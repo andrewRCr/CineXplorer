@@ -1,45 +1,25 @@
 """Unit test fixtures for AuthenticationService."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
 from authentication.tests.test_helpers import create_mock_jwt_settings
+from authentication.tests.unit.types import AuthServiceDeps, AuthServiceFactory
 
-
-@dataclass
-class AuthServiceDeps:
-    """Container for AuthenticationService dependency mocks."""
-    user_model: Mock
-    email_address_model: Mock
-    email_confirmation_model: Mock
-    email_confirmation_hmac: Mock
-    authenticate_fn: Mock
-    validate_password_fn: Mock
-    refresh_token_cls: Mock
-    jwt_settings_provider: Mock
-    set_cookie: Mock
-    blacklist_token_fn: Mock
-    check_token_blacklist_fn: Mock
-    extract_user_id_fn: Mock
-    build_error_response_fn: Mock
-    client_info_getter: Mock
-    logger: Mock
-
+if TYPE_CHECKING:
+    from authentication.services.authentication_service import AuthenticationService
 
 @pytest.fixture()
-def auth_service_factory() -> tuple[
-    callable[..., tuple["AuthenticationService", AuthServiceDeps]],
-    type[AuthServiceDeps],
-]:
+def auth_service_factory() -> AuthServiceFactory:
     """
     Build AuthenticationService with injectable mock dependencies.
 
     Returns:
-        (factory_fn, AuthServiceDeps type) so tests can build service + mocks.
+        Factory function to build service + dependency mocks.
     """
-    def _factory(**overrides: object) -> tuple["AuthenticationService", AuthServiceDeps]:
+    def _factory(**overrides: object) -> tuple[AuthenticationService, AuthServiceDeps]:
         from authentication.services.authentication_service import AuthenticationService
 
         user_model = Mock()
@@ -56,7 +36,13 @@ def auth_service_factory() -> tuple[
         blacklist_token_fn = Mock()
         check_token_blacklist_fn = Mock()
         extract_user_id_fn = Mock(return_value="unknown")
-        build_error_response_fn = Mock(side_effect=lambda message, **_: {"error": message})
+        def build_error_response_mock(
+            message: str,
+            **_: object,
+        ) -> dict[str, object]:
+            return {"error": message}
+
+        build_error_response_fn = Mock(side_effect=build_error_response_mock)
         client_info_getter = Mock(return_value=("127.0.0.1", "test-agent"))
         logger = Mock()
 
@@ -103,4 +89,4 @@ def auth_service_factory() -> tuple[
 
         return service, deps
 
-    return _factory, AuthServiceDeps
+    return _factory

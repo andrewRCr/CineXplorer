@@ -1,14 +1,10 @@
 """Django Ninja API router for authentication endpoints.
 
 This module defines authentication and user management API endpoints
-using Django Ninja, following the patterns established in Phase 1.
+using Django Ninja with established API patterns.
 """
 from __future__ import annotations
 
-import logging
-from datetime import UTC, datetime, timedelta
-
-from allauth.account.models import EmailAddress, EmailConfirmation
 from authentication.auth_ninja import get_current_user, jwt_cookie_auth
 from authentication.schemas import (
     CsrfTokenResponseSchema,
@@ -25,26 +21,11 @@ from authentication.schemas import (
     UserProfileSchema,
     UserProfileUpdateSchema,
 )
+from authentication.services.service_factory import get_authentication_service
 from authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
-from authentication.utils import (
-    blacklist_token,
-    check_token_blacklist,
-    extract_user_id_from_token,
-    get_jwt_settings,
-    set_auth_cookie,
-)
-from core.utils import build_error_response, get_client_info
 from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from ninja import Router
-from ninja_jwt.exceptions import TokenError
-from ninja_jwt.tokens import RefreshToken
-
-# Logger for authentication security events
-logger = logging.getLogger('cinexplorer.auth')
 
 # Create authentication router
 auth_router = Router(tags=["Authentication"])
@@ -63,7 +44,7 @@ auth_router = Router(tags=["Authentication"])
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
-) -> tuple[int, dict[str, object]]:
+) -> tuple[int, RegisterResponseSchema | dict[str, object]]:
     """Register a new user and send email verification.
 
     Creates a new user account and triggers email verification via
@@ -91,99 +72,8 @@ def register_user(
         3. User receives email with verification link via CustomAccountAdapter (ZeptoMail)
         4. Email verification handled by allauth EmailAddress model
     """
-    user_model = get_user_model()
-
-    # Get client info for logging
-    client_ip, _ = get_client_info(request)
-
-    # Check for forbidden usernames
-    forbidden_usernames = settings.FORBIDDEN_USERNAMES
-    if payload.username.lower() in forbidden_usernames:
-        logger.warning(
-            f"Registration failed: Forbidden username | "
-            f"username={payload.username} | ip={client_ip}"
-        )
-        return 409, {
-            "error": f'Username "{payload.username}" is not allowed.'
-        }
-
-    # Check for existing username
-    if user_model.objects.filter(username=payload.username).exists():
-        logger.warning(
-            f"Registration failed: Username already exists | "
-            f"username={payload.username} | ip={client_ip}"
-        )
-        return 409, {
-            "error": "Username already associated with an existing account."
-        }
-
-    # Check for existing email
-    if user_model.objects.filter(email=payload.email).exists():
-        logger.warning(
-            f"Registration failed: Email already exists | "
-            f"email={payload.email} | ip={client_ip}"
-        )
-        return 409, {
-            "error": "Email address already associated with an existing account."
-        }
-
-    # Validate password strength using Django's configured validators
-    # (MinimumLengthValidator, CommonPasswordValidator, UserAttributeSimilarityValidator, etc.)
-    try:
-        validate_password(payload.password)
-    except ValidationError as e:
-        logger.warning(
-            f"Registration failed: Weak password | "
-            f"username={payload.username} | ip={client_ip}"
-        )
-        return 400, {
-            "error": "Password validation failed.",
-            "details": list(e.messages)
-        }
-
-    # Create the user (convert None to empty string for Django CharField)
-    # Pyright doesn't infer UserManager from get_user_model(), MyPy does via django-stubs
-    user = user_model.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType, reportAttributeAccessIssue]
-        username=payload.username,
-        email=payload.email,
-        password=payload.password,
-        first_name=payload.first_name or '',
-        last_name=payload.last_name or ''
-    )
-
-    # Send verification email via allauth API
-    try:
-        # Create EmailAddress record and send confirmation using allauth
-        EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # pyright: ignore[reportUnknownArgumentType]
-
-        # Log successful registration
-        logger.info(
-            f"Registration successful | "
-            f"user_id={user.id} | username={payload.username} | email={payload.email} | "  # pyright: ignore[reportUnknownMemberType]
-            f"ip={client_ip}"
-        )
-
-        return 201, {
-            "message": "Registration successful. Please check your email to verify your account.",
-            "user_id": user.id,  # pyright: ignore[reportUnknownMemberType]
-            "email": user.email,  # pyright: ignore[reportUnknownMemberType]
-            "email_sent": True
-        }
-    except Exception as e:
-        # Email failed to send - delete the user and return error
-        user.delete()  # pyright: ignore[reportUnknownMemberType]
-
-        logger.error(
-            f"Registration failed: Email sending error | "
-            f"username={payload.username} | email={payload.email} | ip={client_ip} | "
-            f"error={e!s}"
-        )
-
-        return 500, {
-            "error": "Registration failed. Unable to send verification email. "
-            "Please try again later or contact support.",
-            "email_sent": False
-        }
+    service = get_authentication_service()
+    return service.register_user(request, payload)
 
 
 @auth_router.post(
@@ -199,7 +89,7 @@ def register_user(
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
-) -> tuple[int, dict[str, object]]:
+) -> tuple[int, TokenResponseSchema | dict[str, object]]:
     """Obtain JWT access and refresh tokens (login) for hybrid authentication.
 
     Hybrid Authentication Architecture:
@@ -232,75 +122,8 @@ def obtain_token(
         - secure: True (HTTPS only)
         - samesite: Lax (CSRF protection)
     """
-    login = payload.login
-    password = payload.password
-
-    # Get client info for logging
-    client_ip, user_agent = get_client_info(request)
-
-    if not login or not password:
-        return 400, {"error": "Username/email and password are required."}
-
-    # Authenticate user (supports both username and email via allauth backend)
-    # allauth's AuthenticationBackend handles username/email detection
-    authenticated_user = authenticate(
-        request=request,
-        username=login,  # allauth backend expects 'username' parameter
-        password=password
-    )
-
-    if not authenticated_user:
-        # Log failed login attempt with forensic data
-        logger.warning(
-            f"Login failed: Invalid credentials | "
-            f"login={login} | ip={client_ip} | user_agent={user_agent}"
-        )
-        return 401, {"error": "Unable to authenticate with provided credentials."}
-
-    # Check email verification using allauth EmailAddress API
-    if not EmailAddress.objects.filter(user=authenticated_user, verified=True).exists():
-        logger.warning(
-            f"Login failed: Email not verified | "
-            f"user_id={authenticated_user.id} | login={login} | "  # pyright: ignore[reportUnknownMemberType]
-            f"ip={client_ip}"
-        )
-        return 403, {
-            "error": "Please verify your email address before logging in. "
-            "Check your email for the verification link."
-        }
-
-    # Generate JWT tokens
-    refresh = RefreshToken.for_user(authenticated_user)  # pyright: ignore[reportArgumentType]
-    access_token = str(refresh.access_token)
-    refresh_token = str(refresh)
-
-    # Get JWT settings
-    jwt_settings = get_jwt_settings()
-
-    # Hybrid authentication: Only set refresh token as HTTP-only cookie
-    # Access token returned in response body for localStorage storage (frontend manages it)
-    set_auth_cookie(
-        response,
-        jwt_settings.refresh_token_name,
-        refresh_token,
-        jwt_settings.refresh_lifetime,
-        jwt_settings.samesite
-    )
-
-    # Log successful login
-    logger.info(
-        f"Login successful | "
-        f"user_id={authenticated_user.id} | login={login} | "  # pyright: ignore[reportUnknownMemberType]
-        f"ip={client_ip} | user_agent={user_agent}"
-    )
-
-    # Return token data (also available in cookies)
-    return 200, {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "user_id": authenticated_user.id,  # pyright: ignore[reportUnknownMemberType]
-        "email_verified": True  # Already checked above
-    }
+    service = get_authentication_service()
+    return service.obtain_token(request, response, payload)
 
 
 @auth_router.post(
@@ -311,7 +134,7 @@ def obtain_token(
 )
 def refresh_token(
     request: HttpRequest, response: HttpResponse
-) -> tuple[int, dict[str, object]]:
+) -> tuple[int, TokenResponseSchema | dict[str, object]]:
     """Refresh JWT access token using refresh token from cookie.
 
     Reads refresh token from httponly cookie and generates new access token.
@@ -337,95 +160,8 @@ def refresh_token(
         - Reads refresh token from httponly cookie
         - Sets new access and refresh tokens as httponly cookies
     """
-    # Get JWT settings
-    jwt_settings = get_jwt_settings()
-
-    # Get client info for logging
-    client_ip, user_agent = get_client_info(request)
-
-    # Get refresh token from cookie
-    refresh_token_value = request.COOKIES.get(jwt_settings.refresh_token_name)
-
-    if not refresh_token_value:
-        return 400, {"error": "No valid refresh token found in cookies."}
-
-    try:
-        # Validate the old refresh token
-        # This will raise TokenError if token is blacklisted or invalid
-        old_refresh = RefreshToken(refresh_token_value)
-
-        # Generate new access token from old refresh token
-        access_token = str(old_refresh.access_token)
-
-        # Get user for generating new refresh token
-        user_id = old_refresh.payload.get('user_id')  # pyright: ignore[reportUnknownMemberType]
-        user_model = get_user_model()
-        user = user_model.objects.get(id=user_id)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-
-        # Generate completely new refresh token
-        new_refresh = RefreshToken.for_user(user)  # pyright: ignore[reportArgumentType]
-        new_refresh_token = str(new_refresh)
-
-        # Blacklist the old refresh token (prevents reuse)
-        blacklist_token(old_refresh)
-
-        # Set new access token cookie
-        set_auth_cookie(
-            response,
-            jwt_settings.access_token_name,
-            access_token,
-            jwt_settings.access_lifetime,
-            jwt_settings.samesite
-        )
-
-        # Set new refresh token cookie
-        set_auth_cookie(
-            response,
-            jwt_settings.refresh_token_name,
-            new_refresh_token,
-            jwt_settings.refresh_lifetime,
-            jwt_settings.samesite
-        )
-
-        # Log successful token refresh
-        logger.info(
-            f"Token refresh successful | "
-            f"user_id={user_id} | ip={client_ip}"
-        )
-
-        # Return success response with new tokens
-        return 200, {
-            "access_token": access_token,
-            "refresh_token": new_refresh_token,
-            "user_id": user_id,
-            "email_verified": True  # Assume verified (token already issued)
-        }
-    except TokenError as e:
-        # Token is blacklisted or invalid - log as security event
-        error_message = str(e).lower()
-
-        # Detect blacklisted token reuse attempts (potential security incident)
-        if 'blacklist' in error_message or 'blacklisted' in error_message:
-            # Extract user_id from token if possible (for attribution)
-            user_id = extract_user_id_from_token(refresh_token_value)
-
-            # Log security event: blacklisted token reuse attempt
-            logger.warning(
-                f"SECURITY: Blacklisted token reuse attempt detected | "
-                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
-            )
-
-            return 401, build_error_response(
-                "Token has been revoked. Please login again.",
-                debug_detail="This refresh token has already been used and is no longer valid."
-            )
-
-        # Other token errors (expired, invalid signature, malformed)
-        return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
-    except Exception as e:
-        # Unexpected errors (database issues, etc.)
-        logger.error(f"Unexpected error during token refresh: {e!s}", exc_info=True)
-        return 400, {"error": "An error occurred during token refresh. Please try again."}
+    service = get_authentication_service()
+    return service.refresh_token(request, response)
 
 
 @auth_router.post(
@@ -440,7 +176,7 @@ def refresh_token(
 )
 def hybrid_refresh_token(
     request: HttpRequest, response: HttpResponse
-) -> tuple[int, dict[str, object]]:
+) -> tuple[int, HybridTokenRefreshResponseSchema | dict[str, object]]:
     """Refresh JWT access token for hybrid authentication.
 
     Hybrid Authentication Architecture:
@@ -468,105 +204,8 @@ def hybrid_refresh_token(
         - Automatic blacklisting: Old tokens blacklisted via BLACKLIST_AFTER_ROTATION
         - Reuse detection: Blacklisted token attempts logged as security events
     """
-    # Get JWT settings
-    jwt_settings = get_jwt_settings()
-
-    # Get client info for logging
-    client_ip, user_agent = get_client_info(request)
-
-    # Get refresh token from HTTP-only cookie
-    refresh_token_value = request.COOKIES.get(jwt_settings.refresh_token_name)
-
-    if not refresh_token_value:
-        return 400, {"error": "No valid refresh token found in cookies."}
-
-    try:
-        # Validate the old refresh token
-        old_refresh = RefreshToken(refresh_token_value)
-
-        # Check if token is blacklisted
-        if check_token_blacklist(old_refresh):
-            # Extract user_id from token for security logging
-            user_id = extract_user_id_from_token(refresh_token_value)
-
-            # Log security event
-            logger.warning(
-                f"SECURITY: Blacklisted token reuse attempt (hybrid auth) | "
-                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
-            )
-
-            return 401, build_error_response(
-                "Token has been revoked. Please login again.",
-                debug_detail="This refresh token has already been used and is no longer valid."
-            )
-
-        # Generate new access token from old refresh token
-        access_token = str(old_refresh.access_token)
-
-        # Get user for generating new refresh token
-        user_id = old_refresh.payload.get('user_id')  # pyright: ignore[reportUnknownMemberType]
-        user_model = get_user_model()
-        user = user_model.objects.get(id=user_id)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-
-        # Generate new refresh token
-        new_refresh = RefreshToken.for_user(user)  # pyright: ignore[reportArgumentType]
-        new_refresh_token = str(new_refresh)
-
-        # Blacklist the old refresh token (prevents reuse)
-        blacklist_token(old_refresh)
-
-        # Set new refresh token as HTTP-only cookie
-        # Note: Access token is NOT set as cookie (frontend manages in localStorage)
-        set_auth_cookie(
-            response,
-            jwt_settings.refresh_token_name,
-            new_refresh_token,
-            jwt_settings.refresh_lifetime,
-            jwt_settings.samesite
-        )
-
-        # Calculate issued_at timestamp (UTC, ISO 8601 format)
-        issued_at = datetime.now(UTC)
-
-        # Log successful token refresh
-        logger.info(
-            f"Hybrid token refresh successful | "
-            f"user_id={user_id} | ip={client_ip}"
-        )
-
-        # Return access token in response body for localStorage
-        # Refresh token is ONLY in HTTP-only cookie (hybrid architecture)
-        assert isinstance(jwt_settings.access_lifetime, timedelta)
-        return 200, {
-            "access_token": access_token,
-            "expires_in": int(jwt_settings.access_lifetime.total_seconds()),
-            "issued_at": issued_at.isoformat(),
-        }
-    except TokenError as e:
-        # Token is blacklisted or invalid - log as security event
-        error_message = str(e).lower()
-
-        # Detect blacklisted token reuse attempts
-        if 'blacklist' in error_message or 'blacklisted' in error_message:
-            # Extract user_id for attribution
-            user_id = extract_user_id_from_token(refresh_token_value)
-
-            # Log security event
-            logger.warning(
-                f"SECURITY: Blacklisted token reuse attempt (hybrid auth) | "
-                f"user_id={user_id} | ip={client_ip} | user_agent={user_agent}"
-            )
-
-            return 401, build_error_response(
-                "Token has been revoked. Please login again.",
-                debug_detail="This refresh token has already been used and is no longer valid."
-            )
-
-        # Other token errors
-        return 400, {"error": f"Invalid or expired refresh token: {e!s}"}
-    except Exception as e:
-        logger.error(f"Unexpected error during hybrid token refresh: {e!s}", exc_info=True)
-        return 400, {"error": "An error occurred during token refresh. Please try again."}
+    service = get_authentication_service()
+    return service.hybrid_refresh_token(request, response)
 
 
 @auth_router.post("/logout/", auth=None, response={200: LogoutResponseSchema})
@@ -594,21 +233,8 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
         - Deletes refresh token cookie (HTTP-only, secure)
         - Uses same path, domain, samesite as when cookie was set
     """
-    # Get JWT settings
-    jwt_settings = get_jwt_settings()
-
-    # Delete refresh token cookie with matching attributes for reliable removal
-    # Hybrid authentication: Only refresh token is stored as HTTP-only cookie
-    # Access token is managed by frontend in localStorage (frontend clears it)
-    cookie_kwargs: dict[str, str | None] = {
-        'path': '/',  # Default path
-        'domain': None,  # Use default domain
-        'samesite': jwt_settings.samesite,
-    }
-
-    response.delete_cookie(jwt_settings.refresh_token_name, **cookie_kwargs)  # pyright: ignore[reportArgumentType]
-
-    return 200, {"message": "Logged out successfully."}
+    service = get_authentication_service()
+    return service.logout(response)
 
 
 @auth_router.get("/csrf/", response={200: CsrfTokenResponseSchema}, auth=None)
@@ -685,15 +311,8 @@ def get_user_profile(request: HttpRequest) -> UserProfileSchema:
         - full_name: Concatenated first_name + last_name
     """
     user = get_current_user(request)
-
-    # Create base schema from ORM model
-    profile = UserProfileSchema.from_orm(user)
-
-    # Add computed fields using allauth EmailAddress API
-    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()
-    profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
-
-    return profile
+    service = get_authentication_service()
+    return service.get_user_profile(user)
 
 
 @auth_router.patch(
@@ -728,28 +347,8 @@ def update_user_profile(
         - full_name: Concatenated first_name + last_name
     """
     user = get_current_user(request)
-
-    # Update only provided fields (exclude_unset for partial updates)
-    update_data = payload.dict(exclude_unset=True)
-
-    # Handle password separately for proper hashing
-    password = update_data.pop('password', None)
-
-    # Update model fields
-    for field, value in update_data.items():
-        setattr(user, field, value)
-
-    # Hash and set password if provided
-    if password:
-        user.set_password(password)
-
-    user.save()
-
-    # Create response schema with computed fields using allauth EmailAddress API
-    profile = UserProfileSchema.from_orm(user)
-    profile.email_verified = EmailAddress.objects.filter(user=user, verified=True).exists()
-    profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
-
+    service = get_authentication_service()
+    profile = service.update_user_profile(user, payload)
     return 200, profile
 
 
@@ -760,7 +359,7 @@ def update_user_profile(
 )
 def verify_email(
     request: HttpRequest, payload: EmailVerificationInputSchema
-) -> tuple[int, dict[str, str]]:
+) -> tuple[int, EmailVerificationResponseSchema | dict[str, str]]:
     """Verify user's email address using the confirmation key.
 
     Supports both HMAC-based confirmations (default) and database-stored confirmations.
@@ -772,43 +371,8 @@ def verify_email(
     Returns:
         Success message if verification succeeds, error if key is invalid/expired
     """
-    from allauth.account.models import (
-        EmailConfirmationHMAC,  # pyright: ignore[reportAttributeAccessIssue, reportUnknownVariableType]
-    )
-
-    try:
-        logger.info(f"Attempting to verify email with key: {payload.key[:20]}...")
-
-        # Try HMAC verification first (default django-allauth behavior)
-        confirmation = EmailConfirmationHMAC.from_key(payload.key)  # pyright: ignore[reportUnknownVariableType, reportUnknownMemberType]
-        logger.info(f"HMAC verification result: {confirmation}")
-
-        if not confirmation:
-            # Fall back to database lookup for non-HMAC keys
-            logger.info("HMAC failed, trying database lookup")
-            confirmation = EmailConfirmation.objects.get(key=payload.key)  # pyright: ignore[reportUnknownMemberType]
-
-        # Check if already confirmed
-        email_address = confirmation.email_address  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-        if email_address.verified:  # pyright: ignore[reportUnknownMemberType]
-            logger.warning(f"Email {email_address.email} already verified")  # pyright: ignore[reportUnknownMemberType]
-            return 400, {"error": "Email address is already verified."}
-
-        # Confirm the email (this marks it as verified)
-        logger.info(f"Confirming email {email_address.email}")  # pyright: ignore[reportUnknownMemberType]
-        confirmation.confirm(request)  # pyright: ignore[reportUnknownMemberType]
-
-        return 200, {"message": "Email verified successfully."}
-
-    except EmailConfirmation.DoesNotExist as e:
-        logger.error(f"EmailConfirmation not found: {e}")
-        return 400, {"error": "Invalid or expired verification link."}
-    except AttributeError as e:
-        logger.error(f"AttributeError during verification: {e}")
-        return 400, {"error": "Invalid or expired verification link."}
-    except Exception as e:
-        logger.error(f"Unexpected error during verification: {e}", exc_info=True)
-        return 400, {"error": "Invalid or expired verification link."}
+    service = get_authentication_service()
+    return service.verify_email(request, payload)
 
 
 @auth_router.post(
@@ -818,7 +382,7 @@ def verify_email(
 )
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationInputSchema
-) -> tuple[int, dict[str, str]]:
+) -> tuple[int, ResendVerificationResponseSchema | dict[str, str]]:
     """Resend email verification to the provided email address.
 
     Args:
@@ -828,29 +392,8 @@ def resend_verification(
     Returns:
         Success message (even if email doesn't exist for security)
     """
-    user_model = get_user_model()
-
-    try:
-        user = user_model.objects.get(email=payload.email)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-
-        # Check if already verified using allauth EmailAddress API
-        if EmailAddress.objects.filter(user=user, verified=True).exists():
-            return 400, {"error": "This email address is already verified."}
-
-        # Get or create EmailAddress record and send confirmation via allauth
-        try:
-            email_address = EmailAddress.objects.get(user=user, email__iexact=payload.email)
-            # Send new confirmation email using allauth's built-in method
-            email_address.send_confirmation(request)
-            return 200, {"message": "Verification email sent successfully."}
-        except EmailAddress.DoesNotExist:
-            # Create EmailAddress record if it doesn't exist, then send confirmation
-            EmailAddress.objects.add_email(request, user, payload.email, confirm=True)  # pyright: ignore[reportUnknownArgumentType, reportArgumentType]
-            return 200, {"message": "Verification email sent successfully."}
-
-    except user_model.DoesNotExist:
-        # Don't reveal if email exists or not for security
-        return 200, {"message": "If the email address exists, a verification email has been sent."}
+    service = get_authentication_service()
+    return service.resend_verification(request, payload)
 
 
 __all__ = [

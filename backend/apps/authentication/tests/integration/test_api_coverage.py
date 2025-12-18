@@ -75,7 +75,7 @@ def test_email_sending_failure_deletes_user_and_returns_500(
 ) -> None:
     """Test that email sending failure during registration deletes user and returns 500.
 
-    Covers lines 145-155 in api.py (email sending exception handling).
+    Covers AuthenticationService registration error handling for email failures.
     Ensures user is not left in database if verification email fails to send.
     """
     from django.contrib.auth import get_user_model
@@ -87,7 +87,9 @@ def test_email_sending_failure_deletes_user_and_returns_500(
     }
 
     # Mock EmailAddress.objects.add_email to raise exception
-    with patch('authentication.api.EmailAddress.objects.add_email') as mock_add_email:
+    with patch(
+        "authentication.services.authentication_service.EmailAddress.objects.add_email"
+    ) as mock_add_email:
         mock_add_email.side_effect = Exception("SMTP connection failed")
 
         response = api_client.post(

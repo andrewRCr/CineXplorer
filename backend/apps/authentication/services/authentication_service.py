@@ -2,10 +2,15 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
-from typing import Callable, Protocol, TYPE_CHECKING
+from typing import Protocol, cast
 
-from allauth.account.models import EmailAddress, EmailConfirmation, EmailConfirmationHMAC
+from allauth.account.models import (
+    EmailAddress,
+    EmailConfirmation,
+    EmailConfirmationHMAC,
+)
 from authentication.schemas import (
     EmailVerificationInputSchema,
     EmailVerificationResponseSchema,
@@ -30,15 +35,69 @@ from authentication.utils import (
 from core.utils import build_error_response, get_client_info
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.base_user import AbstractBaseUser as BaseAbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser as ModelAbstractBaseUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
 from ninja_jwt.exceptions import TokenError
 from ninja_jwt.tokens import RefreshToken
 
-if TYPE_CHECKING:
-    from django.contrib.auth.models import AbstractUser
+
+class UserProtocol(Protocol):
+    """User shape used by authentication service."""
+
+    id: int
+    email: str
+    first_name: str
+    last_name: str
+
+    def set_password(self, raw_password: str | None) -> None:
+        """Hash and set password."""
+        ...
+
+    def save(self, *args: object, **kwargs: object) -> None:
+        """Persist changes."""
+        ...
+
+    def delete(
+        self,
+        using: object = ...,
+        keep_parents: bool = ...,
+    ) -> tuple[int, dict[str, int]]:
+        """Delete user."""
+        ...
+
+
+class UserQuerySetProtocol(Protocol):
+    """Minimal queryset interface for auth checks."""
+
+    def exists(self) -> bool:
+        """Return whether the queryset has results."""
+        ...
+
+
+class UserManagerProtocol(Protocol):
+    """Manager interface for the user model."""
+
+    def create_user(self, **kwargs: str) -> UserProtocol:
+        """Create a user."""
+        ...
+
+    def get(self, **kwargs: object) -> UserProtocol:
+        """Fetch a single user."""
+        ...
+
+    def filter(self, **kwargs: object) -> UserQuerySetProtocol:
+        """Filter users."""
+        ...
+
+
+class UserModelProtocol(Protocol):
+    """User model interface with manager."""
+
+    objects: UserManagerProtocol
+    DoesNotExist: type[Exception]
 
 
 class EmailConfirmationHMACProtocol(Protocol):
@@ -55,11 +114,11 @@ class AuthenticationService:
     def __init__(
         self,
         *,
-        user_model: type[AbstractBaseUser] | None = None,
+        user_model: type[ModelAbstractBaseUser] | UserModelProtocol | None = None,
         email_address_model: type[EmailAddress] | None = None,
         email_confirmation_model: type[EmailConfirmation] | None = None,
         email_confirmation_hmac: type[EmailConfirmationHMAC] | None = None,
-        authenticate_fn: Callable[..., AbstractBaseUser | None] | None = None,
+        authenticate_fn: Callable[..., BaseAbstractBaseUser | None] | None = None,
         validate_password_fn: Callable[[str], None] | None = None,
         refresh_token_cls: type[RefreshToken] | None = None,
         jwt_settings_provider: Callable[[], JWTSettings] | None = None,
@@ -75,7 +134,7 @@ class AuthenticationService:
         client_info_getter: Callable[[HttpRequest], tuple[str, str]] | None = None,
         logger: logging.Logger | None = None,
     ) -> None:
-        self._user_model = user_model or get_user_model()
+        self._user_model = cast(UserModelProtocol, user_model or get_user_model())
         self._email_address_model = email_address_model or EmailAddress
         self._email_confirmation_model = email_confirmation_model or EmailConfirmation
         self._email_confirmation_hmac = email_confirmation_hmac or EmailConfirmationHMAC
@@ -152,7 +211,7 @@ class AuthenticationService:
         try:
             self._email_address_model.objects.add_email(
                 request,
-                user,
+                cast(BaseAbstractBaseUser, user),
                 payload.email,
                 confirm=True,
             )
@@ -225,7 +284,8 @@ class AuthenticationService:
         ).exists():
             self._logger.warning(
                 "Login failed: Email not verified | "
-                f"user_id={authenticated_user.id} | login={login} | ip={client_ip}"
+                f"user_id={cast(UserProtocol, authenticated_user).id} | "
+                f"login={login} | ip={client_ip}"
             )
             return 403, {
                 "error": (
@@ -234,7 +294,9 @@ class AuthenticationService:
                 )
             }
 
-        refresh = self._refresh_token_cls.for_user(authenticated_user)
+        refresh = self._refresh_token_cls.for_user(
+            cast(BaseAbstractBaseUser, authenticated_user)
+        )
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         jwt_settings = self._jwt_settings_provider()
@@ -249,14 +311,14 @@ class AuthenticationService:
 
         self._logger.info(
             "Login successful | "
-            f"user_id={authenticated_user.id} | login={login} | "
+            f"user_id={cast(UserProtocol, authenticated_user).id} | login={login} | "
             f"ip={client_ip} | user_agent={user_agent}"
         )
 
         return 200, {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "user_id": authenticated_user.id,
+            "user_id": cast(UserProtocol, authenticated_user).id,
             "email_verified": True,
         }
 
@@ -280,7 +342,9 @@ class AuthenticationService:
             user_id = old_refresh.payload.get("user_id")
             user = self._user_model.objects.get(id=user_id)
 
-            new_refresh = self._refresh_token_cls.for_user(user)
+            new_refresh = self._refresh_token_cls.for_user(
+                cast(BaseAbstractBaseUser, user)
+            )
             new_refresh_token = str(new_refresh)
 
             self._blacklist_token_fn(old_refresh)
@@ -367,7 +431,9 @@ class AuthenticationService:
             access_token = str(old_refresh.access_token)
             user_id = old_refresh.payload.get("user_id")
             user = self._user_model.objects.get(id=user_id)
-            new_refresh = self._refresh_token_cls.for_user(user)
+            new_refresh = self._refresh_token_cls.for_user(
+                cast(BaseAbstractBaseUser, user)
+            )
             new_refresh_token = str(new_refresh)
 
             self._blacklist_token_fn(old_refresh)
@@ -420,11 +486,15 @@ class AuthenticationService:
     def logout(self, response: HttpResponse) -> tuple[int, dict[str, object]]:
         """Clear refresh token cookie for logout."""
         jwt_settings = self._jwt_settings_provider()
-        response.delete_cookie(
+        response.set_cookie(
             jwt_settings.refresh_token_name,
+            "",
+            max_age=0,
+            httponly=True,
+            secure=True,
+            samesite=jwt_settings.samesite,
             path="/",
             domain=None,
-            samesite=jwt_settings.samesite,
         )
         return 200, {"message": "Logged out successfully."}
 
@@ -432,7 +502,7 @@ class AuthenticationService:
     # Profile Operations
     # =========================================================================
 
-    def get_user_profile(self, user: AbstractUser) -> UserProfileSchema:
+    def get_user_profile(self, user: UserProtocol) -> UserProfileSchema:
         """Return user profile with computed fields."""
         profile = UserProfileSchema.from_orm(user)
         profile.email_verified = self._email_address_model.objects.filter(
@@ -444,7 +514,7 @@ class AuthenticationService:
 
     def update_user_profile(
         self,
-        user: AbstractUser,
+        user: UserProtocol,
         payload: UserProfileUpdateSchema,
     ) -> UserProfileSchema:
         """Update user profile fields with validation."""
@@ -537,7 +607,7 @@ class AuthenticationService:
             except self._email_address_model.DoesNotExist:
                 self._email_address_model.objects.add_email(
                     request,
-                    user,
+                    cast(BaseAbstractBaseUser, user),
                     payload.email,
                     confirm=True,
                 )

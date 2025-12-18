@@ -525,18 +525,16 @@ all remaining function-based services to class-based architecture with dependenc
         - All 85 user_movie_data tests pass (21 unit + 64 integration)
         - Quality checks pass (ruff, pyright)
 
-- [ ] **4.2 Update UserMovieData API Endpoints to Use Service Layer**
+- [x] **4.2 Update UserMovieData API Endpoints to Use Service Layer**
 
     **Goal:** Refactor API endpoints to delegate business logic to the new service layer, ensuring separation of concerns.
 
-    - [~] 4.2.a Refactor UserMovieData API endpoints in `backend/apps/user_movie_data/api.py`
-        - ✓ Replaced inline business logic with service calls (5 endpoints)
-        - ✓ Using `get_user_movie_data_service()` factory
-        - ✓ API layer now handles only: request/response, authentication, validation
-        - **PARTIAL**: Blocked on `get_all_user_movies()` addition in 4.2.b.5
-        - **Uncommitted**: api.py changes pending 4.2.b.5 completion
+    - [x] 4.2.a Refactor UserMovieData API endpoints in `backend/apps/user_movie_data/api.py`
+        - Replaced inline business logic with service calls (5 endpoints)
+        - Using `get_user_movie_data_service()` factory
+        - API layer now handles only: request/response, authentication, validation
 
-    - [ ] 4.2.b Schema naming consistency refactor
+    - [x] 4.2.b Schema naming consistency refactor
         **Goal:** Establish consistent, semantic schema naming across codebase.
 
         - [x] 4.2.b.1 Rename single-item schema with documentation
@@ -552,24 +550,30 @@ all remaining function-based services to class-based architecture with dependenc
             - Updated schema name references across backend services, tests, and docs
             - Ensured backend test assertions and fixtures reference new schema names
 
-        - [ ] 4.2.b.4 Regenerate frontend types and update aliases
-            - `PaginatedMoviesResponse` → `MovieListResponse`
-            - `PaginatedKeywordResponse` → `KeywordListResponse`
-            - `PaginatedPersonResponse` → `PersonListResponse`
+        - [x] 4.2.b.4 Regenerate frontend types and update aliases
+            - Regenerated OpenAPI types from updated schema names
+            - Updated frontend aliases to MovieListResponse/KeywordListResponse/PersonListResponse
 
-        - [ ] 4.2.b.5 Add `get_all_user_movies()` method to UserMovieDataService
+        - [x] 4.2.b.5 Add `get_all_user_movies()` method to UserMovieDataService
             - Dedicated method for non-paginated user movie fetching
-            - Update api.py to use new method (completes 4.2.a intent)
+            - Updated api.py to use new method and return service response
 
-        - [ ] 4.2.b.6 Run incremental quality checks (schema files, affected services)
+        - [x] 4.2.b.6 Run incremental quality checks (schema files, affected services)
+            - Ruff: backend/apps/user_movie_data
+            - Pyright: backend/apps/, backend/config/ (0 errors, 0 warnings; infos only)
 
-    - [ ] 4.2.c Run API integration tests (verify all 5 endpoints work, auth/error handling unchanged)
-    - [ ] 4.2.d Run incremental quality checks (user_movie_data app)
+    - [x] 4.2.c Run API integration tests (verify all 5 endpoints work, auth/error handling unchanged)
+        - pytest apps/user_movie_data/tests/integration (46 passed)
+    - [x] 4.2.d Run incremental quality checks (user_movie_data app)
+        - Ruff: backend/apps/user_movie_data
 
-- [ ] **4.3 Phase 4 Quality Gate**
-    - [ ] 4.3.a Run full backend test suite
-    - [ ] 4.3.b Run all backend linting checks
-    - [ ] 4.3.c Run Python type checking
+- [x] **4.3 Phase 4 Quality Gate**
+    - [x] 4.3.a Run full backend test suite
+        - pytest apps/ (639 passed)
+    - [x] 4.3.b Run all backend linting checks
+        - Ruff: backend/apps/, backend/config/
+    - [x] 4.3.c Run Python type checking
+        - Pyright: backend/apps/, backend/config/ (0 errors, 0 warnings; infos only)
 
 ---
 

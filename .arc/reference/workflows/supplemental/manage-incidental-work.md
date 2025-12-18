@@ -7,7 +7,7 @@ that should be addressed immediately.
 **When to use**: During feature or technical work when discovering issues requiring multiple subtasks (>30 min effort)
 that block or significantly impact current work.
 
-**Related**: [3-process-task-loop.md](../3-process-task-loop.md), [archive-completed.md](archive-completed.md)
+**Related**: [3_process-task-loop.md](../3_process-task-loop.md), [archive-completed.md](archive-completed.md)
 
 ---
 
@@ -212,7 +212,7 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
 
 **Follow standard workflows** - incidental work has no special execution procedures:
 
-1. **Task execution**: Follow [3-process-task-loop.md](../3-process-task-loop.md)
+1. **Task execution**: Follow [3_process-task-loop.md](../3_process-task-loop.md)
    - One subtask at a time
    - Quality checks after each subtask
    - Mark `[x]` immediately on completion

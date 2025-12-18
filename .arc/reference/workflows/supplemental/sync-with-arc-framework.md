@@ -332,7 +332,7 @@ When framework has new files not in project:
 
 If you discover a gap that affects **ALL repos** (framework + all adopting projects):
 
-**Example**: Missing `3-process-task-loop.md` reference in `session-init.md` across all 3 repos.
+**Example**: Missing `3_process-task-loop.md` reference in `session-init.md` across all 3 repos.
 
 **Protocol**:
 

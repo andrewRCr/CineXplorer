@@ -414,7 +414,7 @@ notes: |
 - Always include Context: footer with exact task list filename or boundary category
 - Mark parent tasks [x] when all subtasks complete, in same commit as final subtask
 - Verify task status in files matches actual implementation
-- Follow [Task Processing Workflow](../3-process-task-loop.md) completion protocol
+- Follow [Task Processing Workflow](../3_process-task-loop.md) completion protocol
 - See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for branch naming
 
 ---

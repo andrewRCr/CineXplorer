@@ -143,8 +143,10 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
 # Task List: [Feature/Work Name]
 
 **PRD Reference:** `.arc/active/[category]/prd-[name].md`
+**Created:** YYYY-MM-DD
 **Branch:** `feature/[feature-name]` or `technical/[work-name]`
-**Status**: In Progress
+**Base Branch:** `main` (or parent branch if stacked)
+**Status:** In Progress
 
 ## Tasks
 
@@ -209,4 +211,4 @@ for complete formatting rules, test-first patterns, and examples.
 - All tasks start unchecked: `- [ ]`
 - Mark completed: `- [x] 1.1 Sub-task description`
 - Task list is a living document, updated throughout implementation
-- See [Task Processing Loop](3-process-task-loop.md) for execution workflow
+- See [Task Processing Loop](3_process-task-loop.md) for execution workflow

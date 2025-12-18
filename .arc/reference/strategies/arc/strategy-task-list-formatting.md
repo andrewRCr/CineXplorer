@@ -10,7 +10,7 @@ documentation throughout the project lifecycle.
 
 **Referenced by:**
 
-- [2-generate-tasks.md](../workflows/2-generate-tasks.md) - Planned feature/technical work
+- [2_generate-tasks.md](../workflows/2_generate-tasks.md) - Planned feature/technical work
 - [manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md) - Reactive incidental work
 
 ## Table of Contents
@@ -61,7 +61,9 @@ Task list headers provide essential metadata and context. Format varies by task 
 # Task List: [Feature/Technical Name]
 
 **PRD:** `.arc/active/{feature|technical}/prd-[name].md`
+**Created:** YYYY-MM-DD
 **Branch:** `{feature|technical}/[branch-name]`
+**Base Branch:** `main` (or parent branch if stacked)
 **Status:** {Pending|In Progress|Complete}
 
 ## Overview
@@ -102,7 +104,9 @@ Task list headers provide essential metadata and context. Format varies by task 
 # Task List: Service Layer Modernization
 
 **PRD:** `.arc/active/technical/prd-service-layer-modernization.md`
+**Created:** 2025-10-21
 **Branch:** `technical/service-layer-modernization`
+**Base Branch:** `main`
 **Status:** In Progress
 
 ## Overview
@@ -137,7 +141,8 @@ Task list headers provide essential metadata and context. Format varies by task 
 # Incidental: [Descriptive Title]
 
 **Created:** YYYY-MM-DD
-**Branch:** `[branch-where-this-work-happens]`
+**Branch:** `incidental/[name]`
+**Base Branch:** `[parent-branch-this-branched-from]`
 **Status:** {Pending|In Progress|Complete}
 
 ## Context
@@ -171,11 +176,12 @@ Task list headers provide essential metadata and context. Format varies by task 
 
 - Title uses `Incidental:` prefix
 - Created date in YYYY-MM-DD format
-- Branch indicates where work happens (often same as interrupted work)
+- Branch is this task list's own branch (e.g., `incidental/filter-testing`)
+- Base Branch is the parent branch this branched from (enables grep-based discovery of related work)
 - Status values: `Pending` (not started), `In Progress` (active), `Paused` (blocked by other work), `Complete` (done)
 - Discovered field shows discovery context
-- Interrupts field shows workflow management (what's paused) OR `None` if fresh work
-- **When paused**, add `Paused At` and `Paused To` fields to interrupted task list
+- **Interrupts** field shows what task list/task was paused (backward pointer) OR `None` if fresh work
+- **When pausing parent work**, add `Paused At` and `Paused To` fields to the interrupted task list (forward pointer)
 - **When resuming**, update `Status` back to `In Progress` and optionally add resume context
 - Scope section separates included vs deferred work
 - Horizontal rule (`---`) separates header from tasks
@@ -187,14 +193,15 @@ Task list headers provide essential metadata and context. Format varies by task 
 # Incidental: Navigation Filter State Preservation
 
 **Created:** 2025-10-29
-**Branch:** `technical/service-layer-modernization`
+**Branch:** `incidental/navigation-filter-state-preservation`
+**Base Branch:** `incidental/filter-integration-testing`
 **Status:** In Progress
 
 ## Context
 
 **Discovered:** Manual testing during Phase 3.6 (data quality filtering implementation)
 
-**Interrupts:** `.arc/active/incidental/filter-integration-testing.md` at Phase 3.6, Task 3.6.2
+**Interrupts:** `tasks-filter-integration-testing.md` at Phase 3.6, Task 3.6.2
 
 **Problem:** Navigation loses filter query params, causing blank screens and collapsed panels.
 
@@ -223,19 +230,20 @@ Task list headers provide essential metadata and context. Format varies by task 
 # Incidental: Test Organization Standardization
 
 **Created:** 2025-10-30
-**Branch:** `technical/service-layer-modernization`
+**Branch:** `incidental/test-organization-standardization`
+**Base Branch:** `incidental/buffer-deduplication`
 **Status:** Paused
 
 ## Context
 
 **Discovered:** During Phase 3 planning for buffer deduplication work
 
-**Interrupts:** `.arc/active/incidental/tasks-buffer-deduplication.md` at Task 3.1
+**Interrupts:** `tasks-buffer-deduplication.md` at Task 3.1
 
 **Paused At:** Phase 3 complete (test file analysis done, before Phase 4 file splits)
 
-**Paused To:** `.arc/active/incidental/tasks-discover-endpoint-consolidation.md` - Critical endpoint
-architecture issues discovered during browser testing
+**Paused To:** `tasks-discover-endpoint-consolidation.md` - Critical endpoint architecture issues
+discovered during browser testing
 
 **Problem:** Test organization inconsistent and files too large.
 
@@ -913,14 +921,15 @@ This example demonstrates all formatting elements in proper context:
 # Incidental: Filter State Preservation
 
 **Created:** 2025-10-29
-**Branch:** `technical/service-layer-modernization`
+**Branch:** `incidental/filter-state-preservation`
+**Base Branch:** `incidental/filter-integration-testing`
 **Status:** In Progress
 
 ## Context
 
 **Discovered:** Manual testing during Phase 3.6 (data quality filtering implementation)
 
-**Interrupts:** `.arc/active/incidental/filter-integration-testing.md` at Phase 3.6, Task 3.6.2
+**Interrupts:** `tasks-filter-integration-testing.md` at Phase 3.6, Task 3.6.2
 
 **Problem:** UI state not preserved when navigating back from detail pages.
 
@@ -1484,6 +1493,6 @@ If you find this pattern, you have two options:
 
 - [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) - Test-First Protocol
 - [strategy-testing-methodology.md](./strategy-testing-methodology.md) - Testing standards and patterns
-- [2-generate-tasks.md](../workflows/2-generate-tasks.md) - Planned work task generation
+- [2_generate-tasks.md](../workflows/2_generate-tasks.md) - Planned work task generation
 - [manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md) - Incidental work lifecycle
-- [3-process-task-loop.md](../workflows/3-process-task-loop.md) - Task execution workflow
+- [3_process-task-loop.md](../workflows/3_process-task-loop.md) - Task execution workflow

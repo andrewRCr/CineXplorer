@@ -1110,7 +1110,7 @@ See [Work Organization Strategy](strategies/strategy-work-organization.md) for d
 
 **Workflow guide changes:**
 
-Update `2-generate-tasks.md` to reflect:
+Update `2_generate-tasks.md` to reflect:
 
 - feature/ and technical/ get PRDs + task lists + branches
 - incidental/ gets task lists only, no PRDs, no branches
@@ -1234,8 +1234,8 @@ See ADR-014 for complete rationale and alternatives considered.
 ## Related Documentation
 
 - [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards and git workflow
-- [2-generate-tasks.md](../workflows/2-generate-tasks.md) - Task breakdown workflow
-- [3-process-task-loop.md](../workflows/3-process-task-loop.md) - Task execution workflow
+- [2_generate-tasks.md](../workflows/2_generate-tasks.md) - Task breakdown workflow
+- [3_process-task-loop.md](../workflows/3_process-task-loop.md) - Task execution workflow
 - [atomic-commit.md](../workflows/supplemental/atomic-commit.md) - Commit creation and review
 - [manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md) - Incidental work workflow
 - [weekly-review.md](../workflows/supplemental/weekly-review.md) - Weekly backlog review process

@@ -54,7 +54,7 @@ changes versus AI interpretation.
 - Other documents can reference it, but shouldn't duplicate it
 - Contradictions emerge when same instruction exists in multiple places with slight variations
 
-**Example**: Task completion protocol belongs in `3-process-task-loop.md`.
+**Example**: Task completion protocol belongs in `3_process-task-loop.md`.
 Other documents should reference it, not duplicate it.
 
 ### Cross-References Over Duplication
@@ -125,7 +125,7 @@ When updating `agent/` docs:
 - `AGENTS.md` - Project context and lookup guide
 - `CURRENT-SESSION.md` - Active work state
 - `DEVELOPMENT-RULES.md` - Quality standards and protocols
-- `3-process-task-loop.md` - Task execution workflow
+- `3_process-task-loop.md` - Task execution workflow
 - `QUICK-REFERENCE.md` - Commands and environment
 
 ### Read On-Demand

@@ -147,10 +147,14 @@ Task file headers may contain pointers to other task lists. Understanding which 
 - Task list in `.arc/active/` → **KEEP pointer** (work ongoing or will resume)
 - Task list in `.arc/reference/archive/` → **REMOVE pointer** (work complete, historical)
 
-**Common pointer labels:**
+**Standard pointer labels:**
 
-- Backward: `Interrupts:`, `Paused:`, `Resumes at:`, `Returns to:`
-- Forward: `Spawned:`, `Created:`, `Branched to:`
+- **Backward (preferred: `Interrupts:`)**: Shows what task list/task was paused to do this work
+    - Other acceptable: `Paused:`, `Resumes at:`, `Returns to:`
+- **Forward (preferred: `Paused To:`)**: Shows what work interrupted this task list
+    - Other acceptable: `Spawned:`, `Created:`, `Branched to:`
+
+**Note:** `Interrupts:` goes in the child task list's Context section. `Paused To:` goes in the parent task list's header.
 
 **Step 1e: Assess File Size & Select Strategy (Mode 2 Only)**
 
@@ -323,9 +327,9 @@ This includes:
 # Task File (Detailed Work Record)
 
 ## Top-Matter (KEEP - concise context)
-- Metadata (Created, Completed, Status, Branch)
+- Metadata (Created, Completed, Status, Branch, Base Branch)
 - Context (1-3 paragraphs: why this work, what triggered it, discovery context)
-- Backward pointers ONLY (where work resumes - use backticks with filename only, no dates)
+- Backward pointers ONLY (`Interrupts:` - where work resumes, use backticks with filename only)
 - Scope & Boundaries (what's in/out of scope)
 
 ## Task List (KEEP - complete detailed record)
@@ -501,8 +505,8 @@ or migrated - this is where the biggest cleanup decisions happen.
 
 **Top-Matter Sections to KEEP:**
 
-- Header metadata (Created, Completed, Branch, Status)
-- Brief context (Discovered, Interrupts pointer)
+- Header metadata (Created, Completed, Branch, Base Branch, Status)
+- Brief context (Discovered, `Interrupts:` pointer)
 - Problem statement (what was fixed - brief historical context)
 - "Won't Do" scope exclusions (useful record of deliberate decisions)
 

@@ -334,7 +334,7 @@ Detailed workflow to be documented in `weekly-review.md`.
 **3. Update documentation:**
 
 - [x] `strategy-work-organization.md` - Add Section 9: Backlog Organization
-- [x] `3-process-task-loop.md` - Add atomic task completion protocol
+- [x] `3_process-task-loop.md` - Add atomic task completion protocol
 - [x] `atomic-commit.md` - Document new commit context footer patterns with examples
 
 **4. Migrate existing backlog:**

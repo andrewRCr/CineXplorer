@@ -68,7 +68,7 @@ more value in having complete context upfront than discovering missing rules mid
      large to internalize upfront. But you MUST read the overview + current task context.
    - **What to extract**: Current phase, task details, acceptance criteria, implementation notes
 
-4. `.arc/reference/workflows/3-process-task-loop.md` - **MUST READ IN FULL**
+4. `.arc/reference/workflows/3_process-task-loop.md` - **MUST READ IN FULL**
    - One-subtask-at-a-time workflow
    - Task execution protocol
    - Quality gate requirements per subtask

@@ -242,7 +242,7 @@ start fresh with new model
 - `archive-completed.md` - Update archive timing (after branch deletion, not before PR), unify completion docs
 - `maintain-task-notes.md` - Add timing guidance (before PR), remove completion summary from task files
 - `agent-pre-merge-review.md` - Add stacked branch review examples
-- `3-process-task-loop.md` - Note branch/task list lifecycle coupling
+- `3_process-task-loop.md` - Note branch/task list lifecycle coupling
 - `atomic-commit.md` - Minor updates (if any)
 - `session-handoff.md` - Add "Protected Sections" guidance for transition notes
 

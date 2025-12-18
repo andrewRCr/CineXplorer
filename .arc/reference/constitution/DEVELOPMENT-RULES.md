@@ -358,7 +358,7 @@ ADRs are immutable once accepted - new decisions require new ADRs that supersede
 This document provides core rules and standards. See related documentation:
 
 - [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) - Environment context, command patterns, and tool usage
-- [Task Processing Workflow](../workflows/3-process-task-loop.md) - Detailed task execution workflow
+- [Task Processing Workflow](../workflows/3_process-task-loop.md) - Detailed task execution workflow
 - [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with task context analysis
 - [AI Agent Reference Card](../agent/AGENTS.md) - Complete project context for AI
 - [Technical Overview](TECHNICAL-OVERVIEW.md) - High-level system architecture and technology stack

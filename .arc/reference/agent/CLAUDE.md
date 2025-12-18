@@ -5,7 +5,7 @@ Guidance for Claude when working in this repository. For shared rules and archit
 - [AGENTS](AGENTS.md) – Project context, lookup guide, and collaboration principles
 - [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.7 – Non-negotiable standards
 - [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.1 – Environment context and command patterns
-- [Process Task Loop](../workflows/3-process-task-loop.md) – One-subtask workflow
+- [Process Task Loop](../workflows/3_process-task-loop.md) – One-subtask workflow
 
 ## Claude-Specific Notes
 
@@ -83,7 +83,7 @@ This is typically invoked via slash command when the user needs to step away bri
 - Make any requested changes
 - Run atomic commit workflow (at user's direction)
 - Run session handoff workflow (at user's direction)
-- **Resume normal workflow** ([3-process-task-loop.md](../workflows/3-process-task-loop.md)) - one subtask at a time
+- **Resume normal workflow** ([3_process-task-loop.md](../workflows/3_process-task-loop.md)) - one subtask at a time
   with check-ins
 
 **Appropriate for:**

@@ -214,8 +214,8 @@ system collections for discovery.
 
 When ready to begin implementation:
 
-1. Create fresh PRD from this notes file (via `workflows/1-create-prd.md`)
-2. Generate task breakdown (via `workflows/2-generate-tasks.md`)
+1. Create fresh PRD from this notes file (via `workflows/1_create-prd.md`)
+2. Generate task breakdown (via `workflows/2_generate-tasks.md`)
 3. Create feature branch and begin implementation
 4. Ensure Backend + Frontend Modernization are complete first (dependencies)
 

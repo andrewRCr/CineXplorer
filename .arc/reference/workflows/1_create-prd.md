@@ -22,7 +22,7 @@ See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md
 
 **Note**: This workflow is for creating **work-level PRDs**, not the project-wide META-PRD. For establishing
 or updating constitutional documents (META-PRD, PROJECT-STATUS, TECHNICAL-OVERVIEW, DEVELOPMENT-RULES),
-use [0-define-constitution.md](0-define-constitution.md) instead.
+use [0_define-constitution.md](0_define-constitution.md) instead.
 
 ## Goal
 
@@ -179,4 +179,4 @@ during implementation.
 1. **Focus on requirements definition** - Do not proceed to implementation or task generation
 2. **Prioritize discovery** - Ensure thorough understanding through clarifying questions
 3. **Iterate on clarity** - Refine the PRD based on feedback and additional context
-4. **Reference next steps** - Upon completion, the PRD is ready for task generation via `2-generate-tasks.md`
+4. **Reference next steps** - Upon completion, the PRD is ready for task generation via `2_generate-tasks.md`

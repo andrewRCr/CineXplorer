@@ -165,4 +165,4 @@ After completing review:
 
 - ADR-014: Backlog Organization (GTD-inspired structure)
 - strategy-work-organization.md: Work categorization and workflow
-- 3-process-task-loop.md: Task execution workflow
+- 3_process-task-loop.md: Task execution workflow

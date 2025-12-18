@@ -619,7 +619,7 @@ all remaining function-based services to class-based architecture with dependenc
 
 ### **Phase 5:** Create AuthenticationService
 
-- [ ] **5.1 Create AuthenticationService Class**
+- [x] **5.1 Create AuthenticationService Class**
 
     **Goal:** Encapsulate all business logic related to user authentication, registration, token management,
     email verification, and profile management (?) in a dedicated service layer.
@@ -644,22 +644,27 @@ all remaining function-based services to class-based architecture with dependenc
     - [x] 5.1.d Run tests and incremental quality checks (authentication service/tests)
         - docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/unit/ (26 passed)
 
-- [ ] **5.2 Update Authentication API Endpoints to Use Service Layer**
+- [x] **5.2 Update Authentication API Endpoints to Use Service Layer**
 
-    - [ ] 5.2.a Refactor Authentication API endpoints in `backend/apps/authentication/api.py`
-        - Replace inline business logic with service calls
-        - Extract all registration/login/token/verification/profile logic to service layer
-        - Use `get_authentication_service()` factory
-        - API layer should ONLY handle: request/response, authentication, rate limiting
-        - Maintain exact same API contracts (backward compatibility)
+    - [x] 5.2.a Refactor Authentication API endpoints in `backend/apps/authentication/api.py`
+        - Replaced inline logic with `AuthenticationService` calls via factory
+        - API layer now focused on HTTP concerns (auth, throttling, response shaping)
+        - Maintained existing endpoint contracts and response schemas
 
-    - [ ] 5.2.b Run API integration tests (verify all 9 endpoints work, security features unchanged)
-    - [ ] 5.2.c Run incremental quality checks (authentication app)
+    - [x] 5.2.b Run API integration tests (verify all 9 endpoints work, security features unchanged)
+        - docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/integration/
+        (132 passed)
 
-- [ ] **5.3 Phase 5 Quality Gate**
-    - [ ] 5.3.a Run full backend test suite
-    - [ ] 5.3.b Run all backend linting checks
-    - [ ] 5.3.c Run Python type checking
+    - [x] 5.2.c Run incremental quality checks (authentication app)
+        - .venv-backend/bin/ruff check backend/apps/authentication
+
+- [x] **5.3 Phase 5 Quality Gate**
+    - [x] 5.3.a Run full backend test suite
+        - docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/ (667 passed)
+    - [x] 5.3.b Run all backend linting checks
+        - .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
+    - [x] 5.3.c Run Python type checking
+        - npx pyright backend/apps/ backend/config/ --project backend (0 errors, 46 informations)
 
 ---
 

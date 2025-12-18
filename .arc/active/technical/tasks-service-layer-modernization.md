@@ -1,62 +1,50 @@
 # Task List: Service Layer Modernization
 
-**PRD Reference:** `.arc/active/technical/prd-service-layer-modernization.md`
+**PRD:** `.arc/active/technical/prd-service-layer-modernization.md`
+**Created:** 2025-10-22
 **Branch:** `technical/service-layer-modernization`
-**Status:** Paused
+**Base Branch:** `main`
+**Status:** In Progress
 
-**Paused At:** Task 3.5.2.3 (Re-evaluate discover_movies type safety)
-
-**Paused To:** `.arc/active/incidental/tasks-filter-integration-testing.md` - Fix critical filter
-functionality and test coverage gaps discovered during type safety investigation
-
-# Overview
+## Overview
 
 **Purpose:** Modernize CineXplorer's service layer by creating reusable pagination/batch helpers and refactoring
-all remaining function-based services to class-based architecture with dependency injection. Establishes consistent
-patterns across movie, UserMovieData, and authentication domains.
+all remaining function-based services to class-based architecture with dependency injection.
 
-## Architecture Patterns
+## Scope
 
-- **Class-based services** with constructor dependency injection (established pattern)
-- **Factory functions** for common instantiation (e.g., `get_movie_service()`)
-- **Functional programming principles**: Immutable data, pure functions, composable helpers
-- **Service layer responsibility**: ALL business logic belongs here, NOT in API endpoints
+### Will Do
 
-## Current State
+- Create generic pagination and batch operation helpers
+- Refactor `MovieEnrichmentService` to use repository pattern with proper DI
+- Convert function-based `MovieService` to class-based with DI
+- Create `KeywordService` and `PeopleService` (extracted from movie domain)
+- Migrate TMDB result filtering from frontend to service layer
+- Create `UserMovieDataService` with repository pattern for ORM abstraction
+- Create `AuthenticationService` for security-critical operations
+- Update all API endpoints to use service layer (thin wrapper pattern)
+- Update TECHNICAL-OVERVIEW.md with service architecture documentation
 
-- `MovieEnrichmentService`: Exists but incomplete DI (has constructor signature, doesn't use it; mutates in-place)
-- `movie_service.py`: Function-based TMDB integration (needs class conversion + result filtering/buffer)
-- `ZeptomailService`: Already class-based (verify patterns only)
-- `UserMovieDataService`: Doesn't exist (logic currently in API layer)
-- `AuthenticationService`: Doesn't exist (logic currently in API layer)
-- **TMDB Result Filtering**: Currently in frontend (`useEnhancedFetcher`), needs migration to service layer
+### Won't Do
 
-## Testing Strategy
+- Performance optimization beyond current scope (separate enhancement)
+- Async/await conversion (deferred to Backend Modernization)
+- New UserMovieData or authentication features (only refactoring)
+- Frontend changes beyond removing migrated filtering logic
 
-- **Test-first protocol** applies to all new services/helpers
-- **Coverage targets**: 80% general, 90%+ critical paths (pagination, batch fetch, result filtering, authentication)
-- **Integration tests** verify API endpoints unchanged after service extraction
+## Architecture Decisions
 
-## Test-First Protocol Reminders
+**Dependency Injection Pattern:**
 
-- Tasks 1.1, 1.2, 1.3, 2.1, 2.2, 3.1, 3.2, 4.1, 5.1 all follow test-first protocol
-- Write tests BEFORE implementation for all new helpers/services
-- Verify tests fail initially (red), then pass after implementation (green)
-- Use existing test modules as reference for structure and style
-- Use existing test_helpers and fixtures for consistency
+- **External APIs** (TMDB): Inject client abstraction (`TMDBApiClient` via `MovieService`)
+- **Internal data** (ORM): Inject repository abstraction (`UserMovieDataRepository`)
+- **Cross-cutting services**: Inject service instances (`ZeptomailService`, `MovieService`)
 
-## Dependency Flow
+**Testing Strategy:**
 
-- Phase 1 (pagination/batch helpers) must complete before Phase 4 (UserMovieDataService uses them)
-- Phase 2 (MovieEnrichmentService) should complete before Phase 4 (UserMovieDataService may depend on it)
-- Phases 3, 4, 5 can theoretically run in parallel but sequential is safer for integration
-
-## Success Criteria
-
-- Zero business logic in API endpoints (all extracted to services)
-- 100% service layer adoption (movie, UserMovieData, authentication)
-- All tests pass, zero linting/type errors
-- TECHNICAL-OVERVIEW.md updated with service patterns
+- Test-first protocol for all new services/helpers
+- Coverage targets: 80% general, 90%+ critical paths (auth, filtering)
+- Mock repositories/services for unit tests, real DB for integration tests
 
 ---
 
@@ -391,7 +379,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - **Type checking**: 0 errors (Pyright) on new services
         - **Tests**: Verify API endpoints still work (keywords and people routes)
 
-- [ ] **3.5 Clean Up Old Code and Frontend Duplication**
+- [x] **3.5 Clean Up Old Code and Frontend Duplication**
 
     - [x] 3.5.a Remove old function-based implementations and tests
         - **Remove old function-based service code from movie_service.py**:
@@ -418,7 +406,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - Verify no references to old functions remain in codebase (grep for old function names)
         - Run full test suite to confirm nothing broken
 
-    - [ ] 3.5.b Remove client-side filtering from frontend (broken into 3 subtasks)
+    - [x] 3.5.b Remove client-side filtering from frontend (broken into 3 subtasks)
         - **Context**: Backend now handles all year/rating filtering + buffer mechanism
         - **Rationale**: Eliminates duplication, single source of truth in backend
 
@@ -469,41 +457,25 @@ patterns across movie, UserMovieData, and authentication domains.
                 - Quality: 0 TypeScript errors, 333/333 tests passing
                 - Architecture: Clean separation (mapping in utility, routing in hook, filtering in backend)
 
-        - [ ] 3.5.b.3 Re-evaluate discover_movies type safety (BLOCKED - see incidental work)
-            - **Status**: Investigation revealed critical gaps requiring dedicated incidental work
-            - **Blocking Issue**: Filter integration test coverage gaps and incomplete migration
-            - **Quick Fix Applied**: Rating parameter rename (min_rating → vote_average_gte)
-            - **Incidental Work**: `.arc/active/incidental/tasks-incidental-filter-integration-testing.md`
+        - [x] 3.5.b.3 Re-evaluate discover_movies type safety
+            - **Status**: Completed via incidental work `22_filter-integration-testing` (archived 2025-12-10)
+            - **Work completed**:
+                - Schema `to_service_params()` refactored with declarative mapping + year/rating extraction
+                - Frontend parameter mapping fixed (min_rating → vote_average_gte, etc.)
+                - 13 integration tests added (schema + API) - all passing
+                - 15 frontend mapper tests added - all passing
+                - Docstrings updated ("client-side" → "second-pass data hygiene")
+                - Vote count quality filter added (TMDB_MIN_VOTE_COUNT_THRESHOLD setting)
+                - Completeness filter added (excludes movies without poster/title)
+                - TMDB API quirks documented (confirmed API bug on their side)
+            - **Type ignore**: Retained for `**kwargs` unpacking (justified, necessary for dynamic params)
 
-            **Investigation Completed**:
-            - ✅ Root cause identified: Schema `to_service_params()` never populates year_min/rating_min
-            - ✅ Frontend parameter mismatch found: Sent min_rating/max_rating instead of vote_average_gte/lte
-            - ✅ Test coverage gaps documented: Service tests pass, but no integration tests validate parameter flow
-            - ✅ User-visible bug confirmed: 1979 movies appearing in 1980-1983 filter results
-            - ✅ Design intent clarified: Backend filtering is second-pass data hygiene, not primary filtering
-
-            **Quick Fixes Applied (working tree)**:
-            - Changed frontend `min_rating` → `vote_average_gte` in movieFilterMapper.ts
-            - Changed frontend `max_rating` → `vote_average_lte` in movieFilterMapper.ts
-            - Changed frontend `max_runtime` → `with_runtime_lte` in movieFilterMapper.ts
-            - Updated docstring examples to reflect correct parameter names
-            - Quality: 333/333 frontend tests passing, 0 type errors, 0 lint errors
-
-            **Remaining Work**:
-            - Complete schema → service wiring (year_min/rating_min extraction)
-            - Add comprehensive integration tests (frontend → API → service → response)
-            - Fix misleading docstrings ("client-side" → "second-pass data hygiene")
-            - Validate all filters work correctly with no data leakage
-            - See incidental task list for full scope (Phase 1: Discovery, Phase 2: Fix)
-
-            **Type Ignore Resolution**: ✅ See "Declarative derived params extraction" in `completed-atomic-2025-q4.md`
-
-- [ ] **3.6 Phase 3 Quality Gate**
-    - [ ] 3.6.a Run full backend test suite
-    - [ ] 3.6.b Run all backend linting checks
-    - [ ] 3.6.c Run Python type checking
-    - [ ] 3.6.d Run full frontend test suite
-    - [ ] 3.6.e Run frontend linting and type checking
+- [x] **3.6 Phase 3 Quality Gate**
+    - [x] 3.6.a Run full backend test suite - **615/615 passed**
+    - [x] 3.6.b Run all backend linting checks - **0 violations (Ruff)**
+    - [x] 3.6.c Run Python type checking - **0 errors, 46 informations (Pyright)**
+    - [x] 3.6.d Run full frontend test suite - **723/723 passed**
+    - [x] 3.6.e Run frontend linting and type checking - **0 errors (ESLint + TypeScript)**
 
 ---
 
@@ -519,26 +491,38 @@ patterns across movie, UserMovieData, and authentication domains.
         - Test UPDATE: Partial field updates with validation
         - Test DELETE: Authorization and deletion logic
         - Test QUERY: Filtering (watchlist, ratings) with pagination
-        - Mock dependencies: Movie repository, TMDB client
+        - Mock dependencies: `UserMovieDataRepository` (extended with CRUD), `MovieService`
+        - Use existing test helpers: `create_user()`, `create_mock_paginated_response()`
         - Target coverage: 80%+ (general)
+        - Expect tests to FAIL initially
 
-    - [ ] 4.1.b Create `UserMovieDataService` class in `backend/apps/user_movie_data/services/user_movie_data_service.py`
+    - [ ] 4.1.b Extend `UserMovieDataRepository` with CRUD methods
+        - Add `create(user, movie, **fields)` method
+        - Add `update(user_movie_data_id, **fields)` method
+        - Add `delete(user_movie_data_id)` method
+        - Add `get_by_id(user_movie_data_id)` method
+        - Add `get_filtered(user, filters, page, page_size)` method for pagination
+        - Keep existing `get_for_user_and_movies()` method
+        - Full type annotations
+
+    - [ ] 4.1.c Create `UserMovieDataService` class in `backend/apps/user_movie_data/services/user_movie_data_service.py`
         - Extract business logic from `backend/apps/user_movie_data/api.py`
-        - Implement CREATE operations (fetch from TMDB, create Movie stub, create UserMovieData)
+        - Implement CREATE operations (fetch from TMDB via `MovieService`, create Movie stub, create UserMovieData)
         - Implement UPDATE operations (partial updates with validation)
         - Implement DELETE operations (authorization checks, deletion)
         - Implement QUERY operations (filtering with pagination using helpers from 1.1)
-        - Inject dependencies: Movie repository (or ORM), TMDB client
+        - Inject dependencies: `UserMovieDataRepository`, `MovieService`
         - Use pagination helper from 1.1.2
         - Use batch fetch helper from 1.2.2
-        - Follow DI pattern from MovieEnrichmentService
+        - Follow DI pattern from `MovieEnrichmentService`
         - Full type annotations, comprehensive docstrings
+        - Tests should now PASS
 
-    - [ ] 4.1.c Create service factory function
+    - [ ] 4.1.d Create service factory function
         - Implement `get_user_movie_data_service()` in `backend/apps/user_movie_data/services/service_factory.py`
-        - Returns UserMovieDataService with injected dependencies
+        - Returns `UserMovieDataService` with injected `UserMovieDataRepository` and `MovieService`
 
-    - [ ] 4.1.d Run tests and incremental quality checks (user_movie_data service/tests)
+    - [ ] 4.1.e Run tests and incremental quality checks (user_movie_data service/tests)
 
 - [ ] **4.2 Update UserMovieData API Endpoints to Use Service Layer**
 
@@ -599,6 +583,7 @@ patterns across movie, UserMovieData, and authentication domains.
         - Returns AuthenticationService with injected email service, token utilities
 
     - [ ] 5.1.d Run tests and incremental quality checks (authentication service/tests)
+
 - [ ] **5.2 Update Authentication API Endpoints to Use Service Layer**
 
     - [ ] 5.2.a Refactor Authentication API endpoints in `backend/apps/authentication/api.py`
@@ -684,3 +669,31 @@ patterns across movie, UserMovieData, and authentication domains.
         - Update timestamp
 
 ---
+
+## Success Criteria
+
+- [ ] Zero business logic in API endpoints (all extracted to services)
+- [ ] 100% service layer adoption across domains:
+    - [x] `MovieService` (class-based, TMDB integration)
+    - [x] `KeywordService` (class-based, extracted from movie)
+    - [x] `PeopleService` (class-based, extracted from movie)
+    - [x] `MovieEnrichmentService` (repository pattern, proper DI)
+    - [ ] `UserMovieDataService` (repository pattern, CRUD with pagination)
+    - [ ] `AuthenticationService` (service injection, security-critical)
+    - [ ] `ZeptomailService` (verified, reference implementation)
+- [ ] Repository pattern implemented for ORM abstraction:
+    - [x] `UserMovieDataRepository` exists with `get_for_user_and_movies()`
+    - [ ] `UserMovieDataRepository` extended with CRUD methods
+    - [ ] Unit tests mock repository, not ORM directly
+- [x] TMDB result filtering migrated from frontend to service layer
+- [x] Frontend filtering code removed (`useEnhancedFetcher`, `movieFilterUtils`)
+- [ ] All API endpoints use service layer (thin wrapper pattern)
+- [ ] TECHNICAL-OVERVIEW.md updated with service architecture documentation
+- [ ] All quality gates pass:
+    - [ ] Backend tests pass (target: 80% general, 90%+ critical paths)
+    - [ ] Backend linting: 0 violations (Ruff)
+    - [ ] Backend type checking: 0 errors (Pyright)
+    - [ ] Frontend tests pass
+    - [ ] Frontend linting: 0 violations (ESLint)
+    - [ ] Frontend type checking: 0 errors (TypeScript)
+- [ ] Ready for archival

@@ -661,6 +661,109 @@ class TestQueryOperations:
         assert result.results[0].tmdb_id == 111
         assert result.results[1].tmdb_id == 333
 
+    def test_get_all_user_movies_returns_full_list(self) -> None:
+        """Test getting all user's movies without pagination."""
+        from user_movie_data.services.user_movie_data_service import (
+            UserMovieDataService,
+        )
+
+        # Arrange
+        mock_repo = Mock()
+        mock_movie_service = Mock()
+        mock_user = create_mock_user()
+
+        mock_umd_list = [
+            create_mock_user_movie_data(record_id=1, tmdb_id=111),
+            create_mock_user_movie_data(record_id=2, tmdb_id=222),
+        ]
+        mock_repo.get_all_filtered.return_value = mock_umd_list
+        mock_repo.get_for_user_and_movies.return_value = {}
+
+        mock_movie_service.get_movie_by_id.side_effect = [
+            create_movie_detail_schema(tmdb_id=111, title="Movie 1"),
+            create_movie_detail_schema(tmdb_id=222, title="Movie 2"),
+        ]
+
+        service = UserMovieDataService(
+            repository=mock_repo,
+            movie_service=mock_movie_service,
+        )
+
+        # Act
+        result = service.get_all_user_movies(user=mock_user)
+
+        # Assert
+        assert result.page == 1
+        assert result.total_pages == 1
+        assert result.total_results == 2
+        assert len(result.results) == 2
+
+    def test_get_all_user_movies_returns_empty_for_no_data(self) -> None:
+        """Test that empty list returns proper empty response."""
+        from user_movie_data.services.user_movie_data_service import (
+            UserMovieDataService,
+        )
+
+        # Arrange
+        mock_repo = Mock()
+        mock_movie_service = Mock()
+        mock_user = create_mock_user()
+
+        mock_repo.get_all_filtered.return_value = []
+
+        service = UserMovieDataService(
+            repository=mock_repo,
+            movie_service=mock_movie_service,
+        )
+
+        # Act
+        result = service.get_all_user_movies(user=mock_user)
+
+        # Assert
+        assert result.page == 1
+        assert result.total_pages == 0
+        assert result.total_results == 0
+        assert result.results == []
+        mock_movie_service.get_movie_by_id.assert_not_called()
+
+    def test_get_all_user_movies_skips_unavailable_tmdb_movies(self) -> None:
+        """Test that unavailable TMDB movies are skipped gracefully."""
+        from user_movie_data.services.user_movie_data_service import (
+            UserMovieDataService,
+        )
+
+        # Arrange
+        mock_repo = Mock()
+        mock_movie_service = Mock()
+        mock_user = create_mock_user()
+
+        mock_umd_list = [
+            create_mock_user_movie_data(record_id=1, tmdb_id=111),
+            create_mock_user_movie_data(record_id=2, tmdb_id=222),
+            create_mock_user_movie_data(record_id=3, tmdb_id=333),
+        ]
+        mock_repo.get_all_filtered.return_value = mock_umd_list
+        mock_repo.get_for_user_and_movies.return_value = {}
+
+        mock_movie_service.get_movie_by_id.side_effect = [
+            create_movie_detail_schema(tmdb_id=111, title="Movie 1"),
+            HttpError(404, "Movie not found"),
+            create_movie_detail_schema(tmdb_id=333, title="Movie 3"),
+        ]
+
+        service = UserMovieDataService(
+            repository=mock_repo,
+            movie_service=mock_movie_service,
+        )
+
+        # Act
+        result = service.get_all_user_movies(user=mock_user)
+
+        # Assert
+        assert len(result.results) == 2
+        assert result.results[0].tmdb_id == 111
+        assert result.results[1].tmdb_id == 333
+
 
 # =========================
 # Authorization Tests
@@ -718,6 +821,8 @@ class TestAuthorizationChecks:
             [],
             create_pagination_metadata(page=1, total_pages=0, total_results=0),
         )
+        mock_repo.get_all_filtered.return_value = []
+        mock_repo.get_for_user_and_movies.return_value = {}
 
         service = UserMovieDataService(
             repository=mock_repo,
@@ -730,9 +835,11 @@ class TestAuthorizationChecks:
         service.update(user=mock_user, record_id=1, user_watched=True)
         service.delete(user=mock_user, record_id=1)
         service.get_user_movies(user=mock_user, page=1, page_size=20)
+        service.get_all_user_movies(user=mock_user)
 
         # Assert: All calls included the user
         assert mock_repo.create.call_args[0][0] is mock_user
         assert mock_repo.get_by_id.call_args[0][0] is mock_user
         # update and delete use get_by_id for auth check, which passes user
         assert mock_repo.get_filtered.call_args[0][0] is mock_user
+        assert mock_repo.get_all_filtered.call_args[0][0] is mock_user

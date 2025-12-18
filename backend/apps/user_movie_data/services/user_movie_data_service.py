@@ -33,6 +33,7 @@ from django.contrib.auth.models import AbstractBaseUser
 from movie.schemas import MovieListItemSchema, MovieListResponseSchema
 from ninja.errors import HttpError
 from user_movie_data.models import UserMovieData
+from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 if TYPE_CHECKING:
     from movie.services.movie_service import MovieService
@@ -368,6 +369,73 @@ class UserMovieDataService:
             total_pages=metadata["total_pages"],
             total_results=metadata["total_results"],
             results=movies,
+        )
+
+    def get_all_user_movies(
+        self,
+        user: AbstractBaseUser,
+        *,
+        watchlist_only: bool | None = None,
+        watched_only: bool | None = None,
+        rated_only: bool | None = None,
+    ) -> MovieListResponseSchema:
+        """
+        Get full list of user's movies with TMDB data and user enrichment.
+
+        This method returns all matching user movies without pagination.
+
+        Args:
+            user: Authenticated user
+            watchlist_only: If True, only return watchlist items
+            watched_only: If True, only return watched items
+            rated_only: If True, only return rated items
+
+        Returns:
+            MovieListResponseSchema with enriched movie data
+        """
+        umd_list = self._repository.get_all_filtered(
+            user,
+            watchlist_only=watchlist_only,
+            watched_only=watched_only,
+            rated_only=rated_only,
+        )
+
+        if not umd_list:
+            return MovieListResponseSchema(
+                page=1,
+                total_pages=0,
+                total_results=0,
+                results=[],
+            )
+
+        movies: list[MovieListItemSchema] = []
+        for umd in umd_list:
+            tmdb_id = umd.movie.tmdb_id
+            try:
+                movie_detail = self._movie_service.get_movie_by_id(tmdb_id)
+                movies.append(movie_detail)
+            except HttpError:
+                logger.warning(
+                    "Movie TMDB ID %d no longer available, skipping",
+                    tmdb_id,
+                )
+                continue
+
+        enrichment_service = MovieEnrichmentService(
+            user_movie_data_repository=self._repository,
+        )
+        enriched_movies = enrichment_service.enrich_movies_with_user_movie_data(
+            movies=movies,
+            user=user,
+        )
+
+        total_results = len(enriched_movies)
+
+        return MovieListResponseSchema(
+            page=1,
+            total_pages=1 if total_results else 0,
+            total_results=total_results,
+            results=enriched_movies,
         )
 
 

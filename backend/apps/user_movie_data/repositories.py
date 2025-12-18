@@ -373,6 +373,40 @@ class UserMovieDataRepository:
     # Query Operations
     # =========================================================================
 
+    def get_all_filtered(
+        self,
+        user: AbstractBaseUser,
+        *,
+        watchlist_only: bool | None = None,
+        watched_only: bool | None = None,
+        rated_only: bool | None = None,
+    ) -> list[UserMovieData]:
+        """
+        Get all UserMovieData records for a user with optional filters.
+
+        This method returns the full filtered dataset without pagination,
+        ordered by most recently created (newest first).
+
+        Args:
+            user: The authenticated user
+            watchlist_only: If True, only return watchlist items
+            watched_only: If True, only return watched items
+            rated_only: If True, only return rated items
+
+        Returns:
+            List of UserMovieData records matching filters
+        """
+        queryset = UserMovieData.objects.filter(user=user).select_related("movie")
+
+        if watchlist_only:
+            queryset = queryset.filter(user_on_watchlist=True)
+        if watched_only:
+            queryset = queryset.filter(user_watched=True)
+        if rated_only:
+            queryset = queryset.filter(user_rating__isnull=False)
+
+        return list(queryset.order_by("-id"))
+
     def get_filtered(
         self,
         user: AbstractBaseUser,

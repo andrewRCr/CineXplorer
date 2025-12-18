@@ -242,6 +242,20 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         assert params.year_min == 2020
         assert params.year_max == 2023
 
+    def test_extracts_year_range_from_decade_filter(self) -> None:
+        """Test decade filter maps to both TMDB and backend year params."""
+        # Arrange
+        schema = MovieDiscoverFilterSchema(decade="1990s")
+
+        # Act
+        params = transform_to_service_params(schema)
+
+        # Assert: TMDB date range + backend year range
+        assert params.release_date_gte == "1990-01-01"
+        assert params.release_date_lte == "1999-12-31"
+        assert params.year_min == 1990
+        assert params.year_max == 1999
+
     def test_maintains_existing_tmdb_parameter_mappings(self) -> None:
         """Test that new backend param extraction doesn't break existing TMDB mappings.
 

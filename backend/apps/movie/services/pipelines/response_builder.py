@@ -26,7 +26,7 @@ def convert_schema_to_tmdb_movie(schema: MovieListItemSchema) -> TMDBMovieBase:
         Performs bidirectional schema conversion for response building.
         Maps tmdb_id → id and converts date objects to strings.
     """
-    movie_dict = schema.model_dump()
+    movie_dict = schema.model_dump(exclude={"user_movie_data"})
     # Map tmdb_id → id
     movie_dict['id'] = movie_dict.pop('tmdb_id')
     # Convert date object to string if present

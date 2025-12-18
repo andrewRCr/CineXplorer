@@ -90,6 +90,8 @@ def _apply_derived_params(
             end_year = start_year + 9
             params['release_date_gte'] = f"{start_year}-01-01"
             params['release_date_lte'] = f"{end_year}-12-31"
+            params['year_min'] = start_year
+            params['year_max'] = end_year
         except (ValueError, TypeError):
             pass
 

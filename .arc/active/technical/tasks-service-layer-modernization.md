@@ -624,32 +624,25 @@ all remaining function-based services to class-based architecture with dependenc
     **Goal:** Encapsulate all business logic related to user authentication, registration, token management,
     email verification, and profile management (?) in a dedicated service layer.
 
-    - [ ] 5.1.a Write tests for AuthenticationService methods (test-first)
-        - Test REGISTRATION: User creation, password validation, forbidden usernames, allauth EmailAddress integration
-        - Test LOGIN/LOGOUT: Authentication, token generation/blacklisting, cookie management
-        - Test TOKEN MANAGEMENT: Refresh token validation, blacklisting, rotation
-        - Test EMAIL VERIFICATION: Verification flow, resend logic, EmailConfirmation handling
-        - Test USER PROFILE: GET/PATCH operations with validation
-        - Mock dependencies: Email service, token utilities
-        - Target coverage: 90%+ (security-critical)
+    - [x] 5.1.a Write tests for AuthenticationService methods (test-first)
+        - Added unit tests for registration, login/logout, refresh + hybrid refresh, email verification/resend, and profile
+        - Mocked allauth email primitives + token utilities, kept auth logging assertions in place
+        - Split tests by concern under `backend/apps/authentication/tests/unit/`
+        - **Test status:** Failing (ModuleNotFoundError) until AuthenticationService is implemented in 5.1.b
 
-    - [ ] 5.1.b Create `AuthenticationService` class in `backend/apps/authentication/services/authentication_service.py`
-        - Extract business logic from `backend/apps/authentication/api.py`
-        - Implement registration logic (user creation, validation, allauth integration)
-        - Implement login/logout logic (authentication, tokens, cookies)
-        - Implement token management (refresh, blacklisting, rotation)
-        - Implement email verification (verify flow, resend logic)
-        - Implement user profile operations (GET, PATCH with validation)
-        - Inject dependencies: Email service, token utilities
-        - Follow established DI pattern
-        - Full type annotations, comprehensive docstrings
+    - [x] 5.1.b Create `AuthenticationService` class in `backend/apps/authentication/services/authentication_service.py`
+        - Extracted auth business logic from API routes into service methods
+        - Implemented registration/login/logout, refresh + hybrid refresh, email verification/resend, profile ops
+        - Added DI seams for allauth primitives, token utilities, logging, and helpers
+        - Preserved existing behavior and logging semantics
         - **Note**: This is backend service; frontend auth service already exists
+        - **Note**: OAuth logout remains handled by allauth session endpoint (out of scope)
 
-    - [ ] 5.1.c Create service factory function
-        - Implement `get_authentication_service()` in `backend/apps/authentication/services/service_factory.py`
-        - Returns AuthenticationService with injected email service, token utilities
+    - [x] 5.1.c Create service factory function
+        - Implemented `get_authentication_service()` returning default AuthenticationService
 
-    - [ ] 5.1.d Run tests and incremental quality checks (authentication service/tests)
+    - [x] 5.1.d Run tests and incremental quality checks (authentication service/tests)
+        - docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/unit/ (26 passed)
 
 - [ ] **5.2 Update Authentication API Endpoints to Use Service Layer**
 
@@ -683,7 +676,11 @@ all remaining function-based services to class-based architecture with dependenc
         - Check for `get_email_service()` factory function
         - Ensure it follows established pattern
 
-    - [ ] 6.1.c Document email service as reference implementation (if exemplary)
+    - [ ] 6.1.c Verify allauth email adapter wiring
+        - Confirm `CustomAccountAdapter` and allauth EmailAddress/EmailConfirmation flows
+        - Validate injection seams used by AuthenticationService keep behavior unchanged
+
+    - [ ] 6.1.d Document email service as reference implementation (if exemplary)
 - [ ] **6.2 Run Comprehensive Integration Tests**
     - [ ] 6.2.a Run full UserMovieData integration test suite (all 5 endpoints after service extraction)
     - [ ] 6.2.b Run full Authentication integration test suite (all 9 endpoints after service extraction)

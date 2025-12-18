@@ -529,17 +529,39 @@ all remaining function-based services to class-based architecture with dependenc
 
     **Goal:** Refactor API endpoints to delegate business logic to the new service layer, ensuring separation of concerns.
 
-    - [ ] 4.2.a Refactor UserMovieData API endpoints in `backend/apps/user_movie_data/api.py`
-        - Replace inline business logic with service calls
-        - Extract all CREATE/UPDATE/DELETE/QUERY logic to service layer
-        - Use `get_user_movie_data_service()` factory
-        - API layer should ONLY handle: request/response, authentication, validation
-        - Maintain exact same API contracts (backward compatibility)
+    - [~] 4.2.a Refactor UserMovieData API endpoints in `backend/apps/user_movie_data/api.py`
+        - ✓ Replaced inline business logic with service calls (5 endpoints)
+        - ✓ Using `get_user_movie_data_service()` factory
+        - ✓ API layer now handles only: request/response, authentication, validation
+        - **PARTIAL**: Blocked on `get_all_user_movies()` addition in 4.2.b.5
+        - **Uncommitted**: api.py changes pending 4.2.b.5 completion
 
-    - [ ] 4.2.b Update watchlist endpoint tests to verify pagination
-        - Validate pagination parameters work correctly
-        - Test pagination metadata in responses
-        - Verify page size enforcement
+    - [ ] 4.2.b Schema naming consistency refactor
+        **Goal:** Establish consistent, semantic schema naming across codebase.
+
+        - [x] 4.2.b.1 Rename single-item schema with documentation
+            - `MovieBaseSchema` → `MovieListItemSchema`
+            - Update docstrings to document `MovieDetailSchema` inheritance relationship
+
+        - [x] 4.2.b.2 Rename collection response schemas
+            - `PaginatedMovieResponseSchema` → `MovieListResponseSchema`
+            - `PaginatedKeywordResponseSchema` → `KeywordListResponseSchema`
+            - `PaginatedPersonResponseSchema` → `PersonListResponseSchema`
+
+        - [x] 4.2.b.3 Update all backend usages (~18 code files)
+            - Updated schema name references across backend services, tests, and docs
+            - Ensured backend test assertions and fixtures reference new schema names
+
+        - [ ] 4.2.b.4 Regenerate frontend types and update aliases
+            - `PaginatedMoviesResponse` → `MovieListResponse`
+            - `PaginatedKeywordResponse` → `KeywordListResponse`
+            - `PaginatedPersonResponse` → `PersonListResponse`
+
+        - [ ] 4.2.b.5 Add `get_all_user_movies()` method to UserMovieDataService
+            - Dedicated method for non-paginated user movie fetching
+            - Update api.py to use new method (completes 4.2.a intent)
+
+        - [ ] 4.2.b.6 Run incremental quality checks (schema files, affected services)
 
     - [ ] 4.2.c Run API integration tests (verify all 5 endpoints work, auth/error handling unchanged)
     - [ ] 4.2.d Run incremental quality checks (user_movie_data app)

@@ -323,8 +323,13 @@ class MovieService(BaseTMDBService):
             + backend filtering (catches data quality issues).
             Non-visual content (soundtracks, scores, etc.) is filtered out.
         """
-        if params is None:
-            params = SearchServiceParams(query="")
+        if params is None or not params.query or len(params.query.strip()) < 2:
+            return MovieListResponseSchema(
+                page=1,
+                total_pages=0,
+                total_results=0,
+                results=[],
+            )
 
         def fetch_search_page(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch a specific search page with current query."""

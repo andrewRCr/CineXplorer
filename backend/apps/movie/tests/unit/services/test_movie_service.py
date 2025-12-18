@@ -215,6 +215,26 @@ def test_search_movies_filters_soundtrack_results() -> None:
     assert result.results[0].title == 'Real Movie'
 
 
+def test_search_movies_returns_empty_for_short_query() -> None:
+    """Test search_movies returns empty response for short/empty query."""
+    from movie.services.api_boundary import SearchServiceParams
+    from movie.services.movie_service import MovieService
+
+    # Arrange: Mock client
+    mock_client = Mock(spec=['search_movies'])
+    service = MovieService(tmdb_client=mock_client)
+
+    # Act
+    result = service.search_movies(page=2, params=SearchServiceParams(query=""))
+
+    # Assert
+    assert result.page == 1
+    assert result.total_pages == 0
+    assert result.total_results == 0
+    assert result.results == []
+    mock_client.search_movies.assert_not_called()
+
+
 # ============================================================================
 # MovieService.discover_movies Tests
 # ============================================================================

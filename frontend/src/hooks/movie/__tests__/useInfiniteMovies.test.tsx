@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useInfiniteMovies } from "../useInfiniteMovies";
-import type { PaginatedMoviesResponse } from "@/@types/movie";
+import type { MovieListResponse } from "@/@types/movie";
 
 // Helper to create QueryClient wrapper for tests
 function createWrapper() {
@@ -41,8 +41,8 @@ function createWrapper() {
  * Helper to create mock paginated response
  */
 function createMockResponse(
-  overrides?: Partial<PaginatedMoviesResponse>
-): PaginatedMoviesResponse {
+  overrides?: Partial<MovieListResponse>
+): MovieListResponse {
   return {
     page: 1,
     total_pages: 10,
@@ -394,8 +394,8 @@ describe("useInfiniteMovies", () => {
 
   describe("isFetching states", () => {
     it("should have isFetchingNextPage=true while loading more", async () => {
-      let resolveSecondPage: (value: PaginatedMoviesResponse) => void;
-      const secondPagePromise = new Promise<PaginatedMoviesResponse>(
+      let resolveSecondPage: (value: MovieListResponse) => void;
+      const secondPagePromise = new Promise<MovieListResponse>(
         (resolve) => {
           resolveSecondPage = resolve;
         }
@@ -594,8 +594,8 @@ describe("useInfiniteMovies", () => {
     });
 
     it("handles fetchNextPage call while already fetching", async () => {
-      let resolveFirstFetch: (value: PaginatedMoviesResponse) => void;
-      const firstFetchPromise = new Promise<PaginatedMoviesResponse>(
+      let resolveFirstFetch: (value: MovieListResponse) => void;
+      const firstFetchPromise = new Promise<MovieListResponse>(
         (resolve) => {
           resolveFirstFetch = resolve;
         }

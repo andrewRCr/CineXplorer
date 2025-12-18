@@ -16,7 +16,7 @@ import { vi } from "vitest";
 import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { defaultSystem } from "@/theme";
-import type { MovieListItem, PaginatedMoviesResponse } from "@/@types/movie";
+import type { MovieListItem, MovieListResponse } from "@/@types/movie";
 import type { UseInfiniteMoviesResult } from "@/hooks/movie/useInfiniteMovies";
 
 // ============================================================================
@@ -115,7 +115,7 @@ export const createMockMovies = (
 // ============================================================================
 
 /**
- * Creates a mock PaginatedMoviesResponse with realistic pagination metadata.
+ * Creates a mock MovieListResponse with realistic pagination metadata.
  *
  * @param pageNum - Display page number (1-indexed)
  * @param movies - Movies to include in this page
@@ -139,7 +139,7 @@ export const createMockPage = (
     totalResults?: number;
     totalPages?: number;
   } = {}
-): PaginatedMoviesResponse => {
+): MovieListResponse => {
   const { hasNext = true, totalResults = 200, totalPages = 10 } = options;
 
   return {

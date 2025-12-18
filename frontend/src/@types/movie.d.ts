@@ -23,7 +23,7 @@ import type { components } from '@/types/api';
  * Movie data for list/grid views (browse, search, discover endpoints).
  * Contains compact representation with genre_ids (not full genre objects).
  */
-export type MovieListItem = components['schemas']['MovieBaseSchema'];
+export type MovieListItem = components['schemas']['MovieListItemSchema'];
 
 /**
  * Full movie data for detail pages (single movie endpoint).
@@ -39,7 +39,7 @@ export type MovieDetail = components['schemas']['MovieDetailSchema'];
  * Paginated response wrapper for movie list endpoints.
  * Contains results as MovieListItem[] (not MovieDetail[]).
  */
-export type PaginatedMoviesResponse = components['schemas']['PaginatedMovieResponseSchema'];
+export type MovieListResponse = components['schemas']['MovieListResponseSchema'];
 
 // ============================================================================
 // Supporting Types
@@ -53,8 +53,8 @@ export type SpokenLanguage = components['schemas']['SpokenLanguageSchema'];
 export type UserMovieData = components['schemas']['UserMovieDataSchema'];
 export type Keyword = components['schemas']['KeywordSchema'];
 export type Person = components['schemas']['PersonSchema'];
-export type PaginatedKeywordResponse = components['schemas']['PaginatedKeywordResponseSchema'];
-export type PaginatedPersonResponse = components['schemas']['PaginatedPersonResponseSchema'];
+export type KeywordListResponse = components['schemas']['KeywordListResponseSchema'];
+export type PersonListResponse = components['schemas']['PersonListResponseSchema'];
 
 // ============================================================================
 // Response Types

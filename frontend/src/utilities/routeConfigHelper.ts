@@ -3,7 +3,7 @@ import {
     fetchUpcomingMovies,
     fetchSearchMoviesService,
     fetchBrowseMoviesService,
-    type PaginatedMoviesResponse,
+    type MovieListResponse,
 } from "@/services/movieService";
 import { PAGINATED_SOURCES } from "@/constants/routes";
 import { parseSearchParamsFromUrl } from "./searchUrlSync";
@@ -14,7 +14,7 @@ export interface RouteConfig {
         filters?: Record<string, string | number | number[]>,
         tmdb_page_start?: number
     ) => {
-        request: Promise<{ data: PaginatedMoviesResponse }>;
+        request: Promise<{ data: MovieListResponse }>;
         cancel: () => void;
     };
     source: string;
@@ -49,7 +49,7 @@ export const getFetcherAndSource = (pathname: string, search?: string): RouteCon
                 filters?: Record<string, string | number | number[]>,
                 tmdb_page_start?: number
             ) =>
-                fetchNowPlayingMoviesService.getPaginated<PaginatedMoviesResponse>({
+                fetchNowPlayingMoviesService.getPaginated<MovieListResponse>({
                     page,
                     ...filters,
                     ...(tmdb_page_start !== undefined && { tmdb_page_start }),
@@ -65,7 +65,7 @@ export const getFetcherAndSource = (pathname: string, search?: string): RouteCon
                 filters?: Record<string, string | number | number[]>,
                 tmdb_page_start?: number
             ) =>
-                fetchUpcomingMovies().getPaginated<PaginatedMoviesResponse>({
+                fetchUpcomingMovies().getPaginated<MovieListResponse>({
                     page,
                     ...filters,
                     ...(tmdb_page_start !== undefined && { tmdb_page_start }),
@@ -83,7 +83,7 @@ export const getFetcherAndSource = (pathname: string, search?: string): RouteCon
                 filters?: Record<string, string | number | number[]>,
                 tmdb_page_start?: number
             ) =>
-                fetchBrowseMoviesService.getPaginated<PaginatedMoviesResponse>({
+                fetchBrowseMoviesService.getPaginated<MovieListResponse>({
                     page,
                     ...filters,
                     ...(tmdb_page_start !== undefined && { tmdb_page_start }),
@@ -100,7 +100,7 @@ export const getFetcherAndSource = (pathname: string, search?: string): RouteCon
                 filters?: Record<string, string | number | number[]>,
                 tmdb_page_start?: number
             ) =>
-                fetchSearchMoviesService.getPaginated<PaginatedMoviesResponse>({
+                fetchSearchMoviesService.getPaginated<MovieListResponse>({
                     page,
                     ...filters,
                     // Query from search param takes precedence over filters.query
@@ -122,7 +122,7 @@ export const getFetcherAndSource = (pathname: string, search?: string): RouteCon
             filters?: Record<string, string | number | number[]>,
             tmdb_page_start?: number
         ) =>
-            fetchBrowseMoviesService.getPaginated<PaginatedMoviesResponse>({
+            fetchBrowseMoviesService.getPaginated<MovieListResponse>({
                 page,
                 ...filters,
                 ...(tmdb_page_start !== undefined && { tmdb_page_start }),

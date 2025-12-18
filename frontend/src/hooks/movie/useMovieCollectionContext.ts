@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
-import type { PaginatedMoviesResponse } from "@/types/movie";
+import type { MovieListResponse } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 
 // Reusable fetcher function type
 type MovieFetcher = (page: number, tmdb_page_start?: number) => {
-    request: Promise<{ data: PaginatedMoviesResponse }>;
+    request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
 };
 

@@ -17,7 +17,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider as ChakraProvider } from '../../../components/core/chakra/provider';
 import Watchlist from '../Watchlist';
 import * as userMovieService from '../../../services/userMovieService';
-import type { MovieListItem, PaginatedMoviesResponse } from '@/@types/movie.d';
+import type { MovieListItem, MovieListResponse } from '@/@types/movie.d';
 
 // Helper to wrap component with Router and ChakraProvider
 function renderWithProviders(component: React.ReactElement) {
@@ -46,7 +46,7 @@ describe('Watchlist Page', () => {
    */
   it('should fetch watchlist data on mount', async () => {
     // Arrange: Mock empty response
-    const mockResponse: PaginatedMoviesResponse = {
+    const mockResponse: MovieListResponse = {
       page: 1,
       total_pages: 0,
       total_results: 0,
@@ -114,7 +114,7 @@ describe('Watchlist Page', () => {
       },
     ];
 
-    const mockResponse: PaginatedMoviesResponse = {
+    const mockResponse: MovieListResponse = {
       page: 1,
       total_pages: 1,
       total_results: 2,
@@ -144,7 +144,7 @@ describe('Watchlist Page', () => {
    */
   it('should show empty state when no movies on watchlist', async () => {
     // Arrange: Mock empty response
-    const mockResponse: PaginatedMoviesResponse = {
+    const mockResponse: MovieListResponse = {
       page: 1,
       total_pages: 0,
       total_results: 0,

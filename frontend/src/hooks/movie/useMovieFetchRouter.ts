@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react";
-import type { PaginatedMoviesResponse } from "@/services/movieService";
+import type { MovieListResponse } from "@/services/movieService";
 import type { BrowseParams } from "@/types/browseTypes";
 import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
 
@@ -38,7 +38,7 @@ type FetcherFn = (
     params?: Record<string, string | number | number[]>,
     tmdb_page_start?: number
 ) => {
-    request: Promise<{ data: PaginatedMoviesResponse }>;
+    request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
 };
 
@@ -51,7 +51,7 @@ export function useMovieFetchRouter({
     fetcher,
     browseParams,
 }: UseMovieFetchRouterOptions): (page: number, tmdb_page_start?: number) => {
-    request: Promise<{ data: PaginatedMoviesResponse }>;
+    request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
 } {
     // Use refs to store the latest values without causing re-renders

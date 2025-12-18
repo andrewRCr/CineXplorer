@@ -1,6 +1,6 @@
 import { useApiRequest } from "@/hooks/useApiRequest";
 import { useMemo } from "react";
-import { type PaginatedMoviesResponse } from "@/types/movie";
+import { type MovieListResponse } from "@/types/movie";
 
 /**
  * Paginated Movies Hook
@@ -35,7 +35,7 @@ import { type PaginatedMoviesResponse } from "@/types/movie";
  */
 
 type FetchArrayFn = () => {
-    request: Promise<{ data: PaginatedMoviesResponse }>;
+    request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
 };
 
@@ -46,7 +46,7 @@ export const usePaginatedMovies = (fetchFn: FetchArrayFn) => {
     }, [fetchFn]);
 
     const { data, error, setData, setError, isLoading } =
-        useApiRequest<PaginatedMoviesResponse>(stableFetcher);
+        useApiRequest<MovieListResponse>(stableFetcher);
 
     // Extract pagination info and movies array
     const movies = isLoading ? [] : data?.results ?? [];

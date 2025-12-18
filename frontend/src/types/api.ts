@@ -564,7 +564,7 @@ export interface paths {
          *         filters: MovieDiscoverFilterSchema with all optional filter parameters
          *
          *     Returns:
-         *         PaginatedMovieResponseSchema: Paginated movies with user data if authenticated
+         *         MovieListResponseSchema: Paginated movies with user data if authenticated
          *
          *     Raises:
          *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
@@ -597,7 +597,7 @@ export interface paths {
          *         filters: MovieDiscoverFilterSchema with all optional filter parameters
          *
          *     Returns:
-         *         PaginatedMovieResponseSchema: Paginated movies with user data if authenticated
+         *         MovieListResponseSchema: Paginated movies with user data if authenticated
          *
          *     Raises:
          *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
@@ -679,7 +679,7 @@ export interface paths {
          *             - [... many other TMDB discover parameters]
          *
          *     Returns:
-         *         PaginatedMovieResponseSchema: Paginated list of movies with user data if authenticated
+         *         MovieListResponseSchema: Paginated list of movies with user data if authenticated
          *
          *     Raises:
          *         HttpError: 400 for invalid parameters, 500 for TMDB API errors
@@ -837,16 +837,19 @@ export interface paths {
          * Get User Movies
          * @description Retrieve movies associated with the authenticated user.
          *
-         *     This endpoint returns a paginated list of movies that the user has interacted
-         *     with (watched, rated, added to watchlist, etc.). Movies are enriched with
+         *     This endpoint returns all movies that the user has interacted with
+         *     (watched, rated, added to watchlist, etc.). Movies are enriched with
          *     complete TMDB data and user-specific metadata.
+         *
+         *     Note: Returns all results at once (no server-side pagination). Frontend
+         *     uses client-side virtualization for large lists.
          *
          *     Args:
          *         request: HTTP request with authenticated user
-         *         watchlist: Optional filter to show only watchlist movies (default: False)
+         *         watchlist: Filter to show only watchlist movies (default: False)
          *
          *     Returns:
-         *         PaginatedMovieResponseSchema: Paginated list of movies with user data
+         *         MovieListResponseSchema: List of movies with user data
          *
          *     Raises:
          *         HttpError: 401 if authentication fails
@@ -913,12 +916,12 @@ export interface paths {
          *     This endpoint creates a new UserMovieData record when a user first
          *     interacts with a movie (adds to watchlist, rates, reviews, etc.).
          *
-         *     If the movie doesn't exist in our local database yet, it fetches the
-         *     movie data from TMDB and creates a local Movie stub record.
+         *     If the movie doesn't exist in our local database yet, the service
+         *     fetches the movie data from TMDB and creates a local Movie stub record.
          *
          *     Args:
          *         request: HTTP request with authenticated user
-         *         payload: User movie data to create (includes movie_id for FK lookup)
+         *         payload: User movie data to create (includes movie_id as TMDB ID)
          *
          *     Returns:
          *         UserMovieDataDetailSchema: Created user movie data
@@ -1529,10 +1532,16 @@ export interface components {
             genres?: string | null;
         };
         /**
-         * MovieBaseSchema
-         * @description Minimal movie representation used in list endpoints.
+         * MovieListItemSchema
+         * @description Compact movie representation for list/grid endpoints.
+         *
+         *     Contains essential display fields optimized for browse, search, and collection views.
+         *     Uses genre_ids (integers) rather than full genre objects for efficiency.
+         *
+         *     Extended by MovieDetailSchema for single-movie detail views, which adds full
+         *     genre objects, cast, crew, certifications, and other detailed information.
          */
-        MovieBaseSchema: {
+        MovieListItemSchema: {
             /** Tmdb Id */
             tmdb_id: number;
             /** Title */
@@ -1554,15 +1563,17 @@ export interface components {
             user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
         };
         /**
-         * PaginatedMovieResponseSchema
-         * @description Standard TMDB-style pagination envelope for movie collections.
+         * MovieListResponseSchema
+         * @description Response envelope for movie collection endpoints.
          *
-         *     Includes pagination metadata tracking for smart buffer mechanism:
-         *     - next_tmdb_page_start: Tracks the next TMDB page to fetch when buffer
-         *       consumes multiple pages per API response. This prevents duplicates when
-         *       client requests subsequent pages.
+         *     Used for all endpoints returning multiple movies: browse, search, discover,
+         *     user collections, etc. Supports optional pagination via page/total_pages fields.
+         *
+         *     The next_tmdb_page_start field enables cursor-based pagination for TMDB-backed
+         *     endpoints with smart buffer mechanism. For non-paginated responses (e.g., user
+         *     movie collections), this field is None and page=1, total_pages=1.
          */
-        PaginatedMovieResponseSchema: {
+        MovieListResponseSchema: {
             /**
              * Page
              * @default 1
@@ -1579,7 +1590,7 @@ export interface components {
              */
             total_results: number;
             /** Results */
-            results?: components["schemas"]["MovieBaseSchema"][];
+            results?: components["schemas"]["MovieListItemSchema"][];
             /**
              * Next Tmdb Page Start
              * @description Next TMDB page to fetch for pagination continuation (smart buffer tracking)
@@ -1672,7 +1683,14 @@ export interface components {
         };
         /**
          * MovieDetailSchema
-         * @description Extended movie representation for detail endpoints.
+         * @description Full movie representation for detail page endpoints.
+         *
+         *     Inherits all fields from MovieListItemSchema (used in list views) and adds
+         *     complete information: full genre objects, production companies, cast, crew,
+         *     certifications, and spoken languages.
+         *
+         *     The inheritance relationship means MovieDetailSchema contains everything
+         *     MovieListItemSchema has, plus the additional detail-specific fields.
          */
         MovieDetailSchema: {
             /** Tmdb Id */
@@ -1742,15 +1760,11 @@ export interface components {
              */
             page?: number | null;
         };
-        /** KeywordSchema */
-        KeywordSchema: {
-            /** Id */
-            id: number;
-            /** Name */
-            name: string;
-        };
-        /** PaginatedKeywordResponseSchema */
-        PaginatedKeywordResponseSchema: {
+        /**
+         * KeywordListResponseSchema
+         * @description Response envelope for keyword collection endpoints.
+         */
+        KeywordListResponseSchema: {
             /**
              * Page
              * @default 1
@@ -1769,6 +1783,13 @@ export interface components {
             /** Results */
             results?: components["schemas"]["KeywordSchema"][];
         };
+        /** KeywordSchema */
+        KeywordSchema: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+        };
         /** MediaReferenceSchema */
         MediaReferenceSchema: {
             /** Id */
@@ -1784,8 +1805,11 @@ export interface components {
             /** Profile Path */
             profile_path?: string | null;
         };
-        /** PaginatedPersonResponseSchema */
-        PaginatedPersonResponseSchema: {
+        /**
+         * PersonListResponseSchema
+         * @description Response envelope for person/people collection endpoints.
+         */
+        PersonListResponseSchema: {
             /**
              * Page
              * @default 1
@@ -2524,7 +2548,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseSchema"];
+                    "application/json": components["schemas"]["MovieListResponseSchema"];
                 };
             };
         };
@@ -2597,7 +2621,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseSchema"];
+                    "application/json": components["schemas"]["MovieListResponseSchema"];
                 };
             };
         };
@@ -2624,7 +2648,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseSchema"];
+                    "application/json": components["schemas"]["MovieListResponseSchema"];
                 };
             };
         };
@@ -2697,7 +2721,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseSchema"];
+                    "application/json": components["schemas"]["MovieListResponseSchema"];
                 };
             };
         };
@@ -2762,7 +2786,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedKeywordResponseSchema"];
+                    "application/json": components["schemas"]["KeywordListResponseSchema"];
                 };
             };
         };
@@ -2784,7 +2808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedKeywordResponseSchema"];
+                    "application/json": components["schemas"]["KeywordListResponseSchema"];
                 };
             };
         };
@@ -2807,7 +2831,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPersonResponseSchema"];
+                    "application/json": components["schemas"]["PersonListResponseSchema"];
                 };
             };
         };
@@ -2829,7 +2853,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedPersonResponseSchema"];
+                    "application/json": components["schemas"]["PersonListResponseSchema"];
                 };
             };
         };
@@ -2851,7 +2875,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedMovieResponseSchema"];
+                    "application/json": components["schemas"]["MovieListResponseSchema"];
                 };
             };
         };

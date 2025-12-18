@@ -14,13 +14,13 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { usePaginatedMovies } from '../usePaginatedMovies';
-import type { PaginatedMoviesResponse } from '@/types/movie';
+import type { MovieListResponse } from '@/types/movie';
 
 /**
  * Helper to create mock fetch function matching the FetchArrayFn type
  * Returns a function that provides { request, cancel } interface
  */
-function createMockFetcher(mockResponse: PaginatedMoviesResponse) {
+function createMockFetcher(mockResponse: MovieListResponse) {
     return () => ({
         request: Promise.resolve({ data: mockResponse }),
         cancel: vi.fn(),
@@ -31,8 +31,8 @@ function createMockFetcher(mockResponse: PaginatedMoviesResponse) {
  * Helper to create mock paginated response with metadata
  */
 function createMockPaginatedResponse(
-    overrides?: Partial<PaginatedMoviesResponse>
-): PaginatedMoviesResponse {
+    overrides?: Partial<MovieListResponse>
+): MovieListResponse {
     return {
         page: 1,
         total_pages: 10,
@@ -301,9 +301,9 @@ describe('usePaginatedMovies', () => {
     describe('loading and error states', () => {
         it('should handle loading state correctly', async () => {
             // Arrange: Delayed response
-            let resolveResponse: (value: { data: PaginatedMoviesResponse }) => void;
+            let resolveResponse: (value: { data: MovieListResponse }) => void;
             const mockFetcher = () => ({
-                request: new Promise<{ data: PaginatedMoviesResponse }>((resolve) => {
+                request: new Promise<{ data: MovieListResponse }>((resolve) => {
                     resolveResponse = resolve;
                 }),
                 cancel: vi.fn(),
@@ -330,9 +330,9 @@ describe('usePaginatedMovies', () => {
 
         it('should expose next_tmdb_page_start as undefined during loading', async () => {
             // Arrange: Delayed response
-            let resolveResponse: (value: { data: PaginatedMoviesResponse }) => void;
+            let resolveResponse: (value: { data: MovieListResponse }) => void;
             const mockFetcher = () => ({
-                request: new Promise<{ data: PaginatedMoviesResponse }>((resolve) => {
+                request: new Promise<{ data: MovieListResponse }>((resolve) => {
                     resolveResponse = resolve;
                 }),
                 cancel: vi.fn(),

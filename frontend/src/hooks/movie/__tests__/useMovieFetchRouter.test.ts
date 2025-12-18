@@ -17,7 +17,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMovieFetchRouter } from '../useMovieFetchRouter';
-import type { PaginatedMoviesResponse } from '@/types/movie';
+import type { MovieListResponse } from '@/types/movie';
 import type { BrowseParams } from '@/types/browseTypes';
 import { createMockBrowseParams } from '@tests/mocks/browseParams';
 
@@ -26,8 +26,8 @@ import { createMockBrowseParams } from '@tests/mocks/browseParams';
  * (Reusing pattern from usePaginatedMovies.test.ts)
  */
 function createMockPaginatedResponse(
-    overrides?: Partial<PaginatedMoviesResponse>
-): PaginatedMoviesResponse {
+    overrides?: Partial<MovieListResponse>
+): MovieListResponse {
     return {
         page: 1,
         total_pages: 10,

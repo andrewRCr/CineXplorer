@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import type { PaginatedMoviesResponse, MovieListItem } from "@/@types/movie";
+import type { MovieListResponse, MovieListItem } from "@/@types/movie";
 
 /**
  * Options for useInfiniteMovies hook
@@ -19,7 +19,7 @@ export interface UseInfiniteMoviesOptions {
    */
   fetcher: (context: {
     pageParam: number | undefined;
-  }) => Promise<PaginatedMoviesResponse>;
+  }) => Promise<MovieListResponse>;
 
   /**
    * Whether the query is enabled. Defaults to true.
@@ -35,7 +35,7 @@ export interface UseInfiniteMoviesResult {
   movies: MovieListItem[];
 
   /** Raw pages array from TanStack Query (for sequential/discrete page access) */
-  pages: PaginatedMoviesResponse[];
+  pages: MovieListResponse[];
 
   /** Total number of fetched pages */
   pageCount: number;

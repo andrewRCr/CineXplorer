@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import SequentialMovieGrid from "../../SequentialMovieGrid";
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
-import { type MovieListItem, type PaginatedMoviesResponse } from "@/@types/movie";
+import { type MovieListItem, type MovieListResponse } from "@/@types/movie";
 import { renderWithProvider } from "./grid-test-utils";
 
 // Mock the hooks
@@ -28,7 +28,7 @@ const createMockPage = (
   pageNum: number,
   movies: MovieListItem[],
   hasNext = true
-): PaginatedMoviesResponse => ({
+): MovieListResponse => ({
   page: pageNum,
   results: movies,
   total_pages: 10,

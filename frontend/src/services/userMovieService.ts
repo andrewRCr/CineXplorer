@@ -27,7 +27,7 @@
  * ```typescript
  * // Display user's watchlist page
  * const { data } = await getUserMovies({ watchlist: true });
- * // Returns: PaginatedMovieResponseSchema with full movie objects
+ * // Returns: MovieListResponseSchema with full movie objects
  * data.results.forEach(movie => {
  *   console.log(movie.title); // TMDB data
  *   console.log(movie.user_movie_data?.user_on_watchlist); // User metadata
@@ -42,7 +42,7 @@ import create from "./httpService";
 import type { components } from "@/types/api";
 
 // Type-safe schema imports from generated OpenAPI types
-type PaginatedMovieResponseSchema = components["schemas"]["PaginatedMovieResponseSchema"];
+type MovieListResponseSchema = components["schemas"]["MovieListResponseSchema"];
 
 // Query parameter types for type-safe API calls
 export interface UserMoviesQueryParams {
@@ -58,7 +58,7 @@ export interface UserMoviesQueryParams {
 }
 
 // Re-export commonly used types for external consumers
-export type { PaginatedMovieResponseSchema };
+export type { MovieListResponseSchema };
 
 // Service instance for Django Ninja API endpoint
 // Note: baseURL already includes /api, so paths are relative to /api/
@@ -72,7 +72,7 @@ const userMoviesService = create("/user-movie-data/movies");
  * poster, release date, etc.) AND user-specific metadata (watchlist status, rating,
  * review, etc.).
  *
- * The response format matches other movie endpoints (PaginatedMovieResponseSchema),
+ * The response format matches other movie endpoints (MovieListResponseSchema),
  * making it easy to reuse movie card components and other UI elements.
  *
  * **Enrichment Details:**
@@ -108,7 +108,7 @@ const userMoviesService = create("/user-movie-data/movies");
 export const getUserMovies = (params?: UserMoviesQueryParams) => {
     const controller = new AbortController();
     const request = userMoviesService
-        .getPaginated<PaginatedMovieResponseSchema>(params)
+        .getPaginated<MovieListResponseSchema>(params)
         .request;
 
     return { request, cancel: () => controller.abort() };

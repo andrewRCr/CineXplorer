@@ -3,11 +3,11 @@ import type {
     MovieListItem,
     MovieDetail,
     GenresResponse,
-    PaginatedMoviesResponse,
+    MovieListResponse,
     Keyword,
     Person,
-    PaginatedKeywordResponse,
-    PaginatedPersonResponse
+    KeywordListResponse,
+    PersonListResponse
 } from "../@types/movie";
 
 // Query parameter types for type-safe API calls
@@ -46,7 +46,7 @@ export interface PersonQueryParams {
 }
 
 // Re-export commonly used types for external consumers
-export type { PaginatedMoviesResponse, MovieListItem, Keyword, Person };
+export type { MovieListResponse, MovieListItem, Keyword, Person };
 
 // Service instances for clean Django Ninja API endpoints
 // Note: baseURL already includes /api, so paths are relative to /api/
@@ -72,7 +72,7 @@ export const fetchPaginatedMovies = (
     service: ReturnType<typeof create>,
     params?: MovieQueryParams
 ) => {
-    return service.getPaginated<PaginatedMoviesResponse>(params);
+    return service.getPaginated<MovieListResponse>(params);
 };
 
 /**
@@ -101,7 +101,7 @@ export const fetchPaginatedKeywords = (
     service: ReturnType<typeof create>,
     params?: KeywordQueryParams
 ) => {
-    return service.getPaginated<PaginatedKeywordResponse>(params);
+    return service.getPaginated<KeywordListResponse>(params);
 };
 
 /**
@@ -111,7 +111,7 @@ export const fetchPaginatedPeople = (
     service: ReturnType<typeof create>,
     params?: PersonQueryParams
 ) => {
-    return service.getPaginated<PaginatedPersonResponse>(params);
+    return service.getPaginated<PersonListResponse>(params);
 };
 
 // Convenience functions for common movie operations

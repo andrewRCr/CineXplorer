@@ -37,7 +37,6 @@ duplicates and React key collisions that caused incomplete page renders.
 ## Related Documentation
 
 - Tasks: `tasks-buffer-deduplication-data-quality.md`
-- Completion: `completion-buffer-deduplication-data-quality.md`
 
 ## Follow-Up Work
 

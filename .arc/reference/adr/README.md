@@ -54,10 +54,15 @@ Don't write an ADR for:
 
 **Rule of thumb:** If someone might want to change this decision in 6 months, they'll need context for why it was made.
 
-## Index
+## Finding ADRs
 
-- [ADR-001: Use TMDB Discover Endpoint for Filtered Movie Browsing](adr-001-use-tmdb-discover-endpoint.md)
-    - Date: 2025-10-30 | Status: Accepted
+ADRs are numbered sequentially and filenames contain titles (e.g., `adr-001-use-tmdb-discover-endpoint.md`).
+Browse via filesystem - no separate index is maintained to avoid duplication overhead.
+
+```bash
+ls .arc/reference/adr/adr-*.md     # List all ADRs
+grep -l "Superseded" adr-*.md      # Find superseded ADRs
+```
 
 ## Detailed Guidance
 
@@ -66,4 +71,4 @@ For complete methodology, writing tips, and examples, see:
 
 ## Template
 
-Use `adr-template.md` as the starting point for new ADRs.
+Use [`adr-template.md`](adr-template.md) as the starting point for new ADRs.

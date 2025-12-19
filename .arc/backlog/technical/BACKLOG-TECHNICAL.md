@@ -20,7 +20,7 @@ punq, or injector) to replace manual service factory patterns. Current state: Ce
 string duplication but coupling remains. Benefits: Eliminate remaining mock path strings entirely, simplify test setup
 with automatic mock injection, enable easier service swapping for testing. Trade-offs: Added complexity, learning curve.
 Evaluate when: Adding new service layers, significant test infrastructure work, or when mock paths exceed 20+ constants.
-See Task 6.3.e (service layer modernization) for context on current centralized approach.
+See Task 6.3.e (`tasks-service-layer-modernization.md`) for context on current centralized approach.
 
 ## Frontend Architecture
 

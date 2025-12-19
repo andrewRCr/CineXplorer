@@ -129,12 +129,12 @@ The entire application is designed to be run and deployed using containers.
 The backend uses a layered architecture with class-based services for all business logic:
 
 - **Principle**: Business logic belongs in the service layer, NOT in API endpoints
-- **Pattern**: Class-based services with constructor injection for testability
+- **Pattern**: Dependency injection via constructor - enables testability and service composition
 - **Repository pattern**: ORM abstraction for data access (e.g., `UserMovieDataRepository`)
 - **Service composition**: Services can depend on other services/repositories
 - **Factory functions**: Convenient production instantiation while preserving test injection
 
-**Reference services:**
+**Key services** (see `strategy-service-layer.md` for complete inventory):
 
 - `MovieService` - TMDB integration (discovery, search, details)
 - `UserMovieDataService` - User movie data CRUD with TMDB enrichment

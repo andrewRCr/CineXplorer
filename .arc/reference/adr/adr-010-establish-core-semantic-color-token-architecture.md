@@ -132,7 +132,7 @@ interface UnifiedTheme {
 | Token              | Meaning                          | Visual                                 | Usage                            | Token Type           |
 |--------------------|----------------------------------|----------------------------------------|----------------------------------|----------------------|
 | **primary**        | Primary action buttons           | Filled buttons, often blue or green    | "Submit", "Save", "Continue"     | **Background** token |
-| **secondary**      | Secondary actions                | Outline buttons (1px border mandatory) | "Cancel", "Back", "Skip"         | Background + Border  |
+| **secondary**      | Subtle backgrounds               | Muted filled backgrounds               | Subtle buttons, secondary UI     | Background token     |
 | **tertiary**       | Interactive text, links, accents | Blue or brand color, foreground        | Hyperlinks, focus, highlights    | **Foreground** token |
 | **muted**          | Deemphasized, non-interactive    | Subtle gray backgrounds                | Disabled states, subtle surfaces | Background token     |
 | **brand**          | Brand identity (optional)        | Logo color, brand moments              | Logo, special brand sections     | Either type          |
@@ -143,7 +143,7 @@ interface UnifiedTheme {
 - **Primary vs Tertiary**: Primary is for **button fills** (background token), Tertiary is for **links/text**
 (foreground token)
 - **Primary vs Brand**: Primary is for **UI actions**, Brand is for **identity** (may be same color, e.g., IBM Carbon)
-- **Secondary vs Muted**: Secondary is **interactive** (clickable buttons), Muted is **non-interactive** (backgrounds)
+- **Secondary vs Muted**: Secondary is **subtle interactive** (button backgrounds via `button-subtle`), Muted is **non-interactive** (disabled states). See ADR-012 for button token patterns.
 - **Tertiary replaces Accent**: Industry uses "tertiary" (Material), we deprecate "accent" in favor of clearer hierarchy
 
 ### Decision 2: Correct Token Type Mappings

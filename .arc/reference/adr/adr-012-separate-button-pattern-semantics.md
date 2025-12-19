@@ -116,7 +116,7 @@ This is actually closer to Chakra's "subtle" variant than outline buttons.
 - ✅ Self-documenting: "button-outline" clearly indicates this is for outline buttons
 - ✅ Consistent: All themes map identically (button-outline → primary)
 - ✅ Type-safe: Enforced by TypeScript
-- ✅ Minimal: Only 4 new tokens needed
+- ✅ Minimal: Only 8 new tokens needed (2 outline variants + subtle + subtle-selected)
 
 ## Decision
 

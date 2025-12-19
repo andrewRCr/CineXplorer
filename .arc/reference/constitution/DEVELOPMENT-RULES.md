@@ -147,8 +147,8 @@ during initialization).
 
 **When uncertain if strategy applies:** Ask. "Does this work touch [domain] where we have strategy guidance?"
 
-**For large multi-topic strategies** (e.g., semantic-tokens): Search for specific component/pattern rather than reading
-entire document.
+**For large multi-topic strategies** (e.g., `strategy-component-styling.md`): Search for specific component/pattern
+rather than reading entire document.
 
 **Why this matters:** Strategy docs codify decisions, patterns, and token systems. Following them ensures consistency and
 prevents rework when non-standard approaches are caught in review.

@@ -35,8 +35,7 @@ from authentication.utils import (
 from core.utils import build_error_response, get_client_info
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.base_user import AbstractBaseUser as BaseAbstractBaseUser
-from django.contrib.auth.models import AbstractBaseUser as ModelAbstractBaseUser
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest, HttpResponse
@@ -114,11 +113,11 @@ class AuthenticationService:
     def __init__(
         self,
         *,
-        user_model: type[ModelAbstractBaseUser] | UserModelProtocol | None = None,
+        user_model: type[AbstractBaseUser] | UserModelProtocol | None = None,
         email_address_model: type[EmailAddress] | None = None,
         email_confirmation_model: type[EmailConfirmation] | None = None,
         email_confirmation_hmac: type[EmailConfirmationHMAC] | None = None,
-        authenticate_fn: Callable[..., BaseAbstractBaseUser | None] | None = None,
+        authenticate_fn: Callable[..., AbstractBaseUser | None] | None = None,
         validate_password_fn: Callable[[str], None] | None = None,
         refresh_token_cls: type[RefreshToken] | None = None,
         jwt_settings_provider: Callable[[], JWTSettings] | None = None,
@@ -211,7 +210,7 @@ class AuthenticationService:
         try:
             self._email_address_model.objects.add_email(
                 request,
-                cast(BaseAbstractBaseUser, user),
+                cast(AbstractBaseUser, user),
                 payload.email,
                 confirm=True,
             )
@@ -278,14 +277,16 @@ class AuthenticationService:
             )
             return 401, {"error": "Unable to authenticate with provided credentials."}
 
+        # Single cast after validation - user satisfies both protocol and base class
+        user = cast(UserProtocol, authenticated_user)
+
         if not self._email_address_model.objects.filter(
             user=authenticated_user,
             verified=True,
         ).exists():
             self._logger.warning(
                 "Login failed: Email not verified | "
-                f"user_id={cast(UserProtocol, authenticated_user).id} | "
-                f"login={login} | ip={client_ip}"
+                f"user_id={user.id} | login={login} | ip={client_ip}"
             )
             return 403, {
                 "error": (
@@ -295,7 +296,7 @@ class AuthenticationService:
             }
 
         refresh = self._refresh_token_cls.for_user(
-            cast(BaseAbstractBaseUser, authenticated_user)
+            cast(AbstractBaseUser, authenticated_user)
         )
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
@@ -311,14 +312,14 @@ class AuthenticationService:
 
         self._logger.info(
             "Login successful | "
-            f"user_id={cast(UserProtocol, authenticated_user).id} | login={login} | "
+            f"user_id={user.id} | login={login} | "
             f"ip={client_ip} | user_agent={user_agent}"
         )
 
         return 200, {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "user_id": cast(UserProtocol, authenticated_user).id,
+            "user_id": user.id,
             "email_verified": True,
         }
 
@@ -343,7 +344,7 @@ class AuthenticationService:
             user = self._user_model.objects.get(id=user_id)
 
             new_refresh = self._refresh_token_cls.for_user(
-                cast(BaseAbstractBaseUser, user)
+                cast(AbstractBaseUser, user)
             )
             new_refresh_token = str(new_refresh)
 
@@ -432,7 +433,7 @@ class AuthenticationService:
             user_id = old_refresh.payload.get("user_id")
             user = self._user_model.objects.get(id=user_id)
             new_refresh = self._refresh_token_cls.for_user(
-                cast(BaseAbstractBaseUser, user)
+                cast(AbstractBaseUser, user)
             )
             new_refresh_token = str(new_refresh)
 
@@ -607,7 +608,7 @@ class AuthenticationService:
             except self._email_address_model.DoesNotExist:
                 self._email_address_model.objects.add_email(
                     request,
-                    cast(BaseAbstractBaseUser, user),
+                    cast(AbstractBaseUser, user),
                     payload.email,
                     confirm=True,
                 )

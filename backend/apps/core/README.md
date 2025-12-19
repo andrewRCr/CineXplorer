@@ -30,7 +30,7 @@ Extract client IP and user agent from request for security logging.
 **Example**:
 
 ```python
-from core.utils import get_client_info
+from apps.core.utils import get_client_info
 
 @auth_router.post("/login/")
 def login(request: HttpRequest):
@@ -52,7 +52,7 @@ Build standardized error response with optional DEBUG-only detail.
 **Example**:
 
 ```python
-from core.utils import build_error_response
+from apps.core.utils import build_error_response
 
 # Production (DEBUG=False): {"error": "Token has been revoked"}
 # Development (DEBUG=True): {"error": "Token has been revoked", "detail": "Token blacklisted at 2025-10-20 14:30:00"}
@@ -80,7 +80,7 @@ Convert empty strings to None for optional string fields.
 **Example**:
 
 ```python
-from core.utils import empty_str_to_none
+from apps.core.utils import empty_str_to_none
 from pydantic import field_validator
 
 class MovieSearchParamsSchema(Schema):
@@ -110,8 +110,8 @@ Generic paginated response schema for list endpoints.
 **Example**:
 
 ```python
-from core.utils import PaginatedResponse
-from movie.schemas import MovieListItemSchema
+from apps.core.utils import PaginatedResponse
+from apps.movie.schemas import MovieListItemSchema
 
 class MovieListResponseSchema(PaginatedResponse[MovieListItemSchema]):
     """Movie list response with TMDB pagination metadata."""
@@ -145,7 +145,7 @@ Create user and authentication payload in one call (reduces 3-line pattern to 1-
 **Example**:
 
 ```python
-from core.tests.test_helpers import create_user_and_auth_payload
+from apps.core.tests.test_helpers import create_user_and_auth_payload
 
 def test_login_success(api_client):
     # Old way (3 lines):

@@ -7,7 +7,7 @@ enabling perfect type inference in Pyright/Pylance.
 ⚠️ MAINTENANCE: Keep in sync with models.py
 When adding/modifying fields in models.py, update this file accordingly.
 """
-from core.models import Movie
+from apps.core.models import Movie
 from django.contrib.auth.models import User
 from django.db import models
 

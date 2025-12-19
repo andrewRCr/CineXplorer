@@ -25,7 +25,7 @@ from ..data_quality.policy import VoteCountPolicy
 from .browse_service_params import BrowseServiceParams
 
 if TYPE_CHECKING:
-    from movie.schemas import MovieDiscoverFilterSchema
+    from apps.movie.schemas import MovieDiscoverFilterSchema
 
 
 # HTTP param name → BrowseServiceParams field name (underscore notation)

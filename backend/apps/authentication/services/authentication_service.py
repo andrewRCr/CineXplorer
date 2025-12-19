@@ -11,7 +11,7 @@ from allauth.account.models import (
     EmailConfirmation,
     EmailConfirmationHMAC,
 )
-from authentication.schemas import (
+from apps.authentication.schemas import (
     EmailVerificationInputSchema,
     EmailVerificationResponseSchema,
     HybridTokenRefreshResponseSchema,
@@ -24,7 +24,7 @@ from authentication.schemas import (
     UserProfileSchema,
     UserProfileUpdateSchema,
 )
-from authentication.utils import (
+from apps.authentication.utils import (
     JWTSettings,
     blacklist_token,
     check_token_blacklist,
@@ -32,8 +32,8 @@ from authentication.utils import (
     get_jwt_settings,
     set_auth_cookie,
 )
-from core.services.email_service import UserEmailProtocol, send_welcome_email
-from core.utils import build_error_response, get_client_info
+from apps.core.services.email_service import UserEmailProtocol, send_welcome_email
+from apps.core.utils import build_error_response, get_client_info
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser

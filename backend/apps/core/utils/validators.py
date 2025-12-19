@@ -19,7 +19,7 @@ def empty_str_to_none(v: object) -> object:
 
     Example:
         >>> from pydantic import BaseModel, field_validator
-        >>> from core.utils.validators import empty_str_to_none
+        >>> from apps.core.utils.validators import empty_str_to_none
         >>>
         >>> class SearchParams(BaseModel):
         ...     query: str | None = None

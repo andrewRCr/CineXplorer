@@ -7,7 +7,7 @@ and building paginated responses. Extracted from paginated.py for clarity.
 
 from __future__ import annotations
 
-from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
+from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 
 from ...schemas import MovieListItemSchema, MovieListResponseSchema
 from ..tmdb_api_boundary.response_factories import create_paginated_movie_response_from_tmdb

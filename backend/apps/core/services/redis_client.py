@@ -15,7 +15,7 @@ Why this exists:
     This adapter isolates these typing issues to a single location.
 
 Usage:
-    from core.services.redis_client import get_atomic_set_client
+    from apps.core.services.redis_client import get_atomic_set_client
 
     client = get_atomic_set_client()
     if client is not None:

@@ -36,7 +36,7 @@ import json
 import logging
 from typing import Protocol
 
-from core.services.redis_client import get_atomic_set_client
+from apps.core.services.redis_client import get_atomic_set_client
 
 logger = logging.getLogger('cinexplorer.pagination')
 

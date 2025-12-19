@@ -21,8 +21,8 @@ Usage:
 
 Architecture Notes:
     - These factories are pure functions with no side effects
-    - They use the TMDB models from core.tmdb_models for input validation
-    - They create schemas from movie.schemas for application use
+    - They use the TMDB models from apps.core.tmdb_models for input validation
+    - They create schemas from apps.movie.schemas for application use
     - Error handling follows the standard HttpError pattern for API consistency
 """
 from __future__ import annotations
@@ -31,8 +31,8 @@ import logging
 import uuid
 from collections.abc import Mapping
 
-from core.services.api_response import ApiResponse
-from core.tmdb_models.tmdb_responses import (
+from apps.core.services.api_response import ApiResponse
+from apps.core.tmdb_models.tmdb_responses import (
     TMDBCreditsResponse,
     TMDBGenreListResponse,
     TMDBMovieDetail,
@@ -215,7 +215,7 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
     """
     try:
         # First, validate against TMDB response structure for type safety
-        from core.tmdb_models.tmdb_responses import TMDBMovieBase
+        from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase
         tmdb_movie = TMDBMovieBase.model_validate(tmdb_data, strict=False)
 
         # Then convert to application schema

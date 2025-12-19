@@ -17,11 +17,11 @@ from argparse import ArgumentParser
 from dataclasses import dataclass
 from typing import cast
 
-from core.services.api_response import ApiResponse
-from core.services.tmdb_api_client import TMDBApiClient
+from apps.core.services.api_response import ApiResponse
+from apps.core.services.tmdb_api_client import TMDBApiClient
 from django.core.management.base import BaseCommand
 from django.db import IntegrityError
-from movie.models import BlacklistedMovie
+from apps.movie.models import BlacklistedMovie
 
 
 @dataclass

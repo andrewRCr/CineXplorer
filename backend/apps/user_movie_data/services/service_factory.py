@@ -13,10 +13,10 @@ Available factories:
 """
 from __future__ import annotations
 
-from movie.services.service_factory import get_movie_service
-from user_movie_data.repositories import UserMovieDataRepository
-from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
-from user_movie_data.services.user_movie_data_service import UserMovieDataService
+from apps.movie.services.service_factory import get_movie_service
+from apps.user_movie_data.repositories import UserMovieDataRepository
+from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
+from apps.user_movie_data.services.user_movie_data_service import UserMovieDataService
 
 
 def get_movie_enrichment_service() -> MovieEnrichmentService:

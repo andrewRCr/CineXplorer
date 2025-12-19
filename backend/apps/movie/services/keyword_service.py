@@ -13,10 +13,10 @@ from __future__ import annotations
 
 from typing import cast
 
-from core.types.api_types import TMDBParams
-from movie.schemas import KeywordListResponseSchema
-from movie.services.base_service import BaseTMDBService
-from movie.services.tmdb_api_boundary.response_factories import (
+from apps.core.types.api_types import TMDBParams
+from apps.movie.schemas import KeywordListResponseSchema
+from apps.movie.services.base_service import BaseTMDBService
+from apps.movie.services.tmdb_api_boundary.response_factories import (
     create_paginated_keyword_response_from_tmdb,
 )
 
@@ -32,7 +32,7 @@ class KeywordService(BaseTMDBService):
 
     Example:
         # Production usage with factory
-        from movie.services.service_factory import get_keyword_service
+        from apps.movie.services.service_factory import get_keyword_service
         service = get_keyword_service()
         keywords = service.search_keywords("action")
 

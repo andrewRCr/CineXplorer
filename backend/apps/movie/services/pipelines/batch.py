@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Mapping
 
-from core.services.tmdb_api_client import TMDBApiClient
+from apps.core.services.tmdb_api_client import TMDBApiClient
 
 from ...schemas import MovieListItemSchema
 
@@ -167,7 +167,7 @@ def _create_movie_base_from_tmdb_data(
         MovieListItemSchema instance if successful, None if transformation fails
     """
     try:
-        from core.tmdb_models.tmdb_responses import TMDBMovieBase
+        from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase
 
         # Validate against TMDB response structure for type safety
         tmdb_movie = TMDBMovieBase.model_validate(tmdb_data, strict=False)

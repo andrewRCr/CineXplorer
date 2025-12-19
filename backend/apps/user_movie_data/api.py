@@ -13,16 +13,16 @@ Architecture:
 """
 from __future__ import annotations
 
-from authentication.auth_ninja import JWTCookieAuth, get_current_user
+from apps.authentication.auth_ninja import JWTCookieAuth, get_current_user
 from django.http import HttpRequest
-from movie.schemas import MovieListResponseSchema
+from apps.movie.schemas import MovieListResponseSchema
 from ninja import Router
-from user_movie_data.schemas import (
+from apps.user_movie_data.schemas import (
     UserMovieDataCreateSchema,
     UserMovieDataDetailSchema,
     UserMovieDataUpdateSchema,
 )
-from user_movie_data.services.service_factory import get_user_movie_data_service
+from apps.user_movie_data.services.service_factory import get_user_movie_data_service
 
 # Create router with JWT authentication
 user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTCookieAuth())

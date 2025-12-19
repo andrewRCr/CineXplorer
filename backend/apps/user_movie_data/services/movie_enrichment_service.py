@@ -16,11 +16,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractBaseUser
-from movie.schemas import MovieListItemSchema, UserMovieDataSchema
-from user_movie_data.models import UserMovieData
+from apps.movie.schemas import MovieListItemSchema, UserMovieDataSchema
+from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
-    from user_movie_data.repositories import UserMovieDataRepository
+    from apps.user_movie_data.repositories import UserMovieDataRepository
 
 
 class MovieEnrichmentService:
@@ -78,7 +78,7 @@ class MovieEnrichmentService:
             self._repository = user_movie_data_repository
         else:
             # Import here to avoid circular dependency
-            from user_movie_data.repositories import UserMovieDataRepository
+            from apps.user_movie_data.repositories import UserMovieDataRepository
             self._repository = UserMovieDataRepository()
 
     def enrich_movies_with_user_movie_data(

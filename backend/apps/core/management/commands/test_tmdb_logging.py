@@ -10,8 +10,8 @@ from argparse import ArgumentParser
 from typing import cast
 
 from django.core.management.base import BaseCommand
-from movie.services.api_boundary import BrowseServiceParams, SearchServiceParams
-from movie.services.service_factory import get_movie_service
+from apps.movie.services.api_boundary import BrowseServiceParams, SearchServiceParams
+from apps.movie.services.service_factory import get_movie_service
 from ninja.errors import HttpError
 
 

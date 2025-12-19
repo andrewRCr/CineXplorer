@@ -1,7 +1,7 @@
 """Pydantic schemas for the user movie data API.
 
 This module defines schemas for UserMovieData CRUD operations following
-the ModelSchema pattern established in Phase 1 (movie domain).
+the ModelSchema pattern established in the movie domain.
 
 Pattern Guidelines:
 - Use ModelSchema for Django model CRUD (automatic type inference with django-stubs)
@@ -12,7 +12,7 @@ from __future__ import annotations
 from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field
-from user_movie_data.models import UserMovieData
+from apps.user_movie_data.models import UserMovieData
 
 
 class UserMovieDataModelSchema(ModelSchema):

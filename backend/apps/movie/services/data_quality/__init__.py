@@ -17,6 +17,6 @@ Constants:
     OVERVIEW_PLACEHOLDER_PATTERNS - Known TMDB placeholder text
 
 Import directly from submodules:
-    from movie.services.data_quality.filters import apply_data_quality_filters
-    from movie.services.data_quality.policy import VoteCountPolicy, CompletenessPolicy
+    from apps.movie.services.data_quality.filters import apply_data_quality_filters
+    from apps.movie.services.data_quality.policy import VoteCountPolicy, CompletenessPolicy
 """

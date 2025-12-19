@@ -10,8 +10,8 @@ pagination across all API endpoints in the application.
 - Bounds validation: Defensive input handling with sensible defaults
 
 **Usage Example:**
-    from core.pagination import paginate_queryset
-    from core.models import Movie
+    from apps.core.pagination import paginate_queryset
+    from apps.core.models import Movie
 
     # Get paginated results
     queryset = Movie.objects.all().order_by('-release_date')

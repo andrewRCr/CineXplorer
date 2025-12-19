@@ -30,15 +30,15 @@ import logging
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractBaseUser
-from movie.schemas import MovieListItemSchema, MovieListResponseSchema
-from movie.services.pipelines.batch import fetch_movies_batch
+from apps.movie.schemas import MovieListItemSchema, MovieListResponseSchema
+from apps.movie.services.pipelines.batch import fetch_movies_batch
 from ninja.errors import HttpError
-from user_movie_data.models import UserMovieData
-from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
+from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 if TYPE_CHECKING:
-    from movie.services.movie_service import MovieService
-    from user_movie_data.repositories import UserMovieDataRepository
+    from apps.movie.services.movie_service import MovieService
+    from apps.user_movie_data.repositories import UserMovieDataRepository
 
 logger = logging.getLogger(__name__)
 
@@ -88,14 +88,14 @@ class UserMovieDataService:
         if repository is not None:
             self._repository = repository
         else:
-            from user_movie_data.repositories import UserMovieDataRepository
+            from apps.user_movie_data.repositories import UserMovieDataRepository
             self._repository = UserMovieDataRepository()
 
         # Inject movie service or create default
         if movie_service is not None:
             self._movie_service = movie_service
         else:
-            from movie.services.service_factory import get_movie_service
+            from apps.movie.services.service_factory import get_movie_service
             self._movie_service = get_movie_service()
 
     # =========================================================================

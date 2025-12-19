@@ -1,7 +1,7 @@
 """Service factory for authentication domain."""
 from __future__ import annotations
 
-from authentication.services.authentication_service import AuthenticationService
+from apps.authentication.services.authentication_service import AuthenticationService
 
 
 def get_authentication_service() -> AuthenticationService:

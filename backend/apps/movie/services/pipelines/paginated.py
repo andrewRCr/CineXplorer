@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
+from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
 
 from ...schemas import MovieListItemSchema, MovieListResponseSchema
 from ..api_boundary import BrowseServiceParams, SearchServiceParams

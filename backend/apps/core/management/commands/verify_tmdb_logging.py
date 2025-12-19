@@ -9,7 +9,7 @@ import json
 import logging
 import time
 
-from core.services.tmdb_api_client import TMDBApiClient
+from apps.core.services.tmdb_api_client import TMDBApiClient
 from django.core.management.base import BaseCommand
 
 

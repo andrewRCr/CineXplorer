@@ -4,16 +4,16 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from core.services.validators import (
+from apps.core.services.validators import (
     validate_tmdb_paginated_response,
     validate_tmdb_response,
 )
-from core.tmdb_models.tmdb_responses import (
+from apps.core.tmdb_models.tmdb_responses import (
     TMDBGenreListResponse,
     TMDBMovieBase,
     TMDBPaginatedMovieResponse,
 )
-from core.types.api_types import TMDBParams
+from apps.core.types.api_types import TMDBParams
 from ninja.errors import HttpError
 
 from ..helpers import (

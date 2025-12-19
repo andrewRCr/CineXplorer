@@ -9,10 +9,10 @@ maintaining testability through constructor injection.
 """
 from __future__ import annotations
 
-from core.services.tmdb_api_client import TMDBApiClient
-from movie.services.keyword_service import KeywordService
-from movie.services.movie_service import MovieService
-from movie.services.people_service import PeopleService
+from apps.core.services.tmdb_api_client import TMDBApiClient
+from apps.movie.services.keyword_service import KeywordService
+from apps.movie.services.movie_service import MovieService
+from apps.movie.services.people_service import PeopleService
 
 
 def get_movie_service() -> MovieService:

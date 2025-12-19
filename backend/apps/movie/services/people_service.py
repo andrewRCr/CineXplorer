@@ -14,10 +14,10 @@ from __future__ import annotations
 
 from typing import cast
 
-from core.types.api_types import TMDBParams
-from movie.schemas import PersonListResponseSchema
-from movie.services.base_service import BaseTMDBService
-from movie.services.tmdb_api_boundary.response_factories import (
+from apps.core.types.api_types import TMDBParams
+from apps.movie.schemas import PersonListResponseSchema
+from apps.movie.services.base_service import BaseTMDBService
+from apps.movie.services.tmdb_api_boundary.response_factories import (
     create_paginated_person_response_from_tmdb,
 )
 
@@ -34,7 +34,7 @@ class PeopleService(BaseTMDBService):
 
     Example:
         # Production usage with factory
-        from movie.services.service_factory import get_people_service
+        from apps.movie.services.service_factory import get_people_service
         service = get_people_service()
         people = service.search_people("Tom Hanks")
 

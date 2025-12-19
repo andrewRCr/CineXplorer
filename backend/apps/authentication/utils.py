@@ -67,7 +67,7 @@ def set_auth_cookie(
         samesite: SameSite cookie attribute ('Lax', 'Strict', or 'None')
 
     Example:
-        >>> from authentication.utils import set_auth_cookie, get_jwt_settings
+        >>> from apps.authentication.utils import set_auth_cookie, get_jwt_settings
         >>> jwt_settings = get_jwt_settings()
         >>> set_auth_cookie(
         ...     response,

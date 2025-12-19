@@ -2,9 +2,10 @@
 
 **PRD:** `.arc/active/technical/prd-service-layer-modernization.md`
 **Created:** 2025-10-22
+**Completed:** 2025-12-19
 **Branch:** `technical/service-layer-modernization`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -756,7 +757,7 @@ all remaining function-based services to class-based architecture with dependenc
         - ✓ Linting passed
         - ✓ All 167 authentication tests pass
 
-- [ ] **6.3 Fix Coverage Infrastructure (Django App Paths)**
+- [x] **6.3 Fix Coverage Infrastructure (Django App Paths)**
 
     Fixes pytest-cov coverage measurement mismatch caused by `sys.path` manipulation.
     See `plan-backend-modernization.md` lines 189-226 for detailed context.

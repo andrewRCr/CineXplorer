@@ -6,6 +6,18 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] DRY browse select trigger and value styling
+    - **Outcome:**
+        - Extracted shared browse select trigger styles to a helper module.
+        - Consolidated ConnectedDropdowns value text styling logic.
+        - Dropped redundant Select.Content styling where recipe already applies defaults.
+        - Frontend lint passes.
+    - **Files:** `frontend/src/components/movie/browse/selectStyles.ts`,
+      `frontend/src/components/movie/browse/ConnectedDropdowns.tsx`,
+      `frontend/src/components/movie/browse/SortDropdown.tsx`
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Unify select open-state selection indicators and migrate ConnectedDropdowns styling
     - **Outcome:**
         - Language select now treats "All Languages" as a selectable value for open-menu highlighting while

@@ -698,7 +698,7 @@ all remaining function-based services to class-based architecture with dependenc
         - **Discovery**: Official `django-zoho-zeptomail` package provides Django email backend
         - **Decision**: Refactor to use official package, remove custom API code, wire welcome email
 
-- [ ] **6.2 Email Infrastructure Refactor (django-zoho-zeptomail)**
+- [x] **6.2 Email Infrastructure Refactor (django-zoho-zeptomail)**
 
     - [x] 6.2.a Install and configure django-zoho-zeptomail
         - ✓ Added `django-zoho-zeptomail >= 0.0.3` to `backend/requirements/req.txt`
@@ -733,23 +733,28 @@ all remaining function-based services to class-based architecture with dependenc
         - ✓ `test_welcome_email_contains_frontend_link` - verifies CTA link
         - ✓ 3 tests fail (RED phase) - awaiting 6.2.e implementation
 
-    - [ ] 6.2.e Create welcome email utility and wire to verification
-        - Create `send_welcome_email(user)` function using Django's `send_mail()`
-        - Use existing `welcome.html` template
-        - Call from `AuthenticationService.verify_email()` on success
-        - Add appropriate logging
+    - [x] 6.2.e Create welcome email utility and wire to verification
+        - ✓ Created `send_welcome_email(user)` function in `core/services/email_service.py`
+        - ✓ Uses Django's `send_mail()` with HTML template and plain text fallback
+        - ✓ Wired to `AuthenticationService.verify_email()` after successful confirmation
+        - ✓ Added logging (info on success, error on failure)
+        - ✓ Updated stub file (`email_service.pyi`) for type checking
+        - ✓ All 9 email backend tests pass (TDD GREEN phase)
+        - ✓ All 167 authentication tests pass (no regressions)
 
-    - [ ] 6.2.f Remove deprecated email code
-        - Delete `ZeptomailService` class from `email_service.py`
-        - Delete `get_email_service()` factory function
-        - Delete `_EmailServiceProxy` class and `email_service` proxy
-        - Delete `email_service.pyi` stub file
-        - Update any imports if needed
+    - [x] 6.2.f Remove deprecated email code
+        - ✓ Deleted `ZeptomailService` class (~95 lines)
+        - ✓ Deleted `get_email_service()` factory function
+        - ✓ Deleted `_EmailServiceProxy` class and `email_service` proxy
+        - ✓ Deleted `email_service.pyi` stub file
+        - ✓ Removed unused imports (requests, AbstractUser)
+        - ✓ Added `UserEmailProtocol` for type-safe email operations
+        - ✓ File reduced from 213 lines to 82 lines (~62% reduction)
 
-    - [ ] 6.2.g Run incremental quality checks
-        - Type check modified files
-        - Lint modified files
-        - Run authentication test suite
+    - [x] 6.2.g Run incremental quality checks
+        - ✓ Type check passed (0 errors)
+        - ✓ Linting passed
+        - ✓ All 167 authentication tests pass
 
 - [ ] **6.3 Run Comprehensive Integration Tests**
 

@@ -108,19 +108,12 @@ const SortDropdown = ({
               color="foreground"
             >
               {sortCollection.items.map((item) => {
-                const isSelected = currentSortValue === item.value;
                 const isDisabled = item.disabled === true;
                 return (
                   <Select.Item
                     key={item.value}
                     item={item}
-                    bg={isSelected ? "tertiary" : undefined}
-                    color={isSelected ? "on-tertiary" : "foreground"}
                     fontStyle={isDisabled ? "italic" : "normal"}
-                    _hover={{
-                      bg: isSelected ? "tertiary" : "tertiary/12",
-                      color: isSelected ? "on-tertiary" : "foreground",
-                    }}
                   >
                     {item.label}
                   </Select.Item>

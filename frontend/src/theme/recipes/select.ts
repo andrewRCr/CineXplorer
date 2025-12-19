@@ -79,19 +79,30 @@ export const selectRecipe = defineSlotRecipe({
         /**
          * Item: Individual option in dropdown
          * - Base transparent background
-         * - Components apply selected state via runtime conditionals:
-         *   bg={isSelected ? "tertiary" : undefined}
-         *   color={isSelected ? "on-tertiary" : undefined}
-         * - Recipe provides foundation, inline props handle selection
+         * - Selected state uses tertiary + on-tertiary
+         * - Highlight/hover uses tertiary/12
          */
         item: {
             cursor: "pointer",
             transition: "all 0.15s",
             borderRadius: "sm",
-            // Base hover for non-selected items
-            // (components override this for selected items)
             _hover: {
                 bg: "tertiary/12",
+            },
+            _highlighted: {
+                bg: "tertiary/12",
+            },
+            _checked: {
+                bg: "tertiary",
+                color: "on-tertiary",
+                _hover: {
+                    bg: "tertiary",
+                    color: "on-tertiary",
+                },
+                _highlighted: {
+                    bg: "tertiary",
+                    color: "on-tertiary",
+                },
             },
         },
     },

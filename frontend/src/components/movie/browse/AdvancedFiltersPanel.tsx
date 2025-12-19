@@ -124,16 +124,13 @@ const AdvancedFiltersPanel = ({
               _focusVisible={{ borderColor: "tertiary" }}
               css={{
                 padding: "0 12px",
-                // Highlight value text when language is selected
-                "& > span": {
-                  color: browseParams.language
-                    ? "var(--chakra-colors-primary)"
-                    : "var(--chakra-colors-foreground)",
-                },
               }}
             >
-              <Select.ValueText placeholder="All Languages" />
-              <Select.Indicator />
+              <Select.ValueText
+                placeholder="All Languages"
+                color={browseParams.language ? "primary" : "foreground"}
+              />
+              <Select.Indicator color="foreground" />
             </Select.Trigger>
             <Select.Positioner>
               {/* Content uses selectRecipe base styles; custom overrides for width and scroll */}
@@ -143,23 +140,11 @@ const AdvancedFiltersPanel = ({
                 overflowY="auto"
                 zIndex="popover"
               >
-                {languageCollection.items.map((item) => {
-                  const isSelected = browseParams.language === item.value;
-                  return (
-                    <Select.Item
-                      key={item.value}
-                      item={item}
-                      bg={isSelected ? "tertiary" : undefined}
-                      color={isSelected ? "on-tertiary" : "foreground"}
-                      _hover={{
-                        bg: isSelected ? "tertiary" : "tertiary/12",
-                        color: isSelected ? "on-tertiary" : "foreground",
-                      }}
-                    >
-                      {item.label}
-                    </Select.Item>
-                  );
-                })}
+                {languageCollection.items.map((item) => (
+                  <Select.Item key={item.value} item={item}>
+                    {item.label}
+                  </Select.Item>
+                ))}
               </Select.Content>
             </Select.Positioner>
           </Select.Root>

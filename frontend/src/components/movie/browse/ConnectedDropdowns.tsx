@@ -184,7 +184,9 @@ const ConnectedDropdowns = ({
           value={
             genreDisplayData.genreDisplay
               ? [genreDisplayData.genreDisplay.value]
-              : filters.genres.map(String)
+              : filters.genres.length > 0
+                ? filters.genres.map(String)
+                : [""]
           }
           onValueChange={(details) => {
             const value = details.value[0];
@@ -221,24 +223,24 @@ const ConnectedDropdowns = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              "& > span": {
-                fontStyle: genreDisplayData.isGenreDisabled ? "italic" : "normal",
-                // Active filter indication: primary color when genre selected
-                // Small delay ensures text updates before color changes
-                transition: "color 0.15s ease-out 0.05s",
-                color: genreDisplayData.isGenreDisabled
-                  ? "var(--chakra-colors-on-muted)"
-                  : hasActiveGenre
-                    ? "var(--chakra-colors-primary)"
-                    : "var(--chakra-colors-foreground)",
-              },
               "& [data-part='indicator']": {
                 width: "16px",
                 height: "16px",
               },
             }}
           >
-            <Select.ValueText placeholder="Any Genre" />
+            <Select.ValueText
+              placeholder="Any Genre"
+              fontStyle={genreDisplayData.isGenreDisabled ? "italic" : "normal"}
+              transition="color 0.15s ease-out 0.05s"
+              color={
+                genreDisplayData.isGenreDisabled
+                  ? "on-muted"
+                  : hasActiveGenre
+                    ? "primary"
+                    : "foreground"
+              }
+            />
             <Select.Indicator />
           </Select.Trigger>
           <Select.Positioner>
@@ -248,27 +250,11 @@ const ConnectedDropdowns = ({
               borderColor="border-subtle-02"
               color="foreground"
             >
-              {genreCollection.items.map((item) => {
-                // "Any Genre" should show as selected when genres array is empty
-                const isAnyGenre = item.value === "" || item.label === "Any Genre";
-                const isSelected = isAnyGenre
-                  ? filters.genres.length === 0
-                  : filters.genres.map(String).includes(item.value);
-                return (
-                  <Select.Item
-                    key={item.value}
-                    item={item}
-                    bg={isSelected ? "tertiary" : undefined}
-                    color={isSelected ? "on-tertiary" : "foreground"}
-                    _hover={{
-                      bg: isSelected ? "tertiary" : "tertiary/12",
-                      color: isSelected ? "on-tertiary" : "foreground",
-                    }}
-                  >
-                    {item.label}
-                  </Select.Item>
-                );
-              })}
+              {genreCollection.items.map((item) => (
+                <Select.Item key={item.value} item={item}>
+                  {item.label}
+                </Select.Item>
+              ))}
             </Select.Content>
           </Select.Positioner>
         </Select.Root>
@@ -332,24 +318,28 @@ const ConnectedDropdowns = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              "& > span": {
-                fontStyle: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained ? "italic" : "normal",
-                // Active filter indication: primary color when year selected
-                // Small delay ensures text updates before color changes
-                transition: "color 0.15s ease-out 0.05s",
-                color: yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
-                  ? "var(--chakra-colors-on-muted)"
-                  : hasActiveYear
-                    ? "var(--chakra-colors-primary)"
-                    : "var(--chakra-colors-foreground)",
-              },
               "& [data-part='indicator']": {
                 width: "16px",
                 height: "16px",
               },
             }}
           >
-            <Select.ValueText placeholder="Year" />
+            <Select.ValueText
+              placeholder="Year"
+              fontStyle={
+                yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
+                  ? "italic"
+                  : "normal"
+              }
+              transition="color 0.15s ease-out 0.05s"
+              color={
+                yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
+                  ? "on-muted"
+                  : hasActiveYear
+                    ? "primary"
+                    : "foreground"
+              }
+            />
             <Select.Indicator />
           </Select.Trigger>
           <Select.Positioner>
@@ -359,23 +349,11 @@ const ConnectedDropdowns = ({
               borderColor="border-subtle-02"
               color="foreground"
             >
-              {yearCollection.items.map((item) => {
-                const isSelected = yearDisplayData.yearDisplayValue === item.value;
-                return (
-                  <Select.Item
-                    key={item.value}
-                    item={item}
-                    bg={isSelected ? "tertiary" : undefined}
-                    color={isSelected ? "on-tertiary" : "foreground"}
-                    _hover={{
-                      bg: isSelected ? "tertiary" : "tertiary/12",
-                      color: isSelected ? "on-tertiary" : "foreground",
-                    }}
-                  >
-                    {item.label}
-                  </Select.Item>
-                );
-              })}
+              {yearCollection.items.map((item) => (
+                <Select.Item key={item.value} item={item}>
+                  {item.label}
+                </Select.Item>
+              ))}
             </Select.Content>
           </Select.Positioner>
         </Select.Root>

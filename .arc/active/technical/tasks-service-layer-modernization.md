@@ -805,22 +805,31 @@ all remaining function-based services to class-based architecture with dependenc
         - Added to `BACKLOG-TECHNICAL.md` under Backend Architecture
         - Documented threshold: evaluate when mock paths exceed 20+ constants
 
-- [ ] **6.4 Service Layer Coverage Assessment**
+- [x] **6.4 Service Layer Coverage Assessment**
 
-    - [ ] 6.4.a Run coverage with corrected infrastructure
-        - Run: `docker compose -f infrastructure/docker-compose.yml exec backend \`
-          `pytest -n 0 --cov=apps --cov-report=term-missing apps/`
-        - Verify no `CoverageWarning` about previously imported modules
-        - Document baseline coverage percentage
+    - [x] 6.4.a Run coverage with corrected infrastructure
+        - **Baseline coverage: 85.98%** (2603 statements, 365 missed)
+        - No `CoverageWarning` - infrastructure fixes from Task 6.3 resolved import issues
+        - All 665 tests passed (98.83s sequential execution)
 
-    - [ ] 6.4.b Identify coverage gaps in service layer
-        - Focus on: `MovieService`, `UserMovieDataService`, `AuthenticationService`
-        - Check pagination helpers, batch operations
-        - Target: 80% general, 90%+ critical paths
+    - [x] 6.4.b Identify coverage gaps in service layer
+        - **Service layer exceeds targets:**
+            - `MovieService`: 96.94% ✓
+            - `UserMovieDataService`: 97.18% ✓
+            - `AuthenticationService`: 93.14% ✓
+            - `pagination.py`: 100% ✓
+            - `batch.py`: 97.92% ✓
+        - **API infrastructure below 80% target:**
+            - `api_response.py`: 36.84% (utility methods untested)
+            - `base_api_client.py`: 49.04% (exception handling paths)
+            - `tmdb_api_client.py`: 37.65% (convenience methods, error processing)
+        - Created atomic task for infrastructure coverage work
 
-    - [ ] 6.4.c Add tests to meet coverage targets
-        - Write tests for identified gaps
-        - Prioritize critical paths (auth, data mutations)
+    - [x] 6.4.c Add tests to meet coverage targets
+        - **Service layer: No additional tests needed** - all targets exceeded
+        - **API infrastructure: Deferred to atomic task** - see `ATOMIC-TASKS.md`
+        - Rationale: Infrastructure gaps are HTTP client plumbing, not service-layer
+          business logic; tracked separately to maintain task list scope
 
 - [ ] **6.5 Run Comprehensive Integration Tests**
 

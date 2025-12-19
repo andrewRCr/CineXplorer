@@ -6,6 +6,29 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Add unit tests for API infrastructure modules to meet 80% coverage target
+    - **Outcome:**
+        - Refactored: Extracted `_safe_headers_dict()` helper to BaseApiClient (DRY - 6 occurrences)
+        - Refactored: Created `RATE_LIMIT_HEADER_MAPPING` constant in api_response.py (DRY)
+        - Created `mock_paths.py` for core tests (consistency with movie/auth/user_movie_data patterns)
+        - Created 123 new unit tests across 3 test files
+        - Coverage results:
+            - `api_response.py`: 36.84% → 96.84% ✓
+            - `base_api_client.py`: 49.04% → 99.04% ✓
+            - `tmdb_api_client.py`: 37.65% → 76.51% (remaining gap is DEBUG logging, excluded per scope)
+        - Overall project coverage: 85.98% → 92.66%
+        - All 788 tests pass
+    - **Files:**
+        - `backend/apps/core/tests/unit/test_api_response.py` (new)
+        - `backend/apps/core/tests/unit/test_base_api_client.py` (new)
+        - `backend/apps/core/tests/unit/test_tmdb_api_client.py` (new)
+        - `backend/apps/core/tests/mock_paths.py` (new)
+        - `backend/apps/core/services/api_response.py` (refactored)
+        - `backend/apps/core/services/base_api_client.py` (refactored)
+        - `backend/apps/core/services/tmdb_api_client.py` (refactored)
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Rename frontend console log file for clarity
     - **Outcome:** Moved frontend log capture to `backend/logs/frontend.log`, updated docs/endpoint
       references, removed legacy log file, and regenerated OpenAPI-derived types.

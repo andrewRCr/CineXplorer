@@ -18,15 +18,12 @@ key features implemented and a clear roadmap for remaining work.
 
 **Last Completed:**
 
-- Infinite Scroll Migration (incidental) - TanStack Query integration, virtualized grids, scroll persistence
-    - [Completion](../archive/2025-q4/incidental/infinite-scroll-migration/completion-infinite-scroll-migration.md)
+- Service Layer Modernization (technical) - Class-based services with DI, repository pattern, comprehensive testing
+    - [Archive](../archive/2025-q4/technical/25_service-layer-modernization/)
 
 **Currently Active:**
 
-- Service Layer Modernization (technical) - Pagination helpers, service refactoring
-    - [PRD](../../active/technical/prd-service-layer-modernization.md)
-- Theme System Modernization (incidental) - Multi-theme architecture improvements
-    - [Tasks](../../active/incidental/tasks-theme-system-modernization.md)
+- None (planning next work)
 
 **Next Priority:**
 
@@ -198,6 +195,20 @@ modal, watchlist enhancements)
 - OAuth mock infrastructure (fixtures, test helpers)
 - Session authentication test coverage
 - CSRF protection tests
+
+### ✅ Service Layer Modernization
+
+[Archive](../archive/2025-q4/technical/25_service-layer-modernization/)
+
+- Class-based services with dependency injection (constructor injection) for testability
+- Repository pattern for data access abstraction (UserMovieDataRepository)
+- Service composition enabling complex operations (MovieEnrichmentService)
+- Factory functions for production instantiation while preserving test injection
+- 7 backend services: MovieService, UserMovieDataService, AuthenticationService, MovieEnrichmentService,
+  KeywordService, PeopleService, MetricsService
+- Comprehensive test coverage (788 tests, 92.66% coverage)
+- 11 incidental task lists spawned and completed during execution
+- **Key Achievement:** Established service layer architecture as project standard
 
 ---
 

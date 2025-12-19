@@ -717,17 +717,21 @@ all remaining function-based services to class-based architecture with dependenc
         - Tests: backend config, outbox empty, resend sends email, verification link in body,
           no email for nonexistent user, no email for already verified, no email on verify success
 
-    - [ ] 6.2.c Simplify CustomAccountAdapter
-        - Remove `send_mail()` override (use Django's default → ZeptoMail backend)
-        - Remove `_get_headers()` method
-        - Remove config duplication (`api_key`, `base_url`, `dev_mode`)
-        - Keep only `get_email_confirmation_url()` for frontend URLs
-        - Update docstring to reflect simplified purpose
+    - [x] 6.2.c Simplify CustomAccountAdapter
+        - ✓ Removed `send_mail()` override (~150 lines of custom ZeptoMail API code)
+        - ✓ Removed `_get_headers()` method
+        - ✓ Removed `__init__` with config duplication (`api_key`, `base_url`, `dev_mode`)
+        - ✓ Kept only `get_email_confirmation_url()` for frontend URLs
+        - ✓ Updated docstring to reflect simplified purpose
+        - ✓ Adapter reduced from 237 lines to 51 lines (~80% reduction)
+        - ✓ All 7 email backend tests now pass (TDD GREEN phase)
+        - ✓ All 165 authentication tests pass (no regressions)
 
-    - [ ] 6.2.d Write tests for welcome email feature (TDD - test-first)
-        - Test welcome email sent after successful verification
-        - Test welcome email uses correct template and context
-        - Test dev/test mode handling
+    - [x] 6.2.d Write tests for welcome email feature (TDD - test-first)
+        - ✓ `test_email_verification_success_sends_welcome_email` - verifies email sent
+        - ✓ `test_welcome_email_contains_username` - verifies personalization
+        - ✓ `test_welcome_email_contains_frontend_link` - verifies CTA link
+        - ✓ 3 tests fail (RED phase) - awaiting 6.2.e implementation
 
     - [ ] 6.2.e Create welcome email utility and wire to verification
         - Create `send_welcome_email(user)` function using Django's `send_mail()`

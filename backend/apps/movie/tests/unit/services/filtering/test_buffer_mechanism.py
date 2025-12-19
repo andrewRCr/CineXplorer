@@ -9,11 +9,11 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from core.services.api_response import ApiResponse
-from movie.services.api_boundary import BrowseServiceParams
-from movie.services.movie_service import MovieService
-from movie.tests.test_helpers import create_mock_paginated_response
-from movie.tests.tmdb_test_builders import create_tmdb_movie
+from apps.core.services.api_response import ApiResponse
+from apps.movie.services.api_boundary import BrowseServiceParams
+from apps.movie.services.movie_service import MovieService
+from apps.movie.tests.test_helpers import create_mock_paginated_response
+from apps.movie.tests.tmdb_test_builders import create_tmdb_movie
 
 
 def test_buffer_mechanism_fetches_page_n_plus_1_when_under_threshold() -> None:

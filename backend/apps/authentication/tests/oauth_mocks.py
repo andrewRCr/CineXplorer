@@ -9,7 +9,8 @@ from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 from allauth.socialaccount.models import SocialApp
-from authentication.tests.fixtures import create_social_app
+
+from apps.authentication.tests.fixtures import create_social_app
 
 
 class MockOAuthProvider:

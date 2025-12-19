@@ -16,10 +16,11 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 import pytest
-from core.services.api_response import ApiResponse
-from movie.schemas import KeywordListResponseSchema
-from movie.tests.tmdb_test_builders import TMDBKeywordResponse
 from ninja.errors import HttpError
+
+from apps.core.services.api_response import ApiResponse
+from apps.movie.schemas import KeywordListResponseSchema
+from apps.movie.tests.tmdb_test_builders import TMDBKeywordResponse
 
 # ============================================================================
 # KeywordService Class Tests - Constructor and DI
@@ -28,7 +29,7 @@ from ninja.errors import HttpError
 
 def test_keyword_service_constructor_with_injected_client() -> None:
     """Test KeywordService constructor accepts injected TMDB client."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client
     mock_client = Mock(spec=['get'])
@@ -42,7 +43,7 @@ def test_keyword_service_constructor_with_injected_client() -> None:
 
 def test_keyword_service_constructor_with_default_client() -> None:
     """Test KeywordService constructor creates default client when none injected."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Act: Create service without injecting client
     service = KeywordService()
@@ -59,7 +60,7 @@ def test_keyword_service_constructor_with_default_client() -> None:
 
 def test_get_popular_keywords_uses_injected_client() -> None:
     """Test get_popular_keywords calls injected client, not global tmdb_client."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client with successful response
     mock_client = Mock(spec=['get'])
@@ -95,7 +96,7 @@ def test_get_popular_keywords_uses_injected_client() -> None:
 
 def test_get_popular_keywords_handles_api_error() -> None:
     """Test get_popular_keywords raises HttpError when TMDB API fails."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client that returns error response
     mock_client = Mock(spec=['get'])
@@ -110,7 +111,7 @@ def test_get_popular_keywords_handles_api_error() -> None:
 
 def test_get_popular_keywords_default_page() -> None:
     """Test get_popular_keywords uses default page=1 when not specified."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client
     mock_client = Mock(spec=['get'])
@@ -139,7 +140,7 @@ def test_get_popular_keywords_default_page() -> None:
 
 def test_search_keywords_uses_injected_client() -> None:
     """Test search_keywords calls injected client, not global tmdb_client."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client with successful response
     mock_client = Mock(spec=['get'])
@@ -173,7 +174,7 @@ def test_search_keywords_uses_injected_client() -> None:
 
 def test_search_keywords_handles_empty_query() -> None:
     """Test search_keywords returns empty response for invalid queries."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create service (client won't be called)
     mock_client = Mock(spec=['get'])
@@ -200,7 +201,7 @@ def test_search_keywords_handles_empty_query() -> None:
 
 def test_search_keywords_handles_api_error() -> None:
     """Test search_keywords raises HttpError when TMDB API fails."""
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client that returns error response
     mock_client = Mock(spec=['get'])
@@ -220,21 +221,21 @@ def test_search_keywords_handles_api_error() -> None:
 
 def test_get_keyword_service_factory_creates_service_with_default_client() -> None:
     """Test get_keyword_service factory function returns service with default client."""
-    from movie.services.service_factory import get_keyword_service
+    from apps.movie.services.service_factory import get_keyword_service
 
     # Act: Create service via factory
     service = get_keyword_service()
 
     # Assert: Service is KeywordService instance with client
-    from movie.services.keyword_service import KeywordService
+    from apps.movie.services.keyword_service import KeywordService
     assert isinstance(service, KeywordService)
     assert service._tmdb_client is not None  # pyright: ignore[reportPrivateUsage]
 
 
 def test_get_keyword_service_factory_returns_keyword_service_instance() -> None:
     """Test get_keyword_service factory returns correct service type."""
-    from movie.services.keyword_service import KeywordService
-    from movie.services.service_factory import get_keyword_service
+    from apps.movie.services.keyword_service import KeywordService
+    from apps.movie.services.service_factory import get_keyword_service
 
     # Act: Create service via factory
     service = get_keyword_service()

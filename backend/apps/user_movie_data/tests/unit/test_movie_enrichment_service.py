@@ -23,9 +23,9 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from movie.schemas import MovieListItemSchema
-from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
-from user_movie_data.tests.test_helpers import (
+from apps.movie.schemas import MovieListItemSchema
+from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
+from apps.user_movie_data.tests.test_helpers import (
     create_mock_user_movie_data,
     create_movie_schema,
 )

@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from apps.movie.tests.mock_paths import BLACKLIST_GET_IDS
+
 if TYPE_CHECKING:
     from pytest import MonkeyPatch
 
@@ -30,7 +32,4 @@ def mock_blacklist_query(monkeypatch: MonkeyPatch) -> None:
     def empty_blacklist() -> set[int]:
         return set()
 
-    monkeypatch.setattr(
-        "movie.services.data_quality.filters.get_blacklisted_ids",
-        empty_blacklist,
-    )
+    monkeypatch.setattr(BLACKLIST_GET_IDS, empty_blacklist)

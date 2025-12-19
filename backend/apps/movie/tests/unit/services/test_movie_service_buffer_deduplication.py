@@ -12,11 +12,11 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
-from movie.schemas import MovieListItemSchema
-from movie.services.api_boundary import BrowseServiceParams
-from movie.services.pipelines.paginated import apply_buffer_if_needed
-from movie.tests.tmdb_test_builders import (
+from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
+from apps.movie.schemas import MovieListItemSchema
+from apps.movie.services.api_boundary import BrowseServiceParams
+from apps.movie.services.pipelines.paginated import apply_buffer_if_needed
+from apps.movie.tests.tmdb_test_builders import (
     create_paginated_tmdb_response,
     create_tmdb_movie,
 )

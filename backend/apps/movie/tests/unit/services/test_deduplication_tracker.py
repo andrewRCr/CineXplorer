@@ -15,11 +15,13 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
-from movie.services.api_boundary.browse_service_params import BrowseServiceParams
-from movie.services.deduplication_tracker import DeduplicationTracker
 
-# Module path for patching get_atomic_set_client
-GET_CLIENT_PATH = "movie.services.deduplication_tracker.get_atomic_set_client"
+from apps.movie.services.api_boundary.browse_service_params import BrowseServiceParams
+from apps.movie.services.deduplication_tracker import DeduplicationTracker
+from apps.movie.tests.mock_paths import DEDUP_GET_CLIENT
+
+# Alias for backwards compatibility with existing tests
+GET_CLIENT_PATH = DEDUP_GET_CLIENT
 
 
 # ============================================================================

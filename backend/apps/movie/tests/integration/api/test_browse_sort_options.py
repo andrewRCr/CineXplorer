@@ -15,9 +15,11 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
-from core.tests.test_helpers import HTTPStatus
-from movie.services.data_quality.policy import STRICT_VOTE_THRESHOLD, VOTE_COUNT_THRESHOLD
-from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
+
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.movie.services.data_quality.policy import STRICT_VOTE_THRESHOLD, VOTE_COUNT_THRESHOLD
+from apps.movie.tests.mock_paths import TMDB_CLIENT_GET
+from apps.movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:
     from django.test import Client
@@ -47,7 +49,7 @@ class TestSortOptionsReturnResults:
     """
 
     @pytest.mark.parametrize("sort_option", MINIMAL_UI_SORT_OPTIONS)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_sort_option_returns_results(
         self,
         mock_tmdb_get: Mock,
@@ -109,7 +111,7 @@ class TestVoteAverageSortMinVoteCount:
     appearing at the top of rating-sorted results.
     """
 
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_vote_average_sort_sends_min_vote_count_to_tmdb(
         self,
         mock_tmdb_get: Mock,
@@ -143,7 +145,7 @@ class TestVoteAverageSortMinVoteCount:
         params = call_args[0][1] if len(call_args[0]) > 1 else call_args[1].get("params", {})
         assert params.get("vote_count.gte") == STRICT_VOTE_THRESHOLD
 
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_vote_average_sort_filters_low_vote_movies(
         self,
         mock_tmdb_get: Mock,
@@ -222,7 +224,7 @@ class TestAlphabeticalSortUsesModerateFilter:
     """
 
     @pytest.mark.parametrize("sort_option", ALPHABETICAL_SORT_OPTIONS)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_alphabetical_sort_filters_low_vote_spam(
         self,
         mock_tmdb_get: Mock,
@@ -286,7 +288,7 @@ class TestAlphabeticalSortUsesModerateFilter:
         assert 4 in returned_ids  # 10 votes - kept
 
     @pytest.mark.parametrize("sort_option", ALPHABETICAL_SORT_OPTIONS)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_alphabetical_sort_sends_moderate_vote_count_to_tmdb(
         self,
         mock_tmdb_get: Mock,

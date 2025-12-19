@@ -1,13 +1,13 @@
 """
 Rate limiting tests for authentication endpoints.
 
-Tests the throttling behavior configured in Task 3 of security updates:
+Tests the throttling behavior:
 - Login endpoint: 5 requests per minute (AnonRateThrottle)
 - Registration endpoint: 3 requests per hour (AnonRateThrottle)
 - Token refresh endpoint: 10 requests per minute (UserRateThrottle)
 
-These tests use the test-aware throttle infrastructure from Task 3.6,
-which allows selective throttling via @pytest.mark.enable_throttling marker.
+Uses test-aware throttle infrastructure with @pytest.mark.enable_throttling
+marker for selective throttling in tests.
 """
 
 from __future__ import annotations
@@ -16,8 +16,9 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
-from core.tests.test_helpers import get_csrf_token
 from django.test import override_settings
+
+from apps.core.tests.test_helpers import get_csrf_token
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

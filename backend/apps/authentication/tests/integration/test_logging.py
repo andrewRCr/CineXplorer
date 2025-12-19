@@ -29,8 +29,9 @@ from typing import TYPE_CHECKING
 from unittest import TestCase
 
 import pytest
-from core.tests.test_helpers import get_csrf_token
 from django.test import override_settings
+
+from apps.core.tests.test_helpers import get_csrf_token
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User

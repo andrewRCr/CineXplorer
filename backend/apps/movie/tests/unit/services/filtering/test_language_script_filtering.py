@@ -21,8 +21,8 @@ Tests cover:
 """
 from __future__ import annotations
 
-from core.tmdb_models.tmdb_responses import TMDBMovieBase
-from movie.services.data_quality.filters import (
+from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase
+from apps.movie.services.data_quality.filters import (
     LATIN_SCRIPT_LANGUAGES,
     contains_non_latin_script,
     filter_movies_by_language_script,

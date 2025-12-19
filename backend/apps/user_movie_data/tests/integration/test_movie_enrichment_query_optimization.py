@@ -14,11 +14,12 @@ from datetime import date
 from typing import TYPE_CHECKING
 
 import pytest
-from core.models import Movie
 from django.contrib.auth import get_user_model
-from movie.schemas import MovieListItemSchema
-from user_movie_data.models import UserMovieData
-from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
+
+from apps.core.models import Movie
+from apps.movie.schemas import MovieListItemSchema
+from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User

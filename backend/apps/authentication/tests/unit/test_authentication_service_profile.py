@@ -4,12 +4,13 @@ from __future__ import annotations
 from typing import Protocol, cast
 
 import pytest
-from authentication.tests.test_helpers import (
+
+from apps.authentication.tests.test_helpers import (
     create_user_profile_update_input,
     normalize_response_data,
 )
-from authentication.tests.unit.types import AuthServiceFactory
-from core.tests.test_helpers import create_user
+from apps.authentication.tests.unit.types import AuthServiceFactory
+from apps.core.tests.test_helpers import create_user
 
 
 @pytest.mark.django_db

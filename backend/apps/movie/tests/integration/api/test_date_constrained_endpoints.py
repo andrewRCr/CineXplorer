@@ -17,8 +17,10 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
-from core.tests.test_helpers import HTTPStatus
-from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
+
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.movie.tests.mock_paths import TMDB_CLIENT_GET
+from apps.movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:
     from datetime import date
@@ -34,7 +36,7 @@ pytestmark = pytest.mark.django_db
 # =============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_now_playing_preset_includes_release_type(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -73,7 +75,7 @@ def test_now_playing_preset_includes_release_type(
     assert params["with_release_type"] == "2|3"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_upcoming_preset_includes_release_type(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -112,7 +114,7 @@ def test_upcoming_preset_includes_release_type(
     assert params["with_release_type"] == "2|3"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_now_playing_preset_date_range_correct(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -156,7 +158,7 @@ def test_now_playing_preset_date_range_correct(
     assert params["primary_release_date.lte"] == expected_max.isoformat()
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_upcoming_preset_date_range_correct(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -205,7 +207,7 @@ def test_upcoming_preset_date_range_correct(
 # =============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_now_playing_release_type_cannot_be_overridden(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -244,7 +246,7 @@ def test_now_playing_release_type_cannot_be_overridden(
     assert params["with_release_type"] == "2|3"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_upcoming_release_type_cannot_be_overridden(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -283,7 +285,7 @@ def test_upcoming_release_type_cannot_be_overridden(
     assert params["with_release_type"] == "2|3"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_now_playing_date_preset_cannot_be_overridden(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -325,7 +327,7 @@ def test_now_playing_date_preset_cannot_be_overridden(
     assert not params["primary_release_date.lte"].startswith("2020")
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_upcoming_date_preset_cannot_be_overridden(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -372,7 +374,7 @@ def test_upcoming_date_preset_cannot_be_overridden(
 # =============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_now_playing_accepts_genre_filter(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -418,7 +420,7 @@ def test_now_playing_accepts_genre_filter(
     assert "with_release_type" in params  # Preset still applied
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_upcoming_accepts_rating_filter(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -467,7 +469,7 @@ def test_upcoming_accepts_rating_filter(
 # =============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_accepts_all_filters(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:
@@ -507,7 +509,7 @@ def test_browse_accepts_all_filters(
     assert params["sort_by"] == "vote_average.desc"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_allows_full_date_control(
     mock_tmdb_get: Mock, api_client: Client
 ) -> None:

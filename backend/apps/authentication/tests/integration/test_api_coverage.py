@@ -24,6 +24,8 @@ import pytest
 from django.test import override_settings
 from ninja_jwt.tokens import RefreshToken
 
+from apps.authentication.tests.mock_paths import AUTH_SERVICE_EMAIL_ADD
+
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
     from django.test import Client
@@ -87,9 +89,7 @@ def test_email_sending_failure_deletes_user_and_returns_500(
     }
 
     # Mock EmailAddress.objects.add_email to raise exception
-    with patch(
-        "authentication.services.authentication_service.EmailAddress.objects.add_email"
-    ) as mock_add_email:
+    with patch(AUTH_SERVICE_EMAIL_ADD) as mock_add_email:
         mock_add_email.side_effect = Exception("SMTP connection failed")
 
         response = api_client.post(
@@ -144,7 +144,7 @@ def test_token_blacklist_attribute_error_handling(
     assert login_response.status_code == HTTPStatus.OK
 
     # Get CSRF token
-    from core.tests.test_helpers import get_csrf_token
+    from apps.core.tests.test_helpers import get_csrf_token
     csrf_token = get_csrf_token(api_client)
 
     # Mock RefreshToken.blacklist() to raise AttributeError
@@ -187,7 +187,7 @@ def test_token_blacklist_unexpected_error_logged(
     assert login_response.status_code == HTTPStatus.OK
 
     # Get CSRF token
-    from core.tests.test_helpers import get_csrf_token
+    from apps.core.tests.test_helpers import get_csrf_token
     csrf_token = get_csrf_token(api_client)
 
     # Mock RefreshToken.blacklist() to raise unexpected exception
@@ -226,7 +226,7 @@ def test_blacklisted_token_jwt_decode_failure_handling(
     the token can't be decoded for logging purposes.
     """
     # Get CSRF token
-    from core.tests.test_helpers import get_csrf_token
+    from apps.core.tests.test_helpers import get_csrf_token
     csrf_token = get_csrf_token(api_client)
 
     # Set a completely malformed token (not even valid JWT structure)
@@ -273,7 +273,7 @@ def test_unexpected_token_refresh_error_returns_400(
     assert login_response.status_code == HTTPStatus.OK
 
     # Get CSRF token
-    from core.tests.test_helpers import get_csrf_token
+    from apps.core.tests.test_helpers import get_csrf_token
     csrf_token = get_csrf_token(api_client)
 
     # Mock get_user_model().objects.get() to raise unexpected exception

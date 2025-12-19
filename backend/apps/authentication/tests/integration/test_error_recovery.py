@@ -33,11 +33,13 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from core.tests.test_helpers import create_fresh_client, create_user, json_post
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.http import HttpResponse
 from django.test import Client
 from ninja_jwt.tokens import RefreshToken
+
+from apps.authentication.tests.mock_paths import AUTH_SCHEMA_PROFILE_FROM_ORM
+from apps.core.tests.test_helpers import create_fresh_client, create_user, json_post
 
 # ============================================================================
 # Test 5.6.8.3: Invalid JWT Handling
@@ -330,7 +332,7 @@ def test_profile_endpoint_with_serialization_error() -> None:
     client.cookies["access_token"] = access_token_str
 
     # Mock serialization error in schema
-    with patch("authentication.schemas.UserProfileSchema.from_orm") as mock_from_orm:
+    with patch(AUTH_SCHEMA_PROFILE_FROM_ORM) as mock_from_orm:
         mock_from_orm.side_effect = ValueError("Serialization failed")
 
         # Django test client raises exception by default (check_exception=True)
@@ -345,8 +347,8 @@ def test_profile_endpoint_with_serialization_error() -> None:
 @pytest.mark.django_db(
     transaction=True,
     available_apps=[
-        'authentication',
-        'accounts',
+        'apps.authentication',
+        'apps.accounts',
         'django.contrib.auth',
         'django.contrib.contenttypes',
         'ninja_jwt.token_blacklist',

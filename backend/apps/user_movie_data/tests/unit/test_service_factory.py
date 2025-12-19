@@ -6,8 +6,8 @@ appropriate dependencies injected.
 """
 from __future__ import annotations
 
-from user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
-from user_movie_data.services.service_factory import get_movie_enrichment_service
+from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
+from apps.user_movie_data.services.service_factory import get_movie_enrichment_service
 
 
 def test_get_movie_enrichment_service_returns_service_instance() -> None:

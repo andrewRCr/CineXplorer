@@ -15,8 +15,9 @@ import json
 from typing import TYPE_CHECKING, cast
 
 import pytest
-from core.tests.test_helpers import HTTPStatus, create_user, get_csrf_token, json_post
 from django.test import Client
+
+from apps.core.tests.test_helpers import HTTPStatus, create_user, get_csrf_token, json_post
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -40,7 +41,7 @@ def csrf_client(api_client: Client, db: None) -> tuple[Client, "User"]:
     Returns tuple of (Django test client with JWT cookies, user object).
     User returned for tests that need to verify database changes.
     """
-    from core.tests.test_helpers import authenticate_client
+    from apps.core.tests.test_helpers import authenticate_client
 
     user = create_user(
         username='csrftest',

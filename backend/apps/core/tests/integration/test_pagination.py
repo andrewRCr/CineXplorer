@@ -12,8 +12,8 @@
 from __future__ import annotations
 
 import pytest
-from core.models import Movie
-from core.pagination import paginate_queryset
+from apps.core.models import Movie
+from apps.core.pagination import paginate_queryset
 
 
 @pytest.fixture

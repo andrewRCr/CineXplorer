@@ -4,13 +4,14 @@ from __future__ import annotations
 from datetime import timedelta
 from unittest.mock import Mock
 
-from authentication.tests.test_helpers import (
+from ninja_jwt.exceptions import TokenError
+
+from apps.authentication.tests.test_helpers import (
     create_mock_refresh_token,
     create_token_input,
     normalize_response_data,
 )
-from authentication.tests.unit.types import AuthServiceFactory
-from ninja_jwt.exceptions import TokenError
+from apps.authentication.tests.unit.types import AuthServiceFactory
 
 
 def test_obtain_token_success(auth_service_factory: AuthServiceFactory) -> None:

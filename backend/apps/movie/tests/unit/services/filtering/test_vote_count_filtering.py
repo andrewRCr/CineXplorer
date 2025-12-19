@@ -13,15 +13,15 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from core.services.api_response import ApiResponse
-from movie.services.api_boundary import BrowseServiceParams
-from movie.services.data_quality.policy import (
+from apps.core.services.api_response import ApiResponse
+from apps.movie.services.api_boundary import BrowseServiceParams
+from apps.movie.services.data_quality.policy import (
     MODERATE_VOTE_THRESHOLD,
     STRICT_VOTE_THRESHOLD,
 )
-from movie.services.movie_service import MovieService
-from movie.tests.test_helpers import create_mock_paginated_response
-from movie.tests.tmdb_test_builders import (
+from apps.movie.services.movie_service import MovieService
+from apps.movie.tests.test_helpers import create_mock_paginated_response
+from apps.movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
     create_paginated_tmdb_response,
     create_tmdb_movie,

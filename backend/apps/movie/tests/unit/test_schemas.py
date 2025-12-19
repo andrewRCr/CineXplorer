@@ -15,8 +15,8 @@ to ensure both TMDB and backend filtering parameters are correctly extracted.
 """
 from __future__ import annotations
 
-from movie.schemas import MovieDiscoverFilterSchema
-from movie.services.api_boundary import transform_to_service_params
+from apps.movie.schemas import MovieDiscoverFilterSchema
+from apps.movie.services.api_boundary import transform_to_service_params
 
 
 class TestMovieDiscoverFilterSchemaParameterExtraction:

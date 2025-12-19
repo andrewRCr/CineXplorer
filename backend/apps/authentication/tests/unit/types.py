@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from unittest.mock import Mock
 
-from authentication.services.authentication_service import AuthenticationService
+from apps.authentication.services.authentication_service import AuthenticationService
 
 
 @dataclass

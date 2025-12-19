@@ -8,13 +8,15 @@ from typing import cast
 from unittest.mock import Mock, patch
 
 import pytest
-from core.models import Movie
-from core.services.api_response import ApiResponse
-from core.tests.test_helpers import HTTPStatus
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.test_helpers import create_mock_movie_detail_response
-from user_movie_data.models import UserMovieData
+
+from apps.core.models import Movie
+from apps.core.services.api_response import ApiResponse
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.movie.tests.mock_paths import TMDB_CLIENT_GET, TMDB_CLIENT_GET_MOVIE_DETAILS
+from apps.movie.tests.test_helpers import create_mock_movie_detail_response
+from apps.user_movie_data.models import UserMovieData
 
 pytestmark = pytest.mark.django_db
 
@@ -39,8 +41,8 @@ def create_movie_stub(
     )
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
-@patch("core.services.tmdb_api_client.TMDBApiClient.get_movie_details")
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_movie_detail_authenticated(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -96,8 +98,8 @@ def test_get_movie_detail_authenticated(
     assert user_data["user_review"] == "Great movie!"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
-@patch("core.services.tmdb_api_client.TMDBApiClient.get_movie_details")
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_movie_detail_unauthenticated(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,

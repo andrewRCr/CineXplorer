@@ -32,10 +32,11 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from allauth.account.models import EmailAddress
-from authentication.schemas import PASSWORD_MIN_LENGTH
-from authentication.tests.fixtures import create_register_payload
-from core.tests.test_helpers import HTTPStatus, create_user, json_post
 from django.contrib.auth import get_user_model
+
+from apps.authentication.schemas import PASSWORD_MIN_LENGTH
+from apps.authentication.tests.fixtures import create_register_payload
+from apps.core.tests.test_helpers import HTTPStatus, create_user, json_post
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -60,7 +61,7 @@ def authenticated_user(api_client: Client) -> tuple[Client, User]:
 
     The client has JWT cookies set and is ready for authenticated requests.
     """
-    from core.tests.test_helpers import authenticate_client
+    from apps.core.tests.test_helpers import authenticate_client
 
     user = create_user(
         username="privateUser",
@@ -519,15 +520,16 @@ def test_throttling_infrastructure_ready() -> None:
     3. settings.TESTING flag controls throttling behavior
 
     Note: Comprehensive rate limiting tests with actual throttling behavior
-    will be added in Task 7.5.3 using pytest.mark.enable_throttling decorator
+    are in test_rate_limiting.py using pytest.mark.enable_throttling decorator
     and LocMemCache for realistic throttle testing.
 
     This smoke test just confirms the infrastructure is in place and won't
     cause import errors or configuration issues.
     """
     # Import throttle classes to verify they're properly defined
-    from authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
     from django.conf import settings
+
+    from apps.authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
 
     # Verify TESTING flag exists and is True in test environment
     assert getattr(settings, "TESTING", False), (

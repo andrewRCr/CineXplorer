@@ -13,13 +13,15 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 import pytest
-from core.services.api_response import ApiResponse
-from core.tmdb_models.tmdb_responses import (
+from ninja.errors import HttpError
+
+from apps.core.services.api_response import ApiResponse
+from apps.core.tmdb_models.tmdb_responses import (
     TMDBCountryReleases,
     TMDBReleaseDate,
     TMDBReleaseDatesResponse,
 )
-from movie.schemas import (
+from apps.movie.schemas import (
     GenreSchema,
     KeywordListResponseSchema,
     MovieDetailSchema,
@@ -27,7 +29,7 @@ from movie.schemas import (
     MovieListResponseSchema,
     PersonListResponseSchema,
 )
-from movie.services.tmdb_api_boundary.response_factories import (
+from apps.movie.services.tmdb_api_boundary.response_factories import (
     create_genre_list_from_tmdb,
     create_movie_base_from_tmdb,
     create_movie_detail_from_tmdb,
@@ -38,7 +40,6 @@ from movie.services.tmdb_api_boundary.response_factories import (
     get_validated_response,
     handle_tmdb_api_error,
 )
-from ninja.errors import HttpError
 
 # ============================================================================
 # extract_us_certification Tests

@@ -3,13 +3,14 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from authentication.tests.test_helpers import (
+from django.core.exceptions import ValidationError
+from django.test import override_settings
+
+from apps.authentication.tests.test_helpers import (
     create_register_input,
     normalize_response_data,
 )
-from authentication.tests.unit.types import AuthServiceFactory
-from django.core.exceptions import ValidationError
-from django.test import override_settings
+from apps.authentication.tests.unit.types import AuthServiceFactory
 
 
 def test_register_user_success(auth_service_factory: AuthServiceFactory) -> None:

@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from movie.services.api_boundary import BrowseServiceParams
-from movie.services.movie_service import MovieService
-from movie.tests.test_helpers import create_mock_paginated_response
-from movie.tests.tmdb_test_builders import create_tmdb_movie
+from apps.movie.services.api_boundary import BrowseServiceParams
+from apps.movie.services.movie_service import MovieService
+from apps.movie.tests.test_helpers import create_mock_paginated_response
+from apps.movie.tests.tmdb_test_builders import create_tmdb_movie
 
 
 def test_filter_movies_excludes_pre_cinema_dates() -> None:

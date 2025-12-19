@@ -19,17 +19,19 @@ from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock, patch
 
 import pytest
-from core.models import Movie
-from core.services.api_response import ApiResponse
-from core.tests.test_helpers import HTTPStatus
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
-from movie.tests.test_helpers import (
+
+from apps.core.models import Movie
+from apps.core.services.api_response import ApiResponse
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.movie.tests.mock_paths import TMDB_CLIENT_GET, TMDB_CLIENT_GET_MOVIE_DETAILS
+from apps.movie.tests.test_helpers import (
     create_mock_movie_detail_response,
     create_mock_paginated_response,
     create_tmdb_movie,
 )
-from user_movie_data.models import UserMovieData
+from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -65,14 +67,14 @@ def create_movie_stub(tmdb_id: int, title: str = 'Test Movie') -> Movie:
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
+        'apps.core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/upcoming', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+    ('/api/movies/upcoming', 'apps.core.services.tmdb_api_client.TMDBApiClient.get'),
     (
         '/api/movies/search?query=test',
-        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
+        'apps.core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/browse', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+    ('/api/movies/browse', 'apps.core.services.tmdb_api_client.TMDBApiClient.get'),
 ], ids=['now_playing', 'upcoming', 'search', 'browse'])
 def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     api_client: Client,
@@ -137,14 +139,14 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
+        'apps.core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/upcoming', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+    ('/api/movies/upcoming', 'apps.core.services.tmdb_api_client.TMDBApiClient.get'),
     (
         '/api/movies/search?query=test',
-        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
+        'apps.core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/browse', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+    ('/api/movies/browse', 'apps.core.services.tmdb_api_client.TMDBApiClient.get'),
 ], ids=['now_playing', 'upcoming', 'search', 'browse'])
 def test_discovery_endpoint_works_for_unauthenticated_user(
     api_client: Client,
@@ -192,14 +194,14 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
+        'apps.core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/upcoming', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+    ('/api/movies/upcoming', 'apps.core.services.tmdb_api_client.TMDBApiClient.get'),
     (
         '/api/movies/search?query=test',
-        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
+        'apps.core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/browse', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+    ('/api/movies/browse', 'apps.core.services.tmdb_api_client.TMDBApiClient.get'),
 ], ids=['now_playing', 'upcoming', 'search', 'browse'])
 def test_discovery_endpoint_returns_none_for_movies_without_user_data(
     api_client: Client,
@@ -247,8 +249,8 @@ def test_discovery_endpoint_returns_none_for_movies_without_user_data(
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -312,8 +314,8 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_movie_detail_endpoint_works_for_unauthenticated_user(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -361,9 +363,9 @@ def test_movie_detail_endpoint_works_for_unauthenticated_user(
 @pytest.mark.parametrize('endpoint,mock_path', [
     (
         '/api/movies/now-playing',
-        'core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
+        'apps.core.services.tmdb_api_client.TMDBApiClient.get'  # Now uses discover endpoint
     ),
-    ('/api/movies/browse?genres=28', 'core.services.tmdb_api_client.TMDBApiClient.get'),
+    ('/api/movies/browse?genres=28', 'apps.core.services.tmdb_api_client.TMDBApiClient.get'),
 ], ids=['now_playing', 'browse_with_filters'])
 def test_enrichment_handles_multiple_movies_efficiently(
     api_client: Client,

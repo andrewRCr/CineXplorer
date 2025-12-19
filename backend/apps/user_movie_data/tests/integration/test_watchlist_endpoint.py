@@ -22,10 +22,15 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
-from core.models import Movie
-from core.services.api_response import ApiResponse
-from core.tests.test_helpers import HTTPStatus
-from user_movie_data.models import UserMovieData
+
+from apps.core.models import Movie
+from apps.core.services.api_response import ApiResponse
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.tests.mock_paths import (
+    TMDB_CLIENT_GET,
+    TMDB_CLIENT_GET_MOVIE_DETAILS,
+)
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -87,7 +92,7 @@ def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
     Creates a verified user (can login) and authenticates via the JWT token
     endpoint which sets the necessary cookies for Django Ninja JWTCookieAuth.
     """
-    from core.tests.test_helpers import authenticate_client, create_user
+    from apps.core.tests.test_helpers import authenticate_client, create_user
 
     # Create verified user (create_user() verifies email by default)
     user = create_user(
@@ -123,8 +128,8 @@ def test_watchlist_endpoint_requires_authentication(api_client: Client) -> None:
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_user_movies_returns_all_user_movies(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -221,8 +226,8 @@ def test_get_user_movies_returns_all_user_movies(
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_user_movies_with_watchlist_filter(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -365,8 +370,8 @@ def test_get_user_movies_with_watchlist_filter_returns_empty_when_no_watchlist_m
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_user_movies_shows_only_current_users_movies(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -390,7 +395,7 @@ def test_get_user_movies_shows_only_current_users_movies(
     )
 
     # Arrange: Create data for DIFFERENT user
-    from core.tests.test_helpers import create_user
+    from apps.core.tests.test_helpers import create_user
     other_user = create_user(
         username="otheruser",
         email="other@example.com",
@@ -440,8 +445,8 @@ def test_get_user_movies_shows_only_current_users_movies(
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_user_movies_handles_tmdb_api_errors_gracefully(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -508,8 +513,8 @@ def test_get_user_movies_handles_tmdb_api_errors_gracefully(
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_user_movies_enrichment_populates_user_movie_data(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
@@ -578,8 +583,8 @@ def test_get_user_movies_enrichment_populates_user_movie_data(
 
 
 @pytest.mark.django_db
-@patch('core.services.tmdb_api_client.TMDBApiClient.get')
-@patch('core.services.tmdb_api_client.TMDBApiClient.get_movie_details')
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_get_user_movies_returns_pagination_structure(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,

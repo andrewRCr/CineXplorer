@@ -17,9 +17,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from core.models import Movie
-from core.tests.test_helpers import HTTPStatus, get_csrf_token
-from user_movie_data.models import UserMovieData
+
+from apps.core.models import Movie
+from apps.core.tests.test_helpers import HTTPStatus, get_csrf_token
+from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -71,7 +72,7 @@ def other_movie(db: None) -> Movie:
 @pytest.fixture
 def other_user(db: None) -> User:
     """Create a second test user for ownership tests."""
-    from core.tests.test_helpers import create_user
+    from apps.core.tests.test_helpers import create_user
     return create_user(
         email="otheruser@example.com",
         password="testpass123",
@@ -87,7 +88,7 @@ def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
     Creates a verified user (can login) and authenticates via the JWT token
     endpoint which sets the necessary cookies for Django Ninja JWTCookieAuth.
     """
-    from core.tests.test_helpers import authenticate_client, create_user
+    from apps.core.tests.test_helpers import authenticate_client, create_user
 
     # Create verified user (create_user() verifies email by default)
     user = create_user(

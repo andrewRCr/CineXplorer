@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from movie.services.data_quality.policy import (
+from apps.movie.services.data_quality.policy import (
     MODERATE_VOTE_THRESHOLD,
     STRICT_VOTE_THRESHOLD,
     VoteCountPolicy,

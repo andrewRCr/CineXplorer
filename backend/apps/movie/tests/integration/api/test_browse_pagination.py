@@ -12,11 +12,13 @@ Tests the smart buffer pagination mechanism including:
 from unittest.mock import Mock, patch
 
 import pytest
-from core.services.api_response import ApiResponse
-from core.tests.test_helpers import HTTPStatus
 from django.test import Client
-from movie.tests.test_helpers import create_mock_paginated_response
-from movie.tests.tmdb_test_builders import create_tmdb_movie
+
+from apps.core.services.api_response import ApiResponse
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.movie.tests.mock_paths import BLACKLIST_CACHE, TMDB_CLIENT_GET
+from apps.movie.tests.test_helpers import create_mock_paginated_response
+from apps.movie.tests.tmdb_test_builders import create_tmdb_movie
 
 BROWSE_URL = "/api/movies/browse"
 
@@ -52,7 +54,7 @@ def create_buffer_pages(
     return pages
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_returns_next_tmdb_page_start_after_buffer(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -111,7 +113,7 @@ def test_browse_returns_next_tmdb_page_start_after_buffer(
     )
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_continues_from_tmdb_page_start_parameter(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -155,7 +157,7 @@ def test_browse_continues_from_tmdb_page_start_parameter(
     )
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_fallback_when_tmdb_page_start_omitted(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -192,7 +194,7 @@ def test_browse_fallback_when_tmdb_page_start_omitted(
     )
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_respects_max_buffer_pages_with_heavy_duplication(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -256,7 +258,7 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
     )
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_no_cross_page_duplicates(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -330,7 +332,7 @@ def test_browse_no_cross_page_duplicates(
     assert 19 not in page_2_ids, "Movie 19 should NOT appear on page 2 (cross-page duplicate)"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_backward_navigation_consistency(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -425,7 +427,7 @@ def test_browse_backward_navigation_consistency(
 # ============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_page_1_stores_returned_ids_in_session(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -477,7 +479,7 @@ def test_page_1_stores_returned_ids_in_session(
     assert len(overlap) == 0, f"Page 2 contains IDs already shown on page 1: {overlap}"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_session_cleared_on_page_1_fresh_start(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -561,7 +563,7 @@ def test_session_cleared_on_page_1_fresh_start(
     assert len(overlap) == 0, f"Fresh sequence should have no cross-page duplicates: {overlap}"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_different_filter_combinations_use_different_sessions(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -630,7 +632,7 @@ def test_different_filter_combinations_use_different_sessions(
 # ============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_page_1_with_tmdb_page_start_preserves_session(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -690,7 +692,7 @@ def test_page_1_with_tmdb_page_start_preserves_session(
     assert len(overlap) == 0, f"Cross-page duplicates found in infinite scroll: {overlap}"
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_page_1_without_tmdb_page_start_clears_session(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -752,7 +754,7 @@ def test_page_1_without_tmdb_page_start_clears_session(
 # ============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_different_pagination_context_headers_use_separate_sessions(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -840,7 +842,7 @@ def test_different_pagination_context_headers_use_separate_sessions(
     # The key test is that Tab 2 excluded based on its OWN page 1, not Tab 1's
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_requests_without_context_header_work_backwards_compatible(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -896,7 +898,7 @@ SEARCH_URL = "/api/movies/search"
 # filters generate different cache keys.
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_search_pagination_deduplicates_across_pages(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -953,8 +955,8 @@ def test_search_pagination_deduplicates_across_pages(
 # ============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
-@patch("apps.movie.services.data_quality.filters.cache")
+@patch(TMDB_CLIENT_GET)
+@patch(BLACKLIST_CACHE)
 def test_graceful_degradation_when_redis_unavailable(
     mock_cache: Mock,
     mock_tmdb_get: Mock,
@@ -992,7 +994,7 @@ def test_graceful_degradation_when_redis_unavailable(
 # ============================================================================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_returns_null_next_page_when_exceeds_total_pages(
     mock_tmdb_get: Mock,
     api_client: Client,
@@ -1024,7 +1026,7 @@ def test_browse_returns_null_next_page_when_exceeds_total_pages(
     )
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_browse_returns_null_next_page_when_buffer_returns_empty(
     mock_tmdb_get: Mock,
     api_client: Client,

@@ -24,9 +24,11 @@ from __future__ import annotations
 from unittest.mock import Mock, patch
 
 import pytest
-from core.tests.test_helpers import create_mock_user
 from ninja.errors import HttpError
-from user_movie_data.tests.test_helpers import (
+
+from apps.core.tests.test_helpers import create_mock_user
+from apps.user_movie_data.tests.mock_paths import FETCH_MOVIES_BATCH
+from apps.user_movie_data.tests.test_helpers import (
     create_mock_movie,
     create_mock_user_movie_data,
     create_movie_detail_schema,
@@ -45,7 +47,7 @@ class TestServiceInitialization:
     def test_service_initialization_with_defaults(self) -> None:
         """Test that service can be initialized with default dependencies."""
         # Import here to test initialization
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -54,7 +56,7 @@ class TestServiceInitialization:
 
     def test_service_initialization_with_injected_dependencies(self) -> None:
         """Test that service accepts injected repository and movie service."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -81,7 +83,7 @@ class TestCreateOperation:
 
     def test_create_with_existing_movie_succeeds(self) -> None:
         """Test creating UserMovieData when movie already exists locally."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -124,7 +126,7 @@ class TestCreateOperation:
 
     def test_create_fetches_from_tmdb_when_movie_not_local(self) -> None:
         """Test creating UserMovieData fetches movie from TMDB if not in local DB."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -172,7 +174,7 @@ class TestCreateOperation:
 
     def test_create_raises_when_tmdb_movie_not_found(self) -> None:
         """Test that create raises HttpError when movie not found in TMDB."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -201,7 +203,7 @@ class TestCreateOperation:
 
     def test_create_raises_when_already_exists(self) -> None:
         """Test that create raises HttpError when UserMovieData already exists."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -237,7 +239,7 @@ class TestReadOperations:
 
     def test_get_by_id_returns_user_movie_data(self) -> None:
         """Test getting UserMovieData by its primary key."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -269,7 +271,7 @@ class TestReadOperations:
 
     def test_get_by_id_raises_when_not_found(self) -> None:
         """Test that get_by_id raises HttpError when record not found."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -292,7 +294,7 @@ class TestReadOperations:
 
     def test_get_by_tmdb_id_returns_user_movie_data(self) -> None:
         """Test getting UserMovieData by TMDB ID."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -322,7 +324,7 @@ class TestReadOperations:
 
     def test_get_by_tmdb_id_raises_when_not_found(self) -> None:
         """Test that get_by_tmdb_id raises HttpError when not found."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -354,7 +356,7 @@ class TestUpdateOperation:
 
     def test_update_partial_fields_succeeds(self) -> None:
         """Test updating a subset of fields (partial update)."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -394,7 +396,7 @@ class TestUpdateOperation:
 
     def test_update_raises_when_not_found(self) -> None:
         """Test that update raises HttpError when record not found."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -417,7 +419,7 @@ class TestUpdateOperation:
 
     def test_update_with_no_changes_succeeds(self) -> None:
         """Test that update with no fields still works (no-op)."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -452,7 +454,7 @@ class TestDeleteOperation:
 
     def test_delete_succeeds(self) -> None:
         """Test deleting UserMovieData record."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -477,7 +479,7 @@ class TestDeleteOperation:
 
     def test_delete_raises_when_not_found(self) -> None:
         """Test that delete raises HttpError when record not found."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -507,13 +509,13 @@ class TestDeleteOperation:
 class TestQueryOperations:
     """Tests for UserMovieDataService query/filter methods."""
 
-    @patch('user_movie_data.services.user_movie_data_service.fetch_movies_batch')
+    @patch(FETCH_MOVIES_BATCH)
     def test_get_user_movies_returns_paginated_list(
         self,
         mock_fetch_movies_batch: Mock,
     ) -> None:
         """Test getting user's movies with pagination."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -551,13 +553,13 @@ class TestQueryOperations:
         assert len(result.results) == 2
         mock_fetch_movies_batch.assert_called_once_with([111, 222])
 
-    @patch('user_movie_data.services.user_movie_data_service.fetch_movies_batch')
+    @patch(FETCH_MOVIES_BATCH)
     def test_get_user_movies_with_watchlist_filter(
         self,
         mock_fetch_movies_batch: Mock,
     ) -> None:
         """Test filtering user's movies to watchlist only."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -599,13 +601,13 @@ class TestQueryOperations:
         call_kwargs = mock_repo.get_filtered.call_args[1]
         assert call_kwargs.get("watchlist_only") is True
 
-    @patch('user_movie_data.services.user_movie_data_service.fetch_movies_batch')
+    @patch(FETCH_MOVIES_BATCH)
     def test_get_user_movies_returns_empty_for_no_data(
         self,
         mock_fetch_movies_batch: Mock,
     ) -> None:
         """Test that empty list returns proper empty response."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -635,13 +637,13 @@ class TestQueryOperations:
         # Movie service should NOT be called for empty list
         mock_fetch_movies_batch.assert_not_called()
 
-    @patch('user_movie_data.services.user_movie_data_service.fetch_movies_batch')
+    @patch(FETCH_MOVIES_BATCH)
     def test_get_user_movies_skips_unavailable_tmdb_movies(
         self,
         mock_fetch_movies_batch: Mock,
     ) -> None:
         """Test that movies no longer in TMDB are skipped gracefully."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -681,13 +683,13 @@ class TestQueryOperations:
         assert result.results[0].tmdb_id == 111
         assert result.results[1].tmdb_id == 333
 
-    @patch('user_movie_data.services.user_movie_data_service.fetch_movies_batch')
+    @patch(FETCH_MOVIES_BATCH)
     def test_get_all_user_movies_returns_full_list(
         self,
         mock_fetch_movies_batch: Mock,
     ) -> None:
         """Test getting all user's movies without pagination."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -722,13 +724,13 @@ class TestQueryOperations:
         assert result.total_results == 2
         assert len(result.results) == 2
 
-    @patch('user_movie_data.services.user_movie_data_service.fetch_movies_batch')
+    @patch(FETCH_MOVIES_BATCH)
     def test_get_all_user_movies_returns_empty_for_no_data(
         self,
         mock_fetch_movies_batch: Mock,
     ) -> None:
         """Test that empty list returns proper empty response."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -754,13 +756,13 @@ class TestQueryOperations:
         assert result.results == []
         mock_fetch_movies_batch.assert_not_called()
 
-    @patch('user_movie_data.services.user_movie_data_service.fetch_movies_batch')
+    @patch(FETCH_MOVIES_BATCH)
     def test_get_all_user_movies_skips_unavailable_tmdb_movies(
         self,
         mock_fetch_movies_batch: Mock,
     ) -> None:
         """Test that unavailable TMDB movies are skipped gracefully."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -807,7 +809,7 @@ class TestAuthorizationChecks:
 
     def test_user_cannot_access_other_users_data(self) -> None:
         """Test that service enforces user isolation via repository."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 
@@ -832,7 +834,7 @@ class TestAuthorizationChecks:
 
     def test_all_operations_pass_user_to_repository(self) -> None:
         """Test that all CRUD operations pass user to repository for filtering."""
-        from user_movie_data.services.user_movie_data_service import (
+        from apps.user_movie_data.services.user_movie_data_service import (
             UserMovieDataService,
         )
 

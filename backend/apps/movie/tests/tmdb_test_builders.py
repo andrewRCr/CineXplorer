@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import NotRequired, TypedDict
 
-from core.tmdb_models.tmdb_responses import (
+from apps.core.tmdb_models.tmdb_responses import (
     TMDBGenre,
     TMDBMovieBase,
     TMDBMovieDetail,

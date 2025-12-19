@@ -16,10 +16,11 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 import pytest
-from core.services.api_response import ApiResponse
-from movie.schemas import PersonListResponseSchema
-from movie.tests.tmdb_test_builders import TMDBPersonResponse
 from ninja.errors import HttpError
+
+from apps.core.services.api_response import ApiResponse
+from apps.movie.schemas import PersonListResponseSchema
+from apps.movie.tests.tmdb_test_builders import TMDBPersonResponse
 
 # ============================================================================
 # PeopleService Class Tests - Constructor and DI
@@ -28,7 +29,7 @@ from ninja.errors import HttpError
 
 def test_people_service_constructor_with_injected_client() -> None:
     """Test PeopleService constructor accepts injected TMDB client."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client
     mock_client = Mock(spec=['get'])
@@ -42,7 +43,7 @@ def test_people_service_constructor_with_injected_client() -> None:
 
 def test_people_service_constructor_with_default_client() -> None:
     """Test PeopleService constructor creates default client when none injected."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Act: Create service without injecting client
     service = PeopleService()
@@ -59,7 +60,7 @@ def test_people_service_constructor_with_default_client() -> None:
 
 def test_get_popular_people_uses_injected_client() -> None:
     """Test get_popular_people calls injected client, not global tmdb_client."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client with successful response
     mock_client = Mock(spec=['get'])
@@ -105,7 +106,7 @@ def test_get_popular_people_uses_injected_client() -> None:
 
 def test_get_popular_people_handles_api_error() -> None:
     """Test get_popular_people raises HttpError when TMDB API fails."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client that returns error response
     mock_client = Mock(spec=['get'])
@@ -120,7 +121,7 @@ def test_get_popular_people_handles_api_error() -> None:
 
 def test_get_popular_people_default_page() -> None:
     """Test get_popular_people uses default page=1 when not specified."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client
     mock_client = Mock(spec=['get'])
@@ -149,7 +150,7 @@ def test_get_popular_people_default_page() -> None:
 
 def test_search_people_uses_injected_client() -> None:
     """Test search_people calls injected client, not global tmdb_client."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client with successful response
     mock_client = Mock(spec=['get'])
@@ -198,7 +199,7 @@ def test_search_people_uses_injected_client() -> None:
 
 def test_search_people_handles_empty_query() -> None:
     """Test search_people returns empty response for invalid queries."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create service (client won't be called)
     mock_client = Mock(spec=['get'])
@@ -225,7 +226,7 @@ def test_search_people_handles_empty_query() -> None:
 
 def test_search_people_handles_api_error() -> None:
     """Test search_people raises HttpError when TMDB API fails."""
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client that returns error response
     mock_client = Mock(spec=['get'])
@@ -245,21 +246,21 @@ def test_search_people_handles_api_error() -> None:
 
 def test_get_people_service_factory_creates_service_with_default_client() -> None:
     """Test get_people_service factory function returns service with default client."""
-    from movie.services.service_factory import get_people_service
+    from apps.movie.services.service_factory import get_people_service
 
     # Act: Create service via factory
     service = get_people_service()
 
     # Assert: Service is PeopleService instance with client
-    from movie.services.people_service import PeopleService
+    from apps.movie.services.people_service import PeopleService
     assert isinstance(service, PeopleService)
     assert service._tmdb_client is not None  # pyright: ignore[reportPrivateUsage]
 
 
 def test_get_people_service_factory_returns_people_service_instance() -> None:
     """Test get_people_service factory returns correct service type."""
-    from movie.services.people_service import PeopleService
-    from movie.services.service_factory import get_people_service
+    from apps.movie.services.people_service import PeopleService
+    from apps.movie.services.service_factory import get_people_service
 
     # Act: Create service via factory
     service = get_people_service()

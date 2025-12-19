@@ -20,14 +20,16 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
-from core.tests.test_helpers import HTTPStatus
-from movie.services.data_quality.policy import VOTE_COUNT_THRESHOLD
-from movie.tests.integration.api.endpoint_configs import (
+
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.movie.services.data_quality.policy import VOTE_COUNT_THRESHOLD
+from apps.movie.tests.integration.api.endpoint_configs import (
     ALL_ENDPOINTS,
     DATE_CONSTRAINED_ENDPOINTS,
     EndpointConfig,
 )
-from movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
+from apps.movie.tests.mock_paths import TMDB_CLIENT_GET
+from apps.movie.tests.test_helpers import create_mock_paginated_response, create_tmdb_movie
 
 if TYPE_CHECKING:
     from datetime import date
@@ -49,7 +51,7 @@ class TestResponseContract:
     """
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_returns_200_with_results(
         self,
         mock_tmdb_get: Mock,
@@ -98,7 +100,7 @@ class TestResponseContract:
         assert data["results"][0]["title"] == "Test Movie 1"
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_buffer_fills_to_20_results(
         self,
         mock_tmdb_get: Mock,
@@ -139,7 +141,7 @@ class TestResponseContract:
         assert data["total_pages"] > data["page"]
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_pagination_metadata_correct(
         self,
         mock_tmdb_get: Mock,
@@ -258,7 +260,7 @@ class TestBusinessConstraints:
     """
 
     @pytest.mark.parametrize("config", DATE_CONSTRAINED_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_date_range_params_sent_to_tmdb(
         self,
         mock_tmdb_get: Mock,
@@ -310,7 +312,7 @@ class TestBusinessConstraints:
         assert params["primary_release_date.lte"] == expected_max.isoformat()
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_min_vote_count_behavior(
         self,
         mock_tmdb_get: Mock,
@@ -385,7 +387,7 @@ class TestDataQuality:
     """
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_completeness_filtering(
         self,
         mock_tmdb_get: Mock,
@@ -445,7 +447,7 @@ class TestDataQuality:
         assert data["results"][0]["overview"] == "A complete movie with all required fields."
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_filter_passthrough_genre(
         self,
         mock_tmdb_get: Mock,
@@ -487,7 +489,7 @@ class TestDataQuality:
         assert params["with_genres"] == "28"
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_filter_passthrough_rating(
         self,
         mock_tmdb_get: Mock,
@@ -531,7 +533,7 @@ class TestDataQuality:
         assert params["vote_average.lte"] == 9.0
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_filter_passthrough_multiple(
         self,
         mock_tmdb_get: Mock,
@@ -575,7 +577,7 @@ class TestDataQuality:
         assert params["vote_average.gte"] == 7.0
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_deduplication_across_pages(
         self,
         mock_tmdb_get: Mock,
@@ -677,7 +679,7 @@ class TestDataQuality:
         assert result_ids.count(18) == 1
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_filter_passthrough_language(
         self,
         mock_tmdb_get: Mock,
@@ -719,7 +721,7 @@ class TestDataQuality:
         assert params["with_original_language"] == "en"
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_filter_no_language_when_all_selected(
         self,
         mock_tmdb_get: Mock,
@@ -761,7 +763,7 @@ class TestDataQuality:
         assert "with_original_language" not in params
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_filter_passthrough_certification(
         self,
         mock_tmdb_get: Mock,
@@ -808,7 +810,7 @@ class TestDataQuality:
         assert params["certification_country"] == "US"
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
-    @patch("core.services.tmdb_api_client.TMDBApiClient.get")
+    @patch(TMDB_CLIENT_GET)
     def test_filter_passthrough_certification_multiple(
         self,
         mock_tmdb_get: Mock,

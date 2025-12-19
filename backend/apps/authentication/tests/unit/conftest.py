@@ -5,11 +5,12 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
-from authentication.tests.test_helpers import create_mock_jwt_settings
-from authentication.tests.unit.types import AuthServiceDeps, AuthServiceFactory
+
+from apps.authentication.tests.test_helpers import create_mock_jwt_settings
+from apps.authentication.tests.unit.types import AuthServiceDeps, AuthServiceFactory
 
 if TYPE_CHECKING:
-    from authentication.services.authentication_service import AuthenticationService
+    from apps.authentication.services.authentication_service import AuthenticationService
 
 @pytest.fixture()
 def auth_service_factory() -> AuthServiceFactory:
@@ -20,7 +21,7 @@ def auth_service_factory() -> AuthServiceFactory:
         Factory function to build service + dependency mocks.
     """
     def _factory(**overrides: object) -> tuple[AuthenticationService, AuthServiceDeps]:
-        from authentication.services.authentication_service import AuthenticationService
+        from apps.authentication.services.authentication_service import AuthenticationService
 
         user_model = Mock()
         email_address_model = Mock()

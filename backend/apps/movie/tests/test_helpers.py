@@ -26,8 +26,8 @@ by services. Tests use the same validation boundary pattern.
 """
 from __future__ import annotations
 
-from core.services.api_response import ApiResponse
-from core.tmdb_models.tmdb_responses import (
+from apps.core.services.api_response import ApiResponse
+from apps.core.tmdb_models.tmdb_responses import (
     TMDBMovieBase,
 )
 

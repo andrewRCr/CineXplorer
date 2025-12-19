@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from core.services.api_response import ApiResponse
-from movie.schemas import MovieListResponseSchema
-from movie.services.api_boundary import BrowseServiceParams
-from movie.services.movie_service import MovieService
-from movie.tests.test_helpers import create_mock_paginated_response
-from movie.tests.tmdb_test_builders import (
+from apps.core.services.api_response import ApiResponse
+from apps.movie.schemas import MovieListResponseSchema
+from apps.movie.services.api_boundary import BrowseServiceParams
+from apps.movie.services.movie_service import MovieService
+from apps.movie.tests.test_helpers import create_mock_paginated_response
+from apps.movie.tests.tmdb_test_builders import (
     TMDBMovieBaseRawDict,
     create_paginated_tmdb_response,
     create_tmdb_movie,
@@ -118,7 +118,7 @@ def test_search_movies_filters_incorrect_release_years() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Search "Batman" filtered to 2020s
-    from movie.services.api_boundary import SearchServiceParams
+    from apps.movie.services.api_boundary import SearchServiceParams
     result = service.search_movies(
         page=1,
         params=SearchServiceParams(

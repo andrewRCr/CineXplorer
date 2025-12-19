@@ -7,10 +7,12 @@ They wrap TMDB API calls and return structured responses.
 from unittest.mock import Mock, patch
 
 import pytest
-from core.services.api_response import ApiResponse
-from core.tests.test_helpers import HTTPStatus
-from core.types.api_types import TMDBResponseData
 from django.test import Client
+
+from apps.core.services.api_response import ApiResponse
+from apps.core.tests.test_helpers import HTTPStatus
+from apps.core.types.api_types import TMDBResponseData
+from apps.movie.tests.mock_paths import TMDB_CLIENT_GET
 
 pytestmark = pytest.mark.django_db
 
@@ -20,7 +22,7 @@ pytestmark = pytest.mark.django_db
 # =========================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_get_movie_genres(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test retrieving the list of available movie genres from TMDB."""
     # Arrange: Mock TMDB genres response
@@ -51,7 +53,7 @@ def test_get_movie_genres(mock_tmdb_get: Mock, api_client: Client) -> None:
 # =========================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_get_popular_keywords(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test retrieving popular keywords with pagination."""
     # Arrange: Mock TMDB keywords response
@@ -79,7 +81,7 @@ def test_get_popular_keywords(mock_tmdb_get: Mock, api_client: Client) -> None:
     assert len(data["results"]) == 2
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_search_keywords(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test searching for keywords by query string."""
     # Arrange: Mock TMDB search keywords response
@@ -108,7 +110,7 @@ def test_search_keywords(mock_tmdb_get: Mock, api_client: Client) -> None:
 # =========================
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_get_popular_people(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test retrieving popular people (actors, directors, etc.) with pagination."""
     # Arrange: Mock TMDB people response
@@ -136,7 +138,7 @@ def test_get_popular_people(mock_tmdb_get: Mock, api_client: Client) -> None:
     assert len(data["results"]) == 2
 
 
-@patch("core.services.tmdb_api_client.TMDBApiClient.get")
+@patch(TMDB_CLIENT_GET)
 def test_search_people(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Test searching for people by query string."""
     # Arrange: Mock TMDB search people response

@@ -91,8 +91,9 @@ def samesite_user(api_client: Client) -> tuple[dict[str, str], Client]:
     Returns tuple of (user_data, client) with logged-in session ready.
     """
     from allauth.account.models import EmailAddress
-    from core.tests.test_helpers import create_user
     from django.contrib.auth import get_user_model
+
+    from apps.core.tests.test_helpers import create_user
 
     user_data = {
         'username': 'samesiteuser',
@@ -129,7 +130,7 @@ def test_login_sets_access_token_samesite_lax(
     import json
     from typing import cast
 
-    from core.tests.test_helpers import json_post
+    from apps.core.tests.test_helpers import json_post
 
     user_data, client = samesite_user
     login_payload = {
@@ -156,7 +157,7 @@ def test_login_sets_refresh_token_samesite_lax(
     """Login response sets refresh_token cookie with SameSite=Lax."""
     from typing import cast
 
-    from core.tests.test_helpers import json_post
+    from apps.core.tests.test_helpers import json_post
 
     user_data, client = samesite_user
     login_payload = {
@@ -179,7 +180,7 @@ def test_token_refresh_maintains_samesite_lax(
     """Token refresh response maintains SameSite=Lax for both cookies."""
     from typing import cast
 
-    from core.tests.test_helpers import json_post
+    from apps.core.tests.test_helpers import json_post
 
     user_data, client = samesite_user
 

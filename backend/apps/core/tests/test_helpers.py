@@ -102,7 +102,7 @@ def authenticate_client(client: Client, username: str, password: str) -> None:
         password: Password for authentication
 
     Example:
-        from core.tests.test_helpers import create_user, authenticate_client
+        from apps.core.tests.test_helpers import create_user, authenticate_client
 
         user = create_user(username='testuser', password='testpass123')
         authenticate_client(api_client, 'testuser', 'testpass123')
@@ -142,7 +142,7 @@ def login_and_get_tokens(
         Tuple of (access_token, refresh_token) as strings
 
     Example:
-        from core.tests.test_helpers import create_user, login_and_get_tokens
+        from apps.core.tests.test_helpers import create_user, login_and_get_tokens
 
         user = create_user(username='testuser', password='testpass123')
         access_token, refresh_token = login_and_get_tokens(
@@ -177,7 +177,7 @@ def create_fresh_client(refresh_token: str | None = None) -> Client:
         Fresh Client instance (no session, optional refresh token cookie)
 
     Example:
-        from core.tests.test_helpers import create_fresh_client
+        from apps.core.tests.test_helpers import create_fresh_client
         from ninja_jwt.tokens import RefreshToken
 
         # Create tokens manually
@@ -428,7 +428,7 @@ def create_user_and_auth_payload(
                        ready for json_post to /api/token/ endpoint
 
     Example:
-        from core.tests.test_helpers import create_user_and_auth_payload, json_post
+        from apps.core.tests.test_helpers import create_user_and_auth_payload, json_post
 
         # Old 3-line pattern:
         user_details = {"username": "testuser", "password": "testpass123"}
@@ -486,7 +486,7 @@ def create_mock_user(
         Mock object with id, username, and email attributes
 
     Example:
-        from core.tests.test_helpers import create_mock_user
+        from apps.core.tests.test_helpers import create_mock_user
 
         # Unit test with mocked user
         mock_user = create_mock_user(user_id=42, username="alice")

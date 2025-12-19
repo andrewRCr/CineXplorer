@@ -6,7 +6,7 @@ semantic identity.
 """
 
 
-from movie.helpers import (
+from apps.movie.helpers import (
     BROWSE_PROTECTED_KEYS,
     NOW_PLAYING_PROTECTED_KEYS,
     UPCOMING_PROTECTED_KEYS,

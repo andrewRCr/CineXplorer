@@ -3,12 +3,12 @@ from __future__ import annotations
 
 from unittest.mock import Mock
 
-from authentication.tests.test_helpers import (
+from apps.authentication.tests.test_helpers import (
     create_email_verification_input,
     create_resend_verification_input,
     normalize_response_data,
 )
-from authentication.tests.unit.types import AuthServiceFactory
+from apps.authentication.tests.unit.types import AuthServiceFactory
 
 
 def test_verify_email_success_with_hmac(auth_service_factory: AuthServiceFactory) -> None:

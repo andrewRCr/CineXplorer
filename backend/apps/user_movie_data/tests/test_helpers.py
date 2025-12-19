@@ -18,15 +18,15 @@ user_movie_data domain (UserMovieData, MovieEnrichmentService, etc.).
 
 **Import Pattern:**
     # For unit tests
-    from core.tests.test_helpers import create_mock_user
-    from user_movie_data.tests.test_helpers import (
+    from apps.core.tests.test_helpers import create_mock_user
+    from apps.user_movie_data.tests.test_helpers import (
         create_mock_user_movie_data,
         create_mock_movie,
         create_pagination_metadata,
     )
 
     # For TMDB schema builders (used by movie service mocks)
-    from movie.tests.tmdb_test_builders import create_tmdb_movie_detail
+    from apps.movie.tests.tmdb_test_builders import create_tmdb_movie_detail
 
 **Exported Helpers:**
 - create_mock_user_movie_data() - Mock UserMovieData record
@@ -40,7 +40,7 @@ from __future__ import annotations
 from datetime import date
 from unittest.mock import Mock
 
-from movie.schemas import MovieDetailSchema, MovieListItemSchema
+from apps.movie.schemas import MovieDetailSchema, MovieListItemSchema
 
 __all__ = [
     "create_mock_movie",

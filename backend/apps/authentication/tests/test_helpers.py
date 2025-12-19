@@ -16,7 +16,7 @@ from types import SimpleNamespace
 from typing import Protocol, cast
 from unittest.mock import Mock
 
-from authentication.schemas import (
+from apps.authentication.schemas import (
     EmailVerificationInputSchema,
     RegisterInputSchema,
     ResendVerificationInputSchema,

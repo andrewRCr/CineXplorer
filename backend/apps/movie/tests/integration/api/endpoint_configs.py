@@ -4,7 +4,7 @@ Defines endpoint configurations used by parametrized tests to run the same
 test logic against all movie discovery endpoints (browse, now-playing, upcoming).
 
 Usage:
-    from movie.tests.integration.api.endpoint_configs import ALL_ENDPOINTS, EndpointConfig
+    from apps.movie.tests.integration.api.endpoint_configs import ALL_ENDPOINTS, EndpointConfig
 
     @pytest.mark.parametrize("config", ALL_ENDPOINTS, ids=lambda c: c.name)
     def test_endpoint_returns_results(config: EndpointConfig) -> None:
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
-from movie.services.data_quality.policy import VoteCountPolicy
+from apps.movie.services.data_quality.policy import VoteCountPolicy
 
 
 class EndpointConfig(NamedTuple):

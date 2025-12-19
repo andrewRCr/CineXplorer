@@ -9,8 +9,8 @@ Tests critical token refresh behaviors that ensure security and reliability:
 4. Race condition handling (multiple concurrent API calls)
 5. Token rotation verification (new refresh token issued on refresh)
 
-These tests validate the JWT authentication infrastructure migrated in Phase 4
-(djangorestframework-simplejwt → django-ninja-jwt) and ensure:
+These tests validate the JWT authentication infrastructure
+(django-ninja-jwt) and ensure:
 - Security: Token rotation prevents replay attacks
 - Reliability: Expired tokens handled gracefully
 - Performance: Concurrent requests don't cause auth failures
@@ -29,17 +29,18 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, cast
 
 import pytest
-from authentication.tests.fixtures import TEST_USER_PASSWORD
-from core.tests.test_helpers import (
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.test import Client
+from freezegun import freeze_time
+from ninja_jwt.tokens import RefreshToken
+
+from apps.authentication.tests.fixtures import TEST_USER_PASSWORD
+from apps.core.tests.test_helpers import (
     create_fresh_client,
     get_csrf_token,
     json_post,
     login_and_get_tokens,
 )
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.test import Client
-from freezegun import freeze_time
-from ninja_jwt.tokens import RefreshToken
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User

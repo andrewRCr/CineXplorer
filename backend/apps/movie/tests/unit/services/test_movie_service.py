@@ -17,22 +17,23 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
-from core.services.api_response import ApiResponse
-from movie.schemas import (
+from ninja.errors import HttpError
+
+from apps.core.services.api_response import ApiResponse
+from apps.movie.schemas import (
     MovieDetailSchema,
     MovieListResponseSchema,
 )
-from movie.tests.test_helpers import (
+from apps.movie.tests.test_helpers import (
     create_mock_movie_detail_response,
     create_mock_paginated_response,
     create_tmdb_movie,
 )
-from movie.tests.tmdb_test_builders import (
+from apps.movie.tests.tmdb_test_builders import (
     TMDBCreditsResponse,
     TMDBGenreListResponse,
     TMDBMovieResponse,
 )
-from ninja.errors import HttpError
 
 if TYPE_CHECKING:
     pass
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
 
 def test_movie_service_constructor_with_injected_client() -> None:
     """Test MovieService constructor accepts injected TMDB client."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange: Create mock client
     mock_client = Mock(
@@ -61,7 +62,7 @@ def test_movie_service_constructor_with_injected_client() -> None:
 
 def test_movie_service_constructor_with_default_client() -> None:
     """Test MovieService constructor creates default client when none injected."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Act: Create service without injecting client
     service = MovieService()
@@ -79,7 +80,7 @@ def test_movie_service_constructor_with_default_client() -> None:
 
 def test_get_movie_by_id_uses_injected_client() -> None:
     """Test get_movie_by_id calls injected client, not global tmdb_client."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange: Create mock client with successful responses
     mock_client = Mock(spec=['get', 'get_movie_details'])
@@ -123,7 +124,7 @@ def test_get_movie_by_id_uses_injected_client() -> None:
 
 def test_get_movie_by_id_handles_movie_not_found() -> None:
     """Test get_movie_by_id raises HttpError(404) when movie not found."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client returns 404
     mock_client = Mock(spec=['get_movie_details'])
@@ -150,7 +151,7 @@ def test_get_movie_by_id_handles_movie_not_found() -> None:
 
 def test_search_movies_uses_injected_client() -> None:
     """Test search_movies calls injected client with correct parameters."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client
     mock_client = Mock(spec=['search_movies'])
@@ -166,7 +167,7 @@ def test_search_movies_uses_injected_client() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call search_movies
-    from movie.services.api_boundary import SearchServiceParams
+    from apps.movie.services.api_boundary import SearchServiceParams
     result = service.search_movies(page=2, params=SearchServiceParams(query="test"))
 
     # Assert: Injected client was called with correct params
@@ -183,7 +184,7 @@ def test_search_movies_uses_injected_client() -> None:
 
 def test_search_movies_filters_soundtrack_results() -> None:
     """Test search_movies filters out soundtrack/score entries."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock response with soundtrack entry
     mock_client = Mock(spec=['search_movies'])
@@ -207,7 +208,7 @@ def test_search_movies_filters_soundtrack_results() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call search_movies
-    from movie.services.api_boundary import SearchServiceParams
+    from apps.movie.services.api_boundary import SearchServiceParams
     result = service.search_movies(page=1, params=SearchServiceParams(query="test"))
 
     # Assert: Only real movie returned (soundtracks filtered)
@@ -217,8 +218,8 @@ def test_search_movies_filters_soundtrack_results() -> None:
 
 def test_search_movies_returns_empty_for_short_query() -> None:
     """Test search_movies returns empty response for short/empty query."""
-    from movie.services.api_boundary import SearchServiceParams
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.api_boundary import SearchServiceParams
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client
     mock_client = Mock(spec=['search_movies'])
@@ -242,7 +243,7 @@ def test_search_movies_returns_empty_for_short_query() -> None:
 
 def test_discover_movies_uses_injected_client() -> None:
     """Test discover_movies calls injected client with mapped parameters."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client
     mock_client = Mock(spec=['get'])
@@ -259,7 +260,7 @@ def test_discover_movies_uses_injected_client() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call discover with BrowseServiceParams
-    from movie.services.api_boundary import BrowseServiceParams
+    from apps.movie.services.api_boundary import BrowseServiceParams
     params = BrowseServiceParams(
         genres='28,12',  # Should map to with_genres
         year=2023,
@@ -282,7 +283,7 @@ def test_discover_movies_uses_injected_client() -> None:
 
 def test_discover_movies_sets_default_parameters() -> None:
     """Test discover_movies includes default TMDB parameters."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange
     mock_client = Mock(spec=['get'])
@@ -314,7 +315,7 @@ def test_discover_movies_sets_default_parameters() -> None:
 
 def test_get_now_playing_movies_uses_injected_client() -> None:
     """Test get_now_playing_movies calls discover endpoint with date presets."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange
     mock_client = Mock(spec=['get'])
@@ -356,7 +357,7 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
 
 def test_get_upcoming_movies_uses_injected_client() -> None:
     """Test get_upcoming_movies calls injected client with date range."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange
     mock_client = Mock(spec=['get'])
@@ -393,7 +394,7 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
 
 def test_get_movie_service_factory_creates_service_with_default_client() -> None:
     """Test get_movie_service() factory creates service with default client."""
-    from movie.services.service_factory import get_movie_service
+    from apps.movie.services.service_factory import get_movie_service
 
     # Act
     service = get_movie_service()
@@ -406,8 +407,8 @@ def test_get_movie_service_factory_creates_service_with_default_client() -> None
 
 def test_get_movie_service_factory_returns_movie_service_instance() -> None:
     """Test factory returns MovieService instance."""
-    from movie.services.movie_service import MovieService
-    from movie.services.service_factory import get_movie_service
+    from apps.movie.services.movie_service import MovieService
+    from apps.movie.services.service_factory import get_movie_service
 
     # Act
     service = get_movie_service()
@@ -423,7 +424,7 @@ def test_get_movie_service_factory_returns_movie_service_instance() -> None:
 
 def test_get_movie_genres_uses_injected_client() -> None:
     """Test get_movie_genres calls injected client."""
-    from movie.services.movie_service import MovieService
+    from apps.movie.services.movie_service import MovieService
 
     # Arrange
     mock_client = Mock(spec=['get'])

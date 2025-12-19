@@ -143,7 +143,8 @@ interface UnifiedTheme {
 - **Primary vs Tertiary**: Primary is for **button fills** (background token), Tertiary is for **links/text**
 (foreground token)
 - **Primary vs Brand**: Primary is for **UI actions**, Brand is for **identity** (may be same color, e.g., IBM Carbon)
-- **Secondary vs Muted**: Secondary is **subtle interactive** (button backgrounds via `button-subtle`), Muted is **non-interactive** (disabled states). See ADR-012 for button token patterns.
+- **Secondary vs Muted**: Secondary is **subtle interactive** (button backgrounds via `button-subtle`), Muted is
+  **non-interactive** (disabled states). See ADR-012 for button token patterns.
 - **Tertiary replaces Accent**: Industry uses "tertiary" (Material), we deprecate "accent" in favor of clearer hierarchy
 
 ### Decision 2: Correct Token Type Mappings

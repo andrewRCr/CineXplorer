@@ -12,7 +12,7 @@ import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from .api_response import ApiResponse
+from .api_response import RATE_LIMIT_HEADER_MAPPING, ApiResponse
 from .base_api_client import BaseApiClient
 
 
@@ -143,13 +143,6 @@ class TMDBApiClient(BaseApiClient):
                 )
             })
 
-            # Handle headers safely for both real responses and mocked responses
-            try:
-                headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
-            except (TypeError, AttributeError):
-                # Handle Mock objects or other non-dict-like headers
-                headers = {}
-
             return ApiResponse(
                 status_code=502,
                 error_message="TMDB returned invalid JSON (Bad Gateway)",
@@ -158,7 +151,7 @@ class TMDBApiClient(BaseApiClient):
                 correlation_id=correlation_id,
                 endpoint=endpoint,
                 duration_ms=duration_ms,
-                headers=headers,
+                headers=self._safe_headers_dict(response),
                 raw_response=response
             )
 
@@ -242,17 +235,10 @@ class TMDBApiClient(BaseApiClient):
                     f"TMDB response (ALL {len(all_results)} results): {all_results}"
                 )
 
-        # Handle headers safely for both real responses and mocked responses
-        try:
-            headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
-        except (TypeError, AttributeError):
-            # Handle Mock objects or other non-dict-like headers
-            headers = {}
-
         return ApiResponse(
             status_code=response.status_code,
             data=data,
-            headers=headers,
+            headers=self._safe_headers_dict(response),
             correlation_id=correlation_id,
             endpoint=endpoint,
             method="GET",
@@ -328,13 +314,6 @@ class TMDBApiClient(BaseApiClient):
         else:
             self.logger.warning("TMDB API request failed", extra=log_data)
 
-        # Handle headers safely for both real responses and mocked responses
-        try:
-            headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
-        except (TypeError, AttributeError):
-            # Handle Mock objects or other non-dict-like headers
-            headers = {}
-
         return ApiResponse(
             status_code=response.status_code,
             error_message=error_message,
@@ -344,7 +323,7 @@ class TMDBApiClient(BaseApiClient):
             endpoint=endpoint,
             method="GET",
             duration_ms=duration_ms,
-            headers=headers,
+            headers=self._safe_headers_dict(response),
             raw_response=response
         )
 
@@ -403,17 +382,9 @@ class TMDBApiClient(BaseApiClient):
 
         rate_limit_info: dict[str, object] = {}
 
-        # Standard rate limiting headers used by TMDB
-        rate_limit_headers = {
-            'x-ratelimit-limit': 'limit',
-            'x-ratelimit-remaining': 'remaining',
-            'x-ratelimit-reset': 'reset',
-            'retry-after': 'retry_after'
-        }
-
         # Headers typed as object to support mock objects in tests
         # Use try/except for safe access to non-dict or mock header objects
-        for header_name, key in rate_limit_headers.items():
+        for header_name, key in RATE_LIMIT_HEADER_MAPPING.items():
             try:
                 value = headers[header_name]  # type: ignore[index]  # Mock object support
             except (TypeError, KeyError, IndexError):

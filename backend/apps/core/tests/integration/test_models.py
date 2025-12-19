@@ -5,8 +5,9 @@ Tests for core models.
 from typing import TYPE_CHECKING, cast
 
 import pytest
-from apps.core import models
 from django.contrib.auth import get_user_model
+
+from apps.core import models
 from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:

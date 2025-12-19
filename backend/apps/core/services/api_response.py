@@ -16,6 +16,15 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+# Shared mapping of standard rate limit headers to normalized keys
+# Used by both ApiResponse and API clients for consistent rate limit handling
+RATE_LIMIT_HEADER_MAPPING: dict[str, str] = {
+    'x-ratelimit-limit': 'limit',
+    'x-ratelimit-remaining': 'remaining',
+    'x-ratelimit-reset': 'reset',
+    'retry-after': 'retry_after'
+}
+
 
 @dataclass
 class ApiResponse:
@@ -101,15 +110,7 @@ class ApiResponse:
 
         rate_limit_info: dict[str, object] = {}
 
-        # Standard rate limiting headers
-        rate_limit_mappings = {
-            'x-ratelimit-limit': 'limit',
-            'x-ratelimit-remaining': 'remaining',
-            'x-ratelimit-reset': 'reset',
-            'retry-after': 'retry_after'
-        }
-
-        for header_name, key in rate_limit_mappings.items():
+        for header_name, key in RATE_LIMIT_HEADER_MAPPING.items():
             value = self.get_header(header_name)
             if value is not None:
                 # Try to convert numeric values to integers

@@ -27,9 +27,10 @@ from __future__ import annotations
 import logging
 import re
 
-from core.tmdb_models.tmdb_responses import TMDBMovieBase
 from django.core.cache import cache
-from movie.schemas import MovieListItemSchema
+
+from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase
+from apps.movie.schemas import MovieListItemSchema
 
 from .policy import (
     EARLIEST_VALID_RELEASE_YEAR,
@@ -284,18 +285,28 @@ def get_blacklisted_ids() -> set[int]:
     """Get set of blacklisted TMDB movie IDs from cache or database.
 
     Results are cached for 5 minutes to avoid repeated database queries.
+    Gracefully degrades if cache is unavailable (queries database directly).
     """
-    cached = cache.get(BLACKLIST_CACHE_KEY)
-    if cached is not None:
-        return cached
+    try:
+        cached = cache.get(BLACKLIST_CACHE_KEY)
+        if cached is not None:
+            return cached
+    except Exception:
+        # Cache unavailable - fall through to database query
+        logger.warning("Cache unavailable for blacklist lookup, querying database")
 
-    from movie.models import BlacklistedMovie
+    from apps.movie.models import BlacklistedMovie
 
     blacklist_ids = set(
         BlacklistedMovie.objects.values_list("tmdb_id", flat=True)
     )
 
-    cache.set(BLACKLIST_CACHE_KEY, blacklist_ids, BLACKLIST_CACHE_TIMEOUT)
+    try:
+        cache.set(BLACKLIST_CACHE_KEY, blacklist_ids, BLACKLIST_CACHE_TIMEOUT)
+    except Exception:
+        # Cache unavailable - continue without caching
+        logger.warning("Cache unavailable for blacklist storage")
+
     logger.debug(f"Loaded {len(blacklist_ids)} blacklisted movie IDs from database")
 
     return blacklist_ids

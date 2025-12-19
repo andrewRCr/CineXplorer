@@ -187,15 +187,11 @@ def test_resend_verification_does_not_send_email_for_already_verified(
 
 
 @pytest.mark.django_db
-def test_email_verification_success_does_not_send_email(
+def test_email_verification_success_sends_welcome_email(
     api_client: Client,
     unverified_user: User,
 ) -> None:
-    """Verify successful email verification doesn't send additional email.
-
-    Note: Welcome email feature not yet implemented.
-    This test will need updating when welcome email is added.
-    """
+    """Verify successful email verification sends welcome email."""
     # Create EmailAddress for unverified user
     email_address = EmailAddress.objects.create(
         user=unverified_user,
@@ -220,6 +216,89 @@ def test_email_verification_success_does_not_send_email(
 
     assert response.status_code == HTTPStatus.OK
 
-    # Currently no email sent on verification (welcome email not yet wired)
-    # This assertion will change when welcome email is implemented
-    assert len(mail.outbox) == 0
+    # Welcome email should be sent after successful verification
+    assert len(mail.outbox) == 1
+    welcome_email = mail.outbox[0]
+
+    # Verify recipient
+    assert unverified_user.email in welcome_email.to
+
+    # Verify it's a welcome email (not verification email)
+    assert "welcome" in welcome_email.subject.lower()
+
+
+@pytest.mark.django_db
+def test_welcome_email_contains_username(
+    api_client: Client,
+    unverified_user: User,
+) -> None:
+    """Verify welcome email contains the user's username."""
+    email_address = EmailAddress.objects.create(
+        user=unverified_user,
+        email=unverified_user.email,
+        primary=True,
+        verified=False,
+    )
+
+    confirmation = EmailConfirmationHMAC(email_address)
+    valid_key = confirmation.key
+
+    mail.outbox.clear()
+
+    response = api_client.post(
+        "/api/verify-email/",
+        data={"key": valid_key},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(mail.outbox) == 1
+
+    welcome_email = mail.outbox[0]
+
+    # Check email body contains username
+    email_body = welcome_email.body
+    if hasattr(welcome_email, "alternatives") and welcome_email.alternatives:
+        email_body = welcome_email.alternatives[0][0]
+
+    assert unverified_user.username in email_body
+
+
+@pytest.mark.django_db
+def test_welcome_email_contains_frontend_link(
+    api_client: Client,
+    unverified_user: User,
+) -> None:
+    """Verify welcome email contains link to frontend."""
+    from django.conf import settings
+
+    email_address = EmailAddress.objects.create(
+        user=unverified_user,
+        email=unverified_user.email,
+        primary=True,
+        verified=False,
+    )
+
+    confirmation = EmailConfirmationHMAC(email_address)
+    valid_key = confirmation.key
+
+    mail.outbox.clear()
+
+    response = api_client.post(
+        "/api/verify-email/",
+        data={"key": valid_key},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(mail.outbox) == 1
+
+    welcome_email = mail.outbox[0]
+
+    # Check email body contains frontend URL
+    email_body = welcome_email.body
+    if hasattr(welcome_email, "alternatives") and welcome_email.alternatives:
+        email_body = welcome_email.alternatives[0][0]
+
+    frontend_url = getattr(settings, "FRONTEND_URL", "")
+    assert frontend_url in email_body

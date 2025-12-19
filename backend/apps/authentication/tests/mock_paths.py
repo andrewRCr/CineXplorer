@@ -22,4 +22,6 @@ AUTH_SERVICE_EMAIL_ADD = (
 )
 
 # Schema paths
-AUTH_SCHEMA_PROFILE_FROM_ORM = "apps.authentication.schemas.UserProfileSchema.from_orm"
+AUTH_SCHEMA_PROFILE_MODEL_VALIDATE = (
+    "apps.authentication.schemas.UserProfileSchema.model_validate"
+)

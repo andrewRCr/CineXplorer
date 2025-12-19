@@ -507,7 +507,7 @@ class AuthenticationService:
 
     def get_user_profile(self, user: UserProtocol) -> UserProfileSchema:
         """Return user profile with computed fields."""
-        profile = UserProfileSchema.from_orm(user)
+        profile = UserProfileSchema.model_validate(user)
         profile.email_verified = self._email_address_model.objects.filter(
             user=user,
             verified=True,
@@ -521,7 +521,7 @@ class AuthenticationService:
         payload: UserProfileUpdateSchema,
     ) -> UserProfileSchema:
         """Update user profile fields with validation."""
-        update_data = payload.dict(exclude_unset=True)
+        update_data = payload.model_dump(exclude_unset=True)
         password = update_data.pop("password", None)
 
         for field, value in update_data.items():
@@ -531,7 +531,7 @@ class AuthenticationService:
             user.set_password(password)
 
         user.save()
-        profile = UserProfileSchema.from_orm(user)
+        profile = UserProfileSchema.model_validate(user)
         profile.email_verified = self._email_address_model.objects.filter(
             user=user,
             verified=True,

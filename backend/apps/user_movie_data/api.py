@@ -168,7 +168,7 @@ def update_user_movie_data(
     user = get_current_user(request)
 
     # Extract only provided fields for partial update
-    update_data = payload.dict(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True)
 
     # Service handles authorization and raises HttpError(404) if not found
     umd = _service.update(

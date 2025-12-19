@@ -38,7 +38,7 @@ from django.http import HttpResponse
 from django.test import Client
 from ninja_jwt.tokens import RefreshToken
 
-from apps.authentication.tests.mock_paths import AUTH_SCHEMA_PROFILE_FROM_ORM
+from apps.authentication.tests.mock_paths import AUTH_SCHEMA_PROFILE_MODEL_VALIDATE
 from apps.core.tests.test_helpers import create_fresh_client, create_user, json_post
 
 # ============================================================================
@@ -332,8 +332,8 @@ def test_profile_endpoint_with_serialization_error() -> None:
     client.cookies["access_token"] = access_token_str
 
     # Mock serialization error in schema
-    with patch(AUTH_SCHEMA_PROFILE_FROM_ORM) as mock_from_orm:
-        mock_from_orm.side_effect = ValueError("Serialization failed")
+    with patch(AUTH_SCHEMA_PROFILE_MODEL_VALIDATE) as mock_model_validate:
+        mock_model_validate.side_effect = ValueError("Serialization failed")
 
         # Django test client raises exception by default (check_exception=True)
         # This verifies error is properly raised (not silently swallowed)

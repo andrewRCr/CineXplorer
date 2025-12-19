@@ -119,9 +119,6 @@ class MovieService(BaseTMDBService):
             Year and rating filters use two-pass architecture: TMDB API (primary)
             + backend filtering (catches data quality issues).
         """
-        import logging
-        logger = logging.getLogger('cinexplorer.movie')
-
         # Use empty params if none provided
         if params is None:
             params = BrowseServiceParams()

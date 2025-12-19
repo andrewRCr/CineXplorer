@@ -4,7 +4,6 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from core.services.tmdb_api_client import TMDBApiClient
 from core.services.validators import (
     validate_tmdb_paginated_response,
     validate_tmdb_response,
@@ -41,9 +40,6 @@ from .tmdb_api_boundary.response_factories import (
 
 # Use TMDB-specific logger for better log organization
 logger = logging.getLogger('cinexplorer.tmdb')
-
-# Initialize the TMDB API client
-tmdb_client = TMDBApiClient()
 
 
 class MovieService(BaseTMDBService):

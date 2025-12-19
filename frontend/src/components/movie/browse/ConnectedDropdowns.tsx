@@ -8,10 +8,20 @@ import {
 } from "@/constants/browseOptions";
 import type { BrowseParams } from "@/types/browseTypes";
 import { analyzeYearFilter } from "@/utilities/yearFilterAnalysis";
+import {
+  BROWSE_SELECT_TRIGGER_BASE_PROPS,
+  BROWSE_SELECT_TRIGGER_CSS,
+} from "./selectStyles";
 
 const GENRE_WIDTH = "140px";
 const YEAR_WIDTH = "110px";
 const YEAR_SPAN_WIDTH = YEAR_WIDTH + "10px";
+
+const getFilterValueTextProps = (isDisabled: boolean, isActive: boolean) => ({
+  fontStyle: isDisabled ? "italic" : "normal",
+  transition: "color 0.15s ease-out 0.05s",
+  color: isDisabled ? "on-muted" : isActive ? "primary" : "foreground",
+});
 
 interface ConnectedDropdownsProps {
   filters: BrowseParams;
@@ -199,57 +209,26 @@ const ConnectedDropdowns = ({
           positioning={{ placement: "bottom-start", gutter: 2 }}>
           <Select.Trigger
             w={GENRE_WIDTH}
-            minH="32px"
-            h="32px"
-            fontSize="14px"
-            lineHeight="1.2"
-        borderRadius="4px 0 0 4px"
-            border="1px solid"
+            {...BROWSE_SELECT_TRIGGER_BASE_PROPS}
+            borderRadius="4px 0 0 4px"
             // DESIGN: Uses button-outline (not input) for visual consistency with adjacent toggle button
-            borderColor="button-outline"
-            backgroundColor="transparent"
-            _hover={{
-              bg: "tertiary/8",
-            }}
-            _focusVisible={{
-              borderColor: "tertiary",
-            }}
             _disabled={{
               opacity: 1,
               cursor: "not-allowed",
             }}
-            css={{
-              padding: "6px 12px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              "& [data-part='indicator']": {
-                width: "16px",
-                height: "16px",
-              },
-            }}
+            css={BROWSE_SELECT_TRIGGER_CSS}
           >
             <Select.ValueText
               placeholder="Any Genre"
-              fontStyle={genreDisplayData.isGenreDisabled ? "italic" : "normal"}
-              transition="color 0.15s ease-out 0.05s"
-              color={
-                genreDisplayData.isGenreDisabled
-                  ? "on-muted"
-                  : hasActiveGenre
-                    ? "primary"
-                    : "foreground"
-              }
+              {...getFilterValueTextProps(
+                genreDisplayData.isGenreDisabled,
+                hasActiveGenre
+              )}
             />
             <Select.Indicator />
           </Select.Trigger>
           <Select.Positioner>
-            <Select.Content
-              w={GENRE_WIDTH}
-              bg="muted"
-              borderColor="border-subtle-02"
-              color="foreground"
-            >
+            <Select.Content w={GENRE_WIDTH}>
               {genreCollection.items.map((item) => (
                 <Select.Item key={item.value} item={item}>
                   {item.label}
@@ -294,61 +273,26 @@ const ConnectedDropdowns = ({
         >
           <Select.Trigger
             w={yearWidth}
-            minH="32px"
-            h="32px"
-            fontSize="14px"
-            lineHeight="1.2"
-      borderRadius="0"
-            border="1px solid"
+            {...BROWSE_SELECT_TRIGGER_BASE_PROPS}
+            borderRadius="0"
             // DESIGN: Uses button-outline (not input) for visual consistency with adjacent toggle button
-            borderColor="button-outline"
-            backgroundColor="transparent"
-            _hover={{
-              bg: "tertiary/8",
-            }}
-            _focusVisible={{
-              borderColor: "tertiary",
-            }}
             _disabled={{
               opacity: 1,
               cursor: "not-allowed",
             }}
-            css={{
-              padding: "6px 12px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              "& [data-part='indicator']": {
-                width: "16px",
-                height: "16px",
-              },
-            }}
+            css={BROWSE_SELECT_TRIGGER_CSS}
           >
             <Select.ValueText
               placeholder="Year"
-              fontStyle={
-                yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
-                  ? "italic"
-                  : "normal"
-              }
-              transition="color 0.15s ease-out 0.05s"
-              color={
-                yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
-                  ? "on-muted"
-                  : hasActiveYear
-                    ? "primary"
-                    : "foreground"
-              }
+              {...getFilterValueTextProps(
+                yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained,
+                hasActiveYear
+              )}
             />
             <Select.Indicator />
           </Select.Trigger>
           <Select.Positioner>
-            <Select.Content
-              w={yearWidth}
-              bg="muted"
-              borderColor="border-subtle-02"
-              color="foreground"
-            >
+            <Select.Content w={yearWidth}>
               {yearCollection.items.map((item) => (
                 <Select.Item key={item.value} item={item}>
                   {item.label}

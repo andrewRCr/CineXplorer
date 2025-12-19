@@ -2,6 +2,10 @@ import { useMemo } from "react";
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
 import { getAvailableSortOptions } from "@/utilities/sortAvailability";
 import type { BrowseParams } from "@/types/browseTypes";
+import {
+  BROWSE_SELECT_TRIGGER_BASE_PROPS,
+  BROWSE_SELECT_TRIGGER_CSS,
+} from "./selectStyles";
 
 const SORT_WIDTH = "170px";
 
@@ -71,42 +75,16 @@ const SortDropdown = ({
         >
           <Select.Trigger
             w={SORT_WIDTH}
-            minH="32px"
-            h="32px"
-            fontSize="14px"
-            lineHeight="1.2"
+            {...BROWSE_SELECT_TRIGGER_BASE_PROPS}
             borderRadius="4px"
-            border="1px solid"
             // DESIGN: Uses button-outline (not input) for visual consistency with adjacent filter dropdowns
-            borderColor="button-outline"
-            backgroundColor="transparent"
-            _hover={{
-              bg: "tertiary/8",
-            }}
-            _focusVisible={{
-              borderColor: "tertiary",
-            }}
-            css={{
-              padding: "6px 12px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              "& [data-part='indicator']": {
-                width: "16px",
-                height: "16px",
-              },
-            }}
+            css={BROWSE_SELECT_TRIGGER_CSS}
           >
             <Select.ValueText placeholder="Sort by" />
             <Select.Indicator />
           </Select.Trigger>
           <Select.Positioner>
-            <Select.Content
-              w={SORT_WIDTH}
-              bg="muted"
-              borderColor="border-subtle-02"
-              color="foreground"
-            >
+            <Select.Content w={SORT_WIDTH}>
               {sortCollection.items.map((item) => {
                 const isDisabled = item.disabled === true;
                 return (

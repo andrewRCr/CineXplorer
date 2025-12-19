@@ -1,10 +1,10 @@
 # Task List: Toast Notification System
 
-**PRD:** `.arc/backlog/technical/prd-toast-notification-system.md`
+**PRD:** `.arc/active/technical/prd-toast-notification-system.md`
 **Created:** 2025-12-19
 **Branch:** `technical/toast-notification-system`
 **Base Branch:** `main`
-**Status:** Pending
+**Status:** In Progress
 
 ## Overview
 
@@ -15,8 +15,8 @@ integrated with our semantic token system.
 
 ### Will Do
 
-- Create toaster composition with semantic token styling
-- Mount toaster provider at application root
+- Enhance existing toaster composition with semantic token styling
+- Mount toaster provider at application root (composition exists but not mounted)
 - Create toast recipe following existing alert pattern
 - Integrate with auth flows (logout, session errors)
 - Integrate with watchlist actions (add/remove with undo)
@@ -35,33 +35,34 @@ integrated with our semantic token system.
 
 ### **Phase 1:** Infrastructure Setup
 
-**Purpose:** Create toaster composition and mount at application root.
+**Purpose:** Verify existing toaster composition and mount at application root.
 
-- [ ] **1.1 Create toaster composition file**
+**Discovery:** Toaster composition already exists at `components/core/chakra/toaster.tsx` with Chakra
+defaults. It exports `toaster` instance and `Toaster` component but is NOT mounted anywhere.
 
-    **Goal:** Establish the `toaster` instance and `Toaster` component following Chakra UI v3 patterns.
+- [ ] **1.1 Verify existing toaster composition**
 
-    - [ ] **1.1.a Create `frontend/src/components/ui/toaster.tsx`**
-        - Create `components/ui/` directory (doesn't exist yet)
-        - Import `Toaster as ChakraToaster`, `Portal`, `Stack`, `Toast`, `createToaster` from `@chakra-ui/react`
-        - Configure `createToaster` with `placement: "bottom-end"`, `pauseOnPageIdle: true`
-        - Export both `toaster` instance and `Toaster` component
-        - Follow Chakra's composition pattern from MCP examples
+    **Goal:** Confirm existing composition is correct and types compile.
+
+    - [ ] **1.1.a Review `frontend/src/components/core/chakra/toaster.tsx`**
+        - Verify `createToaster` config has `placement: "bottom-end"`, `pauseOnPageIdle: true` ✓
+        - Verify exports: `toaster` instance and `Toaster` component ✓
+        - Note: Currently uses Chakra defaults (e.g., `blue.solid` spinner) - will update in Phase 2
 
     - [ ] **1.1.b Verify TypeScript types compile**
         - Run `npm run type-check` in Docker
-        - Ensure no type errors in new file
+        - Ensure no type errors in existing file
 
 - [ ] **1.2 Mount Toaster in application**
 
     - [ ] **1.2.a Add `Toaster` to `main.tsx`**
-        - Import `Toaster` from `@/components/ui/toaster`
+        - Import `Toaster` from `@/components/core/chakra/toaster`
         - Place `<Toaster />` inside `<Provider>` but outside `<App />`
         - Ensures toaster available to entire application
 
     - [ ] **1.2.b Verify toaster renders**
         - Start dev server, check browser console for errors
-        - Optionally add temporary test toast to verify rendering
+        - Add temporary test toast to verify rendering works
 
 ### **Phase 2:** Toast Recipe and Styling
 
@@ -93,8 +94,9 @@ integrated with our semantic token system.
 
 - [ ] **2.2 Update toaster composition to use recipe**
 
-    - [ ] **2.2.a Apply recipe styling in `toaster.tsx`**
+    - [ ] **2.2.a Apply recipe styling in `components/core/chakra/toaster.tsx`**
         - Use `useSlotRecipe` or inline recipe application
+        - Replace Chakra defaults (e.g., `blue.solid`) with semantic tokens
         - Apply correct data attributes for status variants (`data-type`)
         - Ensure close button and action trigger styled correctly
 
@@ -112,14 +114,14 @@ integrated with our semantic token system.
         - File: `frontend/src/hooks/auth/useAuth.ts`
         - In `logout()` function, add `toaster.success({ title: "Logged out successfully" })`
         - Place after `navigate(ROUTES.LOGIN)` call
-        - Import `toaster` from `@/components/ui/toaster`
+        - Import `toaster` from `@/components/core/chakra/toaster`
 
     - [ ] **3.1.b Add session expired toast (401 interceptor)**
         - File: `frontend/src/services/apiClient.ts`
         - In response interceptor, when 401 detected and refresh fails
         - Add `toaster.error({ title: "Session expired", description: "Please log in again." })`
         - Ensure closable: true for critical errors
-        - Import `toaster` at top of file
+        - Import `toaster` from `@/components/core/chakra/toaster`
 
     - [ ] **3.1.c Test auth toasts manually**
         - Log out → verify success toast
@@ -200,7 +202,7 @@ integrated with our semantic token system.
 
 - [ ] **5.1 Write component tests**
 
-    - [ ] **5.1.a Create test file `frontend/src/components/ui/__tests__/toaster.test.tsx`**
+    - [ ] **5.1.a Create test file `frontend/src/components/core/chakra/__tests__/toaster.test.tsx`**
         - Test: `toaster.success()` renders toast with correct title
         - Test: `toaster.error()` renders toast with correct type
         - Test: Action button renders when provided
@@ -237,6 +239,10 @@ integrated with our semantic token system.
 ---
 
 ## Implementation Notes
+
+**Existing composition:** Toaster composition already exists at `components/core/chakra/toaster.tsx`
+with Chakra defaults. This follows the project pattern of keeping Chakra infrastructure in `core/chakra/`
+(alongside provider, color-mode, theme-provider, tooltip).
 
 **Toaster placement:** The `<Toaster />` component must be inside the Chakra `Provider` to access theme
 tokens. Placing it in `main.tsx` inside `<Provider>` but outside `<App />` ensures it's available globally

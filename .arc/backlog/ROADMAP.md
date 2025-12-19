@@ -54,7 +54,13 @@ One PRD per feature (includes both backend and frontend work together).
    - Rationale: Extends discovery, wiki-style interlinking
    - Scope: Actor/crew profiles, filmography, TMDB integration
 
-8. **Recommendations System**
+8. **Featured Page Hero**
+   - Currently: Stub implementation
+   - Rationale: Landing page first impression; showcases featured/trending content
+   - Scope: Hero carousel or spotlight section, dynamic content from TMDB trending
+   - Note: Relatively small scope compared to other Phase B items
+
+9. **Recommendations System**
    - Backlog: `feature/BACKLOG-FEATURE.md`
    - Rationale: Core value proposition; needs user rating data to be effective
    - Scope: Metadata-based recommendations, "For You" page
@@ -62,14 +68,26 @@ One PRD per feature (includes both backend and frontend work together).
 
 ### Phase C: Polish & Deploy
 
-9. **Visual Design / UX Pass**
-   - When feature-complete
-   - Scope: Consistency audit, accessibility review, visual polish
+10. **Mobile Responsiveness Pass**
+    - When: Feature-complete, before deployment
+    - Rationale: Ensure touch-friendly UX and responsive layouts across all features
+    - Scope:
+      - Touch target sizing (44px minimum per WCAG)
+      - Hover-dependent interactions → mobile alternatives
+      - Grid/layout adjustments for small viewports
+      - Form input sizing and mobile keyboard handling
+      - Modal/drawer behavior on small screens
+      - Performance (lazy loading, responsive images)
+    - Note: Foundation exists (Chakra breakpoints, responsive props) - this is polish, not rewrite
 
-10. **Deployment Enablement**
+11. **Visual Design / UX Pass**
+    - When: Feature-complete
+    - Scope: Consistency audit, accessibility review, visual polish
+    - Note: Can overlap with Mobile Pass (related concerns)
 
-- Backlog: `technical/BACKLOG-TECHNICAL.md`
-- Scope: Hosting strategy, secrets management, migration procedures, runbook
+12. **Deployment Enablement**
+    - Backlog: `technical/BACKLOG-TECHNICAL.md`
+    - Scope: Hosting strategy, secrets management, migration procedures, runbook
 
 ---
 
@@ -122,14 +140,15 @@ Movie Lists ──────────► Recommendations (TMDB keyword over
 ## Open Questions
 
 - **Search Results Filtering**: Backend supports it, frontend doesn't expose it. Include in Phase B or defer?
-- **Featured Page Hero**: Currently stub. Include in Phase B or separate small effort?
 
 **Resolved:**
 
+- ~~Featured Page Hero~~: Added as Phase B item #8 (relatively small scope).
 - ~~Atomic Tasks~~: Interleave with phases. They bubble up naturally or get bundled when touching related domains.
 
 ---
 
 ## Change Log
 
+- **2025-12-19**: Added Mobile Responsiveness Pass (Phase C #10), Featured Page Hero (Phase B #8)
 - **2025-12-19**: Initial roadmap created after service-layer-modernization completion

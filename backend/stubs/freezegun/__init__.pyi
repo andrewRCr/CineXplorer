@@ -17,8 +17,9 @@ Maintenance:
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from datetime import datetime
-from typing import Any, ContextManager
+from typing import Any
 
 def freeze_time(
     time_to_freeze: str | datetime | None = None,
@@ -27,7 +28,7 @@ def freeze_time(
     tick: bool = False,
     as_arg: bool = False,
     auto_tick_seconds: int = 0,
-) -> ContextManager[Any]:
+) -> AbstractContextManager[Any]:
     """
     Context manager/decorator to freeze time for testing.
 
@@ -47,4 +48,3 @@ def freeze_time(
             # time is frozen at 2025-01-01
             assert datetime.now().year == 2025
     """
-    ...

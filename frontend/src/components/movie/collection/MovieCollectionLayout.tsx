@@ -1,174 +1,202 @@
-import { useState, useMemo, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { useLocation, Outlet } from "react-router-dom";
 import { Box } from "@chakra-ui/react";
-import { type MovieFilters as MovieFiltersType } from "@/components/movie/filters/AdvancedMovieFilters";
-import { useEnhancedFetcher } from "@/hooks/useEnhancedFetcher";
+import type { BrowseParams } from "@/types/browseTypes";
+import { useMovieFetchRouter } from "@/hooks/movie/useMovieFetchRouter";
 import {
-	getFetcherAndSource,
-	type RouteConfig,
+  getFetcherAndSource,
+  type RouteConfig,
 } from "@/utilities/routeConfigHelper";
+import { parseSearchParamsFromUrl } from "@/utilities/searchUrlSync";
 import PageHeader from "@/components/movie/collection/PageHeader";
-import FilterSection from "@/components/movie/collection/FilterSection";
-import { useMovieCollectionUrl } from "@/components/movie/collection/useMovieCollectionUrl";
+import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
+import { useMovieCollectionState } from "@/hooks/movie/useMovieCollectionState";
 
 // Better prop patterns with discriminated unions and required/optional groups
-type FilterConfig =
-	| { showFilters?: false; filterStyle?: never; defaultFilters?: never }
-	| {
-			showFilters: true;
-			filterStyle?: "expanded" | "minimal";
-			defaultFilters?: Partial<MovieFiltersType>;
-	  };
+type BrowseControlsConfig =
+  | { showBrowseControls?: false; defaultBrowseParams?: never }
+  | {
+      showBrowseControls: true;
+      defaultBrowseParams?: Partial<BrowseParams>;
+    };
 
 type MovieCollectionLayoutProps = {
-	// Core props - can be provided or auto-detected from route
-	title?: string;
-	fetcher?: RouteConfig["fetcher"];
-	source?: string;
-	currentPage?: number;
-	// Layout customization
-	size?: "sm" | "md" | "lg" | "xl";
-	// Header customization
-	headerProps?: {
-		size?: "sm" | "md" | "lg" | "xl";
-		showAccent?: boolean;
-		children?: ReactNode;
-	};
-	// Container customization
-	containerProps?: {
-		maxW?: string;
-		px?: number | string;
-		pt?: number | string;
-		pb?: number | string;
-	};
-} & FilterConfig;
+  // Core props - can be provided or auto-detected from route
+  title?: string;
+  fetcher?: RouteConfig["fetcher"];
+  source?: string;
+  // Layout customization
+  size?: "sm" | "md" | "lg" | "xl";
+  /** Whether to render PageHeader (default: true). Set false for grids that handle their own title. */
+  renderPageHeader?: boolean;
+  // Header customization
+  headerProps?: {
+    size?: "sm" | "md" | "lg" | "xl";
+    showAccent?: boolean;
+    children?: ReactNode;
+  };
+  // Container customization
+  containerProps?: {
+    maxW?: string;
+    px?: number | string;
+    pt?: number | string;
+    pb?: number | string;
+  };
+} & BrowseControlsConfig;
 
 const MovieCollectionLayout = ({
-	title,
-	fetcher,
-	source,
-	showFilters = false,
-	defaultFilters,
-	filterStyle = "expanded",
-	currentPage,
-	size = "xl",
-	headerProps,
-	containerProps,
+  title,
+  fetcher,
+  source,
+  showBrowseControls = false,
+  defaultBrowseParams,
+  size = "xl",
+  renderPageHeader = true,
+  headerProps,
+  containerProps,
 }: MovieCollectionLayoutProps) => {
-	const location = useLocation();
+  const location = useLocation();
 
-	// Get fetcher and source based on current route
-	const {
-		fetcher: routeFetcher,
-		source: routeSource,
-		title: routeTitle,
-	} = getFetcherAndSource(location.pathname);
+  // Get fetcher and source based on current route
+  // Pass location.search to ensure React Router location is the source of truth
+  const {
+    fetcher: routeFetcher,
+    source: routeSource,
+    title: routeTitle,
+  } = getFetcherAndSource(location.pathname, location.search);
 
-	// Use provided props or route-based defaults
-	const actualFetcher = fetcher || routeFetcher;
-	const actualSource = source || routeSource;
-	const actualTitle = title || routeTitle;
+  // Use provided props or route-based defaults
+  const actualFetcher = fetcher || routeFetcher;
+  const actualSource = source || routeSource;
+  const actualTitle = title || routeTitle;
 
-	// Local state for filter UI
-	const [isFiltersCollapsed, setIsFiltersCollapsed] = useState(false);
-	const [showAdvanced, setShowAdvanced] = useState(false);
+  // Extract search query from URL for search routes
+  // This is needed for TanStack Query cache key and scroll position persistence
+  const searchQuery = useMemo(() => {
+    if (location.pathname.startsWith("/search")) {
+      return parseSearchParamsFromUrl(location.search).query || undefined;
+    }
+    return undefined;
+  }, [location.pathname, location.search]);
 
-	// Use custom hook for URL management
-	const {
-		unifiedFilters,
-		currentPageFromUrl,
-		handlePageChange,
-		handleUnifiedFiltersChange,
-	} = useMovieCollectionUrl(defaultFilters, actualSource);
+  // Use custom hook for state management with auto-expand
+  // Note: Pagination is handled internally by TanStack Query (infinite scroll)
+  const {
+    browseParams,
+    onBrowseParamsChange,
+    isAdvancedPanelOpen,
+    setIsAdvancedPanelOpen,
+    toggleAdvancedPanel,
+    hasActiveAdvancedFilters,
+  } = useMovieCollectionState({
+    defaultBrowseParams,
+  });
 
-	// Use the enhanced fetcher hook
-	const enhancedFetcher = useEnhancedFetcher({
-		fetcher: actualFetcher,
-		filters: unifiedFilters,
-		filterStyle,
-	});
+  // Use the movie fetch router hook to route between search/discover endpoints
+  const enhancedFetcher = useMovieFetchRouter({
+    fetcher: actualFetcher,
+    browseParams,
+  });
 
-	// Memoized container configuration for better performance
-	const containerConfig = useMemo(() => {
-		const sizeMap = {
-			sm: { maxW: "600px", px: 3, pt: 2, pb: 3 },
-			md: { maxW: "800px", px: 3, pt: 2, pb: 3 },
-			lg: { maxW: "1200px", px: 4, pt: 3, pb: 4 },
-			xl: { maxW: "1400px", px: 4, pt: 3, pb: 4 },
-		};
-		return { ...sizeMap[size], ...containerProps };
-	}, [size, containerProps]);
+  // Memoized container configuration for better performance
+  const containerConfig = useMemo(() => {
+    const sizeMap = {
+      sm: { maxW: "600px", px: 3, pt: 2, pb: 3 },
+      md: { maxW: "800px", px: 3, pt: 2, pb: 3 },
+      lg: { maxW: "1200px", px: 4, pt: 3, pb: 4 },
+      xl: { maxW: "1400px", px: 4, pt: 3, pb: 4 },
+    };
+    const baseConfig = { ...sizeMap[size], ...containerProps };
 
-	// Memoized outlet context to prevent unnecessary re-renders
-	const outletContext = useMemo(
-		() => {
-			return {
-				fetcher: actualFetcher,
-				source: actualSource,
-				query: defaultFilters?.query,
-				initialCurrentPage: currentPage || currentPageFromUrl,
-				onPageChange: handlePageChange,
-				enhancedFetcher,
-			};
-		},
-		[
-			actualFetcher,
-			actualSource,
-			defaultFilters?.query,
-			currentPage,
-			currentPageFromUrl,
-			handlePageChange,
-			enhancedFetcher,
-		]
-	);
+    // When browse controls are shown, add extra top padding for the fixed sub-nav
+    // Uses layout-subnav token via CSS variable
+    // When advanced panel is open, add drawer height to push content below
+    if (showBrowseControls) {
+      baseConfig.pt = isAdvancedPanelOpen
+        ? "calc(var(--chakra-sizes-layout-subnav) + var(--chakra-sizes-subnav-advanced-drawer-height))"
+        : "var(--chakra-sizes-layout-subnav)";
+    }
 
-	return (
-		<Box
-			width="100%"
-			mx="auto"
-			minHeight="100vh"
-			display="flex"
-			flexDirection="column"
-			alignItems="flex-start"
-			{...containerConfig}
-		>
-			{/* Enhanced Page Header with better composition */}
-			<PageHeader
-				title={actualTitle}
-				size={headerProps?.size || "lg"}
-				showAccent={headerProps?.showAccent ?? true}
-			>
-				{headerProps?.children}
-			</PageHeader>
+    return baseConfig;
+  }, [size, containerProps, showBrowseControls, isAdvancedPanelOpen]);
 
-			{/* Conditionally rendered Filter Section */}
-			{showFilters && (
-				<FilterSection
-					showFilters={showFilters}
-					filterStyle={filterStyle}
-					showAdvanced={showAdvanced}
-					filters={unifiedFilters}
-					onFiltersChange={handleUnifiedFiltersChange}
-					onToggleAdvanced={() => setShowAdvanced(!showAdvanced)}
-					isFiltersCollapsed={isFiltersCollapsed}
-					onToggleCollapse={() => setIsFiltersCollapsed(!isFiltersCollapsed)}
-					source={source}
-				/>
-			)}
+  // Memoized outlet context to prevent unnecessary re-renders
+  // Note: Pagination is handled internally by child components via TanStack Query
+  const outletContext = useMemo(
+    () => {
+      return {
+        fetcher: actualFetcher,
+        source: actualSource,
+        // searchQuery is extracted from URL ?query= param for search routes
+        query: searchQuery,
+        title: actualTitle,
+        renderPageHeader,
+        enhancedFetcher,
+        // browseParams for TanStack Query cache key (filter changes invalidate cache)
+        browseParams,
+      };
+    },
+    [
+      actualFetcher,
+      actualSource,
+      searchQuery,
+      actualTitle,
+      renderPageHeader,
+      enhancedFetcher,
+      browseParams,
+    ]
+  );
 
-			{/* Content Container with consistent flex behavior */}
-			<Box
-				flex="1"
-				minHeight="600px"
-				display="flex"
-				flexDirection="column"
-				width="100%"
-				position="relative"
-			>
-				<Outlet context={outletContext} />
-			</Box>
-		</Box>
-	);
+  return (
+    <Box
+      width="100%"
+      mx="auto"
+      minHeight="100vh"
+      display="flex"
+      flexDirection="column"
+      alignItems="flex-start"
+      // Smooth transition for padding change when advanced panel opens/closes
+      transition={showBrowseControls ? "padding-top 220ms ease" : undefined}
+      {...containerConfig}
+    >
+      {/* Page Header - conditionally rendered (grids can handle their own title) */}
+      {renderPageHeader && (
+        <PageHeader
+          title={actualTitle}
+          size={headerProps?.size || "lg"}
+          showAccent={headerProps?.showAccent ?? true}
+        >
+          {headerProps?.children}
+        </PageHeader>
+      )}
+
+      {/* Conditionally rendered Browse Controls Section */}
+      {showBrowseControls && (
+        <BrowseControlsSection
+          showControls={showBrowseControls}
+          isAdvancedPanelOpen={isAdvancedPanelOpen}
+          hasActiveAdvancedFilters={hasActiveAdvancedFilters}
+          browseParams={browseParams}
+          onBrowseParamsChange={onBrowseParamsChange}
+          onToggleAdvancedPanel={toggleAdvancedPanel}
+          onSetAdvancedPanelOpen={setIsAdvancedPanelOpen}
+          source={actualSource}
+        />
+      )}
+
+      {/* Content Container with consistent flex behavior */}
+      <Box
+        flex="1"
+        minHeight="600px"
+        display="flex"
+        flexDirection="column"
+        width="100%"
+        position="relative"
+      >
+        <Outlet context={outletContext} />
+      </Box>
+    </Box>
+  );
 };
 
 export default MovieCollectionLayout;

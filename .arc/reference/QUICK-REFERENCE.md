@@ -12,11 +12,12 @@
 
 **Key documentation:**
 
-- `constitution/` - Project principles (META-PRD, TECHNICAL-ARCHITECTURE, PROJECT-STATUS)
-- `workflows/` - Core process guides (0-define-constitution.md, 1-create-prd.md, 2-generate-tasks.md, 3-process-task-loop.md)
+- `constitution/` - Project principles (META-PRD, TECHNICAL-OVERVIEW, PROJECT-STATUS)
+- `adr/` - Architecture decision records (significant design decisions with context)
+- `workflows/` - Core process guides (0_define-constitution.md, 1_create-prd.md, 2_generate-tasks.md, 3_process-task-loop.md)
 - `workflows/supplemental/` - Supporting workflows (atomic-commit.md, session-handoff.md, manage-incidental-work.md)
-- `strategies/` - Technical approaches (strategy-testing-methodology.md, strategy-type-safety.md)
-- `ai-instructions/` - AI-specific guidance (AGENTS.md, CLAUDE.md, WARP.md, GEMINI.md, copilot-instructions.md)
+- `strategies/` - Technical approaches (testing methodology, type safety, ADR methodology)
+- `agent/` - AI-specific guidance (AGENTS.md, CLAUDE.md, WARP.md, GEMINI.md, copilot-instructions.md)
 
 ---
 
@@ -27,13 +28,13 @@
 
 ### Critical Path Reference
 
-| Resource | Location from Repo Root | Why It Matters |
-|----------|-------------------------|----------------|
+| Resource       | Location from Repo Root             | Why It Matters                     |
+| -------------- | ----------------------------------- | ---------------------------------- |
+| .arc docs      | `.arc/`                             | Documentation                      |
+| Backend code   | `backend/apps/`, `backend/config/`  | Type checking, linting targets     |
+| Backend venv   | `.venv-backend/bin/`                | Host tools (ruff, pytest)          |
 | Docker Compose | `infrastructure/docker-compose.yml` | Required for all Docker operations |
-| Backend venv | `.venv-backend/bin/` | Host tools (ruff, pytest) |
-| Backend code | `backend/apps/`, `backend/config/` | Type checking, linting targets |
-| Frontend code | `frontend/src/` | Frontend operations |
-| .arc docs | `.arc/` | Documentation |
+| Frontend code  | `frontend/src/`                     | Frontend operations                |
 
 **Working Directory Note**: Your actual working directory may vary (backend/, frontend/, or root).
 CURRENT-SESSION.md contains context-specific paths adjusted for your current location.
@@ -65,6 +66,21 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 - Frontend `.env` has `VITE_BASE_API_URL="https://localhost:8444/api"` (includes `/api` prefix)
 - All API endpoints are relative to `/api/` (e.g., `/movies/discover`, not `/api/movies/discover`)
 - Redis runs internally (no exposed port needed for development)
+
+### Console Logging for AI Debugging
+
+Browser console logs automatically captured to `backend/logs/frontend.log` in development.
+
+```bash
+# Read logs
+cat backend/logs/frontend.log
+
+# Clear logs
+rm backend/logs/frontend.log
+
+# Tail in real-time
+tail -f backend/logs/frontend.log
+```
 
 ---
 
@@ -104,14 +120,14 @@ docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps
 
 **CRITICAL: Tests MUST run via Docker** (require PostgreSQL + Redis)
 
-**Test Runner**: pytest (migration complete 2025-10-13, 100% of tests converted)
+**Test Runner**: pytest with parallel execution enabled by default (~5x faster via pytest-xdist)
 
 ```bash
-# Run all tests (standard)
+# Run all tests (parallel execution is automatic)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 
-# Parallel execution (2-4x faster, recommended for development)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest -n auto apps/
+# Sequential execution (for debugging test isolation issues)
+docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/ -n 0
 
 # With coverage (full app)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/
@@ -136,9 +152,38 @@ docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint -
 
 ### Type Checking (Frontend)
 
+**CRITICAL: NEVER use `npx tsc` directly on individual files** - This bypasses project references and uses incorrect
+module resolution.
+
 ```bash
+# CORRECT: Use npm script (runs tsc -b with project references)
 docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check
+
+# WRONG: Direct tsc invocation - DO NOT USE
+# npx tsc --noEmit src/some-file.tsx  ❌ INCORRECT
+# npx tsc <file>                       ❌ INCORRECT
 ```
+
+**Why:** Project uses TypeScript project references (`tsconfig.json` → `tsconfig.app.json`). Direct `tsc` calls bypass
+this and produce false errors.
+
+### Chakra UI Type Generation
+
+**Run after modifying theme recipes** (variants, sizes, etc.) to regenerate component types:
+
+```bash
+# From frontend directory (preferred - uses installed CLI)
+npm run typegen
+
+# Or via npx (downloads CLI if not installed)
+npx @chakra-ui/cli typegen ./src/theme/index.ts
+```
+
+**Why:** Custom recipe variants (e.g., Badge "success", Button "secondary") need type generation to be recognized by
+TypeScript. Without this, you'll get errors like `Type '"success"' is not assignable to type...`
+
+**Note:** CI runs `npm run typegen` automatically before type-check. Generated types are written to
+`node_modules/@chakra-ui/react/dist/types/styled-system/generated/` and are not committed.
 
 ### Markdown Linting
 
@@ -156,6 +201,10 @@ npx markdownlint-cli2 --no-globs "path/to/file.md"
 
 # Auto-fix single file only
 npx markdownlint-cli2 --fix --no-globs "path/to/file.md"
+
+# Fix table formatting (MD060 violations)
+npx --yes markdown-table-prettify < input.md > output.md
+# Or use VS Code extension: "Markdown Table Prettifier" (Ctrl+Shift+P → "Prettify tables")
 ```
 
 **Important:**
@@ -163,6 +212,7 @@ npx markdownlint-cli2 --fix --no-globs "path/to/file.md"
 - Without `--no-globs`, markdownlint-cli2 processes config globs **in addition to** specified files
 - Use `--no-globs` when checking/fixing individual files to avoid processing entire workspace
 - VS Code extension uses separate config (`.markdownlint.jsonc`)
+- `markdownlint-cli2 --fix` does NOT fix MD060 (table alignment) - use `markdown-table-prettify` instead
 
 ---
 
@@ -171,7 +221,7 @@ npx markdownlint-cli2 --fix --no-globs "path/to/file.md"
 Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
 
 ```bash
-# 1. Backend Tests (pytest - migration complete 2025-10-13)
+# 1. Backend Tests (parallel execution enabled by default)
 docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
 
 # 2. Frontend Tests
@@ -224,54 +274,99 @@ docker compose -f infrastructure/docker-compose.yml down
 
 ---
 
-## Tool Decision Tree
+## Movie Blacklist Operations
 
-```
-Need to run a command?
-│
-├─ Type checking (Python)?
-│  └─ npx pyright backend/apps/ backend/config/ --project backend
-│
-├─ Linting (Python)?
-│  └─ .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
-│
-├─ Testing (Backend)?
-│  └─ docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
-│     (MUST use Docker - requires database/Redis)
-│
-├─ API Testing (curl/Postman)?
-│  └─ curl -k https://localhost:8000/api/endpoint
-│     (Direct backend access, -k skips cert verification)
-│
-├─ Linting/Type-checking (Frontend)?
-│  └─ docker compose -f infrastructure/docker-compose.yml exec frontend npm run [lint|type-check]
-│
-├─ Markdown linting?
-│  └─ npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
-│
-└─ Unsure?
-   └─ Use Docker (always consistent)
+**IMPORTANT:** App is registered as `movie` not `apps.movie` - use correct import path.
+
+```bash
+# Add single movie to blacklist
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from movie.models import BlacklistedMovie
+movie, created = BlacklistedMovie.objects.get_or_create(
+    tmdb_id=123456,
+    defaults={'reason': 'Description of why blacklisted'}
+)
+print(f'{"Added" if created else "Already exists"}: {movie.tmdb_id}')
+print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
+EOF
+
+# Bulk blacklist (example: list of IDs)
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from movie.models import BlacklistedMovie
+ids_to_blacklist = [111, 222, 333]
+for tmdb_id in ids_to_blacklist:
+    movie, created = BlacklistedMovie.objects.get_or_create(
+        tmdb_id=tmdb_id,
+        defaults={'reason': 'Bulk blacklist: [category]'}
+    )
+print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
+EOF
+
+# Check current blacklist count
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from movie.models import BlacklistedMovie
+print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
+EOF
 ```
 
 ---
 
-## Common Patterns
+## TMDB API Queries (Ad-hoc)
 
-### Incremental Quality Checks (After Sub-Task)
+**Use Django shell with TMDBApiClient** - automatic API key injection, error handling, structured responses.
 
 ```bash
-# Type check specific module (use directory, not file - ensures config applies)
-npx pyright backend/apps/authentication/ --project backend
+# Single movie details
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from core.services.tmdb_api_client import TMDBApiClient
 
-# Lint and fix specific files
-.venv-backend/bin/ruff check backend/apps/authentication/api.py --fix
+client = TMDBApiClient()
+response = client.get_movie_details(123456)  # TMDB movie ID
 
-# Run specific test file
-docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/authentication/tests/test_user_api.py -v
+if response.is_success:
+    data = response.data
+    print(f"Title: {data.get('title')}")
+    print(f"Release: {data.get('release_date')}")
+    print(f"Adult flag: {data.get('adult')}")
+    print(f"Companies: {[c.get('name') for c in data.get('production_companies', [])]}")
+else:
+    print(f"Error: {response.error_message}")
+EOF
 
-# Coverage for specific modules (use module paths, not file paths)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps.authentication.api --cov-report=term-missing apps/authentication/tests/
+# Batch movie details
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from core.services.tmdb_api_client import TMDBApiClient
+
+client = TMDBApiClient()
+movie_ids = [123, 456, 789]
+
+for movie_id in movie_ids:
+    response = client.get_movie_details(movie_id)
+    if response.is_success:
+        data = response.data
+        print(f"{movie_id}: {data.get('title')} ({data.get('release_date', '')[:4]})")
+EOF
+
+# Discover movies by production company
+docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
+from core.services.tmdb_api_client import TMDBApiClient
+
+client = TMDBApiClient()
+response = client.get("discover/movie", params={"with_companies": 12782})  # Company ID
+
+if response.is_success:
+    print(f"Total: {response.data.get('total_results')} movies")
+    for m in response.data.get('results', [])[:10]:
+        print(f"  {m.get('title')} ({m.get('release_date', '')[:4]})")
+EOF
 ```
+
+**Available TMDBApiClient methods:**
+
+- `get_movie_details(movie_id)` - Movie details including production companies
+- `search_movies(query, page=1)` - Search by title
+- `discover_movies(**params)` - Discovery endpoint with filters
+- `get(endpoint, params)` - Generic GET for any TMDB endpoint
 
 ---
 
@@ -308,29 +403,6 @@ docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=ap
 ✅ Use commands from QUICK-REFERENCE (paths correct for repo root)
 ✅ Adjust paths based on your working directory (see CURRENT-SESSION.md)
 ✅ Use explicit paths for venv tools: `.venv-backend/bin/[tool]`
-
----
-
-## Key Reminders
-
-1. **Docker Compose location**: `infrastructure/docker-compose.yml` (from repo root)
-2. **Tests require Docker**: NEVER run backend tests from host (no database access)
-3. **Venv location**: `.venv-backend/bin/` (from repo root)
-4. **Working directory varies**: Check CURRENT-SESSION.md for context-specific paths
-5. **Pyright from anywhere**: `npx pyright backend/apps/ --project backend` works regardless of CWD
-
----
-
-## Additional Resources
-
-- **DEVELOPMENT-RULES.md** - Quality standards and protocols (what/why)
-- **CURRENT-SESSION.md** - Current work context and adjusted paths for your working directory
-- **TECHNICAL-ARCHITECTURE.md** - System design and testing methodology
-- **3-process-task-loop.md** - Workflow for task execution
-- **supplemental/atomic-commit.md** - Commit creation and review process
-- **supplemental/session-handoff.md** - Session handoff protocol
-- **strategy-type-safety.md** - Type checking approach and patterns
-- **strategy-testing-methodology.md** - Testing philosophy and practices
 
 ---
 

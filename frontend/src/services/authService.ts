@@ -1,6 +1,7 @@
 import apiClient from "./apiClient";
-import type { components } from "../types/api";
+import type { components } from "@/types/api";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
+import logger from "./logger";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -25,29 +26,33 @@ type LogoutResponse = components["schemas"]["LogoutResponseSchema"];
  * @returns Token response with access token, refresh token, user_id, and email_verified status
  */
 export async function login(
-	username: string,
-	password: string
+    username: string,
+    password: string
 ): Promise<TokenResponse> {
-	await ensureCsrfTokenCookie(BASE_URL);
-	const csrfToken = getCsrfToken();
+    await ensureCsrfTokenCookie(BASE_URL);
+    const csrfToken = getCsrfToken();
 
-	const payload: TokenObtainInput = {
-		login: username, // Backend accepts username or email
-		password,
-	};
+    if (!csrfToken) {
+        logger.warn("CSRF token not available for login request");
+    }
 
-	const response = await apiClient.post<TokenResponse>(
-		`/token/`,
-		payload,
-		{
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRFToken": csrfToken || "",
-			},
-		}
-	);
+    const payload: TokenObtainInput = {
+        login: username, // Backend accepts username or email
+        password,
+    };
 
-	return response.data;
+    const response = await apiClient.post<TokenResponse>(
+        `/token/`,
+        payload,
+        {
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
+            },
+        }
+    );
+
+    return response.data;
 }
 
 /**
@@ -62,35 +67,39 @@ export async function login(
  * @returns Token response with access token, refresh token, user_id, and email_verified status
  */
 export async function register(
-	username: string,
-	email: string,
-	password: string,
-	firstName: string = "",
-	lastName: string = ""
+    username: string,
+    email: string,
+    password: string,
+    firstName: string = "",
+    lastName: string = ""
 ): Promise<TokenResponse> {
-	await ensureCsrfTokenCookie(BASE_URL);
-	const csrfToken = getCsrfToken();
+    await ensureCsrfTokenCookie(BASE_URL);
+    const csrfToken = getCsrfToken();
 
-	const payload: RegisterInput = {
-		username,
-		email,
-		password,
-		first_name: firstName,
-		last_name: lastName,
-	};
+    if (!csrfToken) {
+        logger.warn("CSRF token not available for register request");
+    }
 
-	const response = await apiClient.post<TokenResponse>(
-		`/register/`,
-		payload,
-		{
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRFToken": csrfToken || "",
-			},
-		}
-	);
+    const payload: RegisterInput = {
+        username,
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName,
+    };
 
-	return response.data;
+    const response = await apiClient.post<TokenResponse>(
+        `/register/`,
+        payload,
+        {
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
+            },
+        }
+    );
+
+    return response.data;
 }
 
 /**
@@ -100,20 +109,25 @@ export async function register(
  * @returns Logout confirmation message
  */
 export async function logout(): Promise<LogoutResponse> {
-	const csrfToken = getCsrfToken();
+    await ensureCsrfTokenCookie(BASE_URL);
+    const csrfToken = getCsrfToken();
 
-	const response = await apiClient.post<LogoutResponse>(
-		`/logout/`,
-		{},
-		{
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRFToken": csrfToken || "",
-			},
-		}
-	);
+    if (!csrfToken) {
+        logger.warn("CSRF token not available for logout request");
+    }
 
-	return response.data;
+    const response = await apiClient.post<LogoutResponse>(
+        `/logout/`,
+        {},
+        {
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
+            },
+        }
+    );
+
+    return response.data;
 }
 
 /**
@@ -123,8 +137,8 @@ export async function logout(): Promise<LogoutResponse> {
  * @returns User profile with id, username, email, first_name, last_name, email_verified, full_name
  */
 export async function getUserProfile(): Promise<UserProfile> {
-	const response = await apiClient.get<UserProfile>(`/profile/`);
-	return response.data;
+    const response = await apiClient.get<UserProfile>(`/profile/`);
+    return response.data;
 }
 
 /**
@@ -135,20 +149,25 @@ export async function getUserProfile(): Promise<UserProfile> {
  * @returns Verification result with message
  */
 export async function verifyEmail(token: string): Promise<{ message: string }> {
-	await ensureCsrfTokenCookie(BASE_URL);
-	const csrfToken = getCsrfToken();
+    await ensureCsrfTokenCookie(BASE_URL);
+    const csrfToken = getCsrfToken();
 
-	const response = await apiClient.post<{ message: string }>(
-		`/verify-email/`,
-		{ key: token },
-		{
-			headers: {
-				"X-CSRFToken": csrfToken || "",
-			},
-		}
-	);
+    if (!csrfToken) {
+        logger.warn("CSRF token not available for verify-email request");
+    }
 
-	return response.data;
+    const response = await apiClient.post<{ message: string }>(
+        `/verify-email/`,
+        { key: token },
+        {
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
+            },
+        }
+    );
+
+    return response.data;
 }
 
 /**
@@ -159,21 +178,25 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
  * @returns Confirmation message
  */
 export async function resendVerificationEmail(
-	email: string
+    email: string
 ): Promise<{ message: string }> {
-	await ensureCsrfTokenCookie(BASE_URL);
-	const csrfToken = getCsrfToken();
+    await ensureCsrfTokenCookie(BASE_URL);
+    const csrfToken = getCsrfToken();
 
-	const response = await apiClient.post<{ message: string }>(
-		`/resend-verification/`,
-		{ email },
-		{
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRFToken": csrfToken || "",
-			},
-		}
-	);
+    if (!csrfToken) {
+        logger.warn("CSRF token not available for resend-verification request");
+    }
 
-	return response.data;
+    const response = await apiClient.post<{ message: string }>(
+        `/resend-verification/`,
+        { email },
+        {
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
+            },
+        }
+    );
+
+    return response.data;
 }

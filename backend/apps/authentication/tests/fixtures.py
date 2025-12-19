@@ -27,11 +27,11 @@ Example:
 from typing import TYPE_CHECKING, TypedDict, Unpack
 
 from allauth.socialaccount.models import SocialAccount, SocialApp
-
-# Import canonical create_user from core test helpers
-from core.tests.test_helpers import create_user
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+
+# Import canonical create_user from core test helpers
+from apps.core.tests.test_helpers import create_user
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User as UserType
@@ -70,7 +70,7 @@ class LoginPayload(TypedDict, total=False):
 
 
 # User creation fixtures
-# Note: create_user is imported from core.tests.test_helpers (canonical version)
+# Note: create_user is imported from apps.core.tests.test_helpers (canonical version)
 
 
 def create_unverified_user(**params: Unpack[UserParams]) -> "UserType":

@@ -19,8 +19,14 @@ from apps.movie.api import genres_router, keywords_router, movies_router, people
 from apps.user_movie_data.api import user_movie_data_router
 
 # Create the main NinjaAPI instance with native authentication
-# csrf=False: Disable Django Ninja CSRF entirely to avoid bug #1464
-# CSRF protection provided by custom CsrfHeaderMiddleware with path-based exemptions
+#
+# CSRF Architecture (django-ninja 1.5.x):
+# - NinjaAPI(): No csrf parameter (removed in 1.5.0)
+# - JWTCookieAuth: Passes csrf=False to APIKeyCookie parent (disables Ninja's CSRF)
+# - Protection: Custom CsrfHeaderMiddleware with path-based exemptions
+#
+# This bypasses Django Ninja's CSRF entirely (avoids bug #1464) and uses
+# our middleware for header-based CSRF validation on authenticated endpoints.
 api = NinjaAPI(
     title="CineXplorer API",
     version="1.0.0",
@@ -31,7 +37,6 @@ api = NinjaAPI(
     docs_url="/docs",
     openapi_url="/openapi.json",
     auth=jwt_cookie_auth,  # Global authentication scheme
-    csrf=False  # Custom middleware handles CSRF (avoid Django Ninja bug #1464)
 )
 
 # Add app routers

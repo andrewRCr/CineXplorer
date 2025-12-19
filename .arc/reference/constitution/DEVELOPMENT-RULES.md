@@ -1,69 +1,52 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.7 | **Updated:** 2025-10-15 | **Hash:** `h3n5p8r2`
+**Version:** 2.14 | **Updated:** 2025-11-13 | **Hash:** `k7m3p9w2`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
 
 **For command patterns and environment context**, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
+**For session initialization protocol**, see [session-init.md](../workflows/supplemental/session-init.md).
 
-## AI Session Initialization Required
-
-**Before starting ANY work, AI assistants must:**
-
-1. **Confirm rules version:** "Acknowledging DEVELOPMENT-RULES v2.7, hash h3n5p8r2"
-2. **Verify environment:** Follow Session Startup Protocol in CURRENT-SESSION.md
-   (check working directory, Docker status, venv availability)
-3. **State understanding:** Confirm commit protocols, test-first protocol, task analysis, quality gates,
-   "Leave It Cleaner" protocol, CURRENT-SESSION control, and feature branch workflow
-4. **Verify context access:** Confirm access to required documents (QUICK-REFERENCE, AGENTS, META-PRD, etc.)
-5. **Check branch status:** Verify current git branch and alignment with intended work
-
-## Git & Commit Control
-
-### Manual Commit Control
+## Manual Commit Control
 
 - **AI NEVER initiates commits** without explicit user approval or instruction
 - **AI CAN execute commits** when user explicitly approves/instructs it
 - **User approval required** for all git operations
+- **NEVER use `--no-verify`** to bypass commit hooks - hooks exist to catch errors
+- **Careful with file reverts**: Before running `git checkout -- <file>` or similar destructive operations,
+  check `git diff <file>` to understand ALL uncommitted changes. Your changes may not be the only ones in
+  that file - other tasks may have added uncommitted work that will be lost
 - **MANDATORY:** Comprehensive task context analysis before any commit consideration (see atomic-commit workflow)
-- AI reports completion with readiness report, then awaits commit instructions
-
-### Feature Branch Workflow
-
-- **All feature work** must happen on dedicated feature branches
-- **Branch naming convention**: `feature/[feature-name]` (e.g., `feature/user-profile-editing`)
-- **Branch creation**: Create new branch during task generation phase
-- **Branch verification**: Always verify correct branch before committing
-- **Merge strategy**: Preserve commit history when merging to main (no squash merge)
-- **Branch cleanup**: Delete feature branches after successful merge
+- **Task list accuracy required**: Before commit consideration, verify task documentation reflects completed work
+  (parent task marked `[x]` if all subtasks complete)
+- **Never commit stale task docs**: Task list updates must be saved and included in commits for completed work
+- AI reports completion, then awaits commit instructions
 
 ### Quality Gates (Zero Tolerance)
 
-Before any commit consideration, ALL of the following must pass with **zero exceptions**. For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
+Before any commit consideration, ALL of the following must pass with **zero exceptions**.
+For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
+
+**Zero Tolerance Policy:** All errors, violations, and failures must be fixed. No exceptions.
 
 1. **Backend Tests**: 100% pass rate
    - **MUST run via Docker** (requires database connection to PostgreSQL/Redis)
    - **Test runner**: pytest (migration complete 2025-10-13, 103/103 tests converted)
    - **NEVER run from host venv** - tests require Docker network access
-   - Zero failures acceptable
 
 2. **Frontend Tests**: 100% pass rate
    - Run via Docker (npm test)
-   - Zero failures acceptable
 
-3. **Backend Linting**: Zero violations
+3. **Backend Linting**
    - Use Ruff with auto-fix capability
    - Options: host venv (fast) or Docker (consistent)
-   - Every violation must be fixed
 
-4. **Frontend Linting**: Zero violations
+4. **Frontend Linting**
    - Run via Docker (npm run lint)
-   - Every violation must be fixed
 
-5. **TypeScript Checking**: Zero errors
+5. **TypeScript Checking**
    - Run via Docker (npm run type-check)
-   - Every type error must be resolved
 
 6. **Python Type Safety**: Pyright with django-types for minimal Any usage
    - Use Pyright via npx: `npx pyright backend/apps/ backend/config/ --project backend`
@@ -72,14 +55,13 @@ Before any commit consideration, ALL of the following must pass with **zero exce
    - **PROHIBITED**: Using `typing.Any` except for external API payloads (TMDB, etc.)
    - **REQUIRED**: Use `object` for unknown data, `dict[str, object]` for generic dictionaries
    - **JUSTIFICATION**: Any `Any` usage must have inline comment explaining necessity
-   - **Full guidelines**: See [Type Safety Strategy](../strategies/strategy-type-safety.md) for complete strategy
+   - **Full guidelines**: See [Type Safety Strategy](../strategies/project/strategy-type-safety.md) for complete strategy
    - **Stub maintenance**: `backend/stubs/` must stay in sync with dependency versions (see strategy doc)
 
-7. **Markdown Linting**: Zero violations
+7. **Markdown Linting**
    - Use markdownlint-cli2 via npx with auto-fix
    - Config: `.markdownlint-cli2.jsonc` (MD034 bare URLs disabled only for temporal docs)
    - Gitignored files automatically excluded (notes/, archive/notes/, CURRENT-SESSION.md)
-   - Every violation must be fixed
 
 ### Quality Gate Failure Protocol
 
@@ -111,41 +93,133 @@ Quality issues discovered during work should be addressed, not ignored.
      - Link to relevant files/line numbers
    - ❌ **Ignore silently** - NEVER acceptable
 
-3. **Examples:**
-   - Type errors in file you're editing → Fix with proper solution per [Type Safety Strategy](../strategies/strategy-type-safety.md)
-   - Linting violations in modified file → Fix with auto-fix tools
-   - Missing tests for existing function → Ask if should add now or defer
-   - Deprecated API usage → Ask if should modernize now or defer
-
-4. **Documentation requirements:**
+3. **Documentation requirements:**
    - Fixed issues: Note in commit message ("Also fixed X pre-existing issues")
    - Deferred issues: Create task list in `.arc/active/incidental/tasks-incidental-*.md`
    - Never: Leave issues undocumented or unaddressed
-
-**Rationale:**
-
-- Prevents technical debt accumulation
-- Ensures quality gates actually improve codebase health
-- Makes incremental progress on code quality with every change
-- Documents intentional decisions when issues must be deferred
 
 ## Session Documentation Control
 
 ### CURRENT-SESSION.md Update Protocol
 
 - **AI NEVER updates CURRENT-SESSION.md** without explicit user instruction
-- CURRENT-SESSION.md is a handoff document controlled by the user
-- AI should report changes and progress but NOT modify this file during active work
-- User decides when and how session documentation is updated
-- Violating this rule breaks session continuity and coordination
+- CURRENT-SESSION.md is a handoff document only updated at session end when instructed
+- AI should report changes and progress, but user decides when/how session docs are updated
+
+## Verification Protocol
+
+**Principle:** Wrong information is worse than no information - it wastes time and breaks trust.
+
+**When uncertain about implementation details, file locations, or existing content:**
+
+1. **Search first:** Use Grep/Glob/Read to verify from source
+2. **Ask clarifying questions:** When you understand the request but design decisions need input
+3. **Stop and ask:** If still unclear after searching
+
+**Never generate or assume:**
+
+- File paths or directory structure (use Glob)
+- What code "probably does" (read the actual implementation)
+- Task phase content or summaries (read the task list)
+- Implementation approaches without understanding requirements
+
+**On clarifying questions:**
+When you mostly understand a request but see ambiguities, edge cases, or design alternatives that need decisions - ask.
+Examples: "Should this handle empty states?" "Do we want this cached?" "Which takes precedence if both conditions are
+true?" These questions improve outcomes for both code and documentation work.
+
+**Why this matters:** Made-up content in documentation misleads future work. Assumed behavior in code wastes debugging
+time. Verification takes seconds; fixing wrong assumptions takes hours.
+
+## Strategy Document Protocol
+
+**Before implementing work in codified domains, consult the relevant strategy document.**
+
+See [STRATEGY-INDEX.md](../strategies/STRATEGY-INDEX.md) for complete list of available strategies (read every session
+during initialization).
+
+**Process:**
+
+1. Identify if your work touches a domain with codified guidance (theming, auth, testing, layout, etc.)
+2. Grep the strategy doc for your specific topic (e.g., `grep -i "button patterns" strategy-component-styling.md`)
+3. Read relevant section(s) before implementing
+4. Follow documented patterns and token usage
+
+**When uncertain if strategy applies:** Ask. "Does this work touch [domain] where we have strategy guidance?"
+
+**For large multi-topic strategies** (e.g., `strategy-component-styling.md`): Search for specific component/pattern
+rather than reading entire document.
+
+**Why this matters:** Strategy docs codify decisions, patterns, and token systems. Following them ensures consistency and
+prevents rework when non-standard approaches are caught in review.
+
+## Session Context Management
+
+**Principle:** Work quality must never be compromised due to context/resource limitations. Session handoffs are
+managed by the user.
+
+**Core Protocol:**
+
+- Work at full specification throughout the session
+- When approaching context limits (agent-specific thresholds in agent files like CLAUDE.md):
+  1. Complete current work item (don't stop mid-edit)
+  2. Evaluate remaining work scope
+  3. **Stop and ask user** how to proceed with summary of completed/remaining work
+  4. User decides: continue, commit completed work then continue, or begin handoff
+- **Never** degrade work quality or change approach due to context/resource pressure
+- **Never** make "efficiency" tradeoffs based on context window size
+
+**Ideal end-of-session workflow:**
+
+1. Use atomic-commit workflow to commit all **complete** work
+2. Leave any **partial** work uncommitted
+3. Perform session handoff documenting partial work state
+
+**Backup workflow** (when insufficient resources remain for commits):
+
+- Session handoff captures commit-message-level notes
+- Next session executes commits from documented state
+- Less ideal but functional fallback
+
+**Why this matters:** Incomplete work done properly with good handoff is better than complete work done sloppily.
+Context management is user responsibility - AI focuses on maintaining work quality standards.
+
+**Agent-specific details:** See agent-specific files (CLAUDE.md, GEMINI.md, etc.) for context window thresholds
+and monitoring protocols.
+
+## Core Document Reference Protocol
+
+Core documents (QUICK-REFERENCE, DEVELOPMENT-RULES) are read each session but should be re-checked when triggered.
+
+**QUICK-REFERENCE - Re-check when:**
+
+- Bash command fails with path/environment errors (ENOENT, "no such file or directory", "config not found")
+- About to run quality gate commands and uncertain which tool/path to use (Docker vs host? Which flags?)
+- **About to run TypeScript type checks** - Verify exact command (NEVER use `npx tsc` directly, ALWAYS use `npm run type-check`)
+- Working directory context feels uncertain or commands aren't working as expected
+
+**DEVELOPMENT-RULES - Re-check when:**
+
+- Uncertainty about quality standards (what's the zero-tolerance policy? which gates are required?)
+- Approaching context limits (verify Session Context Management protocol and agent-specific guidance)
+- Confusion about verification, strategy, or task management protocols
+
+**Don't re-check for:**
+
+- Operations with dedicated workflow docs (commit operations, session handoffs, etc; workflows are authoritative, not DEVELOPMENT-RULES)
+
+**Why this matters:** Session-start reading establishes baseline context. Trigger-based re-checking ensures accuracy
+when specific patterns/commands are needed. Active verification beats passive recall, especially later in long sessions.
 
 ## Task Management Protocol
 
 ### One Sub-Task Rule
 
 - **Complete ONE sub-task at a time** - never bundle multiple deliverables
-- **Mandatory stop** after each sub-task completion
-- **Wait for explicit user approval** before starting next sub-task
+- **Mark complete immediately** when work is done (tests pass, quality checks pass)
+- **Mandatory stop** after reporting completion for user approval to proceed
+- **Implied permission**: User approval implies permission to proceed UNLESS explicitly stated otherwise
+  (e.g., "that's done, but before moving on..."). Address such concerns before proceeding to next subtask.
 
 ### Sub-Task Granularity Guidelines
 
@@ -176,14 +250,6 @@ Break down a sub-task if it requires:
 - Trivial refactoring (renaming, moving files)
 - Documentation-only changes
 
-**Task breakdown pattern for test-first work:**
-
-```markdown
-- [ ] X.1 Write tests for [feature]
-- [ ] X.2 Implement [feature] (make tests pass)
-- [ ] X.3 Incremental quality checks
-```
-
 **If unsure whether test-first applies, default to test-first.** Writing tests after implementation is harder and less effective.
 
 **During task list creation:** Ensure test sub-tasks appear BEFORE implementation sub-tasks for test-first work.
@@ -195,95 +261,107 @@ This makes the protocol visible during execution.
 - **Integration focus**: Prefer flow-level coverage over isolated units when practical
 - **All tests must pass** before any commit discussion (see quality gates above)
 - **Command patterns**: See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for execution commands
-- **Detailed guidance**: See [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md)
-
-### Documentation Updates
-
-- **Immediate task list updates**: Mark `[x]` in task files after each sub-task
-- **Update "Relevant Files"** section when files are created/modified
-- **Never batch documentation updates** - do immediately after work
-
-### Parent Task Completion
-
-After completing all sub-tasks under a parent task:
-
-1. **Run full quality gate checks**
-2. **Check PROJECT-STATUS** for necessary updates
-3. **Report completion** with standardized readiness report
-4. **Wait for user approval** before proceeding
-
-### PROJECT-STATUS Maintenance
-
-- **After each sub-task**: Update task documentation only
-- **After each parent task**: Check if PROJECT-STATUS needs updates
-- **Regular accuracy checks**: Ensure PROJECT-STATUS reflects all recent work
+- **Detailed guidance**: See [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md)
 
 ## Code Quality Principles
 
-Apply standard software engineering principles to maintain clean, maintainable code:
+Apply standard software engineering principles:
 
-### Core Principles
+- **DRY** (don't repeat yourself)
+- **SOLID** (single responsibility, open/closed, dependency inversion)
+- **KISS** (keep it simple)
+- **YAGNI** (you aren't gonna need it)
 
-**DRY (Don't Repeat Yourself)**
+Separate concerns, prefer composition over duplication, favor readability when principles conflict.
 
-- Extract repeated logic into reusable functions, components, or utilities
-- Wait for 2-3 instances before abstracting (avoid premature optimization)
-- Share types and interfaces instead of duplicating definitions
+### Layered Architecture (Backend)
 
-**SOLID Principles**
+Backend uses strict layered architecture: API routes handle HTTP concerns only, Service layer contains ALL
+business logic (filtering, calculations, presets, orchestration).
 
-- **Single Responsibility**: Each component/function should have one clear purpose
-- **Open/Closed**: Use composition and configuration over modification
-- **Liskov Substitution**: Subtypes must be substitutable for their base types
-- **Interface Segregation**: Keep interfaces focused and minimal
-- **Dependency Inversion**: Depend on abstractions, not concrete implementations
+**Rule of thumb:** If an API route does more than extract params → call service → return response, the extra
+logic likely belongs in Service layer.
 
-**KISS (Keep It Simple)**
+### Component Styling Standards (Frontend)
 
-- Choose simple solutions over clever ones
-- Prefer clarity over brevity when they conflict
-- Question complexity - if it's hard to explain, simplify it
+Frontend uses semantic token system for all styling. Components MUST use semantic tokens, never hardcoded colors or
+direct style values.
 
-**YAGNI (You Aren't Gonna Need It)**
+**Required practices:**
 
-- Implement features when required, not when anticipated
-- Start specific, generalize later when patterns actually emerge
-- Delete unused code
+- Always use semantic tokens (e.g., `color="tertiary"`, `bg="layer-01"`)
+- Never hardcode colors (`color="#4299e1"`, `bg="blue.500"`)
+- Never use Chakra raw color tokens (`color="red.600"`, `colorScheme="blue"`)
+- Use recipes and wrapper components for consistent patterns
+- Reference strategy docs before implementing: [Color Token System](../strategies/project/style/strategy-color-tokens.md),
+  [Component Styling Strategy](../strategies/project/style/strategy-component-styling.md)
 
-### Practical Application
+**Rule of thumb:** If you're writing inline color/style values instead of semantic tokens, check the strategy
+docs for the correct pattern.
 
-- **Separate concerns**: UI from business logic, data fetching from presentation
-- **Use custom hooks** to abstract and share logic
-- **Prefer composition** over inheritance or duplication
-- **Design component APIs** that accept configuration
-- **When principles conflict**: Favor readability and simplicity
+### Import Standards (Frontend)
 
-## Error Handling
+Use absolute imports (`@/`) for cross-directory references and relative imports (`./`) for same-directory references.
 
-### When Things Go Wrong
+**Examples:**
 
-- **Report immediately** with full context
-- **Provide diagnostic information** (error messages, stack traces)
-- **Suggest investigation areas** based on the changes made
-- **Wait for guidance** rather than attempting fixes without approval
+- ✅ `import { foo } from "@/services/apiClient"` (from hooks/ to services/)
+- ✅ `import { bar } from "./httpService"` (within services/)
+- ❌ `import { foo } from "../services/apiClient"` (cross-directory relative)
 
-### Never Proceed If
+**Why:** Absolute imports are resilient to file moves and make import paths self-documenting. The `@/` alias maps
+to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
 
-- Quality gates are failing
-- Tests are broken
-- Linting violations exist
-- TypeScript errors are present
-- User has not approved the next step
+### Code Documentation Standards
+
+- **No meta-project references in codebase**: Never reference task IDs, phase numbers, or `.arc/`
+  documentation in production code (comments, docstrings, variable names). Meta-project information
+  belongs only in `.arc/` documentation. Code should explain "what" and "why" independently of
+  project management context.
+
+- **Task references in `.arc/` documentation**: When referencing tasks in `.arc/` documentation,
+  always include both the task/phase identifier AND the task list filename in backticks. Format:
+  "Task X.Y - `tasks-name.md`" or "Phase X - `tasks-name.md`". Use only the filename (no path),
+  as task lists move between active/, backlog/, and archive/ directories. This ensures references
+  are searchable and provide clear context about which work the task belongs to.
+  Examples: "Task 8.3 - `tasks-oauth-headless-migration.md`", "Phase 3 - `tasks-service-layer-modernization.md`"
+
+## Architecture Documentation
+
+### Architecture Decision Records (ADRs)
+
+Document significant architectural decisions in ADRs (`.arc/reference/adr/`). ADRs capture the context,
+decision, and consequences of important design choices, serving as historical record and reference for
+understanding system constraints.
+
+**Write an ADR when:**
+
+- Decision affects system structure or external contracts
+- Multiple alternatives were considered
+- Decision driven by external constraint (API limitations, regulatory requirements)
+- Future developers will ask "why did we do it this way?"
+- Decision could be reversed later (context needed for reversal)
+
+**Don't write an ADR for:**
+
+- Purely tactical implementation choices (variable names, loop constructs)
+- Decisions obvious from reading code (standard CRUD, framework conventions)
+- Temporary or experimental choices
+
+**Format and guidance:** See [ADR Methodology Strategy](../strategies/arc/strategy-adr-methodology.md)
+**Template:** See `.arc/reference/adr/adr-template.md`
+
+ADRs are immutable once accepted - new decisions require new ADRs that supersede old ones.
 
 ## Reference Documentation
 
 This document provides core rules and standards. See related documentation:
 
-- **[QUICK-REFERENCE.md](../QUICK-REFERENCE.md)** - Environment context, command patterns, and tool usage
-- [Task Processing Workflow](../workflows/3-process-task-loop.md) - Detailed task execution workflow
+- [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) - Environment context, command patterns, and tool usage
+- [Task Processing Workflow](../workflows/3_process-task-loop.md) - Detailed task execution workflow
 - [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with task context analysis
-- [AI Agent Reference Card](../ai-instructions/AGENTS.md) - Complete project context for AI
-- [Current Session](.arc/active/CURRENT-SESSION.md) - Session handoff template (untracked)
-- [Technical Architecture](TECHNICAL-ARCHITECTURE.md) - Testing methodology details
-- [Type Safety Strategy](../strategies/strategy-type-safety.md) - Type checking approach and patterns
-- [Testing Methodology Strategy](../strategies/strategy-testing-methodology.md) - Testing philosophy and practices
+- [AI Agent Reference Card](../agent/AGENTS.md) - Complete project context for AI
+- [Technical Overview](TECHNICAL-OVERVIEW.md) - High-level system architecture and technology stack
+- [ADR Methodology Strategy](../strategies/arc/strategy-adr-methodology.md) - Architecture decision record guidance
+- [Type Safety Strategy](../strategies/project/strategy-type-safety.md) - Type checking approach and patterns
+- [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md) - Testing philosophy and practices

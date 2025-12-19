@@ -21,6 +21,11 @@ from ninja.errors import HttpError
 from middleware.logging import get_correlation_id
 
 from .schemas import (
+    ApiErrorSchema,
+    DevConsoleLogRequest,
+    DevConsoleLogResponse,
+    ErrorCategory,
+    ErrorCode,
     FrontendLogEntrySchema,
     FrontendLogErrorResponse,
     FrontendLogSuccessResponse,
@@ -120,6 +125,62 @@ def health_check(request: HttpRequest) -> dict[str, str]:
         Status response indicating the application is healthy
     """
     return {"status": "healthy"}
+
+
+@core_router.get(
+    "/error-codes/",
+    auth=None,
+    response=list[ApiErrorSchema],
+    summary="Get available error codes",
+    description="Returns a list of all API error codes. This endpoint exposes error "
+    "codes and categories for frontend type generation via OpenAPI.",
+)
+def get_error_codes(request: HttpRequest) -> list[ApiErrorSchema]:
+    """
+    Return all available error codes with their categories.
+
+    This endpoint serves two purposes:
+    1. Documents all error codes and their categories
+    2. Exposes ErrorCode/ErrorCategory enums in OpenAPI for TypeScript generation
+    """
+    # Map error codes to their categories
+    category_map: dict[ErrorCode, ErrorCategory] = {
+        # Authentication
+        ErrorCode.EMAIL_NOT_VERIFIED: ErrorCategory.AUTHENTICATION,
+        ErrorCode.INVALID_CREDENTIALS: ErrorCategory.AUTHENTICATION,
+        ErrorCode.ACCOUNT_DISABLED: ErrorCategory.AUTHENTICATION,
+        ErrorCode.ACCOUNT_LOCKED: ErrorCategory.AUTHENTICATION,
+        ErrorCode.INVALID_AUTHORIZATION: ErrorCategory.AUTHENTICATION,
+        ErrorCode.INVALID_REFRESH_TOKEN: ErrorCategory.AUTHENTICATION,
+        # User Management
+        ErrorCode.USERNAME_EXISTS: ErrorCategory.USER_MANAGEMENT,
+        ErrorCode.EMAIL_EXISTS: ErrorCategory.USER_MANAGEMENT,
+        ErrorCode.INVALID_USERNAME: ErrorCategory.USER_MANAGEMENT,
+        ErrorCode.WEAK_PASSWORD: ErrorCategory.USER_MANAGEMENT,
+        # Movie Data
+        ErrorCode.MOVIE_NOT_FOUND: ErrorCategory.MOVIE_DATA,
+        ErrorCode.INVALID_RATING: ErrorCategory.MOVIE_DATA,
+        ErrorCode.DUPLICATE_RATING: ErrorCategory.MOVIE_DATA,
+        # API General
+        ErrorCode.VALIDATION_ERROR: ErrorCategory.API_GENERAL,
+        ErrorCode.PERMISSION_DENIED: ErrorCategory.API_GENERAL,
+        ErrorCode.RESOURCE_NOT_FOUND: ErrorCategory.API_GENERAL,
+        ErrorCode.RATE_LIMITED: ErrorCategory.API_GENERAL,
+    }
+
+    # Warn if any error codes are missing category mappings
+    missing_codes = set(ErrorCode) - set(category_map.keys())
+    if missing_codes:
+        app_logger.warning(f"Error codes without category mapping: {missing_codes}")
+
+    return [
+        ApiErrorSchema(
+            code=code,
+            message=f"Error code: {code.value}",
+            category=category_map.get(code),
+        )
+        for code in ErrorCode
+    ]
 
 
 @core_router.get("/logs/health/", auth=None, response=LogHealthCheckResponse)
@@ -273,6 +334,63 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
             },
         )
         return False
+
+
+@core_router.post(
+    "/dev-logs/write/",
+    auth=None,  # Development only, no auth needed
+    response={200: DevConsoleLogResponse, 403: DevConsoleLogResponse, 500: DevConsoleLogResponse},
+)
+def write_dev_console_log(
+    request: HttpRequest, payload: DevConsoleLogRequest
+) -> tuple[int, DevConsoleLogResponse]:
+    """
+    Development-only endpoint to write browser console logs to file.
+
+    This endpoint receives formatted log lines from the frontend logger
+    and appends them to backend/logs/frontend.log for AI debugging.
+
+    Args:
+        request: HTTP request object
+        log_line: Formatted log line to write to file
+
+    Returns:
+        Status response indicating success or failure
+
+    Security:
+        - Only available in DEBUG mode
+        - No authentication required (localhost development only)
+        - File path is fixed to prevent directory traversal
+    """
+    from pathlib import Path
+
+    # Only available in development mode
+    if not settings.DEBUG:
+        return 403, DevConsoleLogResponse(
+            status="forbidden",
+            error="This endpoint is only available in development mode",
+        )
+
+    try:
+        # Fixed path to prevent directory traversal
+        # Write to backend/logs/frontend which is mounted in Docker
+        log_file = Path(settings.BASE_DIR) / "logs" / "frontend.log"
+
+        # Ensure parent directory exists
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Append log line to file
+        with log_file.open("a", encoding="utf-8") as f:
+            f.write(payload.log_line)
+
+        return 200, DevConsoleLogResponse(status="ok", file=str(log_file.name))
+
+    except Exception as e:
+        app_logger.error(f"Failed to write dev console log: {e!s}")
+        return 500, DevConsoleLogResponse(
+            status="error",
+            error="Failed to write log file",
+        )
 
 
 __all__ = ["core_router"]

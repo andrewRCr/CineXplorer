@@ -23,8 +23,8 @@ class PaginatedResponse[T](Schema):
         results: List of items for the current page
 
     Example:
-        >>> from core.utils.schemas import PaginatedResponse
-        >>> from movie.schemas import MovieSchema
+        >>> from apps.core.utils.schemas import PaginatedResponse
+        >>> from apps.movie.schemas import MovieSchema
         >>>
         >>> @router.get("/movies", response=PaginatedResponse[MovieSchema])
         >>> def list_movies(request: HttpRequest, page: int = 1) -> PaginatedResponse[MovieSchema]:

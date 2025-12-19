@@ -124,6 +124,28 @@ class BaseApiClient(ABC):
         else:
             return "unknown"
 
+    @staticmethod
+    def _safe_headers_dict(response: requests.Response) -> dict[str, str]:
+        """
+        Safely extract headers as a dictionary from a response object.
+
+        Handles both real Response objects and mock objects in tests,
+        returning an empty dict if headers cannot be extracted.
+
+        Args:
+            response: Requests response object (or mock)
+
+        Returns:
+            Headers as a dictionary, or empty dict if extraction fails
+        """
+        try:
+            if hasattr(response.headers, 'items'):
+                return dict(response.headers)
+            return {}
+        except (TypeError, AttributeError):
+            # Handle Mock objects or other non-dict-like headers
+            return {}
+
     def get_error_details(self, status_code: int) -> str:
         """
         Get human-readable error details for status code.
@@ -199,7 +221,7 @@ class BaseApiClient(ABC):
                 correlation_id=correlation_id,
                 endpoint=endpoint,
                 duration_ms=duration_ms,
-                headers=dict(response.headers),
+                headers=self._safe_headers_dict(response),
                 raw_response=response
             )
 
@@ -214,19 +236,10 @@ class BaseApiClient(ABC):
             )
         })
 
-        # Handle headers safely for both real responses and mocked responses
-        try:
-            headers = (
-                dict(response.headers) if hasattr(response.headers, 'items') else {}
-            )
-        except (TypeError, AttributeError):
-            # Handle Mock objects or other non-dict-like headers
-            headers = {}
-
         return ApiResponse(
             status_code=response.status_code,
             data=data,
-            headers=headers,
+            headers=self._safe_headers_dict(response),
             correlation_id=correlation_id,
             endpoint=endpoint,
             method="GET",  # Default, subclasses can override
@@ -282,13 +295,6 @@ class BaseApiClient(ABC):
         else:
             self.logger.warning("API request failed", extra=log_data)
 
-        # Handle headers safely for both real responses and mocked responses
-        try:
-            headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
-        except (TypeError, AttributeError):
-            # Handle Mock objects or other non-dict-like headers
-            headers = {}
-
         return ApiResponse(
             status_code=response.status_code,
             error_message=error_message,
@@ -298,7 +304,7 @@ class BaseApiClient(ABC):
             endpoint=endpoint,
             method="GET",  # Default, subclasses can override
             duration_ms=duration_ms,
-            headers=headers,
+            headers=self._safe_headers_dict(response),
             raw_response=response
         )
 
@@ -457,6 +463,10 @@ class BaseApiClient(ABC):
             'params': sanitized_params,
             'param_count': len(sanitized_params) if sanitized_params else 0
         })
+
+        # DEBUG-level: Log full request parameters for debugging
+        if self.logger.isEnabledFor(logging.DEBUG) and params:
+            self.logger.debug(f"API request params: {sanitized_params}")
 
         start_time = time.time()
 

@@ -1,0 +1,475 @@
+# Incidental: Buffer Deduplication for TMDB Data Quality
+
+**Created:** 2025-10-30
+**Completed:** 2025-12-09
+**Branch:** `technical/service-layer-modernization`
+**Status:** Complete
+
+## Context
+
+**Discovered:** Manual testing revealed multi-genre filter duplicates
+(Animation + Family filters showing Spirited Away twice on page 1)
+
+**Interrupts:** `tasks-navigation-filter-state-preservation.md` at Task 3.3
+
+**Problem:** TMDB API returns duplicate movies across pagination boundaries (e.g., Spirited Away on page 1 position 19
+AND page 2 position 1), backend buffer concatenates without deduplication, causing React key collisions and incomplete pages.
+
+## Scope
+
+### Will Do
+
+- ✅ Add within-page deduplication to backend buffer logic (Phase 1-2 complete)
+- Add session-based cross-page deduplication (Option 1 - Redis cache)
+- Write comprehensive tests for both deduplication types (TDD approach)
+- Clean up debug logging from frontend buffer reset fix
+- Manual verification of all three symptoms resolved
+- Integration with pagination-buffer-tracking Phase 3.7 (coordination)
+
+### Won't Do
+
+- Report to TMDB (their documented behavior, our responsibility to handle)
+- Frontend deduplication (backend is correct place for data quality)
+- Change React key strategy (using `tmdb_id` is correct)
+- Refactor buffer mechanism beyond deduplication (working as designed)
+- Cursor-based pagination (different approach, out of scope)
+- Frontend exclude lists (ugly URLs, complex state management)
+- Deep link pre-population (if user bookmarks page 3, we don't pre-fetch pages 1-2 to populate session)
+    - **Rationale:** High effort, minimal UX impact. User landing on page 3 never saw pages 1-2, so if a movie
+      from those pages reappears on page 4+, they won't perceive it as a duplicate. Only visible if they navigate
+      backward after deep linking, which is rare. Accepted as known limitation.
+
+---
+
+## Tasks
+
+### **Phase 1:** Write Tests for Within-Page Buffer Deduplication (TDD)
+
+**Status:** ✅ COMPLETE
+
+- [x] **1.1 Write unit tests for `_apply_buffer_if_needed` deduplication**
+
+    **Goal:** Verify buffer correctly deduplicates and continues fetching to reach 20 unique movies.
+
+    - [x] **1.1.a Create test file `test_movie_service_buffer_deduplication.py`**
+        - ✅ Test: Buffer with no duplicates returns first 20 movies
+        - ✅ Test: Buffer with 1 duplicate fetches additional page to reach 20 unique
+        - ✅ Test: Buffer with multiple duplicates across pages continues until 20 unique
+        - ✅ Test: Buffer respects `max_buffer_pages` limit even with duplicates
+        - ✅ Test: Deduplication preserves first occurrence order
+        - ✅ Test: Empty results after deduplication handled correctly
+        - ✅ Test: Buffer applies filters to buffer pages during deduplication
+        - File location: `backend/apps/movie/tests/test_movie_service_buffer_deduplication.py` (7 comprehensive tests)
+
+    - [x] **1.1.b Run unit tests and verify failure messages**
+        - ✅ All 7 tests executed successfully (TDD red phase)
+        - ✅ 6/7 tests FAILED as expected, 1/7 PASSED (baseline case)
+
+- [x] **1.2 Write integration tests for discover endpoint with duplicates**
+
+    - [x] **1.2.a Create integration tests in `test_movie_api.py`**
+        - ✅ Test: Multi-genre filter returns 20 unique movies (Spirited Away scenario)
+        - ✅ Test: Multiple duplicates across pages handled correctly
+        - ✅ Test: Deduplication works with backend filters (year/rating)
+        - ✅ Test: Respects `max_buffer_pages` safety limit
+        - File location: `backend/apps/movie/tests/test_movie_api.py` (4 integration tests)
+
+    - [x] **1.2.b Run integration tests and verify failures**
+        - ✅ All 4 integration tests FAILED as expected (TDD red phase)
+
+### **Phase 2:** Implement Within-Page Backend Buffer Deduplication
+
+**Status:** ✅ COMPLETE
+
+- [x] **2.1 Implement deduplication in `_apply_buffer_if_needed`**
+
+    **Location:** `backend/apps/movie/services/movie_service.py:458-494`
+
+    - [x] **2.1.a Add deduplication logic after buffer concatenation**
+        - ✅ Implemented deduplication inside buffer loop (lines 483-490)
+        - ✅ Track `seen_ids` with set for O(1) lookup
+        - ✅ Build `deduplicated` list preserving first occurrence order
+        - ✅ Loop continues after dedup if count < 20
+        - ✅ Returns up to 20 unique movies with correct page count
+
+    - [x] **2.1.b Run unit tests - should now PASS**
+        - ✅ All 7 unit tests PASS (TDD green phase)
+
+    - [x] **2.1.c Run integration tests - should now PASS**
+        - ✅ All 4 integration tests PASS (TDD green phase)
+
+### **Phase 3:** Write Tests for Session-Based Cross-Page Deduplication (TDD Red Phase)
+
+**Purpose:** Implement Redis-based session tracking to prevent duplicates across pagination requests (Option 1).
+
+- [x] **3.1 Write unit tests for `PaginationSessionManager` helper class**
+
+    **Goal:** Test session state management (store/retrieve/clear returned movie IDs).
+
+    - [x] **3.1.a Create test file `test_pagination_session_manager.py`**
+        Created 24 tests organized into 7 test classes:
+        - `TestGetReturnedIds` (2 tests): empty set for new session, retrieves stored IDs
+        - `TestAddReturnedIds` (3 tests): stores IDs, appends to existing, handles duplicates
+        - `TestClearSession` (1 test): removes all IDs for filter combination
+        - `TestSessionTTL` (1 test): verifies 1-hour TTL passed to cache.set()
+        - `TestGracefulDegradation` (3 tests): get/add/clear silently fail when Redis unavailable
+        - `TestSessionScoping` (3 tests): user isolation via different session IDs
+        - `TestContextIdIsolation` (5 tests): multi-tab isolation via context_id parameter
+        - `TestFilterHash` (6 tests): order-independent hashing, search query inclusion, case normalization
+
+        File: `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py`
+
+    - [x] **3.1.b Run unit tests and verify failure messages**
+        - All 24 tests SKIPPED as expected (TDD red phase)
+        - Skip reason: "PaginationSessionManager not yet implemented (TDD red phase)"
+        - Tests use `pytest.mark.skipif(not IMPORT_AVAILABLE)` pattern
+        - Type errors (106) expected due to `PaginationSessionManager = None` fallback; will resolve in Phase 4
+
+    - [x] **3.1.c Add unit test for atomic Redis operations**
+        Added `TestAtomicRedisOperations` class with 4 tests:
+        - `test_add_returned_ids_uses_atomic_sadd` - Verifies Redis `SADD` command is called
+        - `test_get_returned_ids_uses_smembers` - Verifies Redis `SMEMBERS` command is used
+        - `test_clear_session_uses_delete` - Verifies Redis `DEL` command is used
+        - `test_concurrent_adds_preserve_all_ids` - Simulates concurrent adds, verifies no data loss
+
+        Total unit tests: 28 (24 original + 4 atomic ops)
+        File: `backend/apps/movie/tests/unit/services/test_pagination_session_manager.py`
+
+- [x] **3.2 Write integration tests for cross-page deduplication**
+
+    **Goal:** Verify session tracking prevents duplicates across paginated requests.
+
+    - [x] **3.2.a Add cross-page deduplication tests to `test_browse_pagination.py`**
+        Added 8 new tests (all marked `@pytest.mark.xfail`) organized into 4 categories:
+
+        **Core cross-page tests (3 tests):**
+        - `test_page_1_stores_returned_ids_in_session` - XFAIL
+        - `test_session_cleared_on_page_1_fresh_start` - XFAIL (expanded to test actual session reset)
+        - `test_different_filter_combinations_use_different_sessions` - XFAIL
+
+        **Context ID tests (2 tests):**
+        - `test_different_pagination_context_headers_use_separate_sessions` - XFAIL (expandeded tests tab isolation with
+        page 2)
+        - `test_requests_without_context_header_work_backwards_compatible` - XFAIL
+
+        **Search integration tests (1 test):**
+        - `test_search_pagination_deduplicates_across_pages` - XFAIL
+        - Note: Removed `test_search_results_use_separate_session_from_browse` as redundant
+          (search/browse isolation is inherent via different filter hashes, tested at unit level)
+
+        **Graceful degradation (1 test):**
+        - `test_graceful_degradation_when_redis_unavailable` - XFAIL
+
+        File: `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
+
+    - [x] **3.2.b Run integration tests and verify failures**
+        Test results: 5 passed, 8 xfailed
+        - 5 original tests pass (existing pagination behavior)
+        - 8 session-based tests XFAIL as expected (all now meaningful tests)
+        - Existing xfail `test_browse_no_cross_page_duplicates` still XFAIL
+        - Within-page deduplication unaffected (Phase 2 work intact)
+
+### **Phase 4:** Implement Session-Based Cross-Page Deduplication (TDD Green Phase)
+
+**Status:** ✅ COMPLETE
+
+- [x] **4.1 Create `PaginationSessionManager` helper class**
+
+    **Location:** `backend/apps/movie/services/pagination_session_manager.py` (new file)
+
+    - [x] **4.1.a Implement session manager class**
+        **Constructor:**
+        - `__init__(session_id: str, context_id: str = "")` - Initialize with session and optional context
+        - `session_id`: Django session key (from `request.session.session_key`)
+        - `context_id`: Optional tab isolation ID (from `X-Pagination-Context` header)
+
+        **Methods (UPDATED - uses HashableParams Protocol, not dict):**
+        - `get_returned_ids(params: HashableParams) -> set[int]` - Retrieve session state
+        - `add_returned_ids(params: HashableParams, ids: list[int]) -> None` - Update session
+        - `clear_session(params: HashableParams) -> None` - Reset on page 1 or filter change
+        - `_generate_cache_key(params: HashableParams) -> str` - Build key from session_id + context_id + params_hash
+        - `_generate_params_hash(params: HashableParams) -> str` - Hash via `model_dump(exclude_none=True)`
+
+        **Cache key format:** `pagination_session:{session_id}:{context_id}:{filter_hash}`
+
+        **Filter hash must include:**
+        - All browse filters (genres, sort_by, year_min, year_max, rating_min, rating_max)
+        - Search query (`q`) when present
+        - View type (popular, top_rated, etc.) if applicable
+
+        **Infrastructure:**
+        - **Use Redis SET operations directly** (not Django cache get/set)
+            - `SADD key id1 id2...` for atomic additions (race-condition-free)
+            - `SMEMBERS key` for retrieval
+            - `DEL key` for clearing
+            - Access via django-redis: `django.core.cache.cache.client.get_client()`
+        - Set 1-hour TTL via `EXPIRE key 3600` after modifications
+        - Graceful degradation if Redis unavailable (log warning, return empty set)
+        - ~120 lines estimated
+
+        **Thread Safety Note:**
+        Using atomic `SADD` prevents race conditions when concurrent requests modify the same
+        session. Without this, read-modify-write (`get()` → union → `set()`) could lose IDs:
+
+        ```
+        Request A reads {1-20}, Request B reads {1-20} (before A writes)
+        A writes {1-40}, B writes {1-20, 41-60} → {21-40} lost!
+        ```
+
+        With `SADD`, both requests atomically add their IDs - no data loss.
+
+    - [x] **4.1.b Run unit tests - should now PASS**
+        - All 25 `PaginationSessionManager` tests pass (core + scoping + context + params hash + atomic ops + graceful degradation)
+        - **Final architecture uses Protocol-based adapter pattern:**
+            - `AtomicSetOperations` Protocol: Type-safe interface for Redis SET ops (sadd, smembers, delete, expire)
+            - `DjangoRedisAdapter`: Implements Protocol, isolates ALL type ignores (10 total)
+            - `HashableParams` Protocol: Accepts any Pydantic model via `model_dump()` method
+        - **Type safety achieved:**
+            - `redis_client.py` (adapter): 10 type ignores - Django cache internals + redis-py sync/async typing
+            - `pagination_session_manager.py` (business logic): **0 type ignores**
+            - No `Any`, no `cast()` - uses `object` and Protocol-based contracts
+        - **Key design decisions:**
+            - Uses `HashableParams` Protocol for extensibility (BrowseServiceParams, SearchServiceParams, future types)
+            - Leverages Pydantic boundary validation instead of internal TypeGuards
+            - `model_dump(exclude_none=True)` for deterministic hash generation
+
+- [x] **4.2 Integrate session tracking into buffer logic**
+
+    **Scope:** Includes preparatory refactoring for clean, maintainable integration.
+    Refactor first (Part 1), then integrate (Part 2), then verify (Part 3).
+
+    **Part 1: Preparatory Refactoring (no behavior change)**
+
+    - [x] **4.2.a Rename PaginationSessionManager → DeduplicationTracker**
+        - Renamed class, file, and test file
+        - Updated imports and module path for patching
+        - All 25 tests pass, linting clean, type check clean
+
+    - [x] **4.2.a2 Rename ServiceParams → BrowseServiceParams**
+        - Renamed class and file (`service_params.py` → `browse_service_params.py`)
+        - Updated ~90 usages across 20 files (services, tests, helpers, management commands)
+        - Removed old re-export from `tmdb_api_boundary/query_params.py` (clean rename)
+        - Updated `HashableParams` docstring to reference `BrowseServiceParams`
+        - All 603 tests pass, linting clean, type check clean (0 errors)
+
+    - [x] **4.2.b Create SearchServiceParams model**
+        - Created `services/api_boundary/search_service_params.py` (40 lines)
+        - Fields: `query: str`, `year_min`, `year_max`, `rating_min`, `rating_max`
+        - Exported from `api_boundary/__init__.py`
+
+    - [x] **4.2.c Refactor pipeline: separate response building**
+        - Extracted `convert_schema_to_tmdb_movie()` and `build_filtered_response()` to
+          `pipelines/response_builder.py` (new file, 83 lines)
+        - Updated imports in `paginated.py`
+
+    - [x] **4.2.d Refactor pipeline: accept params objects directly**
+        - Updated `apply_buffer_if_needed()` and `fetch_with_filters_and_buffer()` signatures
+          to accept `params: BrowseServiceParams | SearchServiceParams` instead of individual args
+        - Uses `getattr()` for BrowseServiceParams-only fields (min_vote_count, language, tmdb_page_start)
+        - Updated callers: `discover_movies()` passes params directly, `search_movies()`
+          creates `SearchServiceParams` inline
+        - Updated 7 unit tests to use `BrowseServiceParams` constructor
+        - All 603 tests pass, linting clean, type check clean (0 errors)
+
+    **Part 2: Session Tracking Integration**
+
+    - [x] **4.2.e Thread DeduplicationTracker through layers**
+        - API layer (`api.py`): Added `_create_dedup_tracker()` helper, updated 4 endpoints
+        - Service layer (`movie_service.py`): Added `dedup_tracker` param to 4 methods
+        - Pipeline layer (`paginated.py`): Added `dedup_tracker` param to both functions
+        - Also updated 3 tests using old `search_movies()` signature
+
+    - [x] **4.2.f Update apply_buffer_if_needed() for session tracking**
+        - Gets session IDs at start, initializes `seen_ids` with session state
+        - Tracks new IDs returned after building final results
+        - Properly excludes session IDs from "new IDs" tracking
+
+    - [x] **4.2.g Implement page=1 session clearing**
+        - Added clear_session() call at start of `fetch_with_filters_and_buffer()` when page==1
+
+    - [x] **4.2.h Update search_movies() to use SearchServiceParams**
+        - Changed service signature from individual params to `SearchServiceParams`
+        - Updated API layer to create `SearchServiceParams` from HTTP params
+
+    **Part 3: Verification**
+
+    - [x] **4.2.i Run backend tests - verify all pass**
+        - All 603 tests pass
+        - `test_graceful_degradation_when_redis_unavailable` now passes (was xfail)
+        - 7 xfails remain (expected - require frontend context ID for full verification)
+
+- [x] **4.3 Add frontend context ID generation (Issue #2 fix)**
+
+    **Purpose:** Generate unique ID per page load for multi-tab isolation.
+
+    - [x] **4.3.a Generate pagination context ID on page load**
+        - Created `paginationContext.ts` with `crypto.randomUUID()` at module init
+        - ID generated once per page load, stable for lifetime of page
+        - File: `frontend/src/services/paginationContext.ts`
+
+    - [x] **4.3.b Add context ID to API requests**
+        - Added `X-Pagination-Context` header in apiClient request interceptor
+        - Header sent for movie endpoints: browse, now-playing, upcoming, search
+        - File: `frontend/src/services/apiClient.ts`
+
+    - [x] **4.3.c Run frontend tests - should still PASS**
+        - All 507 frontend tests pass
+        - Linting clean, type checking clean
+
+    - [x] **4.3.d Remove xfail decorators from cross-page dedup tests**
+        - Removed all 8 xfail decorators from test_browse_pagination.py
+        - Tests now fail (expected) - need mock updates for buffer behavior
+
+    - [x] **4.3.e Update cross-page dedup tests for buffer behavior**
+        - Root cause: `tmdb_page_start` included in params hash caused different cache keys per page
+        - Fix: Exclude `tmdb_page_start` from hash in `deduplication_tracker.py:216`
+        - Added `create_buffer_pages` helper for generating mock buffer responses
+        - Updated 8 test mocks with buffer pages where deduplication triggers buffer fetches
+        - All 13 pagination tests now pass
+        - Files: `backend/apps/movie/services/deduplication_tracker.py`,
+          `backend/apps/movie/tests/integration/api/test_browse_pagination.py`
+
+- [x] **4.4 Run backend quality gates**
+
+    - [x] **4.4.a Run all backend tests**
+        - 611 tests passed
+
+    - [x] **4.4.b Run backend linting with auto-fix**
+        - 0 violations
+
+    - [x] **4.4.c Run Python type checking**
+        - 0 errors (fixed 8 pre-existing type errors during gate)
+        - Fixed `test_tmdb_logging.py`: Use `SearchServiceParams` instead of `query=` keyword
+        - Fixed `test_browse_pagination.py`: Add `ApiResponse` import and proper type annotations
+
+### **Phase 5:** Cross-Task Coordination & Backward Navigation Fix
+
+**Context:** Audit of related task lists revealed a frontend bug causing backward navigation to page 1 to show
+completely different results. Additionally, coordination with `pagination-buffer-tracking` Phase 3.7 is needed
+for full backward navigation support.
+
+- [x] **5.1 Audit related task lists for coordination**
+
+    **Completed:** Comprehensive audit of all 4 related pagination/filter task lists.
+
+    - [x] **5.1.a Analyze task list status and dependencies**
+        - `buffer-deduplication-data-quality`: Phase 4 complete (cross-page dedup)
+        - `navigation-filter-state-preservation`: Paused at Task 3.3, blocked by buffer-dedup
+        - `pagination-buffer-tracking`: Paused at Task 3.6.5, blocked by navigation-filter-state
+        - `filter-integration-testing`: Paused at Task 3.6.2, blocked by pagination-buffer-tracking
+        - **Interrupt chain can now unwind** with Phase 4 complete
+
+    - [x] **5.1.b Verify no code conflicts between task lists**
+        - buffer-deduplication: Cross-page movie ID tracking (Redis session)
+        - pagination-buffer-tracking: TMDB page metadata (`tmdb_page_start` in URL)
+        - navigation-filter-state: Filter state preservation (URL params)
+        - filter-integration-testing: Data quality filtering (backend service)
+        - **Confirmed:** Each addresses different concern, no conflicts
+
+    - [x] **5.1.c Identify backward navigation bug**
+        - **Bug discovered:** Frontend sends stale `tmdb_page_start` on backward navigation
+        - **Symptom:** Page 1 shows completely different movies after page 2 → page 1
+        - **Root cause:** `nextTmdbPageStartRef.current` not cleared on backward navigation
+        - **Example:** After page 2, ref holds `5`. Back to page 1 sends `{page: 1, tmdb_page_start: 5}`
+          causing backend to fetch from TMDB page 5 instead of page 1
+        - **Backend test passes** because it manually sends correct params (no integration test)
+
+- [x] **5.2 Fix page 1 backward navigation bug**
+
+    **Goal:** Ensure backward navigation clears stale `tmdb_page_start` metadata.
+
+    **Completed:** Fixed by adding `prevPageRef` tracking and clearing metadata on backward navigation.
+    Also cleaned up legacy `MovieGrid.tsx` that was not used in production.
+
+    - [x] **5.2.a Write frontend test for backward navigation params**
+        - Added 2 tests to `MovieCollectionGrid.stability.test.tsx`:
+            - `should clear metadata when navigating backward to page 1`
+            - `should clear metadata on any backward navigation`
+        - Tests verified failure before fix (TDD red phase)
+
+    - [x] **5.2.b Implement fix in MovieCollectionGrid.tsx**
+        - Added `prevPageRef` to track previous page number
+        - Clear `nextTmdbPageStartRef.current` when `currentPage < prevPageRef.current` or `currentPage === 1`
+        - All 6 stability tests pass
+
+    - [x] **5.2.c Delete legacy MovieGrid files**
+        - Deleted `MovieGrid.tsx` and `MovieGrid.stability.test.tsx`
+        - Analysis: Component was renamed to `MovieCollectionGrid` but old files not removed
+
+    - [x] **5.2.d Run frontend tests and quality gates**
+        - Tests: 505 passed (down from 507 after legacy test deletion)
+        - Linting: 0 violations
+        - Type checking: 0 errors
+
+    - [x] **5.2.e Manual browser verification**
+        - Verified: Page 1 shows same movies after backward navigation
+
+- [x] **5.3 Document Phase 3.7 dependency for full backward navigation**
+
+    **Completed:** Cross-referenced prerequisites and scope between task lists.
+
+    - [x] **5.3.a Update pagination-buffer-tracking Phase 3.7 context**
+        - Added "Prerequisites Complete" section with Phase 4 and Phase 5.2 references
+        - Added "Scope Clarification" distinguishing page 1 (5.2) vs pages 2+ (3.7)
+
+    - [x] **5.3.b Update success criteria in this task list**
+        - Marked backward nav criteria complete with scope notes
+
+### **Phase 6:** Final Cleanup, Quality Gates, and Manual Verification
+
+- [x] **6.1 Clean up frontend debug logging**
+
+    **Completed:** Removed debug logging from multiple files as "leave it cleaner" cleanup.
+
+    - [x] **6.1.a Remove debug logging**
+        - `MovieCollectionGrid.tsx`: No logging found (already clean)
+        - `GenreSelector.tsx`: Removed re-render debug logging
+        - `SearchResults.tsx`: Removed extensive component lifecycle logging
+        - `GenreSelector.test.tsx`: Removed test for debug logging
+
+    - [x] **6.1.b Run frontend tests**
+        - All 504 tests pass (1 test removed with debug logging)
+
+- [x] **6.2 Run frontend quality gates**
+
+    - [x] **6.2.a Run frontend linting** - 0 violations
+    - [x] **6.2.b Run TypeScript type checking** - 0 errors
+
+- [x] **6.3 Manual browser verification**
+
+    **Verified:** All test cases pass.
+
+    - [x] **6.3.a Verify within-page duplicate fix** - 20 unique movies, no duplicates
+    - [x] **6.3.b Verify cross-page duplicate fix** - No duplicates across pages
+    - [x] **6.3.c Verify backward navigation to page 1** - Same movies on return
+        - **Note:** Pages 2+ backward nav requires Phase 3.7 (out of scope)
+    - [x] **6.3.d Verify filter change resets session** - New movies on filter change
+    - [x] **6.3.e Verify no regressions** - All views working correctly
+
+- [x] **6.4 Run comprehensive quality gates**
+
+    **All quality gates pass.**
+
+    - [x] **6.4.a Backend tests** - 611 passed
+    - [x] **6.4.b Frontend tests** - 504 passed
+    - [x] **6.4.c Linting** - Backend: 0 violations, Frontend: 0 violations, Markdown (modified files): 0 errors
+    - [x] **6.4.d Type checking** - Python: 0 errors, TypeScript: 0 errors
+
+---
+
+## Success Criteria
+
+- [x] Within-page deduplication working (Phase 1-2 complete)
+- [x] Cross-page deduplication working (Phase 4 complete - no duplicates across forward pagination)
+- [x] Backward navigation to page 1 consistent (Phase 5.2 complete - clears stale metadata)
+- [x] Backward navigation to pages 2+ documented (requires Phase 3.7 in `tasks-pagination-buffer-tracking.md`)
+- [x] Filter changes reset session (verified in 6.3.d)
+- [x] All pages consistently show 20 results (verified in 6.3.a)
+- [x] Session tracking graceful degradation (works without Redis, logs warning)
+- [x] 100% test pass rate (backend 611, frontend 504)
+- [x] Zero linting violations, zero type errors
+- [x] Cross-task coordination documented (Phase 5 complete - audit + backward nav fix + docs)
+- [x] All quality gates pass (Phase 6 complete)
+- [x] Ready to resume navigation work at Task 3.3 in `tasks-navigation-filter-state-preservation.md`
+
+---

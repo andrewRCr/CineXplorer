@@ -6,7 +6,7 @@ to replace generic dict[str, object] usage and provide complete type safety
 throughout the application.
 
 These models are used internally for parsing TMDB responses before converting
-them to our application schemas (MovieDetailSchema, MovieBaseSchema, etc.).
+them to our application schemas (MovieDetailSchema, MovieListItemSchema, etc.).
 """
 from __future__ import annotations
 
@@ -81,6 +81,17 @@ class TMDBMovieBase(BaseModel):
     genre_ids: list[int] = []
 
 
+class TMDBSpokenLanguage(BaseModel):
+    """TMDB spoken language response structure.
+
+    TMDB returns both 'name' (native) and 'english_name' fields.
+    We use english_name for consistent display. The 'name' field is
+    inconsistently populated per TMDB docs, so we skip it.
+    """
+    iso_639_1: str
+    english_name: str
+
+
 class TMDBMovieDetail(TMDBMovieBase):
     """TMDB movie detail response structure (extends base with detail fields)."""
     runtime: int | None = None
@@ -95,10 +106,10 @@ class TMDBMovieDetail(TMDBMovieBase):
     # Any: TMDB /movie/{id} - collection structure rarely used, fields vary by collection type
     # TODO: Create TMDBCollectionModel if collection features are implemented
     belongs_to_collection: dict[str, Any] | None = None
-    # Any: TMDB /movie/{id} - country/language structures unused in current codebase
-    # TODO: Create TMDBCountryModel and TMDBLanguageModel if needed for internationalization
+    # Any: TMDB /movie/{id} - production_countries structure unused in current codebase
+    # TODO: Create TMDBCountryModel if needed for internationalization
     production_countries: list[dict[str, Any]] = []
-    spoken_languages: list[dict[str, Any]] = []
+    spoken_languages: list[TMDBSpokenLanguage] = []
 
 
 class TMDBPaginatedResponse(BaseModel):
@@ -108,8 +119,8 @@ class TMDBPaginatedResponse(BaseModel):
     total_results: int
 
 
-class TMDBMovieSearchResponse(TMDBPaginatedResponse):
-    """TMDB movie search/discover response structure."""
+class TMDBPaginatedMovieResponse(TMDBPaginatedResponse):
+    """TMDB paginated movie response for search, discover, and browse endpoints."""
     results: list[TMDBMovieBase] = []
 
 
@@ -119,8 +130,8 @@ class TMDBKeyword(BaseModel):
     name: str
 
 
-class TMDBKeywordSearchResponse(TMDBPaginatedResponse):
-    """TMDB keyword search response structure."""
+class TMDBPaginatedKeywordResponse(TMDBPaginatedResponse):
+    """TMDB paginated keyword response for search endpoints."""
     results: list[TMDBKeyword] = []
 
 
@@ -138,11 +149,40 @@ class TMDBPerson(BaseModel):
     known_for: list[dict[str, Any]] = []
 
 
-class TMDBPersonSearchResponse(TMDBPaginatedResponse):
-    """TMDB person search response structure."""
+class TMDBPaginatedPersonResponse(TMDBPaginatedResponse):
+    """TMDB paginated person response for search endpoints."""
     results: list[TMDBPerson] = []
 
 
 class TMDBGenreListResponse(BaseModel):
     """TMDB genre list response structure."""
     genres: list[TMDBGenre] = []
+
+
+# =========================
+# Release Dates Models (for certification extraction)
+# =========================
+
+
+class TMDBReleaseDate(BaseModel):
+    """Individual release entry within a country's releases.
+
+    TMDB release types:
+    1 = Premiere, 2 = Theatrical (limited), 3 = Theatrical,
+    4 = Digital, 5 = Physical, 6 = TV
+    """
+    certification: str = ''
+    release_date: str = ''
+    type: int = 0
+    note: str = ''
+
+
+class TMDBCountryReleases(BaseModel):
+    """Per-country release information with certification data."""
+    iso_3166_1: str
+    release_dates: list[TMDBReleaseDate] = []
+
+
+class TMDBReleaseDatesResponse(BaseModel):
+    """TMDB release_dates append_to_response structure."""
+    results: list[TMDBCountryReleases] = []

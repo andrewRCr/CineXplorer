@@ -41,7 +41,7 @@ CineXplorer (primary) ──sync-cinexplorer-refinements.md──> ARC Framework
 - `.arc/reference/` directory improvements:
     - `constitution/` - Constitutional documents and standards
     - `workflows/` - Process documentation
-    - `ai-instructions/` - AI collaboration guidance
+    - `agent/` - AI collaboration guidance
     - `strategies/` - Strategy and pattern documents
 - `.arc/active/CURRENT-SESSION.md` - **Format/structure improvements only**
     - Session Startup Protocol updates
@@ -67,7 +67,7 @@ CineXplorer (primary) ──sync-cinexplorer-refinements.md──> ARC Framework
 **Active Work**:
 
 - Current `.arc/active/` content (except format improvements to CURRENT-SESSION.md)
-- `.arc/upcoming/` planning specific to that project
+- `.arc/backlog/` planning specific to that project
 - `.arc/reference/archive/` completed work history
 
 **Note on `.arc-internal/`**: The framework repository (arc-agentic-dev-framework) maintains its own `.arc-internal/`
@@ -119,7 +119,7 @@ For significant syncs, create a task list in the adopting project:
 ```
 
 **Work Categorization**: Framework syncs are "chore" type incidental work - operational improvements rather than
-feature development. See `strategies/strategy-work-categorization.md` for the three-way categorization system
+feature development. See `strategies/arc/strategy-work-organization.md` for the three-way categorization system
 and naming conventions.
 
 ### 2. Analysis
@@ -332,7 +332,7 @@ When framework has new files not in project:
 
 If you discover a gap that affects **ALL repos** (framework + all adopting projects):
 
-**Example**: Missing `3-process-task-loop.md` reference in `session-init.md` across all 3 repos.
+**Example**: Missing `3_process-task-loop.md` reference in `session-init.md` across all 3 repos.
 
 **Protocol**:
 
@@ -444,7 +444,7 @@ git add .arc/
 # Or stage selectively
 git add .arc/reference/workflows/
 git add .arc/reference/constitution/
-git add .arc/reference/ai-instructions/
+git add .arc/reference/agent/
 ```
 
 **7.3 Commit Message**
@@ -498,7 +498,7 @@ Sync foundation documents first:
 
 1. DEVELOPMENT-RULES
 2. META-PRD (if framework-based)
-3. TECHNICAL-ARCHITECTURE
+3. TECHNICAL-OVERVIEW
 4. PROJECT-STATUS
 
 Then workflows, strategies, and AI instructions.

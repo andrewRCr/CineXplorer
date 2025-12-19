@@ -1,247 +1,254 @@
-# Manage Incidental Work Workflow
+# Workflow: Manage Incidental Work
 
-**Purpose**: Systematic workflow for creating, executing, and archiving incidental task lists discovered during feature development.
+**Purpose**: Guidelines for creating and managing incidental task lists—
+quality improvements, refactoring, or tech debt discovered during feature or technical work—
+that should be addressed immediately.
 
-**Related**: [3-process-task-loop.md](../3-process-task-loop.md), [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md)
+**When to use**: During feature or technical work when discovering issues requiring multiple subtasks (>30 min effort)
+that block or significantly impact current work.
+
+**Related**: [3_process-task-loop.md](../3_process-task-loop.md), [archive-completed.md](archive-completed.md)
 
 ---
 
 ## Overview
 
-**Incidental work** is quality improvements, refactoring, or tech debt discovered during feature development
-that should be fixed immediately rather than deferred. This workflow provides a complete lifecycle management system.
-
-**Key Principle**: Incidental work is **reactive** (discovered during implementation) vs **proactive**
-(planned feature work with PRDs).
+Incidental work is **reactive** (discovered during implementation) vs **proactive** (planned work with PRDs).
+This workflow covers what makes incidental work unique—execution follows standard task loop,
+archival follows standard archive workflow.
 
 ---
 
-## Decision Tree: When to Create Incidental Task Lists
+## When to Create Incidental Task Lists
 
-### Create Incidental Task List When
+### The Key Distinction
 
-- ✅ **Multiple subtasks needed** (>1 subtask)
-- ✅ **Non-trivial effort** (>30 minutes estimated)
-- ✅ **Cross-cutting concern** (affects multiple domains/files)
-- ✅ **Quality improvement** discovered during feature work
-- ✅ **Worth documenting** for future reference and handoffs
-- ✅ **Blocks or significantly impacts current feature work**
+**Task lists are for work with distinct phases**, not just complex work.
 
-### Do NOT Create Incidental Task List When
+- **"Sequential steps toward one goal"** → Atomic task (even if 60-90 min, multiple files)
+- **"Distinct phases with different objectives"** → Task list
 
-- ❌ **Simple fixes** (<30 min, 1 subtask) - just fix inline
-- ❌ **Typos, formatting, trivial refactors** - fix without ceremony
-- ❌ **Work already in main task list** - add subtasks there instead
-- ❌ **Exploratory work** - use notes files instead
-- ❌ **Can be deferred** - create issue/PRD for future sprint
+Example: "Clean up auth tech debt" with 5 ordered steps touching 7 files is **one coherent concern** - stays atomic.
 
-### Examples
+Example: "Investigate performance issue" requiring profiling → analysis → design → implementation is
+**multiple phases** - needs task list.
 
-**Create incidental task list:**
+### Create Task List When
 
-- Type safety tooling incompatibility discovered (affects entire backend)
-- Security vulnerability in authentication flow (critical, multi-step fix)
-- Broken test infrastructure affecting reliability (cross-cutting, urgent)
+- ✅ Multiple distinct phases with different goals (research, design, implement are separate stages)
+- ✅ Scope likely to expand via discovery (investigation-heavy, unknown boundaries)
+- ✅ Estimated 2+ hours of work
+- ✅ Requires research → design → implement cycle (each phase produces different artifacts)
+- ✅ Would benefit from independent commits/reviews per phase
 
-**Fix inline (no task list):**
+### Keep as Atomic Task When
 
-- Missing type annotation on single function
-- Outdated comment in one file
-- Linting violation in modified file
+- ❌ Single coherent concern, even if complex (multiple files, 30-90 min)
+- ❌ Sequential steps all serving one goal (ordered execution, not distinct phases)
+- ❌ Scope is known/bounded after initial analysis
+- ❌ Could be described as "do X" rather than "figure out X, then design Y, then implement Z"
+
+### Why This Matters
+
+Task lists add overhead: file creation, phase structure, branch lifecycle, archival process. This overhead pays off
+when work genuinely has distinct phases that benefit from independent tracking. It's wasted ceremony for focused
+refactors that happen to touch multiple files.
+
+**Session duration is not a factor**: Well-structured atomic tasks with subtask checkboxes track progress across
+sessions just as effectively as task lists. Don't escalate to task list just because work might span sessions.
 
 ---
 
-## Phase 1: Creation
+## Creating Incidental Task Lists
 
-### Step 1: Verify Need for Incidental Work
+### 1. Verify Need
 
-Before creating incidental task list:
+Before creating:
 
-1. **Confirm urgency**: Why fix now vs defer to future PRD?
-2. **Estimate effort**: Is this >30 minutes with multiple subtasks?
-3. **Assess impact**: Does this block or significantly impact current work?
-4. **Check scope**: Is this truly incidental or should it be a planned feature?
+- **Confirm distinct phases**: Does this work have research/design/implement stages, or just sequential steps?
+- **Assess scope certainty**: Is scope bounded, or likely to expand during investigation?
+- **Estimate effort**: Is this 2+ hours, or <2 hours of focused execution?
+- **Check urgency**: Why fix now vs defer?
 
-**If uncertain**: Ask user for guidance on whether to address now or defer.
+**If work is <2 hours with known scope and sequential steps** → Use atomic task instead (see criteria above).
 
-### Step 2: Create Incidental Task File
+If uncertain, ask for guidance on whether task list overhead is justified.
 
-**File location**: `.arc/active/incidental/tasks-{brief-slug}.md`
+### 2. Create Task File
 
-**Naming convention**: `tasks-{brief-descriptive-slug}.md`
+**Location**: `.arc/active/incidental/tasks-{brief-slug}.md`
 
-- Example: `tasks-backend-type-safety.md`
-- Example: `tasks-security-updates.md`
-- Example: `tasks-oauth-headless-migration.md`
+**Naming**: `tasks-{brief-descriptive-slug}.md` (no `incidental-` prefix - directory name provides that context)
 
-**Note**: The `incidental/` directory already indicates this is incidental work, so the `incidental-` filename
-prefix is omitted for clarity.
+Examples:
 
-**Create file**:
+- `tasks-filter-integration-testing.md`
+- `tasks-backend-type-safety.md`
+- `tasks-security-updates.md`
+
+**Template structure** (same as feature/technical work):
+
+- Context section explaining discovery and why now
+- Scope section (will do / won't do)
+- Phased task breakdown with standardized format
+- Implementation notes as work proceeds
+
+**Formatting standards**: Before creating the task list, review:
+
+**→ [strategy-task-list-formatting.md](../../strategies/arc/strategy-task-list-formatting.md)** ← **Required reading**
+
+This strategy document defines:
+
+- Exact format for all task list elements (phase headers, parent tasks, subtasks)
+- Test-first task structure patterns (CRITICAL for incidental work)
+- Complete annotated examples
+- Common mistakes to avoid
+- Decision guidelines
+
+**Test-first protocol applies**: Incidental work fixing bugs or refactoring business logic MUST follow
+test-first approach. Write failing tests before implementation. See [strategy-testing-methodology.md](../../strategies/project/strategy-testing-methodology.md)
+and [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md) Test-First Protocol section.
+
+The [strategy-task-list-formatting.md](../../strategies/arc/strategy-task-list-formatting.md) document includes comprehensive
+test-first examples and patterns.
+
+**Key difference**: Incidental task lists get **completion notes appended at bottom** when finished
+(feature/technical work uses separate completion metadata files).
+
+### 3. Track Creation with Commit
+
+**Guidance**: Lint and commit the new task list immediately for visibility and audit trail.
+
+**Pre-commit check:**
 
 ```bash
-touch .arc/active/incidental/tasks-{brief-slug}.md
- ```
+# Run markdown linting with auto-fix on new task list
+npx markdownlint-cli2 --fix --no-globs ".arc/active/incidental/tasks-{slug}.md"
+```
 
-**Use template** (see "Template" section below)
+Markdown linting enforces line length limits, consistent formatting, and catches structural issues before committing.
 
-### Step 3: Track Incidental Task List Creation
+**Purpose**:
 
-**Immediately stage and suggest commit for context visibility**:
+- Git log shows when/why work was paused
+- Session handoffs have full context
+- Team visibility into priority shifts
 
-1. `git add .arc/active/incidental/tasks-{brief-slug}.md`
-2. Show `git status` to confirm only the new file is staged
-3. Propose a commit message (example below) and wait for user approval before running it
-
-_Suggested message (show to user, do not execute until approved):_
+**Commit message format**:
 
 ```
 docs({current-branch}): create {brief-slug} incidental task list
 
-Triggered by {discovery context}.
-Pausing {current work} to address {critical issue}.
+Triggered by {discovery context during current feature/technical work}.
+Pausing {current work task} to address {critical issue}.
 
-Related to: .arc/active/feature/tasks-{main-feature}.md
+Related to: .arc/active/{feature|technical}/tasks-{main-work-name}.md
 ```
 
-**Why capture this commit early**:
+**Example**:
 
-- ✅ Git log shows when/why work was paused
-- ✅ Session handoffs have full context
-- ✅ Audit trail of priority shifts
-- ✅ Team visibility into active work
-
-### Step 4: Update CURRENT-SESSION.md
-
-**Update session tracking** (after the task-list commit):
-
-```markdown
-**Last Completed**: Task X.Y from tasks-{main-feature}.md (paused for incidental work)
-**Next Action**: Incidental work - {brief description}
-
-### Paused/Deferred Work
-
-**Paused Task Lists:**
-- `.arc/active/feature/tasks-{main-feature}.md` - Task X.Y complete, paused at Task X.Y+1
-
-**Resume Order After Incidental Work:**
-1. Complete incidental work ({brief description})
-2. Resume tasks-{main-feature}.md Task X.Y+1
 ```
+docs(service-layer-modernization): create filter integration testing incidental task list
 
-**Note**: CURRENT-SESSION.md is gitignored (untracked). Update it only if you're actively using the session handoff workflow.
+Triggered by Task 3.5.2.3 investigation revealing critical test coverage gaps.
+Pausing service layer work to establish comprehensive filter testing.
 
-### Step 5: Create Notes File (Optional)
-
-**For complex incidental work**, create a companion notes file (pairs well with [maintain-task-notes.md](maintain-task-notes.md)):
-
-**File location**: `.arc/active/incidental/notes-{same-slug}.md`
-
-**Notes are gitignored** - use for:
-
-- Research findings
-- Error diagnostics
-- Exploratory work
-- Scratch calculations
+Related to: .arc/active/technical/tasks-service-layer-modernization.md
+```
 
 ---
 
-## Phase 2: Execution
+## Git Branch Creation for Incidental Work
 
-### Follow Standard Task Loop Workflow
+**As of 2025-11-10 (ADR-013)**, incidental work that meets task list criteria gets its own git branch
+using a stacked branch workflow. See [ADR-013](../../adr/adr-013-adopt-stacked-branch-workflow.md) and
+[Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete rationale.
 
-Incidental work follows **same rules** as feature work:
+### When to Create a Branch
 
-1. **One sub-task at a time** - never bundle multiple deliverables
-2. **Mandatory stop** after each sub-task completion
-3. **Wait for explicit user approval** before starting next sub-task
-4. **Run incremental quality checks** after each sub-task
-5. **Update task list immediately** - mark `[x]` after completion
+**Create separate branch when incidental work:**
 
-See [3-process-task-loop.md](../3-process-task-loop.md) for detailed workflow.
+- ✅ Requires dedicated task list (meets criteria in "When to Create" section above)
+- ✅ Is semantically distinct from current branch's work
+- ✅ Benefits from independent merge/review capability
 
-### Commit Standards for Incidental Work
+**Stay on current branch when:**
 
-**Commit message structure** (present to user for approval):
+- ❌ Atomic task or inline fix (single coherent concern, <2 hours)
+- ❌ Work directly continues current branch's theme
+- ❌ No separate task list justified
 
-```
-{type}({branch}): {description}
+### Branch Naming and Lifecycle
 
-{details}
+**Branch naming**: `incidental/<name>` (matches task list name without `tasks-` prefix)
 
-Complete incidental task {X.Y}
-Related to: .arc/active/incidental/tasks-{slug}.md
-```
+Example:
 
-**Pick an appropriate type** (`refactor`, `fix`, `config`, `test`, `feat`) and use the current branch as the scope.
+- Task list: `.arc/active/incidental/tasks-pagination-buffer-tracking.md`
+- Branch: `incidental/pagination-buffer-tracking`
 
-**Examples**:
+**Branch lifecycle**:
 
-Example proposals to show the user:
+1. Discover work needing task list (distinct phases, 2+ hours, or scope uncertainty)
+2. Create branch off current: `git checkout -b incidental/<name>`
+3. Create task list: `.arc/active/incidental/tasks-<name>.md`
+4. Work on branch, commit with task references
+5. Complete work (all tasks done, quality gates pass)
+6. Run code review (local or two-pass)
+7. Create PR against parent branch: `gh pr create --base parent-branch`
+8. Merge PR (child → parent)
+9. Delete merged branch: `git branch -d incidental/<name>`
+10. Archive task list immediately: `mv` to `.arc/reference/archive/incidental/`
+11. Return to parent branch and continue work
 
-```
-config(api-layer-p2): replace django-stubs with django-types
+**Key rule**: Task list in `.arc/active/` ↔ Git branch exists
 
-- Install django-types 0.22.0 (Pyright-compatible)
-- Remove django-stubs (requires MyPy plugin)
-- Update pyrightconfig.json for django-types
-
-Complete incidental task 2.2
-Related to: .arc/active/incidental/tasks-backend-type-safety.md
-```
-
-```
-fix(api-layer-p2): add rate limiting to authentication endpoints
-
-- Configure throttle classes on login/register
-- Add tests for rate limit enforcement
-
-Complete incidental task 3.1
-Related to: .arc/active/incidental/tasks-security-updates.md
-```
-
-### Update Task List During Execution
-
-**Commit task list updates** alongside code changes:
-
-**After completing a subtask**
-
-1. Stage the task list plus associated code changes (`git add …`).
-2. Show `git status` so the user sees exactly what will be committed.
-3. Propose a commit message that calls out the subtask completion, then pause for approval. Example:
-
-   ```
-   {type}({branch}): {description}
-
-   - Mark task {X.Y} complete
-
-   Related to: .arc/active/incidental/tasks-{slug}.md
-   ```
-
-4. Only run `git commit` after the user gives an explicit “yes”.
-
-**Why commit task list with code**:
-
-- ✅ Git history shows task progress with implementation
-- ✅ Rollback captures both code and documentation state
-- ✅ Session handoffs show exact progress point
+See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for complete stacked
+branch workflow details, merge strategy (depth-first), and handling branch updates.
 
 ---
 
-## Phase 3: Completion
+## Executing Incidental Work
 
-### Step 1: Verify Full Completion
+**Follow standard workflows** - incidental work has no special execution procedures:
 
-Before archiving, ensure:
+1. **Task execution**: Follow [3_process-task-loop.md](../3_process-task-loop.md)
+   - One subtask at a time
+   - Quality checks after each subtask
+   - Mark `[x]` immediately on completion
 
-- ✅ All subtasks marked `[x]` in task list
-- ✅ All quality gates passing (tests, linting, type checking, markdown)
-- ✅ All related code committed and merged to current branch
-- ✅ Follow-up work documented (if any) in new task lists
+2. **Commits**: Follow [atomic-commit.md](atomic-commit.md)
+   - Include task reference: `Complete incidental task {X.Y}`
+   - Include relationship: `Related to: .arc/active/incidental/tasks-{slug}.md`
 
-### Step 2: Update Completion Notes in Task List
+3. **Quality gates**: Same zero-tolerance standards as feature/technical work
 
-**Add to bottom of task list** (before archiving). Keep only sections that apply; delete placeholders that have no content:
+4. **Branch context**: If incidental work has its own branch, commits stay on that branch until merge
+
+---
+
+## Completing Incidental Work
+
+### Branch Cleanup and Archiving
+
+**If incidental work has its own branch:**
+
+1. Complete all tasks (quality gates pass)
+2. Run code review (local or two-pass as appropriate)
+3. Create PR against parent branch
+4. Merge PR (child → parent)
+5. Delete merged branch: `git branch -d incidental/<name>`
+6. Archive task list **immediately** after branch deletion
+7. Return to parent branch and continue work
+
+**If incidental work was on parent branch** (no separate branch):
+
+1. Complete all tasks (quality gates pass)
+2. Archive when all work complete (standard timing)
+
+### Add Completion Notes
+
+**Before archiving**, append completion section to bottom of task list:
 
 ```markdown
 ## Completion Notes
@@ -249,311 +256,65 @@ Before archiving, ensure:
 **Completion Date**: {YYYY-MM-DD}
 
 **Summary**:
-- {1-2 sentence summary of what was accomplished}
+- {1-2 sentences summarizing accomplishments}
 - {Key outcomes or improvements}
-- {Metrics if applicable: error counts, test coverage, performance}
 
-**Tooling/Architecture Changes** (if applicable):
-- {Major changes to build tools, dependencies, CI/CD}
-- {New patterns or standards introduced}
+**Files Changed**: {Count and key files}
 
-**Files Changed**:
-- {Count of files modified/created/deleted}
-- {Key files and their purpose}
-
-**Follow-Up Work Created** (if any):
-- `.arc/active/incidental/tasks-{follow-up-slug}.md` ({brief description})
-- {Estimated effort for follow-up}
-
-**References**:
-- {Links to key commits}
-- {Links to external research or documentation}
-- {Links to related PRDs or task lists}
+**Follow-Up Work** (if any):
+- `.arc/active/incidental/tasks-{follow-up-slug}.md` - {description}
 
 **Next Steps**:
-1. {What to do after this incidental work completes}
-2. {Which paused work to resume}
+1. Resume {paused work} at Task {X.Y}
 ```
 
-### Step 3: Update Documentation (Before Archiving)
+### Archive and Resume
 
-**IMPORTANT**: Update all tracked documentation **BEFORE** suggesting commit.
+Follow [archive-completed.md](archive-completed.md) for archival procedure:
 
-**Check and update if needed** (skip anything untouched):
-
-1. `PROJECT-STATUS.md` – add the improvement, refresh metrics if they moved.
-2. Relevant `strategy-*.md` files – capture any new patterns or best practices.
-3. Constitution docs – update `DEVELOPMENT-RULES.md` / `TECHNICAL-ARCHITECTURE.md` if standards changed.
-4. Related task lists – unblock dependent tasks or refresh references.
-
-### Step 4: Move to Archive
-
-**Archive path depends on whether notes exist:**
-
-- **Without notes** (simple task list): `.arc/reference/archive/incidental/tasks-{slug}.md`
-- **With notes** (work package): `.arc/reference/archive/incidental/{slug}/` (all files together)
-
-**Use git mv** (file is tracked):
-
-```bash
-# Without notes - move to incidental root
-git mv .arc/active/incidental/tasks-{slug}.md \
-       .arc/reference/archive/incidental/
-
-# With notes - create subdirectory and move all files
-mkdir -p .arc/reference/archive/incidental/{slug}
-git mv .arc/active/incidental/tasks-{slug}.md \
-       .arc/reference/archive/incidental/{slug}/
-mv .arc/active/incidental/notes-{slug}.md \
-   .arc/reference/archive/incidental/{slug}/
-```
-
-### Step 5: Suggest Atomic Commit of All Changes
-
-**IMPORTANT**: AI suggests commit, **NEVER initiates** without user approval.
-
-**Commit includes**:
-
-- Archived task list (moved to archive)
-- Updated PROJECT-STATUS.md (if modified)
-- Updated strategy documents (if modified)
-- Updated constitution documents (if modified)
-- Updated related task lists (if modified)
-
-**Suggested commit format** (for user approval):
-
-```
-docs({branch}): archive incidental work - {brief description}
-
-Completed all subtasks for {incidental work description}.
-Resuming {main work description}.
-
-Summary: {1-2 sentence outcome}
-
-Changes:
-- Archive tasks-{slug}.md with completion notes
-- Update PROJECT-STATUS.md with {improvements}
-- Update {strategy/constitution docs} to reflect {changes}
-
-Related to: .arc/active/feature/tasks-{main-feature}.md
-```
-
-**AI workflow**:
-
-1. Stage all relevant files (`git add …`), then show `git status`
-2. Present the proposed commit message/template above
-3. **Wait for user approval** before running `git commit`
-4. Execute the commit only after explicit approval
-
-### Step 6: Update CURRENT-SESSION.md (After Commit)
-
-**IMPORTANT**: Update CURRENT-SESSION.md **AFTER** commit, not before.
-
-**Why this order**:
-
-- ✅ All tracked documentation changes included in commit
-- ✅ CURRENT-SESSION.md doesn't contain stale commit references
-- ✅ Session state reflects post-commit reality
-
-**Update session tracking**:
-
-```markdown
-**Last Completed**: Incidental work - {brief description} (archived)
-**Next Action**: Resume Task X.Y from tasks-{main-feature}.md
-
-### Paused/Deferred Work
-
-**Paused Task Lists:**
-- `.arc/active/feature/tasks-{main-feature}.md` - Resume at Task X.Y
-```
-
-### Step 7: Resume Main Work
-
-Return to paused feature work and continue normal workflow.
+- Archive to `.arc/reference/archive/incidental/`
+- **Archive timing**: Immediately when branch deleted (after merge) if work had separate branch
+- Update PROJECT-STATUS.md if applicable
+- Update CURRENT-SESSION.md to resume paused work
+- Commit with summary of completed incidental work
 
 ---
 
-## Incidental Task List Template
-
-```markdown
-# Incidental Work: {Title}
-
-**Created**: {YYYY-MM-DD}
-**Triggered By**: Task {X.Y} in tasks-{feature-name}.md
-**Status**: In Progress / Complete
-**Estimated Effort**: {X minutes / Y hours}
-
-## Context
-
-**Why Now**: {Why fix immediately instead of deferring to future PRD}
-
-**Discovery**: {How this issue was discovered during main task work}
-
-**Impact**: {What improves if we fix this - quality, consistency, tech debt reduction}
-
-## Scope
-
-**Will Do**:
-- {Specific changes that will be made}
-- {Expected outcomes}
-- {Target metrics or completion criteria}
-
-**Won't Do** (deferred to {future-work-reference}):
-- {Out of scope items}
-- {Future improvements}
-- {Why these are deferred}
-
-## Tasks
-
-- [ ] 1. {Task 1 with clear deliverable}
-  - [ ] 1.1 {Sub-subtask if needed}
-  - [ ] 1.2 {Sub-subtask if needed}
-- [ ] 2. {Task 2 with quality gate}
-  - [ ] 2.1 {Sub-subtask}
-- [ ] 3. {Task 3 with verification step}
-  - [ ] 3.1 {Sub-subtask}
-
-## Implementation Notes
-
-### {Decision/Pattern Name}
-
-**{Context}:**
-- {Key technical decisions made}
-- {Rationale for approach chosen}
-- {Alternatives considered and rejected}
-
-## Completion Notes
-
-{Added at completion - see Phase 3, Step 2 above}
-```
-
----
-
-## Best Practices
-
-### Scope Management
-
-- **Start small**: Resist scope creep - defer non-critical improvements
-- **Document deferrals**: Create follow-up task lists for discovered work outside scope
-- **Time-box**: If effort exceeds 2x estimate, stop and reassess with user
-
-### Communication
-
-- **Keep user informed**: Report progress after each subtask
-- **Flag blockers**: Immediately report unexpected complexity or blockers
-- **Suggest pivots**: If better approach discovered, propose and get approval
-
-### Quality
-
-- **No shortcuts**: Incidental work follows same quality standards as feature work
-- **Test thoroughly**: Incidental fixes must not break existing functionality
-- **Document decisions**: Capture "why" not just "what" in implementation notes
+## Common Patterns
 
 ### Nested Incidental Work
 
-**If incidental work spawns MORE incidental work**:
+If incidental work spawns MORE incidental work:
 
 1. **Assess criticality**: Is new issue blocking current incidental work?
-2. **Get user approval**: Don't auto-create nested incidental work
-3. **Document relationship**: Link nested task list to parent incidental work
+2. **Get approval**: Don't auto-create nested incidental work
+3. **Document relationship**: Link nested task list to parent
 4. **Track in CURRENT-SESSION**: Show full dependency chain
 
-**Example**:
+Example hierarchy:
 
-- Main feature: API Layer Modernization
-    - Incidental: Security Updates (discovered during feature work)
-        - Nested Incidental: Type Safety Tooling Fix (discovered during security updates)
+- Main work: API Layer Modernization (feature/technical)
+    - Incidental: Filter Integration Testing (discovered during main work)
+        - Nested: Type Safety Tooling Fix (discovered during incidental work - rare but valid)
 
----
+### Scope Management
 
-## Directory Structure
-
-### Active Work
-
-```
-.arc/active/
-├── CURRENT-SESSION.md           # Session tracking (gitignored)
-├── feature/
-│   ├── prd-{feature}.md         # Feature PRD
-│   ├── tasks-{feature}.md       # Feature task list
-│   └── notes-{feature}.md       # Feature notes (gitignored)
-└── incidental/
-    ├── tasks-{slug}.md     # Incidental task list
-    └── notes-{slug}.md     # Incidental notes (gitignored)
-```
-
-### Archived Work
-
-```
-.arc/reference/archive/
-├── feature/
-│   └── {name}/                       # Work package subdirectories
-│       ├── prd-{name}.md
-│       ├── tasks-{name}.md
-│       ├── notes-{name}.md (optional)
-│       └── completion-{name}.md
-├── technical/
-│   └── {name}/                       # Work package subdirectories
-│       ├── prd-{name}.md
-│       ├── tasks-{name}.md
-│       ├── notes-{name}.md (optional)
-│       └── completion-{name}.md
-└── incidental/
-    ├── {name}/                       # Work package (if has notes)
-    │   ├── tasks-{name}.md
-    │   └── notes-{name}.md
-    └── tasks-{name}.md    # Simple task list (no notes, stays in root)
-```
-
-**Key Points**:
-
-- ✅ Only `CURRENT-SESSION.md` remains in `.arc/active/` root
-- ✅ Task lists tracked by git (context visibility)
-- ✅ Notes files gitignored until archival (scratch paper)
-- ✅ Archive uses work-package subdirectories (all docs for a work item together)
+- **Start small**: Defer non-critical improvements to future work
+- **Document deferrals**: Create follow-up task lists for discovered work outside current scope
+- **Time-box**: If effort exceeds 2x estimate, stop and reassess
 
 ---
 
-## Common Pitfalls
-
-### ❌ Creating incidental work for planned features
-
-**Problem**: Using incidental workflow for work that should be a PRD.
-
-**Solution**: If work is strategic (new capability, major refactor), create PRD instead.
-
-### ❌ Forgetting to update paused work references
-
-**Problem**: Resuming wrong task after incidental work completes.
-
-**Solution**: Always update CURRENT-SESSION.md and paused task list cross-references.
-
-### ❌ Archiving before all documentation updated
-
-**Problem**: PROJECT-STATUS.md out of date, strategy docs stale.
-
-**Solution**: Update all tracked docs **before** archive commit, CURRENT-SESSION.md **after**.
-
-### ❌ Not documenting completion notes
-
-**Problem**: Archived task list lacks context on what was achieved.
-
-**Solution**: Always add comprehensive completion notes before archiving.
-
 ---
 
-## Related Workflows
+**Version**: 3.1 (2025-12-04) - Refined task list vs atomic task criteria
 
-- [3-process-task-loop.md](../3-process-task-loop.md) - Main task execution workflow
-- [atomic-commit.md](atomic-commit.md) - Commit message standards
-- [archive-completed-features.md](archive-completed-features.md) - Feature archival process
-- [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md) - Core development standards
+**Changelog**:
 
----
-
-## Changelog
-
-- **2025-10-09**: Initial creation - extracted from process-task-loop.md
-    - Added comprehensive lifecycle: creation → execution → archival
-    - Defined commit order: docs update → commit → CURRENT-SESSION update
-    - Documented new directory structure with `feature/` and `incidental/` subdirs
+- v3.1 (2025-12-04): Revised "When to Create" criteria - focus on distinct phases vs sequential steps,
+  raised time threshold from 30min to 2hrs, emphasized scope certainty as key factor. Removed overly
+  trigger-happy criteria (">1 subtask", ">30min") that caused unnecessary task list overhead.
+- v3.0 (2025-11-10): Added git branch creation guidance, stacked branch workflow, updated completion/archival
+  to reflect branch lifecycle (ADR-013)
+- v2.0 (2025-10-24): Streamlined to focus on unique aspects of incidental work
+- v1.0 (previous): Initial version

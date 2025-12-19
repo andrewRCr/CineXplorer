@@ -6,11 +6,13 @@ with TMDB-specific authentication, rate limiting, error handling, and response
 processing built on top of the BaseApiClient infrastructure.
 """
 
+import logging
+
 import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-from .api_response import ApiResponse
+from .api_response import RATE_LIMIT_HEADER_MAPPING, ApiResponse
 from .base_api_client import BaseApiClient
 
 
@@ -141,13 +143,6 @@ class TMDBApiClient(BaseApiClient):
                 )
             })
 
-            # Handle headers safely for both real responses and mocked responses
-            try:
-                headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
-            except (TypeError, AttributeError):
-                # Handle Mock objects or other non-dict-like headers
-                headers = {}
-
             return ApiResponse(
                 status_code=502,
                 error_message="TMDB returned invalid JSON (Bad Gateway)",
@@ -156,7 +151,7 @@ class TMDBApiClient(BaseApiClient):
                 correlation_id=correlation_id,
                 endpoint=endpoint,
                 duration_ms=duration_ms,
-                headers=headers,
+                headers=self._safe_headers_dict(response),
                 raw_response=response
             )
 
@@ -197,17 +192,53 @@ class TMDBApiClient(BaseApiClient):
 
         self.logger.info("TMDB API request successful", extra=log_data)
 
-        # Handle headers safely for both real responses and mocked responses
-        try:
-            headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
-        except (TypeError, AttributeError):
-            # Handle Mock objects or other non-dict-like headers
-            headers = {}
+        # DEBUG-level detailed logging: Log first few results for debugging
+        # This helps diagnose TMDB filtering behavior and data quality issues
+        has_results = 'results' in data and hasattr(data['results'], '__iter__')
+        if self.logger.isEnabledFor(logging.DEBUG) and has_results:
+            results = data['results']
+            if hasattr(results, '__len__') and len(results) > 0:  # type: ignore[arg-type]
+                sample_count = min(3, len(results))  # type: ignore[arg-type]
+                sample_results: list[dict[str, object]] = []
+                for i in range(sample_count):
+                    try:
+                        movie = results[i]  # type: ignore[index]
+                        # Extract key fields for debugging (title, year, ID)
+                        release = movie.get('release_date') if hasattr(movie, 'get') else None
+                        vote_avg = movie.get('vote_average') if hasattr(movie, 'get') else None
+                        sample_results.append({
+                            'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
+                            'title': movie.get('title') if hasattr(movie, 'get') else None,
+                            'release_date': release,
+                            'vote_average': vote_avg,
+                        })
+                    except (IndexError, TypeError, AttributeError):
+                        continue
+
+                # Log ALL results for complete debugging visibility
+                all_results: list[dict[str, object]] = []
+                for i in range(len(results)):  # type: ignore[arg-type]
+                    try:
+                        movie = results[i]  # type: ignore[index]
+                        release = movie.get('release_date') if hasattr(movie, 'get') else None
+                        vote_avg = movie.get('vote_average') if hasattr(movie, 'get') else None
+                        all_results.append({
+                            'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
+                            'title': movie.get('title') if hasattr(movie, 'get') else None,
+                            'release_date': release,
+                            'vote_average': vote_avg,
+                        })
+                    except (IndexError, TypeError, AttributeError):
+                        continue
+
+                self.logger.debug(
+                    f"TMDB response (ALL {len(all_results)} results): {all_results}"
+                )
 
         return ApiResponse(
             status_code=response.status_code,
             data=data,
-            headers=headers,
+            headers=self._safe_headers_dict(response),
             correlation_id=correlation_id,
             endpoint=endpoint,
             method="GET",
@@ -283,13 +314,6 @@ class TMDBApiClient(BaseApiClient):
         else:
             self.logger.warning("TMDB API request failed", extra=log_data)
 
-        # Handle headers safely for both real responses and mocked responses
-        try:
-            headers = dict(response.headers) if hasattr(response.headers, 'items') else {}
-        except (TypeError, AttributeError):
-            # Handle Mock objects or other non-dict-like headers
-            headers = {}
-
         return ApiResponse(
             status_code=response.status_code,
             error_message=error_message,
@@ -299,7 +323,7 @@ class TMDBApiClient(BaseApiClient):
             endpoint=endpoint,
             method="GET",
             duration_ms=duration_ms,
-            headers=headers,
+            headers=self._safe_headers_dict(response),
             raw_response=response
         )
 
@@ -358,17 +382,9 @@ class TMDBApiClient(BaseApiClient):
 
         rate_limit_info: dict[str, object] = {}
 
-        # Standard rate limiting headers used by TMDB
-        rate_limit_headers = {
-            'x-ratelimit-limit': 'limit',
-            'x-ratelimit-remaining': 'remaining',
-            'x-ratelimit-reset': 'reset',
-            'retry-after': 'retry_after'
-        }
-
         # Headers typed as object to support mock objects in tests
         # Use try/except for safe access to non-dict or mock header objects
-        for header_name, key in rate_limit_headers.items():
+        for header_name, key in RATE_LIMIT_HEADER_MAPPING.items():
             try:
                 value = headers[header_name]  # type: ignore[index]  # Mock object support
             except (TypeError, KeyError, IndexError):

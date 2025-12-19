@@ -1,47 +1,39 @@
 import BaseLayout from "./BaseLayout";
-import Sidebar from "./Sidebar";
-import { SidebarDrawerViewport } from "./SidebarDrawer";
+import Sidebar from "./sidebar/Sidebar";
 import {
-	Box,
-	Container,
-	useBreakpointValue,
+  Box,
+  Container,
 } from "@chakra-ui/react";
 import { Outlet } from "react-router-dom";
 
 const AppLayout = () => {
-	// Show static sidebar on desktop, drawer on mobile
-	const showStaticSidebar = useBreakpointValue({
-		base: false,
-		lg: true,
-	}, { ssr: false }) ?? false;
+  return (
+    <BaseLayout>
+      {/* Main Content Area */}
+      <Container
+        maxW="container.xl"
+        px={{ base: 2, md: 6, lg: 8 }}
+        w="100%"
+        flex="1"
+        display="flex"
+      >
+        {/* Static Sidebar - Desktop only (hidden on mobile via CSS) */}
+        <Box
+          width="layout-sidebar"
+          flexShrink={0}
+          mr={6}
+          display={{ base: 'none', lg: 'block' }}
+        >
+          <Sidebar />
+        </Box>
 
-	return (
-		<BaseLayout>
-			{/* Main Content Area */}
-			<Container
-				maxW="container.xl"
-				px={{ base: 2, md: 6, lg: 8 }}
-				w="100%"
-				flex="1"
-				display="flex"
-			>
-				{/* Static Sidebar - Desktop only */}
-				{showStaticSidebar && (
-					<Box width="280px" flexShrink={0} mr={6}>
-						<Sidebar />
-					</Box>
-				)}
-
-				{/* Main Content */}
-				<Box flex="1">
-					<Outlet />
-				</Box>
-			</Container>
-
-			{/* Sidebar Drawer Viewport - Required for Chakra v3 overlay manager */}
-			<SidebarDrawerViewport />
-		</BaseLayout>
-	);
+        {/* Main Content */}
+        <Box flex="1">
+          <Outlet />
+        </Box>
+      </Container>
+    </BaseLayout>
+  );
 };
 
 export default AppLayout;

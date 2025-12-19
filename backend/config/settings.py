@@ -30,10 +30,6 @@ environ.Env.read_env(os.path.join(os.path.dirname(__file__), ".env"))
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# add apps directory
-APPS_DIR = os.path.join(BASE_DIR, "apps")
-sys.path.insert(0, APPS_DIR)
-
 # add shared directory (mounted in container)
 SHARED_DIR = "/shared"
 sys.path.insert(0, SHARED_DIR)
@@ -63,8 +59,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",  # Required for django-allauth
     "django_extensions",
-    "accounts",
-    "core",
+    "apps.accounts",
+    "apps.core",
     "debug_toolbar",
     "corsheaders",
     # django-allauth
@@ -77,9 +73,9 @@ INSTALLED_APPS = [
     # django-ninja-jwt token blacklist (refresh token rotation security)
     "ninja_jwt.token_blacklist",
     # Project apps
-    "authentication",
-    "movie",
-    "user_movie_data",
+    "apps.authentication",
+    "apps.movie",
+    "apps.user_movie_data",
 ]
 
 MIDDLEWARE = [
@@ -127,7 +123,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "core.context_processors.global_settings",
+                "apps.core.context_processors.global_settings",
             ],
         },
     },
@@ -235,23 +231,27 @@ ENVIRONMENT = _environment  # Final constant assignment
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
-# Email verification settings
-ZEPTOMAIL_API_KEY = os.environ.get("ZEPTOMAIL_API_KEY", "")
-ZEPTOMAIL_SENDER_EMAIL = os.environ.get(
+# Email Configuration - ZeptoMail via django-zoho-zeptomail backend
+# Uses Django's email system with ZeptoMail as the delivery backend
+EMAIL_BACKEND = "zoho_zeptomail.backend.zeptomail_backend.ZohoZeptoMailEmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get(
     "ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com"
 )
+ZOHO_ZEPTOMAIL_API_KEY_TOKEN = os.environ.get("ZEPTOMAIL_API_KEY", "")
+# Region setting - only required for non-US hosted accounts
+# Options: None (US default), "eu" (Europe), "in" (India), "au" (Australia)
+ZOHO_ZEPTOMAIL_HOSTED_REGION = os.environ.get("ZEPTOMAIL_HOSTED_REGION", None)
+
 # Email verification expiry (days) - configurable via environment variable
 # Default: 3 days (72 hours) - reasonable for production use
 EMAIL_VERIFICATION_EXPIRY_DAYS = int(
     os.environ.get("EMAIL_VERIFICATION_EXPIRY_DAYS", "3")
 )
-# Legacy constant for DRF email verification bridge (deferred to API Layer Phase 2)
-EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # Validate email configuration in production
-# Allow missing API key in development (dev_mode) and testing
-if not ZEPTOMAIL_API_KEY and not DEBUG and "test" not in sys.argv:
+# Allow missing API key in development and testing (emails will fail silently)
+if not ZOHO_ZEPTOMAIL_API_KEY_TOKEN and not DEBUG and "test" not in sys.argv:
     import warnings
     warnings.warn(
         "ZEPTOMAIL_API_KEY is not set. Email delivery will fail in production. "
@@ -294,7 +294,7 @@ ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
 
 # Adapter configuration - Custom adapter for ZeptoMail integration
-ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
+ACCOUNT_ADAPTER = "apps.authentication.adapters.CustomAccountAdapter"
 
 # Headless Mode Configuration (for SPA/React frontend)
 # Provides JSON API endpoints instead of HTML templates
@@ -309,7 +309,7 @@ HEADLESS_FRONTEND_URLS = {
 
 # Token Strategy - JWT token generation for headless mode
 # Official django-allauth extension point for custom token generation
-HEADLESS_TOKEN_STRATEGY = "authentication.token_strategy.JWTTokenStrategy"
+HEADLESS_TOKEN_STRATEGY = "apps.authentication.token_strategy.JWTTokenStrategy"
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login

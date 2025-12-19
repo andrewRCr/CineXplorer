@@ -1,0 +1,35 @@
+# CodeRabbit Configuration for CineXplorer
+# https://docs.coderabbit.ai/reference/configuration
+#
+# Minimal repo-specific config - organizational settings take precedence for most options.
+# This file only overrides settings critical to stacked branch workflow (ADR-013).
+
+# Review configuration
+reviews:
+  # Code quality focus areas - ignore build artifacts and dependencies
+  path_filters:
+    - "!**/node_modules/**"
+    - "!**/dist/**"
+    - "!**/.venv*/**"
+    - "!**/logs/**"
+
+  # Auto-review settings (supports stacked branch workflow - ADR-013)
+  auto_review:
+    enabled: true
+    base_branches:
+      - ".*"  # Review PRs to any branch using regex (supports stacked branches)
+
+# Knowledge base - organizational learning and coding standards
+knowledge_base:
+  opt_out: false
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - ".arc/reference/constitution/DEVELOPMENT-RULES.md"
+      - ".arc/reference/constitution/TECHNICAL-OVERVIEW.md"
+      - ".arc/reference/strategies/**/*.md"
+      - ".arc/reference/adr/**/*.md"
+  learnings:
+    scope: auto
+  issues:
+    scope: auto

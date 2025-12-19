@@ -40,7 +40,7 @@ export const mockUseMovieCollectionState = {
 	},
 	currentPage: 1,
 	hasActiveFilters: false,
-	hasAdvancedFilters: false,
+	hasActiveAdvancedFilters: false,
 	filterCount: 0,
 	handleFiltersChange: vi.fn(),
 	handlePageChange: vi.fn(),

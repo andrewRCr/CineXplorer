@@ -5,19 +5,20 @@ This middleware provides CSRF protection for Django Ninja APIs with path-based
 exemptions, working around Django Ninja bug #1464 where csrf=True causes
 valid CSRF tokens to be rejected.
 
-CSRF Protection Strategy:
-- Django Ninja: csrf=False (avoid bug #1464 entirely)
+CSRF Architecture (django-ninja 1.5.x):
+- NinjaAPI(): No csrf parameter (removed in 1.5.0)
+- JWTCookieAuth: Passes csrf=False to APIKeyCookie parent (disables Ninja's CSRF)
 - Django's CsrfViewMiddleware: DISABLED (conflicts with custom middleware)
-- This custom middleware: Path-based CSRF validation
+- This custom middleware: Path-based header CSRF validation
 
 Exemption Strategy:
 - Path-based: All public endpoints listed in EXEMPT_PATH_PREFIXES
 - Simple and reliable for small, stable authentication API
 
 Why Custom Middleware:
-1. Django Ninja bug #1464 makes csrf=True unreliable
-2. Setting csrf=False on NinjaAPI applies @csrf_exempt to ALL endpoints
-3. This middleware provides selective CSRF protection without Django Ninja conflicts
+1. Django Ninja bug #1464 makes built-in CSRF unreliable
+2. Bypassing Ninja's CSRF entirely avoids double-validation conflicts
+3. This middleware provides selective CSRF protection via X-CSRFToken header
 """
 from __future__ import annotations
 

@@ -10,18 +10,18 @@ from argparse import ArgumentParser
 from typing import cast
 
 from django.core.management.base import BaseCommand
-from movie.services.movie_service import (
-    discover_movies,
-    get_movie_by_id,
-    get_now_playing_movies,
-    get_upcoming_movies,
-    search_movies,
-)
 from ninja.errors import HttpError
+
+from apps.movie.services.api_boundary import BrowseServiceParams, SearchServiceParams
+from apps.movie.services.service_factory import get_movie_service
 
 
 class Command(BaseCommand):
     help = 'Test TMDB API logging by exercising typical API operations'
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.movie_service = get_movie_service()
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
@@ -87,7 +87,8 @@ class Command(BaseCommand):
         """Test discover movies API call."""
         self.stdout.write("  📊 Discover popular movies...")
         try:
-            result = discover_movies(page=1, sort_by='popularity.desc')
+            params = BrowseServiceParams(sort_by='popularity.desc')
+            result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🎭 Found {len(result.results)} movies")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.message}")
@@ -98,7 +99,8 @@ class Command(BaseCommand):
         """Test search movies API call."""
         self.stdout.write("  🔍 Searching for 'Inception'...")
         try:
-            result = search_movies(query='Inception', page=1)
+            params = SearchServiceParams(query='Inception')
+            result = self.movie_service.search_movies(page=1, params=params)
             self.stdout.write(f"  🎬 Found {len(result.results)} results")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.message}")
@@ -109,7 +111,7 @@ class Command(BaseCommand):
         """Test movie details API call."""
         self.stdout.write("  📄 Getting details for movie ID 27205 (Inception)...")
         try:
-            result = get_movie_by_id(27205)
+            result = self.movie_service.get_movie_by_id(27205)
             title = result.title
             year = str(result.release_date.year) if result.release_date else 'Unknown'
             self.stdout.write(f"  🎯 Retrieved: {title} ({year})")
@@ -122,7 +124,8 @@ class Command(BaseCommand):
         """Test popular movies API call."""
         self.stdout.write("  🌟 Getting popular movies...")
         try:
-            result = discover_movies(page=1, sort_by='popularity.desc')
+            params = BrowseServiceParams(sort_by='popularity.desc')
+            result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🏆 Found {len(result.results)} popular movies")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.message}")
@@ -133,7 +136,7 @@ class Command(BaseCommand):
         """Test now playing movies API call."""
         self.stdout.write("  🎪 Getting now playing movies...")
         try:
-            result = get_now_playing_movies(page=1)
+            result = self.movie_service.get_now_playing_movies(page=1)
             self.stdout.write(f"  🎭 Found {len(result.results)} now playing movies")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.message}")
@@ -144,7 +147,7 @@ class Command(BaseCommand):
         """Test upcoming movies API call."""
         self.stdout.write("  🔮 Getting upcoming movies...")
         try:
-            result = get_upcoming_movies(page=1)
+            result = self.movie_service.get_upcoming_movies(page=1)
             self.stdout.write(f"  📅 Found {len(result.results)} upcoming movies")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.message}")

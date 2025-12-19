@@ -133,7 +133,7 @@ import { render } from '@tests/helpers/test-renderer';
 ### Mock Factories
 
 ```typescript
-import { createMockMovie, createMockMovies } from '@tests/mocks/movieData';
+import { createMockMovieListItem, createMockMovieListItems, createMockMovieDetail } from '@tests/mocks/movieData';
 ```
 
 ### API Mocks

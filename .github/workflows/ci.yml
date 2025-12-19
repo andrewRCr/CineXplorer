@@ -80,9 +80,10 @@ jobs:
           echo "Running pytest with coverage..."
           docker compose exec -T -e COVERAGE_FILE=/tmp/.coverage backend pytest apps/ --cov=apps --cov-report=term --cov-report=xml:/tmp/coverage.xml
 
-          # Copy coverage report and pytest cache from container to host
+          # Copy coverage report from container to host
           docker compose cp backend:/tmp/coverage.xml backend/coverage.xml
-          docker compose cp backend:/app/.pytest_cache backend/.pytest_cache || true
+          # Copy pytest cache if it exists (optional, used for caching only)
+          docker compose cp backend:/backend/.pytest_cache backend/.pytest_cache || true
 
       - name: Upload coverage reports
         if: always()
@@ -168,6 +169,10 @@ jobs:
         working-directory: frontend
         run: npm run ci:generate-types --if-present
 
+      - name: Generate Chakra UI component types
+        working-directory: frontend
+        run: npm run typegen
+
       - name: TypeScript type checking
         working-directory: frontend
         run: npm run type-check
@@ -175,6 +180,10 @@ jobs:
       - name: ESLint
         working-directory: frontend
         run: npm run lint
+
+      - name: Verify theme contrast (WCAG AA compliance)
+        working-directory: frontend
+        run: npm run verify-contrast:ci
 
       - name: Run frontend tests
         working-directory: frontend

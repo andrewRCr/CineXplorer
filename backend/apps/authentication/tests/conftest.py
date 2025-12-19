@@ -16,7 +16,7 @@ factory functions for common test data needs.
     3. **Domain Fixtures**: This file (authentication-specific fixtures)
     4. **Domain Factories**: `fixtures.py` (create_social_app, create_register_payload, etc.)
 
-See: `.arc/reference/strategies/strategy-testing-methodology.md` for full architecture.
+See strategy-testing-methodology.md for full architecture.
 
 Fixture Architecture:
     This conftest.py provides pytest fixtures (dependency-injected, single instance).
@@ -89,8 +89,8 @@ from django.core.cache import cache
 if TYPE_CHECKING:
     from django.test import Client
 
-# Import OAuth mock classes from test_oauth_mocks module
-from authentication.tests.test_oauth_mocks import (
+# Import OAuth mock classes from oauth_mocks module
+from apps.authentication.tests.oauth_mocks import (
     MockGitHubOAuth,
     MockGoogleOAuth,
 )
@@ -210,7 +210,7 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
         has username 'testuser' and password 'testpass123' by default.
         See authentication.tests.fixtures.create_user() for details.
     """
-    from core.tests.test_helpers import authenticate_client
+    from apps.core.tests.test_helpers import authenticate_client
 
     # Authenticate using hybrid JWT pattern (sets access_token + refresh_token cookies)
     authenticate_client(client, verified_user.username, 'testpass123')
@@ -392,7 +392,7 @@ def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures mo
         user1 = create_user(email='custom1@example.com')
         user2 = create_user(email='custom2@example.com', email_verified=False)
     """
-    from core.tests.test_helpers import create_user
+    from apps.core.tests.test_helpers import create_user
     return create_user(email_verified=True)
 
 
@@ -416,7 +416,7 @@ def unverified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures 
             response = api_client.get('/api/protected/')
             assert response.status_code == 403
     """
-    from authentication.tests.fixtures import create_unverified_user
+    from apps.authentication.tests.fixtures import create_unverified_user
     return create_unverified_user()
 
 
@@ -443,7 +443,7 @@ def register_payload() -> Any:  # noqa: ANN401 - RegisterPayload type from fixtu
             email='custom@example.com'
         )
     """
-    from authentication.tests.fixtures import create_register_payload
+    from apps.authentication.tests.fixtures import create_register_payload
     return create_register_payload()
 
 
@@ -471,7 +471,7 @@ def login_payload() -> Any:  # noqa: ANN401 - LoginPayload type from fixtures
             use_email=True
         )
     """
-    from authentication.tests.fixtures import create_login_payload
+    from apps.authentication.tests.fixtures import create_login_payload
     return create_login_payload()
 
 

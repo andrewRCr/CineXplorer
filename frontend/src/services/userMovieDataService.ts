@@ -33,7 +33,7 @@
  */
 
 import create from "./httpService";
-import type { components } from "../types/api";
+import type { components } from "@/types/api";
 
 // Type-safe schema imports from generated OpenAPI types
 type UserMovieDataDetailSchema = components["schemas"]["UserMovieDataDetailSchema"];
@@ -42,14 +42,14 @@ type UserMovieDataUpdateSchema = components["schemas"]["UserMovieDataUpdateSchem
 
 // Query parameter types for type-safe API calls
 export interface GetUserMovieDataByTmdbIdParams {
-	tmdb_id: number;
+    tmdb_id: number;
 }
 
 // Re-export commonly used types for external consumers
 export type {
-	UserMovieDataDetailSchema,
-	UserMovieDataCreateSchema,
-	UserMovieDataUpdateSchema,
+    UserMovieDataDetailSchema,
+    UserMovieDataCreateSchema,
+    UserMovieDataUpdateSchema,
 };
 
 // Service instances for Django Ninja API endpoints
@@ -81,12 +81,12 @@ const userMovieDataByTmdbIdService = create("/user-movie-data/by-tmdb-id");
  * }
  */
 export const getUserMovieDataByTmdbId = (params: GetUserMovieDataByTmdbIdParams) => {
-	const controller = new AbortController();
-	const request = userMovieDataByTmdbIdService
-		.getPaginated<UserMovieDataDetailSchema>(params)
-		.request;
+    const controller = new AbortController();
+    const request = userMovieDataByTmdbIdService
+        .getPaginated<UserMovieDataDetailSchema>(params)
+        .request;
 
-	return { request, cancel: () => controller.abort() };
+    return { request, cancel: () => controller.abort() };
 };
 
 /**
@@ -111,7 +111,7 @@ export const getUserMovieDataByTmdbId = (params: GetUserMovieDataByTmdbIdParams)
  * })
  */
 export const createUserMovieData = (data: UserMovieDataCreateSchema) => {
-	return userMovieDataService.create<UserMovieDataDetailSchema>(data);
+    return userMovieDataService.create<UserMovieDataDetailSchema>(data);
 };
 
 /**
@@ -135,7 +135,7 @@ export const createUserMovieData = (data: UserMovieDataCreateSchema) => {
  * })
  */
 export const updateUserMovieData = (id: number, data: UserMovieDataUpdateSchema) => {
-	return userMovieDataService.update<UserMovieDataUpdateSchema>(id, data);
+    return userMovieDataService.update<UserMovieDataUpdateSchema>(id, data);
 };
 
 /**
@@ -155,7 +155,7 @@ export const updateUserMovieData = (id: number, data: UserMovieDataUpdateSchema)
  * deleteUserMovieData(1)
  */
 export const deleteUserMovieData = (id: number) => {
-	return userMovieDataService.remove(id);
+    return userMovieDataService.remove(id);
 };
 
 // Implementation Notes:

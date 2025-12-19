@@ -21,23 +21,55 @@ from .helpers import (
 )
 from .schemas import (
     GenreSchema,
+    KeywordListResponseSchema,
     MovieDetailSchema,
     MovieDiscoverFilterSchema,
+    MovieListResponseSchema,
     MovieSearchParamsSchema,
-    PaginatedKeywordResponseSchema,
-    PaginatedMovieResponseSchema,
-    PaginatedPersonResponseSchema,
     PaginationParamsSchema,
+    PersonListResponseSchema,
 )
 
-# Import service functions
-from .services import movie_service
+# Import API boundary transformer (handles vote count policy internally)
+from .services.api_boundary import SearchServiceParams, transform_to_service_params
+from .services.deduplication_tracker import DeduplicationTracker
+
+# Import service factories
+from .services.service_factory import (
+    get_keyword_service,
+    get_movie_service,
+    get_people_service,
+)
+
+# Module-level service instances (singleton pattern for request handling)
+_movie_service = get_movie_service()
+_keyword_service = get_keyword_service()
+_people_service = get_people_service()
 
 # Create separate router instances for logical grouping
 movies_router = Router(tags=["movies"])
 genres_router = Router(tags=["genres"])
 keywords_router = Router(tags=["keywords"])
 people_router = Router(tags=["people"])
+
+
+def _create_dedup_tracker(request: HttpRequest) -> DeduplicationTracker:
+    """Create DeduplicationTracker from request context.
+
+    Handles anonymous sessions by creating a session if none exists.
+    Extracts context_id from X-Pagination-Context header for multi-tab isolation.
+    """
+    # Ensure session exists for anonymous users
+    if not request.session.session_key:
+        request.session.create()
+        # Mark session as modified to ensure it gets saved
+        # Django sessions are lazy - they only save if modified
+        request.session.modified = True
+
+    session_id = request.session.session_key or ""
+    context_id = request.headers.get("X-Pagination-Context", "")
+
+    return DeduplicationTracker(session_id=session_id, context_id=context_id)
 
 # Reusable type aliases for query parameters (Django Ninja + FastAPI pattern)
 # Note: We use the bracket syntax Query[Schema] rather than Annotated[Schema, Query()]
@@ -57,7 +89,7 @@ FilterParams = Query[MovieDiscoverFilterSchema]  # type: ignore[valid-type]
 @genres_router.get("", response=list[GenreSchema], auth=None)
 def get_movie_genres(request: HttpRequest):
     """Retrieve the list of available movie genres from TMDB."""
-    return movie_service.get_movie_genres()
+    return _movie_service.get_movie_genres()
 
 
 # =========================
@@ -65,19 +97,19 @@ def get_movie_genres(request: HttpRequest):
 # =========================
 
 
-@keywords_router.get("", response=PaginatedKeywordResponseSchema, auth=None)
+@keywords_router.get("", response=KeywordListResponseSchema, auth=None)
 def get_popular_keywords(
     request: HttpRequest,
     params: PaginationParams,
 ):
     """Retrieve popular keywords with pagination."""
-    return movie_service.get_popular_keywords(page=params.page or 1)
+    return _keyword_service.get_popular_keywords(page=params.page or 1)
 
 
-@keywords_router.get("/search", response=PaginatedKeywordResponseSchema, auth=None)
+@keywords_router.get("/search", response=KeywordListResponseSchema, auth=None)
 def search_keywords(request: HttpRequest, query: str):
     """Search for keywords by query string."""
-    return movie_service.search_keywords(query)
+    return _keyword_service.search_keywords(query)
 
 
 # =========================
@@ -85,19 +117,19 @@ def search_keywords(request: HttpRequest, query: str):
 # =========================
 
 
-@people_router.get("", response=PaginatedPersonResponseSchema, auth=None)
+@people_router.get("", response=PersonListResponseSchema, auth=None)
 def get_popular_people(
     request: HttpRequest,
     params: PaginationParams,
 ):
     """Retrieve popular people (actors, directors, etc.) with pagination."""
-    return movie_service.get_popular_people(page=params.page or 1)
+    return _people_service.get_popular_people(page=params.page or 1)
 
 
-@people_router.get("/search", response=PaginatedPersonResponseSchema, auth=None)
+@people_router.get("/search", response=PersonListResponseSchema, auth=None)
 def search_people(request: HttpRequest, query: str):
     """Search for people by query string."""
-    return movie_service.search_people(query)
+    return _people_service.search_people(query)
 
 
 # =========================
@@ -105,33 +137,77 @@ def search_people(request: HttpRequest, query: str):
 # =========================
 
 
-@movies_router.get("/now-playing", response=PaginatedMovieResponseSchema, auth=None)
+@movies_router.get("/now-playing", response=MovieListResponseSchema, auth=None)
 def get_now_playing_movies(
     request: HttpRequest,
-    params: PaginationParams,
+    filters: FilterParams,
 ):
-    """Retrieve currently playing movies with pagination and user-specific data."""
-    # Fetch movies from TMDB
-    response = movie_service.get_now_playing_movies(page=params.page or 1)
+    """
+    Retrieve movies currently playing in theaters with filtering and user-specific data.
+
+    Thin HTTP wrapper that delegates to service layer for business logic.
+    See MovieService.get_now_playing_movies() for implementation details including
+    date range presets, protected parameters, and user filter capabilities.
+
+    Query Parameters:
+        filters: MovieDiscoverFilterSchema with all optional filter parameters
+
+    Returns:
+        MovieListResponseSchema: Paginated movies with user data if authenticated
+
+    Raises:
+        HttpError: 400 for invalid parameters, 500 for TMDB API errors
+    """
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
+
+    # Transform HTTP params to service params and delegate to service layer
+    response = _movie_service.get_now_playing_movies(
+        page=filters.page or 1,
+        params=transform_to_service_params(filters),
+        dedup_tracker=dedup_tracker,
+    )
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
 
 
-@movies_router.get("/upcoming", response=PaginatedMovieResponseSchema, auth=None)
+@movies_router.get("/upcoming", response=MovieListResponseSchema, auth=None)
 def get_upcoming_movies(
     request: HttpRequest,
-    params: PaginationParams,
+    filters: FilterParams,
 ):
-    """Retrieve upcoming movies with pagination and user-specific data."""
-    # Fetch movies from TMDB
-    response = movie_service.get_upcoming_movies(page=params.page or 1)
+    """
+    Retrieve upcoming movies with filtering and user-specific data.
+
+    Thin HTTP wrapper that delegates to service layer for business logic.
+    See MovieService.get_upcoming_movies() for implementation details including
+    date range presets, protected parameters, and user filter capabilities.
+
+    Query Parameters:
+        filters: MovieDiscoverFilterSchema with all optional filter parameters
+
+    Returns:
+        MovieListResponseSchema: Paginated movies with user data if authenticated
+
+    Raises:
+        HttpError: 400 for invalid parameters, 500 for TMDB API errors
+    """
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
+
+    # Transform HTTP params to service params and delegate to service layer
+    response = _movie_service.get_upcoming_movies(
+        page=filters.page or 1,
+        params=transform_to_service_params(filters),
+        dedup_tracker=dedup_tracker,
+    )
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
 
 
-@movies_router.get("/search", response=PaginatedMovieResponseSchema, auth=None)
+@movies_router.get("/search", response=MovieListResponseSchema, auth=None)
 def search_movies(
     request: HttpRequest,
     params: SearchParams,
@@ -142,25 +218,50 @@ def search_movies(
     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
     Pydantic 2.12.0 empty string validation issue with optional parameters.
     """
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
+
+    # Create SearchServiceParams from HTTP params
+    search_params = SearchServiceParams(
+        query=params.query,
+        tmdb_page_start=params.tmdb_page_start,
+    )
+
     # Fetch movies from TMDB
-    response = movie_service.search_movies(query=params.query, page=params.page or 1)
+    response = _movie_service.search_movies(
+        page=params.page or 1,
+        params=search_params,
+        dedup_tracker=dedup_tracker,
+    )
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
 
 
-@movies_router.get("/discover", response=PaginatedMovieResponseSchema, auth=None)
-def discover_movies(
+@movies_router.get("/browse", response=MovieListResponseSchema, auth=None)
+def browse_movies(
     request: HttpRequest,
     filters: FilterParams,
 ):
     """
-    Discover movies with advanced filtering options and user-specific data.
+    Browse movies with advanced filtering options and user-specific data.
 
-    This endpoint provides comprehensive movie discovery with extensive filtering
-    capabilities including genres, keywords, cast, crew, release dates, ratings,
-    and more. It supports both TMDB standard parameters and custom aliases for
-    frontend convenience.
+    This is a thin wrapper around the TMDB discover endpoint with zero presets,
+    giving users full control over all filter parameters. Unlike now-playing and
+    upcoming endpoints which protect date ranges, this endpoint allows unrestricted
+    filtering for general movie browsing.
+
+    This endpoint implements a two-pass filtering architecture:
+    1. TMDB API filtering (primary) - Reduces millions of movies to thousands
+    2. Backend filtering (second-pass) - Catches TMDB data quality issues
+
+    The schema layer extracts parameters for both passes from incoming filter
+    parameters. For example, release_date_gte="2020-01-01" generates both:
+    - release_date.gte for TMDB API (primary filter)
+    - year_min=2020 for backend filtering (data hygiene)
+
+    This ensures users see only movies matching their filters, even when TMDB
+    API returns movies with incorrect release dates or ratings.
 
     Uses FilterSchema to handle 40+ optional parameters cleanly, with automatic
     empty string to None conversion to handle Django Ninja 1.4.3 + Pydantic 2.12.0
@@ -173,22 +274,31 @@ def discover_movies(
             - genres: Alias for with_genres (frontend convenience)
             - decade: Decade filter (e.g., "1990s" → converts to date range)
             - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)
-            - vote_average_gte/lte: Rating range filtering
-            - with_runtime_gte/lte: Runtime range filtering
+            - vote_average_gte/lte: Rating range filtering (both TMDB + backend)
+            - release_date_gte/lte: Date range filtering (both TMDB + backend)
             - primary_release_year: Filter by release year
             - [... many other TMDB discover parameters]
 
     Returns:
-        PaginatedMovieResponseSchema: Paginated list of movies with user data if authenticated
+        MovieListResponseSchema: Paginated list of movies with user data if authenticated
 
     Raises:
         HttpError: 400 for invalid parameters, 500 for TMDB API errors
     """
-    # Convert filter schema to service layer parameters
-    params = filters.to_service_params()
+    # Create deduplication tracker from request context
+    dedup_tracker = _create_dedup_tracker(request)
 
-    # Fetch movies from TMDB
-    response = movie_service.discover_movies(page=filters.page or 1, **params)
+    # Transform HTTP params to service layer parameters
+    # Note: min_vote_count is computed by transform_to_service_params via VoteCountPolicy
+    # with full context (sort_by, year_max, rating_min, rating_max)
+    params = transform_to_service_params(filters)
+
+    # Fetch movies from TMDB with two-pass filtering
+    response = _movie_service.discover_movies(
+        page=filters.page or 1,
+        params=params,
+        dedup_tracker=dedup_tracker,
+    )
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(request, response)
@@ -213,7 +323,7 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
         HttpError: 404 if movie not found, 500 for TMDB API errors
     """
     # Fetch movie details from TMDB
-    movie_data = movie_service.get_movie_by_id(tmdb_id)
+    movie_data = _movie_service.get_movie_by_id(tmdb_id)
 
     # Enrich with user data if authenticated
     return enrich_single_movie_with_user_movie_data(request, movie_data)  # type: ignore[return-value]

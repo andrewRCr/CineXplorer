@@ -1,12 +1,18 @@
-"""Pydantic schemas for the movie API."""
+"""Pydantic schemas for the movie API.
+
+These schemas define the shape of HTTP request/response data only.
+For parameter transformation logic, see services.api_boundary.param_transformer.
+"""
 from __future__ import annotations
 
 from datetime import date
+from typing import Annotated
 
-from core.models import Movie
 from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
+
+from apps.core.models import Movie
 
 
 class MovieSearchParamsSchema(Schema):
@@ -17,11 +23,15 @@ class MovieSearchParamsSchema(Schema):
     """
     query: str = Field(..., description="Search query string")
     page: int | None = Field(None, description="Page number for pagination")
+    tmdb_page_start: int | None = Field(
+        None,
+        description="TMDB page to start fetching from (cursor for infinite scroll)"
+    )
 
-    @field_validator('page', mode='before')
+    @field_validator('page', 'tmdb_page_start', mode='before')
     @classmethod
-    def convert_empty_page_to_none(cls, v: object) -> object:
-        """Convert empty strings to None for page parameter."""
+    def convert_empty_to_none(cls, v: object) -> object:
+        """Convert empty strings to None for optional integer parameters."""
         if isinstance(v, str) and v.strip() == "":
             return None
         return v
@@ -60,7 +70,7 @@ def _empty_crew_list() -> list[CrewMemberSchema]:
     return []
 
 
-def _empty_movie_list() -> list[MovieBaseSchema]:
+def _empty_movie_list() -> list[MovieListItemSchema]:
     return []
 
 
@@ -73,6 +83,14 @@ def _empty_media_reference_list() -> list[MediaReferenceSchema]:
 
 
 def _empty_person_list() -> list[PersonSchema]:
+    return []
+
+
+def _empty_genre_id_list() -> list[int]:
+    return []
+
+
+def _empty_spoken_language_list() -> list[SpokenLanguageSchema]:
     return []
 
 
@@ -97,15 +115,25 @@ class UserMovieDataSchema(Schema):
     user_review: str | None = None
 
 
-class MovieBaseSchema(Schema):
-    """Minimal movie representation used in list endpoints."""
+class MovieListItemSchema(Schema):
+    """Compact movie representation for list/grid endpoints.
+
+    Contains essential display fields optimized for browse, search, and collection views.
+    Uses genre_ids (integers) rather than full genre objects for efficiency.
+
+    Extended by MovieDetailSchema for single-movie detail views, which adds full
+    genre objects, cast, crew, certifications, and other detailed information.
+    """
 
     tmdb_id: int
     title: str
     poster_path: str | None = None
     release_date: date | None = None
     vote_average: float | None = None
+    vote_count: int | None = None
     runtime: int | None = None
+    genre_ids: list[int] = Field(default_factory=_empty_genre_id_list)
+    overview: str | None = None
     user_movie_data: UserMovieDataSchema | None = None
 
 
@@ -119,6 +147,12 @@ class ProductionCompanySchema(Schema):
     name: str
     logo_path: str | None = None
     origin_country: str | None = None
+
+
+class SpokenLanguageSchema(Schema):
+    """Spoken language from TMDB movie details."""
+    iso_639_1: str
+    english_name: str
 
 
 class CrewMemberSchema(Schema):
@@ -135,8 +169,16 @@ class CastMemberSchema(Schema):
     profile_path: str | None = None
 
 
-class MovieDetailSchema(MovieBaseSchema):
-    """Extended movie representation for detail endpoints."""
+class MovieDetailSchema(MovieListItemSchema):
+    """Full movie representation for detail page endpoints.
+
+    Inherits all fields from MovieListItemSchema (used in list views) and adds
+    complete information: full genre objects, production companies, cast, crew,
+    certifications, and spoken languages.
+
+    The inheritance relationship means MovieDetailSchema contains everything
+    MovieListItemSchema has, plus the additional detail-specific fields.
+    """
 
     overview: str | None = None
     genres: list[GenreSchema] = Field(default_factory=_empty_genre_list)
@@ -145,15 +187,31 @@ class MovieDetailSchema(MovieBaseSchema):
     )
     cast: list[CastMemberSchema] = Field(default_factory=_empty_cast_list)
     crew: list[CrewMemberSchema] = Field(default_factory=_empty_crew_list)
+    us_certification: str | None = None
+    spoken_languages: list[SpokenLanguageSchema] = Field(
+        default_factory=_empty_spoken_language_list
+    )
 
 
-class PaginatedMovieResponseSchema(Schema):
-    """Standard TMDB-style pagination envelope for movie collections."""
+class MovieListResponseSchema(Schema):
+    """Response envelope for movie collection endpoints.
+
+    Used for all endpoints returning multiple movies: browse, search, discover,
+    user collections, etc. Supports optional pagination via page/total_pages fields.
+
+    The next_tmdb_page_start field enables cursor-based pagination for TMDB-backed
+    endpoints with smart buffer mechanism. For non-paginated responses (e.g., user
+    movie collections), this field is None and page=1, total_pages=1.
+    """
 
     page: int = 1
     total_pages: int = 0
     total_results: int = 0
-    results: list[MovieBaseSchema] = Field(default_factory=_empty_movie_list)
+    results: list[MovieListItemSchema] = Field(default_factory=_empty_movie_list)
+    next_tmdb_page_start: int | None = Field(
+        default=None,
+        description="Next TMDB page to fetch for pagination continuation (smart buffer tracking)"
+    )
 
 
 class KeywordSchema(Schema):
@@ -161,7 +219,9 @@ class KeywordSchema(Schema):
     name: str
 
 
-class PaginatedKeywordResponseSchema(Schema):
+class KeywordListResponseSchema(Schema):
+    """Response envelope for keyword collection endpoints."""
+
     page: int = 1
     total_pages: int = 0
     total_results: int = 0
@@ -185,7 +245,9 @@ class PersonSchema(Schema):
     known_for: list[MediaReferenceSchema] = Field(default_factory=_empty_media_reference_list)
 
 
-class PaginatedPersonResponseSchema(Schema):
+class PersonListResponseSchema(Schema):
+    """Response envelope for person/people collection endpoints."""
+
     page: int = 1
     total_pages: int = 0
     total_results: int = 0
@@ -194,7 +256,15 @@ class PaginatedPersonResponseSchema(Schema):
 
 class MovieDiscoverFilterSchema(Schema):
     """
-    Schema for TMDB discover endpoint filtering.
+    Schema for TMDB discover endpoint filtering with two-pass architecture.
+
+    Extracts parameters for both:
+    1. TMDB API filtering (primary) - Reduces millions of movies to thousands
+    2. Backend filtering (second-pass) - Catches TMDB data quality issues
+
+    For example, release_date_gte="2020-01-01" generates:
+    - release_date.gte for TMDB API (primary filter)
+    - year_min=2020 for backend filtering (data hygiene)
 
     Handles 40+ optional query parameters with automatic empty string to None
     conversion, solving Django Ninja 1.4.3 + Pydantic 2.12.0 validation issues
@@ -204,16 +274,20 @@ class MovieDiscoverFilterSchema(Schema):
     """
 
     # Pagination
-    page: int | None = Field(None, description="Page number for pagination")
+    page: Annotated[int | None, Field(description="Page number for pagination")] = None
+    tmdb_page_start: Annotated[
+        int | None,
+        Field(description="TMDB page to start fetching from (smart buffer continuation)")
+    ] = None
 
     # Genre/Keyword filters
-    with_genres: str | None = Field(None, description="Comma-separated genre IDs")
-    with_keywords: str | None = Field(None, description="Comma-separated keyword IDs")
+    with_genres: Annotated[str | None, Field(description="Comma-separated genre IDs")] = None
+    with_keywords: Annotated[str | None, Field(description="Comma-separated keyword IDs")] = None
     without_genres: str | None = None
     without_keywords: str | None = None
 
     # Cast/Crew filters
-    with_cast: str | None = Field(None, description="Comma-separated person IDs")
+    with_cast: Annotated[str | None, Field(description="Comma-separated person IDs")] = None
     with_crew: str | None = None
     with_people: str | None = None
 
@@ -233,8 +307,8 @@ class MovieDiscoverFilterSchema(Schema):
     include_video: bool | None = None
 
     # Language/Region filters
-    language: str | None = Field(None, description="ISO 639-1 language code")
-    region: str | None = Field(None, description="ISO 3166-1 country code")
+    language: Annotated[str | None, Field(description="ISO 639-1 language code")] = None
+    region: Annotated[str | None, Field(description="ISO 3166-1 country code")] = None
     with_original_language: str | None = None
     without_original_language: str | None = None
 
@@ -264,14 +338,14 @@ class MovieDiscoverFilterSchema(Schema):
     certification_gte: str | None = None
 
     # Sorting
-    sort_by: str | None = Field(
-        None,
-        description="Sort by field (e.g., popularity.desc, vote_average.desc)"
-    )
+    sort_by: Annotated[
+        str | None,
+        Field(description="Sort by field (e.g., popularity.desc, vote_average.desc)")
+    ] = None
 
     # Frontend convenience aliases
-    decade: str | None = Field(None, description="Decade filter (e.g., '1990s')")
-    genres: str | None = Field(None, description="Alias for with_genres")
+    decade: Annotated[str | None, Field(description="Decade filter (e.g., '1990s')")] = None
+    genres: Annotated[str | None, Field(description="Alias for with_genres")] = None
 
     @field_validator('*', mode='before')
     @classmethod
@@ -293,75 +367,24 @@ class MovieDiscoverFilterSchema(Schema):
             return None
         return v
 
-    def to_service_params(self) -> dict[str, str | int | float | bool]:
-        """
-        Convert filter schema to service layer parameter format.
-
-        The service layer (movie_service.discover_movies) expects parameter names
-        in its own format (e.g., 'genres', 'vote_average.gte') which it then maps
-        to TMDB API format internally.
-
-        Returns:
-            Dictionary with service layer parameters (None values excluded)
-        """
-        params: dict[str, str | int | float | bool] = {}
-
-        # Map schema fields to service layer parameter names
-        # The service layer will handle further mapping to TMDB API format
-        if self.sort_by is not None:
-            params['sort_by'] = self.sort_by  # type: ignore[assignment]
-        if self.year is not None:
-            params['year'] = self.year  # type: ignore[assignment]
-        if self.vote_average_gte is not None:
-            params['vote_average.gte'] = self.vote_average_gte  # type: ignore[assignment]
-        if self.vote_average_lte is not None:
-            params['vote_average.lte'] = self.vote_average_lte  # type: ignore[assignment]
-        if self.release_date_gte is not None:
-            params['release_date.gte'] = self.release_date_gte  # type: ignore[assignment]
-        if self.release_date_lte is not None:
-            params['release_date.lte'] = self.release_date_lte  # type: ignore[assignment]
-        if self.certification is not None:
-            params['certification'] = self.certification  # type: ignore[assignment]
-        if self.region is not None:
-            params['region'] = self.region  # type: ignore[assignment]
-
-        # Handle 'genres' alias - service layer expects 'genres', not 'with_genres'
-        if self.genres is not None:
-            params['genres'] = self.genres  # type: ignore[assignment]
-        elif self.with_genres is not None:
-            params['genres'] = self.with_genres  # type: ignore[assignment]
-
-        # Handle decade conversion
-        if self.decade is not None:
-            try:
-                decade_str = str(self.decade)
-                year = int(decade_str[:4])
-                start_year = year if decade_str.endswith('s') else (year // 10) * 10
-                end_year = start_year + 9
-                params['release_date.gte'] = f"{start_year}-01-01"
-                params['release_date.lte'] = f"{end_year}-12-31"
-            except (ValueError, TypeError):
-                pass
-
-        return params
-
 
 __all__ = [
     "CastMemberSchema",
     "CrewMemberSchema",
     "GenreSchema",
+    "KeywordListResponseSchema",
     "KeywordSchema",
     "MediaReferenceSchema",
-    "MovieBaseSchema",
     "MovieDetailSchema",
     "MovieDiscoverFilterSchema",
+    "MovieListItemSchema",
+    "MovieListResponseSchema",
     "MovieModelSchema",
     "MovieSearchParamsSchema",
-    "PaginatedKeywordResponseSchema",
-    "PaginatedMovieResponseSchema",
-    "PaginatedPersonResponseSchema",
     "PaginationParamsSchema",
+    "PersonListResponseSchema",
     "PersonSchema",
     "ProductionCompanySchema",
+    "SpokenLanguageSchema",
     "UserMovieDataSchema",
 ]

@@ -1,48 +1,19 @@
 """
 Test settings for Django tests.
-Mocks the email service to prevent real API calls during testing.
+Uses Django's in-memory email backend to capture emails without sending.
 """
 
 import os
-import sys
-from datetime import timedelta
-from typing import TYPE_CHECKING
-from unittest.mock import MagicMock
 
 from .settings import *  # noqa: F403
 
-if TYPE_CHECKING:
-    from django.contrib.auth.models import User
-
-
-class MockEmailService:
-    """Mock email service for testing."""
-
-    def send_verification_email(self, user: "User") -> bool:
-        """Mock verification email sending."""
-        print(f"MOCK: Would send verification email to {user.email}")
-        return True
-
-    def send_welcome_email(self, user: "User") -> bool:
-        """Mock welcome email sending."""
-        print(f"MOCK: Would send welcome email to {user.email}")
-        return True
-
-
-# Create a mock module to replace the real email service
-mock_email_module = MagicMock()
-mock_email_module.EmailService = MockEmailService
-
-# Replace the module in sys.modules before Django loads
-sys.modules["core.services.email_service"] = mock_email_module
-
-# Override email settings for tests
-ZEPTOMAIL_API_KEY = "test_key"  # pyright: ignore[reportConstantRedefinition]
+# Use Django's in-memory email backend for tests
+# Emails are captured in django.core.mail.outbox for assertion
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"  # pyright: ignore[reportConstantRedefinition]
 # Expiry settings (1 day for faster tests)
 # - EMAIL_VERIFICATION_EXPIRY_DAYS: Custom app setting
 # - ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS: Django-allauth setting
 EMAIL_VERIFICATION_EXPIRY_DAYS = 1  # pyright: ignore[reportConstantRedefinition]
-EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)  # pyright: ignore[reportConstantRedefinition]
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS  # pyright: ignore[reportConstantRedefinition]
 FRONTEND_URL = "http://testserver"  # pyright: ignore[reportConstantRedefinition]
 

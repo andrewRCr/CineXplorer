@@ -9,21 +9,25 @@ cross-cutting test utilities.
 **Test Infrastructure Hierarchy:**
     1. **Core Shared Helpers**: This file (`core/tests/test_helpers.py`)
        - HTTP helpers (json_post, json_patch, json_put, get_csrf_token)
-       - User creation (create_user)
+       - User creation (create_user for integration tests, create_mock_user for unit tests)
        - Auth helpers (login_and_get_tokens, authenticate_client, create_fresh_client)
        - Types (HTTPStatus, UserParams)
     2. **Root Fixtures**: `apps/conftest.py`
        - api_client, user, auth_client
     3. **Domain Fixtures**: `{app}/tests/conftest.py` (pytest fixtures per app)
-    4. **Domain Factories**: `{app}/tests/fixtures.py` (factory functions for test data)
+    4. **Domain Helpers**: `{app}/tests/test_helpers.py` (domain-specific mock builders)
 
-See: `.arc/reference/strategies/strategy-testing-methodology.md` for full architecture.
+**Related Helper Files (Domain-Specific):**
+    - `movie/tests/test_helpers.py` - TMDB ApiResponse mocks, MovieSchema builders
+    - `movie/tests/tmdb_test_builders.py` - Pydantic TMDB model builders
+    - `user_movie_data/tests/test_helpers.py` - UserMovieData mocks, pagination helpers
 
 **Exported Helpers:**
 - HTTP: json_post(), json_patch(), json_put()
 - CSRF: get_csrf_token()
 - Auth: login_and_get_tokens(), authenticate_client(), create_fresh_client()
-- User: create_user()
+- User (integration): create_user() - creates REAL Django User in database
+- User (unit): create_mock_user() - creates Mock object for unit tests
 - Types: HTTPStatus (stdlib enum), UserParams (TypedDict)
 
 HTTP Status Codes
@@ -46,6 +50,7 @@ import json
 import uuid
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypedDict, Unpack, cast
+from unittest.mock import Mock
 
 from allauth.account.models import EmailAddress
 from django.contrib.auth import get_user_model
@@ -61,6 +66,7 @@ __all__ = [
     "UserParams",
     "authenticate_client",
     "create_fresh_client",
+    "create_mock_user",
     "create_user",
     "create_user_and_auth_payload",
     "get_csrf_token",
@@ -96,7 +102,7 @@ def authenticate_client(client: Client, username: str, password: str) -> None:
         password: Password for authentication
 
     Example:
-        from core.tests.test_helpers import create_user, authenticate_client
+        from apps.core.tests.test_helpers import create_user, authenticate_client
 
         user = create_user(username='testuser', password='testpass123')
         authenticate_client(api_client, 'testuser', 'testpass123')
@@ -136,7 +142,7 @@ def login_and_get_tokens(
         Tuple of (access_token, refresh_token) as strings
 
     Example:
-        from core.tests.test_helpers import create_user, login_and_get_tokens
+        from apps.core.tests.test_helpers import create_user, login_and_get_tokens
 
         user = create_user(username='testuser', password='testpass123')
         access_token, refresh_token = login_and_get_tokens(
@@ -171,7 +177,7 @@ def create_fresh_client(refresh_token: str | None = None) -> Client:
         Fresh Client instance (no session, optional refresh token cookie)
 
     Example:
-        from core.tests.test_helpers import create_fresh_client
+        from apps.core.tests.test_helpers import create_fresh_client
         from ninja_jwt.tokens import RefreshToken
 
         # Create tokens manually
@@ -422,7 +428,7 @@ def create_user_and_auth_payload(
                        ready for json_post to /api/token/ endpoint
 
     Example:
-        from core.tests.test_helpers import create_user_and_auth_payload, json_post
+        from apps.core.tests.test_helpers import create_user_and_auth_payload, json_post
 
         # Old 3-line pattern:
         user_details = {"username": "testuser", "password": "testpass123"}
@@ -452,3 +458,50 @@ def create_user_and_auth_payload(
     }
 
     return user, auth_payload
+
+
+# =============================================================================
+# Unit Test Mocks (no database)
+# =============================================================================
+
+
+def create_mock_user(
+    user_id: int = 1,
+    username: str = "testuser",
+    email: str = "testuser@example.com",
+) -> Mock:
+    """
+    Create a mock User object for unit tests (no database).
+
+    Use this for unit tests where you need a user-like object but don't want
+    database access. For integration tests that need a real User in the
+    database, use create_user() instead.
+
+    Args:
+        user_id: Mock user ID (default: 1)
+        username: Mock username (default: "testuser")
+        email: Mock email (default: "testuser@example.com")
+
+    Returns:
+        Mock object with id, username, and email attributes
+
+    Example:
+        from apps.core.tests.test_helpers import create_mock_user
+
+        # Unit test with mocked user
+        mock_user = create_mock_user(user_id=42, username="alice")
+        result = service.get_user_data(mock_user)
+
+        # Verify user was passed correctly
+        mock_repo.get_by_user.assert_called_once_with(mock_user)
+
+    See Also:
+        - create_user(): Creates REAL Django User in database (integration tests)
+        - user_movie_data/tests/test_helpers.py: Domain-specific mock helpers
+    """
+    mock = Mock()
+    mock.id = user_id
+    mock.pk = user_id  # Django uses pk as alias for id
+    mock.username = username
+    mock.email = email
+    return mock

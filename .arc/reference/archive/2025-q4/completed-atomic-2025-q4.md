@@ -6,6 +6,51 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Unify select open-state selection indicators and migrate ConnectedDropdowns styling
+    - **Outcome:**
+        - Language select now treats "All Languages" as a selectable value for open-menu highlighting while
+          keeping closed-state text in foreground when no filter is active.
+        - Sort and connected dropdowns rely on Select recipe checked/highlighted states for active item styling.
+        - ConnectedDropdowns trigger text styles moved to Select.ValueText to preserve custom disabled/custom displays.
+        - Frontend lint passes.
+    - **Files:** `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`,
+      `frontend/src/components/movie/browse/ConnectedDropdowns.tsx`,
+      `frontend/src/components/movie/browse/SortDropdown.tsx`
+
+    - **Branch:** `technical/service-layer-modernization`
+
+- [x] Fix language Select placeholder state and align SortDropdown item styling
+    - **Outcome:**
+        - Language Select now treats empty value as placeholder so "All Languages" renders in foreground.
+        - SortDropdown items rely on Select recipe checked/highlighted states (no behavior change).
+        - Frontend lint passes.
+    - **Files:** `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`,
+      `frontend/src/components/movie/browse/SortDropdown.tsx`
+
+    - **Branch:** `technical/service-layer-modernization`
+
+- [x] Implement Select recipe/data-attribute styling for AdvancedFiltersPanel
+    - **Outcome:**
+        - Added `_checked` and `_highlighted` states to Select item recipe for consistent selected/hover styling.
+        - Replaced conditional language value styling with `_placeholderShown` trigger state and recipe-driven item styles.
+        - Kept indicator color neutral while selected value uses primary.
+    - **Files:** `frontend/src/theme/recipes/select.ts`, `frontend/src/components/movie/browse/AdvancedFiltersPanel.tsx`
+
+    - **Branch:** `technical/service-layer-modernization`
+
+- [x] Investigate Chakra v3 Select native styling for selected state
+    - **Outcome:**
+        - Verified Ark/Chakra Select emits `data-state="checked"` + `data-highlighted` on items and
+          `data-placeholder-shown` on the trigger (from `@zag-js/select`).
+        - Chakra conditionals map `_checked` → `[data-state=checked]`, `_highlighted` → `[data-highlighted]`,
+          `_placeholderShown` → `[data-placeholder-shown]`.
+        - Selected/placeholder styling can be recipe-driven (no runtime `isSelected` or manual `css`),
+          aligning with component styling strategy. Use `_checked` on `Select.Item` and `_placeholderShown`
+          on `Select.Trigger` (or a `data-part="valueText"` selector) when revisiting.
+    - **Files:** `.arc/active/ATOMIC-TASKS.md`
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Add unit tests for API infrastructure modules to meet 80% coverage target
     - **Outcome:**
         - Refactored: Extracted `_safe_headers_dict()` helper to BaseApiClient (DRY - 6 occurrences)

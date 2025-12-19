@@ -670,69 +670,132 @@ all remaining function-based services to class-based architecture with dependenc
 
 ### **Phase 6:** Integration Testing & Documentation
 
-- [ ] **6.1 Verify Email Service Patterns**
+- [x] **6.1 Verify Email Service Patterns**
 
-    - [ ] 6.1.a Review `ZeptomailService` in `backend/apps/core/services/email_service.py`
-        - Verify it follows same DI patterns as other services
-        - Verify constructor injection for configuration
-        - Confirm it's already class-based (no refactoring needed)
+    - [x] 6.1.a Review `ZeptomailService` in `backend/apps/core/services/email_service.py`
+        - **Class-based**: ✓ Yes, proper class structure
+        - **Config injection**: Reads from Django settings via `getattr()` in constructor (appropriate for email config)
+        - **DI pattern variation**: Uses lazy singleton + proxy pattern (different from fresh-instance factories)
+        - **Testing seam**: `dev_mode` flag enables testing without constructor injection
+        - **No refactoring needed**: Pattern is valid for stateless email service with settings-based config
 
-    - [ ] 6.1.b Verify email service factory exists
-        - Check for `get_email_service()` factory function
-        - Ensure it follows established pattern
+    - [x] 6.1.b Verify email service factory exists
+        - ✓ `get_email_service()` at lines 116-129, lazy singleton with `_email_service_instance`
+        - ✓ Follows established factory pattern (docstring, clear usage example)
 
-    - [ ] 6.1.c Verify allauth email adapter wiring
-        - Confirm `CustomAccountAdapter` and allauth EmailAddress/EmailConfirmation flows
-        - Validate injection seams used by AuthenticationService keep behavior unchanged
+    - [x] 6.1.c Verify allauth email adapter wiring
+        - ✓ `CustomAccountAdapter` properly overrides `send_mail()` to use ZeptoMail API
+        - ✓ `get_email_confirmation_url()` returns frontend URL for verification links
+        - ✓ AuthenticationService has DI seams for EmailAddress, EmailConfirmation, EmailConfirmationHMAC
+        - ✓ Injection defaults to actual allauth models, enabling mock injection for tests
 
-    - [ ] 6.1.d Document email service as reference implementation (if exemplary)
-- [ ] **6.2 Run Comprehensive Integration Tests**
-    - [ ] 6.2.a Run full UserMovieData integration test suite (all 5 endpoints after service extraction)
-    - [ ] 6.2.b Run full Authentication integration test suite (all 9 endpoints after service extraction)
-    - [ ] 6.2.c Run full Movie integration test suite (all endpoints after MovieService refactoring)
+    - [x] 6.1.d Code quality audit of email service and adapters
+        - ✓ Type checking: 0 errors (both files)
+        - ✓ Linting: All checks passed
+        - **Finding 1 - Dead code**: `ZeptomailService.send_welcome_email()` never called; `welcome.html` unused
+        - **Finding 2 - DRY violation**: `CustomAccountAdapter` duplicates ZeptoMail API code
+        - **Finding 3 - Type safety**: `context: dict[str, Any]` acceptable (allauth external API)
+        - **Discovery**: Official `django-zoho-zeptomail` package provides Django email backend
+        - **Decision**: Refactor to use official package, remove custom API code, wire welcome email
 
-- [ ] **6.3 Update TECHNICAL-OVERVIEW.md**
+- [ ] **6.2 Email Infrastructure Refactor (django-zoho-zeptomail)**
 
-    - [ ] 6.3.a Add service layer architecture patterns section
+    - [x] 6.2.a Install and configure django-zoho-zeptomail
+        - ✓ Added `django-zoho-zeptomail >= 0.0.3` to `backend/requirements/req.txt`
+        - ✓ Configured `EMAIL_BACKEND` to use `ZohoZeptoMailEmailBackend`
+        - ✓ Added `ZOHO_ZEPTOMAIL_API_KEY_TOKEN` (reuses existing env var)
+        - ✓ Added `ZOHO_ZEPTOMAIL_HOSTED_REGION` setting (optional, for non-US)
+        - ✓ `DEFAULT_FROM_EMAIL` uses existing `ZEPTOMAIL_SENDER_EMAIL`
+        - ✓ Test mode uses `django.core.mail.backends.locmem.EmailBackend`
+        - ✓ Removed old MockEmailService hack from settings_test.py
+        - ✓ Docker container rebuilt with new dependency
+
+    - [x] 6.2.b Write tests for email verification flow (TDD - test-first)
+        - ✓ Created `test_email_backend.py` with 7 tests
+        - ✓ Tests verify emails captured in `django.core.mail.outbox`
+        - ✓ 5 pass, 2 fail (RED phase) - awaiting 6.2.c to fix adapter
+        - Tests: backend config, outbox empty, resend sends email, verification link in body,
+          no email for nonexistent user, no email for already verified, no email on verify success
+
+    - [ ] 6.2.c Simplify CustomAccountAdapter
+        - Remove `send_mail()` override (use Django's default → ZeptoMail backend)
+        - Remove `_get_headers()` method
+        - Remove config duplication (`api_key`, `base_url`, `dev_mode`)
+        - Keep only `get_email_confirmation_url()` for frontend URLs
+        - Update docstring to reflect simplified purpose
+
+    - [ ] 6.2.d Write tests for welcome email feature (TDD - test-first)
+        - Test welcome email sent after successful verification
+        - Test welcome email uses correct template and context
+        - Test dev/test mode handling
+
+    - [ ] 6.2.e Create welcome email utility and wire to verification
+        - Create `send_welcome_email(user)` function using Django's `send_mail()`
+        - Use existing `welcome.html` template
+        - Call from `AuthenticationService.verify_email()` on success
+        - Add appropriate logging
+
+    - [ ] 6.2.f Remove deprecated email code
+        - Delete `ZeptomailService` class from `email_service.py`
+        - Delete `get_email_service()` factory function
+        - Delete `_EmailServiceProxy` class and `email_service` proxy
+        - Delete `email_service.pyi` stub file
+        - Update any imports if needed
+
+    - [ ] 6.2.g Run incremental quality checks
+        - Type check modified files
+        - Lint modified files
+        - Run authentication test suite
+
+- [ ] **6.3 Run Comprehensive Integration Tests**
+
+    - [ ] 6.3.a Run full UserMovieData integration test suite (all 5 endpoints after service extraction)
+    - [ ] 6.3.b Run full Authentication integration test suite (all 9 endpoints after service extraction)
+    - [ ] 6.3.c Run full Movie integration test suite (all endpoints after MovieService refactoring)
+
+- [ ] **6.4 Update TECHNICAL-OVERVIEW.md**
+
+    - [ ] 6.4.a Add service layer architecture patterns section
         - Document class-based service pattern with DI
         - Provide decision guide: "When to use class-based vs function-based"
         - Document pagination helper usage guidelines
         - Document batch operation patterns
         - Document dependency injection patterns and best practices
 
-    - [ ] 6.3.b Add reference implementations section
+    - [ ] 6.4.b Add reference implementations section
         - Link to MovieService (TMDB integration)
         - Link to UserMovieDataService (CRUD with pagination)
         - Link to AuthenticationService (security-critical operations)
         - Link to MovieEnrichmentService (composition pattern)
-        - Link to ZeptomailService (email integration)
+        - Document email approach (Django backend with django-zoho-zeptomail)
 
-    - [ ] 6.3.c Add architectural guidelines
+    - [ ] 6.4.c Add architectural guidelines
         - Guideline: "Business logic belongs in service layer, NOT API endpoints"
         - Guideline: "Use factory functions for service instantiation"
         - Guideline: "Use dependency injection for testability"
         - Security note: "Authentication service handles security-critical operations"
 
-    - [ ] 6.3.d Run markdown linting on TECHNICAL-OVERVIEW.md
+    - [ ] 6.4.d Run markdown linting on TECHNICAL-OVERVIEW.md
 
-- [ ] **6.4 Final Quality Gate (All Gates)**
-    - [ ] 6.4.a Run full backend test suite with coverage
-    - [ ] 6.4.b Address any coverage gaps (target: 80% general, 90%+ critical paths)
-    - [ ] 6.4.c Run all backend linting checks
-    - [ ] 6.4.d Run Python type checking (comprehensive)
-    - [ ] 6.4.e Run frontend tests (ensure no regressions)
-    - [ ] 6.4.f Run frontend linting
-    - [ ] 6.4.g Run frontend type checking
-    - [ ] 6.4.h Run markdown linting on all documentation
+- [ ] **6.5 Final Quality Gate (All Gates)**
 
-- [ ] **6.5 Final Pre-Archival and PR Documentation Pass**
+    - [ ] 6.5.a Run full backend test suite with coverage
+    - [ ] 6.5.b Address any coverage gaps (target: 80% general, 90%+ critical paths)
+    - [ ] 6.5.c Run all backend linting checks
+    - [ ] 6.5.d Run Python type checking (comprehensive)
+    - [ ] 6.5.e Run frontend tests (ensure no regressions)
+    - [ ] 6.5.f Run frontend linting
+    - [ ] 6.5.g Run frontend type checking
+    - [ ] 6.5.h Run markdown linting on all documentation
 
-    - [ ] 6.5.a Generate completion metadata
+- [ ] **6.6 Final Pre-Archival and PR Documentation Pass**
+
+    - [ ] 6.6.a Generate completion metadata
         - Document all completed work across 6 phases
         - List success metrics achieved
         - Provide quality gate results summary
 
-    - [ ] 6.5.b Check if PROJECT-STATUS.md needs updates
+    - [ ] 6.6.b Check if PROJECT-STATUS.md needs updates
         - Update Service Layer Modernization status to "Complete"
         - Update next priorities if needed
         - Update timestamp
@@ -749,7 +812,7 @@ all remaining function-based services to class-based architecture with dependenc
     - [x] `MovieEnrichmentService` (repository pattern, proper DI)
     - [ ] `UserMovieDataService` (repository pattern, CRUD with pagination)
     - [ ] `AuthenticationService` (service injection, security-critical)
-    - [ ] `ZeptomailService` (verified, reference implementation)
+    - [ ] Email infrastructure (django-zoho-zeptomail backend, welcome email wired)
 - [ ] Repository pattern implemented for ORM abstraction:
     - [x] `UserMovieDataRepository` exists with `get_for_user_and_movies()`
     - [ ] `UserMovieDataRepository` extended with CRUD methods

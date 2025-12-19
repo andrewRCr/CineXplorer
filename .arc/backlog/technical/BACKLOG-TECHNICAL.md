@@ -15,7 +15,12 @@ Then **delete** the item from this file (no strikethrough clutter).
 
 ## Backend Architecture
 
-<!-- Technical ideas for backend structure, patterns, organization -->
+- **Dependency Injection Framework Evaluation** - Consider adopting a DI framework (e.g., python-dependency-injector,
+punq, or injector) to replace manual service factory patterns. Current state: Centralized mock path constants reduce
+string duplication but coupling remains. Benefits: Eliminate remaining mock path strings entirely, simplify test setup
+with automatic mock injection, enable easier service swapping for testing. Trade-offs: Added complexity, learning curve.
+Evaluate when: Adding new service layers, significant test infrastructure work, or when mock paths exceed 20+ constants.
+See Task 6.3.e (service layer modernization) for context on current centralized approach.
 
 ## Frontend Architecture
 

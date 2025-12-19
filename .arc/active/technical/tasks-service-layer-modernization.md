@@ -761,30 +761,49 @@ all remaining function-based services to class-based architecture with dependenc
     Fixes pytest-cov coverage measurement mismatch caused by `sys.path` manipulation.
     See `plan-backend-modernization.md` lines 189-226 for detailed context.
 
-    - [ ] 6.3.a Update `AppConfig.name` to full dotted paths
+    - [x] 6.3.a Update `AppConfig.name` to full dotted paths
         - `accounts` → `apps.accounts`
         - `authentication` → `apps.authentication`
         - `core` → `apps.core`
         - `movie` → `apps.movie`
         - `user_movie_data` → `apps.user_movie_data`
 
-    - [ ] 6.3.b Update `INSTALLED_APPS` to full paths
-        - Use full AppConfig paths (e.g., `apps.authentication.apps.AuthenticationConfig`)
-        - Or simple dotted names (e.g., `apps.authentication`)
+    - [x] 6.3.b Update `INSTALLED_APPS` to full paths
+        - Updated all 5 project apps to use `apps.` prefix
+        - Updated settings string references (ACCOUNT_ADAPTER, HEADLESS_TOKEN_STRATEGY, context_processors)
 
-    - [ ] 6.3.c Update imports across codebase
-        - ~50+ import statements use short names
-        - Change `from authentication` → `from apps.authentication`
-        - Change `from movie` → `from apps.movie`
-        - etc.
+    - [x] 6.3.c Update imports across codebase
+        - Updated ~90 files with top-level imports
+        - Updated TYPE_CHECKING imports
+        - Updated lazy imports inside `__init__` methods (legitimate DI pattern)
 
-    - [ ] 6.3.d Remove `sys.path` manipulation from settings
-        - Remove `sys.path.insert(0, APPS_DIR)` from `config/settings.py`
-        - Keep `APPS_DIR` variable if used elsewhere, or remove if unused
+    - [x] 6.3.d Remove `sys.path` manipulation from settings
+        - Removed `sys.path.insert(0, APPS_DIR)` and `APPS_DIR` variable
+        - Kept `SHARED_DIR` for container-mounted shared files
 
-    - [ ] 6.3.e Verify all tests pass
-        - Run full backend test suite
-        - Verify no import errors
+    - [x] 6.3.e Centralize string-based module paths in tests (DRY fix)
+
+        **Context:** Migration exposed DRY violations - same `@patch()` paths repeated 50+ times.
+        Fixing now since we're touching all these files anyway.
+
+        - [x] 6.3.e.i Audit all string-based module references (see CURRENT-SESSION.md for findings)
+        - [x] 6.3.e.ii Create centralized path constants
+            - Created `apps/movie/tests/mock_paths.py` - TMDB client, blacklist, dedup paths
+            - Created `apps/authentication/tests/mock_paths.py` - auth service, schema paths
+            - Created `apps/user_movie_data/tests/mock_paths.py` - re-exports + fetch_movies_batch
+        - [x] 6.3.e.iii Update all test files to use centralized references
+            - Updated 12+ test files across movie, auth, user_movie_data apps
+            - Replaced ~100+ scattered string paths with constants
+
+    - [x] 6.3.f Update remaining string paths to `apps.` prefix
+        - Django migration FKs use app labels (e.g., `core.movie`) - works correctly
+        - Added graceful degradation to `get_blacklisted_ids()` for cache failures
+
+    - [x] 6.3.g Verify all tests pass (665 passed)
+
+    - [x] 6.3.h Add DI framework consideration to backlog
+        - Added to `BACKLOG-TECHNICAL.md` under Backend Architecture
+        - Documented threshold: evaluate when mock paths exceed 20+ constants
 
 - [ ] **6.4 Service Layer Coverage Assessment**
 

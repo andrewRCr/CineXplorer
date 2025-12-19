@@ -5,6 +5,10 @@ using Django Ninja with established API patterns.
 """
 from __future__ import annotations
 
+from django.conf import settings
+from django.http import HttpRequest, HttpResponse
+from ninja import Router
+
 from apps.authentication.auth_ninja import get_current_user, jwt_cookie_auth
 from apps.authentication.schemas import (
     CsrfTokenResponseSchema,
@@ -23,9 +27,6 @@ from apps.authentication.schemas import (
 )
 from apps.authentication.services.service_factory import get_authentication_service
 from apps.authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
-from django.conf import settings
-from django.http import HttpRequest, HttpResponse
-from ninja import Router
 
 # Create authentication router
 auth_router = Router(tags=["Authentication"])

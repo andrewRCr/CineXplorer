@@ -30,9 +30,10 @@ import logging
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractBaseUser
+from ninja.errors import HttpError
+
 from apps.movie.schemas import MovieListItemSchema, MovieListResponseSchema
 from apps.movie.services.pipelines.batch import fetch_movies_batch
-from ninja.errors import HttpError
 from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 

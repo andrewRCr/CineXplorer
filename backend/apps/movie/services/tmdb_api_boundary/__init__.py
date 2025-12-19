@@ -7,5 +7,7 @@ This package handles transformation between application domain and TMDB API:
 
 Import from canonical sources:
     from apps.movie.services.api_boundary import BrowseServiceParams
-    from apps.movie.services.tmdb_api_boundary.response_factories import create_movie_base_from_tmdb
+    from apps.movie.services.tmdb_api_boundary.response_factories import (
+        create_movie_base_from_tmdb
+    )
 """

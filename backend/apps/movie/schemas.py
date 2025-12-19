@@ -8,10 +8,11 @@ from __future__ import annotations
 from datetime import date
 from typing import Annotated
 
-from apps.core.models import Movie
 from ninja import Schema
 from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
+
+from apps.core.models import Movie
 
 
 class MovieSearchParamsSchema(Schema):

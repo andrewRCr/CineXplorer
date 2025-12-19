@@ -31,6 +31,8 @@ import logging
 import uuid
 from collections.abc import Mapping
 
+from ninja.errors import HttpError
+
 from apps.core.services.api_response import ApiResponse
 from apps.core.tmdb_models.tmdb_responses import (
     TMDBCreditsResponse,
@@ -41,7 +43,6 @@ from apps.core.tmdb_models.tmdb_responses import (
     TMDBPaginatedPersonResponse,
     TMDBReleaseDatesResponse,
 )
-from ninja.errors import HttpError
 
 from ...schemas import (
     CastMemberSchema,

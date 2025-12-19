@@ -2,7 +2,8 @@
 Django admin interface customization for core models.
 """
 
-from apps.core import models
 from django.contrib import admin
+
+from apps.core import models
 
 admin.site.register(models.Movie)

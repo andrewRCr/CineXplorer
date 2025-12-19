@@ -13,10 +13,11 @@ Architecture:
 """
 from __future__ import annotations
 
-from apps.authentication.auth_ninja import JWTCookieAuth, get_current_user
 from django.http import HttpRequest
-from apps.movie.schemas import MovieListResponseSchema
 from ninja import Router
+
+from apps.authentication.auth_ninja import JWTCookieAuth, get_current_user
+from apps.movie.schemas import MovieListResponseSchema
 from apps.user_movie_data.schemas import (
     UserMovieDataCreateSchema,
     UserMovieDataDetailSchema,

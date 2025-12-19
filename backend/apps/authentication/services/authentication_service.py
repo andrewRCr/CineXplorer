@@ -11,6 +11,15 @@ from allauth.account.models import (
     EmailConfirmation,
     EmailConfirmationHMAC,
 )
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.http import HttpRequest, HttpResponse
+from ninja_jwt.exceptions import TokenError
+from ninja_jwt.tokens import RefreshToken
+
 from apps.authentication.schemas import (
     EmailVerificationInputSchema,
     EmailVerificationResponseSchema,
@@ -34,14 +43,6 @@ from apps.authentication.utils import (
 )
 from apps.core.services.email_service import UserEmailProtocol, send_welcome_email
 from apps.core.utils import build_error_response, get_client_info
-from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
-from django.http import HttpRequest, HttpResponse
-from ninja_jwt.exceptions import TokenError
-from ninja_jwt.tokens import RefreshToken
 
 
 class UserProtocol(Protocol):

@@ -4,6 +4,8 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
+from ninja.errors import HttpError
+
 from apps.core.services.validators import (
     validate_tmdb_paginated_response,
     validate_tmdb_response,
@@ -14,7 +16,6 @@ from apps.core.tmdb_models.tmdb_responses import (
     TMDBPaginatedMovieResponse,
 )
 from apps.core.types.api_types import TMDBParams
-from ninja.errors import HttpError
 
 from ..helpers import (
     NOW_PLAYING_PROTECTED_KEYS,

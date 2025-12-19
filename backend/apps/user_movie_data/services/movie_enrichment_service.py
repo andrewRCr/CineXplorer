@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractBaseUser
+
 from apps.movie.schemas import MovieListItemSchema, UserMovieDataSchema
 from apps.user_movie_data.models import UserMovieData
 

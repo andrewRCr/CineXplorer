@@ -6,9 +6,10 @@ reducing code duplication and centralizing common patterns.
 
 from collections.abc import Sequence
 
+from django.http import HttpRequest
+
 from apps.authentication.auth_ninja import get_current_user_optional
 from apps.core.types.api_types import TMDBParams
-from django.http import HttpRequest
 from apps.movie.schemas import MovieListItemSchema, MovieListResponseSchema
 from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 

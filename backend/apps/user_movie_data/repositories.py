@@ -31,10 +31,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from apps.core.models import Movie
-from apps.core.pagination import PaginationMetadata, paginate_queryset
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import IntegrityError
+
+from apps.core.models import Movie
+from apps.core.pagination import PaginationMetadata, paginate_queryset
 from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:

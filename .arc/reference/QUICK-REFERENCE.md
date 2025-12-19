@@ -69,17 +69,17 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 
 ### Console Logging for AI Debugging
 
-Browser console logs automatically captured to `backend/logs/frontend/.console-logs.txt` in development.
+Browser console logs automatically captured to `backend/logs/frontend.log` in development.
 
 ```bash
 # Read logs
-cat backend/logs/frontend/.console-logs.txt
+cat backend/logs/frontend.log
 
 # Clear logs
-rm backend/logs/frontend/.console-logs.txt
+rm backend/logs/frontend.log
 
 # Tail in real-time
-tail -f backend/logs/frontend/.console-logs.txt
+tail -f backend/logs/frontend.log
 ```
 
 ---

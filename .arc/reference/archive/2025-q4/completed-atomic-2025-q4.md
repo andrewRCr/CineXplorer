@@ -6,6 +6,24 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Rename frontend console log file for clarity
+    - **Outcome:** Moved frontend log capture to `backend/logs/frontend.log`, updated docs/endpoint
+      references, removed legacy log file, and regenerated OpenAPI-derived types.
+    - **Files:** `backend/apps/core/api.py`, `frontend/src/services/logger.ts`,
+      `.arc/reference/QUICK-REFERENCE.md`, `.arc/reference/agent/CLAUDE.md`,
+      `frontend/openapi.json`, `frontend/src/types/api.ts`,
+      `.arc/active/incidental/temp-notes-console-log-capture.md`,
+      `backend/logs/README.md` (ignored path)
+
+    - **Branch:** `technical/service-layer-modernization`
+
+- [x] Investigate console.log capture to frontend log file
+    - **Outcome:** Added dev-only console interception to forward raw `console.*` output to
+      `/api/dev-logs/write/` with safe serialization and logger prefix guard.
+    - **Files:** `frontend/src/services/consoleCapture.ts`, `frontend/src/main.tsx`
+
+    - **Branch:** `technical/service-layer-modernization`
+
 - [x] Refactor Movie Collection URL/State Hooks for Clarity and Separation of Concerns
     - **Outcome:** Extracted utilities, clarified terminology, fixed bugs, simplified structure
     - **New files created:**

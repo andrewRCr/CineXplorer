@@ -326,7 +326,7 @@ class Logger {
     /**
      * Write logs to file for AI debugging (development only)
      *
-     * Sends formatted log lines to Django endpoint which writes to frontend/logs/.console-logs.txt.
+     * Sends formatted log lines to Django endpoint which writes to backend/logs/frontend.log.
      * This allows AI assistants to read browser console logs without manual copy/paste.
      */
     private logToFile(entry: LogEntry): void {

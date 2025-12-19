@@ -524,7 +524,7 @@ export interface paths {
          * @description Development-only endpoint to write browser console logs to file.
          *
          *     This endpoint receives formatted log lines from the frontend logger
-         *     and appends them to backend/logs/frontend/.console-logs.txt for AI debugging.
+         *     and appends them to backend/logs/frontend.log for AI debugging.
          *
          *     Args:
          *         request: HTTP request object

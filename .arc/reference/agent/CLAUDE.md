@@ -18,7 +18,7 @@ Guidance for Claude when working in this repository. For shared rules and archit
 - **Large diffs:** If a change won't fit in context, propose a chunking strategy and wait for approval
 - **Tooling awareness:** Docker and venv are available - check QUICK-REFERENCE for command patterns
 - **Session handoffs:** Explicitly state whether CURRENT-SESSION.md was updated or left unchanged
-- **Console logs:** Browser console logs automatically captured to `backend/logs/frontend/.console-logs.txt`.
+- **Console logs:** Browser console logs automatically captured to `backend/logs/frontend.log`.
   Check proactively when debugging frontend issues - no MCP or copy/paste needed. See QUICK-REFERENCE for commands.
 
 ## Context Window Management

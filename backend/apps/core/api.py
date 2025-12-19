@@ -348,7 +348,7 @@ def write_dev_console_log(
     Development-only endpoint to write browser console logs to file.
 
     This endpoint receives formatted log lines from the frontend logger
-    and appends them to backend/logs/frontend/.console-logs.txt for AI debugging.
+    and appends them to backend/logs/frontend.log for AI debugging.
 
     Args:
         request: HTTP request object
@@ -374,7 +374,7 @@ def write_dev_console_log(
     try:
         # Fixed path to prevent directory traversal
         # Write to backend/logs/frontend which is mounted in Docker
-        log_file = Path(settings.BASE_DIR) / "logs" / "frontend" / ".console-logs.txt"
+        log_file = Path(settings.BASE_DIR) / "logs" / "frontend.log"
 
         # Ensure parent directory exists
         log_file.parent.mkdir(parents=True, exist_ok=True)

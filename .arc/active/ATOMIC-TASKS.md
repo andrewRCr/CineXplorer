@@ -76,28 +76,6 @@
     - Test session timeout behavior
     - Document reproduction steps if found, or close as testing artifact
 
-- [ ] Investigate console.log capture to frontend log file
-    - **Context:** QUICK-REFERENCE.md mentions console logs captured to `backend/logs/frontend/.console-logs.txt`
-    - **Observation:** Log file exists but only contains structured logger output (`logger.debug()`, etc.)
-    - **Problem:** Raw `console.log()` calls aren't being captured - only structured logger calls appear
-    - **Question:** Was console.log capture ever implemented, or is QUICK-REFERENCE documentation inaccurate?
-    - **If broken:** Implement console.log interception to write to the same log file
-    - **If never implemented:** Update QUICK-REFERENCE to accurately reflect current behavior
-    - **Files to investigate:**
-        - `frontend/src/services/logger.ts` - check for console interception
-        - `backend/logs/frontend/` - examine log capture mechanism
-        - `.arc/reference/QUICK-REFERENCE.md` - verify/update documentation
-
-- [ ] Investigate pytest-cov coverage measurement issue (external research)
-    - Observed: `CoverageWarning: Module apps.movie was previously imported, but not measured`
-    - Symptom: Some modules show 0% coverage (helpers.py, schemas.py) while others show 100% (api.py)
-      despite tests clearly exercising all modules
-    - Likely cause: Module import timing - modules imported during test collection/fixture setup
-      before coverage measurement starts
-    - Research: pytest-cov documentation, Django-specific coverage patterns, potential fixes
-    - Goal: Either fix configuration or document as known limitation with workaround
-    - Context: Discovered during endpoint consolidation quality gates (Phase 6.1.b)
-
 <!-- Data Quality -->
 
 - [ ] Examine the following movies for production company patterns (i.e., do any of them produce 90%+ 'adult' content?)

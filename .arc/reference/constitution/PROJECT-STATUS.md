@@ -57,26 +57,27 @@ modal, watchlist enhancements)
 
 *High Priority:*
 
-- **Backend Modernization** - Async tasks (Celery/Redis), E2E testing (Playwright), code quality refactoring
-    - [Plan](../../backlog/technical/plan-backend-modernization.md)
-- **Frontend Modernization** - TanStack Query, Redux Toolkit, routing architecture improvements
-    - [Plan](../../backlog/technical/plan-frontend-modernization.md)
 - **Toast Notification System** - Consistent user feedback patterns across features
     - [Plan](../../backlog/technical/plan-toast-notification-system.md)
+- **E2E Testing** - Playwright-based regression protection for critical user flows
+    - [Plan](../../backlog/technical/plan-backend-modernization.md) (E2E section)
+- **Async Infrastructure** - Celery/Redis for non-blocking email, future computation
+    - [Plan](../../backlog/technical/plan-backend-modernization.md) (Async section)
 
 *Medium Priority:*
 
 - **Deployment Enablement** - Production hosting strategy, secrets management, migration procedures
     - [Backlog](../../backlog/technical/BACKLOG-TECHNICAL.md)
-- **Observability & Monitoring** - Metrics, tracing, alerting infrastructure (Prometheus/OpenTelemetry)
-    - [Backlog](../../backlog/technical/BACKLOG-TECHNICAL.md)
-- **Security & Compliance Hygiene** - Dependency scanning cadence, secrets rotation, incident response
-    - [Backlog](../../backlog/technical/BACKLOG-TECHNICAL.md)
+- **Routing Modernization** - React Router data patterns (loaders, type-safe routes)
+    - [Plan](../../backlog/technical/plan-frontend-modernization.md)
 
 *Lower Priority:*
 
+- **Observability & Monitoring** - Metrics, tracing, alerting infrastructure (Prometheus/OpenTelemetry)
 - **Performance Optimization** - Caching strategies, query optimization, profiling
 - **Documentation & Onboarding** - Architecture evolution guide, getting started improvements
+
+**For detailed sequencing and scoping decisions, see [ROADMAP.md](../../backlog/ROADMAP.md).**
 
 ---
 

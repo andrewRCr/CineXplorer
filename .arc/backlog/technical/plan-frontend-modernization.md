@@ -56,34 +56,25 @@ Candidate areas to evaluate:
 
 ### Redux Toolkit
 
-**Status:** Planned
-**Priority:** Medium
-**Rationale:** Centralized client state management for global UI concerns
+**Status:** Deferred (2025-12-19)
+**Priority:** Skip unless genuine use case emerges
+**Rationale:** No current use case justifies the complexity
 
-**Use Cases:**
+**Original Use Cases (evaluated and found insufficient):**
 
-- Theme/preferences (dark mode, language)
-- Global UI state (modals, notifications, sidebar)
-- Complex form state spanning multiple components
-- Feature flags/app configuration
+- Theme/preferences → Chakra's built-in system handles this
+- Global UI state (modals, notifications) → Toast system uses Chakra, no Redux needed
+- Complex form state → Not currently building forms-heavy features
+- Feature flags → None exist
 
-**NOT for:**
+**Decision:** Adding Redux without genuine complexity to manage would be resume-padding rather than
+good engineering. Current patterns (AuthContext, Chakra theme, local state) are sufficient.
 
-- Server state (use TanStack Query instead)
-- Authentication state (already handled by AuthContext)
-- URL/routing state (React Router handles this)
+**Revisit if:**
 
-**Target Implementation:**
-
-- Redux Toolkit with TypeScript
-- Redux DevTools integration
-- RTK Query for any remaining REST needs not covered by TanStack Query
-- Slice-based organization
-
-**Related Patterns:**
-
-- Clear separation: TanStack Query (server) vs Redux (client)
-- AuthContext stays as-is (works well for auth-specific needs)
+- Complex cross-component state emerges that React context can't handle cleanly
+- Multiple unrelated components need to share mutable state
+- Undo/redo or time-travel debugging becomes valuable
 
 ---
 
@@ -93,24 +84,24 @@ Candidate areas to evaluate:
 
 ```
 Server State (API data, cache) → TanStack Query
-Client State (global UI) → Redux Toolkit
 Client State (local UI) → React useState/useReducer
 Auth State → AuthContext (existing pattern)
+Theme State → Chakra theme system
 ```
 
-### Migration Priority
+### Current Strategy
 
-1. **Phase 1:** TanStack Query for all API interactions
-2. **Phase 2:** Redux Toolkit for global client state
-3. **Phase 3:** Review and optimize patterns
+TanStack Query is already implemented for browse/search. Further expansion (optimistic updates for
+user movie data) happens naturally during feature work. No separate "state management modernization"
+effort needed - patterns evolve with features.
 
 ---
 
 ## Routing Architecture Modernization
 
-**Status:** Planned
-**Priority:** Medium
-**Timing:** Phase 2 (pairs with TanStack Query migration)
+**Status:** Lower Priority (2025-12-19)
+**Priority:** Fit during Phase B if touching routing-adjacent code
+**Rationale:** Portfolio consistency with Next.js App Router patterns; current routing works fine
 
 **Current Pattern:** Traditional Pages Router (React Router v6, centralized routes in App.tsx)
 

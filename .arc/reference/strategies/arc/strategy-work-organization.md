@@ -1127,6 +1127,7 @@ Update `2_generate-tasks.md` to reflect:
 ```
 backlog/
   TASK-INBOX.md              # Zero-friction capture (flat bullets, lean)
+  ROADMAP.md                 # Sequencing strategy, order of operations
   feature/
     BACKLOG-FEATURE.md       # Feature ideas (sections, non-atomic work only)
     plan-*.md                # Work units under planning/analysis
@@ -1150,6 +1151,13 @@ active/
 
 - Unsorted captures, processed weekly → buckets/atomic/action
 - Flat bullets (no checkboxes), kept lean
+
+**ROADMAP.md** (backlog root):
+
+- Internal planning artifact for sequencing strategy
+- Documents order of operations (phases), dependency analysis, scoping decisions
+- Subject to change as project evolves
+- Referenced from PROJECT-STATUS.md for detailed planning context
 
 **ATOMIC-TASKS.md** (active root):
 

@@ -124,7 +124,27 @@ The entire application is designed to be run and deployed using containers.
   Configuration is managed via `infrastructure/.env` which sets `USER_UID` and `USER_GID` build arguments.
   A host Python virtual environment (`.venv-backend/`) provides faster linting/type checking alternatives to Docker commands.
 
-## 6. Testing Infrastructure
+## 6. Service Layer Architecture
+
+The backend uses a layered architecture with class-based services for all business logic:
+
+- **Principle**: Business logic belongs in the service layer, NOT in API endpoints
+- **Pattern**: Class-based services with constructor injection for testability
+- **Repository pattern**: ORM abstraction for data access (e.g., `UserMovieDataRepository`)
+- **Service composition**: Services can depend on other services/repositories
+- **Factory functions**: Convenient production instantiation while preserving test injection
+
+**Reference services:**
+
+- `MovieService` - TMDB integration (discovery, search, details)
+- `UserMovieDataService` - User movie data CRUD with TMDB enrichment
+- `AuthenticationService` - Security-critical auth operations
+- `MovieEnrichmentService` - Enriches movie lists with user-specific data
+
+**For complete patterns, decision guides, and implementation details**, see:
+[Service Layer Strategy](../strategies/project/strategy-service-layer.md)
+
+## 7. Testing Infrastructure
 
 The project uses modern testing frameworks for both backend and frontend:
 

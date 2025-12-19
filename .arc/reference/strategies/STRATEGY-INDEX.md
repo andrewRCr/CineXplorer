@@ -15,6 +15,7 @@ work in these domains.
 
 **Engineering:**
 
+- `project/strategy-service-layer.md` - Class-based services, DI patterns, repository pattern, batch operations
 - `project/strategy-authentication.md` - Authentication patterns, session management, OAuth flows
 - `project/strategy-type-safety.md` - Type checking approach, Any usage policy, stub maintenance
 - `project/strategy-testing-methodology.md` - Testing philosophy, integration focus, test-first protocol

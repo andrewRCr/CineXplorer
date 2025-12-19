@@ -30,10 +30,6 @@ environ.Env.read_env(os.path.join(os.path.dirname(__file__), ".env"))
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# add apps directory
-APPS_DIR = os.path.join(BASE_DIR, "apps")
-sys.path.insert(0, APPS_DIR)
-
 # add shared directory (mounted in container)
 SHARED_DIR = "/shared"
 sys.path.insert(0, SHARED_DIR)
@@ -63,8 +59,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",  # Required for django-allauth
     "django_extensions",
-    "accounts",
-    "core",
+    "apps.accounts",
+    "apps.core",
     "debug_toolbar",
     "corsheaders",
     # django-allauth
@@ -77,9 +73,9 @@ INSTALLED_APPS = [
     # django-ninja-jwt token blacklist (refresh token rotation security)
     "ninja_jwt.token_blacklist",
     # Project apps
-    "authentication",
-    "movie",
-    "user_movie_data",
+    "apps.authentication",
+    "apps.movie",
+    "apps.user_movie_data",
 ]
 
 MIDDLEWARE = [
@@ -127,7 +123,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "core.context_processors.global_settings",
+                "apps.core.context_processors.global_settings",
             ],
         },
     },
@@ -298,7 +294,7 @@ ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[CineXplorer] "
 
 # Adapter configuration - Custom adapter for ZeptoMail integration
-ACCOUNT_ADAPTER = "authentication.adapters.CustomAccountAdapter"
+ACCOUNT_ADAPTER = "apps.authentication.adapters.CustomAccountAdapter"
 
 # Headless Mode Configuration (for SPA/React frontend)
 # Provides JSON API endpoints instead of HTML templates
@@ -313,7 +309,7 @@ HEADLESS_FRONTEND_URLS = {
 
 # Token Strategy - JWT token generation for headless mode
 # Official django-allauth extension point for custom token generation
-HEADLESS_TOKEN_STRATEGY = "authentication.token_strategy.JWTTokenStrategy"
+HEADLESS_TOKEN_STRATEGY = "apps.authentication.token_strategy.JWTTokenStrategy"
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login

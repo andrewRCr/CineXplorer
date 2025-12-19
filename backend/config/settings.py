@@ -235,23 +235,27 @@ ENVIRONMENT = _environment  # Final constant assignment
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
-# Email verification settings
-ZEPTOMAIL_API_KEY = os.environ.get("ZEPTOMAIL_API_KEY", "")
-ZEPTOMAIL_SENDER_EMAIL = os.environ.get(
+# Email Configuration - ZeptoMail via django-zoho-zeptomail backend
+# Uses Django's email system with ZeptoMail as the delivery backend
+EMAIL_BACKEND = "zoho_zeptomail.backend.zeptomail_backend.ZohoZeptoMailEmailBackend"
+DEFAULT_FROM_EMAIL = os.environ.get(
     "ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com"
 )
+ZOHO_ZEPTOMAIL_API_KEY_TOKEN = os.environ.get("ZEPTOMAIL_API_KEY", "")
+# Region setting - only required for non-US hosted accounts
+# Options: None (US default), "eu" (Europe), "in" (India), "au" (Australia)
+ZOHO_ZEPTOMAIL_HOSTED_REGION = os.environ.get("ZEPTOMAIL_HOSTED_REGION", None)
+
 # Email verification expiry (days) - configurable via environment variable
 # Default: 3 days (72 hours) - reasonable for production use
 EMAIL_VERIFICATION_EXPIRY_DAYS = int(
     os.environ.get("EMAIL_VERIFICATION_EXPIRY_DAYS", "3")
 )
-# Legacy constant for DRF email verification bridge (deferred to API Layer Phase 2)
-EMAIL_VERIFICATION_TOKEN_EXPIRY = timedelta(days=EMAIL_VERIFICATION_EXPIRY_DAYS)
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # Validate email configuration in production
-# Allow missing API key in development (dev_mode) and testing
-if not ZEPTOMAIL_API_KEY and not DEBUG and "test" not in sys.argv:
+# Allow missing API key in development and testing (emails will fail silently)
+if not ZOHO_ZEPTOMAIL_API_KEY_TOKEN and not DEBUG and "test" not in sys.argv:
     import warnings
     warnings.warn(
         "ZEPTOMAIL_API_KEY is not set. Email delivery will fail in production. "

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 from django.core import mail
+from django.core.mail import EmailMultiAlternatives
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -126,10 +127,10 @@ def test_resend_verification_email_contains_verification_link(
     # Check email body contains verification URL
     # The body could be plain text or HTML
     email_body = sent_email.body
-    if hasattr(sent_email, "alternatives") and sent_email.alternatives:
+    if isinstance(sent_email, EmailMultiAlternatives) and sent_email.alternatives:
         # Get HTML body if available
         html_body = sent_email.alternatives[0][0]
-        email_body = html_body
+        email_body = str(html_body)
 
     # Verify the email contains a verification link
     # allauth uses either /verify-email/ or /auth/verify-email based on HEADLESS_FRONTEND_URLS
@@ -257,9 +258,9 @@ def test_welcome_email_contains_username(
     welcome_email = mail.outbox[0]
 
     # Check email body contains username
-    email_body = welcome_email.body
-    if hasattr(welcome_email, "alternatives") and welcome_email.alternatives:
-        email_body = welcome_email.alternatives[0][0]
+    email_body: str = welcome_email.body
+    if isinstance(welcome_email, EmailMultiAlternatives) and welcome_email.alternatives:
+        email_body = str(welcome_email.alternatives[0][0])
 
     assert unverified_user.username in email_body
 
@@ -296,9 +297,9 @@ def test_welcome_email_contains_frontend_link(
     welcome_email = mail.outbox[0]
 
     # Check email body contains frontend URL
-    email_body = welcome_email.body
-    if hasattr(welcome_email, "alternatives") and welcome_email.alternatives:
-        email_body = welcome_email.alternatives[0][0]
+    email_body: str = welcome_email.body
+    if isinstance(welcome_email, EmailMultiAlternatives) and welcome_email.alternatives:
+        email_body = str(welcome_email.alternatives[0][0])
 
     frontend_url = getattr(settings, "FRONTEND_URL", "")
     assert frontend_url in email_body

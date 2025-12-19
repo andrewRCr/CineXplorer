@@ -32,6 +32,7 @@ from authentication.utils import (
     get_jwt_settings,
     set_auth_cookie,
 )
+from core.services.email_service import UserEmailProtocol, send_welcome_email
 from core.utils import build_error_response, get_client_info
 from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
@@ -568,6 +569,9 @@ class AuthenticationService:
 
             self._logger.info(f"Confirming email {email_address.email}")
             confirmation.confirm(request)
+
+            # Send welcome email after successful verification
+            send_welcome_email(cast(UserEmailProtocol, email_address.user))
 
             return 200, {"message": "Email verified successfully."}
         except self._email_confirmation_model.DoesNotExist as exc:

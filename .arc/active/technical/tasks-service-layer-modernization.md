@@ -668,7 +668,7 @@ all remaining function-based services to class-based architecture with dependenc
 
 ---
 
-### **Phase 6:** Integration Testing & Documentation
+### **Phase 6:** Final Validation & Finalization
 
 - [x] **6.1 Verify Email Service Patterns**
 
@@ -756,55 +756,102 @@ all remaining function-based services to class-based architecture with dependenc
         - ✓ Linting passed
         - ✓ All 167 authentication tests pass
 
-- [ ] **6.3 Run Comprehensive Integration Tests**
+- [ ] **6.3 Fix Coverage Infrastructure (Django App Paths)**
 
-    - [ ] 6.3.a Run full UserMovieData integration test suite (all 5 endpoints after service extraction)
-    - [ ] 6.3.b Run full Authentication integration test suite (all 9 endpoints after service extraction)
-    - [ ] 6.3.c Run full Movie integration test suite (all endpoints after MovieService refactoring)
+    Fixes pytest-cov coverage measurement mismatch caused by `sys.path` manipulation.
+    See `plan-backend-modernization.md` lines 189-226 for detailed context.
 
-- [ ] **6.4 Update TECHNICAL-OVERVIEW.md**
+    - [ ] 6.3.a Update `AppConfig.name` to full dotted paths
+        - `accounts` → `apps.accounts`
+        - `authentication` → `apps.authentication`
+        - `core` → `apps.core`
+        - `movie` → `apps.movie`
+        - `user_movie_data` → `apps.user_movie_data`
 
-    - [ ] 6.4.a Add service layer architecture patterns section
+    - [ ] 6.3.b Update `INSTALLED_APPS` to full paths
+        - Use full AppConfig paths (e.g., `apps.authentication.apps.AuthenticationConfig`)
+        - Or simple dotted names (e.g., `apps.authentication`)
+
+    - [ ] 6.3.c Update imports across codebase
+        - ~50+ import statements use short names
+        - Change `from authentication` → `from apps.authentication`
+        - Change `from movie` → `from apps.movie`
+        - etc.
+
+    - [ ] 6.3.d Remove `sys.path` manipulation from settings
+        - Remove `sys.path.insert(0, APPS_DIR)` from `config/settings.py`
+        - Keep `APPS_DIR` variable if used elsewhere, or remove if unused
+
+    - [ ] 6.3.e Verify all tests pass
+        - Run full backend test suite
+        - Verify no import errors
+
+- [ ] **6.4 Service Layer Coverage Assessment**
+
+    - [ ] 6.4.a Run coverage with corrected infrastructure
+        - Run: `docker compose -f infrastructure/docker-compose.yml exec backend \`
+          `pytest -n 0 --cov=apps --cov-report=term-missing apps/`
+        - Verify no `CoverageWarning` about previously imported modules
+        - Document baseline coverage percentage
+
+    - [ ] 6.4.b Identify coverage gaps in service layer
+        - Focus on: `MovieService`, `UserMovieDataService`, `AuthenticationService`
+        - Check pagination helpers, batch operations
+        - Target: 80% general, 90%+ critical paths
+
+    - [ ] 6.4.c Add tests to meet coverage targets
+        - Write tests for identified gaps
+        - Prioritize critical paths (auth, data mutations)
+
+- [ ] **6.5 Run Comprehensive Integration Tests**
+
+    - [ ] 6.5.a Run full UserMovieData integration test suite (all 5 endpoints after service extraction)
+    - [ ] 6.5.b Run full Authentication integration test suite (all 9 endpoints after service extraction)
+    - [ ] 6.5.c Run full Movie integration test suite (all endpoints after MovieService refactoring)
+
+- [ ] **6.6 Update TECHNICAL-OVERVIEW.md**
+
+    - [ ] 6.6.a Add service layer architecture patterns section
         - Document class-based service pattern with DI
         - Provide decision guide: "When to use class-based vs function-based"
         - Document pagination helper usage guidelines
         - Document batch operation patterns
         - Document dependency injection patterns and best practices
 
-    - [ ] 6.4.b Add reference implementations section
+    - [ ] 6.6.b Add reference implementations section
         - Link to MovieService (TMDB integration)
         - Link to UserMovieDataService (CRUD with pagination)
         - Link to AuthenticationService (security-critical operations)
         - Link to MovieEnrichmentService (composition pattern)
         - Document email approach (Django backend with django-zoho-zeptomail)
 
-    - [ ] 6.4.c Add architectural guidelines
+    - [ ] 6.6.c Add architectural guidelines
         - Guideline: "Business logic belongs in service layer, NOT API endpoints"
         - Guideline: "Use factory functions for service instantiation"
         - Guideline: "Use dependency injection for testability"
         - Security note: "Authentication service handles security-critical operations"
 
-    - [ ] 6.4.d Run markdown linting on TECHNICAL-OVERVIEW.md
+    - [ ] 6.6.d Run markdown linting on TECHNICAL-OVERVIEW.md
 
-- [ ] **6.5 Final Quality Gate (All Gates)**
+- [ ] **6.7 Final Quality Gate (All Gates)**
 
-    - [ ] 6.5.a Run full backend test suite with coverage
-    - [ ] 6.5.b Address any coverage gaps (target: 80% general, 90%+ critical paths)
-    - [ ] 6.5.c Run all backend linting checks
-    - [ ] 6.5.d Run Python type checking (comprehensive)
-    - [ ] 6.5.e Run frontend tests (ensure no regressions)
-    - [ ] 6.5.f Run frontend linting
-    - [ ] 6.5.g Run frontend type checking
-    - [ ] 6.5.h Run markdown linting on all documentation
+    - [ ] 6.7.a Run full backend test suite with coverage
+    - [ ] 6.7.b Verify coverage meets targets (80% general, 90%+ critical paths)
+    - [ ] 6.7.c Run all backend linting checks
+    - [ ] 6.7.d Run Python type checking (comprehensive)
+    - [ ] 6.7.e Run frontend tests (ensure no regressions)
+    - [ ] 6.7.f Run frontend linting
+    - [ ] 6.7.g Run frontend type checking
+    - [ ] 6.7.h Run markdown linting on all documentation
 
-- [ ] **6.6 Final Pre-Archival and PR Documentation Pass**
+- [ ] **6.8 Final Pre-Archival and PR Documentation Pass**
 
-    - [ ] 6.6.a Generate completion metadata
+    - [ ] 6.8.a Generate completion metadata
         - Document all completed work across 6 phases
         - List success metrics achieved
         - Provide quality gate results summary
 
-    - [ ] 6.6.b Check if PROJECT-STATUS.md needs updates
+    - [ ] 6.8.b Check if PROJECT-STATUS.md needs updates
         - Update Service Layer Modernization status to "Complete"
         - Update next priorities if needed
         - Update timestamp

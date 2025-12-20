@@ -6,14 +6,18 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>CineXplorer</title>
 		<style>
-			/* Background now handled by Chakra UI theme system */
-			body {
-				margin: 0;
-			}
-			#root {
-				min-height: 100vh;
-			}
+			html, body { margin: 0; }
+			#root { min-height: 100vh; }
 		</style>
+		<script>
+			// Prevent flash of wrong background before React/Chakra loads
+			// Reads background color stored by BackgroundSync component
+			(function() {
+				var bg = '#161616'; // Default: IBM Carbon dark
+				try { bg = localStorage.getItem('cinexplorer-bg') || bg; } catch(e) {}
+				document.documentElement.style.backgroundColor = bg;
+			})();
+		</script>
 	</head>
 	<body>
 		<div id="root">

@@ -16,3 +16,4 @@ export { checkboxRecipe } from "./checkbox";
 export { radioRecipe } from "./radio";
 export { switchRecipe } from "./switch";
 export { tooltipRecipe } from "./tooltip";
+export { toastRecipe } from "./toast";

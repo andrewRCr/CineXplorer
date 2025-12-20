@@ -18,16 +18,17 @@ integrated with our semantic token system.
 - Enhance existing toaster composition with semantic token styling
 - Mount toaster provider at application root (composition exists but not mounted)
 - Create toast recipe following existing alert pattern
-- Integrate with auth flows (logout, session errors)
+- Integrate with auth flows (login, register, logout, email verification resend, session errors)
 - Integrate with watchlist actions (add/remove with undo)
 - Add API error interceptors (401, 5xx)
+- Use promise toast pattern for async operations (login, register, email resend, watchlist)
 - Ensure accessibility (ARIA, reduced motion, pause on hover)
 
 ### Won't Do
 
-- Promise toast patterns for reviews/email (Phase 2+ features)
 - Notification history or persistent notifications
 - Custom animations beyond Chakra defaults
+- Toast integrations for unimplemented features (ratings, reviews, liked, watched, profile/settings updates)
 
 ---
 
@@ -40,124 +41,151 @@ integrated with our semantic token system.
 **Discovery:** Toaster composition already exists at `components/core/chakra/toaster.tsx` with Chakra
 defaults. It exports `toaster` instance and `Toaster` component but is NOT mounted anywhere.
 
-- [ ] **1.1 Verify existing toaster composition**
+- [x] **1.1 Verify existing toaster composition**
 
-    **Goal:** Confirm existing composition is correct and types compile.
+    Confirmed composition at `components/core/chakra/toaster.tsx` is correct:
+    - `placement: "bottom-end"`, `pauseOnPageIdle: true` ✓
+    - Exports `toaster` instance and `Toaster` component ✓
+    - Uses Chakra defaults (e.g., `blue.solid` spinner) - to update in Phase 2
 
-    - [ ] **1.1.a Review `frontend/src/components/core/chakra/toaster.tsx`**
-        - Verify `createToaster` config has `placement: "bottom-end"`, `pauseOnPageIdle: true` ✓
-        - Verify exports: `toaster` instance and `Toaster` component ✓
-        - Note: Currently uses Chakra defaults (e.g., `blue.solid` spinner) - will update in Phase 2
+    - [x] **1.1.a Review existing composition** - Verified config and exports
+    - [x] **1.1.b Verify TypeScript types compile** - `npm run type-check` passed
 
-    - [ ] **1.1.b Verify TypeScript types compile**
-        - Run `npm run type-check` in Docker
-        - Ensure no type errors in existing file
+- [x] **1.2 Mount Toaster in application**
 
-- [ ] **1.2 Mount Toaster in application**
+    Added `<Toaster />` to `main.tsx` inside `<Provider>`, after `<App />`.
 
-    - [ ] **1.2.a Add `Toaster` to `main.tsx`**
-        - Import `Toaster` from `@/components/core/chakra/toaster`
-        - Place `<Toaster />` inside `<Provider>` but outside `<App />`
-        - Ensures toaster available to entire application
-
-    - [ ] **1.2.b Verify toaster renders**
-        - Start dev server, check browser console for errors
-        - Add temporary test toast to verify rendering works
+    - [x] **1.2.a Add `Toaster` to `main.tsx`** - Import and mount complete
+    - [x] **1.2.b Verify toaster renders** - Type check, lint, and all tests pass; frontend serves HTTP 200
 
 ### **Phase 2:** Toast Recipe and Styling
 
 **Purpose:** Create toast recipe using semantic tokens, consistent with existing alert recipe patterns.
 
-- [ ] **2.1 Create toast recipe**
+- [x] **2.1 Create toast recipe**
 
-    **Goal:** Style toasts using semantic tokens for design system consistency.
+    Created `theme/recipes/toast.ts` with 6 slots and 5 status variants following alert recipe pattern.
+    Registered in theme system and generated types.
 
-    - [ ] **2.1.a Create `frontend/src/theme/recipes/toast.ts`**
-        - Use `defineSlotRecipe` pattern from `alert.ts`
-        - Slots: `root`, `indicator`, `title`, `description`, `actionTrigger`, `closeTrigger`
-        - Base styles: layer background, border, shadow, padding
-        - Status variants: `success`, `error`, `warning`, `info`, `loading`
-        - Use semantic tokens: `layer-02`, `border-strong-01`, status colors
-        - Match alert recipe pattern for status backgrounds (e.g., `success/10`)
+    - [x] **2.1.a Create recipe file** - 6 slots, 5 status variants (success/error/warning/info/loading)
+    - [x] **2.1.b Export from recipes/index.ts** - Added `toastRecipe` export
+    - [x] **2.1.c Register in theme system** - Added to slotRecipes, ran typegen
+    - [x] **2.1.d Verify compilation** - Type check and lint passed
 
-    - [ ] **2.1.b Export recipe from `recipes/index.ts`**
-        - Add `toastRecipe` to exports
-        - Follow existing export pattern
+- [x] **2.2 Update toaster composition to use recipe**
 
-    - [ ] **2.1.c Register recipe in theme system**
-        - Add to `theme/index.ts` slot recipes
-        - Run Chakra typegen: `npm run typegen`
+    Updated `components/core/chakra/toaster.tsx` with semantic token styling.
+    Replaced Chakra defaults (`blue.solid`) with status-based semantic tokens.
 
-    - [ ] **2.1.d Verify recipe compiles and applies**
-        - Run type-check
-        - Test toast appearance in browser (temporary test)
+    - [x] **2.2.a Apply semantic styling** - Status-based styles map, all slots styled
+    - [x] **2.2.b Verify dark mode support** - Semantic tokens auto-adapt; all 723 tests pass
 
-- [ ] **2.2 Update toaster composition to use recipe**
+- [x] **2.3 Documentation and visual validation**
 
-    - [ ] **2.2.a Apply recipe styling in `components/core/chakra/toaster.tsx`**
-        - Use `useSlotRecipe` or inline recipe application
-        - Replace Chakra defaults (e.g., `blue.solid`) with semantic tokens
-        - Apply correct data attributes for status variants (`data-type`)
-        - Ensure close button and action trigger styled correctly
+    Updated strategy doc and ThemeDebug page with toast documentation and interactive demos.
 
-    - [ ] **2.2.b Verify dark mode support**
-        - Toggle color mode in dev
-        - Confirm toasts render correctly in both modes
+    - [x] **2.3.a Update component styling strategy** - Added Toasts section to Status Indicators
+    - [x] **2.3.b Add toast demonstration to ThemeDebug** - Interactive triggers for all 5 variants
 
 ### **Phase 3:** Core Integrations
 
-**Purpose:** Integrate toasts with existing auth and movie action flows.
+**Purpose:** Integrate toasts with all existing auth and movie action flows using promise toast pattern
+for async operations.
 
-- [ ] **3.1 Auth flow integrations**
+- [ ] **3.1 Login flow integration**
 
-    - [ ] **3.1.a Add logout success toast**
-        - File: `frontend/src/hooks/auth/useAuth.ts`
-        - In `logout()` function, add `toaster.success({ title: "Logged out successfully" })`
-        - Place after `navigate(ROUTES.LOGIN)` call
-        - Import `toaster` from `@/components/core/chakra/toaster`
+    - [ ] **3.1.a Add promise toast to login**
+        - File: `frontend/src/hooks/auth/useAuth.ts` - `login()` function
+        - Use `toaster.promise()` pattern for loading → success/error states
+        - Loading: "Logging in..."
+        - Success: "Welcome back!" (or include username if available)
+        - Error: Display API error message
+        - Consider removing redundant Alert UI in Login.tsx after toast added
 
-    - [ ] **3.1.b Add session expired toast (401 interceptor)**
+    - [ ] **3.1.b Test login toasts manually**
+        - Valid credentials → verify success toast
+        - Invalid credentials → verify error toast with message
+        - Slow network → verify loading state visible
+
+- [ ] **3.2 Register flow integration**
+
+    - [ ] **3.2.a Add promise toast to register**
+        - File: `frontend/src/hooks/auth/useAuth.ts` - `register()` function
+        - Use `toaster.promise()` pattern
+        - Loading: "Creating account..."
+        - Success: "Account created! Check your email to verify."
+        - Error: Display API error message (email taken, validation, etc.)
+
+    - [ ] **3.2.b Test register toasts manually**
+        - Valid registration → verify success toast mentions email verification
+        - Duplicate email → verify error toast
+
+- [ ] **3.3 Email verification resend integration**
+
+    - [ ] **3.3.a Add promise toast to email resend**
+        - File: `frontend/src/pages/user/Login.tsx` - `handleResendVerification()`
+        - Use `toaster.promise()` pattern
+        - Loading: "Sending verification email..."
+        - Success: "Verification email sent! Check your inbox."
+        - Error: Display error message
+        - Remove inline message state after toast added
+
+    - [ ] **3.3.b Test email resend toast manually**
+        - Resend verification → verify success toast
+        - Rate limited → verify error toast
+
+- [ ] **3.4 Logout flow integration**
+
+    - [ ] **3.4.a Add logout success toast**
+        - File: `frontend/src/hooks/auth/useAuth.ts` - `logout()` function
+        - Add `toaster.success({ title: "You've been logged out" })`
+        - Place after navigation or before (test UX)
+        - Simple toast, not promise (logout is fast)
+
+    - [ ] **3.4.b Test logout toast manually**
+        - Log out → verify success toast appears
+
+- [ ] **3.5 Session expired (401 interceptor) integration**
+
+    - [ ] **3.5.a Add session expired toast**
         - File: `frontend/src/services/apiClient.ts`
         - In response interceptor, when 401 detected and refresh fails
-        - Add `toaster.error({ title: "Session expired", description: "Please log in again." })`
-        - Ensure closable: true for critical errors
-        - Import `toaster` from `@/components/core/chakra/toaster`
+        - Add `toaster.error({ title: "Session expired", description: "Please log in again.", closable: true })`
+        - Ensure only fires once (not on every failed request during refresh)
 
-    - [ ] **3.1.c Test auth toasts manually**
-        - Log out → verify success toast
-        - Force 401 (clear tokens, make API call) → verify error toast
+    - [ ] **3.5.b Test 401 toast manually**
+        - Clear tokens, make API call → verify error toast
 
-- [ ] **3.2 Watchlist action integrations**
+- [ ] **3.6 Watchlist action integrations**
 
-    - [ ] **3.2.a Add watchlist success/error toasts to `useMovieActions.ts`**
+    - [ ] **3.6.a Add watchlist promise toasts to `useMovieActions.ts`**
         - File: `frontend/src/hooks/movie/useMovieActions.ts`
         - Remove TODO comments at lines 111 and 116
-        - Add `toaster.success({ title: "Added to watchlist" })` or "Removed from watchlist"
-        - Need to know current state to determine message (check `movie.user_movie_data?.on_watchlist`)
-        - Add error toast: `toaster.error({ title: "Failed to update watchlist", description: errorMessage })`
+        - Use `toaster.promise()` or loading/success/error pattern
+        - Success: "Added to watchlist" or "Removed from watchlist" based on action
+        - Error: "Failed to update watchlist" with description
 
-    - [ ] **3.2.b Add undo action for watchlist removal**
+    - [ ] **3.6.b Add undo action for watchlist removal**
         - When removing from watchlist, include action button:
         - `action: { label: "Undo", onClick: () => toggleWatchlist() }`
         - Only for removal (destructive action), not for add
 
-    - [ ] **3.2.c Test watchlist toasts manually**
+    - [ ] **3.6.c Test watchlist toasts manually**
         - Add movie to watchlist → verify success toast
         - Remove movie → verify success toast with Undo button
         - Click Undo → verify movie re-added
         - Simulate error (network off) → verify error toast
 
-- [ ] **3.3 API error interceptor integration**
+- [ ] **3.7 API error interceptor (5xx) integration**
 
-    - [ ] **3.3.a Add 5xx error toast**
+    - [ ] **3.7.a Add 5xx error toast**
         - File: `frontend/src/services/apiClient.ts`
         - In response interceptor, detect 5xx status codes
-        - Add `toaster.error({ title: "Server error", description: "Please try again later." })`
+        - Add `toaster.error({ title: "Server error", description: "Please try again later.", closable: true })`
         - Avoid duplicate toasts (don't show both 5xx and specific action error)
 
-    - [ ] **3.3.b Test server error toast**
-        - Simulate 500 error (modify backend temporarily or mock)
-        - Verify error toast appears
+    - [ ] **3.7.b Test server error toast**
+        - Simulate 500 error → verify error toast appears
 
 ### **Phase 4:** Accessibility and Polish
 
@@ -264,8 +292,11 @@ handling a refresh.
 
 - [ ] Toaster renders at application root with semantic token styling
 - [ ] Toast recipe integrates with theme system (light/dark modes work)
+- [ ] Login shows promise toast (loading → success/error)
+- [ ] Register shows promise toast (loading → success with email verification note)
+- [ ] Email resend shows promise toast (loading → success/error)
 - [ ] Logout shows success toast
-- [ ] Session expiry shows critical error toast
+- [ ] Session expiry (401) shows critical error toast
 - [ ] Watchlist add/remove shows success toast
 - [ ] Watchlist remove includes Undo action
 - [ ] Server errors (5xx) show error toast

@@ -50,10 +50,9 @@ Organized by component type ("what are you building?") rather than token categor
 ```
 What am I styling?
 ├─ Status/feedback indicator? → [Status Indicators](#building-status-indicators)
-│  ├─ Success: Alert/Badge with status="success"
-│  ├─ Warning: Alert/Badge with status="warning"
-│  ├─ Error: Alert/Badge with status="error"
-│  └─ Info: Alert/Badge with status="info"
+│  ├─ Inline feedback: Alert with status="success/warning/error/info"
+│  ├─ Compact label: Badge with variant="success/warning/error/info/neutral"
+│  └─ Floating notification: toaster.success/error/warning/info/loading()
 │
 ├─ Button or action? → [Building Buttons](#building-buttons)
 │  ├─ Primary action (highest emphasis): variant="solid"
@@ -419,8 +418,8 @@ For implementation details and compound variant logic (selection state), see the
 
 ## Building Status Indicators
 
-Status indicators use Chakra UI v3 recipes with semantic status variants. Alerts and Badges provide visual feedback
-for outcomes, states, and categorization.
+Status indicators use Chakra UI v3 recipes with semantic status variants. Alerts, Badges, and Toasts provide visual
+feedback for outcomes, states, and categorization.
 
 ### Alerts
 
@@ -479,7 +478,67 @@ Badges use recipes with 5 variants for status and categorization.
 
 **Recipe reference:** `frontend/src/theme/recipes/badge.ts`
 
-### Key Distinction: Alert vs Badge Text Colors
+### Toasts
+
+Toasts provide temporary, non-blocking feedback for user actions and system events. They use the same semantic token
+pattern as Alerts (10% opacity backgrounds with semantic borders) but appear as floating notifications.
+
+```tsx
+import { toaster } from "@/components/core/chakra/toaster";
+
+// Success toast (e.g., after saving)
+toaster.success({ title: "Changes saved", description: "Your settings have been updated." });
+
+// Error toast (e.g., API failure)
+toaster.error({ title: "Save failed", description: "Please try again.", closable: true });
+
+// Warning toast (e.g., validation issue)
+toaster.warning({ title: "Missing fields", description: "Please complete all required fields." });
+
+// Info toast (e.g., notification)
+toaster.info({ title: "New feature", description: "Check out our new search filters." });
+
+// Loading toast (e.g., async operation)
+toaster.loading({ title: "Saving...", description: "Please wait." });
+
+// Toast with action (e.g., undo)
+toaster.success({
+  title: "Removed from watchlist",
+  action: { label: "Undo", onClick: () => handleUndo() },
+});
+```
+
+**Available status types:**
+
+| Type      | Use Cases                                    | Color  |
+|-----------|----------------------------------------------|--------|
+| `success` | Confirmations, completed actions             | Green  |
+| `warning` | Validation warnings, caution states          | Amber  |
+| `error`   | Errors, failed operations (closable: true)   | Red    |
+| `info`    | Informational messages, tips                 | Blue   |
+| `loading` | Async operations in progress                 | Blue   |
+
+**What the composition provides:**
+
+- Subtle opacity backgrounds (10%) with semantic borders (matches Alert pattern)
+- Title with semantic color for emphasis
+- Description with foreground color for readability
+- Action trigger with tertiary styling for undo/retry actions
+- Close trigger with muted styling and hover state
+- Shadow elevation (`shadow-md`) for floating appearance
+
+**Duration by type (default behavior):**
+
+- Success: 4 seconds (quick confirmation)
+- Info: 5 seconds (time to read)
+- Warning: 6 seconds (needs attention)
+- Error: 8 seconds or closable (critical, needs action)
+- Loading: Persists until dismissed programmatically
+
+**Composition reference:** `frontend/src/components/core/chakra/toaster.tsx`
+**Recipe reference:** `frontend/src/theme/recipes/toast.ts`
+
+### Key Distinction: Alert vs Badge vs Toast Text Colors
 
 **Alerts (subtle backgrounds):** Description uses `foreground` color for maximum readability on 10% opacity backgrounds.
 The recipe handles this automatically.
@@ -487,8 +546,11 @@ The recipe handles this automatically.
 **Badges (solid backgrounds):** Text uses `on-*` color pairs (e.g., `on-success`) optimized for full opacity backgrounds.
 The recipe handles this automatically.
 
-**Why the difference?** `on-*` tokens are designed for solid fills. On subtle tints, semantic color provides emphasis
-while foreground maintains readability across all themes.
+**Toasts (subtle backgrounds):** Same pattern as Alerts - description uses `foreground` for readability, title uses
+semantic color for emphasis. The composition handles this via inline styling that mirrors the recipe pattern.
+
+**Why the difference?** `on-*` tokens are designed for solid fills. On subtle tints (Alerts, Toasts), semantic color
+provides emphasis while foreground maintains readability across all themes.
 
 ---
 

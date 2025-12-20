@@ -288,13 +288,13 @@ All interaction states (hover, active, focus) are handled automatically by the r
 
 ### Button Variants Quick Reference
 
-| Variant      | Emphasis   | Visual            | Use Cases                                          |
-|--------------|------------|-------------------|----------------------------------------------------|
-| **solid**    | Highest    | Filled background | Primary actions: "Save", "Submit", "Browse Movies" |
-| **secondary**| High       | Primary text      | Secondary action in form pairs with primary        |
-| **outline**  | Medium     | Grey border/text  | Standalone utility: "Back", OAuth, filters         |
-| **subtle**   | Medium-Low | Muted fill        | Embedded in panels: theme selectors, sort controls |
-| **ghost**    | Lowest     | Text only         | Dismissive: "Skip", "Close", "Dismiss"             |
+| Variant       | Emphasis   | Visual            | Use Cases                                          |
+|---------------|------------|-------------------|----------------------------------------------------|
+| **solid**     | Highest    | Filled background | Primary actions: "Save", "Submit", "Browse Movies" |
+| **secondary** | High       | Primary text      | Secondary action in form pairs with primary        |
+| **outline**   | Medium     | Grey border/text  | Standalone utility: "Back", OAuth, filters         |
+| **subtle**    | Medium-Low | Muted fill        | Embedded in panels: theme selectors, sort controls |
+| **ghost**     | Lowest     | Text only         | Dismissive: "Skip", "Close", "Dismiss"             |
 
 ### Solid Variant (Primary Actions)
 
@@ -435,12 +435,12 @@ Alerts use slot recipes with 4 status variants. The recipe handles all styling a
 
 **Available status variants:**
 
-| Status    | Use Cases                                      | Color  |
-|-----------|------------------------------------------------|--------|
-| `success` | Confirmations, positive feedback               | Green  |
-| `warning` | Validation warnings, caution states            | Amber  |
-| `error`   | Errors, critical alerts                        | Red    |
-| `info`    | Informational messages, tips, neutral status   | Blue   |
+| Status    | Use Cases                                    | Color |
+|-----------|----------------------------------------------|-------|
+| `success` | Confirmations, positive feedback             | Green |
+| `warning` | Validation warnings, caution states          | Amber |
+| `error`   | Errors, critical alerts                      | Red   |
+| `info`    | Informational messages, tips, neutral status | Blue  |
 
 **What the recipe provides:**
 
@@ -462,13 +462,13 @@ Badges use recipes with 5 variants for status and categorization.
 
 **Available variants:**
 
-| Variant   | Use Cases                                        | Color  |
-|-----------|--------------------------------------------------|--------|
-| `success` | Positive status, active states                   | Green  |
-| `warning` | Caution states, pending status                   | Amber  |
-| `error`   | Danger, deleted, error states                    | Red    |
-| `info`    | Informational, new items, neutral status         | Blue   |
-| `neutral` | Genre tags, content ratings, non-semantic labels | Grey   |
+| Variant   | Use Cases                                        | Color |
+|-----------|--------------------------------------------------|-------|
+| `success` | Positive status, active states                   | Green |
+| `warning` | Caution states, pending status                   | Amber |
+| `error`   | Danger, deleted, error states                    | Red   |
+| `info`    | Informational, new items, neutral status         | Blue  |
+| `neutral` | Genre tags, content ratings, non-semantic labels | Grey  |
 
 **What the recipe provides:**
 
@@ -480,8 +480,8 @@ Badges use recipes with 5 variants for status and categorization.
 
 ### Toasts
 
-Toasts provide temporary, non-blocking feedback for user actions and system events. They use the same semantic token
-pattern as Alerts (10% opacity backgrounds with semantic borders) but appear as floating notifications.
+Toasts provide temporary, non-blocking feedback for user actions and system events. Unlike inline Alerts,
+toasts overlay UI content and use solid backgrounds with colored left accent borders for readability.
 
 ```tsx
 import { toaster } from "@/components/core/chakra/toaster";
@@ -510,17 +510,18 @@ toaster.success({
 
 **Available status types:**
 
-| Type      | Use Cases                                    | Color  |
-|-----------|----------------------------------------------|--------|
-| `success` | Confirmations, completed actions             | Green  |
-| `warning` | Validation warnings, caution states          | Amber  |
-| `error`   | Errors, failed operations (closable: true)   | Red    |
-| `info`    | Informational messages, tips                 | Blue   |
-| `loading` | Async operations in progress                 | Blue   |
+| Type      | Use Cases                                  | Accent |
+|-----------|--------------------------------------------|--------|
+| `success` | Confirmations, completed actions           | Green  |
+| `warning` | Validation warnings, caution states        | Amber  |
+| `error`   | Errors, failed operations (closable: true) | Red    |
+| `info`    | Informational messages, tips               | Blue   |
+| `loading` | Async operations in progress               | Blue   |
 
 **What the composition provides:**
 
-- Subtle opacity backgrounds (10%) with semantic borders (matches Alert pattern)
+- Solid layer background (`layer-03`) for visibility above all content including modals
+- Colored left accent border (4px) for status indication
 - Title with semantic color for emphasis
 - Description with foreground color for readability
 - Action trigger with tertiary styling for undo/retry actions
@@ -536,21 +537,17 @@ toaster.success({
 - Loading: Persists until dismissed programmatically
 
 **Composition reference:** `frontend/src/components/core/chakra/toaster.tsx`
-**Recipe reference:** `frontend/src/theme/recipes/toast.ts`
 
-### Key Distinction: Alert vs Badge vs Toast Text Colors
+### Key Distinction: Alert vs Badge vs Toast
 
-**Alerts (subtle backgrounds):** Description uses `foreground` color for maximum readability on 10% opacity backgrounds.
-The recipe handles this automatically.
+| Component | Background               | Status Indication  | Text Colors                              |
+|-----------|--------------------------|--------------------|------------------------------------------|
+| Alert     | 10% opacity tint         | Full border + icon | Title: semantic, Description: foreground |
+| Badge     | Solid semantic fill      | Background color   | `on-*` tokens (high contrast)            |
+| Toast     | Solid layer (`layer-03`) | Left accent border | Title: semantic, Description: foreground |
 
-**Badges (solid backgrounds):** Text uses `on-*` color pairs (e.g., `on-success`) optimized for full opacity backgrounds.
-The recipe handles this automatically.
-
-**Toasts (subtle backgrounds):** Same pattern as Alerts - description uses `foreground` for readability, title uses
-semantic color for emphasis. The composition handles this via inline styling that mirrors the recipe pattern.
-
-**Why the difference?** `on-*` tokens are designed for solid fills. On subtle tints (Alerts, Toasts), semantic color
-provides emphasis while foreground maintains readability across all themes.
+**Why toasts differ from alerts:** Alerts are inline and don't overlap content, so subtle tints work well.
+Toasts float over varied backgrounds and need solid fills for consistent readability.
 
 ---
 

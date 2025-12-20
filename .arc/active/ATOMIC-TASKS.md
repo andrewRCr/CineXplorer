@@ -31,6 +31,23 @@
 
 <!-- UI/UX Fixes -->
 
+- [ ] Improve login form error message UX
+    - **Current behavior:** On failed login, both username AND password fields show identical
+      error message: "Unable to authenticate with provided credentials"
+    - **Issues:**
+        1. Duplicate messaging looks sloppy
+        2. Message doesn't mention "email" as an option (username field accepts email)
+        3. Both fields flagged when typically only one is incorrect
+    - **Constraints:**
+        - Backend intentionally returns generic error (security: don't reveal valid usernames)
+        - Cannot show field-specific accuracy without backend changes
+    - **Proposed approach:**
+        - Option A: Show error once as general alert (not on individual fields)
+        - Option B: Show on password field only with improved wording: "Invalid email/username or password"
+        - Option C: Show on username field only, rephrase to "Email, username, or password is incorrect"
+    - **Files:** `frontend/src/pages/user/Login.tsx` (lines 165-192)
+    - **Decision needed:** Which option provides best UX without security compromise?
+
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
     - Change: `≥7.5` success (green), `5.0-7.4` warning (yellow), `<5.0` error (red)
     - Current: success/info/warning doesn't communicate rating quality intuitively

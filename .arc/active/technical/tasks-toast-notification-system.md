@@ -92,20 +92,43 @@ defaults. It exports `toaster` instance and `Toaster` component but is NOT mount
 **Purpose:** Integrate toasts with all existing auth and movie action flows using promise toast pattern
 for async operations.
 
-- [ ] **3.1 Login flow integration**
+- [x] **3.1 Login flow integration**
 
-    - [ ] **3.1.a Add promise toast to login**
-        - File: `frontend/src/hooks/auth/useAuth.ts` - `login()` function
-        - Use `toaster.promise()` pattern for loading → success/error states
-        - Loading: "Logging in..."
-        - Success: "Welcome back!" (or include username if available)
-        - Error: Display API error message
-        - Consider removing redundant Alert UI in Login.tsx after toast added
+    - [x] **3.1.a Add promise toast to login**
 
-    - [ ] **3.1.b Test login toasts manually**
-        - Valid credentials → verify success toast
-        - Invalid credentials → verify error toast with message
-        - Slow network → verify loading state visible
+        Added loading → success/error toast pattern to login flow with personalized greeting.
+
+        **Backend changes:**
+        - Added `username` to `UserProtocol` in `authentication_service.py`
+        - Added `username` and `first_name` fields to `TokenResponseSchema`
+        - Updated `obtain_token` and `refresh_token` to include user identity
+
+        **Frontend changes:**
+        - Regenerated API types from OpenAPI schema
+        - Implemented toast in `useAuth.ts` using manual loading/update pattern
+        - Success: "Welcome back, {first_name || username}!" (4s duration)
+        - Error: Title + API error message description (8s, closable)
+        - Loading: "Logging in..." (persists until resolved)
+
+        **Expanded scope (discovered during testing):**
+
+        - **OAuth toast:** Added success toast to OAuth callback flow in `useAuth.ts`
+        - **OAuth detection bug fix:** Changed `sessionStorage.getItem('oauth_in_progress') === 'true'`
+          to `!== null` (we store provider name, not 'true')
+        - **Toast styling:** Changed from 10% opacity tint to solid `layer-03` background with 4px
+          colored left accent border for readability over content
+        - **White flash fix:** Added `BackgroundSync` component in `provider.tsx` that stores
+          resolved background color in `cinexplorer-bg` localStorage; `index.html` reads this
+          before React loads (self-maintaining across theme changes)
+        - **Docs updated:** strategy-component-styling.md, ThemeDebug FeedbackStatusSection
+
+        **Atomic task created:** Login form error UX (duplicate error on both fields)
+
+    - [x] **3.1.b Test login toasts manually**
+        - Valid credentials → success toast with personalized name ✓
+        - Invalid credentials → error toast with message ✓
+        - OAuth login (Google/GitHub) → success toast ✓
+        - Toast styling readable over content ✓
 
 - [ ] **3.2 Register flow integration**
 

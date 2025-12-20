@@ -166,9 +166,8 @@ export function FeedbackStatusSection() {
               </VStack>
 
               <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5">
-                Toasts use the same 10% opacity + semantic border pattern as Alerts.
+                Toasts use solid layer-03 background with colored left accent border (unlike Alerts which use 10% opacity).
                 Composition: <Code fontSize="xs">components/core/chakra/toaster.tsx</Code>.
-                Recipe: <Code fontSize="xs">theme/recipes/toast.ts</Code>.
                 Action triggers use <Code fontSize="xs">tertiary</Code> tokens for undo/retry actions.
               </Text>
             </VStack>

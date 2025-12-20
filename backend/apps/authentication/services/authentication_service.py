@@ -49,6 +49,7 @@ class UserProtocol(Protocol):
     """User shape used by authentication service."""
 
     id: int
+    username: str
     email: str
     first_name: str
     last_name: str
@@ -322,6 +323,8 @@ class AuthenticationService:
             "access_token": access_token,
             "refresh_token": refresh_token,
             "user_id": user.id,
+            "username": user.username,
+            "first_name": user.first_name or None,
             "email_verified": True,
         }
 
@@ -376,6 +379,8 @@ class AuthenticationService:
                 "access_token": access_token,
                 "refresh_token": new_refresh_token,
                 "user_id": user_id,
+                "username": user.username,
+                "first_name": user.first_name or None,
                 "email_verified": True,
             }
         except TokenError as exc:

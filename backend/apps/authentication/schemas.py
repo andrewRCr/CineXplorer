@@ -1,7 +1,7 @@
 """Pydantic schemas for the authentication API.
 
 This module defines schemas for authentication and user management endpoints
-following Django Ninja patterns established in Phase 1 (movie domain).
+following Django Ninja patterns.
 
 Pattern Guidelines:
 - Use ModelSchema for Django User model operations (profile retrieval/updates)
@@ -112,6 +112,14 @@ class TokenResponseSchema(Schema):
     user_id: int = Field(
         ...,
         description="ID of the authenticated user"
+    )
+    username: str = Field(
+        ...,
+        description="Username of the authenticated user"
+    )
+    first_name: str | None = Field(
+        default=None,
+        description="User's first name (if provided)"
     )
     email_verified: bool = Field(
         ...,

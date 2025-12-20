@@ -16,16 +16,17 @@ export const toaster = createToaster({
 
 /**
  * Status-based styling for toasts using semantic tokens.
- * Matches the toast recipe pattern: 10% opacity backgrounds with semantic borders.
+ * Uses solid layer background with colored left accent for readability over content.
+ * Unlike inline alerts (10% opacity), toasts overlay UI and need higher contrast.
  */
 type ToastType = "success" | "error" | "warning" | "info" | "loading"
 
-const statusStyles: Record<ToastType, { bg: string; borderColor: string; color: string }> = {
-  success: { bg: "success/10", borderColor: "success", color: "success" },
-  error: { bg: "destructive/10", borderColor: "destructive", color: "destructive" },
-  warning: { bg: "warning/10", borderColor: "warning", color: "warning" },
-  info: { bg: "info/10", borderColor: "info", color: "info" },
-  loading: { bg: "info/10", borderColor: "info", color: "info" },
+const statusStyles: Record<ToastType, { accentColor: string; titleColor: string }> = {
+  success: { accentColor: "success", titleColor: "success" },
+  error: { accentColor: "destructive", titleColor: "destructive" },
+  warning: { accentColor: "warning", titleColor: "warning" },
+  info: { accentColor: "info", titleColor: "info" },
+  loading: { accentColor: "info", titleColor: "info" },
 }
 
 export const Toaster = () => {
@@ -39,25 +40,27 @@ export const Toaster = () => {
           return (
             <Toast.Root
               width={{ md: "sm" }}
-              bg={styles.bg}
+              bg="layer-03"
               borderWidth="1px"
-              borderColor={styles.borderColor}
+              borderColor="border"
+              borderLeftWidth="4px"
+              borderLeftColor={styles.accentColor}
               borderRadius="md"
               boxShadow="shadow-md"
               p="4"
               gap="3"
             >
               {toast.type === "loading" ? (
-                <Spinner size="sm" color={styles.color} />
+                <Spinner size="sm" color={styles.titleColor} />
               ) : (
-                <Toast.Indicator color={styles.color} />
+                <Toast.Indicator color={styles.titleColor} />
               )}
               <Stack gap="1" flex="1" maxWidth="100%">
                 {toast.title && (
                   <Toast.Title
                     fontWeight="semibold"
                     fontSize="sm"
-                    color={styles.color}
+                    color={styles.titleColor}
                   >
                     {toast.title}
                   </Toast.Title>

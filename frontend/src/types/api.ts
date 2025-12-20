@@ -1077,6 +1077,16 @@ export interface components {
              */
             user_id: number;
             /**
+             * Username
+             * @description Username of the authenticated user
+             */
+            username: string;
+            /**
+             * First Name
+             * @description User's first name (if provided)
+             */
+            first_name?: string | null;
+            /**
              * Email Verified
              * @description Whether user's email has been verified via allauth
              */

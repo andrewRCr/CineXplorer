@@ -29,6 +29,7 @@ import {
 } from "@/utilities/token";
 import type { components } from "@/types/api";
 import * as authService from "@/services/authService";
+import { toaster } from "@/components/core/chakra/toaster";
 
 // Type alias for user profile from generated API types
 type UserProfile = components["schemas"]["UserProfileSchema"];
@@ -205,10 +206,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Check if we just came from an OAuth redirect
             // Only check session if we have a referrer or state indicating OAuth flow
             // This prevents auto-login on every /login page visit
+            const oauthInProgress = sessionStorage.getItem('oauth_in_progress');
             const isFromOAuthRedirect =
                 document.referrer.includes('google.com') ||
                 document.referrer.includes('github.com') ||
-                sessionStorage.getItem('oauth_in_progress') === 'true';
+                oauthInProgress !== null;  // Check for existence, not 'true' (value is provider name)
 
             // ONLY run callback handling for:
             // 1. OAuth redirects (from Google/GitHub with oauth_in_progress flag)
@@ -237,6 +239,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                     logger.debug('[useAuth] OAuth callback - authenticated via session cookie');
                     setUser(oauthUser);
                     setIsAuthenticated(true);
+
+                    // Show welcome toast for OAuth login
+                    const displayName = oauthUser.first_name || oauthUser.username;
+                    toaster.success({
+                        title: `Welcome back, ${displayName}!`,
+                        duration: 4000,
+                    });
+
                     navigate(ROUTES.HOME);
                     return;
                 } else {
@@ -324,6 +334,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         password: string,
         rememberMe: boolean = false
     ): Promise<AuthResult<void>> => {
+        const toastId = "login-toast";
+        toaster.loading({ id: toastId, title: "Logging in..." });
+
         try {
             logger.debug('[useAuth] login() called, attempting authentication...');
             const response = await authService.login(username, password);
@@ -342,6 +355,15 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 setAuthTokens(accessToken, refreshToken, storage);
                 setIsAuthenticated(true);
                 await getUserDetails();
+
+                // Show success toast with user's name (first_name if available, otherwise username)
+                const displayName = response.first_name || response.username;
+                toaster.update(toastId, {
+                    title: `Welcome back, ${displayName}!`,
+                    type: "success",
+                    duration: 4000,
+                });
+
                 return { success: true, data: undefined };
             }
 
@@ -351,6 +373,15 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 hasAccessToken: !!accessToken,
                 hasRefreshToken: !!refreshToken,
             });
+
+            toaster.update(toastId, {
+                title: "Login failed",
+                description: "Invalid server response",
+                type: "error",
+                duration: 8000,
+                closable: true,
+            });
+
             return {
                 success: false,
                 error: {
@@ -380,6 +411,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }
+
+            toaster.update(toastId, {
+                title: "Login failed",
+                description: authError.message,
+                type: "error",
+                duration: 8000,
+                closable: true,
+            });
 
             return { success: false, error: authError };
         }

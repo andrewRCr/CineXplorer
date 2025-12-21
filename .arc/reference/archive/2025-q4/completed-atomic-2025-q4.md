@@ -6,6 +6,17 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Fix email test coverage gaps
+    - **Outcome:** Added 8 new tests covering registration email flow, EmailDeliveryError, and template rendering
+    - **Tests added:**
+        1. Registration sends verification email to outbox (3 tests: basic, link content, username)
+        2. EmailDeliveryError raised when send fails (2 tests: failure raises, success passes)
+        3. Template rendering smoke tests (3 tests: confirmation templates, subject, password reset templates exist)
+    - **Note:** Password reset API endpoint not yet implemented; added template existence test for future
+    - **Files:** `apps/authentication/tests/integration/test_email_backend.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] Audit mock_paths.py compliance across test codebase
     - **Outcome:** All hardcoded mock paths migrated to centralized mock_paths.py files
     - **Changes:**

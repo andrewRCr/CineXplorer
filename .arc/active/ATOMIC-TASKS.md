@@ -31,17 +31,6 @@
 
 <!-- Test Infrastructure -->
 
-- [ ] Fix email test coverage gaps
-    - **Context:** Email sending was broken but no tests caught it; comprehensive fix required
-    - **Fixes:**
-        1. ~~Update `mock_paths.py`: Add path for `send_verification_email_to_address`~~ ✓ (done in audit)
-        2. ~~Fix `test_email_sending_failure_deletes_user_and_returns_500`~~ ✓ (done in audit)
-        3. Add registration email integration test: Verify `/api/register/` sends email to `mail.outbox`
-        4. Add `EmailDeliveryError` test: Verify adapter raises when `msg.send()` returns 0
-        5. Add password reset email tests: Verify reset flow sends email to outbox
-        6. Add template rendering smoke test: Verify templates render with expected context vars
-    - **Files:** test_email_backend.py, test adapters
-
 <!-- UI/UX Fixes -->
 
 - [ ] Improve login form error message UX

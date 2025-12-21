@@ -68,6 +68,13 @@ steps:
     - Update any progress notes or status indicators
     - Add any new tasks that were discovered during implementation
 
+  **Step 5.5: Archive Completed Atomic Tasks**
+    - If ATOMIC-TASKS.md contains completed `[x]` items, they must be archived before committing
+    - Move completed tasks to `reference/archive/completed-atomic-{quarter}.md` (insert at top)
+    - Add completion notes and branch info per ATOMIC-TASKS.md format
+    - **Rationale:** ATOMIC-TASKS.md should only contain pending work; completed items are archived
+    - **Exception:** If the atomic task is being completed in the current commit, archive it now
+
   **Step 6: Determine Context Footer**
     - Task list work: MUST use task list filename WITH parenthetical:
         - (Task X.Y) for specific task work

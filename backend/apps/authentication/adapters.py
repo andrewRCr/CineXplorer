@@ -59,13 +59,17 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         Overrides default to use FRONTEND_URL instead of backend URL,
         allowing the React frontend to handle email verification flow.
 
+        Uses /login?verify=TOKEN pattern instead of dedicated /verify-email/:token route.
+        This consolidates verification into the login page and uses a button safeguard
+        to prevent email client link scanning from consuming single-use tokens.
+
         Args:
             request: HTTP request object (may be None)
             emailconfirmation: EmailConfirmation instance with verification key
 
         Returns:
-            Full URL for email confirmation (e.g., https://localhost:5173/verify-email/{key})
+            Full URL for email confirmation (e.g., https://localhost:8444/login?verify={key})
         """
         frontend_url = getattr(settings, "FRONTEND_URL", "https://localhost:8444").rstrip("/")
         key = emailconfirmation.key
-        return f"{frontend_url}/verify-email/{key}"
+        return f"{frontend_url}/login?verify={key}"

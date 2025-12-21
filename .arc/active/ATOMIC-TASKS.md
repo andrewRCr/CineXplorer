@@ -29,34 +29,18 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
-<!-- Email System Issues (discovered during Task 3.2 - tasks-toast-notification-system.md) -->
+<!-- Test Infrastructure -->
 
-- [ ] Restore email template styling (visual regression)
-    - **Problem:** Verification email regressed after migration to django-zoho-zeptomail
-    - **Current state:** Plain text, empty fields, says "Hello from !" (missing values)
-    - **Previous state:** Styled HTML template with proper branding
-    - **Investigation:**
-        - Check `git show 87c40da -- backend/apps/core/services/email_service.py` for old code
-        - Email templates likely in: `backend/templates/emails/` or `backend/templates/account/`
-        - Allauth templates: `backend/templates/account/email/`
-    - **Files:** Unknown until investigation (likely templates + settings)
-
-- [ ] Analyze email system quality (investigation only)
-    - **Problem:** Email sending was completely broken but no tests caught it
-    - **Symptom:** Silent failures went undetected through multiple development cycles
-    - **Scope:** Analysis only - identify issues before implementing fixes
-    - **Primary focus - Test coverage gap:**
-        1. What email flows exist? (registration, password reset, etc.)
-        2. What tests currently exist for email?
-        3. What's the gap between actual vs tested flows?
-        4. What mocking strategy should tests use?
-    - **Secondary focus - Code quality:**
-        - DRY violations (duplicate email logic across services?)
-        - Separation of concerns (email logic in wrong layers?)
-        - Code smells (error handling, configuration patterns)
-        - Architectural consistency with service layer strategy
-    - **Output:** Document all findings in this task before implementing any changes
-    - **Files:** `backend/apps/*/tests/`, email-related services, adapters
+- [ ] Fix email test coverage gaps
+    - **Context:** Email sending was broken but no tests caught it; comprehensive fix required
+    - **Fixes:**
+        1. ~~Update `mock_paths.py`: Add path for `send_verification_email_to_address`~~ ✓ (done in audit)
+        2. ~~Fix `test_email_sending_failure_deletes_user_and_returns_500`~~ ✓ (done in audit)
+        3. Add registration email integration test: Verify `/api/register/` sends email to `mail.outbox`
+        4. Add `EmailDeliveryError` test: Verify adapter raises when `msg.send()` returns 0
+        5. Add password reset email tests: Verify reset flow sends email to outbox
+        6. Add template rendering smoke test: Verify templates render with expected context vars
+    - **Files:** test_email_backend.py, test adapters
 
 <!-- UI/UX Fixes -->
 

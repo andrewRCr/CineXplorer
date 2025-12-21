@@ -6,6 +6,27 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Audit mock_paths.py compliance across test codebase
+    - **Outcome:** All hardcoded mock paths migrated to centralized mock_paths.py files
+    - **Changes:**
+        - `authentication/tests/mock_paths.py`: Added `AUTH_SERVICE_SEND_VERIFICATION_EMAIL`,
+          `AUTH_SERVICE_TRANSACTION_ATOMIC`; removed stale `AUTH_SERVICE_EMAIL_ADD`
+        - `core/tests/mock_paths.py`: Added `WAIT_FOR_DB_CONNECTIONS`
+        - `movie/tests/mock_paths.py`: Added `BATCH_LOGGER`
+        - Updated 4 test files to use centralized paths
+    - **Files:** `backend/apps/*/tests/mock_paths.py`, `test_authentication_service_registration.py`,
+      `test_api_coverage.py`, `test_commands.py`, `test_batch_operations.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Restore email template styling (visual regression)
+    - **Outcome:** Created custom TXT email template to match HTML branding
+    - **Root cause:** TXT template was missing, falling back to allauth default with
+      "Hello from {{ site_name }}!" pattern; django-zoho-zeptomail concatenates both bodies
+    - **Files:** `backend/templates/account/email/email_confirmation_message.txt` (new)
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] DRY browse select trigger and value styling
     - **Outcome:**
         - Extracted shared browse select trigger styles to a helper module.

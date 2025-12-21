@@ -17,17 +17,38 @@ if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
 
 
+class EmailDeliveryError(Exception):
+    """Raised when email delivery fails."""
+
+
 class CustomAccountAdapter(DefaultAccountAdapter):
     """
-    Custom allauth adapter for frontend URL customization.
+    Custom allauth adapter for frontend URL customization and email verification.
 
-    This adapter only overrides get_email_confirmation_url() to ensure
-    verification links point to the frontend application. All other
-    functionality (including email sending) uses allauth defaults.
+    Overrides:
+    - get_email_confirmation_url(): Points verification links to frontend
+    - send_mail(): Verifies email was actually sent, raises on failure
 
     Email delivery is handled by Django's email backend configured in
     settings.py (ZohoZeptoMailEmailBackend for production, locmem for tests).
     """
+
+    def send_mail(self, template_prefix: str, email: str, context: dict[str, object]) -> None:
+        """
+        Send email and verify delivery.
+
+        Overrides default to check msg.send() return value and raise
+        EmailDeliveryError if the email backend reports failure.
+
+        Raises:
+            EmailDeliveryError: If email backend returns 0 (not sent)
+        """
+        msg = self.render_mail(template_prefix, email, context)
+        sent_count = msg.send()
+        if sent_count == 0:
+            raise EmailDeliveryError(
+                f"Email delivery failed for {email} (template: {template_prefix})"
+            )
 
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation

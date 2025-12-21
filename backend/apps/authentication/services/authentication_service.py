@@ -6,6 +6,9 @@ from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Protocol, cast
 
+from allauth.account.internal.flows.email_verification import (
+    send_verification_email_to_address,
+)
 from allauth.account.models import (
     EmailAddress,
     EmailConfirmation,
@@ -16,6 +19,7 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from ninja_jwt.exceptions import TokenError
 from ninja_jwt.tokens import RefreshToken
@@ -202,22 +206,34 @@ class AuthenticationService:
                 "details": list(exc.messages),
             }
 
-        user = self._user_model.objects.create_user(
-            username=payload.username,
-            email=payload.email,
-            password=payload.password,
-            first_name=payload.first_name or "",
-            last_name=payload.last_name or "",
-        )
-
         try:
-            self._email_address_model.objects.add_email(
-                request,
-                cast(AbstractBaseUser, user),
-                payload.email,
-                confirm=True,
-            )
+            with transaction.atomic():
+                user = self._user_model.objects.create_user(
+                    username=payload.username,
+                    email=payload.email,
+                    password=payload.password,
+                    first_name=payload.first_name or "",
+                    last_name=payload.last_name or "",
+                )
 
+                # Create email address record (without sending - we'll send manually)
+                email_address = self._email_address_model.objects.create(
+                    user=user,
+                    email=payload.email,
+                    verified=False,
+                    primary=True,
+                )
+
+                # Send verification email and check if it was actually sent
+                email_sent = send_verification_email_to_address(
+                    request, email_address, signup=True
+                )
+
+                if not email_sent:
+                    # Email wasn't sent - raise to trigger rollback
+                    raise RuntimeError("Verification email could not be sent")
+
+            # Transaction committed successfully - user and email records created
             self._logger.info(
                 "Registration successful | "
                 f"user_id={user.id} | username={payload.username} | "
@@ -234,7 +250,7 @@ class AuthenticationService:
                 "email_sent": True,
             }
         except Exception as exc:
-            user.delete()
+            # Transaction automatically rolled back - no manual cleanup needed
             self._logger.error(
                 "Registration failed: Email sending error | "
                 f"username={payload.username} | email={payload.email} | "

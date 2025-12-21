@@ -3,7 +3,6 @@ import { Box, Button, Field, VStack, Text } from "@chakra-ui/react";
 import { StyledInput } from "@/components/common";
 import { useFormik } from "formik";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { TextLink } from "@/components/common";
 
@@ -11,7 +10,6 @@ const Register = () => {
   const authContext = useAuthContext();
   const register = authContext?.register;
   const navigate = useNavigate();
-  const [errorMessage, setErrorMessage] = useState<string>("");
   const formik = useFormik({
     initialValues: {
       username: "",
@@ -34,34 +32,13 @@ const Register = () => {
     onSubmit: async (values) => {
       const { username, email, password } = values;
       if (register) {
-        setErrorMessage("");
         const response = await register(username, email, password);
 
         if (response.success) {
-          navigate(ROUTES.LOGIN, {
-            state: {
-              registrationSuccess: true,
-              message:
-                "Registration successful! Please check your email to verify your account before logging in.",
-            },
-          });
-        } else {
-          // Error case - use structured AuthError
-          const { status, message } = response.error;
-
-          if (status === 409) {
-            formik.setErrors({
-              username: "Username invalid or already taken.",
-              email: "Email invalid or already taken.",
-            });
-          } else if (status === 400) {
-            formik.setErrors({
-              password: message || "Password invalid.",
-            });
-          } else {
-            setErrorMessage(message || "Registration failed. Please try again.");
-          }
+          // Toast notification handled by useAuth.register()
+          navigate(ROUTES.LOGIN);
         }
+        // Error case: toast notification handled by useAuth.register()
       }
     },
   });
@@ -199,12 +176,6 @@ const Register = () => {
                   </Field.ErrorText>
                 </Field.Root>
               </Box>
-
-              {errorMessage && (
-                <Text color="on-destructive" fontSize="14px" textAlign="center">
-                  {errorMessage}
-                </Text>
-              )}
 
               <Button
                 type="submit"

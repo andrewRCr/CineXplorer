@@ -430,8 +430,19 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         email: string,
         password: string
     ): Promise<AuthResult<void>> => {
+        const toastId = "register-toast";
+        toaster.loading({ id: toastId, title: "Creating account..." });
+
         try {
             await authService.register(username, email, password);
+
+            toaster.update(toastId, {
+                title: "Account created!",
+                description: "Check your email to verify your account.",
+                type: "success",
+                duration: 6000,
+            });
+
             return { success: true, data: undefined };
         } catch (error: unknown) {
             const authError: AuthError = {
@@ -454,6 +465,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }
+
+            toaster.update(toastId, {
+                title: "Registration failed",
+                description: authError.message,
+                type: "error",
+                duration: 8000,
+                closable: true,
+            });
 
             return { success: false, error: authError };
         }

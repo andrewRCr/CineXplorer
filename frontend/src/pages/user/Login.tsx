@@ -151,23 +151,19 @@ const Login = () => {
         setIsLoggingIn(false);
 
         if (response.success) {
-          // Success case
+          // Success case - toast notification handled by useAuth.login()
           setGeneralError(""); // Clear any previous errors
           setEmailVerificationNeeded(false); // Clear verification alert
           setEmailVerifiedSuccess(null); // Clear email verified success
           setRegistrationSuccess(null); // Clear registration success
           navigate(ROUTES.HOME);
         } else {
-          // Error case - use structured AuthError
+          // Error case - toast notification handled by useAuth.login()
+          // Only handle special cases that need persistent UI (email verification)
           const { status, message, code } = response.error;
 
-          if (status === 401) {
-            formik.setErrors({
-              username: "Invalid username or password",
-              password: "Invalid username or password",
-            });
-          } else if (status === 400) {
-            // Check if this is an email verification error
+          if (status === 400) {
+            // Check if this is an email verification error - needs persistent alert with resend
             const isEmailVerificationError =
               code === ERROR_CODES.EMAIL_NOT_VERIFIED ||
               message.toLowerCase().includes("verify your email") ||
@@ -184,17 +180,9 @@ const Login = () => {
                 emailFromUsername || "username (no email provided)"
               );
               setGeneralError(""); // Clear any general error
-              formik.setErrors({
-                username: "",
-                password: "",
-              });
-            } else {
-              // Handle other 400 errors
-              setGeneralError(message || "Login failed. Please try again.");
             }
-          } else {
-            setGeneralError(message || `Login failed with status ${status}`);
           }
+          // All other errors: toast notification handles display
         }
       }
     },

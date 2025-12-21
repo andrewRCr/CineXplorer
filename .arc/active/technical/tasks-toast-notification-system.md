@@ -130,32 +130,44 @@ for async operations.
         - OAuth login (Google/GitHub) → success toast ✓
         - Toast styling readable over content ✓
 
-- [ ] **3.2 Register flow integration**
+- [x] **3.2 Register flow integration**
 
-    - [ ] **3.2.a Add promise toast to register**
-        - File: `frontend/src/hooks/auth/useAuth.ts` - `register()` function
-        - Use `toaster.promise()` pattern
+    - [x] **3.2.a Add promise toast to register**
+
+        Added loading → success/error toast pattern to register flow.
         - Loading: "Creating account..."
-        - Success: "Account created! Check your email to verify."
-        - Error: Display API error message (email taken, validation, etc.)
+        - Success: "Account created!" with description "Check your email to verify your account."
+        - Error: "Registration failed" with API error message (email taken, validation, etc.)
 
-    - [ ] **3.2.b Test register toasts manually**
-        - Valid registration → verify success toast mentions email verification
-        - Duplicate email → verify error toast
+    - [x] **3.2.b Test register toasts manually**
 
-- [ ] **3.3 Email verification resend integration**
+        Tested and verified. Discovered and fixed several issues during testing:
+        - Duplicate feedback removed (Register.tsx errorMessage, Login.tsx generalError)
+        - Backend registration atomicity fixed (transaction.atomic wrapper)
+        - Email delivery verification added (CustomAccountAdapter.send_mail raises on failure)
+        - ZeptoMail settings fixed (region config, token prefix)
+        - Allauth stubs added for send_verification_email_to_address
 
-    - [ ] **3.3.a Add promise toast to email resend**
-        - File: `frontend/src/pages/user/Login.tsx` - `handleResendVerification()`
-        - Use `toaster.promise()` pattern
+- [ ] **3.3 Email verification flow migration**
+
+    - [ ] **3.3.a Replace email verification alert with actionable error toast**
+        - File: `frontend/src/pages/user/Login.tsx`
+        - When login fails due to unverified email, show error toast with "Resend" action button
+        - Toast: "Email verification required" with description and action
+        - Use longer duration or `duration: null` for visibility
+        - Remove `emailVerificationNeeded` state and associated Alert component
+        - Remove `dismissVerificationAlert`, `resendMessage` state
+
+    - [ ] **3.3.b Add promise toast to resend action**
+        - When user clicks "Resend" action in toast, trigger resend flow
         - Loading: "Sending verification email..."
         - Success: "Verification email sent! Check your inbox."
-        - Error: Display error message
-        - Remove inline message state after toast added
+        - Error: Display error message (rate limited, etc.)
 
-    - [ ] **3.3.b Test email resend toast manually**
-        - Resend verification → verify success toast
-        - Rate limited → verify error toast
+    - [ ] **3.3.c Test email verification toasts manually**
+        - Unverified user login → error toast with resend action appears
+        - Click resend → loading/success toast
+        - Rate limited → error toast
 
 - [ ] **3.4 Logout flow integration**
 

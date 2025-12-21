@@ -15,7 +15,7 @@ import { useFormik } from "formik";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { useState, useEffect } from "react";
-import { FiMail, FiX } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { ERROR_CODES } from "@/constants/errors";
 import * as authService from "@/services/authService";
@@ -23,6 +23,7 @@ import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { TextLink } from "@/components/common";
+import { toaster } from "@/components/core/chakra/toaster";
 
 const Login = () => {
   const authContext = useAuthContext();
@@ -30,10 +31,6 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [rememberMeChecked, setRememberMeChecked] = useState(false);
-  const [emailVerificationNeeded, setEmailVerificationNeeded] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
-  const [isResendingEmail, setIsResendingEmail] = useState(false);
-  const [resendMessage, setResendMessage] = useState("");
   const [generalError, setGeneralError] = useState("");
   const [emailVerifiedSuccess, setEmailVerifiedSuccess] = useState<
     string | null
@@ -153,17 +150,15 @@ const Login = () => {
         if (response.success) {
           // Success case - toast notification handled by useAuth.login()
           setGeneralError(""); // Clear any previous errors
-          setEmailVerificationNeeded(false); // Clear verification alert
           setEmailVerifiedSuccess(null); // Clear email verified success
           setRegistrationSuccess(null); // Clear registration success
           navigate(ROUTES.HOME);
         } else {
           // Error case - toast notification handled by useAuth.login()
-          // Only handle special cases that need persistent UI (email verification)
+          // Handle email verification as a special case with actionable toast
           const { status, message, code } = response.error;
 
           if (status === 400) {
-            // Check if this is an email verification error - needs persistent alert with resend
             const isEmailVerificationError =
               code === ERROR_CODES.EMAIL_NOT_VERIFIED ||
               message.toLowerCase().includes("verify your email") ||
@@ -171,14 +166,26 @@ const Login = () => {
               message.toLowerCase().includes("verify email");
 
             if (isEmailVerificationError) {
-              setEmailVerificationNeeded(true);
-              // Try to get email from username if it contains @, otherwise leave empty
-              const emailFromUsername = username.includes("@") ? username : "";
-              setUserEmail(emailFromUsername);
-              console.log(
-                "Email verification needed for:",
-                emailFromUsername || "username (no email provided)"
-              );
+              // Dismiss the generic error toast from useAuth before showing our specific one
+              toaster.dismiss("login-toast");
+
+              // Get email from username if it contains @, otherwise can't offer resend
+              const emailForResend = username.includes("@") ? username : "";
+
+              toaster.error({
+                title: "Email verification required",
+                description: emailForResend
+                  ? "Please verify your email address before logging in."
+                  : "Please verify your email address. Log in with your email to resend verification.",
+                duration: 30000, // 30 seconds - long enough for user to read and act
+                closable: true,
+                action: emailForResend
+                  ? {
+                      label: "Resend",
+                      onClick: () => handleResendVerification(emailForResend),
+                    }
+                  : undefined,
+              });
               setGeneralError(""); // Clear any general error
             }
           }
@@ -221,35 +228,26 @@ const Login = () => {
     }
   }, [location, navigate]);
 
-  const handleResendVerification = async () => {
-    if (!userEmail) {
-      setResendMessage(
-        "Unable to resend email. Please try logging in with your email address."
-      );
-      return;
-    }
-
-    setIsResendingEmail(true);
-    setResendMessage("");
-
+  const handleResendVerification = async (email: string) => {
     try {
-      await authService.resendVerificationEmail(userEmail);
-      setResendMessage("Verification email sent! Please check your inbox.");
+      await authService.resendVerificationEmail(email);
+      toaster.success({
+        title: "Verification email sent!",
+        description: "Check your inbox for the verification link.",
+      });
     } catch (error: unknown) {
       console.error("Resend error:", error);
-      if (error && typeof error === 'object' && 'response' in error) {
-        console.error("Error response:", (error as { response: unknown }).response);
+      if (error && typeof error === "object" && "response" in error) {
+        console.error(
+          "Error response:",
+          (error as { response: unknown }).response
+        );
       }
-      setResendMessage("Failed to send email. Please try again.");
-    } finally {
-      setIsResendingEmail(false);
+      toaster.error({
+        title: "Failed to send email",
+        description: "Please try again later.",
+      });
     }
-  };
-
-  const dismissVerificationAlert = () => {
-    setEmailVerificationNeeded(false);
-    setResendMessage("");
-    setGeneralError(""); // Clear general error when alert is dismissed
   };
 
   const dismissEmailVerifiedAlert = () => {
@@ -566,10 +564,7 @@ const Login = () => {
       </Box>
 
       {/* Alerts - Positioned below login box */}
-      {(generalError ||
-        emailVerificationNeeded ||
-        emailVerifiedSuccess ||
-        registrationSuccess) && (
+      {(generalError || emailVerifiedSuccess || registrationSuccess) && (
         <Box position="relative" top="4" w="480px" mx="auto">
           <VStack gap={4} align="stretch">
             {registrationSuccess && (
@@ -641,65 +636,6 @@ const Login = () => {
                 <Alert.Description fontSize="sm" color="on-destructive">
                   {generalError}
                 </Alert.Description>
-              </Alert.Root>
-            )}
-            {emailVerificationNeeded && (
-              <Alert.Root
-                status="warning"
-                bg="warning/10"
-                borderRadius="lg"
-                borderWidth="1px"
-                borderColor="warning"
-                boxShadow="sm"
-                position="relative"
-              >
-                <IconButton
-                  size="sm"
-                  variant="ghost"
-                  aria-label="Dismiss"
-                  onClick={dismissVerificationAlert}
-                  position="absolute"
-                  top={2}
-                  right={2}
-                  zIndex={1}
-                >
-                  <FiX size={16} />
-                </IconButton>
-                <HStack gap={3} align="flex-start">
-                  <Alert.Indicator>
-                    <FiMail size={18} />
-                  </Alert.Indicator>
-                  <Box flex="1">
-                    <Alert.Title fontSize="md" fontWeight="semibold" mb={2}>
-                      Email Verification Required
-                    </Alert.Title>
-                    <Alert.Description fontSize="sm" mb={3}>
-                      Please verify your email address before logging in. Check
-                      your email for the verification link.
-                    </Alert.Description>
-                    <Box textAlign="center" mt={3} ml={-2}>
-                      <Button
-                        size="sm"
-                        bg="tertiary"
-                        color="on-tertiary"
-                        _hover={{ bg: "tertiary-hover" }}
-                        onClick={handleResendVerification}
-                        loading={isResendingEmail}
-                        loadingText="Sending..."
-                      >
-                        <FiMail size={14} style={{ marginRight: "4px" }} />
-                        Resend Email
-                      </Button>
-                    </Box>
-                    {resendMessage && (
-                      <Box textAlign="center" mt={2}>
-                        <Text fontSize="sm" color="on-success">
-                          {resendMessage}
-                        </Text>
-                      </Box>
-                    )}
-                  </Box>
-                </HStack>
               </Alert.Root>
             )}
           </VStack>

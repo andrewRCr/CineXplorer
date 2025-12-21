@@ -150,13 +150,16 @@ for async operations.
 
 - [ ] **3.3 Email verification flow migration**
 
-    - [ ] **3.3.a Replace email verification alert with actionable error toast**
-        - File: `frontend/src/pages/user/Login.tsx`
-        - When login fails due to unverified email, show error toast with "Resend" action button
-        - Toast: "Email verification required" with description and action
-        - Use longer duration or `duration: null` for visibility
-        - Remove `emailVerificationNeeded` state and associated Alert component
-        - Remove `dismissVerificationAlert`, `resendMessage` state
+    - [x] **3.3.a Replace email verification alert with actionable error toast**
+
+        Replaced Alert component with actionable error toast in Login.tsx:
+        - Error toast with "Resend" action button when email verification required
+        - 30-second duration (long enough for user to read and act)
+        - Dismisses generic useAuth error toast before showing specific one (prevents duplicate)
+        - Resend action triggers `handleResendVerification(email)` with success/error toast feedback
+        - Removed deprecated state: `emailVerificationNeeded`, `userEmail`, `isResendingEmail`, `resendMessage`
+        - Removed `dismissVerificationAlert` function
+        - Removed email verification Alert component block (~60 lines)
 
     - [ ] **3.3.b Add promise toast to resend action**
         - When user clicks "Resend" action in toast, trigger resend flow

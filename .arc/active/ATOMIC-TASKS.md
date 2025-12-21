@@ -31,70 +31,6 @@
 
 <!-- Code Quality / Refactoring -->
 
-- [ ] Auth flow refactor: architecture, error handling patterns, and accessibility
-    - **Context:** Code quality analysis (commit a089f65) + UX research on auth error patterns.
-      Current implementation has duplicate toast bug, misuses toasts for auth errors (should be
-      alerts per OWASP/Carbon/Material research), and lacks WCAG compliance on alerts.
-    - **Research findings (see external-research-analyst output):**
-        - Auth errors (wrong credentials) → persistent alert/banner, NOT toast
-        - Validation errors (empty field, format) → inline field errors
-        - Success feedback → toast is fine
-        - Toasts auto-dismiss; users may miss critical auth error info
-    - **Architectural decisions:**
-        - **Toast ownership:** Hooks return data only, components control presentation
-        - **Error pattern:** Auth errors use alerts (persistent), success uses toasts (ephemeral)
-        - **OAuth isolation:** Extract `useOAuthFlow` hook to contain complexity
-    - **Subtasks:**
-        - **Phase 1: Architecture (~1.5 hrs)**
-            - [ ] **1.1** Remove toast coupling from useAuth
-                - Remove `toaster` import from useAuth.ts
-                - `login()` returns `AuthResult` without showing toasts/alerts
-                - `register()` returns `AuthResult` without showing toasts/alerts
-                - Keep OAuth welcome toast (callback-triggered, success case)
-            - [ ] **1.2** Extract useOAuthFlow hook
-                - Move: `oauthLoading`, `minDisplayTimeElapsed`, timing effects, `initializeOAuthLogin`
-                - Isolate eslint-disable comments to this hook (documented complexity)
-                - Export: `{ oauthLoading, initializeOAuth, isProcessingCallback }`
-        - **Phase 2: Error handling alignment (~1.5 hrs)**
-            - [ ] **2.1** Create WCAG-compliant alert component
-                - `components/common/AuthAlert.tsx` (or enhance existing Alert usage)
-                - Required: `role="alert"`, `aria-live="assertive"`, proper focus management
-                - Support dismissible variant with close button
-                - Support action variant (e.g., "Resend" for email verification)
-                - Include recovery links pattern ("Forgot password?", "Try another method")
-            - [ ] **2.2** Update Login.tsx error handling
-                - Auth errors → alert (using new component), NOT toast
-                - Email verification → alert with Resend action (revert from toast)
-                - Validation errors → keep inline on fields (Formik pattern)
-                - Success → loading toast → success toast (welcome message)
-                - Remove duplicate field errors (single alert, not both fields)
-            - [ ] **2.3** Update Register.tsx error handling
-                - Registration errors → alert, NOT toast
-                - Success → toast ("Account created, check email")
-        - **Phase 3: State simplification (~45 min)**
-            - [ ] **3.1** Simplify Login.tsx state
-                - Use `useOAuthFlow` hook (removes ~4 state variables)
-                - Remove redundant `rememberMeChecked` (use formik.values directly)
-                - Consolidate error states if possible
-            - [ ] **3.2** Clean up alert rendering
-                - Use new AuthAlert component for all alert cases
-                - Remove duplicate Alert code (~60 lines)
-        - **Phase 4: Verification (~45 min)**
-            - [ ] **4.1** Functional testing
-                - Email/password login: success, wrong credentials, email verification needed
-                - OAuth flows: Google, GitHub
-                - Registration: success, duplicate email/username errors
-                - Remember me checkbox
-            - [ ] **4.2** Accessibility testing
-                - Screen reader announces alerts properly
-                - Focus moves to alert on error
-                - No color-only error indication
-            - [ ] **4.3** Verify no duplicate feedback (no toast + alert for same error)
-    - **Files:** `useAuth.ts`, `Login.tsx`, `Register.tsx`, new `useOAuthFlow.ts`, new `AuthAlert.tsx`
-    - **Estimated:** 4-5 hours total
-    - **Branch:** Continue on `technical/toast-notification-system`
-    - **Updates required:** Component styling strategy (alert vs toast guidance already added)
-
 - [ ] Backend: Return user email in "email not verified" error response
     - **Context:** Frontend can only offer "Resend" if user logged in with email (not username).
       Backend should return masked email in error response.
@@ -104,17 +40,14 @@
     - **Files:** `backend/apps/authentication/api.py`
     - **Related:** Auth flow refactor (frontend will use this once available)
 
-<!-- UI/UX Enhancements -->
+- [ ] Backend: Fix email verification template rendering as plaintext
+    - **Issue:** "Verify your account" email renders as plaintext, not HTML with links/formatting
+    - **Contrast:** "Welcome" email renders correctly with HTML
+    - **Investigation needed:** Check allauth email template configuration, compare working vs broken
+    - **Files:** `backend/templates/account/email/` (likely `email_confirmation_*.html/.txt`)
+    - **Related:** Auth flow - verification emails should be user-friendly
 
-- [ ] Evaluate toast positioning strategy (priority-based placement)
-    - **Context:** Important actionable toasts may warrant more prominent positioning than routine
-      feedback. However, research indicates auth errors should use alerts, not toasts - so this
-      may be lower priority now.
-    - **Remaining use cases for prominent toasts:**
-        - Destructive action confirmations (delete account, etc.)
-        - Time-sensitive notifications
-    - **Options:** Priority prop, separate toaster instances, dynamic placement
-    - **Status:** Evaluate after auth refactor complete - scope may be reduced
+<!-- UI/UX Enhancements -->
 
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
     - Change: `≥7.5` success (green), `5.0-7.4` warning (yellow), `<5.0` error (red)

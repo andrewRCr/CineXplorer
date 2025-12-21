@@ -6,6 +6,36 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Evaluate toast positioning strategy (priority-based placement)
+    - **Outcome:** Two toaster instances implemented with distinct positions
+    - `toaster` (bottom-right): Routine feedback (movie actions, general operations)
+    - `priorityToaster` (top-right): Auth success, important confirmations
+    - **Documented in:** `strategy-component-styling.md` (Toast positioning section)
+    - **Files:** `frontend/src/components/core/chakra/toaster.tsx`
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Auth flow refactor: architecture, error handling patterns, and accessibility
+    - **Scope note:** This task expanded well beyond atomic scope (6 phases, 20+ subtasks). In
+      retrospect, should have been its own incidental task list with dedicated branch. Lesson
+      learned: when an "atomic" task develops multiple phases, extract to proper task list early.
+    - **Outcome:** Complete auth flow overhaul with WCAG-compliant error handling, email/password
+      reset modals, component extraction (AuthFormCard, FormField, EmailVerificationDialog,
+      PasswordResetDialog), and proper toast/alert separation.
+    - **Key changes:**
+        - Hooks return data only; components control presentation (toast ownership)
+        - Auth errors → persistent FloatingAlerts; success → ephemeral toasts
+        - Email verification consolidated to `/login?verify=TOKEN` modal pattern
+        - Password reset flow added with `/login?reset=KEY` modal pattern
+        - Extracted reusable auth components to `components/auth/`
+        - Removed redundant button styling (uses default solid variant)
+    - **Files:** `useAuth.ts`, `Login.tsx`, `Register.tsx`, `ForgotPassword.tsx`, `useOAuthFlow.ts`,
+      `authService.ts`, `adapters.py`, `settings.py`, `toaster.tsx`, `FloatingAlert.tsx`,
+      `AuthFormCard.tsx`, `FormField.tsx`, `EmailVerificationDialog.tsx`, `PasswordResetDialog.tsx`,
+      `routes.ts`, `App.tsx` (VerifyEmail.tsx deleted)
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] Fix email test coverage gaps
     - **Outcome:** Added 8 new tests covering registration email flow, EmailDeliveryError, and template rendering
     - **Tests added:**

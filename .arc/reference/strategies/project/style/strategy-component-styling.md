@@ -484,22 +484,19 @@ Toasts provide temporary, non-blocking feedback for user actions and system even
 toasts overlay UI content and use solid backgrounds with colored left accent borders for readability.
 
 ```tsx
-import { toaster } from "@/components/core/chakra/toaster";
+import { toaster, priorityToaster } from "@/components/core/chakra/toaster";
 
-// Success toast (e.g., after saving)
+// Default toaster (bottom-right) - routine feedback
 toaster.success({ title: "Changes saved", description: "Your settings have been updated." });
-
-// Error toast (e.g., API failure)
 toaster.error({ title: "Save failed", description: "Please try again.", closable: true });
-
-// Warning toast (e.g., validation issue)
 toaster.warning({ title: "Missing fields", description: "Please complete all required fields." });
-
-// Info toast (e.g., notification)
 toaster.info({ title: "New feature", description: "Check out our new search filters." });
-
-// Loading toast (e.g., async operation)
 toaster.loading({ title: "Saving...", description: "Please wait." });
+
+// Priority toaster (top-right) - important notifications
+priorityToaster.success({ title: "Welcome back, John!", duration: 4000 });
+priorityToaster.loading({ id: "login", title: "Logging in..." });
+priorityToaster.dismiss("login"); // Dismiss by ID
 
 // Toast with action (e.g., undo)
 toaster.success({
@@ -507,6 +504,19 @@ toaster.success({
   action: { label: "Undo", onClick: () => handleUndo() },
 });
 ```
+
+**Toast positioning:**
+
+| Toaster           | Position     | Use Cases                                                |
+|-------------------|--------------|----------------------------------------------------------|
+| `toaster`         | bottom-right | Routine feedback (save, update, background actions)      |
+| `priorityToaster` | top-right    | Auth success, important confirmations, critical feedback |
+
+**When to use priority position:**
+
+- Auth flow toasts (login success, registration, email verified)
+- Critical action confirmations (account changes, destructive actions)
+- Time-sensitive notifications that warrant immediate attention
 
 **Available status types:**
 
@@ -551,25 +561,66 @@ Toasts float over varied backgrounds and need solid fills for consistent readabi
 
 ### When to Use: Alert vs Toast
 
-| Scenario                                    | Use               | Rationale                                       |
-|---------------------------------------------|-------------------|-------------------------------------------------|
-| Success after action (save, submit)         | Toast             | Ephemeral confirmation, user continues workflow |
-| Success that redirects away                 | Toast             | Page is changing anyway                         |
-| Transient error (wrong password, network)   | Toast             | User can retry immediately                      |
-| Actionable error (email verification)       | Toast with action | Action button enables recovery                  |
-| Blocking state (rate limited, locked)       | Alert             | User must wait/address before proceeding        |
-| Page-level warning (unsaved changes)        | Alert             | Contextual to current page state                |
-| Informational banner (maintenance, feature) | Alert             | Persistent awareness needed                     |
+| Scenario                                    | Use                  | Rationale                                                |
+|---------------------------------------------|----------------------|----------------------------------------------------------|
+| Success after action (save, submit)         | Toast                | Ephemeral confirmation, user continues workflow          |
+| Success that redirects away                 | Toast                | Page is changing anyway                                  |
+| Auth error (wrong credentials)              | Alert (blocking)     | User may miss if auto-dismiss; needs to read and correct |
+| Email verification needed                   | Alert with action    | Persistent, action button enables resend                 |
+| Registration success with CTA               | Alert (non-blocking) | Persistent "check email" message, user may look away     |
+| Network/transient error                     | Toast                | Retry is immediate, no correction needed                 |
+| Blocking state (rate limited, locked)       | Alert (blocking)     | User must wait/address before proceeding                 |
+| Page-level warning (unsaved changes)        | Alert (blocking)     | Contextual to current page state                         |
+| Informational banner (maintenance, feature) | Alert (blocking)     | Persistent awareness needed                              |
 
 **General principles:**
 
 - **Toasts** = Ephemeral, non-blocking, auto-dismiss, feedback on completed actions
-- **Alerts** = Persistent, inline, contextual, requires user awareness/action
+- **Alerts** = Persistent, contextual, requires user awareness/action
+
+### Alert Positioning Hierarchy
+
+Alerts support two positions via `FloatingAlertContainer`:
+
+| Position    | Visual Location | Blocking? | Use Cases                                         |
+|-------------|-----------------|-----------|---------------------------------------------------|
+| `center`    | Top-center      | Yes       | Auth errors, verification needed, blocking states |
+| `top-right` | Top-right       | No        | Registration success CTA, informational CTAs      |
+
+**Code example:**
+
+```tsx
+// Blocking alert (center, default) - demands immediate attention
+<FloatingAlertContainer>
+  <FloatingAlert status="error" onDismiss={...}>
+    Invalid username or password.
+  </FloatingAlert>
+</FloatingAlertContainer>
+
+// Non-blocking alert (top-right) - persistent but doesn't block workflow
+<FloatingAlertContainer position="top-right">
+  <FloatingAlert status="success" onDismiss={...}>
+    Account created! Check your email to verify.
+  </FloatingAlert>
+</FloatingAlertContainer>
+```
+
+**Why non-blocking alerts exist:**
+Registration success needs persistence (user may look away during redirect) but shouldn't block the login form.
+Non-blocking alerts share top-right space with priority toasts - both are "important but not stopping you".
+
+**Auth-specific guidance:**
+
+- Auth errors use `FloatingAlert` with center position (blocking)
+- WCAG: `role="alert"`, `aria-live="assertive"` for errors, dismissible via close button
+- Auto-clear when user starts typing (correcting the error)
+- Login/email verified success uses toasts (ephemeral, page context is clear)
+- Registration success uses non-blocking alert (persistent CTA, user may look away)
 
 **Edge cases:**
 
 - Actionable toasts (with action buttons) blur the line - use longer duration or `closable: true`
-- If user needs to reference the message while fixing something, prefer inline Alert
+- If user needs to reference the message while fixing something, prefer Alert
 
 ---
 

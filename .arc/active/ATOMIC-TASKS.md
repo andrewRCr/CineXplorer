@@ -33,6 +33,43 @@
 
 <!-- UI/UX Fixes -->
 
+- [ ] Evaluate toast positioning strategy (priority-based placement)
+    - **Context:** During toast system migration, identified that important actionable toasts
+      (auth errors with resend actions, destructive confirmations) may warrant more prominent
+      positioning than routine feedback (welcome messages, watchlist updates).
+    - **Consideration:**
+        - Critical toasts → top-center or bottom-center (more prominent)
+        - Standard toasts → bottom-end (current default, less intrusive)
+    - **Implementation options:**
+        - Add `priority` option to toaster wrapper that maps to placement
+        - Create separate toaster instances per placement
+        - Use Chakra's placement prop dynamically
+    - **UX concern:** Must feel intentional, not inconsistent. Critical toasts should "feel"
+      different (closable, longer duration, prominent position) so placement difference is justified.
+    - **Scope:** Evaluate feasibility, propose approach, may result in component styling strategy update
+    - **Related:** Toast notification system task list, component styling strategy
+
+- [ ] Code quality review: Login.tsx and Register.tsx
+    - **Context:** These files have accumulated incremental changes through multiple auth system
+      transformations (OAuth migration, allauth headless, alerts→toasts, etc.). They're among our
+      oldest frontend files and may have accumulated technical debt.
+    - **Scope:**
+        - Code smells, DRY violations, separation of concerns issues
+        - Type safety improvements (Any usage, better typing)
+        - Consistency with current patterns (hooks, services, error handling)
+        - "If writing from scratch today, what would we do differently?"
+        - Related functionality in useAuth, authService, etc.
+    - **Specific concerns to investigate:**
+        - Email derivation logic (line ~169 in Login.tsx) - backend should return email in
+          "email not verified" error response so frontend can always offer resend
+        - **DUPLICATE TOAST BUG**: useAuth.login() shows error toast for ALL errors, then Login.tsx
+          shows ADDITIONAL email verification toast - user sees two toasts for same error
+        - Error handling ownership - should useAuth show toasts, or return errors for caller to handle?
+        - State management complexity - too many useState variables?
+        - OAuth flow logic - could this be extracted/simplified?
+    - **Files:** `Login.tsx`, `Register.tsx`, `useAuth.ts`, `authService.ts`, related components
+    - **Outcome:** May result in refactoring, may confirm current approach is fine
+
 - [ ] Improve login form error message UX
     - **Current behavior:** On failed login, both username AND password fields show identical
       error message: "Unable to authenticate with provided credentials"

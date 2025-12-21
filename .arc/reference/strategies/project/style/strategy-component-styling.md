@@ -549,6 +549,28 @@ toaster.success({
 **Why toasts differ from alerts:** Alerts are inline and don't overlap content, so subtle tints work well.
 Toasts float over varied backgrounds and need solid fills for consistent readability.
 
+### When to Use: Alert vs Toast
+
+| Scenario                                    | Use               | Rationale                                       |
+|---------------------------------------------|-------------------|-------------------------------------------------|
+| Success after action (save, submit)         | Toast             | Ephemeral confirmation, user continues workflow |
+| Success that redirects away                 | Toast             | Page is changing anyway                         |
+| Transient error (wrong password, network)   | Toast             | User can retry immediately                      |
+| Actionable error (email verification)       | Toast with action | Action button enables recovery                  |
+| Blocking state (rate limited, locked)       | Alert             | User must wait/address before proceeding        |
+| Page-level warning (unsaved changes)        | Alert             | Contextual to current page state                |
+| Informational banner (maintenance, feature) | Alert             | Persistent awareness needed                     |
+
+**General principles:**
+
+- **Toasts** = Ephemeral, non-blocking, auto-dismiss, feedback on completed actions
+- **Alerts** = Persistent, inline, contextual, requires user awareness/action
+
+**Edge cases:**
+
+- Actionable toasts (with action buttons) blur the line - use longer duration or `closable: true`
+- If user needs to reference the message while fixing something, prefer inline Alert
+
 ---
 
 ## Building Interactive Elements

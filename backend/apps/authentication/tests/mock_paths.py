@@ -6,9 +6,9 @@ eliminating string duplication across test files and ensuring
 path updates only need to happen in one place.
 
 Usage:
-    from apps.authentication.tests.mock_paths import AUTH_SERVICE_EMAIL_ADD
+    from apps.authentication.tests.mock_paths import AUTH_SERVICE_SEND_VERIFICATION_EMAIL
 
-    with patch(AUTH_SERVICE_EMAIL_ADD):
+    with patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL):
         ...
 """
 
@@ -16,9 +16,14 @@ Usage:
 # Authentication Service Paths
 # =============================================================================
 
-# Email management
-AUTH_SERVICE_EMAIL_ADD = (
-    "apps.authentication.services.authentication_service.EmailAddress.objects.add_email"
+# Email sending (registration flow)
+AUTH_SERVICE_SEND_VERIFICATION_EMAIL = (
+    "apps.authentication.services.authentication_service.send_verification_email_to_address"
+)
+
+# Transaction management (for unit test isolation)
+AUTH_SERVICE_TRANSACTION_ATOMIC = (
+    "apps.authentication.services.authentication_service.transaction.atomic"
 )
 
 # Schema paths

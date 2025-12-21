@@ -7,6 +7,10 @@ from unittest.mock import Mock, patch
 from django.core.exceptions import ValidationError
 from django.test import override_settings
 
+from apps.authentication.tests.mock_paths import (
+    AUTH_SERVICE_SEND_VERIFICATION_EMAIL,
+    AUTH_SERVICE_TRANSACTION_ATOMIC,
+)
 from apps.authentication.tests.test_helpers import (
     create_register_input,
     normalize_response_data,
@@ -14,8 +18,8 @@ from apps.authentication.tests.test_helpers import (
 from apps.authentication.tests.unit.types import AuthServiceFactory
 
 
-@patch("apps.authentication.services.authentication_service.send_verification_email_to_address")
-@patch("apps.authentication.services.authentication_service.transaction.atomic", nullcontext)
+@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
+@patch(AUTH_SERVICE_TRANSACTION_ATOMIC, nullcontext)
 def test_register_user_success(
     mock_send_email: Mock,
     auth_service_factory: AuthServiceFactory,
@@ -122,8 +126,8 @@ def test_register_user_rejects_weak_password(
     deps.logger.warning.assert_called()
 
 
-@patch("apps.authentication.services.authentication_service.send_verification_email_to_address")
-@patch("apps.authentication.services.authentication_service.transaction.atomic", nullcontext)
+@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
+@patch(AUTH_SERVICE_TRANSACTION_ATOMIC, nullcontext)
 def test_register_user_returns_500_on_email_failure(
     mock_send_email: Mock,
     auth_service_factory: AuthServiceFactory,

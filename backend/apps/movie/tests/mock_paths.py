@@ -38,3 +38,10 @@ BLACKLIST_CACHE = "apps.movie.services.data_quality.filters.cache"
 
 # Deduplication tracker
 DEDUP_GET_CLIENT = "apps.movie.services.deduplication_tracker.get_atomic_set_client"
+
+# =============================================================================
+# Logging Paths
+# =============================================================================
+
+# Batch pipeline logger (for verifying log output)
+BATCH_LOGGER = "apps.movie.services.pipelines.batch.logger"

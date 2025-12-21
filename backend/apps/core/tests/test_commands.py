@@ -8,13 +8,15 @@ import pytest
 from django.core.management import call_command
 from django.db.utils import OperationalError
 
+from apps.core.tests.mock_paths import WAIT_FOR_DB_CONNECTIONS
+
 # ============================================================================
 # Management Command Tests
 # ============================================================================
 
 
 @pytest.mark.django_db
-@patch("apps.core.management.commands.wait_for_db.connections")
+@patch(WAIT_FOR_DB_CONNECTIONS)
 def test_wait_for_db_ready(patched_connections: MagicMock) -> None:
     """Tests waiting for the database.
     Case: database is ready.
@@ -32,7 +34,7 @@ def test_wait_for_db_ready(patched_connections: MagicMock) -> None:
 
 @pytest.mark.django_db
 @patch("time.sleep")
-@patch("apps.core.management.commands.wait_for_db.connections")
+@patch(WAIT_FOR_DB_CONNECTIONS)
 def test_wait_for_db_delay(
     patched_connections: MagicMock,
     patched_sleep: MagicMock,

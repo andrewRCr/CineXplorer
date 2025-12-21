@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 from apps.core.services.api_response import ApiResponse
 from apps.movie.schemas import MovieListItemSchema
 from apps.movie.services.pipelines.batch import fetch_movies_batch
-from apps.movie.tests.mock_paths import BATCH_TMDB_GET_MOVIE_DETAILS
+from apps.movie.tests.mock_paths import BATCH_LOGGER, BATCH_TMDB_GET_MOVIE_DETAILS
 from apps.movie.tests.test_helpers import (
     create_mock_movie_detail_response,
     create_mock_tmdb_error_response,
@@ -260,7 +260,7 @@ def test_fetch_movies_batch_null_response_data(mock_get_movie_details: MagicMock
 # ============================================================================
 
 
-@patch('apps.movie.services.pipelines.batch.logger')
+@patch(BATCH_LOGGER)
 @patch(BATCH_TMDB_GET_MOVIE_DETAILS)
 def test_fetch_movies_batch_logs_operation_start(
     mock_get_movie_details: MagicMock,
@@ -291,7 +291,7 @@ def test_fetch_movies_batch_logs_operation_start(
     assert first_call.kwargs['extra']['operation'] == 'fetch_movies_batch'
 
 
-@patch('apps.movie.services.pipelines.batch.logger')
+@patch(BATCH_LOGGER)
 @patch(BATCH_TMDB_GET_MOVIE_DETAILS)
 def test_fetch_movies_batch_logs_failures(
     mock_get_movie_details: MagicMock,
@@ -310,7 +310,7 @@ def test_fetch_movies_batch_logs_failures(
     assert len(warning_calls) > 0
 
 
-@patch('apps.movie.services.pipelines.batch.logger')
+@patch(BATCH_LOGGER)
 @patch(BATCH_TMDB_GET_MOVIE_DETAILS)
 def test_fetch_movies_batch_logs_completion(
     mock_get_movie_details: MagicMock,

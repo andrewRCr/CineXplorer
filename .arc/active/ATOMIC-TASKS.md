@@ -49,26 +49,63 @@
     - **Scope:** Evaluate feasibility, propose approach, may result in component styling strategy update
     - **Related:** Toast notification system task list, component styling strategy
 
-- [ ] Code quality review: Login.tsx and Register.tsx
-    - **Context:** These files have accumulated incremental changes through multiple auth system
-      transformations (OAuth migration, allauth headless, alerts→toasts, etc.). They're among our
-      oldest frontend files and may have accumulated technical debt.
-    - **Scope:**
-        - Code smells, DRY violations, separation of concerns issues
-        - Type safety improvements (Any usage, better typing)
-        - Consistency with current patterns (hooks, services, error handling)
-        - "If writing from scratch today, what would we do differently?"
-        - Related functionality in useAuth, authService, etc.
-    - **Specific concerns to investigate:**
-        - Email derivation logic (line ~169 in Login.tsx) - backend should return email in
-          "email not verified" error response so frontend can always offer resend
-        - **DUPLICATE TOAST BUG**: useAuth.login() shows error toast for ALL errors, then Login.tsx
-          shows ADDITIONAL email verification toast - user sees two toasts for same error
-        - Error handling ownership - should useAuth show toasts, or return errors for caller to handle?
-        - State management complexity - too many useState variables?
-        - OAuth flow logic - could this be extracted/simplified?
-    - **Files:** `Login.tsx`, `Register.tsx`, `useAuth.ts`, `authService.ts`, related components
-    - **Outcome:** May result in refactoring, may confirm current approach is fine
+- [ ] Refactor auth flow: decouple toasts, simplify state, extract OAuth logic
+    - **Context:** Code quality analysis completed (see commit a089f65). Identified duplicate toast bug,
+      state complexity, and OAuth logic sprawl. This refactor implements the architectural decisions made.
+    - **Architectural decisions:**
+        - **Toast ownership:** Hooks return data only, components control presentation
+        - **Shared utilities:** `authFeedback.ts` for consistent toast patterns (optional helper)
+        - **OAuth isolation:** Extract `useOAuthFlow` hook to contain OAuth complexity and eslint-disables
+    - **Subtasks:**
+        - [ ] **1. Remove toast coupling from useAuth** (~45 min)
+            - Remove `toaster` import from useAuth.ts
+            - Modify `login()` to return `AuthResult` without showing toasts
+            - Modify `register()` to return `AuthResult` without showing toasts
+            - Keep OAuth welcome toast in useAuth (it's callback-triggered, not caller-controlled)
+        - [ ] **2. Create authFeedback.ts utility** (~15 min)
+            - `showAuthLoadingToast(id, title)` - returns toastId
+            - `handleAuthResult(toastId, result, successMessage)` - updates toast based on result
+            - Provides consistency without coupling
+        - [ ] **3. Update Login.tsx to handle toasts** (~30 min)
+            - Show loading toast before calling login
+            - Handle success/error cases with toast updates
+            - Email verification case: dismiss generic, show actionable toast (existing logic)
+            - Remove redundant `rememberMeChecked` state (test checkbox still works)
+        - [ ] **4. Update Register.tsx to handle toasts** (~15 min)
+            - Show loading toast before calling register
+            - Handle success/error cases with toast updates
+        - [ ] **5. Extract useOAuthFlow hook** (~45 min)
+            - Move from Login.tsx: `oauthLoading`, `minDisplayTimeElapsed`, timing effects
+            - Move `initializeOAuthLogin` function
+            - Isolate eslint-disable comments to this hook
+            - Export: `{ oauthLoading, initializeOAuth }`
+        - [ ] **6. Simplify Login.tsx** (~20 min)
+            - Use `useOAuthFlow` hook
+            - Remove extracted OAuth state/logic
+            - Verify all auth flows still work
+        - [ ] **7. Extract DismissibleAlert component** (~20 min, optional)
+            - Create reusable component for success/error alerts with dismiss button
+            - Reduces ~60 lines of duplicate Alert code in Login.tsx
+            - Location: `components/common/DismissibleAlert.tsx`
+        - [ ] **8. Verify and test** (~30 min)
+            - Test email/password login flow (success, error, email verification)
+            - Test OAuth flows (Google, GitHub)
+            - Test registration flow
+            - Test remember me checkbox works correctly
+            - Verify no duplicate toasts
+    - **Files:** `useAuth.ts`, `Login.tsx`, `Register.tsx`, new `useOAuthFlow.ts`, new `authFeedback.ts`
+    - **Estimated:** 3-4 hours total
+    - **Branch:** Continue on `technical/toast-notification-system` (directly supports toast migration)
+
+- [ ] Backend: Return user email in "email not verified" error response
+    - **Context:** Currently when login fails due to unverified email, frontend can only offer
+      "Resend" action if user logged in with email (not username). Backend should return the
+      user's email (or masked version like `t***@example.com`) in the error response.
+    - **Current behavior:** Error response is `{"detail": "Please verify your email", "code": "EMAIL_NOT_VERIFIED"}`
+    - **Proposed:** Add `"email": "t***@example.com"` to error response
+    - **Security consideration:** Masked email reveals domain but not full address - acceptable tradeoff
+    - **Files:** `backend/apps/authentication/api.py` (login endpoint error handling)
+    - **Related:** Auth flow refactor task above (frontend will use this once available)
 
 - [ ] Improve login form error message UX
     - **Current behavior:** On failed login, both username AND password fields show identical

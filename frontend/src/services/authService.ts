@@ -200,3 +200,86 @@ export async function resendVerificationEmail(
 
     return response.data;
 }
+
+/**
+ * Request password reset email.
+ * Uses allauth headless API for password reset flow.
+ *
+ * @param email - User's email address
+ * @returns Success status (allauth returns 200 OK on success)
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+    const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
+    const csrfToken = getCsrfToken();
+
+    const response = await fetch(
+        `${baseUrl}/_allauth/browser/v1/auth/password/request`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(csrfToken && { "X-CSRFToken": csrfToken }),
+            },
+            credentials: "include",
+            body: JSON.stringify({ email }),
+        }
+    );
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+            errorData.detail || errorData.message || "Failed to send reset email"
+        );
+    }
+}
+
+/**
+ * Complete password reset with new password.
+ * Uses allauth headless API to submit the new password with the reset key.
+ *
+ * IMPORTANT: A 401 response means SUCCESS (password changed, user must login).
+ * A 200 response means SUCCESS + user was auto-logged in.
+ * This is allauth's non-standard behavior documented in their API.
+ *
+ * @param key - Password reset key from email link
+ * @param password - New password
+ * @returns Object with success status and whether user was auto-logged in
+ */
+export async function resetPassword(
+    key: string,
+    password: string
+): Promise<{ success: boolean; autoLoggedIn: boolean }> {
+    const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
+    const csrfToken = getCsrfToken();
+
+    const response = await fetch(
+        `${baseUrl}/_allauth/browser/v1/auth/password/reset`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(csrfToken && { "X-CSRFToken": csrfToken }),
+            },
+            credentials: "include",
+            body: JSON.stringify({ key, password }),
+        }
+    );
+
+    // 200 = success + auto-logged in
+    if (response.status === 200) {
+        return { success: true, autoLoggedIn: true };
+    }
+
+    // 401 = success but user needs to login (non-standard but documented allauth behavior)
+    if (response.status === 401) {
+        return { success: true, autoLoggedIn: false };
+    }
+
+    // 400 or other = error (invalid/expired key, password validation failed)
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+        errorData.errors?.[0]?.message ||
+        errorData.detail ||
+        "Password reset failed. The link may be expired or invalid.";
+    throw new Error(errorMessage);
+}

@@ -9,18 +9,25 @@ export interface AuthError {
 
 /**
  * Auth Result - discriminated union for consistent auth operation outcomes
- * @template T - The success data type (void for login/register)
+ * @template T - The success data type (displayName for login, void for register)
  */
 export type AuthResult<T> =
     | { success: true; data: T }
     | { success: false; error: AuthError };
+
+/**
+ * Login success data - returned by login() for component to use in success feedback
+ */
+export interface LoginSuccessData {
+    displayName: string;
+}
 
 export interface AuthStateProps {
     login: (
         username: string,
         password: string,
         rememberMe?: boolean
-    ) => Promise<AuthResult<void>>;
+    ) => Promise<AuthResult<LoginSuccessData>>;
     isAuthenticated: boolean;
     user: User | null;
     logout: () => Promise<void>;

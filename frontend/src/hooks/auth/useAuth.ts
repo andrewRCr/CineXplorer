@@ -17,7 +17,7 @@
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { AuthStateProps, AuthResult, AuthError } from "@/@types/auth-state";
+import type { AuthStateProps, AuthResult, AuthError, LoginSuccessData } from "@/@types/auth-state";
 import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
@@ -29,7 +29,7 @@ import {
 } from "@/utilities/token";
 import type { components } from "@/types/api";
 import * as authService from "@/services/authService";
-import { toaster } from "@/components/core/chakra/toaster";
+import { priorityToaster } from "@/components/core/chakra/toaster";
 
 // Type alias for user profile from generated API types
 type UserProfile = components["schemas"]["UserProfileSchema"];
@@ -240,9 +240,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                     setUser(oauthUser);
                     setIsAuthenticated(true);
 
-                    // Show welcome toast for OAuth login
+                    // Show welcome toast for OAuth login (priority position)
                     const displayName = oauthUser.first_name || oauthUser.username;
-                    toaster.success({
+                    priorityToaster.success({
                         title: `Welcome back, ${displayName}!`,
                         duration: 4000,
                     });
@@ -333,10 +333,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         username: string,
         password: string,
         rememberMe: boolean = false
-    ): Promise<AuthResult<void>> => {
-        const toastId = "login-toast";
-        toaster.loading({ id: toastId, title: "Logging in..." });
-
+    ): Promise<AuthResult<LoginSuccessData>> => {
         try {
             logger.debug('[useAuth] login() called, attempting authentication...');
             const response = await authService.login(username, password);
@@ -356,15 +353,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 setIsAuthenticated(true);
                 await getUserDetails();
 
-                // Show success toast with user's name (first_name if available, otherwise username)
+                // Return display name for component to use in success feedback
                 const displayName = response.first_name || response.username;
-                toaster.update(toastId, {
-                    title: `Welcome back, ${displayName}!`,
-                    type: "success",
-                    duration: 4000,
-                });
-
-                return { success: true, data: undefined };
+                return { success: true, data: { displayName } };
             }
 
             // Login response missing required tokens
@@ -372,14 +363,6 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 hasUserId: !!user_id,
                 hasAccessToken: !!accessToken,
                 hasRefreshToken: !!refreshToken,
-            });
-
-            toaster.update(toastId, {
-                title: "Login failed",
-                description: "Invalid server response",
-                type: "error",
-                duration: 8000,
-                closable: true,
             });
 
             return {
@@ -412,14 +395,6 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 authError.message = error.message;
             }
 
-            toaster.update(toastId, {
-                title: "Login failed",
-                description: authError.message,
-                type: "error",
-                duration: 8000,
-                closable: true,
-            });
-
             return { success: false, error: authError };
         }
     };
@@ -430,19 +405,8 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         email: string,
         password: string
     ): Promise<AuthResult<void>> => {
-        const toastId = "register-toast";
-        toaster.loading({ id: toastId, title: "Creating account..." });
-
         try {
             await authService.register(username, email, password);
-
-            toaster.update(toastId, {
-                title: "Account created!",
-                description: "Check your email to verify your account.",
-                type: "success",
-                duration: 6000,
-            });
-
             return { success: true, data: undefined };
         } catch (error: unknown) {
             const authError: AuthError = {
@@ -465,14 +429,6 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }
-
-            toaster.update(toastId, {
-                title: "Registration failed",
-                description: authError.message,
-                type: "error",
-                duration: 8000,
-                closable: true,
-            });
 
             return { success: false, error: authError };
         }

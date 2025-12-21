@@ -1,120 +1,124 @@
 import { ROUTES } from "@/constants/routes";
 import {
   Box,
-  Field,
   VStack,
   Text,
-  Alert,
   HStack,
-  IconButton,
   Checkbox,
   Button,
 } from "@chakra-ui/react";
-import { StyledInput } from "@/components/common";
+import { TextLink, FloatingAlert, FloatingAlertContainer } from "@/components/common";
+import { AuthFormCard, FormField, EmailVerificationDialog, PasswordResetDialog } from "@/components/auth";
+import type { VerificationState } from "@/components/auth";
 import { useFormik } from "formik";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import useAuthContext from "@/hooks/auth/useAuthContext";
-import { useState, useEffect } from "react";
-import { FiX } from "react-icons/fi";
+import { useOAuthFlow } from "@/hooks/auth/useOAuthFlow";
+import { useState, useEffect, useRef } from "react";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { ERROR_CODES } from "@/constants/errors";
 import * as authService from "@/services/authService";
 import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
-import { TextLink } from "@/components/common";
-import { toaster } from "@/components/core/chakra/toaster";
+import { priorityToaster } from "@/components/core/chakra/toaster";
 
 const Login = () => {
   const authContext = useAuthContext();
   const login = authContext?.login;
   const navigate = useNavigate();
   const location = useLocation();
-  const [rememberMeChecked, setRememberMeChecked] = useState(false);
+  const [searchParams] = useSearchParams();
   const [generalError, setGeneralError] = useState("");
-  const [emailVerifiedSuccess, setEmailVerifiedSuccess] = useState<
-    string | null
-  >(null);
-  const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(
-    null
-  );
+  // Email verification error needs special handling (action button for resend)
+  const [emailVerificationError, setEmailVerificationError] = useState<{
+    message: string;
+    email: string;
+  } | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  // Registration success message (persistent, non-blocking, top-right)
+  const [registrationSuccess, setRegistrationSuccess] = useState<string | null>(null);
 
-  // Initialize OAuth loading state immediately from sessionStorage (prevents form flash)
-  // Note: State never updates after initialization - component unmounts during navigation
-  const [oauthLoading] = useState<{
-    provider: string;
-    loading: boolean;
-  } | null>(() => {
-    const oauthProvider = sessionStorage.getItem('oauth_in_progress');
-    if (oauthProvider) {
-      console.log(`[OAuth] Component initializing with OAuth flow in progress: ${oauthProvider}`);
-      return { provider: oauthProvider, loading: true };
-    }
-    return null;
-  });
+  // Email verification via query param (?verify=TOKEN)
+  // Uses button safeguard to prevent email client link scanning from consuming tokens
+  const verifyToken = searchParams.get("verify");
+  const [verificationState, setVerificationState] = useState<VerificationState>(
+    verifyToken ? "pending" : null
+  );
+  const [verificationMessage, setVerificationMessage] = useState("");
+  const hasVerifiedRef = useRef(false);
 
-  // Initialize timing gate: closed if OAuth in progress (will open after minimum display time)
-  const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(() => {
-    const oauthProvider = sessionStorage.getItem('oauth_in_progress');
-    // If OAuth flow in progress, gate starts CLOSED (false) - will open after minimum display time
-    // Otherwise gate starts OPEN (true) - no delay needed for normal login
-    return !oauthProvider;
-  });
+  // Password reset via query param (?reset=KEY)
+  const resetKey = searchParams.get("reset");
+  const [passwordResetKey, setPasswordResetKey] = useState<string | null>(resetKey);
 
-  // Check if returning from OAuth flow and set up timing gate
-  useEffect(() => {
-    const oauthProvider = sessionStorage.getItem('oauth_in_progress');
-    const startTimeStr = sessionStorage.getItem('oauth_start_time');
-
-    if (oauthProvider && startTimeStr) {
-      const startTime = parseInt(startTimeStr, 10);
-      const elapsedTime = Date.now() - startTime;
-      const FAST_OAUTH_THRESHOLD = 3000; // 3 seconds
-      const MINIMUM_DISPLAY_TIME = 500; // 0.5 seconds minimum (actual display time from when spinner appears)
-
-      console.log(`[OAuth] Detected return from ${oauthProvider} OAuth flow after ${elapsedTime}ms`);
-
-      // For fast OAuth, enforce minimum display time before allowing navigation
-      if (elapsedTime < FAST_OAUTH_THRESHOLD) {
-        setMinDisplayTimeElapsed(false);
-
-        // Display spinner for MINIMUM_DISPLAY_TIME from NOW (not from original click time)
-        // This ensures consistent visible duration regardless of OAuth speed
-        console.log(`[OAuth] Fast OAuth detected, enforcing ${MINIMUM_DISPLAY_TIME}ms minimum display time`);
-
-        setTimeout(() => {
-          console.log('[OAuth] Minimum display time elapsed, allowing navigation');
-          setMinDisplayTimeElapsed(true);
-        }, MINIMUM_DISPLAY_TIME);
-      } else {
-        console.log('[OAuth] Slow OAuth detected, no minimum display time needed');
-        // Slow OAuth - user already waited, allow immediate navigation
-        setMinDisplayTimeElapsed(true);
-      }
-
-      // Cleanup function: Clear flags when component unmounts (during navigation)
-      return () => {
-        console.log('[OAuth] Login component unmounting, clearing OAuth flags');
-        sessionStorage.removeItem('oauth_in_progress');
-        sessionStorage.removeItem('oauth_start_time');
-      };
-    }
-  }, []);
+  // OAuth flow state and controls (extracted to dedicated hook)
+  const {
+    isLoading: isOAuthLoading,
+    provider: oauthProvider,
+    canNavigate: oauthCanNavigate,
+    initializeOAuth,
+  } = useOAuthFlow((error) => setGeneralError(error));
 
   // Redirect authenticated users away from login page
-  // Note: Gate navigation with minDisplayTimeElapsed to enforce minimum spinner display for fast OAuth
+  // Gate navigation with oauthCanNavigate to enforce minimum spinner display for fast OAuth
   useEffect(() => {
     // Only redirect if:
     // 1. User is authenticated
     // 2. Not in active login process
-    // 3. Minimum OAuth display time has elapsed (for fast OAuth UX)
-    if (authContext?.isAuthenticated && !isLoggingIn && minDisplayTimeElapsed) {
+    // 3. OAuth timing gate allows navigation (for fast OAuth UX)
+    if (authContext?.isAuthenticated && !isLoggingIn && oauthCanNavigate) {
       console.log("User already authenticated, redirecting to home");
       // Use replace to avoid adding login page to history
       navigate(ROUTES.HOME, { replace: true });
     }
-  }, [authContext?.isAuthenticated, navigate, isLoggingIn, minDisplayTimeElapsed]);
+  }, [authContext?.isAuthenticated, navigate, isLoggingIn, oauthCanNavigate]);
+
+  // Handle email verification when user clicks the button
+  const handleVerifyEmail = async () => {
+    if (!verifyToken || hasVerifiedRef.current) return;
+
+    hasVerifiedRef.current = true;
+    setVerificationState("verifying");
+
+    try {
+      const response = await authService.verifyEmail(verifyToken);
+      setVerificationState("success");
+      setVerificationMessage(response.message || "Email verified successfully!");
+
+      // Clear the token from URL to prevent re-verification attempts
+      window.history.replaceState({}, "", ROUTES.LOGIN);
+
+      // Show success toast
+      priorityToaster.success({
+        title: "Email verified!",
+        description: "You can now log in with your account.",
+        duration: 6000,
+      });
+
+      // Clear verification UI after short delay to let user see success
+      setTimeout(() => {
+        setVerificationState(null);
+      }, 1500);
+    } catch (error: unknown) {
+      console.error("Email verification error:", error);
+      setVerificationState("error");
+      hasVerifiedRef.current = false; // Allow retry
+
+      // Extract error message
+      let errorMessage = "Verification failed. The link may be expired or invalid.";
+      if (error && typeof error === "object" && "response" in error) {
+        const axiosError = error as { response?: { status?: number; data?: { error?: string } } };
+        if (axiosError.response?.data?.error) {
+          errorMessage = axiosError.response.data.error;
+        }
+      }
+      setVerificationMessage(errorMessage);
+
+      // Clear the token from URL
+      window.history.replaceState({}, "", ROUTES.LOGIN);
+    }
+  };
 
   const formik = useFormik({
     initialValues: {
@@ -140,6 +144,9 @@ const Login = () => {
       const { username, password } = values;
       if (login) {
         setIsLoggingIn(true);
+        const toastId = "login-toast";
+        priorityToaster.loading({ id: toastId, title: "Logging in..." });
+
         const response = await login(
           username,
           password,
@@ -148,77 +155,79 @@ const Login = () => {
         setIsLoggingIn(false);
 
         if (response.success) {
-          // Success case - toast notification handled by useAuth.login()
-          setGeneralError(""); // Clear any previous errors
-          setEmailVerifiedSuccess(null); // Clear email verified success
-          setRegistrationSuccess(null); // Clear registration success
+          // Clear any previous error state
+          setGeneralError("");
+          setEmailVerificationError(null);
+
+          // Show success toast with user's display name (priority position)
+          priorityToaster.dismiss(toastId);
+          priorityToaster.success({
+            title: `Welcome back, ${response.data.displayName}!`,
+            duration: 4000,
+          });
+
           navigate(ROUTES.HOME);
         } else {
-          // Error case - toast notification handled by useAuth.login()
-          // Handle email verification as a special case with actionable toast
+          // Handle different error cases
           const { status, message, code } = response.error;
 
-          if (status === 400) {
-            const isEmailVerificationError =
-              code === ERROR_CODES.EMAIL_NOT_VERIFIED ||
+          // Check for email verification error (special case with action)
+          const isEmailVerificationError =
+            status === 400 &&
+            (code === ERROR_CODES.EMAIL_NOT_VERIFIED ||
               message.toLowerCase().includes("verify your email") ||
               message.toLowerCase().includes("email verification") ||
-              message.toLowerCase().includes("verify email");
+              message.toLowerCase().includes("verify email"));
 
-            if (isEmailVerificationError) {
-              // Dismiss the generic error toast from useAuth before showing our specific one
-              toaster.dismiss("login-toast");
+          if (isEmailVerificationError) {
+            // Dismiss the loading toast
+            priorityToaster.dismiss(toastId);
 
-              // Get email from username if it contains @, otherwise can't offer resend
-              const emailForResend = username.includes("@") ? username : "";
+            // Get email from username if it contains @, otherwise can't offer resend
+            const emailForResend = username.includes("@") ? username : "";
 
-              toaster.error({
-                title: "Email verification required",
-                description: emailForResend
-                  ? "Please verify your email address before logging in."
-                  : "Please verify your email address. Log in with your email to resend verification.",
-                duration: 30000, // 30 seconds - long enough for user to read and act
-                closable: true,
-                action: emailForResend
-                  ? {
-                      label: "Resend",
-                      onClick: () => handleResendVerification(emailForResend),
-                    }
-                  : undefined,
-              });
-              setGeneralError(""); // Clear any general error
-            }
+            // Use FloatingAlert for email verification (persistent with action)
+            setEmailVerificationError({
+              message: emailForResend
+                ? "Please verify your email address before logging in."
+                : "Please verify your email address. Log in with your email to resend verification.",
+              email: emailForResend,
+            });
+            setGeneralError(""); // Clear any general error
+          } else {
+            // Generic auth error - use FloatingAlert (persistent, dismissible)
+            priorityToaster.dismiss(toastId);
+            setGeneralError(message);
           }
-          // All other errors: toast notification handles display
         }
       }
     },
   });
 
-  // Sync local state with Formik
-  useEffect(() => {
-    setRememberMeChecked(formik.values.rememberMe);
-  }, [formik.values.rememberMe]);
-
-  // Check for email verification success from redirect
+  // Check for success/error redirects and show appropriate feedback
   useEffect(() => {
     if (location.state?.emailVerified) {
-      setEmailVerifiedSuccess(
-        location.state.message ||
-          "Email verified successfully! You can now log in."
-      );
+      // Email verified - show success toast (priority position)
+      priorityToaster.success({
+        title: "Email verified!",
+        description: location.state.message || "You can now log in.",
+        duration: 6000,
+      });
       // Clear the state to prevent showing the message again on refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
     if (location.state?.registrationSuccess) {
+      // Registration success - show persistent alert (non-blocking, top-right)
+      // Uses alert instead of toast so message persists if user looks away
       setRegistrationSuccess(
         location.state.message ||
-          "Registration successful! Please check your email to verify your account before logging in."
+          "Account created! Please check your email to verify your account before logging in."
       );
       // Clear the state to prevent showing the message again on refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
     if (location.state?.oauthError) {
+      // OAuth error - set general error for FloatingAlert
       setGeneralError(
         location.state.message ||
           "OAuth authentication failed. Please try again."
@@ -231,7 +240,7 @@ const Login = () => {
   const handleResendVerification = async (email: string) => {
     try {
       await authService.resendVerificationEmail(email);
-      toaster.success({
+      priorityToaster.success({
         title: "Verification email sent!",
         description: "Check your inbox for the verification link.",
       });
@@ -243,112 +252,34 @@ const Login = () => {
           (error as { response: unknown }).response
         );
       }
-      toaster.error({
+      priorityToaster.error({
         title: "Failed to send email",
         description: "Please try again later.",
       });
     }
   };
 
-  const dismissEmailVerifiedAlert = () => {
-    setEmailVerifiedSuccess(null);
+  const dismissGeneralError = () => {
+    setGeneralError("");
   };
 
-  const dismissRegistrationSuccessAlert = () => {
-    setRegistrationSuccess(null);
+  const dismissEmailVerificationError = () => {
+    setEmailVerificationError(null);
   };
 
-  const handleGoogleLogin = async () => {
-    // Use django-allauth headless mode API
-    await initializeOAuthLogin("google");
-  };
-
-  const handleGithubLogin = async () => {
-    // Use django-allauth headless mode API
-    await initializeOAuthLogin("github");
-  };
-
-  /**
-   * Initialize OAuth login using django-allauth headless mode.
-   *
-   * Security Model:
-   * - OAuth endpoints (/_allauth/) are CSRF-exempt in backend middleware
-   * - OAuth 2.0 'state' parameter provides CSRF protection at protocol level
-   * - State is random, session-bound, validated on callback (more secure than cookies)
-   * - CSRF token is optional but included for defense-in-depth
-   *
-   * Flow:
-   * 1. Check session endpoint (validates django-allauth is available)
-   * 2. Get CSRF token from existing cookie (may not exist, that's OK)
-   * 3. POST to provider redirect endpoint (browser follows OAuth redirect)
-   * 4. User authorizes on provider site (Google/GitHub)
-   * 5. Provider redirects to backend callback with OAuth code
-   * 6. Backend validates state, exchanges code, creates session, sets JWT cookies
-   * 7. Backend redirects to frontend, useAuth detects tokens, logs in
-   *
-   * Note: Uses HTML form submission (not fetch) so browser follows OAuth redirect.
-   */
-  const initializeOAuthLogin = async (provider: string) => {
-    try {
-      console.log(`[OAuth] Initializing ${provider} OAuth login`);
-
-      // Step 1: Get CSRF token from cookie (if available)
-      const csrfToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("csrftoken="))
-        ?.split("=")[1];
-
-      // Step 2: Create form and submit through Caddy proxy
-      // Use absolute URL with protocol to force full page navigation (bypass React Router)
-      const baseUrl = import.meta.env.VITE_BASE_URL || 'https://localhost:8444';
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = `${baseUrl}/_allauth/browser/v1/auth/provider/redirect`;
-      // CRITICAL: Force full page reload, prevent React Router interception
-      form.target = "_self";
-
-      // Add form fields
-      const fields = {
-        provider: provider,
-        callback_url: `${baseUrl}/login`,
-        process: "login",
-        ...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
-      };
-
-      Object.entries(fields).forEach(([key, value]) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = key;
-        input.value = value;
-        form.appendChild(input);
-      });
-
-      // Set flag to indicate OAuth flow is in progress
-      // Store provider name and timestamp for UX timing decisions on return
-      sessionStorage.setItem('oauth_in_progress', provider);
-      sessionStorage.setItem('oauth_start_time', Date.now().toString());
-
-      // Submit form immediately (browser will perform full page navigation)
-      // No artificial delay - user will see Google/GitHub login form immediately if needed
-      // Loading spinner will show when returning FROM OAuth (not when going TO OAuth)
-      document.body.appendChild(form);
-      form.submit();
-    } catch (error) {
-      console.error("OAuth initialization error:", error);
-      setGeneralError("Failed to initiate OAuth login. Please try again.");
-    }
-  };
+  const handleGoogleLogin = () => initializeOAuth("google");
+  const handleGithubLogin = () => initializeOAuth("github");
 
   // Show loading content when OAuth is in progress
-  if (oauthLoading?.loading) {
+  if (isOAuthLoading && oauthProvider) {
     return (
       <LoadingContent
         mode="content"
         message={`Logging in with ${
-          oauthLoading.provider === "google" ? "Google" : "GitHub"
+          oauthProvider === "google" ? "Google" : "GitHub"
         }...`}
         icon={
-          oauthLoading.provider === "google" ? (
+          oauthProvider === "google" ? (
             <GoogleLogo size={64} />
           ) : (
             <Box color="black">
@@ -369,110 +300,53 @@ const Login = () => {
       justifyContent="center"
       paddingY="32px"
     >
-      {/* Login Box - Centered */}
-      <Box position="relative" zIndex={1} w="480px">
-        <Box
-          bg="layer-01"
-          color="foreground"
-          p={10}
-          rounded="lg"
-          boxShadow="xl"
-          w="100%"
-        >
-          <form onSubmit={formik.handleSubmit}>
-            <VStack gap="24px" align="flex-start">
-              <Box minH="80px" w="100%">
-                <Field.Root
-                  required
-                  invalid={!!formik.errors.username && formik.touched.username}
-                  w="100%"
-                  position="relative"
-                >
-                  <Field.Label
-                    htmlFor="username"
-                    fontSize="16px"
-                    fontWeight="medium"
-                    mb={2}
-                  >
-                    Username or Email Address
-                  </Field.Label>
-                  <StyledInput
-                    autoFocus
-                    id="username"
-                    name="username"
-                    type="text"
-                    value={formik.values.username}
-                    onChange={(e) => {
-                      formik.handleChange(e);
-                      setGeneralError(""); // Clear general error when user types
-                      setRegistrationSuccess(null); // Clear registration success when user types
-                    }}
-                    onBlur={formik.handleBlur}
-                    layer="01"
-                  />
-                  <Field.ErrorText
-                    fontSize="14px"
-                    position="absolute"
-                    top="100%"
-                    left="0"
-                    right="0"
-                    mt="4px"
-                    color="destructive"
-                  >
-                    {formik.errors.username}
-                  </Field.ErrorText>
-                </Field.Root>
-              </Box>
-              <Box minH="80px" w="100%" mt={3}>
-                <Field.Root
-                  required
-                  invalid={!!formik.errors.password && formik.touched.password}
-                  w="100%"
-                  position="relative"
-                >
-                  <Field.Label
-                    htmlFor="password"
-                    fontSize="16px"
-                    fontWeight="medium"
-                    mb={2}
-                  >
-                    Password
-                  </Field.Label>
-                  <StyledInput
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formik.values.password}
-                    onChange={(e) => {
-                      formik.handleChange(e);
-                      setGeneralError(""); // Clear general error when user types
-                      setRegistrationSuccess(null); // Clear registration success when user types
-                    }}
-                    onBlur={formik.handleBlur}
-                    layer="01"
-                  />
-                  <Field.ErrorText
-                    fontSize="14px"
-                    position="absolute"
-                    top="100%"
-                    left="0"
-                    right="0"
-                    mt="4px"
-                    color="destructive"
-                  >
-                    {formik.errors.password}
-                  </Field.ErrorText>
-                </Field.Root>
-              </Box>
+      <AuthFormCard>
+        <form onSubmit={formik.handleSubmit}>
+          <VStack gap="24px" align="flex-start">
+              <FormField
+                name="username"
+                label="Username or Email Address"
+                value={formik.values.username}
+                error={formik.errors.username}
+                touched={formik.touched.username}
+                onChange={(e) => {
+                  formik.handleChange(e);
+                  // Clear alerts when user starts typing
+                  setGeneralError("");
+                  setEmailVerificationError(null);
+                  setRegistrationSuccess(null);
+                }}
+                onBlur={formik.handleBlur}
+                autoFocus
+              />
+              <FormField
+                name="password"
+                label="Password"
+                type="password"
+                value={formik.values.password}
+                error={formik.errors.password}
+                touched={formik.touched.password}
+                onChange={(e) => {
+                  formik.handleChange(e);
+                  // Clear alerts when user starts typing
+                  setGeneralError("");
+                  setEmailVerificationError(null);
+                  setRegistrationSuccess(null);
+                }}
+                onBlur={formik.handleBlur}
+                mt={3}
+              >
+                <TextLink to={ROUTES.FORGOT_PASSWORD} fontSize="14px">
+                  Forgot password?
+                </TextLink>
+              </FormField>
               <Checkbox.Root
                 mt={3}
                 id="rememberMe"
                 name="rememberMe"
-                checked={rememberMeChecked}
+                checked={formik.values.rememberMe}
                 onCheckedChange={(details) => {
-                  const checked = Boolean(details.checked);
-                  setRememberMeChecked(checked);
-                  formik.setFieldValue("rememberMe", checked);
+                  formik.setFieldValue("rememberMe", Boolean(details.checked));
                 }}
                 onBlur={() => {
                   formik.setFieldTouched("rememberMe", true);
@@ -497,11 +371,6 @@ const Login = () => {
                 type="submit"
                 width="full"
                 fontSize="16px"
-                bg="primary"
-                color="on-primary"
-                _hover={{
-                  bg: "primary-hover",
-                }}
                 loading={formik.isSubmitting}
                 loadingText="Logging in..."
               >
@@ -560,87 +429,89 @@ const Login = () => {
               </Text>
             </VStack>
           </form>
-        </Box>
-      </Box>
+        </AuthFormCard>
 
-      {/* Alerts - Positioned below login box */}
-      {(generalError || emailVerifiedSuccess || registrationSuccess) && (
-        <Box position="relative" top="4" w="480px" mx="auto">
-          <VStack gap={4} align="stretch">
-            {registrationSuccess && (
-              <Alert.Root
-                status="success"
-                bg="success/10"
-                borderRadius="lg"
-                borderWidth="1px"
-                borderColor="success"
-                boxShadow="sm"
-                position="relative"
-              >
-                <IconButton
-                  size="sm"
-                  variant="ghost"
-                  aria-label="Dismiss"
-                  onClick={dismissRegistrationSuccessAlert}
-                  position="absolute"
-                  top={2}
-                  right={2}
-                  zIndex={1}
-                >
-                  <FiX size={16} />
-                </IconButton>
-                <Alert.Indicator />
-                <Alert.Description fontSize="sm" color="on-success">
-                  {registrationSuccess}
-                </Alert.Description>
-              </Alert.Root>
-            )}
-            {emailVerifiedSuccess && (
-              <Alert.Root
-                status="success"
-                bg="success/10"
-                borderRadius="lg"
-                borderWidth="1px"
-                borderColor="success"
-                boxShadow="sm"
-                position="relative"
-              >
-                <IconButton
-                  size="sm"
-                  variant="ghost"
-                  aria-label="Dismiss"
-                  onClick={dismissEmailVerifiedAlert}
-                  position="absolute"
-                  top={2}
-                  right={2}
-                  zIndex={1}
-                >
-                  <FiX size={16} />
-                </IconButton>
-                <Alert.Indicator />
-                <Alert.Description fontSize="sm" color="on-success">
-                  {emailVerifiedSuccess}
-                </Alert.Description>
-              </Alert.Root>
-            )}
-            {generalError && (
-              <Alert.Root
-                status="error"
-                bg="destructive/10"
-                borderRadius="lg"
-                borderWidth="1px"
-                borderColor="destructive"
-                boxShadow="sm"
-              >
-                <Alert.Indicator />
-                <Alert.Description fontSize="sm" color="on-destructive">
-                  {generalError}
-                </Alert.Description>
-              </Alert.Root>
-            )}
-          </VStack>
-        </Box>
+      {/* Blocking alerts (center) - auth errors requiring immediate attention */}
+      {(generalError || emailVerificationError) && (
+        <FloatingAlertContainer>
+          {emailVerificationError && (
+            <FloatingAlert
+              status="error"
+              onDismiss={dismissEmailVerificationError}
+              action={
+                emailVerificationError.email
+                  ? {
+                      label: "Resend verification",
+                      onClick: () =>
+                        handleResendVerification(emailVerificationError.email),
+                    }
+                  : undefined
+              }
+            >
+              {emailVerificationError.message}
+            </FloatingAlert>
+          )}
+          {generalError && (
+            <FloatingAlert status="error" onDismiss={dismissGeneralError}>
+              {generalError}
+            </FloatingAlert>
+          )}
+        </FloatingAlertContainer>
       )}
+
+      {/* Non-blocking alerts (top-right) - success CTAs that persist but don't block */}
+      {registrationSuccess && (
+        <FloatingAlertContainer position="top-right">
+          <FloatingAlert
+            status="success"
+            onDismiss={() => setRegistrationSuccess(null)}
+          >
+            {registrationSuccess}
+          </FloatingAlert>
+        </FloatingAlertContainer>
+      )}
+
+      {/* Email verification dialog - shown when ?verify=TOKEN in URL */}
+      <EmailVerificationDialog
+        verificationState={verificationState}
+        verificationMessage={verificationMessage}
+        onVerify={handleVerifyEmail}
+        onDismiss={() => {
+          setVerificationState(null);
+          window.history.replaceState({}, "", ROUTES.LOGIN);
+        }}
+      />
+
+      {/* Password reset dialog - shown when ?reset=KEY in URL */}
+      <PasswordResetDialog
+        resetKey={passwordResetKey}
+        onSubmit={authService.resetPassword}
+        onSuccess={(autoLoggedIn) => {
+          setPasswordResetKey(null);
+          window.history.replaceState({}, "", ROUTES.LOGIN);
+
+          if (autoLoggedIn) {
+            // User was auto-logged in, refresh auth state and redirect
+            priorityToaster.success({
+              title: "Password reset successfully!",
+              description: "You are now logged in.",
+              duration: 4000,
+            });
+            navigate(ROUTES.HOME);
+          } else {
+            // User needs to login with new password
+            priorityToaster.success({
+              title: "Password reset successfully!",
+              description: "You can now log in with your new password.",
+              duration: 6000,
+            });
+          }
+        }}
+        onDismiss={() => {
+          setPasswordResetKey(null);
+          window.history.replaceState({}, "", ROUTES.LOGIN);
+        }}
+      />
     </Box>
   );
 };

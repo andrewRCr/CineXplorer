@@ -156,6 +156,20 @@ class AuthenticationService:
         self._client_info_getter = client_info_getter or get_client_info
         self._logger = logger or logging.getLogger("cinexplorer.auth")
 
+    @staticmethod
+    def _mask_email(email: str) -> str:
+        """Mask email address for display in error responses.
+
+        Reveals first character of local part and full domain.
+        Example: "test@example.com" -> "t***@example.com"
+        """
+        if "@" not in email:
+            return "***"
+        local, domain = email.split("@", 1)
+        if not local:
+            return f"***@{domain}"
+        return f"{local[0]}***@{domain}"
+
     # =========================================================================
     # Registration
     # =========================================================================
@@ -311,7 +325,8 @@ class AuthenticationService:
                 "error": (
                     "Please verify your email address before logging in. "
                     "Check your email for the verification link."
-                )
+                ),
+                "email": self._mask_email(user.email),
             }
 
         refresh = self._refresh_token_cls.for_user(

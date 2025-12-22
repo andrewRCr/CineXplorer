@@ -94,6 +94,11 @@ def test_403_email_not_verified_uses_error_format(
     assert isinstance(data["error"], str), "'error' field should be a string"
     assert "verify" in data["error"].lower() or "email" in data["error"].lower()
 
+    # Verify masked email is included for resend functionality
+    assert "email" in data, "Response should contain 'email' field"
+    assert "***@" in data["email"], "Email should be masked"
+    assert data["email"].endswith(unverified_user.email.split("@")[1])
+
 
 # ============================================================================
 # 409 Conflict Error Format Tests

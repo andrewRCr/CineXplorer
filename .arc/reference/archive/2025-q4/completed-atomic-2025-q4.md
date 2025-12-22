@@ -6,6 +6,17 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Backend: Investigate and fix flaky registration email tests
+    - **Root Cause:** Allauth's email verification rate limiting persists in Redis between test runs.
+      Rate limit is `1/180s/key` (1 email per 3 minutes per email address). When tests run multiple
+      times, the rate limit blocks subsequent email sends, causing `send_verification_email_to_address()`
+      to return False and triggering our "Verification email could not be sent" error.
+    - **Fix:** Added `ACCOUNT_RATE_LIMITS = {"confirm_email": ""}` to `settings_test.py` to disable
+      the confirm_email rate limit in test environment.
+    - **Verified:** All 175 authentication tests pass. Ran flaky tests 5x consecutively - all passed.
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] Backend: Fix email verification template rendering as plaintext
     - **Outcome:** Root cause was `django-zoho-zeptomail` v0.0.3 bug - it concatenates plaintext+HTML
       into single `htmlbody` field instead of setting `textbody` and `htmlbody` separately.

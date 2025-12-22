@@ -31,16 +31,6 @@
 
 <!-- Code Quality / Refactoring -->
 
-- [ ] Backend: Investigate and fix flaky registration email tests
-    - **Context:** 3 registration email tests are intermittently failing (pre-existing issue, discovered during
-      email HTML fix work)
-    - **Symptoms:** Tests occasionally fail without code changes; re-running typically passes
-    - **Investigation needed:**
-        - Identify which specific tests are flaky
-        - Determine if it's timing-related, mock isolation, or test database state
-        - Check if parallel test execution (pytest-xdist) is a factor
-    - **Files:** `backend/apps/authentication/tests/integration/test_email_backend.py` (likely)
-
 <!-- UI/UX Enhancements -->
 
 - [ ] Revert MovieUserScore badge colors to traffic light scheme

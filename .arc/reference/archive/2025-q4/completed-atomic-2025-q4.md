@@ -6,6 +6,22 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Backend: Fix email verification template rendering as plaintext
+    - **Outcome:** Root cause was `django-zoho-zeptomail` v0.0.3 bug - it concatenates plaintext+HTML
+      into single `htmlbody` field instead of setting `textbody` and `htmlbody` separately.
+      Created `FixedZohoZeptoMailEmailBackend` with lazy imports to avoid test side effects.
+    - **Files:** `apps/core/email_backend.py` (new), `config/settings.py`
+    - **Note:** 3 registration email tests are flaky (pre-existing issue, not caused by this change)
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Backend: Return user email in "email not verified" error response
+    - **Outcome:** Added `_mask_email()` static method to AuthenticationService, returns masked email
+      (e.g., `t***@example.com`) in 403 response. Updated unit and integration tests.
+    - **Files:** `authentication_service.py`, `test_authentication_service_tokens.py`, `test_error_responses.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] Evaluate toast positioning strategy (priority-based placement)
     - **Outcome:** Two toaster instances implemented with distinct positions
     - `toaster` (bottom-right): Routine feedback (movie actions, general operations)

@@ -31,21 +31,15 @@
 
 <!-- Code Quality / Refactoring -->
 
-- [ ] Backend: Return user email in "email not verified" error response
-    - **Context:** Frontend can only offer "Resend" if user logged in with email (not username).
-      Backend should return masked email in error response.
-    - **Current:** `{"detail": "Please verify your email", "code": "EMAIL_NOT_VERIFIED"}`
-    - **Proposed:** Add `"email": "t***@example.com"` to response
-    - **Security:** Masked email reveals domain but not full address - acceptable tradeoff
-    - **Files:** `backend/apps/authentication/api.py`
-    - **Related:** Auth flow refactor (frontend will use this once available)
-
-- [ ] Backend: Fix email verification template rendering as plaintext
-    - **Issue:** "Verify your account" email renders as plaintext, not HTML with links/formatting
-    - **Contrast:** "Welcome" email renders correctly with HTML
-    - **Investigation needed:** Check allauth email template configuration, compare working vs broken
-    - **Files:** `backend/templates/account/email/` (likely `email_confirmation_*.html/.txt`)
-    - **Related:** Auth flow - verification emails should be user-friendly
+- [ ] Backend: Investigate and fix flaky registration email tests
+    - **Context:** 3 registration email tests are intermittently failing (pre-existing issue, discovered during
+      email HTML fix work)
+    - **Symptoms:** Tests occasionally fail without code changes; re-running typically passes
+    - **Investigation needed:**
+        - Identify which specific tests are flaky
+        - Determine if it's timing-related, mock isolation, or test database state
+        - Check if parallel test execution (pytest-xdist) is a factor
+    - **Files:** `backend/apps/authentication/tests/integration/test_email_backend.py` (likely)
 
 <!-- UI/UX Enhancements -->
 

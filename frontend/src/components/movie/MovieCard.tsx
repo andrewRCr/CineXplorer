@@ -16,6 +16,18 @@ import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
 import { useMovieActions } from "@/hooks/movie/useMovieActions";
 
+// ============================================================================
+// MovieCard Component
+// ============================================================================
+//
+// Displays a movie poster card with:
+// - Poster image with hover zoom effect
+// - Title (with tooltip for truncated titles)
+// - Release date and user score
+// - Action buttons (watched, liked, watchlist)
+//
+// ============================================================================
+
 interface MovieCardProps {
   movie: MovieListItem;
   source?: string;
@@ -23,6 +35,10 @@ interface MovieCardProps {
 }
 
 const MovieCard = ({ movie, source, query }: MovieCardProps) => {
+  // ==========================================================================
+  // State & Hooks
+  // ==========================================================================
+
   const [searchParams] = useSearchParams();
   const [isTitleTooltipOpen, setIsTitleTooltipOpen] = useState(false);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
@@ -35,19 +51,86 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   // Movie actions hook for watchlist, watched, liked, etc.
   const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
 
-  // Compute watchlist state: prefer local state (after toggle), fallback to prop
+  // ==========================================================================
+  // Computed Values
+  // ==========================================================================
+
+  // Watchlist state: prefer local state (after toggle), fallback to prop
   const isOnWatchlist = useMemo(
     () => localWatchlistState ?? movie.user_movie_data?.user_on_watchlist ?? false,
     [localWatchlistState, movie.user_movie_data]
   );
 
-  // Optimize title truncation check with debounced callback
+  // Format release date for display
+  // CRITICAL: Parse ISO date without timezone conversion to avoid date shift
+  // (e.g., "1980-01-01" displaying as "December 31, 1979" in US timezones)
+  const formattedDate = useMemo(() => {
+    if (!movie.release_date) return "Release date unknown";
+
+    const dateParts = movie.release_date.split("-");
+    if (dateParts.length !== 3) return "Release date unknown";
+
+    const year = Number.parseInt(dateParts[0], 10);
+    const month = Number.parseInt(dateParts[1], 10);
+    const day = Number.parseInt(dateParts[2], 10);
+
+    if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+      return "Release date unknown";
+    }
+
+    // Create date in local timezone (month is 0-indexed in Date constructor)
+    const date = new Date(year, month - 1, day);
+    if (Number.isNaN(date.getTime())) return "Release date unknown";
+
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }, [movie.release_date]);
+
+  // Build query string preserving filter parameters (not pagination)
+  const queryString = useMemo(() => {
+    const params: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      // Skip pagination params - infinite scroll doesn't use them
+      if (key === "page" || key === "tmdb_page_start") return;
+      if (value) {
+        params[key] = value;
+      }
+    });
+
+    // Props override URL - source and query only
+    if (source) {
+      params.from = source;
+    }
+    if (query) {
+      params.query = query;
+    }
+
+    const queryStr = Object.entries(params)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
+      .join("&");
+
+    return queryStr ? `?${queryStr}` : "";
+  }, [searchParams, source, query]);
+
+  // Poster image URL
+  const posterUrl = useMemo(() => {
+    return movie.poster_path
+      ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
+      : "https://placehold.co/500x750?text=No\nImage";
+  }, [movie.poster_path]);
+
+  // ==========================================================================
+  // Title Truncation Detection
+  // ==========================================================================
+
   const checkTruncation = useCallback(() => {
     if (!titleRef.current) return;
 
     const element = titleRef.current;
 
-    // Use ResizeObserver API if available (more efficient than DOM cloning)
     if ("ResizeObserver" in window) {
       // Simple heuristic: if scrollHeight > clientHeight, it's truncated
       setIsTitleTruncated(element.scrollHeight > element.clientHeight + 5);
@@ -73,18 +156,17 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
     }
   }, []);
 
-  // Debounced resize handler for better performance
+  // Debounced resize handler for truncation check
   useEffect(() => {
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const debouncedCheck = () => {
       if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(checkTruncation, 150); // 150ms debounce
+      resizeTimer = setTimeout(checkTruncation, 150);
     };
 
     // Initial check with small delay
-    const initialTimer: ReturnType<typeof setTimeout> = setTimeout(checkTruncation, 50);
+    const initialTimer = setTimeout(checkTruncation, 50);
 
-    // Add resize listener with debouncing
     window.addEventListener("resize", debouncedCheck);
 
     return () => {
@@ -94,72 +176,35 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
     };
   }, [movie.title, checkTruncation]);
 
-  // Memoize expensive date formatting
-  const formattedDate = useMemo(() => {
-    if (!movie.release_date) return "Release date unknown";
+  // ==========================================================================
+  // Event Handlers
+  // ==========================================================================
 
-    // Parse ISO date (YYYY-MM-DD) without timezone conversion
-    // CRITICAL: new Date(iso_string) interprets as UTC then converts to local timezone
-    // which causes "1980-01-01" to display as "December 31, 1979" in US timezones
-    // Solution: Parse components and create date in local timezone directly
-    const dateParts = movie.release_date.split("-");
-    if (dateParts.length !== 3) return "Release date unknown";
+  const handleWatchlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-    const year = Number.parseInt(dateParts[0], 10);
-    const month = Number.parseInt(dateParts[1], 10);
-    const day = Number.parseInt(dateParts[2], 10);
+    // Optimistically update local state for immediate UI feedback
+    setLocalWatchlistState(!isOnWatchlist);
 
-    // Validate parsed values
-    if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
-      return "Release date unknown";
+    try {
+      await toggleWatchlist();
+      // TODO (7.7.7): Show success notification
+      console.log(
+        isOnWatchlist
+          ? "Movie removed from watchlist"
+          : "Movie added to watchlist"
+      );
+    } catch (error) {
+      // Rollback on error
+      setLocalWatchlistState(isOnWatchlist);
+      console.error("Failed to toggle watchlist:", error);
     }
+  };
 
-    // Create date in local timezone (month is 0-indexed in Date constructor)
-    const date = new Date(year, month - 1, day);
-    if (Number.isNaN(date.getTime())) return "Release date unknown";
-
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }, [movie.release_date]);
-
-  // Memoize query string building - preserve filter parameters (not pagination)
-  const queryString = useMemo(() => {
-    // Start with all URL params (includes filter params parent doesn't track)
-    const params: Record<string, string> = {};
-    searchParams.forEach((value, key) => {
-      // Skip pagination params - infinite scroll doesn't use them
-      if (key === "page" || key === "tmdb_page_start") return;
-      if (value) {
-        params[key] = value;
-      }
-    });
-
-    // Props override URL - source and query only (no currentPage for infinite scroll)
-    // Note: currentPage prop is deprecated and ignored
-    if (source) {
-      params.from = source;
-    }
-    if (query) {
-      params.query = query;
-    }
-
-    // Build query string
-    const queryStr = Object.entries(params)
-      .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
-      .join("&");
-
-    return queryStr ? `?${queryStr}` : "";
-  }, [searchParams, source, query]);
-
-  // Memoize poster URL to avoid recreation
-  const posterUrl = useMemo(() => {
-    return movie.poster_path
-      ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
-      : "https://placehold.co/500x750?text=No\nImage";
-  }, [movie.poster_path]);
+  // ==========================================================================
+  // Render
+  // ==========================================================================
 
   return (
     <Box
@@ -183,6 +228,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
         transition="all 0.3s ease-in-out"
         _hover={{ bg: "layer-hover-01" }}
       >
+        {/* Poster Image */}
         <Link to={`/movie/${movie.tmdb_id}${queryString}`} style={{ display: "block", textDecoration: "none" }}>
           <Box position="relative" paddingBottom="150%" overflow="hidden">
             <Image
@@ -200,8 +246,11 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
             />
           </Box>
         </Link>
+
+        {/* Card Body: Title, Date, Score */}
         <Box flex="1" display="flex" flexDirection="column">
           <Card.Body display="flex" flexDirection="column" p={3} height="100px">
+            {/* Title with Tooltip */}
             <Box mb={2} position="relative">
               <Text
                 ref={titleRef}
@@ -217,9 +266,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: "vertical",
                 }}
-                onMouseEnter={() =>
-                  isTitleTruncated && setIsTitleTooltipOpen(true)
-                }
+                onMouseEnter={() => isTitleTruncated && setIsTitleTooltipOpen(true)}
                 onMouseLeave={() => setIsTitleTooltipOpen(false)}
               >
                 <Link to={`/movie/${movie.tmdb_id}${queryString}`} style={{ textDecoration: "none", color: "inherit" }}>
@@ -274,31 +321,24 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                 </Box>
               )}
             </Box>
+
+            {/* Date and Score Row */}
             <Box>
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-              >
-                <Text
-                  fontSize="sm"
-                  fontFamily="sourcesans"
-                  color="on-muted"
-                >
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Text fontSize="sm" fontFamily="sourcesans" color="on-muted">
                   {formattedDate}
                 </Text>
                 <MovieUserScore score={movie.vote_average ?? 0} />
               </Box>
             </Box>
           </Card.Body>
+
+          {/* Action Buttons */}
           <Card.Footer p={3} pt={0}>
             <Center width="100%">
               <ButtonGroup size="sm" spaceX={1}>
                 <Tooltip content="Watched" openDelay={500}>
-                  <IconButton
-                    variant="ghost"
-                    size="sm"
-                  >
+                  <IconButton variant="ghost" size="sm">
                     <LuEye />
                   </IconButton>
                 </Tooltip>
@@ -315,25 +355,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                     variant="ghost"
                     color={isOnWatchlist ? "tertiary" : undefined}
                     size="sm"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Optimistically update local state for immediate UI feedback
-                      setLocalWatchlistState(!isOnWatchlist);
-                      try {
-                        await toggleWatchlist();
-                        // TODO (7.7.7): Show success notification
-                        console.log(
-                          isOnWatchlist
-                            ? "Movie removed from watchlist"
-                            : "Movie added to watchlist"
-                        );
-                      } catch (error) {
-                        // Rollback on error
-                        setLocalWatchlistState(isOnWatchlist);
-                        console.error("Failed to toggle watchlist:", error);
-                      }
-                    }}
+                    onClick={handleWatchlistToggle}
                     disabled={isUpdating}
                   >
                     {isOnWatchlist ? <RiPlayListFill /> : <RiPlayListAddLine />}
@@ -360,10 +382,11 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   );
 };
 
-// Memoize the component to prevent unnecessary re-renders
+// ============================================================================
+// Memoization
+// ============================================================================
+
 const MemoizedMovieCard = memo(MovieCard, (prevProps, nextProps) => {
-  // Custom comparison function for better performance
-  // Note: currentPage is deprecated (infinite scroll) - not included in comparison
   return (
     prevProps.movie.tmdb_id === nextProps.movie.tmdb_id &&
     prevProps.movie.user_movie_data?.user_on_watchlist ===

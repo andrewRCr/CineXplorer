@@ -3,8 +3,10 @@
 **Type:** Open source contribution
 **Repository:** <https://github.com/zohomail/zoho_zeptomail-django>
 **Branch:** `fix/multipart-email-body-handling`
-**Status:** Not started
+**Status:** PR submitted, awaiting response
+**PR:** <https://github.com/zohomail/zoho_zeptomail-django/pull/1>
 **Created:** 2024-12-22
+**Fork:** `~/dev/zoho_zeptomail-django`
 
 ## Summary
 
@@ -17,70 +19,59 @@ setting `textbody` and `htmlbody` separately per the ZeptoMail API specification
 
 ---
 
-## Phase 1: Setup & Research
+## Phase 1: Setup & Research ✅
 
-- [ ] 1.1 Fork zoho_zeptomail-django on GitHub
-    - Fork to personal GitHub account
-    - Note: Repo has MIT license, contributions welcome
+- [x] 1.1 Fork zoho_zeptomail-django on GitHub
+    - Forked to `andrewRCr/zoho_zeptomail-django`
+    - MIT license confirmed
 
-- [ ] 1.2 Clone fork locally
-    - Clone to `~/dev/` (sibling to CineXplorer)
-    - Set upstream remote: `git remote add upstream https://github.com/zohomail/zoho_zeptomail-django.git`
+- [x] 1.2 Clone fork locally
+    - Cloned to `~/dev/zoho_zeptomail-django`
+    - Upstream remote set automatically by `gh repo clone`
 
-- [ ] 1.3 Examine existing codebase structure
-    - [ ] Identify the buggy code location (likely `backend/message.py` or similar)
-    - [ ] Check for existing test structure
-    - [ ] Check for contribution guidelines (CONTRIBUTING.md, PR templates)
-    - [ ] Note: Single commit repo - may have minimal structure
+- [x] 1.3 Examine existing codebase structure
+    - [x] Buggy code: `zoho_zeptomail/backend/message.py` (`__set_body()` method)
+    - [x] No tests exist in repo
+    - [x] No CONTRIBUTING.md or PR templates
+    - [x] Minimal structure confirmed (single commit repo)
 
-- [ ] 1.4 Create fix branch
-    - `git checkout -b fix/multipart-email-body-handling`
-
----
-
-## Phase 2: Implement Fix
-
-- [ ] 2.1 Locate and understand the bug
-    - Find `__set_body()` method (or equivalent)
-    - Confirm it matches the behavior we diagnosed:
-        - Currently: concatenates `body` + HTML alternative into `htmlbody`
-        - Should: set `textbody` for plain, `htmlbody` for HTML separately
-
-- [ ] 2.2 Implement the fix
-    - Modify the body-setting logic to:
-        - Set `textbody` when content_subtype is "plain"
-        - Set `htmlbody` when content_subtype is "html"
-        - Handle EmailMultiAlternatives correctly (text body + HTML alternative)
-    - Reference our working implementation in `email_backend.py` lines 134-146
-
-- [ ] 2.3 Test locally (if test infrastructure exists)
-    - If tests exist: run them, add test for multipart handling
-    - If no tests: manual verification with Django shell
+- [x] 1.4 Create fix branch
+    - Created `fix/multipart-email-body-handling`
 
 ---
 
-## Phase 3: Create PR
+## Phase 2: Implement Fix ✅
 
-- [ ] 3.1 Write clear commit message
-    - Describe the bug (what happens now)
-    - Describe the fix (what should happen)
-    - Reference ZeptoMail API docs if helpful
+- [x] 2.1 Locate and understand the bug
+    - Found `__set_body()` in `zoho_zeptomail/backend/message.py:78-112`
+    - Also found `set_body()` in `zoho_zeptomail/emails/__init__.py:28-32` (only sets htmlbody)
+    - Confirmed: concatenates plain + HTML into single htmlbody field
 
-- [ ] 3.2 Push branch to fork
-    - `git push -u origin fix/multipart-email-body-handling`
+- [x] 2.2 Implement the fix
+    - Added `set_textbody()` method to `SendEmail` class
+    - Added `set_htmlbody()` method to `SendEmail` class
+    - Modified `__set_body()` to call these separately based on content type
+    - Preserved `set_body()` for backwards compatibility (marked deprecated)
 
-- [ ] 3.3 Create pull request
-    - Title: "Fix multipart email handling - separate textbody and htmlbody"
-    - Description should include:
-        - [ ] Problem statement (HTML emails render as plaintext)
-        - [ ] Root cause (body concatenation into single field)
-        - [ ] Solution (set fields separately per API spec)
-        - [ ] Testing done
-        - [ ] Link to ZeptoMail API docs showing correct field usage
+- [x] 2.3 Test locally
+    - Created `test_fix.py` and `test_integration.py` (deleted after verification)
+    - Verified: plain text → textbody only
+    - Verified: HTML only → htmlbody only
+    - Verified: multipart → both textbody AND htmlbody separately
+    - Commit: `3a1491c Fix multipart email handling - separate textbody and htmlbody`
 
-- [ ] 3.4 Submit and wait
-    - Note: Repo appears minimally maintained - response may take time or never come
-    - Set calendar reminder to check in 2 weeks
+---
+
+## Phase 3: Create PR ✅
+
+- [x] 3.1 Write clear commit message
+- [x] 3.2 Push branch to fork
+- [x] 3.3 Create pull request
+    - PR #1: <https://github.com/zohomail/zoho_zeptomail-django/pull/1>
+    - First PR ever on this repo
+    - Includes problem statement, root cause, solution, ZeptoMail API references
+- [x] 3.4 Submit and wait
+    - Repo has zero community engagement - response may take time or never come
 
 ---
 

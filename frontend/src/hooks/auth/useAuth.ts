@@ -177,6 +177,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         return () => clearInterval(interval);
     }, [isAuthenticated]);
 
+    // Ref to prevent duplicate OAuth callback handling (StrictMode double-invokes effects)
+    const hasHandledOAuthRef = useRef(false);
+
     // Handle OAuth callback (when redirected back from Google/GitHub)
     // Supports two authentication patterns:
     // 1. OAuth: Session cookies only (HTTP-only, managed by django-allauth)
@@ -188,6 +191,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         }
 
         const handleOAuthCallback = async () => {
+            // Guard against double-invocation (StrictMode, fast re-renders)
+            if (hasHandledOAuthRef.current) {
+                logger.debug('[useAuth] OAuth callback already handled, skipping');
+                return;
+            }
             const params = new URLSearchParams(location.search);
             const oauthError = params.get('error');
 
@@ -231,10 +239,17 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // OAuth authentication uses session cookies (NO tokens in URL)
             if (location.pathname === ROUTES.LOGIN && isFromOAuthRedirect) {
                 logger.debug('[useAuth] OAuth redirect detected, checking session...');
-                // Clear the OAuth in-progress flag
-                sessionStorage.removeItem('oauth_in_progress');
+
+                // Mark as handled BEFORE async operation to prevent race conditions
+                hasHandledOAuthRef.current = true;
 
                 const oauthUser = await checkOAuthSession();
+
+                // Clear OAuth flags AFTER session check completes
+                // useOAuthFlow monitors this and will clear its loading state
+                sessionStorage.removeItem('oauth_in_progress');
+                sessionStorage.removeItem('oauth_start_time');
+
                 if (oauthUser) {
                     logger.debug('[useAuth] OAuth callback - authenticated via session cookie');
                     setUser(oauthUser);
@@ -251,6 +266,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                     return;
                 } else {
                     logger.debug('[useAuth] Session response shows not authenticated');
+                    // OAuth failed - flags already cleared above
+                    // useOAuthFlow will detect this and show login form
+                    // Reset ref so user can retry OAuth
+                    hasHandledOAuthRef.current = false;
                 }
             }
         };

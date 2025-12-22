@@ -60,6 +60,7 @@ const Login = () => {
   } = useLoginAlerts();
 
   // OAuth flow (Google/GitHub)
+  // Note: clearLoading is not destructured - automatic sync in useOAuthFlow handles it
   const {
     isLoading: isOAuthLoading,
     provider: oauthProvider,

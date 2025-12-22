@@ -30,6 +30,8 @@ interface UseOAuthFlowReturn {
   initializeOAuth: (provider: string) => Promise<void>;
   /** Set error state (for error handling in parent component) */
   setError: (error: string) => void;
+  /** Clear loading state (called when auth resolution completes) */
+  clearLoading: () => void;
 }
 
 /**
@@ -40,8 +42,8 @@ interface UseOAuthFlowReturn {
  */
 export function useOAuthFlow(onError?: (error: string) => void): UseOAuthFlowReturn {
   // Initialize OAuth loading state from sessionStorage (prevents form flash on return)
-  // Note: State is initialized once - component unmounts during OAuth navigation
-  const [oauthLoading] = useState<OAuthLoadingState | null>(() => {
+  // State can be cleared when auth resolution completes (success or failure)
+  const [oauthLoading, setOauthLoading] = useState<OAuthLoadingState | null>(() => {
     const oauthProvider = sessionStorage.getItem("oauth_in_progress");
     if (oauthProvider) {
       console.log(
@@ -67,6 +69,45 @@ export function useOAuthFlow(onError?: (error: string) => void): UseOAuthFlowRet
     },
     [onError]
   );
+
+  // Clear loading state (called when auth resolution completes - success or failure)
+  const clearLoading = useCallback(() => {
+    console.log("[OAuth] Clearing loading state (auth resolved)");
+    setOauthLoading(null);
+    sessionStorage.removeItem("oauth_in_progress");
+    sessionStorage.removeItem("oauth_start_time");
+  }, []);
+
+  // Sync loading state with sessionStorage flag
+  // Handles case where OAuth fails (useAuth clears flag but user is not authenticated)
+  // For success case, component unmounts during navigation and cleanup handles it
+  useEffect(() => {
+    if (!oauthLoading) return; // Not in loading state, nothing to sync
+
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    const checkFlag = () => {
+      const flag = sessionStorage.getItem("oauth_in_progress");
+      if (!flag) {
+        console.log("[OAuth] Flag cleared externally after delay, stopping loading state");
+        setOauthLoading(null);
+        if (interval) clearInterval(interval);
+      }
+    };
+
+    // Delay before checking - gives successful OAuth time to complete navigation
+    // If flag is gone after delay AND we're still mounted, OAuth likely failed
+    const timeout = setTimeout(() => {
+      checkFlag();
+      // Continue checking in case of slow networks
+      interval = setInterval(checkFlag, 200);
+    }, 500); // 500ms delay - enough for navigation to complete on success
+
+    return () => {
+      clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
+  }, [oauthLoading]);
 
   // Check if returning from OAuth flow and set up timing gate
   useEffect(() => {
@@ -171,9 +212,9 @@ export function useOAuthFlow(onError?: (error: string) => void): UseOAuthFlowRet
         sessionStorage.setItem("oauth_in_progress", provider);
         sessionStorage.setItem("oauth_start_time", Date.now().toString());
 
-        // Submit form immediately (browser will perform full page navigation)
-        // No artificial delay - user will see Google/GitHub login form immediately
-        // Loading spinner will show when returning FROM OAuth (not when going TO OAuth)
+        // Submit form immediately - don't show overlay before navigation
+        // The white flash during navigation is browser behavior we can't control
+        // The overlay is used on RETURN from OAuth (handled in index.html)
         document.body.appendChild(form);
         form.submit();
       } catch (error) {
@@ -190,5 +231,6 @@ export function useOAuthFlow(onError?: (error: string) => void): UseOAuthFlowRet
     canNavigate: minDisplayTimeElapsed,
     initializeOAuth,
     setError,
+    clearLoading,
   };
 }

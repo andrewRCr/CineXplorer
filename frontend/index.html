@@ -4,32 +4,111 @@
 		<meta charset="UTF-8" />
 		<link rel="icon" type="image/svg+xml" href="/vite.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<!-- Theme color for browser UI (address bar, etc.) - helps with visual continuity -->
+		<meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
 		<title>CineXplorer</title>
 		<style>
-			html, body { margin: 0; }
-			#root { min-height: 100vh; }
+			/* Prevent white flash: background on ALL containers */
+			html, body, #root {
+				margin: 0;
+				min-height: 100vh;
+				background-color: var(--app-bg, #161616) !important;
+			}
+
+			/* Preload overlay: covers screen, independent of React */
+			#preload-overlay {
+				position: fixed;
+				inset: 0;
+				z-index: 9999;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background-color: var(--app-bg, #161616);
+				/* Start invisible but in DOM (faster than display:none toggle) */
+				opacity: 0;
+				pointer-events: none;
+			}
+			#preload-overlay.visible {
+				opacity: 1;
+				pointer-events: auto;
+			}
+			#preload-overlay.fade-out {
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.2s ease-out;
+			}
+			#preload-overlay.hidden {
+				display: none;
+			}
+			.preload-spinner__ring {
+				width: 48px;
+				height: 48px;
+				border: 4px solid transparent;
+				border-radius: 50%;
+				animation: preload-spin 0.8s linear infinite;
+			}
+			@keyframes preload-spin {
+				to { transform: rotate(360deg); }
+			}
 		</style>
 		<script>
 			// Prevent flash of wrong background before React/Chakra loads
-			// Reads background color stored by BackgroundSync component
+			// Sets CSS variable used by html/body/#root/#preload-overlay styles
 			(function() {
 				var bg = '#161616'; // Default: IBM Carbon dark
 				try { bg = localStorage.getItem('cinexplorer-bg') || bg; } catch(e) {}
-				document.documentElement.style.backgroundColor = bg;
+				document.documentElement.style.setProperty('--app-bg', bg);
+				window.__PRELOAD_BG__ = bg;
 			})();
 		</script>
 	</head>
 	<body>
-		<div id="root">
-			<div
-				style="
-					display: flex;
-					justify-content: center;
-					align-items: center;
-					height: 100vh;
-				"
-			></div>
+		<!-- Preload overlay: OUTSIDE of React's #root, won't be replaced -->
+		<!-- Always in DOM with opacity:0, toggled via .visible class for instant show -->
+		<div id="preload-overlay">
+			<div class="preload-spinner__ring"></div>
 		</div>
+		<script>
+			// Show preload overlay if returning from OAuth
+			// This overlay stays visible while React initializes underneath
+			(function() {
+				var overlay = document.getElementById('preload-overlay');
+				var bg = window.__PRELOAD_BG__ || '#161616';
+
+				// Calculate spinner color based on background luminance
+				var hex = bg.replace('#', '');
+				var r = parseInt(hex.substr(0, 2), 16) / 255;
+				var g = parseInt(hex.substr(2, 2), 16) / 255;
+				var b = parseInt(hex.substr(4, 2), 16) / 255;
+				var luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+				var spinnerColor = luminance > 0.5 ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+
+				// Set spinner color (always, so it's ready)
+				overlay.querySelector('.preload-spinner__ring').style.borderTopColor = spinnerColor;
+
+				// Show overlay if returning from OAuth
+				var isOAuth = false;
+				try { isOAuth = sessionStorage.getItem('oauth_in_progress') !== null; } catch(e) {}
+				if (isOAuth) {
+					overlay.classList.add('visible');
+				}
+
+				// Global function for React to call when ready to dismiss overlay
+				window.__dismissPreloadOverlay = function() {
+					if (overlay.classList.contains('visible')) {
+						overlay.classList.remove('visible');
+						overlay.classList.add('fade-out');
+						setTimeout(function() {
+							overlay.classList.add('hidden');
+						}, 200);
+					}
+				};
+			})();
+		</script>
+
+		<!-- React root: completely independent of preload overlay -->
+		<div id="root"></div>
 		<script type="module" src="/src/main.tsx"></script>
 	</body>
 </html>

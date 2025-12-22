@@ -3,6 +3,14 @@ import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";
 import BaseLayout from "./BaseLayout";
 import { Box } from "@chakra-ui/react";
+import { useEffect } from "react";
+
+// Declare global function type for preload overlay dismissal
+declare global {
+  interface Window {
+    __dismissPreloadOverlay?: () => void;
+  }
+}
 
 /**
  * Full-page loading layout for Suspense fallback
@@ -13,6 +21,11 @@ import { Box } from "@chakra-ui/react";
  * Login component mounts.
  */
 const LoadingLayout = () => {
+  // Dismiss preload overlay when React is ready to render
+  useEffect(() => {
+    window.__dismissPreloadOverlay?.();
+  }, []);
+
   // Check if we're returning from an OAuth flow
   const oauthProvider = sessionStorage.getItem('oauth_in_progress');
 

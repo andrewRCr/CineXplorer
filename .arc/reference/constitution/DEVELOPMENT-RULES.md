@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.14 | **Updated:** 2025-11-13 | **Hash:** `k7m3p9w2`
+**Version:** 2.15 | **Updated:** 2025-12-23 | **Hash:** `r8n4q1x3`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -22,6 +22,7 @@ by all contributors, including AI assistants.
   (parent task marked `[x]` if all subtasks complete)
 - **Never commit stale task docs**: Task list updates must be saved and included in commits for completed work
 - AI reports completion, then awaits commit instructions
+- **Commit message format**: Use the `commit-format` skill for proper format (Context footer, subject length, etc.)
 
 ### Quality Gates (Zero Tolerance)
 

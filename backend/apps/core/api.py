@@ -393,4 +393,26 @@ def write_dev_console_log(
         )
 
 
+@core_router.get(
+    "/debug/error-500/",
+    auth=None,
+    response={500: dict[str, str], 403: dict[str, str]},
+)
+def debug_error_500(request: HttpRequest) -> tuple[int, dict[str, str]]:
+    """
+    Development-only endpoint that returns a 500 error for testing.
+
+    Use this to verify frontend error handling (e.g., toast notifications
+    for server errors).
+
+    Security:
+        - Only available in DEBUG mode
+        - Returns 403 in production
+    """
+    if not settings.DEBUG:
+        return 403, {"error": "This endpoint is only available in development mode"}
+
+    return 500, {"error": "Simulated server error for testing"}
+
+
 __all__ = ["core_router"]

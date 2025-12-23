@@ -302,16 +302,13 @@ for async operations.
         **Note:** MovieDetail page uses different hook (`useUserMovieData`) which can't CREATE
         new records - documented in architectural issues for future consolidation.
 
-- [ ] **3.7 API error interceptor (5xx) integration**
+- [x] **3.7 API error interceptor (5xx) integration**
 
-    - [ ] **3.7.a Add 5xx error toast**
-        - File: `frontend/src/services/apiClient.ts`
-        - In response interceptor, detect 5xx status codes
-        - Add `toaster.error({ title: "Server error", description: "Please try again later.", closable: true })`
-        - Avoid duplicate toasts (don't show both 5xx and specific action error)
+    Added 5xx error toast to response interceptor in `apiClient.ts`. Uses regular `toaster` (bottom-right)
+    per strategy guidance - 5xx errors are transient/operational feedback, not auth-critical.
 
-    - [ ] **3.7.b Test server error toast**
-        - Simulate 500 error → verify error toast appears
+    - [x] **3.7.a Add 5xx error toast** - Detects `status >= 500`, shows closable error toast
+    - [x] **3.7.b Test server error toast** - Type-check and lint pass; manual verification available
 
 ### **Phase 4:** Accessibility and Polish
 

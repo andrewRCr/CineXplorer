@@ -6,6 +6,7 @@ import {
 } from "@/utilities/token";
 import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
+import { toaster } from "@/components/core/chakra/toaster";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -97,6 +98,17 @@ apiClient.interceptors.response.use(
         // If the error is a cancellation, we don't need to do anything.
         if (axios.isCancel(error)) {
             return Promise.reject(error);
+        }
+
+        // Check for server errors (5xx) and show toast notification
+        // This provides consistent user feedback for infrastructure/backend failures
+        if (error.response && error.response.status >= 500) {
+            toaster.error({
+                title: "Server error",
+                description: "Please try again later.",
+                closable: true,
+            });
+            // Continue to reject the error so callers can still handle it
         }
 
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };

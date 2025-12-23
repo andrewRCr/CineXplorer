@@ -3,7 +3,7 @@
 **Type:** Open source contribution
 **Repository:** <https://github.com/zohomail/zoho_zeptomail-django>
 **Branch:** `fix/multipart-email-body-handling`
-**Status:** PR submitted, awaiting response
+**Status:** PR merged, awaiting PyPI release
 **PR:** <https://github.com/zohomail/zoho_zeptomail-django/pull/1>
 **Created:** 2024-12-22
 **Fork:** `~/dev/zoho_zeptomail-django`
@@ -71,11 +71,14 @@ setting `textbody` and `htmlbody` separately per the ZeptoMail API specification
     - First PR ever on this repo
     - Includes problem statement, root cause, solution, ZeptoMail API references
 - [x] 3.4 Submit and wait
-    - Repo has zero community engagement - response may take time or never come
+    - Merged 2024-12-23 (< 24 hour turnaround - surprisingly responsive!)
 
 ---
 
 ## Phase 4: Cleanup (after PR merged or abandoned)
+
+**Blocked:** Awaiting PyPI release. PR merged 2024-12-23, but PyPI still shows v0.0.3 (pre-fix).
+Check back in 1-2 days: <https://pypi.org/project/django-zoho-zeptomail/>
 
 - [ ] 4.1 If merged: update CineXplorer
     - Update django-zoho-zeptomail dependency version

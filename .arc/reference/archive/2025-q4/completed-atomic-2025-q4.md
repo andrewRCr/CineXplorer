@@ -6,6 +6,19 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Data Quality: Blacklist heuristic adult content candidates (batch 2)
+    - **Outcome:** Blacklisted 378 movies from heuristic matches. 7 false positives excluded after
+      title review, 1 new addition. No production companies qualified for 90%+ bulk blacklisting.
+    - **Total blacklist:** 2,856 movies
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Data Quality: Blacklist mislabeled adult content movies from TMDB (batch 1)
+    - **Outcome:** Blacklisted 95 movies total. Deutsche Dynamik Film (company 81980) bulk blacklisted
+      (5 movies, 90%+ adult catalog). 90 individual movies blacklisted as "Mislabeled adult content on TMDB".
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] Backend: Investigate and fix flaky registration email tests
     - **Root Cause:** Allauth's email verification rate limiting persists in Redis between test runs.
       Rate limit is `1/180s/key` (1 email per 3 minutes per email address). When tests run multiple

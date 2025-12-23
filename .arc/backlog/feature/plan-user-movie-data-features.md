@@ -595,6 +595,7 @@ Chronological timeline of all user actions:
 **Symptom:** After toggling watchlist, subsequent toggles fail or show wrong state.
 
 **Root cause:** `useMovieActions` receives `movie` prop which includes `user_movie_data`. After API call:
+
 1. Service layer updates backend correctly
 2. Service returns updated UserMovieData
 3. But parent component (movie list) still has stale `movie.user_movie_data`
@@ -608,6 +609,7 @@ queries so they refetch with updated `user_movie_data`.
 ### Issue 2: Two Different Hooks for Same Domain
 
 **Hooks:**
+
 - `useMovieActions` - Used by MovieCard, handles CREATE + UPDATE via service layer
 - `useUserMovieData` - Used by MovieDetail, only handles UPDATE (requires existing data)
 
@@ -615,6 +617,7 @@ queries so they refetch with updated `user_movie_data`.
 (no existing UserMovieData record).
 
 **Analysis needed:**
+
 - Is there a good reason for two hooks? (Different use cases? Performance?)
 - Or is this development remnants / unconsolidated work?
 - Should `useUserMovieData` be enhanced to support CREATE?
@@ -628,6 +631,7 @@ using `useMutation` with proper cache invalidation.
 **Context:** Toast notification for "Removed from watchlist" originally had Undo button.
 
 **Problem:** Undo action is disconnected from MovieCard's local state:
+
 1. MovieCard has `localWatchlistState` for optimistic updates
 2. Undo in toast calls `toggleWatchlist()` directly (bypasses local state)
 3. API succeeds but MovieCard shows wrong state
@@ -645,6 +649,7 @@ causing MovieCard to refetch and show correct state.
 Race condition handler wasn't triggering because error type check failed.
 
 **Resolution:** Added proper Axios error type guards and message extraction:
+
 - `getErrorStatus(error)` - extracts status from Axios error structure
 - `getErrorMessage(error)` - extracts message from various error formats
 
@@ -658,6 +663,7 @@ Race condition handler wasn't triggering because error type check failed.
 3. **Long-term (Feature work):** Consolidate hooks into unified patterns
 
 **Related files:**
+
 - `frontend/src/hooks/movie/useMovieActions.ts` - MovieCard integration
 - `frontend/src/hooks/movie/useUserMovieData.ts` - MovieDetail integration
 - `frontend/src/services/movieInteractionService.ts` - Service layer with workarounds

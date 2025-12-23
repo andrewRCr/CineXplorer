@@ -4,6 +4,7 @@ import {
   type ElementType,
   useState,
   useEffect,
+  useRef,
 } from "react";
 import { flushSync } from "react-dom";
 import { Box, type BoxProps } from "@chakra-ui/react";
@@ -44,8 +45,15 @@ const PageHeader = forwardRef(
       "reset" | "ready" | "animating"
     >("reset");
 
+    // Refs to track timer IDs for cleanup
+    const titleTimersRef = useRef<{ ready?: ReturnType<typeof setTimeout>; animating?: ReturnType<typeof setTimeout> }>({});
+    const mountTimersRef = useRef<{ initial?: ReturnType<typeof setTimeout>; animating?: ReturnType<typeof setTimeout> }>({});
+
     // Trigger animation on title change
     useEffect(() => {
+      // Capture ref for cleanup (ESLint react-hooks/exhaustive-deps)
+      const timers = titleTimersRef.current;
+
       // Use microtasks to avoid React warning while keeping flushSync functionality
       queueMicrotask(() => {
         // Step 1: Force reset with no transition
@@ -54,27 +62,38 @@ const PageHeader = forwardRef(
         });
 
         // Step 2: Enable transition but stay at 0%
-        setTimeout(() => {
+        timers.ready = setTimeout(() => {
           flushSync(() => {
             setAnimationPhase("ready");
           });
 
           // Step 3: Animate to 100%
-          setTimeout(() => {
+          timers.animating = setTimeout(() => {
             setAnimationPhase("animating");
           }, 50);
         }, 50);
       });
+
+      return () => {
+        if (timers.ready) clearTimeout(timers.ready);
+        if (timers.animating) clearTimeout(timers.animating);
+      };
     }, [title]);
 
     // Trigger initial animation on mount
     useEffect(() => {
-      const initialTimer = setTimeout(() => {
+      // Capture ref for cleanup (ESLint react-hooks/exhaustive-deps)
+      const timers = mountTimersRef.current;
+
+      timers.initial = setTimeout(() => {
         setAnimationPhase("ready");
-        setTimeout(() => setAnimationPhase("animating"), 50);
+        timers.animating = setTimeout(() => setAnimationPhase("animating"), 50);
       }, 50);
 
-      return () => clearTimeout(initialTimer);
+      return () => {
+        if (timers.initial) clearTimeout(timers.initial);
+        if (timers.animating) clearTimeout(timers.animating);
+      };
     }, []);
 
     // Handle title structure - string or object with main/secondary parts

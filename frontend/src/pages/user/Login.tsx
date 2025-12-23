@@ -121,25 +121,37 @@ const Login = () => {
   });
 
   const handleLoginError = (
-    error: { status: number; message: string; code?: string },
-    username: string
+    error: { status: number; message: string; code?: string; email?: string },
+    loginInput: string
   ) => {
-    const { status, message, code } = error;
+    const { status, message, code, email: maskedEmail } = error;
 
     // Check for email verification error (special case with resend action)
+    // Backend returns 403 for unverified email
     const isEmailVerificationError =
-      status === 400 &&
+      status === 403 &&
       (code === ERROR_CODES.EMAIL_NOT_VERIFIED ||
         message.toLowerCase().includes("verify your email") ||
         message.toLowerCase().includes("email verification") ||
         message.toLowerCase().includes("verify email"));
 
     if (isEmailVerificationError) {
-      // Get email from username if it contains @, otherwise can't offer resend
-      const emailForResend = username.includes("@") ? username : "";
-      const alertMessage = emailForResend
-        ? "Please verify your email address before logging in."
-        : "Please verify your email address. Log in with your email to resend verification.";
+      // For resend: use login input if it's an email (backend needs real email, not masked)
+      // For display: use masked email from backend to show user where to check
+      const emailForResend = loginInput.includes("@") ? loginInput : "";
+      const displayEmail = maskedEmail || "";
+
+      let alertMessage: string;
+      if (displayEmail && emailForResend) {
+        // Logged in with email - can show where to check AND offer resend
+        alertMessage = `We've sent a verification link to ${displayEmail}. Please check your inbox.`;
+      } else if (displayEmail) {
+        // Logged in with username - show where to check, but can't resend
+        alertMessage = `Please check ${displayEmail} for a verification link. To resend, log in with your email address.`;
+      } else {
+        // Fallback (shouldn't happen - backend always returns masked email)
+        alertMessage = "Please check your inbox for a verification link.";
+      }
       showEmailVerificationError(alertMessage, emailForResend);
     } else {
       showGeneralError(message);
@@ -450,12 +462,12 @@ const Login = () => {
           Alerts
           ==================================================================== */}
 
-      {/* Blocking alerts (center) - auth errors requiring immediate attention */}
+      {/* Blocking alerts (center) - auth errors and workflow requirements */}
       {alert && (alert.type === "general" || alert.type === "emailVerification") && (
         <FloatingAlertContainer>
           {alert.type === "emailVerification" && (
             <FloatingAlert
-              status="error"
+              status="info"
               onDismiss={clearAlert}
               action={
                 alert.email

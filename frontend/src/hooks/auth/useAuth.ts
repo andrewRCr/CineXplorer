@@ -399,7 +399,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             };
 
             if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string } } };
+                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string; email?: string } } };
                 if (axiosError.response) {
                     authError.status = axiosError.response.status || 500;
                     authError.message =
@@ -408,6 +408,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                         'Login failed';
                     if (axiosError.response.data?.code) {
                         authError.code = axiosError.response.data.code;
+                    }
+                    if (axiosError.response.data?.email) {
+                        authError.email = axiosError.response.data.email;
                     }
                 }
             } else if (error instanceof Error) {

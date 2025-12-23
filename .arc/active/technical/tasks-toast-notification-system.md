@@ -148,29 +148,78 @@ for async operations.
         - ZeptoMail settings fixed (region config, token prefix)
         - Allauth stubs added for send_verification_email_to_address
 
-- [ ] **3.3 Email verification flow migration**
+- [ ] **3.3 Email verification flow alignment**
 
-    - [x] **3.3.a Replace email verification alert with actionable error toast**
+    **Note:** Task 3.3.a description was outdated - the atomic task "Auth flow refactor" already
+    implemented FloatingAlert (not toast) per updated policy. Remaining work is bug fixes and
+    UX refinement.
 
-        Replaced Alert component with actionable error toast in Login.tsx:
-        - Error toast with "Resend" action button when email verification required
-        - 30-second duration (long enough for user to read and act)
-        - Dismisses generic useAuth error toast before showing specific one (prevents duplicate)
-        - Resend action triggers `handleResendVerification(email)` with success/error toast feedback
-        - Removed deprecated state: `emailVerificationNeeded`, `userEmail`, `isResendingEmail`, `resendMessage`
-        - Removed `dismissVerificationAlert` function
-        - Removed email verification Alert component block (~60 lines)
+    - [x] **3.3.a Implement email verification FloatingAlert** *(completed in atomic task)*
 
-    - [ ] **3.3.b Add promise toast to resend action**
-        - When user clicks "Resend" action in toast, trigger resend flow
-        - Loading: "Sending verification email..."
-        - Success: "Verification email sent! Check your inbox."
-        - Error: Display error message (rate limited, etc.)
+        Already implemented during "Auth flow refactor" atomic task:
+        - FloatingAlert (blocking, center) with "Resend verification" action button
+        - Uses `useLoginAlerts` hook for alert state management
+        - Resend action triggers `handleResendVerification()` with success/error toasts
 
-    - [ ] **3.3.c Test email verification toasts manually**
-        - Unverified user login → error toast with resend action appears
-        - Click resend → loading/success toast
+    - [x] **3.3.b Fix email propagation and UX refinement**
+
+        Fixed resend button not appearing and improved UX:
+
+        1. Added `email?: string` to `AuthError` interface - backend sends masked email
+        2. Extract `email` from backend response in `useAuth.ts` error parsing
+        3. Updated `handleLoginError` to use `error.email` from backend (not username field)
+        4. Changed alert status from `error` to `info` - workflow requirement, not user mistake
+        5. Fixed status code check (403, not 400) for email verification errors
+        6. Improved messaging to show masked email and explain resend availability
+
+        **Current limitation:** Resend only works when user logs in with email (not username).
+        Task 3.3.c addresses this by implementing token-based resend.
+
+        **Strategy doc updated:** Added Status column to Alert vs Toast table, documented
+        alert status selection guidelines (error/warning/info/success semantics).
+
+        **Files:** `auth-state.d.ts`, `useAuth.ts`, `Login.tsx`, `strategy-component-styling.md`
+
+    - [ ] **3.3.c Implement resend token pattern** *(enables resend for all login methods)*
+
+        **Problem:** Current resend requires actual email. If user logs in with username, we
+        only have masked email - can't resend. This is a UX gap.
+
+        **Solution:** Include opaque resend token in login error response. Resend endpoint
+        accepts token instead of email. Token maps to user_id server-side.
+
+        **Research:** Industry standard (Auth0, Ory Kratos, BetterAuth). OWASP-aligned -
+        prevents user enumeration while enabling universal resend.
+
+        **Implementation:**
+
+        - [ ] **3.3.c.i Backend: Generate resend token on unverified login**
+            - Generate 64-char cryptographically random token (`secrets.token_urlsafe(64)`)
+            - Store hash in Redis: `resend_token_hash -> (user_id, expires_at)`
+            - Expiration: 10-15 minutes
+            - Include plain token in 403 response alongside masked email
+
+        - [ ] **3.3.c.ii Backend: Update `/resend-verification/` endpoint**
+            - Accept `{ resend_token: "..." }` OR `{ email: "..." }` (backwards compat)
+            - If token provided: validate, extract user_id, send email, mark token used
+            - Single-use enforcement, rate-limit 3-4 attempts per token lifetime
+            - Return generic success message (don't leak token validity)
+
+        - [ ] **3.3.c.iii Frontend: Use resend token from error response**
+            - Extract `resend_token` from login error in `useAuth.ts`
+            - Pass token to `handleLoginError` and store in alert state
+            - Update `handleResendVerification` to use token instead of email
+            - Resend button always available when token present
+
+        **Files:** `authentication_service.py`, `schemas.py`, `useAuth.ts`, `Login.tsx`,
+        `useLoginAlerts.ts`
+
+    - [ ] **3.3.d Test email verification flow manually**
+        - Unverified user login (email) → **info** FloatingAlert with resend action
+        - Unverified user login (username) → **info** FloatingAlert with resend action
+        - Click resend → success/error toast feedback
         - Rate limited → error toast
+        - Expired token → appropriate error handling
 
 - [ ] **3.4 Logout flow integration**
 
@@ -185,14 +234,21 @@ for async operations.
 
 - [ ] **3.5 Session expired (401 interceptor) integration**
 
-    - [ ] **3.5.a Add session expired toast**
-        - File: `frontend/src/services/apiClient.ts`
-        - In response interceptor, when 401 detected and refresh fails
-        - Add `toaster.error({ title: "Session expired", description: "Please log in again.", closable: true })`
+    **Policy alignment:** Session expired is a blocking state requiring user action (re-login).
+    Per toast/alert policy, blocking states use FloatingAlert, not toast.
+
+    - [ ] **3.5.a Add session expired FloatingAlert**
+        - File: `frontend/src/services/apiClient.ts` (interceptor detection)
+        - When 401 detected and refresh fails, set a flag/event for Login page to show alert
+        - **Approach options:**
+          1. Redirect to `/login?session_expired=true` and handle in Login.tsx
+          2. Use a global state/context for session expired alert
+        - FloatingAlert (blocking, center): "Session expired. Please log in again."
+        - Status: `info` (not error - session expiry is expected behavior, not user mistake)
         - Ensure only fires once (not on every failed request during refresh)
 
-    - [ ] **3.5.b Test 401 toast manually**
-        - Clear tokens, make API call → verify error toast
+    - [ ] **3.5.b Test 401 flow manually**
+        - Clear tokens, make API call → verify redirect + FloatingAlert on login page
 
 - [ ] **3.6 Watchlist action integrations**
 

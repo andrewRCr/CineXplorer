@@ -561,22 +561,30 @@ Toasts float over varied backgrounds and need solid fills for consistent readabi
 
 ### When to Use: Alert vs Toast
 
-| Scenario                                    | Use                  | Rationale                                                |
-|---------------------------------------------|----------------------|----------------------------------------------------------|
-| Success after action (save, submit)         | Toast                | Ephemeral confirmation, user continues workflow          |
-| Success that redirects away                 | Toast                | Page is changing anyway                                  |
-| Auth error (wrong credentials)              | Alert (blocking)     | User may miss if auto-dismiss; needs to read and correct |
-| Email verification needed                   | Alert with action    | Persistent, action button enables resend                 |
-| Registration success with CTA               | Alert (non-blocking) | Persistent "check email" message, user may look away     |
-| Network/transient error                     | Toast                | Retry is immediate, no correction needed                 |
-| Blocking state (rate limited, locked)       | Alert (blocking)     | User must wait/address before proceeding                 |
-| Page-level warning (unsaved changes)        | Alert (blocking)     | Contextual to current page state                         |
-| Informational banner (maintenance, feature) | Alert (blocking)     | Persistent awareness needed                              |
+| Scenario                                    | Use                  | Status  | Rationale                                                |
+|---------------------------------------------|----------------------|---------|----------------------------------------------------------|
+| Success after action (save, submit)         | Toast                | success | Ephemeral confirmation, user continues workflow          |
+| Success that redirects away                 | Toast                | success | Page is changing anyway                                  |
+| Auth error (wrong credentials)              | Alert (blocking)     | error   | User needs to read and correct their input               |
+| Email verification needed                   | Alert with action    | info    | Workflow requirement, not user mistake; resend action    |
+| Session expired                             | Alert (blocking)     | info    | Expected behavior, not error; redirect to login          |
+| Registration success with CTA               | Alert (non-blocking) | success | Persistent "check email" message, user may look away     |
+| Network/transient error                     | Toast                | error   | Retry is immediate, no correction needed                 |
+| Blocking state (rate limited, locked)       | Alert (blocking)     | warning | User must wait/address before proceeding                 |
+| Page-level warning (unsaved changes)        | Alert (blocking)     | warning | Contextual to current page state                         |
+| Informational banner (maintenance, feature) | Alert (blocking)     | info    | Persistent awareness needed                              |
 
 **General principles:**
 
 - **Toasts** = Ephemeral, non-blocking, auto-dismiss, feedback on completed actions
 - **Alerts** = Persistent, contextual, requires user awareness/action
+
+**Alert status selection:**
+
+- `error` (red) = User made a mistake that needs correction (wrong input, invalid action)
+- `warning` (yellow) = User action is blocked by external factor (rate limit, locked)
+- `info` (blue) = Workflow requirement or expected state (verification needed, session expired)
+- `success` (green) = Positive outcome with persistent CTA (registration success)
 
 ### Alert Positioning Hierarchy
 

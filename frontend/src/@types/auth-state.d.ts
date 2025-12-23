@@ -5,6 +5,8 @@ export interface AuthError {
     status: number;
     message: string;
     code?: string;
+    /** Masked email from backend (e.g., "t***@example.com") for email verification errors */
+    email?: string;
 }
 
 /**

@@ -33,6 +33,16 @@
 
 <!-- UI/UX Enhancements -->
 
+- [ ] Pre-fill email field after email verification
+    - **Problem:** After clicking verification link, login form shows blank fields - unnecessary friction
+    - **Solution:** Pass email as URL param on redirect, pre-fill login form
+    - **Approach:**
+        1. Backend: Include email in verification redirect URL (`/login?email=user@example.com`)
+        2. Frontend: Parse param and pre-fill email field in Login.tsx
+    - **Security:** No risk - email is not sensitive (public contact info)
+    - **Research:** See external-research-analyst findings (agent a56e556) - industry best practice
+    - **Files:** Backend verification view/adapter, `frontend/src/pages/user/Login.tsx`
+
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
     - Change: `≥7.5` success (green), `5.0-7.4` warning (yellow), `<5.0` error (red)
     - Current: success/info/warning doesn't communicate rating quality intuitively

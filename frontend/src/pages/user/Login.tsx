@@ -110,7 +110,6 @@ const Login = () => {
         priorityToaster.dismiss(toastId);
         priorityToaster.success({
           title: `Welcome back, ${response.data.displayName}!`,
-          duration: 4000,
         });
         navigate(ROUTES.HOME);
       } else {

@@ -259,7 +259,6 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                     const displayName = oauthUser.first_name || oauthUser.username;
                     priorityToaster.success({
                         title: `Welcome back, ${displayName}!`,
-                        duration: 4000,
                     });
 
                     navigate(ROUTES.HOME);
@@ -290,6 +289,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         setUser(null);
         clearAuthTokens();
         navigate(ROUTES.LOGIN);
+
+        // Show logout success toast (appears on login page after redirect)
+        // Uses priorityToaster for auth flow consistency (top-right, same as login)
+        priorityToaster.success({ title: "You've been logged out" });
 
         try {
             if (isJWTUser) {

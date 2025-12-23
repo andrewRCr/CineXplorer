@@ -223,16 +223,26 @@ for async operations.
         **Bonus fix:** Added 429 rate limit detection in `handleResendVerification`
         for clearer error messaging.
 
-- [ ] **3.4 Logout flow integration**
+- [x] **3.4 Logout flow integration**
 
-    - [ ] **3.4.a Add logout success toast**
-        - File: `frontend/src/hooks/auth/useAuth.ts` - `logout()` function
-        - Add `toaster.success({ title: "You've been logged out" })`
-        - Place after navigation or before (test UX)
-        - Simple toast, not promise (logout is fast)
+    - [x] **3.4.a Add logout success toast**
 
-    - [ ] **3.4.b Test logout toast manually**
-        - Log out → verify success toast appears
+        Added `priorityToaster.success({ title: "You've been logged out" })` after `navigate(ROUTES.LOGIN)`
+        in the `logout()` function. Uses `priorityToaster` for auth flow consistency (top-right position,
+        same as login).
+
+        **Infrastructure enhancement:** Added policy-based duration defaults to toaster composition.
+        All status methods now apply durations from strategy doc automatically:
+        - success: 4s, info: 5s, warning: 6s, error: 8s, loading: persists
+        - Call sites can override with explicit `duration` prop
+        - Removed explicit `duration: 4000` from existing login toasts (now use defaults)
+
+        **Files:**
+        - `frontend/src/hooks/auth/useAuth.ts` (logout + OAuth login cleanup)
+        - `frontend/src/pages/user/Login.tsx` (login cleanup)
+        - `frontend/src/components/core/chakra/toaster.tsx` (duration wrapper)
+
+    - [x] **3.4.b Test logout toast manually** - Verified with OAuth and regular login flows
 
 - [ ] **3.5 Session expired (401 interceptor) integration**
 

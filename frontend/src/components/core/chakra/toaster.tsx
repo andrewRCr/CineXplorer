@@ -10,31 +10,98 @@ import {
 } from "@chakra-ui/react"
 
 /**
- * Default toaster - bottom-right positioning for routine feedback.
- * Use for: save confirmations, background updates, non-critical notifications.
+ * Toast status types for styling and duration configuration.
  */
-export const toaster = createToaster({
+type ToastType = "success" | "error" | "warning" | "info" | "loading"
+
+/**
+ * Policy-based duration defaults (in milliseconds).
+ * From strategy-component-styling.md:
+ * - Success: 4 seconds (quick confirmation)
+ * - Info: 5 seconds (time to read)
+ * - Warning: 6 seconds (needs attention)
+ * - Error: 8 seconds (critical, needs action)
+ * - Loading: Persists until dismissed programmatically
+ */
+const statusDurations: Record<ToastType, number | undefined> = {
+  success: 4000,
+  info: 5000,
+  warning: 6000,
+  error: 8000,
+  loading: undefined, // Persists until dismissed
+}
+
+// Toast options type (matches Chakra's toast options)
+type ToastOptions = {
+  id?: string
+  title?: React.ReactNode
+  description?: React.ReactNode
+  duration?: number
+  closable?: boolean
+  action?: { label: string; onClick: () => void }
+  [key: string]: unknown
+}
+
+/**
+ * Wraps a Chakra toaster with policy-based duration defaults.
+ * Call sites get policy compliance by default, with override capability.
+ *
+ * Usage:
+ *   toaster.success({ title: "Saved" })           // Uses 4s default
+ *   toaster.success({ title: "Saved", duration: 6000 })  // Override to 6s
+ */
+function wrapWithDurationDefaults(baseToaster: ReturnType<typeof createToaster>) {
+  const withDefaults = (type: ToastType) => (options: ToastOptions) => {
+    const defaultDuration = statusDurations[type]
+    return baseToaster[type]({
+      ...options,
+      // Use explicit duration if provided, otherwise use policy default
+      duration: options.duration ?? defaultDuration,
+    })
+  }
+
+  return {
+    // Preserve all base toaster functionality
+    ...baseToaster,
+    // Override status methods with duration-aware versions
+    success: withDefaults("success"),
+    error: withDefaults("error"),
+    warning: withDefaults("warning"),
+    info: withDefaults("info"),
+    loading: withDefaults("loading"),
+  }
+}
+
+// Create raw toasters (internal use only)
+const rawToaster = createToaster({
   placement: "bottom-end",
   pauseOnPageIdle: true,
 })
 
-/**
- * Priority toaster - top-right positioning for important notifications.
- * Use for: auth success (login, registration, email verified), critical confirmations.
- * These toasts warrant user attention but aren't blocking errors.
- */
-export const priorityToaster = createToaster({
+const rawPriorityToaster = createToaster({
   placement: "top-end",
   pauseOnPageIdle: true,
 })
+
+/**
+ * Default toaster - bottom-right positioning for routine feedback.
+ * Use for: save confirmations, background updates, non-critical notifications.
+ * Duration defaults applied per status type (see statusDurations).
+ */
+export const toaster = wrapWithDurationDefaults(rawToaster)
+
+/**
+ * Priority toaster - top-right positioning for important notifications.
+ * Use for: auth success (login, registration, email verified), critical confirmations.
+ * Duration defaults applied per status type (see statusDurations).
+ */
+export const priorityToaster = wrapWithDurationDefaults(rawPriorityToaster)
 
 /**
  * Status-based styling for toasts using semantic tokens.
  * Uses solid layer background with colored left accent for readability over content.
  * Unlike inline alerts (10% opacity), toasts overlay UI and need higher contrast.
  */
-type ToastType = "success" | "error" | "warning" | "info" | "loading"
-
 const statusStyles: Record<ToastType, { accentColor: string; titleColor: string }> = {
   success: { accentColor: "success", titleColor: "success" },
   error: { accentColor: "destructive", titleColor: "destructive" },
@@ -122,7 +189,7 @@ export const Toaster = () => {
   return (
     <Portal>
       <ChakraToaster
-        toaster={toaster}
+        toaster={rawToaster}
         insetInline={{ mdDown: "4" }}
         // Override default bottom: 0 to account for footer height
         style={{ bottom: bottomOffset, top: "auto" }}
@@ -142,7 +209,7 @@ export const PriorityToaster = () => {
   return (
     <Portal>
       <ChakraToaster
-        toaster={priorityToaster}
+        toaster={rawPriorityToaster}
         insetInline={{ mdDown: "4" }}
         // Override default top: 0 to account for navbar height
         style={{ top: topOffset, bottom: "auto" }}

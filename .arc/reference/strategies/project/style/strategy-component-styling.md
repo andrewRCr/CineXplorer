@@ -538,13 +538,17 @@ toaster.success({
 - Close trigger with muted styling and hover state
 - Shadow elevation (`shadow-md`) for floating appearance
 
-**Duration by type (default behavior):**
+**Duration by type (enforced by composition):**
 
 - Success: 4 seconds (quick confirmation)
 - Info: 5 seconds (time to read)
 - Warning: 6 seconds (needs attention)
 - Error: 8 seconds or closable (critical, needs action)
 - Loading: Persists until dismissed programmatically
+
+Durations are applied automatically by the toaster wrapper - call sites don't need to specify duration unless
+overriding the default. Override with explicit `duration` prop when needed (e.g., actionable toasts may need
+longer visibility).
 
 **Composition reference:** `frontend/src/components/core/chakra/toaster.tsx`
 

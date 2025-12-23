@@ -63,6 +63,20 @@
     - Files: `frontend/src/theme/recipes/` (new or existing), `frontend/src/components/movie/MovieCard.tsx`
     - Pattern will be reused in MovieDetail and other locations
 
+<!-- Developer Experience -->
+
+- [ ] Create DevTools debug page (`/dev/tools`)
+    - **Purpose:** Centralized page for development/debugging utilities (separate from ThemeDebug)
+    - **Initial features:**
+        - API error simulation (trigger 500, 401, 403, network errors via apiClient)
+        - Toast testing (all variants, positions, durations)
+        - Auth state inspection (current user, tokens, session info)
+    - **Future expansion:** Cache utilities, feature flags, performance toggles
+    - **Files:** `frontend/src/pages/dev/DevTools.tsx`, add route in router
+    - **Gate:** Only render in development mode (like ThemeDebug)
+    - **Rationale:** Discovered need during `tasks-toast-notification-system` Task 3.7 - manual API error testing
+    required exposing apiClient on window; proper DevTools page provides discoverable, organized utilities
+
 <!-- Miscellaneous -->
 
 <!-- Data Quality -->

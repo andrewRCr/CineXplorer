@@ -137,7 +137,7 @@ export function FeedbackStatusSection() {
                     onClick={() => toaster.loading({
                       title: "Loading",
                       description: "Please wait...",
-                      duration: 3000, // Auto-dismiss after 3 seconds for demo
+                      closable: true, // Loading toasts persist until dismissed
                     })}
                   >
                     Loading

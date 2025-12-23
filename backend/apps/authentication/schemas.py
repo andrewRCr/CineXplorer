@@ -220,11 +220,16 @@ class EmailVerificationResponseSchema(Schema):
 
 
 class ResendVerificationInputSchema(Schema):
-    """Schema for resend verification email input."""
+    """Schema for resend verification email input.
 
-    email: EmailStr = Field(
+    Uses opaque token from login error response instead of email address.
+    This prevents user enumeration while enabling resend for all login methods.
+    """
+
+    resend_token: str = Field(
         ...,
-        description="Email address to resend verification to"
+        min_length=32,
+        description="Opaque resend token from login error response"
     )
 
 

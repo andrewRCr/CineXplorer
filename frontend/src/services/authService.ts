@@ -171,14 +171,14 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
 }
 
 /**
- * Resend email verification to user's email address.
- * Used when verification email was not received or expired.
+ * Resend email verification using opaque token from login error.
+ * Token-based approach works for all login methods (email or username).
  *
- * @param email - User's email address
+ * @param resendToken - Opaque token from login error response
  * @returns Confirmation message
  */
 export async function resendVerificationEmail(
-    email: string
+    resendToken: string
 ): Promise<{ message: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
@@ -189,7 +189,7 @@ export async function resendVerificationEmail(
 
     const response = await apiClient.post<{ message: string }>(
         `/resend-verification/`,
-        { email },
+        { resend_token: resendToken },
         {
             headers: {
                 "Content-Type": "application/json",

@@ -148,10 +148,10 @@ for async operations.
         - ZeptoMail settings fixed (region config, token prefix)
         - Allauth stubs added for send_verification_email_to_address
 
-- [ ] **3.3 Email verification flow alignment**
+- [x] **3.3 Email verification flow alignment**
 
     **Note:** Task 3.3.a description was outdated - the atomic task "Auth flow refactor" already
-    implemented FloatingAlert (not toast) per updated policy. Remaining work is bug fixes and
+    implemented FloatingAlert (not toast) per updated policy. Remaining work was bug fixes and
     UX refinement.
 
     - [x] **3.3.a Implement email verification FloatingAlert** *(completed in atomic task)*
@@ -180,46 +180,48 @@ for async operations.
 
         **Files:** `auth-state.d.ts`, `useAuth.ts`, `Login.tsx`, `strategy-component-styling.md`
 
-    - [ ] **3.3.c Implement resend token pattern** *(enables resend for all login methods)*
+    - [x] **3.3.c Implement resend token pattern** *(enables resend for all login methods)*
 
-        **Problem:** Current resend requires actual email. If user logs in with username, we
-        only have masked email - can't resend. This is a UX gap.
+        Implemented opaque resend token system per OWASP best practices:
 
-        **Solution:** Include opaque resend token in login error response. Resend endpoint
-        accepts token instead of email. Token maps to user_id server-side.
+        - [x] **3.3.c.i Backend: Generate resend token on unverified login**
+            - `_generate_resend_token()`: 64-char token via `secrets.token_urlsafe(48)`
+            - Hash stored in Django cache (Redis): `resend_verification_token:{hash} -> user_id`
+            - 10-minute expiration (`RESEND_TOKEN_EXPIRY_SECONDS = 600`)
+            - Token included in 403 response alongside masked email
 
-        **Research:** Industry standard (Auth0, Ory Kratos, BetterAuth). OWASP-aligned -
-        prevents user enumeration while enabling universal resend.
+        - [x] **3.3.c.ii Backend: Update `/resend-verification/` endpoint**
+            - Token-only (no backwards compat needed - we control both ends)
+            - `_validate_resend_token()`: validates, extracts user_id, single-use (deletes)
+            - All paths return 200 with generic message (prevents enumeration)
+            - Schema: `ResendVerificationInputSchema.resend_token: str`
 
-        **Implementation:**
+        - [x] **3.3.c.iii Frontend: Use resend token from error response**
+            - `AuthError.resend_token` added to type definition
+            - `useAuth.ts` extracts token from 403 response
+            - `useLoginAlerts.ts` updated: `LoginAlert.resendToken`, handler uses token
+            - `authService.resendVerificationEmail()` sends `{ resend_token }`
+            - `Login.tsx` simplified: no username param needed, always has resend
 
-        - [ ] **3.3.c.i Backend: Generate resend token on unverified login**
-            - Generate 64-char cryptographically random token (`secrets.token_urlsafe(64)`)
-            - Store hash in Redis: `resend_token_hash -> (user_id, expires_at)`
-            - Expiration: 10-15 minutes
-            - Include plain token in 403 response alongside masked email
+        **Tests:** 15 unit tests covering token generation, validation, single-use,
+        roundtrip, and all resend flow paths. DRY helpers: `mock_token_validation`,
+        `setup_user_for_resend`.
 
-        - [ ] **3.3.c.ii Backend: Update `/resend-verification/` endpoint**
-            - Accept `{ resend_token: "..." }` OR `{ email: "..." }` (backwards compat)
-            - If token provided: validate, extract user_id, send email, mark token used
-            - Single-use enforcement, rate-limit 3-4 attempts per token lifetime
-            - Return generic success message (don't leak token validity)
+        **Files:** `authentication_service.py`, `schemas.py`, `auth-state.d.ts`,
+        `useAuth.ts`, `Login.tsx`, `useLoginAlerts.ts`, `authService.ts`,
+        `test_helpers.py`, `test_authentication_service_email_verification.py`
 
-        - [ ] **3.3.c.iii Frontend: Use resend token from error response**
-            - Extract `resend_token` from login error in `useAuth.ts`
-            - Pass token to `handleLoginError` and store in alert state
-            - Update `handleResendVerification` to use token instead of email
-            - Resend button always available when token present
+    - [x] **3.3.d Test email verification flow manually**
 
-        **Files:** `authentication_service.py`, `schemas.py`, `useAuth.ts`, `Login.tsx`,
-        `useLoginAlerts.ts`
+        All scenarios verified:
+        - Unverified user login (email) → **info** FloatingAlert with resend ✓
+        - Unverified user login (username) → **info** FloatingAlert with resend ✓
+        - Click resend → success toast, email received ✓
+        - Rate limited (429) → "Too many requests" toast ✓
+        - Expired token → covered by unit tests (returns generic success)
 
-    - [ ] **3.3.d Test email verification flow manually**
-        - Unverified user login (email) → **info** FloatingAlert with resend action
-        - Unverified user login (username) → **info** FloatingAlert with resend action
-        - Click resend → success/error toast feedback
-        - Rate limited → error toast
-        - Expired token → appropriate error handling
+        **Bonus fix:** Added 429 rate limit detection in `handleResendVerification`
+        for clearer error messaging.
 
 - [ ] **3.4 Logout flow integration**
 

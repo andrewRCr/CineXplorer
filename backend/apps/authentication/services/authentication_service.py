@@ -1,7 +1,9 @@
 """Authentication service for registration, login, tokens, and profile management."""
 from __future__ import annotations
 
+import hashlib
 import logging
+import secrets
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from typing import Protocol, cast
@@ -18,6 +20,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import HttpRequest, HttpResponse
@@ -114,6 +117,11 @@ class EmailConfirmationHMACProtocol(Protocol):
         """Return confirmation for key or None."""
 
 
+# Resend token configuration
+RESEND_TOKEN_EXPIRY_SECONDS = 600  # 10 minutes
+RESEND_TOKEN_CACHE_PREFIX = "resend_verification_token:"
+
+
 class AuthenticationService:
     """Service layer for authentication operations with DI support."""
 
@@ -169,6 +177,33 @@ class AuthenticationService:
         if not local:
             return f"***@{domain}"
         return f"{local[0]}***@{domain}"
+
+    def _generate_resend_token(self, user_id: int) -> str:
+        """Generate a cryptographically secure resend token and store in cache.
+
+        Token is stored as a hash in cache with the user_id as value.
+        Returns the plain token for inclusion in the response.
+        """
+        token = secrets.token_urlsafe(48)  # 64 chars base64
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        cache_key = f"{RESEND_TOKEN_CACHE_PREFIX}{token_hash}"
+        cache.set(cache_key, user_id, timeout=RESEND_TOKEN_EXPIRY_SECONDS)
+        self._logger.debug(f"Generated resend token for user_id={user_id}")
+        return token
+
+    def _validate_resend_token(self, token: str) -> int | None:
+        """Validate a resend token and return the user_id if valid.
+
+        Token is single-use: deleted from cache after successful validation.
+        Returns None if token is invalid, expired, or already used.
+        """
+        token_hash = hashlib.sha256(token.encode()).hexdigest()
+        cache_key = f"{RESEND_TOKEN_CACHE_PREFIX}{token_hash}"
+        user_id = cache.get(cache_key)
+        if user_id is not None:
+            cache.delete(cache_key)  # Single-use: consume the token
+            self._logger.debug(f"Validated resend token for user_id={user_id}")
+        return user_id
 
     # =========================================================================
     # Registration
@@ -321,12 +356,14 @@ class AuthenticationService:
                 "Login failed: Email not verified | "
                 f"user_id={user.id} | login={login} | ip={client_ip}"
             )
+            resend_token = self._generate_resend_token(user.id)
             return 403, {
                 "error": (
                     "Please verify your email address before logging in. "
                     "Check your email for the verification link."
                 ),
                 "email": self._mask_email(user.email),
+                "resend_token": resend_token,
             }
 
         refresh = self._refresh_token_cls.for_user(
@@ -629,37 +666,56 @@ class AuthenticationService:
         request: HttpRequest,
         payload: ResendVerificationInputSchema,
     ) -> tuple[int, ResendVerificationResponseSchema | dict[str, str]]:
-        """Resend email verification to provided email."""
-        try:
-            user = self._user_model.objects.get(email=payload.email)
+        """Resend email verification using opaque token from login error.
 
+        Token-based approach prevents user enumeration while enabling resend
+        for all login methods (email or username).
+        """
+        # Validate token and get user_id (token is consumed on validation)
+        user_id = self._validate_resend_token(payload.resend_token)
+
+        # Generic response for invalid/expired token (don't leak validity)
+        if user_id is None:
+            self._logger.debug("Resend verification: invalid or expired token")
+            return 200, {"message": "Verification email sent successfully."}
+
+        try:
+            user = self._user_model.objects.get(id=user_id)
+
+            # Check if already verified (edge case: verified between login and resend)
             if self._email_address_model.objects.filter(
                 user=user,
                 verified=True,
             ).exists():
-                return 400, {"error": "This email address is already verified."}
+                self._logger.info(f"Resend skipped: user_id={user_id} already verified")
+                return 200, {"message": "Verification email sent successfully."}
 
+            # Send verification email
             try:
                 email_address = self._email_address_model.objects.get(
                     user=user,
-                    email__iexact=payload.email,
+                    email__iexact=user.email,
                 )
                 email_address.send_confirmation(request)
-                return 200, {"message": "Verification email sent successfully."}
+                self._logger.info(f"Resend verification email sent to user_id={user_id}")
             except self._email_address_model.DoesNotExist:
+                # Create EmailAddress record if missing (shouldn't happen normally)
                 self._email_address_model.objects.add_email(
                     request,
                     cast(AbstractBaseUser, user),
-                    payload.email,
+                    user.email,
                     confirm=True,
                 )
-                return 200, {"message": "Verification email sent successfully."}
-        except self._user_model.DoesNotExist:
-            return 200, {
-                "message": (
-                    "If the email address exists, a verification email has been sent."
+                self._logger.info(
+                    f"Created EmailAddress and sent verification for user_id={user_id}"
                 )
-            }
+
+            return 200, {"message": "Verification email sent successfully."}
+
+        except self._user_model.DoesNotExist:
+            # User deleted between token generation and resend (rare edge case)
+            self._logger.warning(f"Resend verification: user_id={user_id} not found")
+            return 200, {"message": "Verification email sent successfully."}
 
 
 __all__ = ["AuthenticationService"]

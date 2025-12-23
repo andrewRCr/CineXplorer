@@ -399,7 +399,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             };
 
             if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string; email?: string } } };
+                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string; email?: string; resend_token?: string } } };
                 if (axiosError.response) {
                     authError.status = axiosError.response.status || 500;
                     authError.message =
@@ -411,6 +411,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                     }
                     if (axiosError.response.data?.email) {
                         authError.email = axiosError.response.data.email;
+                    }
+                    if (axiosError.response.data?.resend_token) {
+                        authError.resend_token = axiosError.response.data.resend_token;
                     }
                 }
             } else if (error instanceof Error) {

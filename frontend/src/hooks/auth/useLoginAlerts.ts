@@ -12,7 +12,7 @@ import { priorityToaster } from "@/components/core/chakra/toaster";
  */
 export type LoginAlert =
   | { type: "general"; message: string }
-  | { type: "emailVerification"; message: string; email: string }
+  | { type: "emailVerification"; message: string; resendToken: string }
   | { type: "registrationSuccess"; message: string };
 
 // ============================================================================
@@ -39,8 +39,8 @@ export function useLoginAlerts() {
   }, []);
 
   const showEmailVerificationError = useCallback(
-    (message: string, email: string) => {
-      setAlert({ type: "emailVerification", message, email });
+    (message: string, resendToken: string) => {
+      setAlert({ type: "emailVerification", message, resendToken });
     },
     []
   );
@@ -57,19 +57,34 @@ export function useLoginAlerts() {
   // Actions
   // ---------------------------------------------------------------------------
 
-  const handleResendVerification = useCallback(async (email: string) => {
+  const handleResendVerification = useCallback(async (resendToken: string) => {
     try {
-      await authService.resendVerificationEmail(email);
+      await authService.resendVerificationEmail(resendToken);
       priorityToaster.success({
         title: "Verification email sent!",
         description: "Check your inbox for the verification link.",
       });
     } catch (error: unknown) {
       console.error("Resend verification error:", error);
-      priorityToaster.error({
-        title: "Failed to send email",
-        description: "Please try again later.",
-      });
+
+      // Check for rate limiting (429)
+      const isRateLimited =
+        error &&
+        typeof error === "object" &&
+        "response" in error &&
+        (error as { response?: { status?: number } }).response?.status === 429;
+
+      if (isRateLimited) {
+        priorityToaster.error({
+          title: "Too many requests",
+          description: "Please wait a moment before trying again.",
+        });
+      } else {
+        priorityToaster.error({
+          title: "Failed to send email",
+          description: "Please try again later.",
+        });
+      }
     }
   }, []);
 

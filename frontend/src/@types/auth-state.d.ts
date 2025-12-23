@@ -7,6 +7,8 @@ export interface AuthError {
     code?: string;
     /** Masked email from backend (e.g., "t***@example.com") for email verification errors */
     email?: string;
+    /** Opaque token for resending verification email (works with any login method) */
+    resend_token?: string;
 }
 
 /**

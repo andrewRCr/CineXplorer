@@ -115,19 +115,22 @@ const Login = () => {
         navigate(ROUTES.HOME);
       } else {
         priorityToaster.dismiss(toastId);
-        handleLoginError(response.error, username);
+        handleLoginError(response.error);
       }
     },
   });
 
-  const handleLoginError = (
-    error: { status: number; message: string; code?: string; email?: string },
-    loginInput: string
-  ) => {
-    const { status, message, code, email: maskedEmail } = error;
+  const handleLoginError = (error: {
+    status: number;
+    message: string;
+    code?: string;
+    email?: string;
+    resend_token?: string;
+  }) => {
+    const { status, message, code, email: maskedEmail, resend_token } = error;
 
     // Check for email verification error (special case with resend action)
-    // Backend returns 403 for unverified email
+    // Backend returns 403 for unverified email with resend_token
     const isEmailVerificationError =
       status === 403 &&
       (code === ERROR_CODES.EMAIL_NOT_VERIFIED ||
@@ -135,24 +138,15 @@ const Login = () => {
         message.toLowerCase().includes("email verification") ||
         message.toLowerCase().includes("verify email"));
 
-    if (isEmailVerificationError) {
-      // For resend: use login input if it's an email (backend needs real email, not masked)
-      // For display: use masked email from backend to show user where to check
-      const emailForResend = loginInput.includes("@") ? loginInput : "";
-      const displayEmail = maskedEmail || "";
-
-      let alertMessage: string;
-      if (displayEmail && emailForResend) {
-        // Logged in with email - can show where to check AND offer resend
-        alertMessage = `We've sent a verification link to ${displayEmail}. Please check your inbox.`;
-      } else if (displayEmail) {
-        // Logged in with username - show where to check, but can't resend
-        alertMessage = `Please check ${displayEmail} for a verification link. To resend, log in with your email address.`;
-      } else {
-        // Fallback (shouldn't happen - backend always returns masked email)
-        alertMessage = "Please check your inbox for a verification link.";
-      }
-      showEmailVerificationError(alertMessage, emailForResend);
+    if (isEmailVerificationError && resend_token) {
+      // Token-based resend works for all login methods (email or username)
+      const alertMessage = maskedEmail
+        ? `We've sent a verification link to ${maskedEmail}. Please check your inbox.`
+        : "Please check your inbox for a verification link.";
+      showEmailVerificationError(alertMessage, resend_token);
+    } else if (isEmailVerificationError) {
+      // Fallback: no token (shouldn't happen with current backend)
+      showGeneralError(message);
     } else {
       showGeneralError(message);
     }
@@ -470,10 +464,10 @@ const Login = () => {
               status="info"
               onDismiss={clearAlert}
               action={
-                alert.email
+                alert.resendToken
                   ? {
                       label: "Resend verification",
-                      onClick: () => handleResendVerification(alert.email),
+                      onClick: () => handleResendVerification(alert.resendToken),
                     }
                   : undefined
               }

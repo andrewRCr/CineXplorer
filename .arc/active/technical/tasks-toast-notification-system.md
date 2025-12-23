@@ -244,23 +244,30 @@ for async operations.
 
     - [x] **3.4.b Test logout toast manually** - Verified with OAuth and regular login flows
 
-- [ ] **3.5 Session expired (401 interceptor) integration**
+- [x] **3.5 Session expired (401 interceptor) integration**
 
-    **Policy alignment:** Session expired is a blocking state requiring user action (re-login).
-    Per toast/alert policy, blocking states use FloatingAlert, not toast.
+    **Revised approach:** Session expired is NOT truly blocking - most app functionality (browsing, search)
+    works without auth. Only user-specific features (watchlist) require login. Using non-blocking
+    top-right alert instead of center-blocking.
 
-    - [ ] **3.5.a Add session expired FloatingAlert**
-        - File: `frontend/src/services/apiClient.ts` (interceptor detection)
-        - When 401 detected and refresh fails, set a flag/event for Login page to show alert
-        - **Approach options:**
-          1. Redirect to `/login?session_expired=true` and handle in Login.tsx
-          2. Use a global state/context for session expired alert
-        - FloatingAlert (blocking, center): "Session expired. Please log in again."
-        - Status: `info` (not error - session expiry is expected behavior, not user mistake)
-        - Ensure only fires once (not on every failed request during refresh)
+    - [x] **3.5.a Add session expired FloatingAlert**
 
-    - [ ] **3.5.b Test 401 flow manually**
-        - Clear tokens, make API call → verify redirect + FloatingAlert on login page
+        Added `?session_expired=true` query param to 401 redirect in apiClient.ts. Login.tsx detects
+        param and shows top-right info alert via `useLoginAlerts` hook (new `sessionExpired` alert type).
+
+        - Position: top-right (non-blocking, matches priorityToaster placement)
+        - Status: `info` (session expiry is expected lifecycle, not error)
+        - Message: "Session expired. Please log in again."
+        - Dismissible: yes (user can continue browsing if they want)
+        - No action button (login form is right there)
+
+        **Files:**
+        - `frontend/src/services/apiClient.ts` (redirect with query param)
+        - `frontend/src/hooks/auth/useLoginAlerts.ts` (new sessionExpired alert type)
+        - `frontend/src/pages/user/Login.tsx` (detect param, show alert)
+
+    - [x] **3.5.b Test 401 flow manually** - Verified: logout → set fake auth state → refresh → API call triggers
+    redirect with top-right info alert
 
 - [ ] **3.6 Watchlist action integrations**
 

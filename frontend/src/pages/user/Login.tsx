@@ -49,12 +49,13 @@ const Login = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Alert state (general errors, email verification, registration success)
+  // Alert state (general errors, email verification, registration success, session expired)
   const {
     alert,
     showGeneralError,
     showEmailVerificationError,
     showRegistrationSuccess,
+    showSessionExpired,
     clearAlert,
     handleResendVerification,
   } = useLoginAlerts();
@@ -274,6 +275,15 @@ const Login = () => {
     }
   }, [location, navigate, showGeneralError, showRegistrationSuccess]);
 
+  // Session expired redirect (from 401 interceptor)
+  useEffect(() => {
+    if (searchParams.get("session_expired") === "true") {
+      showSessionExpired();
+      // Clear the param from URL to prevent re-showing on refresh
+      window.history.replaceState({}, "", ROUTES.LOGIN);
+    }
+  }, [searchParams, showSessionExpired]);
+
   // ==========================================================================
   // Auth Redirect (already authenticated users)
   // ==========================================================================
@@ -487,12 +497,19 @@ const Login = () => {
         </FloatingAlertContainer>
       )}
 
-      {/* Non-blocking alerts (top-right) - success CTAs that persist but don't block */}
-      {alert?.type === "registrationSuccess" && (
+      {/* Non-blocking alerts (top-right) - success CTAs and session state that persist but don't block */}
+      {(alert?.type === "registrationSuccess" || alert?.type === "sessionExpired") && (
         <FloatingAlertContainer position="top-right">
-          <FloatingAlert status="success" onDismiss={clearAlert}>
-            {alert.message}
-          </FloatingAlert>
+          {alert?.type === "registrationSuccess" && (
+            <FloatingAlert status="success" onDismiss={clearAlert}>
+              {alert.message}
+            </FloatingAlert>
+          )}
+          {alert?.type === "sessionExpired" && (
+            <FloatingAlert status="info" onDismiss={clearAlert}>
+              Session expired. Please log in again.
+            </FloatingAlert>
+          )}
         </FloatingAlertContainer>
       )}
 

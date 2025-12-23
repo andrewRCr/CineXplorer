@@ -13,7 +13,8 @@ import { priorityToaster } from "@/components/core/chakra/toaster";
 export type LoginAlert =
   | { type: "general"; message: string }
   | { type: "emailVerification"; message: string; resendToken: string }
-  | { type: "registrationSuccess"; message: string };
+  | { type: "registrationSuccess"; message: string }
+  | { type: "sessionExpired" };
 
 // ============================================================================
 // Hook
@@ -47,6 +48,10 @@ export function useLoginAlerts() {
 
   const showRegistrationSuccess = useCallback((message: string) => {
     setAlert({ type: "registrationSuccess", message });
+  }, []);
+
+  const showSessionExpired = useCallback(() => {
+    setAlert({ type: "sessionExpired" });
   }, []);
 
   const clearAlert = useCallback(() => {
@@ -93,6 +98,7 @@ export function useLoginAlerts() {
     showGeneralError,
     showEmailVerificationError,
     showRegistrationSuccess,
+    showSessionExpired,
     clearAlert,
     handleResendVerification,
   };

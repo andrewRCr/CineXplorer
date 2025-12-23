@@ -157,9 +157,9 @@ apiClient.interceptors.response.use(
                     return apiClient(originalRequest);
                 }
             } catch (refreshError) {
-                // If refresh fails, clear tokens and redirect to login
+                // If refresh fails, clear tokens and redirect to login with session expired indicator
                 clearAuthTokens();
-                window.location.href = "/login"; // Force a full page reload to clear all state
+                window.location.href = "/login?session_expired=true"; // Force a full page reload to clear all state
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

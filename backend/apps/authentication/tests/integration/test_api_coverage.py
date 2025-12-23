@@ -327,16 +327,16 @@ def test_verify_email_with_invalid_key_returns_400(
 
 
 @pytest.mark.django_db
-def test_resend_verification_to_nonexistent_email(
+def test_resend_verification_with_invalid_token(
     api_client: Client,
 ) -> None:
-    """Test resending verification to non-existent email returns success (security).
+    """Test resending verification with invalid token returns success (security).
 
-    Covers lines 705-727 in api.py (resend_verification endpoint).
-    Returns success message without revealing if email exists (security best practice).
+    Covers resend_verification endpoint security behavior.
+    Returns success message without revealing if token is valid (security best practice).
     """
     resend_data = {
-        "email": "nonexistent@example.com",
+        "resend_token": "invalid-token-that-does-not-exist",
     }
 
     response = api_client.post(
@@ -345,8 +345,8 @@ def test_resend_verification_to_nonexistent_email(
         content_type="application/json",
     )
 
-    # Should return 200 without revealing if email exists
+    # Should return 200 without revealing if token is valid
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert "message" in data, "Response should contain 'message' field"
-    assert "if" in data["message"].lower() or "sent" in data["message"].lower()
+    assert "sent" in data["message"].lower()

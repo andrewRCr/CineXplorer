@@ -217,6 +217,10 @@ class EmailVerificationResponseSchema(Schema):
         ...,
         description="Verification success/failure message"
     )
+    email: str = Field(
+        ...,
+        description="Verified email address (for pre-filling login form)"
+    )
 
 
 class ResendVerificationInputSchema(Schema):

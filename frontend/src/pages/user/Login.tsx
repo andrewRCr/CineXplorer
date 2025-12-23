@@ -173,6 +173,11 @@ const Login = () => {
       setVerificationState("success");
       setVerificationMessage(response.message || "Email verified successfully!");
 
+      // Pre-fill the username field with verified email (reduces friction)
+      if (response.email) {
+        formik.setFieldValue("username", response.email);
+      }
+
       // Clear the token from URL to prevent re-verification attempts
       window.history.replaceState({}, "", ROUTES.LOGIN);
 

@@ -647,7 +647,10 @@ class AuthenticationService:
             # Send welcome email after successful verification
             send_welcome_email(cast(UserEmailProtocol, email_address.user))
 
-            return 200, {"message": "Email verified successfully."}
+            return 200, {
+                "message": "Email verified successfully.",
+                "email": email_address.email,
+            }
         except self._email_confirmation_model.DoesNotExist as exc:
             self._logger.error(f"EmailConfirmation not found: {exc}")
             return 400, {"error": "Invalid or expired verification link."}

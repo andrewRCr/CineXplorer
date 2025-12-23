@@ -6,6 +6,15 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Pre-fill email field after email verification
+    - **Outcome:** Backend now returns verified email in API response. Frontend pre-fills username field
+      after verification success, reducing login friction. Also fixed pre-existing technical debt:
+      updated 8 resend-verification tests to use token-based API (tests were using deprecated email-based API).
+    - **Files:** `schemas.py`, `authentication_service.py`, `authService.ts`, `Login.tsx`,
+      `test_email_verification.py`, `test_email_backend.py`, `test_api_coverage.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] Data Quality: Blacklist heuristic adult content candidates (batch 2)
     - **Outcome:** Blacklisted 378 movies from heuristic matches. 7 false positives excluded after
       title review, 1 new addition. No production companies qualified for 90%+ bulk blacklisting.

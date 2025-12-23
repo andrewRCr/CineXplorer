@@ -56,8 +56,28 @@ def test_email_outbox_starts_empty() -> None:
 
 
 # ============================================================================
-# Test: Email Sent During Resend Verification
+# Test: Email Sent During Resend Verification (Token-Based Flow)
 # ============================================================================
+#
+# The resend-verification endpoint uses token-based authentication.
+# Tokens are generated when login fails due to unverified email.
+# ============================================================================
+
+
+def _get_resend_token_from_login(
+    api_client: Client,
+    username: str,
+    password: str,
+) -> str | None:
+    """Attempt login and extract resend_token from 403 response."""
+    response = api_client.post(
+        "/api/token/",
+        data={"login": username, "password": password},
+        content_type="application/json",
+    )
+    if response.status_code == HTTPStatus.FORBIDDEN:
+        return response.json().get("resend_token")
+    return None
 
 
 @pytest.mark.django_db
@@ -78,10 +98,16 @@ def test_resend_verification_sends_email_to_outbox(
         verified=False,
     )
 
-    # Clear any existing emails
+    # Get resend token by attempting login
+    resend_token = _get_resend_token_from_login(
+        api_client, unverified_user.username, "testpass123"
+    )
+    assert resend_token is not None
+
+    # Clear any existing emails (login attempt may send verification email)
     mail.outbox.clear()
 
-    resend_data = {"email": unverified_user.email}
+    resend_data = {"resend_token": resend_token}
 
     response = api_client.post(
         "/api/resend-verification/",
@@ -116,9 +142,15 @@ def test_resend_verification_email_contains_verification_link(
         verified=False,
     )
 
+    # Get resend token by attempting login
+    resend_token = _get_resend_token_from_login(
+        api_client, unverified_user.username, "testpass123"
+    )
+    assert resend_token is not None
+
     mail.outbox.clear()
 
-    resend_data = {"email": unverified_user.email}
+    resend_data = {"resend_token": resend_token}
 
     response = api_client.post(
         "/api/resend-verification/",
@@ -145,13 +177,13 @@ def test_resend_verification_email_contains_verification_link(
 
 
 @pytest.mark.django_db
-def test_resend_verification_does_not_send_email_for_nonexistent_user(
+def test_resend_verification_does_not_send_email_for_invalid_token(
     api_client: Client,
 ) -> None:
-    """Verify no email sent for non-existent user (but still returns success for security)."""
+    """Verify no email sent for invalid token (but still returns success for security)."""
     mail.outbox.clear()
 
-    resend_data = {"email": "nonexistent@example.com"}
+    resend_data = {"resend_token": "invalid-token-that-does-not-exist"}
 
     response = api_client.post(
         "/api/resend-verification/",
@@ -159,7 +191,7 @@ def test_resend_verification_does_not_send_email_for_nonexistent_user(
         content_type="application/json",
     )
 
-    # Returns success to prevent email enumeration
+    # Returns success to prevent token enumeration
     assert response.status_code == HTTPStatus.OK
 
     # But no email should actually be sent
@@ -169,12 +201,34 @@ def test_resend_verification_does_not_send_email_for_nonexistent_user(
 @pytest.mark.django_db
 def test_resend_verification_does_not_send_email_for_already_verified(
     api_client: Client,
-    verified_user: User,
+    unverified_user: User,
 ) -> None:
-    """Verify no email sent for already verified user."""
+    """Verify no email sent if user verified between token generation and use.
+
+    Edge case: User gets token, then verifies email through another means,
+    then tries to use the resend token. No email should be sent.
+    """
+    # Create unverified EmailAddress
+    email_address = EmailAddress.objects.create(
+        user=unverified_user,
+        email=unverified_user.email,
+        primary=True,
+        verified=False,
+    )
+
+    # Get resend token while unverified
+    resend_token = _get_resend_token_from_login(
+        api_client, unverified_user.username, "testpass123"
+    )
+    assert resend_token is not None
+
+    # Now verify the email (simulating user verified via another path)
+    email_address.verified = True
+    email_address.save()
+
     mail.outbox.clear()
 
-    resend_data = {"email": verified_user.email}
+    resend_data = {"resend_token": resend_token}
 
     response = api_client.post(
         "/api/resend-verification/",
@@ -182,10 +236,10 @@ def test_resend_verification_does_not_send_email_for_already_verified(
         content_type="application/json",
     )
 
-    # Returns error for already verified
-    assert response.status_code == HTTPStatus.BAD_REQUEST
+    # Returns success (security - don't reveal verification status)
+    assert response.status_code == HTTPStatus.OK
 
-    # No email should be sent
+    # No email should be sent since already verified
     assert len(mail.outbox) == 0
 
 

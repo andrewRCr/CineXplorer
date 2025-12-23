@@ -146,9 +146,9 @@ export async function getUserProfile(): Promise<UserProfile> {
  * Called when user clicks email verification link.
  *
  * @param token - Email verification token from URL
- * @returns Verification result with message
+ * @returns Verification result with message and email (for pre-filling login form)
  */
-export async function verifyEmail(token: string): Promise<{ message: string }> {
+export async function verifyEmail(token: string): Promise<{ message: string; email: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
@@ -156,7 +156,7 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
         logger.warn("CSRF token not available for verify-email request");
     }
 
-    const response = await apiClient.post<{ message: string }>(
+    const response = await apiClient.post<{ message: string; email: string }>(
         `/verify-email/`,
         { key: token },
         {

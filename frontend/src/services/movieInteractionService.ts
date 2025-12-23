@@ -36,14 +36,45 @@ type UserMovieDataCreateSchema = components['schemas']['UserMovieDataCreateSchem
 type UserMovieDataUpdateSchema = components['schemas']['UserMovieDataUpdateSchema'];
 
 /**
- * Type guard for API errors with status codes
+ * Type guard for Axios errors with response status
  */
-interface ApiError extends Error {
-    status?: number;
+interface AxiosErrorLike {
+    response?: {
+        status?: number;
+        data?: {
+            detail?: string;
+            error?: string;
+            message?: string;
+        };
+    };
+    message?: string;
 }
 
-function isApiError(error: unknown): error is ApiError {
-    return error instanceof Error && 'status' in error;
+function isAxiosError(error: unknown): error is AxiosErrorLike {
+    return (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error
+    );
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+    if (isAxiosError(error)) {
+        return error.response?.status;
+    }
+    return undefined;
+}
+
+function getErrorMessage(error: unknown): string {
+    if (isAxiosError(error)) {
+        // Check various backend error message formats
+        const data = error.response?.data;
+        return data?.detail ?? data?.error ?? data?.message ?? error.message ?? '';
+    }
+    if (error instanceof Error) {
+        return error.message;
+    }
+    return '';
 }
 
 /**
@@ -86,14 +117,18 @@ export async function toggleMovieWatchlist(
             const response = await createUserMovieData(createPayload);
             return response.data;
         } catch (error: unknown) {
-            // Handle race condition: Another request created the entry
-            if (isApiError(error) && error.status === 400) {
-                if (error.message.includes('already exists')) {
-                    // Fetch the existing data and retry with UPDATE
+            // Handle race condition: Entry already exists (stale movie prop or concurrent request)
+            // Backend returns 400 when entry already exists for this user/movie
+            if (getErrorStatus(error) === 400) {
+                const errorMsg = getErrorMessage(error).toLowerCase();
+                if (errorMsg.includes('already exists') || errorMsg.includes('unique constraint')) {
+                    // Fetch the current data and TOGGLE (not always set to true)
+                    // This handles the case where movie.user_movie_data is stale
                     const { request } = getUserMovieDataByTmdbId({ tmdb_id: movie.tmdb_id });
                     const existingDataResponse = await request;
+                    const currentStatus = existingDataResponse.data.user_on_watchlist;
                     const updateResponse = await updateUserMovieData(existingDataResponse.data.id!, {
-                        user_on_watchlist: true,
+                        user_on_watchlist: !currentStatus,
                     });
                     return updateResponse.data;
                 }

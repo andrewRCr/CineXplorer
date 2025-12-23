@@ -269,25 +269,38 @@ for async operations.
     - [x] **3.5.b Test 401 flow manually** - Verified: logout → set fake auth state → refresh → API call triggers
     redirect with top-right info alert
 
-- [ ] **3.6 Watchlist action integrations**
+- [x] **3.6 Watchlist action integrations**
 
-    - [ ] **3.6.a Add watchlist promise toasts to `useMovieActions.ts`**
-        - File: `frontend/src/hooks/movie/useMovieActions.ts`
-        - Remove TODO comments at lines 111 and 116
-        - Use `toaster.promise()` or loading/success/error pattern
-        - Success: "Added to watchlist" or "Removed from watchlist" based on action
-        - Error: "Failed to update watchlist" with description
+    - [x] **3.6.a Add watchlist promise toasts to `useMovieActions.ts`**
 
-    - [ ] **3.6.b Add undo action for watchlist removal**
-        - When removing from watchlist, include action button:
-        - `action: { label: "Undo", onClick: () => toggleWatchlist() }`
-        - Only for removal (destructive action), not for add
+        Added success/error toasts to `toggleWatchlist` function. Uses `toaster` (bottom-right)
+        for routine feedback. Success message based on API result (not stale prop): "Added to
+        watchlist" or "Removed from watchlist". Error shows "Failed to update watchlist".
 
-    - [ ] **3.6.c Test watchlist toasts manually**
-        - Add movie to watchlist → verify success toast
-        - Remove movie → verify success toast with Undo button
-        - Click Undo → verify movie re-added
-        - Simulate error (network off) → verify error toast
+        Also fixed Axios error handling - service layer now properly detects 400 errors and
+        handles stale-prop race conditions by fetching fresh data and toggling.
+
+        **Files:**
+        - `frontend/src/hooks/movie/useMovieActions.ts`
+        - `frontend/src/services/movieInteractionService.ts` (error handling)
+
+    - [x] **3.6.b Undo action DEFERRED**
+
+        Originally planned Undo button for removal toast. Deferred due to architectural gap:
+        Undo action bypasses MovieCard's local state, causing UI desync. Requires TanStack Query
+        cache invalidation for proper implementation.
+
+        See: `plan-user-movie-data-features.md` → "Known Architectural Issues" section
+
+    - [x] **3.6.c Test watchlist toasts manually**
+
+        Verified on MovieCard (browse results):
+        - Add movie to watchlist → success toast ✓
+        - Remove movie → success toast ✓
+        - Error handling → error toast with message ✓
+
+        **Note:** MovieDetail page uses different hook (`useUserMovieData`) which can't CREATE
+        new records - documented in architectural issues for future consolidation.
 
 - [ ] **3.7 API error interceptor (5xx) integration**
 

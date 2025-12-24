@@ -2,9 +2,10 @@
 
 **PRD:** `.arc/active/technical/prd-toast-notification-system.md`
 **Created:** 2025-12-19
+**Completed:** 2025-12-23
 **Branch:** `technical/toast-notification-system`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -46,7 +47,7 @@ defaults. It exports `toaster` instance and `Toaster` component but is NOT mount
     Confirmed composition at `components/core/chakra/toaster.tsx` is correct:
     - `placement: "bottom-end"`, `pauseOnPageIdle: true` ✓
     - Exports `toaster` instance and `Toaster` component ✓
-    - Uses Chakra defaults (e.g., `blue.solid` spinner) - to update in Phase 2
+    - Uses Chakra defaults (e.g., `blue.solid` spinner) - updated in Phase 2
 
     - [x] **1.1.a Review existing composition** - Verified config and exports
     - [x] **1.1.b Verify TypeScript types compile** - `npm run type-check` passed
@@ -380,16 +381,16 @@ handling a refresh.
 
 ## Success Criteria
 
-- [ ] Toaster renders at application root with semantic token styling
-- [ ] Toast recipe integrates with theme system (light/dark modes work)
-- [ ] Login shows promise toast (loading → success/error)
-- [ ] Register shows promise toast (loading → success with email verification note)
-- [ ] Email resend shows promise toast (loading → success/error)
-- [ ] Logout shows success toast
-- [ ] Session expiry (401) shows critical error toast
-- [ ] Watchlist add/remove shows success toast
-- [ ] Watchlist remove includes Undo action
-- [ ] Server errors (5xx) show error toast
-- [ ] Accessibility: ARIA roles, keyboard navigation, reduced motion
-- [ ] All quality gates pass (tests, linting, type checking)
-- [ ] Ready for merge to main
+- [x] Toaster renders at application root with semantic token styling
+- [x] Toast recipe integrates with theme system (light/dark modes work)
+- [x] Login shows promise toast (loading → success/error)
+- [x] Register shows promise toast (loading → success with email verification note)
+- [x] Email resend shows promise toast (loading → success/error)
+- [x] Logout shows success toast
+- [x] Session expiry (401) shows info FloatingAlert *(revised from toast per Task 3.5 - non-blocking approach)*
+- [x] Watchlist add/remove shows success toast
+- [~] Watchlist remove Undo action *(deferred per Task 3.6.b - requires TanStack Query integration)*
+- [x] Server errors (5xx) show error toast
+- [x] Accessibility: ARIA roles, keyboard navigation, reduced motion
+- [x] All quality gates pass (tests, linting, type checking)
+- [x] Ready for merge to main

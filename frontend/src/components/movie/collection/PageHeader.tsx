@@ -53,9 +53,13 @@ const PageHeader = forwardRef(
     useEffect(() => {
       // Capture ref for cleanup (ESLint react-hooks/exhaustive-deps)
       const timers = titleTimersRef.current;
+      // Unmount guard - prevents state updates after component unmounts
+      let cancelled = false;
 
       // Use microtasks to avoid React warning while keeping flushSync functionality
       queueMicrotask(() => {
+        if (cancelled) return;
+
         // Step 1: Force reset with no transition
         flushSync(() => {
           setAnimationPhase("reset");
@@ -63,18 +67,21 @@ const PageHeader = forwardRef(
 
         // Step 2: Enable transition but stay at 0%
         timers.ready = setTimeout(() => {
+          if (cancelled) return;
           flushSync(() => {
             setAnimationPhase("ready");
           });
 
           // Step 3: Animate to 100%
           timers.animating = setTimeout(() => {
+            if (cancelled) return;
             setAnimationPhase("animating");
           }, 50);
         }, 50);
       });
 
       return () => {
+        cancelled = true;
         if (timers.ready) clearTimeout(timers.ready);
         if (timers.animating) clearTimeout(timers.animating);
       };
@@ -84,13 +91,20 @@ const PageHeader = forwardRef(
     useEffect(() => {
       // Capture ref for cleanup (ESLint react-hooks/exhaustive-deps)
       const timers = mountTimersRef.current;
+      // Unmount guard - prevents state updates after component unmounts
+      let cancelled = false;
 
       timers.initial = setTimeout(() => {
+        if (cancelled) return;
         setAnimationPhase("ready");
-        timers.animating = setTimeout(() => setAnimationPhase("animating"), 50);
+        timers.animating = setTimeout(() => {
+          if (cancelled) return;
+          setAnimationPhase("animating");
+        }, 50);
       }, 50);
 
       return () => {
+        cancelled = true;
         if (timers.initial) clearTimeout(timers.initial);
         if (timers.animating) clearTimeout(timers.animating);
       };

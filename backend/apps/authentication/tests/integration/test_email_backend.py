@@ -554,6 +554,7 @@ def test_email_confirmation_template_renders_with_context() -> None:
         "user": Mock(username="templateuser"),
         "activate_url": "https://example.com/verify-email/abc123",
         "email": "template@example.com",
+        "expiry_days": 3,  # Injected by CustomAccountAdapter.send_mail
     }
 
     # Test HTML template
@@ -567,6 +568,7 @@ def test_email_confirmation_template_renders_with_context() -> None:
     assert "https://example.com/verify-email/abc123" in html_content
     assert "template@example.com" in html_content
     assert "CineXplorer" in html_content
+    assert "3 day" in html_content  # expiry_days rendered in template
 
     # Test TXT template
     txt_content = render_to_string(
@@ -578,6 +580,7 @@ def test_email_confirmation_template_renders_with_context() -> None:
     assert "templateuser" in txt_content
     assert "https://example.com/verify-email/abc123" in txt_content
     assert "template@example.com" in txt_content
+    assert "3 day" in txt_content  # expiry_days rendered in template
 
 
 @pytest.mark.django_db

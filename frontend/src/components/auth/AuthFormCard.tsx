@@ -26,11 +26,11 @@ interface AuthFormCardProps {
 }
 
 export const AuthFormCard = ({ children }: AuthFormCardProps) => (
-  <Box position="relative" zIndex={1} w="480px">
+  <Box position="relative" zIndex={1} w="100%" maxW="480px" px={{ base: 4, md: 0 }}>
     <Box
       bg="layer-01"
       color="foreground"
-      p={10}
+      p={{ base: 6, md: 10 }}
       rounded="lg"
       boxShadow="xl"
       w="100%"

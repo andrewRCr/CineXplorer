@@ -66,6 +66,16 @@ interface FormFieldProps {
   required?: boolean;
   /** Top margin for spacing between fields */
   mt?: number | string;
+  /** Minimum height for the field container - defaults to "80px" */
+  minH?: string;
+  /** Placeholder text for the input */
+  placeholder?: string;
+  /** HTML autocomplete attribute */
+  autoComplete?: string;
+  /** Maximum character length */
+  maxLength?: number;
+  /** Whether the field is disabled */
+  disabled?: boolean;
   /** Optional helper content rendered below the field (e.g., "Forgot password?" link) */
   children?: ReactNode;
 }
@@ -82,12 +92,17 @@ export const FormField = ({
   autoFocus,
   required = true,
   mt,
+  minH = "80px",
+  placeholder,
+  autoComplete,
+  maxLength,
+  disabled,
   children,
 }: FormFieldProps) => {
   const isInvalid = !!error && touched;
 
   return (
-    <Box minH="80px" w="100%" mt={mt}>
+    <Box minH={minH} w="100%" mt={mt}>
       <Field.Root
         required={required}
         invalid={isInvalid}
@@ -110,6 +125,10 @@ export const FormField = ({
           value={value}
           onChange={onChange}
           onBlur={onBlur}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          maxLength={maxLength}
+          disabled={disabled}
           layer="01"
         />
         <Field.ErrorText

@@ -29,8 +29,6 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
-<!-- Code Quality / Refactoring -->
-
 <!-- UI/UX Enhancements -->
 
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
@@ -76,7 +74,3 @@
     - **Gate:** Only render in development mode (like ThemeDebug)
     - **Rationale:** Discovered need during `tasks-toast-notification-system` Task 3.7 - manual API error testing
     required exposing apiClient on window; proper DevTools page provides discoverable, organized utilities
-
-<!-- Miscellaneous -->
-
-<!-- Data Quality -->

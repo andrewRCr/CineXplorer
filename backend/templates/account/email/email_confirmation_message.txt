@@ -4,7 +4,7 @@ Welcome to CineXplorer! To start exploring movies and managing your watchlist, p
 
 Verify your email: {{ activate_url }}
 
-IMPORTANT: This verification link will expire in 3 days for security reasons.
+IMPORTANT: This verification link will expire in {{ expiry_days }} day{{ expiry_days|pluralize }} for security reasons.
 
 If you didn't create an account with CineXplorer, please ignore this email.
 

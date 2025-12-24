@@ -40,9 +40,15 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         Overrides default to check msg.send() return value and raise
         EmailDeliveryError if the email backend reports failure.
 
+        Also injects expiry_days into context for email templates that display
+        the verification link expiration period.
+
         Raises:
             EmailDeliveryError: If email backend returns 0 (not sent)
         """
+        # Inject expiry_days for templates that display verification expiration
+        context["expiry_days"] = getattr(settings, "EMAIL_VERIFICATION_EXPIRY_DAYS", 3)
+
         msg = self.render_mail(template_prefix, email, context)
         sent_count = msg.send()
         if sent_count == 0:

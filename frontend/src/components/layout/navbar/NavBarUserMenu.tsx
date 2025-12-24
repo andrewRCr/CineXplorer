@@ -9,7 +9,7 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useNavigate, Link } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { ROUTES } from "@/constants/routes";
 import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
@@ -26,6 +26,16 @@ import NavBarUserMenuItem from "./NavBarUserMenuItem";
 // - All: Profile, Settings, Logout
 //
 // ============================================================================
+
+// Menu item type for precomputed menu items
+type MenuItem = {
+  key: string;
+  type: "log" | "nav" | "profile" | "settings" | "logout";
+  label: string;
+  to?: string;
+  icon?: React.ReactNode;
+  position: "first" | "middle" | "last" | "only";
+};
 
 const NavBarUserMenu = () => {
   // ==========================================================================
@@ -87,12 +97,65 @@ const NavBarUserMenu = () => {
   }, [isOpen]);
 
   // ==========================================================================
+  // Menu Items (must be before early return to satisfy hooks rules)
+  // ==========================================================================
+
+  // Build menu items list for position calculation
+  const mobileNavItems = USER_NAVIGATION_ITEMS.filter((item) => !item.isAction);
+
+  // Precompute menu items with positions to avoid mutable counter during render
+  const menuItems = useMemo(() => {
+    const getPosition = (index: number, total: number) => {
+      if (total === 1) return "only" as const;
+      if (index === 0) return "first" as const;
+      if (index === total - 1) return "last" as const;
+      return "middle" as const;
+    };
+
+    const items: MenuItem[] = [];
+
+    // Mobile-only items
+    if (isMobile) {
+      items.push({
+        key: "log",
+        type: "log",
+        label: "LOG",
+        icon: <BsFillPlusCircleFill size={14} />,
+        position: "first", // Will be recalculated
+      });
+
+      mobileNavItems.forEach((item) => {
+        items.push({
+          key: item.value,
+          type: "nav",
+          label: item.label,
+          to: item.path,
+          position: "middle", // Will be recalculated
+        });
+      });
+    }
+
+    // Always-visible items
+    items.push(
+      { key: "profile", type: "profile", label: "Profile", to: ROUTES.PROFILE, position: "middle" },
+      { key: "settings", type: "settings", label: "Settings", to: ROUTES.SETTINGS, position: "middle" },
+      { key: "logout", type: "logout", label: "Logout", position: "middle" }
+    );
+
+    // Recalculate positions based on final array
+    return items.map((item, idx) => ({
+      ...item,
+      position: getPosition(idx, items.length),
+    }));
+  }, [isMobile, mobileNavItems]);
+
+  // ==========================================================================
   // Render: Unauthenticated State
   // ==========================================================================
 
   if (!isAuthenticated) {
     return (
-      <Link to={ROUTES.LOGIN} style={{ textDecoration: "none" }}>
+      <Link to={ROUTES.LOGIN}>
         <Button size="sm" variant="outline">
           Login
         </Button>
@@ -103,22 +166,6 @@ const NavBarUserMenu = () => {
   // ==========================================================================
   // Render: Authenticated State
   // ==========================================================================
-
-  // Build menu items list for position calculation
-  const mobileNavItems = USER_NAVIGATION_ITEMS.filter((item) => !item.isAction);
-  const staticItems = ["Profile", "Settings", "Logout"];
-  const allItems = isMobile
-    ? ["LOG", ...mobileNavItems.map((i) => i.label), ...staticItems]
-    : staticItems;
-
-  const getPosition = (index: number, total: number) => {
-    if (total === 1) return "only" as const;
-    if (index === 0) return "first" as const;
-    if (index === total - 1) return "last" as const;
-    return "middle" as const;
-  };
-
-  let itemIndex = 0;
 
   return (
     <Box position="relative">
@@ -158,55 +205,17 @@ const NavBarUserMenu = () => {
             zIndex="dropdown"
           >
             <VStack gap={0} align="stretch">
-              {/* Mobile-only items */}
-              {isMobile && (
-                <>
-                  {/* LOG Button */}
-                  <NavBarUserMenuItem
-                    icon={<BsFillPlusCircleFill size={14} />}
-                    onClick={handleLogClick}
-                    position={getPosition(itemIndex++, allItems.length)}
-                  >
-                    LOG
-                  </NavBarUserMenuItem>
-
-                  {/* User Navigation Items */}
-                  {mobileNavItems.map((item) => (
-                    <NavBarUserMenuItem
-                      key={item.value}
-                      to={item.path}
-                      onClick={closeMenu}
-                      position={getPosition(itemIndex++, allItems.length)}
-                    >
-                      {item.label}
-                    </NavBarUserMenuItem>
-                  ))}
-                </>
-              )}
-
-              {/* Always-visible items */}
-              <NavBarUserMenuItem
-                to={ROUTES.PROFILE}
-                onClick={closeMenu}
-                position={getPosition(isMobile ? itemIndex++ : 0, allItems.length)}
-              >
-                Profile
-              </NavBarUserMenuItem>
-
-              <NavBarUserMenuItem
-                to={ROUTES.SETTINGS}
-                onClick={closeMenu}
-                position={getPosition(isMobile ? itemIndex++ : 1, allItems.length)}
-              >
-                Settings
-              </NavBarUserMenuItem>
-
-              <NavBarUserMenuItem
-                onClick={handleLogout}
-                position={getPosition(isMobile ? itemIndex : 2, allItems.length)}
-              >
-                Logout
-              </NavBarUserMenuItem>
+              {menuItems.map((item) => (
+                <NavBarUserMenuItem
+                  key={item.key}
+                  icon={item.icon}
+                  to={item.to}
+                  onClick={item.type === "logout" ? handleLogout : item.type === "log" ? handleLogClick : closeMenu}
+                  position={item.position}
+                >
+                  {item.label}
+                </NavBarUserMenuItem>
+              ))}
             </VStack>
           </Box>
         </Portal>

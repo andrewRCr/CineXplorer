@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import * as authService from "@/services/authService";
 import { priorityToaster } from "@/components/core/chakra/toaster";
+import { hasErrorStatus } from "@/utilities/axiosErrorUtils";
 
 // ============================================================================
 // Types
@@ -73,13 +74,7 @@ export function useLoginAlerts() {
       console.error("Resend verification error:", error);
 
       // Check for rate limiting (429)
-      const isRateLimited =
-        error &&
-        typeof error === "object" &&
-        "response" in error &&
-        (error as { response?: { status?: number } }).response?.status === 429;
-
-      if (isRateLimited) {
+      if (hasErrorStatus(error, 429)) {
         priorityToaster.error({
           title: "Too many requests",
           description: "Please wait a moment before trying again.",

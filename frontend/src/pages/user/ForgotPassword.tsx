@@ -93,6 +93,11 @@ const ForgotPassword = () => {
 
               <Button
                 type="submit"
+                variant="solid"
+                bg="primary"
+                color="on-primary"
+                _hover={{ bg: "primary-hover" }}
+                _active={{ bg: "primary-active" }}
                 width="full"
                 fontSize="16px"
                 loading={formik.isSubmitting}

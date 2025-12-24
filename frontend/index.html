@@ -57,7 +57,11 @@
 			// Sets CSS variable used by html/body/#root/#preload-overlay styles
 			(function() {
 				var bg = '#161616'; // Default: IBM Carbon dark
-				try { bg = localStorage.getItem('cinexplorer-bg') || bg; } catch(e) {}
+				try {
+					var stored = localStorage.getItem('cinexplorer-bg');
+					// Validate 6-char hex format (#XXXXXX) before using
+					if (stored && stored.length === 7 && stored[0] === '#') bg = stored;
+				} catch(e) {}
 				document.documentElement.style.setProperty('--app-bg', bg);
 				window.__PRELOAD_BG__ = bg;
 			})();

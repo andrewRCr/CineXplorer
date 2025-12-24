@@ -3,7 +3,7 @@ import {
     clearAuthTokens,
     getAuthTokens,
     setAuthTokens,
-} from "@/utilities/token";
+} from "@/utilities/tokenUtils";
 import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
 import { toaster } from "@/components/core/chakra/toaster";

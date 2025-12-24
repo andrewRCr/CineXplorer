@@ -12,7 +12,7 @@ import {
   isLatinScriptLanguage,
   getAvailableSortOptions,
   isTitleSort,
-} from "../sortAvailability";
+} from "../sortAvailabilityUtils";
 
 describe("sortAvailability", () => {
   describe("isLatinScriptLanguage", () => {

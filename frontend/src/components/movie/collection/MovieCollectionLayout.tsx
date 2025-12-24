@@ -6,7 +6,7 @@ import { useMovieFetchRouter } from "@/hooks/movie/useMovieFetchRouter";
 import {
   getFetcherAndSource,
   type RouteConfig,
-} from "@/utilities/routeConfigHelper";
+} from "@/utilities/routeConfigResolver";
 import { parseSearchParamsFromUrl } from "@/utilities/searchUrlSync";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";

@@ -1,7 +1,7 @@
 import axios from "axios";
 import apiClient from "./apiClient";
 import type { components } from "@/types/api";
-import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
+import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrfTokenFetcher";
 import logger from "./logger";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;

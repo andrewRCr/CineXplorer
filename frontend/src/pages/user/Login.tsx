@@ -23,6 +23,7 @@ import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { priorityToaster } from "@/components/core/chakra/toaster";
+import { isAxiosError } from "@/utilities/axiosErrorUtils";
 
 // ============================================================================
 // Login Page
@@ -199,11 +200,9 @@ const Login = () => {
 
       // Extract error message
       let errorMessage = "Verification failed. The link may be expired or invalid.";
-      if (error && typeof error === "object" && "response" in error) {
-        const axiosError = error as { response?: { status?: number; data?: { error?: string } } };
-        if (axiosError.response?.data?.error) {
-          errorMessage = axiosError.response.data.error;
-        }
+      if (isAxiosError(error)) {
+        const data = error.response?.data as { error?: string } | undefined;
+        if (data?.error) errorMessage = data.error;
       }
       setVerificationMessage(errorMessage);
       window.history.replaceState({}, "", ROUTES.LOGIN);
@@ -420,7 +419,7 @@ const Login = () => {
                 left="0"
                 right="0"
                 h="1px"
-                bg="border"
+                bg="border-subtle-01"
               />
               <Text
                 position="relative"

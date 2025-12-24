@@ -26,7 +26,8 @@ import {
     clearAuthTokens,
     areTokensExpired,
     type TokenStorage,
-} from "@/utilities/token";
+} from "@/utilities/tokenUtils";
+import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import type { components } from "@/types/api";
 import * as authService from "@/services/authService";
 import { priorityToaster } from "@/components/core/chakra/toaster";
@@ -401,24 +402,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 message: 'Login failed',
             };
 
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string; email?: string; resend_token?: string } } };
-                if (axiosError.response) {
-                    authError.status = axiosError.response.status || 500;
-                    authError.message =
-                        axiosError.response.data?.detail ||
-                        axiosError.response.data?.error ||
-                        'Login failed';
-                    if (axiosError.response.data?.code) {
-                        authError.code = axiosError.response.data.code;
-                    }
-                    if (axiosError.response.data?.email) {
-                        authError.email = axiosError.response.data.email;
-                    }
-                    if (axiosError.response.data?.resend_token) {
-                        authError.resend_token = axiosError.response.data.resend_token;
-                    }
-                }
+            if (isAxiosError(error) && error.response) {
+                const { status, data } = error.response;
+                const responseData = data as { detail?: string; error?: string; code?: string; email?: string; resend_token?: string } | undefined;
+                authError.status = status || 500;
+                authError.message = responseData?.detail || responseData?.error || 'Login failed';
+                if (responseData?.code) authError.code = responseData.code;
+                if (responseData?.email) authError.email = responseData.email;
+                if (responseData?.resend_token) authError.resend_token = responseData.resend_token;
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }
@@ -442,18 +433,12 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 message: 'Registration failed',
             };
 
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string } } };
-                if (axiosError.response) {
-                    authError.status = axiosError.response.status || 500;
-                    authError.message =
-                        axiosError.response.data?.detail ||
-                        axiosError.response.data?.error ||
-                        'Registration failed';
-                    if (axiosError.response.data?.code) {
-                        authError.code = axiosError.response.data.code;
-                    }
-                }
+            if (isAxiosError(error) && error.response) {
+                const { status, data } = error.response;
+                const responseData = data as { detail?: string; error?: string; code?: string } | undefined;
+                authError.status = status || 500;
+                authError.message = responseData?.detail || responseData?.error || 'Registration failed';
+                if (responseData?.code) authError.code = responseData.code;
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }

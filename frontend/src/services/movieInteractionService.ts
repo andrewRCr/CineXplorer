@@ -30,52 +30,11 @@ import {
     updateUserMovieData,
     getUserMovieDataByTmdbId,
 } from './userMovieDataService';
+import { getErrorStatus, getErrorMessage } from '@/utilities/axiosErrorUtils';
 
 type UserMovieDataDetailSchema = components['schemas']['UserMovieDataDetailSchema'];
 type UserMovieDataCreateSchema = components['schemas']['UserMovieDataCreateSchema'];
 type UserMovieDataUpdateSchema = components['schemas']['UserMovieDataUpdateSchema'];
-
-/**
- * Type guard for Axios errors with response status
- */
-interface AxiosErrorLike {
-    response?: {
-        status?: number;
-        data?: {
-            detail?: string;
-            error?: string;
-            message?: string;
-        };
-    };
-    message?: string;
-}
-
-function isAxiosError(error: unknown): error is AxiosErrorLike {
-    return (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error
-    );
-}
-
-function getErrorStatus(error: unknown): number | undefined {
-    if (isAxiosError(error)) {
-        return error.response?.status;
-    }
-    return undefined;
-}
-
-function getErrorMessage(error: unknown): string {
-    if (isAxiosError(error)) {
-        // Check various backend error message formats
-        const data = error.response?.data;
-        return data?.detail ?? data?.error ?? data?.message ?? error.message ?? '';
-    }
-    if (error instanceof Error) {
-        return error.message;
-    }
-    return '';
-}
 
 /**
  * Toggle a movie's watchlist status

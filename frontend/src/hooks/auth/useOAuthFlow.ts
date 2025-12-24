@@ -114,6 +114,10 @@ export function useOAuthFlow(onError?: (error: string) => void): UseOAuthFlowRet
     const oauthProvider = sessionStorage.getItem("oauth_in_progress");
     const startTimeStr = sessionStorage.getItem("oauth_start_time");
 
+    // Track timeout for cleanup and mounted state to avoid state updates after unmount
+    let displayTimeoutId: ReturnType<typeof setTimeout> | null = null;
+    let isMounted = true;
+
     if (oauthProvider && startTimeStr) {
       const startTime = parseInt(startTimeStr, 10);
       const elapsedTime = Date.now() - startTime;
@@ -132,23 +136,32 @@ export function useOAuthFlow(onError?: (error: string) => void): UseOAuthFlowRet
           `[OAuth] Fast OAuth detected, enforcing ${MINIMUM_DISPLAY_TIME}ms minimum display time`
         );
 
-        setTimeout(() => {
-          console.log("[OAuth] Minimum display time elapsed, allowing navigation");
-          setMinDisplayTimeElapsed(true);
+        displayTimeoutId = setTimeout(() => {
+          if (isMounted) {
+            console.log("[OAuth] Minimum display time elapsed, allowing navigation");
+            setMinDisplayTimeElapsed(true);
+          }
         }, MINIMUM_DISPLAY_TIME);
       } else {
         console.log("[OAuth] Slow OAuth detected, no minimum display time needed");
         // Slow OAuth - user already waited, allow immediate navigation
         setMinDisplayTimeElapsed(true);
       }
+    }
 
-      // Cleanup function: Clear flags when component unmounts (during navigation)
-      return () => {
+    // Cleanup function: Clear timeout and flags when component unmounts
+    return () => {
+      isMounted = false;
+      if (displayTimeoutId) {
+        clearTimeout(displayTimeoutId);
+      }
+      // Only clear OAuth flags if we were in an OAuth flow
+      if (oauthProvider) {
         console.log("[OAuth] Component unmounting, clearing OAuth flags");
         sessionStorage.removeItem("oauth_in_progress");
         sessionStorage.removeItem("oauth_start_time");
-      };
-    }
+      }
+    };
   }, []);
 
   /**

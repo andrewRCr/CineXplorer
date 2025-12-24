@@ -126,9 +126,16 @@ class FixedZohoZeptoMailEmailBackend(BaseEmailBackend):
         """
         # Access the internal email_data dict (name-mangled in ZeptoMailEmailMessage)
         # This dict is sent to the ZeptoMail API
-        email_data: ZeptoMailData = getattr(
-            msg, "_ZeptoMailEmailMessage__email_data", {}
-        )
+        attr_name = "_ZeptoMailEmailMessage__email_data"
+        email_data = getattr(msg, attr_name, None)
+
+        # Ensure email_data is a dict - create and assign back if missing or wrong type
+        if not isinstance(email_data, dict):
+            email_data = {}
+            setattr(msg, attr_name, email_data)
+
+        # Now email_data is guaranteed to be a dict attached to msg
+        email_data = cast(ZeptoMailData, email_data)
 
         # Set body based on content subtype
         if email.content_subtype == "plain":

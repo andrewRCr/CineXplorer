@@ -257,6 +257,19 @@ export interface UnifiedTheme {
     "shadow-lg": string;
 
     // ===================================================================
+    // OVERLAY TOKENS
+    // ===================================================================
+
+    /**
+     * Modal/dialog backdrop overlay.
+     *
+     * **Usage:** Semi-transparent overlay behind modals, dialogs, drawers
+     * **Value:** rgba with ~70% opacity black for consistent darkening
+     * **Note:** Same value for light and dark modes (overlay dims content equally)
+     */
+    backdrop: string;
+
+    // ===================================================================
     // INTERACTION STATES (Per-Layer Interactive Feedback)
     // ===================================================================
     // Provides hover, selected, and active states that adapt to layer context.

@@ -1,13 +1,12 @@
 import { ROUTES } from "@/constants/routes";
 import { Box, Button, VStack, Text } from "@chakra-ui/react";
-import { TextLink, FloatingAlert, FloatingAlertContainer } from "@/components/common";
+import { TextLink } from "@/components/common";
 import { AuthFormCard, FormField } from "@/components/auth";
 import { useFormik } from "formik";
 import { useState } from "react";
 import * as authService from "@/services/authService";
 
 const ForgotPassword = () => {
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const formik = useFormik({
@@ -25,7 +24,6 @@ const ForgotPassword = () => {
     },
     onSubmit: async (values) => {
       try {
-        setError("");
         await authService.requestPasswordReset(values.email);
         setSuccess(true);
       } catch {
@@ -88,10 +86,7 @@ const ForgotPassword = () => {
                 value={formik.values.email}
                 error={formik.errors.email}
                 touched={formik.touched.email}
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  setError("");
-                }}
+                onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 autoFocus
               />
@@ -113,14 +108,6 @@ const ForgotPassword = () => {
             </VStack>
           </form>
         </AuthFormCard>
-
-      {error && (
-        <FloatingAlertContainer>
-          <FloatingAlert status="error" onDismiss={() => setError("")}>
-            {error}
-          </FloatingAlert>
-        </FloatingAlertContainer>
-      )}
     </Box>
   );
 };

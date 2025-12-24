@@ -149,7 +149,7 @@ export const FloatingAlert = ({
         {action && (
           <Box mt={2}>
             <Button
-              size="xs"
+              size="sm"
               variant="outline"
               onClick={action.onClick}
             >

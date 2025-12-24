@@ -83,8 +83,8 @@ export function FeedbackStatusSection() {
                   <Button
                     size="sm"
                     variant="outline"
-                    borderColor="success"
-                    color="success"
+                    borderColor="button-outline"
+                    color="on-button-outline"
                     onClick={() => toaster.success({
                       title: "Success",
                       description: "Changes saved successfully",
@@ -95,8 +95,8 @@ export function FeedbackStatusSection() {
                   <Button
                     size="sm"
                     variant="outline"
-                    borderColor="warning"
-                    color="warning"
+                    borderColor="button-outline"
+                    color="on-button-outline"
                     onClick={() => toaster.warning({
                       title: "Warning",
                       description: "Please verify your email address",
@@ -107,8 +107,8 @@ export function FeedbackStatusSection() {
                   <Button
                     size="sm"
                     variant="outline"
-                    borderColor="destructive"
-                    color="destructive"
+                    borderColor="button-outline"
+                    color="on-button-outline"
                     onClick={() => toaster.error({
                       title: "Error",
                       description: "Failed to save changes",
@@ -120,8 +120,8 @@ export function FeedbackStatusSection() {
                   <Button
                     size="sm"
                     variant="outline"
-                    borderColor="info"
-                    color="info"
+                    borderColor="button-outline"
+                    color="on-button-outline"
                     onClick={() => toaster.info({
                       title: "Info",
                       description: "New features available",
@@ -132,8 +132,8 @@ export function FeedbackStatusSection() {
                   <Button
                     size="sm"
                     variant="outline"
-                    borderColor="info"
-                    color="info"
+                    borderColor="button-outline"
+                    color="on-button-outline"
                     onClick={() => toaster.loading({
                       title: "Loading",
                       description: "Please wait...",

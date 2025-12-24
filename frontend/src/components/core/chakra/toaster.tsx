@@ -113,7 +113,7 @@ const statusStyles: Record<ToastType, { accentColor: string; titleColor: string 
 /**
  * Shared toast renderer for consistent styling across both toaster instances.
  */
-const renderToast = (toast: { type?: string; title?: React.ReactNode; description?: React.ReactNode; action?: { label: string }; closable?: boolean }) => {
+const renderToast = (toast: { type?: string; title?: React.ReactNode; description?: React.ReactNode; action?: { label: string; onClick?: () => void }; closable?: boolean }) => {
   const status = (toast.type as ToastType) || "info"
   const styles = statusStyles[status]
 
@@ -157,6 +157,7 @@ const renderToast = (toast: { type?: string; title?: React.ReactNode; descriptio
           fontWeight="medium"
           fontSize="sm"
           _hover={{ color: "tertiary-hover" }}
+          onClick={toast.action.onClick}
         >
           {toast.action.label}
         </Toast.ActionTrigger>

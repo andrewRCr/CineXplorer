@@ -1,3 +1,4 @@
+import axios from "axios";
 import apiClient from "./apiClient";
 import type { components } from "@/types/api";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
@@ -210,26 +211,33 @@ export async function resendVerificationEmail(
  */
 export async function requestPasswordReset(email: string): Promise<void> {
     const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
+    await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
-    const response = await fetch(
-        `${baseUrl}/_allauth/browser/v1/auth/password/request`,
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...(csrfToken && { "X-CSRFToken": csrfToken }),
-            },
-            credentials: "include",
-            body: JSON.stringify({ email }),
-        }
-    );
+    if (!csrfToken) {
+        logger.warn("CSRF token not available for password reset request");
+    }
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-            errorData.detail || errorData.message || "Failed to send reset email"
+    try {
+        await apiClient.post(
+            `${baseUrl}/_allauth/browser/v1/auth/password/request`,
+            { email },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken || "",
+                },
+            }
         );
+    } catch (error) {
+        // Normalize error message from axios error response
+        if (axios.isAxiosError(error) && error.response?.data) {
+            const errorData = error.response.data as { detail?: string; message?: string };
+            throw new Error(
+                errorData.detail || errorData.message || "Failed to send reset email"
+            );
+        }
+        throw new Error("Failed to send reset email");
     }
 }
 

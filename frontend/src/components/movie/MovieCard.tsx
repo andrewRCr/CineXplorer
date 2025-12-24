@@ -184,21 +184,18 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
     e.preventDefault();
     e.stopPropagation();
 
+    // Capture previous state before optimistic update (avoids stale closure issues)
+    const wasOnWatchlist = isOnWatchlist;
+
     // Optimistically update local state for immediate UI feedback
-    setLocalWatchlistState(!isOnWatchlist);
+    setLocalWatchlistState(!wasOnWatchlist);
 
     try {
+      // Toast notifications handled by useMovieActions hook
       await toggleWatchlist();
-      // TODO (7.7.7): Show success notification
-      console.log(
-        isOnWatchlist
-          ? "Movie removed from watchlist"
-          : "Movie added to watchlist"
-      );
-    } catch (error) {
-      // Rollback on error
-      setLocalWatchlistState(isOnWatchlist);
-      console.error("Failed to toggle watchlist:", error);
+    } catch {
+      // Rollback to previous state on error (toast handled by hook)
+      setLocalWatchlistState(wasOnWatchlist);
     }
   };
 

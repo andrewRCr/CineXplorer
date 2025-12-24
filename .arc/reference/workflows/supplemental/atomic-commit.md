@@ -70,7 +70,8 @@ steps:
 
   **Step 5.5: Archive Completed Atomic Tasks**
     - If ATOMIC-TASKS.md contains completed `[x]` items, they must be archived before committing
-    - Move completed tasks to `reference/archive/completed-atomic-{quarter}.md` (insert at top)
+    - Move completed tasks to `reference/archive/{year}-q{N}/completed-atomic-{year}-q{N}.md` (insert at top)
+        - Example: `reference/archive/2025-q4/completed-atomic-2025-q4.md`
     - Add completion notes and branch info per ATOMIC-TASKS.md format
     - **Rationale:** ATOMIC-TASKS.md should only contain pending work; completed items are archived
     - **Exception:** If the atomic task is being completed in the current commit, archive it now

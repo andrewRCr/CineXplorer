@@ -1,6 +1,6 @@
 import { Box, Text, HStack } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
-import type { ReactNode } from "react";
+import type { ReactNode, KeyboardEvent } from "react";
 
 // ============================================================================
 // NavBarUserMenuItem
@@ -54,6 +54,25 @@ const NavBarUserMenuItem = ({
 }: NavBarUserMenuItemProps) => {
   const positionStyles = getPositionStyles(position);
 
+  // Keyboard handler for accessibility when acting as a button (no `to` prop)
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      if (e.key === " ") {
+        e.preventDefault(); // Prevent page scroll on Space
+      }
+      onClick?.();
+    }
+  };
+
+  // Accessibility props only needed when not wrapped in Link
+  const a11yProps = !to
+    ? {
+        tabIndex: 0,
+        role: "button" as const,
+        onKeyDown: handleKeyDown,
+      }
+    : {};
+
   const content = (
     <Box
       position="relative"
@@ -67,6 +86,7 @@ const NavBarUserMenuItem = ({
         "& [data-menu-text]": { color: "tertiary" },
       }}
       onClick={onClick}
+      {...a11yProps}
       {...positionStyles}
     >
       {/* Accent bar - visible on hover */}

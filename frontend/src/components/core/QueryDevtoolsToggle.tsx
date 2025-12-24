@@ -3,7 +3,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 declare global {
   interface Window {
-    toggleQueryDevtools: () => void;
+    toggleQueryDevtools?: () => void;
   }
 }
 
@@ -16,6 +16,9 @@ export function QueryDevtoolsToggle() {
 
   useEffect(() => {
     window.toggleQueryDevtools = () => setShowQueryDevtools((old) => !old);
+    return () => {
+      delete window.toggleQueryDevtools;
+    };
   }, []);
 
   if (!showQueryDevtools) return null;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   VStack,
   Text,
@@ -128,9 +128,11 @@ export const PasswordResetDialog = ({
   };
 
   // Update state when resetKey changes
-  if (resetKey && resetState === null) {
-    setResetState("form");
-  }
+  useEffect(() => {
+    if (resetKey && resetState === null) {
+      setResetState("form");
+    }
+  }, [resetKey, resetState]);
 
   return (
     <Dialog.Root
@@ -144,7 +146,7 @@ export const PasswordResetDialog = ({
       placement="top"
     >
       <Portal>
-        <Dialog.Backdrop bg="blackAlpha.700" backdropFilter="blur(4px)" />
+        <Dialog.Backdrop bg="backdrop" backdropFilter="blur(4px)" />
         <Dialog.Positioner pt={24}>
           <Dialog.Content bg="layer-01" maxW="400px">
             <Dialog.Header>
@@ -191,7 +193,11 @@ export const PasswordResetDialog = ({
                     </Text>
                   )}
                   <Button
-                    colorPalette="green"
+                    variant="solid"
+                    bg="primary"
+                    color="on-primary"
+                    _hover={{ bg: "primary-hover" }}
+                    _active={{ bg: "primary-active" }}
                     onClick={handleSubmit}
                     w="full"
                     size="lg"

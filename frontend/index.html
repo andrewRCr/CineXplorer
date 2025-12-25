@@ -78,6 +78,8 @@
 			// This overlay stays visible while React initializes underneath
 			(function() {
 				var overlay = document.getElementById('preload-overlay');
+				if (!overlay) return; // Defensive: bail if overlay missing
+
 				var bg = window.__PRELOAD_BG__ || '#161616';
 
 				// Calculate spinner color based on background luminance

@@ -1,6 +1,6 @@
 # Testing Methodology Strategy
 
-**Version:** 1.3 | **Updated:** 2025-12-21 | **Status:** Active | **Scope:** Full-stack
+**Version:** 1.4 | **Updated:** 2025-12-25 | **Status:** Active | **Scope:** Full-stack
 
 ## Purpose
 
@@ -518,6 +518,21 @@ def json_post(
 ```
 
 **Avoid `Any`:** Use `object` for unknown types, `dict[str, object]` for dictionaries.
+
+**Mock Type Annotations:** Explicit type annotations on Mock variables are **optional**. `Mock()` returns type
+`Mock`, not `Any` - Pyright correctly infers the type without annotations.
+
+```python
+# Both are valid - explicit annotation is optional, not required
+mock_message = Mock()              # ✅ Pyright infers Mock type
+mock_message: Mock = Mock()        # ✅ Also valid, but redundant
+
+# Mock(spec=...) is about runtime safety (catching typos), not type safety
+mock_response = Mock(spec=Response)  # Raises AttributeError on typos at runtime
+```
+
+**Note:** `Mock(spec=SomeType)` provides runtime attribute checking (catches typos) but doesn't improve static
+type safety - Pyright sees `Mock` either way. Use `spec=` when runtime safety matters, not for type checking.
 
 ### Centralized Mock Paths
 

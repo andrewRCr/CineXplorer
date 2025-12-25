@@ -3,20 +3,19 @@
 **Purpose:** Internal planning artifact documenting sequencing strategy for remaining work.
 Subject to change as we learn.
 
-**Last Updated:** 2025-12-19
+**Last Updated:** 2025-12-25
 
 ---
 
 ## Current Sequencing Strategy
 
-### Phase A: Technical Foundation (Quick Wins)
+### Phase A: Technical Foundation
 
 Small, well-scoped infrastructure work that enables better feature development.
 
-1. **Toast Notification System** (~2-3 days)
-   - Plan: `technical/plan-toast-notification-system.md`
-   - Rationale: Enables user feedback for ALL subsequent feature work
-   - Scope: Chakra UI Toast (zero deps), auth/watchlist/error feedback
+1. ~~**Toast Notification System**~~ ✅ **Complete** (2025-12-25)
+   - Archive: `reference/archive/2025-q4/technical/26_toast-notification-system/`
+   - Delivered: Chakra UI toaster with semantic tokens, auth/watchlist/error feedback
 
 2. **E2E Testing Foundation** (~1 week)
    - Plan: `technical/plan-backend-modernization.md` (E2E section)

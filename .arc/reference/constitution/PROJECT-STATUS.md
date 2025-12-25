@@ -18,8 +18,8 @@ key features implemented and a clear roadmap for remaining work.
 
 **Last Completed:**
 
-- Service Layer Modernization (technical) - Class-based services with DI, repository pattern, comprehensive testing
-    - [Archive](../archive/2025-q4/technical/25_service-layer-modernization/)
+- Toast Notification System (technical) - Consistent user feedback with semantic tokens
+    - [Archive](../archive/2025-q4/technical/26_toast-notification-system/)
 
 **Currently Active:**
 
@@ -57,8 +57,6 @@ modal, watchlist enhancements)
 
 *High Priority:*
 
-- **Toast Notification System** - Consistent user feedback patterns across features
-    - [Plan](../../backlog/technical/plan-toast-notification-system.md)
 - **E2E Testing** - Playwright-based regression protection for critical user flows
     - [Plan](../../backlog/technical/plan-backend-modernization.md) (E2E section)
 - **Async Infrastructure** - Celery/Redis for non-blocking email, future computation
@@ -210,6 +208,19 @@ modal, watchlist enhancements)
 - Comprehensive test coverage (788 tests, 92.66% coverage)
 - 11 incidental task lists spawned and completed during execution
 - **Key Achievement:** Established service layer architecture as project standard
+
+### ✅ Toast Notification System
+
+[Archive](../archive/2025-q4/technical/26_toast-notification-system/)
+
+- Chakra UI v3 toaster with semantic token styling (5 status variants)
+- Toast recipe with consistent patterns matching alert system
+- Auth flow integration (login, register, logout, email verification, session errors)
+- Watchlist integration with undo functionality
+- API error interceptors (401, 5xx responses)
+- Promise toast pattern for async operations
+- Accessibility compliant (ARIA, reduced motion, pause on hover)
+- **Key Achievement:** Consistent user feedback infrastructure for all features
 
 ---
 

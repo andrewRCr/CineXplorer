@@ -342,7 +342,7 @@ git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/{quarter}/i
 **Why git mv:** Preserves file history. Future developers can use `git log --follow` to see the file's
 full evolution even after it moved to archive.
 
-### 10) Update PROJECT-STATUS
+### 10) Update PROJECT-STATUS and ROADMAP
 
 Update `.arc/reference/constitution/PROJECT-STATUS.md` if applicable:
 
@@ -351,7 +351,13 @@ Update `.arc/reference/constitution/PROJECT-STATUS.md` if applicable:
 - If significant work, add to "Completed Major Work" section with description
 - Update project metrics (tests, coverage, new capabilities) as appropriate
 
-**When to update PROJECT-STATUS:**
+Update `.arc/backlog/ROADMAP.md` if applicable:
+
+- Mark completed work with ✅ and completion date
+- Update archive path reference
+- Adjust "Last Updated" date
+
+**When to update these docs:**
 
 - ✅ Major features (always document completion)
 - ✅ Significant technical work (modernization, infrastructure changes)
@@ -365,6 +371,7 @@ Update `.arc/reference/constitution/PROJECT-STATUS.md` if applicable:
 git add .arc/reference/archive/{quarter}/{category}/{name}/
 git add .arc/active/{category}/  # captures file deletions
 git add .arc/reference/constitution/PROJECT-STATUS.md  # if updated
+git add .arc/backlog/ROADMAP.md  # if updated
 ```
 
 **Commit message format:** Follow [atomic-commit.md](atomic-commit.md) for full commit message standards.

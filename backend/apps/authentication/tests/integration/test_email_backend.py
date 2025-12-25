@@ -431,7 +431,7 @@ def test_registration_email_contains_verification_link(
     # Verify email contains frontend verification URL
     # CustomAccountAdapter uses /login?verify={key} pattern
     frontend_url = getattr(settings, "FRONTEND_URL", "")
-    assert "/login?verify=" in email_body or "verify" in email_body.lower()
+    assert "/login?verify=" in email_body
     assert frontend_url in email_body or "testserver" in email_body  # testserver in tests
 
 

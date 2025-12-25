@@ -126,12 +126,17 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   // Title Truncation Detection
   // ==========================================================================
 
+  // Truncation detection constants
+  const TRUNCATION_HEIGHT_BUFFER = 5;
+  const RESIZE_DEBOUNCE_MS = 150;
+  const INITIAL_CHECK_DELAY_MS = 50;
+
   const checkTruncation = useCallback(() => {
     if (!titleRef.current) return;
     const element = titleRef.current;
     // Simple heuristic: if scrollHeight > clientHeight, it's truncated
     // Works in all modern browsers (IE9+)
-    setIsTitleTruncated(element.scrollHeight > element.clientHeight + 5);
+    setIsTitleTruncated(element.scrollHeight > element.clientHeight + TRUNCATION_HEIGHT_BUFFER);
   }, []);
 
   // Debounced resize handler for truncation check
@@ -139,11 +144,11 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
     let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     const debouncedCheck = () => {
       if (resizeTimer) clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(checkTruncation, 150);
+      resizeTimer = setTimeout(checkTruncation, RESIZE_DEBOUNCE_MS);
     };
 
     // Initial check with small delay
-    const initialTimer = setTimeout(checkTruncation, 50);
+    const initialTimer = setTimeout(checkTruncation, INITIAL_CHECK_DELAY_MS);
 
     window.addEventListener("resize", debouncedCheck);
 

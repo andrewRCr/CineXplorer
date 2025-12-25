@@ -214,6 +214,10 @@ those patterns, preventing ad-hoc implementations that would need refactoring la
 - Component library: react-rating-stars-component or custom
 - Optimistic updates with rollback
 - Visual distinction: user rating vs TMDB rating (different colors/labels)
+- **Touch target sizing**: When redesigning MovieCard action buttons, use `size="md"` or larger for IconButtons
+  (current `size="sm"` is 32×32px, below WCAG AAA 44×44px guideline). Balance with visual design constraints.
+- **Tooltip simplification**: Replace custom title tooltip with Chakra's `<Tooltip disabled={!isTitleTruncated}>`,
+  eliminating ~40 lines and `isTitleTooltipOpen` state.
 
 **Effort Estimate:** 4-6 hours
 

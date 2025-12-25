@@ -205,7 +205,7 @@ const Login = () => {
         setVerificationState(null);
       }, 1500);
     } catch (error: unknown) {
-      console.error("Email verification error:", error);
+      logger.error("Email verification error:", error);
       setVerificationState("error");
       hasVerifiedRef.current = false; // Allow retry
 

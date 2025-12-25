@@ -70,7 +70,7 @@
 	<body>
 		<!-- Preload overlay: OUTSIDE of React's #root, won't be replaced -->
 		<!-- Always in DOM with opacity:0, toggled via .visible class for instant show -->
-		<div id="preload-overlay">
+		<div id="preload-overlay" role="status" aria-live="polite" aria-label="Loading">
 			<div class="preload-spinner__ring"></div>
 		</div>
 		<script>

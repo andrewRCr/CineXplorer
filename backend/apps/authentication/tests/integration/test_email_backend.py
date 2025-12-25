@@ -539,7 +539,7 @@ def test_email_confirmation_template_renders_with_context() -> None:
         "user": Mock(username="templateuser"),
         "activate_url": "https://example.com/verify-email/abc123",
         "email": "template@example.com",
-        "expiry_days": 3,  # Injected by CustomAccountAdapter.send_mail
+        "expiry_days": 3,  # Mimics what CustomAccountAdapter.send_mail injects
     }
 
     # Test HTML template

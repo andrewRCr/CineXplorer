@@ -84,6 +84,19 @@
       `frontend/src/pages/user/Register.tsx`, related test files
     - **Rationale:** Security best practice; discovered during PR #9 review that complexity wasn't enforced
 
+<!-- Test Organization -->
+
+- [ ] Split `test_email_backend.py` into focused test modules
+    - **Problem:** File is 613 lines, exceeds 400-line guideline
+    - **Proposed split:**
+        - `test_email_backend_config.py` - backend configuration tests
+        - `test_email_resend_verification.py` - token-based resend flow
+        - `test_email_registration_flow.py` - registration email tests
+        - `test_email_adapter_errors.py` - EmailDeliveryError tests
+        - `test_email_templates.py` - template rendering smoke tests
+    - **Files:** `backend/apps/authentication/tests/integration/test_email_backend.py`
+    - **Rationale:** Identified during PR #9 CodeRabbit review; file is well-organized but exceeds guidelines
+
 <!-- Developer Experience -->
 
 - [ ] Create DevTools debug page (`/dev/tools`)

@@ -28,6 +28,11 @@ import { useMovieActions } from "@/hooks/movie/useMovieActions";
 //
 // ============================================================================
 
+// Truncation detection constants
+const TRUNCATION_HEIGHT_BUFFER = 5;
+const RESIZE_DEBOUNCE_MS = 150;
+const INITIAL_CHECK_DELAY_MS = 50;
+
 interface MovieCardProps {
   movie: MovieListItem;
   source?: string;
@@ -125,11 +130,6 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   // ==========================================================================
   // Title Truncation Detection
   // ==========================================================================
-
-  // Truncation detection constants
-  const TRUNCATION_HEIGHT_BUFFER = 5;
-  const RESIZE_DEBOUNCE_MS = 150;
-  const INITIAL_CHECK_DELAY_MS = 50;
 
   const checkTruncation = useCallback(() => {
     if (!titleRef.current) return;

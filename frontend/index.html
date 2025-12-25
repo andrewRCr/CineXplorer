@@ -89,7 +89,8 @@
 				var spinnerColor = luminance > 0.5 ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
 
 				// Set spinner color (always, so it's ready)
-				overlay.querySelector('.preload-spinner__ring').style.borderTopColor = spinnerColor;
+				var spinner = overlay.querySelector('.preload-spinner__ring');
+				if (spinner) spinner.style.borderTopColor = spinnerColor;
 
 				// Show overlay if returning from OAuth
 				var isOAuth = false;

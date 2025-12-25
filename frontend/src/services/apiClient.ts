@@ -3,9 +3,10 @@ import {
     clearAuthTokens,
     getAuthTokens,
     setAuthTokens,
-} from "@/utilities/token";
+} from "@/utilities/tokenUtils";
 import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
+import { toaster } from "@/components/core/chakra/toaster";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -99,6 +100,17 @@ apiClient.interceptors.response.use(
             return Promise.reject(error);
         }
 
+        // Check for server errors (5xx) and show toast notification
+        // This provides consistent user feedback for infrastructure/backend failures
+        if (error.response && error.response.status >= 500) {
+            toaster.error({
+                title: "Server error",
+                description: "Please try again later.",
+                closable: true,
+            });
+            // Continue to reject the error so callers can still handle it
+        }
+
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
         // Check for authentication error (401 only - 403 is authorization, not authentication)
@@ -157,9 +169,9 @@ apiClient.interceptors.response.use(
                     return apiClient(originalRequest);
                 }
             } catch (refreshError) {
-                // If refresh fails, clear tokens and redirect to login
+                // If refresh fails, clear tokens and redirect to login with session expired indicator
                 clearAuthTokens();
-                window.location.href = "/login"; // Force a full page reload to clear all state
+                window.location.href = "/login?session_expired=true"; // Force a full page reload to clear all state
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

@@ -5,7 +5,7 @@ import { useMovieCollectionUrl } from "@/hooks/movie/useMovieCollectionUrl";
 import {
   isLatinScriptLanguage,
   isTitleSort,
-} from "@/utilities/sortAvailability";
+} from "@/utilities/sortAvailabilityUtils";
 import {
   hasActiveFilters as checkHasActiveFilters,
   hasActiveBrowseParams as checkHasActiveBrowseParams,

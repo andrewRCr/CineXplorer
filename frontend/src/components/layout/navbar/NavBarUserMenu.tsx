@@ -9,13 +9,39 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useNavigate, Link } from "react-router-dom";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { ROUTES } from "@/constants/routes";
 import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
 import useAuthContext from "@/hooks/auth/useAuthContext";
+import NavBarUserMenuItem from "./NavBarUserMenuItem";
+
+// ============================================================================
+// NavBarUserMenu Component
+// ============================================================================
+//
+// User menu dropdown in the navbar showing:
+// - User avatar and username (trigger button)
+// - Mobile: LOG button + user navigation items
+// - All: Profile, Settings, Logout
+//
+// ============================================================================
+
+// Menu item type for precomputed menu items
+type MenuItem = {
+  key: string;
+  type: "log" | "nav" | "profile" | "settings" | "logout";
+  label: string;
+  to?: string;
+  icon?: React.ReactNode;
+  position: "first" | "middle" | "last" | "only";
+};
 
 const NavBarUserMenu = () => {
+  // ==========================================================================
+  // State & Context
+  // ==========================================================================
+
   const { isAuthenticated, logout, user } = useAuthContext() ?? {};
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -27,14 +53,27 @@ const NavBarUserMenu = () => {
   const isMobile =
     useBreakpointValue({ base: true, lg: false }, { ssr: false }) ?? true;
 
-  // Handle LOG button click
+  // ==========================================================================
+  // Event Handlers
+  // ==========================================================================
+
   const handleLogClick = () => {
     // TODO: Implement actual log action
-    // console.log("Log action triggered");
     setIsOpen(false);
   };
 
-  // Handle click outside to close dropdown
+  const closeMenu = () => setIsOpen(false);
+
+  const handleLogout = () => {
+    setIsOpen(false);
+    logout?.();
+    navigate(ROUTES.HOME);
+  };
+
+  // ==========================================================================
+  // Click Outside Handler
+  // ==========================================================================
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -57,27 +96,79 @@ const NavBarUserMenu = () => {
     };
   }, [isOpen]);
 
-  // Close dropdown when clicking menu items
-  const handleMenuItemClick = (callback?: () => void) => {
-    setIsOpen(false);
-    if (callback) callback();
-  };
+  // ==========================================================================
+  // Menu Items (must be before early return to satisfy hooks rules)
+  // ==========================================================================
+
+  // Precompute menu items with positions to avoid mutable counter during render
+  const menuItems = useMemo(() => {
+    const getPosition = (index: number, total: number) => {
+      if (total === 1) return "only" as const;
+      if (index === 0) return "first" as const;
+      if (index === total - 1) return "last" as const;
+      return "middle" as const;
+    };
+
+    const items: MenuItem[] = [];
+
+    // Mobile-only items
+    if (isMobile) {
+      items.push({
+        key: "log",
+        type: "log",
+        label: "LOG",
+        icon: <BsFillPlusCircleFill size={14} />,
+        position: "first", // Will be recalculated
+      });
+
+      // Filter inside useMemo to avoid new array reference each render
+      const mobileNavItems = USER_NAVIGATION_ITEMS.filter((item) => !item.isAction);
+      mobileNavItems.forEach((item) => {
+        items.push({
+          key: item.value,
+          type: "nav",
+          label: item.label,
+          to: item.path,
+          position: "middle", // Will be recalculated
+        });
+      });
+    }
+
+    // Always-visible items
+    items.push(
+      { key: "profile", type: "profile", label: "Profile", to: ROUTES.PROFILE, position: "middle" },
+      { key: "settings", type: "settings", label: "Settings", to: ROUTES.SETTINGS, position: "middle" },
+      { key: "logout", type: "logout", label: "Logout", position: "middle" }
+    );
+
+    // Recalculate positions based on final array
+    return items.map((item, idx) => ({
+      ...item,
+      position: getPosition(idx, items.length),
+    }));
+  }, [isMobile]);
+
+  // ==========================================================================
+  // Render: Unauthenticated State
+  // ==========================================================================
 
   if (!isAuthenticated) {
     return (
-      <Link to={ROUTES.LOGIN} style={{ textDecoration: "none" }}>
-        <Button
-          size="sm"
-          variant="outline"
-        >
+      <Link to={ROUTES.LOGIN}>
+        <Button size="sm" variant="outline">
           Login
         </Button>
       </Link>
     );
   }
 
+  // ==========================================================================
+  // Render: Authenticated State
+  // ==========================================================================
+
   return (
     <Box position="relative">
+      {/* Trigger Button */}
       <Button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
@@ -90,12 +181,12 @@ const NavBarUserMenu = () => {
         <HStack gap={2}>
           <Text fontWeight="bold">{user?.username}</Text>
           <Avatar.Root size="xs">
-            {/* <Avatar.Image src={user?.avatarUrl} alt={user?.username} /> */}
             <Avatar.Fallback>{user?.username?.charAt(0)}</Avatar.Fallback>
           </Avatar.Root>
         </HStack>
       </Button>
 
+      {/* Dropdown Menu */}
       {isOpen && (
         <Portal>
           <Box
@@ -113,226 +204,17 @@ const NavBarUserMenu = () => {
             zIndex="dropdown"
           >
             <VStack gap={0} align="stretch">
-              {/* Mobile: Add LOG button and user navigation items */}
-              {isMobile && (
-                <>
-                  {/* LOG Button */}
-                  <Box
-                    position="relative"
-                    px={4}
-                    py={3}
-                    _hover={{
-                      background: "layer-hover-02",
-                      "& > div": { opacity: 1 },
-                    }}
-                    cursor="pointer"
-                    borderRadius="md"
-                    borderBottomRadius={0}
-                    transition="all 0.2s ease-in-out"
-                    onClick={handleLogClick}
-                  >
-                    <Box
-                      position="absolute"
-                      left={0}
-                      top={0}
-                      bottom={0}
-                      w="3px"
-                      background="tertiary"
-                      opacity={0}
-                      transition="opacity 0.2s ease-in-out"
-                      borderRadius="md"
-                      borderBottomRadius={0}
-                    />
-                    <HStack gap={2} ml={2}>
-                      <BsFillPlusCircleFill size={14} />
-                      <Text
-                        color="on-popover"
-                        _hover={{ color: "tertiary" }}
-                        transition="color 0.2s ease-in-out"
-                      >
-                        LOG
-                      </Text>
-                    </HStack>
-                  </Box>
-
-                  {/* User Navigation Items */}
-                  {USER_NAVIGATION_ITEMS.filter((item) => !item.isAction).map(
-                    (item) => (
-                      <Link
-                        key={item.value}
-                        to={item.path}
-                        style={{ textDecoration: "none", width: "100%" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleMenuItemClick();
-                        }}
-                      >
-                        <Box
-                          position="relative"
-                          px={4}
-                          py={3}
-                          _hover={{
-                            background: "layer-hover-02",
-                            "& > div": { opacity: 1 },
-                          }}
-                          cursor="pointer"
-                          borderRadius="md"
-                          borderBottomRadius={0}
-                          transition="all 0.2s ease-in-out"
-                        >
-                          <Box
-                            position="absolute"
-                            left={0}
-                            top={0}
-                            bottom={0}
-                            w="3px"
-                            background="tertiary"
-                            opacity={0}
-                            transition="opacity 0.2s ease-in-out"
-                            borderRadius="md"
-                            borderBottomRadius={0}
-                          />
-                          <Text
-                            color="on-popover"
-                            _hover={{ color: "tertiary" }}
-                            transition="color 0.2s ease-in-out"
-                            ml={2}
-                          >
-                            {item.label}
-                          </Text>
-                        </Box>
-                      </Link>
-                    )
-                  )}
-                </>
-              )}
-
-              {/* Existing Profile, Settings, Logout */}
-              <Link
-                to={ROUTES.PROFILE}
-                style={{ textDecoration: "none", width: "100%" }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick();
-                }}
-              >
-                <Box
-                  position="relative"
-                  px={4}
-                  py={3}
-                  _hover={{
-                    background: "layer-hover-02",
-                    "& > div": { opacity: 1 },
-                  }}
-                  cursor="pointer"
-                  borderRadius="md"
-                  borderBottomRadius={0}
-                  transition="all 0.2s ease-in-out"
+              {menuItems.map((item) => (
+                <NavBarUserMenuItem
+                  key={item.key}
+                  icon={item.icon}
+                  to={item.to}
+                  onClick={item.type === "logout" ? handleLogout : item.type === "log" ? handleLogClick : closeMenu}
+                  position={item.position}
                 >
-                  <Box
-                    position="absolute"
-                    left={0}
-                    top={0}
-                    bottom={0}
-                    w="3px"
-                    background="tertiary"
-                    opacity={0}
-                    transition="opacity 0.2s ease-in-out"
-                    borderRadius="md"
-                    borderBottomRadius={0}
-                  />
-                  <Text
-                    color="on-popover"
-                    _hover={{ color: "tertiary" }}
-                    transition="color 0.2s ease-in-out"
-                    ml={2}
-                  >
-                    Profile
-                  </Text>
-                </Box>
-              </Link>
-              <Link
-                to={ROUTES.SETTINGS}
-                style={{ textDecoration: "none", width: "100%" }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick();
-                }}
-              >
-                <Box
-                  position="relative"
-                  px={4}
-                  py={3}
-                  _hover={{
-                    background: "layer-hover-02",
-                    "& > div": { opacity: 1 },
-                  }}
-                  cursor="pointer"
-                  transition="all 0.2s ease-in-out"
-                >
-                  <Box
-                    position="absolute"
-                    left={0}
-                    top={0}
-                    bottom={0}
-                    w="3px"
-                    background="tertiary"
-                    opacity={0}
-                    transition="opacity 0.2s ease-in-out"
-                  />
-                  <Text
-                    color="on-popover"
-                    _hover={{ color: "tertiary" }}
-                    transition="color 0.2s ease-in-out"
-                    ml={2}
-                  >
-                    Settings
-                  </Text>
-                </Box>
-              </Link>
-              <Box
-                position="relative"
-                px={4}
-                py={3}
-                _hover={{
-                  background: "layer-hover-02",
-                  "& > div": { opacity: 1 },
-                }}
-                cursor="pointer"
-                borderRadius="md"
-                borderTopRadius={0}
-                transition="all 0.2s ease-in-out"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMenuItemClick(() => {
-                    if (logout) {
-                      logout();
-                    }
-                    navigate(ROUTES.HOME);
-                  });
-                }}
-              >
-                <Box
-                  position="absolute"
-                  left={0}
-                  top={0}
-                  bottom={0}
-                  w="3px"
-                  background="tertiary"
-                  opacity={0}
-                  transition="opacity 0.2s ease-in-out"
-                  borderRadius="md"
-                  borderTopRadius={0}
-                />
-                <Text
-                  color="on-popover"
-                  _hover={{ color: "tertiary" }}
-                  transition="color 0.2s ease-in-out"
-                  ml={2}
-                >
-                  Logout
-                </Text>
-              </Box>
+                  {item.label}
+                </NavBarUserMenuItem>
+              ))}
             </VStack>
           </Box>
         </Portal>

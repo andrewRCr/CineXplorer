@@ -1,8 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Provider } from "@/components/core/chakra/provider";
+import { Toaster, PriorityToaster } from "@/components/core/chakra/toaster";
+import { QueryDevtoolsToggle } from "@/components/core/QueryDevtoolsToggle";
 import { initConsoleCapture } from "@/services/consoleCapture";
 import { queryClient } from "@/lib/queryClient";
 import App from "./App.tsx";
@@ -21,8 +22,10 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <Provider>
         <App />
+        <Toaster />
+        <PriorityToaster />
       </Provider>
-      <ReactQueryDevtools initialIsOpen={false} />
+      <QueryDevtoolsToggle />
     </QueryClientProvider>
   </StrictMode>
 );

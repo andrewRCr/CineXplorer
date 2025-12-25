@@ -1,7 +1,7 @@
 """Pydantic schemas for the authentication API.
 
 This module defines schemas for authentication and user management endpoints
-following Django Ninja patterns established in Phase 1 (movie domain).
+following Django Ninja patterns.
 
 Pattern Guidelines:
 - Use ModelSchema for Django User model operations (profile retrieval/updates)
@@ -113,6 +113,14 @@ class TokenResponseSchema(Schema):
         ...,
         description="ID of the authenticated user"
     )
+    username: str = Field(
+        ...,
+        description="Username of the authenticated user"
+    )
+    first_name: str | None = Field(
+        default=None,
+        description="User's first name (if provided)"
+    )
     email_verified: bool = Field(
         ...,
         description="Whether user's email has been verified via allauth"
@@ -209,14 +217,23 @@ class EmailVerificationResponseSchema(Schema):
         ...,
         description="Verification success/failure message"
     )
+    email: str = Field(
+        ...,
+        description="Verified email address (for pre-filling login form)"
+    )
 
 
 class ResendVerificationInputSchema(Schema):
-    """Schema for resend verification email input."""
+    """Schema for resend verification email input.
 
-    email: EmailStr = Field(
+    Uses opaque token from login error response instead of email address.
+    This prevents user enumeration while enabling resend for all login methods.
+    """
+
+    resend_token: str = Field(
         ...,
-        description="Email address to resend verification to"
+        min_length=32,
+        description="Opaque resend token from login error response"
     )
 
 

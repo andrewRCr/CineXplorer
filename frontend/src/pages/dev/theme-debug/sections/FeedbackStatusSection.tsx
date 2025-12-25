@@ -1,5 +1,6 @@
 import { Box, Text, VStack, HStack, Alert, Badge, Progress, Spinner, Button, Code } from "@chakra-ui/react";
 import { Tooltip } from "@/components/core/chakra/tooltip";
+import { toaster } from "@/components/core/chakra/toaster";
 
 /**
  * Feedback & Status Section
@@ -65,6 +66,109 @@ export function FeedbackStatusSection() {
                 Alerts now use slot recipe (theme/recipes/alert.ts) registered in baseConfig.
                 Recipe provides: 10% opacity backgrounds, semantic borders, title emphasis (semantic color),
                 description readability (foreground). Status prop automatically applies variant styles.
+              </Text>
+            </VStack>
+          </Box>
+        </Box>
+
+        {/* Toasts - floating notifications using toaster composition */}
+        <Box>
+          <Text fontSize="lg" fontWeight="bold" mb={2}>Toasts</Text>
+          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+            <VStack gap={4} align="center">
+              {/* Toast trigger buttons */}
+              <VStack gap={2} align="center">
+                <Text fontSize="sm" fontWeight="medium">Status Types (click to trigger):</Text>
+                <HStack gap={3} wrap="wrap" justify="center">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="on-button-outline"
+                    onClick={() => toaster.success({
+                      title: "Success",
+                      description: "Changes saved successfully",
+                    })}
+                  >
+                    Success
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="on-button-outline"
+                    onClick={() => toaster.warning({
+                      title: "Warning",
+                      description: "Please verify your email address",
+                    })}
+                  >
+                    Warning
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="on-button-outline"
+                    onClick={() => toaster.error({
+                      title: "Error",
+                      description: "Failed to save changes",
+                      closable: true,
+                    })}
+                  >
+                    Error
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="on-button-outline"
+                    onClick={() => toaster.info({
+                      title: "Info",
+                      description: "New features available",
+                    })}
+                  >
+                    Info
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="button-outline"
+                    color="on-button-outline"
+                    onClick={() => toaster.loading({
+                      title: "Loading",
+                      description: "Please wait...",
+                      closable: true, // Loading toasts persist until dismissed
+                    })}
+                  >
+                    Loading
+                  </Button>
+                </HStack>
+              </VStack>
+
+              {/* Toast with action */}
+              <VStack gap={2} align="center">
+                <Text fontSize="sm" fontWeight="medium">With Action (e.g., Undo):</Text>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  borderColor="button-outline"
+                  color="on-button-outline"
+                  onClick={() => toaster.success({
+                    title: "Removed from watchlist",
+                    action: {
+                      label: "Undo",
+                      onClick: () => toaster.info({ title: "Action undone" }),
+                    },
+                  })}
+                >
+                  Trigger with Undo
+                </Button>
+              </VStack>
+
+              <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5">
+                Toasts use solid layer-03 background with colored left accent border (unlike Alerts which use 10% opacity).
+                Composition: <Code fontSize="xs">components/core/chakra/toaster.tsx</Code>.
+                Action triggers use <Code fontSize="xs">tertiary</Code> tokens for undo/retry actions.
               </Text>
             </VStack>
           </Box>

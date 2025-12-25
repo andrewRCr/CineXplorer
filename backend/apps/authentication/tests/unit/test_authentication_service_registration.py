@@ -1,11 +1,16 @@
 """Unit tests for AuthenticationService registration flow."""
 from __future__ import annotations
 
-from unittest.mock import Mock
+from contextlib import nullcontext
+from unittest.mock import Mock, patch
 
 from django.core.exceptions import ValidationError
 from django.test import override_settings
 
+from apps.authentication.tests.mock_paths import (
+    AUTH_SERVICE_SEND_VERIFICATION_EMAIL,
+    AUTH_SERVICE_TRANSACTION_ATOMIC,
+)
 from apps.authentication.tests.test_helpers import (
     create_register_input,
     normalize_response_data,
@@ -13,7 +18,12 @@ from apps.authentication.tests.test_helpers import (
 from apps.authentication.tests.unit.types import AuthServiceFactory
 
 
-def test_register_user_success(auth_service_factory: AuthServiceFactory) -> None:
+@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
+@patch(AUTH_SERVICE_TRANSACTION_ATOMIC, nullcontext)
+def test_register_user_success(
+    mock_send_email: Mock,
+    auth_service_factory: AuthServiceFactory,
+) -> None:
     service, deps = auth_service_factory()
     payload = create_register_input()
     request = Mock()
@@ -21,6 +31,9 @@ def test_register_user_success(auth_service_factory: AuthServiceFactory) -> None
     deps.user_model.objects.filter.return_value.exists.return_value = False
     mock_user = Mock(id=1, email=payload.email)
     deps.user_model.objects.create_user.return_value = mock_user
+    mock_email_address = Mock()
+    deps.email_address_model.objects.create.return_value = mock_email_address
+    mock_send_email.return_value = True  # Email sent successfully
 
     status, data = service.register_user(request, payload)
 
@@ -29,12 +42,13 @@ def test_register_user_success(auth_service_factory: AuthServiceFactory) -> None
     assert data_dict["user_id"] == 1
     assert data_dict["email"] == payload.email
     assert data_dict["email_sent"] is True
-    deps.email_address_model.objects.add_email.assert_called_once_with(
-        request,
-        mock_user,
-        payload.email,
-        confirm=True,
+    deps.email_address_model.objects.create.assert_called_once_with(
+        user=mock_user,
+        email=payload.email,
+        verified=False,
+        primary=True,
     )
+    mock_send_email.assert_called_once_with(request, mock_email_address, signup=True)
     deps.logger.info.assert_called()
 
 
@@ -112,9 +126,17 @@ def test_register_user_rejects_weak_password(
     deps.logger.warning.assert_called()
 
 
-def test_register_user_rolls_back_on_email_failure(
+@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
+@patch(AUTH_SERVICE_TRANSACTION_ATOMIC, nullcontext)
+def test_register_user_returns_500_on_email_failure(
+    mock_send_email: Mock,
     auth_service_factory: AuthServiceFactory,
 ) -> None:
+    """Test that email sending failure returns 500 and logs error.
+
+    Note: With transaction.atomic(), rollback is automatic - no manual delete() needed.
+    The transaction ensures atomicity; this test verifies error handling behavior.
+    """
     service, deps = auth_service_factory()
     payload = create_register_input()
     request = Mock()
@@ -122,12 +144,14 @@ def test_register_user_rolls_back_on_email_failure(
     deps.user_model.objects.filter.return_value.exists.return_value = False
     mock_user = Mock(id=1, email=payload.email)
     deps.user_model.objects.create_user.return_value = mock_user
-    deps.email_address_model.objects.add_email.side_effect = RuntimeError("email fail")
+    mock_email_address = Mock()
+    deps.email_address_model.objects.create.return_value = mock_email_address
+    mock_send_email.return_value = False  # Email send failed
 
     status, data = service.register_user(request, payload)
 
     assert status == 500
     data_dict = normalize_response_data(data)
     assert data_dict["email_sent"] is False
-    mock_user.delete.assert_called_once()
+    assert "Unable to send verification email" in str(data_dict["error"])
     deps.logger.error.assert_called()

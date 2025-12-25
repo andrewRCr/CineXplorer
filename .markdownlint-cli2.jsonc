@@ -38,6 +38,7 @@
     "**/frontend/.next/**",
     "**/backend/staticfiles/**",
     ".arc/reference/archive/**",
+    ".arc/active/*/temp-agent-reply.md",
     "README.md"
   ]
 }

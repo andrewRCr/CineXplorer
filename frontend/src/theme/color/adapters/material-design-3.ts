@@ -250,6 +250,9 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         "shadow-md": shadowMd,
         "shadow-lg": shadowLg,
 
+        // Overlay tokens
+        backdrop: "rgba(0, 0, 0, 0.7)",
+
         // Interaction states (derived)
         "layer-hover-01": layer01States.hover,
         "layer-hover-02": layer02States.hover,

@@ -20,7 +20,7 @@ const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Login = lazy(() => import("./pages/user/Login"));
 const TestLogin = lazy(() => import("./pages/user/TestLogin"));
 const Register = lazy(() => import("./pages/user/Register"));
-const VerifyEmail = lazy(() => import("./pages/user/VerifyEmail"));
+const ForgotPassword = lazy(() => import("./pages/user/ForgotPassword"));
 const Profile = lazy(() => import("./pages/user/Profile"));
 const Watchlist = lazy(() => import("./pages/user/Watchlist"));
 const Settings = lazy(() => import("./pages/user/Settings"));
@@ -57,10 +57,10 @@ const App: React.FC = () => {
               }
             />
             <Route
-              path={ROUTES.VERIFY_EMAIL}
+              path={ROUTES.FORGOT_PASSWORD}
               element={
                 <AuthLayout>
-                  <VerifyEmail />
+                  <ForgotPassword />
                 </AuthLayout>
               }
             />

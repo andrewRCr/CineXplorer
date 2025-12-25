@@ -36,6 +36,8 @@ The original rationale for TanStack Query included benefits we haven't fully exp
 Candidate areas to evaluate:
 
 - User movie data (watchlist, ratings) - optimistic updates could improve UX
+  **Note:** See "Known Architectural Issues" in `plan-user-movie-data-features.md` for specific
+  state sync issues discovered 2025-12-23 that TanStack Query would resolve
 - Movie detail page - caching/prefetching on hover
 - Genre/certification lists - rarely change, good cache candidates
 - Authentication flows - currently uses AuthContext (may stay as-is)

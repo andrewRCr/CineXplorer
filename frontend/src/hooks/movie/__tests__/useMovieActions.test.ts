@@ -19,9 +19,30 @@ import type { AxiosResponse } from 'axios';
 
 type UserMovieDataDetailSchema = components['schemas']['UserMovieDataDetailSchema'];
 
-// Type for API errors with status codes
-interface ApiError extends Error {
-    status?: number;
+// Type for Axios-like errors (matches movieInteractionService error handling)
+interface AxiosLikeError {
+    response?: {
+        status?: number;
+        data?: {
+            detail?: string;
+        };
+    };
+    message: string;
+}
+
+/**
+ * Helper to create Axios-like error objects for testing
+ */
+function createAxiosError(message: string, status: number): AxiosLikeError {
+    return {
+        message,
+        response: {
+            status,
+            data: {
+                detail: message,
+            },
+        },
+    };
 }
 
 // Mock the userMovieDataService
@@ -400,10 +421,10 @@ describe('useMovieActions', () => {
                 user_movie_data: null, // Component thinks there's no data
             };
 
-            // Simulate race condition: CREATE fails with 400
-            const alreadyExistsError: ApiError = Object.assign(
-                new Error('User movie data already exists for this movie'),
-                { status: 400 }
+            // Simulate race condition: CREATE fails with 400 (Axios error structure)
+            const alreadyExistsError = createAxiosError(
+                'User movie data already exists for this movie',
+                400
             );
 
             vi.mocked(userMovieDataService.createUserMovieData).mockRejectedValue(
@@ -469,10 +490,10 @@ describe('useMovieActions', () => {
                 user_movie_data: null,
             };
 
-            // CREATE fails with 400
-            const alreadyExistsError: ApiError = Object.assign(
-                new Error('User movie data already exists for this movie'),
-                { status: 400 }
+            // CREATE fails with 400 (Axios error structure)
+            const alreadyExistsError = createAxiosError(
+                'User movie data already exists for this movie',
+                400
             );
 
             vi.mocked(userMovieDataService.createUserMovieData).mockRejectedValue(
@@ -480,7 +501,7 @@ describe('useMovieActions', () => {
             );
 
             // Fetch also fails - return wrapped response with rejected promise
-            const fetchError = new Error('Failed to fetch user movie data');
+            const fetchError = createAxiosError('Failed to fetch user movie data', 500);
             vi.mocked(userMovieDataService.getUserMovieDataByTmdbId).mockReturnValue({
                 request: Promise.reject(fetchError),
                 cancel: () => {},

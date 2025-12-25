@@ -24,7 +24,7 @@ import pytest
 from django.test import override_settings
 from ninja_jwt.tokens import RefreshToken
 
-from apps.authentication.tests.mock_paths import AUTH_SERVICE_EMAIL_ADD
+from apps.authentication.tests.mock_paths import AUTH_SERVICE_SEND_VERIFICATION_EMAIL
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -72,13 +72,13 @@ def test_forbidden_username_registration_returns_409(
 
 
 @pytest.mark.django_db
-def test_email_sending_failure_deletes_user_and_returns_500(
+def test_email_sending_failure_rolls_back_user_and_returns_500(
     api_client: Client,
 ) -> None:
-    """Test that email sending failure during registration deletes user and returns 500.
+    """Test that email sending failure during registration rolls back user creation.
 
     Covers AuthenticationService registration error handling for email failures.
-    Ensures user is not left in database if verification email fails to send.
+    Uses transaction.atomic() to ensure user is not left in database if email fails.
     """
     from django.contrib.auth import get_user_model
 
@@ -88,9 +88,9 @@ def test_email_sending_failure_deletes_user_and_returns_500(
         "password": "TestPass123!",
     }
 
-    # Mock EmailAddress.objects.add_email to raise exception
-    with patch(AUTH_SERVICE_EMAIL_ADD) as mock_add_email:
-        mock_add_email.side_effect = Exception("SMTP connection failed")
+    # Mock send_verification_email_to_address to return False (email not sent)
+    with patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL) as mock_send_email:
+        mock_send_email.return_value = False
 
         response = api_client.post(
             "/api/register/",
@@ -110,10 +110,10 @@ def test_email_sending_failure_deletes_user_and_returns_500(
         or "verification email" in data["error"].lower()
     )
 
-    # Verify user was deleted (rollback on email failure)
+    # Verify user was rolled back (transaction.atomic on email failure)
     user_model = get_user_model()
     assert not user_model.objects.filter(username="testuser_email_fail").exists(), \
-        "User should be deleted when email fails to send"
+        "User should be rolled back when email fails to send"
 
 
 # ============================================================================
@@ -327,16 +327,16 @@ def test_verify_email_with_invalid_key_returns_400(
 
 
 @pytest.mark.django_db
-def test_resend_verification_to_nonexistent_email(
+def test_resend_verification_with_invalid_token(
     api_client: Client,
 ) -> None:
-    """Test resending verification to non-existent email returns success (security).
+    """Test resending verification with invalid token returns success (security).
 
-    Covers lines 705-727 in api.py (resend_verification endpoint).
-    Returns success message without revealing if email exists (security best practice).
+    Covers resend_verification endpoint security behavior.
+    Returns success message without revealing if token is valid (security best practice).
     """
     resend_data = {
-        "email": "nonexistent@example.com",
+        "resend_token": "invalid-token-that-does-not-exist",
     }
 
     response = api_client.post(
@@ -345,8 +345,8 @@ def test_resend_verification_to_nonexistent_email(
         content_type="application/json",
     )
 
-    # Should return 200 without revealing if email exists
+    # Should return 200 without revealing if token is valid
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert "message" in data, "Response should contain 'message' field"
-    assert "if" in data["message"].lower() or "sent" in data["message"].lower()
+    assert "sent" in data["message"].lower()

@@ -1,6 +1,6 @@
 # Testing Methodology Strategy
 
-**Version:** 1.2 | **Updated:** 2025-10-13 | **Status:** Active | **Scope:** Full-stack
+**Version:** 1.4 | **Updated:** 2025-12-25 | **Status:** Active | **Scope:** Full-stack
 
 ## Purpose
 
@@ -519,6 +519,83 @@ def json_post(
 
 **Avoid `Any`:** Use `object` for unknown types, `dict[str, object]` for dictionaries.
 
+**Mock Type Annotations:** Explicit type annotations on Mock variables are **optional**. `Mock()` returns type
+`Mock`, not `Any` - Pyright correctly infers the type without annotations.
+
+```python
+# Both are valid - explicit annotation is optional, not required
+mock_message = Mock()              # ✅ Pyright infers Mock type
+mock_message: Mock = Mock()        # ✅ Also valid, but redundant
+
+# Mock(spec=...) is about runtime safety (catching typos), not type safety
+mock_response = Mock(spec=Response)  # Raises AttributeError on typos at runtime
+```
+
+**Note:** `Mock(spec=SomeType)` provides runtime attribute checking (catches typos) but doesn't improve static
+type safety - Pyright sees `Mock` either way. Use `spec=` when runtime safety matters, not for type checking.
+
+### Centralized Mock Paths
+
+**Purpose:** Prevent stale mocks when implementations change by centralizing mock target paths.
+
+**Pattern:** Each app maintains a `mock_paths.py` file with constants for commonly-mocked module paths.
+
+```python
+# apps/{app}/tests/mock_paths.py
+"""Centralized mock target paths for {app} tests."""
+
+AUTH_SERVICE_SEND_VERIFICATION_EMAIL = (
+    "apps.authentication.services.authentication_service.send_verification_email_to_address"
+)
+
+AUTH_SERVICE_TRANSACTION_ATOMIC = (
+    "apps.authentication.services.authentication_service.transaction.atomic"
+)
+```
+
+**Usage:**
+
+```python
+from apps.authentication.tests.mock_paths import AUTH_SERVICE_SEND_VERIFICATION_EMAIL
+
+@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
+def test_registration_sends_email(mock_send_email: Mock) -> None:
+    mock_send_email.return_value = True
+    # ...
+```
+
+**Benefits:**
+
+- **Single update point:** When implementation changes, update one file
+- **Discoverability:** All mockable paths visible in one place
+- **Consistency:** Prevents typos and path drift across test files
+- **Refactoring safety:** IDE can find all usages when paths change
+
+**Current mock_paths.py files:**
+
+| App             | File                  | Paths                                         |
+|-----------------|-----------------------|-----------------------------------------------|
+| authentication  | `tests/mock_paths.py` | Email sending, transaction, schema validation |
+| core            | `tests/mock_paths.py` | TMDB settings, API client, DB connections     |
+| movie           | `tests/mock_paths.py` | TMDB client, blacklist, dedup, batch logger   |
+| user_movie_data | `tests/mock_paths.py` | Fetch movies batch                            |
+
+**When to add paths:**
+
+- Path is used in 2+ test files
+- Path targets internal implementation likely to change
+- Path is complex (nested modules, long strings)
+
+**Anti-pattern:** Hardcoding paths directly in test decorators.
+
+```python
+# ❌ WRONG - hardcoded path
+@patch("apps.authentication.services.authentication_service.send_verification_email_to_address")
+
+# ✅ CORRECT - centralized path
+@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
+```
+
 ### Database Compatibility
 
 **`--keepdb` Support:** Use `get_or_create()` for unique constraints.
@@ -568,12 +645,12 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 
 **Test Counts by App:**
 
-| App | Test Files | Directory Structure |
-| --- | ---------- | ------------------- |
-| movie | 23 | `unit/services/`, `unit/helpers/`, `integration/api/` |
-| authentication | 13 | `integration/` (all integration tests) |
-| user_movie_data | 6 | `unit/`, `integration/` |
-| core | 6 | `integration/` |
+| App             | Test Files | Directory Structure                                   |
+|-----------------|------------|-------------------------------------------------------|
+| movie           | 23         | `unit/services/`, `unit/helpers/`, `integration/api/` |
+| authentication  | 13         | `integration/` (all integration tests)                |
+| user_movie_data | 6          | `unit/`, `integration/`                               |
+| core            | 6          | `integration/`                                        |
 
 **Test Infrastructure:**
 

@@ -424,9 +424,14 @@ def test_browse_backward_navigation_consistency(
 # These tests verify Redis-based session tracking prevents duplicates across
 # pagination requests. Expected to fail until PaginationSessionManager is
 # implemented with cross-page deduplication support.
+#
+# NOTE: These tests use xdist_group("session") to run serially on a single
+# worker. This prevents flaky failures from session state bleeding between
+# parallel test workers sharing the same database/cache backend.
 # ============================================================================
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_page_1_stores_returned_ids_in_session(
     mock_tmdb_get: Mock,
@@ -479,6 +484,7 @@ def test_page_1_stores_returned_ids_in_session(
     assert len(overlap) == 0, f"Page 2 contains IDs already shown on page 1: {overlap}"
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_session_cleared_on_page_1_fresh_start(
     mock_tmdb_get: Mock,
@@ -563,6 +569,7 @@ def test_session_cleared_on_page_1_fresh_start(
     assert len(overlap) == 0, f"Fresh sequence should have no cross-page duplicates: {overlap}"
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_different_filter_combinations_use_different_sessions(
     mock_tmdb_get: Mock,
@@ -632,6 +639,7 @@ def test_different_filter_combinations_use_different_sessions(
 # ============================================================================
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_page_1_with_tmdb_page_start_preserves_session(
     mock_tmdb_get: Mock,
@@ -692,6 +700,7 @@ def test_page_1_with_tmdb_page_start_preserves_session(
     assert len(overlap) == 0, f"Cross-page duplicates found in infinite scroll: {overlap}"
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_page_1_without_tmdb_page_start_clears_session(
     mock_tmdb_get: Mock,
@@ -754,6 +763,7 @@ def test_page_1_without_tmdb_page_start_clears_session(
 # ============================================================================
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_different_pagination_context_headers_use_separate_sessions(
     mock_tmdb_get: Mock,
@@ -842,6 +852,7 @@ def test_different_pagination_context_headers_use_separate_sessions(
     # The key test is that Tab 2 excluded based on its OWN page 1, not Tab 1's
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_requests_without_context_header_work_backwards_compatible(
     mock_tmdb_get: Mock,
@@ -898,6 +909,7 @@ SEARCH_URL = "/api/movies/search"
 # filters generate different cache keys.
 
 
+@pytest.mark.xdist_group("session")
 @patch(TMDB_CLIENT_GET)
 def test_search_pagination_deduplicates_across_pages(
     mock_tmdb_get: Mock,

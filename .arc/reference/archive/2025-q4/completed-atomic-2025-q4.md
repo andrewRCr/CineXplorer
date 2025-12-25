@@ -6,6 +6,117 @@ Reference format: "see `completed-atomic-2025-q4.md`" or "see {task name} in `co
 
 ---
 
+- [x] Pre-fill email field after email verification
+    - **Outcome:** Backend now returns verified email in API response. Frontend pre-fills username field
+      after verification success, reducing login friction. Also fixed pre-existing technical debt:
+      updated 8 resend-verification tests to use token-based API (tests were using deprecated email-based API).
+    - **Files:** `schemas.py`, `authentication_service.py`, `authService.ts`, `Login.tsx`,
+      `test_email_verification.py`, `test_email_backend.py`, `test_api_coverage.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Data Quality: Blacklist heuristic adult content candidates (batch 2)
+    - **Outcome:** Blacklisted 378 movies from heuristic matches. 7 false positives excluded after
+      title review, 1 new addition. No production companies qualified for 90%+ bulk blacklisting.
+    - **Total blacklist:** 2,856 movies
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Data Quality: Blacklist mislabeled adult content movies from TMDB (batch 1)
+    - **Outcome:** Blacklisted 95 movies total. Deutsche Dynamik Film (company 81980) bulk blacklisted
+      (5 movies, 90%+ adult catalog). 90 individual movies blacklisted as "Mislabeled adult content on TMDB".
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Backend: Investigate and fix flaky registration email tests
+    - **Root Cause:** Allauth's email verification rate limiting persists in Redis between test runs.
+      Rate limit is `1/180s/key` (1 email per 3 minutes per email address). When tests run multiple
+      times, the rate limit blocks subsequent email sends, causing `send_verification_email_to_address()`
+      to return False and triggering our "Verification email could not be sent" error.
+    - **Fix:** Added `ACCOUNT_RATE_LIMITS = {"confirm_email": ""}` to `settings_test.py` to disable
+      the confirm_email rate limit in test environment.
+    - **Verified:** All 175 authentication tests pass. Ran flaky tests 5x consecutively - all passed.
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Backend: Fix email verification template rendering as plaintext
+    - **Outcome:** Root cause was `django-zoho-zeptomail` v0.0.3 bug - it concatenates plaintext+HTML
+      into single `htmlbody` field instead of setting `textbody` and `htmlbody` separately.
+      Created `FixedZohoZeptoMailEmailBackend` with lazy imports to avoid test side effects.
+    - **Files:** `apps/core/email_backend.py` (new), `config/settings.py`
+    - **Note:** 3 registration email tests are flaky (pre-existing issue, not caused by this change)
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Backend: Return user email in "email not verified" error response
+    - **Outcome:** Added `_mask_email()` static method to AuthenticationService, returns masked email
+      (e.g., `t***@example.com`) in 403 response. Updated unit and integration tests.
+    - **Files:** `authentication_service.py`, `test_authentication_service_tokens.py`, `test_error_responses.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Evaluate toast positioning strategy (priority-based placement)
+    - **Outcome:** Two toaster instances implemented with distinct positions
+    - `toaster` (bottom-right): Routine feedback (movie actions, general operations)
+    - `priorityToaster` (top-right): Auth success, important confirmations
+    - **Documented in:** `strategy-component-styling.md` (Toast positioning section)
+    - **Files:** `frontend/src/components/core/chakra/toaster.tsx`
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Auth flow refactor: architecture, error handling patterns, and accessibility
+    - **Scope note:** This task expanded well beyond atomic scope (6 phases, 20+ subtasks). In
+      retrospect, should have been its own incidental task list with dedicated branch. Lesson
+      learned: when an "atomic" task develops multiple phases, extract to proper task list early.
+    - **Outcome:** Complete auth flow overhaul with WCAG-compliant error handling, email/password
+      reset modals, component extraction (AuthFormCard, FormField, EmailVerificationDialog,
+      PasswordResetDialog), and proper toast/alert separation.
+    - **Key changes:**
+        - Hooks return data only; components control presentation (toast ownership)
+        - Auth errors → persistent FloatingAlerts; success → ephemeral toasts
+        - Email verification consolidated to `/login?verify=TOKEN` modal pattern
+        - Password reset flow added with `/login?reset=KEY` modal pattern
+        - Extracted reusable auth components to `components/auth/`
+        - Removed redundant button styling (uses default solid variant)
+    - **Files:** `useAuth.ts`, `Login.tsx`, `Register.tsx`, `ForgotPassword.tsx`, `useOAuthFlow.ts`,
+      `authService.ts`, `adapters.py`, `settings.py`, `toaster.tsx`, `FloatingAlert.tsx`,
+      `AuthFormCard.tsx`, `FormField.tsx`, `EmailVerificationDialog.tsx`, `PasswordResetDialog.tsx`,
+      `routes.ts`, `App.tsx` (VerifyEmail.tsx deleted)
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Fix email test coverage gaps
+    - **Outcome:** Added 8 new tests covering registration email flow, EmailDeliveryError, and template rendering
+    - **Tests added:**
+        1. Registration sends verification email to outbox (3 tests: basic, link content, username)
+        2. EmailDeliveryError raised when send fails (2 tests: failure raises, success passes)
+        3. Template rendering smoke tests (3 tests: confirmation templates, subject, password reset templates exist)
+    - **Note:** Password reset API endpoint not yet implemented; added template existence test for future
+    - **Files:** `apps/authentication/tests/integration/test_email_backend.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Audit mock_paths.py compliance across test codebase
+    - **Outcome:** All hardcoded mock paths migrated to centralized mock_paths.py files
+    - **Changes:**
+        - `authentication/tests/mock_paths.py`: Added `AUTH_SERVICE_SEND_VERIFICATION_EMAIL`,
+          `AUTH_SERVICE_TRANSACTION_ATOMIC`; removed stale `AUTH_SERVICE_EMAIL_ADD`
+        - `core/tests/mock_paths.py`: Added `WAIT_FOR_DB_CONNECTIONS`
+        - `movie/tests/mock_paths.py`: Added `BATCH_LOGGER`
+        - Updated 4 test files to use centralized paths
+    - **Files:** `backend/apps/*/tests/mock_paths.py`, `test_authentication_service_registration.py`,
+      `test_api_coverage.py`, `test_commands.py`, `test_batch_operations.py`
+
+    - **Branch:** `technical/toast-notification-system`
+
+- [x] Restore email template styling (visual regression)
+    - **Outcome:** Created custom TXT email template to match HTML branding
+    - **Root cause:** TXT template was missing, falling back to allauth default with
+      "Hello from {{ site_name }}!" pattern; django-zoho-zeptomail concatenates both bodies
+    - **Files:** `backend/templates/account/email/email_confirmation_message.txt` (new)
+
+    - **Branch:** `technical/toast-notification-system`
+
 - [x] DRY browse select trigger and value styling
     - **Outcome:**
         - Extracted shared browse select trigger styles to a helper module.

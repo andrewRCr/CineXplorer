@@ -76,7 +76,7 @@ def create_email_verification_input(**overrides: str) -> EmailVerificationInputS
 
 def create_resend_verification_input(**overrides: str) -> ResendVerificationInputSchema:
     """Build ResendVerificationInputSchema with sensible defaults."""
-    data: dict[str, str] = {"email": "testuser@example.com"}
+    data: dict[str, str] = {"resend_token": "a" * 64}  # 64-char opaque token
     merged = {**data, **overrides}
     return ResendVerificationInputSchema(**merged)
 

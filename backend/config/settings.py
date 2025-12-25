@@ -231,16 +231,20 @@ ENVIRONMENT = _environment  # Final constant assignment
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
-# Email Configuration - ZeptoMail via django-zoho-zeptomail backend
-# Uses Django's email system with ZeptoMail as the delivery backend
-EMAIL_BACKEND = "zoho_zeptomail.backend.zeptomail_backend.ZohoZeptoMailEmailBackend"
+# Email Configuration - ZeptoMail via custom backend with HTML fix
+# Uses our fixed backend that properly sets textbody and htmlbody separately
+# (django-zoho-zeptomail v0.0.3 has a bug that concatenates them)
+EMAIL_BACKEND = "apps.core.email_backend.FixedZohoZeptoMailEmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get(
     "ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com"
 )
 ZOHO_ZEPTOMAIL_API_KEY_TOKEN = os.environ.get("ZEPTOMAIL_API_KEY", "")
-# Region setting - only required for non-US hosted accounts
-# Options: None (US default), "eu" (Europe), "in" (India), "au" (Australia)
-ZOHO_ZEPTOMAIL_HOSTED_REGION = os.environ.get("ZEPTOMAIL_HOSTED_REGION", None)
+# Region setting - only define for non-US hosted accounts
+# The ZeptoMail package checks hasattr(), so don't define at all for US (default)
+# Valid values: "zeptomail.zoho.eu", "zeptomail.zoho.in", "zeptomail.zoho.com.au", etc.
+_zeptomail_region = os.environ.get("ZEPTOMAIL_HOSTED_REGION")
+if _zeptomail_region:
+    ZOHO_ZEPTOMAIL_HOSTED_REGION = _zeptomail_region
 
 # Email verification expiry (days) - configurable via environment variable
 # Default: 3 days (72 hours) - reasonable for production use
@@ -301,8 +305,9 @@ ACCOUNT_ADAPTER = "apps.authentication.adapters.CustomAccountAdapter"
 # Must be True to enable Token Strategy API for OAuth JWT generation
 HEADLESS_ONLY = True
 HEADLESS_FRONTEND_URLS = {
-    "account_confirm_email": f"{FRONTEND_URL}/auth/verify-email",
-    "account_reset_password_from_key": f"{FRONTEND_URL}/auth/reset-password",
+    # Note: account_confirm_email is handled by CustomAccountAdapter.get_email_confirmation_url()
+    # which generates /login?verify={key} - no entry needed here
+    "account_reset_password_from_key": f"{FRONTEND_URL}/login?reset={{key}}",
     "account_signup": f"{FRONTEND_URL}/auth/signup",
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
 }

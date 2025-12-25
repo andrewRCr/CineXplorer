@@ -29,7 +29,7 @@
 ## Active
 <!-- Add tasks here with checkboxes -->
 
-<!-- UI/UX Fixes -->
+<!-- UI/UX Enhancements -->
 
 - [ ] Revert MovieUserScore badge colors to traffic light scheme
     - Change: `≥7.5` success (green), `5.0-7.4` warning (yellow), `<5.0` error (red)
@@ -61,27 +61,52 @@
     - Files: `frontend/src/theme/recipes/` (new or existing), `frontend/src/components/movie/MovieCard.tsx`
     - Pattern will be reused in MovieDetail and other locations
 
-<!-- Miscellaneous -->
+<!-- Security -->
 
-- [ ] Investigate login session loss during testing
-    - Context: session appeared lost during theme system visual testing (no explicit logout)
-    - Test session persistence during normal navigation
-    - Test session across browser refreshes
-    - Test session timeout behavior
-    - Document reproduction steps if found, or close as testing artifact
+- [ ] Implement password complexity requirements
+    - **Problem:** Currently only enforcing 8-character minimum; assumed we had complexity rules but we don't
+    - **Backend changes:**
+        - Add validators to `AUTH_PASSWORD_VALIDATORS` in `config/settings.py`:
+            - Consider: uppercase, lowercase, digit, special character requirements
+            - Research: Django's built-in validators vs custom validator
+        - Ensure validation errors return clear, user-friendly messages via allauth
+    - **Frontend changes:**
+        - Update `PasswordResetDialog.tsx` validation to match backend rules
+        - Update `Register.tsx` (if separate password field validation exists)
+        - Consider: Real-time strength indicator vs submit-time validation
+        - Ensure error messages from backend display properly in forms
+    - **Testing:**
+        - Backend: Test password validation rejects weak passwords, accepts strong ones
+        - Frontend: Test validation feedback matches backend requirements
+    - **Documentation:**
+        - Update any user-facing help text about password requirements
+    - **Files:** `backend/config/settings.py`, `frontend/src/components/auth/PasswordResetDialog.tsx`,
+      `frontend/src/pages/user/Register.tsx`, related test files
+    - **Rationale:** Security best practice; discovered during PR #9 review that complexity wasn't enforced
 
-<!-- Data Quality -->
+<!-- Test Organization -->
 
-- [ ] Examine the following movies for production company patterns (i.e., do any of them produce 90%+ 'adult' content?)
-  for potential bulk blacklisting; if not found, blacklist individually (movies are mislabeled as non-adult on TMDB):
-    - 280460, 50633, 1113566, 264865, 199214, 329872, 406167, 222270, 264975, 1241742, 89632, 28325, 134451, 318947,
-      458353, 40348, 397298, 29194, 460229, 97697, 1069286, 28555, 33790, 315294, 57267, 45042, 196013, 29926, 333941,
-      433111, 141585, 151182, 715394, 505039, 474531, 331250, 278954, 424626, 225450, 564823, 259903, 110705, 220688,
-      127744, 64512, 154910, 105428, 393249, 423468, 436551, 285553, 284143, 70479, 295389, 70638, 28809, 90787,
-      36888, 220873, 420200, 265255, 69403, 265186, 306107, 265181, 860521, 424829, 40132, 197644, 598691, 5913,
-      410385, 496032, 371748, 281197, 135003, 797816, 272847, 415727, 311917, 264870, 264868, 544082, 899338, 194789,
-      36887, 220897, 193458, 183584, 485736, 259265, 124389, 265255, 36886
-    - **Findings (evaluation complete, blacklisting pending):**
-        - Only bulk candidate at 90%+ threshold: Deutsche Dynamik Film (id=81980), 5/5 matches (small catalog).
-        - Rapid Film, Retromedia, Vivamax, MRG, and others < 90% by TMDB title/keyword heuristics + external review.
-        - Additional heuristic matches (not in original list) moved to `temp-notes-blacklist-candidates.md` for later action.
+- [ ] Split `test_email_backend.py` into focused test modules
+    - **Problem:** File is 613 lines, exceeds 400-line guideline
+    - **Proposed split:**
+        - `test_email_backend_config.py` - backend configuration tests
+        - `test_email_resend_verification.py` - token-based resend flow
+        - `test_email_registration_flow.py` - registration email tests
+        - `test_email_adapter_errors.py` - EmailDeliveryError tests
+        - `test_email_templates.py` - template rendering smoke tests
+    - **Files:** `backend/apps/authentication/tests/integration/test_email_backend.py`
+    - **Rationale:** Identified during PR #9 CodeRabbit review; file is well-organized but exceeds guidelines
+
+<!-- Developer Experience -->
+
+- [ ] Create DevTools debug page (`/dev/tools`)
+    - **Purpose:** Centralized page for development/debugging utilities (separate from ThemeDebug)
+    - **Initial features:**
+        - API error simulation (trigger 500, 401, 403, network errors via apiClient)
+        - Toast testing (all variants, positions, durations)
+        - Auth state inspection (current user, tokens, session info)
+    - **Future expansion:** Cache utilities, feature flags, performance toggles
+    - **Files:** `frontend/src/pages/dev/DevTools.tsx`, add route in router
+    - **Gate:** Only render in development mode (like ThemeDebug)
+    - **Rationale:** Discovered need during `tasks-toast-notification-system` Task 3.7 - manual API error testing
+    required exposing apiClient on window; proper DevTools page provides discoverable, organized utilities

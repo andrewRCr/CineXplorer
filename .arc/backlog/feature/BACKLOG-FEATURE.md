@@ -15,7 +15,15 @@ Then **delete** the item from this file (no strikethrough clutter).
 
 ## User Authentication & Profiles
 
-<!-- Feature ideas related to user accounts, login, profiles -->
+- **Username Requirement Evaluation** - Consider whether username should remain required on registration. Current state:
+username required, users can login with username OR email. Context: App positioned as "Letterboxd without the fluff"
+(movie discovery minus heavy social/content creep), but stretch goal is forward-compatibility with minimal social
+features (follows, shared lists) if scope expands later. Options analyzed: (A) Keep required (current) - forward-compatible
+with social; (B) Make optional with email prefix auto-generation - REJECTED (privacy exposure, collision handling);
+(C) Make optional with display name/UUID fallback - simpler UX but migration pain if social added. Recommendation: Keep
+current approach - migration from email-primary to username-primary would force existing users to pick usernames.
+Related: first_name/last_name fields exist but aren't on registration form (decluttering decision). Priority: LOW
+(current approach works, this is a "nice to revisit" consideration)
 
 ## Discovery & Search
 

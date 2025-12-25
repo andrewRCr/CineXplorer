@@ -34,12 +34,37 @@ not a post-merge activity. This ensures PR reviewers see clean, well-organized d
 ### 1) Verify Work Completion
 
 - [ ] All task list subtasks and parent tasks marked `[x]`
+- [ ] Task list header `**Status:**` updated to `Complete`
+- [ ] PRD header `**Status:**` updated to `Complete` (if PRD exists - planned work only)
 - [ ] All quality gates passed (documented as completed subtasks in task list)
 - [ ] Implementation functions as expected in development environment
 - [ ] PROJECT-STATUS reflects completion (if applicable - major features/technical work)
 
 **Note:** Quality gates (tests, linting, type checking) are always documented as subtasks in the task list.
 If all tasks are marked complete, quality gates have passed. No separate verification step needed.
+
+**Note:** Not all work has PRDs. Incidental work typically has only task lists. Only update PRD status if one exists.
+
+### 1b) API Type Sync Check (If Applicable)
+
+**If backend API files were modified** (`api.py`, `schemas.py`), regenerate frontend types:
+
+```bash
+# Check if API files changed on this branch
+git diff main --name-only | grep -E "backend/apps/.*/api\.py|backend/apps/.*/schemas\.py"
+
+# If any matches, regenerate types (requires running backend containers)
+DEV_SKIP_TLS=true NODE_ENV=development npm run generate-types --prefix frontend
+
+# Check for uncommitted type changes
+git diff --exit-code frontend/openapi.json frontend/src/types/api.ts
+```
+
+**If diff shows changes:** Commit them before proceeding. CI will fail the "check for type drift" step if
+OpenAPI schema and TypeScript types are not in sync with the backend.
+
+**Why this step:** CI regenerates types from a fresh backend and compares against committed files. Local
+type checking passes because it uses the committed (stale) types, but CI catches the drift.
 
 ### 2) Clean Up Documentation (MANDATORY)
 

@@ -2,7 +2,7 @@
 
 **Type:** Technical Infrastructure
 **Priority:** High (Phase A - enables all subsequent feature work)
-**Status:** Ready for Task Generation
+**Status:** Complete
 
 ---
 
@@ -134,12 +134,12 @@ As a screen reader user, I want toast messages announced so that I receive the s
 
 Toasts will use the existing semantic token system:
 
-| Element    | Token Category | Example                                |
-|------------|----------------|----------------------------------------|
-| Background | Layer tokens   | `layer-02`                             |
-| Border     | Border tokens  | `border-strong-01`                     |
-| Text       | Content tokens | `primary`, `secondary`                 |
-| Icons      | Status tokens  | `success`, `danger`, `warning`, `info` |
+| Element    | Token Category | Example                                       |
+|------------|----------------|-----------------------------------------------|
+| Background | Status opacity | `success/10`, `destructive/10`, `info/10`     |
+| Border     | Status tokens  | `success`, `destructive`, `warning`, `info`   |
+| Text       | Status + fg    | Status color for title, `foreground` for desc |
+| Icons      | Status tokens  | `success`, `destructive`, `warning`, `info`   |
 
 ### 6.2 Toast Anatomy
 
@@ -165,7 +165,7 @@ supports color modes - toast implementation inherits this automatically when usi
 **Toaster Setup (compositions pattern):**
 
 ```typescript
-// src/components/ui/toaster.tsx
+// src/components/core/chakra/toaster.tsx
 import { Toaster as ChakraToaster, createToaster } from "@chakra-ui/react";
 
 export const toaster = createToaster({
@@ -174,29 +174,33 @@ export const toaster = createToaster({
 });
 
 export const Toaster = () => (
-  <ChakraToaster toaster={toaster} /* ... */ />
+  <ChakraToaster toaster={toaster}>
+    {(toast) => (
+      <Toast.Root /* semantic token styling based on toast.type */ />
+    )}
+  </ChakraToaster>
 );
 ```
 
 **Usage Pattern:**
 
 ```typescript
-import { toaster } from "@/components/ui/toaster";
+import { toaster } from "@/components/core/chakra/toaster";
 
 // Simple toast
 toaster.success({ title: "Added to watchlist" });
 
-// Promise toast
-toaster.promise(saveReview(movieId, review), {
-  loading: { title: "Saving review..." },
-  success: { title: "Review saved" },
-  error: { title: "Failed to save review" },
+// Promise toast (loading → success/error)
+toaster.promise(authService.login(credentials), {
+  loading: { title: "Logging in..." },
+  success: { title: "Welcome back!" },
+  error: (err) => ({ title: "Login failed", description: err.message }),
 });
 
 // With undo action
 toaster.success({
   title: "Removed from watchlist",
-  action: { label: "Undo", onClick: () => addToWatchlist(movieId) },
+  action: { label: "Undo", onClick: () => toggleWatchlist(movieId) },
 });
 ```
 
@@ -204,25 +208,28 @@ toaster.success({
 
 **Phase 1 - Core Integrations (this PRD):**
 
-| Location                              | Toast Type       | Message                                 |
-|---------------------------------------|------------------|-----------------------------------------|
-| `useAuth.ts` logout                   | Success          | "Logged out successfully"               |
-| `useAuth.ts` session expired          | Error (critical) | "Session expired. Please log in again." |
-| `useMovieActions.ts` watchlist add    | Success          | "Added to watchlist"                    |
-| `useMovieActions.ts` watchlist remove | Success + Undo   | "Removed from watchlist"                |
-| `useMovieActions.ts` error            | Error            | Dynamic error message                   |
-| API interceptor 401                   | Error (critical) | "Session expired. Please log in again." |
-| API interceptor 5xx                   | Error            | "Server error. Please try again."       |
+| Location                              | Toast Type       | Message                                    |
+|---------------------------------------|------------------|--------------------------------------------|
+| `useAuth.ts` login                    | Promise          | "Logging in..." → "Welcome back!"          |
+| `useAuth.ts` register                 | Promise          | "Creating account..." → "Check your email" |
+| `Login.tsx` email resend              | Promise          | "Sending..." → "Verification email sent!"  |
+| `useAuth.ts` logout                   | Success          | "You've been logged out"                   |
+| `apiClient.ts` 401 interceptor        | Error (critical) | "Session expired. Please log in again."    |
+| `useMovieActions.ts` watchlist add    | Success          | "Added to watchlist"                       |
+| `useMovieActions.ts` watchlist remove | Success + Undo   | "Removed from watchlist"                   |
+| `useMovieActions.ts` error            | Error            | Dynamic error message                      |
+| `apiClient.ts` 5xx interceptor        | Error            | "Server error. Please try again."          |
 
-**Phase 2+ - Future Integrations (separate PRDs):**
+**Future Integrations (when features implemented):**
 
-| Feature               | Toast Pattern  | Notes                    |
-|-----------------------|----------------|--------------------------|
-| Ratings save          | Simple success | Fast operation           |
-| Reviews save          | Promise toast  | Visible latency          |
-| Favorites toggle      | Success + Undo | Destructive action       |
-| Movie Lists CRUD      | Promise toast  | Create/delete operations |
-| Celery email dispatch | Promise toast  | "Sending..." → "Sent!"   |
+| Feature               | Toast Pattern  | Notes                              |
+|-----------------------|----------------|------------------------------------|
+| Ratings save          | Simple success | Fast operation                     |
+| Reviews save          | Promise toast  | Visible latency                    |
+| Favorites toggle      | Success + Undo | Destructive action                 |
+| Watched/Liked toggle  | Simple success | Fast operations                    |
+| Movie Lists CRUD      | Promise toast  | Create/delete operations           |
+| Profile/Settings save | Promise toast  | User data mutations                |
 
 ### 7.3 Dependencies
 
@@ -234,16 +241,23 @@ toaster.success({
 ```
 frontend/src/
 ├── components/
-│   └── ui/
-│       └── toaster.tsx          # Toaster provider + createToaster config
+│   └── core/
+│       └── chakra/
+│           └── toaster.tsx      # Toaster composition + createToaster config
+├── theme/
+│   └── recipes/
+│       └── toast.ts             # Toast slot recipe (semantic token styling)
 ├── hooks/
 │   └── auth/
-│       └── useAuth.ts           # Add logout toast
+│       └── useAuth.ts           # Login, register, logout toasts
 │   └── movie/
-│       └── useMovieActions.ts   # Add action toasts
+│       └── useMovieActions.ts   # Watchlist action toasts
+├── pages/
+│   └── user/
+│       └── Login.tsx            # Email resend toast
 ├── services/
-│   └── apiClient.ts             # Add error interceptor toasts
-└── App.tsx                      # Mount <Toaster /> provider
+│   └── apiClient.ts             # 401/5xx error interceptor toasts
+└── main.tsx                     # Mount <Toaster /> provider
 ```
 
 ### 7.5 Testing Strategy

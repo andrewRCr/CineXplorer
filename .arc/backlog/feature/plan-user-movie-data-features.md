@@ -214,6 +214,10 @@ those patterns, preventing ad-hoc implementations that would need refactoring la
 - Component library: react-rating-stars-component or custom
 - Optimistic updates with rollback
 - Visual distinction: user rating vs TMDB rating (different colors/labels)
+- **Touch target sizing**: When redesigning MovieCard action buttons, use `size="md"` or larger for IconButtons
+  (current `size="sm"` is 32×32px, below WCAG AAA 44×44px guideline). Balance with visual design constraints.
+- **Tooltip simplification**: Replace custom title tooltip with Chakra's `<Tooltip disabled={!isTitleTruncated}>`,
+  eliminating ~40 lines and `isTitleTooltipOpen` state.
 
 **Effort Estimate:** 4-6 hours
 
@@ -584,4 +588,93 @@ Chronological timeline of all user actions:
 
 ---
 
-**Last Updated:** 2025-10-22
+## Known Architectural Issues (Frontend State Management)
+
+**Discovered:** 2025-12-23 during toast notification implementation
+**Root Cause:** Stale props without proper state synchronization
+**Resolution:** TanStack Query adoption (see Frontend Modernization)
+
+### Issue 1: Stale Movie Props After API Calls
+
+**Symptom:** After toggling watchlist, subsequent toggles fail or show wrong state.
+
+**Root cause:** `useMovieActions` receives `movie` prop which includes `user_movie_data`. After API call:
+
+1. Service layer updates backend correctly
+2. Service returns updated UserMovieData
+3. But parent component (movie list) still has stale `movie.user_movie_data`
+4. Next toggle reads stale data, tries wrong operation (CREATE vs UPDATE)
+
+**Current workaround:** Service layer fetches fresh data on 400 errors and toggles based on actual server state.
+
+**Proper fix:** TanStack Query cache invalidation - when watchlist mutation succeeds, invalidate movie list
+queries so they refetch with updated `user_movie_data`.
+
+### Issue 2: Two Different Hooks for Same Domain
+
+**Hooks:**
+
+- `useMovieActions` - Used by MovieCard, handles CREATE + UPDATE via service layer
+- `useUserMovieData` - Used by MovieDetail, only handles UPDATE (requires existing data)
+
+**Problem:** MovieDetail can't add movies to watchlist if user has never interacted with that movie
+(no existing UserMovieData record).
+
+**Analysis needed:**
+
+- Is there a good reason for two hooks? (Different use cases? Performance?)
+- Or is this development remnants / unconsolidated work?
+- Should `useUserMovieData` be enhanced to support CREATE?
+- Or should MovieDetail switch to `useMovieActions`? (Type differences: MovieDetailType vs MovieListItem)
+
+**Recommendation:** Consolidate during TanStack Query migration - create unified `useMovieMutations` hook
+using `useMutation` with proper cache invalidation.
+
+### Issue 3: Undo Button Deferred
+
+**Context:** Toast notification for "Removed from watchlist" originally had Undo button.
+
+**Problem:** Undo action is disconnected from MovieCard's local state:
+
+1. MovieCard has `localWatchlistState` for optimistic updates
+2. Undo in toast calls `toggleWatchlist()` directly (bypasses local state)
+3. API succeeds but MovieCard shows wrong state
+
+**Current state:** Undo button removed, deferred until proper state sync exists.
+
+**Proper fix:** TanStack Query mutations with `onSuccess` callback that invalidates queries,
+causing MovieCard to refetch and show correct state.
+
+### Issue 4: Axios Error Structure
+
+**Fixed in:** 2025-12-23 (movieInteractionService.ts, useMovieActions.ts)
+
+**Issue:** Error handling checked `error.status` but Axios errors have `error.response.status`.
+Race condition handler wasn't triggering because error type check failed.
+
+**Resolution:** Added proper Axios error type guards and message extraction:
+
+- `getErrorStatus(error)` - extracts status from Axios error structure
+- `getErrorMessage(error)` - extracts message from various error formats
+
+### Recommended Resolution Path
+
+1. **Short-term (current):** Service layer workarounds in place, Undo button deferred
+2. **Medium-term ([Frontend Modernization](../technical/plan-frontend-modernization.md)):**
+   TanStack Query mutations for user movie data
+   - `useMutation` for watchlist/watched/liked/rating toggles
+   - `queryClient.invalidateQueries()` on mutation success
+   - Optimistic updates with automatic rollback
+3. **Long-term (Feature work):** Consolidate hooks into unified patterns
+
+**Related files:**
+
+- `frontend/src/hooks/movie/useMovieActions.ts` - MovieCard integration
+- `frontend/src/hooks/movie/useUserMovieData.ts` - MovieDetail integration
+- `frontend/src/services/movieInteractionService.ts` - Service layer with workarounds
+- `frontend/src/pages/movie/MovieDetail.tsx` - Uses useUserMovieData
+- `frontend/src/components/movie/MovieCard.tsx` - Uses useMovieActions
+
+---
+
+**Last Updated:** 2025-12-23

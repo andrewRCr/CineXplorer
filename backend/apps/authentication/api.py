@@ -380,6 +380,7 @@ def verify_email(
     "/resend-verification/",
     auth=None,
     response={200: ResendVerificationResponseSchema, 400: dict[str, object]},
+    throttle=[TestAwareAnonThrottle('3/h')],  # Rate limit to prevent email spam abuse
 )
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationInputSchema

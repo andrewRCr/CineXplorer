@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
-import { getAvailableSortOptions } from "@/utilities/sortAvailability";
+import { getAvailableSortOptions } from "@/utilities/sortAvailabilityUtils";
 import type { BrowseParams } from "@/types/browseTypes";
 import {
   BROWSE_SELECT_TRIGGER_BASE_PROPS,

@@ -30,21 +30,11 @@ import {
     updateUserMovieData,
     getUserMovieDataByTmdbId,
 } from './userMovieDataService';
+import { getErrorStatus, getErrorMessage } from '@/utilities/axiosErrorUtils';
 
 type UserMovieDataDetailSchema = components['schemas']['UserMovieDataDetailSchema'];
 type UserMovieDataCreateSchema = components['schemas']['UserMovieDataCreateSchema'];
 type UserMovieDataUpdateSchema = components['schemas']['UserMovieDataUpdateSchema'];
-
-/**
- * Type guard for API errors with status codes
- */
-interface ApiError extends Error {
-    status?: number;
-}
-
-function isApiError(error: unknown): error is ApiError {
-    return error instanceof Error && 'status' in error;
-}
 
 /**
  * Toggle a movie's watchlist status
@@ -86,14 +76,18 @@ export async function toggleMovieWatchlist(
             const response = await createUserMovieData(createPayload);
             return response.data;
         } catch (error: unknown) {
-            // Handle race condition: Another request created the entry
-            if (isApiError(error) && error.status === 400) {
-                if (error.message.includes('already exists')) {
-                    // Fetch the existing data and retry with UPDATE
+            // Handle race condition: Entry already exists (stale movie prop or concurrent request)
+            // Backend returns 400 when entry already exists for this user/movie
+            if (getErrorStatus(error) === 400) {
+                const errorMsg = getErrorMessage(error).toLowerCase();
+                if (errorMsg.includes('already exists') || errorMsg.includes('unique constraint')) {
+                    // Fetch the current data and TOGGLE (not always set to true)
+                    // This handles the case where movie.user_movie_data is stale
                     const { request } = getUserMovieDataByTmdbId({ tmdb_id: movie.tmdb_id });
                     const existingDataResponse = await request;
+                    const currentStatus = existingDataResponse.data.user_on_watchlist ?? false;
                     const updateResponse = await updateUserMovieData(existingDataResponse.data.id!, {
-                        user_on_watchlist: true,
+                        user_on_watchlist: !currentStatus,
                     });
                     return updateResponse.data;
                 }

@@ -79,7 +79,7 @@ def test_obtain_token_rejects_unverified_email(
     service, deps = auth_service_factory()
     payload = create_token_input()
 
-    deps.authenticate_fn.return_value = Mock(id=1)
+    deps.authenticate_fn.return_value = Mock(id=1, email="test@example.com")
     deps.email_address_model.objects.filter.return_value.exists.return_value = False
 
     status, data = service.obtain_token(Mock(), Mock(), payload)
@@ -87,6 +87,7 @@ def test_obtain_token_rejects_unverified_email(
     assert status == 403
     data_dict = normalize_response_data(data)
     assert "verify your email" in str(data_dict["error"])
+    assert data_dict["email"] == "t***@example.com"
     deps.logger.warning.assert_called()
 
 

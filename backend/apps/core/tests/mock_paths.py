@@ -32,3 +32,10 @@ TMDB_CLIENT_SESSION = "apps.core.services.tmdb_api_client.TMDBApiClient.session"
 
 # TMDB client get method
 TMDB_CLIENT_GET = "apps.core.services.tmdb_api_client.TMDBApiClient.get"
+
+# =============================================================================
+# Management Command Paths
+# =============================================================================
+
+# Database connection check (wait_for_db command)
+WAIT_FOR_DB_CONNECTIONS = "apps.core.management.commands.wait_for_db.connections"

@@ -17,6 +17,8 @@ from unittest.mock import Mock, patch
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 
+from apps.authentication.tests.fixtures import get_resend_token_from_login
+
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
     from django.test import Client
@@ -59,6 +61,7 @@ def test_verify_email_with_valid_key_success(
     assert response.status_code == HTTPStatus.OK
     data = response.json()
     assert data["message"] == "Email verified successfully."
+    assert data["email"] == unverified_user.email  # For pre-filling login form
 
     # Verify email is now marked as verified
     email_address.refresh_from_db()
@@ -189,18 +192,27 @@ def test_verify_email_handles_unexpected_exception(
 
 
 # ============================================================================
-# Test: POST /api/resend-verification/ - Success Cases
+# Test: POST /api/resend-verification/ - Token-Based Flow
+# ============================================================================
+#
+# The resend-verification endpoint uses token-based authentication to prevent
+# user enumeration. Tokens are generated when login fails due to unverified email.
+#
+# Flow:
+# 1. User attempts login with unverified email -> 403 with resend_token
+# 2. User calls /api/resend-verification/ with that token
+# 3. Server validates token, sends verification email, returns 200
 # ============================================================================
 
 
 @pytest.mark.django_db
-def test_resend_verification_with_existing_email_address_success(
+def test_resend_verification_with_valid_token_success(
     api_client: Client,
     unverified_user: User,
 ) -> None:
-    """Test resending verification to existing EmailAddress succeeds.
+    """Test resending verification with valid token succeeds.
 
-    Covers lines 877-881 in api.py (existing EmailAddress.send_confirmation path).
+    Token-based flow: login failure provides resend_token for resend endpoint.
     """
     # Create unverified EmailAddress
     EmailAddress.objects.create(
@@ -210,10 +222,16 @@ def test_resend_verification_with_existing_email_address_success(
         verified=False,
     )
 
-    resend_data = {"email": unverified_user.email}
+    # Get resend token by attempting login with unverified user
+    resend_token = get_resend_token_from_login(
+        api_client, unverified_user.username, "testpass123"
+    )
+    assert resend_token is not None, "Expected resend_token in 403 response"
+
+    resend_data = {"resend_token": resend_token}
 
     # Mock send_confirmation to avoid actual email sending
-    with patch.object(EmailAddress, 'send_confirmation') as mock_send:
+    with patch.object(EmailAddress, "send_confirmation") as mock_send:
         response = api_client.post(
             "/api/resend-verification/",
             data=resend_data,
@@ -227,82 +245,70 @@ def test_resend_verification_with_existing_email_address_success(
 
 
 @pytest.mark.django_db
-def test_resend_verification_creates_missing_email_address(
+def test_resend_verification_with_invalid_token_returns_success(
+    api_client: Client,
+) -> None:
+    """Test resending verification with invalid token returns success (security).
+
+    Returns 200 without revealing token validity to prevent enumeration.
+    """
+    resend_data = {"resend_token": "invalid-token-that-does-not-exist"}
+
+    response = api_client.post(
+        "/api/resend-verification/",
+        data=resend_data,
+        content_type="application/json",
+    )
+
+    # Should return 200 without revealing token validity (security)
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()
+    assert data["message"] == "Verification email sent successfully."
+
+
+@pytest.mark.django_db
+def test_resend_verification_token_is_consumed_after_use(
     api_client: Client,
     unverified_user: User,
 ) -> None:
-    """Test resending verification creates EmailAddress if missing.
+    """Test that resend token can only be used once.
 
-    Covers lines 882-885 in api.py (EmailAddress.DoesNotExist path).
+    After successful use, the token should be consumed and subsequent
+    requests with the same token should still return 200 (security)
+    but not send another email.
     """
-    # Ensure no EmailAddress exists for user
-    EmailAddress.objects.filter(user=unverified_user).delete()
+    # Create unverified EmailAddress
+    EmailAddress.objects.create(
+        user=unverified_user,
+        email=unverified_user.email,
+        primary=True,
+        verified=False,
+    )
 
-    resend_data = {"email": unverified_user.email}
+    # Get resend token
+    resend_token = get_resend_token_from_login(
+        api_client, unverified_user.username, "testpass123"
+    )
+    assert resend_token is not None
 
-    # Mock EmailAddress.objects.add_email to avoid actual email sending
-    with patch.object(EmailAddress.objects, 'add_email') as mock_add:
-        response = api_client.post(
+    resend_data = {"resend_token": resend_token}
+
+    # First use - should send email
+    with patch.object(EmailAddress, "send_confirmation") as mock_send:
+        response1 = api_client.post(
             "/api/resend-verification/",
             data=resend_data,
             content_type="application/json",
         )
+        assert response1.status_code == HTTPStatus.OK
+        assert mock_send.call_count == 1
 
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()
-    assert data["message"] == "Verification email sent successfully."
-    mock_add.assert_called_once()
-
-
-# ============================================================================
-# Test: POST /api/resend-verification/ - Error Cases
-# ============================================================================
-
-
-@pytest.mark.django_db
-def test_resend_verification_with_already_verified_email_returns_400(
-    api_client: Client,
-    verified_user: User,
-) -> None:
-    """Test resending verification to already-verified email returns 400.
-
-    Covers lines 873-874 in api.py (already verified check).
-    """
-    # Get the already-verified EmailAddress created by the fixture
-    email_address = EmailAddress.objects.get(user=verified_user, email=verified_user.email)
-    assert email_address.verified is True  # Verify it's already verified
-
-    resend_data = {"email": verified_user.email}
-
-    response = api_client.post(
-        "/api/resend-verification/",
-        data=resend_data,
-        content_type="application/json",
-    )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-    data = response.json()
-    assert data["error"] == "This email address is already verified."
-
-
-@pytest.mark.django_db
-def test_resend_verification_with_nonexistent_user_returns_success(
-    api_client: Client,
-) -> None:
-    """Test resending verification to non-existent email returns success (security).
-
-    Covers lines 887-889 in api.py (User.DoesNotExist path).
-    Returns success without revealing if email exists (security best practice).
-    """
-    resend_data = {"email": "nonexistent@example.com"}
-
-    response = api_client.post(
-        "/api/resend-verification/",
-        data=resend_data,
-        content_type="application/json",
-    )
-
-    # Should return 200 without revealing if email exists (security)
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()
-    assert "verification email has been sent" in data["message"].lower()
+    # Second use - token consumed, no email sent but still returns 200
+    with patch.object(EmailAddress, "send_confirmation") as mock_send:
+        response2 = api_client.post(
+            "/api/resend-verification/",
+            data=resend_data,
+            content_type="application/json",
+        )
+        assert response2.status_code == HTTPStatus.OK
+        assert mock_send.call_count == 0  # Token was consumed, no email sent

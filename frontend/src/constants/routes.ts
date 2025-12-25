@@ -17,7 +17,7 @@ export const ROUTES = {
     MOVIE_DETAIL: "/movie/:id",
     LOGIN: "/login",
     REGISTER: "/register",
-    VERIFY_EMAIL: "/verify-email/:token",
+    FORGOT_PASSWORD: "/forgot-password",
     TEST_LOGIN: "/testlogin",
     TYPOGRAPHY_TEST: "/dev/typography-debug",
     // more to be added as needed
@@ -39,7 +39,7 @@ export const ROUTE_NAMES = {
     MOVIE_DETAIL: "Movie Detail",
     LOGIN: "Login",
     REGISTER: "Register",
-    VERIFY_EMAIL: "Verify Email",
+    FORGOT_PASSWORD: "Forgot Password",
     TEST_LOGIN: "Test Login",
     TYPOGRAPHY_TEST: "Typography Debug",
     // more to be added as needed

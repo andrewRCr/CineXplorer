@@ -5,7 +5,7 @@ import {
   parseBrowseParamsFromUrl,
   generateBrowseUrl,
 } from "@/utilities/browseUrlSync";
-import { deepEqual } from "@/utilities/deepEqual";
+import { deepEqual } from "@/utilities/objectComparator";
 
 /**
  * useMovieCollectionUrl

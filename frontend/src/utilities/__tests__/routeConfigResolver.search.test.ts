@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getFetcherAndSource } from '../routeConfigHelper';
+import { getFetcherAndSource } from '../routeConfigResolver';
 import * as movieService from '@/services/movieService';
 
 /**

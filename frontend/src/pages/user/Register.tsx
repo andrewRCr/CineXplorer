@@ -1,17 +1,19 @@
 import { ROUTES } from "@/constants/routes";
-import { Box, Button, Field, VStack, Text } from "@chakra-ui/react";
-import { StyledInput } from "@/components/common";
+import { Box, Button, VStack, Text } from "@chakra-ui/react";
+import { TextLink, FloatingAlert, FloatingAlertContainer } from "@/components/common";
+import { AuthFormCard, FormField } from "@/components/auth";
 import { useFormik } from "formik";
-import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useAuthContext from "@/hooks/auth/useAuthContext";
-import { TextLink } from "@/components/common";
+import { priorityToaster } from "@/components/core/chakra/toaster";
 
 const Register = () => {
   const authContext = useAuthContext();
   const register = authContext?.register;
   const navigate = useNavigate();
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [registrationError, setRegistrationError] = useState("");
+
   const formik = useFormik({
     initialValues: {
       username: "",
@@ -34,33 +36,28 @@ const Register = () => {
     onSubmit: async (values) => {
       const { username, email, password } = values;
       if (register) {
-        setErrorMessage("");
+        const toastId = "register-toast";
+        priorityToaster.loading({ id: toastId, title: "Creating account..." });
+
         const response = await register(username, email, password);
 
         if (response.success) {
+          // Clear any error state on success
+          setRegistrationError("");
+
+          // Dismiss loading toast and navigate to login
+          // Login page will show persistent success alert (non-blocking, top-right)
+          priorityToaster.dismiss(toastId);
           navigate(ROUTES.LOGIN, {
             state: {
               registrationSuccess: true,
-              message:
-                "Registration successful! Please check your email to verify your account before logging in.",
+              message: "Account created! Check your email to verify your account before logging in.",
             },
           });
         } else {
-          // Error case - use structured AuthError
-          const { status, message } = response.error;
-
-          if (status === 409) {
-            formik.setErrors({
-              username: "Username invalid or already taken.",
-              email: "Email invalid or already taken.",
-            });
-          } else if (status === 400) {
-            formik.setErrors({
-              password: message || "Password invalid.",
-            });
-          } else {
-            setErrorMessage(message || "Registration failed. Please try again.");
-          }
+          // Dismiss loading toast and show error as FloatingAlert
+          priorityToaster.dismiss(toastId);
+          setRegistrationError(response.error.message);
         }
       }
     },
@@ -75,136 +72,48 @@ const Register = () => {
       justifyContent="center"
       paddingY="32px"
     >
-      {/* Register Box - Centered */}
-      <Box position="relative" zIndex={1} w="480px">
-        <Box
-          bg="layer-01"
-          color="foreground"
-          p={10}
-          rounded="lg"
-          boxShadow="xl"
-          w="100%"
-        >
-          <form onSubmit={formik.handleSubmit}>
-            <VStack gap="24px" align="flex-start">
-              <Box minH="80px" w="100%">
-                <Field.Root
-                  required
-                  invalid={!!formik.errors.email && formik.touched.email}
-                  w="100%"
-                  position="relative"
-                >
-                  <Field.Label
-                    htmlFor="email"
-                    fontSize="16px"
-                    fontWeight="medium"
-                    mb={2}
-                  >
-                    Email Address
-                  </Field.Label>
-                  <StyledInput
-                    autoFocus
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formik.values.email}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    layer="01"
-                  />
-                  <Field.ErrorText
-                    fontSize="14px"
-                    position="absolute"
-                    top="100%"
-                    left="0"
-                    right="0"
-                    mt="4px"
-                    color="destructive"
-                  >
-                    {formik.errors.email}
-                  </Field.ErrorText>
-                </Field.Root>
-              </Box>
-              <Box minH="80px" w="100%">
-                <Field.Root
-                  required
-                  invalid={!!formik.errors.username && formik.touched.username}
-                  w="100%"
-                  position="relative"
-                >
-                  <Field.Label
-                    htmlFor="username"
-                    fontSize="16px"
-                    fontWeight="medium"
-                    mb={2}
-                  >
-                    CineXplorer Username
-                  </Field.Label>
-                  <StyledInput
-                    id="username"
-                    name="username"
-                    type="text"
-                    value={formik.values.username}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    layer="01"
-                  />
-                  <Field.ErrorText
-                    fontSize="14px"
-                    position="absolute"
-                    top="100%"
-                    left="0"
-                    right="0"
-                    mt="4px"
-                    color="destructive"
-                  >
-                    {formik.errors.username}
-                  </Field.ErrorText>
-                </Field.Root>
-              </Box>
-              <Box minH="80px" w="100%">
-                <Field.Root
-                  required
-                  invalid={!!formik.errors.password && formik.touched.password}
-                  w="100%"
-                  position="relative"
-                >
-                  <Field.Label
-                    htmlFor="password"
-                    fontSize="16px"
-                    fontWeight="medium"
-                    mb={2}
-                  >
-                    Password
-                  </Field.Label>
-                  <StyledInput
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    layer="01"
-                  />
-                  <Field.ErrorText
-                    fontSize="14px"
-                    position="absolute"
-                    top="100%"
-                    left="0"
-                    right="0"
-                    mt="4px"
-                    color="destructive"
-                  >
-                    {formik.errors.password}
-                  </Field.ErrorText>
-                </Field.Root>
-              </Box>
-
-              {errorMessage && (
-                <Text color="on-destructive" fontSize="14px" textAlign="center">
-                  {errorMessage}
-                </Text>
-              )}
+      <AuthFormCard>
+        <form onSubmit={formik.handleSubmit}>
+          <VStack gap="24px" align="flex-start">
+              <FormField
+                name="email"
+                label="Email Address"
+                type="email"
+                value={formik.values.email}
+                error={formik.errors.email}
+                touched={formik.touched.email}
+                onChange={(e) => {
+                  formik.handleChange(e);
+                  setRegistrationError("");
+                }}
+                onBlur={formik.handleBlur}
+                autoFocus
+              />
+              <FormField
+                name="username"
+                label="CineXplorer Username"
+                value={formik.values.username}
+                error={formik.errors.username}
+                touched={formik.touched.username}
+                onChange={(e) => {
+                  formik.handleChange(e);
+                  setRegistrationError("");
+                }}
+                onBlur={formik.handleBlur}
+              />
+              <FormField
+                name="password"
+                label="Password"
+                type="password"
+                value={formik.values.password}
+                error={formik.errors.password}
+                touched={formik.touched.password}
+                onChange={(e) => {
+                  formik.handleChange(e);
+                  setRegistrationError("");
+                }}
+                onBlur={formik.handleBlur}
+              />
 
               <Button
                 type="submit"
@@ -212,11 +121,6 @@ const Register = () => {
                 fontSize="16px"
                 loading={formik.isSubmitting}
                 loadingText="Registering..."
-                bg="primary"
-                color="on-primary"
-                _hover={{
-                  bg: "primary-hover",
-                }}
               >
                 Register
               </Button>
@@ -226,8 +130,20 @@ const Register = () => {
               </Text>
             </VStack>
           </form>
-        </Box>
-      </Box>
+        </AuthFormCard>
+
+      {/* Floating alert - positioned above form, no layout shift */}
+      {/* Registration errors use persistent alert; success redirects to login with alert there */}
+      {registrationError && (
+        <FloatingAlertContainer>
+          <FloatingAlert
+            status="error"
+            onDismiss={() => setRegistrationError("")}
+          >
+            {registrationError}
+          </FloatingAlert>
+        </FloatingAlertContainer>
+      )}
     </Box>
   );
 };

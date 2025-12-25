@@ -50,10 +50,9 @@ Organized by component type ("what are you building?") rather than token categor
 ```
 What am I styling?
 ├─ Status/feedback indicator? → [Status Indicators](#building-status-indicators)
-│  ├─ Success: Alert/Badge with status="success"
-│  ├─ Warning: Alert/Badge with status="warning"
-│  ├─ Error: Alert/Badge with status="error"
-│  └─ Info: Alert/Badge with status="info"
+│  ├─ Inline feedback: Alert with status="success/warning/error/info"
+│  ├─ Compact label: Badge with variant="success/warning/error/info/neutral"
+│  └─ Floating notification: toaster.success/error/warning/info/loading()
 │
 ├─ Button or action? → [Building Buttons](#building-buttons)
 │  ├─ Primary action (highest emphasis): variant="solid"
@@ -289,13 +288,13 @@ All interaction states (hover, active, focus) are handled automatically by the r
 
 ### Button Variants Quick Reference
 
-| Variant      | Emphasis   | Visual            | Use Cases                                          |
-|--------------|------------|-------------------|----------------------------------------------------|
-| **solid**    | Highest    | Filled background | Primary actions: "Save", "Submit", "Browse Movies" |
-| **secondary**| High       | Primary text      | Secondary action in form pairs with primary        |
-| **outline**  | Medium     | Grey border/text  | Standalone utility: "Back", OAuth, filters         |
-| **subtle**   | Medium-Low | Muted fill        | Embedded in panels: theme selectors, sort controls |
-| **ghost**    | Lowest     | Text only         | Dismissive: "Skip", "Close", "Dismiss"             |
+| Variant       | Emphasis   | Visual            | Use Cases                                          |
+|---------------|------------|-------------------|----------------------------------------------------|
+| **solid**     | Highest    | Filled background | Primary actions: "Save", "Submit", "Browse Movies" |
+| **secondary** | High       | Primary text      | Secondary action in form pairs with primary        |
+| **outline**   | Medium     | Grey border/text  | Standalone utility: "Back", OAuth, filters         |
+| **subtle**    | Medium-Low | Muted fill        | Embedded in panels: theme selectors, sort controls |
+| **ghost**     | Lowest     | Text only         | Dismissive: "Skip", "Close", "Dismiss"             |
 
 ### Solid Variant (Primary Actions)
 
@@ -419,8 +418,8 @@ For implementation details and compound variant logic (selection state), see the
 
 ## Building Status Indicators
 
-Status indicators use Chakra UI v3 recipes with semantic status variants. Alerts and Badges provide visual feedback
-for outcomes, states, and categorization.
+Status indicators use Chakra UI v3 recipes with semantic status variants. Alerts, Badges, and Toasts provide visual
+feedback for outcomes, states, and categorization.
 
 ### Alerts
 
@@ -436,12 +435,12 @@ Alerts use slot recipes with 4 status variants. The recipe handles all styling a
 
 **Available status variants:**
 
-| Status    | Use Cases                                      | Color  |
-|-----------|------------------------------------------------|--------|
-| `success` | Confirmations, positive feedback               | Green  |
-| `warning` | Validation warnings, caution states            | Amber  |
-| `error`   | Errors, critical alerts                        | Red    |
-| `info`    | Informational messages, tips, neutral status   | Blue   |
+| Status    | Use Cases                                    | Color |
+|-----------|----------------------------------------------|-------|
+| `success` | Confirmations, positive feedback             | Green |
+| `warning` | Validation warnings, caution states          | Amber |
+| `error`   | Errors, critical alerts                      | Red   |
+| `info`    | Informational messages, tips, neutral status | Blue  |
 
 **What the recipe provides:**
 
@@ -463,13 +462,13 @@ Badges use recipes with 5 variants for status and categorization.
 
 **Available variants:**
 
-| Variant   | Use Cases                                        | Color  |
-|-----------|--------------------------------------------------|--------|
-| `success` | Positive status, active states                   | Green  |
-| `warning` | Caution states, pending status                   | Amber  |
-| `error`   | Danger, deleted, error states                    | Red    |
-| `info`    | Informational, new items, neutral status         | Blue   |
-| `neutral` | Genre tags, content ratings, non-semantic labels | Grey   |
+| Variant   | Use Cases                                        | Color |
+|-----------|--------------------------------------------------|-------|
+| `success` | Positive status, active states                   | Green |
+| `warning` | Caution states, pending status                   | Amber |
+| `error`   | Danger, deleted, error states                    | Red   |
+| `info`    | Informational, new items, neutral status         | Blue  |
+| `neutral` | Genre tags, content ratings, non-semantic labels | Grey  |
 
 **What the recipe provides:**
 
@@ -479,16 +478,161 @@ Badges use recipes with 5 variants for status and categorization.
 
 **Recipe reference:** `frontend/src/theme/recipes/badge.ts`
 
-### Key Distinction: Alert vs Badge Text Colors
+### Toasts
 
-**Alerts (subtle backgrounds):** Description uses `foreground` color for maximum readability on 10% opacity backgrounds.
-The recipe handles this automatically.
+Toasts provide temporary, non-blocking feedback for user actions and system events. Unlike inline Alerts,
+toasts overlay UI content and use solid backgrounds with colored left accent borders for readability.
 
-**Badges (solid backgrounds):** Text uses `on-*` color pairs (e.g., `on-success`) optimized for full opacity backgrounds.
-The recipe handles this automatically.
+```tsx
+import { toaster, priorityToaster } from "@/components/core/chakra/toaster";
 
-**Why the difference?** `on-*` tokens are designed for solid fills. On subtle tints, semantic color provides emphasis
-while foreground maintains readability across all themes.
+// Default toaster (bottom-right) - routine feedback
+toaster.success({ title: "Changes saved", description: "Your settings have been updated." });
+toaster.error({ title: "Save failed", description: "Please try again.", closable: true });
+toaster.warning({ title: "Missing fields", description: "Please complete all required fields." });
+toaster.info({ title: "New feature", description: "Check out our new search filters." });
+toaster.loading({ title: "Saving...", description: "Please wait." });
+
+// Priority toaster (top-right) - important notifications
+priorityToaster.success({ title: "Welcome back, John!", duration: 4000 });
+priorityToaster.loading({ id: "login", title: "Logging in..." });
+priorityToaster.dismiss("login"); // Dismiss by ID
+
+// Toast with action (e.g., undo)
+toaster.success({
+  title: "Removed from watchlist",
+  action: { label: "Undo", onClick: () => handleUndo() },
+});
+```
+
+**Toast positioning:**
+
+| Toaster           | Position     | Use Cases                                                |
+|-------------------|--------------|----------------------------------------------------------|
+| `toaster`         | bottom-right | Routine feedback (save, update, background actions)      |
+| `priorityToaster` | top-right    | Auth success, important confirmations, critical feedback |
+
+**When to use priority position:**
+
+- Auth flow toasts (login success, registration, email verified)
+- Critical action confirmations (account changes, destructive actions)
+- Time-sensitive notifications that warrant immediate attention
+
+**Available status types:**
+
+| Type      | Use Cases                                  | Accent |
+|-----------|--------------------------------------------|--------|
+| `success` | Confirmations, completed actions           | Green  |
+| `warning` | Validation warnings, caution states        | Amber  |
+| `error`   | Errors, failed operations (closable: true) | Red    |
+| `info`    | Informational messages, tips               | Blue   |
+| `loading` | Async operations in progress               | Blue   |
+
+**What the composition provides:**
+
+- Solid layer background (`layer-03`) for visibility above all content including modals
+- Colored left accent border (4px) for status indication
+- Title with semantic color for emphasis
+- Description with foreground color for readability
+- Action trigger with tertiary styling for undo/retry actions
+- Close trigger with muted styling and hover state
+- Shadow elevation (`shadow-md`) for floating appearance
+
+**Duration by type (enforced by composition):**
+
+- Success: 4 seconds (quick confirmation)
+- Info: 5 seconds (time to read)
+- Warning: 6 seconds (needs attention)
+- Error: 8 seconds or closable (critical, needs action)
+- Loading: Persists until dismissed programmatically
+
+Durations are applied automatically by the toaster wrapper - call sites don't need to specify duration unless
+overriding the default. Override with explicit `duration` prop when needed (e.g., actionable toasts may need
+longer visibility).
+
+**Composition reference:** `frontend/src/components/core/chakra/toaster.tsx`
+
+### Key Distinction: Alert vs Badge vs Toast
+
+| Component | Background               | Status Indication  | Text Colors                              |
+|-----------|--------------------------|--------------------|------------------------------------------|
+| Alert     | 10% opacity tint         | Full border + icon | Title: semantic, Description: foreground |
+| Badge     | Solid semantic fill      | Background color   | `on-*` tokens (high contrast)            |
+| Toast     | Solid layer (`layer-03`) | Left accent border | Title: semantic, Description: foreground |
+
+**Why toasts differ from alerts:** Alerts are inline and don't overlap content, so subtle tints work well.
+Toasts float over varied backgrounds and need solid fills for consistent readability.
+
+### When to Use: Alert vs Toast
+
+| Scenario                                    | Use                  | Status  | Rationale                                                |
+|---------------------------------------------|----------------------|---------|----------------------------------------------------------|
+| Success after action (save, submit)         | Toast                | success | Ephemeral confirmation, user continues workflow          |
+| Success that redirects away                 | Toast                | success | Page is changing anyway                                  |
+| Auth error (wrong credentials)              | Alert (blocking)     | error   | User needs to read and correct their input               |
+| Email verification needed                   | Alert with action    | info    | Workflow requirement, not user mistake; resend action    |
+| Session expired                             | Alert (blocking)     | info    | Expected behavior, not error; redirect to login          |
+| Registration success with CTA               | Alert (non-blocking) | success | Persistent "check email" message, user may look away     |
+| Network/transient error                     | Toast                | error   | Retry is immediate, no correction needed                 |
+| Blocking state (rate limited, locked)       | Alert (blocking)     | warning | User must wait/address before proceeding                 |
+| Page-level warning (unsaved changes)        | Alert (blocking)     | warning | Contextual to current page state                         |
+| Informational banner (maintenance, feature) | Alert (blocking)     | info    | Persistent awareness needed                              |
+
+**General principles:**
+
+- **Toasts** = Ephemeral, non-blocking, auto-dismiss, feedback on completed actions
+- **Alerts** = Persistent, contextual, requires user awareness/action
+
+**Alert status selection:**
+
+- `error` (red) = User made a mistake that needs correction (wrong input, invalid action)
+- `warning` (yellow) = User action is blocked by external factor (rate limit, locked)
+- `info` (blue) = Workflow requirement or expected state (verification needed, session expired)
+- `success` (green) = Positive outcome with persistent CTA (registration success)
+
+### Alert Positioning Hierarchy
+
+Alerts support two positions via `FloatingAlertContainer`:
+
+| Position    | Visual Location | Blocking? | Use Cases                                         |
+|-------------|-----------------|-----------|---------------------------------------------------|
+| `center`    | Top-center      | Yes       | Auth errors, verification needed, blocking states |
+| `top-right` | Top-right       | No        | Registration success CTA, informational CTAs      |
+
+**Code example:**
+
+```tsx
+// Blocking alert (center, default) - demands immediate attention
+<FloatingAlertContainer>
+  <FloatingAlert status="error" onDismiss={...}>
+    Invalid username or password.
+  </FloatingAlert>
+</FloatingAlertContainer>
+
+// Non-blocking alert (top-right) - persistent but doesn't block workflow
+<FloatingAlertContainer position="top-right">
+  <FloatingAlert status="success" onDismiss={...}>
+    Account created! Check your email to verify.
+  </FloatingAlert>
+</FloatingAlertContainer>
+```
+
+**Why non-blocking alerts exist:**
+Registration success needs persistence (user may look away during redirect) but shouldn't block the login form.
+Non-blocking alerts share top-right space with priority toasts - both are "important but not stopping you".
+
+**Auth-specific guidance:**
+
+- Auth errors use `FloatingAlert` with center position (blocking)
+- WCAG: `role="alert"`, `aria-live="assertive"` for errors, dismissible via close button
+- Auto-clear when user starts typing (correcting the error)
+- Login/email verified success uses toasts (ephemeral, page context is clear)
+- Registration success uses non-blocking alert (persistent CTA, user may look away)
+
+**Edge cases:**
+
+- Actionable toasts (with action buttons) blur the line - use longer duration or `closable: true`
+- If user needs to reference the message while fixing something, prefer Alert
 
 ---
 

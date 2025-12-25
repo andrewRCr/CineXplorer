@@ -185,6 +185,24 @@ TypeScript. Without this, you'll get errors like `Type '"success"' is not assign
 **Note:** CI runs `npm run typegen` automatically before type-check. Generated types are written to
 `node_modules/@chakra-ui/react/dist/types/styled-system/generated/` and are not committed.
 
+### API Type Generation (OpenAPI → TypeScript)
+
+**Run after modifying backend API files** (`api.py`, `schemas.py`) to regenerate frontend types:
+
+```bash
+# Regenerate types (requires running backend containers)
+DEV_SKIP_TLS=true NODE_ENV=development npm run generate-types --prefix frontend
+
+# Check for uncommitted changes
+git diff -- frontend/openapi.json frontend/src/types/api.ts
+```
+
+**Why:** Frontend types are generated from the backend's OpenAPI schema. CI verifies types match the schema -
+if you modify backend APIs without regenerating types, CI will fail the "check for type drift" step.
+
+**When to run:** Before creating PRs when backend API changes are involved. See also
+[archive-completed.md](workflows/supplemental/archive-completed.md) Step 1b for pre-PR checklist.
+
 ### Markdown Linting
 
 **⚠️ Run from repo root** - Config file (`.markdownlint-cli2.jsonc`) must be discoverable

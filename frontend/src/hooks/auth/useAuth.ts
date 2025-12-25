@@ -17,7 +17,7 @@
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { AuthStateProps, AuthResult, AuthError } from "@/@types/auth-state";
+import type { AuthStateProps, AuthResult, AuthError, LoginSuccessData } from "@/@types/auth-state";
 import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
@@ -26,9 +26,11 @@ import {
     clearAuthTokens,
     areTokensExpired,
     type TokenStorage,
-} from "@/utilities/token";
+} from "@/utilities/tokenUtils";
+import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import type { components } from "@/types/api";
 import * as authService from "@/services/authService";
+import { priorityToaster } from "@/components/core/chakra/toaster";
 
 // Type alias for user profile from generated API types
 type UserProfile = components["schemas"]["UserProfileSchema"];
@@ -176,6 +178,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         return () => clearInterval(interval);
     }, [isAuthenticated]);
 
+    // Ref to prevent duplicate OAuth callback handling (StrictMode double-invokes effects)
+    const hasHandledOAuthRef = useRef(false);
+
     // Handle OAuth callback (when redirected back from Google/GitHub)
     // Supports two authentication patterns:
     // 1. OAuth: Session cookies only (HTTP-only, managed by django-allauth)
@@ -187,6 +192,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         }
 
         const handleOAuthCallback = async () => {
+            // Guard against double-invocation (StrictMode, fast re-renders)
+            if (hasHandledOAuthRef.current) {
+                logger.debug('[useAuth] OAuth callback already handled, skipping');
+                return;
+            }
             const params = new URLSearchParams(location.search);
             const oauthError = params.get('error');
 
@@ -205,10 +215,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Check if we just came from an OAuth redirect
             // Only check session if we have a referrer or state indicating OAuth flow
             // This prevents auto-login on every /login page visit
+            const oauthInProgress = sessionStorage.getItem('oauth_in_progress');
             const isFromOAuthRedirect =
                 document.referrer.includes('google.com') ||
                 document.referrer.includes('github.com') ||
-                sessionStorage.getItem('oauth_in_progress') === 'true';
+                oauthInProgress !== null;  // Check for existence, not 'true' (value is provider name)
 
             // ONLY run callback handling for:
             // 1. OAuth redirects (from Google/GitHub with oauth_in_progress flag)
@@ -229,18 +240,36 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // OAuth authentication uses session cookies (NO tokens in URL)
             if (location.pathname === ROUTES.LOGIN && isFromOAuthRedirect) {
                 logger.debug('[useAuth] OAuth redirect detected, checking session...');
-                // Clear the OAuth in-progress flag
-                sessionStorage.removeItem('oauth_in_progress');
+
+                // Mark as handled BEFORE async operation to prevent race conditions
+                hasHandledOAuthRef.current = true;
 
                 const oauthUser = await checkOAuthSession();
+
+                // Clear OAuth flags AFTER session check completes
+                // useOAuthFlow monitors this and will clear its loading state
+                sessionStorage.removeItem('oauth_in_progress');
+                sessionStorage.removeItem('oauth_start_time');
+
                 if (oauthUser) {
                     logger.debug('[useAuth] OAuth callback - authenticated via session cookie');
                     setUser(oauthUser);
                     setIsAuthenticated(true);
+
+                    // Show welcome toast for OAuth login (priority position)
+                    const displayName = oauthUser.first_name || oauthUser.username;
+                    priorityToaster.success({
+                        title: `Welcome back, ${displayName}!`,
+                    });
+
                     navigate(ROUTES.HOME);
                     return;
                 } else {
                     logger.debug('[useAuth] Session response shows not authenticated');
+                    // OAuth failed - flags already cleared above
+                    // useOAuthFlow will detect this and show login form
+                    // Reset ref so user can retry OAuth
+                    hasHandledOAuthRef.current = false;
                 }
             }
         };
@@ -261,6 +290,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         setUser(null);
         clearAuthTokens();
         navigate(ROUTES.LOGIN);
+
+        // Show logout success toast (appears on login page after redirect)
+        // Uses priorityToaster for auth flow consistency (top-right, same as login)
+        priorityToaster.success({ title: "You've been logged out" });
 
         try {
             if (isJWTUser) {
@@ -323,7 +356,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         username: string,
         password: string,
         rememberMe: boolean = false
-    ): Promise<AuthResult<void>> => {
+    ): Promise<AuthResult<LoginSuccessData>> => {
         try {
             logger.debug('[useAuth] login() called, attempting authentication...');
             const response = await authService.login(username, password);
@@ -342,7 +375,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 setAuthTokens(accessToken, refreshToken, storage);
                 setIsAuthenticated(true);
                 await getUserDetails();
-                return { success: true, data: undefined };
+
+                // Return display name for component to use in success feedback
+                const displayName = response.first_name || response.username;
+                return { success: true, data: { displayName } };
             }
 
             // Login response missing required tokens
@@ -351,6 +387,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 hasAccessToken: !!accessToken,
                 hasRefreshToken: !!refreshToken,
             });
+
             return {
                 success: false,
                 error: {
@@ -365,18 +402,14 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 message: 'Login failed',
             };
 
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string } } };
-                if (axiosError.response) {
-                    authError.status = axiosError.response.status || 500;
-                    authError.message =
-                        axiosError.response.data?.detail ||
-                        axiosError.response.data?.error ||
-                        'Login failed';
-                    if (axiosError.response.data?.code) {
-                        authError.code = axiosError.response.data.code;
-                    }
-                }
+            if (isAxiosError(error) && error.response) {
+                const { status, data } = error.response;
+                const responseData = data as { detail?: string; error?: string; code?: string; email?: string; resend_token?: string } | undefined;
+                authError.status = status || 500;
+                authError.message = responseData?.detail || responseData?.error || 'Login failed';
+                if (responseData?.code) authError.code = responseData.code;
+                if (responseData?.email) authError.email = responseData.email;
+                if (responseData?.resend_token) authError.resend_token = responseData.resend_token;
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }
@@ -400,18 +433,12 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 message: 'Registration failed',
             };
 
-            if (error && typeof error === 'object' && 'response' in error) {
-                const axiosError = error as { response?: { status?: number; data?: { detail?: string; error?: string; code?: string } } };
-                if (axiosError.response) {
-                    authError.status = axiosError.response.status || 500;
-                    authError.message =
-                        axiosError.response.data?.detail ||
-                        axiosError.response.data?.error ||
-                        'Registration failed';
-                    if (axiosError.response.data?.code) {
-                        authError.code = axiosError.response.data.code;
-                    }
-                }
+            if (isAxiosError(error) && error.response) {
+                const { status, data } = error.response;
+                const responseData = data as { detail?: string; error?: string; code?: string } | undefined;
+                authError.status = status || 500;
+                authError.message = responseData?.detail || responseData?.error || 'Registration failed';
+                if (responseData?.code) authError.code = responseData.code;
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }

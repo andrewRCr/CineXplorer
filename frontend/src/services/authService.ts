@@ -1,6 +1,7 @@
+import axios from "axios";
 import apiClient from "./apiClient";
 import type { components } from "@/types/api";
-import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrf";
+import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrfTokenFetcher";
 import logger from "./logger";
 
 const BASE_URL = import.meta.env.VITE_BASE_API_URL;
@@ -146,9 +147,9 @@ export async function getUserProfile(): Promise<UserProfile> {
  * Called when user clicks email verification link.
  *
  * @param token - Email verification token from URL
- * @returns Verification result with message
+ * @returns Verification result with message and email (for pre-filling login form)
  */
-export async function verifyEmail(token: string): Promise<{ message: string }> {
+export async function verifyEmail(token: string): Promise<{ message: string; email: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
@@ -156,7 +157,7 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
         logger.warn("CSRF token not available for verify-email request");
     }
 
-    const response = await apiClient.post<{ message: string }>(
+    const response = await apiClient.post<{ message: string; email: string }>(
         `/verify-email/`,
         { key: token },
         {
@@ -171,14 +172,14 @@ export async function verifyEmail(token: string): Promise<{ message: string }> {
 }
 
 /**
- * Resend email verification to user's email address.
- * Used when verification email was not received or expired.
+ * Resend email verification using opaque token from login error.
+ * Token-based approach works for all login methods (email or username).
  *
- * @param email - User's email address
+ * @param resendToken - Opaque token from login error response
  * @returns Confirmation message
  */
 export async function resendVerificationEmail(
-    email: string
+    resendToken: string
 ): Promise<{ message: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
@@ -189,7 +190,7 @@ export async function resendVerificationEmail(
 
     const response = await apiClient.post<{ message: string }>(
         `/resend-verification/`,
-        { email },
+        { resend_token: resendToken },
         {
             headers: {
                 "Content-Type": "application/json",
@@ -199,4 +200,94 @@ export async function resendVerificationEmail(
     );
 
     return response.data;
+}
+
+/**
+ * Request password reset email.
+ * Uses allauth headless API for password reset flow.
+ *
+ * @param email - User's email address
+ * @returns Success status (allauth returns 200 OK on success)
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+    const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
+    await ensureCsrfTokenCookie(BASE_URL);
+    const csrfToken = getCsrfToken();
+
+    if (!csrfToken) {
+        logger.warn("CSRF token not available for password reset request");
+    }
+
+    try {
+        await apiClient.post(
+            `${baseUrl}/_allauth/browser/v1/auth/password/request`,
+            { email },
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken || "",
+                },
+            }
+        );
+    } catch (error) {
+        // Normalize error message from axios error response
+        if (axios.isAxiosError(error) && error.response?.data) {
+            const errorData = error.response.data as { detail?: string; message?: string };
+            throw new Error(
+                errorData.detail || errorData.message || "Failed to send reset email"
+            );
+        }
+        throw new Error("Failed to send reset email");
+    }
+}
+
+/**
+ * Complete password reset with new password.
+ * Uses allauth headless API to submit the new password with the reset key.
+ *
+ * IMPORTANT: A 401 response means SUCCESS (password changed, user must login).
+ * A 200 response means SUCCESS + user was auto-logged in.
+ * This is allauth's non-standard behavior documented in their API.
+ *
+ * @param key - Password reset key from email link
+ * @param password - New password
+ * @returns Object with success status and whether user was auto-logged in
+ */
+export async function resetPassword(
+    key: string,
+    password: string
+): Promise<{ success: boolean; autoLoggedIn: boolean }> {
+    const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
+    const csrfToken = getCsrfToken();
+
+    const response = await fetch(
+        `${baseUrl}/_allauth/browser/v1/auth/password/reset`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(csrfToken && { "X-CSRFToken": csrfToken }),
+            },
+            credentials: "include",
+            body: JSON.stringify({ key, password }),
+        }
+    );
+
+    // 200 = success + auto-logged in
+    if (response.status === 200) {
+        return { success: true, autoLoggedIn: true };
+    }
+
+    // 401 = success but user needs to login (non-standard but documented allauth behavior)
+    if (response.status === 401) {
+        return { success: true, autoLoggedIn: false };
+    }
+
+    // 400 or other = error (invalid/expired key, password validation failed)
+    const errorData = await response.json().catch(() => ({}));
+    const errorMessage =
+        errorData.errors?.[0]?.message ||
+        errorData.detail ||
+        "Password reset failed. The link may be expired or invalid.";
+    throw new Error(errorMessage);
 }

@@ -27,6 +27,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from apps.authentication.adapters import CustomAccountAdapter, EmailDeliveryError
+from apps.authentication.tests.fixtures import get_resend_token_from_login
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -64,22 +65,6 @@ def test_email_outbox_starts_empty() -> None:
 # ============================================================================
 
 
-def _get_resend_token_from_login(
-    api_client: Client,
-    username: str,
-    password: str,
-) -> str | None:
-    """Attempt login and extract resend_token from 403 response."""
-    response = api_client.post(
-        "/api/token/",
-        data={"login": username, "password": password},
-        content_type="application/json",
-    )
-    if response.status_code == HTTPStatus.FORBIDDEN:
-        return response.json().get("resend_token")
-    return None
-
-
 @pytest.mark.django_db
 def test_resend_verification_sends_email_to_outbox(
     api_client: Client,
@@ -99,7 +84,7 @@ def test_resend_verification_sends_email_to_outbox(
     )
 
     # Get resend token by attempting login
-    resend_token = _get_resend_token_from_login(
+    resend_token = get_resend_token_from_login(
         api_client, unverified_user.username, "testpass123"
     )
     assert resend_token is not None
@@ -143,7 +128,7 @@ def test_resend_verification_email_contains_verification_link(
     )
 
     # Get resend token by attempting login
-    resend_token = _get_resend_token_from_login(
+    resend_token = get_resend_token_from_login(
         api_client, unverified_user.username, "testpass123"
     )
     assert resend_token is not None
@@ -217,7 +202,7 @@ def test_resend_verification_does_not_send_email_for_already_verified(
     )
 
     # Get resend token while unverified
-    resend_token = _get_resend_token_from_login(
+    resend_token = get_resend_token_from_login(
         api_client, unverified_user.username, "testpass123"
     )
     assert resend_token is not None

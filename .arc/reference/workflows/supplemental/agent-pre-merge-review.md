@@ -160,8 +160,8 @@ process is identical. Agent reviews the diff regardless of base branch.
 
 1. **Sequential processing** - Address comments one at a time to avoid duplicate agent responses
 2. **Batch commits** - Minimize PR commits to reduce automated review triggers
-3. **Issue vs. nitpick distinction** - Only generate replies for actual issues requiring explanation
-4. **Commit-first replies** - Include accurate commit hashes in responses
+3. **Issue vs. nitpick distinction** - Tool classifies findings; Issues get replies, Nitpicks get silent fixes
+4. **Draft-as-you-go replies** - Draft replies immediately after fixing (placeholder hash), finalize after commit
 
 ### Process
 
@@ -189,8 +189,13 @@ Work through comments **one at a time** in order:
 
 **d) Classification**
 
-- **Issue**: Requires explanation/justification in reply (deferred work, scope decisions, bugs)
-- **Nitpick**: Simple fix, no reply needed (typos, formatting, minor improvements)
+The review tool classifies each finding - use the tool's classification, not subjective assessment:
+
+- **Issue**: Substantive finding that warrants a reply (whether fixed, deferred, or rejected)
+- **Nitpick**: Minor suggestion that can be silently fixed or skipped (no reply needed)
+
+CodeRabbit uses these exact terms. Other tools may use different terminology (e.g., "warning" vs "suggestion")
+but the same principle applies: substantive concerns get replies, minor suggestions don't.
 
 #### 2. Decision Framework
 
@@ -227,22 +232,16 @@ Use same framework as Local Mode:
 
 **Important**: Make fixes but **DO NOT commit yet**
 
-```bash
-# Work through all comments sequentially
-# Make fixes to local files
-# DO NOT commit individual changes
-# DO NOT reply to comments yet
-```
+For each comment:
 
-**Track which comments need replies:**
+1. **Make the fix** (or decide to defer/reject)
+2. **If Issue**: Draft reply immediately in temp file (use `[commit-hash]` placeholder)
+3. **If Nitpick**: No reply needed, just track that it was fixed
 
-- Issues requiring defer/reject explanation
-- Issues with substantive fixes needing context
+**Why draft immediately**: Captures context while fresh, aids tracking, and the placeholder hash
+gets replaced after batch commit.
 
-**Track which are nitpicks:**
-
-- Simple fixes that need no explanation
-- Will be silently included in batch commit
+**Temp file location**: `.arc/active/{category}/temp-agent-reply.md` (next to task list, gitignored)
 
 #### 4. Batch Commit Strategy
 
@@ -282,19 +281,20 @@ Split **only** if fixes have substantially different scope/impact:
 
 **General rule**: Prefer single batch commit unless splitting provides meaningful semantic separation.
 
-#### 5. Generate Replies (with commit hashes)
+#### 5. Finalize and Post Replies
 
-**Setup (once per PR review):**
+Replies were drafted during Fix Collection (Step 3). After committing:
 
-Create a single temp file for all replies: `_temp_agent_reply.md`
+1. **Get commit hash**: `git log -1 --format=%h`
+2. **Replace placeholder**: Update `[commit-hash]` in temp file with actual hash
+3. **Post each reply**: Copy from temp file → paste into GitHub comment
+4. **Clear temp file**: After posting, clear content for next reply (or delete when done)
 
-AI updates this file for each comment requiring a reply (don't create new files).
+**Formatting note:** Write reply content as single continuous lines (no hard wraps). GitHub wraps
+automatically - hard line breaks in the source create awkward formatting when pasted. The temp file
+is excluded from markdown linting for this reason.
 
-**For Issues (not nitpicks):**
-
-**a) AI updates temp file** with new reply content (overwrites previous)
-
-**b) Reply format for fixes:**
+**Reply format for fixes:**
 
 ```markdown
 [Brief acknowledgment]
@@ -304,7 +304,7 @@ AI updates this file for each comment requiring a reply (don't create new files)
 Fixed in commit [hash].
 ```
 
-**c) Reply format for deferrals:**
+**Reply format for deferrals/rejections:**
 
 ```markdown
 [Acknowledgment of concern]
@@ -316,15 +316,6 @@ Declining because:
 
 [Context/justification - link to PRD/documentation if applicable]
 ```
-
-**d) Copy from VS Code:**
-
-1. Open `_temp_agent_reply.md` in VS Code
-2. Select all (Ctrl+A)
-3. Copy (Ctrl+C)
-4. Paste into GitHub comment
-
-**e) Repeat** for next comment requiring reply (AI overwrites temp file)
 
 **For Nitpicks:**
 
@@ -342,7 +333,7 @@ After all fixes committed and replies posted:
    - Nitpicks: Immediately (no reply needed)
    - Deferrals: Leave open for agent/team to acknowledge
 3. **Wait for re-review** - Agent may respond to deferrals
-4. **Delete temp file** - `rm _temp_agent_reply.md` after all replies posted
+4. **Delete temp file** - `rm .arc/active/{category}/temp-agent-reply.md` (optional - file is gitignored)
 
 ---
 
@@ -479,7 +470,7 @@ Fixed in commit [hash].
 
 **Solutions**:
 
-1. **Use temp file** (recommended): AI creates `_temp_agent_reply.md`, copy from VS Code
+1. **Use temp file** (recommended): AI creates `temp-agent-reply.md` next to task list, copy from VS Code
 2. **Type directly**: GitHub's comment box supports markdown
 3. **Use clipboard manager**: ClipClip/Ditto (may add extra whitespace)
 
@@ -618,12 +609,14 @@ Fixed in commit [hash].
 
 ---
 
-**Workflow Version**: v3.1 (two-pass strategy with stacked branch support)
+**Workflow Version**: v3.2 (draft-as-you-go replies, tool-based classification)
 
-**Last Updated**: 2025-11-10
+**Last Updated**: 2025-12-25
 
 **Changelog**:
 
+- v3.2 (2025-12-25): Clarified Issue/Nitpick classification comes from tool (not subjective assessment),
+  updated to draft replies immediately during fix collection with placeholder hash (captures context while fresh)
 - v3.1 (2025-11-10): Added stacked branch guidance (ADR-013) - review process applies to all merges (main or
   parent branch), updated PR creation examples to show base branch specification
 - v3.0 (2025-10-21): Introduced two-pass strategy with local + PR modes

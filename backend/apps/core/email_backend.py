@@ -55,13 +55,12 @@ def _get_zeptomail_message_class() -> type[ZeptoMailMessageProtocol]:
     global _zeptomail_message_cls
 
     if _zeptomail_message_cls is None:
-        # No type stubs exist for zoho_zeptomail - using Protocol + cast for type safety
-        from zoho_zeptomail.backend.message import ZeptoMailEmailMessage  # noqa: I001  # pyright: ignore[reportMissingImports,reportUnknownVariableType]
+        from zoho_zeptomail.backend.message import ZeptoMailEmailMessage
 
-        # Cast the untyped class to our Protocol type
+        # ZeptoMailEmailMessage matches our Protocol - cast for type safety
         _zeptomail_message_cls = cast(
             type[ZeptoMailMessageProtocol],
-            ZeptoMailEmailMessage,  # pyright: ignore[reportUnknownArgumentType]
+            ZeptoMailEmailMessage,
         )
 
     # At this point, _zeptomail_message_cls is definitely not None

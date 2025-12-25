@@ -61,6 +61,29 @@
     - Files: `frontend/src/theme/recipes/` (new or existing), `frontend/src/components/movie/MovieCard.tsx`
     - Pattern will be reused in MovieDetail and other locations
 
+<!-- Security -->
+
+- [ ] Implement password complexity requirements
+    - **Problem:** Currently only enforcing 8-character minimum; assumed we had complexity rules but we don't
+    - **Backend changes:**
+        - Add validators to `AUTH_PASSWORD_VALIDATORS` in `config/settings.py`:
+            - Consider: uppercase, lowercase, digit, special character requirements
+            - Research: Django's built-in validators vs custom validator
+        - Ensure validation errors return clear, user-friendly messages via allauth
+    - **Frontend changes:**
+        - Update `PasswordResetDialog.tsx` validation to match backend rules
+        - Update `Register.tsx` (if separate password field validation exists)
+        - Consider: Real-time strength indicator vs submit-time validation
+        - Ensure error messages from backend display properly in forms
+    - **Testing:**
+        - Backend: Test password validation rejects weak passwords, accepts strong ones
+        - Frontend: Test validation feedback matches backend requirements
+    - **Documentation:**
+        - Update any user-facing help text about password requirements
+    - **Files:** `backend/config/settings.py`, `frontend/src/components/auth/PasswordResetDialog.tsx`,
+      `frontend/src/pages/user/Register.tsx`, related test files
+    - **Rationale:** Security best practice; discovered during PR #9 review that complexity wasn't enforced
+
 <!-- Developer Experience -->
 
 - [ ] Create DevTools debug page (`/dev/tools`)

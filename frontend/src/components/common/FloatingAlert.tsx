@@ -99,7 +99,7 @@ export const FloatingAlertContainer = ({
         ? { right: "4" }
         : { left: "50%", transform: "translateX(-50%)" })}
       w={width ?? defaultWidth}
-      zIndex={isTopRight ? 1000 : 2} // Fixed position needs higher z-index
+      zIndex={isTopRight ? "dropdown" : 2} // Fixed position uses overlay layer
     >
       <VStack gap={3} align="stretch">
         {children}

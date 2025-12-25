@@ -6,7 +6,6 @@ import {
   Spinner,
   Dialog,
   Portal,
-  CloseButton,
 } from "@chakra-ui/react";
 
 /**
@@ -128,12 +127,6 @@ export const EmailVerificationDialog = ({
                   </Button>
                 </Dialog.ActionTrigger>
               </Dialog.Footer>
-            )}
-            {/* Close button only for error state */}
-            {verificationState === "error" && (
-              <Dialog.CloseTrigger asChild>
-                <CloseButton size="sm" position="absolute" top={2} right={2} />
-              </Dialog.CloseTrigger>
             )}
           </Dialog.Content>
         </Dialog.Positioner>

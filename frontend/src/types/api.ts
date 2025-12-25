@@ -545,6 +545,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/debug/error-500/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Debug Error 500
+         * @description Development-only endpoint that returns a 500 error for testing.
+         *
+         *     Use this to verify frontend error handling (e.g., toast notifications
+         *     for server errors).
+         *
+         *     Security:
+         *         - Only available in DEBUG mode
+         *         - Returns 403 in production
+         */
+        get: operations["apps_core_api_debug_error_500"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/movies/now-playing": {
         parameters: {
             query?: never;
@@ -1235,6 +1262,11 @@ export interface components {
              * @description Verification success/failure message
              */
             message: string;
+            /**
+             * Email
+             * @description Verified email address (for pre-filling login form)
+             */
+            email: string;
         };
         /**
          * EmailVerificationInputSchema
@@ -1261,14 +1293,16 @@ export interface components {
         /**
          * ResendVerificationInputSchema
          * @description Schema for resend verification email input.
+         *
+         *     Uses opaque token from login error response instead of email address.
+         *     This prevents user enumeration while enabling resend for all login methods.
          */
         ResendVerificationInputSchema: {
             /**
-             * Email
-             * Format: email
-             * @description Email address to resend verification to
+             * Resend Token
+             * @description Opaque resend token from login error response
              */
-            email: string;
+            resend_token: string;
         };
         /**
          * FrontendLogSuccessResponse
@@ -2486,6 +2520,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DevConsoleLogResponse"];
+                };
+            };
+        };
+    };
+    apps_core_api_debug_error_500: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
         };

@@ -1,5 +1,5 @@
 # Stub for allauth.account.internal.flows.email_verification
-# Library: django-allauth
+# Library: django-allauth >= 65.11.2, < 66.0
 # Last verified: 2025-12-21
 
 from allauth.account.models import EmailAddress

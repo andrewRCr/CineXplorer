@@ -128,32 +128,10 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
 
   const checkTruncation = useCallback(() => {
     if (!titleRef.current) return;
-
     const element = titleRef.current;
-
-    if ("ResizeObserver" in window) {
-      // Simple heuristic: if scrollHeight > clientHeight, it's truncated
-      setIsTitleTruncated(element.scrollHeight > element.clientHeight + 5);
-    } else {
-      // Fallback for older browsers
-      const clone = element.cloneNode(true) as HTMLElement;
-      clone.style.cssText = `
-        position: absolute;
-        visibility: hidden;
-        height: auto;
-        width: ${element.clientWidth}px;
-        -webkit-line-clamp: none;
-        -webkit-box-orient: horizontal;
-        display: block;
-        overflow: visible;
-      `;
-
-      document.body.appendChild(clone);
-      const naturalHeight = clone.scrollHeight;
-      document.body.removeChild(clone);
-
-      setIsTitleTruncated(naturalHeight > element.clientHeight + 10);
-    }
+    // Simple heuristic: if scrollHeight > clientHeight, it's truncated
+    // Works in all modern browsers (IE9+)
+    setIsTitleTruncated(element.scrollHeight > element.clientHeight + 5);
   }, []);
 
   // Debounced resize handler for truncation check

@@ -59,8 +59,8 @@
 				var bg = '#161616'; // Default: IBM Carbon dark
 				try {
 					var stored = localStorage.getItem('cinexplorer-bg');
-					// Validate 6-char hex format (#XXXXXX) before using
-					if (stored && stored.length === 7 && stored[0] === '#') bg = stored;
+					// Validate 6-char hex format (#XXXXXX) with valid hex digits
+					if (stored && /^#[0-9A-Fa-f]{6}$/.test(stored)) bg = stored;
 				} catch(e) {}
 				document.documentElement.style.setProperty('--app-bg', bg);
 				window.__PRELOAD_BG__ = bg;
@@ -82,9 +82,9 @@
 
 				// Calculate spinner color based on background luminance
 				var hex = bg.replace('#', '');
-				var r = parseInt(hex.substr(0, 2), 16) / 255;
-				var g = parseInt(hex.substr(2, 2), 16) / 255;
-				var b = parseInt(hex.substr(4, 2), 16) / 255;
+				var r = parseInt(hex.substring(0, 2), 16) / 255;
+				var g = parseInt(hex.substring(2, 4), 16) / 255;
+				var b = parseInt(hex.substring(4, 6), 16) / 255;
 				var luminance = 0.299 * r + 0.587 * g + 0.114 * b;
 				var spinnerColor = luminance > 0.5 ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
 

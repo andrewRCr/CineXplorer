@@ -73,6 +73,9 @@ const NavBarUserMenuItem = ({
       }
     : {};
 
+  // Don't attach onClick to Box when wrapping in Link (Link handles it)
+  const boxOnClick = to ? undefined : onClick;
+
   const content = (
     <Box
       position="relative"
@@ -85,7 +88,12 @@ const NavBarUserMenuItem = ({
         "& > [data-accent-bar]": { opacity: 1 },
         "& [data-menu-text]": { color: "tertiary" },
       }}
-      onClick={onClick}
+      _focusVisible={{
+        outline: "2px solid",
+        outlineColor: "ring",
+        outlineOffset: "-2px",
+      }}
+      onClick={boxOnClick}
       {...a11yProps}
       {...positionStyles}
     >
@@ -100,7 +108,6 @@ const NavBarUserMenuItem = ({
         background="tertiary"
         opacity={0}
         transition="opacity 0.2s ease-in-out"
-        {...positionStyles}
       />
 
       {/* Content */}

@@ -87,9 +87,8 @@
 			</p>
 
 			<div class="warning">
-				<!-- Expiry matches ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS (3 days in production, 1 day in tests) -->
-				<strong>Important:</strong> This verification link will expire in 3
-				days for security reasons.
+				<strong>Important:</strong> This verification link will expire in
+				{{ expiry_days }} day{% if expiry_days != 1 %}s{% endif %} for security reasons.
 			</div>
 
 			<p>

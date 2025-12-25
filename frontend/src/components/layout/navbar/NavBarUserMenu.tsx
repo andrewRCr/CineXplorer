@@ -100,9 +100,6 @@ const NavBarUserMenu = () => {
   // Menu Items (must be before early return to satisfy hooks rules)
   // ==========================================================================
 
-  // Build menu items list for position calculation
-  const mobileNavItems = USER_NAVIGATION_ITEMS.filter((item) => !item.isAction);
-
   // Precompute menu items with positions to avoid mutable counter during render
   const menuItems = useMemo(() => {
     const getPosition = (index: number, total: number) => {
@@ -124,6 +121,8 @@ const NavBarUserMenu = () => {
         position: "first", // Will be recalculated
       });
 
+      // Filter inside useMemo to avoid new array reference each render
+      const mobileNavItems = USER_NAVIGATION_ITEMS.filter((item) => !item.isAction);
       mobileNavItems.forEach((item) => {
         items.push({
           key: item.value,
@@ -147,7 +146,7 @@ const NavBarUserMenu = () => {
       ...item,
       position: getPosition(idx, items.length),
     }));
-  }, [isMobile, mobileNavItems]);
+  }, [isMobile]);
 
   // ==========================================================================
   // Render: Unauthenticated State

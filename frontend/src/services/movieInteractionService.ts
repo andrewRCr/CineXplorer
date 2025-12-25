@@ -85,7 +85,7 @@ export async function toggleMovieWatchlist(
                     // This handles the case where movie.user_movie_data is stale
                     const { request } = getUserMovieDataByTmdbId({ tmdb_id: movie.tmdb_id });
                     const existingDataResponse = await request;
-                    const currentStatus = existingDataResponse.data.user_on_watchlist;
+                    const currentStatus = existingDataResponse.data.user_on_watchlist ?? false;
                     const updateResponse = await updateUserMovieData(existingDataResponse.data.id!, {
                         user_on_watchlist: !currentStatus,
                     });

@@ -17,6 +17,8 @@ from unittest.mock import Mock, patch
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 
+from apps.authentication.tests.fixtures import get_resend_token_from_login
+
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
     from django.test import Client
@@ -203,22 +205,6 @@ def test_verify_email_handles_unexpected_exception(
 # ============================================================================
 
 
-def _get_resend_token_from_login(
-    api_client: Client,
-    username: str,
-    password: str,
-) -> str | None:
-    """Attempt login and extract resend_token from 403 response."""
-    response = api_client.post(
-        "/api/token/",
-        data={"login": username, "password": password},
-        content_type="application/json",
-    )
-    if response.status_code == HTTPStatus.FORBIDDEN:
-        return response.json().get("resend_token")
-    return None
-
-
 @pytest.mark.django_db
 def test_resend_verification_with_valid_token_success(
     api_client: Client,
@@ -237,7 +223,7 @@ def test_resend_verification_with_valid_token_success(
     )
 
     # Get resend token by attempting login with unverified user
-    resend_token = _get_resend_token_from_login(
+    resend_token = get_resend_token_from_login(
         api_client, unverified_user.username, "testpass123"
     )
     assert resend_token is not None, "Expected resend_token in 403 response"
@@ -300,7 +286,7 @@ def test_resend_verification_token_is_consumed_after_use(
     )
 
     # Get resend token
-    resend_token = _get_resend_token_from_login(
+    resend_token = get_resend_token_from_login(
         api_client, unverified_user.username, "testpass123"
     )
     assert resend_token is not None

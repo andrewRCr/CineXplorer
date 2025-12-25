@@ -24,11 +24,13 @@ Example:
     def test_user_profile(verified_user):
         assert verified_user.email == 'testuser@example.com'
 """
+from http import HTTPStatus
 from typing import TYPE_CHECKING, TypedDict, Unpack
 
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.test import Client
 
 # Import canonical create_user from core test helpers
 from apps.core.tests.test_helpers import create_user
@@ -203,3 +205,33 @@ def create_login_payload(
             'username': identifier,
             'password': password
         }
+
+
+# API interaction helpers
+def get_resend_token_from_login(
+    api_client: Client,
+    username: str,
+    password: str,
+) -> str | None:
+    """
+    Attempt login and extract resend_token from 403 response.
+
+    When login fails due to unverified email, the API returns a 403 with a
+    resend_token that can be used to request a new verification email.
+
+    Args:
+        api_client: Django test client
+        username: Username to attempt login with
+        password: Password to attempt login with
+
+    Returns:
+        The resend_token if login was rejected for unverified email, None otherwise
+    """
+    response = api_client.post(
+        "/api/token/",
+        data={"login": username, "password": password},
+        content_type="application/json",
+    )
+    if response.status_code == HTTPStatus.FORBIDDEN:
+        return response.json().get("resend_token")
+    return None

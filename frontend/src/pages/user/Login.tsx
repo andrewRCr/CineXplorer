@@ -24,6 +24,7 @@ import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { priorityToaster } from "@/components/core/chakra/toaster";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
+import logger from "@/services/logger";
 
 // ============================================================================
 // Login Page
@@ -163,6 +164,16 @@ const Login = () => {
   );
   const [verificationMessage, setVerificationMessage] = useState("");
   const hasVerifiedRef = useRef(false);
+  const verificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup verification timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (verificationTimeoutRef.current) {
+        clearTimeout(verificationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleVerifyEmail = async () => {
     if (!verifyToken || hasVerifiedRef.current) return;
@@ -190,7 +201,7 @@ const Login = () => {
       });
 
       // Clear verification UI after short delay to let user see success
-      setTimeout(() => {
+      verificationTimeoutRef.current = setTimeout(() => {
         setVerificationState(null);
       }, 1500);
     } catch (error: unknown) {
@@ -293,7 +304,7 @@ const Login = () => {
     // 2. Not in active login process
     // 3. OAuth timing gate allows navigation (for fast OAuth UX)
     if (authContext?.isAuthenticated && !isLoggingIn && oauthCanNavigate) {
-      console.log("User already authenticated, redirecting to home");
+      logger.debug("User already authenticated, redirecting to home");
       navigate(ROUTES.HOME, { replace: true });
     }
   }, [authContext?.isAuthenticated, navigate, isLoggingIn, oauthCanNavigate]);

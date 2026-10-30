@@ -3,7 +3,7 @@
 # Location: .githooks/pre-commit
 #
 # Setup: git config core.hooksPath .githooks
-# Bypass: git commit --no-verify (use sparingly!)
+# NOTE: Never use --no-verify to bypass hooks. Fix the issue instead.
 
 set -e
 
@@ -192,7 +192,7 @@ echo ""
 if [ $errors -gt 0 ]; then
     echo -e "${RED}❌ Pre-commit checks FAILED with $errors error(s) and $warnings warning(s)${NC}"
     echo ""
-    echo "To bypass checks (use sparingly): git commit --no-verify"
+    echo "Fix the issues above and retry. Do not use --no-verify to bypass."
     exit 1
 elif [ $warnings -gt 0 ]; then
     echo -e "${GREEN}✅ Pre-commit checks PASSED with $warnings warning(s)${NC}"

@@ -99,7 +99,7 @@
 
 **Test Accounts:**
 
-- Google OAuth: <andrew.creekmore@outlook.com> (user: `andrew`)
+- Google OAuth: personal Google account (user: `andrew`)
 - GitHub OAuth: andrewRCr (GitHub UID: 44483269)
 
 **Known Frontend Issue (Deferred to Task 8.0):**

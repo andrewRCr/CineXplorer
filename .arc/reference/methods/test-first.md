@@ -1,0 +1,65 @@
+---
+name: test-first
+description: Decision tree for test-first vs test-after by change type
+related:
+  - testing-standards
+override-active: false
+---
+
+<!--
+Vendored from arc-framework .arc/system/methods/test-first.md at a49ebba40. The default text is verbatim;
+out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
+test-first.override.
+-->
+
+# Method: test-first
+
+> - **Workflow:** [generate-tasks.md][generate-tasks]
+> - **When:** Agent structures tasks during task-list generation
+>
+> - **Contract:** Decide whether each task's tests come before or after its implementation, and let that
+>   decision shape how the task list is structured.
+> - **Related:** [testing-standards](testing-standards.md) — the execution-time counterpart; the two partition
+>   the testing apparatus along the planning / execution seam.
+
+## test-first.override
+
+[No override configured]
+
+## test-first.default
+
+Decision tree by change type.
+
+**Requires test-first** (red-green-refactor within the task):
+
+- New data models or schemas
+- New API endpoints or endpoint modifications
+- New service classes or business logic
+- Complex algorithms or data transformations
+- Non-trivial validation or processing logic
+
+**Test-after acceptable:**
+
+- Simple CRUD operations with no custom logic
+- Presentational UI components
+- Configuration file changes
+- Trivial refactoring (renaming, moving files)
+- Documentation-only changes
+
+**If unsure, default to test-first.** Writing tests after implementation is harder and less effective.
+
+**During task list creation:** Group test and implementation together by the segment's mode: behavior path for
+`slice`, module or concern for `layer`, repeatable transformation batch for `replication` — never by
+testing-versus-implementation activity. A test-first task covers both writing tests and writing the code that makes
+them pass. Use the ``Build `test-first` (one behavior at a time):`` marker line to introduce the behavior list and
+declare the red-green-refactor cycle boundary. When several coupled behaviors share one indivisible implementation,
+put their tests in one batch before implementation so every test can genuinely fail first. See
+[process-task-loop][process-task-loop] for execution details.
+
+An exposing case that passes before its fix is a finding about the code or the case, never a go-ahead. Trace why it
+passed before writing the fix; correct the case or revise the diagnosis from that evidence.
+
+---
+
+[generate-tasks]: ../workflows/2_generate-tasks.md
+[process-task-loop]: ../workflows/3_process-task-loop.md

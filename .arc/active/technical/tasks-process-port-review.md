@@ -41,12 +41,14 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
 
 ### **Phase 1:** Vendor the methods
 
-- [ ] **1.1 Create `.arc/reference/methods/` with a README**
+- [x] **1.1 Create `.arc/reference/methods/` with a README**
     - Vendoring rules: source header (path and arc-framework commit), a `## CineXplorer adaptation` section for every
       change, the set closed under its own references
     - Glossary: work unit → PRD + task list + branch; spec → PRD; depth level and `Class` → not used
+    - README also holds the link map, § Not used here and § Run on request (task audit before a task, design audit
+      of a parked PRD)
 
-- [ ] **1.2 Vendor the rubric methods verbatim**
+- [x] **1.2 Vendor the rubric methods verbatim**
     - `planning-review`, `spec-review`, `design-audit`, `assess-design-proportionality`, `task-audit`,
       `source-grounding`, `verification-review`, `validate-criteria`, `implementation-audit`, `code-review-standard`,
       `code-review-author`, `disposition-report`, `review-model`, `testing-standards`, `test-first`,
@@ -54,17 +56,28 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
     - `assess-boundary-fit` keeps arc-framework's size-trigger override (`64d989642`) as CineXplorer's adaptation:
       about 1,500 PRD lines, 1,000 task-list lines or six phases, or 10,000 forecast changed lines returns the
       boundary decision to the Owner
-    - Strip CLI-bound passages only where they would mislead (for example `validate-criteria`'s locus and digest
-      binding), recording each in the file's adaptation section
+    - Plus `assess-draft-readiness`, which the set references: 19 methods
+    - Default text kept verbatim (checked by diff against `a49ebba40`); CLI-bound passages are handled in each
+      file's `.override` (ARC's own override mechanism, `override-mode: extend`) instead of stripped. Overrides:
+      `adversarial-review`, `planning-review`, `verification-review`, `validate-criteria`, `classify-work-unit`,
+      `spec-review`, `assess-boundary-fit` (arc-framework's size triggers adopted), `testing-standards`
+      (CineXplorer's, replacing arc-framework's, with the Chakra recipe-assertion pattern)
 
-- [ ] **1.3 Trim `adversarial-review` to its review loop**
+- [x] **1.3 Trim `adversarial-review` to its review loop**
     - Keep the invocation contract, severity model, exit gate and context provisioning
     - Remove pass records, fold verification and the partitioned carrier modes; record the removals
     - No fixed pass cap (Owner): a loop runs to the exit gate; the method's sustained non-convergence valve returns
       it to the Owner. Runaway loops come from oversized work, which the sizing triggers catch at planning
+    - Done as an override rather than a trim, keeping the default verbatim. Fold verification and fix checks stay
+      (they are the loop); kept versions, prompts and reports move to a gitignored `temp-review-{name}/` folder;
+      the pass record becomes a `## Review Log` in the PRD or task list, with elapsed time; the partitioned modes
+      and attestation are not used
 
-- [ ] **1.4 Close the set under its references**
+- [x] **1.4 Close the set under its references**
     - Every cross-reference resolves inside the set, or is cut or redirected and recorded
+    - 62 out-of-set links retargeted through the README's link map; a checker confirmed every link target, README
+      anchor, link label and frontmatter method name resolves. Two long lines re-wrapped and one table re-padded
+      to keep the lint passing
 
 ### **Phase 2:** Wire the stages
 

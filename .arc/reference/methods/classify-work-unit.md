@@ -1,0 +1,142 @@
+---
+name: classify-work-unit
+description: Boundary-test triage and estimate-vs-realized ratchet for a work unit's Class
+related:
+  - route-discovered-work
+override-active: true
+override-mode: extend
+---
+
+<!--
+Vendored from arc-framework .arc/system/methods/classify-work-unit.md at a49ebba40. The default text is verbatim;
+out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
+classify-work-unit.override.
+-->
+
+# Method: classify-work-unit
+
+> - **Workflow:** [init-work-unit.md][init-work-unit], [activate-work-unit.md][activate-work-unit],
+>   [draft-design.md][draft-design], [create-spec.md][create-spec],
+>   [generate-tasks.md][generate-tasks], [run-errand.md][run-errand]
+> - **When:** A work unit's `Class` is set or re-confirmed at a lifecycle touchpoint — promotion into
+>   `backlog/planned/` (the forcing point), `init` as the WU enters active planning, `activate` at the
+>   pre-implementation settle, the planning stages, and an Errand’s Launch classification or promote trigger.
+>
+> - **Contract:** Given a work unit, return its `Class` — `Light` / `Heavy` / `Novel`, or `[TBD]` when its
+>   weight is genuinely not yet knowable — by applying the boundary tests, never resolving below the floor the
+>   ratchet protects. The full model and reasoning live in
+>   [strategy-work-organization][work-org]; this method is the single triage home every touchpoint declares.
+
+## classify-work-unit.override
+
+CineXplorer adaptation (`override-mode: extend`):
+
+- Apply the boundary tests. An Errand is an atomic task here (`.arc/active/ATOMIC-TASKS.md`); a work unit gets a PRD
+  and task list, or a task list alone for incidental work.
+- `Class` is not used: skip its assignment, `[TBD]` resolution and the estimate-vs-realized ratchet. The workflows set
+  each stage's review posture.
+
+## classify-work-unit.default
+
+Boundary-test triage, then ratchet against any realized design-authoring work.
+
+### Boundary tests
+
+Apply in order. The first test sorts work below the wrapper out of the `Class` model entirely; the next two
+each independently promote a WU to `Heavy`; the last promotes `Heavy → Novel` on the derivation axis alone.
+
+1. **Errand vs. WU (the wrapper floor):** Apply the record test on the two intrinsic axes at their
+   **sub-floor**. The Owner decides; the agent proposes with all four answers shown at the stop where placement
+   already reaches the Owner. This test adds no stop and settles nothing alone.
+    1. **Steps not knowable yet (scale).** A step cannot be named without first mapping the code to find it, or the
+       Owner says one sitting will not hold the work. Ask no duration estimate: a sweep with known steps stays an
+       Errand however many files it touches. Waiting on review, a merge, or another work unit does not count.
+    2. **A deliberate exclusion (derivation).** The change leaves out something a reader would expect, and it must
+       stay left out: a scope boundary that the Errand's intent line has nowhere to state.
+    3. **Costly if wrong (derivation).** Putting a wrong choice right takes more than another Errand, such as
+       persisted data to migrate or a contract other work builds on to unwind.
+    4. **The decision outgrows its line (derivation).** A later reader needs alternatives and rationale beyond the
+       one line per decision an Errand records in its PR body and commit.
+    - **Any yes** → a **Work Unit**; continue to the two `Heavy` triggers.
+    - **Otherwise** → an **Errand**, design discussion included: outside the `Class` model, with no meta or WU
+      lifecycle, atomic in character — one indivisible concern in a single session. Commit- and review-pass-count
+      are incidental; a determinate concern may take bounded in-session passes. Stop here.
+    - **Unclear, happening now:** run as an Errand and promote the moment an answer flips. Question 1 names
+      `scale`; questions 2–4 name `derivation`, which wins when both flip. **Not happening now:** no default;
+      show both candidates for the Owner's call at the existing placement stop.
+    - **Deciding and guarding are separate.** These questions do not ask whether a wrong choice would fail
+      quietly. The decision line, the reviewed lane for load-bearing infrastructure, and the promote trigger
+      guard that direction; they do not raise the wrapper floor.
+
+2. **Derivation trigger (→ `Heavy`):** _"Must a real design be authored — concerns, alternatives, tradeoffs
+   that don't exist until someone works them out — before a competent engineer can start?"_
+    - **Yes** → `Heavy`. (Derivation also tracks how novel vs. routine execution is, and the validation rigor
+      review demands.)
+    - **Floor:** count only _spec-worthy_ design — what must be settled before a competent engineer starts. A
+      decision resolved _during_ implementation (naming a variable, local structure, a tactical choice) is not
+      derivation, even though it is "deciding something" — this is the design-vs-implementation line. Without the
+      floor every WU trips `Heavy`.
+
+3. **Scale / complexity trigger (→ `Heavy`):** _"Does producing a correct implementation plan require a
+   **substantial** codebase-grounding / mapping pass — a large or intricate surface of symbols and
+   relationships to verify — beyond the routine floor?"_
+    - **Yes** → `Heavy`. Guard the bar at _substantial_: most WUs carry some grounding, so a soft bar makes
+      everything `Heavy`.
+
+4. **Invent-vs-compose trigger (`Heavy → Novel`):** _"Does settling the design require **inventing** concepts /
+   models that do not yet exist in the problem domain (synthesis, external research, discovery) — versus
+   **composing** a real design from existing ARC patterns and primitives?"_
+    - **Invent** → `Novel`. **Compose** → stays `Heavy`. Reachable through **derivation only** — scale never
+      reaches `Novel` (breadth is endurance and self-limits via decomposition into a cohort; depth is what
+      saturates a person's plate). This is a magnitude cut _within_ "derivation fired," so it reads fuzzier than
+      the fired-or-not lines above — tolerable because the consequence is advisory (a misread nudges a
+      suggestion; the ratchet corrects it). `Novel` is a distinct _kind_ (invention), recorded **primarily** as
+      the parallelism / sequencing balance signal — the strongest "fills the plate by itself, don't double up" —
+      and **secondarily** to open an advisory discovery / research + ADR planning path.
+
+**`Light` iff both `Heavy`-triggers are No; `Heavy` when _either_ fires; `Novel` when derivation fires at the
+invent threshold.** The first two axes decorrelate — derivation loads drafting and spec authoring; scale /
+complexity loads task generation — so test them independently rather than collapsing them into one judgment.
+
+**What does not drive `Class`:** raw output volume (lines or files changed) and author preference. `Class` is
+intrinsic demand — it indicates weight across planning, execution, _and_ review, never planning alone, and what
+stays invariant at every value is execution _discipline_ (the review-increment gate, the quality gates), never
+the depth or care the work demands.
+
+### Resolving the estimate (and `[TBD]`)
+
+`[TBD]` is the pre-classification sentinel: every WU _has_ a `Class`, and `[TBD]` means it is merely unresolved
+(distinct from `[none]`). It is legal only in `backlog/provisional/`. Wherever a start decision is imminent —
+entry into `backlog/planned/` and everything downstream — resolve it to a real value.
+
+When resolving without complete information, set a **best estimate** against the boundary tests — never a
+blanket `Heavy` stamp. A blanket stamp fabricates the very signal `Class` exists to carry, and the ratchet
+below would pin the error. Estimating costs nothing (see the ratchet): estimating `Heavy` and later correcting
+down is not a loss, so there is no lowball incentive.
+
+### Estimate-vs-realized ratchet
+
+Estimate-then-ratchet — not strict one-way:
+
+- The ratchet protects **realized** design-authoring work: once a stage has _authored_ design at some depth,
+  `Class` never drops below that floor.
+- An **estimate** — a value set before that work exists — is freely revisable in _both_ directions until
+  planning substantiates a floor. Correcting a too-high estimate **down** is not a demotion: no work is
+  discarded.
+
+**"Execution turned out Light" ≠ "the design was determinate."** If a real design _was_ authored, realized
+authoring floors `Class` at `Heavy` (or `Novel`) even over a tiny surface where execution is trivial; only an
+over-high _estimate_ — no authoring yet realized — corrects down.
+
+At each touchpoint this is a cheap **confirm-or-ratchet**, not a re-derivation: confirm the current value still
+holds, ratchet _up_ to a newly realized floor, or correct an unsubstantiated estimate in either direction.
+
+---
+
+[init-work-unit]: ../workflows/1_create-prd.md
+[activate-work-unit]: ../workflows/supplemental/activate-work-unit.md
+[draft-design]: ../workflows/1_create-prd.md
+[create-spec]: ../workflows/1_create-prd.md
+[generate-tasks]: ../workflows/2_generate-tasks.md
+[work-org]: ../strategies/arc/strategy-work-organization.md
+[run-errand]: ../workflows/3_process-task-loop.md

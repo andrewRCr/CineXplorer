@@ -262,6 +262,9 @@ git push -u origin {branch-name}
 
 # Create PR using completion doc as description template
 gh pr create --base {parent-branch} --head {branch-name}
+
+# Request a CodeRabbit PR review when the change warrants one (automatic review is off)
+gh pr comment {pr-number} --body "@coderabbitai review"
 ```
 
 **Use completion doc as PR description template:** Copy/adapt sections from `completion-{name}.md`

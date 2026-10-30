@@ -22,10 +22,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Cache Python dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             ~/.cache/pip
@@ -34,15 +34,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Docker meta for backend
         id: meta-backend
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
           images: cinexplorer-backend
           tags: |
@@ -51,7 +48,7 @@ jobs:
             type=sha
 
       - name: Build and cache backend image (local only)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./backend
           file: ./backend/Dockerfile
@@ -95,14 +92,14 @@ jobs:
 
       - name: Upload coverage reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: backend-coverage
           path: backend/coverage.xml
           retention-days: 30
 
       - name: Cache pytest
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: backend/.pytest_cache
           key: ${{ runner.os }}-pytest-${{ hashFiles('backend/**/*.py') }}
@@ -116,7 +113,7 @@ jobs:
           docker compose exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff check apps/ config/
 
       - name: Setup Python for type checking
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.13'
           cache: 'pip'
@@ -129,7 +126,7 @@ jobs:
           .venv-backend/bin/pip install -r backend/requirements/req.txt -r backend/requirements/req.dev.txt
 
       - name: Setup Node.js for Pyright
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version-file: '.nvmrc'
 
@@ -143,26 +140,26 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version-file: '.nvmrc'
 
       - name: Lint markdown files
         run: |
-          npx markdownlint-cli2 "README.md" ".arc/**/*.md"
+          npx markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"
 
   frontend:
     name: Frontend Quality Gates
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -206,13 +203,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build backend image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: ./backend
           file: ./backend/Dockerfile
@@ -247,7 +244,7 @@ jobs:
               echo "Database ready on attempt $i"
               break
             else
-              if [ $i -eq 5 ]; then
+              if [ "$i" -eq 5 ]; then
                 echo "Failed to connect to database after 5 attempts"
                 exit 1
               fi
@@ -262,7 +259,7 @@ jobs:
               echo "Migrations completed on attempt $i"
               break
             else
-              if [ $i -eq 5 ]; then
+              if [ "$i" -eq 5 ]; then
                 echo "Failed to run migrations after 5 attempts"
                 exit 1
               fi
@@ -306,7 +303,7 @@ jobs:
           echo "JSON validation passed"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -368,14 +365,14 @@ jobs:
           echo "✅ Generated types match committed version (no drift detected)"
 
       - name: Upload schema artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: openapi-schema
           path: frontend/openapi.json
           retention-days: 30
 
       - name: Upload generated types artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: typescript-types
           path: frontend/src/types/api.ts

@@ -166,7 +166,7 @@ jobs:
       - name: Generate types from schema (if available)
         if: ${{ hashFiles('frontend/openapi.json') != '' }}
         working-directory: frontend
-        run: npm run ci:generate-types --if-present
+        run: npm run generate-types:ci
 
       - name: Generate Chakra UI component types
         working-directory: frontend

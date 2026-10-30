@@ -1,4 +1,4 @@
-FROM node:alpine3.21
+FROM node:26-alpine
 LABEL maintainer="andrew.creekmore@me.com"
 
 WORKDIR /frontend

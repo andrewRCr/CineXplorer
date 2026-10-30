@@ -52,14 +52,15 @@ fi
 # ============================================================================
 sensitive_patterns=(
     "\.env$"
-    "\.env\.local$"
+    "\.env\.[^/]+$"
     "credentials.*\.json"
     "secrets.*\.yaml"
-    "private.*\.key"
+    "\.key$"
+    "\.pem$"
 )
 
 for pattern in "${sensitive_patterns[@]}"; do
-    sensitive_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "$pattern" || true)
+    sensitive_files=$(git diff --cached --name-only --diff-filter=ACMR | grep -E "$pattern" | grep -vE '\.env\.example$' || true)
     if [ -n "$sensitive_files" ]; then
         echo -e "${RED}❌ Error: Sensitive file detected: $sensitive_files${NC}"
         echo "   This file pattern matches credentials/secrets"

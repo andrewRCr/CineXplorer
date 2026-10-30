@@ -42,7 +42,8 @@ import type { ReactNode } from "react";
  * while maintaining React Router navigation functionality.
  */
 
-interface TextLinkProps extends Omit<RouterLinkProps, "color"> {
+// React Router's `mask` (a masked URL) would collide with Chakra's CSS `mask` style prop
+interface TextLinkProps extends Omit<RouterLinkProps, "color" | "mask"> {
   children: ReactNode;
   // Allow Chakra color prop to override default
   color?: string;

@@ -72,14 +72,6 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 "apps/core/management/commands/wait_for_db.py" = ["N806", "ANN401"]  # ALL_CAPS OK, Django command args
 "stubs/**/*.pyi" = ["ANN401"]  # Type stubs may use Any for external library contracts
 
-# To-be-deleted DRF files (ignore violations until Phase 6 cleanup)
-"apps/authentication/serializers.py" = ["N806", "N815", "ANN401"]
-"apps/authentication/views.py" = ["N806", "N815", "ANN401"]
-"apps/user_movie_data/serializers.py" = ["N806", "N815", "ANN401"]
-"apps/user_movie_data/views.py" = ["N806", "N815", "ANN401"]
-"apps/core/views/logging.py" = ["N806", "ANN401"]  # DRF view, will be migrated later
-"apps/core/views/tmdb.py" = ["N806", "ANN401"]     # DRF view, will be migrated later
-
 [tool.ruff.format]
 # Use double quotes (Python default)
 quote-style = "double"

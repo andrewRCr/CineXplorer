@@ -10,7 +10,6 @@ services:
       - "8000:8000"
     volumes:
       - ../backend:/backend:cached
-      - ../shared:/shared:cached
       - ../backend/logs:/backend/logs:cached
       - ./dev-certs/key.pem:/certs/backend/key.pem:ro
       - ./dev-certs/cert.pem:/certs/backend/cert.pem:ro
@@ -52,7 +51,6 @@ services:
       - "5173:5173"
     volumes:
       - ../frontend:/frontend:cached
-      - ../shared:/shared:cached
       - ../frontend/logs:/frontend/logs:cached
       - frontend-node-modules:/frontend/node_modules
       - ./dev-certs/key.pem:/certs/frontend/key.pem:ro

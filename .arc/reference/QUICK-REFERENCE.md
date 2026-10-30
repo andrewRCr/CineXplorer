@@ -1,6 +1,6 @@
 # Quick Reference - CineXplorer
 
-**Version**: 1.1 | **Updated**: 2025-10-14 | **Location**: `.arc/reference/`
+**Version**: 1.2 | **Updated**: 2026-10-30 | **Location**: `.arc/reference/`
 
 ## About This Reference Directory
 
@@ -124,16 +124,16 @@ docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps
 
 ```bash
 # Run all tests (parallel execution is automatic)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
+docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest apps/
 
 # Sequential execution (for debugging test isolation issues)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/ -n 0
+docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest apps/ -n 0
 
 # With coverage (full app)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps --cov-report=term-missing apps/
+docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest --cov=apps --cov-report=term-missing apps/
 
 # With coverage (specific modules - use Python module paths, NOT file paths)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=apps.authentication.api --cov=apps.authentication.middleware --cov-report=term-missing apps/authentication/tests/
+docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest --cov=apps.authentication.api --cov=apps.authentication.middleware --cov-report=term-missing apps/authentication/tests/
 
 # IMPORTANT: Coverage uses Python module notation
 # ✅ Correct:   --cov=apps.authentication.api (module path)
@@ -144,10 +144,10 @@ docker compose -f infrastructure/docker-compose.yml exec backend pytest --cov=ap
 
 ```bash
 # Via Docker
-docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint
+docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint
 
 # With auto-fix
-docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint -- --fix
+docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint -- --fix
 ```
 
 ### Type Checking (Frontend)
@@ -157,7 +157,7 @@ module resolution.
 
 ```bash
 # CORRECT: Use npm script (runs tsc -b with project references)
-docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check
+docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run type-check
 
 # WRONG: Direct tsc invocation - DO NOT USE
 # npx tsc --noEmit src/some-file.tsx  ❌ INCORRECT
@@ -238,21 +238,26 @@ npx --yes markdown-table-prettify < input.md > output.md
 
 Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
 
+Heavy container commands carry `nice -n 15` inside the container: Docker Desktop runs container processes outside
+this WSL distro, so the host's `nicecap` wrapper around `docker compose` would reach only the client. `memcap_gated`
+cannot cap them either, and the Compose file sets no memory limits, so each container can use the whole WSL2 VM's
+memory.
+
 ```bash
 # 1. Backend Tests (parallel execution enabled by default)
-docker compose -f infrastructure/docker-compose.yml exec backend pytest apps/
+docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest apps/
 
 # 2. Frontend Tests
-docker compose -f infrastructure/docker-compose.yml exec frontend npm test
+docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm test
 
 # 3. Backend Linting (with auto-fix)
 .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
 
 # 4. Frontend Linting
-docker compose -f infrastructure/docker-compose.yml exec frontend npm run lint
+docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint
 
 # 5. TypeScript Type Checking
-docker compose -f infrastructure/docker-compose.yml exec frontend npm run type-check
+docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run type-check
 
 # 6. Python Type Safety
 npx pyright backend/apps/ backend/config/ --project backend

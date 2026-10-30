@@ -4,7 +4,7 @@ Guidance for Claude when working in this repository. For shared rules and archit
 
 - [AGENTS](AGENTS.md) – Project context, lookup guide, and collaboration principles
 - [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.15 – Non-negotiable standards
-- [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.1 – Environment context and command patterns
+- [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.2 – Environment context and command patterns
 - [Process Task Loop](../workflows/3_process-task-loop.md) – One-subtask workflow
 
 ## Claude-Specific Notes

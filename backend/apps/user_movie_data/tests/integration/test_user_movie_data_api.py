@@ -15,12 +15,15 @@ All endpoints require JWT authentication via cookies.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import Mock, patch
 
 import pytest
 
 from apps.core.models import Movie
+from apps.core.services.api_response import ApiResponse
 from apps.core.tests.test_helpers import HTTPStatus, get_csrf_token
 from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.tests.mock_paths import TMDB_CLIENT_GET_MOVIE_DETAILS
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -384,15 +387,23 @@ def test_create_user_movie_data_duplicate_returns_400(
 
 
 @pytest.mark.django_db
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
 def test_create_user_movie_data_invalid_movie_id_returns_404(
+    mock_get_movie_details: Mock,
     authenticated_user: tuple[Client, User]
 ) -> None:
     """
     Test that creating with nonexistent movie_id returns 404.
 
-    Uses an extremely large TMDB ID that doesn't exist in TMDB API.
-    The endpoint will attempt to fetch from TMDB and fail with 404.
+    The TMDB client is mocked with the error response it builds when TMDB
+    answers 404 for an unknown movie ID, so the test needs no API key.
     """
+    mock_get_movie_details.return_value = ApiResponse(
+        status_code=404,
+        error_message="TMDB request failed: 404",
+        error_details="Not Found - The requested movie/resource does not exist in TMDB",
+        error_category="client_error",
+    )
     client, _user = authenticated_user
     csrf_token = get_csrf_token(client)
     payload = {

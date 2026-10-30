@@ -217,7 +217,7 @@ class TMDBMovieResponse(BaseModel):
 
 **Configuration** (`backend/pyrightconfig.json`):
 
-```json path=/home/andrew/dev/CineXplorer/backend/pyrightconfig.json start=null
+```json path=backend/pyrightconfig.json start=null
 {
   "typeCheckingMode": "strict",
   "pythonVersion": "3.13",
@@ -367,7 +367,7 @@ def parse_tmdb_response(payload: Any) -> MovieSchema:  # TMDB contract not typed
 
 **Configuration** (`backend/pyproject.toml`):
 
-```toml path=/home/andrew/dev/CineXplorer/backend/pyproject.toml start=null
+```toml path=backend/pyproject.toml start=null
 [tool.ruff.lint]
 select = ["ANN401"]  # Explicit Any detection
 

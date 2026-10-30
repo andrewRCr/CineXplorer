@@ -23,7 +23,7 @@
 
 ## Environment & Path Context
 
-**Repository Root**: `/home/andrew/dev/CineXplorer/`
+**Repository Root**: the checkout's top level (`git rev-parse --show-toplevel`)
 **All commands in this document assume you are at repository root unless otherwise specified.**
 
 ### Critical Path Reference

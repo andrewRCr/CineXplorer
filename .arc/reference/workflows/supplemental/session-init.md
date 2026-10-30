@@ -13,7 +13,7 @@ project context, and behavioral guidance before beginning work.
 
 ```bash
 pwd
-# Expected: /home/andrew/dev/CineXplorer (repo root)
+# Expected: the repository root (same as `git rev-parse --show-toplevel`)
 # Or: backend/, frontend/ subdirectories if working in specific context
 ```
 
@@ -112,7 +112,7 @@ large enough to warrant partial reading - but you must still read the overview a
 
 State your understanding to confirm successful initialization:
 
-- **Working directory**: Repository root (`/home/andrew/dev/CineXplorer/`)
+- **Working directory**: Repository root
 - **Runtime status**: Docker containers (5 running: backend, frontend, redis, caddy, postgres)
 - **Tool availability**: venv tools available at `.venv-backend/bin/` (ruff, pytest)
 - **Quality policy**: Zero-tolerance for linting violations, 100% test pass rate

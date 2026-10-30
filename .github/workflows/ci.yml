@@ -57,12 +57,11 @@ jobs:
           echo "POSTGRES_DB=cinexplorer" > backend/config/.env
           echo "POSTGRES_USER=postgres" >> backend/config/.env
           echo "POSTGRES_PASSWORD=postgres" >> backend/config/.env
-          echo "DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}" >> backend/config/.env
-          echo "TMDB_API_KEY=${{ secrets.TMDB_API_KEY }}" >> backend/config/.env
-          echo "BACKEND_URL=${{ secrets.BACKEND_URL }}" >> backend/config/.env
-          echo "ZEPTOMAIL_API_KEY=${{ secrets.ZEPTOMAIL_API_KEY }}" >> backend/config/.env
-          # FRONTEND_URL will be added when production domain is available
-          # echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> backend/config/.env
+          # Dummy values: tests mock TMDB and use the locmem email backend
+          echo "DJANGO_SECRET_KEY=ci-secret-key-not-for-production" >> backend/config/.env
+          echo "TMDB_API_KEY=dummy-key-for-ci" >> backend/config/.env
+          echo "BACKEND_URL=https://localhost:8000" >> backend/config/.env
+          echo "ZEPTOMAIL_API_KEY=dummy-key-for-ci" >> backend/config/.env
 
       - name: Start services
         env:

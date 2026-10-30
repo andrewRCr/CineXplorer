@@ -21,6 +21,9 @@ reviews:
     auto_incremental_review: false
     description_keyword: ""
 
+  # No status message (such as "review skipped") on pull requests nobody asked to review
+  review_status: false
+
 # Knowledge base - organizational learning and coding standards
 knowledge_base:
   opt_out: false

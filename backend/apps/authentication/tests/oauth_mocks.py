@@ -4,7 +4,7 @@ Mock OAuth provider implementations for testing.
 This module provides mock implementations of OAuth providers (Google, GitHub)
 for testing OAuth flows without requiring real external API calls.
 """
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
@@ -320,7 +320,7 @@ def mock_github_oauth_success() -> MockGitHubOAuth:
 
 
 @contextmanager
-def patch_oauth_requests(provider: str = 'google') -> Iterator[tuple[Mock, Mock]]:
+def patch_oauth_requests(provider: str = 'google') -> Generator[tuple[Mock, Mock]]:
     """
     Context manager for patching OAuth HTTP requests.
 

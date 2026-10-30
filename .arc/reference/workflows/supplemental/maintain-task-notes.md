@@ -338,11 +338,8 @@ This includes:
 - Length is NOT a concern - task files can be 500-3000+ lines
 - Preserves WHAT was done at detailed level
 
-**What NO LONGER exists in modern task files:**
-- ❌ Forward pointers ("Interrupted by", spawned task lists) - remove these, they're complete
-- ❌ Temporal status notes ("Paused", "Resume at", dates)
-- ❌ Bottom-matter sections (Implementation Notes, Coordination, etc.) - old pattern
-- ❌ Completion Summary section - now in separate completion-{name}.md file
+## Success Criteria (KEEP)
+- Verification checklist of outcomes
 ```
 
 **The Three-Tier System:**
@@ -385,15 +382,15 @@ Before migrating any content during mid-work cleanup, ask these questions:
 
 ```markdown
 <!-- KEEP (relevant to remaining Tasks 7-9, even though verbose) -->
-- [x] 6.5 Implement session auth fallback
-    **IMPORTANT for Tasks 7-9:** All endpoints must check session auth after JWT.
-    Authentication order: JWT → API Key → Session (Priority 3).
-    See test_session_auth.py for pattern. All future endpoints must follow this.
+- [x] 6.5 Implement auth fallback
+    **IMPORTANT for Tasks 7-9:** All endpoints must check secondary auth after primary.
+    Authentication order: Primary → API Key → Session (Priority 3).
+    See test_auth.py for pattern. All future endpoints must follow this.
     [Additional 10 lines of implementation guidance...]
 
 <!-- MIGRATE (historical, no future dependencies) -->
-- [x] 3.4 Debug CSRF token issue - RESOLVED
-    **Root Cause:** Referer header missing in form.submit() due to browser security
+- [x] 3.4 Debug token issue - RESOLVED
+    **Root Cause:** Header missing in form.submit() due to browser security
     **Solution:** Switched to fetch() API with explicit headers
     **Investigation:** Tried 5 different approaches... [15 lines of debugging journey]
     **Result:** Working, 0 regressions, all tests pass
@@ -486,47 +483,36 @@ Do NOT skip to grep patterns - section-level evaluation catches the biggest issu
 Evaluate entire sections before diving into line-by-line cleanup. Sections are either kept, removed,
 or migrated - this is where the biggest cleanup decisions happen.
 
-**Top-Matter Sections to REMOVE:**
+**⛔ CHECKPOINT: Complete this step fully before proceeding to Step 2.**
 
-- [ ] **"Why Now"** - Urgency rationale irrelevant after completion
-- [ ] **"Root Cause Analysis"** - Temporal analysis explaining why work started (not what was done)
-- [ ] **"Will Do" with checkmarks** - Redundant with actual task completions (scope without checkmarks OK)
-- [ ] **"Research Completed" summaries** - **VERIFY** content exists in strategy doc before removing
-- [ ] **"Critical Questions"** - Historical scaffolding once all answered
+For each section in the task file, explicitly decide disposition:
 
-**Bottom-Matter Sections to REMOVE:**
+1. Scan the task file from top to bottom
+2. For each section heading (##, ###), decide: **KEEP**, **REMOVE**, or **EVALUATE CONTENTS**
+3. Only proceed to Step 2 (grep patterns) after ALL sections have been evaluated
 
-- [ ] **"Notes" section** - Often contains stale snapshots, test counts, temporal state
-- [ ] **"Research References"** - **VERIFY** in strategy docs before removing, or confirm not reusable
-- [ ] **"Implementation Notes"** - Old pattern, now captured in task completions
-- [ ] **"Completion Summary"** - Now in separate completion-{name}.md
-- [ ] **"Task List Coordination"** - Old pattern
-- [ ] **"Decision Logs"** - **VERIFY** captured in ADRs or strategy docs before removing
+Use the checklists below as reference, but evaluate every section you encounter - not just those listed.
 
-**Top-Matter Sections to KEEP:**
+**Standard Task List Structure:**
 
-- Header metadata (Created, Completed, Branch, Base Branch, Status)
-- Brief context (Discovered, `Interrupts:` pointer)
-- Problem statement (what was fixed - brief historical context)
-- "Won't Do" scope exclusions (useful record of deliberate decisions)
+- Header metadata (PRD, Created, Completed, Branch, Base Branch, Status)
+- Overview (purpose)
+- Scope (Will Do / Won't Do)
+- Tasks (phases with subtasks)
+- Success Criteria
 
-**Bottom-Matter Sections to KEEP:**
+**Handling Non-Standard Sections:**
 
-- "Success Criteria" - Verification checklist of outcomes (complements completion doc's executive summary)
+If additional sections exist beyond this structure, evaluate each:
 
-**Research/Decision Content - Verification Required:**
+- **Temporal scaffolding** (urgency rationale, status snapshots, "next steps", coordination notes,
+  critical questions) → Remove
+- **Substantive content** (implementation findings, research, architectural decisions not captured
+  elsewhere) → Keep in place; if a notes file exists for this work, consider extracting there
+- **Completion summaries** → Should be in separate `completion-{name}.md`, not task file
 
-Before removing any research summaries, decision logs, or reference sections:
-
-1. **Identify the target location** - Which strategy doc or ADR should contain this?
-2. **Grep to verify** - `grep -i "key-term" path/to/strategy.md`
-3. **If not found**: Either migrate content to appropriate doc, or keep in task file
-4. **If found**: Safe to remove from task file
-
-Never assume content is captured elsewhere - verify before removal.
-
-**Evaluation criteria:** For each section ask: "Is this temporal scaffolding, OR have I verified this content
-exists elsewhere?" Only remove if yes to either.
+**Before removing research or decision content:** Verify it's captured in ADRs or strategy docs
+(grep to check). If not captured elsewhere and substantive, keep it.
 
 ---
 
@@ -666,23 +652,23 @@ and scattered information. **Before formatting, consolidate the content.**
 **Example - Before Consolidation:**
 
 ```markdown
-## Task 4.1: JWT Migration Research
-[300 lines about django-ninja-jwt compatibility]
+## Task 4.1: Auth Library Migration Research
+[300 lines about library compatibility]
 
-## Task 4.3: JWT Implementation
-[50 lines repeating same django-ninja-jwt compatibility info]
+## Task 4.3: Auth Library Implementation
+[50 lines repeating same compatibility info]
 [200 lines of implementation details]
 
-## Task 4.7: JWT Testing
-[Another 30 lines about django-ninja-jwt compatibility]
+## Task 4.7: Auth Library Testing
+[Another 30 lines about library compatibility]
 [Testing details]
 ```
 
 **Example - After Consolidation:**
 
 ```markdown
-## Django Ninja JWT Migration
-**Context:** Migrated from djangorestframework-simplejwt (Tasks 4.1-4.8)
+## Auth Library Migration
+**Context:** Migrated from old-auth-library to new-auth-library (Tasks 4.1-4.8)
 
 ### Compatibility Research (Task 4.1)
 [300 lines - kept as comprehensive reference]
@@ -712,8 +698,8 @@ After content consolidation, format for navigation and long-term reference:
 
 **Update Section Headers:**
 
-- Remove task references from headers (e.g., "Task 5.5: Django Ninja CSRF..." →
-  "CSRF Integration Issue Resolution")
+- Remove task references from headers (e.g., "Task 5.5: Token Validation..." →
+  "Token Validation Issue Resolution")
 - Make headers descriptive and standalone (future-you won't remember task numbers)
 - Add brief context line under each major heading
 
@@ -874,3 +860,7 @@ The completion doc requires reading overview + final phases + CLEANUP-PROGRESS t
 ✅ **Notes file cleanup only at archival** (not mid-work)
 ✅ **Both files are navigable** (TOC, clear headers, no temporal confusion - after archival)
 ✅ **Future-you says "thank you"** (actually uses these docs when needed)
+
+---
+
+**Version:** 2026-01-26

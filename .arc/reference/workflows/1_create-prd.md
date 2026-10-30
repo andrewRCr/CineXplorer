@@ -1,10 +1,3 @@
-<!--
-Derived from: https://github.com/snarktank/ai-dev-tasks/create-prd.md
-Original work licensed under Apache License 2.0
-Modifications: Enhanced for ARC framework integration with META-PRD system,
-focus on feature-level PRD creation, dual-audience design, and feature-branch scope
--->
-
 # Workflow: Create PRD
 
 ## Purpose
@@ -139,6 +132,58 @@ Tailor questions based on the specific feature request, but consider these commo
 - **Edge Cases:** "Are there any potential edge cases or error conditions we should consider?"
 
 ## PRD Structure
+
+### Header Metadata
+
+Every PRD begins with metadata fields. The format depends on whether the PRD has dependencies
+that delay task generation.
+
+**Standard format** (most common - task generation follows immediately):
+
+```markdown
+# PRD: [Feature/Technical Name]
+
+**Type:** Feature | Technical
+**Status:** Ready for Implementation
+**Created:** YYYY-MM-DD
+
+---
+```
+
+**With dependencies** (task generation delayed until dependencies complete):
+
+```markdown
+# PRD: [Feature/Technical Name]
+
+**Type:** Feature | Technical
+**Status:** Pending Dependencies | Ready for Implementation
+**Created:** YYYY-MM-DD
+**Updated:** YYYY-MM-DD
+
+**Related Work:**
+
+- ⏳ Depends on: [Dependency name] - brief description
+- ✅ Complete: [Completed dependency] - brief description
+
+---
+```
+
+**Field definitions:**
+
+- **Type:** `Feature` (user-facing) or `Technical` (infrastructure) per work organization
+- **Status:** `Ready for Implementation` when task generation can proceed; `Pending Dependencies` if blocked
+- **Created:** Date PRD was first written
+- **Updated:** Date of last revision (only include when dependencies exist and PRD evolves while waiting)
+- **Related Work:** Dependencies with status indicators (⏳ pending, ✅ complete)
+
+**Rules:**
+
+- Header metadata appears before the horizontal rule (`---`) that separates it from content
+- No version numbers (git history tracks revisions)
+- Updated field only when dependencies exist (PRDs written in advance may evolve)
+- At task generation time, dependency-related fields are removed (see `2_generate-tasks.md`)
+
+### Content Sections
 
 The generated feature PRD should include the following sections:
 

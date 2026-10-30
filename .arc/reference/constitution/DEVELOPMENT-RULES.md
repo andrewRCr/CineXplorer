@@ -24,12 +24,26 @@ by all contributors, including AI assistants.
 - AI reports completion, then awaits commit instructions
 - **Commit message format**: Use the `commit-format` skill for proper format (Context footer, subject length, etc.)
 
-### Quality Gates (Zero Tolerance)
+### Quality Gates
 
-Before any commit consideration, ALL of the following must pass with **zero exceptions**.
+**Zero Tolerance Policy:** Whatever checks you run, they must pass. No ignoring failures, no exceptions.
+
+**Tiered Approach:** Quality gates follow a tiered system. The tier determines *what* to run; zero tolerance
+determines that it must *pass*. See [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md)
+for complete guidance.
+
+| Tier   | When                                    | What to Run                                                        |
+| ------ | --------------------------------------- | ------------------------------------------------------------------ |
+| Tier 1 | Per-subtask                             | Type-check, lint, format, related unit tests (modified files)      |
+| Tier 2 | Parent task completion                  | Tier 1 (full project) + targeted E2E tests + build                 |
+| Tier 3 | Per-phase, pre-PR                       | Full suite (everything below)                                      |
+
+**Commits and quality gates:** Tiers are milestone-driven, not commit-driven. Work committed through
+the task loop inherits the gates already run at each milestone. For work outside the task loop
+(incidental fixes, atomic tasks), run at least Tier 1 before committing.
+
+**Full Suite (Tier 3)** - Required for phase completion and pre-PR.
 For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
-
-**Zero Tolerance Policy:** All errors, violations, and failures must be fixed. No exceptions.
 
 1. **Backend Tests**: 100% pass rate
    - **MUST run via Docker** (requires database connection to PostgreSQL/Redis)
@@ -326,6 +340,10 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
   as task lists move between active/, backlog/, and archive/ directories. This ensures references
   are searchable and provide clear context about which work the task belongs to.
   Examples: "Task 8.3 - `tasks-oauth-headless-migration.md`", "Phase 3 - `tasks-service-layer-modernization.md`"
+
+- **Collaborative voice in documentation**: Commits, task lists, and project docs should read
+  naturally from an author or team perspective. Avoid third-person references to collaborators;
+  write as the work's author would.
 
 ## Architecture Documentation
 

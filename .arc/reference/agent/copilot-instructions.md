@@ -2,7 +2,7 @@
 
 Copilot suggestions must align with the canonical docs:
 [AGENTS](AGENTS.md),
-[DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.7,
+[DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.15,
 and [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.1.
 
 ## Copilot-Specific Notes

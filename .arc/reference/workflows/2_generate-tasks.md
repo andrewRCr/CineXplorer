@@ -36,6 +36,54 @@ foundational documents for broader context:
 - **[PROJECT-STATUS](../constitution/PROJECT-STATUS.md)** - Current priorities and project state
 - **[TECHNICAL-OVERVIEW](../constitution/TECHNICAL-OVERVIEW.md)** - Architectural patterns and conventions
 
+### Step 1.5: Simplify PRD Header Metadata
+
+PRDs written in advance (with dependencies) include extra metadata fields that are no longer needed
+once task generation begins. Simplify the header to the standard format.
+
+**Remove these fields if present:**
+
+- `Updated:` line
+- `Related Work:` section (dependencies are now complete)
+
+**Keep these fields:**
+
+- `Type:` (Feature or Technical)
+- `Status:` (update to "In Progress" or leave as "Ready for Implementation")
+- `Created:` (original creation date)
+
+**Before:**
+
+```markdown
+# PRD: Feature Name
+
+**Type:** Feature
+**Status:** Ready for Implementation
+**Created:** 2025-10-25
+**Updated:** 2025-12-31
+
+**Related Work:**
+
+- ✅ Complete: Some Dependency - description
+
+---
+```
+
+**After:**
+
+```markdown
+# PRD: Feature Name
+
+**Type:** Feature
+**Status:** Ready for Implementation
+**Created:** 2025-10-25
+
+---
+```
+
+**Rationale:** Dependency tracking is useful while waiting for prerequisites. Once task generation
+begins, that context is historical and adds noise to the active document.
+
 ### Step 2: Assess Current Codebase State
 
 Review the existing codebase to identify:
@@ -62,19 +110,19 @@ phases.
 ```markdown
 ## Tasks
 
-### **Phase 1:** Backend Tests and Data Models
+### **Phase 1:** Core Tests and Data Layer
 
 - [ ] **1.1 Write tests for data models**
 - [ ] **1.2 Implement data models**
 
-### **Phase 2:** API Endpoint Tests and Implementation
+### **Phase 2:** Service Layer Tests and Implementation
 
-- [ ] **2.1 Write API integration tests**
-- [ ] **2.2 Implement API endpoints**
+- [ ] **2.1 Write service/API tests**
+- [ ] **2.2 Implement service/API layer**
 
-### **Phase 3:** Frontend Component Tests and Implementation
+### **Phase 3:** UI Tests and Implementation
 
-- [ ] **3.1 Write component tests**
+- [ ] **3.1 Write component/UI tests**
 - [ ] **3.2 Implement UI components**
 
 ### **Phase 4:** Integration Testing and Quality Gates
@@ -101,12 +149,15 @@ For each parent task, define specific, actionable sub-tasks that:
 **Sub-task guidelines:**
 
 - **Test-first protocol (CRITICAL)**: Write test sub-tasks BEFORE implementation sub-tasks for:
-    - Data models (Django models, schemas)
+    - Data models and schemas
     - API endpoints and business logic
     - Service layer functions
     - See [strategy-testing-methodology.md](../strategies/project/strategy-testing-methodology.md)
       and [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) for complete protocol
-- **Quality gates**: Include linting and type-checking steps after significant changes
+- **Quality gates**: Include quality checkpoint tasks at appropriate stages:
+    - Tier 1 (incremental): Linting, type-checking after significant changes
+    - Tier 2 (integration): E2E checkpoint tasks when phases modify E2E-tested components (layout,
+      navigation, forms, user interactions). See [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md)
 - **Incremental validation**: Structure tasks so progress can be verified at each step
 - **No time estimates**: Task lists should NOT include time estimates (duration emojis, minute counts, etc.)
   Focus on clear scope and completion criteria instead
@@ -150,21 +201,21 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
 
 ## Tasks
 
-### **Phase 1:** Backend Tests and Implementation
+### **Phase 1:** Core Tests and Implementation
 
 - [ ] **1.1 Write tests for core functionality**
 
-    - [ ] 1.1.1 Create test for validation
+    - [ ] **1.1.a Create test for validation**
         - Test cases listed here
         - Expect tests to FAIL initially
-    - [ ] 1.1.2 Run tests and verify failures
+    - [ ] **1.1.b Run tests and verify failures**
 
 - [ ] **1.2 Implement core functionality**
 
-    - [ ] 1.2.1 Create implementation
+    - [ ] **1.2.a Create implementation**
         - Implementation details here
-    - [ ] 1.2.2 Run tests - should now PASS
-    - [ ] 1.2.3 Run quality gates
+    - [ ] **1.2.b Run tests - should now PASS**
+    - [ ] **1.2.c Run quality gates**
 
 ## Implementation Notes
 
@@ -212,3 +263,12 @@ for complete formatting rules, test-first patterns, and examples.
 - Mark completed: `- [x] 1.1 Sub-task description`
 - Task list is a living document, updated throughout implementation
 - See [Task Processing Loop](3_process-task-loop.md) for execution workflow
+
+## Next Step (Optional)
+
+When ready to begin implementation, activate the work unit:
+
+**→ [activate-work-unit.md](supplemental/activate-work-unit.md)** - Create branch, move docs to active, update tracking
+
+This step can be deferred if planning ahead (e.g., creating task lists for future work). Activate when
+implementation is about to begin.

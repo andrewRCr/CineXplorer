@@ -6,7 +6,7 @@ This document provides protocols for AI assistants to handle context management,
 
 ### Starting Fresh or Resuming
 
-1. **Acknowledge rules**: "Ready. Using DEVELOPMENT-RULES v{{SYSTEM_VERSION}}"
+1. **Acknowledge rules**: "Ready. Using DEVELOPMENT-RULES v{version}"
 2. **Read essential context**: DEVELOPMENT-RULES.md, AGENTS.md, current PRD and task list docs
 3. **Check session state**: Read `.arc/active/CURRENT-SESSION.md` if resuming
 4. **Verify git state**: Confirm branch and working directory status

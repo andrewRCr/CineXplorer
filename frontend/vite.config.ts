@@ -35,7 +35,7 @@ export default defineConfig({
         //  key: "/certs/frontend/key.pem",
         //  cert: "/certs/frontend/cert.pem",
         // },
-        allowedHosts: true, // Allow requests from all hosts
-        cors: { origin: true }, // Enable CORS with origin true
+        // Vite's default host and CORS checks stay on: Caddy forwards Host: localhost,
+        // and the page origin is https://localhost:8444
     },
 });

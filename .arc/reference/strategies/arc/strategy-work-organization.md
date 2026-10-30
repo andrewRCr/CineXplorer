@@ -519,7 +519,7 @@ coderabbit review local
 
 # Pass 2: PR review
 gh pr create --base parent-branch --head child-branch
-# CodeRabbit reviews PR
+gh pr comment {pr-number} --body "@coderabbitai review"  # automatic review is off
 # Address findings, merge
 ```
 

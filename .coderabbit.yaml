@@ -2,7 +2,6 @@
 # https://docs.coderabbit.ai/reference/configuration
 #
 # Minimal repo-specific config - organizational settings take precedence for most options.
-# This file only overrides settings critical to stacked branch workflow (ADR-013).
 
 # Review configuration
 reviews:
@@ -13,11 +12,14 @@ reviews:
     - "!**/.venv*/**"
     - "!**/logs/**"
 
-  # Auto-review settings (supports stacked branch workflow - ADR-013)
+  # Review is requested per pull request (comment `@coderabbitai review`); every
+  # automatic path is pinned off so an account-level default cannot re-enable one.
   auto_review:
-    enabled: true
-    base_branches:
-      - ".*"  # Review PRs to any branch using regex (supports stacked branches)
+    enabled: false
+    labels: []
+    drafts: false
+    auto_incremental_review: false
+    description_keyword: ""
 
 # Knowledge base - organizational learning and coding standards
 knowledge_base:

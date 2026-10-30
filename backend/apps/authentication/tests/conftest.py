@@ -78,7 +78,7 @@ Example Usage:
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock, patch
@@ -334,7 +334,7 @@ def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
         Raises ValueError for unsupported provider names
     """
     @contextmanager
-    def _patch_oauth_requests(provider: str) -> Iterator[tuple[Mock, Mock]]:
+    def _patch_oauth_requests(provider: str) -> Generator[tuple[Mock, Mock]]:
         """
         Context manager for patching OAuth HTTP requests.
 

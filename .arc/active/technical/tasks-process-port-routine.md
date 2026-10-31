@@ -397,3 +397,8 @@ recorded" instead of counting commits, and the handoff's filter uses `git log ma
   `maintain-docs.md`, unlinked and still asking for a version recital, retired by the Owner. Also decided: document
   versioning stays unused until migration, and `manage-incidental-work.md` stays until migration, since
   `route-discovered-work` needs the `arc` CLI · about 12 minutes · stop: converged; the Owner closed the loop
+- **2026-10-31 · Code review · Author check and hosted review** · the author check (`code-review-author`) over the
+  branch diff against `main`: 1 minor, approved as a `local-correction` (the development rules still sent a captured
+  errand to "the next drain"); the Owner chose no further local independent pass, since verification's pass and fix
+  check had each read the whole diff, and one hosted `@codex review` on the pull request: no findings at `7afb39ec` ·
+  about 15 minutes in all · stop: converged

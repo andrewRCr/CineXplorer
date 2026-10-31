@@ -231,14 +231,6 @@ All utilities must have:
 
 ---
 
-## Related Documentation
-
-- [DEVELOPMENT-RULES.md](../../../.arc/reference/constitution/DEVELOPMENT-RULES.md) - DRY principles and quality standards
-- [strategy-type-safety.md](../../../.arc/reference/strategies/strategy-type-safety.md) - Type safety patterns
-- [TECHNICAL-ARCHITECTURE.md](../../../.arc/reference/constitution/TECHNICAL-ARCHITECTURE.md) - Overall architecture
-
----
-
 ## Changelog
 
 **v1.0** (2025-10-20):

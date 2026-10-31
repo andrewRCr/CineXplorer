@@ -99,6 +99,8 @@ rewritten as prose the agent follows rather than vendored.
       notes orients from the task list and git; a real mismatch stops and asks
     - Dropped: the version and hash recital, the documents-read confirmation, the line-number requirement, the venv
       check
+    - After verification, the Owner retired `maintain-docs.md`: nothing linked to it, and it still had the agent
+      confirm the rules version at session start. Document version headers stay, unused, until migration
 
 - [x] **1.4 Rewrite `session-handoff.md`**
     - Five steps (380 lines to 110): check the actual state; active work unit writes the notes (pointer fields

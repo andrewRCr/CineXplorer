@@ -34,7 +34,8 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
 ### Won't Do
 
 - Session routine, inbox, errands, commit routine, parallel sessions (`tasks-process-port-routine.md`)
-- Anything bound to the `arc` CLI or store: pass records, fold verification, attest, review lanes, partitioned review
+- Anything bound to the `arc` CLI or store: stored pass records, attest, review lanes, partitioned review (fold
+  verification stays, with its copies in a gitignored folder)
 - The `_Goal:_` / `_Outcome:_` task grammar
 
 ## Tasks
@@ -87,45 +88,48 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
 
 ### **Phase 2:** Wire the stages
 
-- [ ] **2.1 PRD stage (`1_create-prd.md`)**
-    - A Design Decisions section: settle every settleable decision; a design question during implementation stops
-      work and amends the PRD
-    - Review loop: `spec-review`, `design-audit`, `assess-design-proportionality`
-    - Boundary check: `assess-boundary-fit` with the size triggers, and `classify-work-unit` (atomic task or task
-      list)
-    - Rewrite Step 3 ("the 'how' … during task generation") and § 9 Open Questions; re-check a parked PRD before
-      activating it
+- [x] **2.1 PRD stage (`1_create-prd.md`)**
+    - Step 2.5 confirms the work needs a PRD (`classify-work-unit`, early `assess-boundary-fit`); Step 3 settles the
+      design in the PRD and recommends on forks; Step 5 runs `planning-review` (proportionality, `spec-review`, size
+      check, the independent loop with a Review Log)
+    - New § Amending a PRD (design questions during implementation) and § Picking Up a Parked PRD (`design-audit`);
+      Design Decisions, observable Success Criteria and an empty Open Questions before task generation
+    - Target Audience: reader independence, no process vocabulary
 
-- [ ] **2.2 Task-generation stage (`2_generate-tasks.md`)**
-    - Audit loop: `task-audit` and `source-grounding`, per phase, stopping only for decisions
-    - Size re-check: a task list past the marks returns the boundary decision to the Owner
-    - Success criteria fixed in advance, with at least one runnable check that fails if the goal is missed; a final
-      verification phase
-    - Tests grouped with their implementation by behaviour slice; rewrite Step 5's "decisions into Implementation
-      Notes"
+- [x] **2.2 Task-generation stage (`2_generate-tasks.md`)**
+    - Phases by behaviour slice with tests beside their implementation, ending in one verification task; Step 4.5
+      grounds each phase (`task-audit`, `source-grounding`); Step 5 keeps design decisions in the PRD; Step 5.5
+      copies the Success Criteria unchanged
+    - Step 9 suite-coherence pass and size check; Step 10 `planning-review` over the task list, nothing deferred past
+      it
 
-- [ ] **2.3 Per-task stage (`3_process-task-loop.md`)**
-    - Task interlock from arc-framework's `process-task-loop.md`: stop after each task by default
-      (`Proceed to Task X.Y?`); deferred review over an Owner-named scope (the agent may propose batching a parent's
-      subtasks that land as one commit); the must-stop list; `[~]` for deferred tasks. Replaces the autonomous-mode
-      trigger word in `agent/CLAUDE.md`
-    - Task descriptions may record what was done; criteria and PRD goals are never reworded to match it
-    - New `supplemental/task-review.md` (from `arc-task-review`), offered after a task or an autonomous run
+- [x] **2.3 Per-task stage (`3_process-task-loop.md`)**
+    - One task per review increment with a structured stop (`Proceed to Task X.Y?`); § Deferred Review (Owner-named
+      scope, agent-proposed batch at a parent, must-stop list); `[~]` for deferred tasks; criteria never reworded;
+      test-first slices and `testing-standards`; design questions stop the task
+    - New `supplemental/task-review.md` (from `arc-task-review`); `agent/CLAUDE.md` § Autonomous Work Mode replaced
+      by § Deferred Review, with `/autonomous-work` taking the scope as its argument; `agent/AGENTS.md` and
+      `manage-incidental-work.md` aligned
 
-- [ ] **2.4 Completion stage (`archive-completed.md`)**
-    - Verification (`validate-criteria`, `verification-review`) and code review (`code-review-standard`, the
-      `code-review-author` checklist) as separate adversarial passes
-    - Then PR, `@codex review` or `@coderabbitai review`, the disposition table, one fix batch, a capped re-review
-    - Rewrite § 1 ("all tasks complete = gates passed") and § 5's `coderabbit review --committed`
+- [x] **2.4 Completion stage (`archive-completed.md`)**
+    - § 1 Verify the Work: Tier 3 run, the author criteria walk (`validate-criteria`) with `[x]`/`[~]`/`[ ]` marks, and
+      a recommended independent pass; § 5 Code Review: the `code-review-author` checklist, then a recommended
+      independent `code-review-standard` pass
+    - § 6 PR text per `pull-request-format`, then a recommended review route (hosted, local subagent, or skip) that the
+      Owner chooses, never started unprompted; § 7 defers to the review-response workflow; § 8 merge after the
+      Owner's approval with `ci-ok` green and threads resolved, never `--admin`
 
-- [ ] **2.5 Review response (`agent-pre-merge-review.md`)**
-    - Every finding plausible until checked against source; sibling search; the complete FIX/DEFER/REJECT table
-      approved before any edit; one fix batch
-    - Remove SILENT FIX, one-at-a-time fixing, deference to the tool's classification and "Deferrals: Leave open";
-      deferred and rejected threads get a reply and are resolved (the ruleset requires resolved threads)
+- [x] **2.5 Review response (`agent-pre-merge-review.md`)**
+    - Rewritten as "Review Findings and PR Response": whole-set triage (verify against source, sibling search, grade,
+      dispose), a disposition report approved before any edit, one fix batch, an optional fix check (always local)
+    - Every fixed, deferred or rejected thread gets a reply written as the Owner and is resolved; the pre-PR local
+      mode moved to `archive-completed.md` § 5
 
-- [ ] **2.6 Success criteria format (`strategy-task-list-formatting.md`)**
-    - `[x]` met, `[~]` superseded with a note, `[ ]` stops the work; replace the sample criteria that restate gates
+- [x] **2.6 Success criteria format (`strategy-task-list-formatting.md`)**
+    - Observable outcomes, at least one runnable check, no gates or counts, fixed in advance; marks `[x]` / `[~]` /
+      `[ ]`; examples replaced; `## Review Log` follows the section
+    - The full-stack pattern and the annotated example now phase by behaviour slice and end in a Verification phase,
+      matching `2_generate-tasks.md`; stale relative links in its References fixed
 
 ### **Phase 3:** Rules and agents
 
@@ -136,6 +140,9 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
     - Task Management Protocol: the one-subtask rule and granularity guidelines give way to the task interlock and
       deferred review (2.3)
     - `strategy-work-organization.md`: the WU sizing standard
+    - Surface rules from DEV-RULES.ARC: no meta-project references in code, tests or durable docs (the stronger
+      version); write for the reader, not the author; commit and PR surface language, loading
+      `pull-request-format` before any PR text; `.arc/` artifact references by filename only
 
 - [ ] **3.2 Root `AGENTS.md` review guidelines**
     - Preamble covers any requested review, hosted or local fresh-context, never ordinary work
@@ -166,5 +173,7 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
 - [ ] At completion, verification and code review are separate passes
 - [ ] No legacy workflow still instructs SILENT FIX, one-at-a-time fixes, leaving deferred threads open, treating
   completed checkboxes as passed gates, or rewording criteria to match the work
+- [ ] PR text and PRDs follow the surface rules: `pull-request-format` is vendored and `DEVELOPMENT-RULES.md`
+  carries the surface language and documentation boundaries
 - [ ] `quality-gate-enforcer` is retired and `pragmatic-code-reviewer` has no edit tools
 - [ ] Markdown lint passes and `ci-ok` is green on the PR

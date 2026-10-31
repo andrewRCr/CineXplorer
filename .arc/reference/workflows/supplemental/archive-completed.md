@@ -17,8 +17,8 @@ See [Work Organization Strategy](../../strategies/arc/strategy-work-organization
 
 **All work follows the same archival workflow**, regardless of category (feature/technical/incidental):
 
-1. **Phase 1: On Child Branch** - Complete work, clean docs, create completion metadata
-2. **Phase 2: Code Review & Merge** - Review, PR, merge to parent
+1. **Phase 1: On Child Branch** - Verify the work, clean docs, create completion metadata
+2. **Phase 2: Code Review & Merge** - Code review, PR, PR review, merge to parent
 3. **Phase 3: On Parent Branch** - Delete child branch, archive files, commit
 
 **Key principle:** Documentation cleanup and completion metadata are part of the child branch deliverable,
@@ -30,22 +30,48 @@ not a post-merge activity. This ensures PR reviewers see clean, well-organized d
 
 **Context:** You're on the child branch where work was completed (e.g., `incidental/chakra-recipe-system`).
 
-### 1) Verify Work Completion
+### 1) Verify the Work
 
-- [ ] All task list subtasks and parent tasks marked `[x]`
-- [ ] Task list header `**Status:**` updated to `Complete`
-- [ ] Task list Success Criteria aligned with completed Phase tasks (all checked if work complete)
-- [ ] PRD alignment (if PRD exists - planned work only):
-    - [ ] PRD header `**Status:**` updated to `Complete`
-    - [ ] PRD Open Questions resolved with brief notes on decisions made
-- [ ] All quality gates passed (documented as completed subtasks in task list)
-- [ ] Implementation functions as expected in development environment
+The task list's verification phase points here. Verification asks whether the work meets its Success Criteria; code
+review (§ 5) asks whether the code is sound. They are separate passes with separate rubrics, and neither stands in
+for the other.
+
+**Preconditions:**
+
+- [ ] Every task is `[x]`, or `[~]` with its reason
+- [ ] PRD Open Questions are empty, and any design change went through
+  [1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)
+
+**Run the gates.** Run the full suite (Tier 3, [DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md))
+and report its results. A checked task box is not a passed gate; only a run is.
+
+**Author criteria walk.** Run [verification-review](../../methods/verification-review.md), which starts with
+[validate-criteria](../../methods/validate-criteria.md) over the whole work unit: the task list's Success Criteria, the
+complete diff from the base branch (`git diff {base-branch}...HEAD` plus uncommitted changes), and the resulting tree.
+Check each criterion against evidence, running its check where it has one, and mark it:
+
+- `[x]` met, with the evidence in a short note
+- `[~]` superseded by an amendment, with a note naming it (the replacement criterion is checked in its own right)
+- `[ ]` not met: stop and end the report with `Criterion not met: <details>. Fix now or amend?` A fix lands as a task
+  under the verification phase; an amendment goes through the PRD
+
+Never reword a criterion so the work meets it, and never mark one from task checkboxes.
+
+**Independent pass.** Then recommend one fresh-context [adversarial-review](../../methods/adversarial-review.md) over
+the same scope, as verification-review's independent companion describes; the Owner decides. The reviewer gets the
+PRD, the task list with its criterion marks removed, and the diff, never the author's walk. Each finding names the
+criterion it fails. Check every finding against source, present the complete set as a
+[disposition-report](../../methods/disposition-report.md), and edit nothing until the Owner approves it. After the
+approved fixes land, offer a fix check; take any further pass only with approval. Record each pass in the task list's
+`## Review Log`.
+
+**Then:**
+
+- [ ] Implementation works in the development environment, including any criterion that must be proven live
+- [ ] Task list header `**Status:**` updated to `Complete`, and the PRD's `**Status:**` likewise (if a PRD exists)
 - [ ] PROJECT-STATUS reflects completion (if applicable - major features/technical work)
 
-**Note:** Quality gates (tests, linting, type checking) are always documented as subtasks in the task list.
-If all tasks are marked complete, quality gates have passed. No separate verification step needed.
-
-**Note:** Not all work has PRDs. Incidental work typically has only task lists. Skip PRD alignment items if no PRD.
+**Note:** Not all work has PRDs. Incidental work typically has only task lists. Skip PRD items if no PRD.
 
 ### 1b) Generated Code Sync Check (If Applicable)
 
@@ -198,8 +224,9 @@ Before considering the completion doc done, verify EVERY claim:
 2. **PR description template** - Copy/adapt sections for PR body
 3. **Future reference** - One place to look for work outcomes
 
-**Dual-purpose with PR:** The completion doc serves as your PR description draft. You'll write this content
-anyway for the PR - creating it as a persistent document ensures it's searchable and greppable beyond GitHub.
+**Feeds the PR:** The completion doc is the source material for the PR description, but not its text: the PR is
+public and follows [pull-request-format](../../methods/pull-request-format.md), so task IDs, task-list names, `.arc/`
+paths and review metadata stay out of it.
 
 ### 4) Commit Documentation Changes
 
@@ -236,56 +263,70 @@ Documentation prep commits use:
 
 **Context:** Still on child branch, docs are clean and committed. **Branch is NOT pushed yet.**
 
-### 5) Local Code Review (Before Push)
+### 5) Code Review (Before Push)
 
-**Run local review before pushing to remote.** This catches issues before they hit PR review,
-creating a cleaner review experience.
+Code review runs before the branch is pushed, so its fixes are part of the branch's history rather than PR churn.
 
-```bash
-# Run local review of the committed branch against its parent
-coderabbit review --committed --base {parent-branch}
+**Author check.** Apply the [code-review-author](../../methods/code-review-author.md) checklist to the aggregate
+diff (`git diff {parent-branch}...HEAD`): scope, consistency across tasks, leftover debug code, documentation drift,
+unresolved markers, correctness and error paths. Check each finding against source and present the complete set
+before fixing anything.
 
-# Fix any findings
-# Commit fixes if needed
-```
+**Independent review.** Then recommend a fresh-context [adversarial-review](../../methods/adversarial-review.md)
+pass applying [code-review-standard](../../methods/code-review-standard.md): a non-author reviewer covers the complete
+branch diff against the [implementation-audit](../../methods/implementation-audit.md) dimensions, with the PRD and the
+project rules as context but none of the author's conclusions or suspected weak spots. The Owner decides whether it
+runs.
 
-**Why before push:** Fixes made here are part of the clean branch history. Fixes after PR creation
-require additional commits and re-review cycles.
+Either way, findings follow the same flow: verify each against source, look for the same defect elsewhere, present
+the complete set as a [disposition-report](../../methods/disposition-report.md), and edit nothing until the Owner
+approves it. Land the approved fixes as one batch, then offer a fix check; take any further pass only with approval.
+Record each pass in the task list's `## Review Log`.
 
 ### 6) Push and Create PR
 
-**After local review passes:**
+**After code review settles:**
 
 ```bash
 # Push branch to remote
 git push -u origin {branch-name}
 
-# Create PR using completion doc as description template
+# Create the PR; title and body follow pull-request-format
 gh pr create --base {parent-branch} --head {branch-name}
+```
 
-# Request a CodeRabbit PR review when the change warrants one (automatic review is off)
+**PR text:** Load [pull-request-format](../../methods/pull-request-format.md) before writing the title or body. The
+title follows the commit subject grammar; the body is written for a reader outside this repository's process.
+
+**Review on the PR:** Once CI is green and nothing more is to be pushed, recommend a review route in a sentence and
+wait for the Owner's choice. Never start one unprompted: hosted reviews are rate-limited and local ones spend tokens.
+
+- **Hosted:** `@codex review`, `@coderabbitai review`, or both (automatic CodeRabbit review is off)
+- **Local:** a fresh-context subagent pass applying [code-review-standard](../../methods/code-review-standard.md) over
+  the PR diff; for example when the diff is too large for a hosted reviewer, or hosted capacity is used up
+- **Skip:** for example when § 5's independent review already covered the final head
+
+```bash
+gh pr comment {pr-number} --body "@codex review"
 gh pr comment {pr-number} --body "@coderabbitai review"
 ```
 
-**Use completion doc as PR description template:** Copy/adapt sections from `completion-{name}.md`
-for the PR body. This ensures consistency and avoids duplicate writing.
+A hosted request reviews the head at that moment, so make it after the last push, once per PR.
 
 ### 7) Address PR Review Findings
 
-**If code review results in significant changes:**
+Follow [agent-pre-merge-review.md](agent-pre-merge-review.md): verify every finding against source, present the
+complete fix/defer/reject table, land approved fixes as one batch, then request at most one re-review. Further rounds
+are the Owner's call.
 
-- Update code as requested
-- **Update completion metadata if work outcomes changed**
-- Commit fixes with references to review findings
-- Re-run quality checks if necessary (add as task list subtasks)
-
-**Important:** If review causes substantial changes to what was delivered, the completion doc should reflect
-final state, not initial intent. This is a natural forcing function for accuracy.
+If review changes what was delivered, update the completion doc to the final state, not the initial intent.
 
 ### 8) Merge Pull Request
 
+With the Owner's approval, once `ci-ok` is green and every review thread is resolved:
+
 ```bash
-# Merge PR through GitHub interface or CLI
+# Merge PR through GitHub interface or CLI (never --admin)
 gh pr merge {pr-number} --merge  # preserve commit history (no squash)
 
 # Or if merging locally:
@@ -409,7 +450,7 @@ git commit -m "docs(arc): archive discover-endpoint-consolidation
 Archival of completed incidental work:
 - Consolidated endpoints to thin wrapper architecture
 - Fixed now-playing/upcoming date ranges and filter support
-- 73 tests added, all quality gates passed
+- Regression tests cover both date ranges and each filter
 
 Context: tasks-discover-endpoint-consolidation.md (maintenance)"
 ```
@@ -475,7 +516,7 @@ for feature vs technical vs incidental decision rules.
 
 - ✅ Run maintain-task-notes Mode 2 before archiving
 - ✅ Create completion doc on child branch (before PR)
-- ✅ Use completion doc as PR description template
+- ✅ Draw the PR description from the completion doc, per pull-request-format
 - ✅ Use `git mv` to preserve history
 
 ---

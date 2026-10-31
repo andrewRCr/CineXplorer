@@ -10,8 +10,8 @@ documentation throughout the project lifecycle.
 
 **Referenced by:**
 
-- [2_generate-tasks.md](../workflows/2_generate-tasks.md) - Planned feature/technical work
-- [manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md) - Reactive incidental work
+- [2_generate-tasks.md](../../workflows/2_generate-tasks.md) - Planned feature/technical work
+- [manage-incidental-work.md](../../workflows/supplemental/manage-incidental-work.md) - Reactive incidental work
 
 ## Table of Contents
 
@@ -43,7 +43,8 @@ Before finalizing any task list, verify:
 - [ ] No time estimates anywhere (no duration emojis, minute counts)
 - [ ] "Expect tests to FAIL initially" noted in test subtasks
 - [ ] "Tests should now PASS" noted after implementation subtasks
-- [ ] Success Criteria section at bottom with checkboxes (verified before archival)
+- [ ] Success Criteria at the bottom: observable outcomes, at least one with a runnable check, no gates or
+  counts; then `## Review Log`
 
 ---
 
@@ -825,12 +826,13 @@ Parent Task (0 spaces) - [ ] **X.Y Description**
 
 ### Pattern 3: Feature with Backend and Frontend
 
-**Use when:** Full-stack feature needs comprehensive testing
+**Use when:** A behaviour spans the API and the UI. Phase by behaviour, not by layer: the slice carries its backend
+and frontend tests and implementation together, so it is reviewable as one user-visible change.
 
 ```markdown
-### **Phase 1:** Backend Tests and Implementation
+### **Phase 1:** Users can submit a review
 
-- [ ] **1.1 Write backend tests**
+- [ ] **1.1 Write backend tests for review submission**
 
     - [ ] **1.1.a Create API integration tests**
         - Test endpoints, validation, error handling
@@ -838,55 +840,36 @@ Parent Task (0 spaces) - [ ] **X.Y Description**
 
     - [ ] **1.1.b Create service layer tests**
         - Test business logic independently
-        - Use mocks for external dependencies
+        - Mock only external boundaries
         - Expect tests to FAIL initially
 
-- [ ] **1.2 Implement backend**
+- [ ] **1.2 Implement the review endpoint and service**
 
-    - [ ] **1.2.a Implement API endpoints**
-        - Create routes, request handling
+    - [ ] **1.2.a Implement API endpoint**
+        - Request parsing and response only; logic in the service
 
     - [ ] **1.2.b Implement service layer**
         - Business logic, data processing
 
     - [ ] **1.2.c Run backend tests - should PASS**
 
-### **Phase 2:** Frontend Tests and Implementation
+- [ ] **1.3 Write component tests for the review form**
 
-- [ ] **2.1 Write component tests**
-
-    - [ ] **2.1.a Create tests for form component**
+    - [ ] **1.3.a Create tests for form component**
         - Test user interactions, validation
-        - Mock API calls
+        - Mock API calls with responses shaped like the real API's
         - Expect tests to FAIL initially
 
-    - [ ] **2.1.b Create integration tests for feature flow**
-        - Test complete user journey
-        - Use MSW for API mocking
-        - Expect tests to FAIL initially
+- [ ] **1.4 Implement the review form**
 
-- [ ] **2.2 Implement frontend components**
+    - [ ] **1.4.a Create form component and wire it to the API service**
+        - Input fields, validation, submit and error handling
 
-    - [ ] **2.2.a Create form component**
-        - Input fields, validation, submit handler
+    - [ ] **1.4.b Run component tests - should PASS**
 
-    - [ ] **2.2.b Integrate with API service**
-        - Wire up API calls, error handling
+### **Phase 2:** Verification
 
-    - [ ] **2.2.c Run component tests - should PASS**
-
-### **Phase 3:** End-to-End Validation
-
-- [ ] **3.1 Manual testing**
-
-    - [ ] **3.1.a Test complete flow in browser**
-        - Verify all user paths work
-        - Check error handling and edge cases
-
-- [ ] **3.2 Quality gates**
-    - [ ] 3.2.a Run full test suite (backend + frontend)
-    - [ ] 3.2.b Run all linting and type checking
-    - [ ] 3.2.c Verify no regressions
+- [ ] **2.1 Verify the work** (load `archive-completed.md` § 1)
 ```
 
 ### Anti-Pattern: Tests After Implementation
@@ -909,7 +892,7 @@ Parent Task (0 spaces) - [ ] **X.Y Description**
 
 - Tests written after implementation are harder and less effective
 - No TDD benefit of driving design through tests
-- Violates [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) Test-First Protocol
+- Violates [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md) Test-First Protocol
 
 ---
 
@@ -971,7 +954,7 @@ This example demonstrates all formatting elements in proper context:
         - Ensure no regressions
         - All tests should still PASS
 
-### **Phase 2:** State Preservation Tests
+### **Phase 2:** Filters survive navigation to a detail page and back
 
 - [ ] **2.1 Write tests for URL parameter preservation**
 
@@ -987,36 +970,36 @@ This example demonstrates all formatting elements in proper context:
         - Test: Very long param strings
         - Expect tests to FAIL initially
 
-- [ ] **2.2 Write tests for UI state preservation**
+- [ ] **2.2 Update URL parameter handling**
 
-    **Goal:** Ensure expanded panels stay expanded across navigation.
-
-    - [ ] **2.2.a Create test for advanced panel state**
-        - Test: Panel expanded with rating filters → detail → back → still expanded
-        - Test: Panel collapsed with genres only → detail → back → still collapsed
-        - Mock `useMovieCollectionState` hook
-        - Expect tests to FAIL initially
-
-    - [ ] **2.2.b Create test for filter collapsed state**
-        - Test: Filters expanded → detail → back → still expanded
-        - Expect tests to FAIL initially
-
-### **Phase 3:** Implementation
-
-- [ ] **3.1 Update URL parameter handling**
-
-    - [ ] **3.1.a Modify `MovieCard.tsx` query string construction**
+    - [ ] **2.2.a Modify `MovieCard.tsx` query string construction**
         - Capture all URL params from `useSearchParams()`
         - Pass all params to detail page URL
         - Preserve unknown params
         - File location: `components/movie/MovieCard.tsx:133-139`
 
-    - [ ] **3.1.b Modify `MovieDetail.tsx` back button URL**
+    - [ ] **2.2.b Modify `MovieDetail.tsx` back button URL**
         - Read all params from current URL
         - Reconstruct complete back URL
         - File location: `pages/movie/MovieDetail.tsx:116-120`
 
-    - [ ] **3.1.c Run URL preservation tests - should now PASS**
+    - [ ] **2.2.c Run URL preservation tests - should now PASS**
+
+### **Phase 3:** Panels keep their expanded state
+
+- [ ] **3.1 Write tests for UI state preservation**
+
+    **Goal:** Ensure expanded panels stay expanded across navigation.
+
+    - [ ] **3.1.a Create test for advanced panel state**
+        - Test: Panel expanded with rating filters → detail → back → still expanded
+        - Test: Panel collapsed with genres only → detail → back → still collapsed
+        - Mock `useMovieCollectionState` hook
+        - Expect tests to FAIL initially
+
+    - [ ] **3.1.b Create test for filter collapsed state**
+        - Test: Filters expanded → detail → back → still expanded
+        - Expect tests to FAIL initially
 
 - [ ] **3.2 Update UI state preservation**
 
@@ -1027,32 +1010,9 @@ This example demonstrates all formatting elements in proper context:
 
     - [ ] **3.2.b Run UI state tests - should now PASS**
 
-### **Phase 4:** Quality Gates and Manual Verification
+### **Phase 4:** Verification
 
-- [ ] **4.1 Automated quality checks**
-
-    - [ ] **4.1.a Run full test suite**
-        - Backend: All tests pass
-        - Frontend: All 416+ tests pass
-
-    - [ ] **4.1.b Run linting and type checking**
-        - ESLint: 0 violations
-        - TypeScript: 0 errors
-        - Pyright: 0 errors
-
-- [ ] **4.2 Manual testing**
-
-    - [ ] **4.2.a Test URL param preservation**
-        - Apply filters → detail → back → verify filters
-        - Test with all filter types
-
-    - [ ] **4.2.b Test UI state preservation**
-        - Expand advanced panel → detail → back → verify expanded
-        - Test across multiple navigation cycles
-
-    - [ ] **4.2.c Test browser back button**
-        - Verify no regression in browser navigation
-        - Test forward button as well
+- [ ] **4.1 Verify the work** (load `archive-completed.md` § 1)
 
 ## Notes & Observations
 
@@ -1061,7 +1021,17 @@ This example demonstrates all formatting elements in proper context:
 - UI state: Effect-based auto-expand using filters as signal
 
 **Related Work**:
-- Discovered during: `.arc/active/incidental/tasks-pagination-buffer-tracking.md`
+- Discovered during: `tasks-pagination-buffer-tracking.md`
+
+## Success Criteria
+
+- [ ] Filters applied on a list page are still applied after opening a movie and pressing Back (URL tests)
+- [ ] An expanded advanced-filter panel is still expanded after the same round trip
+- [ ] Browser Back and Forward buttons restore the same filter state (checked in the browser)
+
+## Review Log
+
+_(one entry per review pass and fix check)_
 ```
 
 **Key elements demonstrated:**
@@ -1074,7 +1044,9 @@ This example demonstrates all formatting elements in proper context:
 - ✅ Goal lines indented to subtask level (4 spaces)
 - ✅ Numbered subtasks bold when detail bullets follow
 - ✅ Unnumbered bullets for implementation details
-- ✅ Test-first ordering throughout
+- ✅ Test-first ordering throughout, with each test beside the implementation it proves
+- ✅ Phases by behaviour slice, ending in a Verification phase
+- ✅ Success Criteria as observable outcomes
 - ✅ "Expect tests to FAIL" and "should now PASS" noted
 - ✅ Backticks for all technical terms
 - ✅ Proper indentation (4 spaces per level)
@@ -1443,13 +1415,33 @@ If you find this pattern, you have two options:
 
 ## Success Criteria Section
 
-**Required for all task lists.** Placed at the bottom after all phases, serves as completion verification checklist.
+**Required for all task lists.** Placed at the bottom after all phases, followed only by the `## Review Log`. The
+criteria say what the finished work must achieve, observably; they are checked at verification
+([archive-completed.md § 1](../../workflows/supplemental/archive-completed.md)), not inferred from task checkboxes.
 
-### Purpose
+### Writing Criteria
 
-- **Pre-archival sanity check**: Verify all intended functionality before marking complete
-- **Explicit verification**: Forces review of outcomes vs. just assuming completion
-- **Easy to find**: Bottom placement makes it the natural final step
+- **Observable outcomes:** each criterion names something a reader can check in the running system, the code or the
+  docs, not an activity ("refactored X") or a process step
+- **At least one runnable check:** at least one criterion has a check (a test, a command, a request) that fails if
+  the goal is missed
+- **Not gates or counts:** passing gates is the floor for every task, not a criterion; test counts, "Ready for
+  archival" and "all tasks complete" are not criteria
+- **Implemented vs proven live:** when a criterion only holds in a deployed or running environment, say so, so
+  verification knows where to look
+- **Planned work:** copied unchanged from the PRD's Success Criteria at task generation. **Incidental work:** written
+  with the task list, to the same standard
+- **Fixed in advance:** never reworded to match the work. A changed goal goes through the PRD
+  ([1_create-prd.md § Amending a PRD](../../workflows/1_create-prd.md#amending-a-prd)): the old criterion is marked
+  `[~]` and its replacement appended
+
+### Marks
+
+| Mark | Meaning |
+| ---- | ------- |
+| `[x]` | Met, with a short note on the evidence |
+| `[~]` | Superseded by an amendment; the note names it, and the replacement is checked in its own right |
+| `[ ]` | Not met. Work stops: fix it, or amend the PRD. Never archive with an open criterion |
 
 ### Format
 
@@ -1458,21 +1450,14 @@ If you find this pattern, you have two options:
 
 ## Success Criteria
 
-- [ ] [Verifiable outcome derived from Scope "Will Do"]
-- [ ] [Another verifiable outcome]
-- [ ] [Functional requirement that can be tested]
-- [ ] All quality gates pass (tests, linting, type checking)
-- [ ] Ready for [archival | next phase | merge]
+- [ ] [Observable outcome derived from Scope "Will Do"]
+- [ ] [Outcome with a runnable check, e.g. "GET /api/movies?genre=27 returns only horror titles"]
+- [ ] [Outcome proven live: e.g. "Password reset email arrives from the production sender"]
+
+## Review Log
+
+_(one entry per review pass and fix check)_
 ```
-
-### Rules
-
-- **Checkboxes required**: Unlike header prose, these are actionable verification items
-- **Derived from Scope**: Each "Will Do" item should map to verifiable criteria
-- **Include quality gates**: Always include "All quality gates pass" as standard item
-- **Include readiness**: Always include "Ready for X" as final item
-- **Mark before archival**: All items must be `[x]` before running archive workflow
-- **No time estimates**: Same rule as rest of task list
 
 ### Examples
 
@@ -1481,11 +1466,11 @@ If you find this pattern, you have two options:
 ```markdown
 ## Success Criteria
 
-- [x] Service layer handles all business logic (API endpoints are thin wrappers)
-- [x] Class-based architecture implemented for all services
-- [x] 100% test coverage for service layer methods
-- [x] All quality gates pass (611 backend tests, 504 frontend tests, 0 violations)
-- [x] Ready for archival
+- [x] API endpoints only parse requests and call services; no filtering or calculation remains in `api.py` files
+  (grep and review of each endpoint)
+- [x] Every service method has tests that exercise it through its public interface
+- [~] Services share one base class (superseded by the 2025-11-02 amendment: composition instead)
+- [x] Services are composed from shared helpers rather than inherited (see `services/base.py`)
 ```
 
 **Incidental task list:**
@@ -1493,12 +1478,10 @@ If you find this pattern, you have two options:
 ```markdown
 ## Success Criteria
 
-- [x] Within-page deduplication working (no duplicates on single page)
-- [x] Cross-page deduplication working (no duplicates across pagination)
-- [x] Backward navigation to page 1 consistent (same movies on return)
-- [x] Filter changes reset session (new filters = fresh results)
-- [x] All quality gates pass (backend 611, frontend 504, 0 violations)
-- [x] Ready to resume interrupted work at Task 3.3
+- [x] No movie appears twice on one results page (regression test `test_page_has_no_duplicates`)
+- [x] No movie appears on two pages of the same browse session (regression test)
+- [x] Returning to page 1 shows the same movies as the first visit
+- [x] Changing filters starts a fresh session
 ```
 
 ### Relationship to Scope
@@ -1507,15 +1490,15 @@ If you find this pattern, you have two options:
 | -------------------------------- | -------------------------------------- |
 | **Scope: Will Do**               | **Success Criteria**                   |
 | Planning: "What we intend to do" | Verification: "Did we actually do it?" |
-| Prose bullets, no checkboxes     | Checkboxes, verifiable items           |
+| Prose bullets, no checkboxes     | Checkboxes, observable outcomes        |
 | Written at task list creation    | Verified at task list completion       |
 
 ---
 
 ## References
 
-- [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) - Test-First Protocol
-- [strategy-testing-methodology.md](./strategy-testing-methodology.md) - Testing standards and patterns
-- [2_generate-tasks.md](../workflows/2_generate-tasks.md) - Planned work task generation
-- [manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md) - Incidental work lifecycle
-- [3_process-task-loop.md](../workflows/3_process-task-loop.md) - Task execution workflow
+- [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md) - Test-First Protocol
+- [strategy-testing-methodology.md](../project/strategy-testing-methodology.md) - Testing standards and patterns
+- [2_generate-tasks.md](../../workflows/2_generate-tasks.md) - Planned work task generation
+- [manage-incidental-work.md](../../workflows/supplemental/manage-incidental-work.md) - Incidental work lifecycle
+- [3_process-task-loop.md](../../workflows/3_process-task-loop.md) - Task execution workflow

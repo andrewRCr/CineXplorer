@@ -213,8 +213,8 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
 **Follow standard workflows** - incidental work has no special execution procedures:
 
 1. **Task execution**: Follow [3_process-task-loop.md](../3_process-task-loop.md)
-   - One subtask at a time
-   - Quality checks after each subtask
+   - One task at a time (or a deferred-review scope the Owner names)
+   - Quality checks after each task
    - Mark `[x]` immediately on completion
 
 2. **Commits**: Follow [atomic-commit.md](atomic-commit.md)

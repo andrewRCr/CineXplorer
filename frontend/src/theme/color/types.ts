@@ -1045,9 +1045,9 @@ export interface UnifiedTheme {
      * ```
      *
      * **NOT for badge backgrounds:**
-     * - TMDB community scores use status colors (success/info/warning) based on thresholds
+     * - TMDB community scores use traffic-light status colors (success/warning/error) based on thresholds
      * - See CineXplorerExtensionsSection for reference implementation
-     * - ≥7.5: success (green), 5.0-7.4: info (blue), <5.0: warning (yellow)
+     * - ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
      */
     "imdb-gold": string;
 

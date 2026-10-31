@@ -32,8 +32,8 @@ git status --short
 - **Working memory**, in full, always: the main checkout's `.arc/user/{identity}/WORKING-MEMORY.md`, when it exists.
 - **Task list**, the one the notes' Task List names: its Overview and the task Next Task names, plus a scan of its
   checkboxes for the first open task. Read the rest on demand.
-- **Inbox**, between work units: count the entries in each section of the main checkout's
-  `.arc/user/{identity}/USER-INBOX.md`.
+- **Inbox**, the main checkout's `.arc/user/{identity}/USER-INBOX.md`: between work units, count the entries in each
+  section; in a work unit, find the entries whose `_Target:_` names its task list or PRD.
 
 ### 3. Read the core documents
 
@@ -74,6 +74,8 @@ Proceed?
 - **Docker:** `docker ps --filter name=infrastructure -q | wc -l` against the five services; report it, and start the
   stack only when the next action needs it.
 - **Next:** one action, from the notes' Next Action. Name any Blockers on their own line.
+- **Captured for this work unit:** the titles of the inbox entries that target it, on one line. Adding one to the task
+  list is a planning change the Owner approves.
 - **Between work units:** say so; the next action comes from working memory or the Owner. When `## Work Unit` has
   entries, give the count and offer a drain ([user-inbox.md § Drain](user-inbox.md#drain)). Errands waiting to run
   are reported as a count only (`3 errands waiting`).

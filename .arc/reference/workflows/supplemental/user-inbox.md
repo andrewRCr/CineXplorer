@@ -68,8 +68,8 @@ Give each entry a class and a home:
   often for a tracked list, so `.arc/active/ATOMIC-TASKS.md` takes no new entries.
 - **Work unit:** add it to an existing backlog document in `.arc/backlog/` (a plan, a PRD, or the `BACKLOG-*.md`
   bucket), or start a new plan file there.
-- **Targets an active task list:** it stays in the inbox for that work unit's session, which takes it into its task
-  list; the drain cannot write another work unit's branch. Say so in the table.
+- **Targets an active task list:** it stays in the inbox. That work unit's session start lists it, and the Owner
+  decides when it joins the task list; the drain cannot write another work unit's branch. Say so in the table.
 - **Local only** (no tracked change, such as cleaning up local branches): done now by hand if the Owner wants,
   otherwise kept.
 - **Kept:** an entry the Owner chooses to keep (work that stays on this machine, or not yet) stays with a

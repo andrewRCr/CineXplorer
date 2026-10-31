@@ -194,7 +194,8 @@ rewritten as prose the agent follows rather than vendored.
       bounded fix of another concern is an errand, creating the task list also creates its session notes, task
       references go in the `Context:` footer
     - `session-init.md`: between work units, counts the inbox entries by section; offers a drain when work-unit
-      entries wait, and reports waiting errands as a count
+      entries wait, and reports waiting errands as a count. In a work unit, it lists the entries that target the
+      work unit's task list or PRD (added after verification found nothing read them)
     - Created `.arc/user/andrew/USER-INBOX.md` (local); the harness-hygiene item moved there from working memory
     - Check: a capture from a linked worktree (no workspace of its own) landed in the main checkout's inbox; the test
       entry and worktree were removed

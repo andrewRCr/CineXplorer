@@ -195,17 +195,15 @@ rewritten as prose the agent follows rather than vendored.
     - Check: a capture from a linked worktree (no workspace of its own) landed in the main checkout's inbox; the test
       entry and worktree were removed
 
-- [ ] **3.3 Retire `TASK-INBOX.md` and `weekly-review.md`**
-    - Delete `.arc/backlog/TASK-INBOX.md`; update `PROJECT-STATUS.md`, `strategy-work-organization.md` (its
-      backlog-structure section) and `atomic-commit.md`
-    - Delete `weekly-review.md`, folded into the drain; `strategy-work-organization.md`'s Weekly Review section and
-      its two links point to `user-inbox.md`; the "during weekly review" comments in `BACKLOG-FEATURE.md` and
-      `BACKLOG-TECHNICAL.md` say "at the drain"
-    - New ADR-021: the personal inbox replaces the shared one and the weekly review folds into its drain, superseding
-      that part of ADR-014; ADR-014's status becomes `Accepted; Superseded in part by ADR-021 (inbox and weekly
-      review)`; `strategy-adr-methodology.md` and the ADR README list `Superseded in part by ADR-XXX` as a valid state
-    - Check: `git grep -n -i -e TASK-INBOX -e 'weekly.review'` hits only `.arc/reference/archive/`, the ADRs and this
-      task list; markdown lint and the link check clean
+- [x] **3.3 Retire `TASK-INBOX.md` and `weekly-review.md`**
+    - Deleted both; `PROJECT-STATUS.md`, `atomic-commit.md`, the two `BACKLOG-*.md` comments and
+      `strategy-work-organization.md` (backlog tree, file purposes, processing flow, discovery, a Drain section in
+      place of Weekly Review, related links) now describe the personal inbox and the drain
+    - New ADR-021 (capture in a personal inbox), superseding ADR-014's inbox and weekly review; ADR-014's status
+      `Accepted; Superseded in part by ADR-021 (inbox and weekly review)`; the partial form added to
+      `strategy-adr-methodology.md` and the ADR README
+    - Check: no `TASK-INBOX` or weekly-review hits outside the archive, the ADRs and this task list; markdown lint and
+      the link check clean (apart from the known placeholder)
 
 - [ ] **3.4 First drain, landed as an errand**
     - Capture the open follow-ups that have no tracked home: the Vitest 4 upgrade, the frontend container running as

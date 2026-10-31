@@ -231,8 +231,8 @@ The project follows a structured development workflow:
 - **META-PRD** for high-level product requirements
 - **PRDs** for individual major/planned feature/technical specifications
 - **Task lists** for implementation tracking and execution
-- **Backlog organization** using GTD-inspired structure (ADR-014):
-    - `backlog/TASK-INBOX.md` - Zero-friction capture
+- **Backlog organization** using GTD-inspired structure (ADR-014, with ADR-021 for capture):
+    - A personal inbox (`.arc/user/{identity}/USER-INBOX.md`, gitignored) - capture, drained between work units
     - `backlog/feature/BACKLOG-FEATURE.md` - Feature ideas bucket
     - `backlog/technical/BACKLOG-TECHNICAL.md` - Technical ideas bucket
     - `backlog/*/plan-*.md` - Work units under planning/analysis

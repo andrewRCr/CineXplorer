@@ -361,7 +361,7 @@ steps:
   docs(arc): update AGENTS.md with backlog structure
 
   - Added backlog organization section
-  - Clarified TASK-INBOX.md and ATOMIC-TASKS.md purpose
+  - Clarified ATOMIC-TASKS.md purpose
   - Updated discovery mechanism description
 
   Context: documentation (atomic / no associated task list)

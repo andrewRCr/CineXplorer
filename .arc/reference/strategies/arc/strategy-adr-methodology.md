@@ -115,6 +115,8 @@ Every ADR follows this five-section structure:
 - `Accepted` - Decision approved and implemented (or ready to implement)
 - `Deprecated` - Decision no longer valid but not replaced
 - `Superseded by ADR-XXX` - Decision replaced by a new ADR
+- `Accepted; Superseded in part by ADR-XXX (part)` - Part of the decision, named in parentheses, replaced by a new
+  ADR; the rest stands
 
 **Note:** Once status is `Accepted`, the ADR should never be edited except to change status.
 

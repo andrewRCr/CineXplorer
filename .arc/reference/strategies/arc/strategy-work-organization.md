@@ -1110,7 +1110,6 @@ Update `2_generate-tasks.md` to reflect:
 
 ```
 backlog/
-  TASK-INBOX.md              # Zero-friction capture (flat bullets, lean)
   ROADMAP.md                 # Sequencing strategy, order of operations
   feature/
     BACKLOG-FEATURE.md       # Feature ideas (sections, non-atomic work only)
@@ -1130,10 +1129,10 @@ active/
 
 ### File Purposes
 
-**TASK-INBOX.md** (backlog root):
+**USER-INBOX.md** (personal, gitignored: `.arc/user/{identity}/`, in the main checkout):
 
-- Unsorted captures, processed weekly → buckets/atomic/action
-- Flat bullets (no checkboxes), kept lean
+- Captures to route later, in `## Errand` and `## Work Unit` sections (ADR-021)
+- Drained between work units ([user-inbox.md](../../workflows/supplemental/user-inbox.md))
 
 **ROADMAP.md** (backlog root):
 
@@ -1146,7 +1145,7 @@ active/
 
 - GTD "Next Actions" - small, one-off tasks ready to execute
 - Checkbox format: "Active" and "Completed (This Week)" sections
-- Completed items deleted during weekly review
+- Completed items move to the quarter's `completed-atomic-{quarter}.md` archive
 
 **BACKLOG-FEATURE.md / BACKLOG-TECHNICAL.md**:
 
@@ -1164,13 +1163,14 @@ active/
 ### Processing Flow
 
 ```
-Capture → TASK-INBOX.md
-  ↓ Weekly Review
-  ├─ Atomic & ready? → active/ATOMIC-TASKS.md
-  ├─ Quick (<5min)? → Do immediately
-  ├─ Feature idea? → BACKLOG-FEATURE.md
-  ├─ Technical idea? → BACKLOG-TECHNICAL.md
-  └─ Uncertain? → Leave in inbox
+Capture → USER-INBOX.md (personal)
+  ↓ Drain, between work units (one table, approved, one pull request)
+  ├─ Errand, now? → its own errand (run-errand.md)
+  ├─ Atomic, later? → active/ATOMIC-TASKS.md
+  ├─ Feature idea? → BACKLOG-FEATURE.md or a plan
+  ├─ Technical idea? → BACKLOG-TECHNICAL.md or a plan
+  ├─ For an active task list? → stays for that work unit's session
+  └─ Kept by the Owner? → stays, with a reason
 
 Bucket files → plan-*.md (when scope clear) → prd-*.md (when ready, delete plan)
 ```
@@ -1195,22 +1195,17 @@ Atomic tasks run as errands ([run-errand.md](../../workflows/supplemental/run-er
 
 "Have we thought about X?" → Check 3 places:
 
-1. TASK-INBOX.md (unsorted captures)
+1. Your USER-INBOX.md (captures not yet drained)
 2. BACKLOG-FEATURE.md or BACKLOG-TECHNICAL.md (sections)
 3. plan-*.md or prd-*.md files (scoped work units)
 
 No separate index needed.
 
-### Weekly Review
+### Drain
 
-Core workflow (15-30 minutes):
-
-1. Process TASK-INBOX.md
-2. Review ATOMIC-TASKS.md (delete completed, reprioritize)
-3. Review bucket files (promote to notes/PRD when ready)
-4. Update PROJECT-STATUS.md
-
-See [weekly-review.md](../../workflows/supplemental/weekly-review.md) for full workflow.
+Between work units, the drain routes every inbox entry to its home, and offers a backlog pass: atomic tasks still
+relevant, bucket items ready for a plan or PRD, PROJECT-STATUS still accurate. See
+[user-inbox.md](../../workflows/supplemental/user-inbox.md).
 
 ### Design Decisions
 
@@ -1229,8 +1224,9 @@ See ADR-014 for complete rationale and alternatives considered.
 - [3_process-task-loop.md](../../workflows/3_process-task-loop.md) - Task execution workflow
 - [atomic-commit.md](../../workflows/supplemental/atomic-commit.md) - Commit creation and review
 - [manage-incidental-work.md](../../workflows/supplemental/manage-incidental-work.md) - Incidental work workflow
-- [weekly-review.md](../../workflows/supplemental/weekly-review.md) - Weekly backlog review process
+- [user-inbox.md](../../workflows/supplemental/user-inbox.md) - Capture and drain
 - [ADR-014](../../adr/adr-014-backlog-organization-gtd-inspired.md) - Backlog organization decision record
+- [ADR-021](../../adr/adr-021-capture-in-a-personal-inbox.md) - Capture in a personal inbox
 
 ---
 

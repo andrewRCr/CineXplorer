@@ -73,4 +73,4 @@ improved matching. Priority: HIGH (core value proposition of app)
 
 ## Unsorted
 
-<!-- Temporary holding area - sort into sections during weekly review -->
+<!-- Temporary holding area - sort into sections at the drain -->

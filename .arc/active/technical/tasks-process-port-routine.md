@@ -2,6 +2,7 @@
 
 **PRD:** none — scope in the Stage 1 assessment and the resume plan's Stage 1 (both kept outside the repository)
 **Created:** 2026-10-30
+**Completed:** 2026-10-31
 **Branch:** `technical/process-port-routine`
 **Base Branch:** `main`
 **Status:** Complete
@@ -285,16 +286,16 @@ rewritten as prose the agent follows rather than vendored.
 - Stacking stays documented (ADR-013, `manage-incidental-work.md`, the work-organization and task-list-formatting
   strategies, PROJECT-STATUS) until the migration pass, deliberately; the Owner's direction not to stack lives in
   working memory (Task 1.6.d)
-- The link check: every relative link and anchor outside `.arc/reference/archive/` resolves. The checker from the
-  review port is kept at `.arc/user/andrew/process-port-routine/linkcheck.py` until this work unit is archived
+- The link check: every relative link and anchor outside `.arc/reference/archive/` resolves, checked by a small local
+  script from the review port
 - Sources, at arc-framework `a49ebba40` (unchanged at `096b63f9d`):
   `.arc/system/workflows/arc/session-lifecycle/{session-loop,session-handoff}.md`,
   `.arc/system/workflows/arc/supplemental/{prepare-commits,drain-inbox}.md`,
   `.arc/system/.internal/skills/{arc-inbox,arc-housekeep,arc-errand}/SKILL.md`,
   `packages/arc-framework/templates/user/{SESSION-NOTES,WORKING-MEMORY,USER-INBOX}.md`, and
   `.arc/reference/strategies/arc/strategy-session-operations.md` § User Workspace Directory through § USER-INBOX
-- The current hook reads `CURRENT-SESSION.md`'s fields with a regex (`**Field**: value`, colon outside the bold) and
-  compares the whole Branch value, so an annotated value reads as a mismatch
+- The old hook read `CURRENT-SESSION.md`'s fields with a regex (`**Field**: value`, colon outside the bold) and
+  compared the whole Branch value, so an annotated value read as a mismatch
 - `.arc/user/` is gitignored: a linked worktree starts without it, so identity and anything flat resolve to the main
   checkout
 - `strategy-work-organization.md` (about 1,250 lines) contradicts itself on incidental branches in several places;

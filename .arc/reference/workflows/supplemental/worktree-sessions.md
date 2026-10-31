@@ -64,6 +64,28 @@ docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # n
   `npx --yes markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"`
 - **Backend tests and API types:** only through the worktree's own test stack (§ Test Stack)
 
+## Test Stack
+
+A worktree runs backend tests in its own test-only stack: `dev-db`, `redis` and an idle backend, with no published
+ports and a memory limit on each container (`infrastructure/docker-compose.test-stack.yml`). Every command names both
+compose files; the second one refuses to resolve until `infrastructure/.env` names the project.
+
+```bash
+S="-f infrastructure/docker-compose.yml -f infrastructure/docker-compose.test-stack.yml"
+docker compose $S up -d dev-db redis backend
+docker compose $S exec -T backend nice -n 15 pytest apps/            # the full suite
+docker compose $S exec -T backend nice -n 15 pytest apps/{app}/      # the apps a task touched
+docker compose $S down                                               # when the worktree goes idle
+```
+
+- **One test run at a time** across every stack on the machine, the primary's included.
+- **Down when idle;** `down -v`, which also deletes the stack's database, belongs to Removal.
+- **The first `up`** builds the backend image for this project from the shared layer cache; rebuild
+  (`docker compose $S build backend`) after backend requirements change.
+- **API types:** `npm run generate-types` in `frontend/` exports the schema from this checkout's own backend container
+  and regenerates `src/types/api.ts`, so a worktree's types come from its own code. That command names only the base
+  compose file and relies on `infrastructure/.env` naming the project, which provisioning confirms with `config`.
+
 ## Removal
 
 After the pull request merges, and before the branch is deleted: git refuses to delete a branch a worktree has checked

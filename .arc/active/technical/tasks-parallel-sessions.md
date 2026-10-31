@@ -156,7 +156,7 @@ Three facts drive the work:
     - Started by naming only `dev-db redis backend` on `up`; Caddy and the frontend never start in a test stack
     - A header comment says what the file is for and how it is started
 
-- [ ] **2.3 Write `worktree-sessions.md` § Test stack, with one route for API types**
+- [x] **2.3 Write `worktree-sessions.md` § Test stack, with one route for API types**
     - Up, test (`exec -T backend nice -n 15 pytest apps/`), down, every command naming both compose files; one test
       run at a time across all stacks, the primary's included; down when the worktree goes idle, `down -v` by
       Removal
@@ -176,6 +176,10 @@ Three facts drive the work:
       message at `ci.yml` line 368 stand as written
     - The first `up` builds the backend image for that project from the shared layer cache; rebuild after backend
       requirements change
+    - Built 2026-10-31: the script captures the export in memory and writes `openapi.json` only after it parses, so
+      no temporary file exists at all; the export runs with `DJANGO_CONSOLE_LOG_LEVEL=WARNING`, because the primary's
+      DEBUG console logging put an import-time line from `cinexplorer.auth` on stdout. On the primary, `openapi.json`
+      moved to the indented format with identical schema content, and `api.ts` regenerated unchanged
 
 - [ ] **2.4 Decide the primary stack's memory limits** (Owner decision, from 2.1's measurements)
     - Present the measured peaks and a recommendation: limits on the primary's `backend` and `dev-db` too, or none.

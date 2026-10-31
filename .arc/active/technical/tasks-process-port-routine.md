@@ -216,18 +216,20 @@ rewritten as prose the agent follows rather than vendored.
 
 ### **Phase 4:** Commits come in reviewable units
 
-- [ ] **4.1 Restructure `atomic-commit.md` into a simple and a complex path**
-    - Simple (one task or errand, clear scope): status, stage explicit paths, message, verify
-    - Complex (adapted from `prepare-commits.md`): when work accumulated, spans sessions, interleaves tasks, or mixes
-      complete and partial work; start from the notes' Uncommitted Work; map changes to tasks; update the task list;
-      plan by concern (one problem per commit, reversibility as the guard, tangled hunks together and noted); execute
-      and verify
-    - Task checkboxes ride with their content commit, replacing the separate task-list documentation commit; a task
-      whose work lands outside the branch (gitignored files, or an errand PR) is checked off in the next commit, its
-      note saying where the work landed
-    - The shared-docs pattern stays only for a strategy document edited by several independent code tasks, never in
-      a documentation-only work unit, and its subject names the document, not the tasks
-    - Subjects name the operation; task IDs go only in the `Context:` footer
+- [x] **4.1 Restructure `atomic-commit.md` into a simple and a complex path**
+    - Rewritten as plain sections (432 to 239 lines): choose the path; a shared Task Context check (branch, task
+      list, quality gates), which keeps the name `DEVELOPMENT-RULES.md` cites; the simple path (review, stage
+      explicit paths, confirm the staged stat, commit, verify); the complex path adapted from `prepare-commits.md`
+      (start from the notes' Uncommitted Work, map changes to tasks, plan by concern with reversibility as the guard
+      and tangled hunks noted, show the plan, execute, leave partial work uncommitted)
+    - Task Lists Ride with Content: checkboxes commit with their content; work landed outside the branch is checked
+      off in the next commit, or alone, its description saying where it landed; parent completion; atomic tasks
+      archive inside their errand. The Documentation Overlap Scenario and the stale atomic-archive step are gone
+    - The shared-docs pattern survives only for one strategy document edited by several independent code tasks,
+      never for checkboxes or a documentation-only work unit; its subject names the document
+    - Message format: the subject names the operation, with no task IDs or task-list names; submission through a
+      quoted heredoc. The footer forms are one table that mirrors the hook; the examples were rewritten to follow
+      the subject rule, and all nine pass `.githooks/commit-msg`
 
 - [ ] **4.2 Commit and PR surface elsewhere**
     - `strategy-work-organization.md`: example subjects that carry `(tasks-x.md Task N.N)` move it to the footer

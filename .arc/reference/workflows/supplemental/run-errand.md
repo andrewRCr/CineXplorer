@@ -20,10 +20,11 @@ Running an errand now, rather than capturing it for later, is the Owner's call.
 
 Never on a work unit's branch, and never from a checkout with uncommitted changes.
 
-- **In place, on the main checkout:** when it is clean. Needed when the errand's checks use the Docker stack, which
-  runs from the main checkout. The stack then serves the errand's files until you switch back.
-- **In a linked worktree:** otherwise, for example when the main checkout holds uncommitted work-unit changes or the
-  errand needs no Docker (documentation, CI, configuration).
+- **In place, on the main checkout:** when it is clean and the errand needs the browser stack. The stack then serves
+  the errand's files until you switch back.
+- **In a linked worktree:** otherwise, provisioned by [worktree-sessions.md](worktree-sessions.md) as far as its
+  checks need: for example when the main checkout holds uncommitted work-unit changes, the errand needs no Docker
+  (documentation, CI, configuration), or its backend tests can run in the worktree's own test stack.
 
 ## Steps
 
@@ -74,11 +75,13 @@ gh pr merge <number> --merge        # never --admin; GitHub deletes the remote b
 
 ### 6. Clean up
 
+A linked worktree is removed first, from the main checkout, by
+[worktree-sessions.md § Removal](worktree-sessions.md#removal). Then:
+
 ```bash
 git switch -                         # in place: back to the previous branch
-git worktree remove <path>           # or remove the worktree
 git branch -d {type}/{name}
-git fetch origin
+git fetch --prune
 ```
 
 An errand taken from the inbox leaves it once the pull request merges, and stays if the errand is abandoned.

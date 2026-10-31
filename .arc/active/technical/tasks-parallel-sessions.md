@@ -94,7 +94,7 @@ Three facts drive the work:
       among them, which `archive-completed.md` § 10 deletes anyway; the merged Review Log is the durable record, and
       the inbox and working memory stay in the main checkout (`user-inbox.md`)
 
-- [ ] **1.3 Point the existing guidance at worktree sessions**
+- [x] **1.3 Point the existing guidance at worktree sessions**
     - `QUICK-REFERENCE.md`: frontend lint and type-check (lines 149-170) and the frontend test command (line 257) gain
       their host commands beside the Docker ones; `docker ps | grep infrastructure` (lines 281 and 421) becomes the
       project-scoped `docker compose -f infrastructure/docker-compose.yml ps`, and the container counts at lines 32

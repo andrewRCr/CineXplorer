@@ -346,6 +346,10 @@ or `main`).
 
 ### 9) Delete Child Branch
 
+A work unit run in a linked worktree removes it first, from the main checkout
+([worktree-sessions.md § Removal](worktree-sessions.md#removal)): git refuses to delete a branch a worktree has checked
+out.
+
 ```bash
 # Delete locally
 git branch -d {child-branch-name}

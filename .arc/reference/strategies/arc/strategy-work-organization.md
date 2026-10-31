@@ -936,9 +936,9 @@ from `origin/main` ([run-errand.md](../../workflows/supplemental/run-errand.md))
 
 ```bash
 # On feature/user-authentication; the CSRF fix is an errand
-git worktree add -b fix/csrf-validation ../csrf-errand origin/main
-# fix, check, pull request, merge (run-errand.md), then:
-git worktree remove ../csrf-errand
+git worktree add -b fix/csrf-validation ~/dev/scratch/cinexplorer-worktrees/csrf-validation origin/main
+# provision (worktree-sessions.md), fix, check, pull request, merge (run-errand.md), then remove the
+# worktree from the main checkout (worktree-sessions.md, Removal)
 ```
 
 ### ❌ Don't: Use Redundant File Naming

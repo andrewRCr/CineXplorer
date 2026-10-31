@@ -53,17 +53,18 @@ For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
    - **NEVER run from host venv** - tests require Docker network access
 
 2. **Frontend Tests**: 100% pass rate
-   - Run via Docker (npm test)
+   - Run on host Node (`npm test` in `frontend/`) or in the primary's frontend container
 
 3. **Backend Linting**
    - Use Ruff with auto-fix capability
    - Options: host venv (fast) or Docker (consistent)
 
 4. **Frontend Linting**
-   - Run via Docker (npm run lint)
+   - Run on host Node (`npm run lint` in `frontend/`) or in the primary's frontend container
 
 5. **TypeScript Checking**
-   - Run via Docker (npm run type-check)
+   - Run on host Node (`npm run type-check` in `frontend/`, after `npm run typegen`) or in the primary's
+     frontend container
 
 6. **Python Type Safety**: Pyright with django-types for minimal Any usage
    - Use Pyright via npx: `npx pyright backend/apps/ backend/config/ --project backend`

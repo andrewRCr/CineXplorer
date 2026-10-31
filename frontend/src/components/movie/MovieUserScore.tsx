@@ -16,21 +16,21 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   userRatingOnly = false,
 }) => {
   // Helper to get TMDB badge variant (0-10 scale)
-  // Variant mapping: High (success) → Medium (info) → Low (warning)
+  // Traffic-light mapping: High (success) → Medium (warning) → Low (error)
   // Badge recipe provides solid backgrounds with on-* color pairs
-  const getTmdbBadgeVariant = (tmdbScore: number): "success" | "info" | "warning" => {
+  const getTmdbBadgeVariant = (tmdbScore: number): "success" | "warning" | "error" => {
     if (tmdbScore >= 7.5) return "success";  // High: Green
-    if (tmdbScore < 5.0) return "warning";   // Low: Yellow
-    return "info";                            // Medium: Blue
+    if (tmdbScore < 5.0) return "error";     // Low: Red
+    return "warning";                         // Medium: Yellow
   };
 
   // Helper to get user rating badge variant (1-10 scale)
-  // Uses same threshold-based semantic variants as TMDB scores
-  // Variant mapping: High (success) → Medium (info) → Low (warning)
-  const getUserRatingBadgeVariant = (rating: number): "success" | "info" | "warning" => {
+  // Uses same traffic-light variants as TMDB scores
+  // Traffic-light mapping: High (success) → Medium (warning) → Low (error)
+  const getUserRatingBadgeVariant = (rating: number): "success" | "warning" | "error" => {
     if (rating >= 8) return "success";
-    if (rating < 5) return "warning";
-    return "info";
+    if (rating < 5) return "error";
+    return "warning";
   };
 
   // Show only user rating

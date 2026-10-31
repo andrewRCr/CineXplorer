@@ -31,14 +31,6 @@
 
 <!-- UI/UX Enhancements -->
 
-- [ ] Revert MovieUserScore badge colors to traffic light scheme
-    - Change: `≥7.5` success (green), `5.0-7.4` warning (yellow), `<5.0` error (red)
-    - Current: success/info/warning doesn't communicate rating quality intuitively
-    - Files: `frontend/src/components/movie/MovieUserScore.tsx`
-    - Update tests if variant names change
-    - Rationale: Traffic light is universally understood for ratings; not implying subjective judgment,
-      just visual encoding of the community score number
-
 - [ ] Evaluate: Hide or alter MovieUserScore badge for movies with no/insufficient votes
     - **Problem:** Unreleased movies and movies with few votes display "0.0" or low scores that are
       misleading - a 0.0 implies a terrible rating when it's actually null/no data

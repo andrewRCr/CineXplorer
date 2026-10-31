@@ -18,15 +18,15 @@ export function CineXplorerExtensionsSection() {
               <Box bg="success" color="on-success" px={3} py={1} borderRadius="md" fontWeight="bold">
                 8.2
               </Box>
-              <Box bg="info" color="on-info" px={3} py={1} borderRadius="md" fontWeight="bold">
+              <Box bg="warning" color="on-warning" px={3} py={1} borderRadius="md" fontWeight="bold">
                 6.5
               </Box>
-              <Box bg="warning" color="on-warning" px={3} py={1} borderRadius="md" fontWeight="bold">
+              <Box bg="destructive" color="on-destructive" px={3} py={1} borderRadius="md" fontWeight="bold">
                 4.1
               </Box>
             </HStack>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              ≥7.5: success (green), 5.0-7.4: info (blue), &lt;5.0: warning (yellow)
+              ≥7.5: success (green), 5.0-7.4: warning (yellow), &lt;5.0: error (red)
             </Text>
           </Box>
 
@@ -98,7 +98,7 @@ export function CineXplorerExtensionsSection() {
         </VStack>
       </Box>
       <Text fontSize="xs" color="foreground/70" fontStyle="italic" px={2} mt={3} textAlign="center">
-        Note: TMDB community scores use status color tokens (success/info/warning) per MovieUserScore component thresholds.
+        Note: TMDB community scores use status color tokens (success/warning/destructive) per MovieUserScore component thresholds.
       </Text>
     </Box>
   );

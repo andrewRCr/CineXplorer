@@ -79,7 +79,7 @@ What am I styling?
 │  └─ Switch: Chakra Switch with recipe
 │
 └─ Movie rating/badge? → [Movie UI](#building-movie-specific-ui)
-   ├─ TMDB scores: Badge variants (success/info/warning)
+   ├─ TMDB scores: Badge variants (success/warning/error)
    ├─ User rating stars: imdb-gold token
    └─ Genre tags: Badge variant="neutral"
 ```
@@ -1103,23 +1103,24 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 ### Movie Ratings
 
-**TMDB Community Scores (threshold-based status colors):**
+**TMDB Community Scores (threshold-based traffic-light colors):**
 
 ```tsx
 // TMDB scores use status colors based on thresholds (0-10 scale)
-// ≥7.5: success (green), 5.0-7.4: info (blue), <5.0: warning (yellow)
+// ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
+// User-rating badges (1-10) use the same variants: ≥8 success, 5-7 warning, <5 error
 
 // High rating (≥7.5)
 <Badge variant="success">8.2</Badge>
 
 // Medium rating (5.0-7.4)
-<Badge variant="info">6.5</Badge>
+<Badge variant="warning">6.5</Badge>
 
 // Low rating (<5.0)
-<Badge variant="warning">4.1</Badge>
+<Badge variant="error">4.1</Badge>
 ```
 
-**Tokens:** Uses Badge recipe with status variants (`success`, `info`, `warning`)
+**Tokens:** Uses Badge recipe with status variants (`success`, `warning`, `error`)
 
 **Use cases:** TMDB community scores, aggregated ratings from external sources
 

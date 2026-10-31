@@ -480,8 +480,8 @@ Fast lookup cheat sheet for common token choices.
 | Error alert            | `destructive` / `on-destructive`                       | `<Alert.Root status="error">`                                  |
 | Info alert             | `info` / `on-info`                                     | `<Alert.Root status="info">`                                   |
 | TMDB score (high)      | `success` / `on-success`                               | `<Badge variant="success">8.2</Badge>` (≥7.5)                  |
-| TMDB score (medium)    | `info` / `on-info`                                     | `<Badge variant="info">6.5</Badge>` (5.0-7.4)                  |
-| TMDB score (low)       | `warning` / `on-warning`                               | `<Badge variant="warning">4.1</Badge>` (<5.0)                  |
+| TMDB score (medium)    | `warning` / `on-warning`                               | `<Badge variant="warning">6.5</Badge>` (5.0-7.4)               |
+| TMDB score (low)       | `destructive` / `on-destructive`                       | `<Badge variant="error">4.1</Badge>` (<5.0)                    |
 | User rating stars      | `imdb-gold`                                            | `<Text color="imdb-gold">★★★★☆</Text>`                         |
 | Genre tag              | `badge` / `on-badge`                                   | `<Badge variant="neutral">Action</Badge>`                      |
 | Secondary text         | `on-muted`                                             | `<Text color="on-muted">`                                      |
@@ -554,7 +554,7 @@ Fast lookup cheat sheet for common token choices.
 2. Button? → Check Component Styling Strategy for variant selection
 3. Surface? → background/layer-01/layer-02/layer-03
 4. Interactive text? → tertiary + tertiary-hover
-5. TMDB score? → Badge variant based on threshold (success/info/warning)
+5. TMDB score? → Badge variant based on threshold (success/warning/error)
 6. User rating stars? → imdb-gold (icon color)
 7. Neutral badge? → badge + on-badge
 8. Border? → border-strong-01 (or see Border Strategy)

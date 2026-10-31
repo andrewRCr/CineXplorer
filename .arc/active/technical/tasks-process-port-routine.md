@@ -247,6 +247,8 @@ rewritten as prose the agent follows rather than vendored.
       the scope the hook requires; that section states the rule, and the "Forget Task References" anti-pattern asks
       for the footer. Stacking narrative untouched
     - `pull-request-format.md` § override: bodies carry no hard line wraps, passed with `--body-file`
+    - `manage-incidental-work.md` (after verification): the task-list commit template and its example follow the
+      format and pass the hook (`Context: tasks-{slug}.md (planning)`); the `Related to:` line is gone
     - Local, gitignored: both `commit-format` skills (`.claude/skills/`, `.codex/skills/`) gained the subject rule
       and the quoted-heredoc submission; they still differ only in `allowed-tools`
     - Check: no task-referencing example subject left outside the archive; every rewritten subject passes the hook;

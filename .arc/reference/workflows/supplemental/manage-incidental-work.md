@@ -136,26 +136,27 @@ Markdown linting enforces line length limits, consistent formatting, and catches
 - Session handoffs have full context
 - Team visibility into priority shifts
 
-**Commit message format**:
+**Commit message format** ([atomic-commit.md § Message Format](atomic-commit.md#message-format)):
 
-```
-docs({current-branch}): create {brief-slug} incidental task list
+```text
+docs(arc): plan {what the incidental work fixes, in plain terms}
 
-Triggered by {discovery context during current feature/technical work}.
-Pausing {current work task} to address {critical issue}.
+- Found while {the work in hand}: {what surfaced, and why it matters}
+- {The current work} pauses until it lands
 
-Related to: tasks-{main-work-name}.md
+Context: tasks-{slug}.md (planning)
 ```
 
 **Example**:
 
-```
-docs(service-layer-modernization): create filter integration testing incidental task list
+```text
+docs(arc): plan filter integration test coverage
 
-Triggered by Task 3.5.2.3 investigation revealing critical test coverage gaps.
-Pausing service layer work to establish comprehensive filter testing.
+- Found while checking filter behaviour in the service layer: the
+  integration tests miss most filter combinations
+- Service-layer work pauses until the coverage is in place
 
-Related to: tasks-service-layer-modernization.md
+Context: tasks-filter-integration-testing.md (planning)
 ```
 
 ---
@@ -197,7 +198,7 @@ Example:
 3. Create task list: `.arc/active/incidental/tasks-<name>.md`, and its session notes,
    `.arc/user/{identity}/<name>/SESSION-NOTES.md`, from the skeleton in [session-handoff.md](session-handoff.md)
    (`Commit at Handoff` `[none yet]`)
-4. Work on branch, commit with task references
+4. Work on the branch, committing per [atomic-commit.md](atomic-commit.md)
 5. Complete the work through [archive-completed.md](archive-completed.md): verify it (§ 1), review the code
    (§ 5), open the PR against the parent branch with the review route the Owner chooses (§ 6), and merge with the
    Owner's approval (§ 8)
@@ -222,7 +223,6 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
 
 2. **Commits**: Follow [atomic-commit.md](atomic-commit.md)
    - Task references go in the `Context:` footer (`Context: tasks-{slug}.md (Task X.Y)`), never the subject
-   - Include relationship: `Related to: tasks-{slug}.md`
 
 3. **Quality gates**: Same zero-tolerance standards as feature/technical work
 

@@ -96,7 +96,7 @@ W=~/dev/scratch/cinexplorer-worktrees/{name}
 docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \
   config | grep '^name:'   # name: cinexplorer-{name}
 docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \
-  down -v
+  down -v --rmi local
 git worktree remove "$W"
 ```
 
@@ -106,7 +106,8 @@ work unit or [run-errand.md § 6](run-errand.md#6-clean-up)'s `git branch -d` fo
 
 - **The stack step** applies to a worktree whose `infrastructure/.env` names a project. Naming the worktree's own files
   by absolute path makes Compose read that worktree's `.env`; `config` must report its name before `down -v`, which
-  deletes that project's volumes. A worktree without the file never had a stack and skips the step.
+  deletes that project's volumes (`--rmi local` also removes the backend image built for it). A worktree without the
+  file never had a stack and skips the step.
 - **A refusal** from `git worktree remove` protects uncommitted or untracked work. Inspect it; never `--force`.
 - **What goes:** the checkout's gitignored files, among them the copied `.env` files, `node_modules`, and a work
   unit's session notes and review records, which [archive-completed.md](archive-completed.md) § 10 deletes anyway;

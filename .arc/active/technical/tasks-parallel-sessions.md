@@ -190,7 +190,7 @@ Three facts drive the work:
     - Decided 2026-10-31 by the Owner: no limits on the primary stack, to be reconsidered as the suite grows; the
       QUICK-REFERENCE note now gives the cap's peak and the test stack's limits
 
-- [ ] **2.5 Check two stacks side by side**
+- [x] **2.5 Check two stacks side by side**
     - With Phase 2 committed, fast-forward `t0-check` to this branch; in the primary, `config` with both compose files
       refuses (the guard)
     - With the primary stack up, start `t0-check`'s test stack: `ps` shows no published ports, `docker inspect` shows a
@@ -199,6 +199,11 @@ Three facts drive the work:
       unchanged
     - The primary's dev database counts (tables, users) and its five containers are unchanged after the run
     - Take the test stack down with `down -v`, both compose files named
+    - Checked 2026-10-31: the test stack came up in 16 s with no published ports and limits of 1.5 GiB, 512 MiB and
+      128 MiB; 802 passed in 35 s at 4 workers (peaks: its backend 474 MiB, its `dev-db` 109 MiB; the primary's
+      backend idle at 142 MiB); `npm run generate-types` there left both files unchanged; the primary kept 28 tables,
+      47 users, five containers and a 200 from 8444; `down -v` removed the stack's volumes and network only. Removal
+      gained `--rmi local`, since each stack builds its own backend image (1.37 GB)
 
 ### **Phase 3:** Checks run when their failure must be fixed
 

@@ -109,8 +109,8 @@ End every completion report with a one-line structured prompt naming the next st
 
 - `Proceed to Task X.Y?` (next task in the phase)
 - `Proceed to Phase N, Task N.1?` (the task just finished ends its phase)
-- `Proceed to completion?` (the verification phase is done; next is
-  [archive-completed.md](supplemental/archive-completed.md) from § 1b)
+- `Proceed to completion?` (the last task is done; next is
+  [archive-completed.md](supplemental/archive-completed.md), from § 1b after a verification phase, otherwise from § 1)
 
 A short affirmative ("y", "yes", "ok") as the first word advances to the named target. Other approval ("looks good",
 "proceed") also advances, unless the Owner raises a concern ("that's done, but before moving on..."): address the

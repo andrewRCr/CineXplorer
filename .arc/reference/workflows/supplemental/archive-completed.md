@@ -62,8 +62,8 @@ the same scope, as verification-review's independent companion describes; the Ow
 PRD, the task list with its criterion marks removed, and the diff, never the author's walk. Each finding names the
 criterion it fails. Check every finding against source, present the complete set as a
 [disposition-report](../../methods/disposition-report.md), and edit nothing until the Owner approves it. After the
-approved fixes land, offer a fix check; take any further pass only with approval. Record each pass in the task list's
-`## Review Log`.
+approved fixes land, offer a fix check; take any further pass only with approval. The loop ends when a pass converges
+or the Owner stops it. Record each pass in the task list's `## Review Log`.
 
 **Then:**
 
@@ -281,11 +281,14 @@ runs.
 Either way, findings follow the same flow: verify each against source, look for the same defect elsewhere, present
 the complete set as a [disposition-report](../../methods/disposition-report.md), and edit nothing until the Owner
 approves it. Land the approved fixes as one batch, then offer a fix check; take any further pass only with approval.
-Record each pass in the task list's `## Review Log`.
+The loop ends when a pass converges or the Owner stops it. Record each pass in the task list's `## Review Log`.
 
 ### 6) Push and Create PR
 
-**After code review settles:**
+**After code review settles,** draft the PR title and body, loading
+[pull-request-format](../../methods/pull-request-format.md) first: the title follows the commit subject grammar, and
+the body is written for a reader outside this repository's process. Show both to the Owner in the turn that asks to
+push and open the PR; the text posts under the Owner's account, so the Owner approves the words, not just the act.
 
 ```bash
 # Push branch to remote
@@ -294,9 +297,6 @@ git push -u origin {branch-name}
 # Create the PR; title and body follow pull-request-format
 gh pr create --base {parent-branch} --head {branch-name}
 ```
-
-**PR text:** Load [pull-request-format](../../methods/pull-request-format.md) before writing the title or body. The
-title follows the commit subject grammar; the body is written for a reader outside this repository's process.
 
 **Review on the PR:** Once CI is green and nothing more is to be pushed, recommend a review route in a sentence and
 wait for the Owner's choice. Never start one unprompted: hosted reviews are rate-limited and local ones spend tokens.
@@ -316,8 +316,8 @@ A hosted request reviews the head at that moment, so make it after the last push
 ### 7) Address PR Review Findings
 
 Follow [agent-pre-merge-review.md](agent-pre-merge-review.md): verify every finding against source, present the
-complete fix/defer/reject table, land approved fixes as one batch, then request at most one re-review. Further rounds
-are the Owner's call.
+complete fix/defer/reject table with the reply drafts, land approved fixes as one batch, and offer a local fix check.
+Any further pass, local or hosted, is the Owner's choice.
 
 If review changes what was delivered, update the completion doc to the final state, not the initial intent.
 
@@ -398,6 +398,10 @@ git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/{quarter}/i
 
 **Why git mv:** Preserves file history. Future developers can use `git log --follow` to see the file's
 full evolution even after it moved to archive.
+
+**Then delete the work unit's review folder** in the gitignored personal workspace
+(`rm -r .arc/user/{identity}/{name}/`): its kept versions, prompts and reports have served their purpose, and the
+task list's `## Review Log` is the durable record.
 
 ### 11) Update PROJECT-STATUS and ROADMAP
 

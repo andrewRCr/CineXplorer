@@ -90,7 +90,9 @@ Examples:
 
 - Context section explaining discovery and why now
 - Scope section (will do / won't do)
-- Phased task breakdown with standardized format
+- Phased task breakdown with standardized format, ending in a Verification phase (one task that loads
+  [archive-completed.md](archive-completed.md) § 1)
+- Success Criteria: observable outcomes, at least one with a runnable check
 - Implementation notes as work proceeds
 
 **Formatting standards**: Before creating the task list, review:
@@ -193,13 +195,11 @@ Example:
 2. Create branch off current: `git checkout -b incidental/<name>`
 3. Create task list: `.arc/active/incidental/tasks-<name>.md`
 4. Work on branch, commit with task references
-5. Complete work (all tasks done, quality gates pass)
-6. Run code review (local or two-pass)
-7. Create PR against parent branch: `gh pr create --base parent-branch`
-8. Merge PR (child → parent)
-9. Delete merged branch: `git branch -d incidental/<name>`
-10. Archive task list immediately: `mv` to `.arc/reference/archive/incidental/`
-11. Return to parent branch and continue work
+5. Complete the work through [archive-completed.md](archive-completed.md): verify it (§ 1), review the code
+   (§ 5), open the PR against the parent branch with the review route the Owner chooses (§ 6), and merge with the
+   Owner's approval (§ 8)
+6. Delete the merged branch and archive the task list immediately (§§ 9-12)
+7. Return to parent branch and continue work
 
 **Key rule**: Task list in `.arc/active/` ↔ Git branch exists
 
@@ -219,7 +219,7 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
 
 2. **Commits**: Follow [atomic-commit.md](atomic-commit.md)
    - Include task reference: `Complete incidental task {X.Y}`
-   - Include relationship: `Related to: .arc/active/incidental/tasks-{slug}.md`
+   - Include relationship: `Related to: tasks-{slug}.md`
 
 3. **Quality gates**: Same zero-tolerance standards as feature/technical work
 
@@ -233,13 +233,10 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
 
 **If incidental work has its own branch:**
 
-1. Complete all tasks (quality gates pass)
-2. Run code review (local or two-pass as appropriate)
-3. Create PR against parent branch
-4. Merge PR (child → parent)
-5. Delete merged branch: `git branch -d incidental/<name>`
-6. Archive task list **immediately** after branch deletion
-7. Return to parent branch and continue work
+1. Follow [archive-completed.md](archive-completed.md): verify (§ 1), code review (§ 5), PR with the Owner's chosen
+   review route (§ 6), merge with the Owner's approval (§ 8)
+2. Delete the merged branch and archive the task list **immediately** (§§ 9-12)
+3. Return to parent branch and continue work
 
 **If incidental work was on parent branch** (no separate branch):
 
@@ -262,7 +259,7 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
 **Files Changed**: {Count and key files}
 
 **Follow-Up Work** (if any):
-- `.arc/active/incidental/tasks-{follow-up-slug}.md` - {description}
+- `tasks-{follow-up-slug}.md` - {description}
 
 **Next Steps**:
 1. Resume {paused work} at Task {X.Y}
@@ -272,7 +269,7 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
 
 Follow [archive-completed.md](archive-completed.md) for archival procedure:
 
-- Archive to `.arc/reference/archive/incidental/`
+- Archive to `.arc/reference/archive/{quarter}/incidental/{NN}_{name}/`
 - **Archive timing**: Immediately when branch deleted (after merge) if work had separate branch
 - Update PROJECT-STATUS.md if applicable
 - Update CURRENT-SESSION.md to resume paused work

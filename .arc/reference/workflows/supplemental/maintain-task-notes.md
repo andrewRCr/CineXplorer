@@ -500,6 +500,7 @@ Use the checklists below as reference, but evaluate every section you encounter 
 - Scope (Will Do / Won't Do)
 - Tasks (phases with subtasks)
 - Success Criteria
+- Review Log (KEEP: the durable record of review passes; never trim it as scaffolding)
 
 **Handling Non-Standard Sections:**
 

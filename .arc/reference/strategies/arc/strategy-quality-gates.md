@@ -21,9 +21,9 @@ checks for key milestones.
 
 ## Tiered Quality Gate System
 
-### Tier 1: Fast Incremental (Per-Subtask)
+### Tier 1: Fast Incremental (Per-Task)
 
-**When:** After completing each subtask, before marking it complete.
+**When:** After completing each task, before marking it complete.
 
 **What:**
 

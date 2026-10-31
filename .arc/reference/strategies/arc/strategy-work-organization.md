@@ -356,10 +356,12 @@ standard [assess-boundary-fit](../../methods/assess-boundary-fit.md) applies at 
   surfaces in one work unit is the trigger to split it.
 - **Lines and files are secondary heads-up signals,** not thresholds: roughly more than a few hundred changed lines,
   more than 8-10 files, or work that fails the "reviewable in one sitting" test says look closer. Review catches far
-  fewer defects past a few hundred lines per increment. Tightly coupled work designed as a whole stays one work unit
-  even when large; the per-task review grain carries quality.
+  fewer defects past a few hundred lines per increment. Below the size marks, tightly coupled work designed as a
+  whole stays one work unit. Above them, coupling alone doesn't keep it whole: a work unit lands as one pull request,
+  and the per-task review grain doesn't carry a large unit's quality.
 - **Size marks:** past about 1,500 PRD lines, 1,000 task-list lines or six phases, or 10,000 forecast changed lines,
-  the boundary decision goes back to the Owner before planning continues.
+  the boundary decision goes back to the Owner before planning continues; keeping the unit whole then needs the
+  Owner's explicit decision and a recorded reason.
 
 A split becomes separate PRDs or task lists with their own branches, ordered by dependency where one builds on
 another (see [Stacked Branch Workflow](#stacked-branch-workflow)).
@@ -461,17 +463,17 @@ On Child Branch (Before PR):
 2. Create branch off current: git checkout -b incidental/<name>
 3. Create task list: .arc/active/incidental/tasks-<name>.md
 4. Work on branch, commit with task references
-5. Complete work (all tasks done, quality gates pass)
+5. Complete the tasks, then verify the work (archive-completed.md § 1)
 6. Run maintain-task-notes.md Mode 2 (clean task list and notes files)
-7. Create completion-{name}.md (executive summary, PR description draft)
+7. Create completion-{name}.md (source material for the PR description, not its text)
 8. Commit documentation changes to child branch
 
 Code Review & Merge:
-9. Run local code review (coderabbit review local)
-10. Create PR against parent: gh pr create --base parent-branch --head child-branch
-    (use completion doc as PR description template)
-11. Address PR review findings (update completion doc if outcomes changed)
-12. Merge PR (child → parent)
+9. Code review before the push (archive-completed.md § 5)
+10. Push and open the PR against the parent, its text per pull-request-format and shown
+    to the Owner first; review on the PR by the route the Owner chooses (§ 6)
+11. Address PR review findings (agent-pre-merge-review.md; update completion doc if outcomes changed)
+12. Merge PR (child → parent) with the Owner's approval (§ 8)
 
 On Parent Branch (After Merge):
 13. Delete merged branch: git branch -d incidental/<name>
@@ -628,8 +630,7 @@ git checkout -b incidental/filter-integration-testing
 # Create: .arc/active/incidental/tasks-filter-integration-testing.md
 git commit -m "test: add filter integration tests (tasks-filter-integration-testing.md Task 1.1)"
 
-# Complete filter testing work
-coderabbit review local  # Local review
+# Complete filter testing work: verify, code review, PR (archive-completed.md §§ 1, 5, 6)
 gh pr create --base technical/service-layer-modernization --head incidental/filter-integration-testing
 # Merge PR, delete branch
 git checkout technical/service-layer-modernization

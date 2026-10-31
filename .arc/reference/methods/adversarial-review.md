@@ -51,17 +51,19 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
   (§ Exit gate, § Fold verification), so the Owner bounds the loop. Runaway loops come from oversized work, which
   [assess-boundary-fit][assess-boundary-fit]'s size triggers catch at planning.
 - **Fold verification is on at planning stages**, as the default says, with its storage replaced: kept reviewed
-  versions, prompts and reports go in the work unit's gitignored folder `.arc/active/{type}/temp-review-{name}/`,
-  named by artifact, pass and round (`prd-pass1.md`, `tasks-pass2-round1.md`, `prompt-pass1.md`,
-  `report-pass1.md`) instead of content hashes. Delete the folder when the work unit is archived. Without the
-  copies, scope a fix check from the account alone and say so in its report.
-- **Pass record → Review Log.** Instead of `ADVERSARIAL-PASSES.md`, append one entry per pass and fix-check round to a
-  `## Review Log` at the end of the PRD (PRD-stage loops) or the task list (task-list, verification and code-review
-  loops): date, stage, `Pass N` or `Fix check, round R since pass N`, rubric, finding counts by verified grade, the
-  approved dispositions with their fold tags, the stop reason, and elapsed time. The commit that lands the reviewed
-  artifact summarizes each pass in one body line.
+  versions, prompts and reports go in the work unit's folder of the gitignored personal workspace,
+  `.arc/user/{identity}/{name}/adversarial-review/`, named by artifact, pass and round (`prd-pass1.md`,
+  `tasks-pass2-round1.md`, `prompt-pass1.md`, `report-pass1.md`) instead of content hashes. The folder is keyed by
+  the work unit's name, so one location serves every stage from the first PRD review on; delete it when the work
+  unit is archived. Without the copies, scope a fix check from the account alone and say so in its report.
+- **Pass record → Review Log.** Instead of `ADVERSARIAL-PASSES.md`, append one entry per pass and fix-check round:
+  date, stage, `Pass N` or `Fix check, round R since pass N`, rubric, finding counts by verified grade, the approved
+  dispositions with their fold tags, the stop reason, and elapsed time. Entries go to the task list's `## Review Log`;
+  before the task list exists they go to `REVIEW-LOG.md` in the work unit's workspace folder, and task generation
+  copies them into the task list. A PRD never carries them. The commit that lands a reviewed artifact summarizes each
+  pass in one body line, in plain terms ("Independent review: 2 rounds, 6 findings fixed").
 - **Orientation** is `.arc/reference/constitution/DEVELOPMENT-RULES.md`, `.arc/reference/agent/AGENTS.md` and
-  `.arc/reference/constitution/TECHNICAL-OVERVIEW.md`. The prompt template's `.arc/user/` line does not apply.
+  `.arc/reference/constitution/TECHNICAL-OVERVIEW.md`.
 - **Runner.** A Claude session spawns a fresh subagent per pass and fix check; the reviewer gets read-only tools.
   A Codex session without subagents runs the pass in a fresh Codex session given the same prompt. Either way the
   report names its runner, and a self-review is never presented as independent

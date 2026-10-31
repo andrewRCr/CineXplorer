@@ -1,7 +1,6 @@
 # Technical: Process Port, Review and Planning Methods
 
-**PRD:** none — scope in the Stage 1 assessment (`~/dev/scratch/cinexplorer-stage1/assessment-2026-10-30.md`) and the
-resume plan's Stage 1
+**PRD:** none — scope in the Stage 1 assessment and the resume plan's Stage 1 (both kept outside the repository)
 **Created:** 2026-10-30
 **Branch:** `technical/process-port-review`
 **Base Branch:** `main`
@@ -70,7 +69,8 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
     - No fixed pass cap (Owner): a loop runs to the exit gate; the method's sustained non-convergence valve returns
       it to the Owner. Runaway loops come from oversized work, which the sizing triggers catch at planning
     - Done as an override rather than a trim, keeping the default verbatim. Fold verification and fix checks stay
-      (they are the loop); kept versions, prompts and reports move to a gitignored `temp-review-{name}/` folder;
+      (they are the loop); kept versions, prompts and reports move to the gitignored personal workspace
+      (`.arc/user/{identity}/{name}/`);
       the pass record becomes a `## Review Log` in the PRD or task list, with elapsed time; the partitioned modes
       and attestation are not used
 
@@ -192,3 +192,12 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
   carries the surface language and documentation boundaries
 - [ ] `quality-gate-enforcer` is retired and `pragmatic-code-reviewer` has no edit tools
 - [ ] Markdown lint passes and `ci-ok` is green on the PR
+
+## Review Log
+
+- **2026-10-30 · Wiring review (Task 4.2) · Pass 1** · fresh read-only subagent · rubric: this list's Success
+  Criteria, `implementation-audit` applied to prose, and whether an agent without session context would run the
+  right method at each stage and stop where the Owner decides · 5 major, 10 minor · all 15 approved as fixes: F1, F2,
+  F4 and F8 `new-design` (review records move to the gitignored personal workspace and leave the PRD; PR text and
+  reply drafts are shown before posting), the rest `local-correction`; F9 allows a reasoned skip recommendation; F15
+  keeps the gate criterion as written · about 14 minutes · stop: fixes landed, fix check offered

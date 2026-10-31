@@ -139,13 +139,15 @@ Run [planning-review](../methods/planning-review.md) with `artifact: spec`:
    complete disposition table ([disposition-report](../methods/disposition-report.md)), and edit nothing until it is
    approved. After the approved fixes land, offer a fix check; a further pass needs its own approval. There is no
    fixed pass cap: the loop ends when a pass converges or the Owner stops it.
-4. **Review Log.** Record each pass and fix check in a `## Review Log` at the end of the PRD (adversarial-review's
-   override gives the fields). Kept versions, prompts and reports go in a gitignored `temp-review-{name}/` folder
-   beside the PRD.
+4. **Review record.** Record each pass and fix check in `REVIEW-LOG.md` in the work unit's folder of the gitignored
+   personal workspace, `.arc/user/{identity}/{name}/` (adversarial-review's override gives the fields); kept
+   versions, prompts and reports go in its `adversarial-review/` subfolder. Task generation copies the log into the
+   task list. The PRD itself carries no review record.
 5. **Post-settle reread.** Rerun spec-review's coherence slice over the settled PRD before committing it. The commit
-   summarizes each pass in one body line.
+   summarizes each pass in one plain-language body line ("Independent review: 2 rounds, 6 findings fixed").
 
-Small, well-understood work may take a light pass or skip the independent loop; say which, and why, when offering.
+For small, well-understood work the recommendation may be to skip the independent loop; give the reason when
+offering.
 
 ### Amending a PRD
 
@@ -154,6 +156,10 @@ amend the PRD, and add a dated line to an `## Amendments` section saying what ch
 with planning-review's `amendment` artifact: omit the independent pass for a wording-level change, offer it for a
 contained one, recommend it when the design changes. A success criterion is never reworded to match the work: mark
 the old one `[~]` with a note naming the amendment and append its replacement.
+
+Then carry the amendment into the task list: update the tasks it affects (adding or `[~]`-marking tasks as needed),
+and apply the same `[~]`-and-append change to the task list's copy of any changed criterion, since that copy is the
+one verification checks. Work resumes at the task that stopped.
 
 ### Picking Up a Parked PRD
 

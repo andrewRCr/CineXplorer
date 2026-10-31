@@ -43,6 +43,7 @@ Before finalizing any task list, verify:
 - [ ] No time estimates anywhere (no duration emojis, minute counts)
 - [ ] "Expect tests to FAIL initially" noted in test subtasks
 - [ ] "Tests should now PASS" noted after implementation subtasks
+- [ ] Last phase is Verification: one task that loads `archive-completed.md` § 1
 - [ ] Success Criteria at the bottom: observable outcomes, at least one with a runnable check, no gates or
   counts; then `## Review Log`
 

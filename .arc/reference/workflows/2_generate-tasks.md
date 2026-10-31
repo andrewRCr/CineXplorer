@@ -36,6 +36,9 @@ foundational documents for broader context:
 - **[PROJECT-STATUS](../constitution/PROJECT-STATUS.md)** - Current priorities and project state
 - **[TECHNICAL-OVERVIEW](../constitution/TECHNICAL-OVERVIEW.md)** - Architectural patterns and conventions
 
+If the PRD waited in `.arc/backlog/`, follow [1_create-prd.md § Picking Up a Parked PRD](1_create-prd.md#picking-up-a-parked-prd)
+first.
+
 ### Step 1.5: Simplify PRD Header Metadata
 
 PRDs written in advance (with dependencies) include extra metadata fields that are no longer needed
@@ -201,7 +204,7 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
 ```markdown
 # Task List: [Feature/Work Name]
 
-**PRD Reference:** `prd-[name].md`
+**PRD:** `prd-[name].md`
 **Created:** YYYY-MM-DD
 **Branch:** `feature/[feature-name]` or `technical/[work-name]`
 **Base Branch:** `main` (or parent branch if stacked)
@@ -224,6 +227,10 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
         - Implementation details here
     - [ ] **1.2.b Run tests - should now PASS**
     - [ ] **1.2.c Run quality gates**
+
+### **Phase 2:** Verification
+
+- [ ] **2.1 Verify the work** (load `archive-completed.md` § 1)
 
 ## Implementation Notes
 
@@ -269,11 +276,12 @@ Owner decides. Each pass is a fresh [adversarial-review](../methods/adversarial-
 [task-audit](../methods/task-audit.md) at full depth, grounding and executability, over the PRD and the finished task
 list. Findings follow the same flow as the PRD's review: verify against source, present the complete disposition
 table, edit nothing until it is approved, offer a fix check after fixes land, and take each further pass only with
-approval. There is no fixed pass cap.
+approval. There is no fixed pass cap: the loop ends when a pass converges or the Owner stops it.
 
 Nothing is deferred past this stage: there is no later planning stage to absorb a correction, so pin each one before
-committing. Record each pass in the task list's `## Review Log`, rerun the suite-coherence pass over the settled list,
-and summarize each pass in one line of the commit body.
+committing. Start the task list's `## Review Log` with the PRD stage's entries from the work unit's `REVIEW-LOG.md`
+(`.arc/user/{identity}/{name}/`), record each pass of this stage after them, rerun the suite-coherence pass over the
+settled list, and summarize each pass in one plain-language line of the commit body.
 
 ## Target Audience
 

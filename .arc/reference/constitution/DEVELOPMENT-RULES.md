@@ -404,7 +404,8 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
       task-list filename: "Task 8.3 - `tasks-oauth-headless-migration.md`"
     - **From one:** no relative-path links, even to stable docs; its own path changes when it moves
 
-  Code and PR text never reference them; a commit references them only in its `Context:` footer.
+  Code and PR text never reference them, except one commit-pinned link to the PRD from a PR whose diff contains it;
+  a commit references them only in its `Context:` footer.
 
 - **Write for the reader, not the author**: When removing or restructuring content, don't leave notes explaining
   what was removed or where it went; document what is. History belongs in commit messages and task-list completion

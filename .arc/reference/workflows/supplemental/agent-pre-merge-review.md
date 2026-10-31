@@ -45,9 +45,10 @@ A fix that would change the PRD's design goes through
 ### 3. Present the complete set, then edit
 
 Present every finding, valid or not, as one [disposition-report](../../methods/disposition-report.md): a header, the
-decision table, then a short section per finding (the issue, the recommendation, how it was verified). Show it as
-text, not a file path. Edit nothing until the Owner approves the complete set; a changed finding or disposition needs
-a fresh approval, and no fix is applied early.
+decision table, then a short section per finding (the issue, the recommendation, how it was verified, and for a
+hosted finding the draft reply). Show it as text, not a file path: replies post under the Owner's account, so the
+Owner approves their words along with the dispositions. Edit nothing until the Owner approves the complete set; a
+changed finding or disposition needs a fresh approval, and no fix is applied early.
 
 End with one approval question naming what approval releases, for example
 `Approve: 3 fixes → commit → push → reply to and resolve 5 threads?`.
@@ -70,7 +71,8 @@ them as the Owner, in first person or neutrally, per
 [pull-request-format § Other text posted under the account](../../methods/pull-request-format.md): no process terms
 (pass, fix check, disposition, task IDs), and a deferral or rejection gives its reason in the project's own terms.
 
-After the fix batch is pushed:
+Post the approved drafts after the fix batch is pushed, and after any fix check the Owner chose has settled, so a
+reply never claims a fix the check overturns:
 
 - **Fixed:** reply with what changed and the commit, then resolve
 - **Deferred:** reply with the reason and where the work went, then resolve

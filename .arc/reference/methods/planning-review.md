@@ -40,11 +40,12 @@ CineXplorer adaptation (`override-mode: extend`):
 
 - **Artifacts:** `spec` (the PRD), `task-list`, or `amendment` (a PRD change during implementation). There is no
   separate draft stage, and a spec's `form` is always `detailed`.
-- **No `Class`.** Recommend the independent pass for every PRD and task list; for an amendment, judge its size: omit
+- **No `Class`.** Recommend the independent pass for every PRD and task list; for small, well-understood work the
+  recommendation may be to skip it, with the reason. For an amendment, judge its size: omit
   for a wording-level change, offer neutrally for a contained one, recommend when it changes design. The Owner still
   decides at the fire-point. There is no fixed pass cap ([adversarial-review][adversarial-review]'s override).
-- **Pass record:** the Review Log and `temp-review-` folder from adversarial-review's override replace
-  `ADVERSARIAL-PASSES.md` and the personal workspace.
+- **Pass record:** the Review Log and workspace folder from adversarial-review's override replace
+  `ADVERSARIAL-PASSES.md`.
 - **Size:** before the PRD's review loop, and again when the task list is finished, run
   [assess-boundary-fit][assess-boundary-fit]; past its size marks the boundary decision returns to the Owner.
 

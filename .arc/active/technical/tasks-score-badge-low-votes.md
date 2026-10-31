@@ -113,12 +113,13 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
     - The "Hide or alter MovieUserScore badge" entry moved to `completed-atomic-2026-q4.md`, naming this branch
 
 - [ ] **1.3 Score-color documentation describes the below-threshold state**
-    - [ ] **1.3.a Frontend theme comments and theme-debug page**
-        - Replay: `badge.ts`, `types.ts` and `extensions.ts` comments state the 10-vote condition and list TMDB
-          scores below 10 votes among `neutral` / `badge` uses; `CineXplorerExtensionsSection.tsx` gains a "—"
-          swatch on `badge` / `on-badge` with its caption and footer note; `FeedbackStatusSection.tsx`'s note names
-          the neutral variant below 10 votes
-        - Checks: typegen, `npm run type-check`, ESLint, `verify-contrast`
+    - [x] **1.3.a Frontend theme comments and theme-debug page**
+        - `badge.ts`, `types.ts` and `extensions.ts` comments state the 10-vote condition and list TMDB scores below
+          10 votes among `neutral` / `badge` uses; `CineXplorerExtensionsSection.tsx` gains a "—" swatch on `badge` /
+          `on-badge` with its caption and footer note; `FeedbackStatusSection.tsx`'s note names the neutral variant
+          below 10 votes
+        - Replayed from the sandbox; the `types.ts` lines the colors change had already rewritten took the sandbox's
+          10-vote text with the colors change's "traffic-light" wording
 
     - [ ] **1.3.b Styling and data-quality strategies**
         - Replay: `strategy-component-styling.md` (decision tree, § Movie Ratings, `neutral` use cases),

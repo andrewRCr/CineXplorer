@@ -31,8 +31,9 @@ classify-work-unit.override.
 
 CineXplorer adaptation (`override-mode: extend`):
 
-- Apply the boundary tests. An Errand is an atomic task here (`.arc/active/ATOMIC-TASKS.md`); a work unit gets a PRD
-  and task list, or a task list alone for incidental work.
+- Apply the boundary tests. An Errand here is one bounded concern run on its own branch and pull request (an atomic
+  task from `.arc/active/ATOMIC-TASKS.md` is one source); a work unit gets a PRD and task list, or a task list alone
+  for incidental work.
 - `Class` is not used: skip its assignment, `[TBD]` resolution and the estimate-vs-realized ratchet. The workflows set
   each stage's review posture.
 
@@ -139,4 +140,4 @@ holds, ratchet _up_ to a newly realized floor, or correct an unsubstantiated est
 [create-spec]: ../workflows/1_create-prd.md
 [generate-tasks]: ../workflows/2_generate-tasks.md
 [work-org]: ../strategies/arc/strategy-work-organization.md
-[run-errand]: ../workflows/3_process-task-loop.md
+[run-errand]: ../workflows/supplemental/run-errand.md

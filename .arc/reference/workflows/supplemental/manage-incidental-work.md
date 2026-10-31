@@ -25,10 +25,10 @@ archival follows standard archive workflow.
 
 **Task lists are for work with distinct phases**, not just complex work.
 
-- **"Sequential steps toward one goal"** → Atomic task (even if 60-90 min, multiple files)
+- **"Sequential steps toward one goal"** → Errand (even if 60-90 min, multiple files; [run-errand.md](run-errand.md))
 - **"Distinct phases with different objectives"** → Task list
 
-Example: "Clean up auth tech debt" with 5 ordered steps touching 7 files is **one coherent concern** - stays atomic.
+Example: "Clean up auth tech debt" with 5 ordered steps touching 7 files is **one coherent concern** - stays an errand.
 
 Example: "Investigate performance issue" requiring profiling → analysis → design → implementation is
 **multiple phases** - needs task list.
@@ -41,7 +41,7 @@ Example: "Investigate performance issue" requiring profiling → analysis → de
 - ✅ Requires research → design → implement cycle (each phase produces different artifacts)
 - ✅ Would benefit from independent commits/reviews per phase
 
-### Keep as Atomic Task When
+### Keep as an Errand When
 
 - ❌ Single coherent concern, even if complex (multiple files, 30-90 min)
 - ❌ Sequential steps all serving one goal (ordered execution, not distinct phases)
@@ -54,8 +54,8 @@ Task lists add overhead: file creation, phase structure, branch lifecycle, archi
 when work genuinely has distinct phases that benefit from independent tracking. It's wasted ceremony for focused
 refactors that happen to touch multiple files.
 
-**Session duration is not a factor**: Well-structured atomic tasks with subtask checkboxes track progress across
-sessions just as effectively as task lists. Don't escalate to task list just because work might span sessions.
+**Session duration**: an errand finishes within one session. A concern that needs a plan spanning sessions is a work
+unit: an incidental task list, or a PRD ([run-errand.md](run-errand.md)).
 
 ---
 
@@ -70,7 +70,8 @@ Before creating:
 - **Estimate effort**: Is this 2+ hours, or <2 hours of focused execution?
 - **Check urgency**: Why fix now vs defer?
 
-**If work is <2 hours with known scope and sequential steps** → Use atomic task instead (see criteria above).
+**If work is <2 hours with known scope and sequential steps** → it is an errand (see criteria above): run it now or
+capture it in the inbox, as the Owner chooses ([run-errand.md](run-errand.md), [user-inbox.md](user-inbox.md)).
 
 If uncertain, ask for guidance on whether task list overhead is justified.
 
@@ -136,26 +137,27 @@ Markdown linting enforces line length limits, consistent formatting, and catches
 - Session handoffs have full context
 - Team visibility into priority shifts
 
-**Commit message format**:
+**Commit message format** ([atomic-commit.md § Message Format](atomic-commit.md#message-format)):
 
-```
-docs({current-branch}): create {brief-slug} incidental task list
+```text
+docs(arc): plan {what the incidental work fixes, in plain terms}
 
-Triggered by {discovery context during current feature/technical work}.
-Pausing {current work task} to address {critical issue}.
+- Found while {the work in hand}: {what surfaced, and why it matters}
+- {The current work} pauses until it lands
 
-Related to: tasks-{main-work-name}.md
+Context: tasks-{slug}.md (planning)
 ```
 
 **Example**:
 
-```
-docs(service-layer-modernization): create filter integration testing incidental task list
+```text
+docs(arc): plan filter integration test coverage
 
-Triggered by Task 3.5.2.3 investigation revealing critical test coverage gaps.
-Pausing service layer work to establish comprehensive filter testing.
+- Found while checking filter behaviour in the service layer: the
+  integration tests miss most filter combinations
+- Service-layer work pauses until the coverage is in place
 
-Related to: tasks-service-layer-modernization.md
+Context: tasks-filter-integration-testing.md (planning)
 ```
 
 ---
@@ -176,7 +178,8 @@ using a stacked branch workflow. See [ADR-013](../../adr/adr-013-adopt-stacked-b
 
 **Stay on current branch when:**
 
-- ❌ Atomic task or inline fix (single coherent concern, <2 hours)
+- ❌ Inline fix of the current work's concern (a bounded fix of another concern is an errand:
+  [run-errand.md](run-errand.md))
 - ❌ Work directly continues current branch's theme
 - ❌ No separate task list justified
 
@@ -193,8 +196,10 @@ Example:
 
 1. Discover work needing task list (distinct phases, 2+ hours, or scope uncertainty)
 2. Create branch off current: `git checkout -b incidental/<name>`
-3. Create task list: `.arc/active/incidental/tasks-<name>.md`
-4. Work on branch, commit with task references
+3. Create task list: `.arc/active/incidental/tasks-<name>.md`, and its session notes,
+   `.arc/user/{identity}/<name>/SESSION-NOTES.md`, from the skeleton in [session-handoff.md](session-handoff.md)
+   (`Commit at Handoff` `[none yet]`)
+4. Work on the branch, committing per [atomic-commit.md](atomic-commit.md)
 5. Complete the work through [archive-completed.md](archive-completed.md): verify it (§ 1), review the code
    (§ 5), open the PR against the parent branch with the review route the Owner chooses (§ 6), and merge with the
    Owner's approval (§ 8)
@@ -218,8 +223,7 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
    - Mark `[x]` immediately on completion
 
 2. **Commits**: Follow [atomic-commit.md](atomic-commit.md)
-   - Include task reference: `Complete incidental task {X.Y}`
-   - Include relationship: `Related to: tasks-{slug}.md`
+   - Task references go in the `Context:` footer (`Context: tasks-{slug}.md (Task X.Y)`), never the subject
 
 3. **Quality gates**: Same zero-tolerance standards as feature/technical work
 
@@ -272,7 +276,7 @@ Follow [archive-completed.md](archive-completed.md) for archival procedure:
 - Archive to `.arc/reference/archive/{quarter}/incidental/{NN}_{name}/`
 - **Archive timing**: Immediately when branch deleted (after merge) if work had separate branch
 - Update PROJECT-STATUS.md if applicable
-- Update CURRENT-SESSION.md to resume paused work
+- Point the paused work unit's session notes back at its next task
 - Commit with summary of completed incidental work
 
 ---
@@ -286,7 +290,7 @@ If incidental work spawns MORE incidental work:
 1. **Assess criticality**: Is new issue blocking current incidental work?
 2. **Get approval**: Don't auto-create nested incidental work
 3. **Document relationship**: Link nested task list to parent
-4. **Track in CURRENT-SESSION**: Show full dependency chain
+4. **Track in the session notes**: Show the full dependency chain
 
 Example hierarchy:
 

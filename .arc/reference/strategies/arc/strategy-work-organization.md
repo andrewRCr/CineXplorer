@@ -76,6 +76,8 @@ Use this strategy when:
 
 - **Planned work** (feature/ + technical/) → Gets PRDs, formal task lists, git branches
 - **Unplanned work** (incidental/) → Gets task lists, NO PRDs, gets branches if substantial (>30min, multiple subtasks)
+- **Errands** (one bounded concern outside the current work unit, such as an atomic task) → their own branch from
+  `origin/main` and pull request ([run-errand.md](../../workflows/supplemental/run-errand.md))
 
 **Secondary Distinction: USER-FACING vs TECHNICAL** (for planned work)
 
@@ -593,22 +595,24 @@ incidental/theme-system-modernization
 
 ### Commit Message Patterns
 
+The subject names the operation; the task reference goes in the `Context:` footer, never the subject
+([atomic-commit.md](../../workflows/supplemental/atomic-commit.md)).
+
 **Feature/Technical work:**
 
 ```bash
 feat(auth): add JWT token refresh endpoint
 refactor(api): extract user service layer
-test: add integration tests for authentication flow
-docs: update API authentication guide
+test(auth): add integration tests for authentication flow
+docs(api): update API authentication guide
 ```
 
-**Incidental work (with task reference):**
+**Incidental work (task reference in the footer):**
 
-```bash
-chore: enable strict TypeScript mode (tasks-chore-type-safety.md Task 1.1)
-refactor: extract test helper utilities (tasks-refactor-test-helpers.md Task 2.3)
-fix: correct CSRF middleware configuration (tasks-fix-csrf.md Task 1.2)
-test: add coverage for edge cases (tasks-test-coverage.md Task 3.1)
+```text
+fix(auth): correct CSRF middleware configuration
+
+Context: tasks-fix-csrf.md (Task 1.2)
 ```
 
 **Benefits of task references:**
@@ -628,7 +632,7 @@ git commit -m "refactor: extract MovieService class"
 # Discover testing gaps (substantial incidental work - needs task list)
 git checkout -b incidental/filter-integration-testing
 # Create: .arc/active/incidental/tasks-filter-integration-testing.md
-git commit -m "test: add filter integration tests (tasks-filter-integration-testing.md Task 1.1)"
+git commit -m "test(movie): add filter integration tests" -m "Context: tasks-filter-integration-testing.md (Task 1.1)"
 
 # Complete filter testing work: verify, code review, PR (archive-completed.md §§ 1, 5, 6)
 gh pr create --base technical/service-layer-modernization --head incidental/filter-integration-testing
@@ -663,8 +667,8 @@ gh pr create --base main --head technical/service-layer-modernization
     - Semantic clarity and natural cleanup discipline
     - Industry-aligned with "stacked development" pattern
 
-**Branches created before 2025-11-10** may not follow stacked model. This is expected and documented
-in their CURRENT-SESSION.md context. All new work uses v2.0 stacked model.
+**Branches created before 2025-11-10** may not follow the stacked model. All new work uses the v2.0 stacked
+model.
 
 **If examining historical branches:**
 
@@ -845,8 +849,8 @@ git merge technical/type-safety-improvements
 # Create .arc/active/incidental/tasks-fix-csrf-middleware.md
 
 # Fix the issue with conventional commit
-git commit -m "fix: correct CSRF middleware configuration (tasks-fix-csrf-middleware.md Task 1.1)"
-git commit -m "test: add CSRF protection tests (tasks-fix-csrf-middleware.md Task 2.1)"
+git commit -m "fix(auth): correct CSRF middleware configuration" -m "Context: tasks-fix-csrf-middleware.md (Task 1.1)"
+git commit -m "test(auth): add CSRF protection tests" -m "Context: tasks-fix-csrf-middleware.md (Task 2.1)"
 
 # Resume feature work
 git commit -m "feat(auth): complete login endpoint"
@@ -870,10 +874,10 @@ git commit -m "feat(auth): complete login endpoint"
 # Create .arc/active/incidental/tasks-refactor-test-helpers.md
 
 # Work through refactoring with conventional commits
-git commit -m "refactor: extract HTTP test helpers (tasks-refactor-test-helpers.md Task 1.1)"
-git commit -m "refactor: create user factory helpers (tasks-refactor-test-helpers.md Task 1.2)"
-git commit -m "refactor: consolidate mock factories (tasks-refactor-test-helpers.md Task 2.1)"
-git commit -m "test: update tests to use shared helpers (tasks-refactor-test-helpers.md Task 3.1)"
+git commit -m "refactor(tests): extract HTTP test helpers" -m "Context: tasks-refactor-test-helpers.md (Task 1.1)"
+git commit -m "refactor(tests): create user factory helpers" -m "Context: tasks-refactor-test-helpers.md (Task 1.2)"
+git commit -m "refactor(tests): consolidate mock factories" -m "Context: tasks-refactor-test-helpers.md (Task 2.1)"
+git commit -m "test(tests): use the shared helpers" -m "Context: tasks-refactor-test-helpers.md (Task 3.1)"
 
 # Resume technical work
 git commit -m "test: add integration test coverage"
@@ -911,48 +915,30 @@ discovered, not planned.
   incidental/        # ✓ Reactive quality work
 ```
 
-### ❌ Don't: Create Branches for All Incidental Work
+### ❌ Don't: Fold an Unrelated Fix into the Current Branch
 
-**Problem:** Creating git branches for every discovered issue.
+**Problem:** Committing a discovered fix of a different concern on the work unit's branch, or merging a fix branch
+into it, mixes concerns in its pull request.
 
 ```bash
-git checkout -b fix/csrf-token-validation
-git commit -m "fix: correct CSRF validation"
-git checkout feature/user-authentication
-git merge fix/csrf-token-validation
-
-git checkout -b refactor/extract-test-helper
-git commit -m "refactor: extract helper"
-git checkout feature/user-authentication
-git merge refactor/extract-test-helper
-
-# Branch juggling overhead!
+# On feature/user-authentication
+git commit -m "fix: correct CSRF validation"        # a different concern
+git commit -m "feat(auth): complete authentication flow"
 ```
 
 **Why it fails:**
 
-- Branch management overhead
-- Context switching costs
-- Doesn't scale for cascading discoveries
-- Slows velocity for solo developers
+- The pull request reviews two concerns at once
+- Neither change can be reverted or shipped on its own
 
-**✅ Do:**
+**✅ Do:** fix a concern of the current work inline; run a different, bounded concern as an errand on its own branch
+from `origin/main` ([run-errand.md](../../workflows/supplemental/run-errand.md)), or capture it for later.
 
 ```bash
-# Stay on feature/user-authentication branch
-
-# Create task list for traceability
-# .arc/active/incidental/tasks-fix-csrf.md
-
-git commit -m "fix: correct CSRF validation (tasks-fix-csrf.md Task 1.1)"
-
-# Create task list for refactoring
-# .arc/active/incidental/tasks-refactor-test-helpers.md
-
-git commit -m "refactor: extract test helper (tasks-refactor-test-helpers.md Task 1.1)"
-
-# Continue feature work
-git commit -m "feat(auth): complete authentication flow"
+# On feature/user-authentication; the CSRF fix is an errand
+git worktree add -b fix/csrf-validation ../csrf-errand origin/main
+# fix, check, pull request, merge (run-errand.md), then:
+git worktree remove ../csrf-errand
 ```
 
 ### ❌ Don't: Use Redundant File Naming
@@ -979,7 +965,7 @@ incidental/tasks-refactor-auth-service.md  # ✓ Conventional commit type
 
 ### ❌ Don't: Forget Task References in Commits
 
-**Problem:** Incidental commits without task references.
+**Problem:** Incidental commits without a task reference in the `Context:` footer.
 
 ```bash
 git commit -m "fix: CSRF validation"  # ❌ No context
@@ -995,8 +981,8 @@ git commit -m "refactor: extract helper"  # ❌ No traceability
 **✅ Do:**
 
 ```bash
-git commit -m "fix: correct CSRF validation (tasks-fix-csrf.md Task 1.1)"  # ✓ Traceable
-git commit -m "refactor: extract test helper (tasks-refactor-test-helpers.md Task 1.1)"  # ✓ Documented
+git commit -m "fix(auth): correct CSRF validation" -m "Context: tasks-fix-csrf.md (Task 1.1)"  # ✓ Traceable
+git commit -m "refactor(tests): extract test helper" -m "Context: tasks-refactor-test-helpers.md (Task 1.1)"  # ✓ Documented
 ```
 
 ### ❌ Don't: Mix Planned and Unplanned Workflows
@@ -1126,7 +1112,6 @@ Update `2_generate-tasks.md` to reflect:
 
 ```
 backlog/
-  TASK-INBOX.md              # Zero-friction capture (flat bullets, lean)
   ROADMAP.md                 # Sequencing strategy, order of operations
   feature/
     BACKLOG-FEATURE.md       # Feature ideas (sections, non-atomic work only)
@@ -1138,8 +1123,7 @@ backlog/
     prd-*.md                 # Work units ready for tasks
 
 active/
-  ATOMIC-TASKS.md            # Committed atomic tasks (checkboxes, ready to execute)
-  CURRENT-SESSION.md         # Session state
+  ATOMIC-TASKS.md            # Atomic tasks already recorded (no new entries, ADR-021)
   feature/
   technical/
   incidental/
@@ -1147,10 +1131,10 @@ active/
 
 ### File Purposes
 
-**TASK-INBOX.md** (backlog root):
+**USER-INBOX.md** (personal, gitignored: `.arc/user/{identity}/`, in the main checkout):
 
-- Unsorted captures, processed weekly → buckets/atomic/action
-- Flat bullets (no checkboxes), kept lean
+- Captures to route later, in `## Errand` and `## Work Unit` sections (ADR-021)
+- Drained between work units ([user-inbox.md](../../workflows/supplemental/user-inbox.md))
 
 **ROADMAP.md** (backlog root):
 
@@ -1162,14 +1146,16 @@ active/
 **ATOMIC-TASKS.md** (active root):
 
 - GTD "Next Actions" - small, one-off tasks ready to execute
+- Takes no new entries (ADR-021): a new errand waits in the personal inbox until it runs, and the entries already
+  here still run as errands
 - Checkbox format: "Active" and "Completed (This Week)" sections
-- Completed items deleted during weekly review
+- Completed items move to the quarter's `completed-atomic-{quarter}.md` archive
 
 **BACKLOG-FEATURE.md / BACKLOG-TECHNICAL.md**:
 
 - Section-based organization (e.g., "User Auth", "API Integration")
 - Plain bullets (no checkboxes)
-- Non-atomic work only (atomic tasks go to ATOMIC-TASKS.md)
+- Non-atomic work only (a one-off is an errand: it runs now or waits in the personal inbox)
 - Graduate to plan/PRD files when scope defined, then delete from bucket
 
 **plan-*.md and prd-*.md**:
@@ -1181,13 +1167,14 @@ active/
 ### Processing Flow
 
 ```
-Capture → TASK-INBOX.md
-  ↓ Weekly Review
-  ├─ Atomic & ready? → active/ATOMIC-TASKS.md
-  ├─ Quick (<5min)? → Do immediately
-  ├─ Feature idea? → BACKLOG-FEATURE.md
-  ├─ Technical idea? → BACKLOG-TECHNICAL.md
-  └─ Uncertain? → Leave in inbox
+Capture → USER-INBOX.md (personal)
+  ↓ Drain, between work units (one table, approved, one pull request)
+  ├─ Errand, now? → its own errand (run-errand.md)
+  ├─ Errand, later? → stays in the inbox until it runs (ATOMIC-TASKS.md takes no new entries)
+  ├─ Feature idea? → BACKLOG-FEATURE.md or a plan
+  ├─ Technical idea? → BACKLOG-TECHNICAL.md or a plan
+  ├─ For an active task list? → stays for that work unit's session
+  └─ Kept by the Owner? → stays, with a reason
 
 Bucket files → plan-*.md (when scope clear) → prd-*.md (when ready, delete plan)
 ```
@@ -1205,29 +1192,25 @@ Context: planning (atomic / no associated task list)
 
 Boundary categories: maintenance, refactor, documentation, planning
 
-**Rationale:** Atomic tasks aren't archived (deleted after completion), so no long-term traceability.
-Commit message IS the record.
+Atomic tasks run as errands ([run-errand.md](../../workflows/supplemental/run-errand.md)). The quarter's
+`completed-atomic-{quarter}.md` archive and the commit message are the record.
 
 ### Discovery Mechanism
 
 "Have we thought about X?" → Check 3 places:
 
-1. TASK-INBOX.md (unsorted captures)
+1. Your USER-INBOX.md (captures not yet drained)
 2. BACKLOG-FEATURE.md or BACKLOG-TECHNICAL.md (sections)
 3. plan-*.md or prd-*.md files (scoped work units)
 
 No separate index needed.
 
-### Weekly Review
+### Drain
 
-Core workflow (15-30 minutes):
-
-1. Process TASK-INBOX.md
-2. Review ATOMIC-TASKS.md (delete completed, reprioritize)
-3. Review bucket files (promote to notes/PRD when ready)
-4. Update PROJECT-STATUS.md
-
-See [weekly-review.md](../../workflows/supplemental/weekly-review.md) for full workflow.
+Between work units, the drain routes each work-unit entry to its tracked home, runs each errand or leaves it in the
+inbox, and offers a backlog pass: atomic tasks still relevant, bucket items ready for a plan or PRD, PROJECT-STATUS still
+accurate. See
+[user-inbox.md](../../workflows/supplemental/user-inbox.md).
 
 ### Design Decisions
 
@@ -1246,8 +1229,9 @@ See ADR-014 for complete rationale and alternatives considered.
 - [3_process-task-loop.md](../../workflows/3_process-task-loop.md) - Task execution workflow
 - [atomic-commit.md](../../workflows/supplemental/atomic-commit.md) - Commit creation and review
 - [manage-incidental-work.md](../../workflows/supplemental/manage-incidental-work.md) - Incidental work workflow
-- [weekly-review.md](../../workflows/supplemental/weekly-review.md) - Weekly backlog review process
+- [user-inbox.md](../../workflows/supplemental/user-inbox.md) - Capture and drain
 - [ADR-014](../../adr/adr-014-backlog-organization-gtd-inspired.md) - Backlog organization decision record
+- [ADR-021](../../adr/adr-021-capture-in-a-personal-inbox.md) - Capture in a personal inbox
 
 ---
 

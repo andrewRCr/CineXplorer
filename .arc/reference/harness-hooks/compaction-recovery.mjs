@@ -3,6 +3,11 @@
 // Compaction drops context silently, so after one the agent is told to re-read the
 // session and process documents and is given the live repository state.
 //
+// Session state lives in the gitignored personal workspace (.arc/user/README.md): a work
+// unit's SESSION-NOTES.md in the checkout that runs it, and WORKING-MEMORY.md and
+// USER-INBOX.md in the main checkout. A linked worktree resolves the main checkout through
+// git's common directory.
+//
 //   claude-session-start   Claude Code SessionStart(compact): inject immediately.
 //   codex-arm              Codex PreCompact: arm a one-shot marker for the session.
 //   codex-claim <event>    Codex PostToolUse / UserPromptSubmit: claim the marker
@@ -13,11 +18,21 @@
 
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, isAbsolute, join, relative } from "node:path";
 
 const MARKER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_LISTED_CHANGES = 10;
-const SESSION_FIELDS = ["Branch", "Task List", "Current Task", "Current Step", "Next Action"];
+const BASE_BRANCH = "main";
+const NOTE_FIELDS = [
+    "State",
+    "Branch",
+    "Task List",
+    "Next Task",
+    "Last Completed",
+    "Blockers",
+    "Next Action",
+    "Commit at Handoff",
+];
 
 try {
     main(process.argv.slice(2));
@@ -108,16 +123,14 @@ function reapStaleMarkers(root) {
 }
 
 function buildContext(root) {
-    const sessionPath = join(root, ".arc/active/CURRENT-SESSION.md");
-    const sessionFields = readSessionFields(sessionPath);
-    const taskList = sessionFields.get("Task List")?.match(/`?(\.arc\/[^\s`]+\.md)`?/)?.[1];
+    const branch = git(root, ["branch", "--show-current"]) || null;
+    const session = resolveSession(root, branch);
 
-    const reads = [
-        ".arc/active/CURRENT-SESSION.md",
-        ".arc/reference/constitution/DEVELOPMENT-RULES.md",
-        ".arc/reference/workflows/3_process-task-loop.md",
-    ];
-    if (taskList && existsSync(join(root, taskList))) reads.push(`${taskList} (overview and the current task)`);
+    const reads = [];
+    if (session.notesPath) reads.push(display(root, session.notesPath));
+    if (session.workingMemory) reads.push(display(root, session.workingMemory));
+    reads.push(".arc/reference/constitution/DEVELOPMENT-RULES.md", ".arc/reference/workflows/3_process-task-loop.md");
+    if (session.taskList) reads.push(`${display(root, session.taskList)} (overview and the current task)`);
 
     const lines = [
         "=== CineXplorer post-compaction recovery (legacy ARC) ===",
@@ -127,61 +140,156 @@ function buildContext(root) {
         "Use those documents as the procedural floor and the compacted summary only for the current work locus.",
         "",
         "Live repository state:",
-        ...liveState(root, sessionFields),
+        ...liveState(root, branch, session),
     ];
 
-    if (sessionFields.size > 0) {
-        lines.push("", "CURRENT-SESSION.md records:");
-        for (const [field, value] of sessionFields) lines.push(`- ${field}: ${value}`);
-    } else {
-        lines.push("", "CURRENT-SESSION.md is missing or records none of the expected fields.");
+    if (session.fields.size > 0) {
+        lines.push("", "The session notes record:");
+        for (const [field, value] of session.fields) lines.push(`- ${field}: ${value}`);
     }
-    return lines.join("\n");
+    return `${lines.join("\n")}\n`;
 }
 
-function readSessionFields(sessionPath) {
-    const fields = new Map();
-    if (!existsSync(sessionPath)) return fields;
-    let current = null;
-    for (const line of readFileSync(sessionPath, "utf8").split(/\r?\n/)) {
-        const match = line.match(/^\*\*([^*]+)\*\*:\s*(.+)$/);
-        if (match) {
-            current = SESSION_FIELDS.includes(match[1]) && !fields.has(match[1]) ? match[1] : null;
-            if (current) fields.set(current, match[2].trim());
-        } else if (current && /^\S/.test(line) && !/^[-#|>]/.test(line)) {
-            // A wrapped field value continues on the next unindented prose line.
-            fields.set(current, `${fields.get(current)} ${line.trim()}`);
-        } else {
-            current = null;
+// Branch {type}/{name} names the work unit; its notes sit under the identity folder of the
+// main checkout's workspace, and its task list anywhere under .arc/active/.
+function resolveSession(root, branch) {
+    const main = mainCheckout(root);
+    const session = {
+        branch,
+        candidate: branch?.includes("/") ? branch.slice(branch.indexOf("/") + 1) : null,
+        identity: resolveIdentity(main),
+        notesPath: null,
+        fields: new Map(),
+        workingMemory: null,
+        inbox: null,
+        taskList: null,
+    };
+
+    if (session.identity.name) {
+        const workspace = join(main, ".arc/user", session.identity.name);
+        session.workingMemory = existingPath(join(workspace, "WORKING-MEMORY.md"));
+        session.inbox = existingPath(join(workspace, "USER-INBOX.md"));
+        if (session.candidate) {
+            session.notesPath = existingPath(join(root, ".arc/user", session.identity.name, session.candidate,
+                "SESSION-NOTES.md"));
         }
+    }
+    if (session.notesPath) session.fields = readNoteFields(session.notesPath);
+
+    if (session.candidate) {
+        const named = session.fields.get("Task List")?.match(/tasks-[^\s`/]+\.md/)?.[0];
+        session.taskList = findTaskList(root, named ?? `tasks-${session.candidate}.md`);
+    }
+    return session;
+}
+
+function mainCheckout(root) {
+    const commonDir = git(root, ["rev-parse", "--path-format=absolute", "--git-common-dir"]);
+    return commonDir ? dirname(commonDir) : root;
+}
+
+function resolveIdentity(main) {
+    let folders = [];
+    try {
+        folders = readdirSync(join(main, ".arc/user"), { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => entry.name)
+            .sort();
+    } catch {
+        // No workspace at all reads the same as an empty one.
+    }
+    if (folders.length === 1) return { name: folders[0] };
+    if (folders.length === 0) return { problem: "no folder under .arc/user/ in the main checkout" };
+    return { problem: `several folders under .arc/user/ in the main checkout (${folders.join(", ")})` };
+}
+
+function findTaskList(root, fileName) {
+    try {
+        for (const entry of readdirSync(join(root, ".arc/active"), { withFileTypes: true })) {
+            if (!entry.isDirectory()) continue;
+            const path = join(root, ".arc/active", entry.name, fileName);
+            if (existsSync(path)) return path;
+        }
+    } catch {
+        // No active work at all.
+    }
+    return null;
+}
+
+function readNoteFields(notesPath) {
+    const fields = new Map();
+    for (const line of readFileSync(notesPath, "utf8").split(/\r?\n/)) {
+        if (line.startsWith("## ")) break;
+        const match = line.match(/^\*\*([^*]+):\*\*\s*(.*)$/);
+        if (match && NOTE_FIELDS.includes(match[1]) && !fields.has(match[1])) fields.set(match[1], match[2].trim());
     }
     return fields;
 }
 
-function liveState(root, sessionFields) {
-    const branch = git(root, ["branch", "--show-current"]) || "(detached HEAD)";
+function liveState(root, branch, session) {
     const upstream = git(root, ["rev-list", "--left-right", "--count", "@{upstream}...HEAD"]);
     const [behind, ahead] = upstream ? upstream.split(/\s+/) : [];
     const head = git(root, ["log", "-1", "--format=%h %s"]) ?? "(no commits)";
     const changes = (git(root, ["status", "--porcelain"]) ?? "").split("\n").filter(Boolean);
 
+    const tracking = upstream ? ` (ahead ${ahead}, behind ${behind} of upstream)` : " (no upstream)";
     const state = [
         `- Checkout: ${root}`,
-        `- Branch: ${branch}${upstream ? ` (ahead ${ahead}, behind ${behind} of upstream)` : " (no upstream)"}`,
+        `- Branch: ${branch ?? "(detached HEAD)"}${tracking}`,
         `- HEAD: ${head}`,
         `- Uncommitted changes: ${changes.length}`,
         ...changes.slice(0, MAX_LISTED_CHANGES).map((line) => `    ${line}`),
     ];
     if (changes.length > MAX_LISTED_CHANGES) state.push(`    ... and ${changes.length - MAX_LISTED_CHANGES} more`);
 
-    const recordedBranch = sessionFields.get("Branch")?.replace(/`/g, "");
-    if (recordedBranch && recordedBranch !== branch) {
+    state.push(`- Work unit: ${describeWorkUnit(session)}`);
+    if (session.identity.problem) state.push(`- Identity: ${session.identity.problem}`);
+    if (session.notesPath) state.push(`- ${describeHandoff(root, session.fields.get("Commit at Handoff"))}`);
+    if (session.inbox) state.push(`- Inbox: ${display(root, session.inbox)}`);
+
+    const recordedBranch = firstToken(session.fields.get("Branch"));
+    if (recordedBranch && branch && recordedBranch !== branch) {
         state.push(
-            `- MISMATCH: CURRENT-SESSION.md records branch ${recordedBranch}, but the checkout is on ${branch}.`
-                + " Follow session-init.md section 5: stop, report it, and ask the Owner.",
+            `- MISMATCH: the session notes record branch ${recordedBranch}, but the checkout is on ${branch}.`
+                + " Stop, report it, and ask the Owner (session-init.md).",
         );
     }
     return state;
+}
+
+function describeWorkUnit(session) {
+    if (!session.branch) return "none (detached HEAD)";
+    if (session.branch === BASE_BRANCH) return "none (between work units)";
+    if (session.notesPath) return session.candidate;
+    if (session.taskList) {
+        return session.identity.name ? `${session.candidate} (no session notes yet)` : session.candidate;
+    }
+    return `none (no work unit on ${session.branch})`;
+}
+
+function describeHandoff(root, recorded) {
+    const commit = firstToken(recorded);
+    if (!commit || commit.startsWith("[")) return "No handoff recorded";
+    const count = git(root, ["rev-list", "--count", `${commit}..HEAD`]);
+    return count === null
+        ? `Commit at Handoff ${commit} is not in this checkout's history`
+        : `Commits since the handoff (${commit}): ${count}`;
+}
+
+// The first backticked token, or the first word: "`technical/x` (from `main`)" names technical/x.
+function firstToken(value) {
+    if (!value) return null;
+    return value.match(/`([^`]+)`/)?.[1] ?? value.split(/\s+/)[0];
+}
+
+// Paths inside this checkout print relative; the main checkout's files print absolute.
+function display(root, path) {
+    const relativePath = relative(root, path);
+    return relativePath.startsWith("..") || isAbsolute(relativePath) ? path : relativePath;
+}
+
+function existingPath(path) {
+    return existsSync(path) ? path : null;
 }
 
 function git(cwd, args) {

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; Superseded in part by ADR-021 (inbox, weekly review and new atomic tasks)
 
 ## Context
 

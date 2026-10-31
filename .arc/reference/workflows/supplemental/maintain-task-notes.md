@@ -773,7 +773,7 @@ If matches remain, return to Step 3 and fix.
 **Check remaining context:** If less than ~120k tokens remaining, stop here:
 
 1. Commit cleanup work: `git add .arc/active/ && git commit -m "docs: archival cleanup for {name}"`
-2. Update CURRENT-SESSION.md: "Next action: Create completion doc (requires fresh context)"
+2. Set the session notes' Next Action: "Create completion doc (requires fresh context)"
 3. Completion doc creation happens next session
 
 **If sufficient context remains:** Proceed to archive-completed Step 3 (Create Completion Metadata).

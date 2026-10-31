@@ -1,431 +1,242 @@
-# Atomic Commit Workflow
+# Workflow: Atomic Commit
 
-**Note**: This workflow is for AI execution when explicitly instructed by the user.
-AI should NEVER initiate this workflow without user approval.  See DEVELOPMENT-RULES.md for complete protocols.
+**Purpose**: Commit finished work in reviewable units: one concern per commit, its task-list checkboxes with it, and a
+message the commit-msg hook accepts.
 
-Break changes into logical, atomic commits with clear messages.
+**When to use**: Whenever an agent commits, once the Owner has approved committing
+([DEVELOPMENT-RULES § Manual Commit Control](../../constitution/DEVELOPMENT-RULES.md#manual-commit-control)). The
+approval covers one commit, or a scope the Owner names ("commit each task as it lands").
 
-steps:
+## Choose the Path
 
-- name: Check Status
-  command: git status
-  description: Review all pending changes and verify current branch
+- **Simple:** one task or one errand, a clear scope, and nothing carried over from an earlier session.
+- **Complex:** work accumulated across tasks, uncommitted work from an earlier session (the notes' Uncommitted Work is
+  not empty), tasks interleaved in the same files, or complete and partial work mixed together.
 
-- name: Review Changes
-  command: git --no-pager diff --stat
-  description: Get overview of changed files and line counts
+When unsure, take the complex path.
 
-- name: Comprehensive Task Context Analysis
-  description: |
-  **MANDATORY**: Before committing, perform comprehensive analysis of ALL uncommitted changes
-  in the context of current task documentation:
+## Task Context
 
-  **Step 1: Identify All Changes**
-    - Run `git status` and `git --no-pager diff --name-only` to see all modified files
-    - Examine changes that might not be immediately obvious (config files, documentation, etc.)
-    - Look for task documentation files that may have been updated
+Both paths check this before staging:
 
-  **Step 1.5: Check for Multi-Session Uncommitted Work**
-    - Read CURRENT-SESSION.md for "Uncommitted Work" or similar section
-    - If present, this indicates changes spanning multiple sessions
-    - Identify which uncommitted changes are from:
-        - Previous session (documented in CURRENT-SESSION)
-        - Current session (not yet documented)
-    - **GOAL:** Separate commits for different work contexts (different sessions, tasks, or features)
-    - **PRAGMATIC EXCEPTION:** If changes are truly intermingled in same file/function:
-        - Using `git add -p` (interactive patch mode) may be overkill for minor overlap
-        - Can commit together but document the overlap in commit body
-        - Example: "Note: Also includes X from previous session (same file modified)"
-    - **Don't combine:** Work from different tasks/contexts just because it's easier
-    - Plan commits to respect original work boundaries and temporal context
+- **Branch:** the work unit's, or the errand's. A different concern never commits on the current branch
+  ([DEVELOPMENT-RULES § Leave It Cleaner](../../constitution/DEVELOPMENT-RULES.md#leave-it-cleaner-pre-existing-issue-protocol)).
+- **Task list:** the one in `.arc/active/*/` that the branch names. Each completed task is `[x]` with its description
+  updated to what was done; a parent is `[x]` only when every subtask is. Partial work stays `[ ]`.
+- **Quality gates:** what the work's tier calls for has passed
+  ([DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md#quality-gates)); work outside the task
+  loop runs at least Tier 1.
 
-  **Step 2: Find Relevant Task Documentation**
-    - Check `.arc/active/` for active task lists related to current work
-        - Feature work: `.arc/active/feature/`
-        - Technical work: `.arc/active/technical/`
-        - Incidental work: `.arc/active/incidental/`
-    - Also check `.arc/backlog/` for additional relevant tasks
-        - `.arc/backlog/feature/` and `.arc/backlog/technical/`
-    - Look for task files that reference modified files or related functionality
-    - Use `find .arc -name "*.md" -exec grep -l "pagination" {} \;` to find related tasks
-      (replace "pagination" with relevant keyword, e.g., "authentication", "api-layer", etc.)
-    - This task list reference will be used in Context: footer of commit message
+### Task Lists Ride with Content
 
-  **Step 3: Analyze Task Progress Context**
-    - Compare actual work completed against task documentation
-    - Identify which specific subtasks were completed by your changes
-    - Check if completing subtasks makes any parent tasks complete
-    - Verify that task status in documentation matches actual implementation
+- A task's checkbox and description commit with the content that completed it: never in a separate task-list commit,
+  and never split by hunk across commits to keep one checkbox per commit.
+- A task whose work lands outside the branch (gitignored files, or an errand's pull request) is checked off in the
+  branch's next commit, or in a commit of its own when nothing else is ready. Its description says where the work
+  landed.
+- A task with work both on the branch and outside it holds its on-branch changes until the outside part has landed,
+  then commits them with its check-off.
+- The commit that completes a parent's last subtask also marks the parent, and adds a line before the footer:
+  `Completes parent task X.0: {Parent Task Name}`.
+- An atomic task runs as an errand, and its archive move rides in the errand's pull request
+  ([3_process-task-loop.md § Atomic Task Completion Protocol](../3_process-task-loop.md#atomic-task-completion-protocol)).
 
-  **Step 4: Validate Milestone Context**
-    - Determine if changes complete major milestones (e.g., "Backend PoC Complete")
-    - Check if this is partial progress toward a larger goal vs. completion of a phase
-    - Identify remaining work required for full phase/milestone completion
+## Simple Path
 
-  **Step 5: Update Task Documentation**
-    - Mark completed subtasks as [x] in task files
-    - Mark parent tasks as [x] ONLY if ALL subtasks are complete
-    - Update any progress notes or status indicators
-    - Add any new tasks that were discovered during implementation
+1. **Review:** `git status` and `git --no-pager diff --stat`. Every change serves one concern; if not, take the
+   complex path.
+2. **Check the task context** (above).
+3. **Stage explicit paths**, never `git add -A` or `git add .`, then confirm the staging matches intent with
+   `git --no-pager diff --cached --stat`: a file staged earlier can slip in, and an intended one can be left out.
+4. **Commit** with a message in the [format below](#message-format).
+5. **Verify:** `git log --oneline -3` and `git status`.
 
-  **Step 5.5: Archive Completed Atomic Tasks**
-    - If ATOMIC-TASKS.md contains completed `[x]` items, they must be archived before committing
-    - Move completed tasks to `reference/archive/{year}-q{N}/completed-atomic-{year}-q{N}.md` (insert at top)
-        - Example: `reference/archive/2025-q4/completed-atomic-2025-q4.md`
-    - Add completion notes and branch info per ATOMIC-TASKS.md format
-    - **Rationale:** ATOMIC-TASKS.md should only contain pending work; completed items are archived
-    - **Exception:** If the atomic task is being completed in the current commit, archive it now
+## Complex Path
 
-  **Step 6: Determine Context Footer**
-    - Task list work: MUST use task list filename WITH parenthetical:
-        - (Task X.Y) for specific task work
-        - (incidental - discovered during Task X.Y) for incidental during task
-        - (planning) for task list maintenance
-    - Non-task-list work: MUST use boundary category WITH parenthetical:
-        - (no associated task list) - for emergent work, quick fixes
-        - (atomic / no associated task list) - for work from ATOMIC-TASKS.md or atomic emergent work
-        - Boundary categories: planning, documentation, maintenance, refactor
+1. **Start from the notes.** Read the session notes' Uncommitted Work. When it records commit-level detail (files
+   mapped to tasks, planned groupings), use it as the plan and check it against the working tree.
+2. **List every change:** `git status` and `git --no-pager diff --name-only`. Look past the obvious: configuration,
+   documentation and task lists change too.
+3. **Map changes to tasks:** for each change, which task it serves and whether that task is complete. A change that
+   serves no task is a different concern: raise it rather than fold it in.
+4. **Check the task context** (above), marking complete only what is.
+5. **Plan the commits by concern:**
+    - One problem solved per commit. Scope, not volume, sets the size: several tasks that solve one problem are one
+      commit.
+    - Split when the description needs separate sentences for separate problems.
+    - Reversibility is the guard: changes that would have to be reverted together belong together; changes that fail
+      or succeed independently split.
+    - Changes tangled in one file or function commit together, and the body notes the overlap. Use `git add -p` when
+      the hunks separate cleanly.
+    - Usual concerns, in a usual order: core functionality, configuration and infrastructure, tests, documentation,
+      formatting, dependencies, cleanup.
+    - Each task's checkbox goes in the commit that completes it.
+6. **Show the plan** (commits, files, messages) with the request for approval, unless an approval already covers it.
+7. **Execute** each commit as in the simple path, steps 3 and 4.
+8. **Verify:** `git log --oneline -10` and `git status`. What remains is partial work: it stays uncommitted, and the
+   notes' Uncommitted Work describes it at handoff
+   ([DEVELOPMENT-RULES § Session Context Management](../../constitution/DEVELOPMENT-RULES.md#session-context-management)).
 
-- name: Plan Commits
-  description: |
-  Organize changes into logical groups:
+### Shared-Docs Pattern
 
-  1. Core functionality (new features, major logic)
-  2. Configuration/Infrastructure (settings, configs)
-  3. Tests (test files, test configurations)
-  4. Documentation - Task list updates (use task list Context:)
-  5. Documentation - Boundary scenarios (use category Context: if no task list)
-  6. Code formatting (linting fixes, style)
-  7. Dependencies (package.json, requirements)
-  8. Cleanup (removals, refactoring)
+One narrow case keeps documentation out of the content commits: several independent code tasks each edit the same
+strategy document, and folding those edits into each code commit would tangle them. The strategy edits then go in
+one commit after the code commits; its subject names the document, and its footer names the tasks.
 
-  **Important: Documentation Overlap Scenario**
+It never applies to task-list checkboxes, which ride with their content, or to a documentation-only work unit, where
+the documents are the work and commits group by concern like any other.
 
-  When working on multiple numbered tasks (e.g., 6.1.d, 6.1.e, 6.1.f), the task list
-  markdown will ALWAYS be updated by all tasks. Strategy docs and other documentation
-  MAY also be updated by multiple tasks.
+## Message Format
 
-  In these cases, commit documentation LAST as a separate commit after all code commits:
+```text
+<type>(scope): imperative description of the operation
 
-  Example with tasks 6.1.d, 6.1.e, 6.1.g:
-    - Commit 1: Task 6.1.d code changes only
-    - Commit 2: Task 6.1.e code changes only
-    - Commit 3: Task 6.1.g code changes only
-    - Commit 4: docs(arc): update task list and strategy doc for tasks 6.1.d-g
+- Why the change was needed, or what it decides (1-2 lines per bullet)
+- Impact, if significant
 
-  This avoids artificial coupling of unrelated code changes and maintains true atomicity.
-  The documentation commit should reference all tasks it documents (Tasks X.Y-X.Z format).
+Context: tasks-{name}.md (Task X.Y)
+```
 
-- name: Create Atomic Commits
-  description: |
-
-  ## Commit Message Standard
-
-  All commits must follow this format:
-
-  ```
-  <type>(scope): Brief description (50-72 chars)
-
-  - Key change (1-2 lines)
-  - Rationale (1-2 lines)
-  - Impact if significant (1-2 lines)
-
-  Context: [task-reference or category]
-  ```
-
-  **Body limits:** 10-15 lines (20-25 for milestones), 1-2 lines per bullet
-
-  **Types:** `feat` `fix` `docs` `style` `refactor` `test` `chore` `perf` `config`
-
-  **Scope:** Functional area (auth, movie, api, tests, types, config, docs, arc, deps)
-
-  ## Context Footer Format
-
-  **With task list (most common):**
+- **Subject:** names the operation, in the imperative, starting lowercase, with a required scope. At most 72
+  characters; the hook warns past 50. It is legible without this repository's process vocabulary (which can still be
+  the subject matter, when the change is to the process documents) and carries no task or phase IDs or task-list
+  names: traceability goes in the `Context:` footer, and in the parent-completion line when there is one
+  ([DEVELOPMENT-RULES § Code Documentation Standards](../../constitution/DEVELOPMENT-RULES.md#code-documentation-standards)).
+- **Types:** `feat` `fix` `docs` `style` `refactor` `content` `test` `chore` `perf` `build` `ci` `config` `revert`.
+- **Scope:** the functional area, such as `auth`, `movie`, `api`, `tests`, `types`, `theme`, `ui`, `email`, `config`,
+  `deps`, `backlog` or `arc`.
+- **Body:** why and impact, not what the diff already shows. Wrap at about 72 characters; 15 lines at most, 25 for a
+  milestone. No checkbox lists, PRD references or task-list names.
+- **Tasks and phases:** "Task 3.6", never "Phase 3.6"; a phase is a bare integer.
+- **Submit** the message from a quoted heredoc so the shell can't reshape it, and never pass `--no-verify`:
 
   ```bash
-  Context: tasks-[exact-filename].md (Task X.Y)              # Single task
-  Context: tasks-[exact-filename].md (Tasks X.Y-X.Z)         # Sequential range
-  Context: tasks-[exact-filename].md (Tasks X.Y, A.B, C.D)   # Non-contiguous
-  Context: tasks-[exact-filename].md (planning)              # Task list maintenance only
-  ```
-
-  **Task completion with extra task list work:**
-
-  Use when completing tasks AND doing additional planning/maintenance work on the task list itself:
-
-  ```bash
-  Context: tasks-[exact-filename].md (Tasks X.Y, A.B; planning)      # Task completion + added new subtasks
-  Context: tasks-[exact-filename].md (Tasks X.Y-X.Z; maintenance)    # Task completion + restructured phases
-  ```
-
-  **When to use qualifiers:**
-    - **planning**: Completing tasks AND adding NEW tasks/subtasks that weren't there before
-    - **maintenance**: Completing tasks AND restructuring/enhancing/removing existing task content
-
-  **When NOT to use qualifiers:**
-    - Just marking completed tasks `[x]` - that's implicit in task completion (no qualifier needed)
-    - Code changes beyond the listed tasks - commit those separately (atomic commits principle)
-
-  **IMPORTANT:** If using a qualifier, the commit body MUST describe what the extra planning/maintenance work was.
-  The qualifier is a flag that says "there's more here," but the body provides the details.
-
-  **Incidental - discovered during task work:**
-
-  ```bash
-  Context: tasks-[parent-filename].md (incidental - discovered during Task X.Y)
-  ```
-
-  **Incidental - discovered during code review:**
-
-  ```bash
-  Context: tasks-[exact-filename].md (incidental - discovered during code review)
-  ```
-
-  Use for fixes/improvements discovered during local or PR code review (pre-merge refinements).
-
-  **Task list planning/maintenance:**
-
-  ```bash
-  Context: tasks-[exact-filename].md (planning)      # Adding/updating tasks in existing list
-  ```
-
-  **No associated task list (boundary scenarios):**
-
-  ```bash
-  # Standard pattern (emergent work, not pre-documented)
-  Context: planning (no associated task list)        # PRD creation, NEW task list generation
-  Context: documentation (no associated task list)   # PROJECT-STATUS, README, ARC framework updates
-  Context: maintenance (no associated task list)     # Dependencies, tooling, configuration
-  Context: refactor (no associated task list)        # Quality improvements, cleanup discovered during reviews
-
-  # Atomic pattern (from ATOMIC-TASKS.md or atomic emergent work)
-  Context: maintenance (atomic / no associated task list)     # Quick fixes, chores, routine upkeep
-  Context: refactor (atomic / no associated task list)        # Small code restructuring, helper extraction
-  Context: documentation (atomic / no associated task list)   # Quick doc updates
-  Context: planning (atomic / no associated task list)        # Small planning/strategy updates
-  ```
-
-  **Note:** Both patterns valid. Use "atomic / no associated task list" for:
-    - Work from `active/ATOMIC-TASKS.md`
-    - Emergent atomic work (small, one-off tasks)
-    - Emphasizes atomic nature vs complex task list work
-
-  **Parent task completion:**
-  Add single line before Context: footer:
-
-  ```bash
-  Completes parent task X.0: [Parent Task Name]
-  ```
-
-  ## Mandatory Rules
-
-  **Required:**
-
-    - ✅ Conventional Commits format: `<type>(scope): description`
-    - ✅ Subject 50-72 characters
-    - ✅ Context: footer with REQUIRED parenthetical (task reference OR boundary category)
-    - ✅ Task numbers: "Task 3.6" NOT "Phase 3.6"
-    - ✅ Body: 10-15 lines (20-25 max for milestones)
-
-  **Prohibited:**
-
-    - ❌ PRD references (use task list instead)
-    - ❌ Display names (use exact filenames: "tasks-pagination.md" NOT "pagination feature")
-    - ❌ Generic descriptions when referencing task lists ("theme system" → "tasks-theme-system-modernization.md")
-    - ❌ Checkbox lists in body
-    - ❌ Implementation details (code shows what, commits show why)
-    - ❌ "Phase X.Y" when referring to tasks
-
-  ## Complete Examples
-
-  ### Standard Single Task
-
-  ```
+  git commit -F - <<'MSG'
   fix(movie): resolve buffer pagination duplicate issue
 
   - Smart buffer now tracks consumed TMDB pages via metadata
-  - Prevents duplicate movies appearing across pagination
-  - Maintains consistent 20-result pages with restrictive filters
 
   Context: tasks-pagination-buffer-tracking.md (Task 2.1)
+  MSG
   ```
 
-  ### Multiple Tasks
+## Context Footer
 
-  ```
-  refactor(api): extract service layer for movie operations
+Every commit ends with one `Context:` line in a form the hook accepts:
 
-  - Extracted MovieService class with business logic
-  - Updated discover/search endpoints to use service layer
-  - Added comprehensive service layer test coverage
+| Work                        | Footer                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------- |
+| One task                    | `Context: tasks-{name}.md (Task X.Y)`; also `X.Y.a`, `X.Y.a.1`, and `X.Y.R` for revised work |
+| Several tasks               | `(Tasks X.Y-X.Z)`, `(Tasks X.Y.c-e)`, `(Tasks X.Y, A.B)`                                     |
+| Tasks and task-list changes | `(Task X.Y; planning)` adds tasks; `(Tasks X.Y-X.Z; maintenance)` restructures them          |
+| The task list only          | `(planning)` or `(maintenance)`                                                              |
+| Incidental to the work unit | `(incidental - discovered during Task X.Y)`, `(incidental - discovered during code review)`  |
+| No task list                | `Context: {category} (no associated task list)`                                              |
+| An errand or atomic task    | `Context: {category} (atomic / no associated task list)`                                     |
 
-  Context: tasks-api-layer-modernization.md (Tasks 3.1-3.4)
-  ```
+The categories are `planning`, `documentation`, `maintenance`, `refactor` and `content`. With `; planning` or
+`; maintenance`, the body says what changed in the task list; plain check-offs need no qualifier.
 
-  ### Parent Task Completion
+## Examples
 
-  ```
-  test(movie): verify rating filter accuracy in manual testing
+### One Task
 
-  - Tested rating ranges 1.0-3.5, 0-6.0, 8.5-10.0
-  - Verified accurate filtering with vote_count threshold
-  - All 368 backend + 351 frontend tests passing
+```text
+fix(movie): resolve buffer pagination duplicate issue
 
-  Completes parent task 3.0: Manual Testing Phase
+- Smart buffer now tracks consumed TMDB pages via metadata
+- Prevents duplicate movies appearing across pagination
+- Maintains consistent 20-result pages with restrictive filters
 
-  Context: tasks-filter-integration-testing.md (Task 3.6)
-  ```
+Context: tasks-pagination-buffer-tracking.md (Task 2.1)
+```
 
-  ### Incidental - Discovered During Task
+### Several Tasks, One Problem
 
-  ```
-  style(types): fix variable naming convention
+```text
+refactor(api): extract service layer for movie operations
 
-  - Changed MAX_BUFFER_PAGES to max_buffer_pages
-  - Resolves ruff N806 violation
+- Business logic moves from the views into MovieService
+- Discover and search endpoints call the service; views stay thin
 
-  Context: tasks-pagination-buffer-tracking.md (incidental - discovered during Task 2.1)
-  ```
+Context: tasks-api-layer-modernization.md (Tasks 3.1-3.4)
+```
 
-  ### Incidental - Discovered During Code Review
+### Parent Task Completion
 
-  ```
-  fix(recipes): correct radio slot documentation
+```text
+test(movie): verify rating filter accuracy in manual testing
 
-  - Fixed itemIndicator slot comment (was "indicator")
-  - Added explicit layer="01" props to auth form inputs
-  - Added TODO for MovieDetail button variant refactoring
+- Tested rating ranges 1.0-3.5, 0-6.0, 8.5-10.0
+- Filtering stays accurate with the vote_count threshold
 
-  Context: tasks-chakra-recipe-system-implementation.md (incidental - discovered during code review)
-  ```
+Completes parent task 3.0: Manual Testing Phase
 
-  ### Planning Work - New Task List
+Context: tasks-filter-integration-testing.md (Task 3.6)
+```
 
-  ```
-  docs(arc): create PRD for pagination improvements feature
+### A Task and a Task-List Restructure
 
-  - Analyzed current pagination limitations
-  - Defined solution approach with metadata tracking
-  - Generated initial task breakdown (7 phases)
+```text
+feat(theme): add the dropdown selected-state pattern
 
-  Context: planning (no associated task list)
-  ```
+- Selected items use the accent token in every dropdown
+- The remaining audits now run by domain, 10-15 components per session
+  instead of 50+; the pattern checklist grows from 8 to 13 patterns
 
-  ### Planning Work - Updating Existing Task List
+Context: tasks-theme-system-modernization.md (Task 6.1.h; maintenance)
+```
 
-  ```
-  docs(arc): add Task 3.7 for metadata persistence across navigation
+### Shared Strategy Document
 
-  - Discovered during tasks-navigation-filter-state-preservation.md (Task 3.3)
-  - Pagination metadata lost on component remount
-  - Task 3.7 adds URL persistence using filter param pattern
-  - Follows TDD structure
+```text
+docs(arc): update the testing strategy for service-layer tests
 
-  Context: tasks-pagination-buffer-tracking.md (planning)
-  ```
+- Service tests mock the TMDB client at its boundary, not the HTTP layer
+- View tests stay thin now that the logic lives in services
 
-  ### Task Completion with Extra Task List Work
+Context: tasks-api-layer-modernization.md (Tasks 3.1-3.4)
+```
 
-  ```
-  docs(arc): complete Phase 6 and enhance Phase 7 structure
+### Work That Landed Elsewhere
 
-  - Marked Task 6.1.h complete (dropdown selected state pattern)
-  - Marked parent Tasks 6.1, 6.2, and Phase 6 complete
-  - Removed unnecessary Task 6.2.e (Phase 8 grep check sufficient)
-  - Restructured Phase 7.1: pattern-focused → domain-focused audits
-  - Expanded pattern checklist from 8 to 13 comprehensive patterns
-  - Added border width standards, form control details, focus specs
+```text
+docs(arc): record the dependency upgrade merged on main
 
-  Rationale: Domain-focused structure enables natural session boundaries
-  with manageable context budgets (10-15 components per domain vs 50+).
+- The upgrade landed through its own pull request; this marks it done
 
-  Context: tasks-theme-system-modernization.md (Tasks 6.1.h, 6.2.a-d; maintenance)
-  ```
+Context: tasks-toolchain-refresh.md (Task 2.3)
+```
 
-  ### Repository Maintenance (Atomic)
+### Incidental Fix
 
-  ```
-  chore(deps): update Django to 5.2.8 security patch
+```text
+style(types): fix variable naming convention
 
-  - Updated Django from 5.2.7 to 5.2.8
-  - Addresses CVE-2024-XXXXX
-  - All tests passing post-update
+- Changed MAX_BUFFER_PAGES to max_buffer_pages
+- Resolves ruff N806 violation
 
-  Context: maintenance (atomic / no associated task list)
-  ```
+Context: tasks-pagination-buffer-tracking.md (incidental - discovered during Task 2.1)
+```
 
-  ### Quick Documentation Update (Atomic)
+### Planning
 
-  ```
-  docs(arc): update AGENTS.md with backlog structure
+```text
+docs(arc): plan metadata persistence across navigation
 
-  - Added backlog organization section
-  - Clarified TASK-INBOX.md and ATOMIC-TASKS.md purpose
-  - Updated discovery mechanism description
+- Pagination metadata is lost when the component remounts
+- Adds a task to keep it in the URL, as the filters already are
 
-  Context: documentation (atomic / no associated task list)
-  ```
+Context: tasks-pagination-buffer-tracking.md (planning)
+```
 
-  ## Commit Message Guidelines
+### Errand
 
-  **Focus on WHY and IMPACT:**
+```text
+chore(deps): update Django to 5.2.8 security patch
 
-    - ✅ "Prevents duplicate movies across pages" (impact)
-    - ✅ "Improves query performance by 40%" (measurable)
-    - ❌ "Changed function name" (code shows this)
+- Addresses a published security advisory
+- All tests pass after the update
 
-  **Provide context for future readers:**
-
-    - What problem existed?
-    - What solution was chosen?
-    - What impact does this have?
-
-  **Keep it scannable:**
-
-    - One idea per bullet
-    - 1-2 lines max per bullet
-    - Active voice
-
-  **Use exact filenames everywhere:**
-
-    - ✅ "Discovered during Phase 7.1.c audit (tasks-theme-system-modernization.md)"
-    - ❌ "Discovered during theme system audit" (too vague)
-    - ✅ "Implements pattern from tasks-api-layer-modernization.md (Task 3.2)"
-    - ❌ "Implements API layer pattern" (missing filename)
-    - **Why:** Enables easy `git log --grep` searches and unambiguous traceability
-
-  **Remember:** Commit messages should accurately reflect WHERE the project stands after the commit.
-  All commits should be independently understandable without extensive archaeology.
-
-- name: Verify Commits
-  command: git log --oneline -10
-  description: Review recent commit messages for clarity
-
-- name: Final Check
-  command: git status
-  description: Ensure all changes are committed and verify branch state
-
-notes: |
-
-## Planned Work Branch Practices
-
-- Verify you're on the correct feature/technical branch before committing
-- Branch naming: `feature/[name]` for user-facing work, `technical/[name]` for infrastructure
-- Incidental work commits to feature/technical branch (no separate branches)
-- Preserve commit history when merging (no squash merge)
-- Clean up branches after successful merge
-
-## Task Documentation Requirements
-
-- **MANDATORY**: Perform comprehensive task context analysis before every commit
-- Always include Context: footer with exact task list filename or boundary category
-- Mark parent tasks [x] when all subtasks complete, in same commit as final subtask
-- Verify task status in files matches actual implementation
-- Follow [Task Processing Workflow](../3_process-task-loop.md) completion protocol
-- See [Work Organization Strategy](../../strategies/arc/strategy-work-organization.md) for branch naming
-
----
-
-Commit messages should accurately reflect WHERE the project stands after the commit,
-not just what changed. This includes identifying remaining work and providing proper milestone context.
+Context: maintenance (atomic / no associated task list)
+```

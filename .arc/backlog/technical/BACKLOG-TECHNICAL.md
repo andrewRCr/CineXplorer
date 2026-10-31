@@ -9,7 +9,8 @@
 
 Then **delete** the item from this file (no strikethrough clutter).
 
-**This file contains ONLY non-atomic ideas** - simple one-offs go to `active/ATOMIC-TASKS.md`.
+**This file contains ONLY non-atomic ideas** - a simple one-off is an errand: it runs now or waits in the personal
+inbox until it runs.
 
 ---
 
@@ -77,4 +78,4 @@ section for portfolio site or README summarizing modernization lessons learned a
 
 ## Unsorted
 
-<!-- Temporary holding area - sort into sections during weekly review -->
+<!-- Temporary holding area - sort into sections at the drain -->

@@ -16,7 +16,7 @@ ADRs document the context, decision, and consequences of important architectural
 Each ADR follows this structure:
 
 - **Title**: Present-tense imperative (e.g., "Use discover endpoint for filtering")
-- **Status**: Proposed | Accepted | Deprecated | Superseded by ADR-XXX
+- **Status**: Proposed | Accepted | Deprecated | Superseded by ADR-XXX | Accepted; Superseded in part by ADR-XXX (part)
 - **Context**: Forces that led to this decision
 - **Decision**: What we chose to do
 - **Consequences**: What becomes easier/harder as a result

@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.16 | **Updated:** 2026-10-30 | **Hash:** `k3v7p2m9`
+**Version:** 2.17 | **Updated:** 2026-10-30 | **Hash:** `b8wobidt`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -78,7 +78,8 @@ For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 7. **Markdown Linting**
    - Use markdownlint-cli2 via npx with auto-fix
    - Config: `.markdownlint-cli2.jsonc` (MD034 bare URLs disabled only for temporal docs)
-   - Gitignored files automatically excluded (notes/, archive/notes/, CURRENT-SESSION.md)
+   - Excluded by the config's `ignores` list: the archive, the personal workspace (`.arc/user/*/`) and the root
+     README
 
 ### Quality Gate Failure Protocol
 
@@ -114,12 +115,14 @@ Judge by total attention cost, not raw fix time. An issue that needs a switch in
 is major whatever its fix time: surface it rather than leaving the current task.
 
 **A different concern** that only shares a file you're editing does not ride the current change, however small the
-fix. Propose where it goes, and the Owner decides:
+fix, and is never written into a tracked file on the current branch. Propose where it goes, and the Owner decides:
 
-- an atomic task in `.arc/active/ATOMIC-TASKS.md` for a single bounded fix
-- an incidental task list ([manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md)) for
-  multi-step work
-- the PRD or backlog plan whose work it belongs to
+- **Bounded** (one self-contained fix): run it now as an errand
+  ([run-errand.md](../workflows/supplemental/run-errand.md)), or capture it in the inbox
+  ([user-inbox.md](../workflows/supplemental/user-inbox.md)), where it waits until it runs
+- **Multi-step:** an incidental task list ([manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md)),
+  started now only if the Owner pauses the current work; otherwise capture it
+- Work that belongs to an existing PRD or backlog plan is captured with that document as its target
 
 Distinct concerns never share a PR either, even on a shared file: sequence them.
 
@@ -142,11 +145,14 @@ judgment.
 
 ## Session Documentation Control
 
-### CURRENT-SESSION.md Update Protocol
+Session state lives in the gitignored personal workspace ([README](../../user/README.md)).
 
-- **AI NEVER updates CURRENT-SESSION.md** without explicit user instruction
-- CURRENT-SESSION.md is a handoff document only updated at session end when instructed
-- AI should report changes and progress, but user decides when/how session docs are updated
+- **Pointer fields** at the top of the work unit's `SESSION-NOTES.md`: the agent updates them at every task and phase
+  stop and says so in the report. They need no approval
+- **Notes sections:** written only at a handoff the Owner asks for
+  ([session-handoff.md](../workflows/supplemental/session-handoff.md)), replaced whole
+- **Working memory:** an entry is proposed when it arises, at the latest at the next report, and added only on the
+  Owner's approval; entries are pruned at each handoff
 
 ## Verification Protocol
 
@@ -202,37 +208,23 @@ prevents rework when non-standard approaches are caught in review.
 
 ## Session Context Management
 
-**Principle:** Work quality must never be compromised due to context/resource limitations. Session handoffs are
-managed by the user.
+**Principle:** Work quality never bends to context pressure. Sessions are bounded: they start from the session notes
+and end with a handoff the Owner asks for.
 
-**Core Protocol:**
+- **Hand off at natural boundaries:** a finished work unit or phase, or a clean commit point with no immediate next
+  step. Also hand off when quality slips (losing track of earlier decisions, needing more correction than before): a
+  fresh session with good notes beats a long degraded one
+- **Compact and recover between boundaries:** when context runs low mid-work, let the harness compact; the recovery
+  hook names what to re-read, and the summary covers only the current work locus. When the pressure arrives at a
+  boundary, hand off instead
+- **Context monitoring is the Owner's:** the harness shows usage, and the agent's own estimate is a backstop, not the
+  trigger
+- Finish the current edit before stopping; **never** degrade work quality or make "efficiency" trade-offs because of
+  context size
 
-- Work at full specification throughout the session
-- When approaching context limits (agent-specific thresholds in agent files like CLAUDE.md):
-  1. Complete current work item (don't stop mid-edit)
-  2. Evaluate remaining work scope
-  3. **Stop and ask user** how to proceed with summary of completed/remaining work
-  4. User decides: continue, commit completed work then continue, or begin handoff
-- **Never** degrade work quality or change approach due to context/resource pressure
-- **Never** make "efficiency" tradeoffs based on context window size
-
-**Ideal end-of-session workflow:**
-
-1. Use atomic-commit workflow to commit all **complete** work
-2. Leave any **partial** work uncommitted
-3. Perform session handoff documenting partial work state
-
-**Backup workflow** (when insufficient resources remain for commits):
-
-- Session handoff captures commit-message-level notes
-- Next session executes commits from documented state
-- Less ideal but functional fallback
-
-**Why this matters:** Incomplete work done properly with good handoff is better than complete work done sloppily.
-Context management is user responsibility - AI focuses on maintaining work quality standards.
-
-**Agent-specific details:** See agent-specific files (CLAUDE.md, GEMINI.md, etc.) for context window thresholds
-and monitoring protocols.
+**Ending a session:** commit complete work ([atomic-commit](../workflows/supplemental/atomic-commit.md)), leave partial
+work uncommitted, and hand off with the notes describing it. When commits can't happen first, the notes' Uncommitted
+Work carries commit-level detail and the next session commits from it.
 
 ## Core Document Reference Protocol
 

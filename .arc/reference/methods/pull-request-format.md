@@ -44,7 +44,10 @@ CineXplorer adaptation (`override-mode: extend`):
   hosted-review results). The design link is the one exception: when the diff contains a PRD, link it at a commit.
 - **No host template, contributing guide or security policy** exists in this repository or an owner `.github`
   repository (checked 2026-10-30), so the defaults govern.
-- An Errand here is an atomic task; the work-unit decision budget applies to task-list work.
+- An Errand here is one bounded concern with its own pull request; the work-unit decision budget applies to
+  task-list work.
+- **Bodies carry no hard line wraps.** GitHub renders a single newline in a pull-request body as a line break, so
+  each paragraph and list item is one line. Write the body to a file and pass it with `gh pr create --body-file`.
 
 ## pull-request-format.default
 
@@ -205,6 +208,6 @@ uses the full body guidance above. Follow [deliver-stack.md][deliver-stack] for 
 ---
 
 [commit-format]: ../workflows/supplemental/atomic-commit.md
-[run-errand]: ../workflows/3_process-task-loop.md
+[run-errand]: ../workflows/supplemental/run-errand.md
 [integrate-work-unit]: ../workflows/supplemental/archive-completed.md
 [deliver-stack]: README.md#not-used-here

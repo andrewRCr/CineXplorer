@@ -69,6 +69,7 @@ It ensures consistent execution, quality control, and documentation of work.
      - [ ] Task list markdown file edited and saved
      - [ ] Task marked [x] (or [~] with its reason) in task list
      - [ ] Task description updated to reflect actual work done; Success Criteria untouched
+     - [ ] Session notes' pointer fields updated
      - [ ] Ready to generate user-facing completion report
      ```
 
@@ -112,6 +113,10 @@ End every completion report with a one-line structured prompt naming the next st
 - `Proceed to completion?` (the last task is done; next is
   [archive-completed.md](supplemental/archive-completed.md), from § 1b after a verification phase, otherwise from § 1)
 
+Before every stop, update the pointer fields of the work unit's session notes (Last Completed, Next Task, Next
+Action; State and Blockers when they change) and say so in the report
+([DEVELOPMENT-RULES § Session Documentation Control](../constitution/DEVELOPMENT-RULES.md#session-documentation-control)).
+
 A short affirmative ("y", "yes", "ok") as the first word advances to the named target. Other approval ("looks good",
 "proceed") also advances, unless the Owner raises a concern ("that's done, but before moving on..."): address the
 concern first. Approval to proceed is not approval to commit.
@@ -125,7 +130,9 @@ no cause, say so and ask for direction.
 When the Owner asks for continuation through a named set of tasks ("work through 5.2-5.4 while I'm away"), the stops
 between those tasks are deferred. The Owner names the scope; the agent never opens one on its own. Within the scope,
 complete each task fully (Tier 1 checks, `[x]`, description updated), then continue without waiting. At the end, leave
-the task list updated, gates passing and the changes uncommitted: the Owner decides commit boundaries on return.
+the task list updated and gates passing. Changes stay uncommitted, and the Owner decides commit boundaries on return,
+unless the scope said to commit each task as it lands; then each task's commit carries its checkbox
+([atomic-commit.md](supplemental/atomic-commit.md)).
 
 **Agent-proposed batch.** At a parent task's start, the agent may propose its subtasks as one increment, and the
 Owner's approval opens the scope:
@@ -175,13 +182,19 @@ immediately. **Quick decision tree**:
 - ✅ Scope likely to expand via discovery (investigation-heavy)
 - ✅ Estimated 2+ hours OR requires research → design → implement cycle
 
-**Keep as atomic task (or fix inline) when:**
+**Keep as an errand when:**
 
 - ❌ Single coherent concern, even if complex (multiple files, 30-90 min)
 - ❌ Sequential steps all serving one goal
 - ❌ Scope is known/bounded after initial analysis
 
-**Key distinction:** "Sequential steps toward one goal" = atomic. "Distinct phases with different objectives" = task list.
+**Key distinction:** "Sequential steps toward one goal" = an errand. "Distinct phases with different objectives" = task
+list.
+
+Either way, a concern different from the current task leaves the current branch: it runs now (an errand, or an
+incidental task list if the Owner pauses the current work) or is captured in the inbox
+([user-inbox.md](supplemental/user-inbox.md)). See
+[DEVELOPMENT-RULES § Leave It Cleaner](../constitution/DEVELOPMENT-RULES.md#leave-it-cleaner-pre-existing-issue-protocol).
 
 ### Complete Workflow
 
@@ -248,10 +261,14 @@ the completion report. The TodoWrite item serves as a checklist reminder.
 
 ## Atomic Task Completion Protocol
 
-**For tasks tracked in:** `active/ATOMIC-TASKS.md`
+**For tasks tracked in:** `active/ATOMIC-TASKS.md`, which takes no new entries
+([ADR-021](../adr/adr-021-capture-in-a-personal-inbox.md)): new one-off work waits in the personal inbox until it runs
+([user-inbox.md](supplemental/user-inbox.md)).
 
 Atomic tasks are small, one-off work items (fixes, chores, quick refactors) that don't require formal task lists with
-phases and subtasks. They follow a simplified completion protocol.
+phases and subtasks. Each runs as an errand, on its own branch from `origin/main` with its own pull request
+([run-errand.md](supplemental/run-errand.md)); the steps below happen inside it, and the archive move rides in the
+errand's pull request.
 
 ### Completion Workflow
 

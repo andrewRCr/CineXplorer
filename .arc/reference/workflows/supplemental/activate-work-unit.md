@@ -77,16 +77,12 @@ Edit `.arc/backlog/ROADMAP.md`:
 2. Update any plan file references to point to active task list
 3. Add "In Progress" indicator or similar
 
-### Step 7: Update CURRENT-SESSION.md
+### Step 7: Create the Session Notes
 
-Edit `.arc/active/CURRENT-SESSION.md`:
-
-1. Update **Branch** to feature branch name
-2. Update **Task List** path to active location
-3. Update **Following Task List** to `Yes`
-4. Update **Current Task** to first task (e.g., "Task 1.1 (line XX)")
-5. Update **Next Action** to describe first task
-6. Clear or update session context as appropriate
+Create `.arc/user/{identity}/{name}/SESSION-NOTES.md` (gitignored; see the
+[personal workspace README](../../../user/README.md)) from the skeleton in
+[session-handoff.md](session-handoff.md): State `executing`, the new branch, the task list's filename, Next Task the
+first task, Last Completed `[none]`, Next Action the first task, and `Commit at Handoff` `[none yet]`.
 
 ### Step 8: Commit Activation
 
@@ -96,7 +92,7 @@ git add .arc/backlog/ROADMAP.md  # if updated
 git commit -m "docs(arc): activate {work-name} work unit
 
 - Move PRD and task list to active
-- Update PROJECT-STATUS, ROADMAP, CURRENT-SESSION
+- Update PROJECT-STATUS and ROADMAP
 - Status: In Progress
 
 Context: tasks-{name}.md (planning)"
@@ -124,7 +120,7 @@ Before proceeding to task execution, verify:
 - [ ] Task list `**PRD:**` header names the PRD by filename only
 - [ ] PROJECT-STATUS.md updated (Currently Active, Next Priority)
 - [ ] ROADMAP.md updated (if work unit tracked there)
-- [ ] CURRENT-SESSION.md updated (branch, task list, current task)
+- [ ] Session notes created (branch, task list, first task)
 - [ ] All changes committed on feature branch
 
 ---

@@ -32,13 +32,13 @@ override wins. An override changes how the method is done here, never what its c
 | Work unit | A PRD plus its task list and branch (`.arc/active/{feature,technical,incidental}/`) |
 | Draft, spec | The PRD. There is no separate draft stage; a spec's `form` is always `detailed` |
 | Stub, backlog draft | A plan or PRD in `.arc/backlog/` |
-| Errand | An atomic task (`.arc/active/ATOMIC-TASKS.md`) |
+| Errand | One bounded concern outside the current work unit, run on its own branch and pull request (`../workflows/supplemental/run-errand.md`); an atomic task (`.arc/active/ATOMIC-TASKS.md`) is one source |
 | `Class` (`Light`, `Heavy`, `Novel`) | Not used; overrides say what replaces it |
 | Planning depth level | Not used: one level |
 | `AGENT-BRIEF.ARC`, `DEV-RULES.ARC` | `../constitution/DEVELOPMENT-RULES.md` |
 | `AGENT-BRIEF.PROJECT` | `../agent/AGENTS.md` and `../constitution/TECHNICAL-OVERVIEW.md` |
 | Personal workspace | `.arc/user/{identity}/` (gitignored); a work unit's review files live in its `{name}/` folder |
-| `SESSION-NOTES` | `CURRENT-SESSION.md` |
+| `SESSION-NOTES` | The work unit's `SESSION-NOTES.md` in the personal workspace |
 | Meta file | The task list header |
 | Candidate, attest, lane, receipt, store | Not used. Reviews are advisory; the Owner's approval is the gate |
 | Hosted review | `@codex review` or `@coderabbitai review` on the pull request |
@@ -50,7 +50,8 @@ override wins. An override changes how the method is done here, never what its c
 | --- | --- |
 | `draft-design`, `create-spec`, `init-work-unit`, `amend-design` workflows | `../workflows/1_create-prd.md` |
 | `generate-tasks` workflow | `../workflows/2_generate-tasks.md` |
-| `process-task-loop`, `run-errand` workflows | `../workflows/3_process-task-loop.md` |
+| `process-task-loop` workflow | `../workflows/3_process-task-loop.md` |
+| `run-errand` workflow | `../workflows/supplemental/run-errand.md` |
 | `verify-work-unit`, `integrate-work-unit` workflows, `code-review` method | `../workflows/supplemental/archive-completed.md` |
 | `activate-work-unit` workflow | `../workflows/supplemental/activate-work-unit.md` |
 | `review-triage`, `review-response` methods | `../workflows/supplemental/agent-pre-merge-review.md` |

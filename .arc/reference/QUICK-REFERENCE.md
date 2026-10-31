@@ -8,7 +8,8 @@
 
 - `DEVELOPMENT-RULES.md` (constitution/) - Rules and quality standards
 - `QUICK-REFERENCE.md` (this file) - Environment and commands
-- `CURRENT-SESSION.md` (active/) - Work status and next actions
+- The work unit's `SESSION-NOTES.md` (`.arc/user/{identity}/{name}/`, gitignored) - Where the work stands and the
+  next action
 
 **Key documentation:**
 
@@ -17,7 +18,7 @@
 - `workflows/` - Core process guides (0_define-constitution.md, 1_create-prd.md, 2_generate-tasks.md, 3_process-task-loop.md)
 - `workflows/supplemental/` - Supporting workflows (atomic-commit.md, session-handoff.md, manage-incidental-work.md)
 - `strategies/` - Technical approaches (testing methodology, type safety, ADR methodology)
-- `agent/` - AI-specific guidance (AGENTS.md, CLAUDE.md, WARP.md, GEMINI.md, copilot-instructions.md)
+- `agent/` - AI-specific guidance (AGENTS.md, CLAUDE.md)
 
 ---
 
@@ -25,6 +26,11 @@
 
 **Repository Root**: the checkout's top level (`git rev-parse --show-toplevel`)
 **All commands in this document assume you are at repository root unless otherwise specified.**
+
+**Expected environment:**
+
+- **Docker:** 5 containers running (backend, frontend, redis, caddy, postgres), started from this checkout
+- **Backend venv:** `.venv-backend/bin/` on Python 3.13 (built with `uv`), with ruff and pytest
 
 ### Critical Path Reference
 
@@ -36,8 +42,8 @@
 | Docker Compose | `infrastructure/docker-compose.yml` | Required for all Docker operations |
 | Frontend code  | `frontend/src/`                     | Frontend operations                |
 
-**Working Directory Note**: Your actual working directory may vary (backend/, frontend/, or root).
-CURRENT-SESSION.md contains context-specific paths adjusted for your current location.
+**Working Directory Note**: Run commands from the repository root. From `backend/` or `frontend/`, adjust each path
+by one level.
 
 ### Network Architecture & Ports
 
@@ -87,7 +93,7 @@ tail -f backend/logs/frontend.log
 ## Command Patterns
 
 All commands shown from **repository root**.
-If you're in a subdirectory, adjust paths accordingly (see CURRENT-SESSION.md for your context).
+If you're in a subdirectory, adjust paths accordingly.
 
 ### Type Checking (Python)
 
@@ -424,10 +430,10 @@ EOF
 ❌ Assuming tools are in PATH vs. venv
 
 ✅ Use commands from QUICK-REFERENCE (paths correct for repo root)
-✅ Adjust paths based on your working directory (see CURRENT-SESSION.md)
+✅ Adjust paths when working from a subdirectory
 ✅ Use explicit paths for venv tools: `.venv-backend/bin/[tool]`
 
 ---
 
-**Version Note**: Commands assume repo root. If working from subdirectory (backend/, frontend/), see
-CURRENT-SESSION.md "Session Startup Protocol" for adjusted paths.
+**Version Note**: Commands assume repo root. From a subdirectory (backend/, frontend/), adjust paths by one
+level.

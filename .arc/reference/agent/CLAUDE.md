@@ -3,50 +3,29 @@
 Guidance for Claude when working in this repository. For shared rules and architecture, defer to the canonical docs:
 
 - [AGENTS](AGENTS.md) – Project context, lookup guide, and collaboration principles
-- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.16 – Non-negotiable standards
+- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.17 – Non-negotiable standards
 - [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.2 – Environment context and command patterns
 - [Process Task Loop](../workflows/3_process-task-loop.md) – Task interlock and deferred review
 
 ## Claude-Specific Notes
 
-- **Session startup:** Execute Session Startup Protocol in CURRENT-SESSION.md first (verify working directory,
-  Docker status, venv availability, paths)
-- **Path awareness:** Commands in QUICK-REFERENCE assume repo root - adjust based on current working directory
-  from Session Startup Protocol
+- **Session startup:** Follow [session-init.md](../workflows/supplemental/session-init.md): it orients from the
+  work unit's session notes and git
+- **Path awareness:** Commands in QUICK-REFERENCE assume repo root - adjust them when working from a subdirectory
 - **Summaries first:** Lead responses with concise bullet findings before deep dives
 - **Clarifying questions:** Offer numbered/lettered options to keep user replies short
 - **Large diffs:** If a change won't fit in context, propose a chunking strategy and wait for approval
 - **Tooling awareness:** Docker and venv are available - check QUICK-REFERENCE for command patterns
-- **Session handoffs:** Explicitly state whether CURRENT-SESSION.md was updated or left unchanged
+- **Session notes:** State in each report that the pointer fields were updated
 - **Console logs:** Browser console logs automatically captured to `backend/logs/frontend.log`.
   Check proactively when debugging frontend issues - no MCP or copy/paste needed. See QUICK-REFERENCE for commands.
 
 ## Context Window Management
 
-**Claude-specific token thresholds and monitoring protocol.**
-
-**Context Window:** Claude Code provides ~200,000 token context window. Monitor usage throughout session.
-
-**Monitoring Protocol:**
-
-- Work at full specification until **~140,000 tokens used** (start monitoring context)
-- At **~150,000 tokens**, assess situation:
-  1. Complete current work item (don't stop mid-edit)
-  2. Evaluate remaining work scope
-  3. **Stop and ask user** how to proceed: "We're at ~150k tokens. [Summary of completed work]. [Remaining work
-     description with estimated token cost]. How should we proceed?"
-  4. User decides: continue, commit completed work then continue, or begin handoff
-- Token usage displayed in function results - check periodically during long sessions
-- **Never** degrade work quality or change approach due to token pressure
-- **Never** make "efficiency" tradeoffs based on context window size
-
-**Why these thresholds:**
-
-- 140k: Start monitoring, but continue normal work
-- 150k: Proactive check-in with user before hitting limits
-- Leaves buffer for commit workflows, quality gates, and session handoff if needed
-
-**See also:** Session Context Management section in DEVELOPMENT-RULES.md for agent-agnostic principles.
+Follow [DEVELOPMENT-RULES § Session Context Management](../constitution/DEVELOPMENT-RULES.md#session-context-management):
+hand off at natural boundaries, and between them let Claude Code compact. The SessionStart hook on compaction runs
+`.arc/reference/harness-hooks/compaction-recovery.mjs`, which names what to re-read. The Owner watches context usage;
+there are no token thresholds.
 
 ## Deferred Review
 

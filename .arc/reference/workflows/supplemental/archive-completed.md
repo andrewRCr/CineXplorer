@@ -83,8 +83,8 @@ or the Owner stops it. Record each pass in the task list's `## Review Log`.
 # Check if API files changed on this branch
 git diff main --name-only | grep -E "backend/apps/.*/(api|schemas)\.py|backend/config/api\.py"
 
-# If any matches, regenerate types (requires running backend containers)
-DEV_SKIP_TLS=true NODE_ENV=development npm run generate-types --prefix frontend
+# If any matches, regenerate types (exports from this checkout's own backend container)
+npm run generate-types --prefix frontend
 
 # Check for uncommitted type changes
 git diff --exit-code frontend/openapi.json frontend/src/types/api.ts

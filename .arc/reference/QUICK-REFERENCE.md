@@ -208,8 +208,9 @@ TypeScript. Without this, you'll get errors like `Type '"success"' is not assign
 **Run after modifying backend API files** (`api.py`, `schemas.py`) to regenerate frontend types:
 
 ```bash
-# Regenerate types (requires running backend containers)
-DEV_SKIP_TLS=true NODE_ENV=development npm run generate-types --prefix frontend
+# Regenerate types: exports the schema from this checkout's own backend container (the primary's
+# full stack, or a worktree's test stack), then generates src/types/api.ts
+npm run generate-types --prefix frontend
 
 # Check for uncommitted changes
 git diff -- frontend/openapi.json frontend/src/types/api.ts

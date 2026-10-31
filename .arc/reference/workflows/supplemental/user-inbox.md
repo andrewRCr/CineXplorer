@@ -1,7 +1,7 @@
 # Workflow: User Inbox
 
-**Purpose**: Capture discovered work so it is neither dropped nor committed under the wrong concern, then route it to
-a tracked home in one reviewed pull request.
+**Purpose**: Capture discovered work so it is neither dropped nor committed under the wrong concern. Errands wait here
+until they run; work-unit entries move to a tracked home in one reviewed pull request.
 
 **Invoked by name**: "inbox" captures an item; "housekeep" drains the inbox.
 
@@ -64,7 +64,8 @@ routed changes land through an errand, so the drain needs a clean main checkout 
 
 Give each entry a class and a home:
 
-- **Errand:** run it now as its own errand, or record it as an atomic task in `.arc/active/ATOMIC-TASKS.md`.
+- **Errand:** run it now as its own errand, or leave it in `## Errand` until it runs. An errand's state changes too
+  often for a tracked list, so `.arc/active/ATOMIC-TASKS.md` takes no new entries.
 - **Work unit:** add it to an existing backlog document in `.arc/backlog/` (a plan, a PRD, or the `BACKLOG-*.md`
   bucket), or start a new plan file there.
 - **Targets an active task list:** it stays in the inbox for that work unit's session, which takes it into its task
@@ -92,13 +93,13 @@ any row.
 
 ### 4. Route
 
-On approval, land every tracked change as one errand ([run-errand.md](run-errand.md)), on a `docs/backlog-{date}`
-branch with Context `planning (atomic / no associated task list)`. The pull request follows
+On approval, land every tracked change, if there is any, as one errand ([run-errand.md](run-errand.md)), on a
+`docs/backlog-{date}` branch with Context `planning (atomic / no associated task list)`. The pull request follows
 [pull-request-format](../../methods/pull-request-format.md)'s surface rule: its body names the topics recorded in
 plain terms, without `.arc/` paths or process vocabulary. Entries chosen to run now run as their own errands, one
 concern each.
 
 ### 5. Finish
 
-When the pull request merges, remove the drained entries (re-read, then write once). If it is abandoned, they stay.
-Report what went where, and what stays in the inbox and why.
+When the pull request merges, remove the entries it routed (re-read, then write once); if it is abandoned, they stay.
+An errand's entry leaves when that errand merges. Report what went where, and what stays in the inbox and why.

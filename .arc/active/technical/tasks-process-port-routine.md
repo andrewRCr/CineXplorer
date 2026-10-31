@@ -177,11 +177,12 @@ rewritten as prose the agent follows rather than vendored.
         - Writes go to the main checkout's file, re-read immediately before one write
 
     - [x] **3.1.b Drain**
-        - Classify with no writes (errand now or atomic task; backlog document; held for an active task list's
-          session; kept with `_Hold:_` only at the Owner's choice); the optional backlog pass from the weekly review;
-          one table with a recommendation per row, nothing written before approval
-        - Lands as one errand on a `docs/backlog-{date}` branch, its PR body in plain terms within the surface rule;
-          entries leave the inbox when it merges
+        - Classify with no writes (an errand runs now or waits in the inbox, since `ATOMIC-TASKS.md` takes no new
+          entries; backlog document; held for an active task list's session; local only; kept with `_Hold:_` only at
+          the Owner's choice); the optional backlog pass from the weekly review; one table with a recommendation per
+          row, nothing written before approval
+        - Tracked changes land as one errand on a `docs/backlog-{date}` branch, its PR body in plain terms within the
+          surface rule; routed entries leave the inbox when it merges, an errand's when that errand merges
 
 - [x] **3.2 Wire the routing into the rules and the session**
     - `DEVELOPMENT-RULES.md` § Leave It Cleaner: a different concern is never written to a tracked file on the current
@@ -199,8 +200,9 @@ rewritten as prose the agent follows rather than vendored.
     - Deleted both; `PROJECT-STATUS.md`, `atomic-commit.md`, the two `BACKLOG-*.md` comments and
       `strategy-work-organization.md` (backlog tree, file purposes, processing flow, discovery, a Drain section in
       place of Weekly Review, related links) now describe the personal inbox and the drain
-    - New ADR-021 (capture in a personal inbox), superseding ADR-014's inbox and weekly review; ADR-014's status
-      `Accepted; Superseded in part by ADR-021 (inbox and weekly review)`; the partial form added to
+    - New ADR-021 (capture in a personal inbox), superseding ADR-014's inbox, weekly review and new atomic tasks
+      (errands wait untracked in the inbox); ADR-014's status
+      `Accepted; Superseded in part by ADR-021 (inbox, weekly review and new atomic tasks)`; the partial form added to
       `strategy-adr-methodology.md` and the ADR README
     - Check: no `TASK-INBOX` or weekly-review hits outside the archive, the ADRs and this task list; markdown lint and
       the link check clean (apart from the known placeholder)

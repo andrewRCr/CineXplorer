@@ -33,12 +33,17 @@ Alternatives considered:
 We will capture discovered work in a personal, gitignored inbox, `.arc/user/{identity}/USER-INBOX.md` in the main
 checkout, with `## Errand` and `## Work Unit` sections. Sessions in linked worktrees write the main checkout's copy.
 
-We will drain it between work units, offered at session start when it has entries: each entry gets a class and a
-tracked home, the Owner approves the whole routing table, and the tracked changes land as one pull request. The drain
-takes over the weekly review's backlog checks (atomic tasks, backlog buckets, PROJECT-STATUS) as an optional pass.
+We will drain it between work units, offered at session start when it has entries: each entry gets a class. A
+work-unit entry gets a tracked home; an errand runs now or waits in the inbox until it does. The Owner approves the
+whole routing table, and the tracked changes land as one pull request. The drain takes over the weekly review's backlog
+checks (atomic tasks, backlog buckets, PROJECT-STATUS) as an optional pass.
 
-This supersedes ADR-014's inbox (`TASK-INBOX.md`) and its weekly review. The rest of ADR-014 stands: the backlog
-buckets, plan and PRD files, and `ATOMIC-TASKS.md`.
+Errands stay untracked because their state is volatile: they are run, dropped or reshaped too often for a tracked list
+whose every change passes through a pull request. `ATOMIC-TASKS.md` therefore takes no new entries; the ones it holds
+still run as errands.
+
+This supersedes ADR-014's inbox (`TASK-INBOX.md`), its weekly review, and new entries in `ATOMIC-TASKS.md`. The rest
+of ADR-014 stands: the backlog buckets, and plan and PRD files.
 
 The workflow is `.arc/reference/workflows/supplemental/user-inbox.md`.
 
@@ -53,7 +58,7 @@ The workflow is `.arc/reference/workflows/supplemental/user-inbox.md`.
 
 ### Negative
 
-- Captures are invisible to others until drained, and live only on one machine
+- Captures are invisible to others until drained, errands until they run, and all of them live only on one machine
 - An entry can sit undrained if work units run long; nothing reminds on a timer
 
 ### Risks

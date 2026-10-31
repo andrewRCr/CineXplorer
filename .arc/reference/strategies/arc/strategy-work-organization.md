@@ -1168,7 +1168,7 @@ active/
 Capture → USER-INBOX.md (personal)
   ↓ Drain, between work units (one table, approved, one pull request)
   ├─ Errand, now? → its own errand (run-errand.md)
-  ├─ Atomic, later? → active/ATOMIC-TASKS.md
+  ├─ Errand, later? → stays in the inbox until it runs (ATOMIC-TASKS.md takes no new entries)
   ├─ Feature idea? → BACKLOG-FEATURE.md or a plan
   ├─ Technical idea? → BACKLOG-TECHNICAL.md or a plan
   ├─ For an active task list? → stays for that work unit's session
@@ -1205,8 +1205,9 @@ No separate index needed.
 
 ### Drain
 
-Between work units, the drain routes every inbox entry to its home, and offers a backlog pass: atomic tasks still
-relevant, bucket items ready for a plan or PRD, PROJECT-STATUS still accurate. See
+Between work units, the drain routes each work-unit entry to its tracked home, runs each errand or leaves it in the
+inbox, and offers a backlog pass: atomic tasks still relevant, bucket items ready for a plan or PRD, PROJECT-STATUS still
+accurate. See
 [user-inbox.md](../../workflows/supplemental/user-inbox.md).
 
 ### Design Decisions

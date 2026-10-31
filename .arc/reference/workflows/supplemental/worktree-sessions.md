@@ -33,7 +33,7 @@ for f in backend/config/.env frontend/.env frontend/.env.development infrastruct
 done
 printf '\nCOMPOSE_PROJECT_NAME=cinexplorer-{name}\n' >> "$W/infrastructure/.env"
 for d in .venv-backend .claude .codex; do
-  ln -s "$PWD/$d" "$W/$d"
+  ln -sfT "$PWD/$d" "$W/$d"
 done
 
 cd "$W"
@@ -41,12 +41,17 @@ docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # n
 (cd frontend && npm ci && npm run typegen)
 ```
 
+- **Branch:** `-b` cuts a new branch from `origin/main`, for an errand or a work unit. For a work unit it stands in
+  for [activate-work-unit.md](activate-work-unit.md) Step 2, and the steps after it run in the worktree. For an
+  existing branch, such as one under review, run `git worktree add "$W" {branch}` instead; git refuses while another
+  checkout has that branch.
 - **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`. Without it the worktree's project
   is `infrastructure` too, and every `docker compose` command there acts on the primary's containers and volumes.
   Never copy `infrastructure/.env` without adding the name, and check it with `config` before the first Compose
   command. The `grep` keeps the rest of `config`'s output, which includes values from the `.env` files, off the screen.
 - **Links:** `.venv-backend`, `.claude` and `.codex` point at the primary's, so the worktree shares its Python
-  environment, harness settings and recovery hooks. `.gitignore` names them without a trailing slash, which matches a
+  environment, harness settings and recovery hooks. `ln -sfT` replaces a link left by an earlier run instead of
+  writing a new one inside the primary's folder. `.gitignore` names them without a trailing slash, which matches a
   link as well as a folder; keep it that way, or the links show as untracked.
 - **Install warnings:** npm holds back the install scripts of esbuild and msw and says so. Neither is needed: esbuild
   runs from its platform package, and the project configures no msw worker directory.
@@ -85,7 +90,8 @@ docker compose $S down                                               # when the 
   (`docker compose $S build backend`) after backend requirements change.
 - **API types:** `npm run generate-types` in `frontend/` exports the schema from this checkout's own backend container
   and regenerates `src/types/api.ts`, so a worktree's types come from its own code. That command names only the base
-  compose file and relies on `infrastructure/.env` naming the project, which provisioning confirms with `config`.
+  compose file and relies on `infrastructure/.env` naming the project, which provisioning confirms with `config`. In
+  a worktree whose project is still `infrastructure`, it refuses rather than export the primary's schema.
 
 ## Removal
 

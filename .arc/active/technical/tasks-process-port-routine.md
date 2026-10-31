@@ -71,30 +71,23 @@ rewritten as prose the agent follows rather than vendored.
       `Commit at Handoff` `[none yet]`; the agent updates it from here. `CURRENT-SESSION.md` keeps a valid Branch line
       and points at the notes until Task 1.2.c lands
 
-- [ ] **1.2 Recovery hook reads the session notes** (tests first, then the change)
+- [x] **1.2 Recovery hook reads the session notes** (tests first, then the change)
 
-    - [ ] **1.2.a Write `compaction-recovery.test.mjs` and see it fail**
-        - Beside the hook, run with `node --test`, no dependencies; builds its fixture checkouts in a temp directory
-        - Cases: (1) a `technical/{name}` branch with notes prints the pointer fields, the commits since
-          `Commit at Handoff`, the task list found by filename under `.arc/active/*/`, and the main checkout's
-          working memory in the re-read list; (2) `main` with no notes prints "between work units" and points at the
-          main checkout's working memory and inbox; (3) a linked worktree on another branch prints its own notes and
-          the main checkout's working memory and inbox; (4) a Branch field naming another branch prints a mismatch,
-          and an annotated Branch value naming this branch does not; (5) a branch with no notes and no task list
-          prints "no work unit"; (6) notes with `[none yet]` print "no handoff recorded"; (7) a detached HEAD prints
-          "no work unit (detached HEAD)" and reads no notes; (8) no identity folder, or several, is reported; (9) a
-          task list without notes prints the task list and "no session notes yet"
-        - Expect tests to FAIL initially (the hook reads `CURRENT-SESSION.md`)
+    - [x] **1.2.a Write `compaction-recovery.test.mjs` and see it fail**
+        - Beside the hook, `node --test .arc/reference/harness-hooks/compaction-recovery.test.mjs`, no dependencies;
+          fixture repositories in a temp directory, isolated from the developer's git configuration
+        - Ten tests for the nine cases (no identity and several identities tested separately); all ten failed on
+          their assertions against the old hook
 
-    - [ ] **1.2.b Change the hook**
-        - Main checkout from `git rev-parse --path-format=absolute --git-common-dir`; work-unit name from the branch
-          (`{type}/{name}`); identity from the main checkout; fields parsed in the pinned format
-        - Re-read list: the session notes, the main checkout's `WORKING-MEMORY.md`, `DEVELOPMENT-RULES.md`,
-          `3_process-task-loop.md`, the task list
-        - Mismatch compares the first backticked token of the Branch field
-        - dotfiles-ai calls the script by path only; no change there
+    - [x] **1.2.b Change the hook**
+        - Reads `.arc/user/{identity}/{name}/SESSION-NOTES.md` in the pinned format; identity and the flat files from
+          the main checkout (`--git-common-dir`); task list by filename under `.arc/active/*/`
+        - Re-read list: notes, working memory, `DEVELOPMENT-RULES.md`, `3_process-task-loop.md`, task list; live state
+          adds the work unit, an identity problem, commits since the handoff (or "No handoff recorded") and the inbox
+        - Mismatch compares the first backticked token of the Branch field; dotfiles-ai unchanged
 
-    - [ ] **1.2.c Tests should now PASS**; `node --check` and the live hook in this checkout
+    - [x] **1.2.c Tests should now PASS**: 10 of 10; `node --check` clean; the live hook here reads this work unit's
+      notes, and the Codex arm-then-claim path injects once
 
 - [ ] **1.3 Rewrite `session-init.md`**
     - Steps: locate (checkout, branch, linked worktree or not); read the notes when a work unit is active (without

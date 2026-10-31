@@ -13,7 +13,7 @@
 # The project name below refuses to resolve without COMPOSE_PROJECT_NAME, so no command naming
 # this file can reach the main checkout's default project (`infrastructure`) or its volumes.
 # Memory limits: the full suite at 4 workers peaks near 650 MiB in the backend (about 1 GiB at
-# 8 workers) and under 100 MiB in dev-db; each limit leaves headroom above that.
+# 8 workers) and near 110 MiB in a fresh test stack's dev-db; each limit leaves headroom above that.
 
 name: ${COMPOSE_PROJECT_NAME:?set COMPOSE_PROJECT_NAME in infrastructure/.env}
 

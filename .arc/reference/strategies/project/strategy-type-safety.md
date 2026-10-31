@@ -520,12 +520,15 @@ def create_entry(request: HttpRequest) -> UserMovieDataModelSchema:
 
 ### Verification Type Check
 
-The verification run's type check, also run by CI on every pull request:
+The verification run's type check (QUICK-REFERENCE's full command set), which CI runs at a pinned Pyright version on
+every pull request:
 
 ```bash path=null start=null
-python backend/scripts/type_check.py
-# Must show: ✅ Type Safety Status: Pyright (0 errors)
+npx pyright backend/apps/ backend/config/ --project backend
+# Must show: 0 errors
 ```
+
+`python backend/scripts/type_check.py` gives an optional per-app report.
 
 ### Development Workflow
 

@@ -44,7 +44,7 @@ decides *what* runs; zero tolerance decides that it must *pass*. See
   [Quality Gates Strategy § When to Run Wider](../strategies/arc/strategy-quality-gates.md#when-to-run-wider) lists
   the cases.
 - **Pull request:** CI is the broad check: the backend suite with coverage, frontend tests, lint and type-check,
-  pyright, API type drift and markdown lint.
+  the contrast check and the production build, pyright, API type drift and markdown lint.
 - **Verification:** one local full run (below), then CI on the pull request.
 - **Merge:** `ci-ok` green.
 

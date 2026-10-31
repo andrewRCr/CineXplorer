@@ -4,7 +4,8 @@
 
 **How to use:**
 
-1. Add tasks with checkboxes under "Active" section
+1. No new entries ([ADR-021](../reference/adr/adr-021-capture-in-a-personal-inbox.md)): new one-off work waits in the
+   personal inbox until it runs as an errand. The entries under "Active" run as errands too.
 2. When complete:
    - Mark `[x]` and add completion notes
    - Move to `completed-atomic-{quarter}.md` in `reference/archive/` (insert at top)
@@ -27,7 +28,6 @@
 ---
 
 ## Active
-<!-- Add tasks here with checkboxes -->
 
 <!-- UI/UX Enhancements -->
 

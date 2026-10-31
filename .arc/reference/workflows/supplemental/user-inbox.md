@@ -69,6 +69,8 @@ Give each entry a class and a home:
   bucket), or start a new plan file there.
 - **Targets an active task list:** it stays in the inbox for that work unit's session, which takes it into its task
   list; the drain cannot write another work unit's branch. Say so in the table.
+- **Local only** (no tracked change, such as cleaning up local branches): done now by hand if the Owner wants,
+  otherwise kept.
 - **Kept:** an entry the Owner chooses to keep (work that stays on this machine, or not yet) stays with a
   `- _Hold:_` reason. This is never the agent's suggestion.
 

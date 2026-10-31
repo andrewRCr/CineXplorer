@@ -205,12 +205,14 @@ rewritten as prose the agent follows rather than vendored.
     - Check: no `TASK-INBOX` or weekly-review hits outside the archive, the ADRs and this task list; markdown lint and
       the link check clean (apart from the known placeholder)
 
-- [ ] **3.4 First drain, landed as an errand**
-    - Capture the open follow-ups that have no tracked home: the Vitest 4 upgrade, the frontend container running as
-      root, the backend test warnings, stale local branches, the PROJECT-STATUS refresh
-    - Run the drain: its table first, nothing written before approval
-    - Land the routed entries as one errand PR from a linked worktree per `run-errand.md`, through merge and branch
-      deletion
+- [x] **3.4 First drain, landed as an errand**
+    - Captured the five follow-ups; the drain's table was approved before any write, with no backlog pass
+    - Routed: the Vitest 4 upgrade, the non-root frontend container, the backend test warnings and the PROJECT-STATUS
+      refresh became atomic tasks; the four stale local branches (all merged into `main`) were deleted by hand; the
+      harness-hygiene errand stays in the inbox with a `_Hold:_`
+    - Landed on `main` as errand PR #16 (`docs/backlog-2026-10-30`, merge `efd0dc40`) from a linked worktree, no
+      review; the worktree and branches are gone and the drained entries left the inbox
+    - Running it found a missing class: work with no tracked change. `user-inbox.md` gained the local-only class
 
 ### **Phase 4:** Commits come in reviewable units
 

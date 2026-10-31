@@ -30,22 +30,26 @@ by all contributors, including AI assistants.
 
 **Zero Tolerance Policy:** Whatever checks you run, they must pass. No ignoring failures, no exceptions.
 
-**Tiered Approach:** Quality gates follow a tiered system. The tier determines *what* to run; zero tolerance
-determines that it must *pass*. See [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md)
-for complete guidance.
+**Checks by deadline:** each check runs at the earliest moment before which its failure must be resolved. The moment
+decides *what* runs; zero tolerance decides that it must *pass*. See
+[Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md) for the reasoning.
 
-| Tier   | When                                    | What to Run                                                        |
-| ------ | --------------------------------------- | ------------------------------------------------------------------ |
-| Tier 1 | Per-task                                | Type-check, lint, format, related unit tests (modified files)      |
-| Tier 2 | Parent task completion                  | Tier 1 (full project) + targeted E2E tests + build                 |
-| Tier 3 | Per-phase, pre-PR                       | Full suite (everything below)                                      |
+- **Each task:** the task's checks. Lint, format and type-check for what it touched: ruff and pyright on the touched
+  backend apps, ESLint and `npm run type-check` for frontend changes, markdown lint for documentation. Then its
+  related tests: for the backend, `pytest apps/{app}/` for the touched apps, in this checkout's own stack; for the
+  frontend, `npx vitest related --run <files>`.
+- **Commit:** the pre-commit and commit-message hooks. The task's checks have already run.
+- **Parent task, phase and session end:** nothing extra. The report names the broader checks not yet run. Run wider
+  when the affected surface has grown past what related tests reach (shared code, configuration, test fixtures).
+- **Pull request:** CI is the broad check: the backend suite with coverage, frontend tests, lint and type-check,
+  pyright, API type drift and markdown lint.
+- **Verification:** one local full run (below), then CI on the pull request.
+- **Merge:** `ci-ok` green.
 
-**Commits and quality gates:** Tiers are milestone-driven, not commit-driven. Work committed through
-the task loop inherits the gates already run at each milestone. For work outside the task loop
-(incidental fixes, atomic tasks), run at least Tier 1 before committing.
+**Work outside the task loop** (errands, incidental fixes) runs the checks for what it changed before committing.
 
-**Full Suite (Tier 3)** - Required for phase completion and pre-PR.
-For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
+**The full run** is the verification run, and the wider run when judgment calls for one. For specific commands, see
+[QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 
 1. **Backend Tests**: 100% pass rate
    - **MUST run via Docker** (requires database connection to PostgreSQL/Redis)
@@ -328,7 +332,7 @@ This makes the protocol visible during execution.
 
 - **Test-first protocol**: See Task Management Protocol section above for when to write tests before vs. after implementation
 - **Integration focus**: Prefer flow-level coverage over isolated units when practical
-- **All tests must pass** before any commit discussion (see quality gates above)
+- **Every check that runs must pass**, at the moment the quality gates above assign it
 - **Command patterns**: See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for execution commands
 - **Detailed guidance**: See [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md)
 

@@ -207,7 +207,7 @@ Three facts drive the work:
 
 ### **Phase 3:** Checks run when their failure must be fixed
 
-- [ ] **3.1 Re-place the gates in `DEVELOPMENT-RULES.md`**
+- [x] **3.1 Re-place the gates in `DEVELOPMENT-RULES.md`**
     - § Quality Gates (lines 33-47): "Tiered Approach" and the tier table become a table of moments (task, commit,
       parent task and phase, session end, pull request, verification, merge), each with what runs, the per-task
       related tests as the Scope defines them; "at least Tier 1 before committing" and "Full Suite (Tier 3) -

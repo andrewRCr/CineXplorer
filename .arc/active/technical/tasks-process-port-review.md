@@ -4,7 +4,7 @@
 **Created:** 2026-10-30
 **Branch:** `technical/process-port-review`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -176,25 +176,37 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
     - Pass 1: 15 findings (5 major, 10 minor), all fixed; review records moved to the gitignored personal workspace
       (`.arc/user/`), PR text and reply drafts shown before posting, incidental lifecycles pointed at the completion
       workflow. Fix check: 3 minor residues fixed; loop closed (see Review Log)
-- [ ] **4.3 PR, one `@codex review`, dispositions, merge**
+- [x] **4.3 PR, one `@codex review`, dispositions, merge**
+    - PR #15 with the text shown to the Owner first; the personal workspace excluded from local lint. One hosted
+      review: 1 finding (the verification step's circular precondition), fixed; Success Criteria walked below
 
 ## Success Criteria
 
-- [ ] Every vendored method names its source path and arc-framework commit, and keeps CineXplorer's changes in a
+- [x] Every vendored method names its source path and arc-framework commit, and keeps CineXplorer's changes in a
   marked section
-- [ ] The vendored set is closed under its references (no pointer to removed machinery)
-- [ ] The PRD, task-generation, per-task and completion stages each name the methods they run and when the loop
+    - All 20 carry the `a49ebba40` source header and both sections; the 11 adapted set `override-mode: extend`
+- [x] The vendored set is closed under its references (no pointer to removed machinery)
+    - Every link and anchor in the methods resolves; CLI-bound passages are disposed by the README and overrides
+- [x] The PRD, task-generation, per-task and completion stages each name the methods they run and when the loop
   exits
-- [ ] PRD and task generation each run the size check, which returns the boundary decision to the Owner past the
+    - Each review loop ends when a pass converges or the Owner stops it; checked in the wiring review and its fix check
+- [x] PRD and task generation each run the size check, which returns the boundary decision to the Owner past the
   marks
-- [ ] The task loop stops per task by default and supports deferred review over an Owner-named scope
-- [ ] At completion, verification and code review are separate passes
-- [ ] No legacy workflow still instructs SILENT FIX, one-at-a-time fixes, leaving deferred threads open, treating
+    - `assess-boundary-fit` at PRD Steps 2.5 and 5 and task-generation Step 9, with the adopted size marks
+- [x] The task loop stops per task by default and supports deferred review over an Owner-named scope
+    - Task loop § Stopping and Proceeding and § Deferred Review
+- [x] At completion, verification and code review are separate passes
+    - Completion § 1 (criteria walk, independent pass) and § 5 (author checklist, independent pass)
+- [x] No legacy workflow still instructs SILENT FIX, one-at-a-time fixes, leaving deferred threads open, treating
   completed checkboxes as passed gates, or rewording criteria to match the work
-- [ ] PR text and PRDs follow the surface rules: `pull-request-format` is vendored and `DEVELOPMENT-RULES.md`
+    - Searched workflows, rules and strategies: none remain
+- [x] PR text and PRDs follow the surface rules: `pull-request-format` is vendored and `DEVELOPMENT-RULES.md`
   carries the surface language and documentation boundaries
-- [ ] `quality-gate-enforcer` is retired and `pragmatic-code-reviewer` has no edit tools
-- [ ] Markdown lint passes and `ci-ok` is green on the PR
+    - DEVELOPMENT-RULES § Code Documentation Standards; PRDs carry no review record; PR #15's text follows the method
+- [x] `quality-gate-enforcer` is retired and `pragmatic-code-reviewer` has no edit tools
+    - Checked on this machine (the agents are gitignored)
+- [x] Markdown lint passes and `ci-ok` is green on the PR
+    - PR #15: Documentation Lint and `ci-ok` passed
 
 ## Review Log
 
@@ -208,3 +220,6 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
   the repairs · 13 of 15 repairs hold; F5 and F6 partial (residue at loci their findings named); one new minor (F16,
   a stale line in this list) · 3 minor approved as fixes, `local-correction` · about 10 minutes · stop: converged;
   the Owner closed the loop
+- **2026-10-30 · Pull request · hosted review (Codex)** · 1 major: the verification step required every task
+  finished, including the open verification task · approved as a fix, `local-correction`; fix check skipped (a
+  one-line change, CI re-runs) · stop: converged

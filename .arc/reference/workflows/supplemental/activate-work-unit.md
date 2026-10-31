@@ -39,6 +39,8 @@ Branch name should match the work unit name (e.g., `feature/content-polish-p2`).
 
 For a work unit run in a linked worktree, skip this step: provisioning creates the branch from `origin/main`
 ([worktree-sessions.md § Provisioning](worktree-sessions.md#provisioning)), and Steps 3 onward run in the worktree.
+The PRD and task list must already be on `origin/main` (Step 1); the clean-tree and `main` prerequisites apply only
+to activating in place, so the primary keeps whatever branch it is on.
 
 ### Step 3: Move Documents to Active
 

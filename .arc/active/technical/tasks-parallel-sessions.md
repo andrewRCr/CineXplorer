@@ -223,7 +223,7 @@ Three facts drive the work:
       Quality Gates" phase, since the final phase is verification; § When to Escalate becomes judgment when the
       affected surface grows, reported as checks not yet run; § Anti-Patterns and the E2E guidance follow
 
-- [ ] **3.3 The task loop and deferred review**
+- [x] **3.3 The task loop and deferred review**
     - `3_process-task-loop.md` lines 38-40 (per task, "the tiered approach") name the task checks; lines 82 and 94
       (parent completion) drop the Tier 2 run and its checklist line, and the parent-completion report names the
       broader checks not yet run; lines 132-133 (deferred review, "gates passing") name the task checks

@@ -1141,10 +1141,10 @@ Run before production deployment:
 
 ## Related Documentation
 
-- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards and quality gates
-- [TECHNICAL-OVERVIEW](../constitution/TECHNICAL-OVERVIEW.md) - System architecture overview
-- [Research Report](../../active/incidental/research-django-allauth-headless-oauth.md) - Comprehensive OAuth research
-- [OAuth Incidental Task List](../../active/incidental/tasks-incidental-oauth-headless-migration.md) - Implementation history
+- [DEVELOPMENT-RULES](../../constitution/DEVELOPMENT-RULES.md) - Development standards and quality gates
+- [TECHNICAL-OVERVIEW](../../constitution/TECHNICAL-OVERVIEW.md) - System architecture overview
+- `research-django-allauth-headless-oauth.md` - Comprehensive OAuth research (archived)
+- `tasks-oauth-headless-migration.md` - Implementation history (archived)
 - [django-allauth Headless Documentation](https://docs.allauth.org/en/latest/headless/) - Official docs
 - [React SPA Example](https://codeberg.org/allauth/django-allauth/src/branch/main/examples/react-spa) - Official implementation
 

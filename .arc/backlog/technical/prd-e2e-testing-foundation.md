@@ -347,6 +347,6 @@ e2e:
 ## 10. References
 
 - [plan-backend-modernization.md](plan-backend-modernization.md) - Original E2E planning notes
-- [strategy-testing-methodology.md](../../reference/strategies/project/strategy-testing-methodology.md) - Testing standards
+- `.arc/reference/strategies/project/strategy-testing-methodology.md` - Testing standards
 - [Playwright Documentation](https://playwright.dev/) - Official docs
 - External research findings on test location, CI strategy, and browser coverage (2025-12-26)

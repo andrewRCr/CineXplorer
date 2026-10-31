@@ -166,7 +166,12 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
 
 ### **Phase 4:** Verify and land
 
-- [ ] **4.1 Closure, markdown lint and link check across `.arc/`**
+- [x] **4.1 Closure, markdown lint and link check across `.arc/`**
+    - Markdown lint clean across `.arc/` and `AGENTS.md`; every relative link and anchor outside the archive resolves
+      (one remaining hit is a placeholder inside a code span)
+    - Fixed: wrong relative depth in four strategies and `maintain-task-notes.md`; links to archived work documents
+      (ADR-020, `strategy-authentication.md`) made filename-only; PROJECT-STATUS archive links repointed; link-shaped
+      paths in `atomic-commit.md` made code spans; two backlog documents' relative links made filename-only
 - [ ] **4.2 Fresh-context adversarial review of the wiring** (one pass plus a fix-check)
 - [ ] **4.3 PR, one `@codex review`, dispositions, merge**
 

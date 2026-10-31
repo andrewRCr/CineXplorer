@@ -116,7 +116,7 @@ const virtualizer = useWindowVirtualizer({
 
 ## References
 
-- [Phase 5 Implementation - `tasks-infinite-scroll-migration.md`](../../active/incidental/tasks-infinite-scroll-migration.md)
+- Phase 5 implementation - `tasks-infinite-scroll-migration.md`
 - [Pagination Strategy](../strategies/project/strategy-pagination.md)
 - [Data Quality Strategy](../strategies/project/strategy-data-quality.md)
 - [@tanstack/react-virtual Documentation](https://tanstack.com/virtual/latest)

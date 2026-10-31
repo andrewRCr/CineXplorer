@@ -63,13 +63,13 @@ rewritten as prose the agent follows rather than vendored.
 
 ### **Phase 1:** Sessions start from accurate state and hand off cleanly
 
-- [ ] **1.1 Personal-workspace layout, and this work unit's notes**
-    - `.arc/user/README.md`: add `{name}/SESSION-NOTES.md` (created at activation, deleted with the folder at
-      archive), flat `WORKING-MEMORY.md` and `USER-INBOX.md` in the main checkout, the identity rule (resolved from the
-      main checkout), and which workflow writes each file when
-    - Seed `.arc/user/andrew/process-port-routine/SESSION-NOTES.md` in the pinned format from `CURRENT-SESSION.md`'s
-      Session Information, with `Commit at Handoff` `[none yet]`; from here the agent updates the notes. Until 1.2.c
-      lands, the live hook still reads `CURRENT-SESSION.md`, so its Branch line stays valid until then
+- [x] **1.1 Personal-workspace layout, and this work unit's notes**
+    - `.arc/user/README.md`: layout adds `{name}/SESSION-NOTES.md` and the flat `WORKING-MEMORY.md` and
+      `USER-INBOX.md`; new § Identity (read from the main checkout) and § Who writes what, and when (notes created at
+      activation or with an incidental task list, deleted with the folder at archive)
+    - Seeded `.arc/user/andrew/process-port-routine/SESSION-NOTES.md` (gitignored) in the pinned format, with
+      `Commit at Handoff` `[none yet]`; the agent updates it from here. `CURRENT-SESSION.md` keeps a valid Branch line
+      and points at the notes until Task 1.2.c lands
 
 - [ ] **1.2 Recovery hook reads the session notes** (tests first, then the change)
 

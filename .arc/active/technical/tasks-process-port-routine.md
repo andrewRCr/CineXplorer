@@ -4,7 +4,7 @@
 **Created:** 2026-10-30
 **Branch:** `technical/process-port-routine`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -267,7 +267,14 @@ rewritten as prose the agent follows rather than vendored.
 
 ### **Phase 5:** Verification
 
-- [ ] **5.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+- [x] **5.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+    - Tier 3 on the final tree (`93be74d4`): 802 backend and 723 frontend tests pass; frontend lint, type-check
+      after `typegen`, ruff, pyright at CI's pin, markdown lint and the 10 hook tests clean
+    - Each Success Criterion is met, its evidence noted under it; an independent pass and one fix check (Review Log)
+      confirmed them, and their fixes landed on this branch
+    - PROJECT-STATUS needs no change for this process work; its refresh waits in the inbox as an errand
+    - The link check's two remaining hits are in `backend/apps/core/README.md`; errand PR #17 removed those links on
+      `main`, and they clear here when `main` is merged in
 
 ## Implementation Notes
 
@@ -379,4 +386,13 @@ recorded" instead of counting commits, and the handoff's filter uses `git log ma
   the no-new-atomic-tasks rule reaches the tracked lines and its working-memory entry is gone, F5 the incidental
   task-list commit template passes the hook; F6, the previous work unit's archive riding this branch, stays as
   approved, and the missing archive route is captured in the inbox · about 15 minutes · stop: fixes landed; fix
-  check offered
+  check approved
+- **2026-10-31 · Verification · Fix check, round 1 since pass 1** · fresh read-only subagent
+  (`pragmatic-code-reviewer`), scoped to the repairs (`acf004bc..a19bd1e5`) and the fold · the seven repairs close
+  their findings and every criterion stands · 1 major, 4 minor, none failing a criterion, all confirmed against source ·
+  all approved, `local-correction`: F1 `ATOMIC-TASKS.md`'s own header closed to new entries (a filename search had
+  missed it); F2 the incidental-work sizing guide and the task loop's copy name an errand, finished within one
+  session; F3 an entry added to a task list leaves the inbox; F4 Task 3.4 records PR #18's withdrawal; F5
+  `maintain-docs.md`, unlinked and still asking for a version recital, retired by the Owner. Also decided: document
+  versioning stays unused until migration, and `manage-incidental-work.md` stays until migration, since
+  `route-discovered-work` needs the `arc` CLI · about 12 minutes · stop: converged; the Owner closed the loop

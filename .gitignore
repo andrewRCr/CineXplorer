@@ -217,6 +217,9 @@ infrastructure/dev-certs/*.key
 # Transient docs (mostly temp-notes-; regular notes- are tracked for context visibility)
 .arc/active/*/temp-*
 
+# Personal workspace: one folder per developer (README tracked)
+.arc/user/*/
+
 # Session handoff file (transient)
 .arc/active/CURRENT-SESSION.md
 

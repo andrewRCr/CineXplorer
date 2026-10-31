@@ -80,10 +80,19 @@ Before detailed discovery, determine whether this is **feature** or **technical*
 
 See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for complete decision tree and examples.
 
+### Step 2.5: Confirm It Needs a PRD
+
+Run [classify-work-unit](../methods/classify-work-unit.md)'s boundary tests. Work that sorts below a work unit is an
+atomic task: record it in `.arc/active/ATOMIC-TASKS.md` and stop here. When the concern already looks like several
+separately deliverable parts, read [assess-boundary-fit](../methods/assess-boundary-fit.md) now rather than after the
+PRD is written.
+
 ### Step 3: Conduct Discovery Session
 
-Ask clarifying questions to gather sufficient detail about the "what" and "why" of the work. The "how"
-(implementation details) will be determined during task generation and development.
+Ask clarifying questions to gather the "what" and "why", and settle the design: every decision that can be settled
+now belongs in the PRD, not in task generation or implementation. A design question that surfaces during
+implementation stops the work and amends the PRD ([§ Amending a PRD](#amending-a-prd)). When offering options,
+recommend one.
 
 **If working from notes document:**
 
@@ -100,7 +109,8 @@ Ask clarifying questions to gather sufficient detail about the "what" and "why" 
 - Explore user stories, acceptance criteria, and scope boundaries
 - Gather context about constraints, dependencies, and technical considerations
 
-**For interactive sessions:** Provide options in numbered lists to enable quick responses and maintain momentum.
+**For interactive sessions:** Provide options in numbered lists, with a recommendation, to enable quick responses
+and maintain momentum.
 
 ### Step 4: Generate and Save PRD
 
@@ -113,6 +123,49 @@ the structure outlined below.
 - **Technical work** (infrastructure): `.arc/backlog/technical/prd-{{FEATURE_NAME}}.md`
 
 See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for guidance on feature vs. technical.
+
+### Step 5: Review the PRD
+
+Run [planning-review](../methods/planning-review.md) with `artifact: spec`:
+
+1. **Author checks.** [assess-design-proportionality](../methods/assess-design-proportionality.md) over the saved
+   PRD; continue only on `proportionate`. Then [spec-review](../methods/spec-review.md) over the whole PRD, including
+   its reader-independence and binding-completeness checks.
+2. **Size.** [assess-boundary-fit](../methods/assess-boundary-fit.md) with its size marks. Past a mark, the boundary
+   decision goes to the Owner with the cut the design's own seams suggest.
+3. **Independent review loop.** Recommend it; the Owner decides. Each pass is a fresh
+   [adversarial-review](../methods/adversarial-review.md) over the PRD against proportionality,
+   [design-audit](../methods/design-audit.md) and spec-review. Verify every finding against source, present the
+   complete disposition table ([disposition-report](../methods/disposition-report.md)), and edit nothing until it is
+   approved. After the approved fixes land, offer a fix check; a further pass needs its own approval. There is no
+   fixed pass cap: the loop ends when a pass converges or the Owner stops it.
+4. **Review record.** Record each pass and fix check in `REVIEW-LOG.md` in the work unit's folder of the gitignored
+   personal workspace, `.arc/user/{identity}/{name}/` (adversarial-review's override gives the fields); kept
+   versions, prompts and reports go in its `adversarial-review/` subfolder. Task generation copies the log into the
+   task list. The PRD itself carries no review record.
+5. **Post-settle reread.** Rerun spec-review's coherence slice over the settled PRD before committing it. The commit
+   summarizes each pass in one plain-language body line ("Independent review: 2 rounds, 6 findings fixed").
+
+For small, well-understood work the recommendation may be to skip the independent loop; give the reason when
+offering.
+
+### Amending a PRD
+
+A design question that surfaces during task generation or implementation stops the work. Settle it with the Owner,
+amend the PRD, and add a dated line to an `## Amendments` section saying what changed and why. Review the amendment
+with planning-review's `amendment` artifact: omit the independent pass for a wording-level change, offer it for a
+contained one, recommend it when the design changes. A success criterion is never reworded to match the work: mark
+the old one `[~]` with a note naming the amendment and append its replacement.
+
+Then carry the amendment into the task list: update the tasks it affects (adding or `[~]`-marking tasks as needed),
+and apply the same `[~]`-and-append change to the task list's copy of any changed criterion, since that copy is the
+one verification checks. Work resumes where it stopped.
+
+### Picking Up a Parked PRD
+
+A PRD that waited in `.arc/backlog/` may describe a world that has moved. Before generating tasks from it, offer
+[design-audit](../methods/design-audit.md) over the PRD against the current code; recommend it when dependencies have
+landed or changed since it was written.
 
 ## Clarifying Questions (Examples)
 
@@ -196,21 +249,27 @@ The generated feature PRD should include the following sections:
 5. **Non-Goals (Out of Scope):** Clearly state what this feature will _not_ include to manage scope.
 6. **Design Considerations (Optional):** Link to mockups, describe UI/UX requirements, or mention
    relevant components/styles if applicable.
-7. **Technical Considerations (Optional):** Mention any known technical constraints, dependencies, or
-   suggestions (e.g., "Should integrate with the existing Auth module").
-8. **Success Metrics:** How will the success of this feature be measured? (e.g., "Increase user
-   engagement by 10%", "Reduce support tickets related to X").
-9. **Open Questions:** List any remaining questions or areas needing further clarification.
+7. **Design Decisions:** Every settled decision that shapes implementation: the choice, the credible alternative it
+   was chosen over, and why. Interfaces, invariants, failure cases and preconditions belong here or in the
+   requirements, not left for task generation.
+8. **Success Criteria:** Observable conditions that show the goals are met, fixed now and checked independently at
+   completion. At least one is a runnable check that fails if the main goal is missed. Separate "implemented" from
+   "proven live" where deployment matters. Never "all quality gates pass" or a test count: those are gates, not
+   criteria.
+9. **Open Questions:** Empty before task generation. Settle each question now, or record it as a decision the Owner
+   defers explicitly, with its consequence.
 
 ## Target Audience
 
-The feature PRD serves as a bridge between product vision and implementation:
+The PRD serves as a bridge between product vision and implementation:
 
 - **Primary:** Implementation teams (developers, designers) who need clear, actionable requirements
 - **Secondary:** Stakeholders seeking to understand feature scope and rationale
 
-Requirements should be explicit, unambiguous, and provide sufficient context for informed decision-making
-during implementation.
+Write for a reader who has none of the planning session. Desired behavior, scope, concepts and success conditions
+must stand without notes, other PRDs or session history ([spec-review](../methods/spec-review.md)'s reader
+independence). The repository is public, so no process vocabulary carries meaning: describe the product and the
+code, not how the work is organized.
 
 ## Output Specifications
 
@@ -221,7 +280,7 @@ during implementation.
 
 ## Workflow Completion
 
-1. **Focus on requirements definition** - Do not proceed to implementation or task generation
+1. **Focus on requirements and design** - Do not proceed to implementation or task generation
 2. **Prioritize discovery** - Ensure thorough understanding through clarifying questions
-3. **Iterate on clarity** - Refine the PRD based on feedback and additional context
+3. **Review before handing on** - The PRD's review loop (Step 5) settles before task generation starts
 4. **Reference next steps** - Upon completion, the PRD is ready for task generation via `2_generate-tasks.md`

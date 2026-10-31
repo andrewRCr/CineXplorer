@@ -17,7 +17,7 @@ z-index hierarchy, and responsive patterns.
 
 **For color tokens**, see [Color Token System](./strategy-color-tokens.md) and [Component Styling Strategy](./strategy-component-styling.md).
 
-**For architectural decision context**, see [ADR-007: Use Chakra Theme Tokens for Layout Constants](../../adr/adr-007-use-chakra-theme-tokens-for-layout.md).
+**For architectural decision context**, see [ADR-007: Use Chakra Theme Tokens for Layout Constants](../../../adr/adr-007-use-chakra-theme-tokens-for-layout.md).
 
 ## Table of Contents
 

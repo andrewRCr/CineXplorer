@@ -127,7 +127,7 @@ modal, watchlist enhancements)
 
 ### ✅ Logging System
 
-[Archive](../archive/completion-metadata/completion-logging-system.md)
+[Archive](../archive/2025-q4/technical/01_logging-system/completion-logging-system.md)
 
 - Django backend logging with configurable levels and request correlation
 - React frontend error boundaries and logging service
@@ -139,7 +139,7 @@ modal, watchlist enhancements)
 
 ### ✅ API Layer Modernization (Phase 1)
 
-[Archive](../archive/completion-metadata/completion-api-layer-modernization-p1.md)
+[Archive](../archive/2025-q4/technical/02_api-layer-modernization-p1/completion-api-layer-modernization-p1.md)
 
 - Movie domain fully migrated from DRF to Django Ninja with complete type safety
 - Pydantic schemas replacing DRF serializers for all movie endpoints (10 endpoints)
@@ -151,7 +151,7 @@ modal, watchlist enhancements)
 
 ### ✅ API Layer Modernization (Phase 2)
 
-[Archive](../archive/technical/api-layer-modernization-p2/)
+[Archive](../archive/2025-q4/technical/10_api-layer-modernization-p2/)
 
 - UserMovieData domain migrated to Django Ninja (4 endpoints, 24 tests)
 - Authentication domain migrated to Django Ninja (9 endpoints, 93 tests)
@@ -166,7 +166,7 @@ modal, watchlist enhancements)
 
 ### ✅ Authentication System (Two-Pattern Architecture)
 
-[Archives](../archive/completion-metadata/)
+[Archives](../archive/)
 
 **Foundation (Authentication Modernization):**
 

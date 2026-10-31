@@ -1,9 +1,10 @@
 # Work Organization Strategy
 
-**Version:** 2.1 | **Updated:** 2025-12-18 | **Status:** Active
+**Version:** 2.2 | **Updated:** 2026-10-30 | **Status:** Active
 
 **Version history (latest first):**
 
+- 2.2 (2026-10-30) – Added the work-unit sizing standard; review at merge follows `archive-completed.md`
 - 2.1 (2025-12-18) – Added global sequence numbering for archive directories (`{NN}_` prefix by completion order)
 - 2.0 (2025-11-10) – Added stacked branch workflow (ADR-013), renamed from "Work Categorization" to
   "Work Organization" to reflect expanded scope covering git workflow, directory structure, and archive organization
@@ -30,13 +31,14 @@ Use this strategy when:
 3. [Core Principles](#core-principles)
 4. [Work Categories](#work-categories)
 5. [Decision Rules](#decision-rules)
-6. [Incidental Work Model](#incidental-work-model)
-7. [Git Workflow](#git-workflow)
-8. [Directory Structure](#directory-structure)
-9. [Implementation Examples](#implementation-examples)
-10. [Anti-Patterns](#anti-patterns)
-11. [Migration Guide](#migration-guide)
-12. [Related Documentation](#related-documentation)
+6. [Sizing a Work Unit](#sizing-a-work-unit)
+7. [Incidental Work Model](#incidental-work-model)
+8. [Git Workflow](#git-workflow)
+9. [Directory Structure](#directory-structure)
+10. [Implementation Examples](#implementation-examples)
+11. [Anti-Patterns](#anti-patterns)
+12. [Migration Guide](#migration-guide)
+13. [Related Documentation](#related-documentation)
 
 ---
 
@@ -344,6 +346,28 @@ determine category.
 
 ---
 
+## Sizing a Work Unit
+
+Category follows the kind of work; the boundary of a work unit (one PRD, task list and branch) follows its concern.
+Decompose on orthogonality, not size, but treat size as the heads-up that prompts the question. This is the sizing
+standard [assess-boundary-fit](../../methods/assess-boundary-fit.md) applies at the PRD and task-list stages:
+
+- **Count distinct deliverables and independently reviewable surfaces:** the primary signal. Several unrelated review
+  surfaces in one work unit is the trigger to split it.
+- **Lines and files are secondary heads-up signals,** not thresholds: roughly more than a few hundred changed lines,
+  more than 8-10 files, or work that fails the "reviewable in one sitting" test says look closer. Review catches far
+  fewer defects past a few hundred lines per increment. Below the size marks, tightly coupled work designed as a
+  whole stays one work unit. Above them, coupling alone doesn't keep it whole: a work unit lands as one pull request,
+  and the per-task review grain doesn't carry a large unit's quality.
+- **Size marks:** past about 1,500 PRD lines, 1,000 task-list lines or six phases, or 10,000 forecast changed lines,
+  the boundary decision goes back to the Owner before planning continues; keeping the unit whole then needs the
+  Owner's explicit decision and a recorded reason.
+
+A split becomes separate PRDs or task lists with their own branches, ordered by dependency where one builds on
+another (see [Stacked Branch Workflow](#stacked-branch-workflow)).
+
+---
+
 ## Incidental Work Model
 
 ### Why Incidental Work is Different
@@ -439,17 +463,17 @@ On Child Branch (Before PR):
 2. Create branch off current: git checkout -b incidental/<name>
 3. Create task list: .arc/active/incidental/tasks-<name>.md
 4. Work on branch, commit with task references
-5. Complete work (all tasks done, quality gates pass)
+5. Complete the tasks, then verify the work (archive-completed.md § 1)
 6. Run maintain-task-notes.md Mode 2 (clean task list and notes files)
-7. Create completion-{name}.md (executive summary, PR description draft)
+7. Create completion-{name}.md (source material for the PR description, not its text)
 8. Commit documentation changes to child branch
 
 Code Review & Merge:
-9. Run local code review (coderabbit review local)
-10. Create PR against parent: gh pr create --base parent-branch --head child-branch
-    (use completion doc as PR description template)
-11. Address PR review findings (update completion doc if outcomes changed)
-12. Merge PR (child → parent)
+9. Code review before the push (archive-completed.md § 5)
+10. Push and open the PR against the parent, its text per pull-request-format and shown
+    to the Owner first; review on the PR by the route the Owner chooses (§ 6)
+11. Address PR review findings (agent-pre-merge-review.md; update completion doc if outcomes changed)
+12. Merge PR (child → parent) with the Owner's approval (§ 8)
 
 On Parent Branch (After Merge):
 13. Delete merged branch: git branch -d incidental/<name>
@@ -500,33 +524,10 @@ This creates conceptual coherence:
 
 ### Code Review at Every Merge
 
-Review required at EVERY merge point (not just merge to main):
-
-**Method 1 (Lightweight):** Local review only
-
-```bash
-coderabbit review local  # Before PR
-# Fix findings, commit
-gh pr create --base parent-branch --head child-branch
-```
-
-**Method 2 (Thorough):** Two-pass review
-
-```bash
-# Pass 1: Local review
-coderabbit review local
-# Fix findings, commit
-
-# Pass 2: PR review
-gh pr create --base parent-branch --head child-branch
-gh pr comment {pr-number} --body "@coderabbitai review"  # automatic review is off
-# Address findings, merge
-```
-
-**Choose based on scope:**
-
-- Lightweight: Small changes (<300 lines), low risk
-- Thorough: Large changes, user-facing, planned work
+Review is required at every merge point, not just merge to main. The completion workflow
+([archive-completed.md](../../workflows/supplemental/archive-completed.md)) runs it: code review before the push,
+then a review on the PR by the route the Owner chooses (hosted, local, or skip), with findings handled by
+[agent-pre-merge-review.md](../../workflows/supplemental/agent-pre-merge-review.md).
 
 ### Industry Alignment
 
@@ -629,8 +630,7 @@ git checkout -b incidental/filter-integration-testing
 # Create: .arc/active/incidental/tasks-filter-integration-testing.md
 git commit -m "test: add filter integration tests (tasks-filter-integration-testing.md Task 1.1)"
 
-# Complete filter testing work
-coderabbit review local  # Local review
+# Complete filter testing work: verify, code review, PR (archive-completed.md §§ 1, 5, 6)
 gh pr create --base technical/service-layer-modernization --head incidental/filter-integration-testing
 # Merge PR, delete branch
 git checkout technical/service-layer-modernization
@@ -1227,7 +1227,7 @@ Core workflow (15-30 minutes):
 3. Review bucket files (promote to notes/PRD when ready)
 4. Update PROJECT-STATUS.md
 
-See [weekly-review.md](../workflows/supplemental/weekly-review.md) for full workflow.
+See [weekly-review.md](../../workflows/supplemental/weekly-review.md) for full workflow.
 
 ### Design Decisions
 
@@ -1241,13 +1241,13 @@ See ADR-014 for complete rationale and alternatives considered.
 
 ## Related Documentation
 
-- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards and git workflow
-- [2_generate-tasks.md](../workflows/2_generate-tasks.md) - Task breakdown workflow
-- [3_process-task-loop.md](../workflows/3_process-task-loop.md) - Task execution workflow
-- [atomic-commit.md](../workflows/supplemental/atomic-commit.md) - Commit creation and review
-- [manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md) - Incidental work workflow
-- [weekly-review.md](../workflows/supplemental/weekly-review.md) - Weekly backlog review process
-- [ADR-014](../adr/adr-014-backlog-organization-gtd-inspired.md) - Backlog organization decision record
+- [DEVELOPMENT-RULES](../../constitution/DEVELOPMENT-RULES.md) - Development standards and git workflow
+- [2_generate-tasks.md](../../workflows/2_generate-tasks.md) - Task breakdown workflow
+- [3_process-task-loop.md](../../workflows/3_process-task-loop.md) - Task execution workflow
+- [atomic-commit.md](../../workflows/supplemental/atomic-commit.md) - Commit creation and review
+- [manage-incidental-work.md](../../workflows/supplemental/manage-incidental-work.md) - Incidental work workflow
+- [weekly-review.md](../../workflows/supplemental/weekly-review.md) - Weekly backlog review process
+- [ADR-014](../../adr/adr-014-backlog-organization-gtd-inspired.md) - Backlog organization decision record
 
 ---
 

@@ -7,20 +7,48 @@ It ensures consistent execution, quality control, and documentation of work.
 
 ## Task Implementation
 
-- **One sub-task at a time:** Do **NOT** start the next sub‑task without user approval
+- **One task at a time:** Each checkbox in the task list is one review increment: a bounded unit of work between the
+  Owner's reviews. Complete one, mark it `[x]`, report, and **stop** for approval. Only
+  [deferred review](#deferred-review) runs several tasks without a stop, and only the Owner opens it.
 - **Branch/task list coupling:** Task lists in `.arc/active/` correspond to git branches (branch exists ↔ task list
   active). Archive task list immediately when branch deleted after merge. See
   [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for details.
+- **Co-development awareness:** The Owner may edit files or commit alongside you. Treat parallel changes as expected
+  context, not interruptions. If one conflicts with the current task, flag the conflict and ask how to proceed.
+- **Test-first execution:** When a task's tests come first ([test-first](../methods/test-first.md)), work in vertical
+  slices, one behavior at a time:
+    1. **RED:** Write one test for one behavior the task lists, run it, and confirm it fails
+    2. **GREEN:** Write the minimal code that makes it pass
+    3. **REFACTOR:** Review the code you just wrote; fix duplication, unclear naming or an emerging abstraction now,
+       with every test staying green
+    4. Next behavior: repeat from RED
+
+  The task's test cases are behaviors to cover, not an execution order. When behaviors are tightly coupled (one
+  function, shared setup, nothing to learn between them), writing their tests together before implementing is
+  acceptable; say so in the completion report, not in the task list.
+- **Testing discipline:** Before writing or changing any test, apply
+  [testing-standards](../methods/testing-standards.md): observable behavior, faithful boundaries, and a test seen
+  failing before it passes. This applies to test-after work too.
+- **Pre-existing issues:** Follow [DEVELOPMENT-RULES § Leave It Cleaner](../constitution/DEVELOPMENT-RULES.md).
+- **Design questions stop the task:** A design question the PRD doesn't answer is never settled inside a task. Stop,
+  and settle it in the PRD first ([1_create-prd.md § Amending a PRD](1_create-prd.md#amending-a-prd)).
 - **Completion protocol:**
 
-  1. When you finish a **single sub‑task**:
-     - **First**: Run incremental quality checks on modified files - **Tier 1** (linting, type checking, related unit tests)
+  1. When you finish a **single task** (one checkbox):
+     - **First**: Run incremental quality checks on modified files - **Tier 1** (linting, type checking, related unit
+       tests)
        - See [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md) for the tiered approach
-       - Task list specifies critical checkpoints, but use judgment: if changes warrant validation, run appropriate checks
+       - Task list specifies critical checkpoints, but use judgment: if changes warrant validation, run appropriate
+         checks
        - When task list explicitly calls for quality gates (including E2E checkpoints), they are mandatory
-     - **Second**: Mark subtask as `[x]` in task list file (task list reflects completed work when reporting)
-       - Update task description to reflect actual work done (not just original plan)
-       - Add completion notes with key findings/changes if work deviated from plan
+       - A failure follows [DEVELOPMENT-RULES § Quality Gate Failure Protocol](../constitution/DEVELOPMENT-RULES.md)
+     - **Second**: Mark the task `[x]` in the task list file (task list reflects completed work when reporting)
+       - Update the task description to record what was actually done, not just the original plan. Success Criteria
+         and the PRD's goals are never reworded to match the work: criteria are marked only at verification, and a
+         changed goal goes through [1_create-prd.md § Amending a PRD](1_create-prd.md#amending-a-prd)
+       - **Deferred or superseded tasks**: When a task is deliberately not done (deferred to later work, made
+         irrelevant by a design decision, or replaced by a different approach), mark it `[~]` with a brief note
+         saying why. `[~]` is a decision; `[ ]` is unfinished work
        - **No inline dates**: Don't add completion dates to subtasks (e.g., "Completed: 2025-11-02"). Only the
          task list header `**Completed:**` field should have a date. Inline dates become temporal noise during archival.
        - **Streamline verbose planning details**: Task descriptions serve different purposes before vs. after completion.
@@ -30,56 +58,109 @@ It ensures consistent execution, quality control, and documentation of work.
          considerations, etc.) that no longer serves a purpose. Keep: actual changes made, key decisions,
          architectural impact, anything needed to understand the implementation later.
      - **Third**: Verify completion before reporting (use pre-report checklist below)
-     - **Fourth**: **REPORT** completed work to user with summary of changes
-     - **Fifth**: ⛔ **MANDATORY STOP** - Wait for user approval before proceeding
-     - **Sixth**: After approval, proceed to next subtask
-     - **NEVER** continue to multiple subtasks without explicit user approval for each one
+     - **Fourth**: **REPORT** completed work to the Owner with a summary of changes
+     - **Fifth**: ⛔ **MANDATORY STOP**, ending the report with the structured prompt
+       ([Stopping and Proceeding](#stopping-and-proceeding))
 
      **Pre-Report Checklist** (verify before generating completion report):
 
      ```
      - [ ] Quality checks passed (linting, type checking, tests as appropriate)
      - [ ] Task list markdown file edited and saved
-     - [ ] Subtask marked [x] in task list
-     - [ ] Task description updated to reflect actual work done
+     - [ ] Task marked [x] (or [~] with its reason) in task list
+     - [ ] Task description updated to reflect actual work done; Success Criteria untouched
      - [ ] Ready to generate user-facing completion report
      ```
 
      If any item is unchecked, complete it before proceeding to report generation.
 
-     **Note on implied permission:** User approval ("great!", "looks good", "proceed") implies permission to
-     continue to the next subtask UNLESS explicitly stated otherwise (e.g., "that's done, but before moving on...").
-     In such cases, address the concern before proceeding to the next task-list-documented subtask.
+  2. If **all** subtasks underneath a parent task are now `[x]` or `[~]`, follow this sequence:
 
-  2. If **all** subtasks underneath a parent task are now `[x]`, follow this sequence:
-
-    - **First**: Mark the **parent task** as `[x]` in the task list file (ensures docs reflect completion)
-    - **Second**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
-    - **Third**: Run quality gates - **Tier 2** (full-project type-check, lint, format, unit tests, targeted E2E if
-      applicable, build)
-    - **Fourth**: Check if [PROJECT-STATUS](.arc/reference/constitution/PROJECT-STATUS.md) needs updates
-      (feature progress, completed functionality, updated priorities)
-    - **Fifth**: Verify completion before reporting (use pre-report checklist below)
-
-  3. Report completion to user
+     - **First**: Mark the **parent task** as `[x]` in the task list file (ensures docs reflect completion)
+     - **Second**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
+     - **Third**: Run quality gates - **Tier 2** (full-project type-check, lint, format, unit tests, targeted E2E if
+       applicable, build)
+     - **Fourth**: Check if [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) needs updates
+       (feature progress, completed functionality, updated priorities)
+     - **Fifth**: Verify completion before reporting (use pre-report checklist below)
 
      **Pre-Report Checklist for Parent Task Completion** (verify before reporting):
 
      ```
-     - [ ] All subtasks under parent task marked [x] in task list
+     - [ ] All subtasks under parent task marked [x] or [~] in task list
      - [ ] Parent task marked [x] in task list
      - [ ] Task list file edited and saved
      - [ ] Tier 2 quality gates passed (full-project lint/type-check/format, unit tests, targeted E2E if applicable, build)
-
      - [ ] PROJECT-STATUS checked and updated if needed
      - [ ] Ready to report completion to user
      ```
 
      If any item is unchecked, complete it before proceeding to report generation.
 
-  4. Await user instructions on how to proceed.
-     User may choose to commit changes (AI can execute only if explicitly approved) or request modifications.
-     When committing, follow [Atomic Commit Workflow](supplemental/atomic-commit.md) guidelines.
+  3. Report completion and stop ([Stopping and Proceeding](#stopping-and-proceeding)).
+
+  4. Await the Owner's instructions. The Owner may approve a commit (AI executes only when explicitly approved) or
+     request changes. When committing, follow [Atomic Commit Workflow](supplemental/atomic-commit.md); before
+     staging, check that every change serves one concern, and when in doubt split and ask.
+
+### Stopping and Proceeding
+
+End every completion report with a one-line structured prompt naming the next step:
+
+- `Proceed to Task X.Y?` (next task in the phase)
+- `Proceed to Phase N, Task N.1?` (the task just finished ends its phase)
+- `Proceed to completion?` (the last task is done; next is
+  [archive-completed.md](supplemental/archive-completed.md), from § 1b after a verification phase, otherwise from § 1)
+
+A short affirmative ("y", "yes", "ok") as the first word advances to the named target. Other approval ("looks good",
+"proceed") also advances, unless the Owner raises a concern ("that's done, but before moving on..."): address the
+concern first. Approval to proceed is not approval to commit.
+
+When a quality gate fails, fix obvious issues (lint, type errors) and re-run. Diagnose a non-obvious failure before
+raising it, then end the report with `Quality gates failed: <details>. <cause>. Fix now or defer?`. If diagnosis finds
+no cause, say so and ask for direction.
+
+### Deferred Review
+
+When the Owner asks for continuation through a named set of tasks ("work through 5.2-5.4 while I'm away"), the stops
+between those tasks are deferred. The Owner names the scope; the agent never opens one on its own. Within the scope,
+complete each task fully (Tier 1 checks, `[x]`, description updated), then continue without waiting. At the end, leave
+the task list updated, gates passing and the changes uncommitted: the Owner decides commit boundaries on return.
+
+**Agent-proposed batch.** At a parent task's start, the agent may propose its subtasks as one increment, and the
+Owner's approval opens the scope:
+
+- **Propose batching** when the subtasks will land as one commit: one concern broken down for planning, not for
+  delivery. Further signals: intermediate states that don't stand on their own, or subtasks that depend on each other.
+- **Keep per task** when a subtask carries a design decision that may need correcting before the next, or each one can
+  be reverted or shipped on its own.
+
+Make the proposal in one line naming the scope ("4.2's subtasks a–d land as one commit — review 4.2 as one
+increment?") and wait for approval. Propose at most once per parent, and only when the signals fire; the default stays
+per task and is never widened silently. The Owner may pre-authorize batching "when it makes sense".
+
+Stop when the scope is complete, or earlier on a stop condition. Deferred review does not suspend them:
+
+- **Must stop:** a quality gate failure that can't be fixed mechanically; a blocking dependency on another task or on
+  outside input; a design question (enter [1_create-prd.md § Amending a PRD](1_create-prd.md#amending-a-prd)); scope
+  well beyond what the task expected
+- **Continue with a note:** auto-fixable lint (fix it and note it); a task taking longer than expected but
+  progressing; a minor deviation from the plan that doesn't change outcomes
+
+The [task review](supplemental/task-review.md) suits the end of a deferred-review scope; offer it in the report.
+
+### Task Review
+
+On the Owner's request, after any task or deferred-review scope, run
+[task-review.md](supplemental/task-review.md): a read-only account of spec deviations, unexpected file changes,
+ambiguity interpretations, judgment calls and unaddressed observations. It complements the completion report and
+never replaces the completion stage's verification or code review.
+
+### Verification Phase
+
+Every task list ends with a verification phase: a task that validates the Success Criteria and runs the verification
+review. Load [archive-completed.md § 1](supplemental/archive-completed.md) and follow it; the task is a pointer, not a
+standalone instruction. Code review follows as a separate stage of the same workflow.
 
 ## Incidental Work Management
 
@@ -105,7 +186,7 @@ immediately. **Quick decision tree**:
 ### Complete Workflow
 
 **For full incidental work lifecycle** (creation, execution, archival), see:
-**→ [manage-incidental-work.md](manage-incidental-work.md)** ← Complete workflow documentation
+**→ [manage-incidental-work.md](supplemental/manage-incidental-work.md)** ← Complete workflow documentation
 
 ## Task List Maintenance
 

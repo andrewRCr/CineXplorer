@@ -1,6 +1,6 @@
 # Testing Methodology Strategy
 
-**Version:** 1.4 | **Updated:** 2025-12-25 | **Status:** Active | **Scope:** Full-stack
+**Version:** 1.5 | **Updated:** 2026-10-30 | **Status:** Active | **Scope:** Full-stack
 
 ## Purpose
 
@@ -14,17 +14,19 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 ## Table of Contents
 
 1. [Common Principles](#common-principles)
-2. [Testing Philosophy](#testing-philosophy)
+2. [Test Discipline](#test-discipline)
+3. [Testing Philosophy](#testing-philosophy)
    - [Coverage Targets](#coverage-targets)
    - [Quality Gates](#quality-gates)
-3. [Backend Testing (Django/Ninja)](#backend-testing-djangoninja)
-4. [Frontend Testing (React/Vitest)](#frontend-testing-reactvitest)
+4. [Backend Testing (Django/Ninja)](#backend-testing-djangoninja)
+5. [Frontend Testing (React/Vitest)](#frontend-testing-reactvitest)
    - [Testing Patterns](#testing-patterns)
+   - [Asserting Chakra Recipe Styles](#asserting-chakra-recipe-styles)
    - [Anti-Patterns](#anti-patterns)
-5. [Integration Testing](#integration-testing)
+6. [Integration Testing](#integration-testing)
    - [E2E Test Structure](#e2e-test-structure)
    - [E2E Best Practices](#e2e-best-practices)
-6. [References](#references)
+7. [References](#references)
 
 ---
 
@@ -40,6 +42,23 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 
 - Backend: `backend/apps/{app}/tests/`
 - Frontend: `frontend/src/{feature}/__tests__/`
+
+## Test Discipline
+
+These hold for every test, test-first or not. The full rules are in
+[testing-standards](../../methods/testing-standards.md) (CineXplorer's override names the boundaries below) and
+[test-first](../../methods/test-first.md).
+
+- **Observable behavior, not wiring.** Assert what a user or caller can observe: a response, rendered text, a saved
+  row. A spy's call arguments prove only that something was called; never make them the outcome.
+- **Faithful boundaries.** Mock only the boundaries (TMDB, the OAuth providers, ZeptoMail, time), at the client, with
+  responses shaped like the real service's, including its error shapes. Let the database be real. A hand-built
+  fixture in a shape the producer never emits passes against a fiction.
+- **Every test seen failing.** Run a new test before the code that satisfies it and watch it fail for the right
+  reason; a compile or import error doesn't count. If it passes first, the behavior already exists or the test is
+  wrong: find out which before going on.
+- **Isolated, with error paths.** No test depends on another's state or order. Cover error and boundary paths, not
+  just the happy path; meaningful assertions matter more than coverage numbers.
 
 ## Testing Philosophy
 
@@ -808,6 +827,30 @@ afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 ```
 
+### Asserting Chakra Recipe Styles
+
+The shared renderer (`tests/helpers/test-renderer.tsx`) wraps Chakra's own `defaultSystem` from `@chakra-ui/react`,
+which doesn't include the project's recipes. Recipe styles also sit in CSS `@layer` blocks, which jsdom's
+`getComputedStyle` skips. So a style assertion under the shared renderer can pass without the recipe ever applying.
+
+To test that a recipe variant applies a token, render under the project theme with layers disabled, then assert the
+computed style:
+
+```tsx
+import { ChakraProvider, createSystem } from "@chakra-ui/react";
+import { render } from "@testing-library/react";
+import { defaultSystem } from "@/theme";
+
+const system = createSystem(defaultSystem._config, { disableLayers: true });
+
+render(
+  <ChakraProvider value={system}>
+    <Button variant="secondary">Cancel</Button>
+  </ChakraProvider>,
+);
+// Assert the token's resolved value on `background` (not `backgroundColor`)
+```
+
 ### Current State
 
 - ✅ Vitest + React Testing Library configured
@@ -889,8 +932,10 @@ test('user can register and verify email', async ({ page }) => {
 
 ## References
 
-- [TECHNICAL-OVERVIEW.md](../constitution/TECHNICAL-OVERVIEW.md) - `--keepdb` strategy, test database config
-- [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) - Quality gates, test execution standards
+- [TECHNICAL-OVERVIEW.md](../../constitution/TECHNICAL-OVERVIEW.md) - `--keepdb` strategy, test database config
+- [DEVELOPMENT-RULES.md](../../constitution/DEVELOPMENT-RULES.md) - Quality gates, test execution standards
 - [Type Safety Strategy](./strategy-type-safety.md) - Type safety patterns for test code
-- [Phase 2 Task List](../../active/tasks-api-layer-modernization-p2.md) - Task 6.0: Test helper utilities implementation
-- [Phase 2 Notes](../../active/notes-api-layer-modernization-p2.md) - "Test Helper Utilities Audit" section
+- [testing-standards](../../methods/testing-standards.md) and [test-first](../../methods/test-first.md) - Test
+  discipline and test-first decisions
+- Task 6.0 - `tasks-api-layer-modernization-p2.md` - Test helper utilities implementation
+- `notes-api-layer-modernization-p2.md` - "Test Helper Utilities Audit" section

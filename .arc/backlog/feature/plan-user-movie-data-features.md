@@ -660,7 +660,7 @@ Race condition handler wasn't triggering because error type check failed.
 ### Recommended Resolution Path
 
 1. **Short-term (current):** Service layer workarounds in place, Undo button deferred
-2. **Medium-term ([Frontend Modernization](../technical/plan-frontend-modernization.md)):**
+2. **Medium-term (Frontend Modernization, `plan-frontend-modernization.md`):**
    TanStack Query mutations for user movie data
    - `useMutation` for watchlist/watched/liked/rating toggles
    - `queryClient.invalidateQueries()` on mutation success

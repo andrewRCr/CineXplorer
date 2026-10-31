@@ -56,7 +56,7 @@ and becomes part of the work deliverable.
 
 - Path to the task list (e.g., `.arc/active/incidental/tasks-*.md`)
 - Path to the related notes file (e.g., `.arc/active/incidental/notes-*.md`)
-- Current project rules: [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md)
+- Current project rules: [DEVELOPMENT-RULES](../../constitution/DEVELOPMENT-RULES.md)
 
 ## Checklist
 
@@ -500,6 +500,7 @@ Use the checklists below as reference, but evaluate every section you encounter 
 - Scope (Will Do / Won't Do)
 - Tasks (phases with subtasks)
 - Success Criteria
+- Review Log (KEEP: the durable record of review passes; never trim it as scaffolding)
 
 **Handling Non-Standard Sections:**
 

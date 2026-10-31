@@ -555,8 +555,8 @@ Use domain layer (separate dataclasses from ORM) when:
 
 ## Related Documentation
 
-- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) - Development standards
-- [TECHNICAL-OVERVIEW](../constitution/TECHNICAL-OVERVIEW.md) - Architecture overview
+- [DEVELOPMENT-RULES](../../constitution/DEVELOPMENT-RULES.md) - Development standards
+- [TECHNICAL-OVERVIEW](../../constitution/TECHNICAL-OVERVIEW.md) - Architecture overview
 - `backend/pyrightconfig.json` - Pyright configuration
 - `backend/stubs/` - Custom type stubs
 - [django-types](https://pypi.org/project/django-types/) - Django stubs for Pyright

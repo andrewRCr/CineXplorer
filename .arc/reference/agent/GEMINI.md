@@ -1,7 +1,7 @@
 # GEMINI.md
 
 Minimal guidance for Gemini assistants. Shared context lives in [AGENTS](AGENTS.md);
-follow [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.15,
+follow [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.16,
 [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.2,
 and the [Process Task Loop](../workflows/3_process-task-loop.md).
 

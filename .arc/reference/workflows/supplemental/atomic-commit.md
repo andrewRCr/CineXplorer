@@ -40,11 +40,11 @@ steps:
     - Plan commits to respect original work boundaries and temporal context
 
   **Step 2: Find Relevant Task Documentation**
-    - Check [active tasks](.arc/active/) for active task lists related to current work
+    - Check `.arc/active/` for active task lists related to current work
         - Feature work: `.arc/active/feature/`
         - Technical work: `.arc/active/technical/`
         - Incidental work: `.arc/active/incidental/`
-    - Also check [backlog tasks](.arc/backlog/) for additional relevant tasks
+    - Also check `.arc/backlog/` for additional relevant tasks
         - `.arc/backlog/feature/` and `.arc/backlog/technical/`
     - Look for task files that reference modified files or related functionality
     - Use `find .arc -name "*.md" -exec grep -l "pagination" {} \;` to find related tasks

@@ -51,11 +51,7 @@ git mv .arc/backlog/{category}/tasks-{name}.md .arc/active/{category}/
 Edit `.arc/active/{category}/tasks-{name}.md`:
 
 1. Change `Status: Pending` → `Status: In Progress`
-2. Update PRD path reference from `backlog` to `active`:
-
-   ```
-   **PRD:** `.arc/active/{category}/prd-{name}.md`
-   ```
+2. Check the `**PRD:**` header names the PRD by filename only (`prd-{name}.md`), so the move needs no edit
 
 ### Step 5: Update PROJECT-STATUS.md
 
@@ -67,7 +63,7 @@ Edit `.arc/reference/constitution/PROJECT-STATUS.md`:
    **Currently Active:**
 
    - {Work Name} (feature|technical) - Brief description
-     - Task list: `.arc/active/{category}/tasks-{name}.md`
+     - Task list: `tasks-{name}.md`
      - Branch: `{feature|technical}/{branch-name}`
    ```
 
@@ -95,7 +91,8 @@ Edit `.arc/active/CURRENT-SESSION.md`:
 ### Step 8: Commit Activation
 
 ```bash
-git add -A
+git add .arc/active/{category}/ .arc/backlog/{category}/ .arc/reference/constitution/PROJECT-STATUS.md
+git add .arc/backlog/ROADMAP.md  # if updated
 git commit -m "docs(arc): activate {work-name} work unit
 
 - Move PRD and task list to active
@@ -124,7 +121,7 @@ Before proceeding to task execution, verify:
 - [ ] Feature branch created and checked out
 - [ ] PRD and task list moved to `.arc/active/{category}/`
 - [ ] Task list `Status` changed to `In Progress`
-- [ ] Task list PRD path updated to active location
+- [ ] Task list `**PRD:**` header names the PRD by filename only
 - [ ] PROJECT-STATUS.md updated (Currently Active, Next Priority)
 - [ ] ROADMAP.md updated (if work unit tracked there)
 - [ ] CURRENT-SESSION.md updated (branch, task list, current task)

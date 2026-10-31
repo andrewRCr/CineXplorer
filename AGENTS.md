@@ -2,13 +2,15 @@
 
 CineXplorer runs on its in-repository ARC process. Sessions start with the session-init workflow
 (`.arc/reference/workflows/supplemental/session-init.md`; `/resume-current` in Claude Code). Project context and
-collaboration rules live in `.arc/reference/agent/AGENTS.md` and `.arc/reference/constitution/DEVELOPMENT-RULES.md`.
+collaboration rules live in `.arc/reference/agent/AGENTS.md` and `.arc/reference/constitution/DEVELOPMENT-RULES.md`;
+the review and planning methods the workflows run live in `.arc/reference/methods/`.
 
 ## Review guidelines
 
-> _These guidelines govern **requested hosted code reviews** (for example, a hosted Codex PR review requested with
-> `@codex review`). They are **not** standing instructions for development sessions — do not apply this during
-> ordinary work; apply only when performing an explicitly requested, hosted PR review._
+> _These guidelines govern **requested code reviews**: a hosted pull-request review (for example `@codex review`), or
+> a local fresh-context review an agent runs on request in a subagent or a fresh session. They are **not** standing
+> instructions for development sessions: do not apply them during ordinary work; apply them only when performing an
+> explicitly requested review._
 
 Adapted from arc-framework's `standard-review/v1` rubric; maintained by hand in this repository.
 
@@ -28,8 +30,8 @@ Adapted from arc-framework's `standard-review/v1` rubric; maintained by hand in 
 - Verification quality and missing cases — Check that verification proves the behavior and covers material missing cases.
 - Repository contract coherence — Check the change against `.arc/reference/constitution/DEVELOPMENT-RULES.md` and the
   strategy docs indexed in `.arc/reference/strategies/STRATEGY-INDEX.md`: business logic in the backend service layer,
-  not API routes; frontend styling through semantic tokens; no unjustified `typing.Any`; no task or `.arc/` references
-  in production code.
+  not API routes; frontend styling through semantic tokens; no unjustified `typing.Any`; no planning IDs, process
+  names or `.arc/` references in code, tests or durable docs outside `.arc/`; PR text free of process vocabulary.
 
 ### Finding requirements
 

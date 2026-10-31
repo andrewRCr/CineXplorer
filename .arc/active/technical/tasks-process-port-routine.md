@@ -231,11 +231,17 @@ rewritten as prose the agent follows rather than vendored.
       quoted heredoc. The footer forms are one table that mirrors the hook; the examples were rewritten to follow
       the subject rule, and all nine pass `.githooks/commit-msg`
 
-- [ ] **4.2 Commit and PR surface elsewhere**
-    - `strategy-work-organization.md`: example subjects that carry `(tasks-x.md Task N.N)` move it to the footer
-    - Gitignored `commit-format` skills (`.claude/skills/`, `.codex/skills/`) agree on the subject rule
-    - `pull-request-format` CineXplorer adaptation: PR bodies without hard wraps (GitHub renders single newlines)
-    - Markdown lint and the link check clean
+- [x] **4.2 Commit and PR surface elsewhere**
+    - `strategy-work-organization.md`: the thirteen example subjects that carried `(tasks-x.md Task N.N)` now carry
+      it in a `Context:` footer (a second `-m`; the four in § Commit Message Patterns became one full message), with
+      the scope the hook requires; that section states the rule, and the "Forget Task References" anti-pattern asks
+      for the footer. Stacking narrative untouched
+    - `pull-request-format.md` § override: bodies carry no hard line wraps, passed with `--body-file`
+    - Local, gitignored: both `commit-format` skills (`.claude/skills/`, `.codex/skills/`) gained the subject rule
+      and the quoted-heredoc submission; they still differ only in `allowed-tools`
+    - Check: no task-referencing example subject left outside the archive; every rewritten subject passes the hook;
+      markdown lint clean; the link check finds only the known placeholder plus two links in
+      `backend/apps/core/README.md` that predate this branch (raised separately)
 
 ### **Phase 5:** Verification
 

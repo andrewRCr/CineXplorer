@@ -46,6 +46,8 @@ CineXplorer adaptation (`override-mode: extend`):
   repository (checked 2026-10-30), so the defaults govern.
 - An Errand here is one bounded concern with its own pull request; the work-unit decision budget applies to
   task-list work.
+- **Bodies carry no hard line wraps.** GitHub renders a single newline in a pull-request body as a line break, so
+  each paragraph and list item is one line. Write the body to a file and pass it with `gh pr create --body-file`.
 
 ## pull-request-format.default
 

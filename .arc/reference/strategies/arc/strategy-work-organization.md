@@ -595,22 +595,24 @@ incidental/theme-system-modernization
 
 ### Commit Message Patterns
 
+The subject names the operation; the task reference goes in the `Context:` footer, never the subject
+([atomic-commit.md](../../workflows/supplemental/atomic-commit.md)).
+
 **Feature/Technical work:**
 
 ```bash
 feat(auth): add JWT token refresh endpoint
 refactor(api): extract user service layer
-test: add integration tests for authentication flow
-docs: update API authentication guide
+test(auth): add integration tests for authentication flow
+docs(api): update API authentication guide
 ```
 
-**Incidental work (with task reference):**
+**Incidental work (task reference in the footer):**
 
-```bash
-chore: enable strict TypeScript mode (tasks-chore-type-safety.md Task 1.1)
-refactor: extract test helper utilities (tasks-refactor-test-helpers.md Task 2.3)
-fix: correct CSRF middleware configuration (tasks-fix-csrf.md Task 1.2)
-test: add coverage for edge cases (tasks-test-coverage.md Task 3.1)
+```text
+fix(auth): correct CSRF middleware configuration
+
+Context: tasks-fix-csrf.md (Task 1.2)
 ```
 
 **Benefits of task references:**
@@ -630,7 +632,7 @@ git commit -m "refactor: extract MovieService class"
 # Discover testing gaps (substantial incidental work - needs task list)
 git checkout -b incidental/filter-integration-testing
 # Create: .arc/active/incidental/tasks-filter-integration-testing.md
-git commit -m "test: add filter integration tests (tasks-filter-integration-testing.md Task 1.1)"
+git commit -m "test(movie): add filter integration tests" -m "Context: tasks-filter-integration-testing.md (Task 1.1)"
 
 # Complete filter testing work: verify, code review, PR (archive-completed.md §§ 1, 5, 6)
 gh pr create --base technical/service-layer-modernization --head incidental/filter-integration-testing
@@ -847,8 +849,8 @@ git merge technical/type-safety-improvements
 # Create .arc/active/incidental/tasks-fix-csrf-middleware.md
 
 # Fix the issue with conventional commit
-git commit -m "fix: correct CSRF middleware configuration (tasks-fix-csrf-middleware.md Task 1.1)"
-git commit -m "test: add CSRF protection tests (tasks-fix-csrf-middleware.md Task 2.1)"
+git commit -m "fix(auth): correct CSRF middleware configuration" -m "Context: tasks-fix-csrf-middleware.md (Task 1.1)"
+git commit -m "test(auth): add CSRF protection tests" -m "Context: tasks-fix-csrf-middleware.md (Task 2.1)"
 
 # Resume feature work
 git commit -m "feat(auth): complete login endpoint"
@@ -872,10 +874,10 @@ git commit -m "feat(auth): complete login endpoint"
 # Create .arc/active/incidental/tasks-refactor-test-helpers.md
 
 # Work through refactoring with conventional commits
-git commit -m "refactor: extract HTTP test helpers (tasks-refactor-test-helpers.md Task 1.1)"
-git commit -m "refactor: create user factory helpers (tasks-refactor-test-helpers.md Task 1.2)"
-git commit -m "refactor: consolidate mock factories (tasks-refactor-test-helpers.md Task 2.1)"
-git commit -m "test: update tests to use shared helpers (tasks-refactor-test-helpers.md Task 3.1)"
+git commit -m "refactor(tests): extract HTTP test helpers" -m "Context: tasks-refactor-test-helpers.md (Task 1.1)"
+git commit -m "refactor(tests): create user factory helpers" -m "Context: tasks-refactor-test-helpers.md (Task 1.2)"
+git commit -m "refactor(tests): consolidate mock factories" -m "Context: tasks-refactor-test-helpers.md (Task 2.1)"
+git commit -m "test(tests): use the shared helpers" -m "Context: tasks-refactor-test-helpers.md (Task 3.1)"
 
 # Resume technical work
 git commit -m "test: add integration test coverage"
@@ -963,7 +965,7 @@ incidental/tasks-refactor-auth-service.md  # ✓ Conventional commit type
 
 ### ❌ Don't: Forget Task References in Commits
 
-**Problem:** Incidental commits without task references.
+**Problem:** Incidental commits without a task reference in the `Context:` footer.
 
 ```bash
 git commit -m "fix: CSRF validation"  # ❌ No context
@@ -979,8 +981,8 @@ git commit -m "refactor: extract helper"  # ❌ No traceability
 **✅ Do:**
 
 ```bash
-git commit -m "fix: correct CSRF validation (tasks-fix-csrf.md Task 1.1)"  # ✓ Traceable
-git commit -m "refactor: extract test helper (tasks-refactor-test-helpers.md Task 1.1)"  # ✓ Documented
+git commit -m "fix(auth): correct CSRF validation" -m "Context: tasks-fix-csrf.md (Task 1.1)"  # ✓ Traceable
+git commit -m "refactor(tests): extract test helper" -m "Context: tasks-refactor-test-helpers.md (Task 1.1)"  # ✓ Documented
 ```
 
 ### ❌ Don't: Mix Planned and Unplanned Workflows

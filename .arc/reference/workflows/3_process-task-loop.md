@@ -130,7 +130,9 @@ no cause, say so and ask for direction.
 When the Owner asks for continuation through a named set of tasks ("work through 5.2-5.4 while I'm away"), the stops
 between those tasks are deferred. The Owner names the scope; the agent never opens one on its own. Within the scope,
 complete each task fully (Tier 1 checks, `[x]`, description updated), then continue without waiting. At the end, leave
-the task list updated, gates passing and the changes uncommitted: the Owner decides commit boundaries on return.
+the task list updated and gates passing. Changes stay uncommitted, and the Owner decides commit boundaries on return,
+unless the scope said to commit each task as it lands; then each task's commit carries its checkbox
+([atomic-commit.md](supplemental/atomic-commit.md)).
 
 **Agent-proposed batch.** At a parent task's start, the agent may propose its subtasks as one increment, and the
 Owner's approval opens the scope:

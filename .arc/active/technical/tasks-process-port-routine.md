@@ -335,8 +335,10 @@ recorded" instead of counting commits, and the handoff's filter uses `git log ma
     - Task 3.2's check (a capture from a linked worktree reached the main checkout's inbox) and Task 3.4's drain (the
       table approved before any write)
 - [x] One real errand runs end to end as `run-errand.md` describes, from branch to merged PR and deleted branch
-    - PR #16, and since then #17: each branched from `origin/main` in a linked worktree, merged with `--merge` once
-      `ci-ok` passed, its remote branch deleted on merge and its worktree and local branch removed
+    - PR #16, and since then #17 and #18: each branched from `origin/main`'s tip in a linked worktree, merged with
+      `--merge` once `ci-ok` passed, its remote branch deleted on merge and its worktree and local branch removed.
+      Checked after verification: the merges (`efd0dc40`, `6eb876b0`, `6d515bb0`) are two-parent merge commits, each
+      branch's base is `main` (#18 branched before #17 merged), and `ci-ok` succeeded on all three
 - [x] No commit subject on this branch names a task (`git log main..HEAD --format=%s` has no `Task N` or
   `tasks-` match), and every commit that checks off a task whose changes land on this branch carries those changes
     - No match across the branch's commits. Every check-off commit carries its task's changes, except where the
@@ -358,3 +360,15 @@ recorded" instead of counting commits, and the handoff's filter uses `git log ma
   migration, the no-stacking direction lives in working memory); F2 gives incidental work units session notes and a
   hook case; the rest tighten the ADR status, the first-handoff range, the drain's PR text and keep route, and the
   commit rule for work landed off the branch · about 16 minutes · stop: converged; the Owner closed the loop
+- **2026-10-31 · Verification · Pass 1** · fresh read-only subagent (`pragmatic-code-reviewer`) · rubric: the six
+  Success Criteria under `validate-criteria`'s evidence standard, over the task list with the author's marks withheld,
+  the branch diff and log, and raw outputs of the commands it could not run · 1 major, 6 minor, all confirmed
+  against source · all approved: F1 (Criterion 6) Task 3.4's on-branch change sat in a commit before its check-off;
+  the two were folded locally before any push (previous tip `778a6e86`), and a task with work on both sides now
+  commits its branch part with its check-off, `new-design`; F3 session start lists the inbox entries that target the
+  work unit, `new-design`; F7 the Owner retired the Gemini, Warp and Copilot agent files, the first of which sent
+  audit findings into the notes, `new-design`; `local-correction`: F2 the hook tests compare every pointer field, F4
+  the no-new-atomic-tasks rule reaches the tracked lines and its working-memory entry is gone, F5 the incidental
+  task-list commit template passes the hook; F6, the previous work unit's archive riding this branch, stays as
+  approved, and the missing archive route is captured in the inbox · about 15 minutes · stop: fixes landed; fix
+  check offered

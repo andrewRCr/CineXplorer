@@ -114,7 +114,9 @@ rewritten as prose the agent follows rather than vendored.
       sections at handoff, working memory on approval; § Session Context Management: hand off at natural boundaries
       or when quality slips, compact and recover between them, monitoring is the Owner's; the markdownlint line names
       the config's `ignores` list
-    - Version 2.17, hash `b8wobidt`; `agent/CLAUDE.md`, `GEMINI.md`, `WARP.md` and `copilot-instructions.md` cite it
+    - Version 2.17, hash `b8wobidt`; `agent/CLAUDE.md`, `GEMINI.md`, `WARP.md` and `copilot-instructions.md` cite it.
+      After verification, the Owner retired the last three (only `AGENTS.md` and `CLAUDE.md` are in use): deleted,
+      with `QUICK-REFERENCE.md`'s listing
     - `3_process-task-loop.md` § Stopping and Proceeding: every stop updates the pointer fields; the per-task
       pre-report checklist has the line
     - `agent/CLAUDE.md` § Context Window Management: thresholds removed; points to the rule and the recovery hook

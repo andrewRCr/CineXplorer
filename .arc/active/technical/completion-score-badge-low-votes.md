@@ -36,8 +36,9 @@ left null.
 - Replayed one task at a time from the sandbox branch: each task's new tests ran first against `main`'s code and
   failed for the expected reason, and a mutation check showed the badge-variant assertions catch a wrong color
 - The traffic-light colors themselves landed first as their own pull request, since the vote rule builds on them
-- Verified with one independent pass, every finding settled with the Owner; the score display was confirmed on the
-  running stack for a zero-vote, a one-vote and a well-rated movie
+- One independent verification pass and one independent code review, every finding settled with the Owner; the score
+  display was confirmed on the running stack for a zero-vote, a one-vote and a well-rated movie. The new tests that
+  passed before the change each failed against a narrow reconstruction of the missing behavior
 - The branch also carries the previous work unit's archive move
 
 ## Related Documentation

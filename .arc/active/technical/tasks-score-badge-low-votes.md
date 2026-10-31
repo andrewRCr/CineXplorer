@@ -111,6 +111,10 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
     - Against `main`'s components the 20 below-threshold tests failed and the 74 others passed. Swapping two variants
       in the component (`error` to `warning` at 4.9, the zero-vote `neutral` to `success`) failed 13 tests, so the
       variant checks discriminate
+    - The new tests that passed on `main` each failed against a narrow reconstruction and passed once it was
+      reverted: `<= 10` failed both exactly-10-votes cases; `> 7.5`, `>= 7.4` and `<= 5.0` failed the 7.5, 7.4 and
+      5.0 cases in both presentations; dropping the user-rating-only branch failed the hide test; a threshold above
+      every count failed `MovieDetail`'s 10-or-more test
     - The "Hide or alter MovieUserScore badge" entry moved to `completed-atomic-2026-q4.md`, naming this branch
 
 - [x] **1.3 Score-color documentation describes the below-threshold state**
@@ -201,3 +205,11 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
   stack; F2 criterion 9's ADR-003 exclusion recorded in its evidence; F3 the carried parallel-sessions archive commit
   rejected, since `main` takes changes only through pull requests and the next work unit carries each archive move ·
   about 9 minutes · stop: Owner declined a fix check (neither fix touches code)
+- **2026-10-31 · Code review · Pass 1** · fresh read-only subagent (`pragmatic-code-reviewer`) · rubric:
+  `code-review-standard` (`standard-review/v1`) through `implementation-audit`'s five dimensions plus the repository's
+  review guidelines (repository contract coherence), over the whole branch diff, the design and the project rules ·
+  3 minor, all confirmed against source · approved: F2 fail-first evidence for the new tests that passed on `main`,
+  fixed by reconstruct-and-revert runs recorded under Task 1.2; F1 the card placeholder's reason reaching touch and
+  screen-reader users only through `title`, deferred to the inbox as a change across every score badge; F3 the
+  ADR-003 follow-up rejected, since it is captured in the inbox · also captured: the data-quality strategy's stale
+  Vote Count Policy section · about 10 minutes · stop: Owner declined a fix check (the fix adds evidence only)

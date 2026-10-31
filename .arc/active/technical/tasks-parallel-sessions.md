@@ -57,7 +57,7 @@ Three facts drive the work:
 
 ### **Phase 1:** A worktree session works on its own checkout
 
-- [ ] **1.1 Per-worktree Compose project name**
+- [x] **1.1 Per-worktree Compose project name**
     - Create the scratch worktree on a throwaway branch cut from this one (`git worktree add -b scratch/t0-check
       ~/dev/scratch/cinexplorer-worktrees/t0-check technical/parallel-sessions`), kept until verification. It takes
       this branch's later commits only by `git merge --ff-only technical/parallel-sessions`, run inside it

@@ -121,12 +121,17 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
         - Replayed from the sandbox; the `types.ts` lines the colors change had already rewritten took the sandbox's
           10-vote text with the colors change's "traffic-light" wording
 
-    - [ ] **1.3.b Styling and data-quality strategies**
-        - Replay: `strategy-component-styling.md` (decision tree, § Movie Ratings, `neutral` use cases),
-          `strategy-color-tokens.md` (a below-10-votes cheat-sheet row, flowchart step 5) and
-          `strategy-data-quality.md` (the zero-vote quirk points to `SCORE_DISPLAY_MIN_VOTES` in `MovieUserScore`)
-        - A closing search finds no TMDB score color description missing the `neutral` state
-        - Checks: markdown lint on the three strategies
+    - [x] **1.3.b Styling and data-quality strategies**
+        - `strategy-component-styling.md` (decision tree, the badge variant table, § Movie Ratings with "—" and
+          "6.8 · 4 votes" examples and a `MovieUserScore` pointer, `neutral` use cases), `strategy-color-tokens.md`
+          (a below-10-votes cheat-sheet row, flowchart step 5) and `strategy-data-quality.md` (the zero-vote quirk
+          points to `SCORE_DISPLAY_MIN_VOTES` in `MovieUserScore` for the surfaces the vote-count policy leaves
+          unfiltered)
+        - Replayed from the sandbox; flowchart step 5, which the colors change had already rewritten, took the
+          sandbox's 10-vote text
+        - The closing search over code, strategies, ADRs and active docs found no TMDB score color description
+          missing the `neutral` state; ADR-003's context line on rating displays is an accepted ADR describing the
+          original need, not the current mapping, and stays
 
 ### **Phase 2:** Verification
 

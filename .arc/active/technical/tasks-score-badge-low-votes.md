@@ -92,11 +92,11 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
 
 ### **Phase 1:** Vote-count rule for the TMDB score badge
 
-- [ ] **1.1 Detail endpoint returns the TMDB vote count**
-    - Replay: `create_movie_detail_from_tmdb` (`response_factories.py`) maps `vote_count` beside `vote_average`;
-      `test_get_movie_detail_returns_tmdb_vote_count` (`test_movie_detail.py`) covers it through the endpoint
-    - The new test runs first against `main`'s factory and fails; it passes with the mapping
-    - Checks: ruff and pyright on `backend/apps/movie/`, `pytest apps/movie/` in this checkout's stack
+- [x] **1.1 Detail endpoint returns the TMDB vote count**
+    - `create_movie_detail_from_tmdb` (`response_factories.py`) maps `vote_count` beside `vote_average`;
+      `test_get_movie_detail_returns_tmdb_vote_count` (`test_movie_detail.py`) covers it through the endpoint,
+      replayed unchanged from the sandbox
+    - Against `main`'s factory the new test failed (`None == 100`); it passes with the mapping
 
 - [ ] **1.2 Score badge applies the 10-vote rule on cards and the detail page**
     - Replay: `MovieUserScore` derives the TMDB badge in one `getTmdbBadge` helper, shared by the TMDB-only and

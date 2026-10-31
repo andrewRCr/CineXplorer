@@ -210,6 +210,9 @@ rewritten as prose the agent follows rather than vendored.
       `strategy-adr-methodology.md` and the ADR README
     - Check: no `TASK-INBOX` or weekly-review hits outside the archive, the ADRs and this task list; markdown lint and
       the link check clean (apart from the known placeholder)
+    - After verification, every line that still sent one-offs to `ATOMIC-TASKS.md` (`1_create-prd.md`, both
+      `BACKLOG-*.md`, `strategy-work-organization.md`, the task loop's atomic-task section) and the personal-workspace
+      README's "emptied by the drain" follow ADR-021; the interim working-memory entry is gone
 
 - [x] **3.4 First drain, landed as an errand**
     - Captured the five follow-ups; the drain's table was approved before any write, with no backlog pass

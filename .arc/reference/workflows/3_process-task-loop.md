@@ -260,7 +260,9 @@ the completion report. The TodoWrite item serves as a checklist reminder.
 
 ## Atomic Task Completion Protocol
 
-**For tasks tracked in:** `active/ATOMIC-TASKS.md`
+**For tasks tracked in:** `active/ATOMIC-TASKS.md`, which takes no new entries
+([ADR-021](../adr/adr-021-capture-in-a-personal-inbox.md)): new one-off work waits in the personal inbox until it runs
+([user-inbox.md](supplemental/user-inbox.md)).
 
 Atomic tasks are small, one-off work items (fixes, chores, quick refactors) that don't require formal task lists with
 phases and subtasks. Each runs as an errand, on its own branch from `origin/main` with its own pull request

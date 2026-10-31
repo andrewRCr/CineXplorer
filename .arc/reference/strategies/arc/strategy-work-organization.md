@@ -1123,7 +1123,7 @@ backlog/
     prd-*.md                 # Work units ready for tasks
 
 active/
-  ATOMIC-TASKS.md            # Committed atomic tasks (checkboxes, ready to execute)
+  ATOMIC-TASKS.md            # Atomic tasks already recorded (no new entries, ADR-021)
   feature/
   technical/
   incidental/
@@ -1146,6 +1146,8 @@ active/
 **ATOMIC-TASKS.md** (active root):
 
 - GTD "Next Actions" - small, one-off tasks ready to execute
+- Takes no new entries (ADR-021): a new errand waits in the personal inbox until it runs, and the entries already
+  here still run as errands
 - Checkbox format: "Active" and "Completed (This Week)" sections
 - Completed items move to the quarter's `completed-atomic-{quarter}.md` archive
 
@@ -1153,7 +1155,7 @@ active/
 
 - Section-based organization (e.g., "User Auth", "API Integration")
 - Plain bullets (no checkboxes)
-- Non-atomic work only (atomic tasks go to ATOMIC-TASKS.md)
+- Non-atomic work only (a one-off is an errand: it runs now or waits in the personal inbox)
 - Graduate to plan/PRD files when scope defined, then delete from bucket
 
 **plan-*.md and prd-*.md**:

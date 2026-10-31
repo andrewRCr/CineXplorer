@@ -32,8 +32,8 @@ guessed.
   (`session-init.md`) and the compaction-recovery hook read it.
 - **`WORKING-MEMORY.md`**: an entry is proposed when it arises and added on the Owner's approval; each carries a
   `_Remove when:_` trigger. Read at every session start; pruned at each handoff.
-- **`USER-INBOX.md`**: written at capture (`user-inbox.md`), from any branch or checkout, and emptied by the drain
-  between work units.
+- **`USER-INBOX.md`**: written at capture (`user-inbox.md`), from any branch or checkout. The drain between work
+  units moves work-unit entries to tracked homes; an errand's entry stays until that errand merges.
 - **`REVIEW-LOG.md`** and **`adversarial-review/`**: written by each review pass. The durable review record is the
   task list's `## Review Log`; task generation copies `REVIEW-LOG.md` into it.
 

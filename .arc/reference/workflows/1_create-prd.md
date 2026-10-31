@@ -83,9 +83,10 @@ See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md
 ### Step 2.5: Confirm It Needs a PRD
 
 Run [classify-work-unit](../methods/classify-work-unit.md)'s boundary tests. Work that sorts below a work unit is an
-atomic task: record it in `.arc/active/ATOMIC-TASKS.md` and stop here. When the concern already looks like several
-separately deliverable parts, read [assess-boundary-fit](../methods/assess-boundary-fit.md) now rather than after the
-PRD is written.
+errand: run it now ([run-errand](supplemental/run-errand.md)) or capture it in the inbox
+([user-inbox](supplemental/user-inbox.md)), as the Owner chooses, and stop here. When the concern already looks like
+several separately deliverable parts, read [assess-boundary-fit](../methods/assess-boundary-fit.md) now rather than
+after the PRD is written.
 
 ### Step 3: Conduct Discovery Session
 

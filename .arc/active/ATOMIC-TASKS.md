@@ -110,3 +110,27 @@
     - **Gate:** Only render in development mode (like ThemeDebug)
     - **Rationale:** Discovered need during `tasks-toast-notification-system` Task 3.7 - manual API error testing
     required exposing apiClient on window; proper DevTools page provides discoverable, organized utilities
+
+<!-- Maintenance -->
+
+- [ ] Upgrade Vitest to 4
+    - **Current:** `vitest` and `@vitest/ui` pinned at `^3.2.7` in `frontend/package.json`
+    - **Approach:** bump both together, work through the breaking changes, run the full frontend test suite
+    - **Files:** `frontend/package.json`, `frontend/package-lock.json`, `frontend/vitest.config.ts`, any tests the
+      upgrade breaks
+
+- [ ] Run the frontend dev container as a non-root user
+    - **Problem:** `frontend/Dockerfile` (`node:26-alpine`) sets no `USER`, so the dev server runs as root
+    - **Approach:** `USER node`; check that the bind-mounted source and the `node_modules` volume stay writable
+    - **Files:** `frontend/Dockerfile`, `infrastructure/docker-compose.yml` if volume ownership needs it
+
+- [ ] Triage the backend test warnings
+    - **Problem:** the backend suite passes with about 290 warnings, which bury real deprecations
+    - **Approach:** group the warnings by source; fix each group, or filter it in the pytest configuration with a
+      stated reason
+    - **Files:** `backend/pyproject.toml` (pytest filters), the code each group points to
+
+- [ ] Refresh PROJECT-STATUS
+    - **Problem:** `.arc/reference/constitution/PROJECT-STATUS.md` predates the 2026 resume; its priorities and
+      active-work sections are stale
+    - **Approach:** rewrite the status sections against the current plan and active work

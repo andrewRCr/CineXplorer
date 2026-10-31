@@ -305,19 +305,31 @@ recorded" instead of counting commits, and the handoff's filter uses `git log ma
 
 ## Success Criteria
 
-- [ ] `node --test .arc/reference/harness-hooks/compaction-recovery.test.mjs` passes: the hook prints the pointer
+- [x] `node --test .arc/reference/harness-hooks/compaction-recovery.test.mjs` passes: the hook prints the pointer
   fields of the checkout's own session notes and the commits since the handoff, reports between work units on `main`
   with no notes, reads a linked worktree's own notes with the main checkout's working memory and inbox, and reports
   a missing work unit, notes, handoff or identity instead of guessing
-- [ ] A fresh session's resume orients from the session notes, working memory and git alone: `branch · clean/dirty`,
+    - 10 of 10 pass (2026-10-30), one case per behaviour listed, each in a temporary repository
+- [x] A fresh session's resume orients from the session notes, working memory and git alone: `branch · clean/dirty`,
   commits since the handoff, one next action, `Proceed?`, and no version or documents-read recital
-- [ ] `git grep -n CURRENT-SESSION` and `git grep -n TASK-INBOX` hit nothing outside `.arc/reference/archive/`, the ADRs
+    - A fresh-context agent given only `/resume-current` reported `technical/process-port-routine · clean · no handoff
+      recorded`, the Docker line, one Next, the Blockers and `Proceed?`, with no recital. Its trace found two
+      unclear instructions in `session-init.md`, both clarified
+- [x] `git grep -n CURRENT-SESSION` and `git grep -n TASK-INBOX` hit nothing outside `.arc/reference/archive/`, the ADRs
   and this work unit's own documents
-- [ ] An item captured from a linked worktree lands in the main checkout's `USER-INBOX.md`, and a drain changes nothing
+    - Both hit only this task list
+- [x] An item captured from a linked worktree lands in the main checkout's `USER-INBOX.md`, and a drain changes nothing
   until the Owner approves its table
-- [ ] One real errand runs end to end as `run-errand.md` describes, from branch to merged PR and deleted branch
-- [ ] No commit subject on this branch names a task (`git log main..HEAD --format=%s` has no `Task N` or
+    - Task 3.2's check (a capture from a linked worktree reached the main checkout's inbox) and Task 3.4's drain (the
+      table approved before any write)
+- [x] One real errand runs end to end as `run-errand.md` describes, from branch to merged PR and deleted branch
+    - PR #16, and since then #17: each branched from `origin/main` in a linked worktree, merged with `--merge` once
+      `ci-ok` passed, its remote branch deleted on merge and its worktree and local branch removed
+- [x] No commit subject on this branch names a task (`git log main..HEAD --format=%s` has no `Task N` or
   `tasks-` match), and every commit that checks off a task whose changes land on this branch carries those changes
+    - No match across the branch's commits. Every check-off commit carries its task's changes, except where the
+      work landed elsewhere and the note says so: 1.6.c (gitignored commands), 1.6.d (working memory and a
+      gitignored file) and 3.4 (PR #16)
 
 ## Review Log
 

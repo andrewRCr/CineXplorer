@@ -182,11 +182,13 @@ Three facts drive the work:
       DEBUG console logging put an import-time line from `cinexplorer.auth` on stdout. On the primary, `openapi.json`
       moved to the indented format with identical schema content, and `api.ts` regenerated unchanged
 
-- [ ] **2.4 Decide the primary stack's memory limits** (Owner decision, from 2.1's measurements)
+- [x] **2.4 Decide the primary stack's memory limits** (Owner decision, from 2.1's measurements)
     - Present the measured peaks and a recommendation: limits on the primary's `backend` and `dev-db` too, or none.
       Limits in `docker-compose.yml` also bind CI's runs (merged at ci.yml lines 79 and 244, the backend with `--cov`)
       and the production override; the recommendation says so. Apply what the Owner picks, as `mem_limit`
     - `QUICK-REFERENCE.md` lines 247-250 ("the Compose file sets no memory limits") state the limits that now exist
+    - Decided 2026-10-31 by the Owner: no limits on the primary stack, to be reconsidered as the suite grows; the
+      QUICK-REFERENCE note now gives the cap's peak and the test stack's limits
 
 - [ ] **2.5 Check two stacks side by side**
     - With Phase 2 committed, fast-forward `t0-check` to this branch; in the primary, `config` with both compose files

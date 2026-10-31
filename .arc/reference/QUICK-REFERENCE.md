@@ -259,8 +259,10 @@ Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
 
 Heavy container commands carry `nice -n 15` inside the container: Docker Desktop runs container processes outside
 this WSL distro, so the host's `nicecap` wrapper around `docker compose` would reach only the client. `memcap_gated`
-cannot cap them either, and the Compose file sets no memory limits, so each container can use the whole WSL2 VM's
-memory.
+cannot cap them either. The primary stack sets no memory limits, since limits in `docker-compose.yml` would also bind
+CI and the production override; the worker cap keeps the full backend suite near 650 MiB in the backend container.
+Revisit that as the suite grows. A worktree's test stack caps each container (backend 1.5 GiB, `dev-db` 512 MiB,
+`redis` 128 MiB).
 
 ```bash
 # 1. Backend Tests (parallel execution enabled by default)

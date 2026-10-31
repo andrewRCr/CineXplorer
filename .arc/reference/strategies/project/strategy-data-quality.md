@@ -305,8 +305,9 @@ This inflates NC-17 counts with historical X-rated films.
 
 ### vote_average with vote_count=0
 
-TMDB returns `vote_average: 0.0` when `vote_count: 0`. This is not "terrible rating"
-but "no rating data." Our vote count policy handles this.
+TMDB returns `vote_average: 0.0` when `vote_count: 0`. This is not "terrible rating" but "no rating data." The vote
+count policy leaves several surfaces unfiltered (search, now playing, upcoming, some browse sorts, the detail page), so
+the score display handles it: `MovieUserScore` shows a neutral badge, never "0.0", below `SCORE_DISPLAY_MIN_VOTES`.
 
 ---
 

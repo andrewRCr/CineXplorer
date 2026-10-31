@@ -11,7 +11,7 @@ export function CineXplorerExtensionsSection() {
       <Text fontSize="xl" fontWeight="bold" mb={4}>CineXplorer Extensions</Text>
       <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
         <VStack align="stretch" gap={4}>
-          {/* TMDB Community Scores - uses status colors */}
+          {/* TMDB Community Scores - status colors from 10 votes, neutral below */}
           <Box>
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">TMDB Community Scores (0-10)</Text>
             <HStack gap={2} wrap="wrap" justify="center">
@@ -24,9 +24,12 @@ export function CineXplorerExtensionsSection() {
               <Box bg="destructive" color="on-destructive" px={3} py={1} borderRadius="md" fontWeight="bold">
                 4.1
               </Box>
+              <Box bg="badge" color="on-badge" px={3} py={1} borderRadius="md" fontWeight="bold">
+                —
+              </Box>
             </HStack>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              ≥7.5: success (green), 5.0-7.4: warning (yellow), &lt;5.0: error (red)
+              10+ votes: ≥7.5 success (green), 5.0-7.4 warning (yellow), &lt;5.0 error (red) | fewer than 10 votes: neutral (badge)
             </Text>
           </Box>
 
@@ -98,7 +101,8 @@ export function CineXplorerExtensionsSection() {
         </VStack>
       </Box>
       <Text fontSize="xs" color="foreground/70" fontStyle="italic" px={2} mt={3} textAlign="center">
-        Note: TMDB community scores use status color tokens (success/warning/destructive) per MovieUserScore component thresholds.
+        Note: TMDB community scores use status color tokens (success/warning/destructive) per MovieUserScore component thresholds
+        from 10 votes, and the neutral badge / on-badge pair below 10 votes.
       </Text>
     </Box>
   );

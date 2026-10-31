@@ -26,7 +26,7 @@ export interface ExtensionTokens {
     /** Star system icon color (local user [NOT TMDB] scores; IMDb gold standard) */
     "imdb-gold": string;
 
-    /** Badge background (genre tags, neutral labels) */
+    /** Badge background (genre tags, neutral labels, TMDB scores below 10 votes) */
     badge: string;
     /** Text color on badge backgrounds (ADR-011 canonical naming) */
     "on-badge": string;

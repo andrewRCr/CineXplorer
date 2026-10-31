@@ -138,6 +138,18 @@ describe('MovieCard Component', () => {
 
       expect(screen.getByText('7.2')).toBeInTheDocument();
     });
+
+    it('shows a placeholder instead of the score below 10 votes', () => {
+      const testMovie = createMockMovieListItem({
+        vote_average: 6.8,
+        vote_count: 4
+      });
+
+      render(<MovieCard {...defaultProps} movie={testMovie} />);
+
+      expect(screen.getByText('—')).toBeInTheDocument();
+      expect(screen.queryByText('6.8')).not.toBeInTheDocument();
+    });
   });
 
   describe('Date Formatting', () => {

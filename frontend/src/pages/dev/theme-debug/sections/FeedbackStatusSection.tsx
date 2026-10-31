@@ -209,7 +209,7 @@ export function FeedbackStatusSection() {
 
               <Text fontSize="xs" color="foreground/60" maxW="700px" textAlign="center" lineHeight="1.5" mt={2}>
                 Note: TMDB community scores are CineXplorer extensions that use status badge variants
-                based on thresholds (see Extensions section). User rating stars use <Code fontSize="xs">imdb-gold</Code> token color.
+                based on thresholds, or the neutral variant below 10 votes (see Extensions section). User rating stars use <Code fontSize="xs">imdb-gold</Code> token color.
               </Text>
             </VStack>
           </Box>

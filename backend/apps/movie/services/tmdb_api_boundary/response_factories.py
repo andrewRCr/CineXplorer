@@ -300,6 +300,7 @@ def create_movie_detail_from_tmdb(
             'poster_path': tmdb_movie.poster_path,
             'release_date': release_date,
             'vote_average': tmdb_movie.vote_average,
+            'vote_count': tmdb_movie.vote_count,
             'runtime': tmdb_movie.runtime or 0,
             'overview': tmdb_movie.overview or '',
             'user_movie_data': None,  # Will be set when user integration is implemented

@@ -370,3 +370,43 @@ describe('MovieDetail - Back Button URL Construction', () => {
     });
   });
 });
+
+describe('MovieDetail - TMDB Score', () => {
+  const mockMovieDetail = (overrides: Partial<MovieDetailType>) => {
+    vi.mocked(useMovieDetail).mockReturnValue({
+      movie: createMockMovieDetail(overrides),
+      error: '',
+      setMovie: vi.fn(),
+      setError: vi.fn(),
+      isLoading: false,
+    });
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows "Not yet rated" for a movie with no votes', () => {
+    mockMovieDetail({ vote_average: 0, vote_count: 0 });
+
+    renderMovieDetailWithRoute('1');
+
+    expect(screen.getByText('Not yet rated')).toBeInTheDocument();
+  });
+
+  it('shows the average with its vote count below 10 votes', () => {
+    mockMovieDetail({ vote_average: 6.8, vote_count: 4 });
+
+    renderMovieDetailWithRoute('1');
+
+    expect(screen.getByText('6.8 · 4 votes')).toBeInTheDocument();
+  });
+
+  it('shows the score for a movie with 10 or more votes', () => {
+    mockMovieDetail({});
+
+    renderMovieDetailWithRoute('1');
+
+    expect(screen.getByText('8.2')).toBeInTheDocument();
+  });
+});

@@ -79,7 +79,7 @@ What am I styling?
 │  └─ Switch: Chakra Switch with recipe
 │
 └─ Movie rating/badge? → [Movie UI](#building-movie-specific-ui)
-   ├─ TMDB scores: Badge variants (success/warning/error)
+   ├─ TMDB scores: Badge variants (success/warning/error); neutral below 10 votes
    ├─ User rating stars: imdb-gold token
    └─ Genre tags: Badge variant="neutral"
 ```
@@ -462,13 +462,13 @@ Badges use recipes with 5 variants for status and categorization.
 
 **Available variants:**
 
-| Variant   | Use Cases                                        | Color |
-|-----------|--------------------------------------------------|-------|
-| `success` | Positive status, active states                   | Green |
-| `warning` | Caution states, pending status                   | Amber |
-| `error`   | Danger, deleted, error states                    | Red   |
-| `info`    | Informational, new items, neutral status         | Blue  |
-| `neutral` | Genre tags, content ratings, non-semantic labels | Grey  |
+| Variant   | Use Cases                                                                    | Color |
+|-----------|------------------------------------------------------------------------------|-------|
+| `success` | Positive status, active states                                               | Green |
+| `warning` | Caution states, pending status                                               | Amber |
+| `error`   | Danger, deleted, error states                                                | Red   |
+| `info`    | Informational, new items, neutral status                                     | Blue  |
+| `neutral` | Genre tags, content ratings, TMDB scores below 10 votes, non-semantic labels | Grey  |
 
 **What the recipe provides:**
 
@@ -1103,10 +1103,10 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 ### Movie Ratings
 
-**TMDB Community Scores (threshold-based traffic-light colors):**
+**TMDB Community Scores (threshold-based traffic-light colors from 10 votes, neutral below):**
 
 ```tsx
-// TMDB scores use status colors based on thresholds (0-10 scale)
+// TMDB scores backed by 10 or more votes use status colors based on thresholds (0-10 scale)
 // ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
 // User-rating badges (1-10) use the same variants: ≥8 success, 5-7 warning, <5 error
 
@@ -1118,9 +1118,16 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 // Low rating (<5.0)
 <Badge variant="error">4.1</Badge>
+
+// Fewer than 10 votes: neutral, never a traffic-light color
+// Cards show a placeholder; the detail page shows the average with its vote count
+<Badge variant="neutral" title="Fewer than 10 TMDB votes">—</Badge>
+<Badge variant="neutral">6.8 · 4 votes</Badge>
 ```
 
-**Tokens:** Uses Badge recipe with status variants (`success`, `warning`, `error`)
+**Tokens:** Uses Badge recipe with status variants (`success`, `warning`, `error`) from 10 votes and `neutral` below
+
+**Implementation:** `MovieUserScore` applies the rule; the threshold is `SCORE_DISPLAY_MIN_VOTES`
 
 **Use cases:** TMDB community scores, aggregated ratings from external sources
 
@@ -1149,11 +1156,11 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 **Tokens:** Uses Badge recipe with `neutral` variant (recipe handles `badge` / `on-badge` tokens automatically)
 
-**Use cases:** Genre tags, content ratings, non-semantic labels
+**Use cases:** Genre tags, content ratings, TMDB scores below 10 votes, non-semantic labels
 
 **Distinction:**
 
-- `neutral` variant - Neutral categorization (genre, rating)
+- `neutral` variant - Neutral categorization (genre, content rating) and TMDB scores below 10 votes
 - Status variants - Semantic feedback (success, warning, error)
 
 ### Drag and Drop Interactions

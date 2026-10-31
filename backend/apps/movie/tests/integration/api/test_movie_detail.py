@@ -136,3 +136,31 @@ def test_get_movie_detail_unauthenticated(
     assert data["tmdb_id"] == tmdb_id
     assert "user_movie_data" in data
     assert data["user_movie_data"] is None
+
+
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
+def test_get_movie_detail_returns_tmdb_vote_count(
+    mock_get_movie_details: Mock,
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """Test the detail response carries the vote count TMDB supplied."""
+    # Arrange
+    mock_get_movie_details.return_value = create_mock_movie_detail_response(
+        tmdb_id=78,
+        title="Blade Runner",
+        vote_average=8.1,
+        vote_count=100,
+    )
+    mock_tmdb_get.return_value = ApiResponse(
+        status_code=200,
+        data={"crew": [], "cast": []},
+    )
+
+    # Act
+    res = api_client.get(movie_detail_url(78))
+
+    # Assert
+    assert res.status_code == HTTPStatus.OK
+    assert res.json()["vote_count"] == 100

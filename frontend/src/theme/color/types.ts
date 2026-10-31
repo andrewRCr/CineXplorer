@@ -1045,16 +1045,17 @@ export interface UnifiedTheme {
      * ```
      *
      * **NOT for badge backgrounds:**
-     * - TMDB community scores use traffic-light status colors (success/warning/error) based on thresholds
+     * - TMDB community scores with 10 or more votes use traffic-light status colors (success/warning/error)
      * - See CineXplorerExtensionsSection for reference implementation
      * - ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
+     * - Fewer than 10 votes: neutral badge (`badge` / `on-badge`)
      */
     "imdb-gold": string;
 
     /**
      * Badge background (genre tags, neutral labels).
      *
-     * **Usage:** Genre tags, content ratings, non-semantic badges
+     * **Usage:** Genre tags, content ratings, TMDB scores below 10 votes, non-semantic badges
      * **Text color:** Use `on-badge`
      */
     badge: string;

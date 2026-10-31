@@ -1,17 +1,32 @@
 import { Badge, HStack } from "@chakra-ui/react";
 import React from "react";
 
+/** Fewer TMDB votes than this and the average is not shown as a traffic-light score. */
+const SCORE_DISPLAY_MIN_VOTES = 10;
+
 interface MovieUserScoreProps {
   /** TMDB vote_average (0-10 scale) */
-  score: number;
+  score: number | null | undefined;
+  /** TMDB vote_count; a missing count reads as no votes */
+  voteCount: number | null | undefined;
+  /** "compact" for cards, "detailed" for the detail page */
+  presentation?: "compact" | "detailed";
   /** Optional user rating (1-10 scale) - if provided, shows both ratings */
   userRating?: number;
   /** Show just the user rating (for user-specific views) */
   userRatingOnly?: boolean;
 }
 
+interface TmdbBadge {
+  variant: "success" | "warning" | "error" | "neutral";
+  label: string;
+  title: string;
+}
+
 const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   score,
+  voteCount,
+  presentation = "compact",
   userRating,
   userRatingOnly = false,
 }) => {
@@ -22,6 +37,30 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
     if (tmdbScore >= 7.5) return "success";  // High: Green
     if (tmdbScore < 5.0) return "error";     // Low: Red
     return "warning";                         // Medium: Yellow
+  };
+
+  // Helper to get the TMDB badge for the selected presentation
+  // Traffic-light score from SCORE_DISPLAY_MIN_VOTES votes up; neutral placeholder or vote-counted average below
+  const getTmdbBadge = (): TmdbBadge => {
+    const isDetailed = presentation === "detailed";
+
+    // A missing average or a missing or zero count means TMDB has no votes to show
+    if (score == null || !voteCount) {
+      return { variant: "neutral", label: isDetailed ? "Not yet rated" : "—", title: "No TMDB votes yet" };
+    }
+
+    // Too few votes: cards hold a placeholder, the detail page shows the average with its count
+    if (voteCount < SCORE_DISPLAY_MIN_VOTES) {
+      return isDetailed
+        ? {
+            variant: "neutral",
+            label: `${score.toFixed(1)} · ${voteCount} ${voteCount === 1 ? "vote" : "votes"}`,
+            title: "TMDB Rating",
+          }
+        : { variant: "neutral", label: "—", title: `Fewer than ${SCORE_DISPLAY_MIN_VOTES} TMDB votes` };
+    }
+
+    return { variant: getTmdbBadgeVariant(score), label: score.toFixed(1), title: "TMDB Rating" };
   };
 
   // Helper to get user rating badge variant (1-10 scale)
@@ -48,19 +87,20 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
     );
   }
 
+  const tmdbBadge = getTmdbBadge();
+
   // Show both TMDB and user rating
   if (userRating) {
-    const tmdbVariant = getTmdbBadgeVariant(score);
     const userVariant = getUserRatingBadgeVariant(userRating);
     return (
       <HStack gap={1}>
         <Badge
-          variant={tmdbVariant}
+          variant={tmdbBadge.variant}
           fontSize="12px"
           paddingX={1}
-          title="TMDB Rating"
+          title={tmdbBadge.title}
         >
-          {score.toFixed(1)}
+          {tmdbBadge.label}
         </Badge>
         <Badge
           variant={userVariant}
@@ -74,17 +114,16 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
     );
   }
 
-  // Show only TMDB rating (current behavior)
-  const tmdbVariant = getTmdbBadgeVariant(score);
+  // Show only TMDB rating
   return (
     <Badge
-      variant={tmdbVariant}
+      variant={tmdbBadge.variant}
       fontSize="12px"
       fontFamily="sourcesans"
       paddingX={1}
-      title="TMDB Rating"
+      title={tmdbBadge.title}
     >
-      {score.toFixed(1)}
+      {tmdbBadge.label}
     </Badge>
   );
 };

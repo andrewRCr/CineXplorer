@@ -34,6 +34,8 @@ Both paths check this before staging:
 - A task whose work lands outside the branch (gitignored files, or an errand's pull request) is checked off in the
   branch's next commit, or in a commit of its own when nothing else is ready. Its description says where the work
   landed.
+- A task with work both on the branch and outside it holds its on-branch changes until the outside part has landed,
+  then commits them with its check-off.
 - The commit that completes a parent's last subtask also marks the parent, and adds a line before the footer:
   `Completes parent task X.0: {Parent Task Name}`.
 - An atomic task runs as an errand, and its archive move rides in the errand's pull request

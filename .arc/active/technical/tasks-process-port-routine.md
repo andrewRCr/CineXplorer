@@ -226,8 +226,9 @@ rewritten as prose the agent follows rather than vendored.
       (start from the notes' Uncommitted Work, map changes to tasks, plan by concern with reversibility as the guard
       and tangled hunks noted, show the plan, execute, leave partial work uncommitted)
     - Task Lists Ride with Content: checkboxes commit with their content; work landed outside the branch is checked
-      off in the next commit, or alone, its description saying where it landed; parent completion; atomic tasks
-      archive inside their errand. The Documentation Overlap Scenario and the stale atomic-archive step are gone
+      off in the next commit, or alone, its description saying where it landed; a task with work on both sides
+      commits its on-branch part with its check-off; parent completion; atomic tasks archive inside their errand.
+      The Documentation Overlap Scenario and the stale atomic-archive step are gone
     - The shared-docs pattern survives only for one strategy document edited by several independent code tasks,
       never for checkboxes or a documentation-only work unit; its subject names the document
     - Message format: the subject names the operation, with no task IDs or task-list names; submission through a
@@ -253,8 +254,9 @@ rewritten as prose the agent follows rather than vendored.
 ## Implementation Notes
 
 - This branch follows Task 4.1's commit rule from its first commit: checkboxes ride with their content commit, no
-  task IDs in subjects, and a task whose work lands outside the branch (gitignored files, or Task 3.4's errand PR) is
-  checked off in the next commit, its note saying where the work landed
+  task IDs in subjects, and a task whose work lands outside the branch (gitignored files) is checked off in the next
+  commit, its note saying where the work landed. Task 3.4 had work on both sides: its on-branch change and its
+  check-off were first committed apart, and were folded into one commit after verification, before any push
 - Stacking stays documented (ADR-013, `manage-incidental-work.md`, the work-organization and task-list-formatting
   strategies, PROJECT-STATUS) until the migration pass, deliberately; the Owner's direction not to stack lives in
   working memory (Task 1.6.d)
@@ -328,8 +330,9 @@ recorded" instead of counting commits, and the handoff's filter uses `git log ma
 - [x] No commit subject on this branch names a task (`git log main..HEAD --format=%s` has no `Task N` or
   `tasks-` match), and every commit that checks off a task whose changes land on this branch carries those changes
     - No match across the branch's commits. Every check-off commit carries its task's changes, except where the
-      work landed elsewhere and the note says so: 1.6.c (gitignored commands), 1.6.d (working memory and a
-      gitignored file) and 3.4 (PR #16)
+      work landed elsewhere and the note says so: 1.6.c (gitignored commands) and 1.6.d (working memory and a
+      gitignored file). 3.4's check-off carries its on-branch change (the local-only class) and notes PR #16 for
+      the rest; verification found the two in separate commits, and they were folded before the branch was pushed
 
 ## Review Log
 

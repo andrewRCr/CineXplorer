@@ -5,7 +5,7 @@
 **Created:** 2026-10-31
 **Branch:** `technical/parallel-sessions`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -269,7 +269,7 @@ Three facts drive the work:
 
 ### **Phase 4:** Verification
 
-- [ ] **4.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+- [x] **4.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
     - The live criteria use the `t0-check` worktree, fast-forwarded to this branch, and a test stack beside the
       primary; criterion 4 needs the Owner to start a Claude Code session and a Codex session in that worktree and
       compact each. Codex first runs once in the primary as the baseline (project hooks approved, recovery context
@@ -277,6 +277,10 @@ Three facts drive the work:
       hooks
     - Afterwards `t0-check` comes down by `worktree-sessions.md`'s Removal as written, which runs that section once,
       and its `scratch/t0-check` branch is deleted
+    - Done 2026-10-31: the full command set passed once at `b8967f32`, every criterion is met with its evidence under
+      Success Criteria, and two independent passes are in the Review Log. Removal ran as written from the primary:
+      `config` reported `cinexplorer-t0-check`, `down -v --rmi local` removed its two volumes and backend image,
+      `git worktree remove` ran without a refusal, then `git branch -d scratch/t0-check` and `git fetch --prune`
 
 ## Implementation Notes
 
@@ -331,7 +335,8 @@ Three facts drive the work:
   leaves the primary's dev database (table and user counts) and containers unchanged; `npm run generate-types` in
   the worktree leaves `frontend/openapi.json` and `frontend/src/types/api.ts` unchanged
     - 802 passed at 4 workers in 33 s; each container's port bindings were empty; the primary held 28 tables and 47
-      users before and after, with its five containers; `npm run generate-types` exited 0 with a clean status
+      users before and after, with its five containers, each started before every run; `npm run generate-types`
+      exited 0 with a clean status, and from the worktree's `frontend/` Compose resolves `cinexplorer-t0-check`
 - [x] `docker inspect` reports a memory limit on each test-stack container, and a fresh backend run creates no more
   per-worker test databases than the cap
     - Limits of 1,610,612,736, 536,870,912 and 134,217,728 bytes (backend, `dev-db`, `redis`); the fresh stack's run
@@ -340,9 +345,11 @@ Three facts drive the work:
   recovery context after a compaction names the worktree's own session notes
     - The Owner's live sessions, 2026-10-31: Codex in the primary (the baseline) asked once to approve the four project
       hooks, and its recovery context named the primary's notes; Codex in `t0-check` asked nothing and its recovery
-      context named `t0-check`'s notes; Claude Code in `t0-check`, compacted after one exchange, named the same notes
+      context named `t0-check`'s notes; Claude Code in `t0-check`, compacted after one exchange, named the same notes.
+      Codex's hooks run by hand there armed a marker in the worktree's own git directory, and the claim named its notes
 - [x] In the worktree, host-side frontend tests, lint and type-check (after typegen), ruff and pyright pass
-    - At `b8967f32`: 723 frontend tests, ESLint and `tsc -b` exit 0, ruff clean, pyright 1.1.414 0 errors
+    - At `b8967f32`: 723 frontend tests, ESLint and `tsc -b` exit 0, ruff clean, pyright 1.1.414 0 errors; the
+      commits after it change Markdown only
 - [x] No tracked instruction outside the archive, the ADRs and the backlog runs the full suite before a commit or at
   a parent task, phase or session end, and `DEVELOPMENT-RULES.md` names what runs at each moment
     - Task 3.6's reading of every search hit, on the tree verification ran against; `DEVELOPMENT-RULES.md` §
@@ -388,3 +395,18 @@ Three facts drive the work:
   errand worktrees (the caller's branch deletion; the stack step only where a project is named); F3 the temporary
   file from `mktemp`, outside the checkout, removed either way · about 17 minutes · stop: converged on minor-only
   repairs; the Owner closed the loop
+- **2026-10-31 · Verification review · Pass 1** · fresh read-only subagent (`pragmatic-code-reviewer`) · rubric:
+  `verification-review`'s independent companion under `validate-criteria`, over the six criteria, the change from
+  `main`, the tree and raw outputs of the runtime checks · runner `separation-failure`: the diff, log and tree carried
+  the author's criterion marks and the record commit's claim that all six were met, so the pass did not count · all
+  six met as worded; 1 minor, out of scope, confirmed against source · approved, `local-correction`: F1 the run-wider
+  list's handoff case dropped and `DEVELOPMENT-RULES.md` pointed at the list · about 15 minutes · stop: the Owner
+  approved a rerun with clean separation
+- **2026-10-31 · Verification review · Pass 1, rerun** · fresh read-only subagent (`pragmatic-code-reviewer`) over the
+  worktree at F1's commit with the criteria unmarked, the change from `main` without the record commit, commit
+  subjects only, and the raw outputs with three further runtime checks · runner `independent` · all six met as
+  worded, with two evidence caveats: criterion 4 rests on the Owner's report backed by hand runs of the hooks
+  (accepted by the Owner), and criterion 5's runs predate two Markdown-only commits (checked) · 1 minor, out of scope,
+  confirmed against source · approved, `local-correction`: F2 "judgment" replaced by the affected surface at the
+  strategy's session-end moment and `DEVELOPMENT-RULES.md`'s full-run line · about 11 minutes · stop: the Owner
+  declined a fix check

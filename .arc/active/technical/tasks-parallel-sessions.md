@@ -130,8 +130,9 @@ Three facts drive the work:
 ### **Phase 2:** A worktree runs backend tests in its own stack
 
 - [x] **2.1 Cap the backend test workers** (no backend test runs before this lands)
-    - `backend/pyproject.toml` addopts (line 97) keep `-n auto` and gain `--maxprocesses`, starting at 4; CI's
-      runners have 4 cores, so CI is unchanged
+    - `backend/pyproject.toml` addopts (line 97) keep `-n auto` and gain `--maxprocesses`, starting at 4; CI is
+      unchanged: its runner starts 2 workers today (a private repository's 2-core runner, per the CI log) and would
+      start 4 once the repository is public, both within the cap
     - First capped run on the primary, with `docker stats` sampled throughout: record wall time and the peak memory of
       `backend` and `dev-db`; repeat with `--maxprocesses 8` (the cap also limits an explicit `-n`, and the later
       option wins) and keep the value that buys real time for its memory; one run with `--cov=apps`, as CI runs it,

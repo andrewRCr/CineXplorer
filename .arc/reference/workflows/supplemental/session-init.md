@@ -32,6 +32,7 @@ git status --short
 - **Working memory**, in full, always: the main checkout's `.arc/user/{identity}/WORKING-MEMORY.md`, when it exists.
 - **Task list**, the one the notes' Task List names: its Overview and the task Next Task names. Read the rest on
   demand.
+- **Inbox**, between work units: count the entries in the main checkout's `.arc/user/{identity}/USER-INBOX.md`.
 
 ### 3. Read the core documents
 
@@ -72,7 +73,8 @@ Proceed?
 - **Docker:** `docker ps --filter name=infrastructure -q | wc -l` against the five services; report it, and start the
   stack only when the next action needs it.
 - **Next:** one action, from the notes' Next Action. Name any Blockers on their own line.
-- **Between work units:** say so; the next action comes from working memory or the Owner.
+- **Between work units:** say so; the next action comes from working memory or the Owner. When the inbox has
+  entries, give the count and offer a drain ([user-inbox.md § Drain](user-inbox.md#drain)).
 
 Don't recite versions, hashes or the documents read, and don't start work until the Owner answers. On approval, work
 follows [3_process-task-loop.md](../3_process-task-loop.md).

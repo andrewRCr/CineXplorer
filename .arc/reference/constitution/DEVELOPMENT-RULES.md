@@ -115,12 +115,14 @@ Judge by total attention cost, not raw fix time. An issue that needs a switch in
 is major whatever its fix time: surface it rather than leaving the current task.
 
 **A different concern** that only shares a file you're editing does not ride the current change, however small the
-fix. Propose where it goes, and the Owner decides:
+fix, and is never written into a tracked file on the current branch. Propose where it goes, and the Owner decides:
 
-- an atomic task in `.arc/active/ATOMIC-TASKS.md` for a single bounded fix
-- an incidental task list ([manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md)) for
-  multi-step work
-- the PRD or backlog plan whose work it belongs to
+- **Bounded** (one self-contained fix): run it now as an errand
+  ([run-errand.md](../workflows/supplemental/run-errand.md)), or capture it in the inbox
+  ([user-inbox.md](../workflows/supplemental/user-inbox.md)) for the next drain
+- **Multi-step:** an incidental task list ([manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md)),
+  started now only if the Owner pauses the current work; otherwise capture it
+- Work that belongs to an existing PRD or backlog plan is captured with that document as its target
 
 Distinct concerns never share a PR either, even on a shared file: sequence them.
 

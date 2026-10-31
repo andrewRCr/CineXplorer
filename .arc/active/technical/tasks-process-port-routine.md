@@ -183,15 +183,17 @@ rewritten as prose the agent follows rather than vendored.
         - Lands as one errand on a `docs/backlog-{date}` branch, its PR body in plain terms within the surface rule;
           entries leave the inbox when it merges
 
-- [ ] **3.2 Wire the routing into the rules and the session**
-    - `DEVELOPMENT-RULES.md` § Leave It Cleaner: the routing in Scope; a different concern is never written to a
-      tracked file on the current branch
-    - `3_process-task-loop.md` § Incidental Work Management and `manage-incidental-work.md` agree with it: "stay on
-      current branch when atomic task" becomes an errand; task references in incidental commits go in the `Context:`
-      footer; creating an incidental task list also creates its session notes in the pinned format
-    - `session-init.md`: between work units with inbox entries, offer a drain
-    - Create `.arc/user/andrew/USER-INBOX.md`; the harness-hygiene follow-up moves there from working memory
-    - Check: a capture made from a linked worktree lands in the main checkout's file
+- [x] **3.2 Wire the routing into the rules and the session**
+    - `DEVELOPMENT-RULES.md` § Leave It Cleaner: a different concern is never written to a tracked file on the current
+      branch; bounded runs now as an errand or is captured, multi-step becomes an incidental task list only if the
+      Owner pauses the current work, otherwise captured; work for an existing PRD or plan is captured with it as target
+    - `3_process-task-loop.md` § Incidental Work Management points at both routes; `manage-incidental-work.md`: a
+      bounded fix of another concern is an errand, creating the task list also creates its session notes, task
+      references go in the `Context:` footer
+    - `session-init.md`: between work units, counts the inbox entries and offers a drain
+    - Created `.arc/user/andrew/USER-INBOX.md` (local); the harness-hygiene item moved there from working memory
+    - Check: a capture from a linked worktree (no workspace of its own) landed in the main checkout's inbox; the test
+      entry and worktree were removed
 
 - [ ] **3.3 Retire `TASK-INBOX.md` and `weekly-review.md`**
     - Delete `.arc/backlog/TASK-INBOX.md`; update `PROJECT-STATUS.md`, `strategy-work-organization.md` (its

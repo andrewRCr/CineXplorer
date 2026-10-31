@@ -176,7 +176,8 @@ using a stacked branch workflow. See [ADR-013](../../adr/adr-013-adopt-stacked-b
 
 **Stay on current branch when:**
 
-- ❌ Atomic task or inline fix (single coherent concern, <2 hours)
+- ❌ Inline fix of the current work's concern (a bounded fix of another concern is an errand:
+  [run-errand.md](run-errand.md))
 - ❌ Work directly continues current branch's theme
 - ❌ No separate task list justified
 
@@ -193,7 +194,9 @@ Example:
 
 1. Discover work needing task list (distinct phases, 2+ hours, or scope uncertainty)
 2. Create branch off current: `git checkout -b incidental/<name>`
-3. Create task list: `.arc/active/incidental/tasks-<name>.md`
+3. Create task list: `.arc/active/incidental/tasks-<name>.md`, and its session notes,
+   `.arc/user/{identity}/<name>/SESSION-NOTES.md`, from the skeleton in [session-handoff.md](session-handoff.md)
+   (`Commit at Handoff` `[none yet]`)
 4. Work on branch, commit with task references
 5. Complete the work through [archive-completed.md](archive-completed.md): verify it (§ 1), review the code
    (§ 5), open the PR against the parent branch with the review route the Owner chooses (§ 6), and merge with the
@@ -218,7 +221,7 @@ branch workflow details, merge strategy (depth-first), and handling branch updat
    - Mark `[x]` immediately on completion
 
 2. **Commits**: Follow [atomic-commit.md](atomic-commit.md)
-   - Include task reference: `Complete incidental task {X.Y}`
+   - Task references go in the `Context:` footer (`Context: tasks-{slug}.md (Task X.Y)`), never the subject
    - Include relationship: `Related to: tasks-{slug}.md`
 
 3. **Quality gates**: Same zero-tolerance standards as feature/technical work

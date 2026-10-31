@@ -8,6 +8,10 @@
  * must parse as JSON before openapi.json is written, so a failed export leaves the
  * file as it was. CI exports the schema the same way.
  *
+ * A linked worktree whose infrastructure/.env names no project would fall back to the
+ * main checkout's default project and export the main checkout's schema, so the
+ * export refuses there instead.
+ *
  * The console log level is raised to WARNING for the export: the development stack
  * logs at DEBUG to stdout, and an import-time debug line would land in the schema.
  *
@@ -21,11 +25,33 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const COMPOSE_FILE = path.join(__dirname, '..', '..', 'infrastructure', 'docker-compose.yml');
+const CHECKOUT_ROOT = path.join(__dirname, '..', '..');
+const COMPOSE_FILE = path.join(CHECKOUT_ROOT, 'infrastructure', 'docker-compose.yml');
+const DEFAULT_PROJECT = path.basename(path.dirname(COMPOSE_FILE));
 const OUTPUT_FILE = path.join(__dirname, '..', 'openapi.json');
+const EXEC_OPTIONS = { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'inherit'] };
+
+/** A linked worktree has a `.git` file pointing at the main repository; the main checkout has a folder. */
+function isLinkedWorktree() {
+  try {
+    return fs.statSync(path.join(CHECKOUT_ROOT, '.git')).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function composeProjectName() {
+  const config = execFileSync('docker', ['compose', '-f', COMPOSE_FILE, 'config', '--format', 'json'], EXEC_OPTIONS);
+  return JSON.parse(config).name;
+}
 
 let schema;
 try {
+  if (isLinkedWorktree() && composeProjectName() === DEFAULT_PROJECT) {
+    console.error(`❌ This worktree's Compose project is "${DEFAULT_PROJECT}", the main checkout's.`);
+    console.error('   Set COMPOSE_PROJECT_NAME in infrastructure/.env; openapi.json is unchanged.');
+    process.exit(1);
+  }
   schema = execFileSync(
     'docker',
     [
@@ -33,7 +59,7 @@ try {
       'exec', '-T', '-e', 'DJANGO_CONSOLE_LOG_LEVEL=WARNING',
       'backend', 'python', 'manage.py', 'export_openapi_schema',
     ],
-    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'inherit'] },
+    EXEC_OPTIONS,
   );
   JSON.parse(schema);
 } catch (error) {

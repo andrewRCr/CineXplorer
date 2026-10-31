@@ -96,8 +96,9 @@ Context: tasks-{name}.md (Task X.Y)
 ```
 
 - **Subject:** names the operation, in the imperative, starting lowercase, with a required scope. At most 72
-  characters; the hook warns past 50. No task or phase IDs, task-list names or other process vocabulary: traceability
-  goes in the `Context:` footer, and in the parent-completion line when there is one
+  characters; the hook warns past 50. It is legible without this repository's process vocabulary (which can still be
+  the subject matter, when the change is to the process documents) and carries no task or phase IDs or task-list
+  names: traceability goes in the `Context:` footer, and in the parent-completion line when there is one
   ([DEVELOPMENT-RULES § Code Documentation Standards](../../constitution/DEVELOPMENT-RULES.md#code-documentation-standards)).
 - **Types:** `feat` `fix` `docs` `style` `refactor` `content` `test` `chore` `perf` `build` `ci` `config` `revert`.
 - **Scope:** the functional area, such as `auth`, `movie`, `api`, `tests`, `types`, `theme`, `ui`, `email`, `config`,

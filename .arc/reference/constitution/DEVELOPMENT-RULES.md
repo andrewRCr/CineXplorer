@@ -40,7 +40,9 @@ decides *what* runs; zero tolerance decides that it must *pass*. See
   frontend, `npx vitest related --run <files>`.
 - **Commit:** the pre-commit and commit-message hooks. The task's checks have already run.
 - **Parent task, phase and session end:** nothing extra. The report names the broader checks not yet run. Run wider
-  when the affected surface has grown past what related tests reach (shared code, configuration, test fixtures).
+  when the affected surface has grown past what related tests reach;
+  [Quality Gates Strategy § When to Run Wider](../strategies/arc/strategy-quality-gates.md#when-to-run-wider) lists
+  the cases.
 - **Pull request:** CI is the broad check: the backend suite with coverage, frontend tests, lint and type-check,
   pyright, API type drift and markdown lint.
 - **Verification:** one local full run (below), then CI on the pull request.

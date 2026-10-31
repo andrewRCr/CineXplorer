@@ -119,7 +119,6 @@ surface has grown past that:
 - Shared code changed: base services, common serializers or schemas, context providers, hooks used across the app
 - Configuration, settings, test fixtures or dependencies changed
 - Inputs that no import graph shows changed (templates, data files, Markdown read at runtime)
-- A long stretch of work is about to hand off, and the changes span several areas
 
 Otherwise, report the broader checks as not yet run and let CI run them.
 

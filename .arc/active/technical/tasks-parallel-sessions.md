@@ -115,7 +115,7 @@ Three facts drive the work:
     - Markdown lint and the local link checker (`.arc/user/{identity}/parallel-sessions/linkcheck.py`, every relative
       link and anchor outside the archive) on every touched file
 
-- [ ] **1.4 Check a provisioned worktree**
+- [x] **1.4 Check a provisioned worktree**
     - With Tasks 1.2 and 1.3 committed, fast-forward `t0-check` to this branch, then provision it by
       `worktree-sessions.md` exactly from the step after `git worktree add` through `npm run typegen` (the Codex step
       belongs to Task 4.1), fixing the document where a step fails; with the links in place,

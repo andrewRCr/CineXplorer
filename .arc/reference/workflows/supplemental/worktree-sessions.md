@@ -48,6 +48,8 @@ docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # n
 - **Links:** `.venv-backend`, `.claude` and `.codex` point at the primary's, so the worktree shares its Python
   environment, harness settings and recovery hooks. `.gitignore` names them without a trailing slash, which matches a
   link as well as a folder; keep it that way, or the links show as untracked.
+- **Install warnings:** npm holds back the install scripts of esbuild and msw and says so. Neither is needed: esbuild
+  runs from its platform package, and the project configures no msw worker directory.
 - **Codex:** on the worktree's first Codex session, trust its path and approve its project hooks if Codex asks.
 - **Notes:** a work unit's session notes live in the worktree's own `.arc/user/{identity}/{name}/`. The inbox and
   working memory stay in the main checkout ([user-inbox.md](user-inbox.md)).

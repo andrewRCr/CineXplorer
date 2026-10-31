@@ -138,7 +138,7 @@ For each parent task, define specific, actionable sub-tasks that:
 
 - Follow logically from the parent task
 - Cover implementation details implied by the PRD
-- Include quality checkpoints (linting, type checking, tests) at appropriate stages
+- Name a check only where a task needs one beyond its own checks (a specific E2E file, a build)
 - Reference specific files, components, or patterns where appropriate
 - Are small enough to review in one sitting
 
@@ -150,10 +150,10 @@ For each parent task, define specific, actionable sub-tasks that:
     - Service layer functions
     - See [strategy-testing-methodology.md](../strategies/project/strategy-testing-methodology.md)
       and [DEVELOPMENT-RULES.md](../constitution/DEVELOPMENT-RULES.md) for complete protocol
-- **Quality gates**: Include quality checkpoint tasks at appropriate stages:
-    - Tier 1 (incremental): Linting, type-checking after significant changes
-    - Tier 2 (integration): E2E checkpoint tasks when phases modify E2E-tested components (layout,
-      navigation, forms, user interactions). See [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md)
+- **Quality gates**: Each task carries its own checks (lint, type-check, related tests) without listing them. Name a
+  check in a task only when it needs one beyond them, such as the E2E files that drive a layout, navigation, form or
+  interaction change. No full-suite checkpoint tasks: the final phase is verification. See
+  [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md)
 - **Incremental validation**: Structure tasks so progress can be verified at each step
 - **No time estimates**: Task lists should NOT include time estimates (duration emojis, minute counts, etc.)
   Focus on clear scope and completion criteria instead
@@ -226,7 +226,6 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
     - [ ] **1.2.a Create implementation**
         - Implementation details here
     - [ ] **1.2.b Run tests - should now PASS**
-    - [ ] **1.2.c Run quality gates**
 
 ### **Phase 2:** Verification
 

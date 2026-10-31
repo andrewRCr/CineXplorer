@@ -236,7 +236,7 @@ Three facts drive the work:
       run's type check; its "Fast - specific files" example (line 531) uses a directory, matching DEVELOPMENT-RULES'
       "NOT individual files"
 
-- [ ] **3.5 Workflows and task-list templates**
+- [x] **3.5 Workflows and task-list templates**
     - `archive-completed.md` line 46: the verification run, then CI on the pull request
     - `atomic-commit.md` lines 26-28 and `run-errand.md` line 42: the task checks, not "Tier 1"
     - `2_generate-tasks.md` lines 141 and 153-156 and its template's "Run quality gates" subtask, and

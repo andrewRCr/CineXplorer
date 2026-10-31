@@ -40,8 +40,9 @@ git worktree add -b {type}/{name} <path> origin/main             # or a linked w
 
 ### 2. Make the change and check it
 
-- Make the change; run the checks for what it touches (Tier 1 at least; see
-  [QUICK-REFERENCE](../../QUICK-REFERENCE.md) for commands).
+- Make the change; run the checks for what it touches: lint, type-check and related tests
+  ([DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md#quality-gates); commands in
+  [QUICK-REFERENCE](../../QUICK-REFERENCE.md)).
 - An atomic task: move its entry from `ATOMIC-TASKS.md` to the quarter's archive
   (`.arc/reference/archive/{year}-{quarter}/completed-atomic-{quarter}.md`) as
   [3_process-task-loop.md § Atomic Task Completion Protocol](../3_process-task-loop.md#atomic-task-completion-protocol)

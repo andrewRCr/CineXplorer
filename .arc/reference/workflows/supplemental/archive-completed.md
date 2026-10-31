@@ -43,8 +43,9 @@ for the other.
 - [ ] PRD Open Questions are empty, and any design change went through
   [1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)
 
-**Run the gates.** Run the full suite (Tier 3, [DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md))
-and report its results. A checked task box is not a passed gate; only a run is.
+**Run the gates.** Run the verification run: the full command set once locally
+([DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md#quality-gates)), and report its results;
+CI runs it again on the pull request. A checked task box is not a passed gate; only a run is.
 
 **Author criteria walk.** Run [verification-review](../../methods/verification-review.md), which starts with
 [validate-criteria](../../methods/validate-criteria.md) over the whole work unit: the task list's Success Criteria, the

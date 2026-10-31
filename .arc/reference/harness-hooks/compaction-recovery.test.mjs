@@ -103,6 +103,16 @@ function rereadList(context) {
     return list;
 }
 
+// The "- Field: value" lines printed under "The session notes record:", in order.
+function notesBlock(context) {
+    const lines = context.split("\n");
+    const start = lines.indexOf("The session notes record:");
+    if (start === -1) return [];
+    const block = [];
+    for (let i = start + 1; (lines[i] ?? "").startsWith("- "); i += 1) block.push(lines[i]);
+    return block;
+}
+
 test("a work unit with notes: pointer fields, commits since the handoff, task list and working memory", (t) => {
     const root = repository(t);
     startWorkUnit(root, "technical/demo", "demo");
@@ -121,8 +131,16 @@ test("a work unit with notes: pointer fields, commits since the handoff, task li
     assert.ok(rereadList(context).some((line) => line.startsWith(".arc/active/technical/tasks-demo.md")));
     assert.match(context, /Work unit: demo\n/);
     assert.match(context, new RegExp(`Commits since the handoff \\(${handoff}\\): 2\\n`));
-    assert.match(context, /- Next Action: Task 2\.1: start the thing\n/);
-    assert.match(context, /- State: executing\n/);
+    assert.deepEqual(notesBlock(context), [
+        "- State: executing",
+        "- Branch: `technical/demo`",
+        "- Task List: `tasks-demo.md`",
+        "- Next Task: 2.1 Write the thing",
+        "- Last Completed: 1.3 Read the thing",
+        "- Blockers: [none]",
+        "- Next Action: Task 2.1: start the thing",
+        `- Commit at Handoff: \`${handoff}\``,
+    ]);
     assert.doesNotMatch(context, /MISMATCH/);
 });
 
@@ -157,6 +175,7 @@ test("a linked worktree reads its own notes and the main checkout's working memo
     ]);
     assert.match(context, new RegExp(`Inbox: ${root}/\\.arc/user/me/USER-INBOX\\.md\\n`));
     assert.match(context, /Work unit: side\n/);
+    assert.deepEqual(notesBlock(context).slice(1, 3), ["- Branch: `technical/side`", "- Task List: `tasks-side.md`"]);
 });
 
 test("a Branch field naming another branch is a mismatch; an annotated value naming this one is not", (t) => {

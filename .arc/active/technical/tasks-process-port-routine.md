@@ -78,6 +78,8 @@ rewritten as prose the agent follows rather than vendored.
           fixture repositories in a temp directory, isolated from the developer's git configuration
         - Ten tests for the nine cases (no identity and several identities tested separately); all ten failed on
           their assertions against the old hook
+        - After verification, the first test compares every printed pointer field, and the worktree test checks the
+          fields from its own notes
 
     - [x] **1.2.b Change the hook**
         - Reads `.arc/user/{identity}/{name}/SESSION-NOTES.md` in the pinned format; identity and the flat files from

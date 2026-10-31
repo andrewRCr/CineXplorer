@@ -226,6 +226,8 @@ rewritten as prose the agent follows rather than vendored.
     - Landed on `main` as errand PR #16 (`docs/backlog-2026-10-30`, merge `efd0dc40`) from a linked worktree, no
       review; the worktree and branches are gone and the drained entries left the inbox
     - Running it found a missing class: work with no tracked change. `user-inbox.md` gained the local-only class
+    - Later, once ADR-021 closed `ATOMIC-TASKS.md` to new entries, errand PR #18 (merge `6d515bb0`) withdrew the four
+      atomic tasks; they wait in the inbox as errands
 
 ### **Phase 4:** Commits come in reviewable units
 

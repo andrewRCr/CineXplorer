@@ -48,7 +48,7 @@ Work outside the task loop (errands, incidental fixes) runs the checks for what 
 
 **What:** nothing extra. The completion or handoff report names the broader checks not yet run, so the gap is visible.
 
-Run wider when judgment calls for it (see [When to Run Wider](#when-to-run-wider)).
+Run wider when the affected surface calls for it (see [When to Run Wider](#when-to-run-wider)).
 
 ### Pull Request
 

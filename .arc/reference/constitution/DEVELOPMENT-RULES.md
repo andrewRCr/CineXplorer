@@ -50,8 +50,8 @@ decides *what* runs; zero tolerance decides that it must *pass*. See
 
 **Work outside the task loop** (errands, incidental fixes) runs the checks for what it changed before committing.
 
-**The full run** is the verification run, and the wider run when judgment calls for one. For specific commands, see
-[QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
+**The full run** is the verification run, and the wider run when the affected surface calls for one. For specific
+commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 
 1. **Backend Tests**: 100% pass rate
    - **MUST run via Docker** (requires database connection to PostgreSQL/Redis)

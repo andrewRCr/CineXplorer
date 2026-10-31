@@ -1,6 +1,6 @@
 # Methods
 
-Review and planning methods vendored from arc-framework (`.arc/system/methods/`, snapshot `a49ebba40`, 2026-10-30).
+Review, planning and pull-request methods vendored from arc-framework (`.arc/system/methods/`, snapshot `a49ebba40`, 2026-10-30).
 They carry new ARC's backstops into this repository's process until it migrates: adversarial review loops at each
 planning stage, verification separate from code review, and the rubrics behind them. Workflows under
 `../workflows/` say where each method fires.
@@ -50,9 +50,10 @@ override wins. An override changes how the method is done here, never what its c
 | `draft-design`, `create-spec`, `init-work-unit`, `amend-design` workflows | `../workflows/1_create-prd.md` |
 | `generate-tasks` workflow | `../workflows/2_generate-tasks.md` |
 | `process-task-loop`, `run-errand` workflows | `../workflows/3_process-task-loop.md` |
-| `verify-work-unit` workflow, `code-review` method | `../workflows/supplemental/archive-completed.md` |
+| `verify-work-unit`, `integrate-work-unit` workflows, `code-review` method | `../workflows/supplemental/archive-completed.md` |
 | `activate-work-unit` workflow | `../workflows/supplemental/activate-work-unit.md` |
 | `review-triage`, `review-response` methods | `../workflows/supplemental/agent-pre-merge-review.md` |
+| `commit-format` method | `../workflows/supplemental/atomic-commit.md` |
 | `DEV-RULES.ARC`, `route-discovered-work` method | `../constitution/DEVELOPMENT-RULES.md` |
 | `strategy-work-organization` | `../strategies/arc/strategy-work-organization.md` |
 | `arc-design-audit`, `arc-task-audit` skills | [§ Run on request](#run-on-request) |

@@ -79,6 +79,12 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
       anchor, link label and frontmatter method name resolves. Two long lines re-wrapped and one table re-padded
       to keep the lint passing
 
+- [x] **1.5 Vendor `pull-request-format`** (Owner, 2026-10-30)
+    - Override: merge commits rather than squash; the surface boundary also excludes this repository's process
+      vocabulary (task and phase IDs, stage names, `.arc/` paths, review pass counts)
+    - No PR template, contributing guide or security policy here or in an owner `.github` repository; the defaults
+      govern. Link map gains `commit-format` → `atomic-commit.md` and `integrate-work-unit` → `archive-completed.md`
+
 ### **Phase 2:** Wire the stages
 
 - [ ] **2.1 PRD stage (`1_create-prd.md`)**

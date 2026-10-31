@@ -245,7 +245,7 @@ Three facts drive the work:
     - `STRATEGY-INDEX.md` line 30 ("Tiered quality gate system") and `strategy-testing-methodology.md` lines 333-336
       ("Full quality gates") name the moments
 
-- [ ] **3.6 Check the re-placement**
+- [x] **3.6 Check the re-placement**
     - Read every hit of `git grep -n -i -E '\btier(ed)?\b|quality gates?|full (test )?suite|before any commit' --
       .arc/reference AGENTS.md ':!.arc/reference/archive'`: none asks for a check tier, or for the full suite before a
       commit or at a parent task, phase or session end. Hits about something else are listed as such: the backlog
@@ -257,6 +257,15 @@ Three facts drive the work:
       hits are the backlog, the README's product description, CI job names, code and this task list
     - Backlog task lists and PRDs (`.arc/backlog/`) are left as they are and re-planned when picked up
     - Markdown lint and the local link checker clean
+    - Read 2026-10-31: no hit asks for a check tier, or for the full suite before a commit or at a parent task, phase
+      or session end. Hits naming the moments or their documents: the rules, the strategy, the task loop, the
+      workflows and QUICK-REFERENCE's full command set. Generic standards or pointers, no timing: "quality gates" in
+      TECHNICAL-OVERVIEW, PROJECT-STATUS, the PRD and constitution workflows, task-list status, incidental work's
+      zero tolerance, task notes' gate results, the testing strategy's pass-rate and coverage targets, the type-safety
+      strategy's CI line and the methods' references. Unrelated tiers as listed above, plus ADR-006's and ADR-013's
+      gate lines (ADRs). Repository-wide, the other hits are the backlog (with ROADMAP), the README, CI job names,
+      code, this task list and the test-stack override's measurement comment. Lint and links clean across every
+      non-archive reference doc
 
 ### **Phase 4:** Verification
 

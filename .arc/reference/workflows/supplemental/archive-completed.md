@@ -226,7 +226,7 @@ Before considering the completion doc done, verify EVERY claim:
 
 **Feeds the PR:** The completion doc is the source material for the PR description, but not its text: the PR is
 public and follows [pull-request-format](../../methods/pull-request-format.md), so task IDs, task-list names, `.arc/`
-paths and review metadata stay out of it.
+paths (except the one commit-pinned PRD link) and review metadata stay out of it.
 
 ### 4) Commit Documentation Changes
 

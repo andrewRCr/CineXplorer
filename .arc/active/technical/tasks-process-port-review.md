@@ -71,7 +71,7 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
     - Done as an override rather than a trim, keeping the default verbatim. Fold verification and fix checks stay
       (they are the loop); kept versions, prompts and reports move to the gitignored personal workspace
       (`.arc/user/{identity}/{name}/`);
-      the pass record becomes a `## Review Log` in the PRD or task list, with elapsed time; the partitioned modes
+      the pass record becomes a `## Review Log` in the task list, with elapsed time; the partitioned modes
       and attestation are not used
 
 - [x] **1.4 Close the set under its references**
@@ -172,7 +172,10 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
     - Fixed: wrong relative depth in four strategies and `maintain-task-notes.md`; links to archived work documents
       (ADR-020, `strategy-authentication.md`) made filename-only; PROJECT-STATUS archive links repointed; link-shaped
       paths in `atomic-commit.md` made code spans; two backlog documents' relative links made filename-only
-- [ ] **4.2 Fresh-context adversarial review of the wiring** (one pass plus a fix-check)
+- [x] **4.2 Fresh-context adversarial review of the wiring** (one pass plus a fix-check)
+    - Pass 1: 15 findings (5 major, 10 minor), all fixed; review records moved to the gitignored personal workspace
+      (`.arc/user/`), PR text and reply drafts shown before posting, incidental lifecycles pointed at the completion
+      workflow. Fix check: 3 minor residues fixed; loop closed (see Review Log)
 - [ ] **4.3 PR, one `@codex review`, dispositions, merge**
 
 ## Success Criteria
@@ -201,3 +204,7 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
   F4 and F8 `new-design` (review records move to the gitignored personal workspace and leave the PRD; PR text and
   reply drafts are shown before posting), the rest `local-correction`; F9 allows a reasoned skip recommendation; F15
   keeps the gate criterion as written · about 14 minutes · stop: fixes landed, fix check offered
+- **2026-10-30 · Wiring review (Task 4.2) · Fix check, round 1 since pass 1** · fresh read-only subagent, scoped to
+  the repairs · 13 of 15 repairs hold; F5 and F6 partial (residue at loci their findings named); one new minor (F16,
+  a stale line in this list) · 3 minor approved as fixes, `local-correction` · about 10 minutes · stop: converged;
+  the Owner closed the loop

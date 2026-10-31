@@ -415,7 +415,7 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
 - **Commit and PR surface language**: Commit prose reads as the operation performed, legible without this
   repository's process vocabulary; traceability (task IDs, phases) goes in the `Context:` footer. Before writing any
   PR title or body, load [pull-request-format](../methods/pull-request-format.md): the repository is public, so PR
-  text carries no process vocabulary, `.arc/` references or review metadata.
+  text carries no process vocabulary, `.arc/` references (except the one commit-pinned PRD link) or review metadata.
 
 - **Collaborative voice in documentation**: Commits, task lists, and project docs should read
   naturally from an author or team perspective. Avoid third-person references to collaborators;

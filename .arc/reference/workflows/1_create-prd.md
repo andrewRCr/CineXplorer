@@ -159,7 +159,7 @@ the old one `[~]` with a note naming the amendment and append its replacement.
 
 Then carry the amendment into the task list: update the tasks it affects (adding or `[~]`-marking tasks as needed),
 and apply the same `[~]`-and-append change to the task list's copy of any changed criterion, since that copy is the
-one verification checks. Work resumes at the task that stopped.
+one verification checks. Work resumes where it stopped.
 
 ### Picking Up a Parked PRD
 

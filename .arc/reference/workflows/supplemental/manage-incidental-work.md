@@ -144,7 +144,7 @@ docs({current-branch}): create {brief-slug} incidental task list
 Triggered by {discovery context during current feature/technical work}.
 Pausing {current work task} to address {critical issue}.
 
-Related to: .arc/active/{feature|technical}/tasks-{main-work-name}.md
+Related to: tasks-{main-work-name}.md
 ```
 
 **Example**:
@@ -155,7 +155,7 @@ docs(service-layer-modernization): create filter integration testing incidental 
 Triggered by Task 3.5.2.3 investigation revealing critical test coverage gaps.
 Pausing service layer work to establish comprehensive filter testing.
 
-Related to: .arc/active/technical/tasks-service-layer-modernization.md
+Related to: tasks-service-layer-modernization.md
 ```
 
 ---

@@ -410,9 +410,10 @@ notes: |
 
 ## Planned Work Branch Practices
 
-- Verify you're on the correct feature/technical branch before committing
+- Verify you're on the correct branch before committing: the work unit's, or the errand's
 - Branch naming: `feature/[name]` for user-facing work, `technical/[name]` for infrastructure
-- Incidental work commits to feature/technical branch (no separate branches)
+- A fix of the current work unit's concern commits on its branch; a different, bounded concern is an errand on its
+  own branch from `origin/main` ([run-errand.md](run-errand.md))
 - Preserve commit history when merging (no squash merge)
 - Clean up branches after successful merge
 

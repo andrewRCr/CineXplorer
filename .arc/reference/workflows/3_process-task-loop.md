@@ -256,7 +256,9 @@ the completion report. The TodoWrite item serves as a checklist reminder.
 **For tasks tracked in:** `active/ATOMIC-TASKS.md`
 
 Atomic tasks are small, one-off work items (fixes, chores, quick refactors) that don't require formal task lists with
-phases and subtasks. They follow a simplified completion protocol.
+phases and subtasks. Each runs as an errand, on its own branch from `origin/main` with its own pull request
+([run-errand.md](supplemental/run-errand.md)); the steps below happen inside it, and the archive move rides in the
+errand's pull request.
 
 ### Completion Workflow
 

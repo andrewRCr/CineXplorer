@@ -76,6 +76,8 @@ Use this strategy when:
 
 - **Planned work** (feature/ + technical/) → Gets PRDs, formal task lists, git branches
 - **Unplanned work** (incidental/) → Gets task lists, NO PRDs, gets branches if substantial (>30min, multiple subtasks)
+- **Errands** (one bounded concern outside the current work unit, such as an atomic task) → their own branch from
+  `origin/main` and pull request ([run-errand.md](../../workflows/supplemental/run-errand.md))
 
 **Secondary Distinction: USER-FACING vs TECHNICAL** (for planned work)
 
@@ -911,48 +913,30 @@ discovered, not planned.
   incidental/        # ✓ Reactive quality work
 ```
 
-### ❌ Don't: Create Branches for All Incidental Work
+### ❌ Don't: Fold an Unrelated Fix into the Current Branch
 
-**Problem:** Creating git branches for every discovered issue.
+**Problem:** Committing a discovered fix of a different concern on the work unit's branch, or merging a fix branch
+into it, mixes concerns in its pull request.
 
 ```bash
-git checkout -b fix/csrf-token-validation
-git commit -m "fix: correct CSRF validation"
-git checkout feature/user-authentication
-git merge fix/csrf-token-validation
-
-git checkout -b refactor/extract-test-helper
-git commit -m "refactor: extract helper"
-git checkout feature/user-authentication
-git merge refactor/extract-test-helper
-
-# Branch juggling overhead!
+# On feature/user-authentication
+git commit -m "fix: correct CSRF validation"        # a different concern
+git commit -m "feat(auth): complete authentication flow"
 ```
 
 **Why it fails:**
 
-- Branch management overhead
-- Context switching costs
-- Doesn't scale for cascading discoveries
-- Slows velocity for solo developers
+- The pull request reviews two concerns at once
+- Neither change can be reverted or shipped on its own
 
-**✅ Do:**
+**✅ Do:** fix a concern of the current work inline; run a different, bounded concern as an errand on its own branch
+from `origin/main` ([run-errand.md](../../workflows/supplemental/run-errand.md)), or capture it for later.
 
 ```bash
-# Stay on feature/user-authentication branch
-
-# Create task list for traceability
-# .arc/active/incidental/tasks-fix-csrf.md
-
-git commit -m "fix: correct CSRF validation (tasks-fix-csrf.md Task 1.1)"
-
-# Create task list for refactoring
-# .arc/active/incidental/tasks-refactor-test-helpers.md
-
-git commit -m "refactor: extract test helper (tasks-refactor-test-helpers.md Task 1.1)"
-
-# Continue feature work
-git commit -m "feat(auth): complete authentication flow"
+# On feature/user-authentication; the CSRF fix is an errand
+git worktree add -b fix/csrf-validation ../csrf-errand origin/main
+# fix, check, pull request, merge (run-errand.md), then:
+git worktree remove ../csrf-errand
 ```
 
 ### ❌ Don't: Use Redundant File Naming
@@ -1204,8 +1188,8 @@ Context: planning (atomic / no associated task list)
 
 Boundary categories: maintenance, refactor, documentation, planning
 
-**Rationale:** Atomic tasks aren't archived (deleted after completion), so no long-term traceability.
-Commit message IS the record.
+Atomic tasks run as errands ([run-errand.md](../../workflows/supplemental/run-errand.md)). The quarter's
+`completed-atomic-{quarter}.md` archive and the commit message are the record.
 
 ### Discovery Mechanism
 

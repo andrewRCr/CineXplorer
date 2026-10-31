@@ -154,17 +154,16 @@ rewritten as prose the agent follows rather than vendored.
       route; merge with `gh pr merge --merge` on approval once `ci-ok` is green; clean up (GitHub deletes the remote
       branch)
 
-- [ ] **2.2 Point existing guidance at errands**
-    - `3_process-task-loop.md` § Atomic Task Completion Protocol: atomic tasks run as errands; its archive step and
-      Context footer stay
-    - `atomic-commit.md` § Planned Work Branch Practices: "no separate branches" removed; same-work-unit fixes stay
-      on its branch, errands get their own
-    - `strategy-work-organization.md`: the statements that atomic work never gets a branch, including the
-      "Don't: Create Branches for All Incidental Work" example (its `fix/` branch is now the errand shape)
-    - `methods/README.md`: the glossary's Errand row (one bounded concern outside the current work unit, run per
-      `run-errand.md`; an atomic task is one source) and the link map's `run-errand` row
-      (`../workflows/supplemental/run-errand.md`); the same two statements in the CineXplorer adaptations of
-      `classify-work-unit.md` and `pull-request-format.md`
+- [x] **2.2 Point existing guidance at errands**
+    - `3_process-task-loop.md` § Atomic Task Completion Protocol: atomic tasks run as errands, the archive move
+      riding in the errand's PR
+    - `atomic-commit.md` § Planned Work Branch Practices: "no separate branches" replaced; same-concern fixes stay on
+      the work unit's branch, errands get their own
+    - `strategy-work-organization.md`: errands added to the work split; the "Don't: Create Branches for All Incidental
+      Work" example becomes "Don't: Fold an Unrelated Fix into the Current Branch"; the atomic-task rationale names
+      the quarterly archive. Its historical migration notes are left for the migration pass
+    - `methods/README.md`: the Errand glossary row and a separate `run-errand` link-map row; the CineXplorer
+      adaptations and `[run-errand]` links in `classify-work-unit.md` and `pull-request-format.md` follow
     - Markdown lint and the link check clean
 
 ### **Phase 3:** Discovered work is captured or routed, never dropped

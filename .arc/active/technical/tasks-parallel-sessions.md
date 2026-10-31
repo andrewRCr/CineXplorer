@@ -129,7 +129,7 @@ Three facts drive the work:
 
 ### **Phase 2:** A worktree runs backend tests in its own stack
 
-- [ ] **2.1 Cap the backend test workers** (no backend test runs before this lands)
+- [x] **2.1 Cap the backend test workers** (no backend test runs before this lands)
     - `backend/pyproject.toml` addopts (line 97) keep `-n auto` and gain `--maxprocesses`, starting at 4; CI's
       runners have 4 cores, so CI is unchanged
     - First capped run on the primary, with `docker stats` sampled throughout: record wall time and the peak memory of
@@ -139,6 +139,11 @@ Three facts drive the work:
     - Drop the primary's per-worker test databases above the cap (`test_cinexplorer_dev_gw{cap}` through `gw23`), which
       `--reuse-db` would otherwise keep
     - QUICK-REFERENCE's backend test lines (125-146) state the cap
+    - Measured 2026-10-31 on the primary, 802 tests, `docker stats` every 2-3 seconds, local ARC slot idle: 4 workers
+      33 s, peaks backend 614 MiB and `dev-db` 70 MiB; 8 workers 26 s, 989 MiB and 92 MiB; 4 workers with
+      `--cov=apps` 34 s, 661 MiB and 84 MiB (91.11% coverage). Kept 4: 8 saves 7 s for 60% more backend memory and
+      twice the CPU. WSL MemAvailable stayed above 8.6 GB. `gw4` to `gw23` dropped; dev data unchanged (28 tables,
+      47 users)
 
 - [ ] **2.2 Write the test-stack override, `infrastructure/docker-compose.test-stack.yml`**
     - `backend`, `dev-db`, `redis`: `ports: !reset []` and a `mem_limit` sized from 2.1's peaks with headroom (one

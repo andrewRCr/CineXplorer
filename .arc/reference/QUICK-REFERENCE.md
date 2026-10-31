@@ -129,10 +129,12 @@ docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps
 
 **CRITICAL: Tests MUST run via Docker** (require PostgreSQL + Redis)
 
-**Test Runner**: pytest with parallel execution enabled by default (~5x faster via pytest-xdist)
+**Test Runner**: pytest with parallel execution enabled by default via pytest-xdist, capped at 4 workers
+(`--maxprocesses 4` in `backend/pyproject.toml`; `-n auto` alone would start one per core). The full suite takes about
+35 seconds and peaks near 650 MiB in the backend container; 8 workers save under 10 seconds for about 60% more memory.
 
 ```bash
-# Run all tests (parallel execution is automatic)
+# Run all tests (parallel execution is automatic, 4 workers)
 docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest apps/
 
 # Sequential execution (for debugging test isolation issues)

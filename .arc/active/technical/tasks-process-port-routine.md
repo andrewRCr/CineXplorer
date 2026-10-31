@@ -119,11 +119,11 @@ rewritten as prose the agent follows rather than vendored.
 
 - [ ] **1.6 Retire `CURRENT-SESSION.md`**
 
-    - [ ] **1.6.a Update tracked references**
-        - `QUICK-REFERENCE.md` (takes the startup table and the path notes), `agent/AGENTS.md`, `agent/CLAUDE.md`,
-          `agent/GEMINI.md`, `agent/WARP.md`, `methods/README.md` glossary, `strategy-work-organization.md`,
-          `activate-work-unit.md` (creates the notes file in the pinned format), `atomic-commit.md`, `maintain-docs.md`,
-          `maintain-task-notes.md`, `manage-incidental-work.md`
+    - [x] **1.6.a Update tracked references**
+        - `QUICK-REFERENCE.md` (now holds the expected environment; path notes no longer defer to the session file),
+          the four agent files, `methods/README.md` glossary, `strategy-work-organization.md` (two lines),
+          `activate-work-unit.md` (Step 7 creates the notes from the handoff skeleton), `atomic-commit.md`,
+          `maintain-docs.md`, `maintain-task-notes.md`, `manage-incidental-work.md`
         - ADR-013 and ADR-014 stay as written (immutable)
 
     - [ ] **1.6.b Delete `sync-with-arc-framework.md`** (nothing links to it)

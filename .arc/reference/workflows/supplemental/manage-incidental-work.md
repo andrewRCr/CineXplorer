@@ -272,7 +272,7 @@ Follow [archive-completed.md](archive-completed.md) for archival procedure:
 - Archive to `.arc/reference/archive/{quarter}/incidental/{NN}_{name}/`
 - **Archive timing**: Immediately when branch deleted (after merge) if work had separate branch
 - Update PROJECT-STATUS.md if applicable
-- Update CURRENT-SESSION.md to resume paused work
+- Point the paused work unit's session notes back at its next task
 - Commit with summary of completed incidental work
 
 ---
@@ -286,7 +286,7 @@ If incidental work spawns MORE incidental work:
 1. **Assess criticality**: Is new issue blocking current incidental work?
 2. **Get approval**: Don't auto-create nested incidental work
 3. **Document relationship**: Link nested task list to parent
-4. **Track in CURRENT-SESSION**: Show full dependency chain
+4. **Track in the session notes**: Show the full dependency chain
 
 Example hierarchy:
 

@@ -26,10 +26,10 @@ steps:
     - Look for task documentation files that may have been updated
 
   **Step 1.5: Check for Multi-Session Uncommitted Work**
-    - Read CURRENT-SESSION.md for "Uncommitted Work" or similar section
+    - Read the work unit's session notes for their "Uncommitted Work" section
     - If present, this indicates changes spanning multiple sessions
     - Identify which uncommitted changes are from:
-        - Previous session (documented in CURRENT-SESSION)
+        - Previous session (documented in the session notes)
         - Current session (not yet documented)
     - **GOAL:** Separate commits for different work contexts (different sessions, tasks, or features)
     - **PRAGMATIC EXCEPTION:** If changes are truly intermingled in same file/function:

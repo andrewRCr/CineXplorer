@@ -9,15 +9,14 @@ Guidance for Claude when working in this repository. For shared rules and archit
 
 ## Claude-Specific Notes
 
-- **Session startup:** Execute Session Startup Protocol in CURRENT-SESSION.md first (verify working directory,
-  Docker status, venv availability, paths)
-- **Path awareness:** Commands in QUICK-REFERENCE assume repo root - adjust based on current working directory
-  from Session Startup Protocol
+- **Session startup:** Follow [session-init.md](../workflows/supplemental/session-init.md): it orients from the
+  work unit's session notes and git
+- **Path awareness:** Commands in QUICK-REFERENCE assume repo root - adjust them when working from a subdirectory
 - **Summaries first:** Lead responses with concise bullet findings before deep dives
 - **Clarifying questions:** Offer numbered/lettered options to keep user replies short
 - **Large diffs:** If a change won't fit in context, propose a chunking strategy and wait for approval
 - **Tooling awareness:** Docker and venv are available - check QUICK-REFERENCE for command patterns
-- **Session handoffs:** Explicitly state whether CURRENT-SESSION.md was updated or left unchanged
+- **Session notes:** State in each report that the pointer fields were updated
 - **Console logs:** Browser console logs automatically captured to `backend/logs/frontend.log`.
   Check proactively when debugging frontend issues - no MCP or copy/paste needed. See QUICK-REFERENCE for commands.
 

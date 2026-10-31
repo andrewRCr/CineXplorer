@@ -663,8 +663,8 @@ gh pr create --base main --head technical/service-layer-modernization
     - Semantic clarity and natural cleanup discipline
     - Industry-aligned with "stacked development" pattern
 
-**Branches created before 2025-11-10** may not follow stacked model. This is expected and documented
-in their CURRENT-SESSION.md context. All new work uses v2.0 stacked model.
+**Branches created before 2025-11-10** may not follow the stacked model. All new work uses the v2.0 stacked
+model.
 
 **If examining historical branches:**
 
@@ -1139,7 +1139,6 @@ backlog/
 
 active/
   ATOMIC-TASKS.md            # Committed atomic tasks (checkboxes, ready to execute)
-  CURRENT-SESSION.md         # Session state
   feature/
   technical/
   incidental/

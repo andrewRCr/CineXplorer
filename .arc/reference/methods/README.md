@@ -38,7 +38,7 @@ override wins. An override changes how the method is done here, never what its c
 | `AGENT-BRIEF.ARC`, `DEV-RULES.ARC` | `../constitution/DEVELOPMENT-RULES.md` |
 | `AGENT-BRIEF.PROJECT` | `../agent/AGENTS.md` and `../constitution/TECHNICAL-OVERVIEW.md` |
 | Personal workspace | `.arc/user/{identity}/` (gitignored); a work unit's review files live in its `{name}/` folder |
-| `SESSION-NOTES` | `CURRENT-SESSION.md` |
+| `SESSION-NOTES` | The work unit's `SESSION-NOTES.md` in the personal workspace |
 | Meta file | The task list header |
 | Candidate, attest, lane, receipt, store | Not used. Reviews are advisory; the Owner's approval is the gate |
 | Hosted review | `@codex review` or `@coderabbitai review` on the pull request |

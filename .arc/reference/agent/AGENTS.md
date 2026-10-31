@@ -36,8 +36,7 @@ demonstrating disciplined software engineering practices, comprehensive testing,
 - **Docker Compose location**: `infrastructure/docker-compose.yml` (from repo root)
 - **Backend venv**: `.venv-backend/bin/` (from repo root)
 - **Tests MUST run via Docker**: NEVER run backend tests from host (require PostgreSQL + Redis connections)
-- **Working directory varies**: Check CURRENT-SESSION.md Session Startup Protocol for current context
-  (backend/, frontend/, or repo root)
+- **Working directory**: the repository root; session start reports the checkout and branch
 - **Commands in QUICK-REFERENCE**: All assume repo root - adjust paths based on current working directory
 - **Network architecture**: Backend HTTPS (8000), Frontend HTTP (5173), Caddy proxy (8444)
 - **Type generation**: Frontend types auto-generated from Django Ninja OpenAPI schema via `npm run generate-types`

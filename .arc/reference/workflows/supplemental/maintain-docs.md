@@ -123,7 +123,7 @@ When updating `agent/` docs:
 ### Always Read (Session Init)
 
 - `AGENTS.md` - Project context and lookup guide
-- `CURRENT-SESSION.md` - Active work state
+- The work unit's `SESSION-NOTES.md` - Active work state
 - `DEVELOPMENT-RULES.md` - Quality standards and protocols
 - `3_process-task-loop.md` - Task execution workflow
 - `QUICK-REFERENCE.md` - Commands and environment

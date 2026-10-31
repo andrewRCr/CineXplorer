@@ -117,7 +117,7 @@ rewritten as prose the agent follows rather than vendored.
       pre-report checklist has the line
     - `agent/CLAUDE.md` § Context Window Management: thresholds removed; points to the rule and the recovery hook
 
-- [ ] **1.6 Retire `CURRENT-SESSION.md`**
+- [x] **1.6 Retire `CURRENT-SESSION.md`**
 
     - [x] **1.6.a Update tracked references**
         - `QUICK-REFERENCE.md` (now holds the expected environment; path notes no longer defer to the session file),
@@ -128,22 +128,20 @@ rewritten as prose the agent follows rather than vendored.
 
     - [x] **1.6.b Delete `sync-with-arc-framework.md`** (nothing linked to it)
 
-    - [ ] **1.6.c Gitignored commands**: the `.claude/commands/` and `.codex/prompts/` copies of `handoff.md` and
-      `resume-current.md` name the new files; check both copies of `atomic-commit.md` and
-      `.claude/commands/autonomous-work.md`
+    - [x] **1.6.c Gitignored commands**: the `.claude/commands/` and `.codex/prompts/` copies of `handoff.md` and
+      `resume-current.md` name the session notes and working memory; the `atomic-commit.md` copies and
+      `autonomous-work.md` needed no change (local files; checked off with the next commit)
 
-    - [ ] **1.6.d Move the remaining live content, then delete the file**
-        - Proposed working-memory entries: the standing follow-ups (harness hygiene, the parked email task) and the
-          Owner's direction "Branch every work unit from `main`; no stacking", removed when migration replaces the
-          work-organization strategy
-        - Delete `CURRENT-SESSION.md` and its `.gitignore` entry
+    - [x] **1.6.d Move the remaining live content, then delete the file**
+        - Working memory (approved): the Owner's no-stacking direction, and the harness-hygiene errand until Task 3.2
+          moves it to the inbox. The email task stays out: its task list and the resume plan already hold it
+        - Deleted `CURRENT-SESSION.md` (a copy kept outside the repository) and its `.gitignore` entry
 
-    - [ ] **1.6.e Check**
+    - [x] **1.6.e Check**
         - `git grep -n CURRENT-SESSION` hits only `.arc/reference/archive/`, the two ADRs, this task list and
-          `weekly-review.md` (deleted in Task 3.3)
-        - `grep -rn CURRENT-SESSION .claude .codex` hits only `.claude/settings.local.json` (stale allow rules, left
-          to the harness-hygiene errand)
-        - Markdown lint and the link check clean
+          `weekly-review.md` (deleted in Task 3.3); among local files only `.claude/settings.local.json`
+        - Markdown lint clean; link check clean apart from a placeholder inside a code span in `maintain-docs.md`;
+          the hook tests pass
 
 ### **Phase 2:** Small fixes outside a work unit run as errands
 

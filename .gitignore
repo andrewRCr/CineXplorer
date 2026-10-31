@@ -220,9 +220,6 @@ infrastructure/dev-certs/*.key
 # Personal workspace: one folder per developer (README tracked)
 .arc/user/*/
 
-# Session handoff file (transient)
-.arc/active/CURRENT-SESSION.md
-
 # AI tool settings (personal development environment preferences)
 .claude/
 .warp/

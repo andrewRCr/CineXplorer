@@ -119,7 +119,7 @@ fix, and is never written into a tracked file on the current branch. Propose whe
 
 - **Bounded** (one self-contained fix): run it now as an errand
   ([run-errand.md](../workflows/supplemental/run-errand.md)), or capture it in the inbox
-  ([user-inbox.md](../workflows/supplemental/user-inbox.md)) for the next drain
+  ([user-inbox.md](../workflows/supplemental/user-inbox.md)), where it waits until it runs
 - **Multi-step:** an incidental task list ([manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md)),
   started now only if the Owner pauses the current work; otherwise capture it
 - Work that belongs to an existing PRD or backlog plan is captured with that document as its target

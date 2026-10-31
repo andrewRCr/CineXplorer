@@ -51,11 +51,7 @@ git mv .arc/backlog/{category}/tasks-{name}.md .arc/active/{category}/
 Edit `.arc/active/{category}/tasks-{name}.md`:
 
 1. Change `Status: Pending` → `Status: In Progress`
-2. Update PRD path reference from `backlog` to `active`:
-
-   ```
-   **PRD:** `.arc/active/{category}/prd-{name}.md`
-   ```
+2. Check the `**PRD:**` header names the PRD by filename only (`prd-{name}.md`), so the move needs no edit
 
 ### Step 5: Update PROJECT-STATUS.md
 
@@ -67,7 +63,7 @@ Edit `.arc/reference/constitution/PROJECT-STATUS.md`:
    **Currently Active:**
 
    - {Work Name} (feature|technical) - Brief description
-     - Task list: `.arc/active/{category}/tasks-{name}.md`
+     - Task list: `tasks-{name}.md`
      - Branch: `{feature|technical}/{branch-name}`
    ```
 

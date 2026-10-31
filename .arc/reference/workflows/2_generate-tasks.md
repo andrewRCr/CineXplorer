@@ -114,13 +114,12 @@ phases.
 
 ### **Phase 1:** Users can rate a movie
 
-- [ ] **1.1 Write tests for submitting a rating** (expect them to fail)
-- [ ] **1.2 Implement the rating endpoint and service**
-- [ ] **1.3 Write tests for the rating control, then implement it**
+- [ ] **1.1 Submitting a rating is saved** (endpoint and service: tests first, then implementation)
+- [ ] **1.2 The rating control submits a rating** (component: tests first, then implementation)
 
 ### **Phase 2:** Ratings appear on the movie page
 
-- [ ] **2.1 Write tests for the aggregate rating display, then implement it**
+- [ ] **2.1 The movie page shows the average rating** (tests first, then implementation)
 
 ### **Phase 3:** Verification
 
@@ -138,7 +137,7 @@ For each parent task, define specific, actionable sub-tasks that:
 - Cover implementation details implied by the PRD
 - Include quality checkpoints (linting, type checking, tests) at appropriate stages
 - Reference specific files, components, or patterns where appropriate
-- Are small enough to complete in a single work session (typically < 3 files modified)
+- Are small enough to review in one sitting
 
 **Sub-task guidelines:**
 
@@ -202,7 +201,7 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
 ```markdown
 # Task List: [Feature/Work Name]
 
-**PRD Reference:** `.arc/active/[category]/prd-[name].md`
+**PRD Reference:** `prd-[name].md`
 **Created:** YYYY-MM-DD
 **Branch:** `feature/[feature-name]` or `technical/[work-name]`
 **Base Branch:** `main` (or parent branch if stacked)

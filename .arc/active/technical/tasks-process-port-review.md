@@ -133,26 +133,36 @@ copy names its source and keeps CineXplorer's changes in a marked section; at mi
 
 ### **Phase 3:** Rules and agents
 
-- [ ] **3.1 `DEVELOPMENT-RULES.md`**
-    - Quality Gate Failure Protocol: triage (wrong invocation reruns; a mechanical in-change fix is fixed and rerun;
-      otherwise ask); a green rerun proves only intermittency; no self-attested gates
-    - Leave It Cleaner rewritten around proportionality and anti-rider; sub-agent scope; recommend on forks
-    - Task Management Protocol: the one-subtask rule and granularity guidelines give way to the task interlock and
-      deferred review (2.3)
-    - `strategy-work-organization.md`: the WU sizing standard
-    - Surface rules from DEV-RULES.ARC: no meta-project references in code, tests or durable docs (the stronger
-      version); write for the reader, not the author; commit and PR surface language, loading
-      `pull-request-format` before any PR text; `.arc/` artifact references by filename only
+- [x] **3.1 `DEVELOPMENT-RULES.md`** (v2.16)
+    - Quality Gate Failure Protocol: never-ran / mechanical / ask triage, intermittency, no red gate reported green
+    - Leave It Cleaner by concern, not file (anti-rider), with attention cost; new § Proportionality; § Recommend on
+      Advisory Forks; merges need explicit approval, never `--admin`
+    - Task Management: § Task Interlock replaces the One Sub-Task Rule; § Design Before Implementation; granularity
+      thresholds dropped; § Sub-agent Scope; § Review Findings
+    - Code Documentation Standards: the stronger meta-reference rule, `.arc/` work-document references, write for the
+      reader, commit and PR surface language (`pull-request-format` before any PR text)
+    - `strategy-work-organization.md` v2.2: § Sizing a Work Unit (the WU sizing standard and size marks); review at
+      merge follows the completion workflow. Version references updated in the agent docs and `session-init.md`;
+      stale relative links fixed
+    - Templates follow the filename-only rule: the task list's PRD header, the completion doc's Related
+      Documentation and `activate-work-unit.md` (which no longer rewrites the PRD path on activation)
 
-- [ ] **3.2 Root `AGENTS.md` review guidelines**
-    - Preamble covers any requested review, hosted or local fresh-context, never ordinary work
+- [x] **3.2 Root `AGENTS.md` review guidelines**
+    - Preamble covers a requested hosted review or a local fresh-context one, never ordinary work; the repository
+      contract names the stronger meta-reference rule and PR surface; the bootstrap points at the methods folder
 
-- [ ] **3.3 Testing standards (`strategy-testing-methodology.md`)**
-    - Observable behaviour over spy arguments, faithful mocks and fixtures, every test seen failing, the Chakra
-      recipe-assertion pattern
+- [x] **3.3 Testing standards (`strategy-testing-methodology.md`)** (v1.5)
+    - § Test Discipline (observable behaviour, faithful boundaries, every test seen failing, isolation and error paths)
+      and § Asserting Chakra Recipe Styles (shared renderer uses Chakra's own system; `disableLayers` pattern,
+      checked against Chakra 3.28)
+    - `test-first` gains an override: one parent task per behaviour with test subtasks first; no segment modes or
+      marker line. The `2_generate-tasks.md` example follows it
 
-- [ ] **3.4 Agents (gitignored, this machine only)**
-    - Retire `quality-gate-enforcer`; `pragmatic-code-reviewer` read-only, unpinned, pointing at the vendored rubric
+- [x] **3.4 Agents (gitignored, this machine only)**
+    - `quality-gate-enforcer` moved to `~/dev/scratch/cinexplorer-stage1/retired-agents/`
+    - `pragmatic-code-reviewer`: read-only tools (no Bash, Edit or Write; the caller supplies the diff), no model pin,
+      on request only; applies `code-review-standard` through the `implementation-audit` dimensions and reports
+      critical / major / minor findings with locus and evidence. Previous version kept beside the retired agent
 
 ### **Phase 4:** Verify and land
 

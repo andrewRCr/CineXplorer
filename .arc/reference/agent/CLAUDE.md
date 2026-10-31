@@ -3,7 +3,7 @@
 Guidance for Claude when working in this repository. For shared rules and architecture, defer to the canonical docs:
 
 - [AGENTS](AGENTS.md) – Project context, lookup guide, and collaboration principles
-- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.15 – Non-negotiable standards
+- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.16 – Non-negotiable standards
 - [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.2 – Environment context and command patterns
 - [Process Task Loop](../workflows/3_process-task-loop.md) – Task interlock and deferred review
 

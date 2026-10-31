@@ -61,7 +61,7 @@ Task list headers provide essential metadata and context. Format varies by task 
 ```markdown
 # Task List: [Feature/Technical Name]
 
-**PRD:** `.arc/active/{feature|technical}/prd-[name].md`
+**PRD:** `prd-[name].md`
 **Created:** YYYY-MM-DD
 **Branch:** `{feature|technical}/[branch-name]`
 **Base Branch:** `main` (or parent branch if stacked)
@@ -91,7 +91,7 @@ Task list headers provide essential metadata and context. Format varies by task 
 **Rules:**
 
 - Title uses `Task List:` (not "Incidental:")
-- PRD reference is absolute path from repo root
+- PRD reference is the filename only, so it survives moves between `backlog/`, `active/` and `archive/`
 - Status values: `Pending` (planned), `In Progress` (active), `Complete` (done)
 - Overview section includes Purpose
 - Scope section defines boundaries (Will Do / Won't Do)
@@ -104,7 +104,7 @@ Task list headers provide essential metadata and context. Format varies by task 
 ```markdown
 # Task List: Service Layer Modernization
 
-**PRD:** `.arc/active/technical/prd-service-layer-modernization.md`
+**PRD:** `prd-service-layer-modernization.md`
 **Created:** 2025-10-21
 **Branch:** `technical/service-layer-modernization`
 **Base Branch:** `main`

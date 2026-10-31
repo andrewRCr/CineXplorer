@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.15 | **Updated:** 2025-12-23 | **Hash:** `r8n4q1x3`
+**Version:** 2.16 | **Updated:** 2026-10-30 | **Hash:** `k3v7p2m9`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -22,6 +22,8 @@ by all contributors, including AI assistants.
   (parent task marked `[x]` if all subtasks complete)
 - **Never commit stale task docs**: Task list updates must be saved and included in commits for completed work
 - AI reports completion, then awaits commit instructions
+- **Merges need explicit approval**: never infer it from task approval, review completion, passing checks or a
+  general "proceed". Never merge with `--admin`
 - **Commit message format**: Use the `commit-format` skill for proper format (Context footer, subject length, etc.)
 
 ### Quality Gates
@@ -34,7 +36,7 @@ for complete guidance.
 
 | Tier   | When                                    | What to Run                                                        |
 | ------ | --------------------------------------- | ------------------------------------------------------------------ |
-| Tier 1 | Per-subtask                             | Type-check, lint, format, related unit tests (modified files)      |
+| Tier 1 | Per-task                                | Type-check, lint, format, related unit tests (modified files)      |
 | Tier 2 | Parent task completion                  | Tier 1 (full project) + targeted E2E tests + build                 |
 | Tier 3 | Per-phase, pre-PR                       | Full suite (everything below)                                      |
 
@@ -80,38 +82,63 @@ For specific commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 
 ### Quality Gate Failure Protocol
 
-If quality gates fail after sub-task completion:
+If quality gates fail after a task:
 
-1. **Report the failure** with specific details
-2. **Identify suspected causes** and investigation areas
-3. **Ask for guidance** on whether to fix immediately or defer
-4. **Never proceed** to next sub-task until resolved or user approves
+- **The gate never ran:** a wrong invocation (bad path, wrong container, a service not running) is not a gate
+  failure. Correct it and re-run; there is nothing to decide.
+- **Mechanical, inside the change:** a failure you own, inside the approved change, with an obvious fix (a trailing
+  blank line, auto-fixable lint, a type error you just introduced): fix it, re-run, and name the correction in the
+  report.
+- **Otherwise:** report the details and the suspected cause, and ask whether to fix now or defer. Don't proceed
+  until it is resolved or the Owner approves.
+
+**A green rerun after an intermittent failure shows only that the failure is intermittent.** A fix names the
+mechanism it removes and shows the change reaches it, such as a reproduction that fails reliably without the change
+and passes with it; until then, report the cause as suspected.
+
+**A red gate is never reported green, and never bypassed.** Report a gate from a run, never from memory or from
+checked task boxes.
 
 ### Leave It Cleaner: Pre-existing Issue Protocol
 
-**Principle:** When touching any file, leave it cleaner than you found it.
-Quality issues discovered during work should be addressed, not ignored.
+**Principle:** Take responsibility for issues you find in the course of work: fix them or capture them, never drop
+them silently. Whether a fix rides the current change is decided by concern, not by file.
 
-**When quality checks reveal pre-existing issues in files you're modifying:**
+**Same concern** (an issue in what the current change is already about):
 
-1. **Assess severity and scope:**
-   - **Minor issues** (< 5 minutes): Fix immediately without asking
-   - **Moderate issues** (5-15 minutes): Fix immediately, document in commit
-   - **Major issues** (> 15 minutes): Ask for direction before proceeding
+- **Minor** (< 5 minutes): fix it inline and name it in the completion report
+- **Moderate** (5-15 minutes): fix it inline and note it in the commit message
+- **Major** (> 15 minutes): ask whether to fix now or defer
 
-2. **Required actions (choose one):**
-   - ✅ **Fix immediately** - Preferred for all issues < 15 minutes
-   - ✅ **Document and defer** - Create incidental task list with:
-     - Clear description of issue found
-     - Why it's being deferred (time/scope constraints)
-     - Estimated effort to fix
-     - Link to relevant files/line numbers
-   - ❌ **Ignore silently** - NEVER acceptable
+Judge by total attention cost, not raw fix time. An issue that needs a switch into unfamiliar code or another domain
+is major whatever its fix time: surface it rather than leaving the current task.
 
-3. **Documentation requirements:**
-   - Fixed issues: Note in commit message ("Also fixed X pre-existing issues")
-   - Deferred issues: Create task list in `.arc/active/incidental/tasks-incidental-*.md`
-   - Never: Leave issues undocumented or unaddressed
+**A different concern** that only shares a file you're editing does not ride the current change, however small the
+fix. Propose where it goes, and the Owner decides:
+
+- an atomic task in `.arc/active/ATOMIC-TASKS.md` for a single bounded fix
+- an incidental task list ([manage-incidental-work.md](../workflows/supplemental/manage-incidental-work.md)) for
+  multi-step work
+- the PRD or backlog plan whose work it belongs to
+
+Distinct concerns never share a PR either, even on a shared file: sequence them.
+
+**Never** ignore an issue silently, or leave a deferred one only in completion notes or session notes.
+
+## Proportionality
+
+Every material mechanism (in a design, an implementation, a proposed fix, a review response) traces to a stated goal,
+a real constraint, an actual trust boundary or an observed failure. Plausibility, thoroughness, symmetry and imagined
+threat models are not requirements. Prefer composing what exists over new mechanism. Concentrate rigor where failure
+is destructive, authoritative or irreversible; advisory and retryable paths get lighter handling. The same trace
+bounds simplification: never drop behavior it marks as required.
+
+A PRD's Scope is a commitment: unrequested capability is a scope decision, not engineering taste. Propose the smallest
+complete in-scope response to a finding or request on its own. Anything beyond it is a separate proposal, named as a
+scope expansion, that lands only through a PRD amendment, with the Owner deciding. Finishing what a change requires
+(callsites, migrations, tests) is completion, not expansion. At planning stages the deep check is
+[assess-design-proportionality](../methods/assess-design-proportionality.md); everywhere else, apply this trace as one
+judgment.
 
 ## Session Documentation Control
 
@@ -145,6 +172,11 @@ true?" These questions improve outcomes for both code and documentation work.
 
 **Why this matters:** Made-up content in documentation misleads future work. Assumed behavior in code wastes debugging
 time. Verification takes seconds; fixing wrong assumptions takes hours.
+
+### Recommend on Advisory Forks
+
+When raising an advisory choice (accept or decline, this or that) rather than a mandatory approval, state the
+recommended option with a one-line reason; never a bare fork. The Owner still decides.
 
 ## Strategy Document Protocol
 
@@ -228,22 +260,51 @@ when specific patterns/commands are needed. Active verification beats passive re
 
 ## Task Management Protocol
 
-### One Sub-Task Rule
+### Task Interlock
 
-- **Complete ONE sub-task at a time** - never bundle multiple deliverables
-- **Mark complete immediately** when work is done (tests pass, quality checks pass)
-- **Mandatory stop** after reporting completion for user approval to proceed
+- **One task per review increment:** each checkbox is one increment. Complete it, mark it, report, and stop for
+  approval before advancing or committing
+- **Deferred review** widens the increment only when the Owner opens it: by naming a scope, or by approving the
+  agent's proposal to review a parent's tightly coupled subtasks as one. It is a bounded convenience, not an autonomy
+  mode, and its stop conditions still apply
 - **Implied permission**: User approval implies permission to proceed UNLESS explicitly stated otherwise
-  (e.g., "that's done, but before moving on..."). Address such concerns before proceeding to next subtask.
+  (e.g., "that's done, but before moving on..."). Address such concerns before proceeding to the next task.
+- **Full protocol:** [Task Processing Workflow](../workflows/3_process-task-loop.md)
 
-### Sub-Task Granularity Guidelines
+### Design Before Implementation
 
-Break down a sub-task if it requires:
+Settle every settleable design decision in the PRD before implementation starts. A design question that surfaces
+during a task stops it and goes back to the PRD
+([1_create-prd.md § Amending a PRD](../workflows/1_create-prd.md#amending-a-prd)); it never becomes debt in code or
+notes.
 
-- More than 3 files to be modified
-- More than 50 lines of core logic changes
+### Task Granularity
+
+Break a task into subtasks if it requires:
+
 - Multiple interdependent changes
 - Complex debugging/investigation
+
+### Sub-agent Scope
+
+Delegation follows function. Two things hold whatever delegates: the Owner stays involved in each change as it
+forms, and judgment stays with the primary agent.
+
+- **Derivation** (read-only: search, research, review, finding generation): freely delegable. Outputs are advisory
+  until the primary verifies them against source
+- **Execution** (work that lands in the change): stays with the primary, unless the Owner explicitly approves
+  otherwise
+- **Judgment** (validation against ground truth, gates, commits): never delegated
+
+Run an independent review in a fresh subagent when the harness supports one: fresh context, at the primary's own
+capability by default, with read-only tools. Without subagents, skip it with a note (delegated review is advisory) or
+run it in a fresh session; never present a review in the primary's own context as independent.
+
+### Review Findings
+
+Verify every review finding against source with your own judgment, whoever raised it; reviewer and subagent output
+is advisory. Present the complete proposed disposition set and get approval before applying any finding-driven fix
+([agent-pre-merge-review.md](../workflows/supplemental/agent-pre-merge-review.md)).
 
 ### Test-First Protocol
 
@@ -329,17 +390,31 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
 
 ### Code Documentation Standards
 
-- **No meta-project references in codebase**: Never reference task IDs, phase numbers, or `.arc/`
-  documentation in production code (comments, docstrings, variable names). Meta-project information
-  belongs only in `.arc/` documentation. Code should explain "what" and "why" independently of
-  project management context.
+- **No meta-project references in code**: Never reference planning IDs (task IDs, phase numbers, requirement IDs,
+  PRD section citations), the named processes, methods or workflows that organize the work, or `.arc/` paths in code,
+  tests, or durable documentation outside `.arc/` (READMEs, docs, config comments). This covers comments,
+  docstrings, identifiers, test names and prose. A citation that justifies code by appeal to a process artifact ("per
+  the test-first method", "implements the PRD") couples the code to a document with its own schedule: say what the
+  code does instead, and put process rationale in the PRD, task list, ADR or the commit's `Context:` footer.
+  Substantive references (test names describing behavior, comments on non-obvious invariants) stay.
 
-- **Task references in `.arc/` documentation**: When referencing tasks in `.arc/` documentation,
-  always include both the task/phase identifier AND the task list filename in backticks. Format:
-  "Task X.Y - `tasks-name.md`" or "Phase X - `tasks-name.md`". Use only the filename (no path),
-  as task lists move between active/, backlog/, and archive/ directories. This ensures references
-  are searchable and provide clear context about which work the task belongs to.
-  Examples: "Task 8.3 - `tasks-oauth-headless-migration.md`", "Phase 3 - `tasks-service-layer-modernization.md`"
+- **References to `.arc/` work documents**: PRDs, task lists, notes and completion docs move between `backlog/`,
+  `active/` and `archive/`, so:
+    - **To one:** backticked filename only, no links or paths, from anywhere. For tasks, include the task ID and the
+      task-list filename: "Task 8.3 - `tasks-oauth-headless-migration.md`"
+    - **From one:** no relative-path links, even to stable docs; its own path changes when it moves
+
+  Code and PR text never reference them; a commit references them only in its `Context:` footer.
+
+- **Write for the reader, not the author**: When removing or restructuring content, don't leave notes explaining
+  what was removed or where it went; document what is. History belongs in commit messages and task-list completion
+  notes. The same holds for PR descriptions and handoffs: they describe what the change delivers, not the author's
+  workflow state.
+
+- **Commit and PR surface language**: Commit prose reads as the operation performed, legible without this
+  repository's process vocabulary; traceability (task IDs, phases) goes in the `Context:` footer. Before writing any
+  PR title or body, load [pull-request-format](../methods/pull-request-format.md): the repository is public, so PR
+  text carries no process vocabulary, `.arc/` references or review metadata.
 
 - **Collaborative voice in documentation**: Commits, task lists, and project docs should read
   naturally from an author or team perspective. Avoid third-person references to collaborators;
@@ -378,6 +453,7 @@ This document provides core rules and standards. See related documentation:
 
 - [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) - Environment context, command patterns, and tool usage
 - [Task Processing Workflow](../workflows/3_process-task-loop.md) - Detailed task execution workflow
+- [Methods](../methods/README.md) - Review, planning and pull-request methods the workflows run
 - [Atomic Commit Workflow](../workflows/supplemental/atomic-commit.md) - Enhanced commit workflow with task context analysis
 - [AI Agent Reference Card](../agent/AGENTS.md) - Complete project context for AI
 - [Technical Overview](TECHNICAL-OVERVIEW.md) - High-level system architecture and technology stack

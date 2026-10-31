@@ -171,9 +171,9 @@ Create `completion-{name}.md` in the same directory as the task list:
 
 ## Related Documentation
 
-- {For planned work: PRD: `path/to/prd-{name}.md`}
-- Tasks: `path/to/tasks-{name}.md`
-- Notes: `path/to/notes-{name}.md` (if exists)
+- {For planned work: PRD: `prd-{name}.md`}
+- Tasks: `tasks-{name}.md`
+- Notes: `notes-{name}.md` (if exists)
 
 ## {For planned work only: Incidental Work Completed}
 

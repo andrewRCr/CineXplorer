@@ -3,7 +3,8 @@ name: test-first
 description: Decision tree for test-first vs test-after by change type
 related:
   - testing-standards
-override-active: false
+override-active: true
+override-mode: extend
 ---
 
 <!--
@@ -24,7 +25,15 @@ test-first.override.
 
 ## test-first.override
 
-[No override configured]
+CineXplorer adaptation (`override-mode: extend`):
+
+- **Shape.** Phases are behaviour slices; the `slice` / `layer` / `replication` segment modes and the
+  ``Build `test-first` `` marker line are not used. A test-first behaviour is one parent task: its test subtasks
+  come first ("Expect tests to FAIL initially"), then the implementation, then the passing run. A `Write tests` task
+  followed directly by its `Implement` task in the same phase is acceptable when the tests should be reviewed before
+  implementation starts.
+- **Execution** follows [3_process-task-loop.md § Task Implementation][process-task-loop] (red-green-refactor, one
+  behaviour at a time).
 
 ## test-first.default
 

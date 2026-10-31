@@ -98,15 +98,14 @@ rewritten as prose the agent follows rather than vendored.
     - Dropped: the version and hash recital, the documents-read confirmation, the line-number requirement, the venv
       check
 
-- [ ] **1.4 Rewrite `session-handoff.md`**
-    - Active work unit: update the pointer fields and `Commit at Handoff` (`git rev-parse --short HEAD`); replace the
-      three sections, first dropping anything `git log <previous Commit at Handoff>..HEAD` already shows, then keeping
-      only what passes the filter (not in a tracked source; acted on at the next start; costly if missing); `[none]`
-      when empty; Uncommitted Work at commit-level detail; an Owner direction recorded with the subject it answered
-    - Between work units: no notes file; a next step worth keeping becomes a proposed working-memory entry
-    - Both: remove working-memory entries whose `_Remove when:_` trigger has fired or whose content a tracked document
-      now carries; propose additions (they land on approval; invoking the handoff does not approve them); report
-    - Holds the pinned notes skeleton verbatim and the working-memory entry shape
+- [x] **1.4 Rewrite `session-handoff.md`**
+    - Five steps (380 lines to 110): check the actual state; active work unit writes the notes (pointer fields
+      confirmed, `Commit at Handoff` set, three sections replaced); between work units no notes; working memory pruned
+      and additions proposed; report
+    - Filter: drop what the commits since the previous handoff show (`main..HEAD` before the first), then the three
+      criteria; Owner directions recorded with the subject they answered
+    - Holds the pinned skeleton and the working-memory entry shape; the old session-start section, working-directory
+      check and line-number rules are gone
 
 - [ ] **1.5 Rules and agent guidance**
     - `DEVELOPMENT-RULES.md` § Session Documentation Control: the cadence rule replaces "never update without

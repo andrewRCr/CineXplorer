@@ -301,10 +301,10 @@ Three facts drive the work:
   `git rev-parse --show-toplevel`, so a linked worktree runs its own tracked hook copy
 - Whether Claude Code loads a linked `.claude/`, and Codex a linked `.codex/`, needs live sessions; verification asks
   the Owner to start one of each in the worktree, and copying the folder is the fallback for either
-- Codex records trust and hook approvals by path in `~/.codex/config.toml`: today the primary's path is trusted and
-  no approval exists for CineXplorer's `.codex/hooks.json`. Upstream reportedly resolves a linked worktree to its main
-  repository for trust; Task 4.1 records what codex-cli 0.166.0 does here. Copying `.codex/` is the fallback only when
-  the linked folder fails with trust and approval in place
+- Codex records trust and hook approvals by path in `~/.codex/config.toml`. Observed in Task 4.1 (codex-cli 0.166.0):
+  a session in the primary approved the four project hooks, keyed to the primary's `.codex/hooks.json`; a session in
+  `t0-check` asked for neither trust nor approval and ran the hooks, and no `t0-check` entry was written. The copy
+  fallback was not needed
 - Probed 2026-10-31 in scratch projects (Compose 5.6.0): a `${VAR:?message}` project name in the override makes
   `config` and `down -v` refuse while the variable is unset; a checkout's compose files named by absolute path from
   another checkout read that checkout's `.env`, so the project name resolves to its own
@@ -321,19 +321,32 @@ Three facts drive the work:
 
 ## Success Criteria
 
-- [ ] In a worktree provisioned by `worktree-sessions.md`, `docker compose -f infrastructure/docker-compose.yml config`
+- [x] In a worktree provisioned by `worktree-sessions.md`, `docker compose -f infrastructure/docker-compose.yml config`
   reports `name: cinexplorer-{worktree}` and `ps` lists only that project's containers, while the primary reports
   `infrastructure`; with the links in place, `git status --short` in the worktree is empty
-- [ ] With the primary stack up, the worktree's test stack runs `pytest apps/` to a pass, publishes no ports, and
+    - 2026-10-31, `t0-check` at `b8967f32`: `name: cinexplorer-t0-check`; `ps` listed none, then only its three
+      test-stack containers; the primary reports `infrastructure`; `check-ignore` matched `.claude`, `.codex` and
+      `.venv-backend`, and `git status --short` was empty before and after every check
+- [x] With the primary stack up, the worktree's test stack runs `pytest apps/` to a pass, publishes no ports, and
   leaves the primary's dev database (table and user counts) and containers unchanged; `npm run generate-types` in
   the worktree leaves `frontend/openapi.json` and `frontend/src/types/api.ts` unchanged
-- [ ] `docker inspect` reports a memory limit on each test-stack container, and a fresh backend run creates no more
+    - 802 passed at 4 workers in 33 s; each container's port bindings were empty; the primary held 28 tables and 47
+      users before and after, with its five containers; `npm run generate-types` exited 0 with a clean status
+- [x] `docker inspect` reports a memory limit on each test-stack container, and a fresh backend run creates no more
   per-worker test databases than the cap
-- [ ] A Claude Code session and a Codex session started in the worktree each load the linked settings, and each one's
+    - Limits of 1,610,612,736, 536,870,912 and 134,217,728 bytes (backend, `dev-db`, `redis`); the fresh stack's run
+      created `test_cinexplorer_dev_gw0` to `gw3` only, and the primary holds the same four plus the base test database
+- [x] A Claude Code session and a Codex session started in the worktree each load the linked settings, and each one's
   recovery context after a compaction names the worktree's own session notes
-- [ ] In the worktree, host-side frontend tests, lint and type-check (after typegen), ruff and pyright pass
-- [ ] No tracked instruction outside the archive, the ADRs and the backlog runs the full suite before a commit or at
+    - The Owner's live sessions, 2026-10-31: Codex in the primary (the baseline) asked once to approve the four project
+      hooks, and its recovery context named the primary's notes; Codex in `t0-check` asked nothing and its recovery
+      context named `t0-check`'s notes; Claude Code in `t0-check`, compacted after one exchange, named the same notes
+- [x] In the worktree, host-side frontend tests, lint and type-check (after typegen), ruff and pyright pass
+    - At `b8967f32`: 723 frontend tests, ESLint and `tsc -b` exit 0, ruff clean, pyright 1.1.414 0 errors
+- [x] No tracked instruction outside the archive, the ADRs and the backlog runs the full suite before a commit or at
   a parent task, phase or session end, and `DEVELOPMENT-RULES.md` names what runs at each moment
+    - Task 3.6's reading of every search hit, on the tree verification ran against; `DEVELOPMENT-RULES.md` §
+      Quality Gates lists each moment and what runs at it
 
 ## Review Log
 

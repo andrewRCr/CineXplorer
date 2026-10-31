@@ -102,4 +102,5 @@ concern each.
 ### 5. Finish
 
 When the pull request merges, remove the entries it routed (re-read, then write once); if it is abandoned, they stay.
-An errand's entry leaves when that errand merges. Report what went where, and what stays in the inbox and why.
+An errand's entry leaves when that errand merges, and an entry that targets an active task list leaves when the Owner
+approves adding it there. Report what went where, and what stays in the inbox and why.

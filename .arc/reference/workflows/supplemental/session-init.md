@@ -75,7 +75,8 @@ Proceed?
   stack only when the next action needs it.
 - **Next:** one action, from the notes' Next Action. Name any Blockers on their own line.
 - **Captured for this work unit:** the titles of the inbox entries that target it, on one line. Adding one to the task
-  list is a planning change the Owner approves.
+  list is a planning change the Owner approves; the entry then leaves the inbox
+  ([user-inbox.md § Finish](user-inbox.md#5-finish)).
 - **Between work units:** say so; the next action comes from working memory or the Owner. When `## Work Unit` has
   entries, give the count and offer a drain ([user-inbox.md § Drain](user-inbox.md#drain)). Errands waiting to run
   are reported as a count only (`3 errands waiting`).

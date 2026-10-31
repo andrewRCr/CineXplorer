@@ -215,7 +215,7 @@ Three facts drive the work:
     - § Testing Requirements (line 330): "All tests must pass before any commit discussion" is withdrawn in favour of
       the task's checks
 
-- [ ] **3.2 Rewrite `strategies/arc/strategy-quality-gates.md` around moments**
+- [x] **3.2 Rewrite `strategies/arc/strategy-quality-gates.md` around moments**
     - Core philosophy, quoting the source: "Assign each check to the earliest event before which its failure must be
       resolved" (arc-framework's `strategy-quality-gates.md` § Place checks by deadline); CI on the pull request
       carries the broad suites

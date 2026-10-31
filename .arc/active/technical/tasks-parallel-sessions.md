@@ -3,6 +3,7 @@
 **PRD:** none — scope in the Stage 1 assessment's T0/T1 sections and guardrails, the resume plan, and an inbox entry
 (all kept outside the repository)
 **Created:** 2026-10-31
+**Completed:** 2026-10-31
 **Branch:** `technical/parallel-sessions`
 **Base Branch:** `main`
 **Status:** Complete
@@ -294,8 +295,8 @@ Three facts drive the work:
 - Tests reach `dev-db` and `redis` by service name (`settings_test.py` lines 52 and 64; `REDIS_URL` defaults to
   `redis://redis:6379/0` in `settings.py`), which resolves inside each project's own network
 - `-n auto` gives 24 workers here and `--reuse-db` keeps a test database per worker (`test_cinexplorer_dev_gw0` to
-  `gw23` exist today); `--maxprocesses` limits any non-zero `-n`, `auto` included, and leaves `-n 0` alone
-  (`xdist/plugin.py` lines 318-323)
+  `gw23` existed until Task 2.1 dropped `gw4` onward); `--maxprocesses` limits any non-zero `-n`, `auto` included,
+  and leaves `-n 0` alone (`xdist/plugin.py` lines 318-323)
 - `t0-check` sees this branch's work only through committed fast-forwards; uncommitted changes in the primary never
   reach it, and a test stack mounts the `backend/` of the checkout whose compose files it is started from
 - The CI override (`infrastructure/docker-compose.ci.yml`) is the pattern for an idle backend; `!reset` and
@@ -303,8 +304,8 @@ Three facts drive the work:
   when the files are missing, which is why the test stack drops them
 - `.claude/settings.json` runs the recovery hook from `$CLAUDE_PROJECT_DIR`, and `.codex/hooks.json` from
   `git rev-parse --show-toplevel`, so a linked worktree runs its own tracked hook copy
-- Whether Claude Code loads a linked `.claude/`, and Codex a linked `.codex/`, needs live sessions; verification asks
-  the Owner to start one of each in the worktree, and copying the folder is the fallback for either
+- Claude Code loads a linked `.claude/`, and Codex a linked `.codex/`: the Owner's live sessions in the worktree
+  showed both (Task 4.1), so copying either folder, the planned fallback, was not needed
 - Codex records trust and hook approvals by path in `~/.codex/config.toml`. Observed in Task 4.1 (codex-cli 0.166.0):
   a session in the primary approved the four project hooks, keyed to the primary's `.codex/hooks.json`; a session in
   `t0-check` asked for neither trust nor approval and ran the hooks, and no `t0-check` entry was written. The copy
@@ -315,7 +316,7 @@ Three facts drive the work:
 - The committed `frontend/openapi.json` is the raw API response the fetch script saved (one line, escaped unicode),
   while the export writes indented JSON. CI exports, compares only `src/types/api.ts`, and passes on `main`, so the
   export yields the committed types
-- The link checker is the local script from the earlier process ports, kept in this work unit's personal folder
+- The link checker was the local script from the earlier process ports, kept in the gitignored personal workspace
 - Removal follows arc-framework's teardown order (`integrate-work-unit.md` Step 11, `strategy-concurrent-work.md`):
   physical removal after merge, from outside the worktree, refusing rather than forcing. Its detached husk, markers
   and notes-preservation guard are left out: removal runs from the primary after the worktree's session ends, and no

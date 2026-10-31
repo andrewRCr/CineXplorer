@@ -3,9 +3,10 @@
 **PRD:** none — the design below was written and independently reviewed in a sandbox copy of this repository, where
 the change was built; verification and code review never ran there (sandbox kept outside the repository)
 **Created:** 2026-10-31
+**Completed:** 2026-10-31
 **Branch:** `technical/score-badge-low-votes`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -112,7 +113,7 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
       variant checks discriminate
     - The "Hide or alter MovieUserScore badge" entry moved to `completed-atomic-2026-q4.md`, naming this branch
 
-- [ ] **1.3 Score-color documentation describes the below-threshold state**
+- [x] **1.3 Score-color documentation describes the below-threshold state**
     - [x] **1.3.a Frontend theme comments and theme-debug page**
         - `badge.ts`, `types.ts` and `extensions.ts` comments state the 10-vote condition and list TMDB scores below
           10 votes among `neutral` / `badge` uses; `CineXplorerExtensionsSection.tsx` gains a "—" swatch on `badge` /
@@ -135,32 +136,68 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
 
 ### **Phase 2:** Verification
 
-- [ ] **2.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+- [x] **2.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+    - The full local run passed (backend and frontend suites, ruff, ESLint, `type-check`, pyright, markdown lint,
+      contrast, the production build, no API-type drift); every Success Criterion is met, with its evidence below;
+      one independent verification pass, recorded in the Review Log
 
 ---
 
 ## Success Criteria
 
-- [ ] With zero votes (count `0`, count missing, or average missing), the TMDB badge never renders "0.0" or a
+- [x] With zero votes (count `0`, count missing, or average missing), the TMDB badge never renders "0.0" or a
   traffic-light variant: cards show "—" and the detail page shows "Not yet rated", both `neutral`
-- [ ] With 1–9 votes, cards show "—" and the detail page shows the average to one decimal with its vote count
+    - `getTmdbBadge` sends a null average or a falsy count to the `neutral` placeholder; `MovieUserScore.test.tsx`
+      checks five zero-vote inputs in both presentations by badge background, and that "0.0" never renders;
+      `MovieDetail.test.tsx` checks "Not yet rated"
+- [x] With 1–9 votes, cards show "—" and the detail page shows the average to one decimal with its vote count
   ("1 vote" when singular), both `neutral`
-- [ ] With 10 or more votes, the TMDB badge renders the average to one decimal in `success` (7.5 and above),
+    - Tests cover 4 votes in both presentations, the singular at 1 vote and the boundary at 9; `MovieCard.test.tsx`
+      checks the card placeholder and `MovieDetail.test.tsx` "6.8 · 4 votes"
+- [x] With 10 or more votes, the TMDB badge renders the average to one decimal in `success` (7.5 and above),
   `warning` (5.0–7.4) or `error` (below 5.0), as before
-- [ ] Every placeholder carries a `title` stating why no score is shown
-- [ ] The user-rating badge renders unchanged in every `MovieUserScore` mode
-- [ ] `GET /api/movies/{id}` returns TMDB's `vote_count`, asserted in `test_movie_detail.py`
-- [ ] `MovieCard` and `MovieDetail` pass `vote_count` and no longer coerce `vote_average` with `?? 0`
-- [ ] `MovieUserScore.test.tsx` covers the zero-vote, 1–9-vote and 10-or-more-vote cases in both presentations, and
+    - `getTmdbBadgeVariant` is unchanged from `main`; tests check 7.5, 7.4, 5.0 and 4.9 in both presentations and
+      exactly 10 votes. Swapping two variants failed 13 tests, so the variant checks discriminate
+- [x] Every placeholder carries a `title` stating why no score is shown
+    - "No TMDB votes yet" on both zero-vote placeholders, "Fewer than 10 TMDB votes" on the card's 1–9-vote "—",
+      each asserted in `MovieUserScore.test.tsx`; the detail page's 1–9-vote badge shows a score, not a placeholder
+- [x] The user-rating badge renders unchanged in every `MovieUserScore` mode
+    - Its JSX in the user-rating-only and combined layouts is unchanged in the diff; new tests check it beside a
+      compact placeholder, beside "Not yet rated", and alone
+- [x] `GET /api/movies/{id}` returns TMDB's `vote_count`, asserted in `test_movie_detail.py`
+    - `test_get_movie_detail_returns_tmdb_vote_count` failed against `main` (`None == 100`) and passes; the live
+      backend returns 0, 1 and 15,574 for movies 1003596, 1591604 and 78, and signed-in detail responses keep the
+      field (enrichment uses `model_copy`)
+- [x] `MovieCard` and `MovieDetail` pass `vote_count` and no longer coerce `vote_average` with `?? 0`
+    - They are the only call sites (`MovieCard.tsx` line 311, `MovieDetail.tsx` line 200); no `vote_average ?? 0`
+      remains outside tests
+- [x] `MovieUserScore.test.tsx` covers the zero-vote, 1–9-vote and 10-or-more-vote cases in both presentations, and
   no longer expects "0.0"
-- [ ] Every description of TMDB score colors in active code and documentation (outside `.arc/reference/archive/`)
+    - All three bands appear in both presentations; "0.0" survives only in two absence checks
+- [x] Every description of TMDB score colors in active code and documentation (outside `.arc/reference/archive/`)
   states the below-threshold `neutral` state, and none describes the retired success/info/warning scheme
-- [ ] `frontend/openapi.json` and `frontend/src/types/api.ts` are unchanged; `npm run generate-types` on this branch
+    - Every editable site states it (theme comments, theme-debug page, the three strategies), and a search finds no
+      success/info/warning score description. ADR-003 is excluded: an accepted ADR is immutable (DEVELOPMENT-RULES §
+      Architecture Decision Records), and its score-display line describes the original decision; superseding it
+      is captured as its own concern
+- [x] `frontend/openapi.json` and `frontend/src/types/api.ts` are unchanged; `npm run generate-types` on this branch
   leaves no diff
-- [ ] On the running stack, a movie with no TMDB votes shows "—" on its card and "Not yet rated" on its detail page,
+    - No diff from `main` for either file; the verification run's export from the backend container followed by
+      `git diff --exit-code` exited 0
+- [x] On the running stack, a movie with no TMDB votes shows "—" on its card and "Not yet rated" on its detail page,
   a movie with 1–9 votes shows "—" and its average with the count, and a movie with 10 or more votes shows the same
   colored score as before (proven live)
+    - Observed by the Owner on the primary stack, whose frontend container serves this branch: Avengers: Doomsday
+      (1003596, 0 votes) "—" on its Upcoming card and "Not yet rated" on its detail page; Soul Patrol (1591604, 1
+      vote) "—" and "1.0 · 1 vote"; Blade Runner (78, 15,574 votes) green "7.9" on its search card and detail page;
+      one detail page also checked signed in
 
 ## Review Log
 
-_(one entry per review pass and fix check)_
+- **2026-10-31 · Verification · Pass 1** · fresh read-only subagent (`pragmatic-code-reviewer`) · rubric:
+  `verification-review` over the eleven Success Criteria under `validate-criteria`'s evidence standard, with the
+  task list unmarked, the branch diff and the raw outputs of the verification run · 1 major, 2 minor, all confirmed
+  against source · approved: F1 criterion 11 has no rendered-UI evidence, fixed by the Owner's look at the running
+  stack; F2 criterion 9's ADR-003 exclusion recorded in its evidence; F3 the carried parallel-sessions archive commit
+  rejected, since `main` takes changes only through pull requests and the next work unit carries each archive move ·
+  about 9 minutes · stop: Owner declined a fix check (neither fix touches code)

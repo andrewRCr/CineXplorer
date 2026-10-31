@@ -126,7 +126,7 @@ rewritten as prose the agent follows rather than vendored.
           `maintain-docs.md`, `maintain-task-notes.md`, `manage-incidental-work.md`
         - ADR-013 and ADR-014 stay as written (immutable)
 
-    - [ ] **1.6.b Delete `sync-with-arc-framework.md`** (nothing links to it)
+    - [x] **1.6.b Delete `sync-with-arc-framework.md`** (nothing linked to it)
 
     - [ ] **1.6.c Gitignored commands**: the `.claude/commands/` and `.codex/prompts/` copies of `handoff.md` and
       `resume-current.md` name the new files; check both copies of `atomic-commit.md` and

@@ -35,12 +35,12 @@ It ensures consistent execution, quality control, and documentation of work.
 - **Completion protocol:**
 
   1. When you finish a **single task** (one checkbox):
-     - **First**: Run incremental quality checks on modified files - **Tier 1** (linting, type checking, related unit
-       tests)
-       - See [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md) for the tiered approach
-       - Task list specifies critical checkpoints, but use judgment: if changes warrant validation, run appropriate
-         checks
-       - When task list explicitly calls for quality gates (including E2E checkpoints), they are mandatory
+     - **First**: Run the task's checks: lint, format and type-check for what it touched, and its related tests
+       ([DEVELOPMENT-RULES § Quality Gates](../constitution/DEVELOPMENT-RULES.md#quality-gates))
+       - See [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md) for why each check runs when it does
+       - Run wider when the affected surface has grown past what related tests reach
+         ([When to Run Wider](../strategies/arc/strategy-quality-gates.md#when-to-run-wider))
+       - A check the task list names for a task (a specific E2E file, a build) is mandatory
        - A failure follows [DEVELOPMENT-RULES § Quality Gate Failure Protocol](../constitution/DEVELOPMENT-RULES.md)
      - **Second**: Mark the task `[x]` in the task list file (task list reflects completed work when reporting)
        - Update the task description to record what was actually done, not just the original plan. Success Criteria
@@ -65,7 +65,7 @@ It ensures consistent execution, quality control, and documentation of work.
      **Pre-Report Checklist** (verify before generating completion report):
 
      ```
-     - [ ] Quality checks passed (linting, type checking, tests as appropriate)
+     - [ ] The task's checks passed (lint, format, type-check, related tests)
      - [ ] Task list markdown file edited and saved
      - [ ] Task marked [x] (or [~] with its reason) in task list
      - [ ] Task description updated to reflect actual work done; Success Criteria untouched
@@ -79,11 +79,12 @@ It ensures consistent execution, quality control, and documentation of work.
 
      - **First**: Mark the **parent task** as `[x]` in the task list file (ensures docs reflect completion)
      - **Second**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
-     - **Third**: Run quality gates - **Tier 2** (full-project type-check, lint, format, unit tests, targeted E2E if
-       applicable, build)
-     - **Fourth**: Check if [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) needs updates
+     - **Third**: Check if [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) needs updates
        (feature progress, completed functionality, updated priorities)
-     - **Fifth**: Verify completion before reporting (use pre-report checklist below)
+     - **Fourth**: Verify completion before reporting (use pre-report checklist below)
+
+     No extra checks run at a parent task or phase end; each task ran its own. Run wider only when the affected
+     surface calls for it ([When to Run Wider](../strategies/arc/strategy-quality-gates.md#when-to-run-wider)).
 
      **Pre-Report Checklist for Parent Task Completion** (verify before reporting):
 
@@ -91,14 +92,14 @@ It ensures consistent execution, quality control, and documentation of work.
      - [ ] All subtasks under parent task marked [x] or [~] in task list
      - [ ] Parent task marked [x] in task list
      - [ ] Task list file edited and saved
-     - [ ] Tier 2 quality gates passed (full-project lint/type-check/format, unit tests, targeted E2E if applicable, build)
      - [ ] PROJECT-STATUS checked and updated if needed
      - [ ] Ready to report completion to user
      ```
 
      If any item is unchecked, complete it before proceeding to report generation.
 
-  3. Report completion and stop ([Stopping and Proceeding](#stopping-and-proceeding)).
+  3. Report completion and stop ([Stopping and Proceeding](#stopping-and-proceeding)). The report names the checks
+     that ran for this work and the broader checks not yet run (for example the full backend suite, left to CI).
 
   4. Await the Owner's instructions. The Owner may approve a commit (AI executes only when explicitly approved) or
      request changes. When committing, follow [Atomic Commit Workflow](supplemental/atomic-commit.md); before
@@ -129,10 +130,10 @@ no cause, say so and ask for direction.
 
 When the Owner asks for continuation through a named set of tasks ("work through 5.2-5.4 while I'm away"), the stops
 between those tasks are deferred. The Owner names the scope; the agent never opens one on its own. Within the scope,
-complete each task fully (Tier 1 checks, `[x]`, description updated), then continue without waiting. At the end, leave
-the task list updated and gates passing. Changes stay uncommitted, and the Owner decides commit boundaries on return,
-unless the scope said to commit each task as it lands; then each task's commit carries its checkbox
-([atomic-commit.md](supplemental/atomic-commit.md)).
+complete each task fully (the task's checks, `[x]`, description updated), then continue without waiting. At the end,
+leave the task list updated and every check that ran passing. Changes stay uncommitted, and the Owner decides commit
+boundaries on return, unless the scope said to commit each task as it lands; then each task's commit carries its
+checkbox ([atomic-commit.md](supplemental/atomic-commit.md)).
 
 **Agent-proposed batch.** At a parent task's start, the agent may propose its subtasks as one increment, and the
 Owner's approval opens the scope:

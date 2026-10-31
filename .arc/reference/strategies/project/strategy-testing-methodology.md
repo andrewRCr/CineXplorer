@@ -330,7 +330,7 @@ npx pyright backend/apps/ --project backend
 # Linting (with auto-fix)
 .venv-backend/bin/ruff check backend/apps/ --fix
 
-# Full quality gates
+# Full run (verification, or a wider run when the affected surface calls for one)
 pytest apps/  # All tests pass
 npx pyright backend/apps/ --project backend  # 0 type errors
 .venv-backend/bin/ruff check backend/apps/  # 0 violations

@@ -57,10 +57,6 @@ services:
       - ./dev-certs/cert.pem:/certs/frontend/cert.pem:ro
     environment:
       - HOST=0.0.0.0
-      # OpenAPI schema URL for type generation (inter-container communication)
-      - OPENAPI_SCHEMA_URL=https://backend:8000/api/openapi.json
-      # Skip TLS verification for dev self-signed certs (inter-container only)
-      - DEV_SKIP_TLS=true
       - NODE_ENV=development
 
     depends_on:

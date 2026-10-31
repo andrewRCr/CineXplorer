@@ -384,10 +384,10 @@ discovered during browser testing
 ✅ **Also correct (simple single-line subtasks):**
 
 ```markdown
-- [ ] **1.2 Run quality gates**
-    - [ ] 1.2.a Run linting checks
-    - [ ] 1.2.b Run type checking
-    - [ ] 1.2.c Verify no errors
+- [ ] **1.2 Add the profile fields**
+    - [ ] 1.2.a Add `bio` and `avatar_url` to `Profile`
+    - [ ] 1.2.b Add the migration
+    - [ ] 1.2.c Expose both fields in `ProfileSchema`
 ```
 
 ❌ **Wrong:**
@@ -777,8 +777,6 @@ Parent Task (0 spaces) - [ ] **X.Y Description**
         - Add validation in `clean()` method
 
     - [ ] **1.2.b Run tests - should now PASS**
-
-    - [ ] **1.2.c Run quality gates (linting, type checking)**
 ```
 
 ### Pattern 2: Multi-Component Test-First
@@ -819,10 +817,6 @@ Parent Task (0 spaces) - [ ] **X.Y Description**
         - Implement rate limiting
 
     - [ ] **2.3.b Run login tests - should now PASS**
-
-- [ ] **2.4 Final quality gates**
-    - [ ] 2.4.a Run full test suite (all tests pass)
-    - [ ] 2.4.b Run linting and type checking
 ```
 
 ### Pattern 3: Feature with Backend and Frontend
@@ -940,6 +934,9 @@ This example demonstrates all formatting elements in proper context:
 
     **Goal:** Reusable fixtures to test state persistence across components.
 
+    **Check:** the full backend suite once, since `test_helpers.py` is shared by every app's tests and related tests
+    would not reach them all.
+
     - [ ] **1.1.a Create fixture for filter state in `test_helpers.py`**
         - Return mock filter object with all fields
         - Support partial overrides for test variations
@@ -948,12 +945,6 @@ This example demonstrates all formatting elements in proper context:
     - [ ] **1.1.b Create fixture for navigation context**
         - Mock URL params and history state
         - Support detail→back→detail flows
-
-- [ ] **1.2 Verify fixture compatibility with existing tests**
-
-    - [ ] **1.2.a Run existing test suite with new fixtures**
-        - Ensure no regressions
-        - All tests should still PASS
 
 ### **Phase 2:** Filters survive navigation to a detail page and back
 

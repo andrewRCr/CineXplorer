@@ -105,6 +105,7 @@ What to watch for or work around, and why.
 ## 5. Report
 
 - What is committed, what is left uncommitted, and the next action
+- The broader checks not yet run for the work so far (for example the full backend suite, left to CI)
 - Working-memory removals made, and additions proposed for approval
 
 The notes describe where the work stands, not the session's history.

@@ -161,7 +161,8 @@ The project uses modern testing frameworks for both backend and frontend:
 - **Framework**: Vitest with React Testing Library
 - **Environment**: JSDOM with browser API mocking
 - **Structure**: Co-located tests in `__tests__/` directories
-- **Command**: `docker compose -f infrastructure/docker-compose.yml exec frontend npm test`
+- **Command**: `npm test` in `frontend/` on host Node, or
+  `docker compose -f infrastructure/docker-compose.yml exec frontend npm test` in the primary's frontend container
 
 **For testing methodology, quality gates, and test-first protocols**, see:
 

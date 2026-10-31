@@ -64,15 +64,20 @@ Report in one block, then wait for the Owner:
 
 ```text
 technical/{name} · clean · 3 commits since the handoff (abc1234)
-Docker: 5 of 5 containers up
+Docker: 5 of 5 containers up (primary)
 Next: Task 2.1, write the errand workflow
 Proceed?
 ```
 
 - **First line:** branch, `clean` or `dirty` (with the count of changed files), and the commits since the handoff or
   `no handoff recorded`.
-- **Docker:** `docker ps --filter name=infrastructure -q | wc -l` against the five services; report it, and start the
-  stack only when the next action needs it.
+- **Docker:** `docker compose -f infrastructure/docker-compose.yml ps -q | wc -l`, this checkout's own project,
+  against its expectation: five on the primary, three in a linked worktree with its test stack up, none without one
+  ([worktree-sessions.md](worktree-sessions.md)). Report it, and start the stack only when the next action needs it:
+  the full stack on the primary, the test stack in a worktree.
+- **Worktrees:** on the primary, name any linked worktree (`git worktree list`) whose branch's pull request has merged
+  (`gh pr list --state merged --head {branch}`) as ready to remove
+  ([worktree-sessions.md § Removal](worktree-sessions.md#removal)); omit the line when there are none.
 - **Next:** one action, from the notes' Next Action. Name any Blockers on their own line.
 - **Captured for this work unit:** the titles of the inbox entries that target it, on one line. Adding one to the task
   list is a planning change the Owner approves; the entry then leaves the inbox

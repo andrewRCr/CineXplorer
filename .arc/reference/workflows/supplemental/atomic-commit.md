@@ -23,9 +23,9 @@ Both paths check this before staging:
   ([DEVELOPMENT-RULES § Leave It Cleaner](../../constitution/DEVELOPMENT-RULES.md#leave-it-cleaner-pre-existing-issue-protocol)).
 - **Task list:** the one in `.arc/active/*/` that the branch names. Each completed task is `[x]` with its description
   updated to what was done; a parent is `[x]` only when every subtask is. Partial work stays `[ ]`.
-- **Quality gates:** what the work's tier calls for has passed
+- **Quality gates:** the task's checks have passed
   ([DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md#quality-gates)); work outside the task
-  loop runs at least Tier 1.
+  loop runs the checks for what it changed.
 
 ### Task Lists Ride with Content
 

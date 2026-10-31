@@ -29,7 +29,9 @@
 
 **Expected environment:**
 
-- **Docker:** 5 containers running (backend, frontend, redis, caddy, postgres), started from this checkout
+- **Docker:** this checkout's own Compose project. On the primary, 5 containers (backend, frontend, redis, caddy,
+  postgres); in a linked worktree, its test stack's 3 (backend, redis, postgres) while one is up, otherwise none
+  ([worktree-sessions.md](workflows/supplemental/worktree-sessions.md))
 - **Backend venv:** `.venv-backend/bin/` on Python 3.13 (built with `uv`), with ruff and pytest
 
 ### Critical Path Reference
@@ -71,7 +73,8 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 - Backend serves HTTPS only (self-signed cert in development)
 - Frontend `.env` has `VITE_BASE_API_URL="https://localhost:8444/api"` (includes `/api` prefix)
 - All API endpoints are relative to `/api/` (e.g., `/movies/discover`, not `/api/movies/discover`)
-- Redis runs internally (no exposed port needed for development)
+- The backend reaches Redis by service name (`redis:6379`); the primary also publishes 6379 on the host, and a
+  worktree's test stack publishes no ports
 
 ### Console Logging for AI Debugging
 
@@ -126,10 +129,12 @@ docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps
 
 **CRITICAL: Tests MUST run via Docker** (require PostgreSQL + Redis)
 
-**Test Runner**: pytest with parallel execution enabled by default (~5x faster via pytest-xdist)
+**Test Runner**: pytest with parallel execution enabled by default via pytest-xdist, capped at 4 workers
+(`--maxprocesses 4` in `backend/pyproject.toml`; `-n auto` alone would start one per core). The full suite takes about
+35 seconds and peaks near 650 MiB in the backend container; 8 workers save under 10 seconds for about 60% more memory.
 
 ```bash
-# Run all tests (parallel execution is automatic)
+# Run all tests (parallel execution is automatic, 4 workers)
 docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest apps/
 
 # Sequential execution (for debugging test isolation issues)
@@ -149,7 +154,11 @@ docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pyte
 ### Linting (Frontend)
 
 ```bash
-# Via Docker
+# On host Node (any checkout)
+(cd frontend && npm run lint)
+(cd frontend && npm run lint -- --fix)   # with auto-fix
+
+# Via Docker (the primary's frontend container)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint
 
 # With auto-fix
@@ -162,7 +171,10 @@ docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm
 module resolution.
 
 ```bash
-# CORRECT: Use npm script (runs tsc -b with project references)
+# CORRECT: Use npm script (runs tsc -b with project references), after `npm run typegen`
+# On host Node (any checkout)
+(cd frontend && npm run type-check)
+# Via Docker (the primary's frontend container)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run type-check
 
 # WRONG: Direct tsc invocation - DO NOT USE
@@ -196,8 +208,9 @@ TypeScript. Without this, you'll get errors like `Type '"success"' is not assign
 **Run after modifying backend API files** (`api.py`, `schemas.py`) to regenerate frontend types:
 
 ```bash
-# Regenerate types (requires running backend containers)
-DEV_SKIP_TLS=true NODE_ENV=development npm run generate-types --prefix frontend
+# Regenerate types: exports the schema from this checkout's own backend container (the primary's
+# full stack, or a worktree's test stack), then generates src/types/api.ts
+npm run generate-types --prefix frontend
 
 # Check for uncommitted changes
 git diff -- frontend/openapi.json frontend/src/types/api.ts
@@ -242,27 +255,30 @@ npx --yes markdown-table-prettify < input.md > output.md
 
 ## Quality Gate Commands
 
-Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
+The full command set: the verification run, and the wider run when the affected surface calls for one
+(DEVELOPMENT-RULES § Quality Gates). A task runs only its own checks; CI runs the full set on every pull request.
 
 Heavy container commands carry `nice -n 15` inside the container: Docker Desktop runs container processes outside
 this WSL distro, so the host's `nicecap` wrapper around `docker compose` would reach only the client. `memcap_gated`
-cannot cap them either, and the Compose file sets no memory limits, so each container can use the whole WSL2 VM's
-memory.
+cannot cap them either. The primary stack sets no memory limits, since limits in `docker-compose.yml` would also bind
+CI and the production override; the worker cap keeps the full backend suite near 650 MiB in the backend container.
+Revisit that as the suite grows. A worktree's test stack caps each container (backend 1.5 GiB, `dev-db` 512 MiB,
+`redis` 128 MiB).
 
 ```bash
 # 1. Backend Tests (parallel execution enabled by default)
 docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest apps/
 
-# 2. Frontend Tests
+# 2. Frontend Tests (or on host Node: cd frontend && npm test)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm test
 
 # 3. Backend Linting (with auto-fix)
 .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
 
-# 4. Frontend Linting
+# 4. Frontend Linting (or on host Node: cd frontend && npm run lint)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint
 
-# 5. TypeScript Type Checking
+# 5. TypeScript Type Checking (or on host Node, after typegen: cd frontend && npm run type-check)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run type-check
 
 # 6. Python Type Safety
@@ -277,8 +293,8 @@ npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
 ## Docker Operations
 
 ```bash
-# Check container status
-docker ps | grep infrastructure
+# Check container status (this checkout's own project)
+docker compose -f infrastructure/docker-compose.yml ps
 
 # View logs
 docker compose -f infrastructure/docker-compose.yml logs backend
@@ -414,12 +430,13 @@ EOF
 ### Docker Assumptions
 
 ❌ "Docker isn't running" without verifying
-❌ Running tests from host (no database connection)
+❌ Running backend tests from the host (no database connection)
 ❌ Assuming containers are up without checking
 ❌ Using wrong ports (localhost:3000 vs localhost:8000)
 
-✅ Verify: `docker ps | grep infrastructure` (expect 5 containers)
-✅ Always use Docker for tests
+✅ Verify: `docker compose -f infrastructure/docker-compose.yml ps` (5 containers on the primary, 3 for a worktree's
+test stack)
+✅ Backend tests always run in Docker, in this checkout's own stack; frontend tests run on host Node or in Docker
 ✅ Check container status before operations
 ✅ Use `https://localhost:8000` for direct API testing (see Network Architecture section)
 

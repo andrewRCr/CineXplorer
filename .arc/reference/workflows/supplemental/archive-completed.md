@@ -43,8 +43,9 @@ for the other.
 - [ ] PRD Open Questions are empty, and any design change went through
   [1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)
 
-**Run the gates.** Run the full suite (Tier 3, [DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md))
-and report its results. A checked task box is not a passed gate; only a run is.
+**Run the gates.** Run the verification run: the full command set once locally
+([DEVELOPMENT-RULES § Quality Gates](../../constitution/DEVELOPMENT-RULES.md#quality-gates)), and report its results;
+CI runs it again on the pull request. A checked task box is not a passed gate; only a run is.
 
 **Author criteria walk.** Run [verification-review](../../methods/verification-review.md), which starts with
 [validate-criteria](../../methods/validate-criteria.md) over the whole work unit: the task list's Success Criteria, the
@@ -83,8 +84,8 @@ or the Owner stops it. Record each pass in the task list's `## Review Log`.
 # Check if API files changed on this branch
 git diff main --name-only | grep -E "backend/apps/.*/(api|schemas)\.py|backend/config/api\.py"
 
-# If any matches, regenerate types (requires running backend containers)
-DEV_SKIP_TLS=true NODE_ENV=development npm run generate-types --prefix frontend
+# If any matches, regenerate types (exports from this checkout's own backend container)
+npm run generate-types --prefix frontend
 
 # Check for uncommitted type changes
 git diff --exit-code frontend/openapi.json frontend/src/types/api.ts
@@ -345,6 +346,10 @@ git push
 or `main`).
 
 ### 9) Delete Child Branch
+
+A work unit run in a linked worktree removes it first, from the main checkout
+([worktree-sessions.md § Removal](worktree-sessions.md#removal)): git refuses to delete a branch a worktree has checked
+out.
 
 ```bash
 # Delete locally

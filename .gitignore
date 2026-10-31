@@ -221,10 +221,10 @@ infrastructure/dev-certs/*.key
 .arc/user/*/
 
 # AI tool settings (personal development environment preferences)
-.claude/
+.claude
 .warp/
 .gemini/
-.codex/
+.codex
 
 # Markdownlint VS Code config (local dev tooling - project standards in .markdownlint-cli2.jsonc)
 .markdownlint.jsonc
@@ -233,4 +233,4 @@ infrastructure/dev-certs/*.key
 
 # Type checking output files
 *type_errors.json
-.venv-backend/
+.venv-backend

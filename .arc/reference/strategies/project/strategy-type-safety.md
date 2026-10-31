@@ -518,18 +518,23 @@ def create_entry(request: HttpRequest) -> UserMovieDataModelSchema:
 2. Run `npx pyright backend/apps/ backend/config/ --project backend`
 3. Run backend tests to confirm runtime contract
 
-### Pre-Commit Quality Gate
+### Verification Type Check
+
+The verification run's type check (QUICK-REFERENCE's full command set), which CI runs at a pinned Pyright version on
+every pull request:
 
 ```bash path=null start=null
-python backend/scripts/type_check.py
-# Must show: ✅ Type Safety Status: Pyright (0 errors)
+npx pyright backend/apps/ backend/config/ --project backend
+# Must show: 0 errors
 ```
+
+`python backend/scripts/type_check.py` gives an optional per-app report.
 
 ### Development Workflow
 
 ```bash path=null start=null
-# Fast - specific files
-npx pyright backend/apps/authentication/api.py --project backend
+# Fast - the touched app (a directory, not individual files, so the project config applies)
+npx pyright backend/apps/authentication/ --project backend
 
 # Comprehensive - all code
 python backend/scripts/type_check.py

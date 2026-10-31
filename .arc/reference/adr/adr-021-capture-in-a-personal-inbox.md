@@ -33,10 +33,10 @@ Alternatives considered:
 We will capture discovered work in a personal, gitignored inbox, `.arc/user/{identity}/USER-INBOX.md` in the main
 checkout, with `## Errand` and `## Work Unit` sections. Sessions in linked worktrees write the main checkout's copy.
 
-We will drain it between work units, offered at session start when it has entries: each entry gets a class. A
-work-unit entry gets a tracked home; an errand runs now or waits in the inbox until it does. The Owner approves the
-whole routing table, and the tracked changes land as one pull request. The drain takes over the weekly review's backlog
-checks (atomic tasks, backlog buckets, PROJECT-STATUS) as an optional pass.
+We will drain it between work units, offered at session start when it holds work-unit entries: each entry gets a
+class. A work-unit entry gets a tracked home; an errand runs now or waits in the inbox until it does. The Owner
+approves the whole routing table, and the tracked changes land as one pull request. The drain takes over the weekly
+review's backlog checks (atomic tasks, backlog buckets, PROJECT-STATUS) as an optional pass.
 
 Errands stay untracked because their state is volatile: they are run, dropped or reshaped too often for a tracked list
 whose every change passes through a pull request. `ATOMIC-TASKS.md` therefore takes no new entries; the ones it holds

@@ -57,7 +57,7 @@ Leave other entries in place.
 
 ## Drain
 
-**When:** between work units (session start offers it when the inbox has entries), or when the Owner asks. The
+**When:** between work units (session start offers it when `## Work Unit` has entries), or when the Owner asks. The
 routed changes land through an errand, so the drain needs a clean main checkout or a linked worktree.
 
 ### 1. Classify, writing nothing

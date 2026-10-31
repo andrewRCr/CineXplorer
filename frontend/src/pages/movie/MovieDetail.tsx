@@ -196,7 +196,8 @@ const MovieDetail = () => {
           )}
           {/* Header: User Score */}
           <Text fontWeight="bold">
-            User Score: <MovieUserScore score={movie.vote_average ?? 0} />
+            User Score:{" "}
+            <MovieUserScore score={movie.vote_average} voteCount={movie.vote_count} presentation="detailed" />
           </Text>
           {/* Header: Key Crew Section (creative leads) */}
           <Box mt={2}>

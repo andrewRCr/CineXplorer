@@ -308,7 +308,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                 <Text fontSize="sm" fontFamily="sourcesans" color="on-muted">
                   {formattedDate}
                 </Text>
-                <MovieUserScore score={movie.vote_average ?? 0} />
+                <MovieUserScore score={movie.vote_average} voteCount={movie.vote_count} />
               </Box>
             </Box>
           </Card.Body>

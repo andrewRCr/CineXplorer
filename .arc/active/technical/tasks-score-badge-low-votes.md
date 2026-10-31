@@ -98,16 +98,19 @@ caller of `get_movie_by_id` reads, and detail responses are not cached server-si
       replayed unchanged from the sandbox
     - Against `main`'s factory the new test failed (`None == 100`); it passes with the mapping
 
-- [ ] **1.2 Score badge applies the 10-vote rule on cards and the detail page**
-    - Replay: `MovieUserScore` derives the TMDB badge in one `getTmdbBadge` helper, shared by the TMDB-only and
-      user-rating layouts, with the threshold as `SCORE_DISPLAY_MIN_VOTES`; `MovieCard` and `MovieDetail` pass
-      `vote_count` and the uncoerced average. `MovieUserScore.test.tsx` covers zero, 1–9 and 10-or-more votes in
-      both presentations and drops its "0.0" expectation; `MovieCard.test.tsx` and `MovieDetail.test.tsx` cover the
-      call sites
-    - The new tests run first against `main`'s components and fail; they pass with the change
-    - The "Hide or alter MovieUserScore badge" entry moves to `completed-atomic-2026-q4.md`, naming this branch
-    - Checks: typegen, `npm run type-check`, ESLint and `vitest related` on the touched files, markdown lint on
-      `ATOMIC-TASKS.md`
+- [x] **1.2 Score badge applies the 10-vote rule on cards and the detail page**
+    - `MovieUserScore` takes `voteCount` and a `compact` or `detailed` `presentation`, and derives the TMDB badge in
+      one `getTmdbBadge` helper shared by the TMDB-only and user-rating layouts, with the threshold as
+      `SCORE_DISPLAY_MIN_VOTES`; `MovieCard` and `MovieDetail` (the only call sites) pass `vote_count` and the
+      uncoerced average. Replayed unchanged from the sandbox
+    - `MovieUserScore.test.tsx` covers zero, 1–9 and 10-or-more votes in both presentations and drops its "0.0"
+      expectation; its variant checks render under a layer-free copy of the project system, since the shared
+      renderer lacks the badge recipe and jsdom skips `@layer` styles. `MovieCard.test.tsx` and
+      `MovieDetail.test.tsx` cover the call sites
+    - Against `main`'s components the 20 below-threshold tests failed and the 74 others passed. Swapping two variants
+      in the component (`error` to `warning` at 4.9, the zero-vote `neutral` to `success`) failed 13 tests, so the
+      variant checks discriminate
+    - The "Hide or alter MovieUserScore badge" entry moved to `completed-atomic-2026-q4.md`, naming this branch
 
 - [ ] **1.3 Score-color documentation describes the below-threshold state**
     - [ ] **1.3.a Frontend theme comments and theme-debug page**

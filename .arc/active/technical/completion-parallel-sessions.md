@@ -23,7 +23,8 @@ full-suite runs.
   `COMPOSE_PROJECT_NAME`, so no command naming it reaches the primary's project
 - Backend test workers capped at four (`--maxprocesses 4`), chosen by measurement
 - One route for API types: `npm run generate-types` exports the schema from the checkout's own backend container and
-  checks it parses before writing `openapi.json`; the fetch from a running server is gone
+  checks it parses before writing `openapi.json`, refusing in a worktree whose Compose project is still the main
+  checkout's; the fetch from a running server is gone
 - `.gitignore` ignores the links as well as the folders
 - Checks placed by deadline: DEVELOPMENT-RULES names what runs at each moment (task, commit, parent task, phase and
   session end, pull request, verification, merge), and the quality-gates strategy is rewritten around those moments.
@@ -44,9 +45,9 @@ full-suite runs.
 - Codex in a linked worktree uses the primary's project trust and hook approvals, so a worktree needs no Codex step
 - The live `dev-db` and `redis` had been created by an install-kit sandbox copy sharing the project name; both were
   recreated from the primary with their data intact
-- Reviewed at both ends: an independent task-list review with three fix checks before execution, and at the end an
-  independent verification pass, rerun after the first was set aside for separation, every finding settled with the
-  Owner
+- Reviewed at both ends: an independent task-list review with three fix checks before execution; at the end an
+  independent verification pass, rerun after the first was set aside for separation, and an independent code review
+  with a fix check, every finding settled with the Owner
 - The branch also carries the previous work unit's archive move
 
 ## Related Documentation

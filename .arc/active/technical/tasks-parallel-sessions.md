@@ -411,3 +411,17 @@ Three facts drive the work:
   confirmed against source · approved, `local-correction`: F2 "judgment" replaced by the affected surface at the
   strategy's session-end moment and `DEVELOPMENT-RULES.md`'s full-run line · about 11 minutes · stop: the Owner
   declined a fix check
+- **2026-10-31 · Code review · Pass 1** · fresh read-only subagent (`pragmatic-code-reviewer`) · rubric:
+  `code-review-standard` with the `implementation-audit` lens and the repository's contract coherence, over the
+  complete change from `main` with raw outputs of the runs · runner `independent` · 6 minor, all confirmed against
+  source (F5 by probe) · all approved, F2 in part: F1 the API-type export refuses in a linked worktree whose Compose
+  project is the main checkout's, `new-design`; `local-correction`: F2 provisioning stands in for activation's branch
+  step and names the form for an existing branch (a stacked base not taken, under the no-stacking direction), F3 the
+  type-safety strategy's verification type check is the full set's Pyright run, F4 the pull-request line names CI's
+  contrast check and production build (no local build added), F5 the links use `ln -sfT`, F6 the test-stack
+  comment's `dev-db` peak · about 11 minutes · stop: fixes landed, fix check approved
+- **2026-10-31 · Code review · Fix check, round 1 since pass 1** · fresh read-only subagent
+  (`pragmatic-code-reviewer`), scoped to the repairs, with the export's refusal and failure paths run in a throwaway
+  worktree · the six fixes close their findings · 1 minor, confirmed against source · approved, `local-correction`:
+  F1 activation's prerequisites bounded to activating in place, with the planning documents on `origin/main` before
+  provisioning · about 9 minutes · stop: the Owner declined round 2

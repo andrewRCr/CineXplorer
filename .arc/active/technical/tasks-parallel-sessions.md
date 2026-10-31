@@ -229,7 +229,7 @@ Three facts drive the work:
       broader checks not yet run; lines 132-133 (deferred review, "gates passing") name the task checks
     - `session-handoff.md` § 5 Report names the broader checks not yet run
 
-- [ ] **3.4 QUICK-REFERENCE and the type-safety strategy**
+- [x] **3.4 QUICK-REFERENCE and the type-safety strategy**
     - `QUICK-REFERENCE.md` § Quality Gate Commands (line 245, "Run these before any commit"): the full command set is
       the verification run
     - `strategies/project/strategy-type-safety.md` § Pre-Commit Quality Gate (line 521) becomes the verification

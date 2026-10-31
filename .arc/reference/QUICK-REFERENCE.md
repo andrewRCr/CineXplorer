@@ -255,7 +255,8 @@ npx --yes markdown-table-prettify < input.md > output.md
 
 ## Quality Gate Commands
 
-Reference for DEVELOPMENT-RULES quality gates. Run these before any commit.
+The full command set: the verification run, and the wider run when the affected surface calls for one
+(DEVELOPMENT-RULES § Quality Gates). A task runs only its own checks; CI runs the full set on every pull request.
 
 Heavy container commands carry `nice -n 15` inside the container: Docker Desktop runs container processes outside
 this WSL distro, so the host's `nicecap` wrapper around `docker compose` would reach only the client. `memcap_gated`

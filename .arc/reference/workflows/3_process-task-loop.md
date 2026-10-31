@@ -69,6 +69,7 @@ It ensures consistent execution, quality control, and documentation of work.
      - [ ] Task list markdown file edited and saved
      - [ ] Task marked [x] (or [~] with its reason) in task list
      - [ ] Task description updated to reflect actual work done; Success Criteria untouched
+     - [ ] Session notes' pointer fields updated
      - [ ] Ready to generate user-facing completion report
      ```
 
@@ -111,6 +112,10 @@ End every completion report with a one-line structured prompt naming the next st
 - `Proceed to Phase N, Task N.1?` (the task just finished ends its phase)
 - `Proceed to completion?` (the last task is done; next is
   [archive-completed.md](supplemental/archive-completed.md), from § 1b after a verification phase, otherwise from § 1)
+
+Before every stop, update the pointer fields of the work unit's session notes (Last Completed, Next Task, Next
+Action; State and Blockers when they change) and say so in the report
+([DEVELOPMENT-RULES § Session Documentation Control](../constitution/DEVELOPMENT-RULES.md#session-documentation-control)).
 
 A short affirmative ("y", "yes", "ok") as the first word advances to the named target. Other approval ("looks good",
 "proceed") also advances, unless the Owner raises a concern ("that's done, but before moving on..."): address the

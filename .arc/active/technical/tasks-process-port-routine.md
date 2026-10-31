@@ -107,16 +107,15 @@ rewritten as prose the agent follows rather than vendored.
     - Holds the pinned skeleton and the working-memory entry shape; the old session-start section, working-directory
       check and line-number rules are gone
 
-- [ ] **1.5 Rules and agent guidance**
-    - `DEVELOPMENT-RULES.md` § Session Documentation Control: the cadence rule replaces "never update without
-      instruction"; § Session Context Management: arc-framework's session-loop guidance (hand off at natural
-      boundaries or when quality degrades, compact and recover between boundaries, context monitoring is the
-      Owner's); the markdownlint line matches `.markdownlint-cli2.jsonc` (exclusions come from its `ignores` list:
-      the archive, the personal workspace, the root README)
-    - Version 2.17 with a new hash, updated wherever the version or hash is cited, `agent/copilot-instructions.md`
-      included; later edits in this work unit stay under 2.17
-    - `3_process-task-loop.md` completion protocol: each stop updates the notes' pointer fields
-    - `agent/CLAUDE.md` § Context Window Management: thresholds removed, pointing to the rule
+- [x] **1.5 Rules and agent guidance**
+    - `DEVELOPMENT-RULES.md` § Session Documentation Control: pointer fields at every stop without approval, notes
+      sections at handoff, working memory on approval; § Session Context Management: hand off at natural boundaries
+      or when quality slips, compact and recover between them, monitoring is the Owner's; the markdownlint line names
+      the config's `ignores` list
+    - Version 2.17, hash `b8wobidt`; `agent/CLAUDE.md`, `GEMINI.md`, `WARP.md` and `copilot-instructions.md` cite it
+    - `3_process-task-loop.md` § Stopping and Proceeding: every stop updates the pointer fields; the per-task
+      pre-report checklist has the line
+    - `agent/CLAUDE.md` § Context Window Management: thresholds removed; points to the rule and the recovery hook
 
 - [ ] **1.6 Retire `CURRENT-SESSION.md`**
 

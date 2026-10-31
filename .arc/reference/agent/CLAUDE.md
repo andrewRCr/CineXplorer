@@ -3,7 +3,7 @@
 Guidance for Claude when working in this repository. For shared rules and architecture, defer to the canonical docs:
 
 - [AGENTS](AGENTS.md) – Project context, lookup guide, and collaboration principles
-- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.16 – Non-negotiable standards
+- [DEVELOPMENT-RULES](../constitution/DEVELOPMENT-RULES.md) v2.17 – Non-negotiable standards
 - [QUICK-REFERENCE](../QUICK-REFERENCE.md) v1.2 – Environment context and command patterns
 - [Process Task Loop](../workflows/3_process-task-loop.md) – Task interlock and deferred review
 
@@ -23,30 +23,10 @@ Guidance for Claude when working in this repository. For shared rules and archit
 
 ## Context Window Management
 
-**Claude-specific token thresholds and monitoring protocol.**
-
-**Context Window:** Claude Code provides ~200,000 token context window. Monitor usage throughout session.
-
-**Monitoring Protocol:**
-
-- Work at full specification until **~140,000 tokens used** (start monitoring context)
-- At **~150,000 tokens**, assess situation:
-  1. Complete current work item (don't stop mid-edit)
-  2. Evaluate remaining work scope
-  3. **Stop and ask user** how to proceed: "We're at ~150k tokens. [Summary of completed work]. [Remaining work
-     description with estimated token cost]. How should we proceed?"
-  4. User decides: continue, commit completed work then continue, or begin handoff
-- Token usage displayed in function results - check periodically during long sessions
-- **Never** degrade work quality or change approach due to token pressure
-- **Never** make "efficiency" tradeoffs based on context window size
-
-**Why these thresholds:**
-
-- 140k: Start monitoring, but continue normal work
-- 150k: Proactive check-in with user before hitting limits
-- Leaves buffer for commit workflows, quality gates, and session handoff if needed
-
-**See also:** Session Context Management section in DEVELOPMENT-RULES.md for agent-agnostic principles.
+Follow [DEVELOPMENT-RULES § Session Context Management](../constitution/DEVELOPMENT-RULES.md#session-context-management):
+hand off at natural boundaries, and between them let Claude Code compact. The SessionStart hook on compaction runs
+`.arc/reference/harness-hooks/compaction-recovery.mjs`, which names what to re-read. The Owner watches context usage;
+there are no token thresholds.
 
 ## Deferred Review
 

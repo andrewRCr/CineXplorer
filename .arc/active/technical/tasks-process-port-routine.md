@@ -89,16 +89,14 @@ rewritten as prose the agent follows rather than vendored.
     - [x] **1.2.c Tests should now PASS**: 10 of 10; `node --check` clean; the live hook here reads this work unit's
       notes, and the Codex arm-then-claim path injects once
 
-- [ ] **1.3 Rewrite `session-init.md`**
-    - Steps: locate (checkout, branch, linked worktree or not); read the notes when a work unit is active (without
-      notes, orient from the task list and git and say so), and the main checkout's working memory always; read the
-      core documents (the current list less `CURRENT-SESSION.md`); compare with git; orient in one block ending
-      `Proceed?`
-    - Compare: commits since `Commit at Handoff` (`git log <hash>..HEAD`) are expected, not a mismatch, and
-      `[none yet]` reads as "no handoff recorded"; dirty files against Uncommitted Work; Next Task against the task
-      list's checkboxes. A real mismatch still stops and asks
-    - Orientation: `branch · clean/dirty`, commits since the handoff, Docker up or not, one next action
-    - Drops: the version and hash recital, the documents-read confirmation, the task line-number requirement
+- [x] **1.3 Rewrite `session-init.md`**
+    - Five steps: locate (checkout, identity, work unit from the branch); read the notes, working memory always, and
+      the task list's overview and next task; read the core documents without reciting them; compare with git; orient
+      in one block ending `Proceed?`
+    - Commits since `Commit at Handoff` are expected; `[none yet]` reads as no handoff recorded; a task list without
+      notes orients from the task list and git; a real mismatch stops and asks
+    - Dropped: the version and hash recital, the documents-read confirmation, the line-number requirement, the venv
+      check
 
 - [ ] **1.4 Rewrite `session-handoff.md`**
     - Active work unit: update the pointer fields and `Commit at Handoff` (`git rev-parse --short HEAD`); replace the

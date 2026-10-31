@@ -145,7 +145,7 @@ Three facts drive the work:
       twice the CPU. WSL MemAvailable stayed above 8.6 GB. `gw4` to `gw23` dropped; dev data unchanged (28 tables,
       47 users)
 
-- [ ] **2.2 Write the test-stack override, `infrastructure/docker-compose.test-stack.yml`**
+- [x] **2.2 Write the test-stack override, `infrastructure/docker-compose.test-stack.yml`**
     - `backend`, `dev-db`, `redis`: `ports: !reset []` and a `mem_limit` sized from 2.1's peaks with headroom (one
       spelling throughout: Compose rejects a `mem_limit` that differs from a `deploy` limit)
     - Top level: `name: ${COMPOSE_PROJECT_NAME:?set COMPOSE_PROJECT_NAME in infrastructure/.env}`, so every command

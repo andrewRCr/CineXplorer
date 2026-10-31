@@ -1,0 +1,43 @@
+# Test-only backend stack for a second checkout (a linked git worktree), run beside the main
+# checkout's full stack. It starts dev-db, redis and an idle backend, publishes no ports, and
+# caps each container's memory; Caddy and the frontend stay behind a profile and never start.
+#
+# From the checkout's root, once infrastructure/.env sets COMPOSE_PROJECT_NAME:
+#   docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.test-stack.yml \
+#     up -d dev-db redis backend
+#   docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.test-stack.yml \
+#     exec -T backend nice -n 15 pytest apps/
+#   docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.test-stack.yml \
+#     down          # down -v also deletes the stack's database and Redis volumes
+#
+# The project name below refuses to resolve without COMPOSE_PROJECT_NAME, so no command naming
+# this file can reach the main checkout's default project (`infrastructure`) or its volumes.
+# Memory limits: the full suite at 4 workers peaks near 650 MiB in the backend (about 1 GiB at
+# 8 workers) and under 100 MiB in dev-db; each limit leaves headroom above that.
+
+name: ${COMPOSE_PROJECT_NAME:?set COMPOSE_PROJECT_NAME in infrastructure/.env}
+
+services:
+  backend:
+    command: tail -f /dev/null
+    healthcheck:
+      disable: true
+    ports: !reset []
+    volumes: !override
+      - ../backend:/backend:cached
+      - ../backend/logs:/backend/logs:cached
+    mem_limit: 1536m
+
+  dev-db:
+    ports: !reset []
+    mem_limit: 512m
+
+  redis:
+    ports: !reset []
+    mem_limit: 128m
+
+  frontend:
+    profiles: ["browser"]
+
+  caddy:
+    profiles: ["browser"]

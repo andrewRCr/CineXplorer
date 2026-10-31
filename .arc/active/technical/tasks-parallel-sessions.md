@@ -69,7 +69,7 @@ Three facts drive the work:
     - If Compose does not read the name from that file, stop: the fallback is an exported variable, which changes
       every documented command, so it returns to the Owner
 
-- [ ] **1.2 Write `supplemental/worktree-sessions.md`, the worktree part**
+- [x] **1.2 Write `supplemental/worktree-sessions.md`, the worktree part**
     - When to use one (planning, review, documentation, CI and configuration errands, frontend work, backend work
       tested in its own test stack) and what stays on the primary (the browser stack on 8444, OAuth)
     - Provisioning by hand, in order: `git worktree add -b {type}/{name} ~/dev/scratch/cinexplorer-worktrees/{name}

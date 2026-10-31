@@ -25,10 +25,10 @@ archival follows standard archive workflow.
 
 **Task lists are for work with distinct phases**, not just complex work.
 
-- **"Sequential steps toward one goal"** → Atomic task (even if 60-90 min, multiple files)
+- **"Sequential steps toward one goal"** → Errand (even if 60-90 min, multiple files; [run-errand.md](run-errand.md))
 - **"Distinct phases with different objectives"** → Task list
 
-Example: "Clean up auth tech debt" with 5 ordered steps touching 7 files is **one coherent concern** - stays atomic.
+Example: "Clean up auth tech debt" with 5 ordered steps touching 7 files is **one coherent concern** - stays an errand.
 
 Example: "Investigate performance issue" requiring profiling → analysis → design → implementation is
 **multiple phases** - needs task list.
@@ -41,7 +41,7 @@ Example: "Investigate performance issue" requiring profiling → analysis → de
 - ✅ Requires research → design → implement cycle (each phase produces different artifacts)
 - ✅ Would benefit from independent commits/reviews per phase
 
-### Keep as Atomic Task When
+### Keep as an Errand When
 
 - ❌ Single coherent concern, even if complex (multiple files, 30-90 min)
 - ❌ Sequential steps all serving one goal (ordered execution, not distinct phases)
@@ -54,8 +54,8 @@ Task lists add overhead: file creation, phase structure, branch lifecycle, archi
 when work genuinely has distinct phases that benefit from independent tracking. It's wasted ceremony for focused
 refactors that happen to touch multiple files.
 
-**Session duration is not a factor**: Well-structured atomic tasks with subtask checkboxes track progress across
-sessions just as effectively as task lists. Don't escalate to task list just because work might span sessions.
+**Session duration**: an errand finishes within one session. A concern that needs a plan spanning sessions is a work
+unit: an incidental task list, or a PRD ([run-errand.md](run-errand.md)).
 
 ---
 
@@ -70,7 +70,8 @@ Before creating:
 - **Estimate effort**: Is this 2+ hours, or <2 hours of focused execution?
 - **Check urgency**: Why fix now vs defer?
 
-**If work is <2 hours with known scope and sequential steps** → Use atomic task instead (see criteria above).
+**If work is <2 hours with known scope and sequential steps** → it is an errand (see criteria above): run it now or
+capture it in the inbox, as the Owner chooses ([run-errand.md](run-errand.md), [user-inbox.md](user-inbox.md)).
 
 If uncertain, ask for guidance on whether task list overhead is justified.
 

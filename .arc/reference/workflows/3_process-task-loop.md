@@ -182,13 +182,14 @@ immediately. **Quick decision tree**:
 - ✅ Scope likely to expand via discovery (investigation-heavy)
 - ✅ Estimated 2+ hours OR requires research → design → implement cycle
 
-**Keep as an errand or atomic task when:**
+**Keep as an errand when:**
 
 - ❌ Single coherent concern, even if complex (multiple files, 30-90 min)
 - ❌ Sequential steps all serving one goal
 - ❌ Scope is known/bounded after initial analysis
 
-**Key distinction:** "Sequential steps toward one goal" = atomic. "Distinct phases with different objectives" = task list.
+**Key distinction:** "Sequential steps toward one goal" = an errand. "Distinct phases with different objectives" = task
+list.
 
 Either way, a concern different from the current task leaves the current branch: it runs now (an errand, or an
 incidental task list if the Owner pauses the current work) or is captured in the inbox

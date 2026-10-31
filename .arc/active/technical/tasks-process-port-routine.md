@@ -217,6 +217,8 @@ rewritten as prose the agent follows rather than vendored.
       `BACKLOG-*.md`, `strategy-work-organization.md`, the task loop's atomic-task section, and the list's own usage
       header, which a filename search missed) and the personal-workspace README's "emptied by the drain" follow
       ADR-021; the interim working-memory entry is gone
+    - The incidental-work sizing guide and the task loop's copy of it sent small work to an atomic task, which could
+      span sessions; both now name an errand, finished within one session
 
 - [x] **3.4 First drain, landed as an errand**
     - Captured the five follow-ups; the drain's table was approved before any write, with no backlog pass

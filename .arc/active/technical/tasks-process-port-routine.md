@@ -145,18 +145,14 @@ rewritten as prose the agent follows rather than vendored.
 
 ### **Phase 2:** Small fixes outside a work unit run as errands
 
-- [ ] **2.1 Write `supplemental/run-errand.md`**
-    - When: one bounded concern outside the current work unit (an atomic task, an inbox errand, an Owner request). A
-      concern of the current work unit is fixed inline; one needing a recorded design or a multi-session plan is a
-      work unit
-    - Where: in place on the main checkout when it is clean (needed when checks use the Docker stack); otherwise a
-      linked worktree from `origin/main`. Never on a work-unit branch, never from a dirty checkout
-    - Steps: fetch; branch `{type}/{name}` from `origin/main`; change; checks for the touched area; commit
-      (`atomic-commit.md`, Context `{category} (atomic / no associated task list)`); an atomic task's archive entry
-      in the same PR; PR text per `pull-request-format` (a drain's PR per `user-inbox.md`), shown first; a
-      recommended review route, the Owner's choice; dispositions per `agent-pre-merge-review.md`; `ci-ok` green;
-      merge on explicit approval with `gh pr merge N --merge`; delete the branch locally and remotely; return to the
-      previous branch or remove the worktree
+- [x] **2.1 Write `supplemental/run-errand.md`**
+    - When it applies (an atomic task, an inbox errand or an Owner request; inline and work-unit cases excluded; an
+      errand that grows stops for the Owner) and where it runs (in place on a clean main checkout when checks need
+      Docker, otherwise a linked worktree; never a work-unit branch or a dirty checkout)
+    - Six steps: branch `{type}/{name}` from `origin/main`; change and check, an atomic task's archive move riding in
+      the same PR; show the diff, message and PR text before committing and opening the PR; a recommended review
+      route; merge with `gh pr merge --merge` on approval once `ci-ok` is green; clean up (GitHub deletes the remote
+      branch)
 
 - [ ] **2.2 Point existing guidance at errands**
     - `3_process-task-loop.md` § Atomic Task Completion Protocol: atomic tasks run as errands; its archive step and

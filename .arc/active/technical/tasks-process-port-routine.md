@@ -168,28 +168,20 @@ rewritten as prose the agent follows rather than vendored.
 
 ### **Phase 3:** Discovered work is captured or routed, never dropped
 
-- [ ] **3.1 Write `supplemental/user-inbox.md`** (invoked by name: "inbox" to capture, "housekeep" to drain)
+- [x] **3.1 Write `supplemental/user-inbox.md`** (invoked by name: "inbox" to capture, "housekeep" to drain)
 
-    - [ ] **3.1.a Capture**
-        - The call, per the routing in Scope: inline, errand now, incidental task list now, or capture
-        - Sections `## Errand` and `## Work Unit`; entry shape: H3 `[ ]` with a bold title, then `_Observation:_`,
-          optional `_Approach:_`, `_Captured during:_`; Work Unit entries add `_Target:_` (a backlog document, an
-          active task list, or `TBD`)
-        - Writes go to the main checkout's file; re-read immediately before writing and write once, never from an
-          earlier read; other entries left in place
+    - [x] **3.1.a Capture**
+        - The call per Leave It Cleaner (inline; errand now or capture, the Owner choosing; incidental task list now
+          only if the Owner pauses the current work); sections `## Errand` and `## Work Unit`; the entry shape, Work
+          Unit entries adding `_Target:_`; the file template
+        - Writes go to the main checkout's file, re-read immediately before one write
 
-    - [ ] **3.1.b Drain**
-        - When: between work units, or on request
-        - Each entry gets a class and a home: an errand runs now or becomes an atomic task; a work-unit entry goes to
-          an existing backlog document or a new one; an entry targeting an active task list stays in the inbox for
-          that work unit's session, and the drain says so; an entry the Owner chooses to keep (local-only work, or not
-          yet) stays with a `_Hold:_` reason, never at the agent's suggestion
-        - One table (entry, class, home, change) with a recommendation per row; nothing written before approval
-        - The tracked changes land as one errand PR whose body names the topics recorded in plain terms, within
-          `pull-request-format`'s surface rule (no `.arc/` paths or process vocabulary); drained entries leave the
-          inbox once it merges, and stay if it is abandoned
-        - Then an optional backlog pass, from `weekly-review.md` steps 2–5: atomic tasks still relevant, backlog
-          items ready for a plan or PRD, PROJECT-STATUS still accurate; its changes ride the same PR
+    - [x] **3.1.b Drain**
+        - Classify with no writes (errand now or atomic task; backlog document; held for an active task list's
+          session; kept with `_Hold:_` only at the Owner's choice); the optional backlog pass from the weekly review;
+          one table with a recommendation per row, nothing written before approval
+        - Lands as one errand on a `docs/backlog-{date}` branch, its PR body in plain terms within the surface rule;
+          entries leave the inbox when it merges
 
 - [ ] **3.2 Wire the routing into the rules and the session**
     - `DEVELOPMENT-RULES.md` § Leave It Cleaner: the routing in Scope; a different concern is never written to a

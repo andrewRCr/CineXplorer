@@ -38,7 +38,8 @@ for the other.
 
 **Preconditions:**
 
-- [ ] Every task is `[x]`, or `[~]` with its reason
+- [ ] Every task before the verification phase is `[x]`, or `[~]` with its reason (the verification task itself
+  stays open until this section's checks are done)
 - [ ] PRD Open Questions are empty, and any design change went through
   [1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)
 
@@ -70,6 +71,7 @@ or the Owner stops it. Record each pass in the task list's `## Review Log`.
 - [ ] Implementation works in the development environment, including any criterion that must be proven live
 - [ ] Task list header `**Status:**` updated to `Complete`, and the PRD's `**Status:**` likewise (if a PRD exists)
 - [ ] PROJECT-STATUS reflects completion (if applicable - major features/technical work)
+- [ ] The verification task is marked `[x]`, its note pointing to the criteria evidence
 
 **Note:** Not all work has PRDs. Incidental work typically has only task lists. Skip PRD items if no PRD.
 

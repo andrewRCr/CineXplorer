@@ -157,7 +157,7 @@ runbook for setting up the server, deploying a version and rolling it back.
       output directories because the pre-existing host dist directory is owned by nobody. ESLint and TypeScript
       checks passed; Vitest found no related App test files. Production-route browser checks remain in 4.2.
 
-- [ ] **3.3 The production Caddyfile and the web image** (R15, R16; SC6)
+- [x] **3.3 The production Caddyfile and the web image** (R15, R16; SC6)
 
     - [x] **3.3.a Production Caddyfile:** Added environment-based site and admin basic-auth settings, plain-HTTP
       backend proxy routes, bundle fallback with no-cache, immutable existing assets and no-store missing assets.
@@ -173,11 +173,11 @@ runbook for setting up the server, deploying a version and rolling it back.
       checks, immutable assets, uncached missing assets/directories, all four security headers, absence of CORS
       headers and admin basic-auth enforcement. Full frontend suite: 761 passed; lint and TypeScript checks passed.
 
-    - [ ] **3.3.c CI builds the web image** in the `images` job: `context: ./frontend`, `target: production`,
-      `build-contexts: infra=./infrastructure`, no push, its own cache scope (`scope=web`)
-        - Check: `actionlint`, and the next manual run on the pushed branch builds it
-        - Local evidence: actionlint passes and the same named-context build succeeds locally; hosted validation
-          follows the CI change, so this checkbox remains open until that run passes.
+    - [x] **3.3.c CI web image:** Added the production web build to the images job with the named infrastructure
+      context, local image loading, no publishing and its own web cache scope. actionlint and the local named-context
+      build passed. Manual run 41356513034 at 142034b5 passed all six jobs, including both production builds, backend
+      and frontend checks, type generation, documentation and ci-ok. Local and hosted frontend suites: 761 passed;
+      hosted backend suite: 844 passed.
 
 ### **Phase 4:** The production stack runs and CI publishes it
 

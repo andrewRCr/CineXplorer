@@ -12,6 +12,7 @@ This module provides logging configuration that supports:
 - File rotation to manage disk usage
 - Separate log files for apps, Django, requests, and errors
 - Console + file dual logging for development workflow
+- Stdout-only logging in staging and production, defaulting to INFO
 
 Environment Variables:
     DJANGO_LOG_LEVEL: Set file logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -20,12 +21,12 @@ Environment Variables:
 
     DJANGO_CONSOLE_LOG_LEVEL: Set console logging level (separate from file level)
                              Controls verbosity of console output during development
-                             Defaults to INFO in debug mode, WARNING in production
+                             Defaults to INFO when deployed or in debug mode; WARNING otherwise
                              Example: DJANGO_CONSOLE_LOG_LEVEL=WARNING
 
     DEBUG: Django debug mode (True/False)
           When True: defaults to DEBUG file level, INFO console level
-          When False: defaults to INFO file level, WARNING console level
+          When False in development: INFO file level, WARNING console level
 
 Usage Examples:
     # Clean console with detailed files
@@ -164,7 +165,7 @@ def _get_handlers_config(
     log_level: str,
     console_log_level: str,
     debug_mode: bool,
-    is_ci: bool,
+    disable_files: bool,
     is_testing: bool,
     log_dir: str,
 ) -> dict[str, dict[str, object]]:
@@ -185,54 +186,56 @@ def _get_handlers_config(
             "class": "logging.NullHandler",
         }
     # Only add file handlers if not in CI or testing environment
-    if not is_ci and not is_testing:
-        handlers.update({
-            "file_app": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": log_level,
-                "formatter": "production" if not debug_mode else "detailed",
-                "filename": f"{log_dir}/cinexplorer.log",
-                "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
-                "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
-                "encoding": LOG_ROTATION_CONFIG["encoding"],
-            },
-            "file_django": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "WARNING",
-                "formatter": "production" if not debug_mode else "detailed",
-                "filename": f"{log_dir}/django.log",
-                "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
-                "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
-                "encoding": LOG_ROTATION_CONFIG["encoding"],
-            },
-            "file_requests": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "INFO",
-                "formatter": "production" if not debug_mode else "detailed",
-                "filename": f"{log_dir}/requests.log",
-                "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
-                "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
-                "encoding": LOG_ROTATION_CONFIG["encoding"],
-            },
-            "file_errors": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "ERROR",
-                "formatter": "error",
-                "filename": f"{log_dir}/errors.log",
-                "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
-                "backupCount": LOG_ROTATION_CONFIG["backup_count_errors"],
-                "encoding": LOG_ROTATION_CONFIG["encoding"],
-            },
-            "file_database": {
-                "class": "logging.handlers.RotatingFileHandler",
-                "level": "DEBUG",
-                "formatter": "database" if debug_mode else "production",
-                "filename": f"{log_dir}/database.log",
-                "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
-                "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
-                "encoding": LOG_ROTATION_CONFIG["encoding"],
-            },
-        })
+    if not disable_files and not is_testing:
+        handlers.update(
+            {
+                "file_app": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": log_level,
+                    "formatter": "production" if not debug_mode else "detailed",
+                    "filename": f"{log_dir}/cinexplorer.log",
+                    "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
+                    "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
+                    "encoding": LOG_ROTATION_CONFIG["encoding"],
+                },
+                "file_django": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "WARNING",
+                    "formatter": "production" if not debug_mode else "detailed",
+                    "filename": f"{log_dir}/django.log",
+                    "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
+                    "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
+                    "encoding": LOG_ROTATION_CONFIG["encoding"],
+                },
+                "file_requests": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "INFO",
+                    "formatter": "production" if not debug_mode else "detailed",
+                    "filename": f"{log_dir}/requests.log",
+                    "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
+                    "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
+                    "encoding": LOG_ROTATION_CONFIG["encoding"],
+                },
+                "file_errors": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "ERROR",
+                    "formatter": "error",
+                    "filename": f"{log_dir}/errors.log",
+                    "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
+                    "backupCount": LOG_ROTATION_CONFIG["backup_count_errors"],
+                    "encoding": LOG_ROTATION_CONFIG["encoding"],
+                },
+                "file_database": {
+                    "class": "logging.handlers.RotatingFileHandler",
+                    "level": "DEBUG",
+                    "formatter": "database" if debug_mode else "production",
+                    "filename": f"{log_dir}/database.log",
+                    "maxBytes": LOG_ROTATION_CONFIG["max_bytes"],
+                    "backupCount": LOG_ROTATION_CONFIG["backup_count_default"],
+                    "encoding": LOG_ROTATION_CONFIG["encoding"],
+                },
+            }
+        )
 
     return handlers
 
@@ -241,7 +244,7 @@ def _get_loggers_config(
     log_level: str,
     console_log_level: str,
     debug_mode: bool,
-    is_ci: bool,
+    disable_files: bool,
     is_testing: bool,
 ) -> dict[str, dict[str, object]]:
     """Get loggers configuration, with console-only/minimal handlers based on environment."""
@@ -255,22 +258,31 @@ def _get_loggers_config(
         # CineXplorer application logger
         "cinexplorer": {
             "handlers": (
-                ["console"] + (["file_app", "file_errors"] if not is_ci and not is_testing else [])
+                ["console"]
+                + (["file_app", "file_errors"] if not disable_files and not is_testing else [])
             ),
             "level": log_level,
             "propagate": False,
         },
         # Django framework loggers
         "django": {
-            "handlers": (["console"] + (["file_django"] if not is_ci and not is_testing else [])),
+            "handlers": (
+                ["console"] + (["file_django"] if not disable_files and not is_testing else [])
+            ),
             "level": "WARNING",
             "propagate": False,
         },
         "django.db.backends": {
             "handlers": (
-                ["null"] if is_testing else (
-                    (["console"] + (["file_database"] if not is_ci and not is_testing else []))
-                    if debug_mode else []
+                ["null"]
+                if is_testing
+                else (
+                    (
+                        ["console"]
+                        + (["file_database"] if not disable_files and not is_testing else [])
+                    )
+                    if debug_mode
+                    else []
                 )
             ),
             "level": "DEBUG" if debug_mode else "WARNING",
@@ -278,9 +290,15 @@ def _get_loggers_config(
         },
         "django.db.backends.schema": {
             "handlers": (
-                ["null"] if is_testing else (
-                    (["console"] + (["file_database"] if not is_ci and not is_testing else []))
-                    if debug_mode else []
+                ["null"]
+                if is_testing
+                else (
+                    (
+                        ["console"]
+                        + (["file_database"] if not disable_files and not is_testing else [])
+                    )
+                    if debug_mode
+                    else []
                 )
             ),
             "level": "INFO" if debug_mode else "WARNING",
@@ -288,7 +306,7 @@ def _get_loggers_config(
         },
         "django.db.migrations": {
             "handlers": (
-                ["console"] + (["file_database"] if not is_ci and not is_testing else [])
+                ["console"] + (["file_database"] if not disable_files and not is_testing else [])
             ),
             "level": "INFO",
             "propagate": False,
@@ -296,29 +314,39 @@ def _get_loggers_config(
         # Request/response logging
         "cinexplorer.requests": {
             "handlers": (
-                ["null"] if is_testing else
-                (["console"] + (["file_requests"] if not is_ci and not is_testing else []))
+                ["null"]
+                if is_testing
+                else (
+                    ["console"]
+                    + (["file_requests"] if not disable_files and not is_testing else [])
+                )
             ),
             "level": "INFO",
             "propagate": False,
         },
         # TMDB API logging
         "cinexplorer.tmdb": {
-            "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),
+            "handlers": (
+                ["console"] + (["file_app"] if not disable_files and not is_testing else [])
+            ),
             # Enable DEBUG in development for detailed TMDB diagnostics
             "level": "DEBUG" if debug_mode else "INFO",
             "propagate": False,
         },
         # Movie service logging (including rating filter debugging)
         "cinexplorer.movie": {
-            "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),
+            "handlers": (
+                ["console"] + (["file_app"] if not disable_files and not is_testing else [])
+            ),
             # Enable DEBUG in development for detailed service diagnostics
             "level": "DEBUG" if debug_mode else "INFO",
             "propagate": False,
         },
         # Werkzeug server logs
         "werkzeug": {
-            "handlers": (["console"] + (["file_app"] if not is_ci and not is_testing else [])),
+            "handlers": (
+                ["console"] + (["file_app"] if not disable_files and not is_testing else [])
+            ),
             "level": "INFO",
             "propagate": False,
             "filters": ["health_check_filter"] if debug_mode else [],
@@ -327,44 +355,49 @@ def _get_loggers_config(
 
     # Add suppressed loggers only if not in CI or testing
     # (to avoid referencing non-existent file handlers)
-    if not is_ci and not is_testing:
-        loggers.update({
-            "watchdog": {
-                "handlers": ["file_app"],
-                "level": "WARNING",
-                "propagate": False,
-            },
-            "watchdog.observers": {
-                "handlers": [],
-                "level": "CRITICAL",
-                "propagate": False,
-            },
-            "debug_toolbar": {
-                "handlers": ["file_django"],
-                "level": "WARNING",
-                "propagate": False,
-            },
-            "urllib3": {
-                "handlers": ["file_app"],
-                "level": "WARNING",
-                "propagate": False,
-            },
-            "requests": {
-                "handlers": ["file_app"],
-                "level": "WARNING",
-                "propagate": False,
-            },
-        })
+    if not disable_files and not is_testing:
+        loggers.update(
+            {
+                "watchdog": {
+                    "handlers": ["file_app"],
+                    "level": "WARNING",
+                    "propagate": False,
+                },
+                "watchdog.observers": {
+                    "handlers": [],
+                    "level": "CRITICAL",
+                    "propagate": False,
+                },
+                "debug_toolbar": {
+                    "handlers": ["file_django"],
+                    "level": "WARNING",
+                    "propagate": False,
+                },
+                "urllib3": {
+                    "handlers": ["file_app"],
+                    "level": "WARNING",
+                    "propagate": False,
+                },
+                "requests": {
+                    "handlers": ["file_app"],
+                    "level": "WARNING",
+                    "propagate": False,
+                },
+            }
+        )
 
     return loggers
 
 
-def get_logging_config(log_dir: str | None = None) -> dict[str, object]:
+def get_logging_config(
+    log_dir: str | None = None, *, environment: str = "development"
+) -> dict[str, object]:
     """
     Return Django logging configuration dictionary.
 
     Args:
         log_dir (str, optional): Directory for log files. If None, uses default.
+        environment: Validated deployment environment from settings.
 
     Environment Variables:
     - DJANGO_LOG_LEVEL: Override default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
@@ -375,7 +408,8 @@ def get_logging_config(log_dir: str | None = None) -> dict[str, object]:
     - DEBUG=True: Uses DEBUG level logging with detailed console output
     - DEBUG=False: Uses INFO level logging with production formatting
     - DJANGO_LOG_LEVEL always takes precedence if set
-    - CI=True: Only console logging, no file handlers
+    - CI=True, staging and production: Only console logging, no file handlers
+    - Staging and production: Console defaults to INFO
     """
     # Get environment variables with multiple environment detection methods
     debug_mode = os.getenv("DEBUG", "False").lower() == "true"
@@ -396,6 +430,8 @@ def get_logging_config(log_dir: str | None = None) -> dict[str, object]:
         bool(os.getenv("BUILD_NUMBER"))  # Jenkins
     ) and not is_testing  # CI detection only applies if not testing
 
+    disable_files = is_ci or environment in ("staging", "production")
+
     # Debug output for CI/testing detection (only when relevant to avoid noise in dev)
     # Use stderr to avoid corrupting stdout-based outputs (e.g., OpenAPI schema export)
     if is_testing:
@@ -414,7 +450,9 @@ def get_logging_config(log_dir: str | None = None) -> dict[str, object]:
 
     # Console log level - more conservative for development usability
     # Can be overridden with DJANGO_CONSOLE_LOG_LEVEL for specific console control
-    console_default = "INFO" if debug_mode else "WARNING"
+    console_default = (
+        "INFO" if debug_mode or environment in ("staging", "production") else "WARNING"
+    )
     raw_console_level = os.getenv("DJANGO_CONSOLE_LOG_LEVEL", console_default)
     console_log_level = validate_log_level(raw_console_level)
 
@@ -423,7 +461,7 @@ def get_logging_config(log_dir: str | None = None) -> dict[str, object]:
         log_dir = "/backend/logs"
 
     # Ensure log directory exists before creating handlers (unless in CI/testing)
-    if not is_ci and not is_testing:
+    if not disable_files and not is_testing:
         os.makedirs(log_dir, mode=0o755, exist_ok=True)
 
     return {
@@ -481,10 +519,10 @@ def get_logging_config(log_dir: str | None = None) -> dict[str, object]:
             },
         },
         "handlers": _get_handlers_config(
-            log_level, console_log_level, debug_mode, is_ci, is_testing, log_dir
+            log_level, console_log_level, debug_mode, disable_files, is_testing, log_dir
         ),
         "loggers": _get_loggers_config(
-            log_level, console_log_level, debug_mode, is_ci, is_testing
+            log_level, console_log_level, debug_mode, disable_files, is_testing
         ),
     }
 

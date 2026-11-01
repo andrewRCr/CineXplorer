@@ -11,6 +11,7 @@ Usage:
 
 import os
 import shutil
+import sys
 import tempfile
 from logging import getLogger
 from logging.config import dictConfig
@@ -26,8 +27,6 @@ try:
     )
 except ImportError:
     # For standalone execution
-    import sys
-
     config_dir = os.path.dirname(os.path.dirname(__file__))
     sys.path.insert(0, config_dir)
 
@@ -217,7 +216,18 @@ def test_database_logging_configuration():
     print(f"    Critical: {DB_QUERY_PERFORMANCE['critical_threshold']*1000:.0f}ms")
 
     # Test database logging configuration
-    config = get_logging_config()
+    if "pytest" in sys.modules:
+        from apps.core.tests.test_helpers import load_settings
+
+        # Pytest suppresses file logging; inspect real development settings in
+        # an isolated interpreter to exercise the file handler this checks.
+        values = load_settings(
+            {"ENVIRONMENT": "development", "DEBUG": "False"}, ["LOGGING"]
+        )
+        config = values["LOGGING"]
+        assert isinstance(config, dict), "logging config should be dict"
+    else:
+        config = get_logging_config()
 
     handlers = config["handlers"]
     assert isinstance(handlers, dict), "handlers should be dict"

@@ -85,26 +85,19 @@ runbook for setting up the server, deploying a version and rolling it back.
       exemption and the documented security.W003 silence. Rebuilt the image. Environment tests: 37 passed; Ruff and
       Pyright passed. Filtered only the observed missing collected-static-directory warning.
 
-- [ ] **1.6 Logs go to stdout only outside development** (R11's logging; SC7 checks the running container in 4.2)
+- [x] **1.6 Logs go to stdout only outside development** (R11's logging; SC7 checks the running container in 4.2)
 
-    - [ ] **1.6.a Write tests** with 1.1.a's helper, in `test_environment_config.py`
-        - In-process, `get_logging_config()` sees `pytest` in `sys.modules` and drops its file handlers whatever the
-          environment, so these tests import `config.settings` in a subprocess
-        - Under `staging` and `production`: the `LOGGING` handlers include no file handler, the console handler's level
-          is `INFO`, and `DJANGO_CONSOLE_LOG_LEVEL=ERROR` sets it to `ERROR`
-        - Under `staging`, nothing creates or probes a log directory: the subprocess wraps `os.makedirs` and `open`
-          before the import and reports any call under a `logs` path
-        - Under `development` with `DEBUG=False`, the file handlers are present and the console default stays `WARNING`
-        - Expect the `staging` and `production` handler, `INFO` and log-directory cases to FAIL initially; the
-          `DJANGO_CONSOLE_LOG_LEVEL=ERROR` case and the `development` case pass today and are guard cases
-
-    - [ ] **1.6.b Implement**
-        - `get_logging_config()` takes the environment from the settings module, which has validated it, as a keyword
-          argument with a default, so existing callers keep working; it treats `staging` and `production` as it treats
-          CI for file handlers and directory creation, and the console default there is `INFO`
-        - `ensure_log_directory()` returns `None` in staging and production
-        - The module docstring of `config/logging.py` states the new defaults
-        - Tests should now PASS
+    - [x] **1.6.a Tests:** Added subprocess coverage for deployed file-handler suppression, the INFO console default,
+      its ERROR override, no log-directory creation/probes, and development file logging with DEBUG disabled.
+      Five deployed cases failed before implementation; deliberate suppression of development files, changing its
+      console default and ignoring the console override broke all three guard cases.
+    - [x] **1.6.b Implementation:** Passed the validated environment into the logging factory as an optional keyword,
+      disabled deployed file handlers and directory access, and documented the console defaults. Preserved existing
+      callers; the legacy database-file-handler check now reads development settings outside pytest's suppression.
+      Environment cases: 45 passed. Full backend: 844 passed. The reproduced URL-isolation sequence and both logging
+      compatibility files passed together (13 tests); backend Ruff and full Pyright passed. Frontend lint and
+      TypeScript checks also passed after the generated description changes. Runtime frontend tests and CI await
+      later verification; no deployed-container claim is made here.
 
 ### **Phase 2:** The production backend image is small and checked in CI
 

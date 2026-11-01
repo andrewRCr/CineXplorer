@@ -37,7 +37,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: set via environment variable only (see line 202)
 
 DEBUG = env.bool("DEBUG", default=False)
-ENVIRONMENT = env("ENVIRONMENT", default="development")
+ENVIRONMENT = str(env("ENVIRONMENT", default="development"))
 if ENVIRONMENT not in ("development", "staging", "production"):
     raise ImproperlyConfigured(
         f"Invalid ENVIRONMENT: {ENVIRONMENT}. Expected development, staging, or production."
@@ -464,7 +464,7 @@ TESTING = "test" in sys.argv
 # Ensure log directory exists
 def ensure_log_directory():
     """
-    Ensure the log directory exists for file handlers (only when not in CI).
+    Ensure development file handlers have a writable directory outside CI.
     """
     # Multiple ways to detect CI environment (consistent with logging.py)
     is_ci = (
@@ -474,11 +474,11 @@ def ensure_log_directory():
         or bool(os.environ.get("BUILD_NUMBER"))  # Jenkins
     )
 
-    if is_ci:
-        # In CI, logging config will disable file handlers entirely
+    if is_ci or ENVIRONMENT in ("staging", "production"):
+        # Deployed and CI logging have no file handlers
         return None  # Signals that file logging is disabled
     else:
-        # In development/production, use the standard logs directory
+        # In development, use the standard logs directory
         log_dir = os.path.join(BASE_DIR, "logs")
 
         try:
@@ -522,7 +522,7 @@ LOG_DIRECTORY = ensure_log_directory()
 def _get_logging_config() -> Mapping[str, object]:
     """Get logging configuration with fallback to basic console logging."""
     try:
-        return get_logging_config(log_dir=LOG_DIRECTORY)
+        return get_logging_config(log_dir=LOG_DIRECTORY, environment=ENVIRONMENT)
     except Exception as e:
         print(f"Error configuring logging: {e}", file=sys.stderr)
         # Fallback to basic console-only logging

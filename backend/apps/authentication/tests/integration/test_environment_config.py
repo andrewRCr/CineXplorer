@@ -392,3 +392,73 @@ def test_https_redirect_exempts_only_health_check(path: str, expected: int) -> N
     assert response.status_code == expected
     if expected == 301:
         assert response["Location"] == "https://testserver" + path
+
+
+@pytest.mark.parametrize("environment", ["staging", "production", "development"])
+@pytest.mark.parametrize("aspect", ["files", "console"])
+def test_logging_handlers_match_environment(environment: str, aspect: str) -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {"ENVIRONMENT": environment, "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
+        ["LOGGING"],
+    )
+    config = cast(dict[str, object], values["LOGGING"])
+    handlers = cast(dict[str, dict[str, object]], config["handlers"])
+    file_handlers = [
+        handler for handler in handlers.values() if "FileHandler" in str(handler["class"])
+    ]
+    if aspect == "files":
+        assert bool(file_handlers) is (environment == "development")
+    else:
+        assert handlers["console"]["level"] == (
+            "WARNING" if environment == "development" else "INFO"
+        )
+
+
+def test_deployed_console_level_can_be_overridden() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {
+            "ENVIRONMENT": "staging",
+            "DEBUG": "False",
+            "DJANGO_ALLOWED_HOSTS": "testserver",
+            "DJANGO_CONSOLE_LOG_LEVEL": "ERROR",
+        },
+        ["LOGGING"],
+    )
+    config = cast(dict[str, object], values["LOGGING"])
+    handlers = cast(dict[str, dict[str, object]], config["handlers"])
+    assert handlers["console"]["level"] == "ERROR"
+
+
+def test_staging_settings_never_create_or_probe_log_directories() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {"ENVIRONMENT": "staging", "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
+        ["observed_log_paths", "LOG_DIRECTORY"],
+        before_import="""
+import builtins
+import os
+observed_log_paths = []
+original_makedirs = os.makedirs
+original_open = builtins.open
+
+def observed_makedirs(path, *args, **kwargs):
+    if "logs" in str(path):
+        observed_log_paths.append(str(path))
+    return original_makedirs(path, *args, **kwargs)
+
+def observed_open(path, *args, **kwargs):
+    if "logs" in str(path):
+        observed_log_paths.append(str(path))
+    return original_open(path, *args, **kwargs)
+
+os.makedirs = observed_makedirs
+builtins.open = observed_open
+""",
+    )
+    assert values["observed_log_paths"] == []
+    assert values["LOG_DIRECTORY"] is None

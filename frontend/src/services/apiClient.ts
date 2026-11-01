@@ -1,3 +1,4 @@
+import { apiBaseUrl as BASE_URL } from "@/config/baseUrls";
 import axios, { CanceledError, type InternalAxiosRequestConfig } from "axios";
 import {
     clearAuthTokens,
@@ -8,7 +9,6 @@ import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
 import { toaster } from "@/components/core/chakra/toaster";
 
-const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
 // Debug: Log the base URL being used
 logger.debug('[apiClient] BASE_URL configured', { BASE_URL });

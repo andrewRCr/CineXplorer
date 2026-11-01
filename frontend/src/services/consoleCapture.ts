@@ -1,9 +1,10 @@
+import { apiBaseUrl } from "@/config/baseUrls";
+
 const CONSOLE_METHODS = ["log", "info", "warn", "error", "debug"] as const;
 const MAX_MESSAGE_LENGTH = 4000;
 
 type ConsoleMethod = (typeof CONSOLE_METHODS)[number];
 
-const DEFAULT_API_URL = "https://localhost:8444/api";
 
 const shouldEnableCapture = (): boolean => {
   if (typeof window === "undefined") {
@@ -97,9 +98,8 @@ const sendConsoleLog = (level: ConsoleMethod, args: unknown[]): void => {
   const formattedArgs = args.map(formatArg).join(" ");
   const logLine = `[${timestamp}] CONSOLE.${level.toUpperCase()}: ${truncate(formattedArgs)}\n`;
 
-  const apiUrl = import.meta.env.VITE_BASE_API_URL || DEFAULT_API_URL;
 
-  void fetch(`${apiUrl}/dev-logs/write/`, {
+  void fetch(`${apiBaseUrl}/dev-logs/write/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

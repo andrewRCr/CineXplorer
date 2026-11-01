@@ -141,22 +141,14 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 ### **Phase 3:** The frontend works on any host and ships in a web image
 
-- [ ] **3.1 One module gives the base URLs** (R13; SC6's frontend test)
+- [x] **3.1 One module gives the base URLs** (R13; SC6's frontend test)
 
-    - [ ] **3.1.a Write tests** in `frontend/src/config/baseUrls.test.ts`
-        - Neither variable set: the site origin is `window.location.origin` and the API base is that origin followed by
-          `/api`
-        - `VITE_BASE_URL` set: the site origin is its value, and the API base is that value followed by `/api`
-        - `VITE_BASE_API_URL` set: the API base is its value
-        - Expect tests to FAIL initially
-
-    - [ ] **3.1.b Create `src/config/baseUrls.ts` and use it in the nine readers**
-        - `src/services/apiClient.ts` (line 11), `src/services/authService.ts` (lines 7, 213 and 260),
-          `src/pages/user/TestLogin.tsx` (line 6), `src/hooks/auth/useOAuthFlow.ts` (line 200),
-          `src/hooks/auth/useAuth.ts` (line 39), `src/services/logger.ts` (line 355) and
-          `src/services/consoleCapture.ts` (lines 6 and 100)
-        - Afterwards `grep -rn "localhost:8444" src` finds only test files
-        - Tests should now PASS, with the touched modules' related tests
+    - [x] **3.1.a Tests:** Added six isolated module-import cases for page-origin defaults, the explicit site origin
+      and its derived API address, and API overrides with or without a site override. Three fallback cases failed
+      against the old direct-env behavior; deliberately empty exports also broke the three existing override guards.
+    - [x] **3.1.b Implementation:** Added config/baseUrls.ts and used its exports in all nine readers across the
+      services, authentication hooks and development login page. No localhost:8444 hardcode remains under src.
+      Six new cases and 148 related tests passed; ESLint and TypeScript checks passed.
 
 - [ ] **3.2 Development routes stay out of production builds** (R14)
     - `src/App.tsx`: the `lazy()` declarations for `TypographyDebug`, `ThemeDebug`, `LayoutDebug` and `TestLogin`, and

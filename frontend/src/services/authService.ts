@@ -1,10 +1,10 @@
+import { apiBaseUrl as BASE_URL, siteOrigin } from "@/config/baseUrls";
 import axios from "axios";
 import apiClient from "./apiClient";
 import type { components } from "@/types/api";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrfTokenFetcher";
 import logger from "./logger";
 
-const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
 // Type aliases from generated API schema
 type TokenObtainInput = components["schemas"]["TokenObtainInputSchema"];
@@ -210,7 +210,6 @@ export async function resendVerificationEmail(
  * @returns Success status (allauth returns 200 OK on success)
  */
 export async function requestPasswordReset(email: string): Promise<void> {
-    const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
@@ -220,7 +219,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
 
     try {
         await apiClient.post(
-            `${baseUrl}/_allauth/browser/v1/auth/password/request`,
+            `${siteOrigin}/_allauth/browser/v1/auth/password/request`,
             { email },
             {
                 headers: {
@@ -257,11 +256,10 @@ export async function resetPassword(
     key: string,
     password: string
 ): Promise<{ success: boolean; autoLoggedIn: boolean }> {
-    const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
     const csrfToken = getCsrfToken();
 
     const response = await fetch(
-        `${baseUrl}/_allauth/browser/v1/auth/password/reset`,
+        `${siteOrigin}/_allauth/browser/v1/auth/password/reset`,
         {
             method: "POST",
             headers: {

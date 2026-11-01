@@ -8,6 +8,7 @@
  * This hook isolates OAuth-specific concerns that would otherwise clutter
  * login/register components with state management and timing logic.
  */
+import { siteOrigin } from "@/config/baseUrls";
 import { useState, useEffect, useCallback } from "react";
 
 // Constants for OAuth timing UX
@@ -197,17 +198,16 @@ export function useOAuthFlow(onError?: (error: string) => void): UseOAuthFlowRet
 
         // Create form and submit through Caddy proxy
         // Use absolute URL with protocol to force full page navigation
-        const baseUrl = import.meta.env.VITE_BASE_URL || "https://localhost:8444";
         const form = document.createElement("form");
         form.method = "POST";
-        form.action = `${baseUrl}/_allauth/browser/v1/auth/provider/redirect`;
+        form.action = `${siteOrigin}/_allauth/browser/v1/auth/provider/redirect`;
         // CRITICAL: Force full page reload, prevent React Router interception
         form.target = "_self";
 
         // Add form fields
         const fields: Record<string, string> = {
           provider: provider,
-          callback_url: `${baseUrl}/login`,
+          callback_url: `${siteOrigin}/login`,
           process: "login",
           ...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
         };

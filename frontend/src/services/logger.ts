@@ -34,6 +34,8 @@
  *   - Backend Reporting: WARN+ levels
  *   - Styling: Simplified formatting
  */
+import { apiBaseUrl } from "@/config/baseUrls";
+
 
 export enum LogLevel {
     DEBUG = 0,
@@ -352,8 +354,7 @@ class Logger {
 
         // Send to Django backend endpoint (fire-and-forget)
         // Use configured API base URL to route through proxy (avoid CORS issues)
-        const apiUrl = import.meta.env.VITE_BASE_API_URL || 'https://localhost:8444/api';
-        fetch(`${apiUrl}/dev-logs/write/`, {
+        fetch(`${apiBaseUrl}/dev-logs/write/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

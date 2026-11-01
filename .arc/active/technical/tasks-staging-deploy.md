@@ -141,6 +141,10 @@ runbook for setting up the server, deploying a version and rolling it back.
       `--deploy --fail-level WARNING` and fails with them); then, with the Owner's approval to push the branch, a
       manual run (`gh workflow run ci.yml --ref technical/staging-deploy`) passes every job, which also checks 2.2.a's
       CI edits
+    - Local evidence: actionlint passes; the exact size and deployment-check scripts pass against the built image.
+      A size threshold of one byte rejects it. A short secret passes ordinary checks and fails the strict deploy
+      check with security.W009. The CI override inherits the explicit dev target. First-push approval is granted;
+      this task remains open until hosted execution passes every job.
 
 ### **Phase 3:** The frontend works on any host and ships in a web image
 

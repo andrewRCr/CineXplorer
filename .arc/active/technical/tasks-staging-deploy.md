@@ -165,18 +165,13 @@ runbook for setting up the server, deploying a version and rolling it back.
       default ignores client-supplied forwarding headers; no trusted proxy configuration is set. Formatted and
       validated with caddy:2.11-alpine and test values; response-level checks follow with the image.
 
-    - [ ] **3.3.b Split the frontend Dockerfile, select `dev` in the development Compose file, and add the production
-      stages** in one change
-        - `frontend/Dockerfile`: `dev` (today's image), a `build` stage on the same `node:26-alpine` base that runs
-          `npm ci`, `npm run typegen` and `npm run build`, and a final `production` stage on `caddy:2.11-alpine` with
-          `/srv` from the build stage and `Caddyfile.prod` as `/etc/caddy/Caddyfile` from the `infra` named context
-        - `target: dev` on the frontend's `build` in `infrastructure/docker-compose.yml`
-        - Check: the development stack's frontend still serves through `https://localhost:8444`;
-          `docker build --build-context infra=infrastructure --target production frontend` succeeds; in the `build`
-          stage, which has no `.env` (`frontend/.dockerignore`) and no `VITE_*` variables, `npx vite build --manifest`
-          gives SC6's results and no file under `dist/` contains `localhost:8444`; the web image run alone with test
-          values answers SC7's cache and security-header checks on `/`, a deep link, `/index.html`, an existing
-          `/assets/` file and a missing one
+    - [x] **3.3.b Web image:** Named the development stage and selected it in Compose; added a Node build stage
+      running npm ci, Chakra type generation and the production build, plus the Caddy 2.11 runtime with its named
+      infrastructure context. Rebuilt the development frontend and verified its page and module through Caddy.
+      In the isolated build stage, no env files or VITE variables exist; a manifest build contains no development
+      pages, and no dist file contains localhost:8444. A standalone web container passed page/deep-link/index cache
+      checks, immutable assets, uncached missing assets/directories, all four security headers, absence of CORS
+      headers and admin basic-auth enforcement. Full frontend suite: 761 passed; lint and TypeScript checks passed.
 
     - [ ] **3.3.c CI builds the web image** in the `images` job: `context: ./frontend`, `target: production`,
       `build-contexts: infra=./infrastructure`, no push, its own cache scope (`scope=web`)

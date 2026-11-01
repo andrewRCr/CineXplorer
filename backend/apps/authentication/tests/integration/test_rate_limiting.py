@@ -335,3 +335,50 @@ def test_forwarded_clients_share_only_their_own_login_limit(
                 ).status_code
                 == 429
             )
+
+
+@pytest.mark.enable_throttling
+@pytest.mark.django_db
+@override_settings(TESTING=False, ZEPTOMAIL_API_KEY="")
+def test_frontend_logs_throttle_without_writing_rejected_report(
+    api_client: Client,
+    clear_throttle_cache: Iterator[None], enable_throttling_for_test: Iterator[None],
+) -> None:
+    from unittest import TestCase
+
+    payload = {"level": "INFO", "message": "Throttle test", "timestamp": "2026-11-01T00:00:00Z"}
+    with TestCase().assertLogs("frontend", level="INFO") as captured:
+        for _ in range(30):
+            assert (
+                api_client.post("/api/logs/", payload, content_type="application/json").status_code
+                == 201
+            )
+        response = api_client.post("/api/logs/", payload, content_type="application/json")
+    assert response.status_code == 429
+    assert len(captured.records) == 30
+
+
+@pytest.mark.enable_throttling
+@pytest.mark.django_db
+@override_settings(TESTING=False, ZEPTOMAIL_API_KEY="")
+def test_frontend_logs_do_not_consume_login_limit(
+    api_client: Client,
+    verified_user: User,
+    clear_throttle_cache: Iterator[None],
+    enable_throttling_for_test: Iterator[None],
+) -> None:
+    payload = {"level": "INFO", "message": "Throttle test", "timestamp": "2026-11-01T00:00:00Z"}
+    for _ in range(30):
+        assert (
+            api_client.post("/api/logs/", payload, content_type="application/json").status_code
+            == 201
+        )
+    for _ in range(5):
+        assert (
+            api_client.post(
+                "/api/token/",
+                {"login": verified_user.username, "password": "testpass123"},
+                content_type="application/json",
+            ).status_code
+            == 200
+        )

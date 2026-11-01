@@ -68,25 +68,12 @@ runbook for setting up the server, deploying a version and rolling it back.
     - [x] **1.3.b Implementation:** Set both trusted proxy counts to one in staging/production and added the two
       exercised allauth stub signatures. Rate-limit tests: 12 passed; Ruff and Pyright passed.
 
-- [ ] **1.4 The log endpoint has its own throttle** (R7; SC5)
+- [x] **1.4 The log endpoint has its own throttle** (R7; SC5)
 
-    - [ ] **1.4.a Write tests** in `test_rate_limiting.py`
-        - `POST /api/logs/` answers `429` on a client's 31st report within a minute, and the throttled report writes no
-          record to the `frontend` logger
-        - After 30 reports, the same client's sign-in still succeeds five times; this passes today, since the endpoint
-          has no throttle, and guards the separate history after the change
-        - Expect the `429` test to FAIL initially
-
-    - [ ] **1.4.b Add the throttle**
-        - A `TestAwareAnonThrottle` subclass in a new `apps/core/throttles.py` with `scope = "frontend_logs"`, applied
-          to `frontend_log` in `apps/core/api.py` at `30/m`; it is core's first import from `apps.authentication`,
-          since moving the base class into core would be a refactor outside this change
-        - The endpoint's `auth=None` comment and its docstring's Security section describe that throttle in place of
-          "throttled at middleware level"
-        - Regenerate the API types as in 1.2.b and commit them with this change; their diff shows only `frontend_log`'s
-          description
-        - Tests should now PASS; then see the separate-history test fail once with the throttle's scope set to the
-          shared `anon`, and restore `frontend_logs`
+    - [x] **1.4.a Tests:** Added the 31st-report rejection and no-log-write case, plus login-history isolation. The
+      limit case failed before throttling; deliberately using anon made the isolation guard fail.
+    - [x] **1.4.b Implementation:** Added FrontendLogThrottle at 30/m with frontend_logs scope and regenerated its API
+      description. Rate-limit/logging API tests: 31 passed; Ruff and Pyright passed.
 
 - [ ] **1.5 Static files, the health check over plain HTTP, and the silenced deploy check** (R4, R6, R8)
 

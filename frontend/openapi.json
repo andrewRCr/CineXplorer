@@ -497,7 +497,7 @@
             }
           }
         },
-        "description": "Receive frontend log entries for centralized logging.\n\nThis endpoint allows the frontend to send log entries to the backend\nfor centralized logging, monitoring, and debugging.\n\nSecurity:\n- Rate limited via middleware (scope: 'frontend_logs')\n- Payload size limited to prevent abuse\n- Available to anonymous users but throttled aggressively\n\nArgs:\n    request: HTTP request object\n    payload: Frontend log entry data\n\nReturns:\n    Success response with 201 status or error response with appropriate status\n\nRaises:\n    HttpError: 400 for validation errors, 413 for payload too large, 500 for server errors",
+        "description": "Receive frontend log entries for centralized logging.\n\nThis endpoint allows the frontend to send log entries to the backend\nfor centralized logging, monitoring, and debugging.\n\nSecurity:\n- Rate limited to 30 reports per minute per client (scope: 'frontend_logs')\n- Payload size limited to prevent abuse\n- Available to anonymous users but throttled aggressively\n\nArgs:\n    request: HTTP request object\n    payload: Frontend log entry data\n\nReturns:\n    Success response with 201 status or error response with appropriate status\n\nRaises:\n    HttpError: 400 for validation errors, 413 for payload too large, 500 for server errors",
         "tags": [
           "core"
         ],

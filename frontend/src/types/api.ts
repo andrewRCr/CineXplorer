@@ -407,7 +407,7 @@ export interface paths {
          *     for centralized logging, monitoring, and debugging.
          *
          *     Security:
-         *     - Rate limited via middleware (scope: 'frontend_logs')
+         *     - Rate limited to 30 reports per minute per client (scope: 'frontend_logs')
          *     - Payload size limited to prevent abuse
          *     - Available to anonymous users but throttled aggressively
          *

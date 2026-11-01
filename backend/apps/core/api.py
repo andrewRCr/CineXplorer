@@ -31,6 +31,7 @@ from .schemas import (
     FrontendLogSuccessResponse,
     LogHealthCheckResponse,
 )
+from .throttles import FrontendLogThrottle
 
 # Get logger instances
 frontend_logger = logging.getLogger("frontend")
@@ -42,7 +43,8 @@ core_router = Router(tags=["core"])
 
 @core_router.post(
     "/logs/",
-    auth=None,  # Allow anonymous users (throttled at middleware level)
+    auth=None,  # Allow anonymous users with a separate frontend log limit
+    throttle=[FrontendLogThrottle("30/m")],
     response={
         201: FrontendLogSuccessResponse,
         400: FrontendLogErrorResponse,
@@ -60,7 +62,7 @@ def frontend_log(
     for centralized logging, monitoring, and debugging.
 
     Security:
-    - Rate limited via middleware (scope: 'frontend_logs')
+    - Rate limited to 30 reports per minute per client (scope: 'frontend_logs')
     - Payload size limited to prevent abuse
     - Available to anonymous users but throttled aggressively
 

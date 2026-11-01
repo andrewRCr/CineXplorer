@@ -219,14 +219,18 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 ### **Phase 5:** Staging is set up and deployed by the runbook
 
-- [ ] **5.1 Write `infrastructure/deploy/bootstrap.sh`** (R24)
-    - Each step checks the state it would create, changes nothing when it is already there, and prints whether it
-      changed anything, so a second run as `deploy` with `sudo` reports no changes (live criterion 6)
-    - SSH settings in a drop-in that sorts first in `/etc/ssh/sshd_config.d/` (Ubuntu reads that directory before the
-      main file and keeps the first value, and cloud images can ship a `50-cloud-init.conf` that enables passwords),
-      checked with `sshd -t` before the reload
-    - The `deploy` user's `sudo` rule in its own file under `/etc/sudoers.d/`, checked with `visudo -cf`
-    - Check: `shellcheck` and `bash -n` pass; live criteria 6 and 7 are the proof (5.3)
+- [x] **5.1 Write `infrastructure/deploy/bootstrap.sh`** (R24)
+    - Added Ubuntu 24.04/root preconditions and state checks for Docker's apt packages, deploy user/SSH keys,
+      Docker membership, validated passwordless sudo, deployment directory, UFW rules, security updates, UTC reboot
+      scheduling and 2 GiB swap. Each step reports changed or unchanged; root's password is untouched.
+    - The first-sorting SSH drop-in is checked with both sshd syntax and effective settings before reload; a failed
+      check restores the prior file without reloading. Unexpected UFW rules stop rather than remain silently open.
+    - Bash syntax and ShellCheck pass. In an isolated Ubuntu 24.04 container, installed real Docker packages and
+      validated actual SSH/sudo parsers. A second run as deploy through sudo changed no checked files or recorded
+      service actions. Conflicting SSH settings stopped safely; key-permission and SSH-setting drift were repaired.
+      Fixed a reproduced pipefail/SIGPIPE false failure by saving sshd output before matching it.
+    - Service control, timezone, firewall activation and swap activation were stubbed in that container; live
+      idempotence and outside SSH/firewall checks remain in 5.3. Evidence is in the personal workspace.
 
 - [ ] **5.2 Write the runbook, `infrastructure/deploy/README.md`** (R25)
     - First-time setup, a deploy, a rollback with the migration comparison, logs, restarts, where state lives, and

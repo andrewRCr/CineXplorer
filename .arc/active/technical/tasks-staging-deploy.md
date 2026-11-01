@@ -232,27 +232,21 @@ runbook for setting up the server, deploying a version and rolling it back.
     - Service control, timezone, firewall activation and swap activation were stubbed in that container; live
       idempotence and outside SSH/firewall checks remain in 5.3. Evidence is in the personal workspace.
 
-- [ ] **5.2 Write the runbook, `infrastructure/deploy/README.md`** (R25)
-    - First-time setup, a deploy, a rollback with the migration comparison, logs, restarts, where state lives, and
-      the Vultr console fallback, each as R25 states it
-    - First-time setup copies `bootstrap.sh` to the new server with `scp` from a local checkout, since the private
-      repository is not on the server yet; later bootstrap runs use the copy in the server's checkout
-    - First-time setup keeps the root session open after the bootstrap until a second session signs in as `deploy`,
-      since the bootstrap turns off root's SSH login
-    - After the bootstrap, the deploy key pair is generated on the server as `deploy` and its public key added on
-      GitHub as a read-only deploy key, before the checkout
-    - Both env files live beside the checkout, not in it, at mode `600`: the Compose env file at
-      `/opt/cinexplorer/prod.env`, made from `infrastructure/prod.env.example`, and the backend env file at
-      `/opt/cinexplorer/backend.env`, made from `backend/config/.env.example`
-    - In the backend env file, the live `ENVIRONMENT` and `DEBUG` lines take the production checklist's values
-      (`ENVIRONMENT=staging` on staging), the checklist's `GUNICORN_*` entries are added, and a new
-      `DJANGO_SECRET_KEY` and the TMDB key are filled in from the Owner's secrets (5.3). The lines Compose sets
-      (`POSTGRES_*`, `BACKEND_URL`, `FRONTEND_URL`, `REDIS_URL`) are deleted, and so are the ZeptoMail and OAuth
-      placeholders, since neither service is set up on staging
-    - Every command uses `docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env` from the
-      checkout's `infrastructure/` directory
+- [x] **5.2 Write the runbook, `infrastructure/deploy/README.md`** (R25)
+    - Documented Vultr/DNS setup, copying bootstrap before checkout, a second deploy-user SSH session before closing
+      root, read-only repository/registry access, mode-600 env files and exact staging edits, first deployment and a
+      verified staff account created interactively without email delivery.
+    - Added versioned deployment and rollback commands, comparing migrations in both images against the live
+      database, including third-party migrations. Reversals use the newer image, with dependency-plan inspection,
+      data-loss and irreversible-migration stops; unchanged schemas skip reversal. Also covered health/browser checks,
+      logs, restarts, persistent volumes, host maintenance and Vultr console recovery.
+    - Markdown lint and all 22 shell-block syntax checks pass. Every Compose command selects the production file
+      and external env file. Executed the documented account code against development inside a rolled-back
+      transaction: staff status, password and verified email passed, with no account retained.
+    - Following the runbook on a real server, including deploy/rollback and certificate reuse, remains in 5.3.
 
 - [ ] **5.3 Set up staging and prove it live** (live criteria 1–7)
+    - Blocked on Vultr account verification: SSH-key setup is unavailable; a support ticket is pending.
     - Before starting, the Owner's steps from the PRD's Dependencies: the server, the `A` record, the registry token
       and the secrets; the deploy key is made during first-time setup (5.2), once the server exists
     - Two manual CI runs at two different commits of this branch, so a deploy and a rollback each have a published

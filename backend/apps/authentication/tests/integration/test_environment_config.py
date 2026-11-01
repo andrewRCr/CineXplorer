@@ -6,6 +6,8 @@ cases load the real settings module; request cases use override_settings.
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 from django.test import override_settings
 
@@ -290,3 +292,52 @@ def test_development_host_and_origin_defaults() -> None:
             "https://localhost:8444",
         ],
     }
+
+
+@pytest.mark.parametrize("environment", ["staging", "development"])
+@pytest.mark.parametrize(
+    "setting,member",
+    [
+        ("INSTALLED_APPS", "debug_toolbar"),
+        ("INSTALLED_APPS", "django_extensions"),
+        ("MIDDLEWARE", "debug_toolbar.middleware.DebugToolbarMiddleware"),
+        ("config.urls.urlpatterns", "__debug__/"),
+    ],
+)
+def test_development_tooling_matches_environment(
+    environment: str, setting: str, member: str
+) -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {"ENVIRONMENT": environment, "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
+        ["INSTALLED_APPS", "MIDDLEWARE", "config.urls.urlpatterns"],
+        setup=True,
+    )
+    value = values[setting]
+    assert isinstance(value, list)
+    assert (
+        any(member in str(item) for item in cast(list[object], value))
+        if setting == "config.urls.urlpatterns"
+        else member in value
+    ) is (environment == "development")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("environment,expected", [("staging", 403), ("development", 500)])
+def test_debug_error_route_environment(environment: str, expected: int) -> None:
+    from django.test import Client
+
+    with override_settings(ENVIRONMENT=environment, DEBUG=True):
+        assert Client().get("/api/debug/error-500/").status_code == expected
+
+
+@pytest.mark.django_db
+def test_dev_log_route_denies_staging_even_with_debug() -> None:
+    from django.test import Client
+
+    with override_settings(ENVIRONMENT="staging", DEBUG=True):
+        response = Client().post(
+            "/api/dev-logs/write/", {"log_line": "example"}, content_type="application/json"
+        )
+    assert response.status_code == 403

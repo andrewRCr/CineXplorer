@@ -52,30 +52,13 @@ runbook for setting up the server, deploying a version and rolling it back.
       deployed DEBUG, and read hosts/origins as lists with development defaults. Core/authentication tests: 363
       passed; Ruff and Pyright passed.
 
-- [ ] **1.2 Development tooling loads only in development** (R1)
+- [x] **1.2 Development tooling loads only in development** (R1)
 
-    - [ ] **1.2.a Write tests** in `test_environment_config.py`
-        - With 1.1.a's helper: under `ENVIRONMENT=staging`, `INSTALLED_APPS` has neither `debug_toolbar` nor
-          `django_extensions` and `MIDDLEWARE` lacks `debug_toolbar.middleware.DebugToolbarMiddleware`; under
-          `development` all three are present
-        - In the same subprocess style, after `django.setup()`, `config.urls.urlpatterns` has no `__debug__/` route
-          under `staging` and has one under `development`
-        - With `override_settings(ENVIRONMENT="staging", DEBUG=True)`, `POST /api/dev-logs/write/` and
-          `GET /api/debug/error-500/` answer `403`, which shows the gate is `ENVIRONMENT` and not `DEBUG`; under
-          `development`, `GET /api/debug/error-500/` answers `500`
-        - Expect the `staging` cases and the endpoint cases to FAIL initially; the `development` apps, middleware and
-          route cases pass today and are guard cases
-
-    - [ ] **1.2.b Gate the tooling on `ENVIRONMENT`**
-        - `config/settings.py`: add `django_extensions` and `debug_toolbar` to `INSTALLED_APPS`, and the toolbar
-          middleware at the head of `MIDDLEWARE`, only in development
-        - `config/urls.py`: add the `__debug__/` route only when `settings.ENVIRONMENT` is `development`
-        - `apps/core/api.py`: `write_dev_console_log` and `debug_error_500` check `settings.ENVIRONMENT` in place of
-          `settings.DEBUG`, and their docstrings say so
-        - Regenerate the API types (`npm run generate-types` in `frontend/`, with the development stack running) and
-          commit `frontend/openapi.json` and `frontend/src/types/api.ts` with this change; their diff shows only these
-          two endpoints' descriptions
-        - Tests should now PASS
+    - [x] **1.2.a Tests:** Added real-settings cases for both development apps, middleware and URL, plus request tests
+      for both debug endpoints. Deployed cases failed before gating; development guards failed with tooling removed
+      and the debug route denied.
+    - [x] **1.2.b Implementation:** Gated development tooling and endpoints on ENVIRONMENT and regenerated API
+      descriptions. Environment cases: 29 passed; core/authentication: 374 passed; Ruff and Pyright passed.
 
 - [ ] **1.3 Throttles key on the client address Caddy saw** (R5; SC5)
 

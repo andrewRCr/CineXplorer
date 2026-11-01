@@ -358,14 +358,14 @@ def write_dev_console_log(
         Status response indicating success or failure
 
     Security:
-        - Only available in DEBUG mode
+        - Only available when ENVIRONMENT is development
         - No authentication required (localhost development only)
         - File path is fixed to prevent directory traversal
     """
     from pathlib import Path
 
     # Only available in development mode
-    if not settings.DEBUG:
+    if settings.ENVIRONMENT != "development":
         return 403, DevConsoleLogResponse(
             status="forbidden",
             error="This endpoint is only available in development mode",
@@ -406,10 +406,10 @@ def debug_error_500(request: HttpRequest) -> tuple[int, dict[str, str]]:
     for server errors).
 
     Security:
-        - Only available in DEBUG mode
+        - Only available when ENVIRONMENT is development
         - Returns 403 in production
     """
-    if not settings.DEBUG:
+    if settings.ENVIRONMENT != "development":
         return 403, {"error": "This endpoint is only available in development mode"}
 
     return 500, {"error": "Simulated server error for testing"}

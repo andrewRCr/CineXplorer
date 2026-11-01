@@ -616,7 +616,7 @@
             }
           }
         },
-        "description": "Development-only endpoint to write browser console logs to file.\n\nThis endpoint receives formatted log lines from the frontend logger\nand appends them to backend/logs/frontend.log for AI debugging.\n\nArgs:\n    request: HTTP request object\n    log_line: Formatted log line to write to file\n\nReturns:\n    Status response indicating success or failure\n\nSecurity:\n    - Only available in DEBUG mode\n    - No authentication required (localhost development only)\n    - File path is fixed to prevent directory traversal",
+        "description": "Development-only endpoint to write browser console logs to file.\n\nThis endpoint receives formatted log lines from the frontend logger\nand appends them to backend/logs/frontend.log for AI debugging.\n\nArgs:\n    request: HTTP request object\n    log_line: Formatted log line to write to file\n\nReturns:\n    Status response indicating success or failure\n\nSecurity:\n    - Only available when ENVIRONMENT is development\n    - No authentication required (localhost development only)\n    - File path is fixed to prevent directory traversal",
         "tags": [
           "core"
         ],
@@ -667,7 +667,7 @@
             }
           }
         },
-        "description": "Development-only endpoint that returns a 500 error for testing.\n\nUse this to verify frontend error handling (e.g., toast notifications\nfor server errors).\n\nSecurity:\n    - Only available in DEBUG mode\n    - Returns 403 in production",
+        "description": "Development-only endpoint that returns a 500 error for testing.\n\nUse this to verify frontend error handling (e.g., toast notifications\nfor server errors).\n\nSecurity:\n    - Only available when ENVIRONMENT is development\n    - Returns 403 in production",
         "tags": [
           "core"
         ]

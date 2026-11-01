@@ -69,10 +69,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",  # Required for django-allauth
-    "django_extensions",
     "apps.accounts",
     "apps.core",
-    "debug_toolbar",
     "corsheaders",
     # django-allauth
     "allauth",
@@ -90,7 +88,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "middleware.logging.RequestLoggingMiddleware",  # Request correlation and logging
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -105,6 +102,10 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
 ]
+
+if ENVIRONMENT == "development":
+    INSTALLED_APPS.extend(["django_extensions", "debug_toolbar"])
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
 # Internal IPs for Django Debug Toolbar
 _base_internal_ips = [

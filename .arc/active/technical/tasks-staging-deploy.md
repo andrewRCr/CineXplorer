@@ -128,23 +128,16 @@ runbook for setting up the server, deploying a version and rolling it back.
       non-root identity, static manifest and absence of copied env files/log directories/build-only runtime variables
       all passed. Ruff and Pyright passed.
 
-- [ ] **2.3 CI builds the production image and checks it** (R21's build, R22; SC3)
-    - A new `images` job in `.github/workflows/ci.yml` on every event the workflow runs for: Buildx, then
-      `docker/build-push-action` with `context: ./backend`, `target: production`, `load: true`, no push, and the
-      GitHub Actions cache under a scope of its own (`cache-from`/`cache-to` `type=gha,scope=backend`, `mode=max`)
-    - A step that fails when the image's files total 300,000,000 bytes or more, measured as the Phase 2 note says
-    - A step that runs `python manage.py check --deploy --fail-level WARNING` in the image with
-      `ENVIRONMENT=production`, a generated secret key and placeholders for R10's other variables
-    - `ci-ok`'s `needs` includes `images`; the job holds no `packages` permission until 4.3
-    - Check: `actionlint`; run locally against the image, each check step fails on a case it must catch (a threshold
-      below the image's size; a short `DJANGO_SECRET_KEY`, which raises `security.W009` and so passes without
-      `--deploy --fail-level WARNING` and fails with them); then, with the Owner's approval to push the branch, a
-      manual run (`gh workflow run ci.yml --ref technical/staging-deploy`) passes every job, which also checks 2.2.a's
-      CI edits
-    - Local evidence: actionlint passes; the exact size and deployment-check scripts pass against the built image.
-      A size threshold of one byte rejects it. A short secret passes ordinary checks and fails the strict deploy
-      check with security.W009. The CI override inherits the explicit dev target. First-push approval is granted;
-      this task remains open until hosted execution passes every job.
+- [x] **2.3 CI builds and checks the production image** (R21's build, R22; SC3)
+    - Added the images job with the production target, local image loading, no publishing, and a backend-scoped GHA
+      build cache. It enforces the 300,000,000-byte filesystem ceiling and strict Django deploy checks with a generated
+      placeholder secret; ci-ok includes this job and package publishing permissions remain absent.
+    - actionlint passed. The exact CI scripts passed locally, rejected a one-byte size limit, and rejected a short
+      secret with security.W009 under strict deploy checks while ordinary checks accepted it.
+    - With first-push approval, pushed the branch and dispatched manual run 41354826882 at commit 9d3876b8.
+      All six jobs passed: backend, frontend, type generation, documentation, production images and ci-ok. The hosted
+      image filesystem measured 183,016,680 bytes and strict deploy checks reported no issues beyond the documented
+      silence. This also validates the development-target CI edits.
 
 ### **Phase 3:** The frontend works on any host and ships in a web image
 

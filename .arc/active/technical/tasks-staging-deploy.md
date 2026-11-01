@@ -110,19 +110,14 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 - [ ] **2.2 Split the backend Dockerfile into `dev` and `production` stages** (R9–R12, R23; SC2, SC3, SC9)
 
-    - [ ] **2.2.a Name today's image the `dev` stage, select it everywhere it is built, and remove the unused builds**
-      in one change, so no commit leaves an untargeted build picking a different stage
-        - `backend/Dockerfile`: a shared base on `python:3.13-alpine3.24` and a `dev` stage that is today's image; the
-          `dev` stage always installs `req.dev.txt`, so the `DEV` build argument and its entry in
-          `infrastructure/docker-compose.yml` go
-        - `target: dev` on the backend's `build` in `infrastructure/docker-compose.yml`
-        - `.github/workflows/ci.yml`: remove the backend job's "Set up Docker Buildx", "Docker meta for backend" and
-          "Build and cache backend image (local only)" steps and the type-generation job's "Set up Docker Buildx" and
-          "Build backend image" steps (R23); both jobs keep building through Compose
-        - Check: the rebuilt development stack serves `https://localhost:8444`; the debug toolbar loads on
-          `https://localhost:8000/admin/login/`, the backend's own port, where it shows today (through Caddy the
-          backend sees Caddy's address, which is not in `INTERNAL_IPS`); and the full backend suite passes in it,
-          since the base image changes under every app
+    - [x] **2.2.a Explicit development builds:** Added the shared Alpine 3.24 base and named dev stage,
+      selected by Compose with the existing UID/GID arguments; development dependencies install unconditionally.
+      Removed the two unused standalone CI builds. Backend CI commands now name both Compose files, since root
+      discovery found no configuration; grouped dummy env writes to satisfy actionlint's ShellCheck integration.
+      Retained binutils in development: without its linker/objdump, ctypes could not discover the installed libpq
+      after temporary build tools were removed. An isolated before/after probe reproduced and fixed that startup
+      failure. The rebuilt stack serves the frontend and health endpoint; direct admin HTML includes the toolbar
+      and its JavaScript loads. Full backend suite: 844 passed. actionlint and Compose target checks passed.
 
     - [ ] **2.2.b Add the build and `production` stages**
         - A build stage from the shared base that installs `build-base` and `libpq-dev` and installs `req.prod.txt`

@@ -36,61 +36,44 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Docker meta for backend
-        id: meta-backend
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: cinexplorer-backend
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-
-      - name: Build and cache backend image (local only)
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          tags: ${{ steps.meta-backend.outputs.tags }}
-          labels: ${{ steps.meta-backend.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-
       - name: Create .env file
         run: |
-          echo "POSTGRES_DB=cinexplorer" > backend/config/.env
-          echo "POSTGRES_USER=postgres" >> backend/config/.env
-          echo "POSTGRES_PASSWORD=postgres" >> backend/config/.env
-          # Dummy values: tests mock TMDB and use the locmem email backend
-          echo "DJANGO_SECRET_KEY=ci-secret-key-not-for-production" >> backend/config/.env
-          echo "TMDB_API_KEY=dummy-key-for-ci" >> backend/config/.env
-          echo "BACKEND_URL=https://localhost:8000" >> backend/config/.env
-          echo "ZEPTOMAIL_API_KEY=dummy-key-for-ci" >> backend/config/.env
+          {
+            echo "POSTGRES_DB=cinexplorer"
+            echo "POSTGRES_USER=postgres"
+            echo "POSTGRES_PASSWORD=postgres"
+            # Dummy values: tests mock TMDB and use the locmem email backend
+            echo "DJANGO_SECRET_KEY=ci-secret-key-not-for-production"
+            echo "TMDB_API_KEY=dummy-key-for-ci"
+            echo "BACKEND_URL=https://localhost:8000"
+            echo "ZEPTOMAIL_API_KEY=dummy-key-for-ci"
+          } > backend/config/.env
 
       - name: Start services
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
           CI: true
         run: |
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml up -d dev-db backend
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml up -d dev-db backend
           # Wait for database to be ready (with timeout for fast failure)
-          docker compose exec -T backend python manage.py wait_for_db --timeout 60
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py wait_for_db --timeout 60
 
       - name: Run backend tests
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
           echo "Running pytest with coverage..."
-          docker compose exec -T -e COVERAGE_FILE=/tmp/.coverage backend pytest apps/ --cov=apps --cov-report=term --cov-report=xml:/tmp/coverage.xml
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml exec -T -e COVERAGE_FILE=/tmp/.coverage backend pytest apps/ --cov=apps --cov-report=term --cov-report=xml:/tmp/coverage.xml
 
           # Copy coverage report from container to host
-          docker compose cp backend:/tmp/coverage.xml backend/coverage.xml
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml cp backend:/tmp/coverage.xml backend/coverage.xml
           # Copy pytest cache if it exists (optional, used for caching only)
-          docker compose cp backend:/backend/.pytest_cache backend/.pytest_cache || true
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml cp backend:/backend/.pytest_cache backend/.pytest_cache || true
 
       - name: Upload coverage reports
         if: always()
@@ -112,7 +95,8 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
-          docker compose exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff check apps/ config/
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff check apps/ config/
 
       - name: Setup Python for type checking
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -213,27 +197,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Build backend image
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          tags: cinexplorer-backend:type-gen
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-
       - name: Create .env file
         run: |
-          echo "POSTGRES_DB=cinexplorer" > backend/config/.env
-          echo "POSTGRES_USER=postgres" >> backend/config/.env
-          echo "POSTGRES_PASSWORD=postgres" >> backend/config/.env
-          echo "DJANGO_SECRET_KEY=ci-secret-key-for-type-generation" >> backend/config/.env
-          echo "TMDB_API_KEY=dummy-key-for-type-generation" >> backend/config/.env
-          echo "BACKEND_URL=https://localhost:8000" >> backend/config/.env
+          {
+            echo "POSTGRES_DB=cinexplorer"
+            echo "POSTGRES_USER=postgres"
+            echo "POSTGRES_PASSWORD=postgres"
+            echo "DJANGO_SECRET_KEY=ci-secret-key-for-type-generation"
+            echo "TMDB_API_KEY=dummy-key-for-type-generation"
+            echo "BACKEND_URL=https://localhost:8000"
+          } > backend/config/.env
 
       - name: Start backend service
         env:

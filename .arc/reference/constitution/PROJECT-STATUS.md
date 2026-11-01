@@ -23,7 +23,9 @@ key features implemented and a clear roadmap for remaining work.
 
 **Currently Active:**
 
-- None (planning next work)
+- Staging Deployment (technical) - Production images, stack and runbook, deployed to a public staging host
+    - Task list: `tasks-staging-deploy.md`
+    - Branch: `technical/staging-deploy`
 
 **Next Priority:**
 

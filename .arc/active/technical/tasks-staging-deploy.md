@@ -181,18 +181,16 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 ### **Phase 4:** The production stack runs and CI publishes it
 
-- [ ] **4.1 The production Compose file and env templates** (R17–R20; SC1)
-    - `infrastructure/docker-compose.prod.yml` replaced by the standalone file R17 describes: `name: cinexplorer-prod`;
-      `web`, `backend`, `db` and `redis` with R17's images, ports, volumes, environment, health checks and
-      `depends_on` conditions; R18's image references; R19's restart policy, memory limits and log rotation
-    - `IMAGE_TAG` and `SITE_ADDRESS` use `${VAR:?message}`, so a deploy that omits either fails before starting
-      anything
-    - The development file's `dev-db` moves to `postgres:17-alpine3.24`
-    - `infrastructure/prod.env.example`, whose `BACKEND_ENV_FILE` is the server's `/opt/cinexplorer/backend.env`, and
-      R20's production entries and checklist edits in `backend/config/.env.example`; the production entries go in the
-      file's commented production checklist, not as live keys, since developers copy the file to `config/.env`
-    - Check: SC1's `docker compose config` with the example values; the development stack still starts on the new
-      Postgres tag with its existing data
+- [x] **4.1 Production Compose and env templates** (R17–R20; SC1)
+    - Replaced the override stub with the standalone cinexplorer-prod project: versioned application images, Caddy
+      data/config volumes, isolated database storage, cache-only Redis, backend health/dependency checks, required
+      image/site inputs, resource limits and rotated container logs. Only web publishes ports, on 80 and 443 TCP
+      plus 443 UDP. Site-derived settings and shared database credentials reach the backend through Compose.
+    - Added prod.env.example with a single-quoted bcrypt placeholder and updated the backend template's commented
+      production checklist, preserving its live development defaults. Config checks validate ports, policies,
+      derived values and missing-input rejection.
+    - Moved development Postgres to 17-alpine3.24 with its existing volume. User/migration counts are unchanged;
+      backend ORM and proxy health checks pass, and the full backend suite passed all 844 tests.
 
 - [ ] **4.2 Run the production stack locally** (SC7)
     - Build both images on this branch and tag them `ghcr.io/andrewrcr/cinexplorer-backend:local` and

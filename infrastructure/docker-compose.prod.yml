@@ -1,6 +1,87 @@
+name: cinexplorer-prod
+
+x-runtime: &runtime
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
+  web:
+    <<: *runtime
+    image: ghcr.io/andrewrcr/cinexplorer-web:${IMAGE_TAG:?Set IMAGE_TAG to a published version}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host}
+      ADMIN_BASIC_AUTH_USER: ${ADMIN_BASIC_AUTH_USER}
+      ADMIN_BASIC_AUTH_HASH: ${ADMIN_BASIC_AUTH_HASH}
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    mem_limit: 128m
+    depends_on:
+      backend:
+        condition: service_healthy
+
   backend:
-    command: >
-      sh -c "python manage.py wait_for_db &&
-             python manage.py migrate &&
-             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --certfile /certs/backend/cert.pem --keyfile /certs/backend/key.pem"
+    <<: *runtime
+    image: ghcr.io/andrewrcr/cinexplorer-backend:${IMAGE_TAG:?Set IMAGE_TAG to a published version}
+    env_file:
+      - ${BACKEND_ENV_FILE}
+    environment:
+      DB_HOST: db
+      REDIS_URL: redis://redis:6379/0
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      DJANGO_ALLOWED_HOSTS: ${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host},localhost
+      FRONTEND_URL: https://${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host}
+      BACKEND_URL: https://${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host}
+    mem_limit: 640m
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health-check/', timeout=5).close()
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  db:
+    <<: *runtime
+    image: postgres:17-alpine3.24
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    mem_limit: 384m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    <<: *runtime
+    image: redis:7.4-alpine
+    command: redis-server --save "" --appendonly no --maxmemory 48mb --maxmemory-policy allkeys-lru
+    mem_limit: 64m
+
+volumes:
+  caddy-data:
+  caddy-config:
+  db-data:

@@ -64,7 +64,7 @@ services:
       - backend
 
   dev-db:
-    image: postgres:17.5-alpine
+    image: postgres:17-alpine3.24
     ports:
       - "5432:5432"
     volumes:

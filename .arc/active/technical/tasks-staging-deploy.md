@@ -176,6 +176,8 @@ runbook for setting up the server, deploying a version and rolling it back.
     - [ ] **3.3.c CI builds the web image** in the `images` job: `context: ./frontend`, `target: production`,
       `build-contexts: infra=./infrastructure`, no push, its own cache scope (`scope=web`)
         - Check: `actionlint`, and the next manual run on the pushed branch builds it
+        - Local evidence: actionlint passes and the same named-context build succeeds locally; hosted validation
+          follows the CI change, so this checkbox remains open until that run passes.
 
 ### **Phase 4:** The production stack runs and CI publishes it
 

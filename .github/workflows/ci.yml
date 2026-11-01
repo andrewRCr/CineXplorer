@@ -164,6 +164,18 @@ jobs:
             -e DJANGO_ALLOWED_HOSTS=placeholder.invalid \
             cinexplorer-backend:ci python manage.py check --deploy --fail-level WARNING
 
+      - name: Build web production image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./frontend
+          target: production
+          build-contexts: infra=./infrastructure
+          tags: cinexplorer-web:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
   markdown:
     name: Documentation Lint
     runs-on: ubuntu-24.04

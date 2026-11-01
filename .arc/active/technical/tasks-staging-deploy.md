@@ -57,6 +57,8 @@ runbook for setting up the server, deploying a version and rolling it back.
     - [x] **1.2.a Tests:** Added real-settings cases for both development apps, middleware and URL, plus request tests
       for both debug endpoints. Deployed cases failed before gating; development guards failed with tooling removed
       and the debug route denied.
+      The request cases load routes before changing ENVIRONMENT, so a staging override cannot cache a route table
+      without the development toolbar for later tests; the reproduced staging-then-debug sequence passes.
     - [x] **1.2.b Implementation:** Gated development tooling and endpoints on ENVIRONMENT and regenerated API
       descriptions. Environment cases: 29 passed; core/authentication: 374 passed; Ruff and Pyright passed.
 

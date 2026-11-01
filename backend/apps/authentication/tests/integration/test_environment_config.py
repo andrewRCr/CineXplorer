@@ -327,7 +327,10 @@ def test_development_tooling_matches_environment(
 @pytest.mark.parametrize("environment,expected", [("staging", 403), ("development", 500)])
 def test_debug_error_route_environment(environment: str, expected: int) -> None:
     from django.test import Client
+    from django.urls import resolve
 
+    # Load routes under normal settings before overriding endpoint policy.
+    resolve("/api/debug/error-500/")
     with override_settings(ENVIRONMENT=environment, DEBUG=True):
         assert Client().get("/api/debug/error-500/").status_code == expected
 
@@ -335,7 +338,9 @@ def test_debug_error_route_environment(environment: str, expected: int) -> None:
 @pytest.mark.django_db
 def test_dev_log_route_denies_staging_even_with_debug() -> None:
     from django.test import Client
+    from django.urls import resolve
 
+    resolve("/api/dev-logs/write/")
     with override_settings(ENVIRONMENT="staging", DEBUG=True):
         response = Client().post(
             "/api/dev-logs/write/", {"log_line": "example"}, content_type="application/json"

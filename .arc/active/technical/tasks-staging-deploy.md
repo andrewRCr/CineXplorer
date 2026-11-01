@@ -217,6 +217,9 @@ runbook for setting up the server, deploying a version and rolling it back.
     - Check: `actionlint`; then, with the Owner's approval to open the pull request, SC8: the pull request's run passes
       every job and builds both images without pushing, and its backend tests run on the `dev` image (SC9); a manual
       run on the branch publishes both images with the `sha-` tag
+    - Local evidence: actionlint passes. Publishing is restricted to manual runs and main pushes; only the images
+      job receives package-write permission. Both checked builds precede registry login and cached publishing.
+      Hosted manual publishing and pull-request verification remain before completion.
 
 ### **Phase 5:** Staging is set up and deployed by the runbook
 

@@ -77,14 +77,21 @@ setting `textbody` and `htmlbody` separately per the ZeptoMail API specification
 
 ## Phase 4: Cleanup (after PR merged or abandoned)
 
-**Blocked:** Awaiting PyPI release. PR merged 2024-12-23, but PyPI still shows v0.0.3 (pre-fix).
-Check back in 1-2 days: <https://pypi.org/project/django-zoho-zeptomail/>
+**Unblocked:** 0.0.4 reached PyPI on 2026-09-28. Its only library change from 0.0.3 is the fix from PR #1
+(wheel contents compared, 2026-10-31).
 
-- [ ] 4.1 If merged: update CineXplorer
+- [x] 4.1 If merged: update CineXplorer
     - Update django-zoho-zeptomail dependency version
     - Remove our workaround (`backend/apps/core/email_backend.py`)
     - Update `settings.py` to use standard backend
     - Test email sending still works
+    - Done on `chore/zeptomail-0.0.4`: `>= 0.0.4`, `EMAIL_BACKEND` on the package's `ZohoZeptoMailEmailBackend`, the
+      workaround and its type stubs (`backend/stubs/zoho_zeptomail/`) removed
+    - New `apps/core/tests/unit/test_zeptomail_backend.py` checks the configured backend's API payload carries
+      `textbody` and `htmlbody` separately; it fails against 0.0.3 (`KeyError: 'textbody'`). Backend suite 804 passed
+    - Live: a dev sign-up's verification email was accepted by ZeptoMail and arrived with clean HTML (no plain text
+      prepended). Whether ZeptoMail also delivers a `text/plain` part was not settled: the receiving mailbox's source
+      view showed HTML only, and ZeptoMail documents the body as text or HTML
 
 - [ ] 4.2 Archive this task list
     - Move to `.arc/reference/archive/` with outcome notes

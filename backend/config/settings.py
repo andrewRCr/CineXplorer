@@ -227,10 +227,10 @@ ENVIRONMENT = _environment  # Final constant assignment
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
-# Email Configuration - ZeptoMail via custom backend with HTML fix
-# Uses our fixed backend that properly sets textbody and htmlbody separately
-# (django-zoho-zeptomail v0.0.3 has a bug that concatenates them)
-EMAIL_BACKEND = "apps.core.email_backend.FixedZohoZeptoMailEmailBackend"
+# Email Configuration - ZeptoMail through django-zoho-zeptomail's backend
+# 0.0.4 or later sends a multipart message's text and HTML as separate
+# textbody and htmlbody fields (0.0.3 concatenated them into htmlbody)
+EMAIL_BACKEND = "zoho_zeptomail.backend.zeptomail_backend.ZohoZeptoMailEmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get(
     "ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com"
 )

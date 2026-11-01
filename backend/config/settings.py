@@ -19,6 +19,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 from .logging import get_logging_config
 
@@ -35,7 +36,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: set via environment variable only (see line 202)
 
-ALLOWED_HOSTS = [
+DEBUG = env.bool("DEBUG", default=False)
+ENVIRONMENT = env("ENVIRONMENT", default="development")
+if ENVIRONMENT not in ("development", "staging", "production"):
+    raise ImproperlyConfigured(
+        f"Invalid ENVIRONMENT: {ENVIRONMENT}. Expected development, staging, or production."
+    )
+if ENVIRONMENT != "development" and DEBUG:
+    raise ImproperlyConfigured("DEBUG must be False in staging and production.")
+
+_development_hosts = [
     "localhost",
     "127.0.0.1",
     "localhost:8000",  # Django backend for OAuth callback_url validation
@@ -43,6 +53,11 @@ ALLOWED_HOSTS = [
     "backend",
     "testserver",  # Django test client
 ]
+ALLOWED_HOSTS = (
+    env.list("DJANGO_ALLOWED_HOSTS", default=_development_hosts)
+    if ENVIRONMENT == "development"
+    else env.list("DJANGO_ALLOWED_HOSTS")
+)
 
 # Application definition
 
@@ -203,25 +218,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # default environment variables
-DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env("DJANGO_SECRET_KEY")
-
-# Environment configuration (development, staging, production)
-# Controls environment-aware security settings and logging
-# Use lowercase mutable variable, then assign to UPPERCASE constant (Pyright type safety)
-_environment = env("ENVIRONMENT", default="development")
-# Validate ENVIRONMENT value
-if _environment not in ["development", "staging", "production"]:
-    import warnings
-    warnings.warn(
-        f"Invalid ENVIRONMENT value: {_environment}. "
-        f"Must be 'development', 'staging', or 'production'. "
-        f"Defaulting to 'development'.",
-        RuntimeWarning,
-        stacklevel=2
-    )
-    _environment = "development"
-ENVIRONMENT = _environment  # Final constant assignment
 
 # custom environment variables
 TMDB_API_KEY = env("TMDB_API_KEY")
@@ -231,9 +228,7 @@ BACKEND_URL = env("BACKEND_URL")
 # 0.0.4 or later sends a multipart message's text and HTML as separate
 # textbody and htmlbody fields (0.0.3 concatenated them into htmlbody)
 EMAIL_BACKEND = "zoho_zeptomail.backend.zeptomail_backend.ZohoZeptoMailEmailBackend"
-DEFAULT_FROM_EMAIL = os.environ.get(
-    "ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com"
-)
+DEFAULT_FROM_EMAIL = os.environ.get("ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com")
 ZOHO_ZEPTOMAIL_API_KEY_TOKEN = os.environ.get("ZEPTOMAIL_API_KEY", "")
 # Region setting - only define for non-US hosted accounts
 # The ZeptoMail package checks hasattr(), so don't define at all for US (default)
@@ -244,20 +239,19 @@ if _zeptomail_region:
 
 # Email verification expiry (days) - configurable via environment variable
 # Default: 3 days (72 hours) - reasonable for production use
-EMAIL_VERIFICATION_EXPIRY_DAYS = int(
-    os.environ.get("EMAIL_VERIFICATION_EXPIRY_DAYS", "3")
-)
+EMAIL_VERIFICATION_EXPIRY_DAYS = int(os.environ.get("EMAIL_VERIFICATION_EXPIRY_DAYS", "3"))
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 # Validate email configuration in production
 # Allow missing API key in development and testing (emails will fail silently)
 if not ZOHO_ZEPTOMAIL_API_KEY_TOKEN and not DEBUG and "test" not in sys.argv:
     import warnings
+
     warnings.warn(
         "ZEPTOMAIL_API_KEY is not set. Email delivery will fail in production. "
         "Set ZEPTOMAIL_API_KEY environment variable or emails will not be sent.",
         RuntimeWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
 # django-allauth Configuration
@@ -273,8 +267,8 @@ ACCOUNT_LOGIN_METHODS = {"email", "username"}  # Allow login with username or em
 # Signup fields (modern allauth API)
 # Field format: 'field_name' (optional) or 'field_name*' (required)
 ACCOUNT_SIGNUP_FIELDS = [
-    "email*",      # Email required
-    "username*",   # Username required
+    "email*",  # Email required
+    "username*",  # Username required
     "password1*",  # Password required
     "password2*",  # Password confirmation required (no separate setting)
 ]
@@ -349,27 +343,37 @@ FORBIDDEN_USERNAMES = [
 
 # CORS configuration - Allow frontend for CORS and CSRF
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",   # Development (direct frontend dev server)
-    "https://localhost:5173",  # Development (if using HTTPS)
-    "https://localhost:5174",
-    "https://localhost:8444",  # Production-like (Caddy proxy)
-]
+CORS_ALLOWED_ORIGINS = env.list(
+    "CORS_ALLOWED_ORIGINS",
+    default=[
+        "http://localhost:5173",  # Development (direct frontend dev server)
+        "https://localhost:5173",  # Development (if using HTTPS)
+        "https://localhost:5174",
+        "https://localhost:8444",  # Production-like (Caddy proxy)
+    ]
+    if ENVIRONMENT == "development"
+    else [],
+)
 CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",   # Development (direct frontend dev server)
-    "https://localhost:5173",  # Development (if using HTTPS)
-    "https://localhost:5174",
-    "https://localhost:8000",  # Development (direct backend access for testing)
-    "https://localhost:8444",  # Production-like (Caddy proxy)
-]
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS",
+    default=[
+        "http://localhost:5173",  # Development (direct frontend dev server)
+        "https://localhost:5173",  # Development (if using HTTPS)
+        "https://localhost:5174",
+        "https://localhost:8000",  # Development (direct backend access for testing)
+        "https://localhost:8444",  # Production-like (Caddy proxy)
+    ]
+    if ENVIRONMENT == "development"
+    else [],
+)
 
 # Cookie Security Settings (Environment-Aware)
 # Session cookie security - enforce HTTPS in production/staging, allow HTTP in development
 # Requires HTTPS (prevents interception)
 SESSION_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
 SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access (XSS protection)
-SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection - same-site requests only
+SESSION_COOKIE_SAMESITE = "Lax"  # CSRF protection - same-site requests only
 # Requires HTTPS (prevents interception)
 CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
 
@@ -413,13 +417,13 @@ if ENVIRONMENT == "production":
     _hsts_preload = True  # Allow inclusion in browser HSTS preload lists
     _ssl_redirect = True  # Redirect all HTTP requests to HTTPS
     # Caddy proxy compatibility - trust X-Forwarded-Proto header for HTTPS detection
-    _proxy_ssl_header = ('HTTP_X_FORWARDED_PROTO', 'https')
+    _proxy_ssl_header = ("HTTP_X_FORWARDED_PROTO", "https")
 elif ENVIRONMENT == "staging":
     _hsts_seconds = 3600  # 1 hour (shorter for staging to allow testing)
     _hsts_include_subdomains = False  # More flexible for staging subdomains
     _hsts_preload = False  # Don't preload staging
     _ssl_redirect = True  # Still redirect HTTP to HTTPS
-    _proxy_ssl_header = ('HTTP_X_FORWARDED_PROTO', 'https')
+    _proxy_ssl_header = ("HTTP_X_FORWARDED_PROTO", "https")
 else:  # Development: No HSTS settings (allow HTTP for local development)
     _hsts_seconds = 0
     _hsts_include_subdomains = False
@@ -435,7 +439,7 @@ SECURE_SSL_REDIRECT = _ssl_redirect
 SECURE_PROXY_SSL_HEADER = _proxy_ssl_header
 
 # Additional Security Headers
-X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks (no iframe embedding)
+X_FRAME_OPTIONS = "DENY"  # Prevent clickjacking attacks (no iframe embedding)
 SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME type sniffing
 SECURE_BROWSER_XSS_FILTER = True  # Enable legacy XSS filter in older browsers
 
@@ -464,11 +468,10 @@ def ensure_log_directory():
     """
     # Multiple ways to detect CI environment (consistent with logging.py)
     is_ci = (
-        os.environ.get('CI', 'False').lower() == 'true' or
-        os.environ.get('GITHUB_ACTIONS', 'False').lower() == 'true' or
-        os.environ.get('CONTINUOUS_INTEGRATION',
-                      'False').lower() == 'true' or
-        bool(os.environ.get('BUILD_NUMBER'))  # Jenkins
+        os.environ.get("CI", "False").lower() == "true"
+        or os.environ.get("GITHUB_ACTIONS", "False").lower() == "true"
+        or os.environ.get("CONTINUOUS_INTEGRATION", "False").lower() == "true"
+        or bool(os.environ.get("BUILD_NUMBER"))  # Jenkins
     )
 
     if is_ci:
@@ -481,21 +484,22 @@ def ensure_log_directory():
         try:
             os.makedirs(log_dir, exist_ok=True)
             # Verify write permissions
-            test_file = os.path.join(log_dir, '.write_test')
-            with open(test_file, 'w') as f:
-                f.write('test')
+            test_file = os.path.join(log_dir, ".write_test")
+            with open(test_file, "w") as f:
+                f.write("test")
             os.remove(test_file)
             return log_dir
         except (PermissionError, OSError):
             # Fallback to temp directory if we can't create the intended directory
             import tempfile
+
             # Use gettempdir() instead of mkdtemp() to avoid creating orphaned directories
-            fallback_dir = os.path.join(tempfile.gettempdir(), 'cinexplorer-logs')
+            fallback_dir = os.path.join(tempfile.gettempdir(), "cinexplorer-logs")
             os.makedirs(fallback_dir, exist_ok=True)
             print(
                 f"Warning: Could not create log directory {log_dir}, "
                 f"using fallback: {fallback_dir}",
-                file=sys.stderr
+                file=sys.stderr,
             )
             return fallback_dir
 
@@ -514,6 +518,7 @@ LOG_DIRECTORY = ensure_log_directory()
 # - Database query performance monitoring
 # - Separate log files for different components
 
+
 def _get_logging_config() -> Mapping[str, object]:
     """Get logging configuration with fallback to basic console logging."""
     try:
@@ -522,25 +527,26 @@ def _get_logging_config() -> Mapping[str, object]:
         print(f"Error configuring logging: {e}", file=sys.stderr)
         # Fallback to basic console-only logging
         return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'formatters': {
-                'simple': {
-                    'format': '{levelname} {name} {message}',
-                    'style': '{',
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "simple": {
+                    "format": "{levelname} {name} {message}",
+                    "style": "{",
                 },
             },
-            'handlers': {
-                'console': {
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'simple',
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "simple",
                 },
             },
-            'root': {
-                'handlers': ['console'],
-                'level': 'INFO',
+            "root": {
+                "handlers": ["console"],
+                "level": "INFO",
             },
         }
+
 
 LOGGING = _get_logging_config()
 

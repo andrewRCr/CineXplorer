@@ -1,26 +1,7 @@
-"""
-Environment-aware configuration tests for authentication security settings.
+"""Configuration that depends on the deployment environment.
 
-Tests the environment-specific security settings implemented in Task 7:
-- Production environment: Full HSTS, SSL redirect, secure cookies
-- Staging environment: Limited HSTS, SSL redirect, secure cookies
-- Development environment: No HSTS, no SSL redirect, insecure cookies allowed
-
-These tests validate that security settings correctly adjust based on the
-ENVIRONMENT setting (production/staging/development).
-
-MAINTENANCE NOTE:
-These tests replicate the conditional logic from config/settings.py (lines 369+)
-where cookie security settings are set based on ENVIRONMENT:
-
-    SESSION_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
-    CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
-
-Because Django's override_settings() doesn't re-evaluate conditional expressions,
-these tests manually replicate the logic to verify environment-specific behavior.
-
-⚠️ If you modify the environment-based security logic in config/settings.py,
-   you MUST update the corresponding logic in these tests to match.
+Cookie, HSTS and HTTPS-redirect tests replicate settings logic. Subprocess
+cases load the real settings module; request cases use override_settings.
 """
 
 from __future__ import annotations
@@ -42,9 +23,7 @@ def test_session_cookie_secure_true_in_production() -> None:
     # Re-evaluate the setting since override_settings doesn't trigger the
     # conditional logic. We need to test the logic directly.
     session_cookie_secure = settings.ENVIRONMENT in ["production", "staging"]
-    assert session_cookie_secure is True, (
-        "SESSION_COOKIE_SECURE should be True in production"
-    )
+    assert session_cookie_secure is True, "SESSION_COOKIE_SECURE should be True in production"
 
 
 @pytest.mark.django_db
@@ -55,9 +34,7 @@ def test_session_cookie_secure_true_in_staging() -> None:
 
     # Re-evaluate the setting
     session_cookie_secure = settings.ENVIRONMENT in ["production", "staging"]
-    assert session_cookie_secure is True, (
-        "SESSION_COOKIE_SECURE should be True in staging"
-    )
+    assert session_cookie_secure is True, "SESSION_COOKIE_SECURE should be True in staging"
 
 
 @pytest.mark.django_db
@@ -68,9 +45,7 @@ def test_session_cookie_secure_false_in_development() -> None:
 
     # Re-evaluate the setting
     session_cookie_secure = settings.ENVIRONMENT in ["production", "staging"]
-    assert session_cookie_secure is False, (
-        "SESSION_COOKIE_SECURE should be False in development"
-    )
+    assert session_cookie_secure is False, "SESSION_COOKIE_SECURE should be False in development"
 
 
 # ============================================================================
@@ -90,9 +65,7 @@ def test_csrf_cookie_secure_follows_session_pattern_production() -> None:
     assert session_cookie_secure == csrf_cookie_secure, (
         "CSRF_COOKIE_SECURE should match SESSION_COOKIE_SECURE pattern"
     )
-    assert csrf_cookie_secure is True, (
-        "CSRF_COOKIE_SECURE should be True in production"
-    )
+    assert csrf_cookie_secure is True, "CSRF_COOKIE_SECURE should be True in production"
 
 
 @pytest.mark.django_db
@@ -107,9 +80,7 @@ def test_csrf_cookie_secure_follows_session_pattern_staging() -> None:
     assert session_cookie_secure == csrf_cookie_secure, (
         "CSRF_COOKIE_SECURE should match SESSION_COOKIE_SECURE pattern"
     )
-    assert csrf_cookie_secure is True, (
-        "CSRF_COOKIE_SECURE should be True in staging"
-    )
+    assert csrf_cookie_secure is True, "CSRF_COOKIE_SECURE should be True in staging"
 
 
 @pytest.mark.django_db
@@ -124,9 +95,7 @@ def test_csrf_cookie_secure_follows_session_pattern_development() -> None:
     assert session_cookie_secure == csrf_cookie_secure, (
         "CSRF_COOKIE_SECURE should match SESSION_COOKIE_SECURE pattern"
     )
-    assert csrf_cookie_secure is False, (
-        "CSRF_COOKIE_SECURE should be False in development"
-    )
+    assert csrf_cookie_secure is False, "CSRF_COOKIE_SECURE should be False in development"
 
 
 # ============================================================================
@@ -143,9 +112,7 @@ def test_hsts_seconds_production() -> None:
 
     # Replicate the settings.py logic
     hsts_seconds = (
-        31536000 if environment == "production"
-        else 3600 if environment == "staging"
-        else 0
+        31536000 if environment == "production" else 3600 if environment == "staging" else 0
     )
 
     assert hsts_seconds == expected_hsts_seconds, (
@@ -162,8 +129,10 @@ def test_hsts_seconds_staging() -> None:
 
     # Replicate the settings.py logic
     hsts_seconds = (
-        31536000 if environment == "production"  # pyright: ignore[reportUnnecessaryComparison]
-        else 3600 if environment == "staging"
+        31536000
+        if environment == "production"  # pyright: ignore[reportUnnecessaryComparison]
+        else 3600
+        if environment == "staging"
         else 0
     )
 
@@ -181,8 +150,10 @@ def test_hsts_seconds_development() -> None:
 
     # Replicate the settings.py logic
     hsts_seconds = (
-        31536000 if environment == "production"  # pyright: ignore[reportUnnecessaryComparison]
-        else 3600 if environment == "staging"  # pyright: ignore[reportUnnecessaryComparison]
+        31536000
+        if environment == "production"  # pyright: ignore[reportUnnecessaryComparison]
+        else 3600
+        if environment == "staging"  # pyright: ignore[reportUnnecessaryComparison]
         else 0
     )
 
@@ -221,9 +192,7 @@ def test_ssl_redirect_true_in_staging() -> None:
     # Replicate the settings.py logic
     ssl_redirect = environment in ("production", "staging")
 
-    assert ssl_redirect == expected_ssl_redirect, (
-        "SECURE_SSL_REDIRECT should be True in staging"
-    )
+    assert ssl_redirect == expected_ssl_redirect, "SECURE_SSL_REDIRECT should be True in staging"
 
 
 @pytest.mark.django_db
@@ -241,43 +210,83 @@ def test_ssl_redirect_false_in_development() -> None:
     )
 
 
-# ============================================================================
-# Invalid ENVIRONMENT Value Test
-# ============================================================================
+@pytest.mark.parametrize(
+    ("environment", "debug", "hosts", "error"),
+    [
+        ("staging", "False", None, "DJANGO_ALLOWED_HOSTS"),
+        ("staging", "True", "staging.example", "DEBUG"),
+        ("qa", "False", "staging.example", "ENVIRONMENT"),
+    ],
+)
+def test_invalid_deployment_settings(
+    environment: str, debug: str, hosts: str | None, error: str
+) -> None:
+    from apps.core.tests.test_helpers import load_settings
 
-
-@pytest.mark.django_db
-def test_invalid_environment_defaults_to_development() -> None:
-    """Test that invalid ENVIRONMENT value logs warning and defaults to 'development'."""
-    import warnings
-
-    # Test the validation logic directly
-    invalid_environment = "invalid_env"
-    validated_environment = invalid_environment
-
-    # Simulate the validation logic from settings.py
-    if validated_environment not in ["development", "staging", "production"]:
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("always")
-            warnings.warn(
-                f"Invalid ENVIRONMENT value: {validated_environment}. "
-                f"Must be 'development', 'staging', or 'production'. "
-                f"Defaulting to 'development'.",
-                RuntimeWarning,
-                stacklevel=2
-            )
-            validated_environment = "development"
-
-            # Verify warning was raised
-            assert len(warning_list) == 1, "Should raise exactly one warning"
-            assert issubclass(warning_list[0].category, RuntimeWarning), (
-                "Warning should be RuntimeWarning"
-            )
-            assert "Invalid ENVIRONMENT value" in str(warning_list[0].message), (
-                "Warning should mention invalid ENVIRONMENT value"
-            )
-
-    # Verify it defaults to development
-    assert validated_environment == "development", (
-        "Invalid ENVIRONMENT should default to 'development'"
+    result = load_settings(
+        {"ENVIRONMENT": environment, "DEBUG": debug, "DJANGO_ALLOWED_HOSTS": hosts}, []
     )
+    assert error in str(result.get("error", ""))
+
+
+def test_staging_origins_default_to_empty() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    assert load_settings(
+        {"ENVIRONMENT": "staging", "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "staging.example"},
+        ["ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "CORS_ALLOWED_ORIGINS"],
+    ) == {
+        "ALLOWED_HOSTS": ["staging.example"],
+        "CSRF_TRUSTED_ORIGINS": [],
+        "CORS_ALLOWED_ORIGINS": [],
+    }
+
+
+def test_deployment_lists_are_comma_separated() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    assert load_settings(
+        {
+            "ENVIRONMENT": "staging",
+            "DEBUG": "False",
+            "DJANGO_ALLOWED_HOSTS": "one.example,two.example",
+            "CSRF_TRUSTED_ORIGINS": "https://one.example,https://two.example",
+            "CORS_ALLOWED_ORIGINS": "https://three.example,https://four.example",
+        },
+        ["ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "CORS_ALLOWED_ORIGINS"],
+    ) == {
+        "ALLOWED_HOSTS": ["one.example", "two.example"],
+        "CSRF_TRUSTED_ORIGINS": ["https://one.example", "https://two.example"],
+        "CORS_ALLOWED_ORIGINS": ["https://three.example", "https://four.example"],
+    }
+
+
+def test_development_host_and_origin_defaults() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    assert load_settings(
+        {"ENVIRONMENT": "development", "DEBUG": "False"},
+        ["ALLOWED_HOSTS", "CSRF_TRUSTED_ORIGINS", "CORS_ALLOWED_ORIGINS"],
+    ) == {
+        "ALLOWED_HOSTS": [
+            "localhost",
+            "127.0.0.1",
+            "localhost:8000",
+            "localhost:5173",
+            "backend",
+            "testserver",
+        ],
+        "CSRF_TRUSTED_ORIGINS": [
+            "http://localhost:5173",
+            "https://localhost:5173",
+            "https://localhost:5174",
+            "https://localhost:8000",
+            "https://localhost:8444",
+        ],
+        "CORS_ALLOWED_ORIGINS": [
+            "http://localhost:5173",
+            "https://localhost:5173",
+            "https://localhost:5174",
+            "https://localhost:8444",
+        ],
+    }

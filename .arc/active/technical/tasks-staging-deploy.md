@@ -43,45 +43,14 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 ### **Phase 1:** The backend is configured for a public host behind a proxy
 
-- [ ] **1.1 Settings read the environment strictly** (R3; SC4)
+- [x] **1.1 Settings read the environment strictly** (R3; SC4)
 
-    - [ ] **1.1.a Write tests that load the real settings module**
-        - In `apps/core/tests/test_helpers.py`, the project's shared test helpers, a helper that imports
-          `config.settings` in a subprocess (`sys.executable`, working directory the backend root) under a given set of
-          environment variables, with the child environment the Phase 1 note describes. It takes optional code to run
-          before the import (1.6.a wraps `os.makedirs` and `open` there), and can run `django.setup()` and report
-          values read afterwards (1.2.a reads `config.urls.urlpatterns`). Requests are dotted names read in the child
-          after the import, or after `django.setup()`: a bare name is an attribute of `config.settings`, and the
-          pre-import code stores what it observes under a name the case then requests. It returns either the requested
-          values as JSON, leaving out any name the module does not define and converting values JSON cannot hold, such
-          as paths, to strings, or the `ImproperlyConfigured` message the import raised
-        - The cases go in `apps/authentication/tests/integration/test_environment_config.py`. Its module docstring is
-          rewritten, without its task reference, to describe the module by its subject, configuration that depends on
-          the environment, and the three ways its tests work: replicating the settings logic (the cookie, HSTS and
-          HTTPS-redirect tests), loading the real settings module in a subprocess, and making requests under
-          `override_settings` (1.2.a and 1.5.a add these)
-        - `ENVIRONMENT=staging` with `DJANGO_ALLOWED_HOSTS` unset fails naming `DJANGO_ALLOWED_HOSTS`
-        - `ENVIRONMENT=staging` with `DJANGO_ALLOWED_HOSTS` set and both origin variables unset gives empty
-          `CSRF_TRUSTED_ORIGINS` and `CORS_ALLOWED_ORIGINS`; each of the three variables is read as a comma-separated
-          list
-        - `ENVIRONMENT=development` with the three variables unset gives today's `ALLOWED_HOSTS`,
-          `CSRF_TRUSTED_ORIGINS` and `CORS_ALLOWED_ORIGINS` lists, written out in the test
-        - `ENVIRONMENT=staging` with `DJANGO_ALLOWED_HOSTS` set and `DEBUG=True` fails with a message naming `DEBUG`;
-          `ENVIRONMENT=qa` fails with a message naming `ENVIRONMENT`
-        - Delete `test_invalid_environment_defaults_to_development`, which replicates the old fallback instead of
-          loading settings
-        - Expect the `staging` and `qa` cases to FAIL initially; the `development` case passes today and guards the
-          defaults (see the Phase 1 note on guard cases)
-
-    - [ ] **1.1.b Validate `ENVIRONMENT` and read hosts and origins from the environment** in `config/settings.py`
-        - Move the `DEBUG` and `ENVIRONMENT` block above `ALLOWED_HOSTS`, since this task and 1.2 make the lists near
-          the top of the module depend on it
-        - An unrecognised `ENVIRONMENT` raises `ImproperlyConfigured` in place of the `RuntimeWarning` fallback; unset
-          still means `development`
-        - `DEBUG=True` with `ENVIRONMENT` `staging` or `production` raises `ImproperlyConfigured`
-        - `env.list()` for the three variables: today's lists as the development defaults, `DJANGO_ALLOWED_HOSTS`
-          required in staging and production, both origin lists empty there by default
-        - Tests should now PASS
+    - [x] **1.1.a Tests:** Added the isolated real-settings helper and strict-environment/list cases; five cases
+      failed before implementation. The development-default guard failed with localhost removed, then passed after
+      restoration.
+    - [x] **1.1.b Implementation:** Moved environment validation before host lists, rejected unknown environments and
+      deployed DEBUG, and read hosts/origins as lists with development defaults. Core/authentication tests: 363
+      passed; Ruff and Pyright passed.
 
 - [ ] **1.2 Development tooling loads only in development** (R1)
 

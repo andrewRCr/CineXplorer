@@ -47,8 +47,12 @@ Example:
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 """
 import json
+import os
+import subprocess
+import sys
 import uuid
 from http import HTTPStatus
+from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict, Unpack, cast
 from unittest.mock import Mock
 
@@ -505,3 +509,90 @@ def create_mock_user(
     mock.username = username
     mock.email = email
     return mock
+
+
+def load_settings(
+    environment: dict[str, str | None],
+    names: list[str],
+    *,
+    before_import: str = "",
+    setup: bool = False,
+) -> dict[str, object]:
+    """Read real settings in an isolated interpreter, or return its configuration error.
+
+    Dotted names resolve through imports; bare names resolve on settings, then
+    the pre-import namespace. Missing settings are omitted from the result.
+    """
+    child_env = os.environ.copy()
+    for name in (
+        "DJANGO_CONSOLE_LOG_LEVEL",
+        "DJANGO_LOG_LEVEL",
+        "TESTING",
+        "CI",
+        "GITHUB_ACTIONS",
+        "CONTINUOUS_INTEGRATION",
+        "BUILD_NUMBER",
+        "DJANGO_ALLOWED_HOSTS",
+        "CSRF_TRUSTED_ORIGINS",
+        "CORS_ALLOWED_ORIGINS",
+    ):
+        child_env.pop(name, None)
+    for name, value in environment.items():
+        if value is None:
+            child_env.pop(name, None)
+        else:
+            child_env[name] = value
+    child_env["DJANGO_SETTINGS_MODULE"] = "config.settings"
+    code = (
+        """
+import importlib
+import json
+from django.core.exceptions import ImproperlyConfigured
+"""
+        + before_import
+        + "\n"
+        + """
+try:
+    settings = importlib.import_module("config.settings")
+    if SETUP:
+        import django
+        django.setup()
+    values = {}
+    for name in NAMES:
+        if "." not in name:
+            if hasattr(settings, name):
+                values[name] = getattr(settings, name)
+            elif name in globals():
+                values[name] = globals()[name]
+        else:
+            parts = name.split(".")
+            for end in range(len(parts) - 1, 0, -1):
+                try:
+                    value = importlib.import_module(".".join(parts[:end]))
+                except ModuleNotFoundError:
+                    continue
+                for part in parts[end:]:
+                    value = getattr(value, part)
+                values[name] = value
+                break
+except ImproperlyConfigured as exc:
+    values = {"error": str(exc)}
+print("SETTINGS_RESULT=" + json.dumps(values, default=str))
+"""
+    )
+    code = code.replace("SETUP", repr(setup)).replace("NAMES", repr(names))
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=Path(__file__).resolve().parents[3],
+        env=child_env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=True,
+    )
+    payload = next(
+        line.removeprefix("SETTINGS_RESULT=")
+        for line in result.stdout.splitlines()
+        if line.startswith("SETTINGS_RESULT=")
+    )
+    return cast(dict[str, object], json.loads(payload))

@@ -108,7 +108,7 @@ runbook for setting up the server, deploying a version and rolling it back.
       (`>= 3.2.9, < 3.3`)
     - Rebuilt the development image; Gunicorn 26.2.0 and email-validator both import successfully
 
-- [ ] **2.2 Split the backend Dockerfile into `dev` and `production` stages** (R9–R12, R23; SC2, SC3, SC9)
+- [x] **2.2 Split the backend Dockerfile into `dev` and `production` stages** (R9–R12, R23; SC2, SC3, SC9)
 
     - [x] **2.2.a Explicit development builds:** Added the shared Alpine 3.24 base and named dev stage,
       selected by Compose with the existing UID/GID arguments; development dependencies install unconditionally.
@@ -119,26 +119,14 @@ runbook for setting up the server, deploying a version and rolling it back.
       failure. The rebuilt stack serves the frontend and health endpoint; direct admin HTML includes the toolbar
       and its JavaScript loads. Full backend suite: 844 passed. actionlint and Compose target checks passed.
 
-    - [ ] **2.2.b Add the build and `production` stages**
-        - A build stage from the shared base that installs `build-base` and `libpq-dev` and installs `req.prod.txt`
-          into a virtual environment
-        - A final `production` stage, last in the file, from the shared base: `apk add libpq`, the virtual environment
-          copied from the build stage, the application code, a non-root user, and `ENV ENVIRONMENT=production`
-        - `RUN` `collectstatic --noinput` with throwaway values for R10's variables set on that one command, so none
-          reaches the image's environment
-        - `backend/gunicorn.conf.py`, which gunicorn loads from its working directory: bind `0.0.0.0:8000`,
-          `worker_class = "gthread"`, `workers` from `GUNICORN_WORKERS` (default 2), `threads` from `GUNICORN_THREADS`
-          (default 4), `timeout = 60`, access log to stdout; `CMD ["gunicorn", "config.wsgi:application"]`
-        - `config/wsgi.py` and `config/asgi.py` default `DJANGO_SETTINGS_MODULE` to `config.settings`, as `manage.py`
-          does; both name `backend.settings` today, which does not exist. Nothing has relied on that default: the
-          development server imports `config.wsgi` through `WSGI_APPLICATION` only after `manage.py` has set the
-          variable, and nothing imports `config.asgi`
-        - `staticfiles/` in `backend/.dockerignore`, so a local `collectstatic` run never reaches the build context
-        - Check: `docker build --target production backend` succeeds; the image is under 300 MB by the Phase 2 note's
-          measure; SC2's commands give their stated results; SC3's `check --deploy --fail-level WARNING` exits 0;
-          `gunicorn --print-config config.wsgi:application` in the image, with R10's variables as placeholders and no
-          `DJANGO_SETTINGS_MODULE` set, shows the worker class, workers, threads and timeout and exits 0, since it
-          loads the application after printing
+    - [x] **2.2.b Production image:** Added separate dependency-build and runtime stages, with compiled psycopg,
+      runtime libpq, a non-root user and build-time static collection using command-scoped placeholders. Collected
+      assets are excluded from the build context. Added Gunicorn's threaded-worker defaults and environment overrides;
+      WSGI and ASGI now default to config.settings. Static collection runs before the final non-root USER switch.
+      The image filesystem is 190,300,093 bytes by du -sxb. Development-package imports and gcc fail as required;
+      psycopg reports c. Production URL imports, strict deployment checks, Gunicorn defaults/overrides, ASGI import,
+      non-root identity, static manifest and absence of copied env files/log directories/build-only runtime variables
+      all passed. Ruff and Pyright passed.
 
 - [ ] **2.3 CI builds the production image and checks it** (R21's build, R22; SC3)
     - A new `images` job in `.github/workflows/ci.yml` on every event the workflow runs for: Buildx, then

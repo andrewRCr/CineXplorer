@@ -43,3 +43,33 @@ RUN chown -R $USERNAME:$USERNAME /backend
 USER $USERNAME
 
 EXPOSE 8000
+
+FROM base AS build
+RUN apk add --no-cache build-base libpq-dev && \
+    python -m venv /py
+WORKDIR /build
+COPY ./requirements ./requirements
+RUN /py/bin/pip install --no-cache-dir -r ./requirements/req.prod.txt
+
+FROM base AS production
+RUN apk add --no-cache libpq && \
+    addgroup -S django-user && \
+    adduser -S -G django-user django-user
+WORKDIR /backend
+COPY --from=build /py /py
+COPY --chown=django-user:django-user . .
+ENV ENVIRONMENT=production
+
+# Build the static manifest with throwaway inputs scoped to this command.
+RUN DJANGO_SECRET_KEY=build-placeholder-secret-key-only-for-static-assets-not-for-runtime \
+    TMDB_API_KEY=build-placeholder \
+    BACKEND_URL=https://build.invalid \
+    POSTGRES_DB=build-placeholder \
+    POSTGRES_USER=build-placeholder \
+    POSTGRES_PASSWORD=build-placeholder \
+    DJANGO_ALLOWED_HOSTS=build.invalid \
+    python manage.py collectstatic --noinput
+
+USER django-user
+EXPOSE 8000
+CMD ["gunicorn", "config.wsgi:application"]

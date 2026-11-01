@@ -3,7 +3,7 @@
 **Type:** Open source contribution
 **Repository:** <https://github.com/zohomail/zoho_zeptomail-django>
 **Branch:** `fix/multipart-email-body-handling`
-**Status:** PR merged, awaiting PyPI release
+**Status:** Complete
 **PR:** <https://github.com/zohomail/zoho_zeptomail-django/pull/1>
 **Created:** 2024-12-22
 **Fork:** `~/dev/zoho_zeptomail-django`
@@ -75,7 +75,7 @@ setting `textbody` and `htmlbody` separately per the ZeptoMail API specification
 
 ---
 
-## Phase 4: Cleanup (after PR merged or abandoned)
+## Phase 4: Cleanup (after PR merged or abandoned) ✅
 
 **Unblocked:** 0.0.4 reached PyPI on 2026-09-28. Its only library change from 0.0.3 is the fix from PR #1
 (wheel contents compared, 2026-10-31).
@@ -93,8 +93,10 @@ setting `textbody` and `htmlbody` separately per the ZeptoMail API specification
       prepended). Whether ZeptoMail also delivers a `text/plain` part was not settled: the receiving mailbox's source
       view showed HTML only, and ZeptoMail documents the body as text or HTML
 
-- [ ] 4.2 Archive this task list
+- [x] 4.2 Archive this task list
     - Move to `.arc/reference/archive/` with outcome notes
+    - Archived to `2026-q4/incidental/05_zoho-zeptomail-upstream-fix/` with `completion-zoho-zeptomail-upstream-fix.md`,
+      in the same pull request as Task 4.1, since `main` takes changes only through pull requests
 
 ---
 
@@ -129,3 +131,26 @@ if isinstance(email, EmailMultiAlternatives):
 **Estimated effort:** 1-2 hours
 **Risk if not merged:** Minimal - we already have working workaround
 **Upside if merged:** Resume bullet point, community benefit, can remove workaround
+
+---
+
+## Completion Notes
+
+**Completion Date**: 2026-10-31
+
+**Summary**:
+
+- The upstream fix (PR #1, merged 2024-12-23) shipped in django-zoho-zeptomail 0.0.4 on 2026-09-28, and CineXplorer
+  now sends through the package's own backend, with the workaround removed
+- A unit test pins the reason for the `>= 0.0.4` floor: the configured backend's API payload carries the text and
+  HTML separately
+
+**Files Changed**: 7 in `backend/` (requirements, settings, the new test; the workaround and its three stub files
+removed)
+
+**Follow-Up Work**:
+
+- Whether ZeptoMail delivers a `text/plain` part alongside the HTML is unconfirmed; the production sign-up check reads
+  it from a real inbox's raw source
+- The package's API call sets no timeout and prints each response to stdout, as it did under the workaround; both
+  matter once email runs in production

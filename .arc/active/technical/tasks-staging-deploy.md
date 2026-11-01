@@ -207,19 +207,15 @@ runbook for setting up the server, deploying a version and rolling it back.
     - Every stack operation used the explicit production file and run env file. Teardown removed its containers,
       volumes and temporary credential files; development stayed healthy and its user/migration counts are unchanged.
 
-- [ ] **4.3 CI publishes both images** (R21; SC8)
-    - In the `images` job, on a push to `main` or a manual run: log in to `ghcr.io` with `GITHUB_TOKEN`, and push both
-      images tagged `sha-` plus the commit's first seven characters, and `main` for pushes to `main`
-      (`docker/metadata-action` with `type=sha` and a `main` tag enabled only on `main`)
-    - Job-level `permissions` of `contents: read` and `packages: write` on this job only; the workflow's top-level
-      `contents: read` stays
-    - Pull request runs still build without pushing
-    - Check: `actionlint`; then, with the Owner's approval to open the pull request, SC8: the pull request's run passes
-      every job and builds both images without pushing, and its backend tests run on the `dev` image (SC9); a manual
-      run on the branch publishes both images with the `sha-` tag
-    - Local evidence: actionlint passes. Publishing is restricted to manual runs and main pushes; only the images
-      job receives package-write permission. Both checked builds precede registry login and cached publishing.
-      Hosted manual publishing and pull-request verification remain before completion.
+- [x] **4.3 CI publishes both images** (R21; SC8)
+    - Added job-scoped registry login and cached publishing after both checked builds. Manual runs publish both
+      images with seven-character SHA tags; main pushes also publish the main tag. Only this job has package-write
+      permission, and pull requests build without publishing. actionlint passed.
+    - Manual run 41358836511 at 9d75e13f passed all six jobs and published both GHCR images with tag sha-9d75e13.
+      Registry login and both manifest pushes succeeded; image names and run evidence are in the personal workspace.
+    - With approval, opened draft PR 24 against main using the approved title and body. Its run 41359341000 passed
+      all six jobs: both production builds succeeded, while registry login and both publishing steps were skipped.
+      Backend logs confirm the development image target and 844 passing tests; frontend tests passed all 761 cases.
 
 ### **Phase 5:** Staging is set up and deployed by the runbook
 

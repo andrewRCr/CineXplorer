@@ -192,26 +192,20 @@ runbook for setting up the server, deploying a version and rolling it back.
     - Moved development Postgres to 17-alpine3.24 with its existing volume. User/migration counts are unchanged;
       backend ORM and proxy health checks pass, and the full backend suite passed all 844 tests.
 
-- [ ] **4.2 Run the production stack locally** (SC7)
-    - Build both images on this branch and tag them `ghcr.io/andrewrcr/cinexplorer-backend:local` and
-      `ghcr.io/andrewrcr/cinexplorer-web:local`, so the Compose file's references resolve with `IMAGE_TAG=local`
-    - A Compose env file and a backend env file for the run, outside the repository and following R20's templates.
-      The Compose env file has `SITE_ADDRESS=localhost`, test Postgres credentials, an admin basic-auth pair and
-      `BACKEND_ENV_FILE` giving the run's backend env file as an absolute path. The backend env file has a generated
-      `DJANGO_SECRET_KEY`, `ENVIRONMENT=staging`, `DEBUG=False` and the development TMDB key copied from the
-      development env file. `staging` is what the staging host runs: its HSTS lasts an hour and leaves out subdomains,
-      where the image's `production` default would send the browser used for the checks one-year HSTS covering
-      subdomains for `localhost`
-    - Run SC7: migrations as a one-off container, then `up`; every check SC7 lists, including a staff account created
-      in a one-off container signing in through `/admin/`
-    - Also: `/dev/theme-debug` and `/testlogin` show the not-found page; plain HTTP redirects to HTTPS; the sign-in
-      endpoint's sixth attempt within a minute is throttled although each attempt sends a different
-      `X-Forwarded-For`, which shows a client-sent `X-Forwarded-For` cannot change the throttle key (R5); that Caddy
-      replaces the header rests on its documentation (3.3.a)
-    - Every command in the run, the teardown included, uses
-      `docker compose -f infrastructure/docker-compose.prod.yml --env-file <the run's Compose env file>`, so none
-      depends on the working directory; tear the stack and its volumes down afterwards with that invocation's
-      `down -v`
+- [x] **4.2 Local production stack** (SC7)
+    - Built both current production images under their GHCR names with the local tag. Ran one-off migrations and
+      started the isolated stack with staging settings, temporary credentials and the development TMDB key loaded
+      without printing it; both env files stayed outside the checkout at mode 600.
+    - HTTP checks passed for HTTPS health, staging HSTS, admin static assets/basic auth, plain-HTTP redirects,
+      page/deep-link/index cache headers, immutable assets, uncached asset 404s, all four security headers and the
+      non-root backend with no logs directory. Changing supplied forwarding headers still yielded five successful
+      sign-ins then 429. The movie API returned real TMDB data.
+    - Headless Chrome rendered home and the movie page with its poster, reloaded the deep link, showed not-found on
+      both development paths, made no requests to the development origin and reported no uncaught script errors.
+      A verified staff account created in a one-off container signed in through the Caddy gate and Django admin.
+      Screenshots and check summaries are in the personal evidence workspace.
+    - Every stack operation used the explicit production file and run env file. Teardown removed its containers,
+      volumes and temporary credential files; development stayed healthy and its user/migration counts are unchanged.
 
 - [ ] **4.3 CI publishes both images** (R21; SC8)
     - In the `images` job, on a push to `main` or a manual run: log in to `ghcr.io` with `GITHUB_TOKEN`, and push both

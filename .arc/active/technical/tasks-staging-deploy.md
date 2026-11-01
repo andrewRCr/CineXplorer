@@ -101,12 +101,12 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 ### **Phase 2:** The production backend image is small and checked in CI
 
-- [ ] **2.1 Runtime dependencies** (R2)
+- [x] **2.1 Runtime dependencies** (R2)
     - `gunicorn` added to `requirements/req.txt` with a bounded range, and `email-validator` moved there from
       `req.dev.txt` with its range and comment
     - New `requirements/req.prod.txt`: `-r req.txt`, then `psycopg[c]` in `req.txt`'s `psycopg` range
       (`>= 3.2.9, < 3.3`)
-    - Rebuild the development image; `python -c "import gunicorn, email_validator"` succeeds in it
+    - Rebuilt the development image; Gunicorn 26.2.0 and email-validator both import successfully
 
 - [ ] **2.2 Split the backend Dockerfile into `dev` and `production` stages** (R9–R12, R23; SC2, SC3, SC9)
 

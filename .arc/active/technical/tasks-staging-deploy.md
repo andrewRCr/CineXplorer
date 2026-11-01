@@ -150,13 +150,12 @@ runbook for setting up the server, deploying a version and rolling it back.
       services, authentication hooks and development login page. No localhost:8444 hardcode remains under src.
       Six new cases and 148 related tests passed; ESLint and TypeScript checks passed.
 
-- [ ] **3.2 Development routes stay out of production builds** (R14)
-    - `src/App.tsx`: the `lazy()` declarations for `TypographyDebug`, `ThemeDebug`, `LayoutDebug` and `TestLogin`, and
-      their `<Route>` elements, exist only when `import.meta.env.DEV` is true; `/testlogin` then falls to the layout's
-      catch-all not-found route, like the three debug paths
-    - The footer's debug links are already gated on `import.meta.env.DEV`
-    - Check: `npx vite build --manifest` writes a `dist/.vite/manifest.json` with no entry under `src/pages/dev/` and
-      none for `src/pages/user/TestLogin.tsx`
+- [x] **3.2 Development routes stay out of production builds** (R14)
+    - Guarded all four development lazy imports and their routes with the development condition. Their paths reach
+      the existing not-found route in production; the footer already has its development guard.
+    - Production manifests contain four development entries before the change and none after it. Used temporary
+      output directories because the pre-existing host dist directory is owned by nobody. ESLint and TypeScript
+      checks passed; Vitest found no related App test files. Production-route browser checks remain in 4.2.
 
 - [ ] **3.3 The production Caddyfile and the web image** (R15, R16; SC6)
 

@@ -94,6 +94,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "middleware.logging.RequestLoggingMiddleware",  # Request correlation and logging
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -208,6 +209,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+if ENVIRONMENT in ("staging", "production"):
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+SECURE_REDIRECT_EXEMPT = [r"^api/health-check/$"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -387,28 +395,15 @@ CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
 # This is safe - CSRF tokens are defense mechanisms, not secrets
 CSRF_COOKIE_HTTPONLY = False
 
-# CSRF Configuration for Django Ninja + Django Middleware Integration
-# Solution: Use Django's CsrfViewMiddleware exclusively (NOT Django Ninja's CSRF)
-#
-# Background:
-# - Django Ninja v1+ auto-detects APIKeyCookie subclasses and enables CSRF
-# - Django Ninja's csrf parameter controls @csrf_exempt decorator (not validation)
-# - Passing csrf=True to auth classes causes conflict with Django's middleware
-# - Django Ninja Issue #1464: csrf=True rejects valid tokens (unresolved bug)
-#
-# Implementation:
-# 1. NinjaAPI(csrf=False) - Disable Django Ninja's CSRF entirely
-# 2. JWTCookieAuth.__init__() - No csrf parameter (avoid bug #1464)
-# 3. CsrfViewMiddleware enabled - Django handles all CSRF validation
-# 4. CSRF_TRUSTED_ORIGINS - Must include all origins sending requests
-#
-# Requirements:
-# - Frontend MUST send X-CSRFToken header with CSRF token value
-# - Frontend MUST send Referer header for HTTPS requests
-# - Referer must match one of CSRF_TRUSTED_ORIGINS
-#
-# See: https://github.com/vitalik/django-ninja/issues/1464
-CSRF_TRUSTED_ORIGINS_USE_HTTPS = not DEBUG  # Use HTTPS for trusted origins in production
+# CsrfHeaderMiddleware deliberately replaces Django's CsrfViewMiddleware:
+# it validates X-CSRFToken on unsafe requests carrying the JWT cookie.
+# Django admin views apply csrf_protect themselves. Token checks do not cover
+# exempt public auth endpoints (registration, sign-in, logout, email verification
+# and resend; refresh stays checked), allauth's headless browser endpoints, or
+# session-only API authentication. Those paths rely on SameSite=Lax; Ninja parses
+# JSON regardless of content type, so cross-site forms can still force sign-in.
+SILENCED_SYSTEM_CHECKS = ["security.W003"]
+
 
 # HSTS and SSL/TLS Security Settings (Environment-Aware)
 # HSTS (HTTP Strict Transport Security) - forces browsers to use HTTPS

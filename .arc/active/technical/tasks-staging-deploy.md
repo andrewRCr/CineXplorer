@@ -75,30 +75,13 @@ runbook for setting up the server, deploying a version and rolling it back.
     - [x] **1.4.b Implementation:** Added FrontendLogThrottle at 30/m with frontend_logs scope and regenerated its API
       description. Rate-limit/logging API tests: 31 passed; Ruff and Pyright passed.
 
-- [ ] **1.5 Static files, the health check over plain HTTP, and the silenced deploy check** (R4, R6, R8)
+- [x] **1.5 Static files, the health check over plain HTTP, and the silenced deploy check** (R4, R6, R8)
 
-    - [ ] **1.5.a Write tests** in `test_environment_config.py`
-        - With `override_settings(SECURE_SSL_REDIRECT=True)`, a plain-HTTP `GET /api/health-check/` answers `200` and
-          another path answers `301` to `https://`; the test client loads its middleware on the first request, so the
-          override must be active before it
-        - With 1.1.a's helper: under `staging`, the `staticfiles` storage is WhiteNoise's
-          `CompressedManifestStaticFilesStorage`, and under `development` the module defines no `STORAGES`, which
-          leaves Django's default; in both, `STATIC_ROOT` is `backend/staticfiles` and
-          `whitenoise.middleware.WhiteNoiseMiddleware` comes directly after `SecurityMiddleware`
-        - Expect the health-check, `staging` storage, `STATIC_ROOT` and middleware cases to FAIL initially; the
-          other path's `301` and the `development` storage case pass today and are guard cases
-
-    - [ ] **1.5.b Implement**
-        - `whitenoise` in `requirements/req.txt` with a bounded range; rebuild the development image, which installs
-          `req.txt`
-        - `STATIC_ROOT` and the middleware in every environment; `STORAGES` with WhiteNoise's storage only in staging
-          and production
-        - `SECURE_REDIRECT_EXEMPT = [r"^api/health-check/$"]`
-        - `SILENCED_SYSTEM_CHECKS = ["security.W003"]` with the comment R8 gives, which replaces the stale block
-          headed `# CSRF Configuration for Django Ninja + Django Middleware Integration` that describes
-          `CsrfViewMiddleware` as enabled; drop `CSRF_TRUSTED_ORIGINS_USE_HTTPS`, which Django does not read
-        - `backend/staticfiles/` in `.gitignore`
-        - Tests should now PASS
+    - [x] **1.5.a Tests:** Added real-settings storage/root/middleware cases and HTTP redirect cases. Six cases failed
+      before implementation; valid unconditional storage and an unrelated redirect exemption each broke their guard.
+    - [x] **1.5.b Implementation:** Added WhiteNoise 6.12.x, STATIC_ROOT, deployed manifest storage, the health
+      exemption and the documented security.W003 silence. Rebuilt the image. Environment tests: 37 passed; Ruff and
+      Pyright passed. Filtered only the observed missing collected-static-directory warning.
 
 - [ ] **1.6 Logs go to stdout only outside development** (R11's logging; SC7 checks the running container in 4.2)
 

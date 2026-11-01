@@ -341,3 +341,49 @@ def test_dev_log_route_denies_staging_even_with_debug() -> None:
             "/api/dev-logs/write/", {"log_line": "example"}, content_type="application/json"
         )
     assert response.status_code == 403
+
+
+@pytest.mark.parametrize("environment", ["staging", "development"])
+@pytest.mark.parametrize("setting", ["STORAGES", "STATIC_ROOT", "MIDDLEWARE"])
+def test_static_configuration(environment: str, setting: str) -> None:
+    from pathlib import Path
+
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {"ENVIRONMENT": environment, "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
+        [setting, "BASE_DIR"],
+    )
+    if setting == "STORAGES":
+        if environment == "development":
+            assert setting not in values
+        else:
+            assert values[setting] == {
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {
+                    "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+                },
+            }
+    elif setting == "STATIC_ROOT":
+        assert values.get(setting) == str(Path(str(values["BASE_DIR"])) / "staticfiles")
+    else:
+        middleware = values[setting]
+        assert isinstance(middleware, list)
+        security = cast(list[object], middleware).index(
+            "django.middleware.security.SecurityMiddleware"
+        )
+        assert middleware[security + 1] == "whitenoise.middleware.WhiteNoiseMiddleware"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "path,expected", [("/api/health-check/", 200), ("/api/logs/health/", 301)]
+)
+def test_https_redirect_exempts_only_health_check(path: str, expected: int) -> None:
+    from django.test import Client
+
+    with override_settings(SECURE_SSL_REDIRECT=True):
+        response = Client().get(path)
+    assert response.status_code == expected
+    if expected == 301:
+        assert response["Location"] == "https://testserver" + path

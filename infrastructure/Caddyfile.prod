@@ -1,0 +1,43 @@
+{$SITE_ADDRESS} {
+	root * /srv
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy same-origin
+		Cross-Origin-Opener-Policy same-origin
+	}
+
+	handle /admin/* {
+		basic_auth {
+			{$ADMIN_BASIC_AUTH_USER} {$ADMIN_BASIC_AUTH_HASH}
+		}
+		reverse_proxy backend:8000
+	}
+
+	@backend path /api/* /_allauth/* /accounts/* /static/*
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	handle /assets/* {
+		@asset {
+			file
+			not path */
+		}
+		handle @asset {
+			header Cache-Control "public, max-age=31536000, immutable"
+			file_server
+		}
+		handle {
+			header Cache-Control no-store
+			respond 404
+		}
+	}
+
+	handle {
+		header Cache-Control no-cache
+		try_files {path} /index.html
+		file_server
+	}
+}

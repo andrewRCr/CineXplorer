@@ -159,17 +159,11 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 - [ ] **3.3 The production Caddyfile and the web image** (R15, R16; SC6)
 
-    - [ ] **3.3.a Write `infrastructure/Caddyfile.prod`** to R16
-        - Site address `{$SITE_ADDRESS}`; `/api/*`, `/_allauth/*`, `/accounts/*`, `/admin/*` and `/static/*` to
-          `backend:8000` over plain HTTP; `basic_auth` on `/admin/*` from `{$ADMIN_BASIC_AUTH_USER}` and
-          `{$ADMIN_BASIC_AUTH_HASH}`
-        - The bundle from `/srv` with `try_files {path} /index.html`; `Cache-Control: no-cache` on `index.html` however
-          it is reached; the one-year immutable policy on files that exist under `/assets/`; a `404` with
-          `Cache-Control: no-store` for a missing one
-        - The four security headers on responses Caddy serves itself; no CORS headers; no `trusted_proxies`, so Caddy
-          replaces any `X-Forwarded-For` a client sends (its `reverse_proxy` documentation: values from untrusted
-          clients are ignored)
-        - Check: `caddy validate` in `caddy:2.11-alpine` with test values for the three variables
+    - [x] **3.3.a Production Caddyfile:** Added environment-based site and admin basic-auth settings, plain-HTTP
+      backend proxy routes, bundle fallback with no-cache, immutable existing assets and no-store missing assets.
+      The four required security headers apply to responses, including Caddy's own errors. Caddy's documented
+      default ignores client-supplied forwarding headers; no trusted proxy configuration is set. Formatted and
+      validated with caddy:2.11-alpine and test values; response-level checks follow with the image.
 
     - [ ] **3.3.b Split the frontend Dockerfile, select `dev` in the development Compose file, and add the production
       stages** in one change

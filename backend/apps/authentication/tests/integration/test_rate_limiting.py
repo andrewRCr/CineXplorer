@@ -250,3 +250,88 @@ def test_token_refresh_throttles_11th_attempt(
     # Django Ninja throttle returns {'detail': 'Too many requests.'}
     assert "detail" in data
     assert "too many" in data["detail"].lower()
+
+
+@pytest.fixture
+def staging_proxy_settings() -> dict[str, int]:
+    """Use proxy counts read from the real deployed configuration."""
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {"ENVIRONMENT": "staging", "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
+        ["NINJA_NUM_PROXIES", "ALLAUTH_TRUSTED_PROXY_COUNT"],
+    )
+    assert all(isinstance(value, int) for value in values.values())
+    return {name: value for name, value in values.items() if isinstance(value, int)}
+
+
+@pytest.mark.parametrize("environment", ["staging", "production", "development"])
+def test_proxy_counts_match_environment(environment: str) -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {"ENVIRONMENT": environment, "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
+        ["NINJA_NUM_PROXIES", "ALLAUTH_TRUSTED_PROXY_COUNT"],
+    )
+    assert values == (
+        {}
+        if environment == "development"
+        else {
+            "NINJA_NUM_PROXIES": 1,
+            "ALLAUTH_TRUSTED_PROXY_COUNT": 1,
+        }
+    )
+
+
+def test_allauth_uses_last_forwarded_address(staging_proxy_settings: dict[str, int]) -> None:
+    from allauth.account.adapter import get_adapter
+    from django.test import RequestFactory
+
+    request = RequestFactory().get(
+        "/", HTTP_X_FORWARDED_FOR="198.51.100.7, 203.0.113.9", REMOTE_ADDR="172.16.0.2"
+    )
+    with override_settings(**staging_proxy_settings):
+        assert get_adapter().get_client_ip(request) == "203.0.113.9"
+
+
+@pytest.mark.enable_throttling
+@pytest.mark.django_db
+@override_settings(TESTING=False, ZEPTOMAIL_API_KEY="")
+@pytest.mark.parametrize("same_client", [True, False])
+def test_forwarded_clients_share_only_their_own_login_limit(
+    api_client: Client,
+    verified_user: User,
+    clear_throttle_cache: Iterator[None],
+    enable_throttling_for_test: Iterator[None],
+    staging_proxy_settings: dict[str, int],
+    same_client: bool,
+) -> None:
+    payload = {"login": verified_user.username, "password": "testpass123"}
+    with override_settings(**staging_proxy_settings):
+        for _ in range(5):
+            assert (
+                api_client.post(
+                    "/api/token/",
+                    payload,
+                    content_type="application/json",
+                    HTTP_X_FORWARDED_FOR="198.51.100.7, 203.0.113.9",
+                ).status_code
+                == 200
+            )
+        header = "192.0.2.4, 203.0.113.9" if same_client else "192.0.2.4, 203.0.113.10"
+        assert api_client.post(
+            "/api/token/",
+            payload,
+            content_type="application/json",
+            HTTP_X_FORWARDED_FOR=header,
+        ).status_code == (429 if same_client else 200)
+        if not same_client:
+            assert (
+                api_client.post(
+                    "/api/token/",
+                    payload,
+                    content_type="application/json",
+                    HTTP_X_FORWARDED_FOR="198.51.100.7, 203.0.113.9",
+                ).status_code
+                == 429
+            )

@@ -59,6 +59,10 @@ ALLOWED_HOSTS = (
     else env.list("DJANGO_ALLOWED_HOSTS")
 )
 
+if ENVIRONMENT in ("staging", "production"):
+    NINJA_NUM_PROXIES = 1
+    ALLAUTH_TRUSTED_PROXY_COUNT = 1
+
 # Application definition
 
 INSTALLED_APPS = [

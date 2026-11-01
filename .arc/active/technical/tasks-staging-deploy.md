@@ -60,27 +60,13 @@ runbook for setting up the server, deploying a version and rolling it back.
     - [x] **1.2.b Implementation:** Gated development tooling and endpoints on ENVIRONMENT and regenerated API
       descriptions. Environment cases: 29 passed; core/authentication: 374 passed; Ruff and Pyright passed.
 
-- [ ] **1.3 Throttles key on the client address Caddy saw** (R5; SC5)
+- [x] **1.3 Throttles key on the client address Caddy saw** (R5; SC5)
 
-    - [ ] **1.3.a Write tests** in `apps/authentication/tests/integration/test_rate_limiting.py`, where the throttle
-      fixtures live
-        - The in-process cases run under the staging proxy setting: they read `NINJA_NUM_PROXIES` and
-          `ALLAUTH_TRUSTED_PROXY_COUNT` under `staging` with 1.1.a's helper and apply them with `override_settings`,
-          leaving out a count the staging settings don't define (Django Ninja reloads its settings on
-          `setting_changed`; allauth reads its own on every call)
-        - Two headers with different first entries and the same last entry (`198.51.100.7, 203.0.113.9` and
-          `192.0.2.4, 203.0.113.9`) share one count; this fails before 1.3.b, when the key is the whole header value
-        - allauth's `get_adapter().get_client_ip(request)` returns the header's last entry; this fails before 1.3.b,
-          when allauth ignores the header and returns `REMOTE_ADDR`
-        - Sign-in requests whose `X-Forwarded-For` names two different clients are counted separately: one client's
-          sixth attempt is throttled while the other's first succeeds. This passes before and after 1.3.b, so see it
-          fail once with `NINJA_NUM_PROXIES=0` in its override, which keys every request on `REMOTE_ADDR`
-        - With 1.1.a's helper: both counts are `1` under `staging` and `production`, and absent under `development`
-        - Expect the shared-count, allauth and helper cases to FAIL initially
-
-    - [ ] **1.3.b Set both proxy counts** to `1` in staging and production in `config/settings.py`; development leaves
-      them unset
-        - Tests should now PASS
+    - [x] **1.3.a Tests:** Added deployed proxy-count, allauth address and per-client login-limit cases. Four deployed
+      cases failed before implementation; forced zero proxies broke separate-client isolation and always-set counts
+      broke the development guard.
+    - [x] **1.3.b Implementation:** Set both trusted proxy counts to one in staging/production and added the two
+      exercised allauth stub signatures. Rate-limit tests: 12 passed; Ruff and Pyright passed.
 
 - [ ] **1.4 The log endpoint has its own throttle** (R7; SC5)
 

@@ -1,7 +1,8 @@
 # Workflow: Worktree Sessions
 
-**Purpose**: Run another session on CineXplorer beside the primary one. A session in a linked worktree works on its
-own checkout and its own Compose project, so its commands never reach the primary's containers, code or dev data.
+**Purpose**: Run work in a linked checkout beside the primary. Either a separate conversation or the same
+conversation can direct its tools to that checkout and its own Compose project. The primary keeps its branch,
+tracked files and dev data.
 
 The primary is the main checkout. It keeps Compose's default project name, `infrastructure`, and runs the full stack:
 Caddy on 8444, the frontend dev server, the backend, `dev-db` and `redis`.
@@ -23,7 +24,7 @@ address), and the dev database's data.
 From the primary's root, for a branch `{type}/{name}`:
 
 ```bash
-W=~/dev/scratch/cinexplorer-worktrees/{name}
+W="${PWD}.{name}"
 git fetch origin
 git worktree add -b {type}/{name} "$W" origin/main
 
@@ -59,6 +60,39 @@ docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # n
   so approve those hooks once in a Codex session on the primary (`/hooks`).
 - **Notes:** a work unit's session notes live in the worktree's own `.arc/user/{identity}/{name}/`. The inbox and
   working memory stay in the main checkout ([user-inbox.md](user-inbox.md)).
+
+## Same-Session Errands
+
+An errand can stay in the conversation launched at the primary. Its tools use an explicit working directory for
+each shell call and absolute paths for reads and edits. The session home and active errand checkout are distinct;
+changing a shell's directory does not retarget the conversation or its hooks.
+
+Before the first such errand, run this from a reviewed checkout containing the updated harness:
+
+```bash
+node .arc/reference/harness-hooks/install-errand-harness.mjs
+```
+
+It copies the recovery implementation and `$errand` skill into the primary's gitignored `.codex/`, preserves
+unrelated hook entries and keeps a backup of `hooks.json`. Approve changed hooks in the harness when prompted.
+Refresh the installation with the same command when those tracked sources change. The installed copy survives
+worktree removal and works while the primary remains on an older branch; it does not modify that branch's tracked
+hook source. `.claude` hook configuration is unchanged.
+
+`$errand <concern or inbox title>` follows [run-errand.md](run-errand.md) in the current conversation. The agent
+creates and provisions a sibling checkout, then records its selection with `errand-enter`, run from the session
+home. For documentation and harness work, provisioning needs only the shared tool/harness links; copy environment
+files, install frontend dependencies or start a test stack only when the checks need them.
+
+The session-scoped record lives in shared Git metadata and uses the Codex thread/session identifier. The identifiers
+must agree; missing or different identifiers stop entry. Recovery validates the checkout's registration, repository
+and recorded branch, then emits that checkout's context and absolute read paths. An invalid or missing checkout
+produces a stop instruction rather than the primary work unit's notes. Return explicitly before removal.
+
+Sibling paths are outside the primary's ordinary writable directory. Configure scoped access or approval context
+for this repository's registered worktrees; project trust alone does not grant writes there. Do not broaden access
+to the entire parent directory. Git metadata and the installed harness are shared; editing through `.codex` or
+`.claude` links edits the primary's local settings.
 
 ## What Runs Where
 
@@ -96,10 +130,12 @@ docker compose $S down                                               # when the 
 ## Removal
 
 After the pull request merges, and before the branch is deleted: git refuses to delete a branch a worktree has checked
-out. Run it from the primary, never from a session standing in the worktree; that session hands off and ends first.
+out. Run removal commands from the primary. A separate conversation rooted in the worktree hands off and ends
+first. A same-session errand instead runs `errand-return` from its session home and confirms that home is active
+before removing the checkout; the conversation can then continue.
 
 ```bash
-W=~/dev/scratch/cinexplorer-worktrees/{name}
+W="${PWD}.{name}"
 docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \
   config | grep '^name:'   # name: cinexplorer-{name}
 docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \

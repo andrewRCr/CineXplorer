@@ -17,8 +17,10 @@
 // A hook must never block the harness: every failure exits 0 without output.
 
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join, relative } from "node:path";
+import { activeErrand, errandCommand } from "./errand-session.mjs";
 
 const MARKER_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const MAX_LISTED_CHANGES = 10;
@@ -34,12 +36,21 @@ const NOTE_FIELDS = [
     "Commit at Handoff",
 ];
 
-try {
-    main(process.argv.slice(2));
-} catch {
-    // Fall through: recovery is best effort and must not fail the hook.
+const args = process.argv.slice(2);
+if (args[0]?.startsWith("errand-")) {
+    try {
+        process.stdout.write(`${JSON.stringify(errandCommand(process.cwd(), args[0], args[1]))}\n`);
+    } catch (error) {
+        process.stderr.write(`${error.message}\n`);
+        process.exitCode = 1;
+    }
+} else {
+    try {
+        main(args);
+    } catch {
+        // Fall through: recovery is best effort and must not fail the hook.
+    }
 }
-process.exit(0);
 
 function main([command, event]) {
     const { sessionId, agentId } = readHookInput();
@@ -52,7 +63,7 @@ function main([command, event]) {
 
     switch (command) {
         case "claude-session-start":
-            emit("SessionStart", buildContext(root), true);
+            emit("SessionStart", recoveryContext(root, sessionId), true);
             return;
         case "codex-arm":
             reapStaleMarkers(root);
@@ -62,7 +73,7 @@ function main([command, event]) {
             if (claimMarker(root, sessionId)) {
                 // Codex rejects suppressOutput on PostToolUse output.
                 const hookEvent = event === "user-prompt-submit" ? "UserPromptSubmit" : "PostToolUse";
-                emit(hookEvent, buildContext(root), hookEvent !== "PostToolUse");
+                emit(hookEvent, recoveryContext(root, sessionId), hookEvent !== "PostToolUse");
             }
             return;
         case "codex-clear":
@@ -91,15 +102,15 @@ function emit(hookEventName, additionalContext, suppressOutput) {
     process.stdout.write(`${JSON.stringify(output)}\n`);
 }
 
-// Markers live in the checkout's own git directory, so worktrees never share one.
+// Markers stay in shared Git metadata; a session can arm and claim from different checkouts.
 function markerDir(root) {
-    const dir = join(git(root, ["rev-parse", "--absolute-git-dir"]), "legacy-arc-recovery");
+    const dir = join(git(root, ["rev-parse", "--path-format=absolute", "--git-common-dir"]), "legacy-arc-recovery");
     mkdirSync(dir, { recursive: true });
     return dir;
 }
 
 function markerPath(root, sessionId, state) {
-    const safeId = sessionId.replace(/[^A-Za-z0-9._-]/g, "_");
+    const safeId = createHash("sha256").update(sessionId).digest("hex");
     return join(markerDir(root), `${safeId}.${state}`);
 }
 
@@ -122,15 +133,34 @@ function reapStaleMarkers(root) {
     }
 }
 
-function buildContext(root) {
+function recoveryContext(home, sessionId) {
+    try {
+        const errand = activeErrand(home, sessionId);
+        if (errand === null) return buildContext(home);
+        return [
+            `Active isolated errand: ${errand.checkout}`,
+            `Session home: ${errand.home}; its work unit remains paused.`,
+            "Direct all errand commands to the active checkout and use absolute paths for reads and edits.",
+            `Re-read ${join(errand.checkout, ".arc/reference/workflows/supplemental/run-errand.md")}.`,
+            buildContext(errand.checkout, true),
+        ].join("\n");
+    } catch (error) {
+        return `STOP: isolated errand recovery could not resolve the active checkout. ${error.message}\n`
+            + "Do not resume the session home's work unit or remove a checkout until this is resolved.\n";
+    }
+}
+
+function buildContext(root, absolutePaths = false) {
     const branch = git(root, ["branch", "--show-current"]) || null;
     const session = resolveSession(root, branch);
 
     const reads = [];
-    if (session.notesPath) reads.push(display(root, session.notesPath));
-    if (session.workingMemory) reads.push(display(root, session.workingMemory));
-    reads.push(".arc/reference/constitution/DEVELOPMENT-RULES.md", ".arc/reference/workflows/3_process-task-loop.md");
-    if (session.taskList) reads.push(`${display(root, session.taskList)} (overview and the current task)`);
+    const readPath = (path) => absolutePaths ? path : display(root, path);
+    if (session.notesPath) reads.push(readPath(session.notesPath));
+    if (session.workingMemory) reads.push(readPath(session.workingMemory));
+    reads.push(...[".arc/reference/constitution/DEVELOPMENT-RULES.md", ".arc/reference/workflows/3_process-task-loop.md"]
+        .map((path) => absolutePaths ? join(root, path) : path));
+    if (session.taskList) reads.push(`${readPath(session.taskList)} (overview and the current task)`);
 
     const lines = [
         "=== CineXplorer post-compaction recovery (legacy ARC) ===",

@@ -79,9 +79,7 @@ It ensures consistent execution, quality control, and documentation of work.
 
      - **First**: Mark the **parent task** as `[x]` in the task list file (ensures docs reflect completion)
      - **Second**: Ensure new code has appropriate test coverage (models, APIs, complex logic)
-     - **Third**: Check if [PROJECT-STATUS](../constitution/PROJECT-STATUS.md) needs updates
-       (feature progress, completed functionality, updated priorities)
-     - **Fourth**: Verify completion before reporting (use pre-report checklist below)
+     - **Third**: Verify completion before reporting (use pre-report checklist below)
 
      No extra checks run at a parent task or phase end; each task ran its own. Run wider only when the affected
      surface calls for it ([When to Run Wider](../strategies/arc/strategy-quality-gates.md#when-to-run-wider)).
@@ -92,7 +90,6 @@ It ensures consistent execution, quality control, and documentation of work.
      - [ ] All subtasks under parent task marked [x] or [~] in task list
      - [ ] Parent task marked [x] in task list
      - [ ] Task list file edited and saved
-     - [ ] PROJECT-STATUS checked and updated if needed
      - [ ] Ready to report completion to user
      ```
 

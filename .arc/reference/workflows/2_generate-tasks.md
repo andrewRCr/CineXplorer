@@ -33,7 +33,6 @@ Read the specified PRD to understand requirements, user stories, and acceptance 
 foundational documents for broader context:
 
 - **[META-PRD](../constitution/META-PRD.md)** - Product vision and core features
-- **[PROJECT-STATUS](../constitution/PROJECT-STATUS.md)** - Current priorities and project state
 - **[TECHNICAL-OVERVIEW](../constitution/TECHNICAL-OVERVIEW.md)** - Architectural patterns and conventions
 
 If the PRD waited in `.arc/backlog/`, follow [1_create-prd.md § Picking Up a Parked PRD](1_create-prd.md#picking-up-a-parked-prd)

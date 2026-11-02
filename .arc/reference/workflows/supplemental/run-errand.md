@@ -79,18 +79,27 @@ git push -u origin {type}/{name}
 gh pr create --base main --title "<title>" --body-file <body file>
 ```
 
+After publication, enter [monitor-pull-request.md](monitor-pull-request.md) for CI in this same turn. If the Owner
+already approved a hosted request at this point, post it once and monitor CI and review together. Otherwise, when
+CI settles, recommend the review route below. Continue until a defined result or bounded stop; a pending first
+observation alone is not a completion report.
+
 ### 4. Review
 
 Recommend a review route with a one-line reason: none (a small, mechanical change), a local fresh-context subagent, or
 a hosted review (`@codex review`, `@coderabbitai review`). The Owner chooses; never start one unasked. Findings follow
 [agent-pre-merge-review.md](agent-pre-merge-review.md).
 
+After an authorized hosted request, retain its comment URL/time and exact head, then enter
+[monitor-pull-request.md](monitor-pull-request.md) without ending the turn merely because review is pending.
+
 ### 5. Merge on approval
 
-When `ci-ok` is green and review threads are resolved, ask to merge. On explicit approval:
+When monitoring establishes readiness for the exact head, ask to merge. Refresh its evidence after approval;
+`ci-ok` must be green and every review thread resolved. On explicit approval:
 
 ```bash
-gh pr merge <number> --merge        # never --admin; GitHub deletes the remote branch
+gh pr merge <number> --merge --match-head-commit <accepted-full-sha>  # never --admin
 ```
 
 ### 6. Clean up

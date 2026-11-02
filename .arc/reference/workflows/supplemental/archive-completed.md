@@ -301,6 +301,9 @@ git push -u origin {branch-name}
 gh pr create --base {parent-branch} --head {branch-name}
 ```
 
+After publication, enter [monitor-pull-request.md](monitor-pull-request.md) for the exact pushed head's CI in the
+same turn. Continue to a result or bounded stop; do not hand the Owner a pending first observation to check manually.
+
 **Review on the PR:** Once CI is green and nothing more is to be pushed, recommend a review route in a sentence and
 wait for the Owner's choice. Never start one unprompted: hosted reviews are rate-limited and local ones spend tokens.
 
@@ -314,7 +317,12 @@ gh pr comment {pr-number} --body "@codex review"
 gh pr comment {pr-number} --body "@coderabbitai review"
 ```
 
-A hosted request reviews the head at that moment, so make it after the last push, once per PR.
+A hosted request reviews the head at that moment, so make it after the last push for that pass, once for the
+Owner-approved request. A further pass still needs its separate approval.
+
+Retain each authorized request's URL/time and head, then enter
+[monitor-pull-request.md](monitor-pull-request.md) in the same turn. Monitor all requested providers together;
+continuing a wait never posts another request.
 
 ### 7) Address PR Review Findings
 
@@ -326,11 +334,12 @@ If review changes what was delivered, update the completion doc to the final sta
 
 ### 8) Merge Pull Request
 
-With the Owner's approval, once `ci-ok` is green and every review thread is resolved:
+Once [monitor-pull-request.md](monitor-pull-request.md) establishes readiness, ask for explicit merge approval.
+After approval, refresh the accepted head's evidence: `ci-ok` must be green and every review thread resolved:
 
 ```bash
 # Merge PR through GitHub interface or CLI (never --admin)
-gh pr merge {pr-number} --merge  # preserve commit history (no squash)
+gh pr merge {pr-number} --merge --match-head-commit {accepted-full-sha}  # preserve commit history
 
 # Or if merging locally:
 git checkout parent-branch

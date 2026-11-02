@@ -18,6 +18,8 @@ export default defineConfig({
         coverage: {
             provider: "v8",
             reporter: ["text", "json", "html"],
+            // Include unexecuted files as well as files loaded by tests.
+            include: ["**/*.{js,cjs,mjs,ts,mts,tsx,jsx,vue,svelte,marko,astro}"],
             exclude: [
                 "node_modules/",
                 "tests/",

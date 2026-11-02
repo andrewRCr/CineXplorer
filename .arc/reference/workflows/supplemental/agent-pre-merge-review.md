@@ -58,6 +58,9 @@ End with one approval question naming what approval releases, for example
 - Land every approved `fix` as one batch: one commit, or the fewest commits that keep separate concerns separate.
   The commit body lists each finding and its fate; follow [atomic-commit.md](atomic-commit.md)
 - Run the checks the changed files call for, then push
+- After the approved push, enter [monitor-pull-request.md](monitor-pull-request.md) for CI on the new exact head in
+  this same turn. Return to this response flow when it settles. This CI-only wait does not request a new hosted
+  review or treat the earlier receipt as a review of the repaired head
 - Offer a fix check: a fresh local subagent, scoped to the approved repairs, checks whether they hold
   ([review-model § Passes and fix checks](../../methods/review-model.md)). Fix checks always run locally, since a
   hosted review can't be scoped to the repairs. Recommend one when the fixes were material; the Owner decides. A

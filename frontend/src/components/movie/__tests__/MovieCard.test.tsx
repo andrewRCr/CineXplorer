@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@tests/helpers/test-renderer';
+import { render, screen, fireEvent, isInaccessible, within } from '@tests/helpers/test-renderer';
 import { renderWithRoute } from '@tests/helpers/test-renderer-with-routes';
 import { createMockMovieListItem } from '@tests/mocks/movieData';
 import MovieCard from '../MovieCard';
@@ -126,7 +126,10 @@ describe('MovieCard Component', () => {
       render(<MovieCard {...defaultProps} movie={testMovie} />);
 
       // The MovieUserScore component should show the rating (0-10 scale)
-      expect(screen.getByText('8.5')).toBeInTheDocument();
+      const badge = screen.getByText('8.5');
+      const explanation = within(badge).getByText('TMDB Rating:');
+      expect(isInaccessible(explanation)).toBe(false);
+      expect(badge).toHaveTextContent('TMDB Rating: 8.5');
     });
 
     it('passes correct score to MovieUserScore', () => {
@@ -139,16 +142,31 @@ describe('MovieCard Component', () => {
       expect(screen.getByText('7.2')).toBeInTheDocument();
     });
 
-    it('shows a placeholder instead of the score below 10 votes', () => {
+    it.each([1, 4, 9])('explains the placeholder at %s votes without hover', (voteCount) => {
       const testMovie = createMockMovieListItem({
         vote_average: 6.8,
-        vote_count: 4
+        vote_count: voteCount
       });
 
       render(<MovieCard {...defaultProps} movie={testMovie} />);
 
-      expect(screen.getByText('—')).toBeInTheDocument();
+      const badge = screen.getByText('—');
+      const explanation = within(badge).getByText('Fewer than 10 TMDB votes:');
+      expect(isInaccessible(explanation)).toBe(false);
+      expect(badge).toHaveTextContent('Fewer than 10 TMDB votes: —');
       expect(screen.queryByText('6.8')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Zero-vote score explanation', () => {
+    it('explains why a card has no TMDB score without hover', () => {
+      const testMovie = createMockMovieListItem({ vote_average: 0, vote_count: 0 });
+      render(<MovieCard {...defaultProps} movie={testMovie} />);
+
+      const badge = screen.getByText('—');
+      const explanation = within(badge).getByText('No TMDB votes yet:');
+      expect(isInaccessible(explanation)).toBe(false);
+      expect(badge).toHaveTextContent('No TMDB votes yet: —');
     });
   });
 

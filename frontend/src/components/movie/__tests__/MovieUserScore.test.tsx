@@ -1,6 +1,6 @@
 import { type ReactElement } from 'react';
 import { describe, it, expect } from 'vitest';
-import { render as renderWithoutProviders } from '@testing-library/react';
+import { isInaccessible, render as renderWithoutProviders, within } from '@testing-library/react';
 import { ChakraProvider, createSystem } from '@chakra-ui/react';
 import { render, screen } from '@tests/helpers/test-renderer';
 import { defaultSystem as projectSystem } from '@/theme';
@@ -238,12 +238,45 @@ describe('MovieUserScore Component', () => {
   });
 
   describe('Accessibility', () => {
-    it('provides meaningful titles for screen readers', () => {
-      render(<MovieUserScore score={7.8} voteCount={1500} userRating={9} />);
+    const tmdbStates = [
+      { presentation: 'compact' as const, score: 7.8, voteCount: 10, label: '7.8', explanation: 'TMDB Rating' },
+      { presentation: 'detailed' as const, score: 7.8, voteCount: 10, label: '7.8', explanation: 'TMDB Rating' },
+      { presentation: 'compact' as const, score: 0, voteCount: 0, label: '—', explanation: 'No TMDB votes yet' },
+      { presentation: 'detailed' as const, score: 0, voteCount: 0, label: 'Not yet rated', explanation: 'No TMDB votes yet' },
+      { presentation: 'compact' as const, score: 6.8, voteCount: 4, label: '—', explanation: 'Fewer than 10 TMDB votes' },
+      { presentation: 'detailed' as const, score: 6.8, voteCount: 4, label: '6.8 · 4 votes', explanation: 'TMDB Rating' },
+    ];
 
-      // Check that both badges have title attributes
-      expect(screen.getByTitle('TMDB Rating')).toBeInTheDocument();
-      expect(screen.getByTitle('Your Rating')).toBeInTheDocument();
+    const tmdbCases = tmdbStates.flatMap((state) => [
+      { ...state, mode: 'alone', userRating: undefined },
+      { ...state, mode: 'beside a user rating', userRating: 9 },
+    ]);
+
+    it.each(tmdbCases)(
+      'exposes "$explanation" for "$label" in the $presentation presentation $mode',
+      ({ presentation, score, voteCount, label, explanation, userRating }) => {
+        renderWithBadgeStyles(
+          <MovieUserScore score={score} voteCount={voteCount} presentation={presentation} userRating={userRating} />
+        );
+
+        const badge = screen.getByTitle(explanation);
+        const explanationText = within(badge).getByText(`${explanation}:`);
+        expect(isInaccessible(explanationText)).toBe(false);
+        expect(explanationText).toHaveStyle({ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden' });
+        expect(badge).toHaveTextContent(`${explanation}: ${label}`);
+      }
+    );
+
+    it.each([false, true])('exposes the user-rating explanation (userRatingOnly=%s)', (userRatingOnly) => {
+      renderWithBadgeStyles(
+        <MovieUserScore score={7.8} voteCount={1500} userRating={9} userRatingOnly={userRatingOnly} />
+      );
+
+      const badge = screen.getByTitle('Your Rating');
+      const explanationText = within(badge).getByText('Your Rating:');
+      expect(isInaccessible(explanationText)).toBe(false);
+      expect(explanationText).toHaveStyle({ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden' });
+      expect(badge).toHaveTextContent(userRatingOnly ? 'Your Rating: ★ 9/10' : 'Your Rating: ★ 9');
     });
   });
 

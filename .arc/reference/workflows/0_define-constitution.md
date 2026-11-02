@@ -71,25 +71,6 @@ Use this section when setting up constitutional documents for the first time.
 - What testing strategies will provide confidence?
 - How will team coordination and reviews work?
 
-### Step 4: Initialize Project Status
-
-**Objective**: Create progress tracking framework for initiatives and milestones
-
-**Process**:
-
-1. Build on template at `.arc/reference/constitution/PROJECT-STATUS.md`
-2. Establish milestone tracking structure
-3. Define progress reporting cadence
-4. Set up initiative and epic organization
-5. Initialize current status baseline
-
-**Key Questions**:
-
-- How will progress toward project goals be tracked?
-- What milestones mark significant progress?
-- How often should status be reviewed and updated?
-- What format best communicates progress to stakeholders?
-
 ---
 
 ## Maintenance Updates (Ongoing)
@@ -120,12 +101,6 @@ Use this section to evolve constitutional documents as the project matures.
    - Adjust testing strategies based on effectiveness
    - Evolve review processes for better efficiency
 
-4. **Progress Project Status**:
-   - Update milestone completion status
-   - Adjust future milestone targets based on velocity
-   - Document completed initiatives and outcomes
-   - Plan next quarter's focus areas
-
 ### Triggered Updates
 
 **When major changes occur**:
@@ -154,7 +129,6 @@ When creating feature-level PRDs using [1_create-prd.md](1_create-prd.md):
 - **Reference META-PRD**: Ensure feature aligns with project vision
 - **Check Technical Architecture**: Verify implementation approach fits established patterns
 - **Follow Development Rules**: Apply quality standards and testing requirements
-- **Update Project Status**: Track feature progress against milestones
 
 ### Constitutional Compliance
 
@@ -163,7 +137,6 @@ All feature development should:
 - **Align with META-PRD vision** and success criteria
 - **Follow TECHNICAL-OVERVIEW** patterns and constraints
 - **Adhere to DEVELOPMENT-RULES** standards and processes
-- **Contribute to PROJECT-STATUS** milestone progress
 
 ---
 
@@ -174,7 +147,6 @@ All feature development should:
 - `.arc/reference/constitution/META-PRD.md`
 - `.arc/reference/constitution/TECHNICAL-OVERVIEW.md`
 - `.arc/reference/constitution/DEVELOPMENT-RULES.md`
-- `.arc/reference/constitution/PROJECT-STATUS.md`
 
 **Working Documents Location**:
 
@@ -186,10 +158,9 @@ All feature development should:
 
 **Initial Setup Complete When**:
 
-- All four constitutional documents created and populated
+- All three constitutional documents created and populated
 - Project vision, technical approach, and standards clearly defined
 - Development team aligned on processes and quality standards
-- Progress tracking framework established
 
 **Maintenance Effective When**:
 

@@ -275,7 +275,6 @@ Follow [archive-completed.md](archive-completed.md) for archival procedure:
 
 - Archive to `.arc/reference/archive/{quarter}/incidental/{NN}_{name}/`
 - **Archive timing**: Immediately when branch deleted (after merge) if work had separate branch
-- Update PROJECT-STATUS.md if applicable
 - Point the paused work unit's session notes back at its next task
 - Commit with summary of completed incidental work
 

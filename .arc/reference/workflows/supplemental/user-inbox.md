@@ -81,7 +81,6 @@ Ask whether to add an optional backlog pass, and if so add its rows to the same 
 
 - Atomic tasks: still relevant, or deleted, or grown into a task list?
 - Backlog items: any ready for a plan or a PRD?
-- PROJECT-STATUS: still accurate?
 
 ### 3. Present one table
 

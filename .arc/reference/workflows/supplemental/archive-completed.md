@@ -71,7 +71,6 @@ or the Owner stops it. Record each pass in the task list's `## Review Log`.
 
 - [ ] Implementation works in the development environment, including any criterion that must be proven live
 - [ ] Task list header `**Status:**` updated to `Complete`, and the PRD's `**Status:**` likewise (if a PRD exists)
-- [ ] PROJECT-STATUS reflects completion (if applicable - major features/technical work)
 - [ ] The verification task is marked `[x]`, its note pointing to the criteria evidence
 
 **Note:** Not all work has PRDs. Incidental work typically has only task lists. Skip PRD items if no PRD.
@@ -419,14 +418,7 @@ full evolution even after it moved to archive.
 (`rm -r .arc/user/{identity}/{name}/`): its kept versions, prompts and reports have served their purpose, and the
 task list's `## Review Log` is the durable record.
 
-### 11) Update PROJECT-STATUS and ROADMAP
-
-Update `.arc/reference/constitution/PROJECT-STATUS.md` if applicable:
-
-- Update "Last Completed" section to add newly completed work with archive link
-- Remove from "Currently Active" section
-- If significant work, add to "Completed Major Work" section with description
-- Update project metrics (tests, coverage, new capabilities) as appropriate
+### 11) Update ROADMAP (if tracked)
 
 Update `.arc/backlog/ROADMAP.md` if applicable:
 
@@ -434,7 +426,7 @@ Update `.arc/backlog/ROADMAP.md` if applicable:
 - Update archive path reference
 - Adjust "Last Updated" date
 
-**When to update these docs:**
+**When to update the roadmap:**
 
 - ✅ Major features (always document completion)
 - ✅ Significant technical work (modernization, infrastructure changes)
@@ -447,7 +439,6 @@ Update `.arc/backlog/ROADMAP.md` if applicable:
 ```bash
 git add .arc/reference/archive/{quarter}/{category}/{name}/
 git add .arc/active/{category}/  # captures file deletions
-git add .arc/reference/constitution/PROJECT-STATUS.md  # if updated
 git add .arc/backlog/ROADMAP.md  # if updated
 ```
 

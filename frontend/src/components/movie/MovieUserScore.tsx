@@ -1,4 +1,4 @@
-import { Badge, HStack } from "@chakra-ui/react";
+import { Badge, HStack, VisuallyHidden } from "@chakra-ui/react";
 import React from "react";
 
 /** Fewer TMDB votes than this and the average is not shown as a traffic-light score. */
@@ -82,6 +82,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
         paddingX={1}
         title="Your Rating"
       >
+        <VisuallyHidden>Your Rating: </VisuallyHidden>
         ★ {userRating}/10
       </Badge>
     );
@@ -100,6 +101,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
           paddingX={1}
           title={tmdbBadge.title}
         >
+          <VisuallyHidden>{tmdbBadge.title}: </VisuallyHidden>
           {tmdbBadge.label}
         </Badge>
         <Badge
@@ -108,6 +110,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
           paddingX={1}
           title="Your Rating"
         >
+          <VisuallyHidden>Your Rating: </VisuallyHidden>
           ★ {userRating}
         </Badge>
       </HStack>
@@ -123,6 +126,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
       paddingX={1}
       title={tmdbBadge.title}
     >
+      <VisuallyHidden>{tmdbBadge.title}: </VisuallyHidden>
       {tmdbBadge.label}
     </Badge>
   );

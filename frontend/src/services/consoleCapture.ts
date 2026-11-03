@@ -5,7 +5,6 @@ const MAX_MESSAGE_LENGTH = 4000;
 
 type ConsoleMethod = (typeof CONSOLE_METHODS)[number];
 
-
 const shouldEnableCapture = (): boolean => {
   if (typeof window === "undefined") {
     return false;
@@ -97,7 +96,6 @@ const sendConsoleLog = (level: ConsoleMethod, args: unknown[]): void => {
   const timestamp = new Date().toISOString();
   const formattedArgs = args.map(formatArg).join(" ");
   const logLine = `[${timestamp}] CONSOLE.${level.toUpperCase()}: ${truncate(formattedArgs)}\n`;
-
 
   void fetch(`${apiBaseUrl}/dev-logs/write/`, {
     method: "POST",

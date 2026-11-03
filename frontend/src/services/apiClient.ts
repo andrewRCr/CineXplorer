@@ -9,7 +9,6 @@ import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
 import { toaster } from "@/components/core/chakra/toaster";
 
-
 // Debug: Log the base URL being used
 logger.debug('[apiClient] BASE_URL configured', { BASE_URL });
 

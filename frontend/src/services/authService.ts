@@ -5,7 +5,6 @@ import type { components } from "@/types/api";
 import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrfTokenFetcher";
 import logger from "./logger";
 
-
 // Type aliases from generated API schema
 type TokenObtainInput = components["schemas"]["TokenObtainInputSchema"];
 type TokenResponse = components["schemas"]["TokenResponseSchema"];

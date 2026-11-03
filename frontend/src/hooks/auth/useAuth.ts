@@ -1,4 +1,3 @@
-import { siteOrigin } from "@/config/baseUrls";
 /**
  * useAuth
  *
@@ -15,6 +14,7 @@ import { siteOrigin } from "@/config/baseUrls";
  * - State is shared via AuthContext.
  * - Components access state using useAuthContext.
  */
+import { siteOrigin } from "@/config/baseUrls";
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";

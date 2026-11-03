@@ -271,6 +271,13 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 - [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
 
+    - [x] **6.1.a One copy of each security header on proxied responses** (R16, amended 2026-11-03; verification
+      pass 1, F1): both proxy routes in `Caddyfile.prod` import one snippet that drops Django's copies of the four
+      headers the site block sets, so each response carries one; HSTS and cookies pass through unchanged. Caddy's
+      formatter and `validate` pass. Against a stand-in backend sending Django's headers, the previous file sent each
+      twice on API, auth, static and admin responses; the fixed one sends one on every route, including Caddy's own
+      basic-auth `401`.
+
 ## Implementation Notes
 
 ### Phase 1
@@ -427,7 +434,8 @@ runbook for setting up the server, deploying a version and rolling it back.
   commit's first seven characters.
     - Pull-request run 41360993462 at `f391821` built both images with login and publishing skipped (the workflow is
       unchanged since); manual runs 41682541067 and 41690802887 published `sha-c926146` and `sha-4b10faf`, which the
-      staging server pulled
+      staging server pulled. After `main` was merged in, pull-request run 41695962159 at `e2baaec4` passed all six
+      jobs, building both images with login and publishing skipped
 - [x] The development stack, built with `target: dev`, still serves `https://localhost:8444` with the debug toolbar
   available, and CI's backend tests run on its `dev` image.
     - Rebuilt at `940bd82a`, both services on `target: dev`: `https://localhost:8444` 200; the toolbar renders on the

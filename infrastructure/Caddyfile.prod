@@ -1,3 +1,14 @@
+# Django sends the four security headers the site block sets; drop its copies so each response carries one.
+# A repeated Cross-Origin-Opener-Policy does not parse, and browsers then ignore it.
+(backend) {
+	reverse_proxy backend:8000 {
+		header_down -X-Content-Type-Options
+		header_down -X-Frame-Options
+		header_down -Referrer-Policy
+		header_down -Cross-Origin-Opener-Policy
+	}
+}
+
 {$SITE_ADDRESS} {
 	root * /srv
 
@@ -12,12 +23,12 @@
 		basic_auth {
 			{$ADMIN_BASIC_AUTH_USER} {$ADMIN_BASIC_AUTH_HASH}
 		}
-		reverse_proxy backend:8000
+		import backend
 	}
 
 	@backend path /api/* /_allauth/* /accounts/* /static/*
 	handle @backend {
-		reverse_proxy backend:8000
+		import backend
 	}
 
 	handle /assets/* {

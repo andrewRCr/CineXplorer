@@ -181,10 +181,12 @@ that works on any host, and a written, repeatable procedure for setting up the s
       request for a missing file under `/assets/` answers `404` with `Cache-Control: no-store` rather than
       `index.html`, so a browser holding a page from before a deploy or rollback gets an error for a file the new
       image lacks, not HTML in its place, and does not keep that error once a rollback restores the file.
-    - Responses Caddy serves itself carry `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
+    - Every response carries one `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`,
       `Referrer-Policy: same-origin` and `Cross-Origin-Opener-Policy: same-origin`, the values Django sends for these
-      four headers on its own responses. `Strict-Transport-Security` stays with Django, whose settings give it a
-      different lifetime in staging and production; browsers apply it to the whole host.
+      four headers on its own responses. Caddy sets them on every response, and its proxy routes drop Django's copies:
+      a repeated `Cross-Origin-Opener-Policy` does not parse, and browsers then ignore it. `Strict-Transport-Security`
+      stays with Django, whose settings give it a different lifetime in staging and production; browsers apply it to
+      the whole host.
     - It sends no CORS headers; the development Caddyfile keeps its localhost CORS handling.
 
 ### Production Compose file
@@ -449,3 +451,8 @@ The proven-live criteria depend on these steps outside the repository, which the
   New York, the first choice, offered no Basic plan when the droplet was created. Dependencies, R24's root-password
   clause and R25's recovery path follow: a droplet created with only an SSH key has no root password, so recovery
   starts with a reset. The code, images, Compose files, CI and DNS pattern are unchanged.
+- 2026-11-03: R16's four security headers come from Caddy on every response, with Django's copies dropped from
+  proxied ones. The verification review found each header twice on proxied responses, where a repeated
+  `Cross-Origin-Opener-Policy` does not parse and browsers ignore it, leaving Django-served pages such as the admin
+  without it. Setting Caddy's values only where a response lacks them was tried and rejected: it left Caddy's own
+  basic-auth `401` without the headers. No success criterion changes.

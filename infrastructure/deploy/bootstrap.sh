@@ -159,7 +159,7 @@ else
     printf '/swapfile none swap sw 0 0\n' >> /etc/fstab
     changed 'swap fstab entry'
 fi
-if swapon --show --noheadings --raw --output NAME | grep -qx /swapfile; then
+if swapon --show=NAME --noheadings --raw | grep -qx /swapfile; then
     unchanged 'swap active'
 else
     swapon /swapfile

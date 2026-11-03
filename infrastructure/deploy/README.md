@@ -55,13 +55,15 @@ docker info >/dev/null
 sudo sshd -T | grep -E '^(passwordauthentication|kbdinteractiveauthentication|permitrootlogin) '
 ```
 
-The three SSH settings must say `no`. From another local terminal, both commands below must fail. The first must
-show only `publickey` in the server's `Authentications that can continue` debug lines, with no `password` offered;
-the second must refuse the root key login. Client failure alone does not prove password authentication is disabled:
+The three SSH settings must say `no`. From another local terminal, both commands below must fail, and client failure
+alone proves neither setting. The first must show only `publickey` in the server's `Authentications that can
+continue` debug lines, with no `password` offered. The second must print `Server accepts key` and then
+`Permission denied (publickey)`: root's key from server creation is accepted and the login is still refused. Unlock
+the key if prompted; a key that cannot sign fails without testing the root setting:
 
 ```sh
 ssh -vv -o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=0 "deploy@$server_ip"
-ssh -o BatchMode=yes "root@$server_ip"
+ssh -v "root@$server_ip" true 2>&1 | grep -E 'Server accepts key|Permission denied'
 ```
 
 Only after the `deploy` session and sudo work should you close the original root session. If either fails, keep it
@@ -111,8 +113,8 @@ docker login ghcr.io --username andrewRCr
 chmod 600 ~/.docker/config.json
 ```
 
-Paste the token at the password prompt. The registry login belongs to `deploy`, so use Docker without sudo from
-here onward.
+Paste the token at the password prompt; the registry does not accept your GitHub password, and the prompt shows
+nothing as you paste. The registry login belongs to `deploy`, so use Docker without sudo from here onward.
 
 ### Prepare the two env files
 

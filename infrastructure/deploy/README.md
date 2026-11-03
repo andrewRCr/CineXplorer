@@ -31,8 +31,8 @@ Host YOUR_SERVER_IPV4
 ```
 
 From your local checkout, copy the bootstrap and connect as root. Replace the example address and commit with your
-server and a full commit whose manual CI run successfully published both images. Choose a published version
-containing this runbook and bootstrap script.
+server and a full commit whose manual CI run published both images and passed its `ci-ok` job. Choose a published
+version containing this runbook and bootstrap script.
 
 ```sh
 server_ip='YOUR_SERVER_IPV4'
@@ -49,6 +49,7 @@ bash /root/bootstrap.sh
 **Keep this session open.** In a second local terminal, prove that your key can sign in as `deploy`:
 
 ```sh
+server_ip='YOUR_SERVER_IPV4'
 ssh "deploy@$server_ip"
 sudo -n true
 docker info >/dev/null
@@ -62,6 +63,7 @@ continue` debug lines, with no `password` offered. The second must print `Server
 the key if prompted; a key that cannot sign fails without testing the root setting:
 
 ```sh
+server_ip='YOUR_SERVER_IPV4'
 ssh -vv -o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=0 "deploy@$server_ip"
 ssh -v "root@$server_ip" true 2>&1 | grep -E 'Server accepts key|Permission denied'
 ```
@@ -214,6 +216,7 @@ to the watchlist and reload it. Visit `/admin/`: it must ask for the separate ba
 From a local terminal, check the public boundary:
 
 ```sh
+server_ip='YOUR_SERVER_IPV4'
 curl --head http://staging.cinexplorer.andrewcreekmore.dev/
 curl --head https://staging.cinexplorer.andrewcreekmore.dev/admin/
 for port in 5432 6379 8000; do nc -vz -w 5 "$server_ip" "$port"; done
@@ -232,8 +235,9 @@ container checks alone do not establish it.
 
 ## Deploy another version
 
-Publish both images first: run the CI workflow manually on the desired branch, or use a successful main-push
-publishing run. A pull-request CI run does not publish images. Use the full commit SHA from the publishing run;
+Publish both images first: run the CI workflow manually on the desired branch, or use a main-push run. A
+pull-request CI run does not publish images. Deploy only from a run whose `ci-ok` job passed: the images publish
+without waiting for the tests, so a run can publish images whose tests failed. Use the full commit SHA from that run;
 the image tag is `sha-` plus its first seven characters.
 
 In the server shell, record the current commit and tag before changing them. Keep these values for rollback in
@@ -303,8 +307,7 @@ IMAGE_TAG="$newer_tag" docker compose -f docker-compose.prod.yml --env-file /opt
 
 Repeat for each affected app in dependency order, then rerun the newer-image `showmigrations` command to confirm the
 applied set is compatible with the previous image. If there are no extra applied migrations, skip these reversal
-commands entirely. Two versions from this initial deployment change share migrations, so that path is not exercised
-by the first live rollback.
+commands entirely.
 
 Only after the comparison/reversals succeed, switch checkout and tag, migrate any unapplied migrations belonging to
 the previous version, and start it:

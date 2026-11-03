@@ -265,22 +265,22 @@ def staging_proxy_settings() -> dict[str, int]:
     return {name: value for name, value in values.items() if isinstance(value, int)}
 
 
-@pytest.mark.parametrize("environment", ["staging", "production", "development"])
-def test_proxy_counts_match_environment(environment: str) -> None:
+@pytest.mark.parametrize(
+    "environment,expected",
+    [
+        ("staging", {"NINJA_NUM_PROXIES": 1, "ALLAUTH_TRUSTED_PROXY_COUNT": 1}),
+        ("production", {"NINJA_NUM_PROXIES": 1, "ALLAUTH_TRUSTED_PROXY_COUNT": 1}),
+        ("development", {}),
+    ],
+)
+def test_proxy_counts_match_environment(environment: str, expected: dict[str, int]) -> None:
     from apps.core.tests.test_helpers import load_settings
 
     values = load_settings(
         {"ENVIRONMENT": environment, "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
         ["NINJA_NUM_PROXIES", "ALLAUTH_TRUSTED_PROXY_COUNT"],
     )
-    assert values == (
-        {}
-        if environment == "development"
-        else {
-            "NINJA_NUM_PROXIES": 1,
-            "ALLAUTH_TRUSTED_PROXY_COUNT": 1,
-        }
-    )
+    assert values == expected
 
 
 def test_allauth_uses_last_forwarded_address(staging_proxy_settings: dict[str, int]) -> None:
@@ -342,7 +342,8 @@ def test_forwarded_clients_share_only_their_own_login_limit(
 @override_settings(TESTING=False, ZEPTOMAIL_API_KEY="")
 def test_frontend_logs_throttle_without_writing_rejected_report(
     api_client: Client,
-    clear_throttle_cache: Iterator[None], enable_throttling_for_test: Iterator[None],
+    clear_throttle_cache: Iterator[None],
+    enable_throttling_for_test: Iterator[None],
 ) -> None:
     from unittest import TestCase
 

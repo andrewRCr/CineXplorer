@@ -18,7 +18,7 @@ describe("browser base URLs", () => {
     vi.stubEnv("VITE_BASE_API_URL", api);
     vi.resetModules();
 
-    const urls = await import("./baseUrls");
+    const urls = await import("../baseUrls");
     const address = expected.replace(/^page/, window.location.origin);
     expect(urls[key]).toBe(address);
   });

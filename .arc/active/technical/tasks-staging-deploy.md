@@ -675,3 +675,38 @@ runbook for setting up the server, deploying a version and rolling it back.
 - **Stop reason:** minor-only pass with both fixes verified, locally and live; stopped on the recommendation, with no
   fix check or pass 2
 - **Elapsed:** about 21 minutes (reviewer), plus verification
+
+### 2026-11-03 — Code review, author check
+
+- **Rubric:** code-review-author over `main...HEAD` at `32198233`, the 41 changed files outside `.arc/`; runner the
+  author
+- **Findings (verified):** 2 minor. A1: the base URL change left six doubled blank lines in five frontend files, and
+  `useAuth.ts`'s new import sat above its header comment. A2: formatter-only churn in `settings.py` and `logging.py`
+- **Dispositions (Owner approved all, 2026-11-03):** A1 fixed in `57f2cd08`. A2 rejected: it is the project
+  formatter's output in files the branch rewrites, and reverting it would be churn of its own
+- **Stop reason:** author preflight, followed by the independent pass
+
+### 2026-11-03 — Code review, Pass 1
+
+- **Rubric:** code-review-standard (`standard-review/v1`) through implementation-audit's dimensions and the
+  repository's review guidelines, over `main...HEAD` at `57f2cd08` (task list and completion summary excluded) and
+  its tree; runner independent (fresh read-only subagent)
+- **Findings (verified):** 7 minor; no critical or major. F1: CI never checks the production Caddyfile or Compose
+  file. F2: the settings test helper's interpreter re-read `config/.env`, restoring variables it had removed. F3:
+  three settings tests chose their assertion inside the body, started about 20 interpreters where 7 do, built the
+  child script by text replacement and hid its errors. F4: the runbook's deploy gate was "images published", not
+  `ci-ok`. F5: runbook commands used `$server_ip` in new terminals. F6: the runbook narrated this change's history.
+  F7: `baseUrls.test.ts` sat outside `__tests__/`
+- **Dispositions (Owner approved all, 2026-11-03):** F1 deferred to the inbox, since CI checks beyond the PRD's are a
+  scope expansion. F2–F7 fixed. The helper's three defects were reproduced first (a removed `DEBUG` came back `True`;
+  caller text `'NAMES'` was rewritten into invalid code, which failed without the child's error) and behave after.
+  The restructured tests take their expectations as parameters, and each fails under a mutation of the setting it
+  guards; the proxy-count test chose its expectation the same way and was fixed alongside. Moving the tests to
+  `apps/core/tests` was rejected: they extend a file `main` keeps under authentication. F6's sentence was deleted,
+  since the sentence before it already states the standing guidance
+- **Noted:** `backend/config/tests/` is outside CI's test paths, so this branch's edit there never runs; the inbox
+  errand "Run the tests under `backend/config/tests/`" covers it
+- **Gates:** backend 831 passed (13 fewer parametrized cases); Ruff, Pyright (0 errors), the related frontend tests
+  (151 passed), ESLint, type-check and markdown lint clean
+- **Stop reason:** minor-only pass with every fix verified; stopped on the recommendation, with no fix check or pass 2
+- **Elapsed:** about 26 minutes (reviewer), plus verification

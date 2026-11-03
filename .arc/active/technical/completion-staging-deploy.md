@@ -59,5 +59,6 @@ A live deploy, rollback and roll-forward proved the runbook.
 - The rollback's reverse-migration path stays unexercised until a change ships a migration
 - The retired `accounts` models still need their deletion migration, and CI has no missing-migration check; captured
   as an errand
+- CI does not yet parse the production Caddyfile or render the production Compose file; captured as an errand
 - Left out by the PRD: automatic deploys, backups, scheduled jobs, monitoring, Google and GitHub sign-in and email on
   the deployed host, and the production host itself

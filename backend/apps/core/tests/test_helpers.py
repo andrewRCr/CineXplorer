@@ -520,8 +520,11 @@ def load_settings(
 ) -> dict[str, object]:
     """Read real settings in an isolated interpreter, or return its configuration error.
 
-    Dotted names resolve through imports; bare names resolve on settings, then
-    the pre-import namespace. Missing settings are omitted from the result.
+    The child sees this process's environment with the given changes (None
+    removes a variable) and does not re-read config/.env, so a removed variable
+    stays removed. Dotted names resolve through imports; bare names resolve on
+    settings, then the pre-import namespace. Missing settings are omitted from
+    the result.
     """
     child_env = os.environ.copy()
     for name in (
@@ -547,18 +550,24 @@ def load_settings(
         """
 import importlib
 import json
+import sys
+
+import environ
 from django.core.exceptions import ImproperlyConfigured
+
+environ.Env.read_env = lambda *args, **kwargs: None
+request = json.loads(sys.argv[1])
 """
         + before_import
         + "\n"
         + """
 try:
     settings = importlib.import_module("config.settings")
-    if SETUP:
+    if request["setup"]:
         import django
         django.setup()
     values = {}
-    for name in NAMES:
+    for name in request["names"]:
         if "." not in name:
             if hasattr(settings, name):
                 values[name] = getattr(settings, name)
@@ -580,16 +589,17 @@ except ImproperlyConfigured as exc:
 print("SETTINGS_RESULT=" + json.dumps(values, default=str))
 """
     )
-    code = code.replace("SETUP", repr(setup)).replace("NAMES", repr(names))
     result = subprocess.run(
-        [sys.executable, "-c", code],
+        [sys.executable, "-c", code, json.dumps({"names": names, "setup": setup})],
         cwd=Path(__file__).resolve().parents[3],
         env=child_env,
         capture_output=True,
         text=True,
         timeout=30,
-        check=True,
+        check=False,
     )
+    if result.returncode != 0:
+        raise AssertionError(f"Settings interpreter exited {result.returncode}:\n{result.stderr}")
     payload = next(
         line.removeprefix("SETTINGS_RESULT=")
         for line in result.stdout.splitlines()

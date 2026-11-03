@@ -294,19 +294,8 @@ def test_development_host_and_origin_defaults() -> None:
     }
 
 
-@pytest.mark.parametrize("environment", ["staging", "development"])
-@pytest.mark.parametrize(
-    "setting,member",
-    [
-        ("INSTALLED_APPS", "debug_toolbar"),
-        ("INSTALLED_APPS", "django_extensions"),
-        ("MIDDLEWARE", "debug_toolbar.middleware.DebugToolbarMiddleware"),
-        ("config.urls.urlpatterns", "__debug__/"),
-    ],
-)
-def test_development_tooling_matches_environment(
-    environment: str, setting: str, member: str
-) -> None:
+@pytest.mark.parametrize("environment,present", [("staging", False), ("development", True)])
+def test_development_tooling_matches_environment(environment: str, present: bool) -> None:
     from apps.core.tests.test_helpers import load_settings
 
     values = load_settings(
@@ -314,13 +303,13 @@ def test_development_tooling_matches_environment(
         ["INSTALLED_APPS", "MIDDLEWARE", "config.urls.urlpatterns"],
         setup=True,
     )
-    value = values[setting]
-    assert isinstance(value, list)
-    assert (
-        any(member in str(item) for item in cast(list[object], value))
-        if setting == "config.urls.urlpatterns"
-        else member in value
-    ) is (environment == "development")
+    installed_apps = cast(list[str], values["INSTALLED_APPS"])
+    middleware = cast(list[str], values["MIDDLEWARE"])
+    routes = cast(list[str], values["config.urls.urlpatterns"])
+    assert ("debug_toolbar" in installed_apps) is present
+    assert ("django_extensions" in installed_apps) is present
+    assert ("debug_toolbar.middleware.DebugToolbarMiddleware" in middleware) is present
+    assert any("__debug__/" in route for route in routes) is present
 
 
 @pytest.mark.django_db
@@ -348,36 +337,35 @@ def test_dev_log_route_denies_staging_even_with_debug() -> None:
     assert response.status_code == 403
 
 
-@pytest.mark.parametrize("environment", ["staging", "development"])
-@pytest.mark.parametrize("setting", ["STORAGES", "STATIC_ROOT", "MIDDLEWARE"])
-def test_static_configuration(environment: str, setting: str) -> None:
+@pytest.mark.parametrize(
+    "environment,storages",
+    [
+        (
+            "staging",
+            {
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {
+                    "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+                },
+            },
+        ),
+        ("development", None),
+    ],
+)
+def test_static_configuration(environment: str, storages: dict[str, object] | None) -> None:
     from pathlib import Path
 
     from apps.core.tests.test_helpers import load_settings
 
     values = load_settings(
         {"ENVIRONMENT": environment, "DEBUG": "False", "DJANGO_ALLOWED_HOSTS": "testserver"},
-        [setting, "BASE_DIR"],
+        ["STORAGES", "STATIC_ROOT", "MIDDLEWARE", "BASE_DIR"],
     )
-    if setting == "STORAGES":
-        if environment == "development":
-            assert setting not in values
-        else:
-            assert values[setting] == {
-                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-                "staticfiles": {
-                    "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
-                },
-            }
-    elif setting == "STATIC_ROOT":
-        assert values.get(setting) == str(Path(str(values["BASE_DIR"])) / "staticfiles")
-    else:
-        middleware = values[setting]
-        assert isinstance(middleware, list)
-        security = cast(list[object], middleware).index(
-            "django.middleware.security.SecurityMiddleware"
-        )
-        assert middleware[security + 1] == "whitenoise.middleware.WhiteNoiseMiddleware"
+    assert values.get("STORAGES") == storages
+    assert values.get("STATIC_ROOT") == str(Path(str(values["BASE_DIR"])) / "staticfiles")
+    middleware = cast(list[str], values["MIDDLEWARE"])
+    security = middleware.index("django.middleware.security.SecurityMiddleware")
+    assert middleware[security + 1] == "whitenoise.middleware.WhiteNoiseMiddleware"
 
 
 @pytest.mark.django_db
@@ -394,9 +382,17 @@ def test_https_redirect_exempts_only_health_check(path: str, expected: int) -> N
         assert response["Location"] == "https://testserver" + path
 
 
-@pytest.mark.parametrize("environment", ["staging", "production", "development"])
-@pytest.mark.parametrize("aspect", ["files", "console"])
-def test_logging_handlers_match_environment(environment: str, aspect: str) -> None:
+@pytest.mark.parametrize(
+    "environment,file_logging,console_level",
+    [
+        ("staging", False, "INFO"),
+        ("production", False, "INFO"),
+        ("development", True, "WARNING"),
+    ],
+)
+def test_logging_handlers_match_environment(
+    environment: str, file_logging: bool, console_level: str
+) -> None:
     from apps.core.tests.test_helpers import load_settings
 
     values = load_settings(
@@ -408,12 +404,8 @@ def test_logging_handlers_match_environment(environment: str, aspect: str) -> No
     file_handlers = [
         handler for handler in handlers.values() if "FileHandler" in str(handler["class"])
     ]
-    if aspect == "files":
-        assert bool(file_handlers) is (environment == "development")
-    else:
-        assert handlers["console"]["level"] == (
-            "WARNING" if environment == "development" else "INFO"
-        )
+    assert bool(file_handlers) is file_logging
+    assert handlers["console"]["level"] == console_level
 
 
 def test_deployed_console_level_can_be_overridden() -> None:

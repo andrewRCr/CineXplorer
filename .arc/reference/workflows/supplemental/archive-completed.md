@@ -353,6 +353,13 @@ git push
 **Context:** PR is merged, you're now on the parent branch (e.g., `technical/service-layer-modernization`
 or `main`).
 
+When the parent is `main`, work from the main checkout and update it first, so § 10 counts every archive already
+there:
+
+```bash
+git pull --ff-only origin main
+```
+
 ### 9) Delete Child Branch
 
 A work unit run in a linked worktree removes it first, from the main checkout
@@ -475,8 +482,10 @@ git push origin main
 
 Commits that change only `.arc/` may go to `main` directly, through the merge gate's admin bypass; everything else
 reaches `main` through a pull request. The `pre-push` hook (`.githooks/pre-push`) refuses a push to `main` whose new
-commits change any path outside `.arc/`. Archiving from the main checkout lands archives one at a time, so two work
-units never claim the same sequence number: start § 10 from an up-to-date `main` (`git pull --ff-only origin main`).
+commits change any path outside `.arc/`. No CI runs before such a push lands, and a failure on `main` fails every open
+pull request's checks, so first run the checks for what the commit changed: markdown lint on changed `.arc/` markdown
+outside the archive, and the harness-hook tests if `.arc/reference/harness-hooks/` changed. Archiving from the main
+checkout lands archives one at a time, so two work units never claim the same sequence number.
 
 ---
 

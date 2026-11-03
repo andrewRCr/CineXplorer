@@ -340,7 +340,7 @@ After approval, refresh the accepted head's evidence: `ci-ok` must be green and 
 # Merge PR through GitHub interface or CLI (never --admin)
 gh pr merge {pr-number} --merge --match-head-commit {accepted-full-sha}  # preserve commit history
 
-# Or if merging locally:
+# Or, into a stacked parent branch only (main takes code through the pull request), merging locally:
 git checkout parent-branch
 git merge child-branch --no-ff  # preserve merge commit
 git push
@@ -465,6 +465,18 @@ Archival of completed incidental work:
 
 Context: tasks-discover-endpoint-consolidation.md (maintenance)"
 ```
+
+**When the parent is `main`, push the archive commit straight to it** from the main checkout, on the Owner's
+approval:
+
+```bash
+git push origin main
+```
+
+Commits that change only `.arc/` may go to `main` directly, through the merge gate's admin bypass; everything else
+reaches `main` through a pull request. The `pre-push` hook (`.githooks/pre-push`) refuses a push to `main` whose new
+commits change any path outside `.arc/`. Archiving from the main checkout lands archives one at a time, so two work
+units never claim the same sequence number: start § 10 from an up-to-date `main` (`git pull --ff-only origin main`).
 
 ---
 

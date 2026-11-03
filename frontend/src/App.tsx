@@ -18,7 +18,7 @@ const BrowseSequential = lazy(() => import("./pages/movie/BrowseSequential"));
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Login = lazy(() => import("./pages/user/Login"));
-const TestLogin = lazy(() => import("./pages/user/TestLogin"));
+const TestLogin = import.meta.env.DEV ? lazy(() => import("./pages/user/TestLogin")) : null;
 const Register = lazy(() => import("./pages/user/Register"));
 const ForgotPassword = lazy(() => import("./pages/user/ForgotPassword"));
 const Profile = lazy(() => import("./pages/user/Profile"));
@@ -26,9 +26,9 @@ const Watchlist = lazy(() => import("./pages/user/Watchlist"));
 const Settings = lazy(() => import("./pages/user/Settings"));
 const MovieDetail = lazy(() => import("./pages/movie/MovieDetail"));
 const SearchResults = lazy(() => import("./pages/movie/SearchResults"));
-const TypographyDebug = lazy(() => import("./pages/dev/TypographyDebug"));
-const ThemeDebug = lazy(() => import("./pages/dev/theme-debug/ThemeDebug"));
-const LayoutDebug = lazy(() => import("./pages/dev/LayoutDebug"));
+const TypographyDebug = import.meta.env.DEV ? lazy(() => import("./pages/dev/TypographyDebug")) : null;
+const ThemeDebug = import.meta.env.DEV ? lazy(() => import("./pages/dev/theme-debug/ThemeDebug")) : null;
+const LayoutDebug = import.meta.env.DEV ? lazy(() => import("./pages/dev/LayoutDebug")) : null;
 const NotFound = lazy(() => import("./pages/core/NotFound"));
 const Forbidden = lazy(() => import("./pages/core/Forbidden"));
 
@@ -116,24 +116,23 @@ const App: React.FC = () => {
                 <Route index element={<SearchResults />} />
               </Route>
               <Route path={ROUTES.MOVIE_DETAIL} element={<MovieDetail />} />
-              <Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyDebug />} />
-              <Route path="/dev/theme-debug" element={<ThemeDebug />} />
-              <Route path="/dev/layout-debug" element={<LayoutDebug />} />
+              {TypographyDebug && <Route path={ROUTES.TYPOGRAPHY_TEST} element={<TypographyDebug />} />}
+              {ThemeDebug && <Route path="/dev/theme-debug" element={<ThemeDebug />} />}
+              {LayoutDebug && <Route path="/dev/layout-debug" element={<LayoutDebug />} />}
               {/* System pages */}
               <Route path="/forbidden" element={<Forbidden />} />
               {/* Catch-all 404 route - must be last */}
               <Route path="*" element={<NotFound />} />
             </Route>
 
-            {/* temp/dev routes... */}
-            <Route
+            {TestLogin && <Route
               path={ROUTES.TEST_LOGIN}
               element={
                 <ProtectedRoute>
                   <TestLogin />
                 </ProtectedRoute>
               }
-            />
+            />}
           </Routes>
         </Suspense>
       </AuthContextProvider>

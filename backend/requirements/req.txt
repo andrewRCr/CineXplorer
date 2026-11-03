@@ -10,3 +10,7 @@ redis >= 5.2.1, < 5.3  # Cache backend for Django Ninja throttling + future Cele
 
 # Type checking - Pyright-only approach
 django-types == 0.22.0  # Pyright-compatible Django stubs
+
+whitenoise >= 6.12.0, < 6.13  # Static files in deployed environments
+gunicorn >= 26.2.0, < 26.3  # WSGI server for deployed environments
+email-validator >= 2.0.0, < 3.0  # Required for Pydantic EmailStr validation

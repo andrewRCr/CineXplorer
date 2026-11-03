@@ -31,6 +31,7 @@ from .schemas import (
     FrontendLogSuccessResponse,
     LogHealthCheckResponse,
 )
+from .throttles import FrontendLogThrottle
 
 # Get logger instances
 frontend_logger = logging.getLogger("frontend")
@@ -42,7 +43,8 @@ core_router = Router(tags=["core"])
 
 @core_router.post(
     "/logs/",
-    auth=None,  # Allow anonymous users (throttled at middleware level)
+    auth=None,  # Allow anonymous users with a separate frontend log limit
+    throttle=[FrontendLogThrottle("30/m")],
     response={
         201: FrontendLogSuccessResponse,
         400: FrontendLogErrorResponse,
@@ -60,7 +62,7 @@ def frontend_log(
     for centralized logging, monitoring, and debugging.
 
     Security:
-    - Rate limited via middleware (scope: 'frontend_logs')
+    - Rate limited to 30 reports per minute per client (scope: 'frontend_logs')
     - Payload size limited to prevent abuse
     - Available to anonymous users but throttled aggressively
 
@@ -358,14 +360,14 @@ def write_dev_console_log(
         Status response indicating success or failure
 
     Security:
-        - Only available in DEBUG mode
+        - Only available when ENVIRONMENT is development
         - No authentication required (localhost development only)
         - File path is fixed to prevent directory traversal
     """
     from pathlib import Path
 
     # Only available in development mode
-    if not settings.DEBUG:
+    if settings.ENVIRONMENT != "development":
         return 403, DevConsoleLogResponse(
             status="forbidden",
             error="This endpoint is only available in development mode",
@@ -406,10 +408,10 @@ def debug_error_500(request: HttpRequest) -> tuple[int, dict[str, str]]:
     for server errors).
 
     Security:
-        - Only available in DEBUG mode
+        - Only available when ENVIRONMENT is development
         - Returns 403 in production
     """
-    if not settings.DEBUG:
+    if settings.ENVIRONMENT != "development":
         return 403, {"error": "This endpoint is only available in development mode"}
 
     return 500, {"error": "Simulated server error for testing"}

@@ -14,6 +14,7 @@
  * - State is shared via AuthContext.
  * - Components access state using useAuthContext.
  */
+import { siteOrigin } from "@/config/baseUrls";
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -36,8 +37,7 @@ import { priorityToaster } from "@/components/core/chakra/toaster";
 type UserProfile = components["schemas"]["UserProfileSchema"];
 
 // Derive base URL for allauth endpoints (not under /api/)
-const BASE_URL = import.meta.env.VITE_BASE_URL || 'https://localhost:8444';
-const ALLAUTH_SESSION_URL = `${BASE_URL}/_allauth/browser/v1/auth/session`;
+const ALLAUTH_SESSION_URL = `${siteOrigin}/_allauth/browser/v1/auth/session`;
 
 // Helper type for allauth session response
 interface AllauthSessionResponse {

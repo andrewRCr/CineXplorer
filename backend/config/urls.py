@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
@@ -22,7 +23,6 @@ from .api import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),  # pyright: ignore[reportCallIssue,reportArgumentType]  # django-types limitation: admin.site.urls type inference incomplete
-    path("__debug__/", include("debug_toolbar.urls")),
     # django-allauth Headless Mode (SPA/API-only)
     # Provides JSON API endpoints for OAuth, email verification, password reset
     # Browser API: /_allauth/browser/v1/...
@@ -35,3 +35,6 @@ urlpatterns = [
     # All authentication, movie, core, and user data endpoints provided by Django Ninja
     path("api/", api.urls),
 ]
+
+if settings.ENVIRONMENT == "development":
+    urlpatterns += [path("__debug__/", include("debug_toolbar.urls"))]

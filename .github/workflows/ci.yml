@@ -36,61 +36,44 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Docker meta for backend
-        id: meta-backend
-        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
-        with:
-          images: cinexplorer-backend
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-
-      - name: Build and cache backend image (local only)
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          tags: ${{ steps.meta-backend.outputs.tags }}
-          labels: ${{ steps.meta-backend.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-
       - name: Create .env file
         run: |
-          echo "POSTGRES_DB=cinexplorer" > backend/config/.env
-          echo "POSTGRES_USER=postgres" >> backend/config/.env
-          echo "POSTGRES_PASSWORD=postgres" >> backend/config/.env
-          # Dummy values: tests mock TMDB and use the locmem email backend
-          echo "DJANGO_SECRET_KEY=ci-secret-key-not-for-production" >> backend/config/.env
-          echo "TMDB_API_KEY=dummy-key-for-ci" >> backend/config/.env
-          echo "BACKEND_URL=https://localhost:8000" >> backend/config/.env
-          echo "ZEPTOMAIL_API_KEY=dummy-key-for-ci" >> backend/config/.env
+          {
+            echo "POSTGRES_DB=cinexplorer"
+            echo "POSTGRES_USER=postgres"
+            echo "POSTGRES_PASSWORD=postgres"
+            # Dummy values: tests mock TMDB and use the locmem email backend
+            echo "DJANGO_SECRET_KEY=ci-secret-key-not-for-production"
+            echo "TMDB_API_KEY=dummy-key-for-ci"
+            echo "BACKEND_URL=https://localhost:8000"
+            echo "ZEPTOMAIL_API_KEY=dummy-key-for-ci"
+          } > backend/config/.env
 
       - name: Start services
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
           CI: true
         run: |
-          docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.ci.yml up -d dev-db backend
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml up -d dev-db backend
           # Wait for database to be ready (with timeout for fast failure)
-          docker compose exec -T backend python manage.py wait_for_db --timeout 60
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py wait_for_db --timeout 60
 
       - name: Run backend tests
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
           echo "Running pytest with coverage..."
-          docker compose exec -T -e COVERAGE_FILE=/tmp/.coverage backend pytest apps/ --cov=apps --cov-report=term --cov-report=xml:/tmp/coverage.xml
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml exec -T -e COVERAGE_FILE=/tmp/.coverage backend pytest apps/ --cov=apps --cov-report=term --cov-report=xml:/tmp/coverage.xml
 
           # Copy coverage report from container to host
-          docker compose cp backend:/tmp/coverage.xml backend/coverage.xml
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml cp backend:/tmp/coverage.xml backend/coverage.xml
           # Copy pytest cache if it exists (optional, used for caching only)
-          docker compose cp backend:/backend/.pytest_cache backend/.pytest_cache || true
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml cp backend:/backend/.pytest_cache backend/.pytest_cache || true
 
       - name: Upload coverage reports
         if: always()
@@ -112,7 +95,8 @@ jobs:
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci
         run: |
-          docker compose exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff check apps/ config/
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff check apps/ config/
 
       - name: Setup Python for type checking
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -136,6 +120,115 @@ jobs:
         run: |
           echo "Running Pyright type checking with django-types..."
           npx pyright@1.1.414 backend/apps/ backend/config/ --project backend
+
+  images:
+    name: Production Image Checks
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Backend image metadata
+        id: backend-meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/andrewrcr/cinexplorer-backend
+          flavor: latest=false
+          tags: |
+            type=sha
+            type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+      - name: Web image metadata
+        id: web-meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/andrewrcr/cinexplorer-web
+          flavor: latest=false
+          tags: |
+            type=sha
+            type=raw,value=main,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+      - name: Build backend production image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./backend
+          target: production
+          tags: cinexplorer-backend:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,scope=backend,mode=max
+
+      - name: Check backend image size
+        run: |
+          image_bytes="$(docker run --rm --user root --entrypoint sh cinexplorer-backend:ci -c 'du -sxb /' | awk '{print $1}')"
+          echo "Backend image filesystem: $image_bytes bytes"
+          test "$image_bytes" -lt 300000000
+
+      - name: Check backend deployment settings
+        run: |
+          secret_key="$(python3 -c 'import secrets; print(secrets.token_urlsafe(50))')"
+          docker run --rm \
+            -e ENVIRONMENT=production \
+            -e DJANGO_SECRET_KEY="$secret_key" \
+            -e TMDB_API_KEY=placeholder \
+            -e BACKEND_URL=https://placeholder.invalid \
+            -e POSTGRES_DB=placeholder \
+            -e POSTGRES_USER=placeholder \
+            -e POSTGRES_PASSWORD=placeholder \
+            -e DJANGO_ALLOWED_HOSTS=placeholder.invalid \
+            cinexplorer-backend:ci python manage.py check --deploy --fail-level WARNING
+
+      - name: Build web production image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./frontend
+          target: production
+          build-contexts: infra=./infrastructure
+          tags: cinexplorer-web:ci
+          load: true
+          push: false
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+
+      - name: Log in to GitHub Container Registry
+        if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish backend production image
+        if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./backend
+          target: production
+          tags: ${{ steps.backend-meta.outputs.tags }}
+          labels: ${{ steps.backend-meta.outputs.labels }}
+          push: true
+          cache-from: type=gha,scope=backend
+
+      - name: Publish web production image
+        if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ./frontend
+          target: production
+          build-contexts: infra=./infrastructure
+          tags: ${{ steps.web-meta.outputs.tags }}
+          labels: ${{ steps.web-meta.outputs.labels }}
+          push: true
+          cache-from: type=gha,scope=web
 
   markdown:
     name: Documentation Lint
@@ -216,27 +309,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Build backend image
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          tags: cinexplorer-backend:type-gen
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-
       - name: Create .env file
         run: |
-          echo "POSTGRES_DB=cinexplorer" > backend/config/.env
-          echo "POSTGRES_USER=postgres" >> backend/config/.env
-          echo "POSTGRES_PASSWORD=postgres" >> backend/config/.env
-          echo "DJANGO_SECRET_KEY=ci-secret-key-for-type-generation" >> backend/config/.env
-          echo "TMDB_API_KEY=dummy-key-for-type-generation" >> backend/config/.env
-          echo "BACKEND_URL=https://localhost:8000" >> backend/config/.env
+          {
+            echo "POSTGRES_DB=cinexplorer"
+            echo "POSTGRES_USER=postgres"
+            echo "POSTGRES_PASSWORD=postgres"
+            echo "DJANGO_SECRET_KEY=ci-secret-key-for-type-generation"
+            echo "TMDB_API_KEY=dummy-key-for-type-generation"
+            echo "BACKEND_URL=https://localhost:8000"
+          } > backend/config/.env
 
       - name: Start backend service
         env:
@@ -403,7 +485,7 @@ jobs:
   # The one required check: passes only when every job above succeeded
   ci-ok:
     name: ci-ok
-    needs: [backend, markdown, frontend, type-generation]
+    needs: [backend, images, markdown, frontend, type-generation]
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     steps:

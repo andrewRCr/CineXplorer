@@ -88,3 +88,6 @@ desktop.ini
 htmlcov/
 coverage.xml
 .tox/
+
+# Collect assets inside the production image instead of copying local output.
+staticfiles/

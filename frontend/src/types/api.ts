@@ -407,7 +407,7 @@ export interface paths {
          *     for centralized logging, monitoring, and debugging.
          *
          *     Security:
-         *     - Rate limited via middleware (scope: 'frontend_logs')
+         *     - Rate limited to 30 reports per minute per client (scope: 'frontend_logs')
          *     - Payload size limited to prevent abuse
          *     - Available to anonymous users but throttled aggressively
          *
@@ -534,7 +534,7 @@ export interface paths {
          *         Status response indicating success or failure
          *
          *     Security:
-         *         - Only available in DEBUG mode
+         *         - Only available when ENVIRONMENT is development
          *         - No authentication required (localhost development only)
          *         - File path is fixed to prevent directory traversal
          */
@@ -560,7 +560,7 @@ export interface paths {
          *     for server errors).
          *
          *     Security:
-         *         - Only available in DEBUG mode
+         *         - Only available when ENVIRONMENT is development
          *         - Returns 403 in production
          */
         get: operations["apps_core_api_debug_error_500"];

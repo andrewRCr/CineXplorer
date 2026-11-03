@@ -234,3 +234,6 @@ infrastructure/dev-certs/*.key
 # Type checking output files
 *type_errors.json
 .venv-backend
+
+# Collected Django static assets
+backend/staticfiles/

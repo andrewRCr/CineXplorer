@@ -111,6 +111,8 @@ markers = [
 
 # Warning filters
 filterwarnings = [
+    # Tests use default static storage without collecting assets into STATIC_ROOT.
+    "ignore:No directory at.*/staticfiles/:UserWarning",
     # Suppress Pydantic V2 deprecation warnings from third-party libraries
     # (django-ninja, django-ninja-extra) until they migrate to ConfigDict
     # Our code warnings will still be shown - these are library-specific

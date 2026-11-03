@@ -20,7 +20,7 @@ Git hooks are scripts that run automatically at specific points in the git workf
 git config core.hooksPath .githooks
 ```
 
-That's it! Hooks will now run automatically for all commits.
+That's it! Hooks will now run automatically for all commits and pushes.
 
 ## What Gets Validated
 
@@ -61,8 +61,8 @@ Checks files before commit is created:
 
 ### pre-push Hook
 
-Code reaches `main` only through a pull request with passing CI; planning records under `.arc/` may be pushed to
-`main` directly.
+Code reaches `main` only through a pull request with passing CI; changes confined to `.arc/` may be pushed to `main`
+directly.
 
 ✅ **Enforced (blocks push):**
 
@@ -122,24 +122,9 @@ Context: Filter Integration Testing (Phase 3.6)"
 
 ## Bypassing Hooks
 
-**Use sparingly!** Hooks exist to maintain quality.
-
-```bash
-# Skip all hooks
-git commit --no-verify -m "emergency fix"
-
-# Or use alias
-git commit -n -m "emergency fix"
-```
-
-**When to bypass:**
-
-- Emergency hotfixes (review format later)
-- Experimental/temporary commits
-
-**Don't bypass for:**
-
-- Anything else! Fix issues instead.
+Never bypass the hooks with `--no-verify` (or `-n`), on a commit or a push. When a hook fails, fix the issue and
+retry. An emergency hotfix still reaches `main` through a pull request: skipping `pre-push` would land code on `main`
+with no check at all.
 
 ## Troubleshooting
 
@@ -198,7 +183,7 @@ git config --unset core.hooksPath
 **Permanent (not recommended):**
 
 ```bash
-rm .githooks/commit-msg .githooks/pre-commit
+rm .githooks/commit-msg .githooks/pre-commit .githooks/pre-push
 ```
 
 ## Validation Details
@@ -282,7 +267,10 @@ echo "test message" > /tmp/test-msg
 ```bash
 git fetch origin
 echo "HEAD $(git rev-parse HEAD) refs/heads/main $(git rev-parse origin/main)" | .githooks/pre-push origin
+echo "exit $?"
 ```
+
+`exit 0` means the push would be allowed; `exit 1` comes with the refusal and the offending paths.
 
 ## Related Documentation
 

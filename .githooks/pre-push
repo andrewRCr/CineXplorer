@@ -5,10 +5,10 @@
 # Setup: git config core.hooksPath .githooks
 # NOTE: Never use --no-verify to bypass hooks. Fix the issue instead.
 #
-# Code reaches main only through a pull request with passing CI. Planning records
-# under .arc/ may be pushed to main directly. This hook refuses a push to main if
-# any new commit, or the resulting tree, changes a path outside .arc/. Pushes to
-# other branches pass untouched; `gh pr merge` merges on GitHub and never runs it.
+# Code reaches main only through a pull request with passing CI. Changes confined
+# to .arc/ may be pushed to main directly. This hook refuses a push to main if any
+# new commit, or the resulting tree, changes a path outside .arc/. Pushes to other
+# branches pass untouched; `gh pr merge` merges on GitHub and never runs it.
 
 set -euo pipefail
 
@@ -47,7 +47,8 @@ while read -r _local_ref local_sha remote_ref remote_sha; do
     # What main's tree gains, plus every path each new commit touches. Renames are
     # split so a move into .arc/ still reports the path it left.
     if ! git diff --name-only --no-renames -z "$remote_sha" "$local_sha" >"$paths_file" ||
-        ! git log --format= --name-only --no-renames --no-merges -z "$remote_sha..$local_sha" >>"$paths_file"; then
+        ! git log --format= --name-only --no-renames --no-merges -z "$remote_sha..$local_sha" >>"$paths_file" ||
+        ! LC_ALL=C sort -zu -o "$paths_file" "$paths_file"; then
         refuse "could not list the changes being pushed."
     fi
 
@@ -57,7 +58,7 @@ while read -r _local_ref local_sha remote_ref remote_sha; do
             "" | .arc/*) ;;
             *) outside+=("$path") ;;
         esac
-    done < <(sort -zu "$paths_file")
+    done <"$paths_file"
 
     if [ "${#outside[@]}" -gt 0 ]; then
         listed=("${outside[@]:0:$MAX_LISTED}")

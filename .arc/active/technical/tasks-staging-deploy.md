@@ -204,7 +204,6 @@ runbook for setting up the server, deploying a version and rolling it back.
     - Headless Chrome rendered home and the movie page with its poster, reloaded the deep link, showed not-found on
       both development paths, made no requests to the development origin and reported no uncaught script errors.
       A verified staff account created in a one-off container signed in through the Caddy gate and Django admin.
-      Screenshots and check summaries are in the personal evidence workspace.
     - Every stack operation used the explicit production file and run env file. Teardown removed its containers,
       volumes and temporary credential files; development stayed healthy and its user/migration counts are unchanged.
 
@@ -213,7 +212,7 @@ runbook for setting up the server, deploying a version and rolling it back.
       images with seven-character SHA tags; main pushes also publish the main tag. Only this job has package-write
       permission, and pull requests build without publishing. actionlint passed.
     - Manual run 41358836511 at 9d75e13f passed all six jobs and published both GHCR images with tag sha-9d75e13.
-      Registry login and both manifest pushes succeeded; image names and run evidence are in the personal workspace.
+      Registry login and both manifest pushes succeeded.
     - With approval, opened draft PR 24 against main using the approved title and body. Its run 41359341000 passed
       all six jobs: both production builds succeeded, while registry login and both publishing steps were skipped.
       Backend logs confirm the development image target and 844 passing tests; frontend tests passed all 761 cases.
@@ -230,8 +229,7 @@ runbook for setting up the server, deploying a version and rolling it back.
       validated actual SSH/sudo parsers. A second run as deploy through sudo changed no checked files or recorded
       service actions. Conflicting SSH settings stopped safely; key-permission and SSH-setting drift were repaired.
       Fixed a reproduced pipefail/SIGPIPE false failure by saving sshd output before matching it.
-    - Service control, timezone, firewall activation and swap activation were stubbed in that container; live
-      idempotence and outside SSH/firewall checks remain in 5.3. Evidence is in the personal workspace.
+    - Service control, timezone, firewall activation and swap activation were stubbed in that container.
 
 - [x] **5.2 Write the runbook, `infrastructure/deploy/README.md`** (R25)
     - Documented Vultr/DNS setup, copying bootstrap before checkout, a second deploy-user SSH session before closing
@@ -244,7 +242,6 @@ runbook for setting up the server, deploying a version and rolling it back.
     - Markdown lint and all 22 shell-block syntax checks pass. Every Compose command selects the production file
       and external env file. Executed the documented account code against development inside a rolled-back
       transaction: staff status, password and verified email passed, with no account retained.
-    - Following the runbook on a real server, including deploy/rollback and certificate reuse, remains in 5.3.
 
 - [x] **5.3 Set up staging and prove it live** (live criteria 1–7)
     - Runs on a DigitalOcean Basic droplet in San Francisco (SFO2), not Vultr, which never verified the account (PRD

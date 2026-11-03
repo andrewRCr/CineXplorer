@@ -246,7 +246,8 @@ runbook for setting up the server, deploying a version and rolling it back.
     - Following the runbook on a real server, including deploy/rollback and certificate reuse, remains in 5.3.
 
 - [ ] **5.3 Set up staging and prove it live** (live criteria 1–7)
-    - Blocked on Vultr account verification: SSH-key setup is unavailable; a support ticket is pending.
+    - Runs on a DigitalOcean droplet in San Francisco (SFO2), not Vultr, which never verified the account (PRD
+      amendment 2026-11-03); the runbook's server, firewall and recovery steps were updated to match before setup
     - Before starting, the Owner's steps from the PRD's Dependencies: the server, the `A` record, the registry token
       and the secrets; the deploy key is made during first-time setup (5.2), once the server exists
     - Two manual CI runs at two different commits of this branch, so a deploy and a rollback each have a published

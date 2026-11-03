@@ -11,14 +11,24 @@ configured: do not use email registration, password reset or verification resend
 
 ### Create the server and DNS record
 
-1. Verify the Vultr account, then create a Regular 2 GB server in Dallas with Ubuntu 24.04 LTS and your SSH public key.
-   Leave Limited User Login off: the initial SSH session and console recovery need the root account.
-2. Save the server's IPv4 address and root password from its Overview tab in your password manager. The bootstrap
-   preserves that password for console recovery, while disabling root login over SSH.
+1. Create a DigitalOcean droplet: Basic, Regular CPU (SSD), 2 GB / 1 vCPU / 50 GB, in San Francisco (SFO2), with
+   Ubuntu 24.04 LTS and your SSH public key as its only authentication. Leave IPv6 off and the user-data field empty.
+2. Save the droplet's public IPv4 address. A droplet created with only an SSH key has no root password; console
+   recovery starts with a password reset ([Recover SSH access](#recover-ssh-access-through-digitalocean)).
 3. In Cloudflare DNS, create the `A` record `staging.cinexplorer` pointing at that IPv4 address. Select **DNS only**,
    with proxying off. Do not create an `AAAA` record; this deployment uses IPv4 for client-address throttling.
-4. Confirm that the public DNS record resolves to the server. Allow incoming TCP 22, 80, 443 and UDP 443 in any
-   provider firewall attached to the instance.
+4. Confirm that the public DNS record resolves to the server. Create a DigitalOcean Cloud Firewall for the droplet
+   allowing inbound TCP 22, 80 and 443 and UDP 443 only. It filters traffic before it reaches the droplet, so it also
+   covers ports Docker publishes, which bypass `ufw`.
+
+If your SSH key is not one SSH offers by default, add a block for the server's address to your local
+`~/.ssh/config` so the commands below use it:
+
+```text
+Host YOUR_SERVER_IPV4
+    IdentityFile ~/.ssh/YOUR_PRIVATE_KEY
+    IdentitiesOnly yes
+```
 
 From your local checkout, copy the bootstrap and connect as root. Replace the example address and commit with your
 server and a full commit whose manual CI run successfully published both images. Choose a published version
@@ -339,10 +349,13 @@ Security updates install automatically. When a required update requests a reboot
 for 09:00 UTC. Inspect `/var/log/unattended-upgrades/`, `systemctl list-timers apt-daily*` and `swapon --show` when
 checking host maintenance. Application images update only when you pull and recreate them.
 
-## Recover SSH access through Vultr
+## Recover SSH access through DigitalOcean
 
-Open the instance's Vultr web console and sign in as `root` with the password shown on its Overview tab. SSH root
-login is disabled, but the bootstrap leaves that local password unchanged. From the console, inspect:
+The Recovery Console works without the network or `sshd`, but it needs a password. Root has none on a droplet
+created with only an SSH key, and the bootstrap leaves root's local password alone, so start with a reset. On the
+droplet's **Settings** tab, use **Reset root password**: DigitalOcean emails a temporary password. Then, from the same
+tab, open **Recovery console → Launch Console**, sign in as `root` with the temporary password, and choose a new one
+when prompted. Store it in your password manager. SSH root login stays disabled. From the console, inspect:
 
 ```sh
 sshd -t
@@ -363,3 +376,4 @@ Correct the public key or file permissions there. For an SSH configuration chang
 - [Ubuntu OpenSSH configuration](https://manpages.ubuntu.com/manpages/noble/man5/sshd_config.5.html)
 - [GitHub registry authentication](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
 - [GitHub SSH fingerprints](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints)
+- [DigitalOcean Recovery Console](https://docs.digitalocean.com/products/droplets/how-to/recovery/recovery-console/)

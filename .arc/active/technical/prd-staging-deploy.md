@@ -250,8 +250,8 @@ that works on any host, and a written, repeatable procedure for setting up the s
       no authority since `docker` group membership is already equivalent to root;
     - Docker Engine and the Compose plugin from Docker's apt repository;
     - `ufw` allowing only SSH, 80/tcp, 443/tcp and 443/udp;
-    - SSH password login and SSH root login (`PermitRootLogin no`) disabled, with root's password left set for the
-      provider console, and the SSH service reloaded so the running daemon applies them;
+    - SSH password login and SSH root login (`PermitRootLogin no`) disabled, with root's local password left
+      untouched for the provider's recovery console, and the SSH service reloaded so the running daemon applies them;
     - `unattended-upgrades` for security updates, with automatic reboot at 09:00 UTC when an update requires one;
     - a 2 GB swap file;
     - `/opt/cinexplorer`, owned by `deploy`.
@@ -270,9 +270,10 @@ that works on any host, and a written, repeatable procedure for setting up the s
       shipped inside third-party packages, whose versions can differ between two builds. Reversing a migration
       discards the data it added, and a migration that cannot be reversed stops the rollback: the fix then rolls
       forward;
-    - reading logs (`docker compose logs`), restarting a service, where state lives (the named volumes), and the
-      Vultr web console as the way back in if SSH access is lost, signing in as root with the password shown on the
-      instance's Overview tab.
+    - reading logs (`docker compose logs`), restarting a service, where state lives (the named volumes), and
+      DigitalOcean's Recovery Console as the way back in if SSH access is lost, signing in as root after a root
+      password reset from the droplet's Settings tab, since a droplet created with only an SSH key has no root
+      password.
 
 ## 5. Non-Goals (Out of Scope)
 
@@ -432,11 +433,19 @@ None.
 
 The proven-live criteria depend on these steps outside the repository, which the maintainer performs:
 
-- A Vultr Regular 2 GB server in Dallas running Ubuntu 24.04 LTS, created with the maintainer's SSH key and without
-  Vultr's Limited User Login, which would lock the root account the bootstrap and the console fallback use.
+- A DigitalOcean Basic droplet (Regular CPU, 2 GB / 1 vCPU / 50 GB) in San Francisco (SFO2) running Ubuntu 24.04
+  LTS, created with the maintainer's SSH key as its only authentication.
 - A Cloudflare DNS `A` record for `staging.cinexplorer`, pointing at the server's IPv4 address with proxying off, so
   Caddy can complete its certificate challenge; no `AAAA` record (Design Decision 16).
 - A classic personal access token with only `read:packages` for the server's registry login, and a read-only deploy
   key on the repository for its checkout.
 - The application's secrets for the server's env files: a new `DJANGO_SECRET_KEY`, the TMDB API key, Postgres
   credentials, and the admin basic-auth pair.
+
+## Amendments
+
+- 2026-11-03: the server moves from a Vultr Regular 2 GB in Dallas to a DigitalOcean Basic droplet (Regular CPU,
+  2 GB) in San Francisco (SFO2), the maintainer's revised hosting decision after Vultr never verified the account;
+  New York, the first choice, offered no Basic plan when the droplet was created. Dependencies, R24's root-password
+  clause and R25's recovery path follow: a droplet created with only an SSH key has no root password, so recovery
+  starts with a reset. The code, images, Compose files, CI and DNS pattern are unchanged.

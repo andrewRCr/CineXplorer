@@ -245,18 +245,27 @@ runbook for setting up the server, deploying a version and rolling it back.
       transaction: staff status, password and verified email passed, with no account retained.
     - Following the runbook on a real server, including deploy/rollback and certificate reuse, remains in 5.3.
 
-- [ ] **5.3 Set up staging and prove it live** (live criteria 1–7)
-    - Runs on a DigitalOcean droplet in San Francisco (SFO2), not Vultr, which never verified the account (PRD
-      amendment 2026-11-03); the runbook's server, firewall and recovery steps were updated to match before setup
-    - Before starting, the Owner's steps from the PRD's Dependencies: the server, the `A` record, the registry token
-      and the secrets; the deploy key is made during first-time setup (5.2), once the server exists
-    - Two manual CI runs at two different commits of this branch, so a deploy and a rollback each have a published
-      version
-    - Follow the runbook from first-time setup through the first deploy, the account created from the server shell,
-      a deploy of the newer commit and a rollback to the older one, then check live criteria 1–7
-    - Anything the runbook got wrong or left out is fixed in the runbook, not worked around on the server
-    - Both deploys carry the same migrations, so the rollback's comparison finds no difference and its
-      reverse-migration steps don't run; that path stays unexercised until a change ships a migration
+- [x] **5.3 Set up staging and prove it live** (live criteria 1–7)
+    - Runs on a DigitalOcean Basic droplet in San Francisco (SFO2), not Vultr, which never verified the account (PRD
+      amendment 2026-11-03); the runbook's server, firewall and recovery steps were updated to match before setup.
+      Its Cloud Firewall allows inbound TCP 22, 80 and 443 and UDP 443 only.
+    - Followed the runbook on the droplet: the bootstrap as root; the deploy-user, SSH-setting and refusal checks; a
+      read-only deploy key, checked against GitHub's published host fingerprint; a registry token; both env files at
+      mode 600; the first deploy at `c926146b` (publishing run 41682541067), where Caddy obtained a Let's Encrypt
+      certificate on its first attempt; and the verified account created from the server shell. Health, the HTTPS
+      redirect, admin basic auth, the closed ports and the browser checks passed.
+    - The bootstrap's second run as `deploy` failed: its active-swap check passed `--output`, which `swapon` reads as
+      its hidden `--output-all`, so the line never matched and the rerun re-enabled active swap (exit 255). 5.1's
+      container check had stubbed swap activation. Fixed with `--show=NAME`; rerun from the checkout at `4b10fafa`,
+      every step reported unchanged.
+    - Runbook fixes: the root-refusal check requires `Server accepts key` before the refusal, since under `BatchMode`
+      a passphrase-locked key failed without testing the root setting; the registry login says the token, not the
+      GitHub password, goes at the prompt.
+    - Deployed `4b10fafa` (publishing run 41690802887) and rolled back to `c926146b`. Each finished with the health
+      check passing, a sign-in succeeding with the watchlist intact, and the stored certificate reused (same serial,
+      no new order). Both images list the same 70 applied migrations, so the comparison skipped reversal; that path
+      stays unexercised until a change ships a migration. Staging was then rolled forward to `4b10fafa`.
+    - `migrate` reports unmigrated `accounts` model changes; they predate this branch and are captured as an errand.
 
 ### **Phase 6:** Verification
 

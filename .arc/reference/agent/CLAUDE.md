@@ -31,12 +31,7 @@ there are no token thresholds.
 
 Working through several tasks without a stop is
 [deferred review](../workflows/3_process-task-loop.md#deferred-review): the Owner names the scope ("work through
-4.2-4.4 while I'm away"), and its stop conditions still apply. The `/autonomous-work` command opens it with the scope
-as its argument.
-
-Claude-specific: before starting each task in the scope, judge whether the remaining context covers that task plus
-the Owner's review edits, a commit and a handoff. If unsure, stop at the task boundary with the task list updated:
-"Paused for review. Completed Tasks X.Y-X.Z."
+4.2-4.4 while I'm away"), and its stop conditions still apply.
 
 ## MCP Server Availability
 

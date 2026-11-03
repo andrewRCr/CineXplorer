@@ -2,9 +2,10 @@
 
 **PRD:** `prd-staging-deploy.md`
 **Created:** 2026-11-01
+**Completed:** 2026-11-03
 **Branch:** `technical/staging-deploy`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -269,14 +270,18 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+- [x] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+    - Done 2026-11-03: the full command set passed once at `940bd82a`, every criterion is met with its evidence under
+      Success Criteria, and the author walk and one independent pass are in the Review Log. The pass's header fix is
+      6.1.a, deployed to staging as `f758fd1e`.
 
     - [x] **6.1.a One copy of each security header on proxied responses** (R16, amended 2026-11-03; verification
       pass 1, F1): both proxy routes in `Caddyfile.prod` import one snippet that drops Django's copies of the four
       headers the site block sets, so each response carries one; HSTS and cookies pass through unchanged. Caddy's
       formatter and `validate` pass. Against a stand-in backend sending Django's headers, the previous file sent each
       twice on API, auth, static and admin responses; the fixed one sends one on every route, including Caddy's own
-      basic-auth `401`.
+      basic-auth `401`. Published by run 41700415058 and deployed to staging by the runbook, reusing the stored
+      certificate: the API, sign-in, static, page, missing-asset and admin `401` routes each carry one of each header.
 
 ## Implementation Notes
 
@@ -658,3 +663,18 @@ runbook for setting up the server, deploying a version and rolling it back.
   outside where a check runs without the browser
 - **Noted:** pull request 24 conflicts with `main`, which deleted `PROJECT-STATUS.md` while this branch's activation
   edited it, so no pull-request run has started since `f391821`
+
+### 2026-11-03 — Verification, Pass 1
+
+- **Rubric:** verification-review's independent companion — validate-criteria over the 16 Success Criteria, the change
+  set `main...HEAD` at `e2baaec4` (the task list supplied separately, its criterion marks withheld) and its tree;
+  runner independent (fresh read-only subagent)
+- **Findings (verified):** 2 minor; no criterion unmet. F1, outside the criteria: R16's four headers doubled on
+  proxied responses, so `Cross-Origin-Opener-Policy` did not parse on Django's pages; confirmed on staging and against
+  the HTML standard's opener-policy algorithm. F2: the recorded CI and image evidence predated the merge of `main`
+- **Dispositions (Owner approved all, 2026-11-03):** both fixed. F1 as 6.1.a, with R16 amended; setting Caddy's values
+  only where missing was rejected after it dropped them from Caddy's own `401`. F2 by pull-request run 41695962159 at
+  `e2baaec4`, recorded under Implemented 8
+- **Stop reason:** minor-only pass with both fixes verified, locally and live; stopped on the recommendation, with no
+  fix check or pass 2
+- **Elapsed:** about 21 minutes (reviewer), plus verification

@@ -370,16 +370,22 @@ runbook for setting up the server, deploying a version and rolling it back.
 
 ### Implemented (checkable locally and in CI)
 
-- [ ] `docker compose -f infrastructure/docker-compose.prod.yml config`, with the example env values, shows published
+- [x] `docker compose -f infrastructure/docker-compose.prod.yml config`, with the example env values, shows published
   ports only on `web`, and only 80/tcp, 443/tcp and 443/udp.
-- [ ] The backend production image is under 300 MB. Inside it, `python -c "import debug_toolbar"`,
+    - 2026-11-03 at `940bd82a`, with `prod.env.example` and `BACKEND_ENV_FILE` set to the backend example (the
+      template's server path does not exist locally): only `web` publishes, on 80/tcp, 443/tcp and 443/udp
+- [x] The backend production image is under 300 MB. Inside it, `python -c "import debug_toolbar"`,
   `python -c "import django_extensions"` and `gcc --version` each fail, while
   `python -c "import psycopg; print(psycopg.pq.__impl__)"` prints `c` and
   `python manage.py shell -c "import config.urls"` succeeds under `ENVIRONMENT=production` with placeholder values
   for R10's variables.
-- [ ] Inside the backend production image, `python manage.py check --deploy --fail-level WARNING` exits 0 under
+    - `production` target built locally at `940bd82a`: 190,300,093 bytes by `du -sxb /`; both imports fail with
+      `ModuleNotFoundError` and `gcc` is not found; psycopg reports `c`; `config.urls` imports with CI's placeholders
+- [x] Inside the backend production image, `python manage.py check --deploy --fail-level WARNING` exits 0 under
   `ENVIRONMENT=production` with a generated placeholder secret key and placeholders for R10's other variables.
-- [ ] With `ENVIRONMENT=staging` and `DJANGO_ALLOWED_HOSTS` unset, Django fails to start with `ImproperlyConfigured`
+    - Same image with CI's placeholders and a generated `token_urlsafe(50)` key: "no issues (1 silenced)", exit 0;
+      CI's image job runs the same check on every pull request and publish
+- [x] With `ENVIRONMENT=staging` and `DJANGO_ALLOWED_HOSTS` unset, Django fails to start with `ImproperlyConfigured`
   naming `DJANGO_ALLOWED_HOSTS`; with it set and the two origin variables unset, `CSRF_TRUSTED_ORIGINS` and
   `CORS_ALLOWED_ORIGINS` are empty. With `ENVIRONMENT=development` and the variables unset, the three settings equal
   today's localhost lists. With `ENVIRONMENT=staging` and `DEBUG=True`, Django fails to start with
@@ -387,15 +393,24 @@ runbook for setting up the server, deploying a version and rolling it back.
   case by loading the real settings module under that environment, for example by importing it in a subprocess, and
   they replace the test in `apps/authentication/tests/integration/test_environment_config.py` that an unrecognised
   value falls back to `development`.
-- [ ] Backend tests show, under the staging proxy setting, that requests to a throttled endpoint from two different
+    - `test_invalid_deployment_settings` (an `ImproperlyConfigured` naming each of `DJANGO_ALLOWED_HOSTS`, `DEBUG`
+      and `ENVIRONMENT`), `test_staging_origins_default_to_empty` and `test_development_host_and_origin_defaults`
+      (equal to `main`'s lists) read the real settings in a subprocess; the fallback test is gone; all pass
+- [x] Backend tests show, under the staging proxy setting, that requests to a throttled endpoint from two different
   client addresses in `X-Forwarded-For` are counted separately, that a header with two entries is counted under the
   last, and that allauth resolves the client address to that same last entry; that `POST /api/logs/` returns `429`
   once a client exceeds 30 requests in a minute; and that log reports do not count against the sign-in throttle.
-- [ ] In a production frontend build made as CI and the web image make it (no `.env` file, no `VITE_*` variables), no
+    - `test_forwarded_clients_share_only_their_own_login_limit` (both cases),
+      `test_allauth_uses_last_forwarded_address`, `test_frontend_logs_throttle_without_writing_rejected_report` (429
+      after 30) and `test_frontend_logs_do_not_consume_login_limit` pass under the staging proxy setting
+- [x] In a production frontend build made as CI and the web image make it (no `.env` file, no `VITE_*` variables), no
   emitted file contains `localhost:8444`, and the Vite manifest (`vite build --manifest`) has no entry for a module
   under `src/pages/dev/` or for `src/pages/user/TestLogin.tsx`. A frontend test shows the API base is the page origin
   followed by `/api` when neither variable is set.
-- [ ] The production stack, run locally from images built on this branch with `SITE_ADDRESS=localhost` while the
+    - In the web image's build stage (no env files, no `VITE_*`): no `dist` file, nor any in the image's `/srv`,
+      contains `localhost:8444`; a `--manifest` build lists 15 pages, none under `src/pages/dev/` and no
+      `TestLogin.tsx`; `baseUrls.test.ts`'s page-origin case passes
+- [x] The production stack, run locally from images built on this branch with `SITE_ADDRESS=localhost` while the
   development stack keeps running: migrations complete as a one-off container; the SPA loads at `/` and on a deep
   link to a movie page; `/api/health-check/` returns `200`; Django admin's files are served under `/static/`; and
   `/admin/` answers `401` without credentials and Django's login page with the configured basic-auth pair, where a
@@ -403,28 +418,50 @@ runbook for setting up the server, deploying a version and rolling it back.
   `/backend/logs` directory exists in the backend container; and `curl -sI` shows `Cache-Control: no-cache` on `/`,
   on a deep link and on `/index.html`, the immutable policy on a file under `/assets/`, and `404` with
   `Cache-Control: no-store` for a missing file there.
-- [ ] A pull request run builds both images without pushing them, and a manual CI run on this branch publishes
+    - Images built locally at `940bd82a`, as project `cinexplorer-verify` beside the running development stack: one-off
+      migrations; `/`, `/movie/550` and `/index.html` 200 with `no-cache`; an asset immutable, a missing one 404
+      `no-store`; health 200; admin CSS 200 under `/static/`; `/admin/` 401, then Django's login with the pair, where
+      a staff account reached Site administration; no `/backend/logs`. Torn down with its volumes
+- [x] A pull request run builds both images without pushing them, and a manual CI run on this branch publishes
   `ghcr.io/andrewrcr/cinexplorer-backend` and `ghcr.io/andrewrcr/cinexplorer-web`, each tagged `sha-` plus the
   commit's first seven characters.
-- [ ] The development stack, built with `target: dev`, still serves `https://localhost:8444` with the debug toolbar
+    - Pull-request run 41360993462 at `f391821` built both images with login and publishing skipped (the workflow is
+      unchanged since); manual runs 41682541067 and 41690802887 published `sha-c926146` and `sha-4b10faf`, which the
+      staging server pulled
+- [x] The development stack, built with `target: dev`, still serves `https://localhost:8444` with the debug toolbar
   available, and CI's backend tests run on its `dev` image.
+    - Rebuilt at `940bd82a`, both services on `target: dev`: `https://localhost:8444` 200; the toolbar renders on the
+      backend's own port and its script loads (port 8000, as task-list pass 2 settled); CI run 41690802887 built the
+      `dev` stage and ran 844 tests on it
 
 ### Proven live (on the staging server)
 
-- [ ] `curl -sSf https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/` succeeds without `-k`, the
+- [x] `curl -sSf https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/` succeeds without `-k`, the
   certificate is issued by a public certificate authority, and `http://` redirects to `https://`.
-- [ ] In a browser on the staging host, the home page, a search, a browse page and a movie detail page load with TMDB
+    - 2026-11-03: succeeds without `-k`; Let's Encrypt (YE1) certificate; `http://` answers 308 to `https://`
+- [x] In a browser on the staging host, the home page, a search, a browse page and a movie detail page load with TMDB
   data, and reloading a movie detail URL loads it directly.
-- [ ] Signing in with the account created from the server shell succeeds, and a movie added to the watchlist is still
+    - The Owner, after the first deploy: home, search, browse and a movie detail page with TMDB data; the detail URL
+      reloaded directly
+- [x] Signing in with the account created from the server shell succeeds, and a movie added to the watchlist is still
   there after a reload.
-- [ ] From outside the server, connections to ports 5432, 6379 and 8000 fail, and `/admin/` asks for basic auth before
+    - The Owner signed in with the shell-created account; the watchlist movie survived a reload, and again after the
+      newer deploy and after the rollback
+- [x] From outside the server, connections to ports 5432, 6379 and 8000 fail, and `/admin/` asks for basic auth before
   Django's login page, which the configured pair passes.
-- [ ] Following the runbook, a deploy of a newer commit and a rollback to the previous one each finish with the health
+    - Ports 5432, 6379 and 8000 time out from outside; `/admin/` answers 401 with a basic-auth challenge, and the
+      Owner passed the pair to Django's login
+- [x] Following the runbook, a deploy of a newer commit and a rollback to the previous one each finish with the health
   check passing and a sign-in succeeding, and Caddy reuses its stored certificate rather than obtaining a new one.
-- [ ] Running `sudo bootstrap.sh` a second time as `deploy` on the configured server completes without error and changes
+    - Deployed `4b10fafa` and rolled back to `c926146b` by the runbook: the health check passed and the Owner signed in
+      after each; the certificate kept its serial and issue time, with no new order in Caddy's logs
+- [x] Running `sudo bootstrap.sh` a second time as `deploy` on the configured server completes without error and changes
   nothing.
-- [ ] On the server, `sudo sshd -T` reports `passwordauthentication no` and `permitrootlogin no`; from outside it, a
+    - From the checkout at `4b10fafa`, after the swap-check fix: exit 0, 34 steps unchanged, none changed (5.3)
+- [x] On the server, `sudo sshd -T` reports `passwordauthentication no` and `permitrootlogin no`; from outside it, a
   password-only SSH login and an SSH login as root are both refused.
+    - `sshd -T` reports both `no`; a password-only login is offered only `publickey` and refused; root's key is accepted
+      and the login refused
 
 ## Review Log
 
@@ -602,3 +639,14 @@ runbook for setting up the server, deploying a version and rolling it back.
   interfaces and size (six phases, under 1,000 lines) held; 1.5.a and 1.6.a now name their test file, and three
   wrapped lines were rejoined
 - **Elapsed:** about 12 minutes (reviewer), plus verification
+
+### 2026-11-03 — Verification, author criteria walk
+
+- **Rubric:** validate-criteria over the work unit: the 16 Success Criteria, `main...HEAD` at `940bd82a` and its tree;
+  runner the author
+- **Gates:** the full local run at `940bd82a`, after rebuilding the development stack: backend 844 passed, frontend
+  761 passed; Ruff, ESLint, type-check, Pyright (0 errors) and markdown lint clean, with no auto-fix changes
+- **Result:** 16 of 16 met, with evidence under each criterion; the live criteria rest on the 5.3 runs, rechecked from
+  outside where a check runs without the browser
+- **Noted:** pull request 24 conflicts with `main`, which deleted `PROJECT-STATUS.md` while this branch's activation
+  edited it, so no pull-request run has started since `f391821`

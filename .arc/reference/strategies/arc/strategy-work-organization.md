@@ -1131,6 +1131,10 @@ active/
 
 ### File Purposes
 
+Read current work from active task lists and their branches and pull requests, and completed work from archived
+records and Git history. Confirm intended priorities and dependencies with the Owner and the relevant plans
+([ADR-022](../../adr/adr-022-retire-project-status-dashboard.md)).
+
 **USER-INBOX.md** (personal, gitignored: `.arc/user/{identity}/`, in the main checkout):
 
 - Captures to route later, in `## Errand` and `## Work Unit` sections (ADR-021)
@@ -1141,7 +1145,6 @@ active/
 - Internal planning artifact for sequencing strategy
 - Documents order of operations (phases), dependency analysis, scoping decisions
 - Subject to change as project evolves
-- Referenced from PROJECT-STATUS.md for detailed planning context
 
 **ATOMIC-TASKS.md** (active root):
 
@@ -1208,8 +1211,7 @@ No separate index needed.
 ### Drain
 
 Between work units, the drain routes each work-unit entry to its tracked home, runs each errand or leaves it in the
-inbox, and offers a backlog pass: atomic tasks still relevant, bucket items ready for a plan or PRD, PROJECT-STATUS still
-accurate. See
+inbox, and offers a backlog pass: atomic tasks still relevant, bucket items ready for a plan or PRD. See
 [user-inbox.md](../../workflows/supplemental/user-inbox.md).
 
 ### Design Decisions

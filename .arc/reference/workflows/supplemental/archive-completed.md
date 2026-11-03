@@ -71,7 +71,6 @@ or the Owner stops it. Record each pass in the task list's `## Review Log`.
 
 - [ ] Implementation works in the development environment, including any criterion that must be proven live
 - [ ] Task list header `**Status:**` updated to `Complete`, and the PRD's `**Status:**` likewise (if a PRD exists)
-- [ ] PROJECT-STATUS reflects completion (if applicable - major features/technical work)
 - [ ] The verification task is marked `[x]`, its note pointing to the criteria evidence
 
 **Note:** Not all work has PRDs. Incidental work typically has only task lists. Skip PRD items if no PRD.
@@ -301,6 +300,9 @@ git push -u origin {branch-name}
 gh pr create --base {parent-branch} --head {branch-name}
 ```
 
+After publication, enter [monitor-pull-request.md](monitor-pull-request.md) for the exact pushed head's CI in the
+same turn. Continue to a result or bounded stop; do not hand the Owner a pending first observation to check manually.
+
 **Review on the PR:** Once CI is green and nothing more is to be pushed, recommend a review route in a sentence and
 wait for the Owner's choice. Never start one unprompted: hosted reviews are rate-limited and local ones spend tokens.
 
@@ -314,7 +316,12 @@ gh pr comment {pr-number} --body "@codex review"
 gh pr comment {pr-number} --body "@coderabbitai review"
 ```
 
-A hosted request reviews the head at that moment, so make it after the last push, once per PR.
+A hosted request reviews the head at that moment, so make it after the last push for that pass, once for the
+Owner-approved request. A further pass still needs its separate approval.
+
+Retain each authorized request's URL/time and head, then enter
+[monitor-pull-request.md](monitor-pull-request.md) in the same turn. Monitor all requested providers together;
+continuing a wait never posts another request.
 
 ### 7) Address PR Review Findings
 
@@ -326,11 +333,12 @@ If review changes what was delivered, update the completion doc to the final sta
 
 ### 8) Merge Pull Request
 
-With the Owner's approval, once `ci-ok` is green and every review thread is resolved:
+Once [monitor-pull-request.md](monitor-pull-request.md) establishes readiness, ask for explicit merge approval.
+After approval, refresh the accepted head's evidence: `ci-ok` must be green and every review thread resolved:
 
 ```bash
 # Merge PR through GitHub interface or CLI (never --admin)
-gh pr merge {pr-number} --merge  # preserve commit history (no squash)
+gh pr merge {pr-number} --merge --match-head-commit {accepted-full-sha}  # preserve commit history
 
 # Or if merging locally:
 git checkout parent-branch
@@ -410,14 +418,7 @@ full evolution even after it moved to archive.
 (`rm -r .arc/user/{identity}/{name}/`): its kept versions, prompts and reports have served their purpose, and the
 task list's `## Review Log` is the durable record.
 
-### 11) Update PROJECT-STATUS and ROADMAP
-
-Update `.arc/reference/constitution/PROJECT-STATUS.md` if applicable:
-
-- Update "Last Completed" section to add newly completed work with archive link
-- Remove from "Currently Active" section
-- If significant work, add to "Completed Major Work" section with description
-- Update project metrics (tests, coverage, new capabilities) as appropriate
+### 11) Update ROADMAP (if tracked)
 
 Update `.arc/backlog/ROADMAP.md` if applicable:
 
@@ -425,7 +426,7 @@ Update `.arc/backlog/ROADMAP.md` if applicable:
 - Update archive path reference
 - Adjust "Last Updated" date
 
-**When to update these docs:**
+**When to update the roadmap:**
 
 - ✅ Major features (always document completion)
 - ✅ Significant technical work (modernization, infrastructure changes)
@@ -438,7 +439,6 @@ Update `.arc/backlog/ROADMAP.md` if applicable:
 ```bash
 git add .arc/reference/archive/{quarter}/{category}/{name}/
 git add .arc/active/{category}/  # captures file deletions
-git add .arc/reference/constitution/PROJECT-STATUS.md  # if updated
 git add .arc/backlog/ROADMAP.md  # if updated
 ```
 

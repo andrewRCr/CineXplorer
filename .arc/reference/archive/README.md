@@ -39,7 +39,6 @@ archive/2025-q4/technical/logging-system/
 
 - **Current Work**: [`.arc/active/`](../../active/) (feature/, technical/, incidental/)
 - **Upcoming Work**: [`.arc/upcoming/`](../../upcoming/) (feature/, technical/)
-- **Project Status**: [`constitution/PROJECT-STATUS.md`](../constitution/PROJECT-STATUS.md)
 - **Workflows**: [`workflows/`](../workflows/)
 
 ### Archive Workflow

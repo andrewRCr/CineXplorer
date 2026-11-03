@@ -9,6 +9,16 @@ the same documents; re-read what it lists.
 Session state lives in the gitignored personal workspace ([README](../../../user/README.md)): the work unit's
 `SESSION-NOTES.md` in the checkout that runs it, and `WORKING-MEMORY.md` and `USER-INBOX.md` in the main checkout.
 
+## Errand Entry
+
+When the Owner requests an errand, use [run-errand.md](run-errand.md) or the installed `$errand` skill before
+interpreting the home branch as the work to resume. Preserve a paused work unit's notes.
+
+When the local harness is installed, run `node .codex/hooks/legacy-arc/compaction-recovery.mjs errand-status` from
+the session home. An active errand selects its `checkoutPath` for all initialization commands and document reads;
+follow its errand workflow rather than resuming the home's work unit. A status failure stops initialization until
+resolved. With no active errand and no explicit errand request, initialize normally below.
+
 ## Steps
 
 ### 1. Locate

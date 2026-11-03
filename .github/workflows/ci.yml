@@ -244,6 +244,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
+      - name: Test recovery hooks
+        run: node --test .arc/reference/harness-hooks/compaction-recovery.test.mjs
+
       - name: Lint markdown files
         run: |
           npx markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"

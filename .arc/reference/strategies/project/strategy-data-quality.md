@@ -213,34 +213,74 @@ We need minimum vote thresholds for rating reliability.
 
 ### Tiered Thresholds
 
-| Tier       | Threshold | When Applied                           |
-|------------|-----------|----------------------------------------|
-| `STRICT`   | 50 votes  | Vote-based sorts (`vote_average.desc`) |
-| `MODERATE` | 3 votes   | Popularity sorts (`popularity.desc`)   |
-| `BYPASS`   | 0 votes   | Date sorts, no rating filter           |
+| Tier       | Threshold | When Applied                                               |
+|------------|-----------|------------------------------------------------------------|
+| `STRICT`   | 200 votes | Rating sorts without rating bounds                         |
+| `MODERATE` | 3 votes   | General browsing and rating sorts with rating bounds       |
+| `BYPASS`   | `None`    | Contexts needing complete results or allowing new releases |
 
 ### Logic
 
+`get_threshold()` takes the endpoint first. `EndpointType` accepts `"browse"`, `"search"`, `"now_playing"` and
+`"upcoming"`. Endpoint bypass takes precedence over sorting and filters; browsing without a sort uses MODERATE.
+
+The decision order below combines `get_threshold()`, `_get_sort_threshold()` and `_is_recent_content()` into one sketch:
+
 ```python
+from datetime import UTC, datetime
+from typing import Literal
+
+EndpointType = Literal["browse", "search", "now_playing", "upcoming"]
+
+
 class VoteCountPolicy:
-    STRICT_THRESHOLD = 50
+    STRICT_THRESHOLD = 200
     MODERATE_THRESHOLD = 3
+    RECENT_YEAR_BUFFER = 1
 
     @classmethod
-    def get_threshold(cls, sort_by: str) -> int:
-        if "vote_average" in sort_by:
-            return cls.STRICT_THRESHOLD
-        elif "popularity" in sort_by:
+    def get_threshold(
+        cls,
+        endpoint: EndpointType = "browse",
+        sort_by: str | None = None,
+        year_max: int | None = None,
+        rating_min: float | None = None,
+        rating_max: float | None = None,
+    ) -> int | None:
+        if endpoint in ("search", "now_playing", "upcoming"):
+            return None
+        if not sort_by:
             return cls.MODERATE_THRESHOLD
-        else:
-            return 0  # BYPASS
+
+        if "vote_average" in sort_by:
+            if rating_min is not None or rating_max is not None:
+                return cls.MODERATE_THRESHOLD
+            return cls.STRICT_THRESHOLD
+
+        if "original_title" in sort_by:
+            return cls.MODERATE_THRESHOLD
+        if sort_by == "popularity.asc":
+            return None
+
+        if "release_date" in sort_by:
+            recent = year_max is None or year_max >= datetime.now(UTC).year - cls.RECENT_YEAR_BUFFER
+            if sort_by.endswith(".desc") and recent:
+                return None
+
+        return cls.MODERATE_THRESHOLD
 ```
+
+A missing upper year bound can include recent releases. An explicit bound is recent when `year_max` is at least
+the current UTC year minus `RECENT_YEAR_BUFFER` (1). Newest-first release-date sorts bypass in either case.
+Historical newest-first and all oldest-first release-date sorts use MODERATE. `popularity.desc`, unrecognized
+sorts and the default browse context also use MODERATE. Either non-`None` rating bound selects MODERATE for a
+rating sort, including a bound of `0`.
 
 ### Rationale
 
-- **STRICT (50):** When sorting by rating, we want statistically meaningful ratings
-- **MODERATE (3):** Popular movies usually have votes; 3 catches edge cases
-- **BYPASS (0):** Date sorts don't depend on rating quality (upcoming releases, etc.)
+- **STRICT (200):** Rating sorts without rating bounds need enough votes for a meaningful ranking.
+- **MODERATE (3):** Light spam filtering preserves niche content and rating-band browsing.
+- **BYPASS (`None`):** Search and least-popular browsing favor completeness; new and unreleased films may lack votes.
 
 ---
 

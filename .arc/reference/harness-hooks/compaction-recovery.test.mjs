@@ -4,8 +4,9 @@
 // checkout can have, and reads the recovery context the hook would inject after a compaction.
 
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { devNull, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -254,4 +255,188 @@ test("a task list without notes is named, with no session notes yet", (t) => {
     assert.match(context, /Work unit: cleanup \(no session notes yet\)\n/);
     assert.ok(rereadList(context).some((line) => line.startsWith(".arc/active/technical/tasks-cleanup.md")));
     assert.doesNotMatch(context, /SESSION-NOTES/);
+});
+
+
+function errandRecord(root, sessionId, checkout, branch = "chore/errand") {
+    const key = createHash("sha256").update(sessionId).digest("hex");
+    write(root, `.git/legacy-arc-errands/${key}.json`, JSON.stringify({
+        version: 1, home: root, checkout, branch,
+    }));
+}
+
+function isolatedErrand(t) {
+    const root = repository(t);
+    startWorkUnit(root, "technical/paused", "paused");
+    writeNotes(root, "me", "paused", { branch: "`technical/paused`" });
+    write(root, ".arc/user/me/WORKING-MEMORY.md", "# Working Memory\n");
+    const checkout = join(tempDir(t), "errand");
+    git(root, "worktree", "add", "-q", "-b", "chore/errand", checkout, "main");
+    return { root, checkout };
+}
+
+function hookCommand(root, command, sessionId, ...args) {
+    return execFileSync(process.execPath, [HOOK, command, ...args], {
+        cwd: root,
+        input: JSON.stringify({ session_id: sessionId }),
+        env: { ...GIT_ENV, CLAUDE_PROJECT_DIR: root, CODEX_THREAD_ID: sessionId, CODEX_SESSION_ID: sessionId },
+        encoding: "utf8", stdio: ["pipe", "pipe", "pipe"],
+    });
+}
+
+test("primary-anchored recovery follows this session's errand without reading the paused work unit", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    errandRecord(root, "isolated-session", checkout);
+
+    const output = hookCommand(root, "claude-session-start", "isolated-session");
+    const context = JSON.parse(output).hookSpecificOutput.additionalContext;
+
+    assert.ok(context.includes(`Checkout: ${checkout}`));
+    assert.ok(context.includes(`${checkout}/.arc/reference/constitution/DEVELOPMENT-RULES.md`));
+    assert.match(context, /Branch: chore\/errand/);
+    assert.doesNotMatch(context, /tasks-paused|paused\/SESSION-NOTES|Next Task: 2\.1/);
+    assert.equal(git(root, "branch", "--show-current"), "technical/paused");
+});
+
+test("Codex can arm from home and claim from the active checkout exactly once", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    errandRecord(root, "moving-session", checkout);
+    assert.equal(hookCommand(root, "codex-arm", "moving-session"), "");
+    const output = hookCommand(checkout, "codex-claim", "moving-session", "post-tool-use");
+    assert.notEqual(output, "", "recovery must survive a change in the command checkout");
+    const recovered = JSON.parse(output);
+    assert.equal(recovered.hookSpecificOutput.hookEventName, "PostToolUse");
+    assert.equal(recovered.suppressOutput, undefined);
+    assert.ok(recovered.hookSpecificOutput.additionalContext.includes(`Checkout: ${checkout}`));
+    assert.equal(hookCommand(root, "codex-claim", "moving-session", "user-prompt-submit"), "");
+});
+
+test("session identifiers that differ only by punctuation do not share recovery markers", (t) => {
+    const root = repository(t);
+    hookCommand(root, "codex-arm", "session/a");
+    assert.equal(hookCommand(root, "codex-claim", "session_a", "post-tool-use"), "");
+    assert.notEqual(hookCommand(root, "codex-claim", "session/a", "user-prompt-submit"), "");
+});
+
+test("enter and return preserve the primary and keep other sessions independent", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    const head = git(root, "rev-parse", "HEAD");
+    const status = git(root, "status", "--porcelain");
+    const entered = hookCommand(root, "errand-enter", "owner", checkout);
+    assert.match(entered, /"state":"errand"/, "enter must select an execution checkout");
+    assert.equal(JSON.parse(entered).checkoutPath, checkout);
+    assert.equal(JSON.parse(hookCommand(root, "errand-status", "owner")).checkoutPath, checkout);
+    assert.equal(JSON.parse(hookCommand(root, "errand-status", "other")).checkoutPath, root);
+    const otherContext = JSON.parse(hookCommand(root, "claude-session-start", "other"))
+        .hookSpecificOutput.additionalContext;
+    assert.match(otherContext, /Branch: technical\/paused/);
+    assert.deepEqual(JSON.parse(hookCommand(root, "errand-return", "owner")), { state: "home", checkoutPath: root });
+    assert.equal(JSON.parse(hookCommand(root, "errand-status", "owner")).checkoutPath, root);
+    assert.equal(git(root, "rev-parse", "HEAD"), head);
+    assert.equal(git(root, "status", "--porcelain"), status);
+    assert.equal(git(root, "branch", "--show-current"), "technical/paused");
+});
+
+test("enter refuses replacing an active errand or selecting a different repository", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    const second = join(tempDir(t), "second");
+    git(root, "worktree", "add", "-q", "-b", "chore/second", second, "main");
+    hookCommand(root, "errand-enter", "owner", checkout);
+    assert.throws(() => hookCommand(root, "errand-enter", "owner", second), /already has an active errand/);
+    assert.equal(JSON.parse(hookCommand(root, "errand-status", "owner")).checkoutPath, checkout);
+    hookCommand(root, "errand-return", "owner");
+    const foreign = repository(t);
+    git(foreign, "checkout", "-q", "-b", "chore/foreign");
+    assert.throws(() => hookCommand(root, "errand-enter", "owner", foreign), /different registered checkout/);
+});
+
+test("a removed errand stops recovery until an explicit return", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    errandRecord(root, "owner", checkout);
+    git(root, "worktree", "remove", checkout);
+    const context = JSON.parse(hookCommand(root, "claude-session-start", "owner"))
+        .hookSpecificOutput.additionalContext;
+    assert.match(context, /STOP: isolated errand recovery/);
+    assert.doesNotMatch(context, /tasks-paused|paused\/SESSION-NOTES|Branch: technical\/paused/);
+    const returned = hookCommand(root, "errand-return", "owner");
+    assert.match(returned, /"state":"home"/);
+    assert.equal(JSON.parse(hookCommand(root, "errand-status", "owner")).checkoutPath, root);
+});
+
+test("a changed errand branch stops recovery instead of adopting unrelated work", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    errandRecord(root, "owner", checkout);
+    git(checkout, "checkout", "-q", "-b", "chore/replaced");
+    const context = JSON.parse(hookCommand(root, "claude-session-start", "owner"))
+        .hookSpecificOutput.additionalContext;
+    assert.match(context, /STOP: isolated errand recovery/);
+    assert.doesNotMatch(context, /Branch: chore\/replaced|paused\/SESSION-NOTES/);
+});
+
+test("foreign and malformed active records produce a scope warning without primary notes", (t) => {
+    const { root } = isolatedErrand(t);
+    const foreign = repository(t);
+    errandRecord(root, "owner", foreign, "main");
+    let context = JSON.parse(hookCommand(root, "claude-session-start", "owner"))
+        .hookSpecificOutput.additionalContext;
+    assert.match(context, /STOP: isolated errand recovery/);
+    assert.doesNotMatch(context, /paused\/SESSION-NOTES/);
+    const key = createHash("sha256").update("owner").digest("hex");
+    write(root, `.git/legacy-arc-errands/${key}.json`, "{broken");
+    context = JSON.parse(hookCommand(root, "claude-session-start", "owner"))
+        .hookSpecificOutput.additionalContext;
+    assert.match(context, /STOP: isolated errand recovery/);
+    assert.doesNotMatch(context, /paused\/SESSION-NOTES/);
+});
+
+test("entry requires a known session identifier and return must run from the session home", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    assert.throws(() => hookCommand(root, "errand-enter", "", checkout), /CODEX_THREAD_ID or CODEX_SESSION_ID is required/);
+    hookCommand(root, "errand-enter", "owner", checkout);
+    assert.throws(() => hookCommand(checkout, "errand-return", "owner"), /Return from the session home/);
+    assert.equal(JSON.parse(hookCommand(root, "errand-status", "owner")).checkoutPath, checkout);
+});
+
+
+test("the installed hook survives removal of its source worktree and preserves other hooks", (t) => {
+    const { root, checkout } = isolatedErrand(t);
+    write(root, ".codex/hooks.json", JSON.stringify({ hooks: {
+        UserPromptSubmit: [{ hooks: [{ type: "command", command: "echo other-hook" }] }],
+    } }));
+    const harness = ".arc/reference/harness-hooks";
+    for (const file of ["compaction-recovery.mjs", "errand-session.mjs", "install-errand-harness.mjs"]) {
+        mkdirSync(join(checkout, harness), { recursive: true });
+        copyFileSync(join(dirname(HOOK), file), join(checkout, harness, file));
+    }
+    const skillSource = join(dirname(HOOK), "../agent/skills/errand/SKILL.md");
+    write(checkout, ".arc/reference/agent/skills/errand/SKILL.md", readFileSync(skillSource, "utf8"));
+    git(checkout, "add", ".");
+    git(checkout, "commit", "-q", "-m", "harness fixture");
+    const before = git(root, "status", "--porcelain", "--untracked-files=no");
+    execFileSync(process.execPath, [join(checkout, harness, "install-errand-harness.mjs")], { env: GIT_ENV });
+    const hooks = JSON.parse(readFileSync(join(root, ".codex/hooks.json"), "utf8"));
+    assert.ok(hooks.hooks.UserPromptSubmit.some((entry) => entry.hooks.some((hook) => hook.command === "echo other-hook")));
+    assert.ok(readFileSync(join(root, ".codex/skills/errand/SKILL.md"), "utf8").includes("name: errand"));
+    execFileSync(process.execPath, [join(checkout, harness, "install-errand-harness.mjs")], { env: GIT_ENV });
+    assert.deepEqual(JSON.parse(readFileSync(join(root, ".codex/hooks.json"), "utf8")), hooks);
+    const installed = join(root, ".codex/hooks/legacy-arc/compaction-recovery.mjs");
+    const options = {
+        cwd: root, input: JSON.stringify({ session_id: "owner" }),
+        env: { ...GIT_ENV, CODEX_THREAD_ID: "owner", CODEX_SESSION_ID: "owner" }, encoding: "utf8",
+    };
+    execFileSync(process.execPath, [installed, "errand-enter", checkout], options);
+    const arm = hooks.hooks.PreCompact[0].hooks[0].command;
+    const claim = hooks.hooks.PostToolUse[0].hooks[0].command;
+    execFileSync("bash", ["-c", arm], options);
+    const recovered = JSON.parse(execFileSync("bash", ["-c", claim], options));
+    assert.ok(recovered.hookSpecificOutput.additionalContext.includes(`Checkout: ${checkout}`));
+    assert.doesNotMatch(recovered.hookSpecificOutput.additionalContext, /paused\/SESSION-NOTES/);
+    execFileSync(process.execPath, [installed, "errand-return"], options);
+    // The source checkout can disappear; the installed hook imports only its local sibling module.
+    git(root, "worktree", "remove", checkout);
+    const output = execFileSync(process.execPath, [installed, "errand-status"], {
+        cwd: root, env: { ...GIT_ENV, CODEX_THREAD_ID: "owner", CODEX_SESSION_ID: "owner" }, encoding: "utf8",
+    });
+    assert.deepEqual(JSON.parse(output), { state: "home", checkoutPath: root });
+    assert.equal(git(root, "status", "--porcelain", "--untracked-files=no"), before);
 });

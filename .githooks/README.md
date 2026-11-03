@@ -1,6 +1,7 @@
 # Git Hooks - CineXplorer
 
-This directory contains git hooks that enforce commit message standards and run pre-commit checks.
+This directory contains git hooks that enforce commit message standards, run pre-commit checks and guard direct
+pushes to `main`.
 
 ## What Are Git Hooks?
 
@@ -8,6 +9,7 @@ Git hooks are scripts that run automatically at specific points in the git workf
 
 - **pre-commit** - Runs before commit is created (checks files, detects issues)
 - **commit-msg** - Runs after commit message is written (validates format)
+- **pre-push** - Runs before a push is sent (guards `main`)
 
 ## Quick Setup
 
@@ -18,7 +20,7 @@ Git hooks are scripts that run automatically at specific points in the git workf
 git config core.hooksPath .githooks
 ```
 
-That's it! Hooks will now run automatically for all commits.
+That's it! Hooks will now run automatically for all commits and pushes.
 
 ## What Gets Validated
 
@@ -56,6 +58,19 @@ Checks files before commit is created:
 - Large files (> 1MB)
 - Debug statements (`console.log`, `pdb.set_trace`, etc.)
 - Modified task lists not staged
+
+### pre-push Hook
+
+Code reaches `main` only through a pull request with passing CI; changes confined to `.arc/` may be pushed to `main`
+directly.
+
+✅ **Enforced (blocks push):**
+
+- A push to `main` whose new commits, or whose resulting tree, change any path outside `.arc/` (a rename counts both
+  its old and new path)
+- Deleting `main`, or pushing to `main` before fetching and integrating the remote's latest commits
+
+Pushes to other branches and tags pass untouched. `gh pr merge` merges on GitHub, so the hook never runs for it.
 
 ## Examples
 
@@ -107,24 +122,9 @@ Context: Filter Integration Testing (Phase 3.6)"
 
 ## Bypassing Hooks
 
-**Use sparingly!** Hooks exist to maintain quality.
-
-```bash
-# Skip all hooks
-git commit --no-verify -m "emergency fix"
-
-# Or use alias
-git commit -n -m "emergency fix"
-```
-
-**When to bypass:**
-
-- Emergency hotfixes (review format later)
-- Experimental/temporary commits
-
-**Don't bypass for:**
-
-- Anything else! Fix issues instead.
+Never bypass the hooks with `--no-verify` (or `-n`), on a commit or a push. When a hook fails, fix the issue and
+retry. An emergency hotfix still reaches `main` through a pull request: skipping `pre-push` would land code on `main`
+with no check at all.
 
 ## Troubleshooting
 
@@ -149,13 +149,13 @@ git config core.hooksPath .githooks
 
 ```bash
 ls -la .githooks/
-# Should show: -rwxr-xr-x for commit-msg and pre-commit
+# Should show: -rwxr-xr-x for commit-msg, pre-commit and pre-push
 ```
 
 **Make executable if needed:**
 
 ```bash
-chmod +x .githooks/commit-msg .githooks/pre-commit
+chmod +x .githooks/commit-msg .githooks/pre-commit .githooks/pre-push
 ```
 
 ### False Positive Warnings
@@ -183,7 +183,7 @@ git config --unset core.hooksPath
 **Permanent (not recommended):**
 
 ```bash
-rm .githooks/commit-msg .githooks/pre-commit
+rm .githooks/commit-msg .githooks/pre-commit .githooks/pre-push
 ```
 
 ## Validation Details
@@ -260,6 +260,17 @@ echo "test message" > /tmp/test-msg
 ```bash
 .githooks/pre-commit
 ```
+
+**Test pre-push hook** (git feeds it `<local ref> <local sha> <remote ref> <remote sha>` lines), here for pushing
+`HEAD` to `main`:
+
+```bash
+git fetch origin
+echo "HEAD $(git rev-parse HEAD) refs/heads/main $(git rev-parse origin/main)" | .githooks/pre-push origin
+echo "exit $?"
+```
+
+`exit 0` means the push would be allowed; `exit 1` comes with the refusal and the offending paths.
 
 ## Related Documentation
 

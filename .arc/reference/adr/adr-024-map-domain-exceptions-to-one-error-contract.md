@@ -23,8 +23,9 @@ frontend shows. A shared `ApiErrorSchema` exists, but only the error-code listin
 ### Alternatives Considered
 
 - **Keep `HttpError` in services.** No work now, but the layering rule stays broken and unhandled errors stay HTML.
-- **Domain exceptions and one handler now; services move when they change (chosen).** About half a day to a day.
-- **Also unify authentication's `{"error"}` bodies now.** About 1.5–2 days: some 20 response bodies, 63 test
+- **Domain exceptions and one handler now; services move when they change (chosen).** A new exceptions module and
+  one handler; existing services keep working until they're next changed.
+- **Also unify authentication's `{"error"}` bodies now.** A larger change: some 20 response bodies, 63 test
   assertions and the sign-in page. The authentication code is being reworked for launch, so this waits until
   after launch.
 

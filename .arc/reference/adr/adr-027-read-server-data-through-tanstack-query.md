@@ -22,10 +22,10 @@ mutations that update or invalidate the cache, and never fetched in `useEffect`.
 
 ### Alternatives Considered
 
-- **A first step now** (about 3 days), mainly so an end-to-end watchlist test could be written early. That test can
-  be written after the full move instead.
-- **The full move, inside the planned rework of the user's movie data (chosen).** About 3.5–4.5 days with the test
-  rewrites, or 2.5–3.5 with the movie detail query left to the detail page's redesign, which rewrites that page
+- **A first step now**, mainly so an end-to-end watchlist test could be written early. That test can be written
+  after the full move instead.
+- **The full move, inside the planned rework of the user's movie data (chosen).** With its test rewrites, the
+  rework's largest part. The movie detail query is left to the detail page's redesign, which rewrites that page
   anyway.
 
 ## Decision

@@ -1,5 +1,4 @@
-"""
-Test-aware throttle classes for authentication endpoints.
+"""Test-aware throttle classes for authentication endpoints.
 
 These classes implement lazy evaluation of settings.TESTING to enable proper
 test isolation with Django's @override_settings decorator. The standard approach
@@ -26,8 +25,7 @@ from ninja.throttling import AnonRateThrottle, UserRateThrottle
 
 
 class TestAwareAnonThrottle(AnonRateThrottle):
-    """
-    Anonymous rate throttle that respects test mode configuration.
+    """Anonymous rate throttle that respects test mode configuration.
 
     In test mode (settings.TESTING=True), bypasses throttling unless explicitly
     enabled via request._test_enable_throttling attribute. This allows:
@@ -50,8 +48,7 @@ class TestAwareAnonThrottle(AnonRateThrottle):
     """
 
     def allow_request(self, request: HttpRequest) -> bool:
-        """
-        Determine if request should be throttled.
+        """Determine if request should be throttled.
 
         Args:
             request: Django HTTP request object
@@ -77,8 +74,7 @@ class TestAwareAnonThrottle(AnonRateThrottle):
 
 
 class TestAwareUserThrottle(UserRateThrottle):
-    """
-    Authenticated user rate throttle that respects test mode configuration.
+    """Authenticated user rate throttle that respects test mode configuration.
 
     Identical behavior to TestAwareAnonThrottle but for authenticated endpoints.
     Uses user ID as throttle key instead of IP address.
@@ -98,8 +94,7 @@ class TestAwareUserThrottle(UserRateThrottle):
     """
 
     def allow_request(self, request: HttpRequest) -> bool:
-        """
-        Determine if request should be throttled.
+        """Determine if request should be throttled.
 
         Args:
             request: Django HTTP request object

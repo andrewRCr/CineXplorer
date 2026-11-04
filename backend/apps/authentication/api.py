@@ -3,11 +3,12 @@
 This module defines authentication and user management API endpoints
 using Django Ninja with established API patterns.
 """
+
 from __future__ import annotations
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
-from ninja import Router
+from ninja import Router, Status
 
 from apps.authentication.auth_ninja import get_current_user, jwt_cookie_auth
 from apps.authentication.schemas import (
@@ -39,13 +40,13 @@ auth_router = Router(tags=["Authentication"])
         201: RegisterResponseSchema,
         400: dict[str, object],
         409: dict[str, object],
-        500: dict[str, object]
+        500: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle('3/h')],
+    throttle=[TestAwareAnonThrottle("3/h")],
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
-) -> tuple[int, RegisterResponseSchema | dict[str, object]]:
+) -> Status[RegisterResponseSchema | dict[str, object]]:
     """Register a new user and send email verification.
 
     Creates a new user account and triggers email verification via
@@ -56,7 +57,7 @@ def register_user(
         payload: Registration data (username, email, password, first_name, last_name)
 
     Returns:
-        tuple: (status_code, response_data)
+        Status: the status code and response data
             - 201: User created successfully, verification email sent
             - 400: Password validation failed (too weak, common, or similar to user attributes)
             - 409: Username/email already exists or forbidden username
@@ -74,7 +75,8 @@ def register_user(
         4. Email verification handled by allauth EmailAddress model
     """
     service = get_authentication_service()
-    return service.register_user(request, payload)
+    status_code, body = service.register_user(request, payload)
+    return Status(status_code, body)
 
 
 @auth_router.post(
@@ -86,11 +88,11 @@ def register_user(
         401: dict[str, object],
         403: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle('5/m')],
+    throttle=[TestAwareAnonThrottle("5/m")],
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
-) -> tuple[int, TokenResponseSchema | dict[str, object]]:
+) -> Status[TokenResponseSchema | dict[str, object]]:
     """Obtain JWT access and refresh tokens (login) for hybrid authentication.
 
     Hybrid Authentication Architecture:
@@ -106,7 +108,7 @@ def obtain_token(
         payload: Login credentials (login, password)
 
     Returns:
-        tuple: (status_code, response_data)
+        Status: the status code and response data
             - 200: Authentication successful, access token in body, refresh token in cookie
             - 400: Missing credentials
             - 401: Invalid credentials
@@ -124,18 +126,19 @@ def obtain_token(
         - samesite: Lax (CSRF protection)
     """
     service = get_authentication_service()
-    return service.obtain_token(request, response, payload)
+    status_code, body = service.obtain_token(request, response, payload)
+    return Status(status_code, body)
 
 
 @auth_router.post(
     "/token/refresh/",
     auth=None,
     response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object]},
-    throttle=[TestAwareUserThrottle('10/m')],
+    throttle=[TestAwareUserThrottle("10/m")],
 )
 def refresh_token(
     request: HttpRequest, response: HttpResponse
-) -> tuple[int, TokenResponseSchema | dict[str, object]]:
+) -> Status[TokenResponseSchema | dict[str, object]]:
     """Refresh JWT access token using refresh token from cookie.
 
     Reads refresh token from httponly cookie and generates new access token.
@@ -147,7 +150,7 @@ def refresh_token(
         response: HTTP response object (for setting new cookies)
 
     Returns:
-        tuple: (status_code, response_data)
+        Status: the status code and response data
             - 200: Token refreshed successfully, new tokens set as cookies
             - 400: No valid refresh token in cookies or invalid format
             - 401: Token blacklisted (reuse attempt detected)
@@ -162,7 +165,8 @@ def refresh_token(
         - Sets new access and refresh tokens as httponly cookies
     """
     service = get_authentication_service()
-    return service.refresh_token(request, response)
+    status_code, body = service.refresh_token(request, response)
+    return Status(status_code, body)
 
 
 @auth_router.post(
@@ -171,13 +175,13 @@ def refresh_token(
     response={
         200: HybridTokenRefreshResponseSchema,
         400: dict[str, object],
-        401: dict[str, object]
+        401: dict[str, object],
     },
-    throttle=[TestAwareUserThrottle('10/m')],
+    throttle=[TestAwareUserThrottle("10/m")],
 )
 def hybrid_refresh_token(
     request: HttpRequest, response: HttpResponse
-) -> tuple[int, HybridTokenRefreshResponseSchema | dict[str, object]]:
+) -> Status[HybridTokenRefreshResponseSchema | dict[str, object]]:
     """Refresh JWT access token for hybrid authentication.
 
     Hybrid Authentication Architecture:
@@ -195,7 +199,7 @@ def hybrid_refresh_token(
         response: HTTP response object (for setting new refresh token cookie)
 
     Returns:
-        tuple: (status_code, response_data)
+        Status: the status code and response data
             - 200: New access token in response body, refresh token rotated in cookie
             - 400: No refresh token found or invalid token format
             - 401: Token blacklisted (reuse attempt detected)
@@ -206,11 +210,12 @@ def hybrid_refresh_token(
         - Reuse detection: Blacklisted token attempts logged as security events
     """
     service = get_authentication_service()
-    return service.hybrid_refresh_token(request, response)
+    status_code, body = service.hybrid_refresh_token(request, response)
+    return Status(status_code, body)
 
 
 @auth_router.post("/logout/", auth=None, response={200: LogoutResponseSchema})
-def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
+def logout(request: HttpRequest, response: HttpResponse) -> Status[dict[str, object]]:
     """Logout user by clearing JWT cookies (hybrid authentication).
 
     Clears refresh token cookie to end the session. No authentication required
@@ -227,7 +232,7 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
         response: HTTP response object (for deleting cookies)
 
     Returns:
-        tuple: (status_code, response_data)
+        Status: the status code and response data
             - 200: Logout successful, cookies cleared
 
     Cookie deletion:
@@ -235,11 +240,12 @@ def logout(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str,
         - Uses same path, domain, samesite as when cookie was set
     """
     service = get_authentication_service()
-    return service.logout(response)
+    status_code, body = service.logout(response)
+    return Status(status_code, body)
 
 
 @auth_router.get("/csrf/", response={200: CsrfTokenResponseSchema}, auth=None)
-def get_csrf_token(request: HttpRequest, response: HttpResponse) -> tuple[int, dict[str, object]]:
+def get_csrf_token(request: HttpRequest, response: HttpResponse) -> Status[dict[str, object]]:
     """Get CSRF token for AJAX requests.
 
     Generates a CSRF token using Django's built-in get_token() and ensures
@@ -252,7 +258,7 @@ def get_csrf_token(request: HttpRequest, response: HttpResponse) -> tuple[int, d
         response: HTTP response object (for setting cookie)
 
     Returns:
-        tuple: (status_code, response_data)
+        Status: the status code and response data
             - 200: CSRF token generated and set as cookie
 
     Cookie details:
@@ -288,7 +294,7 @@ def get_csrf_token(request: HttpRequest, response: HttpResponse) -> tuple[int, d
     )
 
     # Return the token value for client convenience
-    return 200, {"csrf_token": token}
+    return Status(200, {"csrf_token": token})
 
 
 @auth_router.get("/profile/", response={200: UserProfileSchema}, auth=jwt_cookie_auth)
@@ -317,14 +323,11 @@ def get_user_profile(request: HttpRequest) -> UserProfileSchema:
 
 
 @auth_router.patch(
-    "/profile/",
-    response={200: UserProfileSchema, 400: dict[str, object]},
-    auth=jwt_cookie_auth
+    "/profile/", response={200: UserProfileSchema, 400: dict[str, object]}, auth=jwt_cookie_auth
 )
 def update_user_profile(
-    request: HttpRequest,
-    payload: UserProfileUpdateSchema
-) -> tuple[int, UserProfileSchema | dict[str, object]]:
+    request: HttpRequest, payload: UserProfileUpdateSchema
+) -> Status[UserProfileSchema | dict[str, object]]:
     """Update authenticated user's profile.
 
     Supports partial updates (PATCH) for user profile fields including
@@ -335,7 +338,7 @@ def update_user_profile(
         payload: Fields to update (all optional)
 
     Returns:
-        tuple: (status_code, response_data)
+        Status: the status code and response data
             - 200: Profile updated successfully
             - 400: Validation error
 
@@ -350,7 +353,7 @@ def update_user_profile(
     user = get_current_user(request)
     service = get_authentication_service()
     profile = service.update_user_profile(user, payload)
-    return 200, profile
+    return Status(200, profile)
 
 
 @auth_router.post(
@@ -360,7 +363,7 @@ def update_user_profile(
 )
 def verify_email(
     request: HttpRequest, payload: EmailVerificationInputSchema
-) -> tuple[int, EmailVerificationResponseSchema | dict[str, str]]:
+) -> Status[EmailVerificationResponseSchema | dict[str, str]]:
     """Verify user's email address using the confirmation key.
 
     Supports both HMAC-based confirmations (default) and database-stored confirmations.
@@ -373,18 +376,19 @@ def verify_email(
         Success message if verification succeeds, error if key is invalid/expired
     """
     service = get_authentication_service()
-    return service.verify_email(request, payload)
+    status_code, body = service.verify_email(request, payload)
+    return Status(status_code, body)
 
 
 @auth_router.post(
     "/resend-verification/",
     auth=None,
     response={200: ResendVerificationResponseSchema, 400: dict[str, object]},
-    throttle=[TestAwareAnonThrottle('3/h')],  # Rate limit to prevent email spam abuse
+    throttle=[TestAwareAnonThrottle("3/h")],  # Rate limit to prevent email spam abuse
 )
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationInputSchema
-) -> tuple[int, ResendVerificationResponseSchema | dict[str, str]]:
+) -> Status[ResendVerificationResponseSchema | dict[str, str]]:
     """Resend email verification to the provided email address.
 
     Args:
@@ -395,7 +399,8 @@ def resend_verification(
         Success message (even if email doesn't exist for security)
     """
     service = get_authentication_service()
-    return service.resend_verification(request, payload)
+    status_code, body = service.resend_verification(request, payload)
+    return Status(status_code, body)
 
 
 __all__ = [

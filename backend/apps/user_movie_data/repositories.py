@@ -1,5 +1,4 @@
-"""
-Repository layer for UserMovieData domain.
+"""Repository layer for UserMovieData domain.
 
 This module provides data access abstractions following the repository pattern,
 decoupling business logic from Django ORM implementation details.
@@ -27,6 +26,7 @@ Usage:
     mock_repository = MockUserMovieDataRepository()
     service = UserMovieDataService(repository=mock_repository)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -43,8 +43,7 @@ if TYPE_CHECKING:
 
 
 class UserMovieDataRepository:
-    """
-    Repository for UserMovieData model access.
+    """Repository for UserMovieData model access.
 
     This repository encapsulates data access logic for UserMovieData, providing
     a clean interface for services while isolating ORM implementation details.
@@ -69,12 +68,9 @@ class UserMovieDataRepository:
     """
 
     def get_for_user_and_movies(
-        self,
-        user: AbstractBaseUser,
-        tmdb_ids: list[int]
+        self, user: AbstractBaseUser, tmdb_ids: list[int]
     ) -> dict[int, UserMovieData]:
-        """
-        Fetch UserMovieData records for a user and list of TMDB IDs.
+        """Fetch UserMovieData records for a user and list of TMDB IDs.
 
         This method performs a single bulk query with select_related to avoid
         N+1 query problems. Returns a dictionary mapping tmdb_id to UserMovieData
@@ -103,9 +99,8 @@ class UserMovieDataRepository:
         """
         # Bulk query with select_related to avoid N+1
         user_data_qs = UserMovieData.objects.filter(
-            user=user,
-            movie__tmdb_id__in=tmdb_ids
-        ).select_related('movie')
+            user=user, movie__tmdb_id__in=tmdb_ids
+        ).select_related("movie")
 
         # Build lookup dictionary: {tmdb_id: UserMovieData}
         user_data_map: dict[int, UserMovieData] = {}
@@ -121,8 +116,7 @@ class UserMovieDataRepository:
     # =========================================================================
 
     def get_movie_by_tmdb_id(self, tmdb_id: int) -> Movie | None:
-        """
-        Get a Movie by its TMDB ID.
+        """Get a Movie by its TMDB ID.
 
         This method is used during UserMovieData creation to check if a movie
         already exists in the local database before fetching from TMDB.
@@ -145,8 +139,7 @@ class UserMovieDataRepository:
             return None
 
     def create_movie_stub(self, movie_detail: MovieDetailSchema) -> Movie:
-        """
-        Create a minimal Movie stub from TMDB data.
+        """Create a minimal Movie stub from TMDB data.
 
         This creates a local Movie record to serve as a foreign key anchor
         for UserMovieData. The Movie record contains only essential fields
@@ -184,8 +177,7 @@ class UserMovieDataRepository:
         user_rating: int | None = None,
         user_review: str | None = None,
     ) -> UserMovieData:
-        """
-        Create a new UserMovieData record.
+        """Create a new UserMovieData record.
 
         Creates a new user-movie association with the provided fields.
         The user and movie combination must be unique.
@@ -227,8 +219,7 @@ class UserMovieDataRepository:
         user: AbstractBaseUser,
         record_id: int,
     ) -> UserMovieData | None:
-        """
-        Get a UserMovieData record by its primary key.
+        """Get a UserMovieData record by its primary key.
 
         This method scopes the query to the provided user, ensuring
         users can only access their own data (authorization check).
@@ -258,8 +249,7 @@ class UserMovieDataRepository:
         user: AbstractBaseUser,
         tmdb_id: int,
     ) -> UserMovieData | None:
-        """
-        Get a UserMovieData record by TMDB movie ID.
+        """Get a UserMovieData record by TMDB movie ID.
 
         This method scopes the query to the provided user, ensuring
         users can only access their own data (authorization check).
@@ -294,8 +284,7 @@ class UserMovieDataRepository:
         user_rating: int | None = None,
         user_review: str | None = None,
     ) -> UserMovieData:
-        """
-        Update an existing UserMovieData record.
+        """Update an existing UserMovieData record.
 
         Performs a partial update, only modifying fields that are explicitly
         provided (non-None). The caller is responsible for authorization
@@ -343,8 +332,7 @@ class UserMovieDataRepository:
         return obj
 
     def delete(self, record_id: int) -> bool:
-        """
-        Delete a UserMovieData record.
+        """Delete a UserMovieData record.
 
         The caller is responsible for authorization (verifying ownership
         via get_by_id first).
@@ -382,8 +370,7 @@ class UserMovieDataRepository:
         watched_only: bool | None = None,
         rated_only: bool | None = None,
     ) -> list[UserMovieData]:
-        """
-        Get all UserMovieData records for a user with optional filters.
+        """Get all UserMovieData records for a user with optional filters.
 
         This method returns the full filtered dataset without pagination,
         ordered by most recently created (newest first).
@@ -418,8 +405,7 @@ class UserMovieDataRepository:
         watched_only: bool | None = None,
         rated_only: bool | None = None,
     ) -> tuple[list[UserMovieData], PaginationMetadata]:
-        """
-        Get filtered and paginated UserMovieData records for a user.
+        """Get filtered and paginated UserMovieData records for a user.
 
         This method returns a paginated list of user movie data with optional
         filters for common query patterns (watchlist, watched, rated).
@@ -439,9 +425,7 @@ class UserMovieDataRepository:
 
         Example:
             >>> # Get user's watchlist
-            >>> results, meta = repository.get_filtered(
-            ...     user, page=1, watchlist_only=True
-            ... )
+            >>> results, meta = repository.get_filtered(user, page=1, watchlist_only=True)
             >>> print(f"Page {meta['page']} of {meta['total_pages']}")
 
         Note:

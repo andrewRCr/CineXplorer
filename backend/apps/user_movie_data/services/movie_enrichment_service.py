@@ -1,5 +1,4 @@
-"""
-Movie enrichment service for populating user-specific movie data.
+"""Movie enrichment service for populating user-specific movie data.
 
 This service follows the class-based architecture with dependency injection
 pattern, enabling testability and separation of concerns.
@@ -11,6 +10,7 @@ Architecture:
 - Single responsibility: enrich movie data with user context
 - Repository pattern for data access abstraction
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -25,8 +25,7 @@ if TYPE_CHECKING:
 
 
 class MovieEnrichmentService:
-    """
-    Service for enriching movie data with user-specific information.
+    """Service for enriching movie data with user-specific information.
 
     This service takes movie data (typically from TMDB) and enriches it with
     user-specific data like watchlist status, ratings, and reviews. It uses
@@ -54,12 +53,8 @@ class MovieEnrichmentService:
         enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
     """
 
-    def __init__(
-        self,
-        user_movie_data_repository: UserMovieDataRepository | None = None
-    ) -> None:
-        """
-        Initialize the movie enrichment service.
+    def __init__(self, user_movie_data_repository: UserMovieDataRepository | None = None) -> None:
+        """Initialize the movie enrichment service.
 
         Args:
             user_movie_data_repository: Optional repository for UserMovieData
@@ -80,15 +75,13 @@ class MovieEnrichmentService:
         else:
             # Import here to avoid circular dependency
             from apps.user_movie_data.repositories import UserMovieDataRepository
+
             self._repository = UserMovieDataRepository()
 
     def enrich_movies_with_user_movie_data(
-        self,
-        movies: list[MovieListItemSchema],
-        user: AbstractBaseUser | None
+        self, movies: list[MovieListItemSchema], user: AbstractBaseUser | None
     ) -> list[MovieListItemSchema]:
-        """
-        Enrich movie schemas with user movie data.
+        """Enrich movie schemas with user movie data.
 
         For authenticated users, this method bulk-queries UserMovieData records
         and creates new MovieListItemSchema instances with the user_movie_data field
@@ -136,8 +129,8 @@ class MovieEnrichmentService:
         tmdb_ids = [movie.tmdb_id for movie in movies]
 
         # Use repository to fetch UserMovieData (dependency injection)
-        user_data_map: dict[int, UserMovieData] = (
-            self._repository.get_for_user_and_movies(user, tmdb_ids)
+        user_data_map: dict[int, UserMovieData] = self._repository.get_for_user_and_movies(
+            user, tmdb_ids
         )
 
         # Create new enriched movie instances (non-mutating approach)
@@ -150,7 +143,7 @@ class MovieEnrichmentService:
                 # Use model_copy() to preserve all fields from original
                 enriched_movie = movie.model_copy(
                     update={
-                        'user_movie_data': UserMovieDataSchema(
+                        "user_movie_data": UserMovieDataSchema(
                             id=user_movie_data.id,
                             tmdb_id=movie.tmdb_id,  # From MovieListItemSchema parameter
                             title=movie.title,  # From MovieListItemSchema parameter

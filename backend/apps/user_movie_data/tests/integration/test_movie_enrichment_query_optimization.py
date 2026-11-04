@@ -1,5 +1,4 @@
-"""
-Integration tests for MovieEnrichmentService query optimization.
+"""Integration tests for MovieEnrichmentService query optimization.
 
 This module tests the bulk query optimization of the enrichment service,
 verifying that it uses a single database query regardless of movie count
@@ -8,6 +7,7 @@ verifying that it uses a single database query regardless of movie count
 These tests require real database access to verify query behavior using
 Django's django_assert_num_queries fixture.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -36,9 +36,7 @@ User = get_user_model()
 def user(db: None) -> User:  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
     """Create a test user for enrichment tests."""
     return User.objects.create_user(  # pyright: ignore[reportReturnType,reportAttributeAccessIssue,reportUnknownMemberType,reportUnknownVariableType]
-        username="testuser",
-        email="testuser@example.com",
-        password="testpass123"
+        username="testuser", email="testuser@example.com", password="testpass123"
     )
 
 
@@ -47,9 +45,9 @@ def movie1(db: None) -> Movie:
     """Create first test movie."""
     return Movie.objects.create(
         tmdb_id=12345,
-        title='Blade Runner',
-        poster_path='/blade_runner.jpg',
-        release_date='1982-06-25'
+        title="Blade Runner",
+        poster_path="/blade_runner.jpg",
+        release_date="1982-06-25",
     )
 
 
@@ -57,10 +55,7 @@ def movie1(db: None) -> Movie:
 def movie2(db: None) -> Movie:
     """Create second test movie."""
     return Movie.objects.create(
-        tmdb_id=54321,
-        title='Chinatown',
-        poster_path='/chinatown.jpg',
-        release_date='1974-06-20'
+        tmdb_id=54321, title="Chinatown", poster_path="/chinatown.jpg", release_date="1974-06-20"
     )
 
 
@@ -74,7 +69,7 @@ def user_movie_data1(user: User, movie1: Movie) -> UserMovieData:  # pyright: ig
         user_on_watchlist=False,
         user_liked=True,
         user_rating=9,
-        user_review='Excellent sci-fi film!'
+        user_review="Excellent sci-fi film!",
     )
 
 
@@ -88,7 +83,7 @@ def user_movie_data2(user: User, movie2: Movie) -> UserMovieData:  # pyright: ig
         user_on_watchlist=True,
         user_liked=False,
         user_rating=None,
-        user_review=None
+        user_review=None,
     )
 
 
@@ -104,7 +99,7 @@ def test_bulk_query_optimization_single_query(
     movie2: Movie,
     user_movie_data1: UserMovieData,
     user_movie_data2: UserMovieData,
-    django_assert_num_queries: object
+    django_assert_num_queries: object,
 ) -> None:
     """Test that enrichment uses single bulk query (no N+1 problem)."""
     # Arrange
@@ -114,14 +109,14 @@ def test_bulk_query_optimization_single_query(
             tmdb_id=movie1.tmdb_id,
             title=movie1.title,
             poster_path=movie1.poster_path,
-            release_date=date.fromisoformat(str(movie1.release_date))
+            release_date=date.fromisoformat(str(movie1.release_date)),
         ),
         MovieListItemSchema(
             tmdb_id=movie2.tmdb_id,
             title=movie2.title,
             poster_path=movie2.poster_path,
-            release_date=date.fromisoformat(str(movie2.release_date))
-        )
+            release_date=date.fromisoformat(str(movie2.release_date)),
+        ),
     ]
 
     # Act & Assert: Should execute exactly 1 query regardless of movie count
@@ -137,7 +132,7 @@ def test_bulk_query_optimization_single_query(
 @pytest.mark.django_db
 def test_bulk_query_with_many_movies(
     user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
-    django_assert_num_queries: object
+    django_assert_num_queries: object,
 ) -> None:
     """Test that query count stays at 1 even with many movies."""
     # Arrange: Create 10 movies with user data
@@ -145,22 +140,17 @@ def test_bulk_query_with_many_movies(
     for i in range(10):
         movie = Movie.objects.create(
             tmdb_id=1000 + i,
-            title=f'Movie {i}',
-            poster_path=f'/movie_{i}.jpg',
-            release_date='2023-01-01'
+            title=f"Movie {i}",
+            poster_path=f"/movie_{i}.jpg",
+            release_date="2023-01-01",
         )
-        UserMovieData.objects.create(
-            user=user,
-            movie=movie,
-            user_watched=True,
-            user_rating=i + 1
-        )
+        UserMovieData.objects.create(user=user, movie=movie, user_watched=True, user_rating=i + 1)
         movies_data.append(
             MovieListItemSchema(
                 tmdb_id=movie.tmdb_id,
                 title=movie.title,
                 poster_path=movie.poster_path,
-                release_date=date.fromisoformat(str(movie.release_date))
+                release_date=date.fromisoformat(str(movie.release_date)),
             )
         )
 

@@ -1,5 +1,4 @@
-"""
-Django Ninja schemas for core app endpoints.
+"""Django Ninja schemas for core app endpoints.
 
 This module provides Pydantic schemas for:
 - Frontend logging API (receiving frontend log entries)
@@ -20,8 +19,7 @@ from ninja import Schema
 
 
 class ErrorCode(StrEnum):
-    """
-    Standardized error codes for API responses.
+    """Standardized error codes for API responses.
 
     These codes are auto-generated to TypeScript via OpenAPI for type-safe
     error handling across the frontend/backend boundary.
@@ -63,8 +61,7 @@ class ErrorCategory(StrEnum):
 
 
 class ApiErrorSchema(Schema):
-    """
-    Standard API error structure for error responses.
+    """Standard API error structure for error responses.
 
     This schema is exposed in OpenAPI to enable type-safe error handling
     in the frontend with auto-generated TypeScript types.
@@ -76,12 +73,12 @@ class ApiErrorSchema(Schema):
     field: str | None = None  # For validation errors on specific fields
     details: dict[str, object] | None = None
 
+
 # Frontend Logging Schemas
 
 
 class FrontendLogEntrySchema(Schema):
-    """
-    Schema for frontend log entries sent to the backend.
+    """Schema for frontend log entries sent to the backend.
 
     The frontend sends structured log data to enable centralized logging,
     monitoring, and debugging of client-side issues.

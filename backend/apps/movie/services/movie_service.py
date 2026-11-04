@@ -40,12 +40,11 @@ from .tmdb_api_boundary.response_factories import (
 )
 
 # Use TMDB-specific logger for better log organization
-logger = logging.getLogger('cinexplorer.tmdb')
+logger = logging.getLogger("cinexplorer.tmdb")
 
 
 class MovieService(BaseTMDBService):
-    """
-    Movie service with dependency injection for TMDB integration.
+    """Movie service with dependency injection for TMDB integration.
 
     This service encapsulates all TMDB API interactions with constructor-based
     dependency injection, enabling testability and maintaining separation of
@@ -75,8 +74,7 @@ class MovieService(BaseTMDBService):
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Core TMDB discover wrapper with full filtering capabilities.
+        """Core TMDB discover wrapper with full filtering capabilities.
 
         This is the foundational discovery method that other service methods build upon.
         Date-constrained methods (get_now_playing_movies, get_upcoming_movies) call this
@@ -106,6 +104,7 @@ class MovieService(BaseTMDBService):
                 - release_date_gte/lte: Release date range
                 - with_release_type: Release type (2|3 for theatrical)
                 - certification: Certification rating
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with discovered movies, including
@@ -151,15 +150,11 @@ class MovieService(BaseTMDBService):
         def fetch_discover_page(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch a specific discover page with current filters."""
             page_params = api_params.copy()
-            page_params['page'] = page_num
+            page_params["page"] = page_num
             page_response = self._tmdb_client.get(
-                "discover/movie",
-                cast(dict[str, object], page_params)
+                "discover/movie", cast(dict[str, object], page_params)
             )
-            return validate_tmdb_paginated_response(
-                page_response,
-                TMDBPaginatedMovieResponse
-            )
+            return validate_tmdb_paginated_response(page_response, TMDBPaginatedMovieResponse)
 
         return fetch_with_filters_and_buffer(
             fetch_discover_page,
@@ -174,8 +169,7 @@ class MovieService(BaseTMDBService):
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Retrieves movies currently playing in theaters with filtering.
+        """Retrieves movies currently playing in theaters with filtering.
 
         This is a thin wrapper around discover_movies() with protected date range
         and release type presets. The date range covers the "theater planning window"
@@ -197,6 +191,7 @@ class MovieService(BaseTMDBService):
         Args:
             page: Page number for pagination
             params: BrowseServiceParams model with user-provided filters
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with now playing movies
@@ -219,7 +214,7 @@ class MovieService(BaseTMDBService):
         merged_filters = merge_with_preset(user_filters, preset, NOW_PLAYING_PROTECTED_KEYS)
 
         # Apply vote count policy (now-playing bypasses threshold - new releases have low votes)
-        merged_filters['min_vote_count'] = VoteCountPolicy.get_threshold(endpoint="now_playing")
+        merged_filters["min_vote_count"] = VoteCountPolicy.get_threshold(endpoint="now_playing")
         merged_params = BrowseServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
@@ -231,8 +226,7 @@ class MovieService(BaseTMDBService):
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Retrieves upcoming movies releasing soon in theaters with filtering.
+        """Retrieves upcoming movies releasing soon in theaters with filtering.
 
         This is a thin wrapper around discover_movies() with protected date range
         and release type presets. The date range covers the "upcoming planning window"
@@ -254,6 +248,7 @@ class MovieService(BaseTMDBService):
         Args:
             page: Page number for pagination
             params: BrowseServiceParams model with user-provided filters
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with upcoming movies
@@ -279,7 +274,7 @@ class MovieService(BaseTMDBService):
         merged_filters = merge_with_preset(user_filters, preset, UPCOMING_PROTECTED_KEYS)
 
         # Apply vote count policy (upcoming bypasses threshold - unreleased movies have 0 votes)
-        merged_filters['min_vote_count'] = VoteCountPolicy.get_threshold(endpoint="upcoming")
+        merged_filters["min_vote_count"] = VoteCountPolicy.get_threshold(endpoint="upcoming")
         merged_params = BrowseServiceParams.model_validate(merged_filters)
 
         # Call discover endpoint with merged filters (thin wrapper pattern)
@@ -295,8 +290,7 @@ class MovieService(BaseTMDBService):
         params: SearchServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Searches for movies by query string using TMDB.
+        """Searches for movies by query string using TMDB.
 
         Args:
             page: Page number for pagination
@@ -332,7 +326,7 @@ class MovieService(BaseTMDBService):
                 page=page_num,
                 include_adult=False,
                 language="en-US",
-                region="US"
+                region="US",
             )
             return validate_tmdb_paginated_response(page_response, TMDBPaginatedMovieResponse)
 
@@ -349,8 +343,7 @@ class MovieService(BaseTMDBService):
     # ========================================================================
 
     def get_movie_by_id(self, tmdb_id: int) -> MovieDetailSchema:
-        """
-        Retrieves movie details and credits from TMDB by movie ID.
+        """Retrieves movie details and credits from TMDB by movie ID.
 
         Args:
             tmdb_id: TMDB movie ID
@@ -364,15 +357,14 @@ class MovieService(BaseTMDBService):
         # Use injected TMDB client for movie details
         # Include release_dates for US certification extraction
         info_response = self._tmdb_client.get_movie_details(
-            tmdb_id,
-            append_to_response='release_dates'
+            tmdb_id, append_to_response="release_dates"
         )
         if not info_response.is_success():
             handle_tmdb_api_error(
                 info_response,
-                operation='get_movie_details',
+                operation="get_movie_details",
                 movie_id=tmdb_id,
-                error_stage='fetching_movie_info'
+                error_stage="fetching_movie_info",
             )
 
         # Use injected TMDB client for credits
@@ -380,9 +372,9 @@ class MovieService(BaseTMDBService):
         if not credits_response.is_success():
             handle_tmdb_api_error(
                 credits_response,
-                operation='get_movie_credits',
+                operation="get_movie_credits",
                 movie_id=tmdb_id,
-                error_stage='fetching_credits'
+                error_stage="fetching_credits",
             )
 
         info_result = info_response.get_json_data()
@@ -393,12 +385,12 @@ class MovieService(BaseTMDBService):
             logger.error(
                 "Failed to get valid response data from TMDB",
                 extra={
-                    'correlation_id': info_response.correlation_id,
-                    'operation': 'get_movie_by_id',
-                    'movie_id': tmdb_id,
-                    'info_data_valid': bool(info_result),
-                    'credits_data_valid': bool(credits_result)
-                }
+                    "correlation_id": info_response.correlation_id,
+                    "operation": "get_movie_by_id",
+                    "movie_id": tmdb_id,
+                    "info_data_valid": bool(info_result),
+                    "credits_data_valid": bool(credits_result),
+                },
             )
             raise HttpError(500, "Failed to get valid response data from TMDB")
 
@@ -410,8 +402,7 @@ class MovieService(BaseTMDBService):
     # ========================================================================
 
     def get_movie_genres(self) -> list[GenreSchema]:
-        """
-        Retrieves the list of movie genres from TMDB.
+        """Retrieves the list of movie genres from TMDB.
 
         Returns:
             List of GenreSchema instances
@@ -487,24 +478,31 @@ class MovieService(BaseTMDBService):
         """
         # Skip terms for identifying non-visual content
         skip_terms = [
-            'soundtrack', 'score', 'music from',
-            'original motion picture soundtrack',
-            'original score', 'music score', 'film score',
-            'motion picture score'
+            "soundtrack",
+            "score",
+            "music from",
+            "original motion picture soundtrack",
+            "original score",
+            "music score",
+            "film score",
+            "motion picture score",
         ]
 
         filtered: list[TMDBMovieBase] = []
         for movie in movies:
-            title = movie.title or ''
+            title = movie.title or ""
             title_lower = title.lower()
 
             # Skip if title contains non-visual indicators
             if any(skip_term in title_lower for skip_term in skip_terms):
-                logger.debug("Filtering out non-visual content", extra={
-                    'operation': 'filter_non_visual',
-                    'title': title,
-                    'reason': 'non_visual_content'
-                })
+                logger.debug(
+                    "Filtering out non-visual content",
+                    extra={
+                        "operation": "filter_non_visual",
+                        "title": title,
+                        "reason": "non_visual_content",
+                    },
+                )
                 continue
 
             filtered.append(movie)

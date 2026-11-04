@@ -1,5 +1,4 @@
-"""
-Django management command to verify TMDB API logging captures all expected metadata.
+"""Django management command to verify TMDB API logging captures all expected metadata.
 
 This command makes a single TMDB API call and then examines the log output
 to verify that all structured logging data is being captured correctly.
@@ -15,7 +14,7 @@ from apps.core.services.tmdb_api_client import TMDBApiClient
 
 
 class Command(BaseCommand):
-    help = 'Verify TMDB API logging captures all expected metadata'
+    help = "Verify TMDB API logging captures all expected metadata"
 
     def handle(self, *args: object, **options: object) -> None:
         """Handle the logging verification command.
@@ -28,7 +27,7 @@ class Command(BaseCommand):
         self.stdout.write("🔍 Verifying TMDB API logging metadata...")
 
         # Create a logger to capture the structured logging
-        logger = logging.getLogger('cinexplorer.tmdb')
+        logger = logging.getLogger("cinexplorer.tmdb")
 
         # Create a custom handler to capture log records
         log_records: list[logging.LogRecord] = []
@@ -63,12 +62,29 @@ class Command(BaseCommand):
                 # Check for extra fields
                 extra_fields: dict[str, object] = {}
                 for attr in dir(record):
-                    if not attr.startswith('_') and attr not in [
-                        'name', 'msg', 'args', 'levelname', 'levelno', 'pathname',
-                        'filename', 'module', 'lineno', 'funcName', 'created',
-                        'msecs', 'relativeCreated', 'thread', 'threadName',
-                        'processName', 'process', 'getMessage', 'exc_info',
-                        'exc_text', 'stack_info', 'message'
+                    if not attr.startswith("_") and attr not in [
+                        "name",
+                        "msg",
+                        "args",
+                        "levelname",
+                        "levelno",
+                        "pathname",
+                        "filename",
+                        "module",
+                        "lineno",
+                        "funcName",
+                        "created",
+                        "msecs",
+                        "relativeCreated",
+                        "thread",
+                        "threadName",
+                        "processName",
+                        "process",
+                        "getMessage",
+                        "exc_info",
+                        "exc_text",
+                        "stack_info",
+                        "message",
                     ]:
                         value = getattr(record, attr)
                         if value is not None:
@@ -89,8 +105,8 @@ class Command(BaseCommand):
             if not api_response.is_success():
                 self.stdout.write(f"\n❌ API Error: {api_response.error_message}")
             elif api_response.data is not None and isinstance(api_response.data, dict):
-                results = api_response.data.get('results', [])
-                if hasattr(results, '__len__'):
+                results = api_response.data.get("results", [])
+                if hasattr(results, "__len__"):
                     movies_count = len(results)  # pyright: ignore[reportArgumentType]  # Runtime validation via hasattr
                     self.stdout.write(f"\n✅ API Success: Found {movies_count} movies")
                 else:

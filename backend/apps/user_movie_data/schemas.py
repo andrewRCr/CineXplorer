@@ -7,6 +7,7 @@ Pattern Guidelines:
 - Use ModelSchema for Django model CRUD (automatic type inference with django-stubs)
 - Use manual Schema for input DTOs with non-model fields (create/update operations)
 """
+
 from __future__ import annotations
 
 from ninja import Schema
@@ -43,12 +44,10 @@ class UserMovieDataDetailSchema(ModelSchema):
     """
 
     tmdb_id: int | None = Field(
-        None,
-        description="TMDB ID of the associated movie (computed from obj.movie.tmdb_id)"
+        None, description="TMDB ID of the associated movie (computed from obj.movie.tmdb_id)"
     )
     title: str | None = Field(
-        None,
-        description="Title of the associated movie (computed from obj.movie.title)"
+        None, description="Title of the associated movie (computed from obj.movie.title)"
     )
 
     class Meta:
@@ -69,10 +68,8 @@ class UserMovieDataDetailSchema(ModelSchema):
         This method provides type-safe conversion from Django ORM to Pydantic schema
         including computed fields from the related Movie object.
 
-        Note on type checking: Django model field access shows as "unknown" in Pyright
-        due to django-stubs generic field type limitations (documented in
-        _docs/notes/type-safety-status-auth-modernization.md lines 32-47).
-        MyPy with django-stubs validates these correctly at runtime.
+        Companion model stubs provide the field and relation types that Pyright
+        needs to check access to the related movie's attributes.
 
         Args:
             obj: UserMovieData instance (should have movie prefetched via select_related)
@@ -99,32 +96,18 @@ class UserMovieDataCreateSchema(Schema):
     which is not directly on the UserMovieData model (requires FK lookup).
     """
 
-    movie_id: int = Field(
-        ...,
-        description="ID of the Movie object (database ID, not TMDB ID)"
-    )
+    movie_id: int = Field(..., description="ID of the Movie object (database ID, not TMDB ID)")
     user_watched: bool = Field(
-        default=False,
-        description="Whether the user has marked this movie as watched"
+        default=False, description="Whether the user has marked this movie as watched"
     )
     user_on_watchlist: bool = Field(
-        default=False,
-        description="Whether the movie is on the user's watchlist"
+        default=False, description="Whether the movie is on the user's watchlist"
     )
-    user_liked: bool = Field(
-        default=False,
-        description="Whether the user has liked this movie"
-    )
+    user_liked: bool = Field(default=False, description="Whether the user has liked this movie")
     user_rating: int | None = Field(
-        default=None,
-        ge=1,
-        le=10,
-        description="User's rating of the movie (1-10)"
+        default=None, ge=1, le=10, description="User's rating of the movie (1-10)"
     )
-    user_review: str | None = Field(
-        default=None,
-        description="User's text review of the movie"
-    )
+    user_review: str | None = Field(default=None, description="User's text review of the movie")
 
 
 class UserMovieDataUpdateSchema(Schema):
@@ -135,27 +118,18 @@ class UserMovieDataUpdateSchema(Schema):
     """
 
     user_watched: bool | None = Field(
-        default=None,
-        description="Whether the user has marked this movie as watched"
+        default=None, description="Whether the user has marked this movie as watched"
     )
     user_on_watchlist: bool | None = Field(
-        default=None,
-        description="Whether the movie is on the user's watchlist"
+        default=None, description="Whether the movie is on the user's watchlist"
     )
     user_liked: bool | None = Field(
-        default=None,
-        description="Whether the user has liked this movie"
+        default=None, description="Whether the user has liked this movie"
     )
     user_rating: int | None = Field(
-        default=None,
-        ge=1,
-        le=10,
-        description="User's rating of the movie (1-10)"
+        default=None, ge=1, le=10, description="User's rating of the movie (1-10)"
     )
-    user_review: str | None = Field(
-        default=None,
-        description="User's text review of the movie"
-    )
+    user_review: str | None = Field(default=None, description="User's text review of the movie")
 
 
 __all__ = [

@@ -18,8 +18,6 @@ import { Input, type InputProps } from "@chakra-ui/react";
  * - Highly custom inputs that need different styling (use Chakra Input directly)
  * - Inputs that need outline rings (use Chakra Input with `_focusVisible`)
  *
- * See strategy-semantic-tokens.md "Form Controls" for complete usage guide.
- *
  * @example
  * ```tsx
  * // On layer-01 (default)
@@ -53,7 +51,7 @@ export const StyledInput = ({ layer = "01", ...props }: StyledInputProps) => {
       bg={layerNum === 1 ? "transparent" : "background"}
       color="foreground"
       css={{
-        "border-color": `var(--chakra-colors-border-strong-0${layerNum})`,
+        borderColor: `var(--chakra-colors-border-strong-0${layerNum})`,
         "&:hover:not(:focus)": {
           borderColor: `var(--chakra-colors-border-strong-0${layerNum + 1})`,
           backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",

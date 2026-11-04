@@ -10,6 +10,7 @@ Tests session-based cross-page deduplication via Redis cache:
 All tests mock the AtomicSetOperations Protocol interface, not the raw Redis
 client. The adapter handles bytes↔int conversion internally.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -399,15 +400,11 @@ class TestContextIdIsolation:
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             # Tab 1
-            manager1 = DeduplicationTracker(
-                session_id="user_session", context_id="tab1_uuid"
-            )
+            manager1 = DeduplicationTracker(session_id="user_session", context_id="tab1_uuid")
             manager1.add_returned_ids(sample_params, [1, 2, 3])
 
             # Tab 2
-            manager2 = DeduplicationTracker(
-                session_id="user_session", context_id="tab2_uuid"
-            )
+            manager2 = DeduplicationTracker(session_id="user_session", context_id="tab2_uuid")
             manager2.add_returned_ids(sample_params, [4, 5, 6])
 
         assert len(cache_keys_used) == 2
@@ -432,9 +429,7 @@ class TestContextIdIsolation:
         mock_client.smembers.side_effect = capture_key_smembers
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager = DeduplicationTracker(
-                session_id="user_session", context_id="tab1"
-            )
+            manager = DeduplicationTracker(session_id="user_session", context_id="tab1")
             manager.get_returned_ids(sample_params)
             manager.get_returned_ids(sample_params)
 
@@ -460,14 +455,10 @@ class TestContextIdIsolation:
         mock_client.sadd.side_effect = capture_key
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
-            manager1 = DeduplicationTracker(
-                session_id="same_session", context_id="context_A"
-            )
+            manager1 = DeduplicationTracker(session_id="same_session", context_id="context_A")
             manager1.add_returned_ids(sample_params, [1, 2, 3])
 
-            manager2 = DeduplicationTracker(
-                session_id="same_session", context_id="context_B"
-            )
+            manager2 = DeduplicationTracker(session_id="same_session", context_id="context_B")
             manager2.add_returned_ids(sample_params, [4, 5, 6])
 
         assert cache_keys_used[0] != cache_keys_used[1]

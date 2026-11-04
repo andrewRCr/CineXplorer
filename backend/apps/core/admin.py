@@ -1,6 +1,4 @@
-"""
-Django admin interface customization for core models.
-"""
+"""Django admin interface customization for core models."""
 
 from django.contrib import admin
 

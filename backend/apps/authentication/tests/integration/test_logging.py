@@ -1,5 +1,4 @@
-"""
-Authentication security logging tests.
+"""Authentication security logging tests.
 
 Tests the logging implementation from Task 6 (Authentication Event Logging):
 - Failed login attempts log WARNING with IP, username, user agent
@@ -68,22 +67,19 @@ def test_failed_login_logs_warning_with_forensic_data(
 
     # Verify log entry exists
     assert "Login failed" in log_output, "Should have logged failed login attempt"
-    assert (
-        "Invalid credentials" in log_output
-    ), "Should include error message"
+    assert "Invalid credentials" in log_output, "Should include error message"
 
     # Verify forensic data
-    assert (
-        "login=nonexistent_user" in log_output
-        or "nonexistent_user" in log_output
-    ), "Should log attempted username"
+    assert "login=nonexistent_user" in log_output or "nonexistent_user" in log_output, (
+        "Should log attempted username"
+    )
     assert "ip=" in log_output, "Should log IP address"
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level (cm.records is list of LogRecord objects)
-    assert any(
-        r.levelname == "WARNING" for r in cm.records
-    ), "Failed login should be WARNING level"
+    assert any(r.levelname == "WARNING" for r in cm.records), (
+        "Failed login should be WARNING level"
+    )
 
 
 # ============================================================================
@@ -116,26 +112,20 @@ def test_successful_login_logs_info_with_user_id(
     log_output = " ".join(cm.output)
 
     # Verify log entry exists
-    assert (
-        "Login successful" in log_output
-    ), "Should have logged successful login"
+    assert "Login successful" in log_output, "Should have logged successful login"
 
     # Verify log contains user_id and forensic data
     assert (
-        f"user_id={verified_user.id}" in log_output
-        or f"user={verified_user.id}" in log_output
+        f"user_id={verified_user.id}" in log_output or f"user={verified_user.id}" in log_output
     ), "Should log user_id"
     assert (
-        f"login={verified_user.username}" in log_output
-        or verified_user.username in log_output
+        f"login={verified_user.username}" in log_output or verified_user.username in log_output
     ), "Should log login identifier"
     assert "ip=" in log_output, "Should log IP address"
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level
-    assert any(
-        r.levelname == "INFO" for r in cm.records
-    ), "Successful login should be INFO level"
+    assert any(r.levelname == "INFO" for r in cm.records), "Successful login should be INFO level"
 
 
 # ============================================================================
@@ -191,13 +181,12 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
     log_output = " ".join(cm.output)
 
     # Verify security log entry exists
-    assert (
-        "SECURITY" in log_output or "Blacklisted" in log_output
-    ), "Should have logged SECURITY event for blacklisted token"
-    assert (
-        "token reuse" in log_output.lower()
-        or "blacklisted" in log_output.lower()
-    ), "Should mention token reuse or blacklisting"
+    assert "SECURITY" in log_output or "Blacklisted" in log_output, (
+        "Should have logged SECURITY event for blacklisted token"
+    )
+    assert "token reuse" in log_output.lower() or "blacklisted" in log_output.lower(), (
+        "Should mention token reuse or blacklisting"
+    )
 
     # Verify log contains forensic data
     assert "user_id=" in log_output or "user=" in log_output, "Should log user_id"
@@ -205,9 +194,7 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level
-    assert any(
-        r.levelname == "WARNING" for r in cm.records
-    ), "Token reuse should be WARNING level"
+    assert any(r.levelname == "WARNING" for r in cm.records), "Token reuse should be WARNING level"
 
 
 # ============================================================================
@@ -240,26 +227,22 @@ def test_successful_registration_logs_info(
     log_output = " ".join(cm.output)
 
     # Verify log entry exists
-    assert (
-        "Registration successful" in log_output
-        or "Registration" in log_output
-    ), "Should have logged successful registration"
+    assert "Registration successful" in log_output or "Registration" in log_output, (
+        "Should have logged successful registration"
+    )
 
     # Verify log contains user info and forensic data
     assert "user_id=" in log_output or "user=" in log_output, "Should log user_id"
-    assert (
-        "username=newuser" in log_output or "newuser" in log_output
-    ), "Should log username"
-    assert (
-        "email=newuser@example.com" in log_output
-        or "newuser@example.com" in log_output
-    ), "Should log email"
+    assert "username=newuser" in log_output or "newuser" in log_output, "Should log username"
+    assert "email=newuser@example.com" in log_output or "newuser@example.com" in log_output, (
+        "Should log email"
+    )
     assert "ip=" in log_output, "Should log IP address"
 
     # Verify log level
-    assert any(
-        r.levelname == "INFO" for r in cm.records
-    ), "Successful registration should be INFO level"
+    assert any(r.levelname == "INFO" for r in cm.records), (
+        "Successful registration should be INFO level"
+    )
 
 
 # ============================================================================
@@ -318,12 +301,12 @@ def test_passwords_never_logged(
     # Check LogRecord objects for structured data
     for record in cm.records:
         record_str = str(record.__dict__)
-        assert (
-            test_password not in record_str
-        ), f"SECURITY VIOLATION: Password in LogRecord {record.name}"
-        assert (
-            "testpass123" not in record_str
-        ), f"SECURITY VIOLATION: Password in LogRecord {record.name}"
+        assert test_password not in record_str, (
+            f"SECURITY VIOLATION: Password in LogRecord {record.name}"
+        )
+        assert "testpass123" not in record_str, (
+            f"SECURITY VIOLATION: Password in LogRecord {record.name}"
+        )
 
 
 @pytest.mark.django_db
@@ -365,12 +348,8 @@ def test_token_values_never_logged(
     full_log = "\n".join(cm.output)
 
     # SECURITY ASSERTIONS
-    assert (
-        access_token not in full_log
-    ), "SECURITY VIOLATION: Access token in logs!"
-    assert (
-        refresh_token not in full_log
-    ), "SECURITY VIOLATION: Refresh token in logs!"
+    assert access_token not in full_log, "SECURITY VIOLATION: Access token in logs!"
+    assert refresh_token not in full_log, "SECURITY VIOLATION: Refresh token in logs!"
 
     # Check token segments (JWT has 3 parts separated by dots)
     access_parts = access_token.split(".")
@@ -379,19 +358,17 @@ def test_token_values_never_logged(
     for part in access_parts + refresh_parts:
         # Only check substantial parts (>20 chars to avoid false positives)
         if len(part) > 20:
-            assert (
-                part not in full_log
-            ), "SECURITY VIOLATION: Token segment in logs!"
+            assert part not in full_log, "SECURITY VIOLATION: Token segment in logs!"
 
     # Check LogRecord objects
     for record in cm.records:
         record_str = str(record.__dict__)
-        assert (
-            access_token not in record_str
-        ), f"SECURITY VIOLATION: Access token in LogRecord {record.name}"
-        assert (
-            refresh_token not in record_str
-        ), f"SECURITY VIOLATION: Refresh token in LogRecord {record.name}"
+        assert access_token not in record_str, (
+            f"SECURITY VIOLATION: Access token in LogRecord {record.name}"
+        )
+        assert refresh_token not in record_str, (
+            f"SECURITY VIOLATION: Refresh token in LogRecord {record.name}"
+        )
 
 
 # ============================================================================
@@ -403,7 +380,7 @@ def test_token_values_never_logged(
 @pytest.mark.enable_throttling
 @override_settings(
     TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
-    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+    ZEPTOMAIL_API_KEY="",  # Prevent real email sending (triggers dev_mode in adapters)
 )
 def test_rate_limit_violation_logs_throttle_event(
     api_client: Client,

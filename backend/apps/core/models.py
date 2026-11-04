@@ -1,8 +1,6 @@
-"""
-Core database models.
+"""Core database models.
 
-⚠️ TYPE STUB SYNC REQUIRED ⚠️
-===============================
+Type Stub Sync Required:
 This file has a companion type stub file: backend/apps/core/models.pyi
 
 When adding, removing, or modifying model fields in this file, you MUST
@@ -13,7 +11,6 @@ enabling perfect type inference in Pyright/Pylance and eliminating
 "unknown type" warnings.
 
 Type Ignore Usage:
-------------------
 This file uses `# type: ignore` comments on Django model field definitions.
 
 **Why this is justified:**
@@ -29,11 +26,7 @@ This file uses `# type: ignore` comments on Django model field definitions.
 - ✅ Any code importing and using these models (100% type-safe via .pyi)
 - ⚠️ Only the field definitions themselves show as "unknown" (unavoidable)
 
-This is the recommended approach per our type safety strategy.
-See: _docs/reference/type-safety-strategy.md
-
 Maintenance Checklist:
-----------------------
 When modifying this file:
 1. Update the model definition here (models.py)
 2. Update the type stub file (models.pyi)
@@ -45,10 +38,11 @@ from django.db import models
 
 
 class Movie(models.Model):
-    """
-    Represents a minimal local stub for a TMDB movie.
+    """Represents a minimal local stub for a TMDB movie.
+
     Used as an anchor for user-specific data.
     """
+
     tmdb_id = models.PositiveIntegerField(  # type: ignore
         primary_key=True
     )

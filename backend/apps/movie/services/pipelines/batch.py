@@ -1,10 +1,10 @@
-"""
-Batch operations for TMDB movie data fetching.
+"""Batch operations for TMDB movie data fetching.
 
 This module provides helper functions for efficiently fetching multiple movies
 from TMDB in batch operations, with graceful handling of partial failures and
 structured logging for observability.
 """
+
 from __future__ import annotations
 
 import logging
@@ -15,15 +15,14 @@ from apps.core.services.tmdb_api_client import TMDBApiClient
 from ...schemas import MovieListItemSchema
 
 # Use TMDB-specific logger for consistency with movie_service.py
-logger = logging.getLogger('cinexplorer.tmdb')
+logger = logging.getLogger("cinexplorer.tmdb")
 
 # Initialize the TMDB API client
 tmdb_client = TMDBApiClient()
 
 
 def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
-    """
-    Fetch multiple movies from TMDB by ID in a single batch operation.
+    """Fetch multiple movies from TMDB by ID in a single batch operation.
 
     This function handles batch fetching of movies with graceful degradation:
     - Successfully fetched movies are returned
@@ -55,7 +54,7 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
     if not movie_ids:
         logger.debug(
             "Batch fetch called with empty movie list",
-            extra={'operation': 'fetch_movies_batch', 'movie_count': 0}
+            extra={"operation": "fetch_movies_batch", "movie_count": 0},
         )
         return []
 
@@ -65,11 +64,11 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
     logger.info(
         f"Starting batch fetch for {len(unique_ids)} movies",
         extra={
-            'operation': 'fetch_movies_batch',
-            'requested_count': len(movie_ids),
-            'unique_count': len(unique_ids),
-            'duplicates_removed': len(movie_ids) - len(unique_ids)
-        }
+            "operation": "fetch_movies_batch",
+            "requested_count": len(movie_ids),
+            "unique_count": len(unique_ids),
+            "duplicates_removed": len(movie_ids) - len(unique_ids),
+        },
     )
 
     successfully_fetched: list[MovieListItemSchema] = []
@@ -88,12 +87,12 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
                 logger.warning(
                     f"Failed to fetch movie {movie_id} from TMDB",
                     extra={
-                        'operation': 'fetch_single_movie',
-                        'movie_id': movie_id,
-                        'status_code': response.status_code,
-                        'error_message': response.error_message,
-                        'error_category': response.error_category
-                    }
+                        "operation": "fetch_single_movie",
+                        "movie_id": movie_id,
+                        "status_code": response.status_code,
+                        "error_message": response.error_message,
+                        "error_category": response.error_category,
+                    },
                 )
                 continue
 
@@ -106,10 +105,10 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
                 logger.warning(
                     f"Movie {movie_id} returned null/empty data",
                     extra={
-                        'operation': 'fetch_single_movie',
-                        'movie_id': movie_id,
-                        'issue': 'null_data'
-                    }
+                        "operation": "fetch_single_movie",
+                        "movie_id": movie_id,
+                        "issue": "null_data",
+                    },
                 )
                 continue
 
@@ -127,25 +126,26 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
             logger.error(
                 f"Unexpected error fetching movie {movie_id}",
                 extra={
-                    'operation': 'fetch_single_movie',
-                    'movie_id': movie_id,
-                    'error_type': type(e).__name__,
-                    'error': str(e)
+                    "operation": "fetch_single_movie",
+                    "movie_id": movie_id,
+                    "error_type": type(e).__name__,
+                    "error": str(e),
                 },
-                exc_info=True
+                exc_info=True,
             )
 
     # Log batch operation completion
     logger.info(
         f"Batch fetch completed: {len(successfully_fetched)} succeeded, {failed_count} failed",
         extra={
-            'operation': 'fetch_movies_batch_complete',
-            'requested_count': len(unique_ids),
-            'success_count': len(successfully_fetched),
-            'failed_count': failed_count,
-            'success_rate': round(len(successfully_fetched) / len(unique_ids) * 100, 1)
-            if unique_ids else 0
-        }
+            "operation": "fetch_movies_batch_complete",
+            "requested_count": len(unique_ids),
+            "success_count": len(successfully_fetched),
+            "failed_count": failed_count,
+            "success_rate": round(len(successfully_fetched) / len(unique_ids) * 100, 1)
+            if unique_ids
+            else 0,
+        },
     )
 
     return successfully_fetched
@@ -154,8 +154,7 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
 def _create_movie_base_from_tmdb_data(
     tmdb_data: Mapping[str, object],
 ) -> MovieListItemSchema | None:
-    """
-    Create a MovieListItemSchema from TMDB data with error handling.
+    """Create a MovieListItemSchema from TMDB data with error handling.
 
     This is an internal helper that wraps the transformation logic from movie_service.py
     but returns None on error instead of raising exceptions (for graceful batch handling).
@@ -174,19 +173,19 @@ def _create_movie_base_from_tmdb_data(
 
         # Convert empty strings to None for release_date (TMDB quirk)
         release_date = tmdb_movie.release_date
-        if isinstance(release_date, str) and release_date.strip() == '':
+        if isinstance(release_date, str) and release_date.strip() == "":
             release_date = None
 
         validated_data: dict[str, object] = {
-            'tmdb_id': tmdb_movie.id,
-            'title': tmdb_movie.title,
-            'poster_path': tmdb_movie.poster_path,
-            'release_date': release_date,
-            'vote_average': tmdb_movie.vote_average,
-            'runtime': 0,  # Runtime not available in basic movie responses
-            'vote_count': tmdb_movie.vote_count,
-            'genre_ids': tmdb_movie.genre_ids,
-            'overview': tmdb_movie.overview,
+            "tmdb_id": tmdb_movie.id,
+            "title": tmdb_movie.title,
+            "poster_path": tmdb_movie.poster_path,
+            "release_date": release_date,
+            "vote_average": tmdb_movie.vote_average,
+            "runtime": 0,  # Runtime not available in basic movie responses
+            "vote_count": tmdb_movie.vote_count,
+            "genre_ids": tmdb_movie.genre_ids,
+            "overview": tmdb_movie.overview,
         }
 
         return MovieListItemSchema.model_validate(validated_data, strict=False)
@@ -195,10 +194,10 @@ def _create_movie_base_from_tmdb_data(
         logger.warning(
             "Failed to create MovieListItemSchema from TMDB data",
             extra={
-                'error': str(e),
-                'tmdb_id': tmdb_data.get('id'),
-                'operation': 'transform_movie_data',
-                'error_type': type(e).__name__
-            }
+                "error": str(e),
+                "tmdb_id": tmdb_data.get("id"),
+                "operation": "transform_movie_data",
+                "error_type": type(e).__name__,
+            },
         )
         return None

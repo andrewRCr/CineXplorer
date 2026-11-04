@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Comprehensive type checking script for CineXplorer backend.
+"""Comprehensive type checking script for CineXplorer backend.
 
 Type Safety Approach: Pyright-only with django-types
 - Uses Pyright for all type checking (local + CI)
@@ -21,6 +20,7 @@ Options:
     --only CHECKS   Run only specified checks (space-separated)
                    Available: core authentication movie user_movie_data accounts config
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,25 +34,21 @@ def run_command(cmd: list[str], description: str) -> tuple[int, str]:
     print(f"\n> {description}...")
     try:
         # Determine if we need shell mode (for npx on Windows)
-        use_shell = sys.platform == 'win32' and cmd[0] in ('npx', 'npm')
+        use_shell = sys.platform == "win32" and cmd[0] in ("npx", "npm")
 
         # Convert list to string for shell=True on Windows
         if use_shell:
-            cmd_str = ' '.join(cmd)
+            cmd_str = " ".join(cmd)
             result = subprocess.run(
                 cmd_str,
                 capture_output=True,
                 text=True,
                 cwd=Path(__file__).parent.parent,
-                shell=True
+                shell=True,
             )
         else:
             result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=Path(__file__).parent.parent,
-                shell=False
+                cmd, capture_output=True, text=True, cwd=Path(__file__).parent.parent, shell=False
             )
 
         output = result.stdout + result.stderr
@@ -64,13 +60,14 @@ def run_command(cmd: list[str], description: str) -> tuple[int, str]:
 def count_errors(output: str) -> int:
     """Count errors from Pyright output."""
     # Pyright outputs summary like "5 errors, 0 warnings, 0 informations"
-    for line in output.split('\n'):
-        if 'error' in line.lower() and ('warning' in line.lower() or
-                                        'information' in line.lower()):
+    for line in output.split("\n"):
+        if "error" in line.lower() and (
+            "warning" in line.lower() or "information" in line.lower()
+        ):
             # Parse "X errors, Y warnings, Z informations"
-            parts = line.split(',')
+            parts = line.split(",")
             for part in parts:
-                if 'error' in part.lower():
+                if "error" in part.lower():
                     try:
                         count = int(part.strip().split()[0])
                         return count
@@ -81,12 +78,12 @@ def count_errors(output: str) -> int:
 
 def get_error_preview(output: str, max_errors: int = 5) -> str:
     """Extract first N errors from Pyright output for preview."""
-    lines = output.split('\n')
-    error_lines = [line for line in lines if ' - error:' in line or ' - warning:' in line]
+    lines = output.split("\n")
+    error_lines = [line for line in lines if " - error:" in line or " - warning:" in line]
     preview = error_lines[:max_errors]
     if len(error_lines) > max_errors:
         preview.append(f"... and {len(error_lines) - max_errors} more errors")
-    return '\n  '.join(preview) if preview else "No type errors or warnings"
+    return "\n  ".join(preview) if preview else "No type errors or warnings"
 
 
 def main() -> None:
@@ -95,18 +92,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run Pyright type checking on CineXplorer backend",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Available checks: core, authentication, movie, user_movie_data, accounts, config"
+        epilog="Available checks: core, authentication, movie, user_movie_data, accounts, config",
     )
     parser.add_argument(
         "--verbose",
         action="store_true",
-        help="Show detailed error messages (first 5 errors per app)"
+        help="Show detailed error messages (first 5 errors per app)",
     )
     parser.add_argument(
         "--only",
         nargs="*",
         metavar="CHECK",
-        help="Run only specified checks (e.g., --only core movie)"
+        help="Run only specified checks (e.g., --only core movie)",
     )
     args = parser.parse_args()
 

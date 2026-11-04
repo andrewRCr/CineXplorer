@@ -3,6 +3,7 @@
 These schemas define the shape of HTTP request/response data only.
 For parameter transformation logic, see services.api_boundary.param_transformer.
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -21,14 +22,14 @@ class MovieSearchParamsSchema(Schema):
     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
     query parameters are sent as empty strings instead of being omitted.
     """
+
     query: str = Field(..., description="Search query string")
     page: int | None = Field(None, description="Page number for pagination")
     tmdb_page_start: int | None = Field(
-        None,
-        description="TMDB page to start fetching from (cursor for infinite scroll)"
+        None, description="TMDB page to start fetching from (cursor for infinite scroll)"
     )
 
-    @field_validator('page', 'tmdb_page_start', mode='before')
+    @field_validator("page", "tmdb_page_start", mode="before")
     @classmethod
     def convert_empty_to_none(cls, v: object) -> object:
         """Convert empty strings to None for optional integer parameters."""
@@ -43,9 +44,10 @@ class PaginationParamsSchema(Schema):
     Handles Django Ninja 1.4.3 + Pydantic 2.12.0 behavior where missing
     query parameters are sent as empty strings instead of being omitted.
     """
+
     page: int | None = Field(None, description="Page number for pagination")
 
-    @field_validator('page', mode='before')
+    @field_validator("page", mode="before")
     @classmethod
     def convert_empty_page_to_none(cls, v: object) -> object:
         """Convert empty strings to None for page parameter."""
@@ -151,6 +153,7 @@ class ProductionCompanySchema(Schema):
 
 class SpokenLanguageSchema(Schema):
     """Spoken language from TMDB movie details."""
+
     iso_639_1: str
     english_name: str
 
@@ -210,7 +213,7 @@ class MovieListResponseSchema(Schema):
     results: list[MovieListItemSchema] = Field(default_factory=_empty_movie_list)
     next_tmdb_page_start: int | None = Field(
         default=None,
-        description="Next TMDB page to fetch for pagination continuation (smart buffer tracking)"
+        description="Next TMDB page to fetch for pagination continuation (smart buffer tracking)",
     )
 
 
@@ -255,8 +258,7 @@ class PersonListResponseSchema(Schema):
 
 
 class MovieDiscoverFilterSchema(Schema):
-    """
-    Schema for TMDB discover endpoint filtering with two-pass architecture.
+    """Schema for TMDB discover endpoint filtering with two-pass architecture.
 
     Extracts parameters for both:
     1. TMDB API filtering (primary) - Reduces millions of movies to thousands
@@ -277,7 +279,7 @@ class MovieDiscoverFilterSchema(Schema):
     page: Annotated[int | None, Field(description="Page number for pagination")] = None
     tmdb_page_start: Annotated[
         int | None,
-        Field(description="TMDB page to start fetching from (smart buffer continuation)")
+        Field(description="TMDB page to start fetching from (smart buffer continuation)"),
     ] = None
 
     # Genre/Keyword filters
@@ -339,19 +341,17 @@ class MovieDiscoverFilterSchema(Schema):
 
     # Sorting
     sort_by: Annotated[
-        str | None,
-        Field(description="Sort by field (e.g., popularity.desc, vote_average.desc)")
+        str | None, Field(description="Sort by field (e.g., popularity.desc, vote_average.desc)")
     ] = None
 
     # Frontend convenience aliases
     decade: Annotated[str | None, Field(description="Decade filter (e.g., '1990s')")] = None
     genres: Annotated[str | None, Field(description="Alias for with_genres")] = None
 
-    @field_validator('*', mode='before')
+    @field_validator("*", mode="before")
     @classmethod
     def convert_empty_strings_to_none(cls, v: object) -> object:
-        """
-        Convert empty strings to None for all string fields.
+        """Convert empty strings to None for all string fields.
 
         This handles the Django Test Client / Django Ninja 1.4.3 behavior of
         sending empty strings for omitted parameters, ensuring Pydantic validation

@@ -8,6 +8,7 @@ export default tseslint.config([
     {
         ignores: [
             "dist",
+            "coverage",
             // Chakra UI v3 "snippet" system: CLI-installed utility files that intentionally
             // export both components and hooks in single files for cohesion. This violates
             // react-refresh/only-export-components but aligns with Chakra's documented

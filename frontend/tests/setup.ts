@@ -63,7 +63,8 @@ if (typeof window !== 'undefined') {
 // Mock scrollIntoView since it's not implemented in jsdom
 Element.prototype.scrollIntoView = vi.fn();
 
-// Mock scrollTo since it's not implemented in jsdom (needed for Chakra UI Select)
+// Mock scrolling APIs that jsdom does not implement.
+window.scrollTo = vi.fn();
 Element.prototype.scrollTo = vi.fn();
 HTMLElement.prototype.scrollTo = vi.fn();
 
@@ -97,29 +98,6 @@ style.textContent = `
 	}
 `;
 document.head.appendChild(style);
-
-// ============================================================================
-// KNOWN ISSUE: Chakra UI v3 Select "act() warnings"
-// ============================================================================
-//
-// Tests using Chakra UI v3's Select component produce warnings like:
-//   "An update to ForwardRef(SelectImpl) inside a test was not wrapped in act(...)"
-//
-// This is a KNOWN LIMITATION of Chakra UI v3's architecture:
-// - Chakra v3 uses Ark UI underneath, which has state machine-based components
-// - These state machines trigger async updates that React Testing Library can't
-//   automatically wrap in act()
-// - The warnings are cosmetic noise, NOT test failures or bugs
-//
-// Research conducted Dec 2025 confirmed:
-// - CSS animation disabling doesn't help (it's JS state updates, not CSS)
-// - Manual act() wrapping doesn't help (updates happen after test completion)
-// - waitFor/findByRole don't help (Ark UI state machines are the cause)
-// - This is a library-level issue with no clean workaround
-//
-// Per Kent C. Dodds, suppressing warnings masks real issues - accept the noise.
-// See: https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning
-// ============================================================================
 
 // Mock next-themes since it's not available in test environment
 vi.mock('next-themes', () => ({

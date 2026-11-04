@@ -1,5 +1,4 @@
-"""
-Tests for the user API.
+"""Tests for the user API.
 
 Rate Limiting Tests:
     By default, all tests bypass throttling using DummyCache (configured in conftest.py).
@@ -7,7 +6,7 @@ Rate Limiting Tests:
 
     To test rate limiting behavior, use @pytest.mark.enable_throttling decorator:
 
-    Example:
+Example:
         @pytest.mark.enable_throttling
         def test_login_rate_limiting(clear_throttle_cache):
             # This test will use real throttling (LocMemCache)
@@ -56,8 +55,7 @@ ME_URL: str = "/api/profile/"
 
 @pytest.fixture
 def authenticated_user(api_client: Client) -> tuple[Client, User]:
-    """
-    Create a user and authenticate them, returning (client, user).
+    """Create a user and authenticate them, returning (client, user).
 
     The client has JWT cookies set and is ready for authenticated requests.
     """
@@ -79,8 +77,7 @@ def authenticated_user(api_client: Client) -> tuple[Client, User]:
 
 @pytest.fixture
 def registered_user(api_client: Client) -> tuple[Client, dict[str, str]]:
-    """
-    Register a new user via the API and return (client, user_data).
+    """Register a new user via the API and return (client, user_data).
 
     Marks the email as verified to allow login. Supports --reuse-db flag.
     """
@@ -239,8 +236,8 @@ def test_retrieve_profile_unauthorized(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_retrieve_profile_success(authenticated_user: tuple[Client, User]) -> None:
-    """
-    Authenticated user can retrieve their profile (GET is not CSRF-protected).
+    """Authenticated user can retrieve their profile (GET is not CSRF-protected).
+
     Expect 200 OK.
     """
     client, user = authenticated_user
@@ -256,8 +253,7 @@ def test_retrieve_profile_success(authenticated_user: tuple[Client, User]) -> No
 
 @pytest.mark.django_db
 def test_update_profile_no_csrf_authenticated(db: None) -> None:
-    """
-    Authenticated PATCH via Django session succeeds (hybrid auth fallback).
+    """Authenticated PATCH via Django session succeeds (hybrid auth fallback).
 
     Hybrid Authentication Pattern (Priority 3 - Session Fallback):
     - JWT tokens are Priority 1-2 (header/cookie)
@@ -293,8 +289,8 @@ def test_update_profile_no_csrf_authenticated(db: None) -> None:
 
 @pytest.mark.django_db
 def test_update_profile_with_csrf_authenticated(db: None) -> None:
-    """
-    Authenticated PATCH to profile with valid CSRF token.
+    """Authenticated PATCH to profile with valid CSRF token.
+
     Expect 200 OK.
 
     Hybrid Authentication Pattern:
@@ -322,7 +318,7 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
 
     # Extract access token from response body and set as cookie
     response_data = json_module.loads(response.content.decode())
-    client.cookies['access_token'] = response_data['access_token']
+    client.cookies["access_token"] = response_data["access_token"]
 
     # Simulate CSRF token and cookie (double-submit cookie pattern)
     # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
@@ -343,8 +339,8 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
 
 @pytest.mark.django_db
 def test_unauthenticated_profile_access(api_client: Client) -> None:
-    """
-    Unauthenticated GET to profile endpoint.
+    """Unauthenticated GET to profile endpoint.
+
     Expect 401 Unauthorized.
     """
     res = api_client.get(ME_URL)
@@ -353,8 +349,8 @@ def test_unauthenticated_profile_access(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_unauthenticated_profile_update(api_client: Client) -> None:
-    """
-    Unauthenticated PATCH to profile endpoint.
+    """Unauthenticated PATCH to profile endpoint.
+
     Expect 401 Unauthorized (auth fails before CSRF).
     """
     payload = {"first_name": "Hacker"}
@@ -391,7 +387,7 @@ def test_token_obtain_sets_jwt_cookies(registered_user: tuple[Client, dict[str, 
     # Verify access_token is in response body (NOT cookie)
     response_data = json_module.loads(response.content.decode())
     assert "access_token" in response_data
-    assert response_data['access_token'] is not None
+    assert response_data["access_token"] is not None
 
     # Verify access_token is NOT set as cookie (hybrid auth pattern)
     assert "access_token" not in client.cookies
@@ -479,8 +475,7 @@ def test_csrf_token_endpoint_sets_cookie(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_throttling_bypassed_by_default(api_client: Client) -> None:
-    """
-    Verify throttling is bypassed by default in tests.
+    """Verify throttling is bypassed by default in tests.
 
     Without @pytest.mark.enable_throttling, rapid requests should all succeed
     regardless of configured rate limits. This enables fast test execution.
@@ -504,15 +499,14 @@ def test_throttling_bypassed_by_default(api_client: Client) -> None:
     for i in range(10):
         response = json_post(api_client, TOKEN_URL, cast(dict[str, object], login_data))
         assert response.status_code == HTTPStatus.OK, (
-            f"Request {i+1} failed with status {response.status_code}. "
+            f"Request {i + 1} failed with status {response.status_code}. "
             "Expected all requests to succeed (throttling should be bypassed)."
         )
 
 
 @pytest.mark.django_db
 def test_throttling_infrastructure_ready() -> None:
-    """
-    Verify throttling infrastructure is properly configured.
+    """Verify throttling infrastructure is properly configured.
 
     This test documents that:
     1. TestAwareAnonThrottle classes are imported correctly
@@ -541,9 +535,9 @@ def test_throttling_infrastructure_ready() -> None:
     user_throttle = TestAwareUserThrottle("10/m")
 
     # Verify throttle classes have allow_request method
-    assert hasattr(
-        anon_throttle, "allow_request"
-    ), "TestAwareAnonThrottle should have allow_request method"
-    assert hasattr(
-        user_throttle, "allow_request"
-    ), "TestAwareUserThrottle should have allow_request method"
+    assert hasattr(anon_throttle, "allow_request"), (
+        "TestAwareAnonThrottle should have allow_request method"
+    )
+    assert hasattr(user_throttle, "allow_request"), (
+        "TestAwareUserThrottle should have allow_request method"
+    )

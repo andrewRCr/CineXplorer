@@ -5,7 +5,6 @@ endpoint presets while respecting protected keys that preserve endpoint
 semantic identity.
 """
 
-
 from apps.movie.helpers import (
     BROWSE_PROTECTED_KEYS,
     NOW_PLAYING_PROTECTED_KEYS,

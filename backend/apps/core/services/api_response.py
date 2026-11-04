@@ -1,5 +1,4 @@
-"""
-API Response wrapper for consistent handling of HTTP responses.
+"""API Response wrapper for consistent handling of HTTP responses.
 
 This module provides a standardized way to handle API responses across
 all HTTP clients in the application, ensuring consistent access to
@@ -19,17 +18,16 @@ logger = logging.getLogger(__name__)
 # Shared mapping of standard rate limit headers to normalized keys
 # Used by both ApiResponse and API clients for consistent rate limit handling
 RATE_LIMIT_HEADER_MAPPING: dict[str, str] = {
-    'x-ratelimit-limit': 'limit',
-    'x-ratelimit-remaining': 'remaining',
-    'x-ratelimit-reset': 'reset',
-    'retry-after': 'retry_after'
+    "x-ratelimit-limit": "limit",
+    "x-ratelimit-remaining": "remaining",
+    "x-ratelimit-reset": "reset",
+    "retry-after": "retry_after",
 }
 
 
 @dataclass
 class ApiResponse:
-    """
-    Standardized wrapper for HTTP API responses.
+    """Standardized wrapper for HTTP API responses.
 
     Provides consistent access to response data, metadata, timing,
     and error information regardless of the underlying HTTP client.
@@ -75,8 +73,8 @@ class ApiResponse:
         return self.data is not None
 
     def get_json_data(self) -> dict[str, object] | None:
-        """
-        Get response data as JSON dictionary.
+        """Get response data as JSON dictionary.
+
         Returns None if data is not a dictionary.
         """
         if isinstance(self.data, dict):
@@ -101,8 +99,8 @@ class ApiResponse:
         return default
 
     def get_rate_limit_info(self) -> dict[str, object] | None:
-        """
-        Extract rate limiting information from headers.
+        """Extract rate limiting information from headers.
+
         Returns None if no rate limit headers are found.
         """
         if not self.headers:
@@ -114,7 +112,7 @@ class ApiResponse:
             value = self.get_header(header_name)
             if value is not None:
                 # Try to convert numeric values to integers
-                if key in ['limit', 'remaining', 'reset', 'retry_after']:
+                if key in ["limit", "remaining", "reset", "retry_after"]:
                     try:
                         rate_limit_info[key] = int(value)
                     except ValueError:
@@ -129,59 +127,59 @@ class ApiResponse:
         content_info: dict[str, object] = {}
 
         if self.headers:
-            content_info['content_type'] = self.get_header('content-type')
-            content_info['content_length'] = self.get_header('content-length')
+            content_info["content_type"] = self.get_header("content-type")
+            content_info["content_length"] = self.get_header("content-length")
 
             # Convert content length to integer if possible
-            content_length = content_info['content_length']
+            content_length = content_info["content_length"]
             if content_length:
                 with contextlib.suppress(ValueError):
-                    content_info['content_length'] = int(content_length)
+                    content_info["content_length"] = int(content_length)
 
         # Add data size information (in bytes)
         if self.data is not None:
             if isinstance(self.data, str):
-                content_info['data_size'] = len(self.data.encode('utf-8'))
+                content_info["data_size"] = len(self.data.encode("utf-8"))
             elif isinstance(self.data, (dict, list)):
                 try:
-                    content_info['data_size'] = len(json.dumps(self.data).encode('utf-8'))
+                    content_info["data_size"] = len(json.dumps(self.data).encode("utf-8"))
                 except (TypeError, ValueError):
-                    content_info['data_size'] = None
+                    content_info["data_size"] = None
 
         return content_info
 
     def get_error_summary(self) -> dict[str, object] | None:
-        """
-        Get a comprehensive error summary if the response indicates an error.
+        """Get a comprehensive error summary if the response indicates an error.
+
         Returns None for successful responses.
         """
         if self.is_success():
             return None
 
         error_summary: dict[str, object] = {
-            'status_code': self.status_code,
-            'error_message': self.error_message,
-            'error_details': self.error_details,
-            'error_category': self.error_category,
-            'correlation_id': self.correlation_id,
-            'endpoint': self.endpoint,
-            'method': self.method,
-            'duration_ms': self.duration_ms
+            "status_code": self.status_code,
+            "error_message": self.error_message,
+            "error_details": self.error_details,
+            "error_category": self.error_category,
+            "correlation_id": self.correlation_id,
+            "endpoint": self.endpoint,
+            "method": self.method,
+            "duration_ms": self.duration_ms,
         }
 
         # Add rate limit info for rate limit errors or any response with Retry-After
         # Some backends use 503/529 with Retry-After for throttling instead of 429
-        if self.is_rate_limited() or self.get_header('retry-after') is not None:
+        if self.is_rate_limited() or self.get_header("retry-after") is not None:
             rate_limit_info = self.get_rate_limit_info()
             if rate_limit_info:
-                error_summary['rate_limit_info'] = rate_limit_info
+                error_summary["rate_limit_info"] = rate_limit_info
 
         # Remove None values for cleaner output
         return {k: v for k, v in error_summary.items() if v is not None}
 
     def to_legacy_dict(self) -> dict[str, object]:
-        """
-        Convert to legacy dictionary format for backward compatibility.
+        """Convert to legacy dictionary format for backward compatibility.
+
         This matches the current error format used in movie_service.py.
         """
         if self.is_success():
@@ -194,7 +192,7 @@ class ApiResponse:
         error_dict: dict[str, object] = {
             "error": self.error_message or f"Request failed with status {self.status_code}",
             "status": self.status_code,
-            "correlation_id": self.correlation_id
+            "correlation_id": self.correlation_id,
         }
 
         if self.error_details:

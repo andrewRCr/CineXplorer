@@ -1,5 +1,4 @@
-"""
-Main Django Ninja API configuration for CineXplorer.
+"""Main Django Ninja API configuration for CineXplorer.
 
 This module creates the central NinjaAPI instance with:
 - Native JWT cookie authentication integration
@@ -7,6 +6,7 @@ This module creates the central NinjaAPI instance with:
 - Global error handling and logging
 - Type-safe endpoint registration
 """
+
 from __future__ import annotations
 
 from ninja import NinjaAPI

@@ -3,11 +3,12 @@
 These builders create validated Pydantic model instances representing TMDB API responses,
 used across service layer tests for consistent and type-safe mock data.
 
-Following type safety strategy validation boundary pattern: Test data is validated
-at construction using the same Pydantic models as production code, eliminating
+Test data is validated at construction using the same Pydantic models as
+production code, eliminating
 the need for cast() and ensuring tests use realistic, validated data.
 
 """
+
 from __future__ import annotations
 
 from typing import NotRequired, TypedDict
@@ -186,13 +187,13 @@ def create_tmdb_movie(
         >>> movie = create_tmdb_movie(1, "Test Movie", "2022-01-01", 8.0)
 
         >>> # Movie without poster (for completeness filter tests)
-        >>> no_poster = create_tmdb_movie(2, "No Poster", "2022-01-01", 7.5, poster_path='')
+        >>> no_poster = create_tmdb_movie(2, "No Poster", "2022-01-01", 7.5, poster_path="")
 
         >>> # Movie without genres (for data quality filter tests)
         >>> no_genres = create_tmdb_movie(3, "Garbage", "2022-01-01", 2.0, genre_ids=[])
 
         >>> # Movie without overview (for completeness filter tests)
-        >>> no_overview = create_tmdb_movie(4, "No Overview", "2022-01-01", 7.0, overview='')
+        >>> no_overview = create_tmdb_movie(4, "No Overview", "2022-01-01", 7.0, overview="")
     """
     # Default vote_count to 100 (well above 50 threshold) for reliable ratings
     # Tests specifically testing vote count behavior can override this
@@ -202,7 +203,7 @@ def create_tmdb_movie(
     # Default poster_path to valid path unless explicitly set
     # Tests for completeness filter can explicitly pass empty string for missing poster
     if poster_path is None:
-        poster_path = f'/poster_{tmdb_id}.jpg'
+        poster_path = f"/poster_{tmdb_id}.jpg"
 
     # Default genre_ids to [18, 28] (Drama, Action) for legitimate movies
     # Tests for data quality filtering can explicitly pass empty list []
@@ -213,8 +214,7 @@ def create_tmdb_movie(
     # Tests for completeness filter can explicitly pass empty string for missing overview
     if overview is None:
         overview = (
-            f'A compelling story about {title}. '
-            f'This film explores themes of drama and action.'
+            f"A compelling story about {title}. This film explores themes of drama and action."
         )
 
     return TMDBMovieBase(
@@ -273,12 +273,12 @@ def create_tmdb_movie_detail(
     release_date: str,
     vote_average: float,
     runtime: int = 120,
-    overview: str = 'Test movie overview',
+    overview: str = "Test movie overview",
     genres: list[TMDBGenre] | None = None,
     production_companies: list[TMDBProductionCompany] | None = None,
     poster_path: str | None = None,
     vote_count: int | None = None,
-    genre_ids: list[int] | None = None
+    genre_ids: list[int] | None = None,
 ) -> TMDBMovieDetail:
     """Create a validated TMDB movie detail model for testing.
 
@@ -304,16 +304,22 @@ def create_tmdb_movie_detail(
     Example:
         >>> # Standard movie detail
         >>> detail = create_tmdb_movie_detail(
-        ...     1, "Test Movie", "2022-01-01", 8.0,
+        ...     1,
+        ...     "Test Movie",
+        ...     "2022-01-01",
+        ...     8.0,
         ...     runtime=150,
-        ...     genres=[{'id': 28, 'name': 'Action'}]
+        ...     genres=[{"id": 28, "name": "Action"}],
         ... )
 
         >>> # With custom poster and overview
         >>> detail = create_tmdb_movie_detail(
-        ...     2, "Drama", "2023-01-01", 7.5,
+        ...     2,
+        ...     "Drama",
+        ...     "2023-01-01",
+        ...     7.5,
         ...     overview="A compelling drama",
-        ...     poster_path="/custom.jpg"
+        ...     poster_path="/custom.jpg",
         ... )
     """
     # Get base movie model for common fields
@@ -326,7 +332,7 @@ def create_tmdb_movie_detail(
         vote_count=vote_count,
         poster_path=poster_path,
         genre_ids=genre_ids,
-        overview=overview
+        overview=overview,
     )
 
     # Create detail model with base fields + detail-specific fields
@@ -334,5 +340,5 @@ def create_tmdb_movie_detail(
         **base_movie.model_dump(),
         runtime=runtime,
         genres=genres or [],
-        production_companies=production_companies or []
+        production_companies=production_companies or [],
     )

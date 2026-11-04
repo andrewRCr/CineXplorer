@@ -44,6 +44,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+frontend/coverage/
 htmlcov/
 .tox/
 .nox/
@@ -222,8 +223,6 @@ infrastructure/dev-certs/*.key
 
 # AI tool settings (personal development environment preferences)
 .claude
-.warp/
-.gemini/
 .codex
 
 # Markdownlint VS Code config (local dev tooling - project standards in .markdownlint-cli2.jsonc)

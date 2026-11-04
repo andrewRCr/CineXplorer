@@ -366,9 +366,7 @@ class TestBusinessConstraints:
             assert len(data["results"]) == 1
             assert data["results"][0]["title"] == "High Votes"
             # Verify the threshold behavior
-            assert all(
-                movie["vote_count"] >= VOTE_COUNT_THRESHOLD for movie in data["results"]
-            )
+            assert all(movie["vote_count"] >= VOTE_COUNT_THRESHOLD for movie in data["results"])
         else:
             # Now-playing and upcoming: all movies returned
             # (new releases may have few votes, unreleased have 0)

@@ -1,5 +1,4 @@
-"""
-Unit tests for UserMovieDataService.
+"""Unit tests for UserMovieDataService.
 
 This module tests the user movie data service which handles CRUD operations
 for user-specific movie interactions (watchlist, ratings, reviews).
@@ -19,6 +18,7 @@ See Also:
     - core/tests/test_helpers.py for create_mock_user()
     - movie/tests/test_helpers.py for TMDB response mocks
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock, patch
@@ -186,9 +186,7 @@ class TestCreateOperation:
         # Movie doesn't exist locally
         mock_repo.get_movie_by_tmdb_id.return_value = None
         # TMDB returns 404
-        mock_movie_service.get_movie_by_id.side_effect = HttpError(
-            404, "Movie not found"
-        )
+        mock_movie_service.get_movie_by_id.side_effect = HttpError(404, "Movie not found")
 
         service = UserMovieDataService(
             repository=mock_repo,

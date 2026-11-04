@@ -1,5 +1,4 @@
-"""
-Pagination and buffer management utilities for TMDB movie responses.
+"""Pagination and buffer management utilities for TMDB movie responses.
 
 This module provides composable helper functions for paginated movie fetching,
 filtering, and buffer management to maintain consistent page sizes.
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 # Use TMDB-specific logger for consistency
-logger = logging.getLogger('cinexplorer.tmdb')
+logger = logging.getLogger("cinexplorer.tmdb")
 
 
 def apply_buffer_if_needed(
@@ -68,8 +67,8 @@ def apply_buffer_if_needed(
     year_max = params.year_max
     rating_min = params.rating_min
     rating_max = params.rating_max
-    min_vote_count = getattr(params, 'min_vote_count', None)
-    language_filter = getattr(params, 'language', None)
+    min_vote_count = getattr(params, "min_vote_count", None)
+    language_filter = getattr(params, "language", None)
 
     # Get IDs already returned in this session (cross-page deduplication)
     session_ids: set[int] = dedup_tracker.get_returned_ids(params) if dedup_tracker else set()
@@ -108,9 +107,7 @@ def apply_buffer_if_needed(
 
     pages_fetched = 0
     while (
-        len(combined_movies) < 20
-        and next_page <= total_pages
-        and pages_fetched < max_buffer_pages
+        len(combined_movies) < 20 and next_page <= total_pages and pages_fetched < max_buffer_pages
     ):
         # Fetch next page and apply same filters
         buffer_response = fetch_next_page_func(next_page)
@@ -121,7 +118,7 @@ def apply_buffer_if_needed(
             rating_min,
             rating_max,
             min_vote_count,
-            language_filter
+            language_filter,
         )
 
         # Add buffer movies, deduplicating against seen_ids (includes session + this request)
@@ -192,7 +189,7 @@ def fetch_with_filters_and_buffer(
     year_max = params.year_max
     rating_min = params.rating_min
     rating_max = params.rating_max
-    tmdb_page_start = getattr(params, 'tmdb_page_start', None)
+    tmdb_page_start = getattr(params, "tmdb_page_start", None)
 
     # Clear session on page 1 WITHOUT tmdb_page_start for fresh start.
     # This supports infinite scroll which sends page=1 on every request but uses
@@ -200,8 +197,8 @@ def fetch_with_filters_and_buffer(
     # (no cursor provided), not when continuing from a previous position.
     if page == 1 and tmdb_page_start is None and dedup_tracker:
         dedup_tracker.clear_session(params)
-    min_vote_count = getattr(params, 'min_vote_count', None)
-    language_filter = getattr(params, 'language', None)
+    min_vote_count = getattr(params, "min_vote_count", None)
+    language_filter = getattr(params, "language", None)
 
     # Step 1: Fetch initial page (use tmdb_page_start if provided, otherwise use page)
     effective_page = tmdb_page_start if tmdb_page_start is not None else page
@@ -216,13 +213,7 @@ def fetch_with_filters_and_buffer(
     # Note: Completeness filter is ALWAYS applied for UI quality, even without other filters
     original_count = len(movies)
     filtered_movies = apply_data_quality_filters(
-        movies,
-        year_min,
-        year_max,
-        rating_min,
-        rating_max,
-        min_vote_count,
-        language_filter
+        movies, year_min, year_max, rating_min, rating_max, min_vote_count, language_filter
     )
     filtered_count = len(filtered_movies)
 
@@ -237,6 +228,7 @@ def fetch_with_filters_and_buffer(
     # Step 5: Apply buffer mechanism if needed
     # If pre-filter exists, wrap fetch function to apply it to buffer too
     if pre_filter_func is not None:
+
         def fetch_with_pre_filter(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch buffer page and apply pre-filter."""
             buffer_response = fetch_page_func(page_num)
@@ -245,8 +237,9 @@ def fetch_with_filters_and_buffer(
                 page=buffer_response.page,
                 total_pages=buffer_response.total_pages,
                 total_results=buffer_response.total_results,
-                results=buffer_filtered
+                results=buffer_filtered,
             )
+
         buffer_fetch_func = fetch_with_pre_filter
     else:
         buffer_fetch_func = fetch_page_func
@@ -277,5 +270,5 @@ def fetch_with_filters_and_buffer(
         page,
         tmdb_response.total_pages,
         tmdb_response.total_results,
-        next_tmdb_page_start
+        next_tmdb_page_start,
     )

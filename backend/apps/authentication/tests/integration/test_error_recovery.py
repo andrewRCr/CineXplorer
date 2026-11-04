@@ -1,5 +1,4 @@
-"""
-Error recovery scenario tests for JWT authentication.
+"""Error recovery scenario tests for JWT authentication.
 
 Tests critical error handling behaviors to ensure graceful degradation:
 
@@ -48,8 +47,7 @@ from apps.core.tests.test_helpers import create_fresh_client, create_user, json_
 
 @pytest.mark.django_db
 def test_corrupted_jwt_token_returns_401() -> None:
-    """
-    Verify corrupted JWT token is rejected with 401 Unauthorized.
+    """Verify corrupted JWT token is rejected with 401 Unauthorized.
 
     Simulates XSS attack scenario where attacker modifies token in sessionStorage.
     Backend must reject gracefully without exposing token internals.
@@ -68,10 +66,7 @@ def test_corrupted_jwt_token_returns_401() -> None:
     client = create_fresh_client()
 
     # Attempt authenticated request with corrupted token
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {corrupted_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {corrupted_token}")
 
     # Verify rejection
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -83,8 +78,7 @@ def test_corrupted_jwt_token_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_malformed_jwt_format_returns_401() -> None:
-    """
-    Verify malformed JWT format (invalid base64) is rejected.
+    """Verify malformed JWT format (invalid base64) is rejected.
 
     JWT format: header.payload.signature (3 parts, base64-encoded)
     This test sends invalid base64 that can't be decoded.
@@ -94,18 +88,14 @@ def test_malformed_jwt_format_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {malformed_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {malformed_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
 def test_jwt_with_invalid_signature_returns_401() -> None:
-    """
-    Verify JWT with modified signature is rejected.
+    """Verify JWT with modified signature is rejected.
 
     Simulates attacker trying to forge token by modifying signature.
     Backend must validate signature matches payload.
@@ -125,18 +115,14 @@ def test_jwt_with_invalid_signature_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {invalid_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {invalid_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
 def test_jwt_missing_token_parts_returns_401() -> None:
-    """
-    Verify incomplete JWT (missing parts) is rejected.
+    """Verify incomplete JWT (missing parts) is rejected.
 
     JWT requires exactly 3 parts: header.payload.signature
     Test with only 2 parts (missing signature).
@@ -151,35 +137,27 @@ def test_jwt_missing_token_parts_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {incomplete_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {incomplete_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
 def test_empty_authorization_header_returns_401() -> None:
-    """
-    Verify empty Authorization header is rejected.
+    """Verify empty Authorization header is rejected.
 
     Tests edge case where header is present but empty.
     """
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=""
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION="")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
 def test_invalid_authorization_scheme_returns_401() -> None:
-    """
-    Verify non-Bearer authorization scheme is rejected.
+    """Verify non-Bearer authorization scheme is rejected.
 
     JWT authentication requires "Bearer" scheme.
     Test with "Basic" or other schemes.
@@ -191,18 +169,14 @@ def test_invalid_authorization_scheme_returns_401() -> None:
     client = create_fresh_client()
 
     # Try with "Basic" scheme instead of "Bearer"
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Basic {access_token_str}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Basic {access_token_str}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
 def test_token_for_nonexistent_user_returns_401() -> None:
-    """
-    Verify token for deleted user is rejected.
+    """Verify token for deleted user is rejected.
 
     Simulates user deletion while token still valid.
     Backend must check user exists during authentication.
@@ -216,18 +190,14 @@ def test_token_for_nonexistent_user_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {access_token_str}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {access_token_str}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
 def test_malformed_json_in_token_refresh_request() -> None:
-    """
-    Verify malformed JSON in token refresh request is handled.
+    """Verify malformed JSON in token refresh request is handled.
 
     While refresh endpoint doesn't require body, test edge case
     where client sends invalid JSON.
@@ -239,9 +209,7 @@ def test_malformed_json_in_token_refresh_request() -> None:
 
     # Send malformed JSON
     response = client.post(
-        "/api/token/refresh/",
-        data="{not valid json}",
-        content_type="application/json"
+        "/api/token/refresh/", data="{not valid json}", content_type="application/json"
     )
 
     # Should handle gracefully (either 400 or process without body)
@@ -258,8 +226,7 @@ def test_malformed_json_in_token_refresh_request() -> None:
 
 @pytest.mark.django_db
 def test_database_error_during_authentication_returns_500() -> None:
-    """
-    Verify database connection failure during auth returns 500.
+    """Verify database connection failure during auth returns 500.
 
     Simulates database unavailability when validating user.
     Backend must return 500 (not crash) to allow client retry.
@@ -274,10 +241,7 @@ def test_database_error_during_authentication_returns_500() -> None:
     with patch("django.contrib.auth.models.User.objects.get") as mock_get:
         mock_get.side_effect = Exception("Database connection lost")
 
-        response = client.get(
-            "/api/profile/",
-            HTTP_AUTHORIZATION=f"Bearer {access_token_str}"
-        )
+        response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {access_token_str}")
 
         # Should return 500 (server error), not 401 (auth error)
         # Note: Actual behavior depends on exception handling middleware
@@ -290,8 +254,7 @@ def test_database_error_during_authentication_returns_500() -> None:
 
 @pytest.mark.django_db
 def test_token_refresh_with_blacklist_unavailable() -> None:
-    """
-    Verify token refresh handles blacklist check failures.
+    """Verify token refresh handles blacklist check failures.
 
     Token rotation uses blacklist to invalidate old refresh tokens.
     Test error handling when blacklist check fails.
@@ -318,8 +281,7 @@ def test_token_refresh_with_blacklist_unavailable() -> None:
 
 @pytest.mark.django_db
 def test_profile_endpoint_with_serialization_error() -> None:
-    """
-    Verify profile endpoint handles serialization errors gracefully.
+    """Verify profile endpoint handles serialization errors gracefully.
 
     Tests error handling when schema serialization fails.
     Django Ninja propagates exception - verify it doesn't crash server.
@@ -347,16 +309,15 @@ def test_profile_endpoint_with_serialization_error() -> None:
 @pytest.mark.django_db(
     transaction=True,
     available_apps=[
-        'apps.authentication',
-        'apps.accounts',
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
-        'ninja_jwt.token_blacklist',
-    ]
+        "apps.authentication",
+        "apps.accounts",
+        "django.contrib.auth",
+        "django.contrib.contenttypes",
+        "ninja_jwt.token_blacklist",
+    ],
 )
 def test_concurrent_token_refresh_requests() -> None:
-    """
-    Verify concurrent token refresh requests don't cause race conditions.
+    """Verify concurrent token refresh requests don't cause race conditions.
 
     Tests token rotation under concurrent load by executing multiple
     refresh requests in parallel threads. This simulates real-world
@@ -392,14 +353,13 @@ def test_concurrent_token_refresh_requests() -> None:
     user = create_user(
         username=f"testuser_{unique_id}",
         email=f"testuser_{unique_id}@example.com",
-        email_verified=True
+        email_verified=True,
     )
     refresh = RefreshToken.for_user(cast(AbstractBaseUser, user))
     refresh_token_str = str(refresh)
 
     def make_refresh_request() -> HttpResponse:
-        """
-        Execute refresh request in thread.
+        """Execute refresh request in thread.
 
         Creates a new Client per thread (required - Django's Client is not thread-safe).
         Closes database connection after request to prevent connection leaks.
@@ -443,16 +403,14 @@ def test_concurrent_token_refresh_requests() -> None:
 
 @pytest.mark.django_db
 def test_sql_injection_attempt_in_login(api_client: Client) -> None:
-    """
-    Verify SQL injection attempts in login are handled safely.
+    """Verify SQL injection attempts in login are handled safely.
 
     Django ORM protects against SQL injection, but test edge case.
     """
     # Attempt SQL injection in username field
-    response = json_post(api_client, "/api/token/", {
-        "login": "admin' OR '1'='1",
-        "password": "password"
-    })
+    response = json_post(
+        api_client, "/api/token/", {"login": "admin' OR '1'='1", "password": "password"}
+    )
 
     # Should return 401 (invalid credentials), not 500 (SQL error)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -460,8 +418,7 @@ def test_sql_injection_attempt_in_login(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_extremely_long_token_in_header() -> None:
-    """
-    Verify extremely long authorization header is rejected.
+    """Verify extremely long authorization header is rejected.
 
     Tests protection against buffer overflow / DoS attacks.
     """
@@ -470,18 +427,14 @@ def test_extremely_long_token_in_header() -> None:
     # Create extremely long token (10KB)
     long_token = "A" * 10000
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {long_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {long_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
 @pytest.mark.django_db
 def test_null_bytes_in_authorization_header() -> None:
-    """
-    Verify null bytes in authorization header are handled.
+    """Verify null bytes in authorization header are handled.
 
     Tests protection against null byte injection attacks.
     """
@@ -494,9 +447,6 @@ def test_null_bytes_in_authorization_header() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {token_with_null}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {token_with_null}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED

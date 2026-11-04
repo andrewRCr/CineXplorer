@@ -1,11 +1,9 @@
-"""
-Type stubs for django-environ.
+"""Type stubs for django-environ.
 
 Provides type annotations for django-environ's Env class.
 NO official type stubs exist for django-environ.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-environ 0.12.0 + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -35,7 +33,6 @@ class Env:
     """Environment variable reader with type conversion."""
 
     def __init__(self, **schema: object) -> None: ...
-
     def __call__(
         self,
         var: str,
@@ -43,26 +40,21 @@ class Env:
         cast: object = None,
         parse_default: bool = False,
     ) -> str | bytes: ...
-
     @overload
     def bool(self, var: str, default: bool) -> bool: ...
-
     @overload
     def bool(self, var: str, default: NoValue = NOTSET) -> bool: ...
-
     def str(
         self,
         var: str,
         default: str | NoValue = NOTSET,
         multiline: bool = False,
     ) -> str: ...
-
     def int(
         self,
         var: str,
         default: int | NoValue = NOTSET,
     ) -> int: ...
-
     @staticmethod
     def read_env(
         env_file: str | None = None,

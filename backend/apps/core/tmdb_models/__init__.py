@@ -1,5 +1,4 @@
-"""
-TMDB API response models package.
+"""TMDB API response models package.
 
 This package contains Pydantic models representing The Movie Database (TMDB) API
 response structures. These models provide type safety when parsing TMDB API responses

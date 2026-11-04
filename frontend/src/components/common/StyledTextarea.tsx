@@ -18,8 +18,6 @@ import { Textarea, type TextareaProps } from "@chakra-ui/react";
  * - Highly custom textareas that need different styling (use Chakra Textarea directly)
  * - Textareas that need outline rings (use Chakra Textarea with `_focusVisible`)
  *
- * See strategy-semantic-tokens.md "Form Controls" for complete usage guide.
- *
  * @example
  * ```tsx
  * // On layer-01 (default)

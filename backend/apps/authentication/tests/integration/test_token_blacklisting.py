@@ -1,5 +1,4 @@
-"""
-Token blacklisting tests for authentication endpoints.
+"""Token blacklisting tests for authentication endpoints.
 
 Tests the token rotation and blacklisting implementation from Task 4:
 - Token refresh succeeds on first use (rotation generates new tokens)
@@ -319,9 +318,7 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
     outstanding_after_refresh = OutstandingToken.objects.filter(
         user=verified_user  # type: ignore[misc]
     ).count()
-    assert outstanding_after_refresh == 2, (
-        "Refresh should create new outstanding token (2 total)"
-    )
+    assert outstanding_after_refresh == 2, "Refresh should create new outstanding token (2 total)"
 
     # Refresh again - creates another outstanding token
     second_refresh_response = api_client.post(

@@ -15,8 +15,7 @@ import {
 type ToastType = "success" | "error" | "warning" | "info" | "loading"
 
 /**
- * Policy-based duration defaults (in milliseconds).
- * From strategy-component-styling.md:
+ * Default duration for each toast status, in milliseconds:
  * - Success: 4 seconds (quick confirmation)
  * - Info: 5 seconds (time to read)
  * - Warning: 6 seconds (needs attention)

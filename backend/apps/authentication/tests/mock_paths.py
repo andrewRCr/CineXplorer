@@ -1,5 +1,4 @@
-"""
-Centralized mock target paths for authentication app tests.
+"""Centralized mock target paths for authentication app tests.
 
 This module provides constants for commonly-mocked module paths,
 eliminating string duplication across test files and ensuring
@@ -27,6 +26,4 @@ AUTH_SERVICE_TRANSACTION_ATOMIC = (
 )
 
 # Schema paths
-AUTH_SCHEMA_PROFILE_MODEL_VALIDATE = (
-    "apps.authentication.schemas.UserProfileSchema.model_validate"
-)
+AUTH_SCHEMA_PROFILE_MODEL_VALIDATE = "apps.authentication.schemas.UserProfileSchema.model_validate"

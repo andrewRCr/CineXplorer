@@ -71,6 +71,7 @@ def _create_dedup_tracker(request: HttpRequest) -> DeduplicationTracker:
 
     return DeduplicationTracker(session_id=session_id, context_id=context_id)
 
+
 # Reusable type aliases for query parameters (Django Ninja + FastAPI pattern)
 # Note: We use the bracket syntax Query[Schema] rather than Annotated[Schema, Query()]
 # because Django Ninja's Query is already typed as Annotated, leading to typing conflicts
@@ -142,8 +143,7 @@ def get_now_playing_movies(
     request: HttpRequest,
     filters: FilterParams,
 ):
-    """
-    Retrieve movies currently playing in theaters with filtering and user-specific data.
+    """Retrieve movies currently playing in theaters with filtering and user-specific data.
 
     Thin HTTP wrapper that delegates to service layer for business logic.
     See MovieService.get_now_playing_movies() for implementation details including
@@ -177,8 +177,7 @@ def get_upcoming_movies(
     request: HttpRequest,
     filters: FilterParams,
 ):
-    """
-    Retrieve upcoming movies with filtering and user-specific data.
+    """Retrieve upcoming movies with filtering and user-specific data.
 
     Thin HTTP wrapper that delegates to service layer for business logic.
     See MovieService.get_upcoming_movies() for implementation details including
@@ -212,8 +211,7 @@ def search_movies(
     request: HttpRequest,
     params: SearchParams,
 ):
-    """
-    Search for movies by query string with pagination and user-specific data.
+    """Search for movies by query string with pagination and user-specific data.
 
     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
     Pydantic 2.12.0 empty string validation issue with optional parameters.
@@ -243,8 +241,7 @@ def browse_movies(
     request: HttpRequest,
     filters: FilterParams,
 ):
-    """
-    Browse movies with advanced filtering options and user-specific data.
+    """Browse movies with advanced filtering options and user-specific data.
 
     This is a thin wrapper around the TMDB discover endpoint with zero presets,
     giving users full control over all filter parameters. Unlike now-playing and
@@ -306,8 +303,7 @@ def browse_movies(
 
 @movies_router.get("/{tmdb_id}", response=MovieDetailSchema, auth=None)
 def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
-    """
-    Retrieve detailed information for a specific movie by TMDB ID.
+    """Retrieve detailed information for a specific movie by TMDB ID.
 
     This endpoint fetches comprehensive movie details including cast, crew,
     genres, production companies, and user-specific data if authenticated.

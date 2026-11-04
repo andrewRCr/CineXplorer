@@ -1,5 +1,4 @@
-"""
-Test data factory functions for authentication tests.
+"""Test data factory functions for authentication tests.
 
 This module provides factory functions for creating test data with fine-grained
 control over parameters. Use these when you need multiple instances with custom
@@ -24,6 +23,7 @@ Example:
     def test_user_profile(verified_user):
         assert verified_user.email == 'testuser@example.com'
 """
+
 from http import HTTPStatus
 from typing import TYPE_CHECKING, TypedDict, Unpack
 
@@ -42,12 +42,13 @@ User = get_user_model()
 
 # Test data constants
 # Used across all authentication tests for consistency
-TEST_USER_PASSWORD = 'testpass123'
+TEST_USER_PASSWORD = "testpass123"
 
 
 # Type definitions for fixture parameters
 class UserParams(TypedDict, total=False):
     """Type for user creation parameters."""
+
     username: str
     email: str
     password: str
@@ -57,6 +58,7 @@ class UserParams(TypedDict, total=False):
 
 class RegisterPayload(TypedDict):
     """Type for user registration payload."""
+
     username: str
     email: str
     password: str
@@ -66,6 +68,7 @@ class RegisterPayload(TypedDict):
 
 class LoginPayload(TypedDict, total=False):
     """Type for login payload (username or email)."""
+
     username: str
     email: str
     password: str
@@ -76,17 +79,15 @@ class LoginPayload(TypedDict, total=False):
 
 
 def create_unverified_user(**params: Unpack[UserParams]) -> "UserType":
-    """
-    Create a user with unverified email.
+    """Create a user with unverified email.
 
     Convenience wrapper around create_user(email_verified=False).
     """
     return create_user(email_verified=False, **params)
 
 
-def create_social_app(provider: str = 'google', site_id: int = 1) -> SocialApp:
-    """
-    Create a social auth app (OAuth provider) for testing.
+def create_social_app(provider: str = "google", site_id: int = 1) -> SocialApp:
+    """Create a social auth app (OAuth provider) for testing.
 
     Args:
         provider: Provider name ('google', 'github', etc.)
@@ -97,17 +98,16 @@ def create_social_app(provider: str = 'google', site_id: int = 1) -> SocialApp:
     """
     # Get or create the site
     site = Site.objects.get_or_create(
-        pk=site_id,
-        defaults={'domain': 'localhost:8444', 'name': 'CineXplorer Test'}
+        pk=site_id, defaults={"domain": "localhost:8444", "name": "CineXplorer Test"}
     )[0]
 
     # Ensure single SocialApp per provider/site
     social_app, _ = SocialApp.objects.get_or_create(
         provider=provider,
-        name=f'{provider.capitalize()} OAuth',
+        name=f"{provider.capitalize()} OAuth",
         defaults={
-            'client_id': f'test_{provider}_client_id',
-            'secret': f'test_{provider}_secret',
+            "client_id": f"test_{provider}_client_id",
+            "secret": f"test_{provider}_secret",
         },
     )
     social_app.sites.add(site)
@@ -116,12 +116,9 @@ def create_social_app(provider: str = 'google', site_id: int = 1) -> SocialApp:
 
 
 def create_social_account(
-    user: "UserType",
-    provider: str = 'google',
-    uid: str | None = None
+    user: "UserType", provider: str = "google", uid: str | None = None
 ) -> SocialAccount:
-    """
-    Create a social account linking a user to an OAuth provider.
+    """Create a social account linking a user to an OAuth provider.
 
     Args:
         user: User to link
@@ -142,23 +139,22 @@ def create_social_account(
         provider=provider,
         uid=uid,
         extra_data={
-            'email': user.email,
-            'name': f'{user.first_name} {user.last_name}',
-            'picture': 'https://example.com/avatar.jpg'
-        }
+            "email": user.email,
+            "name": f"{user.first_name} {user.last_name}",
+            "picture": "https://example.com/avatar.jpg",
+        },
     )
 
 
 # Payload creation fixtures
 def create_register_payload(
-    username: str = 'testuser',
-    email: str = 'testuser@example.com',
+    username: str = "testuser",
+    email: str = "testuser@example.com",
     password: str = TEST_USER_PASSWORD,
-    first_name: str = 'Test',
-    last_name: str = 'User'
+    first_name: str = "Test",
+    last_name: str = "User",
 ) -> RegisterPayload:
-    """
-    Create a registration payload for API testing.
+    """Create a registration payload for API testing.
 
     Args:
         username: Username
@@ -171,21 +167,18 @@ def create_register_payload(
         Registration payload dict
     """
     return {
-        'username': username,
-        'email': email,
-        'password': password,
-        'first_name': first_name,
-        'last_name': last_name
+        "username": username,
+        "email": email,
+        "password": password,
+        "first_name": first_name,
+        "last_name": last_name,
     }
 
 
 def create_login_payload(
-    identifier: str = 'testuser',
-    password: str = TEST_USER_PASSWORD,
-    use_email: bool = False
+    identifier: str = "testuser", password: str = TEST_USER_PASSWORD, use_email: bool = False
 ) -> LoginPayload:
-    """
-    Create a login payload for API testing.
+    """Create a login payload for API testing.
 
     Args:
         identifier: Username or email (depending on use_email)
@@ -196,15 +189,9 @@ def create_login_payload(
         Login payload dict
     """
     if use_email:
-        return {
-            'email': identifier,
-            'password': password
-        }
+        return {"email": identifier, "password": password}
     else:
-        return {
-            'username': identifier,
-            'password': password
-        }
+        return {"username": identifier, "password": password}
 
 
 # API interaction helpers
@@ -213,8 +200,7 @@ def get_resend_token_from_login(
     username: str,
     password: str,
 ) -> str | None:
-    """
-    Attempt login and extract resend_token from 403 response.
+    """Attempt login and extract resend_token from 403 response.
 
     When login fails due to unverified email, the API returns a 403 with a
     resend_token that can be used to request a new verification email.

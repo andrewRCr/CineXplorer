@@ -1,10 +1,10 @@
-"""
-Unit tests for year filtering in TMDB result processing.
+"""Unit tests for year filtering in TMDB result processing.
 
 Tests the year filtering logic that handles TMDB API quirks where movies
 with incorrect release years are sometimes returned (e.g., re-releases,
 international releases).
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -30,7 +30,7 @@ def test_discover_movies_filters_incorrect_release_years() -> None:
     This test verifies our service layer filters out these incorrect years.
     """
     # Arrange: Mock TMDB client returns mix of correct and incorrect years
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # User requests 2020-2029 movies
     # TMDB returns 20 movies, but 5 are from 2010s (incorrect data hygiene)
@@ -66,8 +66,7 @@ def test_discover_movies_filters_incorrect_release_years() -> None:
 
     # Act: Request 2020s movies with discover endpoint
     result = service.discover_movies(
-        page=1,
-        params=BrowseServiceParams(year_min=2020, year_max=2029)
+        page=1, params=BrowseServiceParams(year_min=2020, year_max=2029)
     )
 
     # Assert: Only 2020s movies returned (15 correct movies)
@@ -93,7 +92,7 @@ def test_search_movies_filters_incorrect_release_years() -> None:
     and filters to 2020s, TMDB may return older Batman movies.
     """
     # Arrange: Mock TMDB client returns search results with mixed years
-    mock_client = Mock(spec=['search_movies'])
+    mock_client = Mock(spec=["search_movies"])
 
     # User searches "Batman" filtered to 2020s
     # TMDB returns 10 results, but 3 are from earlier decades
@@ -119,13 +118,9 @@ def test_search_movies_filters_incorrect_release_years() -> None:
 
     # Act: Search "Batman" filtered to 2020s
     from apps.movie.services.api_boundary import SearchServiceParams
+
     result = service.search_movies(
-        page=1,
-        params=SearchServiceParams(
-            query="Batman",
-            year_min=2020,
-            year_max=2029
-        )
+        page=1, params=SearchServiceParams(query="Batman", year_min=2020, year_max=2029)
     )
 
     # Assert: Only 2020s Batman movies returned (7 correct movies)
@@ -143,7 +138,7 @@ def test_search_movies_filters_incorrect_release_years() -> None:
 def test_year_filtering_handles_single_year() -> None:
     """Test year filtering works correctly for single year (not just ranges)."""
     # Arrange: Mock client returns movies from 2022, 2021, 2023
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         create_tmdb_movie(1, "2022 Movie A", "2022-01-01", 8.0),
@@ -173,16 +168,22 @@ def test_year_filtering_handles_single_year() -> None:
 def test_year_filtering_handles_missing_release_dates() -> None:
     """Test that movies with missing release_date are filtered out."""
     # Arrange: Mock client returns some movies without release dates
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # Mix of valid and invalid release dates to test TMDB data quality handling
     movie_without_date: TMDBMovieBaseRawDict = {
-        'id': 2, 'title': "Movie without date", 'poster_path': '/test.jpg',
-        'vote_average': 7.5, 'release_date': None  # TMDB data quality issue
+        "id": 2,
+        "title": "Movie without date",
+        "poster_path": "/test.jpg",
+        "vote_average": 7.5,
+        "release_date": None,  # TMDB data quality issue
     }
     movie_empty_date: TMDBMovieBaseRawDict = {
-        'id': 3, 'title': "Movie with empty date", 'poster_path': '/test.jpg',
-        'vote_average': 8.0, 'release_date': ""  # TMDB data quality issue
+        "id": 3,
+        "title": "Movie with empty date",
+        "poster_path": "/test.jpg",
+        "vote_average": 8.0,
+        "release_date": "",  # TMDB data quality issue
     }
 
     tmdb_movies: list[TMDBMovieBaseRawDict] = [  # type: ignore[assignment]

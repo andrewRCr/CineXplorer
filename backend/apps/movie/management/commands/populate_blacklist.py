@@ -1,5 +1,4 @@
-"""
-Management command to populate movie blacklist from problematic production companies.
+"""Management command to populate movie blacklist from problematic production companies.
 
 Uses research findings to bulk-add movies from studios that exclusively
 produce adult/exploitation content mislabeled as general films in TMDB.
@@ -92,8 +91,7 @@ BLACKLISTED_COMPANIES: list[BlacklistedCompany] = [
 
 
 class Command(BaseCommand):
-    """
-    Populate movie blacklist from problematic production companies.
+    """Populate movie blacklist from problematic production companies.
 
     Queries TMDB for all movies from studios identified as exclusively
     producing adult content mislabeled in TMDB (adult=false).
@@ -126,17 +124,13 @@ class Command(BaseCommand):
         company_filter = options.get("company")
 
         if not commit:
-            self.stdout.write(
-                self.style.WARNING("DRY RUN - use --commit to actually add entries")
-            )
+            self.stdout.write(self.style.WARNING("DRY RUN - use --commit to actually add entries"))
             self.stdout.write("")
 
         if clear and commit:
             count = BlacklistedMovie.objects.count()
             BlacklistedMovie.objects.all().delete()
-            self.stdout.write(
-                self.style.WARNING(f"Cleared {count} existing blacklist entries")
-            )
+            self.stdout.write(self.style.WARNING(f"Cleared {count} existing blacklist entries"))
 
         client = TMDBApiClient()
         total_added = 0
@@ -147,18 +141,14 @@ class Command(BaseCommand):
         if company_filter:
             companies = [c for c in companies if c.tmdb_id == company_filter]
             if not companies:
-                self.stderr.write(
-                    self.style.ERROR(f"Company {company_filter} not in blacklist")
-                )
+                self.stderr.write(self.style.ERROR(f"Company {company_filter} not in blacklist"))
                 return
 
         for company in companies:
             self.stdout.write(f"\nProcessing: {company.name} (TMDB {company.tmdb_id})")
             self.stdout.write(f"  Reason: {company.reason}")
 
-            added, skipped, already_adult = self._process_company(
-                client, company, commit
-            )
+            added, skipped, already_adult = self._process_company(client, company, commit)
             total_added += added
             total_skipped += skipped
             total_already_adult += already_adult
@@ -170,11 +160,7 @@ class Command(BaseCommand):
 
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS("=" * 50))
-        self.stdout.write(
-            self.style.SUCCESS(
-                f"Total: {total_added} movies added to blacklist"
-            )
-        )
+        self.stdout.write(self.style.SUCCESS(f"Total: {total_added} movies added to blacklist"))
         self.stdout.write(f"  Skipped (already in blacklist): {total_skipped}")
         self.stdout.write(f"  Skipped (already adult=true): {total_already_adult}")
 
@@ -190,8 +176,7 @@ class Command(BaseCommand):
         company: BlacklistedCompany,
         commit: bool,
     ) -> tuple[int, int, int]:
-        """
-        Query TMDB for all movies from a company and add to blacklist.
+        """Query TMDB for all movies from a company and add to blacklist.
 
         Returns:
             Tuple of (added_count, skipped_count, already_adult_count)
@@ -207,26 +192,18 @@ class Command(BaseCommand):
 
             if not response.is_success():
                 self.stderr.write(
-                    self.style.ERROR(
-                        f"  Error fetching page {page}: {response.error_message}"
-                    )
+                    self.style.ERROR(f"  Error fetching page {page}: {response.error_message}")
                 )
                 break
 
             data = response.get_json_data()
             if data is None:
-                self.stderr.write(
-                    self.style.ERROR(f"  No data in response for page {page}")
-                )
+                self.stderr.write(self.style.ERROR(f"  No data in response for page {page}"))
                 break
 
             raw_total_pages = data.get("total_pages")
             # TMDB caps at 500 pages maximum
-            total_pages = (
-                min(raw_total_pages, 500)
-                if isinstance(raw_total_pages, int)
-                else 1
-            )
+            total_pages = min(raw_total_pages, 500) if isinstance(raw_total_pages, int) else 1
 
             raw_results = data.get("results")
 
@@ -235,9 +212,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"  Found {total_results} movies ({total_pages} pages)")
 
             if not isinstance(raw_results, list):
-                self.stderr.write(
-                    self.style.ERROR(f"  Invalid results format for page {page}")
-                )
+                self.stderr.write(self.style.ERROR(f"  Invalid results format for page {page}"))
                 break
 
             # Type narrow results list for iteration

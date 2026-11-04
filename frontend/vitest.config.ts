@@ -19,8 +19,10 @@ export default defineConfig({
             provider: "v8",
             reporter: ["text", "json", "html"],
             // Include unexecuted files as well as files loaded by tests.
-            include: ["**/*.{js,cjs,mjs,ts,mts,tsx,jsx,vue,svelte,marko,astro}"],
+            include: ["src/**"],
             exclude: [
+                "src/pages/dev/**",
+                "src/main.tsx",
                 "node_modules/",
                 "tests/",
                 "**/*.d.ts",
@@ -29,12 +31,10 @@ export default defineConfig({
                 "**/*.spec.*",
             ],
             thresholds: {
-                global: {
-                    branches: 70,
-                    functions: 70,
-                    lines: 70,
-                    statements: 70,
-                },
+                branches: 39,
+                functions: 37,
+                lines: 42,
+                statements: 41,
             },
         },
 

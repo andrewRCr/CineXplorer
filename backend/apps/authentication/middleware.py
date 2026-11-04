@@ -1,5 +1,4 @@
-"""
-Custom CSRF middleware for Django Ninja API endpoints.
+"""Custom CSRF middleware for Django Ninja API endpoints.
 
 This middleware provides CSRF protection for Django Ninja APIs with path-based
 exemptions, working around Django Ninja bug #1464 where csrf=True causes
@@ -20,6 +19,7 @@ Why Custom Middleware:
 2. Bypassing Ninja's CSRF entirely avoids double-validation conflicts
 3. This middleware provides selective CSRF protection via X-CSRFToken header
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,7 +27,7 @@ import logging
 from django.http import HttpRequest, JsonResponse
 from django.utils.deprecation import MiddlewareMixin
 
-logger = logging.getLogger('cinexplorer.auth')
+logger = logging.getLogger("cinexplorer.auth")
 
 # Path-based exemptions for public authentication endpoints
 # These endpoints should NOT require CSRF tokens:
@@ -59,19 +59,18 @@ logger = logging.getLogger('cinexplorer.auth')
 # - URL changes must update this list
 # - Run CSRF test suite after URL structure changes
 EXEMPT_PATH_PREFIXES = [
-    "/api/register/",           # Public: User registration
-    "/api/token/",              # Public: Login (obtain tokens)
-    "/api/csrf/",               # Infrastructure: CSRF token generation
-    "/api/logout/",             # Public: Logout (clears cookies)
-    "/api/verify-email/",       # Public: Email verification
-    "/api/resend-verification/", # Public: Resend verification email
-    "/_allauth/",               # OAuth: django-allauth headless (state provides CSRF protection)
+    "/api/register/",  # Public: User registration
+    "/api/token/",  # Public: Login (obtain tokens)
+    "/api/csrf/",  # Infrastructure: CSRF token generation
+    "/api/logout/",  # Public: Logout (clears cookies)
+    "/api/verify-email/",  # Public: Email verification
+    "/api/resend-verification/",  # Public: Resend verification email
+    "/_allauth/",  # OAuth: django-allauth headless (state provides CSRF protection)
 ]
 
 
 class CsrfHeaderMiddleware(MiddlewareMixin):
-    """
-    Custom CSRF middleware for API endpoints with path-based exemptions.
+    """Custom CSRF middleware for API endpoints with path-based exemptions.
 
     Validates CSRF tokens for authenticated state-changing requests while
     exempting public authentication endpoints.
@@ -89,8 +88,7 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
     """
 
     def process_request(self, request: HttpRequest) -> JsonResponse | None:
-        """
-        Process incoming request and validate CSRF if needed.
+        """Process incoming request and validate CSRF if needed.
 
         Args:
             request: The incoming HTTP request
@@ -111,7 +109,8 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
         # JWT auth happens at Django Ninja endpoint level, not middleware,
         # so request.user is not yet set. We check for JWT cookies directly.
         from django.conf import settings
-        access_token_name = settings.SIMPLE_JWT.get('ACCESS_TOKEN_NAME', 'access_token')
+
+        access_token_name = settings.SIMPLE_JWT.get("ACCESS_TOKEN_NAME", "access_token")
         has_jwt_cookie = access_token_name in request.COOKIES
 
         # CSRF protection only needed when JWT cookies are present
@@ -135,6 +134,7 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
                 # Standardized error format: {"error": "message"} for all errors
                 # Optional "detail" field for debugging (development only)
                 from django.conf import settings
+
                 error_response = {"error": "CSRF token missing or invalid."}
                 if settings.DEBUG:
                     error_response["detail"] = (

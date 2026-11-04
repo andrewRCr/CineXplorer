@@ -1,5 +1,4 @@
-"""
-BaseTMDBService - Base class for TMDB integration services.
+"""BaseTMDBService - Base class for TMDB integration services.
 
 This module provides a common base class for all TMDB service classes,
 encapsulating shared patterns like dependency injection, logging setup,
@@ -11,6 +10,7 @@ Architecture:
 - Common response validation for simple endpoints
 - DRY foundation for MovieService, KeywordService, PeopleService
 """
+
 from __future__ import annotations
 
 import logging
@@ -23,8 +23,7 @@ from .tmdb_api_boundary.response_factories import get_validated_response
 
 
 class BaseTMDBService:
-    """
-    Base class for TMDB API integration services.
+    """Base class for TMDB API integration services.
 
     Provides common initialization pattern with dependency injection
     and shared logging configuration. All TMDB service classes should
@@ -42,11 +41,10 @@ class BaseTMDBService:
                 return response.get_json_data()
     """
 
-    logger: ClassVar[logging.Logger] = logging.getLogger('cinexplorer.tmdb')
+    logger: ClassVar[logging.Logger] = logging.getLogger("cinexplorer.tmdb")
 
     def __init__(self, tmdb_client: TMDBApiClient | None = None) -> None:
-        """
-        Initialize service with optional TMDB client injection.
+        """Initialize service with optional TMDB client injection.
 
         Args:
             tmdb_client: Optional TMDBApiClient instance. If None, creates
@@ -63,13 +61,9 @@ class BaseTMDBService:
         self._tmdb_client = tmdb_client if tmdb_client is not None else TMDBApiClient()
 
     def _get_validated_response(
-        self,
-        api_response: ApiResponse,
-        operation: str,
-        **context: object
+        self, api_response: ApiResponse, operation: str, **context: object
     ) -> dict[str, object]:
-        """
-        Validate API response and return JSON data as untyped dictionary.
+        """Validate API response and return JSON data as untyped dictionary.
 
         Convenience wrapper for common validation pattern: check success,
         handle errors, extract JSON data. Use this for simple endpoints

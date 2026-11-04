@@ -1,4 +1,5 @@
 """Authentication service for registration, login, tokens, and profile management."""
+
 from __future__ import annotations
 
 import hashlib
@@ -230,18 +231,14 @@ class AuthenticationService:
                 "Registration failed: Username already exists | "
                 f"username={payload.username} | ip={client_ip}"
             )
-            return 409, {
-                "error": "Username already associated with an existing account."
-            }
+            return 409, {"error": "Username already associated with an existing account."}
 
         if self._user_model.objects.filter(email=payload.email).exists():
             self._logger.warning(
                 "Registration failed: Email already exists | "
                 f"email={payload.email} | ip={client_ip}"
             )
-            return 409, {
-                "error": "Email address already associated with an existing account."
-            }
+            return 409, {"error": "Email address already associated with an existing account."}
 
         try:
             self._validate_password_fn(payload.password)
@@ -291,8 +288,7 @@ class AuthenticationService:
 
             return 201, {
                 "message": (
-                    "Registration successful. Please check your email to verify "
-                    "your account."
+                    "Registration successful. Please check your email to verify your account."
                 ),
                 "user_id": user.id,
                 "email": user.email,
@@ -366,9 +362,7 @@ class AuthenticationService:
                 "resend_token": resend_token,
             }
 
-        refresh = self._refresh_token_cls.for_user(
-            cast(AbstractBaseUser, authenticated_user)
-        )
+        refresh = self._refresh_token_cls.for_user(cast(AbstractBaseUser, authenticated_user))
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         jwt_settings = self._jwt_settings_provider()
@@ -416,9 +410,7 @@ class AuthenticationService:
             user_id = old_refresh.payload.get("user_id")
             user = self._user_model.objects.get(id=user_id)
 
-            new_refresh = self._refresh_token_cls.for_user(
-                cast(AbstractBaseUser, user)
-            )
+            new_refresh = self._refresh_token_cls.for_user(cast(AbstractBaseUser, user))
             new_refresh_token = str(new_refresh)
 
             self._blacklist_token_fn(old_refresh)
@@ -438,10 +430,7 @@ class AuthenticationService:
                 jwt_settings.samesite,
             )
 
-            self._logger.info(
-                "Token refresh successful | "
-                f"user_id={user_id} | ip={client_ip}"
-            )
+            self._logger.info(f"Token refresh successful | user_id={user_id} | ip={client_ip}")
 
             return 200, {
                 "access_token": access_token,
@@ -471,9 +460,7 @@ class AuthenticationService:
                 f"Unexpected error during token refresh: {exc!s}",
                 exc_info=True,
             )
-            return 400, {
-                "error": "An error occurred during token refresh. Please try again."
-            }
+            return 400, {"error": "An error occurred during token refresh. Please try again."}
 
     def hybrid_refresh_token(
         self,
@@ -507,9 +494,7 @@ class AuthenticationService:
             access_token = str(old_refresh.access_token)
             user_id = old_refresh.payload.get("user_id")
             user = self._user_model.objects.get(id=user_id)
-            new_refresh = self._refresh_token_cls.for_user(
-                cast(AbstractBaseUser, user)
-            )
+            new_refresh = self._refresh_token_cls.for_user(cast(AbstractBaseUser, user))
             new_refresh_token = str(new_refresh)
 
             self._blacklist_token_fn(old_refresh)
@@ -525,8 +510,7 @@ class AuthenticationService:
             issued_at = datetime.now(UTC)
 
             self._logger.info(
-                "Hybrid token refresh successful | "
-                f"user_id={user_id} | ip={client_ip}"
+                f"Hybrid token refresh successful | user_id={user_id} | ip={client_ip}"
             )
 
             assert isinstance(jwt_settings.access_lifetime, timedelta)
@@ -555,9 +539,7 @@ class AuthenticationService:
                 f"Unexpected error during hybrid token refresh: {exc!s}",
                 exc_info=True,
             )
-            return 400, {
-                "error": "An error occurred during token refresh. Please try again."
-            }
+            return 400, {"error": "An error occurred during token refresh. Please try again."}
 
     def logout(self, response: HttpResponse) -> tuple[int, dict[str, object]]:
         """Clear refresh token cookie for logout."""
@@ -623,18 +605,14 @@ class AuthenticationService:
     ) -> tuple[int, EmailVerificationResponseSchema | dict[str, str]]:
         """Verify email address using confirmation key."""
         try:
-            self._logger.info(
-                f"Attempting to verify email with key: {payload.key[:20]}..."
-            )
+            self._logger.info(f"Attempting to verify email with key: {payload.key[:20]}...")
 
             confirmation = self._email_confirmation_hmac.from_key(payload.key)
             self._logger.info(f"HMAC verification result: {confirmation}")
 
             if not confirmation:
                 self._logger.info("HMAC failed, trying database lookup")
-                confirmation = self._email_confirmation_model.objects.get(
-                    key=payload.key
-                )
+                confirmation = self._email_confirmation_model.objects.get(key=payload.key)
 
             email_address = confirmation.email_address
             if email_address.verified:

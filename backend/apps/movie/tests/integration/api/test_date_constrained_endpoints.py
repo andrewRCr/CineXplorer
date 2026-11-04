@@ -37,9 +37,7 @@ pytestmark = pytest.mark.django_db
 
 
 @patch(TMDB_CLIENT_GET)
-def test_now_playing_preset_includes_release_type(
-    mock_tmdb_get: Mock, api_client: Client
-) -> None:
+def test_now_playing_preset_includes_release_type(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Now-playing preset includes with_release_type for theatrical releases.
 
     The now-playing preset should filter for theatrical releases (types 2|3)
@@ -76,9 +74,7 @@ def test_now_playing_preset_includes_release_type(
 
 
 @patch(TMDB_CLIENT_GET)
-def test_upcoming_preset_includes_release_type(
-    mock_tmdb_get: Mock, api_client: Client
-) -> None:
+def test_upcoming_preset_includes_release_type(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Upcoming preset includes with_release_type for theatrical releases.
 
     The upcoming preset should filter for theatrical releases (types 2|3)
@@ -375,9 +371,7 @@ def test_upcoming_date_preset_cannot_be_overridden(
 
 
 @patch(TMDB_CLIENT_GET)
-def test_now_playing_accepts_genre_filter(
-    mock_tmdb_get: Mock, api_client: Client
-) -> None:
+def test_now_playing_accepts_genre_filter(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Now-playing endpoint accepts genre filter alongside presets."""
     movies = [
         create_tmdb_movie(
@@ -421,9 +415,7 @@ def test_now_playing_accepts_genre_filter(
 
 
 @patch(TMDB_CLIENT_GET)
-def test_upcoming_accepts_rating_filter(
-    mock_tmdb_get: Mock, api_client: Client
-) -> None:
+def test_upcoming_accepts_rating_filter(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Upcoming endpoint accepts rating filter alongside presets."""
     movies = [
         create_tmdb_movie(
@@ -470,9 +462,7 @@ def test_upcoming_accepts_rating_filter(
 
 
 @patch(TMDB_CLIENT_GET)
-def test_browse_accepts_all_filters(
-    mock_tmdb_get: Mock, api_client: Client
-) -> None:
+def test_browse_accepts_all_filters(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Browse endpoint accepts all filter types (no presets)."""
     movies = [
         create_tmdb_movie(
@@ -491,9 +481,7 @@ def test_browse_accepts_all_filters(
         total_results=1,
     )
 
-    response = api_client.get(
-        "/api/movies/browse?page=1&with_genres=18&sort_by=vote_average.desc"
-    )
+    response = api_client.get("/api/movies/browse?page=1&with_genres=18&sort_by=vote_average.desc")
 
     assert response.status_code == HTTPStatus.OK
     data = response.json()
@@ -510,9 +498,7 @@ def test_browse_accepts_all_filters(
 
 
 @patch(TMDB_CLIENT_GET)
-def test_browse_allows_full_date_control(
-    mock_tmdb_get: Mock, api_client: Client
-) -> None:
+def test_browse_allows_full_date_control(mock_tmdb_get: Mock, api_client: Client) -> None:
     """Browse endpoint: user has full control over date filters (no presets)."""
     movies = [
         create_tmdb_movie(

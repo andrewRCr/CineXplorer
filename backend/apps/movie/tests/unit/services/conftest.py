@@ -1,5 +1,4 @@
-"""
-Unit test fixtures for movie service tests.
+"""Unit test fixtures for movie service tests.
 
 Provides isolation from database dependencies for true unit testing.
 """
@@ -29,6 +28,7 @@ def mock_blacklist_query(monkeypatch: MonkeyPatch) -> None:
     use @pytest.mark.django_db and can override this by importing the
     real function.
     """
+
     def empty_blacklist() -> set[int]:
         return set()
 

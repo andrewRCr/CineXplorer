@@ -1,5 +1,4 @@
-"""
-Response validation utilities for type-safe API response processing.
+"""Response validation utilities for type-safe API response processing.
 
 This module provides validators that bridge the gap between generic ApiResponse
 objects and specific Pydantic model validation, ensuring type safety throughout
@@ -18,12 +17,8 @@ from .api_response import ApiResponse
 logger = logging.getLogger(__name__)
 
 
-def validate_tmdb_response[T: BaseModel](
-    response: ApiResponse,
-    model: type[T]
-) -> T:
-    """
-    Type-safe validation of TMDB API responses.
+def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) -> T:
+    """Type-safe validation of TMDB API responses.
 
     Bridges the gap between generic ApiResponse.data and specific Pydantic models
     by performing proper type narrowing and validation.
@@ -40,17 +35,11 @@ def validate_tmdb_response[T: BaseModel](
     """
     # Check if the API call was successful
     if not response.is_success():
-        raise HttpError(
-            response.status_code,
-            response.error_message or "TMDB API request failed"
-        )
+        raise HttpError(response.status_code, response.error_message or "TMDB API request failed")
 
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
-        raise HttpError(
-            502,
-            f"Expected dict response from TMDB API, got {type(response.data)}"
-        )
+        raise HttpError(502, f"Expected dict response from TMDB API, got {type(response.data)}")
 
     # Validate with Pydantic model
     try:
@@ -61,21 +50,16 @@ def validate_tmdb_response[T: BaseModel](
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys())
-            }
+                "response_data_keys": list(response.data.keys()),
+            },
         )
-        raise HttpError(
-            502,
-            "TMDB response validation failed"
-        ) from e
+        raise HttpError(502, "TMDB response validation failed") from e
 
 
 def validate_tmdb_list_response[T: BaseModel](
-    response: ApiResponse,
-    item_model: type[T]
+    response: ApiResponse, item_model: type[T]
 ) -> list[T]:
-    """
-    Type-safe validation of TMDB API list responses.
+    """Type-safe validation of TMDB API list responses.
 
     Validates responses that contain lists of items, ensuring each item
     conforms to the expected Pydantic model.
@@ -92,17 +76,11 @@ def validate_tmdb_list_response[T: BaseModel](
     """
     # Check if the API call was successful
     if not response.is_success():
-        raise HttpError(
-            response.status_code,
-            response.error_message or "TMDB API request failed"
-        )
+        raise HttpError(response.status_code, response.error_message or "TMDB API request failed")
 
     # Type narrowing - ensure we have list data
     if not isinstance(response.data, list):
-        raise HttpError(
-            502,
-            f"Expected list response from TMDB API, got {type(response.data)}"
-        )
+        raise HttpError(502, f"Expected list response from TMDB API, got {type(response.data)}")
 
     # Validate each item in the list
     try:
@@ -113,21 +91,14 @@ def validate_tmdb_list_response[T: BaseModel](
             extra={
                 "item_model": item_model.__name__,
                 "validation_errors": e.errors(),
-                "list_length": len(response.data)
-            }
+                "list_length": len(response.data),
+            },
         )
-        raise HttpError(
-            502,
-            "TMDB list response validation failed"
-        ) from e
+        raise HttpError(502, "TMDB list response validation failed") from e
 
 
-def validate_tmdb_paginated_response[T: BaseModel](
-    response: ApiResponse,
-    model: type[T]
-) -> T:
-    """
-    Type-safe validation of TMDB paginated responses.
+def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model: type[T]) -> T:
+    """Type-safe validation of TMDB paginated responses.
 
     Specifically for TMDB responses that contain pagination metadata
     along with results (like search results, discover results, etc.).
@@ -144,17 +115,11 @@ def validate_tmdb_paginated_response[T: BaseModel](
     """
     # Check if the API call was successful
     if not response.is_success():
-        raise HttpError(
-            response.status_code,
-            response.error_message or "TMDB API request failed"
-        )
+        raise HttpError(response.status_code, response.error_message or "TMDB API request failed")
 
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
-        raise HttpError(
-            502,
-            f"Expected dict response from TMDB API, got {type(response.data)}"
-        )
+        raise HttpError(502, f"Expected dict response from TMDB API, got {type(response.data)}")
 
     # Validate the paginated response structure
     try:
@@ -165,17 +130,14 @@ def validate_tmdb_paginated_response[T: BaseModel](
             extra={
                 "model": model.__name__,
                 "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys())
-            }
+                "response_data_keys": list(response.data.keys()),
+            },
         )
-        raise HttpError(
-            502,
-            "TMDB paginated response validation failed"
-        ) from e
+        raise HttpError(502, "TMDB paginated response validation failed") from e
 
 
 __all__ = [
-    'validate_tmdb_list_response',
-    'validate_tmdb_paginated_response',
-    'validate_tmdb_response',
+    "validate_tmdb_list_response",
+    "validate_tmdb_paginated_response",
+    "validate_tmdb_response",
 ]

@@ -1,5 +1,4 @@
-"""
-Django Ninja API endpoints for core app.
+"""Django Ninja API endpoints for core app.
 
 This module provides:
 - General health check endpoint (GET /health-check/)
@@ -15,7 +14,7 @@ from datetime import datetime
 from django.conf import settings
 from django.http import HttpRequest
 from django.utils import timezone
-from ninja import Router
+from ninja import Router, Status
 from ninja.errors import HttpError
 
 from middleware.logging import get_correlation_id
@@ -54,9 +53,8 @@ core_router = Router(tags=["core"])
 )
 def frontend_log(
     request: HttpRequest, payload: FrontendLogEntrySchema
-) -> tuple[int, FrontendLogSuccessResponse | FrontendLogErrorResponse]:
-    """
-    Receive frontend log entries for centralized logging.
+) -> Status[FrontendLogSuccessResponse | FrontendLogErrorResponse]:
+    """Receive frontend log entries for centralized logging.
 
     This endpoint allows the frontend to send log entries to the backend
     for centralized logging, monitoring, and debugging.
@@ -88,7 +86,7 @@ def frontend_log(
                 "max_allowed": max_payload_size,
             },
         )
-        return (
+        return Status(
             413,
             FrontendLogErrorResponse(
                 success=False,
@@ -100,21 +98,22 @@ def frontend_log(
     # Validate required fields
     validation_error = _validate_log_entry(payload)
     if validation_error:
-        return (400, FrontendLogErrorResponse(success=False, error=validation_error))
+        return Status(400, FrontendLogErrorResponse(success=False, error=validation_error))
 
     # Process the log entry
     success = _process_log_entry(payload, request)
 
     if success:
-        return (201, FrontendLogSuccessResponse(success=True, message="Log entry received"))
+        return Status(201, FrontendLogSuccessResponse(success=True, message="Log entry received"))
     else:
-        return (500, FrontendLogErrorResponse(success=False, error="Failed to process log entry"))
+        return Status(
+            500, FrontendLogErrorResponse(success=False, error="Failed to process log entry")
+        )
 
 
 @core_router.get("/health-check/", auth=None)
 def health_check(request: HttpRequest) -> dict[str, str]:
-    """
-    General health check endpoint for Docker orchestration.
+    """General health check endpoint for Docker orchestration.
 
     This lightweight endpoint confirms the Django application is running
     and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
@@ -138,8 +137,7 @@ def health_check(request: HttpRequest) -> dict[str, str]:
     "codes and categories for frontend type generation via OpenAPI.",
 )
 def get_error_codes(request: HttpRequest) -> list[ApiErrorSchema]:
-    """
-    Return all available error codes with their categories.
+    """Return all available error codes with their categories.
 
     This endpoint serves two purposes:
     1. Documents all error codes and their categories
@@ -187,8 +185,7 @@ def get_error_codes(request: HttpRequest) -> list[ApiErrorSchema]:
 
 @core_router.get("/logs/health/", auth=None, response=LogHealthCheckResponse)
 def log_health_check(request: HttpRequest) -> LogHealthCheckResponse:
-    """
-    Health check endpoint for the logging system.
+    """Health check endpoint for the logging system.
 
     This endpoint verifies that the logging system is working correctly
     and can receive frontend logs.
@@ -233,8 +230,7 @@ def log_health_check(request: HttpRequest) -> LogHealthCheckResponse:
 
 
 def _validate_log_entry(data: FrontendLogEntrySchema) -> str | None:
-    """
-    Validate the log entry data.
+    """Validate the log entry data.
 
     Args:
         data: Frontend log entry schema
@@ -258,8 +254,7 @@ def _validate_log_entry(data: FrontendLogEntrySchema) -> str | None:
 
 
 def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bool:
-    """
-    Process the frontend log entry.
+    """Process the frontend log entry.
 
     Args:
         data: Frontend log entry schema
@@ -345,16 +340,15 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
 )
 def write_dev_console_log(
     request: HttpRequest, payload: DevConsoleLogRequest
-) -> tuple[int, DevConsoleLogResponse]:
-    """
-    Development-only endpoint to write browser console logs to file.
+) -> Status[DevConsoleLogResponse]:
+    """Development-only endpoint to write browser console logs to file.
 
     This endpoint receives formatted log lines from the frontend logger
     and appends them to backend/logs/frontend.log for AI debugging.
 
     Args:
         request: HTTP request object
-        log_line: Formatted log line to write to file
+        payload: Request body holding the formatted log line to write to file
 
     Returns:
         Status response indicating success or failure
@@ -368,9 +362,12 @@ def write_dev_console_log(
 
     # Only available in development mode
     if settings.ENVIRONMENT != "development":
-        return 403, DevConsoleLogResponse(
-            status="forbidden",
-            error="This endpoint is only available in development mode",
+        return Status(
+            403,
+            DevConsoleLogResponse(
+                status="forbidden",
+                error="This endpoint is only available in development mode",
+            ),
         )
 
     try:
@@ -385,13 +382,16 @@ def write_dev_console_log(
         with log_file.open("a", encoding="utf-8") as f:
             f.write(payload.log_line)
 
-        return 200, DevConsoleLogResponse(status="ok", file=str(log_file.name))
+        return Status(200, DevConsoleLogResponse(status="ok", file=str(log_file.name)))
 
     except Exception as e:
         app_logger.error(f"Failed to write dev console log: {e!s}")
-        return 500, DevConsoleLogResponse(
-            status="error",
-            error="Failed to write log file",
+        return Status(
+            500,
+            DevConsoleLogResponse(
+                status="error",
+                error="Failed to write log file",
+            ),
         )
 
 
@@ -400,9 +400,8 @@ def write_dev_console_log(
     auth=None,
     response={500: dict[str, str], 403: dict[str, str]},
 )
-def debug_error_500(request: HttpRequest) -> tuple[int, dict[str, str]]:
-    """
-    Development-only endpoint that returns a 500 error for testing.
+def debug_error_500(request: HttpRequest) -> Status[dict[str, str]]:
+    """Development-only endpoint that returns a 500 error for testing.
 
     Use this to verify frontend error handling (e.g., toast notifications
     for server errors).
@@ -412,9 +411,9 @@ def debug_error_500(request: HttpRequest) -> tuple[int, dict[str, str]]:
         - Returns 403 in production
     """
     if settings.ENVIRONMENT != "development":
-        return 403, {"error": "This endpoint is only available in development mode"}
+        return Status(403, {"error": "This endpoint is only available in development mode"})
 
-    return 500, {"error": "Simulated server error for testing"}
+    return Status(500, {"error": "Simulated server error for testing"})
 
 
 __all__ = ["core_router"]

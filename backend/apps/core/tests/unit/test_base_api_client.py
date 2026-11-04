@@ -1,5 +1,4 @@
-"""
-Unit tests for BaseApiClient exception handling and helper methods.
+"""Unit tests for BaseApiClient exception handling and helper methods.
 
 Tests the error handling paths, helper methods, and edge cases
 in the abstract base API client class.
@@ -188,7 +187,7 @@ class TestBaseApiClientExceptionHandling:
             endpoint="/api/test",
             duration_ms=30500,
             url="https://api.example.com/api/test",
-            params={"page": 1}
+            params={"page": 1},
         )
 
         assert response.status_code == 408
@@ -207,7 +206,7 @@ class TestBaseApiClientExceptionHandling:
             correlation_id="test-456",
             endpoint="/api/data",
             duration_ms=1500,
-            url="https://api.example.com/api/data"
+            url="https://api.example.com/api/data",
         )
 
         assert response.status_code == 503
@@ -224,7 +223,7 @@ class TestBaseApiClientExceptionHandling:
             correlation_id="test-789",
             endpoint="/api/resource",
             duration_ms=500,
-            url="https://api.example.com/api/resource"
+            url="https://api.example.com/api/resource",
         )
 
         assert response.status_code == 500
@@ -235,14 +234,14 @@ class TestBaseApiClientExceptionHandling:
         error = requests.exceptions.Timeout("timeout")
 
         # Our concrete client removes 'secret' from params
-        with patch.object(client, 'logger') as mock_logger:
+        with patch.object(client, "logger") as mock_logger:
             client.handle_request_exception(
                 error=error,
                 correlation_id="test",
                 endpoint="/api",
                 duration_ms=100,
                 url="https://api.example.com/api",
-                params={"page": 1, "secret": "hidden"}
+                params={"page": 1, "secret": "hidden"},
             )
 
             # Verify logger was called (it logs the sanitized params)
@@ -261,10 +260,7 @@ class TestBaseApiClientResponseProcessing:
         response.content = b'{"result": "success"}'
 
         result = client.process_successful_response(
-            response=response,
-            correlation_id="test-123",
-            endpoint="/api/test",
-            duration_ms=100
+            response=response, correlation_id="test-123", endpoint="/api/test", duration_ms=100
         )
 
         assert result.is_success()
@@ -280,10 +276,7 @@ class TestBaseApiClientResponseProcessing:
         response.text = "<html>error</html>"
 
         result = client.process_successful_response(
-            response=response,
-            correlation_id="test-123",
-            endpoint="/api/test",
-            duration_ms=100
+            response=response, correlation_id="test-123", endpoint="/api/test", duration_ms=100
         )
 
         # Should return error response for invalid JSON
@@ -307,10 +300,7 @@ class TestBaseApiClientResponseProcessing:
             response.text = ""
 
             result = client.process_error_response(
-                response=response,
-                correlation_id="test",
-                endpoint="/api",
-                duration_ms=100
+                response=response, correlation_id="test", endpoint="/api", duration_ms=100
             )
 
             assert result.status_code == status_code
@@ -323,12 +313,12 @@ class TestBaseApiClientGetMethod:
     def test_get_makes_request_with_correct_url(self) -> None:
         client = ConcreteApiClient(base_url="https://api.example.com")
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"data": "test"}
             mock_response.headers = {}
-            mock_response.content = b'{}'
+            mock_response.content = b"{}"
             mock_get.return_value = mock_response
 
             client.get("/users/123")
@@ -340,12 +330,12 @@ class TestBaseApiClientGetMethod:
     def test_get_passes_params(self) -> None:
         client = ConcreteApiClient(base_url="https://api.example.com")
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {}
             mock_response.headers = {}
-            mock_response.content = b'{}'
+            mock_response.content = b"{}"
             mock_get.return_value = mock_response
 
             client.get("/users", params={"page": 1, "limit": 10})
@@ -356,12 +346,12 @@ class TestBaseApiClientGetMethod:
     def test_get_filters_none_params(self) -> None:
         client = ConcreteApiClient(base_url="https://api.example.com")
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {}
             mock_response.headers = {}
-            mock_response.content = b'{}'
+            mock_response.content = b"{}"
             mock_get.return_value = mock_response
 
             client.get("/users", params={"page": 1, "filter": None})
@@ -373,7 +363,7 @@ class TestBaseApiClientGetMethod:
     def test_get_handles_network_exception(self) -> None:
         client = ConcreteApiClient(base_url="https://api.example.com")
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_get.side_effect = requests.exceptions.ConnectionError("Network error")
 
             result = client.get("/users")
@@ -384,12 +374,12 @@ class TestBaseApiClientGetMethod:
     def test_get_uses_timeout(self) -> None:
         client = ConcreteApiClient(base_url="https://api.example.com", timeout=45)
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {}
             mock_response.headers = {}
-            mock_response.content = b'{}'
+            mock_response.content = b"{}"
             mock_get.return_value = mock_response
 
             client.get("/users")

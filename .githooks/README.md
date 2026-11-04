@@ -49,7 +49,8 @@ Checks files before commit is created:
 
 ✅ **Enforced (blocks commit):**
 
-- No merge conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)
+- No merge conflict markers: Git's seven-character `<<<<<<<`, `|||||||`, `=======` and `>>>>>>>` lines (a longer
+  run of `=`, such as a heading underline, passes)
 - No sensitive files (`.env`, `credentials.json`, etc.)
 
 ⚠️ **Warned (allows commit):**

@@ -8,6 +8,7 @@
 #    CI-specific credentials, ensuring they match the backend service.
 # 4. Overrides the caddy service's dependency on the backend to wait for it
 #    to start, not to be healthy, since the healthcheck is disabled.
+# 5. Names the backend dev image that CI builds and loads before starting services.
 #
 # Note: CI uses simpler database credentials (postgres/postgres/cinexplorer)
 # compared to development (cinexplorer_user/cinexplorer_dev_pass/cinexplorer_dev).
@@ -16,6 +17,7 @@
 
 services:
   backend:
+    image: cinexplorer-backend-dev:ci
     command: tail -f /dev/null
     healthcheck:
       disable: true

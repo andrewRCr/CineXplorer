@@ -11,10 +11,11 @@ Architecture:
 - Service layer: Business logic (CRUD, TMDB integration, filtering)
 - Repository layer: Data access abstraction
 """
+
 from __future__ import annotations
 
 from django.http import HttpRequest
-from ninja import Router
+from ninja import Router, Status
 
 from apps.authentication.auth_ninja import JWTCookieAuth, get_current_user
 from apps.movie.schemas import MovieListResponseSchema
@@ -37,8 +38,7 @@ def get_user_movies(
     request: HttpRequest,
     watchlist: bool = False,
 ) -> MovieListResponseSchema:
-    """
-    Retrieve movies associated with the authenticated user.
+    """Retrieve movies associated with the authenticated user.
 
     This endpoint returns all movies that the user has interacted with
     (watched, rated, added to watchlist, etc.). Movies are enriched with
@@ -74,11 +74,9 @@ def get_user_movies(
 
 @user_movie_data_router.get("/by-tmdb-id", response=UserMovieDataDetailSchema)
 def get_user_movie_data_by_tmdb_id(
-    request: HttpRequest,
-    tmdb_id: int
+    request: HttpRequest, tmdb_id: int
 ) -> UserMovieDataDetailSchema:
-    """
-    Retrieve user movie data for a specific movie by TMDB ID.
+    """Retrieve user movie data for a specific movie by TMDB ID.
 
     This endpoint checks if the authenticated user has existing data
     (watchlist, rating, review, etc.) for a movie identified by its TMDB ID.
@@ -103,11 +101,9 @@ def get_user_movie_data_by_tmdb_id(
 
 @user_movie_data_router.post("", response=UserMovieDataDetailSchema)
 def create_user_movie_data(
-    request: HttpRequest,
-    payload: UserMovieDataCreateSchema
+    request: HttpRequest, payload: UserMovieDataCreateSchema
 ) -> UserMovieDataDetailSchema:
-    """
-    Create new user movie data entry.
+    """Create new user movie data entry.
 
     This endpoint creates a new UserMovieData record when a user first
     interacts with a movie (adds to watchlist, rates, reviews, etc.).
@@ -144,12 +140,9 @@ def create_user_movie_data(
 
 @user_movie_data_router.patch("/{id}", response=UserMovieDataDetailSchema)
 def update_user_movie_data(
-    request: HttpRequest,
-    id: int,
-    payload: UserMovieDataUpdateSchema
+    request: HttpRequest, id: int, payload: UserMovieDataUpdateSchema
 ) -> UserMovieDataDetailSchema:
-    """
-    Update existing user movie data entry.
+    """Update existing user movie data entry.
 
     This endpoint supports partial updates (PATCH) to modify any subset
     of user movie data fields (watchlist, rating, review, etc.).
@@ -185,9 +178,8 @@ def update_user_movie_data(
 
 
 @user_movie_data_router.delete("/{id}", response={204: None})
-def delete_user_movie_data(request: HttpRequest, id: int) -> tuple[int, None]:
-    """
-    Delete user movie data entry.
+def delete_user_movie_data(request: HttpRequest, id: int) -> Status[None]:
+    """Delete user movie data entry.
 
     This endpoint removes a UserMovieData record. This is rare and typically
     used only to correct mistakes in user input.
@@ -207,4 +199,4 @@ def delete_user_movie_data(request: HttpRequest, id: int) -> tuple[int, None]:
     # Service handles authorization and raises HttpError(404) if not found
     _service.delete(user=user, record_id=id)
 
-    return (204, None)
+    return Status(204, None)

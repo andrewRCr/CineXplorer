@@ -1,10 +1,10 @@
-"""
-Custom django-allauth adapter for CineXplorer.
+"""Custom django-allauth adapter for CineXplorer.
 
 Customizes email confirmation URLs to point to the frontend application.
 Email sending is handled by Django's email backend (django-zoho-zeptomail).
 JWT token generation is handled by HEADLESS_TOKEN_STRATEGY setting.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -22,8 +22,7 @@ class EmailDeliveryError(Exception):
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
-    """
-    Custom allauth adapter for frontend URL customization and email verification.
+    """Custom allauth adapter for frontend URL customization and email verification.
 
     Overrides:
     - get_email_confirmation_url(): Points verification links to frontend
@@ -34,8 +33,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     """
 
     def send_mail(self, template_prefix: str, email: str, context: dict[str, object]) -> None:
-        """
-        Send email and verify delivery.
+        """Send email and verify delivery.
 
         Overrides default to check msg.send() return value and raise
         EmailDeliveryError if the email backend reports failure.
@@ -59,8 +57,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation
     ) -> str:
-        """
-        Construct the email confirmation URL for the frontend.
+        """Construct the email confirmation URL for the frontend.
 
         Overrides default to use FRONTEND_URL instead of backend URL,
         allowing the React frontend to handle email verification flow.

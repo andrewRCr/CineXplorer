@@ -1,5 +1,4 @@
-"""
-Service factory functions for user_movie_data domain.
+"""Service factory functions for user_movie_data domain.
 
 This module provides factory functions that create service instances with
 appropriate dependencies injected, following the dependency injection pattern.
@@ -11,6 +10,7 @@ Available factories:
 - get_movie_enrichment_service() - For enriching movie data with user context
 - get_user_movie_data_service() - For CRUD operations on user movie data
 """
+
 from __future__ import annotations
 
 from apps.movie.services.service_factory import get_movie_service
@@ -20,8 +20,7 @@ from apps.user_movie_data.services.user_movie_data_service import UserMovieDataS
 
 
 def get_movie_enrichment_service() -> MovieEnrichmentService:
-    """
-    Create a MovieEnrichmentService with default dependencies.
+    """Create a MovieEnrichmentService with default dependencies.
 
     This factory function instantiates the service with a default
     UserMovieDataRepository, providing a convenient way to obtain
@@ -47,8 +46,7 @@ def get_movie_enrichment_service() -> MovieEnrichmentService:
 
 
 def get_user_movie_data_service() -> UserMovieDataService:
-    """
-    Create a UserMovieDataService with default dependencies.
+    """Create a UserMovieDataService with default dependencies.
 
     This factory function instantiates the service with default
     UserMovieDataRepository and MovieService dependencies, providing

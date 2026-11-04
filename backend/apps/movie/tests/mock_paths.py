@@ -1,5 +1,4 @@
-"""
-Centralized mock target paths for movie app tests.
+"""Centralized mock target paths for movie app tests.
 
 This module provides constants for commonly-mocked module paths,
 eliminating string duplication across test files and ensuring
@@ -24,9 +23,7 @@ TMDB_CLIENT_GET_MOVIE_DETAILS = (
 )
 
 # Batch pipeline's local tmdb_client reference (module-level import)
-BATCH_TMDB_GET_MOVIE_DETAILS = (
-    "apps.movie.services.pipelines.batch.tmdb_client.get_movie_details"
-)
+BATCH_TMDB_GET_MOVIE_DETAILS = "apps.movie.services.pipelines.batch.tmdb_client.get_movie_details"
 
 # =============================================================================
 # Data Quality / Filtering Paths

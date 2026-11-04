@@ -24,7 +24,7 @@ def empty_str_to_none(v: object) -> object:
         >>> class SearchParams(BaseModel):
         ...     query: str | None = None
         ...
-        ...     @field_validator('query', mode='before')
+        ...     @field_validator("query", mode="before")
         ...     @classmethod
         ...     def validate_query(cls, v: object) -> object:
         ...         return empty_str_to_none(v)

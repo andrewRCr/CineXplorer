@@ -1,9 +1,9 @@
-"""
-Unit tests for historical date validation in TMDB result processing.
+"""Unit tests for historical date validation in TMDB result processing.
 
 Tests the historical validation logic that filters out movies with impossible
 release dates (before 1888, the year of the first film ever made).
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -23,7 +23,7 @@ def test_filter_movies_excludes_pre_cinema_dates() -> None:
     This prevents obviously invalid historical data from appearing in results.
     """
     # Arrange: Mix of valid and invalid historical dates
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         # Valid movies (1888 and later)
@@ -63,7 +63,7 @@ def test_filter_movies_includes_first_film_year() -> None:
     Edge case: 1888 is the boundary year and should be included.
     """
     # Arrange: Movies from exactly 1888
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         create_tmdb_movie(1, "Roundhay Garden Scene", "1888-10-14", 7.0),
@@ -92,7 +92,7 @@ def test_historical_validation_with_year_filters() -> None:
     apply to prevent invalid dates from slipping through.
     """
     # Arrange: Mix including invalid dates within user's requested range
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # User requests 1900-1920, but TMDB returns some pre-1888 movies (data bug)
     tmdb_movies = [
@@ -112,8 +112,7 @@ def test_historical_validation_with_year_filters() -> None:
 
     # Act: Request 1900-1920 range
     result = service.discover_movies(
-        page=1,
-        params=BrowseServiceParams(year_min=1900, year_max=1920)
+        page=1, params=BrowseServiceParams(year_min=1900, year_max=1920)
     )
 
     # Assert: Only valid movies in range returned, invalid dates excluded

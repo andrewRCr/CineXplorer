@@ -1,5 +1,4 @@
-"""
-Unit tests for the configured ZeptoMail email backend.
+"""Unit tests for the configured ZeptoMail email backend.
 
 Test settings swap in Django's locmem backend, so these tests load the backend the
 base settings configure. A stand-in for the ZeptoMail API at requests' transport

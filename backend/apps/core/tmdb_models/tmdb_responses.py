@@ -1,5 +1,4 @@
-"""
-Pydantic models for TMDB API response structures.
+"""Pydantic models for TMDB API response structures.
 
 This module defines typed response models for The Movie Database (TMDB) API
 to replace generic dict[str, object] usage and provide complete type safety
@@ -8,6 +7,7 @@ throughout the application.
 These models are used internally for parsing TMDB responses before converting
 them to our application schemas (MovieDetailSchema, MovieListItemSchema, etc.).
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -17,12 +17,14 @@ from pydantic import BaseModel
 
 class TMDBGenre(BaseModel):
     """TMDB genre response structure."""
+
     id: int
     name: str
 
 
 class TMDBProductionCompany(BaseModel):
     """TMDB production company response structure."""
+
     id: int
     name: str
     logo_path: str | None = None
@@ -31,6 +33,7 @@ class TMDBProductionCompany(BaseModel):
 
 class TMDBCastMember(BaseModel):
     """TMDB cast member response structure."""
+
     id: int
     name: str
     character: str | None = None
@@ -44,6 +47,7 @@ class TMDBCastMember(BaseModel):
 
 class TMDBCrewMember(BaseModel):
     """TMDB crew member response structure."""
+
     id: int
     name: str
     job: str | None = None
@@ -56,6 +60,7 @@ class TMDBCrewMember(BaseModel):
 
 class TMDBCreditsResponse(BaseModel):
     """TMDB movie credits response structure."""
+
     id: int | None = None
     cast: list[TMDBCastMember] = []
     crew: list[TMDBCrewMember] = []
@@ -63,6 +68,7 @@ class TMDBCreditsResponse(BaseModel):
 
 class TMDBMovieBase(BaseModel):
     """Base TMDB movie response structure (shared fields)."""
+
     id: int
     title: str
     overview: str | None = None
@@ -88,12 +94,14 @@ class TMDBSpokenLanguage(BaseModel):
     We use english_name for consistent display. The 'name' field is
     inconsistently populated per TMDB docs, so we skip it.
     """
+
     iso_639_1: str
     english_name: str
 
 
 class TMDBMovieDetail(TMDBMovieBase):
     """TMDB movie detail response structure (extends base with detail fields)."""
+
     runtime: int | None = None
     genres: list[TMDBGenre] = []
     production_companies: list[TMDBProductionCompany] = []
@@ -114,6 +122,7 @@ class TMDBMovieDetail(TMDBMovieBase):
 
 class TMDBPaginatedResponse(BaseModel):
     """Base TMDB paginated response structure."""
+
     page: int
     total_pages: int
     total_results: int
@@ -121,22 +130,26 @@ class TMDBPaginatedResponse(BaseModel):
 
 class TMDBPaginatedMovieResponse(TMDBPaginatedResponse):
     """TMDB paginated movie response for search, discover, and browse endpoints."""
+
     results: list[TMDBMovieBase] = []
 
 
 class TMDBKeyword(BaseModel):
     """TMDB keyword response structure."""
+
     id: int
     name: str
 
 
 class TMDBPaginatedKeywordResponse(TMDBPaginatedResponse):
     """TMDB paginated keyword response for search endpoints."""
+
     results: list[TMDBKeyword] = []
 
 
 class TMDBPerson(BaseModel):
     """TMDB person response structure."""
+
     id: int
     name: str
     profile_path: str | None = None
@@ -151,11 +164,13 @@ class TMDBPerson(BaseModel):
 
 class TMDBPaginatedPersonResponse(TMDBPaginatedResponse):
     """TMDB paginated person response for search endpoints."""
+
     results: list[TMDBPerson] = []
 
 
 class TMDBGenreListResponse(BaseModel):
     """TMDB genre list response structure."""
+
     genres: list[TMDBGenre] = []
 
 
@@ -171,18 +186,21 @@ class TMDBReleaseDate(BaseModel):
     1 = Premiere, 2 = Theatrical (limited), 3 = Theatrical,
     4 = Digital, 5 = Physical, 6 = TV
     """
-    certification: str = ''
-    release_date: str = ''
+
+    certification: str = ""
+    release_date: str = ""
     type: int = 0
-    note: str = ''
+    note: str = ""
 
 
 class TMDBCountryReleases(BaseModel):
     """Per-country release information with certification data."""
+
     iso_3166_1: str
     release_dates: list[TMDBReleaseDate] = []
 
 
 class TMDBReleaseDatesResponse(BaseModel):
     """TMDB release_dates append_to_response structure."""
+
     results: list[TMDBCountryReleases] = []

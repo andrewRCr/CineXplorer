@@ -1,5 +1,4 @@
-"""
-KeywordService - TMDB keyword integration service.
+"""KeywordService - TMDB keyword integration service.
 
 This service provides keyword-related operations with dependency injection pattern,
 encapsulating TMDB API interactions for keyword discovery and search.
@@ -9,6 +8,7 @@ Architecture:
 - Methods return Pydantic schemas for type safety
 - Error handling via HttpError for API layer consistency
 """
+
 from __future__ import annotations
 
 from typing import cast
@@ -22,8 +22,7 @@ from apps.movie.services.tmdb_api_boundary.response_factories import (
 
 
 class KeywordService(BaseTMDBService):
-    """
-    Service for TMDB keyword operations with dependency injection.
+    """Service for TMDB keyword operations with dependency injection.
 
     This service handles keyword-related TMDB API interactions, providing
     methods for discovering popular keywords and searching for keywords by query.
@@ -43,8 +42,7 @@ class KeywordService(BaseTMDBService):
     """
 
     def get_popular_keywords(self, page: int = 1) -> KeywordListResponseSchema:
-        """
-        Retrieve popular keywords from TMDB.
+        """Retrieve popular keywords from TMDB.
 
         Args:
             page: Page number for pagination (default: 1)
@@ -64,13 +62,12 @@ class KeywordService(BaseTMDBService):
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("keyword/popular", cast(dict[str, object], params))
         result = self._get_validated_response(
-            response, operation='get_popular_keywords', page=page
+            response, operation="get_popular_keywords", page=page
         )
         return create_paginated_keyword_response_from_tmdb(result)
 
     def search_keywords(self, query: str) -> KeywordListResponseSchema:
-        """
-        Search for keywords by query string.
+        """Search for keywords by query string.
 
         For queries that are empty or less than 2 characters, returns an empty
         response without making an API call (TMDB API requirement).
@@ -97,18 +94,13 @@ class KeywordService(BaseTMDBService):
         """
         # Return empty response for invalid queries (TMDB API requirement)
         if not query or len(query.strip()) < 2:
-            return KeywordListResponseSchema(
-                page=1,
-                total_pages=0,
-                total_results=0,
-                results=[]
-            )
+            return KeywordListResponseSchema(page=1, total_pages=0, total_results=0, results=[])
 
         response = self._tmdb_client.get("search/keyword", {"query": query})
-        result = self._get_validated_response(response, operation='search_keywords', query=query)
+        result = self._get_validated_response(response, operation="search_keywords", query=query)
 
         # Ensure we have results key for proper processing
-        if 'results' not in result:
-            result['results'] = []
+        if "results" not in result:
+            result["results"] = []
 
         return create_paginated_keyword_response_from_tmdb(result)

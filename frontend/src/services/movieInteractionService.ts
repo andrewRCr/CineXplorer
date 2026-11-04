@@ -110,7 +110,7 @@ export async function toggleMovieWatchlist(
 /**
  * Toggle a movie's watched status
  *
- * TODO: Implement in future expansion (API Layer P2)
+ * TODO: Not implemented yet; it throws.
  * Same pattern as toggleMovieWatchlist but for user_watched field
  *
  * @param _movie - Movie object with optional user_movie_data
@@ -127,7 +127,7 @@ export async function toggleMovieWatched(
 /**
  * Toggle a movie's liked status
  *
- * TODO: Implement in future expansion (API Layer P2)
+ * TODO: Not implemented yet; it throws.
  * Same pattern as toggleMovieWatchlist but for user_liked field
  *
  * @param _movie - Movie object with optional user_movie_data
@@ -144,7 +144,7 @@ export async function toggleMovieLiked(
 /**
  * Set a movie's rating
  *
- * TODO: Implement in future expansion (API Layer P2)
+ * TODO: Not implemented yet; it throws.
  * Opens rating modal/UI, then updates user_rating field
  *
  * @param _movie - Movie object with optional user_movie_data
@@ -163,7 +163,7 @@ export async function setMovieRating(
 /**
  * Set a movie's review
  *
- * TODO: Implement in future expansion (API Layer P2)
+ * TODO: Not implemented yet; it throws.
  * Opens review modal/UI, then updates user_review field
  *
  * @param _movie - Movie object with optional user_movie_data

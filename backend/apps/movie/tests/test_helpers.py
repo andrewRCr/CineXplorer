@@ -5,7 +5,6 @@ validated Pydantic data. Centralizes the validation→serialization→ApiRespons
 boundary in one place to improve maintainability and document type boundaries.
 
 Type Boundary Documentation:
----------------------------
 Pydantic's .model_dump() returns dict[str, Any] due to limitations in Pydantic's
 type system. Any is confined to this external serialization boundary. Data validation
 happens at Pydantic model construction, before .model_dump() serialization.
@@ -23,6 +22,7 @@ The architectural pattern:
 This mirrors production where external APIs return raw dicts that get validated
 by services. Tests use the same validation boundary pattern.
 """
+
 from __future__ import annotations
 
 from apps.core.services.api_response import ApiResponse
@@ -78,21 +78,18 @@ def create_mock_paginated_response(
 
         >>> # Multi-page scenario
         >>> response = create_mock_paginated_response(
-        ...     movies=[...],
-        ...     page=2,
-        ...     total_pages=10,
-        ...     total_results=200
+        ...     movies=[...], page=2, total_pages=10, total_results=200
         ... )
 
         >>> # Rate limiting scenario
         >>> response = create_mock_paginated_response(
         ...     status_code=429,
         ...     headers={
-        ...         'x-ratelimit-limit': '40',
-        ...         'x-ratelimit-remaining': '0',
-        ...         'x-ratelimit-reset': '1234567890',
-        ...         'retry-after': '1'
-        ...     }
+        ...         "x-ratelimit-limit": "40",
+        ...         "x-ratelimit-remaining": "0",
+        ...         "x-ratelimit-reset": "1234567890",
+        ...         "retry-after": "1",
+        ...     },
         ... )
 
     Note:
@@ -172,14 +169,11 @@ def create_mock_movie_detail_response(
         ...     release_date="2010-07-16",
         ...     vote_average=8.8,
         ...     runtime=148,
-        ...     genres=[{'id': 28, 'name': 'Action'}, {'id': 878, 'name': 'Sci-Fi'}]
+        ...     genres=[{"id": 28, "name": "Action"}, {"id": 878, "name": "Sci-Fi"}],
         ... )
 
         >>> # Error response (not found)
-        >>> response = create_mock_movie_detail_response(
-        ...     status_code=404,
-        ...     tmdb_id=999999
-        ... )
+        >>> response = create_mock_movie_detail_response(status_code=404, tmdb_id=999999)
 
     Note:
         Pydantic's .model_dump() returns dict[str, Any] due to its type system.
@@ -237,9 +231,7 @@ def create_mock_error_response(
     Example:
         >>> # Not found error
         >>> response = create_mock_error_response(
-        ...     status_code=404,
-        ...     error_message="Movie not found",
-        ...     error_category="not_found"
+        ...     status_code=404, error_message="Movie not found", error_category="not_found"
         ... )
 
         >>> # Rate limit error with headers
@@ -248,10 +240,10 @@ def create_mock_error_response(
         ...     error_message="Rate limit exceeded",
         ...     error_category="rate_limit",
         ...     headers={
-        ...         'x-ratelimit-limit': '40',
-        ...         'x-ratelimit-remaining': '0',
-        ...         'retry-after': '1'
-        ...     }
+        ...         "x-ratelimit-limit": "40",
+        ...         "x-ratelimit-remaining": "0",
+        ...         "retry-after": "1",
+        ...     },
         ... )
 
         >>> # Server error with details
@@ -260,14 +252,12 @@ def create_mock_error_response(
         ...     error_message="Internal server error",
         ...     error_details="Database connection failed",
         ...     error_category="server_error",
-        ...     endpoint="/api/movies/123"
+        ...     endpoint="/api/movies/123",
         ... )
 
         >>> # Network timeout
         >>> response = create_mock_error_response(
-        ...     status_code=504,
-        ...     error_message="Gateway timeout",
-        ...     error_category="timeout"
+        ...     status_code=504, error_message="Gateway timeout", error_category="timeout"
         ... )
     """
     # Generate default error message if not provided
@@ -323,8 +313,7 @@ def create_mock_tmdb_error_response(
     Example:
         >>> # Not found error (404)
         >>> response = create_mock_tmdb_error_response(
-        ...     status_code=404,
-        ...     status_message="The resource you requested could not be found"
+        ...     status_code=404, status_message="The resource you requested could not be found"
         ... )
         >>> # Returns: ApiResponse(404, data={'status_message': '...', 'status_code': 34})
 
@@ -333,16 +322,15 @@ def create_mock_tmdb_error_response(
         ...     status_code=429,
         ...     status_message="Your request count is over the allowed limit",
         ...     headers={
-        ...         'x-ratelimit-limit': '40',
-        ...         'x-ratelimit-remaining': '0',
-        ...         'retry-after': '1'
-        ...     }
+        ...         "x-ratelimit-limit": "40",
+        ...         "x-ratelimit-remaining": "0",
+        ...         "retry-after": "1",
+        ...     },
         ... )
 
         >>> # Server error (500)
         >>> response = create_mock_tmdb_error_response(
-        ...     status_code=500,
-        ...     status_message="Internal error"
+        ...     status_code=500, status_message="Internal error"
         ... )
 
     Note:
@@ -359,7 +347,7 @@ def create_mock_tmdb_error_response(
             404: 34,  # Resource not found
             429: 25,  # Rate limit exceeded
             500: 11,  # Internal error
-            401: 7,   # Invalid API key
+            401: 7,  # Invalid API key
             503: 11,  # Service unavailable (treat as internal error)
         }.get(status_code, 7)  # Default to "Invalid API key" for unknown codes
 
@@ -375,10 +363,7 @@ def create_mock_tmdb_error_response(
 
     return ApiResponse(
         status_code=status_code,
-        data={
-            'status_message': status_message,
-            'status_code': tmdb_status_code
-        },
+        data={"status_message": status_message, "status_code": tmdb_status_code},
         headers=headers,
         correlation_id=correlation_id,
     )

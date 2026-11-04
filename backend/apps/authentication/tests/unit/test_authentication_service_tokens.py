@@ -1,4 +1,5 @@
 """Unit tests for AuthenticationService token management."""
+
 from __future__ import annotations
 
 from datetime import timedelta

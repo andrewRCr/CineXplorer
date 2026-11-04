@@ -1,11 +1,9 @@
-"""
-User movie data models.
+"""User movie data models.
 
 This module contains models related to user interactions with movies,
 including watchlist status, ratings, reviews, and viewing history.
 
-⚠️ TYPE STUB SYNC REQUIRED ⚠️
-===============================
+Type Stub Sync Required:
 This file has a companion type stub file: backend/apps/user_movie_data/models.pyi
 
 When adding, removing, or modifying model fields in this file, you MUST
@@ -16,7 +14,6 @@ enabling perfect type inference in Pyright/Pylance and eliminating
 "unknown type" warnings.
 
 Type Ignore Usage:
-------------------
 This file uses `# type: ignore` comments on Django model field definitions.
 
 **Why this is justified:**
@@ -32,11 +29,7 @@ This file uses `# type: ignore` comments on Django model field definitions.
 - ✅ Any code importing and using these models (100% type-safe via .pyi)
 - ⚠️ Only the field definitions themselves show as "unknown" (unavoidable)
 
-This is the recommended approach per our type safety strategy.
-See: _docs/reference/type-safety-strategy.md
-
 Maintenance Checklist:
-----------------------
 When modifying this file:
 1. Update the model definition here (models.py)
 2. Update the type stub file (models.pyi)
@@ -53,16 +46,14 @@ from django.db import models
 
 
 class UserMovieData(models.Model):
-    """ Represents a user's data about a particular movie. """
+    """Represents a user's data about a particular movie."""
 
     user = models.ForeignKey(  # type: ignore
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
     movie = models.ForeignKey(  # type: ignore
-        'core.Movie',
-        on_delete=models.CASCADE,
-        related_name='user_movie_data'
+        "core.Movie", on_delete=models.CASCADE, related_name="user_movie_data"
     )
     user_watched = models.BooleanField(  # type: ignore
         default=False, db_index=True
@@ -74,15 +65,17 @@ class UserMovieData(models.Model):
         default=False, db_index=True
     )
     user_rating = models.IntegerField(  # type: ignore
-        null=True, blank=True, default=None,
-        validators=[MinValueValidator(1), MaxValueValidator(10)]
+        null=True,
+        blank=True,
+        default=None,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
     user_review = models.TextField(  # type: ignore
         blank=True, null=True
     )
 
     class Meta:
-        unique_together = ('user', 'movie')
+        unique_together = ("user", "movie")
 
     def __str__(self) -> str:
         # ForeignKey attribute access - django-types limitation with related field access

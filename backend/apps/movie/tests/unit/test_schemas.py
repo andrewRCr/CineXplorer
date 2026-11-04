@@ -1,5 +1,4 @@
-"""
-Integration tests for HTTP → BrowseServiceParams transformation.
+"""Integration tests for HTTP → BrowseServiceParams transformation.
 
 Tests the transform_to_service_params() function that bridges API requests to
 service method calls. This is critical for the two-pass filtering architecture where:
@@ -13,6 +12,7 @@ The transformer must extract both types of parameters from the same input fields
 Test Strategy: These tests validate the HTTP schema → BrowseServiceParams transformation
 to ensure both TMDB and backend filtering parameters are correctly extracted.
 """
+
 from __future__ import annotations
 
 from apps.movie.schemas import MovieDiscoverFilterSchema
@@ -44,8 +44,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         """
         # Arrange: Create schema with year range filter
         schema = MovieDiscoverFilterSchema(
-            release_date_gte="2020-01-01",
-            release_date_lte="2029-12-31"
+            release_date_gte="2020-01-01", release_date_lte="2029-12-31"
         )
 
         # Act: Extract service parameters
@@ -69,9 +68,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         Expected: year_min=2020, year_max not set
         """
         # Arrange: Only minimum date provided
-        schema = MovieDiscoverFilterSchema(
-            release_date_gte="2020-01-01"
-        )
+        schema = MovieDiscoverFilterSchema(release_date_gte="2020-01-01")
 
         # Act
         params = transform_to_service_params(schema)
@@ -89,9 +86,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         Expected: year_max=2023, year_min not set
         """
         # Arrange: Only maximum date provided
-        schema = MovieDiscoverFilterSchema(
-            release_date_lte="2023-12-31"
-        )
+        schema = MovieDiscoverFilterSchema(release_date_lte="2023-12-31")
 
         # Act
         params = transform_to_service_params(schema)
@@ -113,10 +108,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         other TMDB data quality issues.
         """
         # Arrange: Create schema with rating range filter
-        schema = MovieDiscoverFilterSchema(
-            vote_average_gte=7.0,
-            vote_average_lte=9.0
-        )
+        schema = MovieDiscoverFilterSchema(vote_average_gte=7.0, vote_average_lte=9.0)
 
         # Act
         params = transform_to_service_params(schema)
@@ -143,9 +135,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         Expected: rating_min=7.5, rating_max not set
         """
         # Arrange: Only minimum rating provided
-        schema = MovieDiscoverFilterSchema(
-            vote_average_gte=7.5
-        )
+        schema = MovieDiscoverFilterSchema(vote_average_gte=7.5)
 
         # Act
         params = transform_to_service_params(schema)
@@ -163,9 +153,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         Expected: rating_max=8.0, rating_min not set
         """
         # Arrange: Only maximum rating provided
-        schema = MovieDiscoverFilterSchema(
-            vote_average_lte=8.0
-        )
+        schema = MovieDiscoverFilterSchema(vote_average_lte=8.0)
 
         # Act
         params = transform_to_service_params(schema)
@@ -184,9 +172,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         """
         # Arrange: Combined year and rating filters
         schema = MovieDiscoverFilterSchema(
-            release_date_gte="2020-01-01",
-            release_date_lte="2023-12-31",
-            vote_average_gte=7.5
+            release_date_gte="2020-01-01", release_date_lte="2023-12-31", vote_average_gte=7.5
         )
 
         # Act
@@ -232,7 +218,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
         # Arrange: Various date formats
         schema = MovieDiscoverFilterSchema(
             release_date_gte="2020-06-15",  # Mid-year date
-            release_date_lte="2023-03-20"   # Early year date
+            release_date_lte="2023-03-20",  # Early year date
         )
 
         # Act
@@ -270,7 +256,7 @@ class TestMovieDiscoverFilterSchemaParameterExtraction:
             certification="PG-13",
             region="US",
             release_date_gte="2023-01-01",
-            vote_average_gte=7.0
+            vote_average_gte=7.0,
         )
 
         # Act

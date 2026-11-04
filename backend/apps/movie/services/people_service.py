@@ -1,5 +1,4 @@
-"""
-PeopleService - TMDB people integration service.
+"""PeopleService - TMDB people integration service.
 
 This service provides people-related operations with dependency injection pattern,
 encapsulating TMDB API interactions for discovering popular people and searching
@@ -10,6 +9,7 @@ Architecture:
 - Methods return Pydantic schemas for type safety
 - Error handling via HttpError for API layer consistency
 """
+
 from __future__ import annotations
 
 from typing import cast
@@ -23,8 +23,7 @@ from apps.movie.services.tmdb_api_boundary.response_factories import (
 
 
 class PeopleService(BaseTMDBService):
-    """
-    Service for TMDB people operations with dependency injection.
+    """Service for TMDB people operations with dependency injection.
 
     This service handles people-related TMDB API interactions, providing
     methods for discovering popular people and searching for actors, directors,
@@ -45,8 +44,7 @@ class PeopleService(BaseTMDBService):
     """
 
     def get_popular_people(self, page: int = 1) -> PersonListResponseSchema:
-        """
-        Retrieve popular people (actors, directors, etc.) from TMDB.
+        """Retrieve popular people (actors, directors, etc.) from TMDB.
 
         Args:
             page: Page number for pagination (default: 1)
@@ -65,12 +63,11 @@ class PeopleService(BaseTMDBService):
         """
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("person/popular", cast(dict[str, object], params))
-        result = self._get_validated_response(response, operation='get_popular_people', page=page)
+        result = self._get_validated_response(response, operation="get_popular_people", page=page)
         return create_paginated_person_response_from_tmdb(result)
 
     def search_people(self, query: str) -> PersonListResponseSchema:
-        """
-        Search for people by name.
+        """Search for people by name.
 
         For queries that are empty or less than 2 characters, returns an empty
         response without making an API call (TMDB API requirement).
@@ -97,18 +94,13 @@ class PeopleService(BaseTMDBService):
         """
         # Return empty response for invalid queries (TMDB API requirement)
         if not query or len(query.strip()) < 2:
-            return PersonListResponseSchema(
-                page=1,
-                total_pages=0,
-                total_results=0,
-                results=[]
-            )
+            return PersonListResponseSchema(page=1, total_pages=0, total_results=0, results=[])
 
         response = self._tmdb_client.get("search/person", {"query": query})
-        result = self._get_validated_response(response, operation='search_people', query=query)
+        result = self._get_validated_response(response, operation="search_people", query=query)
 
         # Ensure we have results key for proper processing
-        if 'results' not in result:
-            result['results'] = []
+        if "results" not in result:
+            result["results"] = []
 
         return create_paginated_person_response_from_tmdb(result)

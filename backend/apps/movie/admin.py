@@ -1,6 +1,4 @@
-"""
-Django admin interface for movie app models.
-"""
+"""Django admin interface for movie app models."""
 
 from django.contrib import admin
 

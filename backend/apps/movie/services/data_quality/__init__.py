@@ -1,5 +1,4 @@
-"""
-Data quality filtering for TMDB API responses.
+"""Data quality filtering for TMDB API responses.
 
 This package provides second-pass filtering applied to TMDB responses.
 

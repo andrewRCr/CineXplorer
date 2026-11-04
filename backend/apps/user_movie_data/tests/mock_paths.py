@@ -1,5 +1,4 @@
-"""
-Centralized mock target paths for user_movie_data app tests.
+"""Centralized mock target paths for user_movie_data app tests.
 
 This module provides constants for commonly-mocked module paths,
 eliminating string duplication across test files and ensuring
@@ -24,9 +23,7 @@ from apps.movie.tests.mock_paths import (
 # =============================================================================
 
 # fetch_movies_batch used in user_movie_data_service
-FETCH_MOVIES_BATCH = (
-    "apps.user_movie_data.services.user_movie_data_service.fetch_movies_batch"
-)
+FETCH_MOVIES_BATCH = "apps.user_movie_data.services.user_movie_data_service.fetch_movies_batch"
 
 # Expose re-exported paths for IDE discovery
 __all__ = [

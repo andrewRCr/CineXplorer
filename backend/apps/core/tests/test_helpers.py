@@ -30,8 +30,7 @@ cross-cutting test utilities.
 - User (unit): create_mock_user() - creates Mock object for unit tests
 - Types: HTTPStatus (stdlib enum), UserParams (TypedDict)
 
-HTTP Status Codes
------------------
+HTTP Status Codes:
 We use Python's stdlib `http.HTTPStatus` enum instead of DRF's status module:
 - Zero dependencies (part of Python stdlib)
 - Type-safe (IntEnum with full mypy/pyright support)
@@ -46,6 +45,7 @@ Example:
     assert response.status_code == HTTPStatus.CREATED
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 """
+
 import json
 import os
 import subprocess
@@ -84,6 +84,7 @@ __all__ = [
 # Type definitions for fixture parameters
 class UserParams(TypedDict, total=False):
     """Type for user creation parameters."""
+
     username: str
     email: str
     password: str
@@ -92,8 +93,7 @@ class UserParams(TypedDict, total=False):
 
 
 def authenticate_client(client: Client, username: str, password: str) -> None:
-    """
-    Authenticate a test client using JWT tokens (hybrid auth pattern).
+    """Authenticate a test client using JWT tokens (hybrid auth pattern).
 
     This helper encapsulates the hybrid authentication pattern where:
     - Login endpoint only sets refresh_token as HTTP-only cookie
@@ -122,16 +122,11 @@ def authenticate_client(client: Client, username: str, password: str) -> None:
 
     # Extract access_token from response and set as cookie (hybrid auth pattern)
     response_data: dict[str, str] = json.loads(response.content.decode())
-    client.cookies['access_token'] = response_data['access_token']
+    client.cookies["access_token"] = response_data["access_token"]
 
 
-def login_and_get_tokens(
-    client: Client,
-    username: str,
-    password: str
-) -> tuple[str, str]:
-    """
-    Login and return access and refresh tokens (hybrid auth pattern).
+def login_and_get_tokens(client: Client, username: str, password: str) -> tuple[str, str]:
+    """Login and return access and refresh tokens (hybrid auth pattern).
 
     Unlike authenticate_client(), this function returns tokens as strings
     without modifying the client. Useful for tests that need explicit
@@ -164,12 +159,11 @@ def login_and_get_tokens(
     response = json_post(client, token_url, auth_payload)
 
     response_data: dict[str, str] = json.loads(response.content.decode())
-    return response_data['access_token'], response_data['refresh_token']
+    return response_data["access_token"], response_data["refresh_token"]
 
 
 def create_fresh_client(refresh_token: str | None = None) -> Client:
-    """
-    Create a fresh Django test client without session authentication.
+    """Create a fresh Django test client without session authentication.
 
     This is useful for JWT token refresh tests where you need to ensure
     there's NO Django session fallback, only pure JWT authentication.
@@ -208,8 +202,7 @@ def create_fresh_client(refresh_token: str | None = None) -> Client:
 
 
 def get_csrf_token(client: Client) -> str:
-    """
-    Retrieve a valid CSRF token from /api/csrf/ endpoint.
+    """Retrieve a valid CSRF token from /api/csrf/ endpoint.
 
     This helper is used by tests that need to make authenticated POST/PATCH/DELETE
     requests to Django Ninja endpoints protected by CSRF middleware.
@@ -229,17 +222,12 @@ def get_csrf_token(client: Client) -> str:
             HTTP_X_CSRFTOKEN=csrf_token
         )
     """
-    csrf_res = client.get('/api/csrf/')
+    csrf_res = client.get("/api/csrf/")
     csrf_data: dict[str, str] = json.loads(csrf_res.content.decode())
-    return csrf_data['csrf_token']
+    return csrf_data["csrf_token"]
 
 
-def json_post(
-    client: Client,
-    url: str,
-    data: dict[str, object],
-    **kwargs: object
-) -> HttpResponse:
+def json_post(client: Client, url: str, data: dict[str, object], **kwargs: object) -> HttpResponse:
     """POST JSON data to a Django Ninja endpoint.
 
     Args:
@@ -262,16 +250,13 @@ def json_post(
     return client.post(  # type: ignore[return-value]
         url,
         json.dumps(data),
-        content_type='application/json',
-        **kwargs  # type: ignore[arg-type]
+        content_type="application/json",
+        **kwargs,  # type: ignore[arg-type]
     )
 
 
 def json_patch(
-    client: Client,
-    url: str,
-    data: dict[str, object],
-    **kwargs: object
+    client: Client, url: str, data: dict[str, object], **kwargs: object
 ) -> HttpResponse:
     """PATCH JSON data to a Django Ninja endpoint.
 
@@ -293,17 +278,12 @@ def json_patch(
     return client.patch(  # type: ignore[return-value]
         url,
         json.dumps(data),
-        content_type='application/json',
-        **kwargs  # type: ignore[arg-type]
+        content_type="application/json",
+        **kwargs,  # type: ignore[arg-type]
     )
 
 
-def json_put(
-    client: Client,
-    url: str,
-    data: dict[str, object],
-    **kwargs: object
-) -> HttpResponse:
+def json_put(client: Client, url: str, data: dict[str, object], **kwargs: object) -> HttpResponse:
     """PUT JSON data to a Django Ninja endpoint.
 
     Args:
@@ -325,17 +305,13 @@ def json_put(
     return client.put(  # type: ignore[return-value]
         url,
         json.dumps(data),
-        content_type='application/json',
-        **kwargs  # type: ignore[arg-type]
+        content_type="application/json",
+        **kwargs,  # type: ignore[arg-type]
     )
 
 
-def create_user(
-    email_verified: bool = True,
-    **params: Unpack[UserParams]
-) -> "UserType":
-    """
-    Create and return a new user for testing.
+def create_user(email_verified: bool = True, **params: Unpack[UserParams]) -> "UserType":
+    """Create and return a new user for testing.
 
     Args:
         email_verified: Whether to mark the user's email as verified (default: True)
@@ -355,35 +331,35 @@ def create_user(
 
     # Set defaults
     defaults: dict[str, str] = {
-        'username': 'testuser',
-        'email': 'testuser@example.com',
-        'password': 'testpass123',
-        'first_name': 'Test',
-        'last_name': 'User'
+        "username": "testuser",
+        "email": "testuser@example.com",
+        "password": "testpass123",
+        "first_name": "Test",
+        "last_name": "User",
     }
 
     # Generate unique defaults for --keepdb compatibility
-    if 'username' not in params:
+    if "username" not in params:
         unique_suffix = str(uuid.uuid4())[:8]
-        defaults['username'] = f"testuser_{unique_suffix}"
-    if 'email' not in params:
+        defaults["username"] = f"testuser_{unique_suffix}"
+    if "email" not in params:
         unique_suffix = str(uuid.uuid4())[:8]
-        defaults['email'] = f"testuser_{unique_suffix}@example.com"
+        defaults["email"] = f"testuser_{unique_suffix}@example.com"
 
     user_data = {**defaults, **params}
 
     # For --keepdb compatibility: reuse existing user if present, else create new
     user: UserType
     try:
-        user = cast("UserType", User.objects.get(username=user_data['username']))
+        user = cast("UserType", User.objects.get(username=user_data["username"]))
         # Update user attributes to match requested params
         for key, value in user_data.items():
-            if key != 'password':
+            if key != "password":
                 setattr(user, key, value)
         user.save()
         # Update password if provided
-        if 'password' in user_data:
-            password_value = user_data['password']
+        if "password" in user_data:
+            password_value = user_data["password"]
             if isinstance(password_value, str):
                 user.set_password(password_value)
                 user.save()
@@ -391,7 +367,7 @@ def create_user(
         # Create new user
         user = cast(
             "UserType",
-            User.objects.create_user(**user_data)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            User.objects.create_user(**user_data),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
         )
 
     # Mark email as verified if requested using allauth EmailAddress API
@@ -400,7 +376,7 @@ def create_user(
         email_address, created = EmailAddress.objects.get_or_create(
             user=user,
             email=str(user.email),  # Cast to str for type safety
-            defaults={'verified': True, 'primary': True}
+            defaults={"verified": True, "primary": True},
         )
         if not created:
             # Update existing EmailAddress if it was already there
@@ -412,10 +388,9 @@ def create_user(
 
 
 def create_user_and_auth_payload(
-    **params: Unpack[UserParams]
+    **params: Unpack[UserParams],
 ) -> tuple["UserType", dict[str, str]]:
-    """
-    Create a user and return both the user instance and authentication payload.
+    """Create a user and return both the user instance and authentication payload.
 
     Combines user creation with auth payload generation for login/token tests.
     This eliminates the common 3-line pattern of creating user details,
@@ -450,16 +425,13 @@ def create_user_and_auth_payload(
         assert res.status_code == HTTPStatus.OK
     """
     # Extract password before creating user (need it for auth payload)
-    password = params.get('password', 'testpass123')
+    password = params.get("password", "testpass123")
 
     # Create user (email_verified=True by default in create_user)
     user = create_user(**params)
 
     # Build auth payload for token endpoint
-    auth_payload = {
-        "login": user.username,
-        "password": password
-    }
+    auth_payload = {"login": user.username, "password": password}
 
     return user, auth_payload
 
@@ -474,8 +446,7 @@ def create_mock_user(
     username: str = "testuser",
     email: str = "testuser@example.com",
 ) -> Mock:
-    """
-    Create a mock User object for unit tests (no database).
+    """Create a mock User object for unit tests (no database).
 
     Use this for unit tests where you need a user-like object but don't want
     database access. For integration tests that need a real User in the

@@ -1,5 +1,4 @@
-"""
-Movie app models.
+"""Movie app models.
 
 This module contains models specific to movie data management,
 including blacklists for filtering problematic TMDB results.
@@ -9,8 +8,7 @@ from django.db import models
 
 
 class BlacklistedMovie(models.Model):
-    """
-    Movies to exclude from all TMDB results.
+    """Movies to exclude from all TMDB results.
 
     Used to manually filter out specific TMDB IDs that slip through
     automated filters (e.g., mislabeled content, non-movie entries).
@@ -39,5 +37,3 @@ class BlacklistedMovie(models.Model):
 
     def __str__(self) -> str:
         return f"TMDB {self.tmdb_id}: {self.reason}"
-
-

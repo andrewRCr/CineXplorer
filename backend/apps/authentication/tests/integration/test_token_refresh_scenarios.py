@@ -1,5 +1,4 @@
-"""
-Comprehensive JWT token refresh scenario tests.
+"""Comprehensive JWT token refresh scenario tests.
 
 Tests critical token refresh behaviors that ensure security and reliability:
 
@@ -56,8 +55,7 @@ def test_token_refresh_after_page_reload_token_still_valid(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """
-    Verify tokens persist across page reloads when still valid.
+    """Verify tokens persist across page reloads when still valid.
 
     Hybrid Auth Pattern (Backend supports BOTH):
     - Access token: Returned in response body (frontend stores in sessionStorage)
@@ -107,8 +105,7 @@ def test_expired_access_token_refresh_token_still_valid(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """
-    Verify automatic refresh when access token expires (refresh token valid).
+    """Verify automatic refresh when access token expires (refresh token valid).
 
     Hybrid Auth Pattern:
     - Access token sent via Authorization header (from sessionStorage)
@@ -191,8 +188,7 @@ def test_expired_refresh_token_redirect_to_login(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """
-    Verify proper rejection when refresh token expires (redirect to login).
+    """Verify proper rejection when refresh token expires (redirect to login).
 
     Simulates:
     1. User logs in
@@ -243,8 +239,7 @@ def test_token_refresh_under_load_multiple_rapid_calls(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """
-    Verify token refresh handles concurrent requests without race conditions.
+    """Verify token refresh handles concurrent requests without race conditions.
 
     Hybrid Auth Pattern:
     - Access token sent via Authorization header
@@ -304,7 +299,7 @@ def test_token_refresh_under_load_multiple_rapid_calls(
 
         # Step 4: Retry all failed requests with new access token
         # Frontend updates sessionStorage and retries with new token
-        new_access = new_tokens['access_token']
+        new_access = new_tokens["access_token"]
         retry_responses = [
             fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}"),
             fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}"),
@@ -327,8 +322,7 @@ def test_refresh_rotation_new_refresh_token_issued(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """
-    Verify refresh token rotation (new refresh token issued on refresh).
+    """Verify refresh token rotation (new refresh token issued on refresh).
 
     Simulates:
     1. User logs in (gets initial refresh token)
@@ -414,8 +408,7 @@ def test_refresh_rotation_new_refresh_token_issued(
 def test_refresh_without_token_cookie(
     api_client: Client,
 ) -> None:
-    """
-    Verify refresh endpoint returns proper error when no refresh token cookie present.
+    """Verify refresh endpoint returns proper error when no refresh token cookie present.
 
     Simulates:
     1. User attempts to refresh tokens without refresh_token cookie
@@ -454,8 +447,7 @@ def test_blacklisted_token_reuse_security_logging(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """
-    Verify blacklisted token reuse triggers proper error response.
+    """Verify blacklisted token reuse triggers proper error response.
 
     Simulates:
     1. User gets initial refresh token

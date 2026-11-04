@@ -9,6 +9,7 @@ Pattern Guidelines:
 - Input schemas validate request data
 - Response schemas define API responses
 """
+
 from __future__ import annotations
 
 from django.contrib.auth import get_user_model
@@ -29,51 +30,29 @@ class RegisterInputSchema(Schema):
     """
 
     username: str = Field(
-        ...,
-        min_length=1,
-        max_length=150,
-        description="Unique username for the account"
+        ..., min_length=1, max_length=150, description="Unique username for the account"
     )
-    email: EmailStr = Field(
-        ...,
-        description="User's email address (must be unique)"
-    )
+    email: EmailStr = Field(..., description="User's email address (must be unique)")
     password: str = Field(
         ...,
         min_length=PASSWORD_MIN_LENGTH,
-        description=f"Account password (minimum {PASSWORD_MIN_LENGTH} characters)"
+        description=f"Account password (minimum {PASSWORD_MIN_LENGTH} characters)",
     )
     first_name: str | None = Field(
-        default=None,
-        max_length=150,
-        description="User's first name (optional)"
+        default=None, max_length=150, description="User's first name (optional)"
     )
     last_name: str | None = Field(
-        default=None,
-        max_length=150,
-        description="User's last name (optional)"
+        default=None, max_length=150, description="User's last name (optional)"
     )
 
 
 class RegisterResponseSchema(Schema):
     """Schema for successful registration response."""
 
-    message: str = Field(
-        ...,
-        description="Success message with email verification instruction"
-    )
-    user_id: int = Field(
-        ...,
-        description="ID of the newly created user"
-    )
-    email: str = Field(
-        ...,
-        description="Email address where verification was sent"
-    )
-    email_sent: bool = Field(
-        ...,
-        description="Whether verification email was successfully sent"
-    )
+    message: str = Field(..., description="Success message with email verification instruction")
+    user_id: int = Field(..., description="ID of the newly created user")
+    email: str = Field(..., description="Email address where verification was sent")
+    email_sent: bool = Field(..., description="Whether verification email was successfully sent")
 
 
 # JWT Token Schemas
@@ -84,14 +63,8 @@ class TokenObtainInputSchema(Schema):
     Field name follows django-allauth convention (allauth.account.forms.LoginForm).
     """
 
-    login: str = Field(
-        ...,
-        description="Username or email for authentication"
-    )
-    password: str = Field(
-        ...,
-        description="User's password"
-    )
+    login: str = Field(..., description="Username or email for authentication")
+    password: str = Field(..., description="User's password")
 
 
 class TokenResponseSchema(Schema):
@@ -101,29 +74,13 @@ class TokenResponseSchema(Schema):
     response body for client convenience.
     """
 
-    access_token: str = Field(
-        ...,
-        description="JWT access token (also set as httponly cookie)"
-    )
-    refresh_token: str = Field(
-        ...,
-        description="JWT refresh token (also set as httponly cookie)"
-    )
-    user_id: int = Field(
-        ...,
-        description="ID of the authenticated user"
-    )
-    username: str = Field(
-        ...,
-        description="Username of the authenticated user"
-    )
-    first_name: str | None = Field(
-        default=None,
-        description="User's first name (if provided)"
-    )
+    access_token: str = Field(..., description="JWT access token (also set as httponly cookie)")
+    refresh_token: str = Field(..., description="JWT refresh token (also set as httponly cookie)")
+    user_id: int = Field(..., description="ID of the authenticated user")
+    username: str = Field(..., description="Username of the authenticated user")
+    first_name: str | None = Field(default=None, description="User's first name (if provided)")
     email_verified: bool = Field(
-        ...,
-        description="Whether user's email has been verified via allauth"
+        ..., description="Whether user's email has been verified via allauth"
     )
 
 
@@ -136,12 +93,10 @@ class UserProfileSchema(ModelSchema):
     """
 
     email_verified: bool | None = Field(
-        default=None,
-        description="Whether user's email is verified (computed from allauth)"
+        default=None, description="Whether user's email is verified (computed from allauth)"
     )
     full_name: str | None = Field(
-        default=None,
-        description="User's full name (first_name + last_name)"
+        default=None, description="User's full name (first_name + last_name)"
     )
 
     class Meta:
@@ -156,24 +111,13 @@ class UserProfileUpdateSchema(Schema):
     Password updates handled separately for security.
     """
 
-    email: EmailStr | None = Field(
-        default=None,
-        description="Updated email address"
-    )
-    first_name: str | None = Field(
-        default=None,
-        max_length=150,
-        description="Updated first name"
-    )
-    last_name: str | None = Field(
-        default=None,
-        max_length=150,
-        description="Updated last name"
-    )
+    email: EmailStr | None = Field(default=None, description="Updated email address")
+    first_name: str | None = Field(default=None, max_length=150, description="Updated first name")
+    last_name: str | None = Field(default=None, max_length=150, description="Updated last name")
     password: str | None = Field(
         default=None,
         min_length=PASSWORD_MIN_LENGTH,
-        description=f"Updated password (minimum {PASSWORD_MIN_LENGTH} characters)"
+        description=f"Updated password (minimum {PASSWORD_MIN_LENGTH} characters)",
     )
 
 
@@ -184,43 +128,28 @@ class CsrfTokenResponseSchema(Schema):
     Token is set as cookie and returned in response body.
     """
 
-    csrf_token: str = Field(
-        ...,
-        description="CSRF token for state-changing requests"
-    )
+    csrf_token: str = Field(..., description="CSRF token for state-changing requests")
 
 
 # Logout Schema
 class LogoutResponseSchema(Schema):
     """Schema for logout response."""
 
-    message: str = Field(
-        ...,
-        description="Logout success message"
-    )
+    message: str = Field(..., description="Logout success message")
 
 
 # Email Verification Schemas
 class EmailVerificationInputSchema(Schema):
     """Schema for email verification input."""
 
-    key: str = Field(
-        ...,
-        description="Email verification key from confirmation link"
-    )
+    key: str = Field(..., description="Email verification key from confirmation link")
 
 
 class EmailVerificationResponseSchema(Schema):
     """Schema for email verification response."""
 
-    message: str = Field(
-        ...,
-        description="Verification success/failure message"
-    )
-    email: str = Field(
-        ...,
-        description="Verified email address (for pre-filling login form)"
-    )
+    message: str = Field(..., description="Verification success/failure message")
+    email: str = Field(..., description="Verified email address (for pre-filling login form)")
 
 
 class ResendVerificationInputSchema(Schema):
@@ -231,19 +160,14 @@ class ResendVerificationInputSchema(Schema):
     """
 
     resend_token: str = Field(
-        ...,
-        min_length=32,
-        description="Opaque resend token from login error response"
+        ..., min_length=32, description="Opaque resend token from login error response"
     )
 
 
 class ResendVerificationResponseSchema(Schema):
     """Schema for resend verification response."""
 
-    message: str = Field(
-        ...,
-        description="Resend operation result message"
-    )
+    message: str = Field(..., description="Resend operation result message")
 
 
 # Hybrid Authentication Token Schemas
@@ -260,17 +184,12 @@ class HybridTokenRefreshResponseSchema(Schema):
     """
 
     access_token: str = Field(
-        ...,
-        description="JWT access token for localStorage (5-min lifetime)"
+        ..., description="JWT access token for localStorage (5-min lifetime)"
     )
     expires_in: int = Field(
-        ...,
-        description="Access token lifetime in seconds (300 for 5 minutes)"
+        ..., description="Access token lifetime in seconds (300 for 5 minutes)"
     )
-    issued_at: str = Field(
-        ...,
-        description="Token issue timestamp (ISO 8601 UTC)"
-    )
+    issued_at: str = Field(..., description="Token issue timestamp (ISO 8601 UTC)")
 
 
 __all__ = [

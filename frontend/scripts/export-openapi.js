@@ -12,9 +12,6 @@
  * main checkout's default project and export the main checkout's schema, so the
  * export refuses there instead.
  *
- * The console log level is raised to WARNING for the export: the development stack
- * logs at DEBUG to stdout, and an import-time debug line would land in the schema.
- *
  * Usage:
  *   node scripts/export-openapi.js   (run by `npm run generate-types`)
  */
@@ -56,8 +53,7 @@ try {
     'docker',
     [
       'compose', '-f', COMPOSE_FILE,
-      'exec', '-T', '-e', 'DJANGO_CONSOLE_LOG_LEVEL=WARNING',
-      'backend', 'python', 'manage.py', 'export_openapi_schema',
+      'exec', '-T', 'backend', 'python', 'manage.py', 'export_openapi_schema',
     ],
     EXEC_OPTIONS,
   );

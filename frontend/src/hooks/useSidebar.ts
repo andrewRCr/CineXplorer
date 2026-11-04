@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useBreakpointValue } from "@chakra-ui/react";
 
 export interface UseSidebarReturn {
@@ -20,8 +20,6 @@ export interface UseSidebarReturn {
  * - Integrates with Chakra v3 overlay management patterns
  */
 export const useSidebar = (): UseSidebarReturn => {
-    const [isOpen, setIsOpen] = useState(false);
-
     // useBreakpointValue acceptable here: controls behavioral logic (drawer vs persistent),
     // not just visibility. See ADR-007 for CSS-vs-JS responsive patterns.
     const isMobile =
@@ -37,18 +35,13 @@ export const useSidebar = (): UseSidebarReturn => {
     // On mobile/tablet (base-md), sidebar should be a drawer
     const shouldShowAsDrawer = isMobile;
 
-    // Auto-open sidebar on desktop by default
-    useEffect(() => {
-        if (!isMobile) {
-            setIsOpen(true);
-        } else {
-            setIsOpen(false);
-        }
-    }, [isMobile]);
-
-    const onOpen = () => setIsOpen(true);
-    const onClose = () => setIsOpen(false);
-    const onToggle = () => setIsOpen((prev) => !prev);
+    const [choice, setChoice] = useState({ isMobile, open: !isMobile });
+    const changed = choice.isMobile !== isMobile;
+    if (changed) setChoice({ isMobile, open: !isMobile });
+    const isOpen = changed ? !isMobile : choice.open;
+    const onOpen = () => setChoice({ isMobile, open: true });
+    const onClose = () => setChoice({ isMobile, open: false });
+    const onToggle = () => setChoice({ isMobile, open: !isOpen });
 
     return {
         isOpen,

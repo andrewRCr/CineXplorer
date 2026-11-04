@@ -68,13 +68,15 @@ export function useScrollState(options?: UseScrollStateOptions): ScrollState {
         options ?? {};
 
     // Current scroll position
-    const [scrollY, setScrollY] = useState(0);
+    const [scrollY, setScrollY] = useState(() =>
+        typeof window === "undefined" ? 0 : window.scrollY,
+    );
 
     // Current direction
     const [direction, setDirection] = useState<ScrollDirection>("idle");
 
     // Track the position where direction last changed (for hysteresis calculation)
-    const directionChangePositionRef = useRef(0);
+    const directionChangePositionRef = useRef(scrollY);
 
     // Track if RAF is pending to avoid queueing multiple updates
     const rafPendingRef = useRef(false);
@@ -118,7 +120,6 @@ export function useScrollState(options?: UseScrollStateOptions): ScrollState {
     useEffect(() => {
         mountedRef.current = true;
         // Initialize with current scroll position
-        setScrollY(window.scrollY);
         directionChangePositionRef.current = window.scrollY;
 
         // Use passive: true for better scroll performance (indicates we won't call preventDefault)

@@ -16,6 +16,7 @@ const SearchBar = ({
   const [isHovered, setIsHovered] = useState(false);
   return (
     <Box
+      data-testid="movie-search"
       position="relative"
       maxW="400px"
       onMouseEnter={() => setIsHovered(true)}
@@ -30,7 +31,7 @@ const SearchBar = ({
         zIndex={1} // Acceptable: positions icon above input field
         pointerEvents="none"
       >
-        <FiSearch />
+        <FiSearch data-testid="search-icon" />
       </Box>
       <Input
         value={value}

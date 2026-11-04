@@ -1,6 +1,5 @@
 import {
   act,
-  cleanup,
   render,
   renderHook,
   screen,
@@ -41,7 +40,6 @@ beforeEach(() => {
   authHandlers();
 });
 afterEach(() => {
-  cleanup();
   vi.useRealTimers();
 });
 
@@ -52,10 +50,9 @@ describe("initial authentication", () => {
     expect(result.current.isAuthenticated).toBe(true);
     await waitFor(() => expect(result.current.user).toEqual(profile));
   });
-  it("starts signed out without tokens or an OAuth session", async () => {
+  it("starts signed out without tokens or an OAuth session", () => {
     const { result } = mountAuth();
     expect(result.current.isAuthenticated).toBe(false);
-    await act(async () => {});
     expect(result.current.user).toBeNull();
   });
   it("leaves an expired token signed out when refresh is unavailable", async () => {

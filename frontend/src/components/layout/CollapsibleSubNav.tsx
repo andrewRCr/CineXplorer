@@ -75,7 +75,9 @@ export function CollapsibleSubNav({
 
   // Use ref to avoid effect re-runs when callback identity changes
   const onHeightChangeRef = useRef(onHeightChange);
-  onHeightChangeRef.current = onHeightChange;
+  useEffect(() => {
+    onHeightChangeRef.current = onHeightChange;
+  }, [onHeightChange]);
 
   // Report height changes (for spacing calculations in parent layouts)
   useEffect(() => {

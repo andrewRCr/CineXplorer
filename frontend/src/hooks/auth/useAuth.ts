@@ -21,7 +21,13 @@ import {
     getCsrfToken,
 } from "@/utilities/csrfTokenFetcher";
 import { ROUTES } from "@/constants/routes";
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+    useState,
+    useEffect,
+    useLayoutEffect,
+    useCallback,
+    useRef,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import type {
     AuthStateProps,
@@ -391,7 +397,9 @@ export function useAuth(): AuthStateProps {
 
     // Update refs to latest callback versions - enables effects to use stable refs
     // while still calling the latest callback implementation
-    getUserDetailsRef.current = getUserDetails;
+    useLayoutEffect(() => {
+        getUserDetailsRef.current = getUserDetails;
+    }, [getUserDetails]);
 
     const login = async (
         username: string,

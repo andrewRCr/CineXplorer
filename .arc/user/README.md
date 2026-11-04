@@ -26,10 +26,11 @@ guessed.
 
 ## Who writes what, and when
 
-- **`{name}/SESSION-NOTES.md`**, in the checkout that runs the work unit: created when the work unit is activated
-  (`activate-work-unit.md`) or its incidental task list is created (`manage-incidental-work.md`). The agent updates its
-  pointer fields at every task and phase stop; the handoff (`session-handoff.md`) replaces its sections. Session start
-  (`session-init.md`) and the compaction-recovery hook read it.
+- **`{name}/SESSION-NOTES.md`**, in the checkout that runs the work unit: created when its worktree is provisioned
+  (`worktree-sessions.md`), at activation for a work unit run in place (`activate-work-unit.md`), or when its
+  incidental task list is created (`manage-incidental-work.md`). The agent updates its pointer fields at every task and
+  phase stop; the handoff (`session-handoff.md`) replaces its sections. Session start (`session-init.md`) and the
+  compaction-recovery hook read it.
 - **`WORKING-MEMORY.md`**: an entry is proposed when it arises and added on the Owner's approval; each carries a
   `_Remove when:_` trigger. Read at every session start; pruned at each handoff.
 - **`USER-INBOX.md`**: written at capture (`user-inbox.md`), from any branch or checkout. The drain between work
@@ -37,8 +38,8 @@ guessed.
 - **`REVIEW-LOG.md`** and **`adversarial-review/`**: written by each review pass. The durable review record is the
   task list's `## Review Log`; task generation copies `REVIEW-LOG.md` into it.
 
-A work unit's folder is created at its first review or at activation, whichever comes first, and deleted when the work
-unit is archived. `WORKING-MEMORY.md` and `USER-INBOX.md` persist across work units; a linked worktree reads and
-writes the main checkout's copies.
+A work unit's folder is created with its session notes, or at its first review if that comes first, and deleted when
+the work unit is archived. `WORKING-MEMORY.md` and `USER-INBOX.md` persist across work units; a linked worktree reads
+and writes the main checkout's copies.
 
 Nothing here is a source of truth for project decisions: those live in the PRD, the task list and the ADRs.

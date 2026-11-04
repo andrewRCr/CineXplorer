@@ -64,13 +64,19 @@ export function useOAuthFlow(
         },
     );
 
-    // Timing gate: closed if OAuth in progress, opens after minimum display time
-    const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(() => {
-        const oauthProvider = sessionStorage.getItem("oauth_in_progress");
-        // If OAuth flow in progress, gate starts CLOSED (false)
-        // Otherwise gate starts OPEN (true) - no delay needed
-        return !oauthProvider;
+    const [returnFlow] = useState(() => {
+        const provider = sessionStorage.getItem("oauth_in_progress");
+        const start = sessionStorage.getItem("oauth_start_time");
+        const fast = Boolean(
+            provider &&
+            start &&
+            Date.now() - parseInt(start, 10) < FAST_OAUTH_THRESHOLD,
+        );
+        return { provider, fast, ready: !provider || Boolean(start && !fast) };
     });
+    const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(
+        returnFlow.ready,
+    );
 
     // Error callback wrapper
     const setError = useCallback(
@@ -121,66 +127,21 @@ export function useOAuthFlow(
         };
     }, [oauthLoading]);
 
-    // Check if returning from OAuth flow and set up timing gate
     useEffect(() => {
-        const oauthProvider = sessionStorage.getItem("oauth_in_progress");
-        const startTimeStr = sessionStorage.getItem("oauth_start_time");
-
-        // Track timeout for cleanup and mounted state to avoid state updates after unmount
-        let displayTimeoutId: ReturnType<typeof setTimeout> | null = null;
-        let isMounted = true;
-
-        if (oauthProvider && startTimeStr) {
-            const startTime = parseInt(startTimeStr, 10);
-            const elapsedTime = Date.now() - startTime;
-
-            logger.debug(
-                `[OAuth] Detected return from ${oauthProvider} OAuth flow after ${elapsedTime}ms`,
-            );
-
-            // For fast OAuth, enforce minimum display time before allowing navigation
-            if (elapsedTime < FAST_OAUTH_THRESHOLD) {
-                setMinDisplayTimeElapsed(false);
-
-                // Display spinner for MINIMUM_DISPLAY_TIME from NOW
-                // This ensures consistent visible duration regardless of OAuth speed
-                logger.debug(
-                    `[OAuth] Fast OAuth detected, enforcing ${MINIMUM_DISPLAY_TIME}ms minimum display time`,
-                );
-
-                displayTimeoutId = setTimeout(() => {
-                    if (isMounted) {
-                        logger.debug(
-                            "[OAuth] Minimum display time elapsed, allowing navigation",
-                        );
-                        setMinDisplayTimeElapsed(true);
-                    }
-                }, MINIMUM_DISPLAY_TIME);
-            } else {
-                logger.debug(
-                    "[OAuth] Slow OAuth detected, no minimum display time needed",
-                );
-                // Slow OAuth - user already waited, allow immediate navigation
-                setMinDisplayTimeElapsed(true);
-            }
-        }
-
-        // Cleanup function: Clear timeout and flags when component unmounts
+        const displayTimeout = returnFlow.fast
+            ? setTimeout(
+                  () => setMinDisplayTimeElapsed(true),
+                  MINIMUM_DISPLAY_TIME,
+              )
+            : undefined;
         return () => {
-            isMounted = false;
-            if (displayTimeoutId) {
-                clearTimeout(displayTimeoutId);
-            }
-            // Only clear OAuth flags if we were in an OAuth flow
-            if (oauthProvider) {
-                logger.debug(
-                    "[OAuth] Component unmounting, clearing OAuth flags",
-                );
+            clearTimeout(displayTimeout);
+            if (returnFlow.provider) {
                 sessionStorage.removeItem("oauth_in_progress");
                 sessionStorage.removeItem("oauth_start_time");
             }
         };
-    }, []);
+    }, [returnFlow]);
 
     /**
      * Initialize OAuth login using django-allauth headless mode.

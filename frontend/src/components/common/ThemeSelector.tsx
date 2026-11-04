@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { Button, Menu, Portal, ClientOnly, Skeleton } from "@chakra-ui/react";
 import { themeRegistry, type ThemeName } from "@/theme";
@@ -45,18 +44,6 @@ const THEME_OPTIONS: ThemeOption[] = Object.entries(themeRegistry).map(
  */
 export function ThemeSelector() {
   const { theme, setTheme } = useThemeSelect();
-  const [mounted, setMounted] = React.useState(false);
-
-  // Prevent hydration mismatch - theme value only available after mount
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Show skeleton during SSR and initial client render
-  if (!mounted) {
-    return <Skeleton height="10" width="32" />;
-  }
-
   // Find current theme option for display
   const currentTheme = THEME_OPTIONS.find((option) => option.value === theme);
   const displayLabel = currentTheme?.label || "IBM Carbon"; // Fallback to default

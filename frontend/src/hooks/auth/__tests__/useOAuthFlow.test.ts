@@ -1,4 +1,4 @@
-import { act, cleanup, renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import {
     afterEach,
     beforeEach,
@@ -19,12 +19,23 @@ import logger from "@/services/logger";
 const originalConfig = logger.getEnvironmentInfo().config;
 let submittedForms: HTMLFormElement[] = [];
 
-describe("OAuth form CSRF", () => {
-    beforeEach(clearBrowserAuth);
-    afterEach(() => {
-        cleanup();
-        document.body.replaceChildren();
+beforeEach(() => {
+    clearBrowserAuth();
+    submittedForms = [];
+    logger.updateConfig({
+        enableConsole: false,
+        enableBackendReporting: false,
     });
+});
+afterEach(() => {
+    vi.useRealTimers();
+    submittedForms.forEach((form) => form.remove());
+    clearBrowserAuth();
+    logger.clearLogs();
+    logger.updateConfig(originalConfig);
+});
+
+describe("OAuth form CSRF", () => {
     it.each([true, false])(
         "submits the OAuth form with CSRF (cookie present: %s)",
         async (present) => {
@@ -41,6 +52,7 @@ describe("OAuth form CSRF", () => {
             vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(
                 function (this: HTMLFormElement) {
                     submitted = new FormData(this);
+                    submittedForms.push(this);
                 },
             );
             const { result } = renderHook(() => useOAuthFlow());
@@ -56,22 +68,7 @@ describe("OAuth form CSRF", () => {
 
 describe("OAuth initialization contract", () => {
     beforeEach(() => {
-        localStorage.clear();
-        sessionStorage.clear();
-        submittedForms = [];
         document.cookie = "csrftoken=django-csrf; path=/";
-        logger.updateConfig({
-            enableConsole: false,
-            enableBackendReporting: false,
-        });
-    });
-
-    afterEach(() => {
-        submittedForms.forEach((form) => form.remove());
-        localStorage.clear();
-        sessionStorage.clear();
-        logger.clearLogs();
-        logger.updateConfig(originalConfig);
     });
 
     it("submits the provider form before returning its completion promise", async () => {
@@ -112,5 +109,30 @@ describe("OAuth initialization contract", () => {
         const completion = result.current.initializeOAuth("github");
 
         await expect(completion).rejects.toBe(callbackError);
+    });
+});
+
+describe("OAuth navigation timing", () => {
+    it("holds a fast return for the minimum display time", () => {
+        vi.useFakeTimers();
+        sessionStorage.setItem("oauth_in_progress", "google");
+        sessionStorage.setItem("oauth_start_time", String(Date.now() - 100));
+        const { result } = renderHook(() => useOAuthFlow());
+        expect(result.current.canNavigate).toBe(false);
+        act(() => {
+            vi.advanceTimersByTime(499);
+        });
+        expect(result.current.canNavigate).toBe(false);
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+        expect(result.current.canNavigate).toBe(true);
+    });
+
+    it("allows navigation immediately after a slow return", () => {
+        sessionStorage.setItem("oauth_in_progress", "github");
+        sessionStorage.setItem("oauth_start_time", String(Date.now() - 3000));
+        const { result } = renderHook(() => useOAuthFlow());
+        expect(result.current.canNavigate).toBe(true);
     });
 });

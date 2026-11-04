@@ -1,6 +1,7 @@
 import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
+import testingLibrary from "eslint-plugin-testing-library";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
@@ -23,7 +24,7 @@ export default tseslint.config([
         extends: [
             js.configs.recommended,
             tseslint.configs.recommended,
-            reactHooks.configs["recommended-latest"],
+            reactHooks.configs.flat.recommended,
             reactRefresh.configs.vite,
         ],
         languageOptions: {
@@ -59,6 +60,16 @@ export default tseslint.config([
     {
         files: ["src/services/logger.ts", "src/services/consoleCapture.ts"],
         rules: { "no-console": "off" },
+    },
+    {
+        files: [
+            "**/__tests__/**/*.{js,jsx,ts,tsx}",
+            "**/*.{test,spec}.{js,jsx,ts,tsx}",
+        ],
+        extends: [testingLibrary.configs["flat/react"]],
+        settings: {
+            "testing-library/utils-module": "test-renderer",
+        },
     },
     eslintConfigPrettier,
 ]);

@@ -87,7 +87,7 @@ export const SequentialPaginationCtrl = memo(function SequentialPaginationCtrl({
           disabled={isPrevDisabled}
           onClick={handlePrev}
         >
-          <LuChevronLeft />
+          <LuChevronLeft data-testid="previous-page-icon" />
         </IconButton>
 
         <IconButton
@@ -97,7 +97,7 @@ export const SequentialPaginationCtrl = memo(function SequentialPaginationCtrl({
           disabled={isNextDisabled}
           onClick={handleNext}
         >
-          <LuChevronRight />
+          <LuChevronRight data-testid="next-page-icon" />
         </IconButton>
       </ButtonGroup>
     </Box>

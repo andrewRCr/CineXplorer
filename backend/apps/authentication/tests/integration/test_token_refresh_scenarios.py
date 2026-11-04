@@ -204,8 +204,8 @@ def test_expired_refresh_token_redirect_to_login(
     # Step 1: Create expired refresh token
     # (Simulates "14 days passed" - both access and refresh expired)
     expired_refresh = RefreshToken.for_user(cast(AbstractBaseUser, verified_user))
-    expired_refresh.set_exp(lifetime=timedelta(seconds=-1))  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
-    expired_refresh.access_token.set_exp(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    expired_refresh.set_exp(lifetime=timedelta(seconds=-1))  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    expired_refresh.access_token.set_exp(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
         lifetime=timedelta(seconds=-1)
     )
 

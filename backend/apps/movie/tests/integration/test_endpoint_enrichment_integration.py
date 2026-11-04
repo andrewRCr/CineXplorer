@@ -79,7 +79,7 @@ def create_movie_stub(tmdb_id: int, title: str = "Test Movie") -> Movie:
 )
 def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     api_client: Client,
-    user: User,  # type: ignore[valid-type]
+    user: User,
     endpoint: str,
     mock_path: str,
 ) -> None:
@@ -198,7 +198,7 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
 )
 def test_discovery_endpoint_returns_none_for_movies_without_user_data(
     api_client: Client,
-    user: User,  # type: ignore[valid-type]
+    user: User,
     endpoint: str,
     mock_path: str,
 ) -> None:
@@ -241,7 +241,7 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
     api_client: Client,
-    user: User,  # type: ignore[valid-type]
+    user: User,
 ) -> None:
     """Test that movie detail endpoint includes user_movie_data for authenticated users.
 
@@ -349,7 +349,7 @@ def test_movie_detail_endpoint_works_for_unauthenticated_user(
 )
 def test_enrichment_handles_multiple_movies_efficiently(
     api_client: Client,
-    user: User,  # type: ignore[valid-type]
+    user: User,
     endpoint: str,
     mock_path: str,
 ) -> None:

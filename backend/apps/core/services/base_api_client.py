@@ -488,7 +488,7 @@ class BaseApiClient(ABC):
 
             response = self.session.get(
                 url,
-                params=request_params or None,  # type: ignore[arg-type]
+                params=request_params or None,  # pyright: ignore[reportUnknownArgumentType]
                 headers=prepared_headers,
                 timeout=self.timeout,
                 # Note: **kwargs ignored to avoid type errors - requests has

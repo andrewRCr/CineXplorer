@@ -310,13 +310,19 @@ authentication gaps that matter once sign-up is public are closed.
       validation, upload and heartbeat failures, independent cleanup commands and archive deletion before success.
       Actual R2/monitor pings, restored data and first-night evidence remain in 5.4.
 
-- [ ] **4.7 Update the runbook, `infrastructure/deploy/README.md`** (R26, with R9, R10 and R14)
-    - Each item R26 lists, in the order a maintainer meets them: first-time setup's additions, with R9's bucket
-      settings and R14's monitors; automatic and manual deploys, and where a CI deploy's output and outcome are; the
-      manual steps for a commit without the deploy script; updating the server itself; rollback with R26's target
-      rule; R10's restore; the nightly jobs; the monitors; the move to the production host
-    - The opening note on what staging supports
-    - Check: every shell block passes `bash -n`, and every Compose command selects the production file and env file
+- [x] **4.7 Update the runbook, `infrastructure/deploy/README.md`** (R26, with R9, R10 and R14)
+    - Updated staging's supported flows and first-time setup for the separate CI key, restricted GitHub environment,
+      private storage/retention, monitors, operations env and deployed provider apps. Live OAuth/mail credentials
+      wait until the hardened version serves and its checks pass.
+    - Documented automatic/manual deploys, private outcomes after session loss, bootstrap upgrades inside the shared
+      lock and the legacy manual path with success-only history. Rollback selects its target from history/container
+      identity, preserves schema comparison/reversal and requires correcting main before the next code push.
+    - Added R2 restore with a verified live recovery copy before schema replacement, transaction-bound restore,
+      migration/startup checks and recovery of the copy on failure. Included nightly operations, alert evidence,
+      first-night checks and the production hostname move. Preserved SSH recovery and persistent-state guidance.
+    - Checks: all 34 shell blocks passed `bash -n`; all 33 Compose calls select the production file and external env
+      file; markdown lint and whitespace checks passed. Corrected mechanical wrapping and kept project-process
+      references out of the durable runbook. External setup/live evidence remains in Phase 5.
 
 ### **Phase 5:** Staging takes this change and proves it live
 

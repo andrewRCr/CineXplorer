@@ -1,0 +1,656 @@
+# Task List: Browsable Stack per Worktree
+
+**PRD:** `prd-worktree-stack.md`
+**Created:** 2026-11-04
+**Branch:** `technical/worktree-stack`
+**Base Branch:** `main`
+**Status:** Pending
+
+## Overview
+
+**Purpose:** Let each linked worktree serve the full app in a browser on its own port, beside the main checkout's
+stack and every other worktree's, with one command each to create and prepare a worktree, start its browsable stack
+and remove it after its branch merges.
+
+## Scope
+
+### Will Do
+
+- `scripts/worktree.mjs` with `create` (and `--existing`, `--work-unit`), `provision`, `browse` and `remove` (and
+  `--keep-branch`), `.worktreeinclude`, and the script's tests in CI (R1–R8, R13, R14)
+- One Compose override for a worktree's test and browsable stacks, renamed from the test-stack file, with the main
+  checkout's stack unchanged (R9, R10)
+- `seed_dev_data`: a dev account, and the blacklist loaded from its tracked file (R11, R15)
+- `seed-session-notes.mjs`, which writes a work unit's starting session notes, and its tests (R16, R17)
+- The worktree, errand, activation, archive and session-start workflows, the personal workspace README, the quick
+  reference, the export script's header, and the rule exception for the seeding script's path (R12)
+- Proving it live on this machine beside the main checkout's stack
+
+### Won't Do
+
+- Google and GitHub sign-in in a worktree, and copying the main checkout's development data into one
+- Staying signed in to several stacks in one browser profile
+- An agent skill wrapping the script; a PRD, task list or session notes in a new worktree beyond `--work-unit`'s
+- Changes to the main checkout's stack, ports, base Compose file, Caddyfiles or `settings.py`
+- End-to-end test configuration that targets a worktree's port
+- Deleting an unmerged branch, and removing a worktree another tool created and locked
+- Guarding against two `provision` runs racing for a port, detecting a port another program holds, and rebuilding a
+  worktree's frontend image after its dependencies change
+
+---
+
+## Tasks
+
+### **Phase 1:** A work unit's worktree starts with its session notes
+
+- [ ] **1.1 `seed-session-notes.mjs` writes a work unit's starting notes** (R16, R17, R13; Criterion 1)
+
+    - [ ] **1.1.a Write tests** in `.arc/reference/harness-hooks/seed-session-notes.test.mjs` (new)
+        - Fixture as `compaction-recovery.test.mjs` builds one: git isolated from the developer's configuration
+          (its `GIT_ENV`), a main checkout with one folder under `.arc/user/`, and a linked worktree on a branch
+          `{type}/{name}` made with `git worktree add`; the script runs with the worktree as its working directory
+        - Refusals, each exiting non-zero and writing nothing, with its reason asserted: run in the main checkout; no
+          folder under the main checkout's `.arc/user/`, and two folders, the message naming what it found; a
+          detached HEAD; branches not of the form `{type}/{name}` (`main`, `Technical/x`, `technical/-x`,
+          `technical/a/b`); notes already in place, left byte for byte as they were
+        - The written file: `.arc/user/{identity}/{name}/SESSION-NOTES.md` in the worktree, none in the main
+          checkout; each field and section as R16 lists them; the path printed
+        - Expect tests to FAIL initially, each on its own assertion: a missing or crashing script cannot pass a case
+          that asserts a reason or a field
+
+    - [ ] **1.1.b Write `.arc/reference/harness-hooks/seed-session-notes.mjs`**
+        - Node's built-in modules only. The main checkout is the parent of
+          `git rev-parse --path-format=absolute --git-common-dir`; the script is in the main checkout when that
+          equals its own top level
+        - Identity as `compaction-recovery.mjs`'s `resolveIdentity` reads it (directories only, sorted). Mirror its
+          `mainCheckout` and `resolveIdentity` rather than import them: importing that module runs its hook entry point
+        - The branch form is R3's: `{type}` lowercase letters, `{name}` lowercase letters, digits and hyphens starting
+          with a letter or digit
+        - The skeleton is `session-handoff.md` § 2's, with R16's values
+        - Tests should now PASS
+
+    - [ ] **1.1.c Run the tests in CI:** the `markdown` job's "Test recovery hooks" step in `.github/workflows/ci.yml`
+      runs `seed-session-notes.test.mjs` beside `compaction-recovery.test.mjs`; rename the step to cover both
+      (Sequencing note on `technical/launch-readiness`, which moves this step)
+
+### **Phase 2:** One command creates and prepares a worktree, and its test stack runs
+
+**Needs:** nothing for 2.1–2.3, whose tests replace Docker and npm; Docker and this worktree's test stack for 2.4.
+
+- [ ] **2.1 `provision` writes the worktree's `infrastructure/.env` with its own port and key** (R1, R4 step 3, R5, R6,
+  R13, R14; Criterion 1)
+
+    - [ ] **2.1.a Write the fixture and tests** in `scripts/worktree.test.mjs` (new)
+        - Fixture (R14): in a temporary folder, a bare `origin` whose `main` tracks `.gitignore` (the four env files,
+          `infrastructure/dev-certs/*.pem`, `.venv-backend`, `.claude`, `.codex`), `.worktreeinclude`,
+          `infrastructure/docker-compose.yml` and `infrastructure/docker-compose.worktree.yml` as stand-ins; a main
+          checkout cloned from it, holding stand-in gitignored files (`backend/config/.env`, `frontend/.env`,
+          `frontend/.env.development`, an `infrastructure/.env` without the worktree keys, `cert.pem` and `key.pem`)
+          and `.venv-backend`, `.claude` and `.codex` folders. Git isolated as in 1.1.a
+        - Stubs (Phase 2 note): `docker` and `npm` executables first on `PATH` append their arguments and working
+          directory to a log the test reads, and fail when the test asks. The `docker` stub answers as Docker does:
+          `compose ... config` with a `name:` line the test sets followed by a `services:` block holding a marker
+          value, standing in for the env files' values; a label-filtered `ls -q` with IDs the test supplies
+        - In worktrees made with `git worktree add` beside the main checkout as `{primary}.{name}`:
+            - no `infrastructure/.env`: the main checkout's is copied, then `COMPOSE_PROJECT_NAME=cinexplorer-{name}`,
+              `SITE_PORT` and a 50-character `[a-z0-9]` `WORKTREE_SECRET_KEY` are appended
+            - a file already setting `COMPOSE_PROJECT_NAME` and `SITE_PORT` keeps both values and gains only the key;
+              a second run changes nothing
+            - names: a folder `{primary}.Some-Name` gives `cinexplorer-some-name`; `{primary}.my_wt` refuses
+            - ports: the first worktree gets 8445; with other worktrees claiming 8445 and 8447, the next gets 8446;
+              with every port from 8445 to 8499 claimed, it refuses; a worktree folder deleted without
+              `git worktree remove` claims nothing
+        - `provision` in the main checkout refuses; `--help` describes the four commands; an unknown command refuses
+        - Every refusal case asserts its reason as well as the exit status and the absent side effects
+        - Expect tests to FAIL initially
+
+    - [ ] **2.1.b Write `scripts/worktree.mjs` with `provision`'s env step**
+        - Node's built-in modules only, run as `node scripts/worktree.mjs <command>` from a checkout's root. Each
+          refusal prints its reason and exits non-zero; a git, Docker or npm call that fails stops the script with
+          that command's output; no git call carries `--force`, `-D` or `-f`
+        - Three git calls answer through their exit status, which the script reads rather than treats as a failure:
+          `git check-ignore` (2.2), `git cat-file -e` (2.3) and `git merge-base --is-ancestor` (4.1)
+        - The main checkout is the parent of `git rev-parse --path-format=absolute --git-common-dir`; a linked
+          worktree's top level differs from it
+        - Keys are read by name at a line's start and appended when missing, never rewritten
+        - The port: the lowest from 8445 to 8499 that no other registered worktree's `infrastructure/.env` claims
+          (`git worktree list --porcelain`); the key from `crypto.randomInt` over `[a-z0-9]`
+        - Tests should now PASS
+
+    - [ ] **2.1.c Run the tests in CI** in 1.1.c's step
+
+- [ ] **2.2 `provision` copies the include files, links the shared folders, checks the project name and installs the
+  frontend** (R2, R4 steps 1, 2, 4 and 5, R14; Criterion 1)
+
+    - [ ] **2.2.a Write tests** in `scripts/worktree.test.mjs`
+        - Copies each file `.worktreeinclude` matches from the main checkout; keeps a copy the worktree already has;
+          skips a matched file the worktree's ignore rules don't ignore (an extra fixture pattern for an untracked,
+          unignored file)
+        - Links `.venv-backend`, `.claude` and `.codex` to the main checkout's; leaves an entry already there
+        - Calls `docker compose` with both files and `config` in the worktree: a `name: cinexplorer-{name}` answer
+          passes, and the output carries the name line and never the stub's marker; another name refuses
+        - Runs `npm ci`, then `npm run typegen`, in `frontend/`; when `npm ci` fails, provisioning stops with its
+          output and a non-zero exit, and `typegen` does not run
+        - In a worktree made by `git worktree add` alone with the include files already copied, as a post-create
+          command finds it, `provision` completes and keeps them; a second run adds nothing and repeats the check and
+          the install
+        - Every refusal case asserts its reason
+        - Expect tests to FAIL initially
+
+    - [ ] **2.2.b Add `.worktreeinclude` and the remaining steps**
+        - `.worktreeinclude` at the root lists `backend/config/.env`, `frontend/.env`, `frontend/.env.development` and
+          `infrastructure/dev-certs/*.pem`, and not `infrastructure/.env`
+        - The copy reads the worktree's own `.worktreeinclude`, the branch's list: in the main checkout,
+          `git ls-files --others --ignored --exclude-from=<worktree>/.worktreeinclude` names the untracked files the
+          patterns match (today exactly the five files), and each is copied where the worktree lacks it and
+          `git check-ignore` there confirms the worktree ignores it
+        - Steps run in R4's order: copy, link, env (2.1), check, install
+        - Tests should now PASS
+
+- [ ] **2.3 `create` cuts a branch into a provisioned worktree** (R3, R14; Criterion 1)
+
+    - [ ] **2.3.a Write tests** in `scripts/worktree.test.mjs`
+        - Refusals, each before `git worktree add` and each with its reason asserted: run from a linked worktree;
+          branches not of the form (`fix`, `Fix/x`, `fix/-x`, `fix/x_y`); the folder `{primary}.{name}` exists; the
+          branch exists locally, and only on `origin`; `--existing` on a branch checked out elsewhere; `--existing`
+          on a branch without `infrastructure/docker-compose.worktree.yml`, saying to merge `main` into it first;
+          `--work-unit` with `--existing`
+        - A new branch: the worktree at `{primary}.{name}` on `{type}/{name}` from `origin/main`, with no upstream,
+          and provisioned; the output names the folder, `git push -u origin {type}/{name}` and the `browse` command
+        - `--existing`: a branch only on `origin`, and a local one, are each checked out and provisioned
+        - `provision` failing (the `npm` stub fails): the output gives the recovery (`node scripts/worktree.mjs
+          provision` in the worktree, then for `--work-unit` the seeding script) and the exit is non-zero
+        - `--work-unit`: a stand-in seeding script, tracked by the fixture at
+          `.arc/reference/harness-hooks/seed-session-notes.mjs`, records one run in the new worktree after `provision`;
+          without the flag it does not run; when the stand-in fails, the worktree stays as provisioned, the output
+          says the seeding script can be run again, and the exit is non-zero
+        - Expect tests to FAIL initially
+
+    - [ ] **2.3.b Implement `create`**
+        - From the main checkout only. `git fetch origin` before the branch checks; then
+          `git worktree add --no-track -b {type}/{name} {primary}.{name} origin/main`, or for `--existing`
+          `git worktree add {primary}.{name} {branch}`, after `git cat-file -e` confirms the branch (local, else
+          `origin/{branch}`) has the override
+        - Runs `provision`'s steps against the new checkout, then for `--work-unit`
+          `node .arc/reference/harness-hooks/seed-session-notes.mjs` in it. The flag's help text says only that it
+          writes the starting notes for planned work (Decision 16)
+        - Tests should now PASS
+
+- [ ] **2.4 One override runs the test stack and the browsable stack, and this worktree's test stack runs on it**
+  (R9, R10; Criteria 3, 4 and 5)
+
+    - [ ] **2.4.a Rename and rewrite the override:** `git mv` `infrastructure/docker-compose.test-stack.yml` to
+      `infrastructure/docker-compose.worktree.yml`
+        - The project name still requires `COMPOSE_PROJECT_NAME`; each use of `SITE_PORT` and `WORKTREE_SECRET_KEY`
+          requires it too (`${VAR:?message}`)
+        - `backend`: no published ports; today's `command`, `healthcheck` and `volumes` overrides go, so the base
+          file's command, certificate mounts and health check apply; `FRONTEND_URL`, `CSRF_TRUSTED_ORIGINS` and
+          `CORS_ALLOWED_ORIGINS` set to `https://localhost:${SITE_PORT}`, and `DJANGO_SECRET_KEY` to
+          `${WORKTREE_SECRET_KEY}`
+        - `dev-db` and `redis` as today
+        - `frontend`: in the `browser` profile, no published ports, `VITE_BASE_URL` set to
+          `https://localhost:${SITE_PORT}` and `VITE_BASE_API_URL` to that plus `/api`
+        - `caddy`: in the `browser` profile, publishing only `127.0.0.1:${SITE_PORT}:8444` (Phase 2 note on merging
+          `ports`)
+        - Memory limits: the backend keeps today's value until 2.4.b measures; `dev-db` and `redis` keep R9's 512 MiB
+          and 128 MiB; the frontend and Caddy start from a provisional value until 3.4 measures
+        - The header comment gives both modes' commands (test mode `up -d dev-db redis backend`, the browsable stack
+          `browse`, and the stop command) and, from 2.4.b and 3.4, the measurements
+
+    - [ ] **2.4.b Provision this worktree and run its test stack** (Criterion 5)
+        - This worktree was set up by hand before this change: `node scripts/worktree.mjs provision` here keeps
+          `COMPOSE_PROJECT_NAME=cinexplorer-worktree-stack` and adds `SITE_PORT`, `WORKTREE_SECRET_KEY` and both
+          certificates; record what it added, by name, not value
+        - With both files: `up -d dev-db redis backend`, then `exec -T backend nice -n 15 pytest apps/` to a pass,
+          as the only test run on the machine
+        - Sample the backend's and `dev-db`'s memory during that run, with the backend serving. Set the backend's
+          limit with headroom above its peak. `dev-db` and `redis` keep R9's 512 MiB and 128 MiB: record `dev-db`'s
+          peak and stop if it nears 512 MiB. Record the peaks in the header comment
+
+    - [ ] **2.4.c Check the configuration** (Criteria 3 and 4)
+        - Against the merge base, so `main`'s own changes don't show and uncommitted edits do:
+          `git diff $(git merge-base HEAD origin/main) --stat --` over `infrastructure/docker-compose.yml`, the
+          Caddyfiles, `backend/config/settings.py`, `infrastructure/docker-compose.ci.yml` and the tracked env
+          examples (`git ls-files '*.example'`) is empty (R10)
+        - `config` with both files and `--profile browser` lists five services, `caddy` the only one publishing a port,
+          bound to `127.0.0.1:{SITE_PORT}`, and a memory limit on each. Print only the ports and limits
+          (`--format json` through a filter): `config` output carries the env files' values. The frontend's and
+          Caddy's limits are still provisional here; 3.4 reruns this check for Criterion 4's evidence
+
+- [ ] **2.5 The workflows create worktrees with `create`, and the rules record the seeding script's path** (R12)
+    - `worktree-sessions.md` § Provisioning gives `create`, `create --existing`, `create --work-unit` and `provision`,
+      the last also for bringing an existing worktree up to date (certificates, port, key), in place of the manual
+      steps. It keeps the section's two points: a work unit is provisioned before its planning starts, its PRD and task
+      list are committed on its branch, and activation runs in the worktree later, skipping its branch step; and its
+      session notes start in planning state, now written by `create --work-unit`, which activation turns to execution.
+      The bullets that stay true (project name, install warnings, Codex) stay; the Links bullet describes the links
+      `provision` makes, without `ln -sfT`
+    - § Test Stack as a whole: it names `docker-compose.worktree.yml` in its prose and commands, says the backend
+      serves rather than idles, and says the override refuses to resolve until `provision` has written
+      `COMPOSE_PROJECT_NAME`, `SITE_PORT` and `WORKTREE_SECRET_KEY`
+    - § Same-Session Errands, `run-errand.md` § Where It Runs and the errand skill
+      (`.arc/reference/agent/skills/errand/SKILL.md`): an errand's worktree is set up by `create`, which needs Docker
+      running and installs the frontend's dependencies, in place of setting it up only as far as its checks need
+    - `run-errand.md` § 1 creates a linked worktree with `create`; its in-place `git switch -c` gains `--no-track`
+    - `activate-work-unit.md` § Where It Runs, Step 1's worktree line and Step 7, and `.arc/user/README.md` § Who
+      writes what, say `create` made the worktree and branch and `create --work-unit` wrote the notes, where they now
+      say provisioning did
+    - `DEVELOPMENT-RULES.md` § Code Documentation Standards records Decision 16's exception: the seeding script's path
+      and the `--work-unit` flag in `scripts/worktree.mjs` and its tests. The root `AGENTS.md` review guideline on
+      repository contract coherence defers to it. For the header, Phase 2 note
+
+### **Phase 3:** A worktree serves the app on its own port
+
+**Needs:** Docker and this worktree's own stack, and the Owner at the browser for 3.4. The main checkout's stack may
+run beside it.
+
+- [ ] **3.1 Merge `main` with the tracked blacklist** (R11's dependency)
+    - Once #75 has merged, and on the Owner's approval of the merge: `git fetch origin` and `git merge origin/main`,
+      which also brings #76, #77 and #79 (Sequencing note). If #75 has not merged, stop here: 3.2 needs
+      `sync_blacklist`
+    - Rebuild the backend image (`main` now pins its base image by digest), then `pytest apps/movie/` passes in this
+      worktree's test stack
+
+- [ ] **3.2 `seed_dev_data` gives a fresh database an account and the blacklist** (R11, R15; Criterion 2)
+
+    - [ ] **3.2.a Write tests** in `backend/apps/core/tests/integration/test_seed_dev_data.py` (new), through
+      `call_command`, against the real test database
+        - Outside `development` (`override_settings(ENVIRONMENT="staging")`): `CommandError` with a message; no user
+          created and the blacklist untouched
+        - A first run creates one user `dev` with `dev@example.com` and one `EmailAddress` for it, verified and
+          primary; `POST /api/token/` with `login` `dev` and password `cinexplorer-dev` answers `200` (it answers `403`
+          to an unverified address); a second run still leaves one user and one address
+        - An existing `dev` user, with another email and password and no `EmailAddress`, is left as it was
+        - Another user holding `DEV@Example.com`: `CommandError` naming the conflict, no `dev` user, nothing changed
+          (the user model's email constraint ignores case, and so does the check)
+        - From an empty blacklist table, the table's IDs afterwards equal the tracked file's (`read_blacklist` and
+          `BLACKLIST_FILE` in `apps/movie/services/data_quality/blacklist_file.py`)
+        - The output says whether the account was created and carries `sync_blacklist`'s summary
+        - Expect tests to FAIL initially
+
+    - [ ] **3.2.b Write `backend/apps/core/management/commands/seed_dev_data.py`**
+        - `CommandError` unless `settings.ENVIRONMENT == "development"`
+        - The conflict check (`email__iexact`, excluding `dev`) runs before any write
+        - The account: `get_or_create` on `username="dev"` through the configured user model's manager, then, when
+          created, `set_password` and the verified, primary `EmailAddress`, all in one `transaction.atomic`
+          (DEVELOPMENT-RULES § Data Integrity: no read followed by a separate write)
+        - Then `call_command("sync_blacklist", stdout=self.stdout)`
+        - Outside tests, #76's rules flag a hard-coded password by form: `S105` on a named constant, `S106` on a
+          `password=` keyword argument, and nothing on a positional `set_password("...")`. Suppress inline only the
+          rule Ruff reports for the form written, with the reason (a documented, development-only credential); an
+          unneeded `noqa` fails `RUF100`
+        - Tests should now PASS, with `main`'s lint and type rules (#76, #77) applied
+
+- [ ] **3.3 `browse` starts the stack, migrates and seeds** (R7, R14; Criterion 1)
+
+    - [ ] **3.3.a Write tests** in `scripts/worktree.test.mjs`
+        - Refusals, each with its reason asserted: in the main checkout, and in a worktree whose
+          `infrastructure/.env` lacks `COMPOSE_PROJECT_NAME`, `SITE_PORT` or `WORKTREE_SECRET_KEY`, each
+        - The calls, in order, in the worktree, each `docker compose` naming both files and `--profile browser`:
+          `up -d --wait`, then `exec -T backend python manage.py migrate --noinput`, then
+          `exec -T backend python manage.py seed_dev_data`; the output gives `https://localhost:{SITE_PORT}` and the
+          dev account's sign-in
+        - When `up` fails, the log shows the `up` call, the output carries the stub's failure output, no `manage.py`
+          call follows, and the exit is non-zero
+        - Expect tests to FAIL initially
+
+    - [ ] **3.3.b Implement `browse`**
+        - `up -d --wait` builds images the project lacks and waits for running services and healthy health checks
+        - Tests should now PASS
+
+- [ ] **3.4 This worktree's browsable stack serves its app, and the limits are measured** (R7, R9; Criterion 4)
+    - `node scripts/worktree.mjs browse` here; `https://localhost:{SITE_PORT}/` and `/api/health-check/` answer `200`;
+      a second `browse` applies no migration and leaves the account as it is
+    - With the app loaded and navigated in the browser (the Owner) and hot reload active, sample the frontend's and
+      Caddy's memory; set their limits with headroom and record the peaks in the override's header comment
+    - Rerun 2.4.c's `config` check with every limit measured (Criterion 4)
+    - Stop with `down`, both files and `--profile browser`; the volumes stay
+
+- [ ] **3.5 The workflows and references describe both stacks** (R12)
+    - `worktree-sessions.md`:
+        - A new section on the browsable stack: `browse`, the stop command, the port in `infrastructure/.env` and
+          changing it when another program holds it, and the dev account. One signed-in stack per browser profile,
+          since cookies on `localhost` are shared across ports; a second profile or a private window keeps a second
+          stack signed in. Google and GitHub sign-in work only on the main checkout. A browser that has not trusted
+          the dev certificate asks again for each new port
+        - § When to Use One and the main checkout's role list what still needs the main checkout: OAuth sign-in and
+          its development data
+        - § What Runs Where: backend tests and API types run through the worktree's own stack, in either mode
+    - `run-errand.md` § Where It Runs runs an errand in place on the main checkout only when it needs OAuth sign-in
+      or the main checkout's development data
+    - `session-init.md` § 5: in a worktree, start the test stack or `browse`, whichever the next action needs, and
+      expect five containers while the browsable stack runs, three while the test stack runs, none otherwise
+    - `QUICK-REFERENCE.md`: the expected containers, the network notes and the Docker Assumptions checklist count as
+      `session-init.md` does; the type-generation note and the list of a worktree's memory limits cover both modes
+      and all five limits
+    - The header comment of `frontend/scripts/export-openapi.js` describes a worktree's stack in either mode
+
+### **Phase 4:** One command removes a worktree with its stack
+
+- [ ] **4.1 `remove` tears down a merged worktree and keeps unmerged work** (R8, R14; Criterion 1)
+
+    - [ ] **4.1.a Write tests** in `scripts/worktree.test.mjs`
+        - Refusals, each before any Docker call, changing nothing, with its reason asserted: run from a linked
+          worktree; a name that is not a registered worktree, or one with a detached HEAD; an unmerged branch;
+          uncommitted changes to a tracked file; an untracked file the ignore rules don't cover; a locked worktree
+          (`git worktree lock`); an `infrastructure/.env` naming a project other than `cinexplorer-{name}`
+        - A merged, clean worktree whose file names `cinexplorer-{name}`, with the main checkout on another branch,
+          and the `docker` stub answering each kind's listing with IDs: every listing filters by the label
+          `com.docker.compose.project=cinexplorer-{name}`, and the container listing includes stopped containers
+          (`-a`); the listed containers are stopped and removed before any
+          volume, network or image is removed, and each removal names the listed IDs; the folder is gone and
+          unregistered, the branch deleted, and `git fetch --prune` ran
+        - A merged worktree whose file names no project: no Docker call; removed, and its branch deleted
+        - `--keep-branch` on an unmerged worktree: its stack torn down and the worktree removed; the branch kept at
+          its commit
+        - Expect tests to FAIL initially
+
+    - [ ] **4.1.b Implement `remove`**
+        - R8's steps in order, every refusal before anything is deleted: after `git fetch origin`,
+          `git merge-base --is-ancestor {branch} origin/main` (skipped for `--keep-branch`); the `locked` line from
+          `git worktree list --porcelain`; `git status --porcelain` in the worktree; the project name
+        - Teardown: for containers, volumes, networks and images, list IDs with `--filter label=...` and `-q`, and
+          remove what is found; containers are stopped, then removed, before the other kinds. The container listing
+          takes `-a`: a stack stopped by `docker compose stop` or a Docker restart leaves exited containers, which
+          would hold its volumes and images
+        - `git worktree remove {primary}.{name}`; unless `--keep-branch`,
+          `git branch --set-upstream-to=origin/main {branch}` and `git branch -d {branch}`; then `git fetch --prune`
+        - Tests should now PASS
+
+- [ ] **4.2 The workflows remove worktrees with `remove`** (R12)
+    - `worktree-sessions.md` § Removal gives `remove`, and `remove --keep-branch` for a review checkout or abandoned
+      work. It says removal deletes the worktree's gitignored files, a work unit's session notes and review records
+      among them, so paused work keeps its worktree
+    - `archive-completed.md` § 9 and `run-errand.md` § 6 give `remove` and say it deletes the local branch, keeping
+      their remote-deletion and archival steps; `run-errand.md` § 6 gives `--keep-branch` for an abandoned errand
+    - Check: `git grep -n docker-compose.test-stack.yml -- ':!.arc/reference/archive' ':!.arc/backlog' ':!.arc/active'`
+      finds nothing (the planning documents and the archive name the old file on purpose)
+
+### **Phase 5:** Worktrees serve beside the main checkout, stay apart, and are removed
+
+**Needs:** the main checkout's stack running on 8444, and the Owner at the browser for 5.2 and 5.3. The throwaway
+worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed by 5.4.
+
+- [ ] **5.1 Two worktrees made by `create` serve at their own ports** (Criterion 6)
+    - From the sandbox's main checkout: `create chore/proof-a --work-unit` and `create chore/proof-b`, then `browse`
+      in each
+    - `/` and `/api/health-check/` answer `200` at each worktree's port, and at `https://localhost:8444`
+    - `proof-a` holds `.arc/user/{identity}/proof-a/SESSION-NOTES.md`; `proof-b` holds no session notes
+
+- [ ] **5.2 A worktree's sign-in, data and tokens stay its own** (Criterion 7)
+    - In the Owner's browser at `proof-a`'s port: sign in as the dev account, add a movie to the watchlist, reload,
+      and it is still there; `proof-a`'s backend log shows the requests; the main checkout's database has no new
+      rows for them (row counts before and after)
+    - With a refresh cookie `proof-a`'s stack issued to the dev account (`POST /api/token/`),
+      `POST /api/auth/refresh` to `proof-a` returns new tokens, and the same request to `https://localhost:8444`
+      answers `400` with "Invalid or expired refresh token" and no tokens. Where a stack runs the stricter CSRF
+      check, the request carries what the Sequencing note lists; a `403` is that check, not the signature failure
+
+- [ ] **5.3 Hot reload works at a worktree's port** (Criterion 8)
+    - Edit a frontend source file in `proof-a`; the page at its port updates without a manual reload; revert the edit
+
+- [ ] **5.4 `remove` cleans up a merged worktree and keeps an unmerged one** (Criterion 9)
+    - `proof-b` has no commits of its own, so its branch is merged: `remove proof-b` leaves no containers, volumes,
+      networks or images labelled `com.docker.compose.project=cinexplorer-proof-b`, no folder and no local branch
+    - Commit once in `proof-a`: `remove proof-a` refuses and leaves its folder, branch and stack in place; then
+      `remove proof-a --keep-branch` removes the folder and stack and keeps the branch at that commit
+    - Delete the sandbox afterwards (Phase 5 note)
+
+### **Phase 6:** Verification
+
+- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+
+## Implementation Notes
+
+### Sequencing with `main`
+
+- `origin/main` has moved since the PRD: #76 (focused Ruff rules; `S105` and `S106` allowed only in tests), #77
+  (rule-specific type-check suppressions, and Pyright run with `--warnings` in CI) and #79 (Dependabot for npm and
+  Docker, with the base images pinned by digest). Phases 1, 2 and 4 add no backend code; 3.1 merges `main` before
+  any, and needs #75 (the tracked blacklist and `sync_blacklist`) merged first
+- `technical/launch-readiness` also changes `infrastructure/` and CI: whichever of the two merges second merges `main`
+  first. It moves the "Test recovery hooks" step from `ci.yml`'s `markdown` job into a new
+  `.github/workflows/docs.yml`; whichever merges second keeps this change's `node --test` files in that step
+- That branch's CSRF change puts Django's check on every unsafe request. Requests through a worktree's Caddy are
+  same-origin, and the override names the worktree's origin in `CSRF_TRUSTED_ORIGINS`, so a browser's requests pass.
+  For `curl` (5.2), what counts is whether the change is in the code a given stack runs: a sandbox worktree runs this
+  branch, which has it once a merge of `main` brings it in; the main checkout runs whatever branch it has checked
+  out. Against such a stack, take the `csrftoken` cookie from `GET /api/csrf/`, send its value as `X-CSRFToken`,
+  and send `Origin: https://localhost:{port}`: on HTTPS, Django refuses a request with neither `Origin` nor
+  `Referer` before it reads the token
+- R12's Provisioning edits build on #69 (activation in a work unit's own worktree), already merged here (`cc4560d2`)
+- The inbox errand that adds `.mjs` to the pre-commit check of process references: if it lands first, it skips the
+  seeding script's recorded path
+
+### Running things here
+
+- Before any frontend check, run `npm ci` and `npm run typegen` in `frontend/`: this checkout's `node_modules` predates
+  `main`'s dependency changes. No Compose volumes exist for `cinexplorer-worktree-stack`, so its first test stack
+  starts on a fresh database
+- `scripts/` and `.arc/reference/harness-hooks/` have no lint configuration: check their files with `node --check`
+  and their tests (`node --test`)
+- **One backend test run at a time** across every stack on the machine, the main checkout's included
+- Memory peaks: sample `docker stats --no-stream --format '{{.Name}} {{.MemUsage}}'` about once a second through the
+  measured activity and keep the highest value per container
+
+### Phase 2
+
+- **Stubs stay faithful:** real `docker compose config` prints `name:` then `services:` with the env files' values
+  inlined, so the stub answers the same shape and the test proves the marker never reaches the output. Real label
+  listings return IDs; an empty answer would make the teardown order untestable
+- **Fixture speed:** the full-range allocation case needs 55 registered worktrees; `git worktree add --no-checkout`
+  keeps that quick, with only `infrastructure/.env` written in each
+- **`--existing` on an `origin`-only branch:** `git worktree add {path} {branch}` creates a local branch tracking
+  `origin/{branch}`, which suits a branch checked out for review
+- **The links stay ignored:** `.gitignore` names `.venv-backend`, `.claude` and `.codex` without a trailing slash,
+  which matches a link as well as a folder
+- **Compose merging:** an override's `ports` list adds to the base file's. `!reset []` empties it; `caddy` needs
+  `!override` so the base file's `8444:8444` does not stay beside the loopback binding. `environment` lists merge by
+  key, so the override's values replace the base file's and the `env_file`'s
+- **Precedence:** Vite gives `VITE_*` variables already in the environment priority over its `.env` files, and
+  `frontend/src/config/baseUrls.ts` reads both; `settings.py` reads `backend/config/.env` with `read_env`, which
+  leaves variables already set
+- **DEVELOPMENT-RULES' header:** no document states when it changes, and its history is mixed: some changes left it
+  alone, and 2026-10-30 raised `Version` twice. Its last three changes (2026-11-03 and 2026-11-04) follow one
+  pattern: a new `Hash` and `Updated` date each time, with `Version` raised by the first change of a day. Follow that
+- **After the merge:** refresh the installed errand skill from the main checkout with
+  `node .arc/reference/harness-hooks/install-errand-harness.mjs`
+
+### Phase 3
+
+- **Sign-in in tests:** `POST /api/token/` takes `login` (username or email) and `password`; its `5/m` throttle applies
+  only when a test enables throttling. `create_user` in `apps/core/tests/test_helpers.py` shows the verified
+  `EmailAddress` pattern
+
+### Phase 4
+
+- `git branch -d` checks the branch is merged into its upstream when it has one, otherwise into `HEAD`. Setting the
+  upstream to `origin/main` first lets a merged branch delete while the main checkout has another branch checked out
+- A list command with `--filter label=...` and `-q` prints nothing when no resource matches; skip that kind
+
+### Phase 5
+
+- **Why a sandbox:** `create` cuts branches from `origin/main`, which gains `.worktreeinclude` and the override only
+  when this change merges, so before the merge a throwaway made from it cannot be provisioned or browsed. The sandbox
+  makes this branch the `main` that `create` sees, and runs the same script:
+    - a bare repository in `~/dev/scratch/worktree-stack-proof/` (its own folder: nothing else under
+      `~/dev/scratch/` is touched) holding this branch's head as `main`, and a clone of it there as the
+      sandbox's main checkout, with the main checkout's gitignored env files and certificates copied in, an empty
+      `.arc/user/{identity}/` folder for `--work-unit`'s identity, and `.venv-backend`, `.claude` and `.codex` linked
+      to the main checkout's
+    - port allocation counts only the sandbox's worktrees, so stop this worktree's browsable stack first, or its
+      port may be allocated again
+    - afterwards remove `~/dev/scratch/worktree-stack-proof/`; the throwaways' Compose resources went with 5.4
+
+## Success Criteria
+
+### Implemented (checkable locally and in CI)
+
+- [ ] 1. `node --test scripts/worktree.test.mjs` and
+  `node --test .arc/reference/harness-hooks/seed-session-notes.test.mjs` pass, in CI as well, covering R14's and
+  R17's cases. They fail when allocation returns a port another worktree claims, when `provision` changes an existing
+  key, when seeding overwrites existing notes, or when `remove` makes a Docker call or changes anything for an
+  unmerged branch without `--keep-branch`, a worktree with uncommitted changes, a locked worktree, or a project name
+  other than `cinexplorer-{name}`, or makes a Docker call when the worktree's `infrastructure/.env` names no project.
+- [ ] 2. The backend tests for `seed_dev_data` pass, covering R15's cases.
+- [ ] 3. `docker compose -f infrastructure/docker-compose.yml config` in the main checkout gives the same published
+  ports as before this change: 8444, 8000, 5173, 5432 and 6379.
+- [ ] 4. In a provisioned worktree, `config` with both files and `--profile browser` lists all five services and shows
+  `caddy` as the only one with a published port, bound to `127.0.0.1:{SITE_PORT}`, and a memory limit on every
+  service.
+- [ ] 5. In a worktree set up by hand before this change, `provision` keeps its `COMPOSE_PROJECT_NAME` and adds the
+  missing keys and certificates, and its test stack (`up -d dev-db redis backend`) then runs `pytest apps/` to a
+  pass.
+
+### Proven live (on this machine, with the main checkout's stack running)
+
+- [ ] 6. Two throwaway worktrees made by `create`, one of them with `--work-unit`, and started by `browse` each answer
+  `200` on `/` and `/api/health-check/` at their own ports, while `https://localhost:8444` still does. The one made
+  with `--work-unit` holds starting session notes at `.arc/user/{identity}/{name}/SESSION-NOTES.md`, and the other
+  holds none.
+- [ ] 7. In the maintainer's browser, at a worktree's port: signing in as the dev account succeeds, a movie added to
+  the watchlist is still there after a reload, the worktree's backend log shows the requests, and the main checkout's
+  database has no new rows for them. With a refresh cookie that worktree's stack issued to the dev account
+  (`POST /api/token/`), `POST /api/auth/refresh` to that worktree's stack returns new tokens, and the same request to
+  `https://localhost:8444` is refused with 400 and the error "Invalid or expired refresh token", the signature
+  failure, and returns no tokens. (A validly signed token whose user is missing on that stack also gets 400, with a
+  different error, so the error text is what shows the key differs.)
+- [ ] 8. Editing a frontend source file in a worktree updates the page at its port without a manual reload.
+- [ ] 9. `remove` on a merged throwaway worktree whose stack ran leaves no containers, volumes, networks or images
+  labelled with its project, no folder and no local branch. On an unmerged one it refuses and leaves all of them in
+  place; with `--keep-branch` it removes the folder and stack and keeps the branch at its commit.
+
+## Review Log
+
+### 2026-11-04 · PRD · Pass 1
+
+- **Rubric:** assess-design-proportionality, design-audit, spec-review (detailed), over `prd-worktree-stack.md` and
+  the brief; runner a fresh read-only Claude subagent. Kept: `adversarial-review/prd-pass1.md`, `prompt-pass1.md`,
+  `report-pass1.md`.
+- **Verified:** 3 major, 5 minor, 1 not supported.
+- **Approved dispositions (Owner):**
+    - F1 major: `remove` refuses a locked worktree before any Docker call; Decision 2 says a later tool replaces
+      `create` and `remove`; non-goal for tool-locked worktrees. FIX (new design)
+    - F2 major: `remove --keep-branch` for unmerged worktrees; deleting an unmerged branch stays manual. FIX (new
+      design)
+    - F3 major: R12 adds run-errand § 1 (`create`; in-place `--no-track`), QUICK-REFERENCE 215 and 268, the export
+      script's header; strategy-work-organization's example left as written. FIX (local correction)
+    - F4 minor: grounding residue (certificate mounts, CSRF/CORS wording and actor, R11 import reason, backend limit
+      re-measured). FIX (local correction)
+    - F5 minor: partial blacklist fill accepted and documented. FIX (local correction)
+    - F6 minor: tests for `remove`'s project-name refusal and no-project skip. FIX (local correction)
+    - F7 minor: Decision 8's reason corrected. FIX (local correction)
+    - F8 minor: Criterion 4 names `--profile browser`; R4 step 4 names the expected project. FIX (local correction)
+    - F9: Caddy anonymous volumes. REJECT (not supported: the images declare no volumes)
+- **Stop reason:** not converged (approved fixes of major findings); fix check approved.
+- **Elapsed:** about 16 minutes.
+
+### 2026-11-04 · PRD · Fix check, round 1 since pass 1
+
+- **Rubric:** closure, behavioral grounding, propagation and completeness, new failure, over `prd-pass1.md` →
+  `prd-pass1-round1.md`; runner a fresh read-only Claude subagent (it also read `report-pass1.md`, not used as
+  evidence). Kept: `prompt-pass1-round1.md`, `report-pass1-round1.md`.
+- **Verified:** 1 major, 4 minor. Folds 1, 2, 5, 6, 7, 8 closed; 4 partly; 3 closed with a new failure.
+- **Approved dispositions (Owner):**
+    - F1 major: `--keep-branch` no longer offered for paused work; removal named as deleting the worktree's
+      gitignored files, session notes and review records among them; "nothing lost" narrowed. FIX (local correction)
+    - F2 minor: R12 rewrites run-errand § Where It Runs, worktree-sessions § Same-Session Errands and the errand
+      skill: errand worktrees are set up by `create`. FIX (local correction)
+    - F3 minor: Goal 3 and the user story match R8's refusal and flag. FIX (local correction)
+    - F4 minor: Criterion 1 adds the no-project skip. FIX (local correction)
+    - F5 minor: R12 adds QUICK-REFERENCE's Docker Assumptions count. FIX (local correction)
+- **Also landing (Owner-approved scope addition, 2026-11-04):** `create --work-unit` seeds the session notes through
+  a script under `.arc/reference/harness-hooks/`; R12 carries the activation change's two provisioning points.
+- **Elapsed:** about 11 minutes.
+
+### 2026-11-04 · PRD · Pass 2
+
+- **Rubric:** assess-design-proportionality, design-audit, spec-review (detailed), over `prd-pass2.md`, the brief and
+  the merged activation change's diff. Runner: **separation-failure** (self-labelled): the prompt's prior findings
+  carried pass 1's REJECT reason. Not counted as independent; its findings were source-verified and used as
+  evidence. Kept: `prompt-pass2.md`, `report-pass2.md`.
+- **Note on the round-1 fix check:** its prompt also carried a one-line reason (why the work-organization strategy's
+  example was left as written), though that runner labelled itself independent. Not rerun (Owner): Pass 3
+  re-reviews its folds.
+- **Verified:** 1 major, 3 minor.
+- **Approved dispositions (Owner):**
+    - F1 major: Criterion 7 gains a distinguishing refresh check (worktree control, 8444 refused); § 1's sign-in
+      bullet describes the refresh-cookie path. FIX (local correction)
+    - F2 minor: the `--work-unit` test uses a stand-in seeding script; notes content tested by R17; Decision 16's
+      exception names the test's stand-in path and the help text. FIX (local correction)
+    - F3 minor: `create` runs its own `provision`; `--existing` refuses a branch without the override; a failed setup
+      prints its recovery. FIX (local correction)
+    - F4 minor: R12 adds run-errand's in-place condition and session-init § 5's worktree stacks. FIX (local
+      correction)
+- **Stop reason:** not converged; Pass 3 approved, with a clean prompt (no disposition reasons).
+- **Elapsed:** about 23 minutes.
+
+### 2026-11-04 · PRD · Pass 3
+
+- **Rubric:** assess-design-proportionality, design-audit, spec-review (detailed), over `prd-pass3.md`, the brief and
+  the merged activation change's diff. Runner: independent (clean prompt; no session files loaded). Kept:
+  `prompt-pass3.md`, `report-pass3.md`.
+- **Verified:** 3 minor.
+- **Approved dispositions (Owner):**
+    - F1 minor: Criterion 7 requires the invalid-token refusal ("Invalid or expired refresh token"). FIX (local
+      correction)
+    - F2 minor: Decision 5 names `environ.Env.read_env`'s non-overwriting default. FIX (local correction)
+    - F3 minor: R12 records Decision 16's exception in DEVELOPMENT-RULES § Code Documentation Standards and the root
+      AGENTS.md review guideline. FIX (local correction)
+- **Follow-up (Owner):** pre-commit CHECK 8 not scanning `.mjs` captured in the inbox as an errand.
+- **Stop reason:** converged (confirmed minors only); fix check declined by the Owner, the fixes being wording.
+- **Elapsed:** about 22 minutes.
+
+### 2026-11-04 · Task list · Pass 1
+
+- **Rubric:** task-audit at full depth (its source-grounding floor), grounding and executability, and the task-list
+  process rules, over `tasks-worktree-stack.md` and `prd-worktree-stack.md` with its amendments; runner a fresh
+  read-only Claude subagent, independent (under `.arc/user/` it opened only its prompt and `.arc/user/README.md`; one
+  `grep -l` listed file names in the review folder without opening them). Kept: `tasks-pass1.md`,
+  `prd-tasks-pass1.md`, `prompt-tasks-pass1.md`, `report-tasks-pass1.md`.
+- **Verified:** 3 major, 10 minor.
+- **Approved dispositions (Owner):**
+    - F1 major: R10's unchanged-files check diffs against the merge base, not `origin/main`. FIX (local correction)
+    - F2 major: the `docker` stub answers `config` with a `services:` block holding a marker the test proves never
+      printed, and label listings with test-supplied IDs, so `remove`'s teardown order is asserted. FIX (local
+      correction)
+    - F3 major: the CSRF note for 5.2's `curl` adds `Origin` and keys on the code each stack runs. FIX (local
+      correction)
+    - F4 minor: the old override name check moves to 4.2, excluding the planning documents. FIX (local correction)
+    - F5 minor: `main`'s #76, #77 and #79 named; the backend image rebuilt after 3.1's merge; `S106` suppressed inline
+      for the dev password. FIX (local correction)
+    - F6 minor: launch-readiness moves the hook-test step into `docs.yml`. FIX (local correction)
+    - F7 minor: activation, the workspace README, the Links bullet and § What Runs Where join the documentation
+      tasks, completing R12. FIX (local correction)
+    - F8 minor: the measurement cross-reference corrected; `dev-db` keeps R9's 512 MiB, its peak recorded. FIX (local
+      correction)
+    - F9 minor: every refusal test asserts its reason. FIX (local correction)
+    - F10 minor: the rules-header note states the file's history. FIX (local correction)
+    - F11 minor: Phase 3 names the Owner at the browser. FIX (local correction)
+    - F12 minor: the three exit-status answers named; a seeding failure exits non-zero. FIX (local correction)
+    - F13 minor: the override rename and this worktree's provisioning move to the end of Phase 2 (2.4). FIX (local
+      correction)
+- **Stop reason:** not converged (approved fixes of major findings); fix check approved.
+- **Elapsed:** about 23 minutes.
+
+### 2026-11-04 · Task list · Fix check, round 1 since pass 1
+
+- **Rubric:** closure, behavioral grounding, propagation and completeness, new failure, over `tasks-pass1.md` →
+  `tasks-pass1-round1.md` and their diff; runner a fresh read-only Claude subagent, independent. Kept:
+  `prompt-tasks-pass1-round1.md`, `report-tasks-pass1-round1.md`.
+- **Verified:** 7 minor. Folds 1, 2, 3, 6, 11, 12 and 13 closed; 5 and 10 closed with grounding residue; 4, 7, 8 and
+  9 left sites unswept or a residual contradiction; one gap beside fold 2 predates the pass.
+- **Approved dispositions (Owner):**
+    - F1 minor: the rules-header note says the history is mixed and names the recent pattern. FIX (local correction)
+    - F2 minor: 3.2.b suppresses only the rule Ruff reports for the form written (`S105` or `S106`); an unneeded
+      `noqa` fails `RUF100`. FIX (local correction)
+    - F3 minor: 2.5 also rewrites `activate-work-unit.md` § Where It Runs. FIX (local correction)
+    - F4 minor: 2.5 updates § Test Stack as a whole (name, serving backend, required keys). FIX (local correction)
+    - F5 minor: 3.3.a's `up`-failure case asserts the `up` call and its failure output. FIX (local correction)
+    - F6 minor: 2.4.a keeps `dev-db` and `redis` at R9's values; only the backend waits for 2.4.b. FIX (local
+      correction)
+    - F7 minor: `remove`'s container listing includes stopped containers (`-a`), asserted in 4.1.a. FIX (local
+      correction)
+- **Stop reason:** converged (confirmed minors only); a further fix check declined by the Owner, the fixes being
+  local and source-verified.
+- **Elapsed:** about 12 minutes.

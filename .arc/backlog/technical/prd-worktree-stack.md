@@ -27,10 +27,10 @@ published ports, for backend tests. It cannot serve the app in a browser:
 - A worktree's database is empty: nothing runs migrations, and nothing creates an account to sign in with.
 - Every stack is served from the host `localhost`, and browsers scope cookies by host, not port. Email sign-in
   (`POST /api/token/`) sets a `refresh_token` cookie, a JWT signed with `DJANGO_SECRET_KEY`, and a worktree copies the
-  main checkout's `backend/config/.env`, key included; the access token stays in the signing-in origin's
-  `localStorage`. When a page on another stack gets a 401, the frontend refreshes through `POST /api/auth/refresh`,
-  the browser sends the shared cookie, and that stack accepts it and issues tokens for whichever of its own users has
-  the token's user ID.
+  main checkout's `backend/config/.env`, key included; the access token stays in the signing-in origin's browser
+  storage. The frontend refreshes through `POST /api/auth/refresh` only when its own origin's storage holds an access
+  token, so on a page of another stack signed in there earlier, the browser sends the shared cookie, and that stack
+  accepts it and issues tokens for whichever of its own users has the token's user ID.
 
 Some of the port and origin settings are already independent of the port. Django's `ALLOWED_HOSTS` entry
 `localhost` matches any port. Caddy matches a site address by hostname alone, so a host port mapped to the
@@ -134,8 +134,9 @@ prepares a worktree, one starts its browsable stack, and one removes it after it
   it lacks, and waits until they run and those with health checks report healthy. It then runs
   `python manage.py migrate --noinput` and `python manage.py seed_dev_data` in the backend, and prints
   `https://localhost:{SITE_PORT}` with the dev account's sign-in (R11). Run again on a running stack, it applies only
-  migrations not yet applied and seeds only what is missing. Stopping is the Compose command `down` with both files
-  and `--profile browser`, which removes the project's containers in either mode and keeps its volumes.
+  migrations not yet applied, leaves the dev account as it is and syncs the blacklist again. Stopping is the Compose
+  command `down` with both files and `--profile browser`, which removes the project's containers in either mode and
+  keeps its volumes.
 - **R8. `remove {name} [--keep-branch]`.** Run from the main checkout; `{name}` names the worktree
   `{primary}.{name}`, which must be a registered worktree with a branch checked out. In order, refusing before
   anything is deleted:
@@ -192,11 +193,9 @@ prepares a worktree, one starts its browsable stack, and one removes it after it
       `dev@example.com` and password `cinexplorer-dev`, and a verified, primary allauth `EmailAddress` for that email,
       so the account can sign in under mandatory email verification. An existing `dev` user is left as it is. When
       another user already has that email, the command exits non-zero naming the conflict, before changing anything.
-    - When the movie blacklist is empty, it fills it by running `populate_blacklist --commit` through
-      `call_command` and reports how many rows that added; TMDB errors print as that command prints them today. A
-      blacklist with any rows is left as it is, so a fill cut short (TMDB unavailable, say) is finished by running
-      `populate_blacklist --commit` again by hand, which skips rows already present.
-    - It prints which of the two it did.
+    - It loads the movie blacklist by running `sync_blacklist` through `call_command`, which makes the table match
+      the tracked blacklist file and is safe to repeat.
+    - It prints whether it created the account, and `sync_blacklist`'s summary.
 
 ### Documentation and CI
 
@@ -208,7 +207,7 @@ prepares a worktree, one starts its browsable stack, and one removes it after it
       activation's branch step; and its session notes start in planning state, now written by `create --work-unit`
       (R16), which activation later turns to execution.
     - A new section on the browsable stack: `browse`, the stop command (R7), the port in `infrastructure/.env` and how
-      to change it when another program holds it, the dev account, and finishing a short blacklist fill (R11). One
+      to change it when another program holds it, and the dev account (R11). One
       signed-in stack per browser profile, since cookies on `localhost` are shared across ports; a second browser
       profile or a private window keeps a second stack signed in. Google and GitHub sign-in work only on the main
       checkout. A browser that has not trusted the dev certificate asks again for each new port.
@@ -260,12 +259,12 @@ prepares a worktree, one starts its browsable stack, and one removes it after it
       when the file names no project; on a merged, clean worktree, the teardown calls naming the project's label,
       the worktree removed, and the branch deleted while the main checkout has another branch checked out; and with
       `--keep-branch` on an unmerged one, the worktree removed and the branch kept at its commit.
-- **R15. Seed command tests.** Backend tests against the real test database, with TMDB replaced at its client:
+- **R15. Seed command tests.** Backend tests against the real test database:
     - the refusal outside `development`;
     - the account created once, verified, and able to sign in through `POST /api/token/`, which refuses an
       unverified email address;
     - an existing `dev` user left unchanged, and the refusal when another user has the email;
-    - the blacklist filled only when empty.
+    - the blacklist matching the tracked blacklist file after the command.
 
 ### Session notes for a work unit
 
@@ -361,8 +360,8 @@ shared layer cache. Backend test runs remain one at a time across every stack.
    name (collisions) or one the maintainer picks (another manual step). Ports are reused after removal.
 10. **A fresh database seeded by a command**, over copying the main checkout's data: a branch that reshapes models,
     such as a change of user model, would break a copy. The copy would also carry OAuth rows tied to the main
-    checkout's address. The blacklist is filled because browsing without it shows the adult titles it exists to
-    hide.
+    checkout's address. The blacklist is loaded from its tracked file because browsing without it shows the adult
+    titles it exists to hide.
 11. **A fixed, documented dev account**, over a password each maintainer sets in the main checkout's env file: no
     setup step. The account exists only in development databases. The command refuses outside `development`, and
     the port answers only on this machine.
@@ -449,3 +448,19 @@ None.
 - R12's edits to `worktree-sessions.md` § Provisioning build on that section as revised for activation in a work
   unit's own worktree (a work unit provisioned before its planning, its notes created at provisioning). That revision
   lands on `main` first, and this branch merges `main` before R12 is implemented.
+- R11 runs `sync_blacklist`, which pull request #75 adds with the tracked blacklist file, replacing
+  `populate_blacklist`. That change lands on `main` first, and this branch merges `main` before R11 is implemented.
+
+## Amendments
+
+- **2026-11-04,** during task generation, on the Owner's approval: R11 loads the movie blacklist with
+  `sync_blacklist`, from the tracked blacklist file, in place of filling an empty blacklist from TMDB through
+  `populate_blacklist`, which pull request #75 removes. The fill-only-when-empty rule, the partial fill finished by
+  hand and the TMDB replacement in R15's tests go with it. R7, R12, R15, Design Decision 10 and the Dependencies
+  follow. Contained change; the independent pass was skipped on the Owner's approval, since the change removes
+  mechanism and the task list's review reads the PRD.
+- **2026-11-04,** during task generation, on the Owner's approval: § 1's sign-in bullet says the frontend refreshes
+  only when its own origin's storage holds an access token (the 401 handler today, and the refresh on load that
+  `technical/launch-readiness` adds), so a stack accepts another stack's cookie only on a page signed in there
+  earlier; the access token's home is the origin's browser storage, since a sign-in without "remember me" uses
+  `sessionStorage`. Wording only; the design is unchanged.

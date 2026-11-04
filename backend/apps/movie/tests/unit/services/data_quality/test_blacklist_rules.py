@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,7 +10,11 @@ import pytest
 from django.core.management import CommandError, call_command
 
 from apps.core.services.api_response import ApiResponse
-from apps.movie.services.data_quality.blacklist_file import BlacklistEntry, write_blacklist
+from apps.movie.services.data_quality.blacklist_file import (
+    BlacklistEntry,
+    read_blacklist,
+    write_blacklist,
+)
 from apps.movie.services.data_quality.blacklist_rules import (
     RULES,
     BlacklistRule,
@@ -103,54 +108,84 @@ def test_a_failed_page_fails_the_whole_rule() -> None:
         fetch_rule_ids(tmdb, STUDIO, pause=lambda _seconds: None)
 
 
-class OnePageTMDB:
-    """Answers every discover request successfully with the same response body."""
+class ScriptedTMDB:
+    """Answers each discover page successfully with the response body given for it."""
 
-    def __init__(self, data: dict[str, object]) -> None:
-        self.data = data
+    def __init__(self, *bodies: dict[str, object]) -> None:
+        self.bodies = bodies
 
     def discover_movies(self, **kwargs: object) -> ApiResponse:
-        return ApiResponse(status_code=200, data=self.data)
+        page = kwargs["page"]
+        assert isinstance(page, int)
+        return ApiResponse(status_code=200, data=self.bodies[page - 1])
+
+
+MISSING_COUNTS = "rule:studio-42: TMDB page 1 is missing its page count, result count or results"
+NO_ID = "rule:studio-42: TMDB page 1 has a result without an ID"
 
 
 @pytest.mark.parametrize(
-    "data",
+    ("data", "error"),
     [
-        pytest.param({"total_results": 1, "results": [{"id": 1}]}, id="no page count"),
+        pytest.param(
+            {"total_results": 1, "results": [{"id": 1}]}, MISSING_COUNTS, id="no page count"
+        ),
         pytest.param(
             {"total_pages": "1", "total_results": 1, "results": [{"id": 1}]},
+            MISSING_COUNTS,
             id="page count not a number",
         ),
-        pytest.param({"total_pages": 1, "results": [{"id": 1}]}, id="no result count"),
+        pytest.param(
+            {"total_pages": 1, "results": [{"id": 1}]}, MISSING_COUNTS, id="no result count"
+        ),
         pytest.param(
             {"total_pages": 1, "total_results": "1", "results": [{"id": 1}]},
+            MISSING_COUNTS,
             id="result count not a number",
         ),
-        pytest.param({"total_pages": 1, "total_results": 1}, id="no results"),
+        pytest.param({"total_pages": 1, "total_results": 1}, MISSING_COUNTS, id="no results"),
         pytest.param(
-            {"total_pages": 1, "total_results": 1, "results": "none"}, id="results not a list"
+            {"total_pages": 1, "total_results": 1, "results": "none"},
+            MISSING_COUNTS,
+            id="results not a list",
         ),
         pytest.param(
             {"total_pages": 1, "total_results": 1, "results": ["Some Film"]},
+            NO_ID,
             id="result not an object",
         ),
         pytest.param(
             {"total_pages": 1, "total_results": 1, "results": [{"adult": False}]},
+            NO_ID,
             id="result without an ID",
         ),
         pytest.param(
             {"total_pages": 1, "total_results": 1, "results": [{"id": "1"}]},
+            NO_ID,
             id="ID not a number",
         ),
         pytest.param(
             {"total_pages": 501, "total_results": 1, "results": [{"id": 1}]},
+            "rule:studio-42: TMDB reports 501 pages but serves only 500",
             id="more pages than TMDB serves",
         ),
     ],
 )
-def test_a_malformed_or_incomplete_page_fails_the_rule(data: dict[str, object]) -> None:
-    with pytest.raises(RuleFetchError, match="rule:studio-42"):
-        fetch_rule_ids(OnePageTMDB(data), STUDIO, pause=lambda _seconds: None)
+def test_a_malformed_or_incomplete_page_fails_the_rule(
+    data: dict[str, object], error: str
+) -> None:
+    with pytest.raises(RuleFetchError, match=error):
+        fetch_rule_ids(ScriptedTMDB(data), STUDIO, pause=lambda _seconds: None)
+
+
+def test_fetch_fails_when_a_later_page_reports_different_counts() -> None:
+    tmdb = ScriptedTMDB(
+        {"total_pages": 3, "total_results": 5, "results": [{"id": 1}, {"id": 2}]},
+        {"total_pages": 2, "total_results": 4, "results": [{"id": 3}, {"id": 4}]},
+    )
+
+    with pytest.raises(RuleFetchError, match="rule:studio-42: TMDB page 2 reports 4 titles"):
+        fetch_rule_ids(tmdb, STUDIO, pause=lambda _seconds: None)
 
 
 def by_id(entries: list[BlacklistEntry]) -> list[BlacklistEntry]:
@@ -218,3 +253,25 @@ def test_regenerate_leaves_the_file_unchanged_when_a_later_rule_fails(tmp_path: 
         call_command("regenerate_blacklist", file=str(path))
 
     assert path.read_bytes() == before
+
+
+def test_regenerate_moves_an_id_to_the_earlier_rule_and_keeps_hand_picks(tmp_path: Path) -> None:
+    first, last = RULES[0], RULES[-1]
+    hand_pick = BlacklistEntry(
+        3, "Mislabeled adult content on TMDB", "hand:browse-reports-2025-12"
+    )
+    path = tmp_path / "blacklist.csv"
+    write_blacklist([hand_pick, BlacklistEntry(5, last.reason, last.source)], path)
+
+    def tmdb_get(endpoint: str, params: dict[str, object]) -> ApiResponse:
+        matches = params["with_companies"] == str(first.company_id)
+        results = [{"id": 3, "adult": False}, {"id": 5, "adult": False}] if matches else []
+        return ApiResponse(
+            status_code=200,
+            data={"total_pages": 1, "total_results": len(results), "results": results},
+        )
+
+    with patch("apps.core.services.tmdb_api_client.TMDBApiClient.get", side_effect=tmdb_get):
+        call_command("regenerate_blacklist", file=str(path), stdout=StringIO())
+
+    assert read_blacklist(path) == [hand_pick, BlacklistEntry(5, first.reason, first.source)]

@@ -30,7 +30,7 @@ class DiscoverClient(Protocol):
 
 
 class RuleFetchError(RuntimeError):
-    """TMDB didn't answer every page of a rule, so its rows can't be regenerated."""
+    """TMDB's answer for a rule failed, was malformed or was incomplete."""
 
 
 @dataclass(frozen=True)
@@ -85,7 +85,8 @@ def fetch_rule_ids(
 
     Raises:
         RuleFetchError: A page failed or was malformed, TMDB reports more pages than it serves,
-            or the pages held fewer titles than TMDB counts, so the result would be incomplete.
+            a later page's counts differ from the first page's, or the pages held fewer titles
+            than TMDB counts, so the result would be incomplete.
     """
     params: dict[str, object] = {
         "with_companies": str(rule.company_id),
@@ -127,8 +128,14 @@ def fetch_rule_ids(
             raise RuleFetchError(
                 f"{rule.source}: TMDB reports {reported_pages} pages but serves only {MAX_PAGES}"
             )
-        total_pages = reported_pages
-        total_results = reported_results
+        # A later page from a changed catalogue could end the fetch early or hide a skip.
+        if page == 1:
+            total_pages, total_results = reported_pages, reported_results
+        elif (reported_pages, reported_results) != (total_pages, total_results):
+            raise RuleFetchError(
+                f"{rule.source}: TMDB page {page} reports {reported_results} titles on "
+                f"{reported_pages} pages, but page 1 reported {total_results} on {total_pages}"
+            )
         for item in cast(list[object], results):
             movie = cast(dict[str, object], item) if isinstance(item, dict) else {}
             movie_id = movie.get("id")

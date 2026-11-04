@@ -487,12 +487,13 @@ def test_adapter_raises_email_delivery_error_when_send_returns_zero() -> None:
             adapter.send_mail(
                 template_prefix="account/email/email_confirmation",
                 email="test@example.com",
-                context={"user": Mock(username="testuser")},
+                context={"user": Mock(pk=7, username="testuser")},
             )
 
-        # Verify error message contains relevant info
-        assert "test@example.com" in str(exc_info.value)
+        # The message reaches the logs: it names the template and user, never the address
+        assert "test@example.com" not in str(exc_info.value)
         assert "email_confirmation" in str(exc_info.value)
+        assert "user ID: 7" in str(exc_info.value)
 
 
 @pytest.mark.django_db

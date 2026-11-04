@@ -1,0 +1,51 @@
+# A linked worktree's test or browsable stack, beside the main checkout's stack.
+# Test mode starts dev-db, redis and the HTTPS backend without publishing any ports.
+# The browser profile adds the frontend and Caddy, publishing only the worktree's loopback port.
+#
+# From the checkout's root, after node scripts/worktree.mjs provision:
+#   docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml \
+#     up -d dev-db redis backend
+#   docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml \
+#     exec -T backend nice -n 15 pytest apps/
+#   node scripts/worktree.mjs browse
+#   docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml \
+#     --profile browser down  # keeps volumes; down -v deletes the database and Redis volumes
+#
+# Required project, port and key values keep a worktree's resources and tokens apart.
+# A full suite (903 tests, 4 workers) with the HTTPS server running peaked at 651.2 MiB in
+# the backend and 103.9 MiB in dev-db. Limits leave headroom above those measured peaks.
+# Frontend and Caddy limits are provisional until measured while browsing and hot reloading.
+
+name: ${COMPOSE_PROJECT_NAME:?set COMPOSE_PROJECT_NAME in infrastructure/.env}
+
+services:
+  backend:
+    ports: !reset []
+    environment:
+      FRONTEND_URL: https://localhost:${SITE_PORT:?run worktree provision first}
+      CSRF_TRUSTED_ORIGINS: https://localhost:${SITE_PORT:?run worktree provision first}
+      CORS_ALLOWED_ORIGINS: https://localhost:${SITE_PORT:?run worktree provision first}
+      DJANGO_SECRET_KEY: ${WORKTREE_SECRET_KEY:?run worktree provision first}
+    mem_limit: 1024m
+
+  dev-db:
+    ports: !reset []
+    mem_limit: 512m
+
+  redis:
+    ports: !reset []
+    mem_limit: 128m
+
+  frontend:
+    profiles: ["browser"]
+    ports: !reset []
+    environment:
+      VITE_BASE_URL: https://localhost:${SITE_PORT:?run worktree provision first}
+      VITE_BASE_API_URL: https://localhost:${SITE_PORT:?run worktree provision first}/api
+    mem_limit: 512m
+
+  caddy:
+    profiles: ["browser"]
+    ports: !override
+      - "127.0.0.1:${SITE_PORT:?run worktree provision first}:8444"
+    mem_limit: 128m

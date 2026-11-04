@@ -87,46 +87,20 @@ and remove it after its branch merges.
       starting notes. Failures print recovery commands; success prints the path, first push and browse command.
       Syntax checks and all 30 worktree tests pass.
 
-- [ ] **2.4 One override runs the test stack and the browsable stack, and this worktree's test stack runs on it**
-  (R9, R10; Criteria 3, 4 and 5)
+- [x] **2.4 One override runs both stacks, and this worktree's test stack runs on it** (R9, R10;
+  Criteria 3, 4 and 5)
 
-    - [ ] **2.4.a Rename and rewrite the override:** `git mv` `infrastructure/docker-compose.test-stack.yml` to
-      `infrastructure/docker-compose.worktree.yml`
-        - The project name still requires `COMPOSE_PROJECT_NAME`; each use of `SITE_PORT` and `WORKTREE_SECRET_KEY`
-          requires it too (`${VAR:?message}`)
-        - `backend`: no published ports; today's `command`, `healthcheck` and `volumes` overrides go, so the base
-          file's command, certificate mounts and health check apply; `FRONTEND_URL`, `CSRF_TRUSTED_ORIGINS` and
-          `CORS_ALLOWED_ORIGINS` set to `https://localhost:${SITE_PORT}`, and `DJANGO_SECRET_KEY` to
-          `${WORKTREE_SECRET_KEY}`
-        - `dev-db` and `redis` as today
-        - `frontend`: in the `browser` profile, no published ports, `VITE_BASE_URL` set to
-          `https://localhost:${SITE_PORT}` and `VITE_BASE_API_URL` to that plus `/api`
-        - `caddy`: in the `browser` profile, publishing only `127.0.0.1:${SITE_PORT}:8444` (Phase 2 note on merging
-          `ports`)
-        - Memory limits: the backend keeps today's value until 2.4.b measures; `dev-db` and `redis` keep R9's 512 MiB
-          and 128 MiB; the frontend and Caddy start from a provisional value until 3.4 measures
-        - The header comment gives both modes' commands (test mode `up -d dev-db redis backend`, the browsable stack
-          `browse`, and the stop command) and, from 2.4.b and 3.4, the measurements
-
-    - [ ] **2.4.b Provision this worktree and run its test stack** (Criterion 5)
-        - This worktree was set up by hand before this change: `node scripts/worktree.mjs provision` here keeps
-          `COMPOSE_PROJECT_NAME=cinexplorer-worktree-stack` and adds `SITE_PORT`, `WORKTREE_SECRET_KEY` and both
-          certificates; record what it added, by name, not value
-        - With both files: `up -d dev-db redis backend`, then `exec -T backend nice -n 15 pytest apps/` to a pass,
-          as the only test run on the machine
-        - Sample the backend's and `dev-db`'s memory during that run, with the backend serving. Set the backend's
-          limit with headroom above its peak. `dev-db` and `redis` keep R9's 512 MiB and 128 MiB: record `dev-db`'s
-          peak and stop if it nears 512 MiB. Record the peaks in the header comment
-
-    - [ ] **2.4.c Check the configuration** (Criteria 3 and 4)
-        - Against the merge base, so `main`'s own changes don't show and uncommitted edits do:
-          `git diff $(git merge-base HEAD origin/main) --stat --` over `infrastructure/docker-compose.yml`, the
-          Caddyfiles, `backend/config/settings.py`, `infrastructure/docker-compose.ci.yml` and the tracked env
-          examples (`git ls-files '*.example'`) is empty (R10)
-        - `config` with both files and `--profile browser` lists five services, `caddy` the only one publishing a port,
-          bound to `127.0.0.1:{SITE_PORT}`, and a memory limit on each. Print only the ports and limits
-          (`--format json` through a filter): `config` output carries the env files' values. The frontend's and
-          Caddy's limits are still provisional here; 3.4 reruns this check for Criterion 4's evidence
+    - [x] **2.4.a Rename and rewrite the override:** `docker-compose.worktree.yml` inherits the serving backend,
+      certificates and health check. Required project, port and signing-key values isolate each stack. Browser mode
+      adds frontend and Caddy with only a loopback Caddy port; every service has a memory limit.
+    - [x] **2.4.b Provision this worktree and run its test stack:** provisioning kept the existing project name and
+      added `SITE_PORT`, `WORKTREE_SECRET_KEY`, `cert.pem` and `key.pem`; frontend install and typegen passed.
+      All 903 backend tests passed with the HTTPS server running, as the only backend test run on this machine.
+      Backend peak 651.2 MiB, dev-db peak 103.9 MiB; backend limit 1024 MiB, dev-db 512 MiB and Redis 128 MiB.
+      Samples and run output are in this worktree's personal `proofs/` folder; peaks are recorded in the override.
+    - [x] **2.4.c Check configuration:** protected files have no diff against the merge base. Browser config lists
+      all five services, only Caddy publishing `127.0.0.1:8445:8444`, and a memory limit on each. Frontend and Caddy
+      limits remain provisional until 3.4 measures them.
 
 - [ ] **2.5 The workflows create worktrees with `create`, and the rules record the seeding script's path** (R12)
     - `worktree-sessions.md` § Provisioning gives `create`, `create --existing`, `create --work-unit` and `provision`,

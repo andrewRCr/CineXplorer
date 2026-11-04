@@ -265,6 +265,7 @@ class BaseApiClient(ABC):
         error_message = f"API request failed with status {response.status_code}"
 
         # Log error with appropriate level based on status code
+        # Upstream bodies can echo credentials; retain only response metadata.
         log_data = {
             "correlation_id": correlation_id,
             "endpoint": endpoint,
@@ -273,11 +274,6 @@ class BaseApiClient(ABC):
             "error_category": error_category,
             "response_size_bytes": (
                 len(response.content) if hasattr(response.content, "__len__") else 0
-            ),
-            "error_response": (
-                str(response.text)[:500]
-                if hasattr(response.text, "__getitem__")
-                else str(response.text)
             ),
         }
 

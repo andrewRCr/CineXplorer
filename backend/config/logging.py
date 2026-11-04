@@ -42,9 +42,10 @@ Usage Examples:
 """
 
 import logging
+import logging.config
 import os
 import sys
-from typing import TypedDict
+from typing import TypedDict, cast
 
 
 class HealthCheckFilter(logging.Filter):
@@ -473,11 +474,15 @@ def get_logging_config(
             },
             # Production formatter - structured JSON for parsing and monitoring
             "production": {
-                "format": (
-                    '{"timestamp": "%(asctime)s", "level": "%(levelname)s", '
-                    '"logger": "%(name)s", "message": "%(message)s", '
-                    '"module": "%(module)s", "function": "%(funcName)s", "line": %(lineno)d}'
-                ),
+                "()": "pythonjsonlogger.json.JsonFormatter",
+                "fmt": ["asctime", "levelname", "name", "message", "module", "funcName", "lineno"],
+                "rename_fields": {
+                    "asctime": "timestamp",
+                    "levelname": "level",
+                    "name": "logger",
+                    "funcName": "function",
+                    "lineno": "line",
+                },
                 "datefmt": "%Y-%m-%d %H:%M:%S",
             },
             # Detailed formatter - verbose output for debugging
@@ -551,8 +556,6 @@ def demo_formatters():
     formatters render the same log message. Useful for testing and
     formatter configuration validation.
     """
-    import logging
-
     # Create test message
     test_record = logging.LogRecord(
         name="cinexplorer.test",
@@ -566,20 +569,12 @@ def demo_formatters():
     )
 
     config = get_logging_config()
-    formatters = config["formatters"]
+    # Every formatter definition above is a dictionary of constructor options.
+    formatters = cast(dict[str, dict[str, object]], config["formatters"])
     print("\n=== Formatter Demonstration ===")
+    configurator = logging.config.DictConfigurator(config)
     for formatter_name, formatter_config in formatters.items():
-        # Create formatter instance
-        if "style" in formatter_config:
-            formatter = logging.Formatter(
-                formatter_config["format"],
-                formatter_config.get("datefmt"),
-                formatter_config["style"],
-            )
-        else:
-            formatter = logging.Formatter(
-                formatter_config["format"], formatter_config.get("datefmt")
-            )
+        formatter = configurator.configure_formatter(formatter_config.copy())
 
         # Format the test record
         formatted_message = formatter.format(test_record)

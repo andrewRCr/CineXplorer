@@ -19,6 +19,8 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
+from apps.core.utils.logging import sanitize_log_url
+
 
 class RequestWithLogging(Protocol):
     """HttpRequest with logging middleware attributes."""
@@ -62,6 +64,14 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         "auth",
         "csrf_token",
         "csrfmiddlewaretoken",
+        "verify",
+        "reset",
+        "key",
+        "code",
+        "state",
+        "access_token",
+        "refresh_token",
+        "id_token",
     }
 
     # Health check endpoints to filter (unless unhealthy)
@@ -170,7 +180,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 "user": user_info,
                 "client_ip": client_ip,
                 "user_agent": user_agent,
-                "referer": request.META.get("HTTP_REFERER", ""),
+                "referer": sanitize_log_url(request.META.get("HTTP_REFERER", "")),
                 "event_type": "request_start",
                 "is_ajax": is_ajax,
                 "is_health_check": self._is_health_check(request),
@@ -304,7 +314,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 "event_type": "request_exception",
                 "is_health_check": self._is_health_check(request),
             },
-            exc_info=True,  # Include full traceback
+            exc_info=exception,  # Preserve the exception passed to this middleware callback.
         )
 
     def _get_user_context(self, request: HttpRequest) -> dict[str, object]:
@@ -360,10 +370,9 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
         if status_code >= 500:
             return logging.ERROR
-        elif status_code >= 400:
+        if status_code >= 400:
             return logging.WARNING
-        else:
-            return logging.INFO
+        return logging.INFO
 
 
 def get_correlation_id(request: HttpRequest) -> str | None:

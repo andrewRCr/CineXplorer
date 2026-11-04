@@ -261,6 +261,7 @@ class TMDBApiClient(BaseApiClient):
         error_message = f"TMDB request failed: {response.status_code}"
 
         # Enhanced logging for TMDB errors
+        # Upstream bodies can echo credentials; retain only response metadata.
         log_data: dict[str, object] = {
             "correlation_id": correlation_id,
             "endpoint": endpoint,
@@ -269,11 +270,6 @@ class TMDBApiClient(BaseApiClient):
             "error_category": error_category,
             "response_size_bytes": (
                 len(response.content) if hasattr(response.content, "__len__") else 0
-            ),
-            "error_response": (
-                str(response.text)[:500]
-                if hasattr(response.text, "__getitem__")
-                else str(response.text)
             ),
         }
 

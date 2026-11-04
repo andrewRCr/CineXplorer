@@ -31,6 +31,7 @@ from .schemas import (
     LogHealthCheckResponse,
 )
 from .throttles import FrontendLogThrottle
+from .utils.logging import sanitize_frontend_context, sanitize_log_url
 
 # Get logger instances
 frontend_logger = logging.getLogger("frontend")
@@ -295,7 +296,7 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
             "correlation_id": correlation_id,
             "frontend_timestamp": data.timestamp,
             "user_agent": data.user_agent or "",
-            "frontend_url": data.url or "",
+            "frontend_url": sanitize_log_url(data.url or ""),
             "frontend_user_id": data.user_id,
             "frontend_session_id": data.session_id or "",
             "source": data.source or "frontend",
@@ -304,15 +305,15 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
 
         # Add browser info if provided
         if data.browser_info:
-            extra_data["browser_info"] = data.browser_info
+            extra_data["browser_info"] = sanitize_frontend_context(data.browser_info)
 
         # Add user interactions if provided (for debugging context)
         if data.recent_interactions:
-            extra_data["recent_interactions"] = data.recent_interactions
+            extra_data["recent_interactions"] = sanitize_frontend_context(data.recent_interactions)
 
         # Add any additional data provided
         if data.data:
-            extra_data["frontend_data"] = data.data
+            extra_data["frontend_data"] = sanitize_frontend_context(data.data)
 
         # Log to the frontend logger with appropriate level
         frontend_logger.log(log_level, message, extra=extra_data)

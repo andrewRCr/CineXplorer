@@ -135,7 +135,12 @@ host, and the authentication gaps above are closed. The site stays at the stagin
        by hand or a deploy that failed partway can leave them at the target already;
     2. check out the target commit (detached) and set `IMAGE_TAG` in `prod.env` to `sha-` plus its first seven
        characters;
-    3. `config --quiet`, `pull`, then migrations as a one-off backend container;
+    3. `config --quiet`, `pull`, prepare `db` with `up -d --wait --no-recreate db`, then take a fresh R2 backup
+       through `backup.sh` using exported `ops.env` settings in a subshell. Stop before migrations if any backup
+       step, upload or heartbeat fails. A fresh database is initialized and backed up empty; an existing database
+       container is started without recreation before its snapshot. Run migrations as a one-off backend container,
+       immediately followed by `python manage.py sync_blacklist` so the table matches the target image's tracked
+       file, then continue to step 4;
     4. `python manage.py configure_site` as a one-off backend container (R16);
     5. `up -d --wait`, then `GET https://<SITE_ADDRESS>/api/health-check/` through the public address;
     6. on success only, append one line to `/opt/cinexplorer/deploy-history.log`, its fields separated by single
@@ -203,7 +208,9 @@ host, and the authentication gaps above are closed. The site stays at the stagin
   `flock /opt/cinexplorer/ops.lock env CINEXPLORER_OPS_LOCK=held bash`, so an automatic deploy or a nightly job waits
   for them, or fails visibly after 30 minutes. The entry point's manual form, run inside that shell, sees
   `CINEXPLORER_OPS_LOCK=held` and does not take the lock again; its CI form always takes it. No two of these
-  operations overlap: no backup runs during a migration, and no checkout changes under a running job.
+  operations overlap: no backup runs during a migration, and no checkout changes under a running job. The deploy's
+  pre-migration backup invokes `backup.sh` directly under its already-held lock, never through the systemd service
+  that would attempt to take that lock again.
 
 ### CI change detection and configuration checks
 
@@ -236,7 +243,10 @@ host, and the authentication gaps above are closed. The site stays at the stagin
   On any failure it requests the ping URL's `/fail` form, sending the failed step's last output lines as the request
   body, and exits non-zero. Its settings come from `/opt/cinexplorer/ops.env` (mode `600`): the R2 account endpoint,
   access key, secret, bucket and prefix, and the backup and maintenance ping URLs. `infrastructure/ops.env.example`
-  lists every variable with no real values.
+  lists every variable with no real values. The same script also supplies the deploy's pre-migration backup (R1),
+  with its existing upload and heartbeat failure behavior. Its configuration is ready before the first automated
+  deployment. Assignments in `ops.env` must be compatible with both systemd's EnvironmentFile and shell sourcing:
+  `NAME=value` or single-quoted values, without `export` statements or shell commands.
 - **R9. Backup storage.** The bucket is private, the token the server holds can read and write objects in that bucket
   only, and a lifecycle rule deletes backup objects 30 days after upload. The maintainer sets these in Cloudflare.
 - **R10. Restore procedure.** The runbook gives the restore, run in a shell holding the operations lock (R5):
@@ -505,8 +515,8 @@ host, and the authentication gaps above are closed. The site stays at the stagin
 - Hiding the sign-in button of an unconfigured provider, Google's brand verification, and the privacy policy page it
   needs.
 - Client-side encryption of backups, DigitalOcean's droplet backups, continuous archiving or point-in-time recovery,
-  backups more often than nightly, and backing up Caddy's certificates or the env files (the maintainer keeps the
-  secrets).
+  scheduled backups more often than nightly, and backing up Caddy's certificates or the env files (the maintainer
+  keeps the secrets).
 - Monitoring beyond the health endpoint and the two nightly jobs: metrics, log collection, error tracking, Redis.
 - Atomic throttle counting across worker processes, and new or changed rate limits.
 - Registration's response to a failed send, which already rolls back and answers with a message.
@@ -838,3 +848,10 @@ authentication hardening (R18–R23) is not deployed.
 - **2026-11-04,** at the merge of `main` before implementation: R22 no longer gives as its reason that the exception's
   text carries the address, since `main` (#62) took the address out of `EmailDeliveryError`'s message; the log rule
   is unchanged.
+
+- **2026-11-04,** on the Owner's explicit approval after the tracked blacklist landed on `main`: R1 syncs the
+  image's tracked blacklist immediately after migrations and takes a fresh validated R2 backup before migrations.
+  R5 keeps that backup inside the deploy's existing lock; R8 reuses the existing script and failure behavior, with
+  shell/systemd-compatible `ops.env` configured before first deployment. Non-Goals exclude more frequent scheduled
+  backups; the pre-deployment backup is included. The runbook retains backup-first manual deployment and blacklist
+  rollback guidance alongside the stronger R2 restore procedure.

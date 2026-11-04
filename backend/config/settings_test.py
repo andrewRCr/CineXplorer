@@ -20,7 +20,7 @@ ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS  # pyrig
 # which causes test failures when the same test runs multiple times
 # because rate limit state persists in Redis between test runs.
 # Setting to empty string disables the rate limit for this action.
-ACCOUNT_RATE_LIMITS = {  # pyright: ignore[reportConstantRedefinition]
+ACCOUNT_RATE_LIMITS = {
     "confirm_email": "",  # Disable rate limiting for email confirmation in tests
     "reset_password": "",  # Password-request tests also reuse addresses across runs
 }

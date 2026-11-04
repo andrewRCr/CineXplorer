@@ -27,7 +27,7 @@ def admin_client(db: None) -> tuple[Client, "UserType", "UserType"]:
     # django-types limitation - UserManager.create_superuser type not inferred
     admin_user = cast(
         "UserType",
-        User.objects.create_superuser(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_superuser(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             username="testAdminUser",
             email="testAdminUser@example.com",
             password="testpass123",
@@ -39,7 +39,7 @@ def admin_client(db: None) -> tuple[Client, "UserType", "UserType"]:
     # django-types limitation - UserManager.create_user type not inferred
     regular_user = cast(
         "UserType",
-        User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             username="testUser@example.com",
             email="testUser@example.com",
             password="testpass123",

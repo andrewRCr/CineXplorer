@@ -130,15 +130,15 @@ def test_rating_filtering_handles_missing_ratings() -> None:
         "vote_average": None,  # TMDB data quality issue
     }
 
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [  # type: ignore[assignment]
+    tmdb_movies: list[TMDBMovieBaseRawDict] = [  # pyright: ignore[reportAssignmentType]
         create_tmdb_movie(1, "Movie with rating", "2022-01-01", 8.0).model_dump(),
         movie_without_rating,
         create_tmdb_movie(3, "Another with rating", "2022-01-01", 7.5).model_dump(),
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)

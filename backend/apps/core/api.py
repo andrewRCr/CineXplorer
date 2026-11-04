@@ -305,15 +305,15 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
 
         # Add browser info if provided
         if data.browser_info:
-            extra_data["browser_info"] = data.browser_info  # type: ignore[assignment]
+            extra_data["browser_info"] = data.browser_info
 
         # Add user interactions if provided (for debugging context)
         if data.recent_interactions:
-            extra_data["recent_interactions"] = data.recent_interactions  # type: ignore[assignment]
+            extra_data["recent_interactions"] = data.recent_interactions
 
         # Add any additional data provided
         if data.data:
-            extra_data["frontend_data"] = data.data  # type: ignore[assignment]
+            extra_data["frontend_data"] = data.data
 
         # Log to the frontend logger with appropriate level
         frontend_logger.log(log_level, message, extra=extra_data)

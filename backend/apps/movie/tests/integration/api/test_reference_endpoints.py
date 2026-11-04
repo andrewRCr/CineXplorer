@@ -66,7 +66,7 @@ def test_get_popular_keywords(mock_tmdb_get: Mock, api_client: Client) -> None:
         "total_pages": 10,
         "total_results": 100,
     }
-    mock_api_response = ApiResponse(status_code=200, data=keywords_data)  # type: ignore[arg-type]
+    mock_api_response = ApiResponse(status_code=200, data=keywords_data)
     mock_tmdb_get.return_value = mock_api_response
 
     # Act: Call the popular keywords endpoint
@@ -91,7 +91,7 @@ def test_search_keywords(mock_tmdb_get: Mock, api_client: Client) -> None:
         "total_pages": 1,
         "total_results": 1,
     }
-    mock_api_response = ApiResponse(status_code=200, data=keywords_data)  # type: ignore[arg-type]
+    mock_api_response = ApiResponse(status_code=200, data=keywords_data)
     mock_tmdb_get.return_value = mock_api_response
 
     # Act: Call the search keywords endpoint
@@ -123,7 +123,7 @@ def test_get_popular_people(mock_tmdb_get: Mock, api_client: Client) -> None:
         "total_pages": 20,
         "total_results": 200,
     }
-    mock_api_response = ApiResponse(status_code=200, data=people_data)  # type: ignore[arg-type]
+    mock_api_response = ApiResponse(status_code=200, data=people_data)
     mock_tmdb_get.return_value = mock_api_response
 
     # Act: Call the popular people endpoint
@@ -148,7 +148,7 @@ def test_search_people(mock_tmdb_get: Mock, api_client: Client) -> None:
         "total_pages": 1,
         "total_results": 1,
     }
-    mock_api_response = ApiResponse(status_code=200, data=people_data)  # type: ignore[arg-type]
+    mock_api_response = ApiResponse(status_code=200, data=people_data)
     mock_tmdb_get.return_value = mock_api_response
 
     # Act: Call the search people endpoint

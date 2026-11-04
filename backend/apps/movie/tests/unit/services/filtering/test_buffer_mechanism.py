@@ -159,7 +159,7 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
     ]
 
     def mock_get_side_effect(*args: object, **kwargs: object) -> ApiResponse:
-        params: dict[str, object] = args[1] if len(args) > 1 else kwargs.get("params", {})  # type: ignore[assignment]
+        params: dict[str, object] = args[1] if len(args) > 1 else kwargs.get("params", {})  # pyright: ignore[reportAssignmentType]
         page_num = params.get("page", 1)
 
         if page_num == 1:
@@ -169,7 +169,7 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
         # Fallback for unexpected page numbers
         return create_mock_paginated_response(
             [],
-            page=page_num,  # type: ignore[arg-type]
+            page=page_num,  # pyright: ignore[reportArgumentType]
             total_pages=10,
         )
 

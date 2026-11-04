@@ -78,8 +78,8 @@ def test_filter_movies_excludes_empty_title() -> None:
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -147,8 +147,8 @@ def test_completeness_filter_applies_with_other_filters() -> None:
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -214,8 +214,8 @@ def test_filter_movies_excludes_empty_overview() -> None:
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -285,8 +285,8 @@ def test_filter_movies_excludes_placeholder_overview() -> None:
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -353,8 +353,8 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)

@@ -277,9 +277,10 @@ curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.de
 ```
 
 The entry point fetches and runs the target's own deploy script from a temporary copy under the operations lock.
-It pulls, migrates, configures the Site, starts services and checks public health. Stop on failure. Caddy obtains
-its certificate once DNS and ports are ready; inspect web logs to resolve a certificate failure, then repeat the
-health check. Acceptance checks use certificate validation.
+It pulls images, prepares the database without recreating an existing container, takes a fresh backup, migrates,
+syncs the tracked movie blacklist, configures the Site, starts services and checks public health. Stop on failure.
+Caddy obtains its certificate once DNS and ports are ready; inspect web logs to resolve a certificate failure,
+then repeat the health check. Acceptance checks use certificate validation.
 
 Before installing OAuth/mail credentials, confirm the running backend image revision is the intended hardened
 commit. In a fresh browser session, an unsafe request without Django's CSRF token must return 403, while the
@@ -343,7 +344,10 @@ cinexplorer-deploy FULL_PUBLISHED_COMMIT_SHA
 Every deploy holds `/opt/cinexplorer/ops.lock`, waiting up to 30 minutes. The trusted manual form reuses a lock held
 by the operations shell below. CI always takes it. There is no automatic rollback or zero-downtime guarantee;
 previous containers serve until startup recreates them, and failed migrations can leave schema changes behind.
-Inspect failure output before retrying or rolling back.
+Inspect failure output before retrying or rolling back. The pre-migration backup must succeed before any
+migration runs. `sync_blacklist` makes the movie blacklist table match the image's tracked
+`backend/apps/movie/data/blacklist.csv`, adding, removing and rewording entries. It validates the complete file
+before changing the table; a malformed file stops deployment without changing it.
 
 CI receives only the six exact step markers and the final result, exit status and private log path. Full output
 lives under `/opt/cinexplorer/deploy-logs/`, readable by `deploy`. If SSH disconnects, CI fails while the detached
@@ -415,6 +419,9 @@ The entry point refuses such commits and names these manual steps. Open the oper
 command at a time, and stop on any failure. For a version lacking the new authentication protections, first remove
 live OAuth/mail values from `backend.env`; activate them only with a hardened version.
 
+Take a [fresh backup](#back-up-the-database) in this locked shell before recording the current version or
+changing the checkout. Stop if the backup fails.
+
 Record the last successful version before changing the checkout. If history is empty, inspect the backend container
 instead; the checkout and configured tag may already be from a failed deployment:
 
@@ -444,6 +451,9 @@ chmod 600 /opt/cinexplorer/prod.env
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env config --quiet
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env pull
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate --noinput
+if git cat-file -e "$target_commit:backend/apps/movie/management/commands/sync_blacklist.py" 2>/dev/null; then
+    docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py sync_blacklist
+fi
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
 curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/
 printf '%s manual %s %s %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -453,6 +463,45 @@ exit
 
 Append history only after public health succeeds. The legacy version has no `configure_site` command; its existing
 Site configuration remains. Confirm browser sign-in and watchlist persistence after any successful switch.
+
+## Back up the database
+
+Every scripted deployment takes a fresh backup after pulling images and before migrations. It prepares `db`
+with `up -d --wait --no-recreate db`, preserving an existing container; a fresh installation initializes its
+empty database first. Any dump, validation, upload or heartbeat failure stops deployment before migrations.
+Configure `ops.env` before the first scripted deployment.
+
+Outside an operations shell, run the same backup through its locking service:
+
+```sh
+sudo systemctl start cinexplorer-backup.service
+sudo journalctl -u cinexplorer-backup.service -n 30 --no-pager
+```
+
+Inside an operations shell that already holds the lock, call the script directly. Starting the locking service
+there would wait for your own shell:
+
+```sh
+(
+    set -a
+    . /opt/cinexplorer/ops.env
+    set +a
+    bash /opt/cinexplorer/repo/infrastructure/deploy/backup.sh
+)
+```
+
+Use `NAME=value` or single-quoted values in `ops.env`, compatible with both systemd's EnvironmentFile and shell
+sourcing. Do not put `export` statements or shell commands in it. Keep deployment and backend env files under
+Compose's parser.
+
+The script writes a private custom-format `pg_dump -Fc` archive in `/opt/cinexplorer/backups/`, validates it with
+`pg_restore --list`, uploads it to R2 and deletes the local archive before its success ping. Failed backups retain
+their local archive for diagnosis. R2's lifecycle rule removes uploaded backups after 30 days. A local recovery
+copy alone cannot protect against loss of the server.
+
+Use [Restore the database from R2](#restore-the-database-from-r2) for the complete restore and recovery procedure,
+and [Capture a recovery copy](#capture-a-recovery-copy) before a destructive schema reversal. The
+[nightly jobs](#nightly-jobs-and-monitoring) use this same script and archive format.
 
 ## Roll back code and compare schema
 
@@ -475,6 +524,10 @@ Choose the target from history:
   differs from it. Use that previous revision/tag, passing over redeploys and same-version rollback records.
 - For a rollback immediately after another rollback, choose the intended earlier target by hand from history;
   following the latest rollback line would just switch back again. A `-` previous field offers no target.
+
+The blacklist table retains the newer version's contents until it is synced again. A target with `sync_blacklist`
+reloads its tracked file during deployment. For a manual rollback to an image with that command, run it immediately
+after `migrate`; older images have no sync command and retain the current table.
 
 A rollback switches code; schema reversal is a separate operation that can discard data. Take and validate a live
 custom-format recovery copy using only the [recovery-copy block](#capture-a-recovery-copy) inside this already
@@ -640,6 +693,8 @@ docker volume inspect cinexplorer-prod_db-data cinexplorer-prod_caddy-data cinex
 Postgres data lives in `cinexplorer-prod_db-data`; Caddy certificates/account state in `cinexplorer-prod_caddy-data`
 and its configuration in `cinexplorer-prod_caddy-config`. Redis is disposable cache with persistence disabled.
 Docker retains three 10 MB stdout/stderr log files per container. Services restart unless explicitly stopped.
+Database backups are stored in R2 by the [backup script](#back-up-the-database); its temporary archives and
+manual recovery copies use `/opt/cinexplorer/backups/`.
 Keep project/volume names stable. `down -v` deletes database and certificate state and is not a server maintenance
 command. Env files stay outside the checkout; deploy's repository and registry credentials stay in its home.
 

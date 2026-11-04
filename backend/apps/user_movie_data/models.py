@@ -46,4 +46,4 @@ class UserMovieData(models.Model):
     def __str__(self) -> str:
         # ForeignKey attribute access - django-types limitation with related field access
         # Pyright cannot infer .username and .title through the stub file
-        return f"{self.user.username} - {self.movie.title}"  # type: ignore[reportUnknownMemberType]
+        return f"{self.user.username} - {self.movie.title}"

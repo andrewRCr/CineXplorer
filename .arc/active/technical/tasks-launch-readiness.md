@@ -35,8 +35,8 @@ authentication gaps that matter once sign-up is public are closed.
 - The move to `cinexplorer.andrewcreekmore.dev` and a second environment (the runbook documents the move)
 - Branch deploys from CI, automatic rollback and zero-downtime deploys
 - Hiding an unconfigured provider's button, Google's brand verification and the privacy policy page it needs
-- Backup encryption, droplet backups, point-in-time recovery, backups more often than nightly, and backing up Caddy's
-  certificates or the env files
+- Backup encryption, droplet backups, point-in-time recovery, scheduled backups more often than nightly,
+  and backing up Caddy's certificates or the env files
 - Monitoring beyond the health endpoint and the two nightly jobs; atomic throttle counting across workers; new or
   changed rate limits
 - Registration's response to a failed send, an upstream ZeptoMail fix, and the sender's display name
@@ -340,6 +340,15 @@ authentication gaps that matter once sign-up is public are closed.
       development-log CSRF test's real file write from checkout permissions after the first CI run exposed them.
     - Merged `main` through `1f980b45`, preserving strict CSRF enforcement and Site tests alongside upstream
       diagnostic tests; aligned resend-prefix references and test styles with upstream renames and lint rules.
+    - Integrated `main` through `031327a5` after the Owner approved the tracked-blacklist update. Deployment now
+      prepares the database without recreation, runs the existing validated R2 backup under its held lock, migrates
+      and immediately syncs the image's tracked blacklist. Backup or sync failure prevents later steps and success
+      history. Preserved all six markers, bootstrap and the runbook's backup/restore/rollback guidance.
+    - Ten deployment cases cover the new ordering, upload/heartbeat and sync failures, and running/stopped/fresh
+      databases. Coupled backup tests failed against the prior script; blacklist guards also failed with only
+      sync removed, then passed with it restored. The merged backend passed 1,029 tests with 94.94% coverage;
+      backend lint/format/type checks and all 24 deployment-harness cases passed. Publication and live evidence
+      for this integration remain pending.
     - PR CI `41906416896` and manual CI `41906505768` passed at `7608822a`, publishing its images. The merged backend
       suite passed 990 tests with 94.71% coverage; backend type, lint, format and task markdown checks passed.
     - On staging, bootstrap installed the entry point, restricted CI key and nightly units; its second run reported

@@ -124,7 +124,7 @@ jobs:
       - name: Run backend type checking
         run: |
           echo "Running Pyright type checking with django-types..."
-          npx pyright@1.1.414 backend/apps/ backend/config/ --project backend
+          npx pyright@1.1.414 backend/apps/ backend/config/ --project backend --warnings
 
   images:
     name: Images

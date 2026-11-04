@@ -49,7 +49,16 @@ cd infrastructure
 printf '==> 3 Pull images and migrate\n'
 compose config --quiet
 compose pull
+compose up -d --wait --no-recreate db
+(
+    set -a
+    # shellcheck source=/dev/null
+    . "$operations/ops.env"
+    set +a
+    bash "$operations/repo/infrastructure/deploy/backup.sh"
+)
 compose run --rm backend python manage.py migrate
+compose run --rm backend python manage.py sync_blacklist
 
 printf '==> 4 Configure Site\n'
 compose run --rm backend python manage.py configure_site

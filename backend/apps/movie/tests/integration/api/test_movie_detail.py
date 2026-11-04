@@ -53,7 +53,7 @@ def test_get_movie_detail_authenticated(
     # Arrange: Create the local movie stub and user data
     movie_stub = create_movie_stub(78, title="Blade Runner")
     UserMovieData.objects.create(
-        user=user,  # type: ignore[arg-type]
+        user=user,
         movie=movie_stub,
         user_rating=9,
         user_review="Great movie!",

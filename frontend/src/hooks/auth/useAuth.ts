@@ -367,6 +367,7 @@ export function useAuth(): AuthStateProps {
             setUser(userDetails);
             // Ensure isAuthenticated is true when user details are successfully fetched
             setIsAuthenticated(true);
+            return undefined;
         } catch (error) {
             logger.error("Error fetching user details", { error });
             setUser(null);

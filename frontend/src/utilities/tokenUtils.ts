@@ -44,6 +44,7 @@ export function getTokenExpiration(token: string): Date | null {
 
         // Decode base64url payload (middle part)
         const payload = parts[1];
+        if (payload === undefined) return null;
         const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
         const jsonPayload = decodeURIComponent(
             atob(base64)

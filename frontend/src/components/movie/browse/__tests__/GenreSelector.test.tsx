@@ -151,26 +151,24 @@ describe("GenreSelector Component", () => {
       const user = userEvent.setup();
       const { rerender } = render(<GenreSelector {...defaultProps} />);
 
-      const genreIds = [28, 35, 18, 27, 878]; // Action, Comedy, Drama, Horror, Sci-Fi
-      const genreLabels = [
-        "Action",
-        "Comedy",
-        "Drama",
-        "Horror",
-        "Science Fiction",
+      const genres = [
+        { id: 28, label: "Action" },
+        { id: 35, label: "Comedy" },
+        { id: 18, label: "Drama" },
+        { id: 27, label: "Horror" },
+        { id: 878, label: "Science Fiction" },
       ];
 
       let selectedIds: number[] = [];
 
       // Select each genre one by one
-      for (let index = 0; index < genreLabels.length; index++) {
-        const label = genreLabels[index];
+      for (const { id, label } of genres) {
         const checkbox = screen.getByLabelText(label);
         await act(async () => {
           await user.click(checkbox);
         });
 
-        selectedIds = [...selectedIds, genreIds[index]];
+        selectedIds = [...selectedIds, id];
         expect(mockOnChange).toHaveBeenCalledWith(selectedIds);
 
         // Update the component with new selection
@@ -182,9 +180,9 @@ describe("GenreSelector Component", () => {
       }
 
       // All checkboxes should be checked
-      genreLabels.forEach((label) => {
-        const checkbox = screen.getByLabelText(label) as HTMLInputElement;
-        expect(checkbox.checked).toBe(true);
+      genres.forEach(({ label }) => {
+        const checkbox = screen.getByLabelText(label);
+        expect(checkbox).toBeChecked();
       });
     });
   });

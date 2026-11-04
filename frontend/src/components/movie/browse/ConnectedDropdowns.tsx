@@ -283,7 +283,7 @@ const ConnectedDropdowns = ({
           collection={yearCollection}
           value={[yearDisplayData.yearDisplayValue]}
           onValueChange={(details) => {
-            const value = details.value[0];
+            const value = details.value[0] ?? "";
             if (value.endsWith("'s")) {
               const startYear = parseInt(value.slice(0, 4));
               const endYear = startYear + 9;

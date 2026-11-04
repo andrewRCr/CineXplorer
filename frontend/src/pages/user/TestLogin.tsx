@@ -19,6 +19,7 @@ const TestLogin = () => {
       });
       const userDetails = userInfoResponse.data;
       setUsername(userDetails.username);
+      return undefined;
     } catch (error) {
       return error;
     }

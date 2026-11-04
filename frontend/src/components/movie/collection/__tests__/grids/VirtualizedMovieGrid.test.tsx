@@ -22,6 +22,7 @@
 
 import { screen, fireEvent } from "@testing-library/react";
 import {
+  assert,
   describe,
   it,
   expect,
@@ -573,6 +574,7 @@ describe("VirtualizedMovieGrid", () => {
 
       // Value should be JSON with the scroll position
       const lastCall = setItemCalls[setItemCalls.length - 1];
+      assert.isDefined(lastCall);
       expect(lastCall[1]).toContain('"position":500');
     });
   });
@@ -739,8 +741,10 @@ describe("VirtualizedMovieGrid", () => {
       );
 
       // Verify estimateSize returns correct value
-      const config = (useWindowVirtualizer as Mock).mock.calls[0][0];
-      expect(config.estimateSize()).toBe(449); // Fixed card height
+      const [firstCall] = vi.mocked(useWindowVirtualizer).mock.calls;
+      assert.isDefined(firstCall);
+      const config = firstCall[0];
+      expect(config.estimateSize(0)).toBe(449); // Fixed card height
     });
 
     /**

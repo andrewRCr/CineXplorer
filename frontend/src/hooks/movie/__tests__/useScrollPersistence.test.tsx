@@ -15,7 +15,15 @@
  */
 
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  assert,
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+} from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useScrollPersistence } from "../useScrollPersistence";
@@ -74,15 +82,18 @@ function createWrapper(
   initialEntries: string[] = ["/browse"],
   initialState?: object,
 ) {
+  const [initialEntry] = initialEntries;
+  assert.isDefined(initialEntry);
+  const [pathname, search] = initialEntry.split("?");
+  assert.isDefined(pathname);
+
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <MemoryRouter
         initialEntries={[
           {
-            pathname: initialEntries[0].split("?")[0],
-            search: initialEntries[0].includes("?")
-              ? `?${initialEntries[0].split("?")[1]}`
-              : "",
+            pathname,
+            search: search === undefined ? "" : `?${search}`,
             state: initialState,
           },
         ]}
@@ -488,9 +499,9 @@ describe("useScrollPersistence", () => {
       // Either no save calls, or if there are, they shouldn't save the intermediate position (300)
       if (setCalls.length > 0) {
         // If saved, it should NOT be the intermediate scroll position
-        expect(setCalls[setCalls.length - 1][1]).not.toContain(
-          '"position":300',
-        );
+        const lastCall = setCalls[setCalls.length - 1];
+        assert.isDefined(lastCall);
+        expect(lastCall[1]).not.toContain('"position":300');
       }
     });
   });

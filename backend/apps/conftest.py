@@ -37,8 +37,9 @@ from typing import TYPE_CHECKING, cast
 import pytest
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
     from django.test import Client
+
+    from apps.users.models import User
 
 
 @pytest.fixture

@@ -22,7 +22,7 @@ from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
+    from apps.users.models import User
 
 User = get_user_model()
 

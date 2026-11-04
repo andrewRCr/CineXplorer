@@ -33,8 +33,9 @@ from apps.user_movie_data.tests.mock_paths import (
 )
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
     from django.test import Client
+
+    from apps.users.models import User
 
 # HTTP status codes
 HTTP_200_OK = HTTPStatus.OK

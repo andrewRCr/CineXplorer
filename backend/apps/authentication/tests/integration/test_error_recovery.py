@@ -238,7 +238,7 @@ def test_database_error_during_authentication_returns_500() -> None:
     client = create_fresh_client()
 
     # Mock database error during user lookup
-    with patch("django.contrib.auth.models.User.objects.get") as mock_get:
+    with patch("apps.users.models.User.objects.get") as mock_get:
         mock_get.side_effect = Exception("Database connection lost")
 
         response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {access_token_str}")
@@ -307,6 +307,7 @@ def test_profile_endpoint_with_serialization_error() -> None:
     transaction=True,
     available_apps=[
         "apps.authentication",
+        "apps.users",
         "django.contrib.auth",
         "django.contrib.contenttypes",
         "ninja_jwt.token_blacklist",

@@ -182,11 +182,12 @@ run beside it.
 **Needs:** the main checkout's stack running on 8444, and the Owner at the browser for 5.2 and 5.3. The throwaway
 worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed by 5.4.
 
-- [ ] **5.1 Two worktrees made by `create` serve at their own ports** (Criterion 6)
-    - From the sandbox's main checkout: `create chore/proof-a --work-unit` and `create chore/proof-b`, then `browse`
-      in each
-    - `/` and `/api/health-check/` answer `200` at each worktree's port, and at `https://localhost:8444`
-    - `proof-a` holds `.arc/user/{identity}/proof-a/SESSION-NOTES.md`; `proof-b` holds no session notes
+- [x] **5.1 Two worktrees made by `create` serve at their own ports** (Criterion 6)
+    - Isolated sandbox `~/dev/scratch/worktree-stack-proof/` has this branch's `af6d7888` as its own `main`.
+      `create chore/proof-a --work-unit` and `create chore/proof-b` provisioned and browsed successfully on 8445
+      and 8446. Both `/` and `/api/health-check/` returned 200 at each port and at the primary's 8444.
+    - Only `proof-a` has starting planning notes. Setup and command output are retained in personal proofs; the
+      sandbox is removed after 5.4.
 
 - [ ] **5.2 A worktree's sign-in, data and tokens stay its own** (Criterion 7)
     - In the Owner's browser at `proof-a`'s port: sign in as the dev account, add a movie to the watchlist, reload,

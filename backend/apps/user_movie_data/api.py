@@ -14,7 +14,7 @@ Architecture:
 from __future__ import annotations
 
 from django.http import HttpRequest
-from ninja import Router
+from ninja import Router, Status
 
 from apps.authentication.auth_ninja import JWTCookieAuth, get_current_user
 from apps.movie.schemas import MovieListResponseSchema
@@ -185,7 +185,7 @@ def update_user_movie_data(
 
 
 @user_movie_data_router.delete("/{id}", response={204: None})
-def delete_user_movie_data(request: HttpRequest, id: int) -> tuple[int, None]:
+def delete_user_movie_data(request: HttpRequest, id: int) -> Status[None]:
     """
     Delete user movie data entry.
 
@@ -207,4 +207,4 @@ def delete_user_movie_data(request: HttpRequest, id: int) -> tuple[int, None]:
     # Service handles authorization and raises HttpError(404) if not found
     _service.delete(user=user, record_id=id)
 
-    return (204, None)
+    return Status(204, None)

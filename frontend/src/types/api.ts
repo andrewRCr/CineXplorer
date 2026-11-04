@@ -25,7 +25,7 @@ export interface paths {
          *         payload: Registration data (username, email, password, first_name, last_name)
          *
          *     Returns:
-         *         tuple: (status_code, response_data)
+         *         Status: the status code and response data
          *             - 201: User created successfully, verification email sent
          *             - 400: Password validation failed (too weak, common, or similar to user attributes)
          *             - 409: Username/email already exists or forbidden username
@@ -75,7 +75,7 @@ export interface paths {
          *         payload: Login credentials (login, password)
          *
          *     Returns:
-         *         tuple: (status_code, response_data)
+         *         Status: the status code and response data
          *             - 200: Authentication successful, access token in body, refresh token in cookie
          *             - 400: Missing credentials
          *             - 401: Invalid credentials
@@ -121,7 +121,7 @@ export interface paths {
          *         response: HTTP response object (for setting new cookies)
          *
          *     Returns:
-         *         tuple: (status_code, response_data)
+         *         Status: the status code and response data
          *             - 200: Token refreshed successfully, new tokens set as cookies
          *             - 400: No valid refresh token in cookies or invalid format
          *             - 401: Token blacklisted (reuse attempt detected)
@@ -170,7 +170,7 @@ export interface paths {
          *         response: HTTP response object (for setting new refresh token cookie)
          *
          *     Returns:
-         *         tuple: (status_code, response_data)
+         *         Status: the status code and response data
          *             - 200: New access token in response body, refresh token rotated in cookie
          *             - 400: No refresh token found or invalid token format
          *             - 401: Token blacklisted (reuse attempt detected)
@@ -214,7 +214,7 @@ export interface paths {
          *         response: HTTP response object (for deleting cookies)
          *
          *     Returns:
-         *         tuple: (status_code, response_data)
+         *         Status: the status code and response data
          *             - 200: Logout successful, cookies cleared
          *
          *     Cookie deletion:
@@ -249,7 +249,7 @@ export interface paths {
          *         response: HTTP response object (for setting cookie)
          *
          *     Returns:
-         *         tuple: (status_code, response_data)
+         *         Status: the status code and response data
          *             - 200: CSRF token generated and set as cookie
          *
          *     Cookie details:
@@ -319,7 +319,7 @@ export interface paths {
          *         payload: Fields to update (all optional)
          *
          *     Returns:
-         *         tuple: (status_code, response_data)
+         *         Status: the status code and response data
          *             - 200: Profile updated successfully
          *             - 400: Validation error
          *

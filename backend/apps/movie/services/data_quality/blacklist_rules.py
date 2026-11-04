@@ -76,6 +76,52 @@ RULES: tuple[BlacklistRule, ...] = (
 )
 
 
+@dataclass(frozen=True)
+class _Page:
+    """One discover page's counts and titles."""
+
+    total_pages: int
+    total_results: int
+    ids: set[int]
+    # Titles TMDB doesn't flag as adult: the ones a rule blacklists.
+    unflagged: set[int]
+
+
+def _read_page(rule: BlacklistRule, page: int, response: ApiResponse) -> _Page:
+    """Check one discover page and return its counts and titles."""
+    data = response.get_json_data() if response.is_success() else None
+    if data is None:
+        raise RuleFetchError(
+            f"{rule.source}: TMDB page {page} failed (status {response.status_code})"
+        )
+    total_pages = data.get("total_pages")
+    total_results = data.get("total_results")
+    results = data.get("results")
+    if (
+        not isinstance(total_pages, int)
+        or not isinstance(total_results, int)
+        or not isinstance(results, list)
+    ):
+        raise RuleFetchError(
+            f"{rule.source}: TMDB page {page} is missing its page count, result count or results"
+        )
+    if total_pages > MAX_PAGES:
+        raise RuleFetchError(
+            f"{rule.source}: TMDB reports {total_pages} pages but serves only {MAX_PAGES}"
+        )
+    ids: set[int] = set()
+    unflagged: set[int] = set()
+    for item in cast(list[object], results):
+        movie = cast(dict[str, object], item) if isinstance(item, dict) else {}
+        movie_id = movie.get("id")
+        if not isinstance(movie_id, int):
+            raise RuleFetchError(f"{rule.source}: TMDB page {page} has a result without an ID")
+        ids.add(movie_id)
+        if not movie.get("adult"):
+            unflagged.add(movie_id)
+    return _Page(total_pages, total_results, ids, unflagged)
+
+
 def fetch_rule_ids(
     client: DiscoverClient,
     rule: BlacklistRule,
@@ -100,56 +146,27 @@ def fetch_rule_ids(
     if rule.released_to:
         params["primary_release_date.lte"] = rule.released_to
 
-    seen: set[int] = set()
-    ids: set[int] = set()
-    page = 1
-    total_pages = 1
-    total_results = 0
-    while page <= total_pages:
-        response = client.discover_movies(page=page, **params)
-        data = response.get_json_data() if response.is_success() else None
-        if data is None:
-            raise RuleFetchError(
-                f"{rule.source}: TMDB page {page} failed (status {response.status_code})"
-            )
-        reported_pages = data.get("total_pages")
-        reported_results = data.get("total_results")
-        results = data.get("results")
-        if (
-            not isinstance(reported_pages, int)
-            or not isinstance(reported_results, int)
-            or not isinstance(results, list)
+    first = _read_page(rule, 1, client.discover_movies(page=1, **params))
+    seen = set(first.ids)
+    ids = set(first.unflagged)
+    for page in range(2, first.total_pages + 1):
+        pause(PAGE_PAUSE_SECONDS)
+        current = _read_page(rule, page, client.discover_movies(page=page, **params))
+        # A later page from a changed catalogue could end the fetch early or hide a skip.
+        if (current.total_pages, current.total_results) != (
+            first.total_pages,
+            first.total_results,
         ):
             raise RuleFetchError(
-                f"{rule.source}: TMDB page {page} is missing its page count, result count or "
-                "results"
+                f"{rule.source}: TMDB page {page} reports {current.total_results} titles on "
+                f"{current.total_pages} pages, but page 1 reported {first.total_results} on "
+                f"{first.total_pages}"
             )
-        if reported_pages > MAX_PAGES:
-            raise RuleFetchError(
-                f"{rule.source}: TMDB reports {reported_pages} pages but serves only {MAX_PAGES}"
-            )
-        # A later page from a changed catalogue could end the fetch early or hide a skip.
-        if page == 1:
-            total_pages, total_results = reported_pages, reported_results
-        elif (reported_pages, reported_results) != (total_pages, total_results):
-            raise RuleFetchError(
-                f"{rule.source}: TMDB page {page} reports {reported_results} titles on "
-                f"{reported_pages} pages, but page 1 reported {total_results} on {total_pages}"
-            )
-        for item in cast(list[object], results):
-            movie = cast(dict[str, object], item) if isinstance(item, dict) else {}
-            movie_id = movie.get("id")
-            if not isinstance(movie_id, int):
-                raise RuleFetchError(f"{rule.source}: TMDB page {page} has a result without an ID")
-            seen.add(movie_id)
-            if not movie.get("adult"):
-                ids.add(movie_id)
-        page += 1
-        if page <= total_pages:
-            pause(PAGE_PAUSE_SECONDS)
-    if len(seen) < total_results:
+        seen |= current.ids
+        ids |= current.unflagged
+    if len(seen) < first.total_results:
         raise RuleFetchError(
-            f"{rule.source}: TMDB reports {total_results} titles but its pages held "
+            f"{rule.source}: TMDB reports {first.total_results} titles but its pages held "
             f"{len(seen)} different ones"
         )
     return ids

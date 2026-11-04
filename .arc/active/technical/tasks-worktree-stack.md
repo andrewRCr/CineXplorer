@@ -160,35 +160,15 @@ run beside it.
 
 ### **Phase 4:** One command removes a worktree with its stack
 
-- [ ] **4.1 `remove` tears down a merged worktree and keeps unmerged work** (R8, R14; Criterion 1)
+- [x] **4.1 `remove` tears down a merged worktree and keeps unmerged work** (R8, R14; Criterion 1)
 
-    - [ ] **4.1.a Write tests** in `scripts/worktree.test.mjs`
-        - Refusals, each before any Docker call, changing nothing, with its reason asserted: run from a linked
-          worktree; a name that is not a registered worktree, or one with a detached HEAD; an unmerged branch;
-          uncommitted changes to a tracked file; an untracked file the ignore rules don't cover; a locked worktree
-          (`git worktree lock`); an `infrastructure/.env` naming a project other than `cinexplorer-{name}`
-        - A merged, clean worktree whose file names `cinexplorer-{name}`, with the main checkout on another branch,
-          and the `docker` stub answering each kind's listing with IDs: every listing filters by the label
-          `com.docker.compose.project=cinexplorer-{name}`, and the container listing includes stopped containers
-          (`-a`); the listed containers are stopped and removed before any
-          volume, network or image is removed, and each removal names the listed IDs; the folder is gone and
-          unregistered, the branch deleted, and `git fetch --prune` ran
-        - A merged worktree whose file names no project: no Docker call; removed, and its branch deleted
-        - `--keep-branch` on an unmerged worktree: its stack torn down and the worktree removed; the branch kept at
-          its commit
-        - Expect tests to FAIL initially
-
-    - [ ] **4.1.b Implement `remove`**
-        - R8's steps in order, every refusal before anything is deleted: after `git fetch origin`,
-          `git merge-base --is-ancestor {branch} origin/main` (skipped for `--keep-branch`); the `locked` line from
-          `git worktree list --porcelain`; `git status --porcelain` in the worktree; the project name
-        - Teardown: for containers, volumes, networks and images, list IDs with `--filter label=...` and `-q`, and
-          remove what is found; containers are stopped, then removed, before the other kinds. The container listing
-          takes `-a`: a stack stopped by `docker compose stop` or a Docker restart leaves exited containers, which
-          would hold its volumes and images
-        - `git worktree remove {primary}.{name}`; unless `--keep-branch`,
-          `git branch --set-upstream-to=origin/main {branch}` and `git branch -d {branch}`; then `git fetch --prune`
-        - Tests should now PASS
+    - [x] **4.1.a Write tests:** 13 fail-first cases cover every refusal, unchanged files and branch heads on
+      refusal, teardown of all four labelled resource kinds in order (including stopped containers), removal with
+      the primary on another branch, pruning, absent project/env and empty listings, and preserving an unmerged
+      branch at its commit with `--keep-branch`.
+    - [x] **4.1.b Implement `remove`:** fetch, check ancestry, lock, tracked/untracked work and project identity
+      before teardown; stop/remove containers, then volumes/networks/images; remove the checkout; delete only a
+      merged branch after setting its upstream to `origin/main`; prune. Syntax checks and all 49 worktree tests pass.
 
 - [ ] **4.2 The workflows remove worktrees with `remove`** (R12)
     - `worktree-sessions.md` § Removal gives `remove`, and `remove --keep-branch` for a review checkout or abandoned

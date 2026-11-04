@@ -179,6 +179,48 @@ function browse(root, main) {
     console.log(`https://localhost:${envValue(contents, "SITE_PORT")}\nSign in: dev / cinexplorer-dev`);
 }
 
+function remove(root, main, name, keepBranch) {
+    primary(root, main);
+    if (!/^[a-z0-9][a-z0-9-]*$/.test(name ?? "")) throw new Error("Supply a worktree name using lowercase letters, digits and hyphens.");
+    const path = `${main}.${name}`;
+    const entry = worktrees(main).find((candidate) => candidate.path === path);
+    if (!entry) throw new Error(`Not a registered worktree: ${path}`);
+    if (!entry.branch) throw new Error("Worktree must have a branch checked out; detached HEAD cannot be removed here.");
+    git(main, "fetch", "origin");
+    if (!keepBranch) {
+        const merged = spawnSync("git", ["merge-base", "--is-ancestor", entry.branch, "origin/main"], {
+            cwd: main, encoding: "utf8",
+        });
+        if (merged.error) throw merged.error;
+        if (merged.status === 1) throw new Error(`Branch ${entry.branch} is not merged into origin/main; use --keep-branch to preserve it.`);
+        if (merged.status !== 0) throw new Error(merged.stderr || "git merge-base failed");
+    }
+    if (entry.locked) throw new Error("Worktree is locked; remove it with the tool that owns it.");
+    if (git(path, "status", "--porcelain", "--untracked-files=all")) {
+        throw new Error("Worktree has uncommitted or untracked files; keep it until they are resolved.");
+    }
+    const project = envValue(readEnv(path), "COMPOSE_PROJECT_NAME");
+    const expected = `cinexplorer-${name}`;
+    if (project && project !== expected) throw new Error(`Compose project must be ${expected}; found ${project}.`);
+    if (project) {
+        const filter = ["--filter", `label=com.docker.compose.project=${project}`, "-q"];
+        for (const kind of ["container", "volume", "network", "image"]) {
+            const listing = run(main, "docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), ...filter]);
+            const ids = [...new Set(listing.split(/\s+/).filter(Boolean))];
+            if (!ids.length) continue;
+            if (kind === "container") console.log(run(main, "docker", [kind, "stop", ...ids]));
+            console.log(run(main, "docker", [kind, "rm", ...ids]));
+        }
+    }
+    git(main, "worktree", "remove", path);
+    if (!keepBranch) {
+        git(main, "branch", "--set-upstream-to=origin/main", entry.branch);
+        git(main, "branch", "-d", entry.branch);
+    }
+    git(main, "fetch", "--prune");
+    console.log(`Removed ${path}; ${keepBranch ? "kept" : "deleted"} branch ${entry.branch}.`);
+}
+
 function main() {
     const [command, ...args] = process.argv.slice(2);
     if (command === "--help" || command === "-h") return console.log(HELP);
@@ -186,6 +228,9 @@ function main() {
     const { root, main } = context();
     if (command === "provision" && args.length === 0) return provision(root, main);
     if (command === "browse" && args.length === 0) return browse(root, main);
+    if (command === "remove" && args.length >= 1 && args.length <= 2 && (args.length === 1 || args[1] === "--keep-branch")) {
+        return remove(root, main, args[0], args.includes("--keep-branch"));
+    }
     if (command === "create" && args.length >= 1 && args.slice(1).every((arg) => ["--existing", "--work-unit"].includes(arg))) {
         return create(root, main, args[0], { existing: args.includes("--existing"), workUnit: args.includes("--work-unit") });
     }

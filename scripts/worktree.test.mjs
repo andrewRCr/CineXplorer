@@ -417,3 +417,133 @@ test("a failed stack start prints its output and never migrates or seeds", (t) =
     refusal(f.invoke(path, ["browse"], { CX_FAIL: "up" }), /stub command failed: up/);
     assert.deepEqual(f.calls(), [{ command: "docker", args: [...BROWSER, "up", "-d", "--wait"], cwd: path }]);
 });
+
+function preserved(f, path, args, reason) {
+    const head = git(path, "rev-parse", "HEAD");
+    const status = git(path, "status", "--porcelain");
+    const env = envOf(path);
+    refusal(f.invoke(f.main, args), reason);
+    assert.equal(git(path, "rev-parse", "HEAD"), head);
+    assert.equal(git(path, "status", "--porcelain"), status);
+    assert.equal(envOf(path), env);
+    assert.deepEqual(f.calls(), []);
+}
+
+test("remove refuses a linked checkout before any Docker call", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    refusal(f.invoke(path, ["remove", "sample"]), /main checkout/i);
+    assert.equal(git(path, "branch", "--show-current"), "fix/sample");
+    assert.deepEqual(f.calls(), []);
+});
+
+test("remove refuses an unregistered folder", (t) => {
+    const f = fixture(t);
+    const path = join(f.parent, "primary.unknown");
+    mkdirSync(path);
+    write(path, "keep", "original");
+    refusal(f.invoke(f.main, ["remove", "unknown"]), /registered worktree/i);
+    assert.equal(readFileSync(join(path, "keep"), "utf8"), "original");
+    assert.deepEqual(f.calls(), []);
+});
+
+test("remove refuses a detached worktree", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(path, "checkout", "-q", "--detach");
+    preserved(f, path, ["remove", "sample"], /branch.*checked out|detached/i);
+});
+
+test("remove refuses an unmerged branch without changing its worktree", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(path, "commit", "-q", "--allow-empty", "-m", "unmerged work");
+    preserved(f, path, ["remove", "sample"], /not merged|unmerged/i);
+});
+
+for (const untracked of [false, true]) {
+    test(`remove refuses ${untracked ? "untracked" : "modified tracked"} files before teardown`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", BROWSE_ENV);
+        write(path, untracked ? "new.txt" : ".worktreeinclude", "keep my changes\n");
+        preserved(f, path, ["remove", "sample"], /uncommitted|untracked/i);
+    });
+}
+
+test("remove refuses a locked worktree before teardown", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(f.main, "worktree", "lock", path);
+    preserved(f, path, ["remove", "sample"], /locked/i);
+    assert.match(git(f.main, "worktree", "list", "--porcelain"), /^locked$/m);
+});
+
+test("remove refuses another Compose project before teardown", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", "COMPOSE_PROJECT_NAME=infrastructure\n");
+    preserved(f, path, ["remove", "sample"], /project.*cinexplorer-sample.*infrastructure/i);
+});
+
+test("remove tears down all labelled resource kinds before removing a merged worktree and branch", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(f.main, "switch", "-q", "-c", "chore/elsewhere");
+    const trace = join(f.parent, "git-trace.log");
+    success(f.invoke(f.main, ["remove", "sample"], { CX_IDS: "first\nsecond", GIT_TRACE: trace }));
+    const label = "label=com.docker.compose.project=cinexplorer-sample";
+    assert.deepEqual(f.calls(), [
+        { command: "docker", args: ["container", "ls", "-a", "--filter", label, "-q"], cwd: f.main },
+        { command: "docker", args: ["container", "stop", "first", "second"], cwd: f.main },
+        { command: "docker", args: ["container", "rm", "first", "second"], cwd: f.main },
+        ...["volume", "network", "image"].flatMap((kind) => [
+            { command: "docker", args: [kind, "ls", "--filter", label, "-q"], cwd: f.main },
+            { command: "docker", args: [kind, "rm", "first", "second"], cwd: f.main },
+        ]),
+    ]);
+    assert.equal(existsSync(path), false);
+    assert.doesNotMatch(git(f.main, "worktree", "list", "--porcelain"), /primary\.sample/);
+    assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
+    assert.equal(git(f.main, "branch", "--show-current"), "chore/elsewhere");
+    assert.match(readFileSync(trace, "utf8"), /git fetch --prune/);
+});
+
+for (const contents of ["DATABASE_NAME=example\n", null]) {
+    test(`remove skips Docker when ${contents === null ? "the env file is absent" : "no project is named"}`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        if (contents !== null) write(path, "infrastructure/.env", contents);
+        success(f.invoke(f.main, ["remove", "sample"]));
+        assert.deepEqual(f.calls(), []);
+        assert.equal(existsSync(path), false);
+        assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
+    });
+}
+
+test("remove skips empty resource listings", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    success(f.invoke(f.main, ["remove", "sample"]));
+    assert.equal(existsSync(path), false);
+    assert.deepEqual(f.calls().map((call) => call.args.slice(0, 2)), [
+        ["container", "ls"], ["volume", "ls"], ["network", "ls"], ["image", "ls"],
+    ]);
+});
+
+test("remove --keep-branch tears down an unmerged worktree and preserves its branch at its commit", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(path, "commit", "-q", "--allow-empty", "-m", "unmerged work");
+    const head = git(path, "rev-parse", "HEAD");
+    success(f.invoke(f.main, ["remove", "sample", "--keep-branch"], { CX_IDS: "resource" }));
+    assert.equal(existsSync(path), false);
+    assert.equal(git(f.main, "rev-parse", "fix/sample"), head);
+    assert.equal(f.calls().filter((call) => call.args[1] === "rm").length, 4);
+});

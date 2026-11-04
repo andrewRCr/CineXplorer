@@ -141,53 +141,25 @@ authentication gaps that matter once sign-up is public are closed.
       hit explains hiding Ninja's `csrf_exempt` flag for Django validation. Checks: markdown lint, touched Python
       lint/format, scoped Pyright, 259 authentication tests, four related OAuth tests, frontend types/lint/format passed.
 
-- [ ] **2.5 A password user stays signed in while the refresh token is valid** (R28; Implemented 10 and 12, and Proven
+- [x] **2.5 A password user stays signed in while the refresh token is valid** (R28; Implemented 10 and 12, and Proven
   live 15 in 5.5)
 
-    - [ ] **2.5.a Reproduce the sign-out by hand** before changing anything: on the main checkout's browser stack,
-      which runs `main`, sign in with a password, leave the tab idle 6 minutes, then reload; record what each step
-      showed here. If the user stays signed in, stop: the amendment's premise fails, and it goes back to the Owner
-
-    - [ ] **2.5.b Write tests**, counting refresh requests in the Mock Service Worker handler for
-      `POST /api/auth/refresh`, with a `navigator.locks` stand-in installed (Phase 2 note on other tabs), since every
-      supported browser runs the refresh under the lock
-        - `useAuth.test.tsx`: an expired access token with a refresh that succeeds keeps the user signed in, on load
-          (the new access token stored and the profile fetched) and at the periodic check (fake timers), and before
-          `getUserDetails` fetches the profile
-        - `useAuth.test.tsx`: an expired access token whose refresh fails is refreshed once and then the user is signed
-          out with the stored tokens cleared, on load and before `getUserDetails` fetches the profile (today no
-          refresh is requested, and on load the expired token stays stored)
-        - `useAuth.test.tsx`: while "another tab" holds the lock, the hook's refresh waits; that tab stores an
-          unexpired access token expiring later and releases the lock; the hook then uses that token, requests no
-          refresh, and keeps the user signed in
-        - `useAuth.test.tsx`: with an expired access token, the hook loading and an `apiClient` request answered `401`
-          at the same moment send one refresh request between them (the refresh handler waits on a gate the test
-          releases, so the `401` arrives while the refresh is in flight)
-        - `useAuth.test.tsx`: a user signed in with Google or GitHub, holding no access token, never requests a refresh
-        - `useAuth.test.tsx`: an expired token stored in `sessionStorage` (a sign-in without "remember me"),
-          refreshed on load, is replaced in `sessionStorage` and nothing is written to `localStorage`
-        - Without the stand-in (jsdom has no `navigator.locks`), the fallback: an expired access token refreshed on load
-          is posted once, stored where the old one was, and keeps the user signed in
-        - Expect the successful-refresh, failed-refresh, lock, storage and fallback cases to FAIL initially; the
-          single-refresh and Google or GitHub cases pass today, since only the interceptor refreshes, and guard the
-          change: see each fail once (the hook posting to the endpoint itself; a refresh requested for every user)
-
-    - [ ] **2.5.c Refresh before signing out**
-        - `services/apiClient.ts` exports one refresh function that the response interceptor and `useAuth` share: it
-          posts to `/auth/refresh` with the token 2.2 adds; stores the new access token in the storage that held the
-          old one (`getCurrentStorageType`); returns the request already in flight when there is one (Phase 2 note on
-          rotation); and, where `navigator.locks` exists, runs under one named lock, holding which it first reads the
-          storage again and resolves with an access token another tab stored if it is unexpired and expires later
-          than the one it started from, posting only otherwise. Without the API it posts directly. The interceptor
-          keeps its own handling of a failure
-        - `hooks/auth/useAuth.ts`: on load, in the 60-second check and in `getUserDetails`, an expired access token
-          is refreshed before the user is treated as signed out; a failed refresh clears the stored tokens and signs
-          the user out as today. The refresh runs in the hook's existing effects (R28's exception to the TanStack
-          Query rule)
-        - `strategy-authentication.md`'s token refresh flow and its response-interceptor sample describe the code as
-          it now stands (R27, R28; Implemented 12): the refresh in `useAuth`, the one shared function, and the lock
-          across tabs, with no refresh made outside that function
-        - Tests should now PASS
+    - [x] **2.5.a Reproduce the sign-out by hand:** on the primary's browser stack, the Owner signed in with a
+      password successfully; six minutes idle left the page signed out, and reloading did not restore it.
+    - [x] **2.5.b Write tests:** eleven hook cases cover load/idle/profile renewal, failure cleanup, original
+      storage, lock waiting, another tab's token, shared hook/interceptor refresh, providers and the fallback.
+      Five API-client cases cover strict expiry boundaries and preserving a successful renewal when its retry fails.
+      Eight renewal cases failed before implementation; controlled mutations proved the existing sharing/provider
+      guards and each additional boundary case fail when their behavior is broken. Retained concurrent malformed/
+      failed-refresh tests now synchronize at the network boundary instead of counting storage reads.
+    - [x] **2.5.c Refresh before signing out:** one exported pending refresh promise coordinates the hook and
+      interceptor. A named Web Lock covers rereading, validating and storing tokens; only a current token expiring
+      strictly later is reused. New tokens stay in the chosen browser storage. Automatic failure clears local
+      state; the interceptor owns its redirect and handles retry failure separately. Mount's state effect owns
+      profile loading. Updated the authentication reference and kept the effects-based credential-renewal exception.
+    - Checks: 200 related frontend tests passed (16 files); type-aware lint, TypeScript, Prettier and markdown lint
+      passed. Astra's bounded integration advice supported the shared promise and caller-owned failures; execution
+      and checks stayed here. Live verification of the fix remains in 5.5.
 
 ### **Phase 3:** A failed email is a handled error, and the deployed host configures sign-in, its Site and health
 

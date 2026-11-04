@@ -112,23 +112,28 @@ going against its design and making upgrades difficult.
 
 **Why Hybrid Storage?**
 
-1. **Access token in sessionStorage**: Frontend can instantly check authentication without network call
+1. **Access token in browser storage**: Frontend can instantly check authentication without a network call
 2. **Short lifetime (5 min)**: XSS attacks only steal 5-minute token, not 14-day refresh token
 3. **Refresh token in HTTP-only cookie**: Long-lived token is XSS-proof, auto-sent with requests
 4. **Session warnings possible**: Frontend can decode JWT expiration for UX
 
 **Token Refresh Flow**:
 
-```typescript
-// Automatic refresh via axios interceptor (apiClient.ts)
-// When 401 response received:
-// 1. Check if access token exists (OAuth users don't have JWT tokens)
-// 2. If JWT user, POST /api/auth/refresh (no body needed)
-// 3. Backend validates refresh_token cookie
-// 4. Returns new access_token in response body
-// 5. Update access_token in sessionStorage
-// 6. Retry original request with new token
-```
+`useAuth` renews an expired access token on load, at its 60-second idle check, and before fetching the profile.
+Password users remain signed in when renewal succeeds. Failure clears stored tokens and the signed-in state;
+provider sessions have no access token and never request a refresh. On load the existing signed-out display remains
+until renewal answers. These effects renew credentials; moving authentication state onto TanStack Query is separate.
+
+The hook and the API client's `401` interceptor call the same exported `refreshAccessToken()` function. It returns
+one pending promise per tab, so every caller receives the same token or failure. On browsers with Web Locks it holds
+`cinexplorer-auth-refresh` across the storage reread, request, validation and storage update. A token another tab
+stored while it waited is reused only when it is unexpired and expires strictly later than the starting token.
+Otherwise the function sends `POST /api/auth/refresh` with credentials and CSRF, presenting the current rotated
+refresh cookie. A valid response replaces the access token in the original browser storage; a session-storage
+sign-in stays in session storage. Without Web Locks, the pending promise still coordinates callers in one tab.
+
+Only this function posts a refresh. The interceptor retains its redirect on refresh failure; the hook only clears
+its authentication state. A failed retry of the original API request does not invalidate a successful refresh.
 
 ---
 
@@ -422,85 +427,21 @@ URLs only register OAuth callback views (login/signup HTML views are disabled).
 
 **Authentication Hook** (`frontend/src/hooks/auth/useAuth.ts`):
 
+Initial state reads the stored access token, expiry and authentication flag. Mount renews an expired password token
+before marking the user authenticated, or checks allauth's session when there is no access token. A failed password
+renewal does not fall through into provider-session discovery. The authentication-state effect owns profile loading;
+`getUserDetails` checks expiry again before its request. The idle interval also renews before signing out.
+
 ```typescript
-export function useAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Instant detection from sessionStorage (JWT pattern)
-    const { access_token } = getAuthTokens();
-    return access_token !== null && !areTokensExpired();
-  });
-
-  // On mount: Check for existing auth (JWT or session)
-  useEffect(() => {
-    const checkExistingAuth = async () => {
-      // 1. Check JWT tokens (email/password pattern)
-      const { access_token } = getAuthTokens();
-      if (access_token && !areTokensExpired()) {
-        setIsAuthenticated(true);
-        return;
-      }
-
-      // 2. Check OAuth session cookie
-      try {
-        const response = await fetch(
-          'https://localhost:8444/_allauth/browser/v1/auth/session',
-          {
-            method: 'GET',
-            credentials: 'include',  // Send session cookie
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data?.meta?.is_authenticated && data?.data?.user) {
-            setUser(data.data.user);
-            setIsAuthenticated(true);
-          }
-        }
-      } catch (error) {
-        // Silently fail - user is not authenticated
-      }
-    };
-
-    checkExistingAuth();
-  }, []);
-
-  // OAuth callback handler
-  useEffect(() => {
-    const handleOAuthCallback = async () => {
-      // Check if we just came from an OAuth redirect
-      const isFromOAuthRedirect =
-        document.referrer.includes('google.com') ||
-        document.referrer.includes('github.com') ||
-        sessionStorage.getItem('oauth_in_progress') === 'true';
-
-      if (!isFromOAuthRedirect) return;
-
-      // Check session endpoint to see if OAuth completed
-      const response = await fetch(
-        'https://localhost:8444/_allauth/browser/v1/auth/session',
-        {
-          method: 'GET',
-          credentials: 'include',
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data?.meta?.is_authenticated && data?.data?.user) {
-          setUser(data.data.user);
-          setIsAuthenticated(true);
-          navigate(ROUTES.HOME);
-        }
-      }
-    };
-
-    handleOAuthCallback();
-  }, [location.pathname]);
-
-  return { isAuthenticated, user, login, logout };
+if (access_token && areTokensExpired()) {
+  await refreshAccessToken();
 }
+const userDetails = await authService.getUserProfile();
 ```
+
+Password sign-in chooses local storage for remember-me and session storage otherwise. OAuth callbacks read the
+provider's existing session and clear their loading flags. Manual sign-out clears local state and then calls the
+password logout endpoint or allauth's CSRF-protected session DELETE.
 
 **API Client Configuration** (`frontend/src/services/apiClient.ts`):
 
@@ -520,20 +461,27 @@ apiClient.interceptors.request.use(async (config) => {
 });
 ```
 
-The response interceptor handles `401` for password users, queues concurrent callers and validates the refresh
-response before retrying. OAuth users have no access token and do not refresh. Every bare refresh POST includes
-credentials and CSRF:
+The response interceptor handles `401` for password users through the same pending refresh as the hook. It marks
+each request before waiting, validates and stores the response through `refreshAccessToken`, and retries outside the
+refresh-failure handler. Its refresh branch is:
 
 ```typescript
-await ensureCsrfTokenCookie(apiBaseUrl);
-const response = await axios.post<unknown>(`${apiBaseUrl}/auth/refresh`, {}, {
-  withCredentials: true,
-  headers: { "X-CSRFToken": getCsrfToken() || "" },
-});
+originalRequest._retry = true;
+let renewedToken: string;
+try {
+  renewedToken = await refreshAccessToken();
+} catch (refreshError) {
+  clearAuthTokens();
+  window.location.href = "/login?session_expired=true";
+  throw refreshError;
+}
+originalRequest.headers.Authorization = `Bearer ${renewedToken}`;
+return apiClient(originalRequest);
 ```
 
-A failed or malformed refresh rejects all queued callers, clears tokens and redirects to
-`/login?session_expired=true`. The access token must be a nonempty string before it is stored or used in a retry.
+The helper accepts only a `200` response with a nonempty string `access_token`. Failures reject every waiting caller
+and release the pending promise, allowing a later attempt. OAuth users hold no access token, so their `401` responses
+never enter this branch. CSRF initialization and the refresh POST live inside the shared helper.
 
 ---
 

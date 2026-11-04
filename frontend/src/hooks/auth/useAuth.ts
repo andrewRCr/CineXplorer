@@ -7,8 +7,8 @@ import { isRecord } from "@/utilities/typeGuards";
  *
  * Supports hybrid authentication:
  * - Instant auth detection from localStorage (no network call needed)
- * - OAuth callback handling with access token storage
- * - Automatic token refresh via axios interceptor
+ * - OAuth callbacks authenticated through their allauth session
+ * - Shared token refresh on load, idle checks, profile loading and API refusals
  *
  * Relationship:
  * - Called by AuthContextProvider to get auth state and actions.
@@ -29,6 +29,7 @@ import type {
     AuthError,
     LoginSuccessData,
 } from "@/types/auth-state";
+import { refreshAccessToken } from "@/services/apiClient";
 import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
@@ -126,7 +127,6 @@ export function useAuth(): AuthStateProps {
 
     // Refs to hold latest callback versions - breaks circular dependency in effects
     // Effects can call ref.current() without needing the callback in dependency array
-    const logoutRef = useRef<() => Promise<void>>(() => Promise.resolve());
     const getUserDetailsRef = useRef<() => Promise<unknown>>(() =>
         Promise.resolve(),
     );
@@ -135,30 +135,18 @@ export function useAuth(): AuthStateProps {
     // This runs ONCE on mount to detect existing sessions
     useEffect(() => {
         const checkExistingAuth = async () => {
-            // Skip if already authenticated (initial state calculation succeeded)
-            if (isAuthenticated) {
-                const { access_token } = getAuthTokens();
-                // Only call getUserDetails if user has JWT tokens (email/password flow)
-                if (access_token) {
-                    void getUserDetailsRef.current?.();
-                }
-                return;
-            }
-
-            // Check for JWT tokens in cookie/localStorage (email/password flow)
             const { access_token, storage } = getAuthTokens();
-            if (access_token && !areTokensExpired()) {
-                logger.debug(
-                    `[useAuth] Initial mount: JWT session detected in ${storage}`,
-                );
-
-                // If token came from cookie, store it in localStorage for future use
-                if (storage === "cookie") {
-                    setAuthTokens(access_token);
+            if (access_token) {
+                try {
+                    if (areTokensExpired()) await refreshAccessToken();
+                    else if (storage === "cookie") setAuthTokens(access_token);
+                    // The authentication-state effect owns profile loading.
+                    setIsAuthenticated(true);
+                } catch {
+                    clearAuthTokens();
+                    setUser(null);
+                    setIsAuthenticated(false);
                 }
-
-                setIsAuthenticated(true);
-                // getUserDetails will be called on next render when isAuthenticated changes
                 return;
             }
 
@@ -180,9 +168,6 @@ export function useAuth(): AuthStateProps {
         };
 
         void checkExistingAuth();
-        // Intentional: must run exactly once on mount to check for existing session.
-        // Adding isAuthenticated would cause infinite loops.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // When authentication state changes, fetch user details (JWT users only)
@@ -197,22 +182,24 @@ export function useAuth(): AuthStateProps {
         }
     }, [isAuthenticated]);
 
-    // Check for token expiration every minute (JWT-only)
-    // Note: Token refresh is handled automatically by axios interceptor (apiClient.ts)
-    // This is just for proactive logout if token expires while idle
-    // OAuth users (session-only) are skipped - their sessions managed by backend
+    // Renew idle password sessions before considering them signed out.
+    // Provider sessions have no access token and are managed by allauth.
     useEffect(() => {
-        const checkTokenExpiration = () => {
+        const checkTokenExpiration = async () => {
             const { access_token } = getAuthTokens();
-            // Only check expiration for JWT users (email/password flow)
-            // OAuth users have session cookies only, no JWT tokens
             if (isAuthenticated && access_token && areTokensExpired()) {
-                logger.debug("Tokens expired during session, logging out...");
-                void logoutRef.current?.();
+                try {
+                    await refreshAccessToken();
+                } catch {
+                    clearAuthTokens();
+                    setUser(null);
+                    setIsAuthenticated(false);
+                }
             }
         };
-
-        const interval = setInterval(checkTokenExpiration, 60000); // Check every minute
+        const interval = setInterval(() => {
+            void checkTokenExpiration();
+        }, 60000);
         return () => clearInterval(interval);
     }, [isAuthenticated]);
 
@@ -385,9 +372,7 @@ export function useAuth(): AuthStateProps {
             // OAuth users have session cookies only, skip JWT expiration check
             const { access_token } = getAuthTokens();
             if (access_token && areTokensExpired()) {
-                logger.debug("Tokens expired, logging out...");
-                await logout();
-                return;
+                await refreshAccessToken();
             }
 
             const userDetails = await authService.getUserProfile();
@@ -402,11 +387,10 @@ export function useAuth(): AuthStateProps {
             clearAuthTokens();
             return error;
         }
-    }, [logout]);
+    }, []);
 
     // Update refs to latest callback versions - enables effects to use stable refs
     // while still calling the latest callback implementation
-    logoutRef.current = logout;
     getUserDetailsRef.current = getUserDetails;
 
     const login = async (

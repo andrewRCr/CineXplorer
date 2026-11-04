@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import type { AxiosInstance } from "axios";
 import { HttpResponse, http } from "msw";
-import apiClient from "../apiClient";
+import apiClient, { refreshAccessToken } from "../apiClient";
 import { apiBaseUrl } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";
 import { server } from "@tests/mocks/server";
 import { clearBrowserAuth, token } from "@tests/helpers/auth";
+
+import { gate, installWebLocks } from "@tests/helpers/web-locks";
 
 beforeEach(clearBrowserAuth);
 it.each(["post", "put", "patch", "delete"] as const)(
@@ -130,7 +132,6 @@ describe("concurrent token refresh", () => {
         const gate = createGate();
         const requests: string[] = [];
         let refreshes = 0;
-        const reads = vi.spyOn(Storage.prototype, "getItem");
         server.use(
             http.get(
                 `${apiBaseUrl}/refresh-queue/:name`,
@@ -159,13 +160,9 @@ describe("concurrent token refresh", () => {
             client.get("/refresh-queue/second"),
         ]);
         try {
-            // Two request interceptors and two 401 interceptors read the real token.
-            // The fourth read completes synchronously before the second request queues.
-            await waitFor(() => {
-                expect(
-                    reads.mock.calls.filter(([key]) => key === "access_token"),
-                ).toHaveLength(4);
-            });
+            await waitFor(() => expect(requests).toHaveLength(2));
+            // Let both completed 401 responses reach their interceptors before release.
+            await new Promise((resolve) => setTimeout(resolve, 20));
         } finally {
             gate.release();
         }
@@ -216,3 +213,76 @@ describe("concurrent token refresh", () => {
         expect(window.location.href).toBe("http://localhost:3000");
     });
 });
+
+it("keeps renewed authentication when the retried request is still refused", async () => {
+    document.cookie = "csrftoken=django-csrf; path=/";
+    window.location.href = "http://localhost:3000";
+    setAuthTokens(token(1));
+    const refreshed = token();
+    let refreshes = 0;
+    let requests = 0;
+    server.use(
+        http.get(`${apiBaseUrl}/retry-refused`, () => {
+            requests++;
+            return HttpResponse.json({}, { status: 401 });
+        }),
+        http.post(`${apiBaseUrl}/auth/refresh`, () => {
+            refreshes++;
+            return HttpResponse.json({ access_token: refreshed });
+        }),
+    );
+    await expect(apiClient.get("/retry-refused")).rejects.toMatchObject({
+        response: { status: 401 },
+    });
+    expect(requests).toBe(2);
+    expect(refreshes).toBe(1);
+    expect(localStorage.getItem("access_token")).toBe(refreshed);
+    expect(window.location.href).toBe("http://localhost:3000");
+});
+
+it.each(["later", "same", "earlier", "expired"] as const)(
+    "uses another tab's token only when newer and current: %s",
+    async (scenario) => {
+        installWebLocks();
+        document.cookie = "csrftoken=django-csrf; path=/";
+        const now = Math.floor(Date.now() / 1000);
+        const original = token(scenario === "expired" ? 1 : now + 600);
+        const candidate =
+            token(
+                scenario === "expired"
+                    ? 2
+                    : now +
+                          (scenario === "later"
+                              ? 900
+                              : scenario === "same"
+                                ? 600
+                                : 300),
+            ) + "other-signature";
+        const renewed = token(now + 1200);
+        setAuthTokens(original);
+        const entered = gate();
+        const release = gate();
+        const otherTab = navigator.locks.request(
+            "cinexplorer-auth-refresh",
+            async () => {
+                entered.release();
+                await release.wait;
+            },
+        );
+        await entered.wait;
+        let refreshes = 0;
+        server.use(
+            http.post(`${apiBaseUrl}/auth/refresh`, () => {
+                refreshes++;
+                return HttpResponse.json({ access_token: renewed });
+            }),
+        );
+        const pending = refreshAccessToken();
+        setAuthTokens(candidate);
+        expect(refreshes).toBe(0);
+        release.release();
+        await otherTab;
+        expect(await pending).toBe(scenario === "later" ? candidate : renewed);
+        expect(refreshes).toBe(scenario === "later" ? 0 : 1);
+    },
+);

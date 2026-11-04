@@ -310,54 +310,6 @@
             "JWTCookieAuth": []
           }
         ]
-      },
-      "patch": {
-        "operationId": "apps_authentication_api_update_user_profile",
-        "summary": "Update User Profile",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserProfileSchema"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "description": "Update authenticated user's profile.\n\nSupports partial updates (PATCH) for user profile fields including\npassword changes with proper hashing.\n\nArgs:\n    request: HTTP request object with authenticated user\n    payload: Fields to update (all optional)\n\nReturns:\n    Status: the status code and response data\n        - 200: Profile updated successfully\n        - 400: Validation error\n\nPassword handling:\n    - Password is hashed using set_password() before saving\n    - Password is write-only (not returned in response)\n\nComputed fields in response:\n    - email_verified: Checked via allauth EmailAddress model\n    - full_name: Concatenated first_name + last_name",
-        "tags": [
-          "Authentication"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserProfileUpdateSchema"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTCookieAuth": []
-          }
-        ]
       }
     },
     "/api/verify-email/": {
@@ -3601,65 +3553,6 @@
           "username"
         ],
         "title": "UserProfileSchema",
-        "type": "object"
-      },
-      "UserProfileUpdateSchema": {
-        "description": "Schema for user profile updates.\n\nManual Schema with all optional fields for partial updates (PATCH).\nPassword updates handled separately for security.",
-        "properties": {
-          "email": {
-            "anyOf": [
-              {
-                "format": "email",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated email address",
-            "title": "Email"
-          },
-          "first_name": {
-            "anyOf": [
-              {
-                "maxLength": 150,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated first name",
-            "title": "First Name"
-          },
-          "last_name": {
-            "anyOf": [
-              {
-                "maxLength": 150,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated last name",
-            "title": "Last Name"
-          },
-          "password": {
-            "anyOf": [
-              {
-                "minLength": 8,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated password (minimum 8 characters)",
-            "title": "Password"
-          }
-        },
-        "title": "UserProfileUpdateSchema",
         "type": "object"
       },
       "EmailVerificationResponseSchema": {

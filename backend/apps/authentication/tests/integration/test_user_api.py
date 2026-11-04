@@ -35,7 +35,7 @@ from django.contrib.auth import get_user_model
 
 from apps.authentication.schemas import PASSWORD_MIN_LENGTH
 from apps.authentication.tests.fixtures import create_register_payload
-from apps.core.tests.test_helpers import HTTPStatus, create_user, json_post
+from apps.core.tests.test_helpers import HTTPStatus, create_user, get_csrf_token, json_post
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -252,89 +252,29 @@ def test_retrieve_profile_success(authenticated_user: tuple[Client, User]) -> No
 
 
 @pytest.mark.django_db
-def test_update_profile_no_csrf_authenticated(db: None) -> None:
-    """Authenticated PATCH via Django session succeeds (hybrid auth fallback).
+def test_profile_cannot_be_changed_through_the_api(
+    authenticated_user: tuple[Client, User],
+) -> None:
+    """The profile is read-only: a valid PATCH changes neither password, email nor name."""
+    client, user = authenticated_user
+    payload = {
+        "password": "takenOver123",
+        "email": "attacker@example.com",
+        "first_name": "Changed",
+    }
 
-    Hybrid Authentication Pattern (Priority 3 - Session Fallback):
-    - JWT tokens are Priority 1-2 (header/cookie)
-    - Django session auth is Priority 3 fallback (OAuth users)
-    - Session auth now works for authenticated requests
-    - CSRF protection still applies (but not tested in this specific test)
-    """
-    from django.test import Client
-
-    user = create_user(
-        username="privateUser",
-        email="private@example.com",
-        password="testpass123",
-        first_name="Private",
-        last_name="User",
-    )
-
-    client = Client()
-    # Login via Django's session auth (simulates OAuth user)
-    logged_in = client.login(username=user.username, password="testpass123")
-    assert logged_in, "Login failed in test setup"
-
-    payload = {"first_name": "Updated", "last_name": "Name", "password": "newPrivatePass123"}
-    # Session auth now works (Priority 3 fallback in hybrid auth)
-    # Note: CSRF would normally block this, but this test uses Django's test client
-    # which automatically handles CSRF for session-authenticated requests
-    res = client.patch(ME_URL, json.dumps(payload), content_type="application/json")
-    assert res.status_code == HTTPStatus.OK
-    user.refresh_from_db()
-    assert user.first_name == payload["first_name"]
-    assert user.last_name == payload["last_name"]
-
-
-@pytest.mark.django_db
-def test_update_profile_with_csrf_authenticated(db: None) -> None:
-    """Authenticated PATCH to profile with valid CSRF token.
-
-    Expect 200 OK.
-
-    Hybrid Authentication Pattern:
-    - Login returns access token in response body
-    - Test must manually set access token cookie for authentication
-    """
-    import json as json_module
-
-    from django.test import Client
-
-    user = create_user(
-        username="privateUser",
-        email="private@example.com",
-        password="testpass123",
-        first_name="Private",
-        last_name="User",
-    )
-
-    payload = {"first_name": "CSRFUpdated", "last_name": "CSRFName", "password": "csrfPass123"}
-    client = Client()
-
-    # Authenticate via JWT token endpoint to get tokens
-    auth_payload = {"login": "privateUser", "password": "testpass123"}
-    response = json_post(client, TOKEN_URL, cast(dict[str, object], auth_payload))
-
-    # Extract access token from response body and set as cookie
-    response_data = json_module.loads(response.content.decode())
-    client.cookies["access_token"] = response_data["access_token"]
-
-    # Simulate CSRF token and cookie (double-submit cookie pattern)
-    # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
-    csrf_token = "testcsrftoken"
-    client.cookies["csrftoken"] = csrf_token  # Django's default CSRF_COOKIE_NAME
     res = client.patch(
         ME_URL,
         json.dumps(payload),
         content_type="application/json",
-        HTTP_X_CSRFTOKEN=csrf_token,
+        HTTP_X_CSRFTOKEN=get_csrf_token(client),
     )
-    assert res.status_code == HTTPStatus.OK
+
+    assert res.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     user.refresh_from_db()
-    assert user.first_name == payload["first_name"]
-    assert user.last_name == payload["last_name"]
-    assert user.check_password(payload["password"])  # type: ignore[no-untyped-call]
+    assert user.check_password("testpass123")  # type: ignore[no-untyped-call]
+    assert user.email == "private@example.com"
+    assert user.first_name == "Private"
 
 
 @pytest.mark.django_db
@@ -344,17 +284,6 @@ def test_unauthenticated_profile_access(api_client: Client) -> None:
     Expect 401 Unauthorized.
     """
     res = api_client.get(ME_URL)
-    assert res.status_code == HTTPStatus.UNAUTHORIZED
-
-
-@pytest.mark.django_db
-def test_unauthenticated_profile_update(api_client: Client) -> None:
-    """Unauthenticated PATCH to profile endpoint.
-
-    Expect 401 Unauthorized (auth fails before CSRF).
-    """
-    payload = {"first_name": "Hacker"}
-    res = api_client.patch(ME_URL, json.dumps(payload), content_type="application/json")
     assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 

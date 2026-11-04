@@ -120,12 +120,60 @@ function provision(root, main) {
     for (const args of [["ci"], ["run", "typegen"]]) console.log(run(join(root, "frontend"), "npm", args));
 }
 
+function primary(root, main) {
+    if (root !== main) throw new Error("Run this command from the main checkout.");
+}
+
+function create(root, main, branch, { existing, workUnit }) {
+    primary(root, main);
+    if (existing && workUnit) throw new Error("--work-unit cannot be combined with --existing.");
+    const match = /^[a-z]+\/([a-z0-9][a-z0-9-]*)$/.exec(branch ?? "");
+    if (!match) throw new Error("The branch must have the form {type}/{name} using lowercase letters, digits and hyphens.");
+    const path = `${main}.${match[1]}`;
+    if (lstatSync(path, { throwIfNoEntry: false })) throw new Error(`Worktree folder already exists: ${path}`);
+    git(main, "fetch", "origin");
+    const refs = git(main, "for-each-ref", "--format=%(refname)", "refs/heads/", "refs/remotes/origin/").split("\n");
+    const local = refs.includes(`refs/heads/${branch}`);
+    const remote = refs.includes(`refs/remotes/origin/${branch}`);
+    if (!existing && (local || remote)) throw new Error(`Branch already exists: ${branch}. Use --existing to check it out.`);
+    if (existing) {
+        if (!local && !remote) throw new Error(`Branch does not exist locally or on origin: ${branch}`);
+        if (worktrees(main).some((entry) => entry.branch === branch)) throw new Error(`Branch is checked out elsewhere: ${branch}`);
+        const ref = local ? `refs/heads/${branch}` : `refs/remotes/origin/${branch}`;
+        const override = spawnSync("git", ["cat-file", "-e", `${ref}:infrastructure/docker-compose.worktree.yml`], {
+            cwd: main, encoding: "utf8",
+        });
+        if (override.error) throw override.error;
+        if (override.status !== 0) throw new Error(`Branch lacks the worktree override; merge main into ${branch} first.`);
+        git(main, "worktree", "add", path, branch);
+    } else {
+        git(main, "worktree", "add", "--no-track", "-b", branch, path, "origin/main");
+    }
+    try {
+        provision(path, main);
+    } catch (error) {
+        throw new Error(`${error.message}\nRecover in ${path}: node scripts/worktree.mjs provision` +
+            (workUnit ? "; then node .arc/reference/harness-hooks/seed-session-notes.mjs" : ""));
+    }
+    if (workUnit) {
+        try {
+            console.log(run(path, process.execPath, [".arc/reference/harness-hooks/seed-session-notes.mjs"]));
+        } catch (error) {
+            throw new Error(`${error.message}\nIn ${path}, run node .arc/reference/harness-hooks/seed-session-notes.mjs again.`);
+        }
+    }
+    console.log(`Worktree: ${path}\nFirst push: git push -u origin ${branch}\nIn the worktree: node scripts/worktree.mjs browse`);
+}
+
 function main() {
     const [command, ...args] = process.argv.slice(2);
     if (command === "--help" || command === "-h") return console.log(HELP);
     if (!["create", "provision", "browse", "remove"].includes(command)) throw new Error(`Unknown command: ${command ?? "[none]"}. Use --help.`);
     const { root, main } = context();
     if (command === "provision" && args.length === 0) return provision(root, main);
+    if (command === "create" && args.length >= 1 && args.slice(1).every((arg) => ["--existing", "--work-unit"].includes(arg))) {
+        return create(root, main, args[0], { existing: args.includes("--existing"), workUnit: args.includes("--work-unit") });
+    }
     throw new Error(`Unsupported arguments for ${command}. Use --help.`);
 }
 

@@ -40,6 +40,11 @@ function fixture(t) {
     write(main, ".worktreeinclude", "backend/config/.env\nfrontend/.env\nfrontend/.env.development\ninfrastructure/dev-certs/*.pem\n");
     write(main, "infrastructure/docker-compose.yml", "services: {}\n");
     write(main, "infrastructure/docker-compose.worktree.yml", "services: {}\n");
+    write(main, ".arc/reference/harness-hooks/seed-session-notes.mjs", `
+import { appendFileSync } from 'node:fs';
+appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({ command: 'seed', args: [], cwd: process.cwd() }) + '\\n');
+if (process.env.CX_SEED_FAIL) { console.error('seed refused'); process.exit(7); }
+`);
     git(main, "add", ".");
     git(main, "commit", "-q", "-m", "initial");
     git(main, "push", "-q", "origin", "main");
@@ -242,4 +247,131 @@ test("provision works after an external tool copied the files and repeats the ch
     assert.equal(readFileSync(join(path, "backend/config/.env"), "utf8"), "already copied\n");
     assert.equal(f.calls().length, 6);
     assert.deepEqual(f.calls().slice(3), f.calls().slice(0, 3));
+});
+
+test("create refuses a linked checkout", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    refusal(f.invoke(path, ["create", "fix/new"]), /main checkout/i);
+    assert.equal(existsSync(join(f.parent, "primary.new")), false);
+    assert.deepEqual(f.calls(), []);
+});
+
+for (const branch of ["fix", "Fix/x", "fix/-x", "fix/x_y"]) {
+    test(`create refuses malformed branch ${branch}`, (t) => {
+        const f = fixture(t);
+        refusal(f.invoke(f.main, ["create", branch]), /branch.*\{type\}\/\{name\}/i);
+        assert.equal(git(f.main, "worktree", "list", "--porcelain").split("worktree ").length, 2);
+        assert.deepEqual(f.calls(), []);
+    });
+}
+
+test("create refuses an existing folder", (t) => {
+    const f = fixture(t);
+    const path = join(f.parent, "primary.new");
+    mkdirSync(path);
+    write(path, "keep", "original");
+    refusal(f.invoke(f.main, ["create", "fix/new"]), /folder.*exists/i);
+    assert.equal(readFileSync(join(path, "keep"), "utf8"), "original");
+    assert.equal(git(f.main, "branch", "--list", "fix/new"), "");
+    assert.deepEqual(f.calls(), []);
+});
+
+for (const remote of [false, true]) {
+    test(`create refuses a branch that exists ${remote ? "only on origin" : "locally"}`, (t) => {
+        const f = fixture(t);
+        git(f.main, "branch", "fix/new");
+        if (remote) {
+            git(f.main, "push", "-q", "origin", "fix/new");
+            git(f.main, "branch", "-d", "fix/new");
+        }
+        refusal(f.invoke(f.main, ["create", "fix/new"]), /branch.*already exists/i);
+        assert.equal(existsSync(join(f.parent, "primary.new")), false);
+        assert.deepEqual(f.calls(), []);
+    });
+}
+
+test("create cuts a branch from origin/main without an upstream and provisions it", (t) => {
+    const f = fixture(t);
+    git(f.main, "commit", "-q", "--allow-empty", "-m", "main checkout ahead");
+    const result = f.invoke(f.main, ["create", "fix/new"]);
+    success(result);
+    const path = join(f.parent, "primary.new");
+    assert.equal(git(path, "branch", "--show-current"), "fix/new");
+    assert.equal(git(path, "rev-parse", "HEAD"), git(f.main, "rev-parse", "origin/main"));
+    assert.equal(git(path, "for-each-ref", "--format=%(upstream)", "refs/heads/fix/new"), "");
+    assert.match(envOf(path), /^COMPOSE_PROJECT_NAME=cinexplorer-new$/m);
+    assert.match(result.stdout, /git push -u origin fix\/new/);
+    assert.ok(result.stdout.includes(path));
+    assert.match(result.stdout, /node scripts\/worktree.mjs browse/);
+    assert.deepEqual(f.calls().map((call) => call.command), ["docker", "npm", "npm"]);
+});
+
+for (const remote of [false, true]) {
+    test(`create --existing provisions a ${remote ? "remote-only" : "local"} branch`, (t) => {
+        const f = fixture(t);
+        git(f.main, "branch", "fix/review");
+        if (remote) {
+            git(f.main, "push", "-q", "origin", "fix/review");
+            git(f.main, "branch", "-d", "fix/review");
+        }
+        success(f.invoke(f.main, ["create", "fix/review", "--existing"]));
+        const path = join(f.parent, "primary.review");
+        assert.equal(git(path, "branch", "--show-current"), "fix/review");
+        assert.match(envOf(path), /^COMPOSE_PROJECT_NAME=cinexplorer-review$/m);
+        assert.deepEqual(f.calls().map((call) => call.command), ["docker", "npm", "npm"]);
+    });
+}
+
+test("create --existing refuses a branch checked out elsewhere", (t) => {
+    const f = fixture(t);
+    git(f.main, "worktree", "add", "-q", "-b", "fix/review", join(f.parent, "elsewhere"));
+    refusal(f.invoke(f.main, ["create", "fix/review", "--existing"]), /checked out/i);
+    assert.equal(existsSync(join(f.parent, "primary.review")), false);
+    assert.deepEqual(f.calls(), []);
+});
+
+test("create --existing refuses a branch without the override", (t) => {
+    const f = fixture(t);
+    git(f.main, "switch", "-q", "-c", "fix/old");
+    git(f.main, "rm", "-q", "infrastructure/docker-compose.worktree.yml");
+    git(f.main, "commit", "-q", "-m", "old branch");
+    git(f.main, "switch", "-q", "main");
+    refusal(f.invoke(f.main, ["create", "fix/old", "--existing"]), /merge main.*first/i);
+    assert.equal(existsSync(join(f.parent, "primary.old")), false);
+    assert.deepEqual(f.calls(), []);
+});
+
+test("create --work-unit refuses --existing before creating anything", (t) => {
+    const f = fixture(t);
+    refusal(f.invoke(f.main, ["create", "fix/new", "--existing", "--work-unit"]), /--work-unit.*--existing/);
+    assert.equal(existsSync(join(f.parent, "primary.new")), false);
+    assert.deepEqual(f.calls(), []);
+});
+
+test("create --work-unit seeds after provisioning", (t) => {
+    const f = fixture(t);
+    success(f.invoke(f.main, ["create", "technical/new", "--work-unit"]));
+    const path = join(f.parent, "primary.new");
+    assert.deepEqual(f.calls().map((call) => call.command), ["docker", "npm", "npm", "seed"]);
+    assert.deepEqual(f.calls().at(-1), { command: "seed", args: [], cwd: path });
+});
+
+test("create explains how to recover when provisioning fails", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(f.main, ["create", "fix/new", "--work-unit"], { CX_FAIL: "ci" });
+    refusal(result, /stub command failed: ci/);
+    assert.match(result.stderr, /node scripts\/worktree.mjs provision/);
+    assert.match(result.stderr, /seed-session-notes.mjs/);
+    assert.equal(git(join(f.parent, "primary.new"), "branch", "--show-current"), "fix/new");
+    assert.equal(f.calls().some((call) => call.command === "seed"), false);
+});
+
+test("a seeding refusal keeps the provisioned worktree and offers retry", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(f.main, ["create", "fix/new", "--work-unit"], { CX_SEED_FAIL: "1" });
+    refusal(result, /seed refused/);
+    assert.match(result.stderr, /seed-session-notes.mjs.*again/i);
+    assert.match(envOf(join(f.parent, "primary.new")), /^SITE_PORT=8445$/m);
+    assert.deepEqual(f.calls().map((call) => call.command), ["docker", "npm", "npm", "seed"]);
 });

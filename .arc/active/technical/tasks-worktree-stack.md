@@ -78,34 +78,14 @@ and remove it after its branch merges.
     - [x] **2.2.b Add `.worktreeinclude` and the remaining steps:** copy, link, append env, check the resolved name,
       then `npm ci` and `npm run typegen`. Syntax checks and all 13 worktree tests pass.
 
-- [ ] **2.3 `create` cuts a branch into a provisioned worktree** (R3, R14; Criterion 1)
+- [x] **2.3 `create` cuts a branch into a provisioned worktree** (R3, R14; Criterion 1)
 
-    - [ ] **2.3.a Write tests** in `scripts/worktree.test.mjs`
-        - Refusals, each before `git worktree add` and each with its reason asserted: run from a linked worktree;
-          branches not of the form (`fix`, `Fix/x`, `fix/-x`, `fix/x_y`); the folder `{primary}.{name}` exists; the
-          branch exists locally, and only on `origin`; `--existing` on a branch checked out elsewhere; `--existing`
-          on a branch without `infrastructure/docker-compose.worktree.yml`, saying to merge `main` into it first;
-          `--work-unit` with `--existing`
-        - A new branch: the worktree at `{primary}.{name}` on `{type}/{name}` from `origin/main`, with no upstream,
-          and provisioned; the output names the folder, `git push -u origin {type}/{name}` and the `browse` command
-        - `--existing`: a branch only on `origin`, and a local one, are each checked out and provisioned
-        - `provision` failing (the `npm` stub fails): the output gives the recovery (`node scripts/worktree.mjs
-          provision` in the worktree, then for `--work-unit` the seeding script) and the exit is non-zero
-        - `--work-unit`: a stand-in seeding script, tracked by the fixture at
-          `.arc/reference/harness-hooks/seed-session-notes.mjs`, records one run in the new worktree after `provision`;
-          without the flag it does not run; when the stand-in fails, the worktree stays as provisioned, the output
-          says the seeding script can be run again, and the exit is non-zero
-        - Expect tests to FAIL initially
-
-    - [ ] **2.3.b Implement `create`**
-        - From the main checkout only. `git fetch origin` before the branch checks; then
-          `git worktree add --no-track -b {type}/{name} {primary}.{name} origin/main`, or for `--existing`
-          `git worktree add {primary}.{name} {branch}`, after `git cat-file -e` confirms the branch (local, else
-          `origin/{branch}`) has the override
-        - Runs `provision`'s steps against the new checkout, then for `--work-unit`
-          `node .arc/reference/harness-hooks/seed-session-notes.mjs` in it. The flag's help text says only that it
-          writes the starting notes for planned work (Decision 16)
-        - Tests should now PASS
+    - [x] **2.3.a Write tests:** 17 fail-first cases cover refusal boundaries, new branches from `origin/main`
+      without an upstream, local and remote existing branches, checked-out and obsolete branches, setup recovery,
+      optional seeding after provisioning and preservation of the provisioned checkout after seeding refuses.
+    - [x] **2.3.b Implement `create`:** fetch, validate, add the worktree, provision it and optionally seed its
+      starting notes. Failures print recovery commands; success prints the path, first push and browse command.
+      Syntax checks and all 30 worktree tests pass.
 
 - [ ] **2.4 One override runs the test stack and the browsable stack, and this worktree's test stack runs on it**
   (R9, R10; Criteria 3, 4 and 5)

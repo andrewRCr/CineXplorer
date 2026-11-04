@@ -221,7 +221,7 @@ class TestResponseContract:
         assert "detail" in data
 
     @pytest.mark.parametrize(
-        "invalid_param,invalid_value",
+        ("invalid_param", "invalid_value"),
         [
             ("year", "invalid"),
             ("vote_average_gte", "invalid"),

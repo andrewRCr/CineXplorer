@@ -70,8 +70,7 @@ def create_mock_fetch_func(page_responses: dict[int, TMDBPaginatedMovieResponse]
             )
         return page_responses[page]
 
-    mock_func = Mock(side_effect=fetch_page)
-    return mock_func
+    return Mock(side_effect=fetch_page)
 
 
 # ============================================================================

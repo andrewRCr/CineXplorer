@@ -6,6 +6,7 @@ processing built on top of the BaseApiClient infrastructure.
 """
 
 import logging
+from typing import Any
 
 import requests
 from django.conf import settings
@@ -119,18 +120,18 @@ class TMDBApiClient(BaseApiClient):
         except ValueError as json_error:
             # Handle invalid JSON responses
             self.logger.error(
-                "TMDB API returned invalid JSON",
+                "TMDB API returned invalid JSON | error_type=%s",
+                type(json_error).__name__,
                 extra={
                     "correlation_id": correlation_id,
-                    "json_error": str(json_error),
                     "endpoint": endpoint,
                     "status_code": response.status_code,
                     "duration_ms": duration_ms,
                     "error_type": "json_parsing_error",
-                    "response_preview": str(response.text)[:200],
-                    "response_size_bytes": (
-                        len(response.content) if hasattr(response.content, "__len__") else 0
-                    ),
+                    "response_size_bytes": len(response.content)
+                    if hasattr(response.content, "__len__")
+                    else 0,
+                    "exception_type": type(json_error).__name__,
                 },
             )
 
@@ -180,6 +181,22 @@ class TMDBApiClient(BaseApiClient):
 
         self.logger.info("TMDB API request successful", extra=log_data)
 
+        self._log_response_results(data)
+
+        return ApiResponse(
+            status_code=response.status_code,
+            data=data,
+            headers=self._safe_headers_dict(response),
+            correlation_id=correlation_id,
+            endpoint=endpoint,
+            method="GET",
+            duration_ms=duration_ms,
+            raw_response=response,
+        )
+
+    # Any is confined to the external JSON payload, before its schema validation.
+    def _log_response_results(self, data: dict[str, Any]) -> None:
+        """Log detailed movie metadata after successful response processing."""
         # DEBUG-level detailed logging: Log first few results for debugging
         # This helps diagnose TMDB filtering behavior and data quality issues
         has_results = "results" in data and hasattr(data["results"], "__iter__")
@@ -224,17 +241,6 @@ class TMDBApiClient(BaseApiClient):
                         continue
 
                 self.logger.debug(f"TMDB response (ALL {len(all_results)} results): {all_results}")
-
-        return ApiResponse(
-            status_code=response.status_code,
-            data=data,
-            headers=self._safe_headers_dict(response),
-            correlation_id=correlation_id,
-            endpoint=endpoint,
-            method="GET",
-            duration_ms=duration_ms,
-            raw_response=response,
-        )
 
     def process_error_response(
         self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int

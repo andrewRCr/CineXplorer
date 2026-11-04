@@ -37,6 +37,8 @@ import json
 import logging
 from typing import Protocol
 
+from redis.exceptions import RedisError
+
 from apps.core.services.redis_client import get_atomic_set_client
 
 logger = logging.getLogger("cinexplorer.pagination")
@@ -119,10 +121,12 @@ class DeduplicationTracker:
 
             return client.smembers(cache_key)
 
-        except Exception as e:
-            logger.warning(
-                f"Redis unavailable for get_returned_ids: {e}. "
-                "Falling back to empty set (cross-page dedup disabled)."
+        except (RedisError, ValueError) as e:
+            logger.error(
+                "Redis unavailable for get_returned_ids. "
+                "Falling back to empty set (cross-page dedup disabled). | error_type=%s",
+                type(e).__name__,
+                extra={"error_type": type(e).__name__},
             )
             return set()
 
@@ -152,10 +156,12 @@ class DeduplicationTracker:
             # Set/refresh TTL
             client.expire(cache_key, SESSION_TTL_SECONDS)
 
-        except Exception as e:
-            logger.warning(
-                f"Redis unavailable for add_returned_ids: {e}. "
-                "Continuing without cross-page dedup tracking."
+        except RedisError as e:
+            logger.error(
+                "Redis unavailable for add_returned_ids. "
+                "Continuing without cross-page dedup tracking. | error_type=%s",
+                type(e).__name__,
+                extra={"error_type": type(e).__name__},
             )
 
     def clear_session(self, params: HashableParams) -> None:
@@ -175,9 +181,12 @@ class DeduplicationTracker:
 
             client.delete(cache_key)
 
-        except Exception as e:
-            logger.warning(
-                f"Redis unavailable for clear_session: {e}. Session may have stale state."
+        except RedisError as e:
+            logger.error(
+                "Redis unavailable for clear_session. "
+                "Session may have stale state. | error_type=%s",
+                type(e).__name__,
+                extra={"error_type": type(e).__name__},
             )
 
     def _generate_cache_key(self, params: HashableParams) -> str:

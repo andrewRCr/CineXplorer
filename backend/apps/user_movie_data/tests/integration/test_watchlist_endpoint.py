@@ -166,20 +166,20 @@ def test_get_user_movies_returns_all_user_movies(
                     "production_companies": [],
                 },
             )
-        else:  # 54321
-            return ApiResponse(
-                status_code=200,
-                data={
-                    "id": 54321,
-                    "title": "Chinatown",
-                    "overview": "A private detective investigating adultery.",
-                    "poster_path": "/chinatown.jpg",
-                    "release_date": "1974-06-20",
-                    "vote_average": 8.2,
-                    "genres": [],
-                    "production_companies": [],
-                },
-            )
+        # 54321
+        return ApiResponse(
+            status_code=200,
+            data={
+                "id": 54321,
+                "title": "Chinatown",
+                "overview": "A private detective investigating adultery.",
+                "poster_path": "/chinatown.jpg",
+                "release_date": "1974-06-20",
+                "vote_average": 8.2,
+                "genres": [],
+                "production_companies": [],
+            },
+        )
 
     mock_get_movie_details.side_effect = get_movie_details_side_effect
     mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})
@@ -453,8 +453,8 @@ def test_get_user_movies_handles_tmdb_api_errors_gracefully(
                     "production_companies": [],
                 },
             )
-        else:  # movie2 - TMDB API error
-            raise HttpError(404, "Movie not found in TMDB")
+        # movie2 - TMDB API error
+        raise HttpError(404, "Movie not found in TMDB")
 
     mock_get_movie_details.side_effect = get_movie_details_side_effect
     mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})

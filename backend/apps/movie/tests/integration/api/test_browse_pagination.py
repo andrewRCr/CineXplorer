@@ -697,7 +697,7 @@ def test_page_1_without_tmdb_page_start_clears_session(
     mock_tmdb_get.side_effect = [
         # First page 1 (initial)
         create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
-        # Continuation (page=1 + tmdb_page_start)
+        # Continue from the prior TMDB cursor
         create_mock_paginated_response(continuation_movies, page=2, total_pages=10),
         # Second page 1 (fresh start after "refresh")
         create_mock_paginated_response(page_1_movies, page=1, total_pages=10),

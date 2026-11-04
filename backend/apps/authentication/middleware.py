@@ -52,7 +52,6 @@ logger = logging.getLogger("cinexplorer.auth")
 # 3. Adding CSRF cookies would be redundant (defense-in-depth but not required)
 # 4. Django-allauth headless is designed for SPA OAuth without traditional CSRF
 # Reference: https://docs.allauth.org/en/dev/headless/
-#   "/_allauth/",  # OAuth: Headless API (state parameter provides CSRF protection)
 #
 # Refactoring Risks:
 # - Prefix matching: "/api/token/" exempts "/api/token/refresh/" too

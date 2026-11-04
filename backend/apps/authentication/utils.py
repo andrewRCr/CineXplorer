@@ -9,6 +9,7 @@ import logging
 from datetime import timedelta
 from typing import Literal
 
+import jwt
 from django.conf import settings
 from django.http import HttpResponse
 from ninja_jwt.tokens import RefreshToken
@@ -105,11 +106,9 @@ def extract_user_id_from_token(token_value: str) -> str | int:
         >>> logger.warning(f"Invalid token from user_id={user_id}")
     """
     try:
-        import jwt
-
         payload = jwt.decode(token_value, options={"verify_signature": False})
         return payload.get("user_id", "unknown")
-    except Exception:
+    except jwt.InvalidTokenError:
         return "unknown"
 
 
@@ -134,8 +133,12 @@ def blacklist_token(token: RefreshToken) -> None:
             "Token blacklist not available - check ninja_jwt.token_blacklist in INSTALLED_APPS"
         )
     except Exception as e:
-        # Token might already be blacklisted or blacklist table not available
-        logger.warning(f"Failed to blacklist refresh token: {e!s}")
+        # Rotation continues when the optional blacklist operation cannot complete.
+        logger.error(
+            "Failed to blacklist refresh token | error_type=%s",
+            type(e).__name__,
+            extra={"error_type": type(e).__name__},
+        )
 
 
 def check_token_blacklist(token: RefreshToken) -> None:

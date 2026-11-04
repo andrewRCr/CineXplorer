@@ -105,7 +105,9 @@ class Command(BaseCommand):
                     log_slow_query(query, time_taken, params=("test_param",))
                     self.stdout.write(f"    ✓ {description}: {time_taken * 1000:.0f}ms")
         except Exception as e:
-            self.stdout.write(self.style.WARNING(f"Database logging test failed: {e}"))
+            self.stdout.write(
+                self.style.WARNING(f"Database logging test failed: {type(e).__name__}")
+            )
 
     def test_error_logging(self) -> None:
         """Test error logging and exception handling."""
@@ -115,8 +117,8 @@ class Command(BaseCommand):
         try:
             # Intentionally cause an exception for testing
             raise ValueError("Test exception for logging system validation")
-        except ValueError as e:
-            app_logger.error(f"Caught test exception: {e}", exc_info=True)
+        except ValueError:
+            app_logger.exception("Caught test exception")
             self.stdout.write("  ✓ Exception logging tested (should appear in errors.log)")
 
     def display_logging_summary(self) -> None:
@@ -151,7 +153,9 @@ class Command(BaseCommand):
             error_backups = LOG_ROTATION_CONFIG["backup_count_errors"]
             self.stdout.write(f"    Error log backups: {error_backups}")
         except ImportError as e:
-            self.stdout.write(self.style.WARNING(f"Could not import logging configuration: {e}"))
+            self.stdout.write(
+                self.style.WARNING(f"Could not import logging configuration: {type(e).__name__}")
+            )
         # Show log files location
         from django.conf import settings
 

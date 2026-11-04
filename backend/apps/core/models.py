@@ -43,21 +43,13 @@ class Movie(models.Model):
     Used as an anchor for user-specific data.
     """
 
-    tmdb_id = models.PositiveIntegerField(  # type: ignore
-        primary_key=True
-    )
-    title = models.CharField(  # type: ignore
-        max_length=255
-    )
-    poster_path = models.CharField(  # type: ignore
-        max_length=255, blank=True, null=True
-    )
-    release_date = models.DateField(  # type: ignore
-        null=True, blank=True
-    )
+    tmdb_id = models.PositiveIntegerField(primary_key=True)
+    title = models.CharField(max_length=255)
+    poster_path = models.CharField(max_length=255, blank=True, null=True)
+    release_date = models.DateField(null=True, blank=True)
 
     class Meta:
         ordering = ["-release_date", "tmdb_id"]
 
     def __str__(self) -> str:
-        return self.title  # type: ignore
+        return self.title

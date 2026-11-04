@@ -217,40 +217,12 @@ class Command(BaseCommand):
 
             # Type narrow results list for iteration
             results = cast(list[object], raw_results)
-            for item in results:
-                if not isinstance(item, dict):
-                    continue
-                # TMDB returns dict with string keys
-                movie_data = cast(dict[str, object], item)
-                raw_movie_id = movie_data.get("id")
-                if not isinstance(raw_movie_id, int):
-                    continue
-                movie_id: int = raw_movie_id
-                is_adult = bool(movie_data.get("adult", False))
-
-                if is_adult:
-                    # Already marked adult in TMDB - our filters already exclude these
-                    already_adult += 1
-                    continue
-
-                reason = f"{company.name} (TMDB {company.tmdb_id}) - {company.reason}"
-
-                if commit:
-                    try:
-                        BlacklistedMovie.objects.create(
-                            tmdb_id=movie_id,
-                            reason=reason,
-                        )
-                        added += 1
-                    except IntegrityError:
-                        # Already exists
-                        skipped += 1
-                else:
-                    # Dry run - check if would be added
-                    if BlacklistedMovie.objects.filter(tmdb_id=movie_id).exists():
-                        skipped += 1
-                    else:
-                        added += 1
+            page_added, page_skipped, page_adult = self._process_company_movies(
+                results, company, commit
+            )
+            added += page_added
+            skipped += page_skipped
+            already_adult += page_adult
 
             page += 1
 
@@ -258,6 +230,53 @@ class Command(BaseCommand):
             # Be conservative with 0.3s delay between requests
             if page <= total_pages:
                 time.sleep(0.3)
+
+        return added, skipped, already_adult
+
+    def _process_company_movies(
+        self,
+        results: list[object],
+        company: BlacklistedCompany,
+        commit: bool,
+    ) -> tuple[int, int, int]:
+        """Count and optionally store eligible movies from one upstream page."""
+        added = 0
+        skipped = 0
+        already_adult = 0
+        for item in results:
+            if not isinstance(item, dict):
+                continue
+            # TMDB returns dict with string keys
+            movie_data = cast(dict[str, object], item)
+            raw_movie_id = movie_data.get("id")
+            if not isinstance(raw_movie_id, int):
+                continue
+            movie_id: int = raw_movie_id
+            is_adult = bool(movie_data.get("adult", False))
+
+            if is_adult:
+                # Already marked adult in TMDB - our filters already exclude these
+                already_adult += 1
+                continue
+
+            reason = f"{company.name} (TMDB {company.tmdb_id}) - {company.reason}"
+
+            if commit:
+                try:
+                    BlacklistedMovie.objects.create(
+                        tmdb_id=movie_id,
+                        reason=reason,
+                    )
+                    added += 1
+                except IntegrityError:
+                    # Already exists
+                    skipped += 1
+            else:
+                # Dry run - check if would be added
+                if BlacklistedMovie.objects.filter(tmdb_id=movie_id).exists():
+                    skipped += 1
+                else:
+                    added += 1
 
         return added, skipped, already_adult
 

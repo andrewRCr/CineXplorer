@@ -363,8 +363,7 @@ def test_concurrent_token_refresh_requests() -> None:
         """
         client = create_fresh_client(refresh_token=refresh_token_str)
         try:
-            response = client.post("/api/token/refresh/")
-            return response
+            return client.post("/api/token/refresh/")
         finally:
             # Critical: Close database connection to prevent leaks
             # Each thread creates a new connection that must be explicitly closed

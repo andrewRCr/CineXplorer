@@ -10,6 +10,8 @@ from __future__ import annotations
 import logging
 from collections.abc import Mapping
 
+from pydantic import ValidationError
+
 from apps.core.services.tmdb_api_client import TMDBApiClient
 
 from ...schemas import MovieListItemSchema
@@ -124,14 +126,13 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
             # Catch any unexpected errors to prevent entire batch from failing
             failed_count += 1
             logger.error(
-                f"Unexpected error fetching movie {movie_id}",
+                f"Unexpected error fetching movie {movie_id}"
+                + f" | error_type={type(e).__name__}",
                 extra={
                     "operation": "fetch_single_movie",
                     "movie_id": movie_id,
                     "error_type": type(e).__name__,
-                    "error": str(e),
                 },
-                exc_info=True,
             )
 
     # Log batch operation completion
@@ -190,11 +191,10 @@ def _create_movie_base_from_tmdb_data(
 
         return MovieListItemSchema.model_validate(validated_data, strict=False)
 
-    except Exception as e:
+    except ValidationError as e:
         logger.warning(
             "Failed to create MovieListItemSchema from TMDB data",
             extra={
-                "error": str(e),
                 "tmdb_id": tmdb_data.get("id"),
                 "operation": "transform_movie_data",
                 "error_type": type(e).__name__,

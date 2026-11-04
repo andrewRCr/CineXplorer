@@ -164,15 +164,14 @@ def test_buffer_mechanism_fills_page_even_with_few_initial_results() -> None:
 
         if page_num == 1:
             return create_mock_paginated_response(page_1_movies, page=1, total_pages=10)
-        elif page_num == 2:
+        if page_num == 2:
             return create_mock_paginated_response(page_2_movies, page=2, total_pages=10)
-        else:
-            # Fallback for unexpected page numbers
-            return create_mock_paginated_response(
-                [],
-                page=page_num,  # type: ignore[arg-type]
-                total_pages=10,
-            )
+        # Fallback for unexpected page numbers
+        return create_mock_paginated_response(
+            [],
+            page=page_num,  # type: ignore[arg-type]
+            total_pages=10,
+        )
 
     mock_client.get.side_effect = mock_get_side_effect
     service = MovieService(tmdb_client=mock_client)

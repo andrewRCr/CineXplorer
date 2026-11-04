@@ -64,12 +64,10 @@ def get_user_movies(
     user = get_current_user(request)
 
     # Delegate to service layer for full, non-paginated list
-    response = _service.get_all_user_movies(
+    return _service.get_all_user_movies(
         user=user,
         watchlist_only=watchlist if watchlist else None,
     )
-
-    return response
 
 
 @user_movie_data_router.get("/by-tmdb-id", response=UserMovieDataDetailSchema)

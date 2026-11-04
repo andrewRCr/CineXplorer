@@ -30,6 +30,7 @@ import logging
 from typing import Protocol
 
 from django.core.cache import cache
+from redis.exceptions import RedisError
 
 logger = logging.getLogger("cinexplorer.redis")
 
@@ -168,6 +169,10 @@ def get_atomic_set_client() -> AtomicSetOperations | None:
             "Ensure CACHES['default']['BACKEND'] is RedisCache."
         )
         return None
-    except Exception as e:
-        logger.warning(f"Failed to initialize Redis adapter: {e}")
+    except RedisError as e:
+        logger.error(
+            "Failed to initialize Redis adapter | error_type=%s",
+            type(e).__name__,
+            extra={"error_type": type(e).__name__},
+        )
         return None

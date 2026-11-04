@@ -120,12 +120,11 @@ class BaseApiClient(ABC):
         """
         if status_code >= 500:
             return "server_error"
-        elif status_code == 429:
+        if status_code == 429:
             return "rate_limit"
-        elif status_code >= 400:
+        if status_code >= 400:
             return "client_error"
-        else:
-            return "unknown"
+        return "unknown"
 
     @staticmethod
     def _safe_headers_dict(response: requests.Response) -> dict[str, str]:
@@ -195,18 +194,18 @@ class BaseApiClient(ABC):
             error_message = f"Invalid JSON in response: {json_error}"
 
             self.logger.error(
-                "API returned invalid JSON",
+                "API returned invalid JSON | error_type=%s",
+                type(json_error).__name__,
                 extra={
                     "correlation_id": correlation_id,
                     "endpoint": endpoint,
                     "status_code": response.status_code,
                     "duration_ms": duration_ms,
                     "error_type": "json_parsing_error",
-                    "json_error": str(json_error),
-                    "response_preview": str(response.text)[:200],
-                    "response_size_bytes": (
-                        len(response.content) if hasattr(response.content, "__len__") else 0
-                    ),
+                    "response_size_bytes": len(response.content)
+                    if hasattr(response.content, "__len__")
+                    else 0,
+                    "exception_type": type(json_error).__name__,
                 },
             )
 
@@ -378,7 +377,7 @@ class BaseApiClient(ABC):
                 duration_ms=duration_ms,
             )
 
-        elif isinstance(error, requests.exceptions.ConnectionError):
+        if isinstance(error, requests.exceptions.ConnectionError):
             self.logger.error(
                 "API connection error",
                 extra={
@@ -391,7 +390,7 @@ class BaseApiClient(ABC):
                     "url": url,
                     "base_url": self.base_url,
                     "params": sanitized_params,
-                    "network_diagnostic": ("Unable to establish connection to API"),
+                    "network_diagnostic": "Unable to establish connection to API",
                 },
             )
 
@@ -408,33 +407,32 @@ class BaseApiClient(ABC):
                 duration_ms=duration_ms,
             )
 
-        else:
-            # Generic request exception
-            self.logger.error(
-                "API request exception",
-                extra={
-                    "correlation_id": correlation_id,
-                    "endpoint": endpoint,
-                    "duration_ms": duration_ms,
-                    "error_type": type(error).__name__,
-                    "error_category": "request_error",
-                    "request_error": redact_api_keys(str(error)),
-                    "url": url,
-                    "params": sanitized_params,
-                    "exception_module": type(error).__module__,
-                    "is_critical": True,
-                },
-            )
+        # Generic request exception
+        self.logger.error(
+            "API request exception",
+            extra={
+                "correlation_id": correlation_id,
+                "endpoint": endpoint,
+                "duration_ms": duration_ms,
+                "error_type": type(error).__name__,
+                "error_category": "request_error",
+                "request_error": redact_api_keys(str(error)),
+                "url": url,
+                "params": sanitized_params,
+                "exception_module": type(error).__module__,
+                "is_critical": True,
+            },
+        )
 
-            return ApiResponse(
-                status_code=502,
-                error_message="API request failed",
-                error_details=f"Unexpected error during API request: {type(error).__name__}",
-                error_category="request_error",
-                correlation_id=correlation_id,
-                endpoint=endpoint,
-                duration_ms=duration_ms,
-            )
+        return ApiResponse(
+            status_code=502,
+            error_message="API request failed",
+            error_details=f"Unexpected error during API request: {type(error).__name__}",
+            error_category="request_error",
+            correlation_id=correlation_id,
+            endpoint=endpoint,
+            duration_ms=duration_ms,
+        )
 
     def get(
         self,
@@ -502,8 +500,7 @@ class BaseApiClient(ABC):
                 return self.process_successful_response(
                     response, correlation_id, endpoint, duration_ms
                 )
-            else:
-                return self.process_error_response(response, correlation_id, endpoint, duration_ms)
+            return self.process_error_response(response, correlation_id, endpoint, duration_ms)
 
         except requests.exceptions.RequestException as error:
             duration_ms = int((time.time() - start_time) * 1000)

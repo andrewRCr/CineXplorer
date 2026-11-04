@@ -109,7 +109,6 @@ def use_dummy_cache(settings: object) -> None:
     """
     # DummyCache configured by default - no action needed
     # Tests will automatically use DummyCache unless overridden
-    pass
 
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type

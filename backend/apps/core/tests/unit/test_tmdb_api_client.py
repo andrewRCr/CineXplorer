@@ -238,7 +238,7 @@ class TestTMDBApiClientGetMethod:
         mock_settings.TMDB_API_KEY = ""
         # Mock getattr to return empty string
         del mock_settings.TMDB_API_KEY
-        mock_settings.configure_mock(**{"TMDB_API_KEY": ""})
+        mock_settings.configure_mock(TMDB_API_KEY="")
 
         client = TMDBApiClient()
 

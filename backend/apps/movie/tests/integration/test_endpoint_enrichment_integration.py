@@ -62,7 +62,7 @@ def create_movie_stub(tmdb_id: int, title: str = "Test Movie") -> Movie:
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "endpoint,mock_path",
+    ("endpoint", "mock_path"),
     [
         (
             "/api/movies/now-playing",
@@ -131,7 +131,7 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "endpoint,mock_path",
+    ("endpoint", "mock_path"),
     [
         (
             "/api/movies/now-playing",
@@ -181,7 +181,7 @@ def test_discovery_endpoint_works_for_unauthenticated_user(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "endpoint,mock_path",
+    ("endpoint", "mock_path"),
     [
         (
             "/api/movies/now-playing",
@@ -337,7 +337,7 @@ def test_movie_detail_endpoint_works_for_unauthenticated_user(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "endpoint,mock_path",
+    ("endpoint", "mock_path"),
     [
         (
             "/api/movies/now-playing",

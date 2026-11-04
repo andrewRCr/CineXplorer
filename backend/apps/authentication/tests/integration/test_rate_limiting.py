@@ -266,7 +266,7 @@ def staging_proxy_settings() -> dict[str, int]:
 
 
 @pytest.mark.parametrize(
-    "environment,expected",
+    ("environment", "expected"),
     [
         ("staging", {"NINJA_NUM_PROXIES": 1, "ALLAUTH_TRUSTED_PROXY_COUNT": 1}),
         ("production", {"NINJA_NUM_PROXIES": 1, "ALLAUTH_TRUSTED_PROXY_COUNT": 1}),

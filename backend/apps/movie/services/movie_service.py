@@ -363,6 +363,7 @@ class MovieService(BaseTMDBService):
             handle_tmdb_api_error(
                 info_response,
                 operation="get_movie_details",
+                lookup=True,
                 movie_id=tmdb_id,
                 error_stage="fetching_movie_info",
             )
@@ -373,6 +374,7 @@ class MovieService(BaseTMDBService):
             handle_tmdb_api_error(
                 credits_response,
                 operation="get_movie_credits",
+                lookup=True,
                 movie_id=tmdb_id,
                 error_stage="fetching_credits",
             )
@@ -392,7 +394,7 @@ class MovieService(BaseTMDBService):
                     "credits_data_valid": bool(credits_result),
                 },
             )
-            raise HttpError(500, "Failed to get valid response data from TMDB")
+            raise HttpError(502, "Failed to get valid response data from TMDB")
 
         # Use factory function to create properly typed MovieDetailSchema
         return create_movie_detail_from_tmdb(info_result, credits_result)

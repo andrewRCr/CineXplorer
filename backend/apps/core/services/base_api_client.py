@@ -8,6 +8,7 @@ response processing across the application.
 from __future__ import annotations
 
 import logging
+import re
 import time
 import uuid
 from abc import ABC, abstractmethod
@@ -17,6 +18,13 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from .api_response import ApiResponse
+
+_API_KEY_IN_QUERY = re.compile(r"(api_key=)[^&\s'\"()]+")
+
+
+def redact_api_keys(text: str) -> str:
+    """Mask API keys in request URLs quoted by exception messages."""
+    return _API_KEY_IN_QUERY.sub(r"\1[REDACTED]", text)
 
 
 class BaseApiClient(ABC):
@@ -307,6 +315,10 @@ class BaseApiClient(ABC):
     ) -> ApiResponse:
         """Handle request exceptions (network errors, timeouts, etc.).
 
+        The exception text can quote the request URL, query string included, so it
+        goes only to the log, with API keys redacted. The response carries a fixed
+        message and a gateway status: 504 for a timeout, 502 for any other failure.
+
         Args:
             error: The exception that occurred
             correlation_id: Correlation ID for this request
@@ -347,7 +359,7 @@ class BaseApiClient(ABC):
                     "duration_ms": duration_ms,
                     "error_type": "timeout_error",
                     "error_category": "network_error",
-                    "timeout_error": str(error),
+                    "timeout_error": redact_api_keys(str(error)),
                     "url": url,
                     "params": sanitized_params,
                     "timeout_threshold_exceeded": duration_ms > 30000,
@@ -355,8 +367,8 @@ class BaseApiClient(ABC):
             )
 
             return ApiResponse(
-                status_code=408,
-                error_message=f"API request timeout: {error}",
+                status_code=504,
+                error_message="API request timed out",
                 error_details=(
                     "The request timed out. This may indicate network issues or high API load."
                 ),
@@ -375,7 +387,7 @@ class BaseApiClient(ABC):
                     "duration_ms": duration_ms,
                     "error_type": "connection_error",
                     "error_category": "network_error",
-                    "connection_error": str(error),
+                    "connection_error": redact_api_keys(str(error)),
                     "url": url,
                     "base_url": self.base_url,
                     "params": sanitized_params,
@@ -384,8 +396,8 @@ class BaseApiClient(ABC):
             )
 
             return ApiResponse(
-                status_code=503,
-                error_message=f"API connection error: {error}",
+                status_code=502,
+                error_message="API connection failed",
                 error_details=(
                     "Unable to connect to API. This may indicate network "
                     "connectivity issues or service outage."
@@ -406,7 +418,7 @@ class BaseApiClient(ABC):
                     "duration_ms": duration_ms,
                     "error_type": type(error).__name__,
                     "error_category": "request_error",
-                    "request_error": str(error),
+                    "request_error": redact_api_keys(str(error)),
                     "url": url,
                     "params": sanitized_params,
                     "exception_module": type(error).__module__,
@@ -415,8 +427,8 @@ class BaseApiClient(ABC):
             )
 
             return ApiResponse(
-                status_code=500,
-                error_message=f"API request error: {error}",
+                status_code=502,
+                error_message="API request failed",
                 error_details=f"Unexpected error during API request: {type(error).__name__}",
                 error_category="request_error",
                 correlation_id=correlation_id,

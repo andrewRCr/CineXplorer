@@ -13,8 +13,9 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 import pytest
-from ninja.errors import HttpError
+from pydantic import ValidationError
 
+from apps.core.exceptions import InvalidInputError, NotFoundError, UpstreamError
 from apps.core.services.api_response import ApiResponse
 from apps.core.tmdb_models.tmdb_responses import (
     TMDBCountryReleases,
@@ -190,69 +191,69 @@ class TestHandleTmdbApiError:
     """Tests for TMDB API error handling and HTTP status code mapping."""
 
     def test_raises_404_for_not_found_on_a_lookup(self) -> None:
-        """Should raise HttpError(404) for a TMDB 404 when looking up one resource."""
+        """Should raise NotFoundError (404) for a TMDB 404 when looking up one resource."""
         api_response = ApiResponse(status_code=404, data=None, error_message="Not found")
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(NotFoundError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation", lookup=True)
 
         assert exc_info.value.status_code == 404
-        assert "not found" in str(exc_info.value.message).lower()
+        assert "not found" in exc_info.value.detail.lower()
 
     def test_raises_502_for_not_found_outside_a_lookup(self) -> None:
-        """Should raise HttpError(502) for a TMDB 404 on a list or search request."""
+        """Should raise UpstreamError (502) for a TMDB 404 on a list or search request."""
         api_response = ApiResponse(status_code=404, data=None, error_message="Not found")
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(UpstreamError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation")
 
         assert exc_info.value.status_code == 502
 
     def test_raises_503_for_rate_limit(self) -> None:
-        """Should raise HttpError(503) when TMDB rate limits the server's key."""
+        """Should raise UpstreamError (503) when TMDB rate limits the server's key."""
         api_response = ApiResponse(status_code=429, data=None, error_message="Rate limited")
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(UpstreamError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation")
 
         assert exc_info.value.status_code == 503
-        assert exc_info.value.message == "External API is busy, please try again later"
+        assert exc_info.value.detail == "External API is busy, please try again later"
 
     @pytest.mark.parametrize("status_code", [400, 422])
     def test_raises_400_for_rejected_parameters(self, status_code: int) -> None:
-        """Should raise a fixed HttpError(400) when TMDB rejects the request's parameters."""
+        """Should raise a fixed InvalidInputError (400) when TMDB rejects the parameters."""
         api_response = ApiResponse(
             status_code=status_code, data=None, error_message="Invalid page"
         )
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(InvalidInputError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation")
 
         assert exc_info.value.status_code == 400
-        assert exc_info.value.message == "Invalid request"
+        assert exc_info.value.detail == "Invalid request"
 
     @pytest.mark.parametrize("status_code", [401, 403, 500, 502, 503])
     def test_raises_502_for_other_upstream_failures(self, status_code: int) -> None:
-        """Should raise a fixed HttpError(502) for any other failed TMDB response."""
+        """Should raise a fixed UpstreamError (502) for any other failed TMDB response."""
         api_response = ApiResponse(
             status_code=status_code, data=None, error_message="api_key=SECRET rejected"
         )
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(UpstreamError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation")
 
         assert exc_info.value.status_code == 502
-        assert exc_info.value.message == "External API error"
+        assert exc_info.value.detail == "External API error"
 
     def test_raises_504_for_timeouts(self) -> None:
-        """Should raise HttpError(504) when the request to TMDB timed out."""
+        """Should raise UpstreamError (504) when the request to TMDB timed out."""
         api_response = ApiResponse(status_code=504, data=None, error_message="timed out")
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(UpstreamError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation")
 
         assert exc_info.value.status_code == 504
-        assert exc_info.value.message == "External API timed out"
+        assert exc_info.value.detail == "External API timed out"
 
 
 class TestGetValidatedResponse:
@@ -271,20 +272,20 @@ class TestGetValidatedResponse:
         """Should raise a gateway error when a list request fails upstream, even with a 404."""
         api_response = ApiResponse(status_code=404, data=None, error_message="Not found")
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(UpstreamError) as exc_info:
             get_validated_response(api_response, operation="test_operation")
 
         assert exc_info.value.status_code == 502
 
     def test_raises_502_when_data_is_empty(self) -> None:
-        """Should raise HttpError(502) when successful response has no data."""
+        """Should raise UpstreamError (502) when successful response has no data."""
         # Mock a response that is_success() but returns None from get_json_data()
         api_response = Mock(spec=ApiResponse)
         api_response.is_success.return_value = True
         api_response.get_json_data.return_value = None
         api_response.correlation_id = "test-123"
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(UpstreamError) as exc_info:
             get_validated_response(api_response, operation="test_operation")
 
         assert exc_info.value.status_code == 502
@@ -364,17 +365,17 @@ class TestCreateMovieBaseFromTmdb:
         assert result.tmdb_id == 100
         assert result.title == "Minimal Movie"
 
-    def test_raises_http_error_on_invalid_data(self) -> None:
-        """Should raise HttpError when data validation fails."""
+    def test_reraises_validation_error_on_invalid_data(self) -> None:
+        """Should log and re-raise the validation error when data validation fails."""
         tmdb_data = {
             # Missing required 'id' field
             "title": "Invalid Movie",
         }
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(ValidationError) as exc_info:
             create_movie_base_from_tmdb(tmdb_data)
 
-        assert exc_info.value.status_code == 500
+        assert any(error["loc"] == ("id",) for error in exc_info.value.errors())
 
 
 class TestCreateMovieDetailFromTmdb:

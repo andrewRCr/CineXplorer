@@ -3,7 +3,7 @@
 This module creates the central NinjaAPI instance with:
 - Native JWT cookie authentication integration
 - OpenAPI security schema documentation
-- Global error handling and logging
+- JSON error responses for domain, validation and unhandled errors
 - Type-safe endpoint registration
 """
 
@@ -15,6 +15,7 @@ from ninja import NinjaAPI
 from apps.authentication.api import auth_router
 from apps.authentication.auth_ninja import jwt_cookie_auth
 from apps.core.api import core_router
+from apps.core.api_errors import register_error_handlers
 from apps.movie.api import genres_router, keywords_router, movies_router, people_router
 from apps.user_movie_data.api import user_movie_data_router
 
@@ -38,6 +39,9 @@ api = NinjaAPI(
     openapi_url="/openapi.json",
     auth=jwt_cookie_auth,  # Global authentication scheme
 )
+
+# Every error reaches the client as JSON: {"detail": ..., "code": ...}
+register_error_handlers(api)
 
 # Add app routers
 # Register authentication router (no auth prefix)

@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.18 | **Updated:** 2026-11-03 | **Hash:** `8xoe0p18`
+**Version:** 2.19 | **Updated:** 2026-11-04 | **Hash:** `begswalg`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -353,11 +353,14 @@ rules below are the checkable part: lint and type checks enforce what they can, 
 ### Errors and Logging
 
 - Catch the narrowest exception that can be raised. A broad `except` either re-raises, or is the deliberate edge of an
-  operation that degrades gracefully, and then logs with `logger.exception`.
+  operation that degrades gracefully, and then logs with `logger.exception`; where the exception's text can carry
+  personal data (a mail error can quote the recipient, a database integrity error the duplicate value), it logs the
+  exception's type at `ERROR` instead, without a traceback.
 - An external service's error text, exception text or status code never reaches a client. The client gets a fixed
-  message and a status this API chooses; the detail goes to the log, with secrets removed.
+  message and a status this API chooses; the detail goes to the log, with secrets and personal data removed.
 - Logs carry no secrets or personal data at any level: no email addresses, tokens, keys or verification codes. Log an
-  identifier, such as the user's ID.
+  identifier, such as the user's ID. The one exception is the API's handler for unhandled errors, which logs the
+  traceback: it can't tell which errors carry personal data, and an unexpected error can't be diagnosed without one.
 
 ### Data Integrity (Backend)
 

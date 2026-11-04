@@ -30,7 +30,8 @@
 **Expected environment:**
 
 - **Docker:** this checkout's own Compose project. On the primary, 5 containers (backend, frontend, redis, caddy,
-  postgres); in a linked worktree, its test stack's 3 (backend, redis, postgres) while one is up, otherwise none
+  postgres); in a linked worktree, 5 while its browsable stack runs, 3 (backend, redis, postgres) while its test
+  stack runs, none otherwise
   ([worktree-sessions.md](workflows/supplemental/worktree-sessions.md))
 - **Backend venv:** `.venv-backend/bin/` on Python 3.13 (built with `uv`), with ruff and pytest
 
@@ -62,6 +63,10 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 - **Frontend Dev Server**: `http://localhost:5173` (Vite dev server)
 - **Caddy Proxy**: `https://localhost:8444` (unified entry point, production-like)
 
+These are the primary's ports. A worktree publishes only Caddy on `127.0.0.1:{SITE_PORT}` from
+`infrastructure/.env`; `node scripts/worktree.mjs browse` prints its address. Its frontend calls its own API at
+that origin plus `/api`; its backend, database and Redis have no published ports.
+
 **For Testing/Development:**
 
 - **API Testing (curl/Postman)**: Use `https://localhost:8000` with `-k` flag (skip cert verification)
@@ -74,7 +79,7 @@ Browser → Caddy Proxy (8444) → Backend (8000) HTTPS
 - Frontend `.env` has `VITE_BASE_API_URL="https://localhost:8444/api"` (includes `/api` prefix)
 - All API endpoints are relative to `/api/` (e.g., `/movies/discover`, not `/api/movies/discover`)
 - The backend reaches Redis by service name (`redis:6379`); the primary also publishes 6379 on the host, and a
-  worktree's test stack publishes no ports
+  worktree's test stack publishes no ports, and its browser mode publishes only Caddy
 
 ### Console Logging for AI Debugging
 
@@ -212,7 +217,7 @@ TypeScript. Without this, you'll get errors like `Type '"success"' is not assign
 
 ```bash
 # Regenerate types: exports the schema from this checkout's own backend container (the primary's
-# full stack, or a worktree's test stack), then generates src/types/api.ts
+# full stack, or a worktree's stack in test or browser mode), then generates src/types/api.ts
 npm run generate-types --prefix frontend
 
 # Check for uncommitted changes
@@ -265,8 +270,9 @@ Heavy container commands carry `nice -n 15` inside the container: Docker Desktop
 this WSL distro, so the host's `nicecap` wrapper around `docker compose` would reach only the client. `memcap_gated`
 cannot cap them either. The primary stack sets no memory limits, since limits in `docker-compose.yml` would also bind
 CI and the production override; the worker cap keeps the full backend suite near 650 MiB in the backend container.
-Revisit that as the suite grows. A worktree's test stack caps each container (backend 1.5 GiB, `dev-db` 512 MiB,
-`redis` 128 MiB).
+Revisit that as the suite grows. A worktree's stack caps every container in either mode: backend 1 GiB, `dev-db`
+512 MiB, Redis 128 MiB, frontend 1 GiB and Caddy 128 MiB. Measured peaks and commands are in
+`infrastructure/docker-compose.worktree.yml`.
 
 ```bash
 # 1. Backend Tests (parallel execution enabled by default)
@@ -448,8 +454,8 @@ EOF
 ❌ Assuming containers are up without checking
 ❌ Using wrong ports (localhost:3000 vs localhost:8000)
 
-✅ Verify: `docker compose -f infrastructure/docker-compose.yml ps` (5 containers on the primary, 3 for a worktree's
-test stack)
+✅ Verify: `docker compose -f infrastructure/docker-compose.yml ps` (5 containers on the primary; in a worktree,
+5 for its browsable stack, 3 for its test stack, none otherwise)
 ✅ Backend tests always run in Docker, in this checkout's own stack; frontend tests run on host Node or in Docker
 ✅ Check container status before operations
 ✅ Use `https://localhost:8000` for direct API testing (see Network Architecture section)

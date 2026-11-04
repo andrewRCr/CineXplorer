@@ -150,24 +150,13 @@ run beside it.
     - Browser-profile config has five services, all measured limits and only Caddy's loopback port. Stopped with
       both files and the browser profile; all three project volumes remain.
 
-- [ ] **3.5 The workflows and references describe both stacks** (R12)
-    - `worktree-sessions.md`:
-        - A new section on the browsable stack: `browse`, the stop command, the port in `infrastructure/.env` and
-          changing it when another program holds it, and the dev account. One signed-in stack per browser profile,
-          since cookies on `localhost` are shared across ports; a second profile or a private window keeps a second
-          stack signed in. Google and GitHub sign-in work only on the main checkout. A browser that has not trusted
-          the dev certificate asks again for each new port
-        - § When to Use One and the main checkout's role list what still needs the main checkout: OAuth sign-in and
-          its development data
-        - § What Runs Where: backend tests and API types run through the worktree's own stack, in either mode
-    - `run-errand.md` § Where It Runs runs an errand in place on the main checkout only when it needs OAuth sign-in
-      or the main checkout's development data
-    - `session-init.md` § 5: in a worktree, start the test stack or `browse`, whichever the next action needs, and
-      expect five containers while the browsable stack runs, three while the test stack runs, none otherwise
-    - `QUICK-REFERENCE.md`: the expected containers, the network notes and the Docker Assumptions checklist count as
-      `session-init.md` does; the type-generation note and the list of a worktree's memory limits cover both modes
-      and all five limits
-    - The header comment of `frontend/scripts/export-openapi.js` describes a worktree's stack in either mode
+- [x] **3.5 The workflows and references describe both stacks** (R12)
+    - Worktree guidance covers browser startup and stopping, the port and conflicts, dev sign-in, cookie sharing,
+      certificate prompts, OAuth on the primary and tests/schema export through either mode.
+    - Session initialization and quick reference count five browser-mode containers, three test-mode containers
+      or none; network notes and all five measured limits match the override. The schema export header covers both
+      modes. Errand placement was already updated in 2.5.
+    - Markdown lint, export-script syntax and focused ESLint pass; the script change is comment-only.
 
 ### **Phase 4:** One command removes a worktree with its stack
 

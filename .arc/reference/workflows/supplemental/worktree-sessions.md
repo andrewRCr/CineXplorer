@@ -9,15 +9,15 @@ Caddy on 8444, the frontend dev server, the backend, `dev-db` and `redis`.
 
 ## When to Use One
 
-A worktree suits work that does not need the browser stack:
+A worktree suits planning, implementation and browser work against its own code and database:
 
 - Planning, review and documentation
 - Errands touching CI, configuration or documentation ([run-errand.md](run-errand.md))
-- Frontend work, checked by host-side tests, lint and type-check
-- Backend work, tested in the worktree's own test stack
+- Frontend work, checked by host-side tests, lint and type-check, and viewed in its browsable stack
+- Backend work, tested in the worktree's own stack in either mode
 
-What stays on the primary: anything viewed in the browser on 8444, OAuth sign-in (its origins name the primary's
-address), and the dev database's data.
+What stays on the primary: OAuth sign-in (its origins name the primary's address) and its development data. A
+worktree's browsable stack serves its own code and fresh database on its own port.
 
 ## Provisioning
 
@@ -105,7 +105,7 @@ to the entire parent directory. Git metadata and the installed harness are share
 - **Pyright and markdown lint**, at CI's pins, from the root:
   `npx --yes pyright@1.1.414 backend/apps/ backend/config/ --project backend` and
   `npx --yes markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"`
-- **Backend tests and API types:** only through the worktree's own test stack (§ Test Stack)
+- **Backend tests and API types:** only through the worktree's own stack, in test or browser mode
 
 ## Test Stack
 
@@ -130,6 +130,33 @@ docker compose $S down                                               # when the 
   and regenerates `src/types/api.ts`, so a worktree's types come from its own code. That command names only the base
   compose file and relies on `infrastructure/.env` naming the project, which provisioning confirms with `config`. In
   a worktree whose project is still `infrastructure`, it refuses rather than export the primary's schema.
+
+## Browsable Stack
+
+From a provisioned worktree's root:
+
+```bash
+node scripts/worktree.mjs browse
+```
+
+This starts all five services with the `browser` profile, waits for them to run and for health checks to pass,
+then applies migrations and runs `seed_dev_data`. The printed address is `https://localhost:{SITE_PORT}`; sign in
+as `dev` with password `cinexplorer-dev`. The account is verified and the tracked blacklist is loaded. Repeating
+`browse` applies only new migrations, leaves an existing dev account unchanged and syncs the blacklist again.
+
+`SITE_PORT` in `infrastructure/.env` drives the published port, frontend API URL and backend origins. Provisioning
+allocates the lowest unclaimed worktree port from 8445 to 8499. If another program holds it, stop the stack, change
+`SITE_PORT` to an unused port in that file and run `browse` again. Each stack has a separate signing key; cookies
+are still shared across ports on `localhost`, so keep one signed-in stack per browser profile. A second browser
+profile or a private window keeps a second stack signed in. Google and GitHub sign-in work only on the primary.
+A browser that has not trusted the development certificate asks again for each new port.
+
+Stop either mode with both files and the browser profile; this keeps all volumes:
+
+```bash
+docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml \
+  --profile browser down
+```
 
 ## Removal
 

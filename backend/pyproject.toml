@@ -131,7 +131,6 @@ omit = [
     "apps/*/management/commands/*",  # Management commands (tested separately if needed)
     "apps/*/__init__.py",       # Package initialization files
     "apps/__init__.py",         # Root package init
-    "config/django_types.py",   # Type stub utilities
     "scripts/*",                # Utility scripts (not application code)
     "shared/*",                 # Shared utilities (tested via usage)
 ]

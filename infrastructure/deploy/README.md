@@ -203,8 +203,11 @@ fields. Keep the OAuth/mail values off the running server until the hardened dep
   `https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/`, with a five-minute interval and the
   maintainer's email alerted on failure and recovery.
 - In the existing Google Cloud project, create a separate **Web application** OAuth client for deployed hosts.
-  Authorize both redirect URIs below. Publish the consent screen with its audience status **In production**.
-  Save the client ID/secret for the backend's `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+  Authorize both redirect URIs below. Keep only the basic identity scopes (`email`, `profile`, and optionally
+  `openid`). The project can remain in **Testing** while the application homepage, privacy policy and terms pages
+  are pending: Google allows this sign-in without adding accounts to the test-user list. Publish the consent screen
+  to **In production** once those pages are live. Save the client ID/secret for the backend's `GOOGLE_CLIENT_ID` and
+  `GOOGLE_CLIENT_SECRET`. See [Google's audience guidance](https://support.google.com/cloud/answer/15549945?hl=en).
 - Create a separate GitHub **OAuth App** with homepage `https://cinexplorer.andrewcreekmore.dev` and both exact
   callback URLs below. GitHub supports multiple callback entries; add both, keeping exact matching. Save its client
   ID/secret for `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. Keep the providers' default scopes.
@@ -258,8 +261,10 @@ gh api repos/andrewRCr/CineXplorer/environments/staging/variables/DEPLOY_HOST
 ```
 
 Confirm custom deployment branch policies are enabled, `main` is the only branch policy, both secret names exist,
-and the host variable is correct. Record the provider console settings for both callbacks and Google's published
-consent screen; a staging sign-in alone cannot prove the future production callback.
+and the host variable is correct. Record the provider console settings for both callbacks and Google's actual
+audience status. Test Google sign-in with an account absent from the test-user list, then add a movie and confirm
+it remains after reloading the watchlist; repeat the sign-in and watchlist check with GitHub. A staging sign-in
+alone cannot prove the future production callback.
 
 ### Deploy the first version and activate authentication
 

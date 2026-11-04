@@ -102,7 +102,8 @@ host, and the authentication gaps above are closed. The site stays at the stagin
    site's own rate-limited endpoints, each anonymous authentication throttle counts only its own endpoint's requests,
    and a failed password-reset or verification email gives the visitor a clear message instead of a server error,
    after which a retry works.
-6. Moving to the production hostname needs no change in the Google, GitHub or ZeptoMail consoles.
+6. Moving to the production hostname needs no change to OAuth client credentials, authorized callbacks or the mail
+   sender. Google consent-screen publication is a separate follow-up once the website pages below are live.
 
 ## 3. User Stories
 
@@ -312,10 +313,13 @@ host, and the authentication gaps above are closed. The site stays at the stagin
   The deployed hosts use their own provider apps, not the development ones: a Google OAuth client in the existing
   Google Cloud project whose authorized redirect URIs are
   `https://staging.cinexplorer.andrewcreekmore.dev/accounts/google/login/callback/` and
-  `https://cinexplorer.andrewcreekmore.dev/accounts/google/login/callback/`, with the project's consent screen
-  published (`In production`); and a GitHub OAuth App whose homepage is `https://cinexplorer.andrewcreekmore.dev` and
-  whose callback configuration accepts `/accounts/github/login/callback/` on both hosts. The scopes are allauth's
-  defaults, as today.
+  `https://cinexplorer.andrewcreekmore.dev/accounts/google/login/callback/`; and a GitHub OAuth App whose homepage is
+  `https://cinexplorer.andrewcreekmore.dev` and whose callback configuration accepts
+  `/accounts/github/login/callback/` on both hosts. The scopes are allauth's defaults: Google uses only basic identity
+  scopes (`email`, `profile`, and optionally `openid`). The Google project may remain in `Testing` for this sign-in,
+  including accounts absent from its test-user list. Publishing the consent screen to `In production` moves to the
+  later website work (Stage 4), once the application homepage, privacy policy and terms pages are live. The deployed
+  client and both authorized callbacks stay as configured.
 - **R16. Site record from the deployment.** A `configure_site` management command sets the Site record named by
   `SITE_ID` to the domain in the `SITE_DOMAIN` setting and the name `CineXplorer`, and reports whether it changed
   anything. `SITE_DOMAIN` comes from the `SITE_DOMAIN` environment variable, which the production Compose file sets to
@@ -763,10 +767,11 @@ what was seen and where.
    for the same address delivers a reset email to the inbox whose text part names
    `staging.cinexplorer.andrewcreekmore.dev` and whose link sets a new password that then signs in. The backend's logs
    show each send's outcome and no ZeptoMail response printed raw.
-10. Signing in with Google, using an account that is not on the Google Cloud project's test-user list, succeeds, which
+10. [~] Signing in with Google, using an account that is not on the Google Cloud project's test-user list, succeeds, which
     shows the consent screen published and the deployed client, its redirect URI and the env file wired together.
     Signing in with GitHub succeeds. Each signed-in user then adds a movie to the watchlist, and it is still there after
-    a reload.
+    a reload. (Superseded by the 2026-11-04 Google Testing amendment: criterion 16 accepts basic identity
+    sign-in in Testing; publication moves to the later website work.)
 11. The Google client's authorized redirect URIs list both hosts' callback URLs, and the GitHub OAuth App's homepage
     and callback configuration name the production host; the maintainer records what each console showed. The
     production host cannot be exercised before it exists.
@@ -783,6 +788,11 @@ what was seen and where.
     shows the user signed in. With every tab of the site then closed for 6 minutes, opening the watchlist page shows
     the user signed in and lists their watchlist, and the browser's network panel shows at least one request to
     `/api/auth/refresh` during that load, each answered `200`.
+
+16. Signing in with Google on staging, using an account absent from the Google Cloud project's test-user list,
+    succeeds with only basic identity scopes (`email`, `profile`, and optionally `openid`). The project may remain in
+    Testing. This proves the deployed client, its redirect URI and the environment credentials work together. Signing
+    in with GitHub succeeds. Each signed-in user adds a movie to the watchlist and still sees it after a reload.
 
 ### Proven after merge
 
@@ -806,9 +816,10 @@ None.
 The maintainer performs these steps outside the repository. They are not tasks, and each is checked by the proven-live
 criterion named beside it:
 
-- **Google:** a web OAuth client in the existing Google Cloud project with both hosts' redirect URIs, and the
-  project's consent screen published (criteria 10 and 11).
-- **GitHub:** an OAuth App for the deployed hosts (criteria 10 and 11).
+- **Google:** a web OAuth client in the existing Google Cloud project with both hosts' redirect URIs and only basic
+  identity scopes; the project may remain in Testing (criteria 16 and 11). Consent-screen publication moves to the
+  later website work (Stage 4), once the application homepage, privacy policy and terms pages are live.
+- **GitHub:** an OAuth App for the deployed hosts (criteria 16 and 11).
 - **ZeptoMail:** a send-mail token for a mail agent with `andrewcreekmore.dev` verified; its DKIM record is already in
   place (criterion 9). If the first verification email lands in Gmail's spam folder, the remedy is DNS, such as a
   `_dmarc` record for `andrewcreekmore.dev`, not a change to this work.
@@ -855,3 +866,10 @@ authentication hardening (R18–R23) is not deployed.
   shell/systemd-compatible `ops.env` configured before first deployment. Non-Goals exclude more frequent scheduled
   backups; the pre-deployment backup is included. The runbook retains backup-first manual deployment and blacklist
   rollback guidance alongside the stronger R2 restore procedure.
+- **2026-11-04, Google Testing,** on the Owner's approval after successful staging sign-in with an empty test-user
+  list and confirmation of watchlist persistence after reload: R15 and Dependencies accept Testing for basic identity
+  scopes, consistent with [Google's audience guidance](https://support.google.com/cloud/answer/15549945?hl=en).
+  Criterion 10 is superseded, with its text retained, by criterion 16; Google/GitHub sign-in and both watchlist reload
+  checks remain. Consent-screen publication moves to the later website work (Stage 4), once homepage, privacy and
+  terms pages are live. Goal 6 narrows the hostname-move promise to credentials, callbacks and sender configuration.
+  The task list and runbook follow. The Owner declined the offered independent review for this contained amendment.

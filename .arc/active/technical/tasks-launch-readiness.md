@@ -326,14 +326,16 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 5:** Staging takes this change and proves it live
 
-- [ ] **5.1 The maintainer's setup outside the repository** (Dependencies and Preconditions; Proven live 6, 11, 12)
-    - Each step in the PRD's Dependencies and Preconditions, by the runbook: the Cloudflare R2 bucket, its token and
-      lifecycle rule; the two Healthchecks.io checks; the UptimeRobot monitor; the Google client and its published
-      consent screen; the GitHub OAuth App; the ZeptoMail token; the CI key pair, its public half at
-      `/opt/cinexplorer/ci-deploy.pub`, and the `staging` environment's branch rule, secrets and variable
-    - `/opt/cinexplorer/ops.env` at mode `600`, made from `ops.env.example`
-    - Proven live 6 and 11 recorded from what each console showed; Proven live 12's `gh api` commands
-    - The ZeptoMail token and the OAuth credentials stay off the server until 5.5
+- [x] **5.1 The maintainer's setup outside the repository** (Dependencies and Preconditions; Proven live 6, 11, 12)
+    - The Owner completed the private R2 bucket, scoped token and 30-day lifecycle rule; both Healthchecks checks
+      and failure email setup; the five-minute UptimeRobot monitor; deployed Google/GitHub apps and both-host
+      callbacks; ZeptoMail sender/token setup; and the dedicated CI key and main-only GitHub staging environment.
+    - Recorded console settings and GitHub API configuration without secret values. Confirmed the CI public key on
+      the server and private operations settings in mode-600 `ops.env`; live backup and alert checks followed in 5.4.
+    - Google remains in Testing. The Owner approved moving publication to the later website work once homepage,
+      privacy and terms pages are live; basic identity sign-in with an empty test-user list works on staging.
+    - OAuth/mail credentials stayed off the server until the hardened version passed its checks, then were entered
+      privately and activated in 5.5.
 
 - [x] **5.2 Publish this branch's images and take the change on staging** (Proven live 3, 2)
     - Published the branch and opened draft PR #78. Corrected the optional Site-domain typing and isolated the
@@ -385,18 +387,22 @@ authentication gaps that matter once sign-up is public are closed.
     - Remaining: after the first night, confirm both timers' own successful executions and Healthchecks pings;
       manual runs do not prove timer-originated execution.
 
-- [ ] **5.5 Credentials only now, then email and sign-in live** (R17; Proven live 9, 10, 13, 15)
+- [ ] **5.5 Credentials only now, then email and sign-in live** (R17; Proven live 9, 13, 15, 16)
     - With `cf0ef11b` serving, fresh-cookie HTTPS probes refused missing CSRF and a foreign Origin with 403, allowed
       the matching token through to payload validation (422) and confirmed closed allauth sign-up returns 404.
-      Credentials still await private Owner entry; valid-credential cross-site refusal remains for the live checks.
+      Valid-credential cross-site refusal remains for the live checks.
     - Clarified the full prefixed ZeptoMail Authorization value in the env example and runbook; the pinned client
       sends that configured value verbatim.
-    - Only with this change's images running on staging (5.2): `ZEPTOMAIL_API_KEY`,
-      `ZEPTOMAIL_SENDER_EMAIL=cinexplorer@andrewcreekmore.dev` and the four OAuth variables go into
-      `/opt/cinexplorer/backend.env`, by the runbook's entries; until then allauth's own sign-up and sign-in stay
-      reachable on the old images, and the hardening is not deployed. The key is unset on staging today
-    - Redeploy with `cinexplorer-deploy`, and confirm the recreated `backend` container has the new variables
-    - Proven live 9 (Gmail sign-up, verification, sign-in, password reset and the logs), 10 (Google and GitHub
+    - After hardening checks passed, the Owner entered the saved ZeptoMail key and complete Google/GitHub pairs
+      privately in `backend.env`. Verified all six fields, the sender, mode 600/deploy ownership and exactly one
+      ZeptoMail Authorization prefix without displaying values.
+    - Redeployed the tested `cf0ef11b` build. Backup succeeded, blacklist sync changed nothing, and the backend
+      was recreated with values matching the saved configuration. Both providers' supported headless forms return
+      302 to their authorization pages with exact staging callbacks; Google requests only email and profile.
+    - The Owner confirmed Google sign-in works in Testing with an empty test-user list, and the added watchlist
+      movie remains after reload. Approved the Google Testing amendment without an independent review. The Owner
+      also confirmed GitHub sign-in and the same watchlist/reload check work.
+    - Proven live 9 (Gmail sign-up, verification, sign-in, password reset and the logs), 16 (Google and GitHub
       sign-in and the watchlist), 13 (a cross-site sign-in refused, the site's own accepted) and 15 (a password user
       still signed in after an idle tab, and after reopening the watchlist page once the access token has expired)
 
@@ -678,10 +684,11 @@ what was seen and where.
   for the same address delivers a reset email to the inbox whose text part names
   `staging.cinexplorer.andrewcreekmore.dev` and whose link sets a new password that then signs in. The backend's logs
   show each send's outcome and no ZeptoMail response printed raw.
-- [ ] Signing in with Google, using an account that is not on the Google Cloud project's test-user list, succeeds, which
+- [~] Signing in with Google, using an account that is not on the Google Cloud project's test-user list, succeeds, which
   shows the consent screen published and the deployed client, its redirect URI and the env file wired together.
   Signing in with GitHub succeeds. Each signed-in user then adds a movie to the watchlist, and it is still there after
-  a reload.
+  a reload. (Superseded by the 2026-11-04 Google Testing amendment: criterion 16 accepts basic identity
+  sign-in in Testing; publication moves to the later website work.)
 - [ ] The Google client's authorized redirect URIs list both hosts' callback URLs, and the GitHub OAuth App's homepage
   and callback configuration name the production host; the maintainer records what each console showed. The
   production host cannot be exercised before it exists.
@@ -698,6 +705,11 @@ what was seen and where.
   shows the user signed in. With every tab of the site then closed for 6 minutes, opening the watchlist page shows
   the user signed in and lists their watchlist, and the browser's network panel shows at least one request to
   `/api/auth/refresh` during that load, each answered `200`.
+
+- [ ] Signing in with Google on staging, using an account absent from the Google Cloud project's test-user list,
+  succeeds with only basic identity scopes (`email`, `profile`, and optionally `openid`). The project may remain in
+  Testing. This proves the deployed client, its redirect URI and the environment credentials work together. Signing
+  in with GitHub succeeds. Each signed-in user adds a movie to the watchlist and still sees it after a reload.
 
 ### Proven after merge
 
@@ -965,3 +977,14 @@ what was seen and where.
   marked `[~]` in both. Size: 6 phases; the task list passes the ~1,000-line mark through its copied Review Log, its
   tasks, notes and criteria being about 840 lines.
 - **Totals:** 1 pass and 2 fix checks, 22 findings fixed (12, 6, 4); PRD Amendment 2 reviewed within them.
+
+### 2026-11-04 — Google Testing amendment
+
+- **Evidence:** the real deployed authorization form requests only email and profile; the Owner confirmed Google
+  sign-in with an empty project test-user list and watchlist persistence after reload. Google's audience guidance
+  documents the basic identity exception for Testing.
+- **Approved change:** retain and supersede Proven live 10, append 16 in both copies, and propagate Testing support
+  and later website-dependent publication into Goal 6, R15, Dependencies, setup and live tasks, and the runbook.
+  Both providers' watchlist reload requirements remain; criterion boxes stay for verification.
+- **Review:** contained amendment at medium depth; author checks covered reader independence, binding completeness,
+  coherence and source grounding across the footprint. The Owner declined the offered independent review.

@@ -1,5 +1,4 @@
-"""
-Rate limiting tests for authentication endpoints.
+"""Rate limiting tests for authentication endpoints.
 
 Tests the throttling behavior:
 - Login endpoint: 5 requests per minute (AnonRateThrottle)

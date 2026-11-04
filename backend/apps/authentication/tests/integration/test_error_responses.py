@@ -1,5 +1,4 @@
-"""
-Error response format tests for authentication endpoints.
+"""Error response format tests for authentication endpoints.
 
 Tests the standardized error response format implemented in Task 6:
 - All errors use {"error": "message"} format for user-facing errors

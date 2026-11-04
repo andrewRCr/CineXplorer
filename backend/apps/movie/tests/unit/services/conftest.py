@@ -1,5 +1,4 @@
-"""
-Unit test fixtures for movie service tests.
+"""Unit test fixtures for movie service tests.
 
 Provides isolation from database dependencies for true unit testing.
 """

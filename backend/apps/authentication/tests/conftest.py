@@ -1,5 +1,4 @@
-"""
-Pytest configuration for authentication app tests.
+"""Pytest configuration for authentication app tests.
 
 Provides pytest fixtures for authentication testing. This module combines
 throttling infrastructure, OAuth mocks, and convenience wrappers around
@@ -96,8 +95,7 @@ from apps.authentication.tests.oauth_mocks import (
 
 @pytest.fixture(autouse=True)  # type: ignore[misc]  # pytest decorator type
 def use_dummy_cache(settings: object) -> None:
-    """
-    Configure DummyCache by default for all tests (autouse).
+    """Configure DummyCache by default for all tests (autouse).
 
     DummyCache is a no-op cache backend that doesn't store anything,
     which allows throttle classes to bypass throttling in normal tests.
@@ -119,8 +117,7 @@ def enable_throttling_for_test(
     request: Any,  # noqa: ANN401 - pytest.FixtureRequest not in stubs
     settings: Any,  # noqa: ANN401 - Django settings dynamic
 ) -> Iterator[None]:
-    """
-    Switch to LocMemCache for tests marked with @pytest.mark.enable_throttling.
+    """Switch to LocMemCache for tests marked with @pytest.mark.enable_throttling.
 
     This fixture is automatically applied to tests with the enable_throttling
     marker. It temporarily switches from DummyCache to LocMemCache to enable
@@ -153,8 +150,7 @@ def enable_throttling_for_test(
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def clear_throttle_cache() -> Iterator[None]:
-    """
-    Clear throttle cache before and after test execution.
+    """Clear throttle cache before and after test execution.
 
     Use this fixture in tests that need a clean throttle state,
     especially when testing rate limiting boundaries (e.g., "exactly
@@ -180,8 +176,7 @@ def clear_throttle_cache() -> Iterator[None]:
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def authenticated_client_with_throttling(client: Client, verified_user: Any) -> Client:  # noqa: ANN401
-    """
-    Provide authenticated client with throttling enabled.
+    """Provide authenticated client with throttling enabled.
 
     This fixture combines authentication setup with the throttling flag,
     useful for testing authenticated endpoints with rate limiting.
@@ -229,8 +224,7 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def google_oauth_provider() -> MockGoogleOAuth:
-    """
-    Provide a mock Google OAuth provider for testing OAuth flows.
+    """Provide a mock Google OAuth provider for testing OAuth flows.
 
     Returns a fully configured MockGoogleOAuth instance that can simulate
     Google's OAuth 2.0 authentication flow. Use the provider's methods to
@@ -262,8 +256,7 @@ def google_oauth_provider() -> MockGoogleOAuth:
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def github_oauth_provider() -> MockGitHubOAuth:
-    """
-    Provide a mock GitHub OAuth provider for testing OAuth flows.
+    """Provide a mock GitHub OAuth provider for testing OAuth flows.
 
     Returns a fully configured MockGitHubOAuth instance that can simulate
     GitHub's OAuth 2.0 authentication flow. GitHub requires an additional
@@ -296,8 +289,7 @@ def github_oauth_provider() -> MockGitHubOAuth:
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
-    """
-    Provide a context manager for patching OAuth HTTP requests.
+    """Provide a context manager for patching OAuth HTTP requests.
 
     This fixture returns a function that creates a context manager for patching
     the requests.post and requests.get calls made during OAuth flows. Use this
@@ -334,8 +326,7 @@ def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
 
     @contextmanager
     def _patch_oauth_requests(provider: str) -> Generator[tuple[Mock, Mock]]:
-        """
-        Context manager for patching OAuth HTTP requests.
+        """Context manager for patching OAuth HTTP requests.
 
         Args:
             provider: OAuth provider name ('google' or 'github')
@@ -366,8 +357,7 @@ def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures module
-    """
-    Provide a user with verified email address.
+    """Provide a user with verified email address.
 
     Wraps fixtures.create_user() with default parameters and email_verified=True.
     For single-instance tests that need a standard verified user.
@@ -398,8 +388,7 @@ def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures mo
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def unverified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures module
-    """
-    Provide a user with unverified email address.
+    """Provide a user with unverified email address.
 
     Wraps fixtures.create_unverified_user() for single-instance tests
     that need a user without email verification.
@@ -423,8 +412,7 @@ def unverified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures 
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def register_payload() -> Any:  # noqa: ANN401 - RegisterPayload type from fixtures
-    """
-    Provide a registration API payload with default values.
+    """Provide a registration API payload with default values.
 
     Wraps fixtures.create_register_payload() for tests that need standard
     registration data without customization.
@@ -451,8 +439,7 @@ def register_payload() -> Any:  # noqa: ANN401 - RegisterPayload type from fixtu
 
 @pytest.fixture  # type: ignore[misc]  # pytest decorator type
 def login_payload() -> Any:  # noqa: ANN401 - LoginPayload type from fixtures
-    """
-    Provide a login API payload with default values (username-based).
+    """Provide a login API payload with default values (username-based).
 
     Wraps fixtures.create_login_payload() for tests that need standard
     login credentials without customization.
@@ -479,8 +466,7 @@ def login_payload() -> Any:  # noqa: ANN401 - LoginPayload type from fixtures
 
 
 def pytest_configure(config: Any) -> None:  # noqa: ANN401 - pytest.Config not in stubs
-    """
-    Register custom pytest markers.
+    """Register custom pytest markers.
 
     Markers:
         enable_throttling: Mark tests that need real throttling behavior

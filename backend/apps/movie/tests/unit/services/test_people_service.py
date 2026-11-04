@@ -1,5 +1,4 @@
-"""
-Unit tests for PeopleService class-based architecture.
+"""Unit tests for PeopleService class-based architecture.
 
 Tests the PeopleService class with dependency injection pattern, verifying:
 - Constructor injection of TMDB client

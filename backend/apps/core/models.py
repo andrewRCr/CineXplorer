@@ -1,5 +1,4 @@
-"""
-Core database models.
+"""Core database models.
 
 ⚠️ TYPE STUB SYNC REQUIRED ⚠️
 -------------------------------
@@ -42,8 +41,7 @@ from django.db import models
 
 
 class Movie(models.Model):
-    """
-    Represents a minimal local stub for a TMDB movie.
+    """Represents a minimal local stub for a TMDB movie.
     Used as an anchor for user-specific data.
     """
 

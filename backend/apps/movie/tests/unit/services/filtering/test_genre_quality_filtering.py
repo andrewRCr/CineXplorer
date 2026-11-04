@@ -1,5 +1,4 @@
-"""
-Unit tests for genre quality filtering in TMDB result processing.
+"""Unit tests for genre quality filtering in TMDB result processing.
 
 Tests the genre completeness validation that ensures movies have at least one
 genre assigned. Empty genres are a strong signal of data quality problems.

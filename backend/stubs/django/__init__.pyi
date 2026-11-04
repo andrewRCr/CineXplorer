@@ -1,5 +1,4 @@
-"""
-Stub namespace package for Django.
+"""Stub namespace package for Django.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================

@@ -1,5 +1,4 @@
-"""
-Pagination and buffer management utilities for TMDB movie responses.
+"""Pagination and buffer management utilities for TMDB movie responses.
 
 This module provides composable helper functions for paginated movie fetching,
 filtering, and buffer management to maintain consistent page sizes.

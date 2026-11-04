@@ -1,5 +1,4 @@
-"""
-Token blacklisting tests for authentication endpoints.
+"""Token blacklisting tests for authentication endpoints.
 
 Tests the token rotation and blacklisting implementation from Task 4:
 - Token refresh succeeds on first use (rotation generates new tokens)

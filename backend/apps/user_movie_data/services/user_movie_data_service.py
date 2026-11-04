@@ -1,5 +1,4 @@
-"""
-User movie data service for managing user-movie interactions.
+"""User movie data service for managing user-movie interactions.
 
 This service encapsulates all business logic for user movie data operations,
 including CRUD operations, filtering, and pagination. It follows the class-based
@@ -46,8 +45,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserMovieDataService:
-    """
-    Service for managing user movie data (watchlist, ratings, reviews).
+    """Service for managing user movie data (watchlist, ratings, reviews).
 
     This service handles all business logic for user-movie interactions,
     including creating new entries (with TMDB fetching), updates, deletions,
@@ -77,8 +75,7 @@ class UserMovieDataService:
         repository: UserMovieDataRepository | None = None,
         movie_service: MovieService | None = None,
     ) -> None:
-        """
-        Initialize UserMovieDataService with optional dependency injection.
+        """Initialize UserMovieDataService with optional dependency injection.
 
         Args:
             repository: UserMovieDataRepository instance for data access.
@@ -117,8 +114,7 @@ class UserMovieDataService:
         user_rating: int | None = None,
         user_review: str | None = None,
     ) -> UserMovieData:
-        """
-        Create a new UserMovieData entry for a movie.
+        """Create a new UserMovieData entry for a movie.
 
         This method handles the full creation flow:
         1. Check if movie exists locally
@@ -180,8 +176,7 @@ class UserMovieDataService:
         user: AbstractBaseUser,
         record_id: int,
     ) -> UserMovieData:
-        """
-        Get UserMovieData by its primary key.
+        """Get UserMovieData by its primary key.
 
         The query is scoped to the user for authorization - users can only
         access their own data.
@@ -206,8 +201,7 @@ class UserMovieDataService:
         user: AbstractBaseUser,
         tmdb_id: int,
     ) -> UserMovieData:
-        """
-        Get UserMovieData by TMDB movie ID.
+        """Get UserMovieData by TMDB movie ID.
 
         The query is scoped to the user for authorization.
 
@@ -241,8 +235,7 @@ class UserMovieDataService:
         user_rating: int | None = None,
         user_review: str | None = None,
     ) -> UserMovieData:
-        """
-        Update an existing UserMovieData record.
+        """Update an existing UserMovieData record.
 
         Performs a partial update - only fields that are explicitly provided
         will be updated. Authorization is enforced by checking ownership first.
@@ -284,8 +277,7 @@ class UserMovieDataService:
         user: AbstractBaseUser,
         record_id: int,
     ) -> None:
-        """
-        Delete a UserMovieData record.
+        """Delete a UserMovieData record.
 
         Authorization is enforced by checking ownership first.
 
@@ -341,8 +333,7 @@ class UserMovieDataService:
         watched_only: bool | None = None,
         rated_only: bool | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Get paginated list of user's movies with full TMDB data.
+        """Get paginated list of user's movies with full TMDB data.
 
         This method:
         1. Queries UserMovieData with filters
@@ -397,8 +388,7 @@ class UserMovieDataService:
         watched_only: bool | None = None,
         rated_only: bool | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Get full list of user's movies with TMDB data and user enrichment.
+        """Get full list of user's movies with TMDB data and user enrichment.
 
         This method returns all matching user movies without pagination.
 

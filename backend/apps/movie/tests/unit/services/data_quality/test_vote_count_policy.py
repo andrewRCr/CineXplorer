@@ -1,5 +1,4 @@
-"""
-Unit tests for VoteCountPolicy - direct policy decision testing.
+"""Unit tests for VoteCountPolicy - direct policy decision testing.
 
 Tests the tiered vote count threshold decision logic in isolation, verifying when
 thresholds are applied at different levels (STRICT, MODERATE, BYPASS) based on

@@ -1,5 +1,4 @@
-"""
-Type stub marker for django-allauth account subpackage.
+"""Type stub marker for django-allauth account subpackage.
 
 This empty stub file provides package structure for allauth.account module,
 allowing Pyright to find type definitions in models.pyi.

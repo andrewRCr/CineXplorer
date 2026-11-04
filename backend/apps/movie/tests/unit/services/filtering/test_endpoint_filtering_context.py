@@ -1,5 +1,4 @@
-"""
-Unit tests for endpoint-specific filtering context and combined filter behavior.
+"""Unit tests for endpoint-specific filtering context and combined filter behavior.
 
 Tests filtering behavior across different endpoints (now playing, upcoming, discover)
 and combined filtering scenarios (year + rating together, no filters at all).

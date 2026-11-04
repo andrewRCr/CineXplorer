@@ -1,5 +1,4 @@
-"""
-Root-level pytest configuration for CineXplorer backend tests.
+"""Root-level pytest configuration for CineXplorer backend tests.
 
 Provides common fixtures that can be used across all Django apps.
 App-specific fixtures should be defined in their respective conftest.py files.
@@ -44,8 +43,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def api_client() -> Client:
-    """
-    Provide Django test client for API requests.
+    """Provide Django test client for API requests.
 
     This is the base client fixture without authentication.
     Use for testing public endpoints or when you need to
@@ -66,8 +64,7 @@ def api_client() -> Client:
 
 @pytest.fixture
 def user(db: None) -> User:
-    """
-    Create and return a test user with standard credentials.
+    """Create and return a test user with standard credentials.
 
     Requires database access (uses db fixture from pytest-django).
     Creates a user with predictable credentials for testing.
@@ -100,8 +97,7 @@ def user(db: None) -> User:
 
 @pytest.fixture
 def auth_client(api_client: Client, user: User) -> Client:
-    """
-    Provide authenticated Django test client.
+    """Provide authenticated Django test client.
 
     Combines api_client and user fixtures to provide a client
     that's already authenticated with the test user. Useful for
@@ -126,8 +122,7 @@ def auth_client(api_client: Client, user: User) -> Client:
 
 @pytest.fixture
 def transactional_api_client(client: Client, transactional_db: None) -> Client:
-    """
-    Provide Django test client with transactional database access.
+    """Provide Django test client with transactional database access.
 
     Use this fixture when tests require session persistence across multiple
     requests (e.g., cross-page deduplication tests). The transactional_db

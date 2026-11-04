@@ -1,6 +1,4 @@
-"""
-Tests for custom Django admin interface.
-"""
+"""Tests for custom Django admin interface."""
 
 from http import HTTPStatus
 from typing import TYPE_CHECKING, cast
@@ -60,7 +58,6 @@ def admin_client(db: None) -> tuple[Client, "UserType", "UserType"]:
 
 def test_users_list(admin_client: tuple[Client, "UserType", "UserType"]) -> None:
     """Tests that created test users are listed on the page."""
-
     client, _admin_user, user = admin_client
 
     # Using Django's default User model (auth.User)
@@ -75,7 +72,6 @@ def test_users_list(admin_client: tuple[Client, "UserType", "UserType"]) -> None
 
 def test_edit_user_page(admin_client: tuple[Client, "UserType", "UserType"]) -> None:
     """Tests that the user edit page works as expected."""
-
     client, _admin_user, user = admin_client
 
     # Using Django's default User model (auth.User)
@@ -87,7 +83,6 @@ def test_edit_user_page(admin_client: tuple[Client, "UserType", "UserType"]) -> 
 
 def test_create_user_page(admin_client: tuple[Client, "UserType", "UserType"]) -> None:
     """Tests that the create user page works as expected."""
-
     client, _admin_user, _user = admin_client
 
     # Using Django's default User model (auth.User)

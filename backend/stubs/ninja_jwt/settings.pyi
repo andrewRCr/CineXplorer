@@ -1,5 +1,4 @@
-"""
-Type stub file for django-ninja-jwt settings.
+"""Type stub file for django-ninja-jwt settings.
 
 Provides type annotations for JWT settings configuration.
 
@@ -23,8 +22,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 class APISettings:
-    """
-    Settings object for django-ninja-jwt configuration.
+    """Settings object for django-ninja-jwt configuration.
 
     Reads from Django's SIMPLE_JWT settings dict.
     """
@@ -59,8 +57,7 @@ class APISettings:
     JWT_COOKIE_SAMESITE: str
 
     def __getattr__(self, name: str) -> object:
-        """
-        Allow dynamic attribute access for settings not explicitly typed.
+        """Allow dynamic attribute access for settings not explicitly typed.
 
         Args:
             name: Setting name

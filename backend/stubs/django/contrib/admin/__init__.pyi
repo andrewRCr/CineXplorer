@@ -1,5 +1,4 @@
-"""
-Type stub file for django.contrib.admin module.
+"""Type stub file for django.contrib.admin module.
 
 This file SUPPLEMENTS django-types 0.22.0 for Django admin functionality. django-types
 has incomplete coverage for django.contrib.admin, leading to ~100 type errors across
@@ -41,8 +40,7 @@ _ModelAdminT = TypeVar("_ModelAdminT", bound=ModelAdmin)
 def register(
     *models: type[Model], site: AdminSite | None = None
 ) -> Callable[[type[_ModelAdminT]], type[_ModelAdminT]]:
-    """
-    Register model(s) with the admin site.
+    """Register model(s) with the admin site.
 
     Can be used as a decorator:
         @admin.register(MyModel)

@@ -1,5 +1,4 @@
-"""
-Error recovery scenario tests for JWT authentication.
+"""Error recovery scenario tests for JWT authentication.
 
 Tests critical error handling behaviors to ensure graceful degradation:
 
@@ -48,8 +47,7 @@ from apps.core.tests.test_helpers import create_fresh_client, create_user, json_
 
 @pytest.mark.django_db
 def test_corrupted_jwt_token_returns_401() -> None:
-    """
-    Verify corrupted JWT token is rejected with 401 Unauthorized.
+    """Verify corrupted JWT token is rejected with 401 Unauthorized.
 
     Simulates XSS attack scenario where attacker modifies token in sessionStorage.
     Backend must reject gracefully without exposing token internals.
@@ -80,8 +78,7 @@ def test_corrupted_jwt_token_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_malformed_jwt_format_returns_401() -> None:
-    """
-    Verify malformed JWT format (invalid base64) is rejected.
+    """Verify malformed JWT format (invalid base64) is rejected.
 
     JWT format: header.payload.signature (3 parts, base64-encoded)
     This test sends invalid base64 that can't be decoded.
@@ -98,8 +95,7 @@ def test_malformed_jwt_format_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_jwt_with_invalid_signature_returns_401() -> None:
-    """
-    Verify JWT with modified signature is rejected.
+    """Verify JWT with modified signature is rejected.
 
     Simulates attacker trying to forge token by modifying signature.
     Backend must validate signature matches payload.
@@ -126,8 +122,7 @@ def test_jwt_with_invalid_signature_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_jwt_missing_token_parts_returns_401() -> None:
-    """
-    Verify incomplete JWT (missing parts) is rejected.
+    """Verify incomplete JWT (missing parts) is rejected.
 
     JWT requires exactly 3 parts: header.payload.signature
     Test with only 2 parts (missing signature).
@@ -149,8 +144,7 @@ def test_jwt_missing_token_parts_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_empty_authorization_header_returns_401() -> None:
-    """
-    Verify empty Authorization header is rejected.
+    """Verify empty Authorization header is rejected.
 
     Tests edge case where header is present but empty.
     """
@@ -163,8 +157,7 @@ def test_empty_authorization_header_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_invalid_authorization_scheme_returns_401() -> None:
-    """
-    Verify non-Bearer authorization scheme is rejected.
+    """Verify non-Bearer authorization scheme is rejected.
 
     JWT authentication requires "Bearer" scheme.
     Test with "Basic" or other schemes.
@@ -183,8 +176,7 @@ def test_invalid_authorization_scheme_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_token_for_nonexistent_user_returns_401() -> None:
-    """
-    Verify token for deleted user is rejected.
+    """Verify token for deleted user is rejected.
 
     Simulates user deletion while token still valid.
     Backend must check user exists during authentication.
@@ -205,8 +197,7 @@ def test_token_for_nonexistent_user_returns_401() -> None:
 
 @pytest.mark.django_db
 def test_malformed_json_in_token_refresh_request() -> None:
-    """
-    Verify malformed JSON in token refresh request is handled.
+    """Verify malformed JSON in token refresh request is handled.
 
     While refresh endpoint doesn't require body, test edge case
     where client sends invalid JSON.
@@ -235,8 +226,7 @@ def test_malformed_json_in_token_refresh_request() -> None:
 
 @pytest.mark.django_db
 def test_database_error_during_authentication_returns_500() -> None:
-    """
-    Verify database connection failure during auth returns 500.
+    """Verify database connection failure during auth returns 500.
 
     Simulates database unavailability when validating user.
     Backend must return 500 (not crash) to allow client retry.
@@ -264,8 +254,7 @@ def test_database_error_during_authentication_returns_500() -> None:
 
 @pytest.mark.django_db
 def test_token_refresh_with_blacklist_unavailable() -> None:
-    """
-    Verify token refresh handles blacklist check failures.
+    """Verify token refresh handles blacklist check failures.
 
     Token rotation uses blacklist to invalidate old refresh tokens.
     Test error handling when blacklist check fails.
@@ -292,8 +281,7 @@ def test_token_refresh_with_blacklist_unavailable() -> None:
 
 @pytest.mark.django_db
 def test_profile_endpoint_with_serialization_error() -> None:
-    """
-    Verify profile endpoint handles serialization errors gracefully.
+    """Verify profile endpoint handles serialization errors gracefully.
 
     Tests error handling when schema serialization fails.
     Django Ninja propagates exception - verify it doesn't crash server.
@@ -329,8 +317,7 @@ def test_profile_endpoint_with_serialization_error() -> None:
     ],
 )
 def test_concurrent_token_refresh_requests() -> None:
-    """
-    Verify concurrent token refresh requests don't cause race conditions.
+    """Verify concurrent token refresh requests don't cause race conditions.
 
     Tests token rotation under concurrent load by executing multiple
     refresh requests in parallel threads. This simulates real-world
@@ -372,8 +359,7 @@ def test_concurrent_token_refresh_requests() -> None:
     refresh_token_str = str(refresh)
 
     def make_refresh_request() -> HttpResponse:
-        """
-        Execute refresh request in thread.
+        """Execute refresh request in thread.
 
         Creates a new Client per thread (required - Django's Client is not thread-safe).
         Closes database connection after request to prevent connection leaks.
@@ -417,8 +403,7 @@ def test_concurrent_token_refresh_requests() -> None:
 
 @pytest.mark.django_db
 def test_sql_injection_attempt_in_login(api_client: Client) -> None:
-    """
-    Verify SQL injection attempts in login are handled safely.
+    """Verify SQL injection attempts in login are handled safely.
 
     Django ORM protects against SQL injection, but test edge case.
     """
@@ -433,8 +418,7 @@ def test_sql_injection_attempt_in_login(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_extremely_long_token_in_header() -> None:
-    """
-    Verify extremely long authorization header is rejected.
+    """Verify extremely long authorization header is rejected.
 
     Tests protection against buffer overflow / DoS attacks.
     """
@@ -450,8 +434,7 @@ def test_extremely_long_token_in_header() -> None:
 
 @pytest.mark.django_db
 def test_null_bytes_in_authorization_header() -> None:
-    """
-    Verify null bytes in authorization header are handled.
+    """Verify null bytes in authorization header are handled.
 
     Tests protection against null byte injection attacks.
     """

@@ -1,5 +1,4 @@
-"""
-Unit tests for ApiResponse utility methods.
+"""Unit tests for ApiResponse utility methods.
 
 Tests the helper methods on ApiResponse dataclass that provide
 convenient access to response data, headers, and error information.

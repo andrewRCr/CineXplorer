@@ -1,5 +1,4 @@
-"""
-Unit tests for TMDBApiClient.
+"""Unit tests for TMDBApiClient.
 
 Tests the TMDB-specific functionality including convenience methods,
 error processing, and metadata extraction.

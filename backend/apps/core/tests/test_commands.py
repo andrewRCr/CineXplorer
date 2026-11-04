@@ -1,6 +1,4 @@
-"""
-Tests for the custom Django management commands module.
-"""
+"""Tests for the custom Django management commands module."""
 
 import json
 import os
@@ -26,7 +24,6 @@ def test_wait_for_db_ready(patched_connections: MagicMock) -> None:
     """Tests waiting for the database.
     Case: database is ready.
     """
-
     # Mock the default connection's ensure_connection to succeed immediately
     patched_connections.__getitem__.return_value.ensure_connection = MagicMock()
 
@@ -47,7 +44,6 @@ def test_wait_for_db_delay(
     """Tests waiting for the database.
     Case: receiving an OperationalError.
     """
-
     # Mock to raise OperationalError 5 times, then succeed
     patched_connections.__getitem__.return_value.ensure_connection.side_effect = (
         [OperationalError] * 5 + [None]  # Success on 6th attempt

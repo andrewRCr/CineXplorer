@@ -1,5 +1,4 @@
-"""
-Unit tests for BaseApiClient exception handling and helper methods.
+"""Unit tests for BaseApiClient exception handling and helper methods.
 
 Tests the error handling paths, helper methods, and edge cases
 in the abstract base API client class.

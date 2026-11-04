@@ -1,5 +1,4 @@
-"""
-Type stubs for django-allauth headless internal utilities.
+"""Type stubs for django-allauth headless internal utilities.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================

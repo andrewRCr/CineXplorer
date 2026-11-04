@@ -1,5 +1,4 @@
-"""
-Django management command to verify sensitive data is excluded from log output.
+"""Django management command to verify sensitive data is excluded from log output.
 
 This command tests that API keys and other sensitive information are properly
 sanitized from log files and console output for security compliance.

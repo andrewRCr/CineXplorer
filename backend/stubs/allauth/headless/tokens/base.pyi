@@ -1,5 +1,4 @@
-"""
-Type stubs for django-allauth AbstractTokenStrategy.
+"""Type stubs for django-allauth AbstractTokenStrategy.
 
 ⚠️ MAINTENANCE CONTRACT
 ------------------------
@@ -26,8 +25,7 @@ from django.contrib.sessions.backends.base import SessionBase
 from django.http import HttpRequest
 
 class AbstractTokenStrategy(abc.ABC):
-    """
-    Base class for token strategies in django-allauth headless mode.
+    """Base class for token strategies in django-allauth headless mode.
 
     Subclasses must implement:
     - create_session_token() - Required for OAuth flow state management
@@ -40,15 +38,13 @@ class AbstractTokenStrategy(abc.ABC):
     """
 
     def get_session_token(self, request: HttpRequest) -> str | None:
-        """
-        Extract session token from request headers.
+        """Extract session token from request headers.
 
         Default implementation: Returns 'x-session-token' header value.
         """
 
     def create_access_token_payload(self, request: HttpRequest) -> dict[str, Any] | None:
-        """
-        Create access token response payload.
+        """Create access token response payload.
 
         Called by django-allauth after authentication. Default implementation
         calls create_access_token() and wraps in {"access_token": token}.
@@ -63,8 +59,7 @@ class AbstractTokenStrategy(abc.ABC):
         """
 
     def create_access_token(self, request: HttpRequest) -> str | None:
-        """
-        Create access token for authenticated user.
+        """Create access token for authenticated user.
 
         Optional method - default returns None (session-only auth).
         Override to provide JWT or other stateless tokens for API access.
@@ -78,8 +73,7 @@ class AbstractTokenStrategy(abc.ABC):
 
     @abc.abstractmethod
     def create_session_token(self, request: HttpRequest) -> str:
-        """
-        Create session token for authentication flow.
+        """Create session token for authentication flow.
 
         Required by django-allauth for OAuth callback state management.
         Typically returns request.session.session_key.
@@ -94,8 +88,7 @@ class AbstractTokenStrategy(abc.ABC):
 
     @abc.abstractmethod
     def lookup_session(self, session_token: str) -> SessionBase | None:
-        """
-        Lookup Django session by session token.
+        """Lookup Django session by session token.
 
         Required by django-allauth to validate session tokens during auth flows.
 

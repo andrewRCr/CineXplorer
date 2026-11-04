@@ -1,5 +1,4 @@
-"""
-Management command to populate movie blacklist from problematic production companies.
+"""Management command to populate movie blacklist from problematic production companies.
 
 Uses research findings to bulk-add movies from studios that exclusively
 produce adult/exploitation content mislabeled as general films in TMDB.
@@ -92,8 +91,7 @@ BLACKLISTED_COMPANIES: list[BlacklistedCompany] = [
 
 
 class Command(BaseCommand):
-    """
-    Populate movie blacklist from problematic production companies.
+    """Populate movie blacklist from problematic production companies.
 
     Queries TMDB for all movies from studios identified as exclusively
     producing adult content mislabeled in TMDB (adult=false).
@@ -178,8 +176,7 @@ class Command(BaseCommand):
         company: BlacklistedCompany,
         commit: bool,
     ) -> tuple[int, int, int]:
-        """
-        Query TMDB for all movies from a company and add to blacklist.
+        """Query TMDB for all movies from a company and add to blacklist.
 
         Returns:
             Tuple of (added_count, skipped_count, already_adult_count)

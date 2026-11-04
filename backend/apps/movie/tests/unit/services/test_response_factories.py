@@ -1,5 +1,4 @@
-"""
-Unit tests for TMDB response factory functions.
+"""Unit tests for TMDB response factory functions.
 
 Tests the data extraction and transformation logic in response_factories.py:
 - Error handling functions (handle_tmdb_api_error, get_validated_response)

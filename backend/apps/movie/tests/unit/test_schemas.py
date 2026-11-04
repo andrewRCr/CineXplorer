@@ -1,5 +1,4 @@
-"""
-Integration tests for HTTP → BrowseServiceParams transformation.
+"""Integration tests for HTTP → BrowseServiceParams transformation.
 
 Tests the transform_to_service_params() function that bridges API requests to
 service method calls. This is critical for the two-pass filtering architecture where:

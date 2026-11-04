@@ -1,5 +1,4 @@
-"""
-Type stubs for django-environ.
+"""Type stubs for django-environ.
 
 Provides type annotations for django-environ's Env class.
 NO official type stubs exist for django-environ.

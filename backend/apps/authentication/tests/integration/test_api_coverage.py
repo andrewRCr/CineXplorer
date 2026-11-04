@@ -1,5 +1,4 @@
-"""
-Additional coverage tests for authentication API error paths.
+"""Additional coverage tests for authentication API error paths.
 
 This test suite targets uncovered error paths and edge cases in api.py
 to raise coverage from 72% to 90%. These tests focus on:

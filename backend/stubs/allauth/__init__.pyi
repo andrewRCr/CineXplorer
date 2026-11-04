@@ -1,5 +1,4 @@
-"""
-Type stub marker for django-allauth package.
+"""Type stub marker for django-allauth package.
 
 This empty stub file marks the allauth package as having type information,
 preventing Pyright from raising 'import-untyped' warnings when importing

@@ -1,5 +1,4 @@
-"""
-Movie enrichment service for populating user-specific movie data.
+"""Movie enrichment service for populating user-specific movie data.
 
 This service follows the class-based architecture with dependency injection
 pattern, enabling testability and separation of concerns.
@@ -26,8 +25,7 @@ if TYPE_CHECKING:
 
 
 class MovieEnrichmentService:
-    """
-    Service for enriching movie data with user-specific information.
+    """Service for enriching movie data with user-specific information.
 
     This service takes movie data (typically from TMDB) and enriches it with
     user-specific data like watchlist status, ratings, and reviews. It uses
@@ -56,8 +54,7 @@ class MovieEnrichmentService:
     """
 
     def __init__(self, user_movie_data_repository: UserMovieDataRepository | None = None) -> None:
-        """
-        Initialize the movie enrichment service.
+        """Initialize the movie enrichment service.
 
         Args:
             user_movie_data_repository: Optional repository for UserMovieData
@@ -84,8 +81,7 @@ class MovieEnrichmentService:
     def enrich_movies_with_user_movie_data(
         self, movies: list[MovieListItemSchema], user: AbstractBaseUser | None
     ) -> list[MovieListItemSchema]:
-        """
-        Enrich movie schemas with user movie data.
+        """Enrich movie schemas with user movie data.
 
         For authenticated users, this method bulk-queries UserMovieData records
         and creates new MovieListItemSchema instances with the user_movie_data field

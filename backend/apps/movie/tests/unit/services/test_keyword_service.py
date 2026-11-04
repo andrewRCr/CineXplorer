@@ -1,5 +1,4 @@
-"""
-Unit tests for KeywordService class-based architecture.
+"""Unit tests for KeywordService class-based architecture.
 
 Tests the KeywordService class with dependency injection pattern, verifying:
 - Constructor injection of TMDB client

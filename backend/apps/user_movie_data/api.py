@@ -38,8 +38,7 @@ def get_user_movies(
     request: HttpRequest,
     watchlist: bool = False,
 ) -> MovieListResponseSchema:
-    """
-    Retrieve movies associated with the authenticated user.
+    """Retrieve movies associated with the authenticated user.
 
     This endpoint returns all movies that the user has interacted with
     (watched, rated, added to watchlist, etc.). Movies are enriched with
@@ -77,8 +76,7 @@ def get_user_movies(
 def get_user_movie_data_by_tmdb_id(
     request: HttpRequest, tmdb_id: int
 ) -> UserMovieDataDetailSchema:
-    """
-    Retrieve user movie data for a specific movie by TMDB ID.
+    """Retrieve user movie data for a specific movie by TMDB ID.
 
     This endpoint checks if the authenticated user has existing data
     (watchlist, rating, review, etc.) for a movie identified by its TMDB ID.
@@ -105,8 +103,7 @@ def get_user_movie_data_by_tmdb_id(
 def create_user_movie_data(
     request: HttpRequest, payload: UserMovieDataCreateSchema
 ) -> UserMovieDataDetailSchema:
-    """
-    Create new user movie data entry.
+    """Create new user movie data entry.
 
     This endpoint creates a new UserMovieData record when a user first
     interacts with a movie (adds to watchlist, rates, reviews, etc.).
@@ -145,8 +142,7 @@ def create_user_movie_data(
 def update_user_movie_data(
     request: HttpRequest, id: int, payload: UserMovieDataUpdateSchema
 ) -> UserMovieDataDetailSchema:
-    """
-    Update existing user movie data entry.
+    """Update existing user movie data entry.
 
     This endpoint supports partial updates (PATCH) to modify any subset
     of user movie data fields (watchlist, rating, review, etc.).
@@ -183,8 +179,7 @@ def update_user_movie_data(
 
 @user_movie_data_router.delete("/{id}", response={204: None})
 def delete_user_movie_data(request: HttpRequest, id: int) -> Status[None]:
-    """
-    Delete user movie data entry.
+    """Delete user movie data entry.
 
     This endpoint removes a UserMovieData record. This is rare and typically
     used only to correct mistakes in user input.

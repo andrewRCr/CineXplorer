@@ -1,5 +1,4 @@
-"""
-Custom CSRF middleware for Django Ninja API endpoints.
+"""Custom CSRF middleware for Django Ninja API endpoints.
 
 This middleware provides CSRF protection for Django Ninja APIs with path-based
 exemptions, working around Django Ninja bug #1464 where csrf=True causes
@@ -71,8 +70,7 @@ EXEMPT_PATH_PREFIXES = [
 
 
 class CsrfHeaderMiddleware(MiddlewareMixin):
-    """
-    Custom CSRF middleware for API endpoints with path-based exemptions.
+    """Custom CSRF middleware for API endpoints with path-based exemptions.
 
     Validates CSRF tokens for authenticated state-changing requests while
     exempting public authentication endpoints.
@@ -90,8 +88,7 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
     """
 
     def process_request(self, request: HttpRequest) -> JsonResponse | None:
-        """
-        Process incoming request and validate CSRF if needed.
+        """Process incoming request and validate CSRF if needed.
 
         Args:
             request: The incoming HTTP request

@@ -1,5 +1,4 @@
-"""
-Django management command to export OpenAPI schema for CI/CD workflows.
+"""Django management command to export OpenAPI schema for CI/CD workflows.
 
 This command provides a reliable way to export the OpenAPI schema in CI environments
 where direct Python imports might have Django settings configuration issues.

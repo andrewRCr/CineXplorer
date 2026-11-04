@@ -1,5 +1,4 @@
-"""
-Type stub file for django.contrib.admin.options module.
+"""Type stub file for django.contrib.admin.options module.
 
 Provides type definitions for ModelAdmin and related admin options classes.
 
@@ -26,8 +25,7 @@ from django.forms import ModelForm
 from django.http import HttpRequest
 
 class ModelAdmin:
-    """
-    Base class for model admin interfaces.
+    """Base class for model admin interfaces.
 
     Provides common admin functionality like list_display, list_filter,
     search_fields, ordering, etc.

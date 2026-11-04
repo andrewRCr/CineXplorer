@@ -1,5 +1,4 @@
-"""
-Test data factory functions for authentication tests.
+"""Test data factory functions for authentication tests.
 
 This module provides factory functions for creating test data with fine-grained
 control over parameters. Use these when you need multiple instances with custom
@@ -80,8 +79,7 @@ class LoginPayload(TypedDict, total=False):
 
 
 def create_unverified_user(**params: Unpack[UserParams]) -> "UserType":
-    """
-    Create a user with unverified email.
+    """Create a user with unverified email.
 
     Convenience wrapper around create_user(email_verified=False).
     """
@@ -89,8 +87,7 @@ def create_unverified_user(**params: Unpack[UserParams]) -> "UserType":
 
 
 def create_social_app(provider: str = "google", site_id: int = 1) -> SocialApp:
-    """
-    Create a social auth app (OAuth provider) for testing.
+    """Create a social auth app (OAuth provider) for testing.
 
     Args:
         provider: Provider name ('google', 'github', etc.)
@@ -121,8 +118,7 @@ def create_social_app(provider: str = "google", site_id: int = 1) -> SocialApp:
 def create_social_account(
     user: "UserType", provider: str = "google", uid: str | None = None
 ) -> SocialAccount:
-    """
-    Create a social account linking a user to an OAuth provider.
+    """Create a social account linking a user to an OAuth provider.
 
     Args:
         user: User to link
@@ -158,8 +154,7 @@ def create_register_payload(
     first_name: str = "Test",
     last_name: str = "User",
 ) -> RegisterPayload:
-    """
-    Create a registration payload for API testing.
+    """Create a registration payload for API testing.
 
     Args:
         username: Username
@@ -183,8 +178,7 @@ def create_register_payload(
 def create_login_payload(
     identifier: str = "testuser", password: str = TEST_USER_PASSWORD, use_email: bool = False
 ) -> LoginPayload:
-    """
-    Create a login payload for API testing.
+    """Create a login payload for API testing.
 
     Args:
         identifier: Username or email (depending on use_email)
@@ -206,8 +200,7 @@ def get_resend_token_from_login(
     username: str,
     password: str,
 ) -> str | None:
-    """
-    Attempt login and extract resend_token from 403 response.
+    """Attempt login and extract resend_token from 403 response.
 
     When login fails due to unverified email, the API returns a 403 with a
     resend_token that can be used to request a new verification email.

@@ -1,5 +1,4 @@
-"""
-Unit tests for batch_operations.py batch fetch helper.
+"""Unit tests for batch_operations.py batch fetch helper.
 
 These tests focus on the fetch_movies_batch function that fetches multiple
 movies from TMDB by ID in a single batch operation, handling partial failures

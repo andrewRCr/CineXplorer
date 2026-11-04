@@ -1,5 +1,4 @@
-"""
-Type stub file for user_movie_data.models.
+"""Type stub file for user_movie_data.models.
 
 This file provides explicit type annotations for Django model fields,
 enabling perfect type inference in Pyright/Pylance.

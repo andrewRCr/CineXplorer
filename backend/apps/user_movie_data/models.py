@@ -1,5 +1,4 @@
-"""
-User movie data models.
+"""User movie data models.
 
 This module contains models related to user interactions with movies,
 including watchlist status, ratings, reviews, and viewing history.

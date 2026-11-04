@@ -1,5 +1,4 @@
-"""
-Django management command to test TMDB API logging functionality.
+"""Django management command to test TMDB API logging functionality.
 
 This command exercises various TMDB API operations to verify that logging
 is working correctly and producing expected output.

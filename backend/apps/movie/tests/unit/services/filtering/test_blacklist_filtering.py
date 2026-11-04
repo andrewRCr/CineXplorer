@@ -1,5 +1,4 @@
-"""
-Unit tests for blacklist filtering in data quality pipeline.
+"""Unit tests for blacklist filtering in data quality pipeline.
 
 Tests the movie blacklist functionality that excludes specific TMDB IDs
 from results based on the BlacklistedMovie database table. This is a

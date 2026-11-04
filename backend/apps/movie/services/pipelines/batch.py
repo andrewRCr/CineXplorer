@@ -1,5 +1,4 @@
-"""
-Batch operations for TMDB movie data fetching.
+"""Batch operations for TMDB movie data fetching.
 
 This module provides helper functions for efficiently fetching multiple movies
 from TMDB in batch operations, with graceful handling of partial failures and
@@ -23,8 +22,7 @@ tmdb_client = TMDBApiClient()
 
 
 def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
-    """
-    Fetch multiple movies from TMDB by ID in a single batch operation.
+    """Fetch multiple movies from TMDB by ID in a single batch operation.
 
     This function handles batch fetching of movies with graceful degradation:
     - Successfully fetched movies are returned
@@ -156,8 +154,7 @@ def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
 def _create_movie_base_from_tmdb_data(
     tmdb_data: Mapping[str, object],
 ) -> MovieListItemSchema | None:
-    """
-    Create a MovieListItemSchema from TMDB data with error handling.
+    """Create a MovieListItemSchema from TMDB data with error handling.
 
     This is an internal helper that wraps the transformation logic from movie_service.py
     but returns None on error instead of raising exceptions (for graceful batch handling).

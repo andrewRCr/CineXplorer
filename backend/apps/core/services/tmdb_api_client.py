@@ -1,5 +1,4 @@
-"""
-TMDB API Client for movie database interactions.
+"""TMDB API Client for movie database interactions.
 
 This module provides a specialized HTTP client for The Movie Database (TMDB) API
 with TMDB-specific authentication, rate limiting, error handling, and response
@@ -17,8 +16,7 @@ from .base_api_client import BaseApiClient
 
 
 class TMDBApiClient(BaseApiClient):
-    """
-    Specialized API client for TMDB (The Movie Database) interactions.
+    """Specialized API client for TMDB (The Movie Database) interactions.
 
     Extends BaseApiClient with TMDB-specific functionality:
     - Automatic API key injection
@@ -28,8 +26,7 @@ class TMDBApiClient(BaseApiClient):
     """
 
     def __init__(self, timeout: int = 30, max_retries: int = 0):
-        """
-        Initialize the TMDB API client.
+        """Initialize the TMDB API client.
 
         Args:
             timeout: Request timeout in seconds
@@ -43,8 +40,7 @@ class TMDBApiClient(BaseApiClient):
         )
 
     def prepare_headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
-        """
-        Prepare headers for TMDB API requests.
+        """Prepare headers for TMDB API requests.
 
         Args:
             headers: Additional headers to include
@@ -64,8 +60,7 @@ class TMDBApiClient(BaseApiClient):
         return prepared_headers
 
     def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
-        """
-        Get sanitized parameters for logging (removes API key for security).
+        """Get sanitized parameters for logging (removes API key for security).
 
         Args:
             params: Original parameters dictionary
@@ -80,8 +75,7 @@ class TMDBApiClient(BaseApiClient):
         return {k: v for k, v in params.items() if k != "api_key"}
 
     def get_error_details(self, status_code: int) -> str:
-        """
-        Get TMDB-specific error details for status codes.
+        """Get TMDB-specific error details for status codes.
 
         Args:
             status_code: HTTP status code
@@ -109,8 +103,7 @@ class TMDBApiClient(BaseApiClient):
     def process_successful_response(
         self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
-        """
-        Process successful TMDB API response with enhanced metadata extraction.
+        """Process successful TMDB API response with enhanced metadata extraction.
 
         Args:
             response: Requests response object
@@ -246,8 +239,7 @@ class TMDBApiClient(BaseApiClient):
     def process_error_response(
         self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
-        """
-        Process TMDB API error response with enhanced error information.
+        """Process TMDB API error response with enhanced error information.
 
         Args:
             response: Requests response object with error status
@@ -321,8 +313,7 @@ class TMDBApiClient(BaseApiClient):
         )
 
     def _extract_tmdb_response_metadata(self, data: dict[str, object]) -> dict[str, object] | None:
-        """
-        Extract TMDB-specific metadata from response data.
+        """Extract TMDB-specific metadata from response data.
 
         Args:
             data: Parsed JSON response data
@@ -360,8 +351,7 @@ class TMDBApiClient(BaseApiClient):
         return metadata if metadata else None
 
     def _extract_rate_limit_headers(self, headers: object) -> dict[str, object] | None:
-        """
-        Extract TMDB rate limiting headers from response.
+        """Extract TMDB rate limiting headers from response.
 
         Args:
             headers: Response headers object
@@ -402,8 +392,7 @@ class TMDBApiClient(BaseApiClient):
         headers: dict[str, str] | None = None,
         **kwargs: object,
     ) -> ApiResponse:
-        """
-        Make a GET request to TMDB API with automatic API key injection.
+        """Make a GET request to TMDB API with automatic API key injection.
 
         Args:
             endpoint: TMDB API endpoint (relative to base URL)
@@ -434,8 +423,7 @@ class TMDBApiClient(BaseApiClient):
 
     # Convenience methods for common TMDB operations
     def search_movies(self, query: str, page: int = 1, **kwargs: object) -> ApiResponse:
-        """
-        Search for movies by title.
+        """Search for movies by title.
 
         Args:
             query: Movie title to search for
@@ -449,8 +437,7 @@ class TMDBApiClient(BaseApiClient):
         return self.get("search/movie", params)
 
     def get_movie_details(self, movie_id: int, **kwargs: object) -> ApiResponse:
-        """
-        Get detailed information for a specific movie.
+        """Get detailed information for a specific movie.
 
         Args:
             movie_id: TMDB movie ID
@@ -462,8 +449,7 @@ class TMDBApiClient(BaseApiClient):
         return self.get(f"movie/{movie_id}", params=kwargs)
 
     def discover_movies(self, **kwargs: object) -> ApiResponse:
-        """
-        Discover movies using TMDB's discover endpoint.
+        """Discover movies using TMDB's discover endpoint.
 
         Args:
             **kwargs: Discovery parameters (genre, year, etc.)
@@ -474,8 +460,7 @@ class TMDBApiClient(BaseApiClient):
         return self.get("discover/movie", params=kwargs)
 
     def get_popular_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
-        """
-        Get popular movies from TMDB.
+        """Get popular movies from TMDB.
 
         Args:
             page: Page number for pagination
@@ -488,8 +473,7 @@ class TMDBApiClient(BaseApiClient):
         return self.get("movie/popular", params)
 
     def get_top_rated_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
-        """
-        Get top rated movies from TMDB.
+        """Get top rated movies from TMDB.
 
         Args:
             page: Page number for pagination
@@ -502,8 +486,7 @@ class TMDBApiClient(BaseApiClient):
         return self.get("movie/top_rated", params)
 
     def get_now_playing_movies(self, page: int = 1, **kwargs: object) -> ApiResponse:
-        """
-        Get now playing movies from TMDB.
+        """Get now playing movies from TMDB.
 
         Args:
             page: Page number for pagination

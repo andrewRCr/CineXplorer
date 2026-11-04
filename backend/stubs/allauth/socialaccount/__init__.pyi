@@ -1,5 +1,4 @@
-"""
-Type stub marker for django-allauth socialaccount package.
+"""Type stub marker for django-allauth socialaccount package.
 
 This empty stub file marks the allauth.socialaccount package as having type
 information, preventing Pyright from raising 'import-untyped' warnings.

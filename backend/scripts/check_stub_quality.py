@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Stub Quality Gate - Check custom type stubs for quality issues.
+"""Stub Quality Gate - Check custom type stubs for quality issues.
 
 This script validates custom .pyi stub files in backend/stubs/ for:
 1. typing.Any usage (prohibited except for external library contracts)
@@ -36,8 +35,7 @@ def find_stub_files(stubs_dir: Path) -> list[Path]:
 
 
 def _iter_code_lines(lines: list[str]) -> Generator[tuple[int, str]]:
-    """
-    Yield (line_num, line) pairs, skipping docstrings and comments.
+    """Yield (line_num, line) pairs, skipping docstrings and comments.
 
     Handles both triple-quoted docstrings and comment lines (#).
     Line numbers are 1-indexed for error reporting.

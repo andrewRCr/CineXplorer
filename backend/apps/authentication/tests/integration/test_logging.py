@@ -1,5 +1,4 @@
-"""
-Authentication security logging tests.
+"""Authentication security logging tests.
 
 Tests the logging implementation from Task 6 (Authentication Event Logging):
 - Failed login attempts log WARNING with IP, username, user agent

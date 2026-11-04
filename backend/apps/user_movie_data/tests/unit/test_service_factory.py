@@ -1,5 +1,4 @@
-"""
-Unit tests for service factory functions.
+"""Unit tests for service factory functions.
 
 This module tests the factory functions that create service instances with
 appropriate dependencies injected.

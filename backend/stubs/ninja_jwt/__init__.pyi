@@ -1,5 +1,4 @@
-"""
-Type stubs for django-ninja-jwt package.
+"""Type stubs for django-ninja-jwt package.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================

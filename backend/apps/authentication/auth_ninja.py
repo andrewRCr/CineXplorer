@@ -1,5 +1,4 @@
-"""
-Django Ninja authentication adapter for CineXplorer.
+"""Django Ninja authentication adapter for CineXplorer.
 
 This module provides native Django Ninja authentication integration with:
 - OpenAPI security schema documentation
@@ -33,8 +32,7 @@ logger = logging.getLogger("cinexplorer.auth")
 
 
 def get_jwt_cookie_name() -> str:
-    """
-    Get the JWT access token cookie name from Django settings.
+    """Get the JWT access token cookie name from Django settings.
 
     Centralizes the settings lookup to avoid duplication across the module.
 
@@ -46,8 +44,7 @@ def get_jwt_cookie_name() -> str:
 
 
 def get_token_from_request(request: HttpRequest) -> tuple[str | None, str]:
-    """
-    Extract JWT token from request (Authorization header or cookie).
+    """Extract JWT token from request (Authorization header or cookie).
 
     Hybrid Authentication Priority:
     1. Authorization header (Bearer token from localStorage)
@@ -79,8 +76,7 @@ def get_token_from_request(request: HttpRequest) -> tuple[str | None, str]:
 
 
 class JWTCookieAuth(APIKeyCookie):
-    """
-    Django Ninja native security scheme for hybrid JWT authentication.
+    """Django Ninja native security scheme for hybrid JWT authentication.
 
     This extends Django Ninja's APIKeyCookie to provide:
     - OpenAPI security schema documentation
@@ -123,8 +119,7 @@ class JWTCookieAuth(APIKeyCookie):
         logger.debug(f"Initialized JWT cookie auth with cookie name: {self.param_name}")
 
     def authenticate(self, request: HttpRequest, key: str | None) -> AbstractUser | None:
-        """
-        Authenticate user from JWT token or Django session.
+        """Authenticate user from JWT token or Django session.
 
         Two-Pattern Authentication Priority:
         1. Authorization header (Bearer token from localStorage - email/password users)
@@ -192,8 +187,7 @@ jwt_cookie_auth = JWTCookieAuth()
 
 # Enhanced dependency injection functions with proper error handling
 def get_current_user(request: HttpRequest) -> AbstractUser:
-    """
-    Django Ninja dependency function to get the authenticated user.
+    """Django Ninja dependency function to get the authenticated user.
 
     Hybrid Authentication: Checks Authorization header first, then cookie.
 
@@ -230,8 +224,7 @@ def get_current_user(request: HttpRequest) -> AbstractUser:
 
 
 def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
-    """
-    Django Ninja dependency function to optionally get the authenticated user.
+    """Django Ninja dependency function to optionally get the authenticated user.
 
     Hybrid Authentication: Checks Authorization header first, then cookie.
 
@@ -265,8 +258,7 @@ def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
 
 # Native Django Ninja integration utilities
 def get_auth_error_responses() -> dict[int, dict[str, Any]]:
-    """
-    Get standardized error response schemas for OpenAPI documentation.
+    """Get standardized error response schemas for OpenAPI documentation.
 
     Returns:
         Dictionary mapping status codes to error response schemas

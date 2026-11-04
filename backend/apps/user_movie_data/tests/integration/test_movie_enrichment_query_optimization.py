@@ -1,5 +1,4 @@
-"""
-Integration tests for MovieEnrichmentService query optimization.
+"""Integration tests for MovieEnrichmentService query optimization.
 
 This module tests the bulk query optimization of the enrichment service,
 verifying that it uses a single database query regardless of movie count

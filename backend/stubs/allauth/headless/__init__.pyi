@@ -1,5 +1,4 @@
-"""
-Type stubs for django-allauth headless mode.
+"""Type stubs for django-allauth headless mode.
 
 ⚠️ MAINTENANCE CONTRACT
 ------------------------

@@ -1,5 +1,4 @@
-"""
-Type stubs for django-allauth sessionkit module.
+"""Type stubs for django-allauth sessionkit module.
 
 ⚠️ MAINTENANCE CONTRACT
 ========================
@@ -17,8 +16,7 @@ Purpose: Provides type information for allauth's session utilities
 from django.contrib.sessions.backends.base import SessionBase
 
 def session_store(session_key: str | None = None) -> SessionBase:
-    """
-    Get Django session store instance.
+    """Get Django session store instance.
 
     Args:
         session_key: Optional session key to load specific session

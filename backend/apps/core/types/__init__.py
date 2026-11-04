@@ -1,5 +1,4 @@
-"""
-Core type definitions for the CineXplorer application.
+"""Core type definitions for the CineXplorer application.
 
 This package provides type aliases, utilities, and infrastructure
 for maintaining type safety across the application layers.

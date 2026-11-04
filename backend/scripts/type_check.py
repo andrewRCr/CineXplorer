@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""
-Comprehensive type checking script for CineXplorer backend.
+"""Comprehensive type checking script for CineXplorer backend.
 
 Type Safety Approach: Pyright-only with django-types
 - Uses Pyright for all type checking (local + CI)

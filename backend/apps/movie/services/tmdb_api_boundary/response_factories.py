@@ -1,5 +1,4 @@
-"""
-Pydantic schema factory functions for converting TMDB API responses to application schemas.
+"""Pydantic schema factory functions for converting TMDB API responses to application schemas.
 
 This module provides factory functions that handle the data transformation layer between
 TMDB API responses (typed as TMDBMovieBase, TMDBMovieDetail, etc.) and our application
@@ -70,8 +69,7 @@ logger = logging.getLogger("cinexplorer.tmdb")
 
 
 def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: object) -> None:
-    """
-    Handle TMDB API errors by raising appropriate HttpError exceptions.
+    """Handle TMDB API errors by raising appropriate HttpError exceptions.
 
     Args:
         api_response: ApiResponse object from TMDB client
@@ -109,8 +107,7 @@ def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: 
 def get_validated_response(
     api_response: ApiResponse, operation: str, **context: object
 ) -> dict[str, object]:
-    """
-    Validate API response and return JSON data.
+    """Validate API response and return JSON data.
 
     Combines success check, error handling, and data extraction into a single call.
     Replaces the repeated pattern of is_success() → handle_error → get_json_data() → validate.
@@ -150,8 +147,7 @@ def get_validated_response(
 
 
 def extract_us_certification(release_dates: TMDBReleaseDatesResponse | None) -> str | None:
-    """
-    Extract US MPAA certification from TMDB release_dates response.
+    """Extract US MPAA certification from TMDB release_dates response.
 
     Priority: Prefer type 3 (theatrical release), fall back to any with certification.
     Release types: 1=Premiere, 2=Theatrical (limited), 3=Theatrical, 4=Digital, 5=Physical, 6=TV
@@ -189,8 +185,7 @@ def extract_us_certification(release_dates: TMDBReleaseDatesResponse | None) -> 
 
 
 def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListItemSchema:
-    """
-    Create a MovieListItemSchema instance from TMDB API response data.
+    """Create a MovieListItemSchema instance from TMDB API response data.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -251,8 +246,7 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
 def create_movie_detail_from_tmdb(
     movie_data: Mapping[str, object], credits_data: Mapping[str, object] | None = None
 ) -> MovieDetailSchema:
-    """
-    Create a MovieDetailSchema instance from TMDB movie and credits data.
+    """Create a MovieDetailSchema instance from TMDB movie and credits data.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -386,8 +380,7 @@ def create_movie_detail_from_tmdb(
 def create_paginated_movie_response_from_tmdb(
     tmdb_response: dict[str, object],
 ) -> MovieListResponseSchema:
-    """
-    Create a MovieListResponseSchema from TMDB paginated response.
+    """Create a MovieListResponseSchema from TMDB paginated response.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -440,8 +433,7 @@ def create_paginated_movie_response_from_tmdb(
 def create_paginated_keyword_response_from_tmdb(
     tmdb_response: dict[str, object],
 ) -> KeywordListResponseSchema:
-    """
-    Create a KeywordListResponseSchema from TMDB keyword response.
+    """Create a KeywordListResponseSchema from TMDB keyword response.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -490,8 +482,7 @@ def create_paginated_keyword_response_from_tmdb(
 def create_paginated_person_response_from_tmdb(
     tmdb_response: dict[str, object],
 ) -> PersonListResponseSchema:
-    """
-    Create a PersonListResponseSchema from TMDB person response.
+    """Create a PersonListResponseSchema from TMDB person response.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.
@@ -546,8 +537,7 @@ def create_paginated_person_response_from_tmdb(
 
 
 def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[GenreSchema]:
-    """
-    Create a list of GenreSchema instances from TMDB genre list response.
+    """Create a list of GenreSchema instances from TMDB genre list response.
 
     Uses typed TMDB response models for validation before converting to
     application schema, ensuring complete type safety.

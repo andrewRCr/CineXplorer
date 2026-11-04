@@ -1,5 +1,4 @@
-"""
-Response building utilities for movie pagination responses.
+"""Response building utilities for movie pagination responses.
 
 This module provides helper functions for converting between schema types
 and building paginated responses. Extracted from paginated.py for clarity.

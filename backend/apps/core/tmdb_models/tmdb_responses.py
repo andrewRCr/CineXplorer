@@ -1,5 +1,4 @@
-"""
-Pydantic models for TMDB API response structures.
+"""Pydantic models for TMDB API response structures.
 
 This module defines typed response models for The Movie Database (TMDB) API
 to replace generic dict[str, object] usage and provide complete type safety

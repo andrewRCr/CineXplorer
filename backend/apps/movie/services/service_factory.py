@@ -1,5 +1,4 @@
-"""
-Service factory functions for movie domain.
+"""Service factory functions for movie domain.
 
 This module provides factory functions that create service instances with
 appropriate dependencies injected, following the dependency injection pattern.
@@ -17,8 +16,7 @@ from apps.movie.services.people_service import PeopleService
 
 
 def get_movie_service() -> MovieService:
-    """
-    Create a MovieService with default dependencies.
+    """Create a MovieService with default dependencies.
 
     This factory function instantiates the service with a default
     TMDBApiClient, providing a convenient way to obtain a fully-configured
@@ -44,8 +42,7 @@ def get_movie_service() -> MovieService:
 
 
 def get_keyword_service() -> KeywordService:
-    """
-    Create a KeywordService with default dependencies.
+    """Create a KeywordService with default dependencies.
 
     This factory function instantiates the service with a default
     TMDBApiClient, providing a convenient way to obtain a fully-configured
@@ -71,8 +68,7 @@ def get_keyword_service() -> KeywordService:
 
 
 def get_people_service() -> PeopleService:
-    """
-    Create a PeopleService with default dependencies.
+    """Create a PeopleService with default dependencies.
 
     This factory function instantiates the service with a default
     TMDBApiClient, providing a convenient way to obtain a fully-configured

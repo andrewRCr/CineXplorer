@@ -310,7 +310,7 @@ for complete formatting rules, test-first patterns, and examples.
 
 When ready to begin implementation, activate the work unit:
 
-**→ [activate-work-unit.md](supplemental/activate-work-unit.md)** - Create branch, move docs to active, update tracking
+**→ [activate-work-unit.md](supplemental/activate-work-unit.md)** - Move docs to active, update tracking
 
 This step can be deferred if planning ahead (e.g., creating task lists for future work). Activate when
 implementation is about to begin.

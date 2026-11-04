@@ -61,22 +61,15 @@ authentication gaps that matter once sign-up is public are closed.
       The endpoint rates remain `3/h`, `5/m` and `3/h`.
     - Checks: authentication suite 219 passed; Ruff lint/format and scoped Pyright passed.
 
-- [ ] **1.2 Concurrent requests are each counted under their own key** (R19; Implemented 1)
+- [x] **1.2 Concurrent requests are each counted under their own key** (R19; Implemented 1)
 
-    - [ ] **1.2.a Write tests** in `apps/authentication/tests/unit/test_throttles.py` (new)
-        - One `TestAwareAnonThrottle` object and two `RequestFactory` requests with different `REMOTE_ADDR` and
-          `_test_enable_throttling` set, in two threads: the first is held after reading its history and before
-          recording it while the second's `allow_request` runs to the end (Phase 1 note on the hold point); afterwards
-          each address's cache entry holds exactly one timestamp
-        - The same case for `TestAwareUserThrottle`, with two users
-        - A refused request's `wait()`, called in its thread after another thread's admitted request has run on the same
-          object, reflects the refused request's own history
-        - Expect tests to FAIL initially: the first thread's history is written under the second thread's key
-
-    - [ ] **1.2.b Keep the per-request state in thread-local storage**
-        - A mixin shared by `TestAwareAnonThrottle` and `TestAwareUserThrottle` turns `key`, `history` and `now` into
-          properties over a `threading.local()` the throttle object holds; every subclass inherits it
-        - Tests should now PASS
+    - [x] **1.2.a Write tests:** deterministic interleavings against Redis in `test_throttles.py` exercise
+      anonymous and authenticated requests on shared throttle objects, including a refused request's `wait()`.
+      All four cases failed before the fix (missing first history or `30` instead of `40` seconds).
+    - [x] **1.2.b Keep the per-request state in thread-local storage:** both bases inherit a shared mixin whose
+      `key`, `history` and `now` properties use `threading.local()`. Test-mode bypass remains unchanged.
+    - Checks: authentication suite 223 passed; four concurrency cases passed again after type refinements;
+      Ruff lint/format and scoped Pyright passed. The four cases share one indivisible state-isolation change.
 
 - [ ] **1.3 Only the allauth endpoints the site uses answer** (R24; Implemented 9)
 

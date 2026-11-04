@@ -19,12 +19,52 @@ References:
     - External Research Report: 2025-10-13 throttling testing patterns
 """
 
+from threading import local
+
 from django.conf import settings
 from django.http import HttpRequest
-from ninja.throttling import AnonRateThrottle, UserRateThrottle
+from ninja.throttling import AnonRateThrottle, SimpleRateThrottle, UserRateThrottle
 
 
-class TestAwareAnonThrottle(AnonRateThrottle):
+class _RequestState(local):
+    key: str | None
+    history: list[float]
+    now: float
+
+
+class _RequestStateMixin(SimpleRateThrottle):
+    """Keep mutable state in the thread handling allow_request and wait."""
+
+    def __init__(self, rate: str | None = None) -> None:
+        self._request_state = _RequestState()
+        super().__init__(rate)
+
+    @property
+    def key(self) -> str | None:
+        return self._request_state.key
+
+    @key.setter
+    def key(self, value: str | None) -> None:
+        self._request_state.key = value
+
+    @property
+    def history(self) -> list[float]:
+        return self._request_state.history
+
+    @history.setter
+    def history(self, value: list[float]) -> None:
+        self._request_state.history = value
+
+    @property
+    def now(self) -> float:
+        return self._request_state.now
+
+    @now.setter
+    def now(self, value: float) -> None:
+        self._request_state.now = value
+
+
+class TestAwareAnonThrottle(_RequestStateMixin, AnonRateThrottle):
     """Anonymous rate throttle that respects test mode configuration.
 
     In test mode (settings.TESTING=True), bypasses throttling unless explicitly
@@ -73,7 +113,7 @@ class TestAwareAnonThrottle(AnonRateThrottle):
         return super().allow_request(request)
 
 
-class TestAwareUserThrottle(UserRateThrottle):
+class TestAwareUserThrottle(_RequestStateMixin, UserRateThrottle):
     """Authenticated user rate throttle that respects test mode configuration.
 
     Identical behavior to TestAwareAnonThrottle but for authenticated endpoints.

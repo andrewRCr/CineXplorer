@@ -150,7 +150,7 @@ def test_verify_email_handles_attribute_error(
         mock_confirmation = Mock()
         # Standard unittest.mock pattern for AttributeError: create then delete attribute
         # PropertyMock doesn't work here because Mock uses __getattr__ for attribute access
-        mock_confirmation.configure_mock(**{"email_address": Mock()})
+        mock_confirmation.configure_mock(email_address=Mock())
         del mock_confirmation.email_address
 
         mock_from_key.return_value = mock_confirmation

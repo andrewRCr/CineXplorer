@@ -77,9 +77,9 @@ def _create_dedup_tracker(request: HttpRequest) -> DeduplicationTracker:
 # because Django Ninja's Query is already typed as Annotated, leading to typing conflicts
 # This is a known Django Ninja typing limitation - the bracket syntax works at runtime
 # Reference: https://github.com/vitalik/django-ninja/issues/1335
-PaginationParams = Query[PaginationParamsSchema]  # type: ignore[valid-type]
-SearchParams = Query[MovieSearchParamsSchema]  # type: ignore[valid-type]
-FilterParams = Query[MovieDiscoverFilterSchema]  # type: ignore[valid-type]
+PaginationParams = Query[PaginationParamsSchema]
+SearchParams = Query[MovieSearchParamsSchema]
+FilterParams = Query[MovieDiscoverFilterSchema]
 
 
 # =========================
@@ -326,4 +326,4 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
     movie_data = _movie_service.get_movie_by_id(tmdb_id)
 
     # Enrich with user data if authenticated
-    return enrich_single_movie_with_user_movie_data(request, movie_data)  # type: ignore[return-value]
+    return enrich_single_movie_with_user_movie_data(request, movie_data)  # pyright: ignore[reportReturnType]

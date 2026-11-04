@@ -233,13 +233,9 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
 
     except Exception as e:
         logger.error(
-            "Failed to create MovieListItemSchema from TMDB data",
-            extra={
-                "error": str(e),
-                "tmdb_id": tmdb_data.get("id"),
-                "operation": "create_movie_base_from_tmdb",
-                "error_type": type(e).__name__,
-            },
+            "Failed to create MovieListItemSchema from TMDB data | error_type=%s",
+            type(e).__name__,
+            extra={"operation": "create_movie_base_from_tmdb", "error_type": type(e).__name__},
         )
         raise
 
@@ -367,13 +363,9 @@ def create_movie_detail_from_tmdb(
 
     except Exception as e:
         logger.error(
-            "Failed to create MovieDetailSchema from TMDB data",
-            extra={
-                "error": str(e),
-                "tmdb_id": movie_data.get("id"),
-                "operation": "create_movie_detail_from_tmdb",
-                "error_type": type(e).__name__,
-            },
+            "Failed to create MovieDetailSchema from TMDB data | error_type=%s",
+            type(e).__name__,
+            extra={"operation": "create_movie_detail_from_tmdb", "error_type": type(e).__name__},
         )
         raise
 
@@ -416,9 +408,9 @@ def create_paginated_movie_response_from_tmdb(
 
     except Exception as e:
         logger.error(
-            "Failed to create MovieListResponseSchema from TMDB data",
+            "Failed to create MovieListResponseSchema from TMDB data | error_type=%s",
+            type(e).__name__,
             extra={
-                "error": str(e),
                 "operation": "create_paginated_movie_response_from_tmdb",
                 "error_type": type(e).__name__,
             },
@@ -470,9 +462,9 @@ def create_paginated_keyword_response_from_tmdb(
 
     except Exception as e:
         logger.error(
-            "Failed to create KeywordListResponseSchema from TMDB data",
+            "Failed to create KeywordListResponseSchema from TMDB data | error_type=%s",
+            type(e).__name__,
             extra={
-                "error": str(e),
                 "operation": "create_paginated_keyword_response_from_tmdb",
                 "error_type": type(e).__name__,
             },
@@ -527,9 +519,9 @@ def create_paginated_person_response_from_tmdb(
 
     except Exception as e:
         logger.error(
-            "Failed to create PersonListResponseSchema from TMDB data",
+            "Failed to create PersonListResponseSchema from TMDB data | error_type=%s",
+            type(e).__name__,
             extra={
-                "error": str(e),
                 "operation": "create_paginated_person_response_from_tmdb",
                 "error_type": type(e).__name__,
             },
@@ -564,11 +556,8 @@ def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[Gen
 
     except Exception as e:
         logger.error(
-            "Failed to create genre list from TMDB data",
-            extra={
-                "error": str(e),
-                "operation": "create_genre_list_from_tmdb",
-                "error_type": type(e).__name__,
-            },
+            "Failed to create genre list from TMDB data | error_type=%s",
+            type(e).__name__,
+            extra={"operation": "create_genre_list_from_tmdb", "error_type": type(e).__name__},
         )
         raise

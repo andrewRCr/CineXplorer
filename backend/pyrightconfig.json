@@ -27,6 +27,8 @@
     "pythonVersion": "3.13",
     "strict": ["apps"],
     "typeCheckingMode": "strict",
+    "enableTypeIgnoreComments": false,
+    "reportUnnecessaryTypeIgnoreComment": "error",
     "reportGeneralTypeIssues": "error",
     "reportUnusedImport": "warning",
     "reportUnusedClass": "warning",

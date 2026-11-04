@@ -17,13 +17,7 @@ class Command(BaseCommand):
     help = "Verify TMDB API logging captures all expected metadata"
 
     def handle(self, *args: object, **options: object) -> None:
-        """Handle the logging verification command.
-
-        Note: This method has high complexity (C901) due to comprehensive
-        logging verification that captures and analyzes structured log data
-        across multiple loggers and record attributes for testing purposes.
-        The complexity is acceptable for this diagnostic utility.
-        """
+        """Capture and report TMDB response logging metadata."""
         self.stdout.write("🔍 Verifying TMDB API logging metadata...")
 
         # Create a logger to capture the structured logging
@@ -59,36 +53,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"Logger: {record.name}")
                 self.stdout.write(f"Function: {record.funcName}")
 
-                # Check for extra fields
-                extra_fields: dict[str, object] = {}
-                for attr in dir(record):
-                    if not attr.startswith("_") and attr not in [
-                        "name",
-                        "msg",
-                        "args",
-                        "levelname",
-                        "levelno",
-                        "pathname",
-                        "filename",
-                        "module",
-                        "lineno",
-                        "funcName",
-                        "created",
-                        "msecs",
-                        "relativeCreated",
-                        "thread",
-                        "threadName",
-                        "processName",
-                        "process",
-                        "getMessage",
-                        "exc_info",
-                        "exc_text",
-                        "stack_info",
-                        "message",
-                    ]:
-                        value = getattr(record, attr)
-                        if value is not None:
-                            extra_fields[attr] = value
+                extra_fields = self._get_extra_fields(record)
 
                 if extra_fields:
                     self.stdout.write("Extra fields:")
@@ -115,9 +80,45 @@ class Command(BaseCommand):
                 self.stdout.write("\n⚠️ API response has no data")
 
         except Exception as e:
-            self.stdout.write(f"\n❌ Test failed: {e}")
+            self.stdout.write(f"\n❌ Test failed: {type(e).__name__}")
         finally:
             # Clean up the handler
             logger.removeHandler(capture_handler)
 
         self.stdout.write("\n🎯 TMDB logging verification completed!")
+
+    @staticmethod
+    def _get_extra_fields(record: logging.LogRecord) -> dict[str, object]:
+        """Read nonstandard fields in their original attribute order."""
+        # Check for extra fields
+        extra_fields: dict[str, object] = {}
+        for attr in dir(record):
+            if not attr.startswith("_") and attr not in [
+                "name",
+                "msg",
+                "args",
+                "levelname",
+                "levelno",
+                "pathname",
+                "filename",
+                "module",
+                "lineno",
+                "funcName",
+                "created",
+                "msecs",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "processName",
+                "process",
+                "getMessage",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+                "message",
+            ]:
+                value = getattr(record, attr)
+                if value is not None:
+                    extra_fields[attr] = value
+
+        return extra_fields

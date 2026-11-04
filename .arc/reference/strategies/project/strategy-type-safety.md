@@ -432,6 +432,9 @@ def fetch_movie(movie_id: int) -> TMDBMovieResponse:
 
 ### Pyright Ignore Syntax
 
+The configuration disables `type: ignore` comments and reports unnecessary Pyright ignores as errors. CI uses
+`--warnings`, so warnings also fail the check.
+
 **Use specific error codes:**
 
 ```python path=null start=null

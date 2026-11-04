@@ -35,13 +35,13 @@ def test_session_authentication_works_with_django_ninja_endpoints():
         - Endpoint executes successfully with authenticated user
     """
     # Create test user
-    user = User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="oauth_user", email="oauth@example.com", password="testpass123"
     )
 
     # Create client and force login (simulates OAuth session)
     client = Client()
-    client.force_login(user)  # type: ignore[arg-type]
+    client.force_login(user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Test 1: GET request to user-movie-data endpoint (read operation)
     response = client.get("/api/user-movie-data/by-tmdb-id/?tmdb_id=550")
@@ -61,13 +61,13 @@ def test_session_authentication_supports_write_operations():
     authenticated POST/PATCH requests using only session cookies.
     """
     # Create test user and movie
-    user = User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="oauth_user", email="oauth@example.com", password="testpass123"
     )
 
     # Get Movie model dynamically to avoid import issues
     Movie = apps.get_model("core", "Movie")
-    movie = Movie.objects.create(  # pyright: ignore[reportUnknownMemberType]
+    movie = Movie.objects.create(
         tmdb_id=550,
         title="Fight Club",
         release_date="1999-10-15",
@@ -76,7 +76,7 @@ def test_session_authentication_supports_write_operations():
 
     # Create client with session
     client = Client()
-    client.force_login(user)  # type: ignore[arg-type]
+    client.force_login(user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Get CSRF token for POST request
     csrf_response = client.get("/api/csrf/")
@@ -88,7 +88,7 @@ def test_session_authentication_supports_write_operations():
         "/api/user-movie-data",
         data=json.dumps(
             {
-                "movie_id": movie.tmdb_id,  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+                "movie_id": movie.tmdb_id,  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
                 "user_on_watchlist": True,
                 "user_watched": False,
             }
@@ -107,7 +107,7 @@ def test_session_authentication_supports_write_operations():
     data = response.json()
     assert data["user_on_watchlist"] is True
     assert data["user_watched"] is False
-    assert data["tmdb_id"] == movie.tmdb_id  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    assert data["tmdb_id"] == movie.tmdb_id  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
 
 @pytest.mark.django_db
@@ -139,7 +139,7 @@ def test_jwt_authentication_still_works():
     break the existing JWT authentication flow.
     """
     # Create test user with verified email
-    user = User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="jwt_user",
         email="jwt@example.com",
         password="testpass123",
@@ -196,7 +196,7 @@ def test_jwt_token_refresh_works():
     - Rotates the refresh token (old one blacklisted)
     """
     # Create test user with verified email
-    user = User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="jwt_refresh_user", email="refresh@example.com", password="testpass123"
     )
 
@@ -253,13 +253,13 @@ def test_session_auth_persists_across_requests():
     multiple authenticated requests without needing to re-authenticate.
     """
     # Create test user
-    user = User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="session_persist_user", email="persist@example.com", password="testpass123"
     )
 
     # Create client with session (simulates OAuth user)
     client = Client()
-    client.force_login(user)  # type: ignore[arg-type]
+    client.force_login(user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Make multiple requests - all should be authenticated
     for i in range(3):
@@ -283,13 +283,13 @@ def test_oauth_logout_clears_session():
     For session users, logout should invalidate the session.
     """
     # Create test user
-    user = User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="logout_user", email="logout@example.com", password="testpass123"
     )
 
     # Create client with session (simulates OAuth user)
     client = Client()
-    client.force_login(user)  # type: ignore[arg-type]
+    client.force_login(user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Verify user is authenticated before logout
     profile_response = client.get("/api/profile/")
@@ -319,7 +319,7 @@ def test_jwt_logout_clears_cookies():
     the refresh token cookie for JWT-authenticated users.
     """
     # Create test user with verified email
-    user = User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue, reportUnknownVariableType]
+    user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="jwt_logout_user", email="jwtlogout@example.com", password="testpass123"
     )
 

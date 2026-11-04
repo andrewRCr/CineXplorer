@@ -59,7 +59,7 @@ class MetricsService:
         )
 
         # TODO: Add Prometheus/StatsD integration when monitoring backend is configured
-        # Example: prometheus_client.Counter(metric_name, labels).inc(value)
+        # A connected Prometheus counter can record this metric.
 
     @staticmethod
     def record_error(
@@ -100,7 +100,7 @@ class MetricsService:
             logger.error(f"ERROR_EVENT: {error_type} - {error_message}", extra=log_extra)
 
         # TODO: Add Sentry/error tracking integration when configured
-        # Example: sentry_sdk.capture_exception(exception, contexts=context)
+        # A connected error tracker can capture this exception and context.
 
 
 # Singleton instance for convenience

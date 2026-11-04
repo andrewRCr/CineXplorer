@@ -17,16 +17,16 @@ class BlacklistedMovie(models.Model):
     `sync_blacklist` command; the admin shows it read-only.
     """
 
-    tmdb_id = models.IntegerField(  # type: ignore[var-annotated]
+    tmdb_id = models.IntegerField(
         unique=True,
         db_index=True,
         help_text="TMDB movie ID to exclude from results",
     )
-    reason = models.CharField(  # type: ignore[var-annotated]
+    reason = models.CharField(
         max_length=255,
         help_text="Why this movie is blacklisted (for documentation)",
     )
-    added_at = models.DateTimeField(  # type: ignore[var-annotated]
+    added_at = models.DateTimeField(
         auto_now_add=True,
         help_text="When this entry was added",
     )

@@ -24,6 +24,18 @@ if TYPE_CHECKING:
 logger = logging.getLogger("cinexplorer.tmdb")
 
 
+def _deduplicate_movies(
+    movies: list[MovieListItemSchema], seen_ids: set[int]
+) -> list[MovieListItemSchema]:
+    """Preserve the first occurrence and record IDs seen across buffer pages."""
+    unique: list[MovieListItemSchema] = []
+    for movie in movies:
+        if movie.tmdb_id not in seen_ids:
+            seen_ids.add(movie.tmdb_id)
+            unique.append(movie)
+    return unique
+
+
 def apply_buffer_if_needed(
     filtered_movies: list[MovieListItemSchema],
     current_page: int,
@@ -77,11 +89,7 @@ def apply_buffer_if_needed(
     seen_ids: set[int] = set(session_ids)
 
     # Filter out movies already returned in this session from initial results
-    deduplicated_initial: list[MovieListItemSchema] = []
-    for movie in filtered_movies:
-        if movie.tmdb_id not in seen_ids:
-            seen_ids.add(movie.tmdb_id)
-            deduplicated_initial.append(movie)
+    deduplicated_initial = _deduplicate_movies(filtered_movies, seen_ids)
 
     # Full page achieved - return first 20
     if len(deduplicated_initial) >= 20:
@@ -122,10 +130,7 @@ def apply_buffer_if_needed(
         )
 
         # Add buffer movies, deduplicating against seen_ids (includes session + this request)
-        for movie in buffer_movies:
-            if movie.tmdb_id not in seen_ids:
-                seen_ids.add(movie.tmdb_id)
-                combined_movies.append(movie)
+        combined_movies.extend(_deduplicate_movies(buffer_movies, seen_ids))
 
         next_page += 1
         pages_fetched += 1

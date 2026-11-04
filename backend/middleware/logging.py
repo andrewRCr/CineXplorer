@@ -136,10 +136,10 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         """
         # Generate unique correlation ID for this request
         correlation_id = str(uuid.uuid4())
-        request.correlation_id = correlation_id  # type: ignore[attr-defined]
+        request.correlation_id = correlation_id
 
         # Record request start time for duration calculation
-        request.start_time = time.time()  # type: ignore[attr-defined]
+        request.start_time = time.time()
 
         # Build query string for full URL (sanitize for logging)
         query_string = request.META.get("QUERY_STRING", "")
@@ -190,7 +190,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Calculate request duration
         duration: float | None = None
         if hasattr(request, "start_time"):
-            duration = time.time() - request.start_time  # type: ignore[attr-defined]
+            duration = time.time() - request.start_time
 
         # Get correlation ID (should exist from process_request)
         correlation_id = getattr(request, "correlation_id", "unknown")
@@ -264,7 +264,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Calculate duration if possible
         duration: float | None = None
         if hasattr(request, "start_time"):
-            duration = time.time() - request.start_time  # type: ignore[attr-defined]
+            duration = time.time() - request.start_time
 
         correlation_id = getattr(request, "correlation_id", "unknown")
 
@@ -385,4 +385,4 @@ def get_correlation_id(request: HttpRequest) -> str | None:
             correlation_id = get_correlation_id(request)
             logger.info("Processing view", extra={'correlation_id': correlation_id})
     """
-    return getattr(request, "correlation_id", None)  # type: ignore[attr-defined]
+    return getattr(request, "correlation_id", None)

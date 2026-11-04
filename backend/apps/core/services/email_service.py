@@ -78,7 +78,8 @@ The CineXplorer Team
     except Exception as e:
         # The exception's text can carry the address, so only its type is logged.
         logger.error(
-            "Error sending welcome email",
+            "Error sending welcome email | error_type=%s",
+            type(e).__name__,
             extra={"user_id": user.id, "error_type": type(e).__name__},
         )
         return False

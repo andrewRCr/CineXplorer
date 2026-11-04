@@ -165,7 +165,9 @@ class JWTCookieAuth(APIKeyCookie):
                 logger.warning(f"JWT token from {source} valid but user not found in database")
             except Exception as e:
                 logger.error(
-                    f"Unexpected authentication error (token from {source}): {e}", exc_info=True
+                    "Unexpected JWT authentication failure | error_type=%s",
+                    type(e).__name__,
+                    extra={"error_type": type(e).__name__},
                 )
 
         # Priority 3: Check Django session (OAuth users)
@@ -219,7 +221,11 @@ def get_current_user(request: HttpRequest) -> AbstractUser:
         # Re-raise HttpErrors as-is
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in get_current_user: {e}", exc_info=True)
+        logger.error(
+            "Unexpected current-user authentication failure | error_type=%s",
+            type(e).__name__,
+            extra={"error_type": type(e).__name__},
+        )
         raise HttpError(500, "Internal authentication error") from e
 
 

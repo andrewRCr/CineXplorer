@@ -9,6 +9,7 @@ import logging
 from datetime import timedelta
 from typing import Literal
 
+import jwt
 from django.conf import settings
 from django.http import HttpResponse
 from ninja_jwt.tokens import RefreshToken
@@ -25,13 +26,13 @@ class JWTSettings:
 
     def __init__(self) -> None:
         """Initialize JWT settings from Django SIMPLE_JWT configuration."""
-        jwt_config = settings.SIMPLE_JWT  # type: ignore[misc]  # Django settings are dynamic
+        jwt_config = settings.SIMPLE_JWT  # Django settings are dynamic
         self.refresh_token_name: str = str(jwt_config["REFRESH_TOKEN_NAME"])
         self.access_token_name: str = str(jwt_config["ACCESS_TOKEN_NAME"])
         # Django settings dynamic types
-        self.refresh_lifetime: timedelta = jwt_config["REFRESH_TOKEN_LIFETIME"]  # type: ignore[assignment]
-        self.access_lifetime: timedelta = jwt_config["ACCESS_TOKEN_LIFETIME"]  # type: ignore[assignment]
-        self.samesite: Literal["Lax", "Strict", "None"] = jwt_config.get(  # type: ignore[assignment]
+        self.refresh_lifetime: timedelta = jwt_config["REFRESH_TOKEN_LIFETIME"]
+        self.access_lifetime: timedelta = jwt_config["ACCESS_TOKEN_LIFETIME"]
+        self.samesite: Literal["Lax", "Strict", "None"] = jwt_config.get(
             "JWT_COOKIE_SAMESITE", "Lax"
         )
 
@@ -105,11 +106,9 @@ def extract_user_id_from_token(token_value: str) -> str | int:
         >>> logger.warning(f"Invalid token from user_id={user_id}")
     """
     try:
-        import jwt
-
         payload = jwt.decode(token_value, options={"verify_signature": False})
         return payload.get("user_id", "unknown")
-    except Exception:
+    except jwt.InvalidTokenError:
         return "unknown"
 
 
@@ -127,15 +126,19 @@ def blacklist_token(token: RefreshToken) -> None:
         >>> blacklist_token(old_refresh)  # Blacklists with error handling
     """
     try:
-        token.blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        token.blacklist()  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     except AttributeError:
         # blacklist() method not available - library might not support it
         logger.warning(
             "Token blacklist not available - check ninja_jwt.token_blacklist in INSTALLED_APPS"
         )
     except Exception as e:
-        # Token might already be blacklisted or blacklist table not available
-        logger.warning(f"Failed to blacklist refresh token: {e!s}")
+        # Rotation continues when the optional blacklist operation cannot complete.
+        logger.error(
+            "Failed to blacklist refresh token | error_type=%s",
+            type(e).__name__,
+            extra={"error_type": type(e).__name__},
+        )
 
 
 def check_token_blacklist(token: RefreshToken) -> None:
@@ -156,4 +159,4 @@ def check_token_blacklist(token: RefreshToken) -> None:
     """
     with contextlib.suppress(AttributeError):
         # check_blacklist() not available in type stubs
-        token.check_blacklist()  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        token.check_blacklist()  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]

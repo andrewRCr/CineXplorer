@@ -17,8 +17,6 @@ import type { ReactNode } from "react";
  * - Inheriting parent styles (use Link with `color: "inherit"`)
  * - Logo/brand elements (use Link with no decoration)
  *
- * See strategy-semantic-tokens.md "React Router Integration" for complete usage guide.
- *
  * @example
  * ```tsx
  * // Navbar menu item

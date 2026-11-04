@@ -99,7 +99,6 @@ export function adjustColor(hex: string, percent: number): string {
  * @returns Complete 5-token border hierarchy
  *
  * @see ADR-008 (Adopt Carbon Light Alternating Layers)
- * @see strategy-border-system.md (Border Color Hierarchy section)
  *
  * @example
  * ```typescript

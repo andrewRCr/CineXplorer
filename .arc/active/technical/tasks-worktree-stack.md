@@ -189,14 +189,14 @@ worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed 
     - Only `proof-a` has starting planning notes. Setup and command output are retained in personal proofs; the
       sandbox is removed after 5.4.
 
-- [ ] **5.2 A worktree's sign-in, data and tokens stay its own** (Criterion 7)
-    - In the Owner's browser at `proof-a`'s port: sign in as the dev account, add a movie to the watchlist, reload,
-      and it is still there; `proof-a`'s backend log shows the requests; the main checkout's database has no new
-      rows for them (row counts before and after)
-    - With a refresh cookie `proof-a`'s stack issued to the dev account (`POST /api/token/`),
-      `POST /api/auth/refresh` to `proof-a` returns new tokens, and the same request to `https://localhost:8444`
-      answers `400` with "Invalid or expired refresh token" and no tokens. Where a stack runs the stricter CSRF
-      check, the request carries what the Sequencing note lists; a `403` is that check, not the signature failure
+- [x] **5.2 A worktree's sign-in, data and tokens stay its own** (Criterion 7)
+    - The Owner signed in as `dev`, added a movie to the watchlist and confirmed it remained after reload.
+      Proof-a has one movie and one watchlist row; its backend logged sign-in, creation and six watchlist reads.
+      The primary's user/movie/user-movie counts stayed `1,0,0` before and after.
+    - The same proof-a-issued refresh cookie was refused on the primary with 400, the expected
+      "Invalid or expired refresh token" error and no token fields, then accepted on proof-a with 200 and a rotated
+      cookie. Requests carried CSRF cookies/headers and the target origin. Summary retained in personal proofs,
+      without token values.
 
 - [ ] **5.3 Hot reload works at a worktree's port** (Criterion 8)
     - Edit a frontend source file in `proof-a`; the page at its port updates without a manual reload; revert the edit

@@ -15,7 +15,7 @@ from datetime import datetime
 from django.conf import settings
 from django.http import HttpRequest
 from django.utils import timezone
-from ninja import Router
+from ninja import Router, Status
 from ninja.errors import HttpError
 
 from middleware.logging import get_correlation_id
@@ -54,7 +54,7 @@ core_router = Router(tags=["core"])
 )
 def frontend_log(
     request: HttpRequest, payload: FrontendLogEntrySchema
-) -> tuple[int, FrontendLogSuccessResponse | FrontendLogErrorResponse]:
+) -> Status[FrontendLogSuccessResponse | FrontendLogErrorResponse]:
     """
     Receive frontend log entries for centralized logging.
 
@@ -88,7 +88,7 @@ def frontend_log(
                 "max_allowed": max_payload_size,
             },
         )
-        return (
+        return Status(
             413,
             FrontendLogErrorResponse(
                 success=False,
@@ -100,15 +100,17 @@ def frontend_log(
     # Validate required fields
     validation_error = _validate_log_entry(payload)
     if validation_error:
-        return (400, FrontendLogErrorResponse(success=False, error=validation_error))
+        return Status(400, FrontendLogErrorResponse(success=False, error=validation_error))
 
     # Process the log entry
     success = _process_log_entry(payload, request)
 
     if success:
-        return (201, FrontendLogSuccessResponse(success=True, message="Log entry received"))
+        return Status(201, FrontendLogSuccessResponse(success=True, message="Log entry received"))
     else:
-        return (500, FrontendLogErrorResponse(success=False, error="Failed to process log entry"))
+        return Status(
+            500, FrontendLogErrorResponse(success=False, error="Failed to process log entry")
+        )
 
 
 @core_router.get("/health-check/", auth=None)
@@ -345,7 +347,7 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
 )
 def write_dev_console_log(
     request: HttpRequest, payload: DevConsoleLogRequest
-) -> tuple[int, DevConsoleLogResponse]:
+) -> Status[DevConsoleLogResponse]:
     """
     Development-only endpoint to write browser console logs to file.
 
@@ -368,9 +370,12 @@ def write_dev_console_log(
 
     # Only available in development mode
     if settings.ENVIRONMENT != "development":
-        return 403, DevConsoleLogResponse(
-            status="forbidden",
-            error="This endpoint is only available in development mode",
+        return Status(
+            403,
+            DevConsoleLogResponse(
+                status="forbidden",
+                error="This endpoint is only available in development mode",
+            ),
         )
 
     try:
@@ -385,13 +390,16 @@ def write_dev_console_log(
         with log_file.open("a", encoding="utf-8") as f:
             f.write(payload.log_line)
 
-        return 200, DevConsoleLogResponse(status="ok", file=str(log_file.name))
+        return Status(200, DevConsoleLogResponse(status="ok", file=str(log_file.name)))
 
     except Exception as e:
         app_logger.error(f"Failed to write dev console log: {e!s}")
-        return 500, DevConsoleLogResponse(
-            status="error",
-            error="Failed to write log file",
+        return Status(
+            500,
+            DevConsoleLogResponse(
+                status="error",
+                error="Failed to write log file",
+            ),
         )
 
 
@@ -400,7 +408,7 @@ def write_dev_console_log(
     auth=None,
     response={500: dict[str, str], 403: dict[str, str]},
 )
-def debug_error_500(request: HttpRequest) -> tuple[int, dict[str, str]]:
+def debug_error_500(request: HttpRequest) -> Status[dict[str, str]]:
     """
     Development-only endpoint that returns a 500 error for testing.
 
@@ -412,9 +420,9 @@ def debug_error_500(request: HttpRequest) -> tuple[int, dict[str, str]]:
         - Returns 403 in production
     """
     if settings.ENVIRONMENT != "development":
-        return 403, {"error": "This endpoint is only available in development mode"}
+        return Status(403, {"error": "This endpoint is only available in development mode"})
 
-    return 500, {"error": "Simulated server error for testing"}
+    return Status(500, {"error": "Simulated server error for testing"})
 
 
 __all__ = ["core_router"]

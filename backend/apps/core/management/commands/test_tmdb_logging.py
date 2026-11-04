@@ -9,7 +9,6 @@ from argparse import ArgumentParser
 from typing import cast
 
 from django.core.management.base import BaseCommand
-from ninja.errors import HttpError
 
 from apps.movie.services.api_boundary import BrowseServiceParams, SearchServiceParams
 from apps.movie.services.service_factory import get_movie_service
@@ -89,8 +88,6 @@ class Command(BaseCommand):
             params = BrowseServiceParams(sort_by="popularity.desc")
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🎭 Found {len(result.results)} movies")
-        except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
             self.stdout.write(f"  ❌ Error: {e!s}")
 
@@ -101,8 +98,6 @@ class Command(BaseCommand):
             params = SearchServiceParams(query="Inception")
             result = self.movie_service.search_movies(page=1, params=params)
             self.stdout.write(f"  🎬 Found {len(result.results)} results")
-        except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
             self.stdout.write(f"  ❌ Error: {e!s}")
 
@@ -114,8 +109,6 @@ class Command(BaseCommand):
             title = result.title
             year = str(result.release_date.year) if result.release_date else "Unknown"
             self.stdout.write(f"  🎯 Retrieved: {title} ({year})")
-        except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
             self.stdout.write(f"  ❌ Error: {e!s}")
 
@@ -126,8 +119,6 @@ class Command(BaseCommand):
             params = BrowseServiceParams(sort_by="popularity.desc")
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🏆 Found {len(result.results)} popular movies")
-        except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
             self.stdout.write(f"  ❌ Error: {e!s}")
 
@@ -137,8 +128,6 @@ class Command(BaseCommand):
         try:
             result = self.movie_service.get_now_playing_movies(page=1)
             self.stdout.write(f"  🎭 Found {len(result.results)} now playing movies")
-        except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
             self.stdout.write(f"  ❌ Error: {e!s}")
 
@@ -148,7 +137,5 @@ class Command(BaseCommand):
         try:
             result = self.movie_service.get_upcoming_movies(page=1)
             self.stdout.write(f"  📅 Found {len(result.results)} upcoming movies")
-        except HttpError as e:
-            self.stdout.write(f"  ❌ Error: {e.message}")
         except Exception as e:
             self.stdout.write(f"  ❌ Error: {e!s}")

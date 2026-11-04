@@ -9,7 +9,7 @@ from apps.core import models
 from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User as UserType
+    from apps.users.models import User as UserType
 
 User = get_user_model()
 
@@ -69,14 +69,14 @@ def test_new_user_without_username_raises_error() -> None:
 
 
 @pytest.mark.django_db
-def test_django_user_model_allows_empty_email_at_model_level() -> None:
-    """Tests Django's default User model allows empty email at model layer.
+def test_user_model_allows_empty_email_at_model_level() -> None:
+    """Tests the user model allows an empty email at the model layer.
 
     Note: Application policy enforces email requirement via allauth
     ACCOUNT_SIGNUP_FIELDS configuration. This test verifies model-level
     behavior only. Serializer/form-level validation is tested separately.
     """
-    # Django's default User model allows empty email at model level
+    # The user model allows an empty email at the model level
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
         "UserType",

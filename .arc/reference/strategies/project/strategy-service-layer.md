@@ -1,6 +1,6 @@
 # Service Layer Strategy
 
-**Version:** 1.1 | **Updated:** 2026-11-03 | **Status:** Active
+**Version:** 1.2 | **Updated:** 2026-11-04 | **Status:** Active
 
 ## Purpose
 
@@ -119,7 +119,8 @@ class MyService:
 - Private attributes (`_dependency`) for injected dependencies
 - Full type annotations (no `Any` usage)
 - Comprehensive docstrings with usage examples
-- Raises domain exceptions; the API layer maps them to responses
+- Raises domain exceptions from `apps/core/exceptions.py` (`NotFoundError`, `ConflictError`, `InvalidInputError`,
+  `PermissionDeniedError`, `UpstreamError`); the handlers in `apps/core/api_errors.py` map them to responses
 
 ### Decision Guide: Class vs Function
 
@@ -527,6 +528,7 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 
 ## Version History
 
+- **1.2** (2026-11-04): Name the domain exceptions' module and the handlers that map them
 - **1.1** (2026-11-03): Domain exceptions in place of `HttpError`; tests use the real database, not mock
   repositories
 - **1.0** (2025-12-19): Initial strategy document

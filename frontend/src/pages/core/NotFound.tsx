@@ -47,14 +47,14 @@ const NotFound = () => {
 
         <VStack gap={4}>
           <Button
-            onClick={() => navigate(ROUTES.HOME)}
+            onClick={() => void navigate(ROUTES.HOME)}
             colorPalette="accent"
             size="lg"
           >
             Go to Home
           </Button>
 
-          <Button onClick={() => navigate(-1)} variant="ghost" size="md">
+          <Button onClick={() => void navigate(-1)} variant="ghost" size="md">
             Go Back
           </Button>
         </VStack>

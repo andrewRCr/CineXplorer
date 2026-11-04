@@ -117,7 +117,10 @@ export const getUserMovieDataByTmdbId = (
  * })
  */
 export const createUserMovieData = (data: UserMovieDataCreateSchema) => {
-    return userMovieDataService.create<UserMovieDataDetailSchema>(data);
+    return userMovieDataService.create<
+        UserMovieDataCreateSchema,
+        UserMovieDataDetailSchema
+    >(data);
 };
 
 /**
@@ -144,7 +147,10 @@ export const updateUserMovieData = (
     id: number,
     data: UserMovieDataUpdateSchema,
 ) => {
-    return userMovieDataService.update<UserMovieDataUpdateSchema>(id, data);
+    return userMovieDataService.update<
+        UserMovieDataUpdateSchema,
+        UserMovieDataDetailSchema
+    >(id, data);
 };
 
 /**

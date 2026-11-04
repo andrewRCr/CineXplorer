@@ -43,7 +43,7 @@ const Forbidden = () => {
 
         <VStack gap={4}>
           <Button
-            onClick={() => navigate(ROUTES.HOME)}
+            onClick={() => void navigate(ROUTES.HOME)}
             colorPalette="accent"
             size="lg"
           >
@@ -51,7 +51,7 @@ const Forbidden = () => {
           </Button>
 
           <Button
-            onClick={() => navigate(ROUTES.LOGIN)}
+            onClick={() => void navigate(ROUTES.LOGIN)}
             variant="ghost"
             size="md"
           >

@@ -14,6 +14,7 @@ import {
     getCsrfToken,
 } from "@/utilities/csrfTokenFetcher";
 import { useState, useEffect, useCallback } from "react";
+import logger from "@/services/logger";
 
 // Constants for OAuth timing UX
 const FAST_OAUTH_THRESHOLD = 3000; // 3 seconds
@@ -54,7 +55,7 @@ export function useOAuthFlow(
         () => {
             const oauthProvider = sessionStorage.getItem("oauth_in_progress");
             if (oauthProvider) {
-                console.log(
+                logger.debug(
                     `[OAuth] Component initializing with OAuth flow in progress: ${oauthProvider}`,
                 );
                 return { provider: oauthProvider, loading: true };
@@ -81,7 +82,7 @@ export function useOAuthFlow(
 
     // Clear loading state (called when auth resolution completes - success or failure)
     const clearLoading = useCallback(() => {
-        console.log("[OAuth] Clearing loading state (auth resolved)");
+        logger.debug("[OAuth] Clearing loading state (auth resolved)");
         setOauthLoading(null);
         sessionStorage.removeItem("oauth_in_progress");
         sessionStorage.removeItem("oauth_start_time");
@@ -98,7 +99,7 @@ export function useOAuthFlow(
         const checkFlag = () => {
             const flag = sessionStorage.getItem("oauth_in_progress");
             if (!flag) {
-                console.log(
+                logger.debug(
                     "[OAuth] Flag cleared externally after delay, stopping loading state",
                 );
                 setOauthLoading(null);
@@ -133,7 +134,7 @@ export function useOAuthFlow(
             const startTime = parseInt(startTimeStr, 10);
             const elapsedTime = Date.now() - startTime;
 
-            console.log(
+            logger.debug(
                 `[OAuth] Detected return from ${oauthProvider} OAuth flow after ${elapsedTime}ms`,
             );
 
@@ -143,20 +144,20 @@ export function useOAuthFlow(
 
                 // Display spinner for MINIMUM_DISPLAY_TIME from NOW
                 // This ensures consistent visible duration regardless of OAuth speed
-                console.log(
+                logger.debug(
                     `[OAuth] Fast OAuth detected, enforcing ${MINIMUM_DISPLAY_TIME}ms minimum display time`,
                 );
 
                 displayTimeoutId = setTimeout(() => {
                     if (isMounted) {
-                        console.log(
+                        logger.debug(
                             "[OAuth] Minimum display time elapsed, allowing navigation",
                         );
                         setMinDisplayTimeElapsed(true);
                     }
                 }, MINIMUM_DISPLAY_TIME);
             } else {
-                console.log(
+                logger.debug(
                     "[OAuth] Slow OAuth detected, no minimum display time needed",
                 );
                 // Slow OAuth - user already waited, allow immediate navigation
@@ -172,7 +173,7 @@ export function useOAuthFlow(
             }
             // Only clear OAuth flags if we were in an OAuth flow
             if (oauthProvider) {
-                console.log(
+                logger.debug(
                     "[OAuth] Component unmounting, clearing OAuth flags",
                 );
                 sessionStorage.removeItem("oauth_in_progress");
@@ -204,9 +205,9 @@ export function useOAuthFlow(
     const initializeOAuth = useCallback(
         async (provider: string): Promise<void> => {
             try {
-                console.log(`[OAuth] Initializing ${provider} OAuth login`);
+                logger.debug(`[OAuth] Initializing ${provider} OAuth login`);
 
-                await ensureCsrfTokenCookie(apiBaseUrl);
+                if (!getCsrfToken()) await ensureCsrfTokenCookie(apiBaseUrl);
                 const csrfToken = getCsrfToken();
 
                 // Create form and submit through Caddy proxy
@@ -247,7 +248,9 @@ export function useOAuthFlow(
                 document.body.appendChild(form);
                 form.submit();
             } catch (error) {
-                console.error("OAuth initialization error:", error);
+                logger.error("OAuth initialization error:", {
+                    errorType: error instanceof Error ? error.name : "unknown",
+                });
                 setError("Failed to initiate OAuth login. Please try again.");
             }
         },

@@ -1,3 +1,4 @@
+import { isRecord } from "@/utilities/typeGuards";
 import { apiBaseUrl as BASE_URL } from "@/config/baseUrls";
 import axios, { CanceledError, type InternalAxiosRequestConfig } from "axios";
 import {
@@ -44,21 +45,33 @@ const apiClient = axios.create({
 
 // Token refresh state management
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+interface RefreshSubscriber {
+    resolve: (token: string) => void;
+    reject: (error: unknown) => void;
+}
+let refreshSubscribers: RefreshSubscriber[] = [];
 
 /**
  * Adds a callback to be executed when token refresh completes
  */
-function subscribeTokenRefresh(callback: (token: string) => void): void {
-    refreshSubscribers.push(callback);
+function subscribeTokenRefresh(subscriber: RefreshSubscriber): void {
+    refreshSubscribers.push(subscriber);
 }
 
 /**
  * Notifies all subscribers with the new access token
  */
 function onTokenRefreshed(token: string): void {
-    refreshSubscribers.forEach((callback) => callback(token));
+    const subscribers = refreshSubscribers;
     refreshSubscribers = [];
+    subscribers.forEach((subscriber) => subscriber.resolve(token));
+}
+
+/** Reject requests waiting on a failed refresh before starting any cleanup. */
+function onTokenRefreshFailed(error: unknown): void {
+    const subscribers = refreshSubscribers;
+    refreshSubscribers = [];
+    subscribers.forEach((subscriber) => subscriber.reject(error));
 }
 
 // Request interceptor: Attach JWT access token (email/password), CSRF token, and pagination context
@@ -100,11 +113,13 @@ apiClient.interceptors.request.use(async (config) => {
 // Response interceptor: Handle token refresh (JWT only) and authentication errors
 apiClient.interceptors.response.use(
     (response) => response,
-    async (error) => {
+    async (error: unknown) => {
         // If the error is a cancellation, we don't need to do anything.
         if (axios.isCancel(error)) {
-            return Promise.reject(error);
+            throw error;
         }
+
+        if (!axios.isAxiosError<unknown>(error)) throw error;
 
         // Check for server errors (5xx) and show toast notification
         // This provides consistent user feedback for infrastructure/backend failures
@@ -117,9 +132,10 @@ apiClient.interceptors.response.use(
             // Continue to reject the error so callers can still handle it
         }
 
-        const originalRequest = error.config as InternalAxiosRequestConfig & {
+        if (!error.config) throw error;
+        const originalRequest: InternalAxiosRequestConfig & {
             _retry?: boolean;
-        };
+        } = error.config;
 
         // Check for authentication error (401 only - 403 is authorization, not authentication)
         // Note: This refresh flow only applies to email/password (JWT) authentication
@@ -134,15 +150,18 @@ apiClient.interceptors.response.use(
 
             // OAuth users won't have JWT tokens - let them handle 401 via session endpoint
             if (!access_token) {
-                return Promise.reject(error);
+                throw error;
             }
 
             // If token is already being refreshed, queue this request
             if (isRefreshing) {
-                return new Promise((resolve) => {
-                    subscribeTokenRefresh((token: string) => {
-                        originalRequest.headers.Authorization = `Bearer ${token}`;
-                        resolve(apiClient(originalRequest));
+                return new Promise((resolve, reject) => {
+                    subscribeTokenRefresh({
+                        resolve: (token) => {
+                            originalRequest.headers.Authorization = `Bearer ${token}`;
+                            resolve(apiClient(originalRequest));
+                        },
+                        reject,
                     });
                 });
             }
@@ -154,7 +173,7 @@ apiClient.interceptors.response.use(
                 // Call JWT token refresh endpoint (email/password authentication only)
                 // Validates HTTP-only refresh token cookie
                 await ensureCsrfTokenCookie(BASE_URL);
-                const response = await axios.post(
+                const response = await axios.post<unknown>(
                     `${BASE_URL}/auth/refresh`,
                     {},
                     {
@@ -163,35 +182,44 @@ apiClient.interceptors.response.use(
                     },
                 );
 
-                // If refresh is successful, update access token in localStorage
-                if (response.status === 200 && response.data.access_token) {
-                    const newAccessToken = response.data.access_token;
-
-                    // Store new access token in localStorage
-                    setAuthTokens(newAccessToken);
-
-                    // Update default headers for future requests
-                    apiClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-
-                    // Notify all queued requests with new token
-                    onTokenRefreshed(newAccessToken);
-
-                    // Retry original request with new token
-                    originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                    return apiClient(originalRequest);
+                const data = response.data;
+                if (
+                    response.status !== 200 ||
+                    !isRecord(data) ||
+                    typeof data.access_token !== "string" ||
+                    !data.access_token
+                ) {
+                    throw new Error(
+                        "Token refresh did not return a valid access token",
+                    );
                 }
+                const newAccessToken = data.access_token;
+
+                // Store new access token in localStorage
+                setAuthTokens(newAccessToken);
+
+                // Update default headers for future requests
+                apiClient.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+
+                // Notify all queued requests with new token
+                onTokenRefreshed(newAccessToken);
+
+                // Keep retry failures separate from refresh failures.
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return apiClient(originalRequest);
             } catch (refreshError) {
+                onTokenRefreshFailed(refreshError);
                 // If refresh fails, clear tokens and redirect to login with session expired indicator
                 clearAuthTokens();
                 window.location.href = "/login?session_expired=true"; // Force a full page reload to clear all state
-                return Promise.reject(refreshError);
+                throw refreshError;
             } finally {
                 isRefreshing = false;
             }
         }
 
         // For all other errors, just pass them along
-        return Promise.reject(error);
+        throw error;
     },
 );
 

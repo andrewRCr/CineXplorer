@@ -492,6 +492,12 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### Sequencing with `main`
 
+- Merged `origin/main` through #67 (`f49b6837`) before 2.3: domain exceptions, the custom user model and type-aware
+  frontend lint. Recreated this worktree's database volume; `pytest apps/ --create-db` passed all 920 tests.
+  Conflict resolution preserves both CSRF and queued-refresh tests, synchronous OAuth submission with a present
+  cookie, and missing-cookie initialization. Related frontend tests: 184 passed; lint, TypeScript and scoped
+  backend checks passed.
+
 - **Backend style:** `main`'s `ruff format` and Google-style docstring rules are merged into this branch; backend
   code passes `ruff format --check` and `ruff check` with them
 - **Frontend standards queue:** before the first frontend commit (2.1), merge `main`, which now formats the frontend

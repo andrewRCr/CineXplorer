@@ -125,41 +125,41 @@ export async function toggleMovieWatchlist(
 /**
  * Toggle a movie's watched status
  *
- * TODO: Not implemented yet; it throws.
+ * TODO: Not implemented yet; it rejects.
  * Same pattern as toggleMovieWatchlist but for user_watched field
  *
  * @param _movie - Movie object with optional user_movie_data
  * @returns Promise with updated UserMovieData
  */
 
-export async function toggleMovieWatched(
+export function toggleMovieWatched(
     _movie: MovieListItem,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
-    throw new Error("toggleMovieWatched not yet implemented");
+    return Promise.reject(new Error("toggleMovieWatched not yet implemented"));
 }
 
 /**
  * Toggle a movie's liked status
  *
- * TODO: Not implemented yet; it throws.
+ * TODO: Not implemented yet; it rejects.
  * Same pattern as toggleMovieWatchlist but for user_liked field
  *
  * @param _movie - Movie object with optional user_movie_data
  * @returns Promise with updated UserMovieData
  */
 
-export async function toggleMovieLiked(
+export function toggleMovieLiked(
     _movie: MovieListItem,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
-    throw new Error("toggleMovieLiked not yet implemented");
+    return Promise.reject(new Error("toggleMovieLiked not yet implemented"));
 }
 
 /**
  * Set a movie's rating
  *
- * TODO: Not implemented yet; it throws.
+ * TODO: Not implemented yet; it rejects.
  * Opens rating modal/UI, then updates user_rating field
  *
  * @param _movie - Movie object with optional user_movie_data
@@ -167,18 +167,18 @@ export async function toggleMovieLiked(
  * @returns Promise with updated UserMovieData
  */
 
-export async function setMovieRating(
+export function setMovieRating(
     _movie: MovieListItem,
     _rating: number,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (may need UI modal integration)
-    throw new Error("setMovieRating not yet implemented");
+    return Promise.reject(new Error("setMovieRating not yet implemented"));
 }
 
 /**
  * Set a movie's review
  *
- * TODO: Not implemented yet; it throws.
+ * TODO: Not implemented yet; it rejects.
  * Opens review modal/UI, then updates user_review field
  *
  * @param _movie - Movie object with optional user_movie_data
@@ -186,10 +186,10 @@ export async function setMovieRating(
  * @returns Promise with updated UserMovieData
  */
 
-export async function setMovieReview(
+export function setMovieReview(
     _movie: MovieListItem,
     _review: string,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (may need UI modal integration)
-    throw new Error("setMovieReview not yet implemented");
+    return Promise.reject(new Error("setMovieReview not yet implemented"));
 }

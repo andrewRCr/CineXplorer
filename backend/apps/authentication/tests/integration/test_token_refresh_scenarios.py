@@ -42,7 +42,7 @@ from apps.core.tests.test_helpers import (
 )
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
+    from apps.users.models import User
 
 
 # ============================================================================

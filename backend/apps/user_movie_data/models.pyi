@@ -7,10 +7,10 @@ enabling perfect type inference in Pyright/Pylance.
 When adding/modifying fields in models.py, update this file accordingly.
 """
 
-from django.contrib.auth.models import User
 from django.db import models
 
 from apps.core.models import Movie
+from apps.users.models import User
 
 class UserMovieData(models.Model):
     """Type stub for UserMovieData model with explicit field types."""

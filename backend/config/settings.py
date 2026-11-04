@@ -86,6 +86,7 @@ INSTALLED_APPS = [
     # Project apps
     "apps.authentication",
     "apps.movie",
+    "apps.users",
     "apps.user_movie_data",
 ]
 
@@ -222,8 +223,8 @@ SECURE_REDIRECT_EXEMPT = [r"^api/health-check/$"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Authentication configuration
-# Using Django's default User model (django.contrib.auth.models.User)
-# Custom AUTH_USER_MODEL removed to resolve django-stubs mypy --strict bug
+AUTH_USER_MODEL = "users.User"
+
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",  # Django default (for admin, etc.)
     "allauth.account.auth_backends.AuthenticationBackend",  # allauth (OAuth + email)

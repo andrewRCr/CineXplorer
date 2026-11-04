@@ -335,26 +335,22 @@ authentication gaps that matter once sign-up is public are closed.
     - Proven live 6 and 11 recorded from what each console showed; Proven live 12's `gh api` commands
     - The ZeptoMail token and the OAuth credentials stay off the server until 5.5
 
-- [ ] **5.2 Publish this branch's images and take the change on staging** (Proven live 3, 2)
-    - Published the initial branch and opened draft PR #78. Its manual CI run exposed a Site-domain default typing
-      error; the correction preserves the development default and the unset deployed value.
-    - The development-log CSRF test writes to a temporary directory, keeping the real file operation independent of
-      checkout permissions; CI had returned `500` for the unwritable checkout log.
-    - Integrated `main` through `1f980b45`, preserving strict CSRF enforcement and the Site tests alongside upstream
-      diagnostic tests. Updated resend-prefix references and test styles for upstream renames and lint rules; the
-      mail backend retains its documented best-effort exception boundary.
-    - Push the branch (its first push, `git push -u origin technical/launch-readiness`, with the Owner's approval) and
-      dispatch a manual CI run at the exact commit to deploy, which publishes its `sha-` images
-    - Open a draft pull request against `main`, with the Owner's approval: its runs are the evidence for Implemented
-      7 and 8, the latest one, after the last merge from `main`, at 6.1
-    - Before anything changes on the server: there is no `deploy-history.log` yet, so confirm the running `backend`
-      container carries `org.opencontainers.image.revision` (R1's fallback)
-    - In a shell holding the operations lock, by the runbook's server update: check out the branch commit, run the
-      bootstrap twice and `systemctl list-timers` (Proven live 3), then `cinexplorer-deploy <commit>` with a backup
-      started meanwhile from a second session (Proven live 2); outside the shell, the redeploy with a backup started
-      during it, and the refusal of the earlier `main` commit
-    - Anything the runbook or the scripts got wrong is fixed on the branch, published and redeployed, not worked
-      around on the server
+- [x] **5.2 Publish this branch's images and take the change on staging** (Proven live 3, 2)
+    - Published the branch and opened draft PR #78. Corrected the optional Site-domain typing and isolated the
+      development-log CSRF test's real file write from checkout permissions after the first CI run exposed them.
+    - Merged `main` through `1f980b45`, preserving strict CSRF enforcement and Site tests alongside upstream
+      diagnostic tests; aligned resend-prefix references and test styles with upstream renames and lint rules.
+    - PR CI `41906416896` and manual CI `41906505768` passed at `7608822a`, publishing its images. The merged backend
+      suite passed 990 tests with 94.71% coverage; backend type, lint, format and task markdown checks passed.
+    - On staging, bootstrap installed the entry point, restricted CI key and nightly units; its second run reported
+      zero changed and 46 unchanged steps. Timers schedule the next backup/maintenance for 10:00/10:30 UTC.
+    - Deployed `7608822a` inside the held operations shell. Public health passed, Site 1 acquired the staging domain,
+      and history recorded `manual` with the running `f49b6837` image as the previous version. A backup waited until
+      that shell exited, then uploaded and cleaned up successfully.
+    - A standalone same-version redeploy held the lock itself; its concurrent backup waited and then succeeded.
+      History recorded the redeploy, Site setup was unchanged, public health passed and the local backup directory
+      was empty. The earlier `f49b6837` commit was refused with the manual-runbook instruction; history and checkout
+      remained unchanged.
 
 - [ ] **5.3 The CI key runs only the deploy** (Proven live 1)
     - From a local terminal with the CI key, each refusal Proven live 1 lists, with `deploy-history.log` unchanged

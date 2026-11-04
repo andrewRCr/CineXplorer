@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import type { MovieListResponse, MovieListItem } from "@/@types/movie";
+import type { MovieListResponse, MovieListItem } from "@/types/movie";
 
 /**
  * Options for useInfiniteMovies hook

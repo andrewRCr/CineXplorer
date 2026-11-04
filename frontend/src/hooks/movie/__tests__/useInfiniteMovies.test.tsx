@@ -17,7 +17,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useInfiniteMovies } from "../useInfiniteMovies";
-import type { MovieListResponse } from "@/@types/movie";
+import type { MovieListResponse } from "@/types/movie";
 
 // Helper to create QueryClient wrapper for tests
 function createWrapper() {

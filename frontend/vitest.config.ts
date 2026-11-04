@@ -63,8 +63,6 @@ export default defineConfig({
         alias: {
             // Only the MSW server entry needs Node exports; app imports keep browser conditions.
             "msw/node": createRequire(import.meta.url).resolve("msw/node"),
-            // Note: @/types/* is handled by tsconfigPaths() plugin which supports
-            // multiple fallback paths (./src/@types/* and ./src/types/*)
             "@": resolve(__dirname, "./src"),
             "@shared": resolve(__dirname, "../shared"),
             "@tests": resolve(__dirname, "./tests"),

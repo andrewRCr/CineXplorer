@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import SequentialMovieGrid from "../../SequentialMovieGrid";
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
-import { type MovieListItem, type MovieListResponse } from "@/@types/movie";
+import { type MovieListItem, type MovieListResponse } from "@/types/movie";
 import { renderWithProvider } from "./grid-test-utils";
 
 // Mock the hooks

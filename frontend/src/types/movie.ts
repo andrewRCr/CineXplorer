@@ -13,7 +13,7 @@
  * return compact data and detail endpoints return full objects.
  */
 
-import type { components } from "@/types/api";
+import type { components } from "./api";
 
 // ============================================================================
 // Core Movie Types
@@ -52,9 +52,6 @@ export type CrewMember = components["schemas"]["CrewMemberSchema"];
 export type ProductionCompany =
     components["schemas"]["ProductionCompanySchema"];
 export type SpokenLanguage = components["schemas"]["SpokenLanguageSchema"];
-export type UserMovieData = components["schemas"]["UserMovieDataSchema"];
-export type Keyword = components["schemas"]["KeywordSchema"];
-export type Person = components["schemas"]["PersonSchema"];
 export type KeywordListResponse =
     components["schemas"]["KeywordListResponseSchema"];
 export type PersonListResponse =
@@ -66,9 +63,4 @@ export type PersonListResponse =
 
 export interface GenresResponse {
     genres: Genre[];
-}
-
-export interface Credits {
-    cast: CastMember[];
-    crew: CrewMember[];
 }

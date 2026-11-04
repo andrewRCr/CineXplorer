@@ -14,7 +14,7 @@
 import { useState, useEffect } from "react";
 import { Box, Text, VStack } from "@chakra-ui/react";
 import { getUserMovies } from "../../services/userMovieService";
-import type { MovieListItem } from "@/@types/movie.d";
+import type { MovieListItem } from "@/types/movie";
 
 const Watchlist = () => {
   const [movies, setMovies] = useState<MovieListItem[]>([]);

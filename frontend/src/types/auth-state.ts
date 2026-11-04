@@ -1,3 +1,7 @@
+import type { components } from "./api";
+
+type UserProfile = components["schemas"]["UserProfileSchema"];
+
 /**
  * Auth Error - structured error type for authentication failures
  */
@@ -32,7 +36,7 @@ export interface AuthStateProps {
         rememberMe?: boolean,
     ) => Promise<AuthResult<LoginSuccessData>>;
     isAuthenticated: boolean;
-    user: User | null;
+    user: UserProfile | null;
     logout: () => Promise<void>;
     register: (
         username: string,

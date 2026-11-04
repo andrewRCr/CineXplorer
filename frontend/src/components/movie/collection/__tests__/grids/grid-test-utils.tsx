@@ -16,7 +16,7 @@ import { vi } from "vitest";
 import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { defaultSystem } from "@/theme";
-import type { MovieListItem, MovieListResponse } from "@/@types/movie";
+import type { MovieListItem, MovieListResponse } from "@/types/movie";
 import type { UseInfiniteMoviesResult } from "@/hooks/movie/useInfiniteMovies";
 
 // ============================================================================

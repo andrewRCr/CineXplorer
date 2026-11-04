@@ -23,7 +23,7 @@ import type {
     AuthResult,
     AuthError,
     LoginSuccessData,
-} from "@/@types/auth-state";
+} from "@/types/auth-state";
 import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
@@ -74,7 +74,7 @@ async function checkOAuthSession(): Promise<UserProfile | null> {
     }
 }
 
-export function useAuth(): AuthStateProps & { user: UserProfile | null } {
+export function useAuth(): AuthStateProps {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
         // Hybrid auth: Instant authentication detection from localStorage/cookie
         // Priority: cookie → localStorage → sessionStorage (handled by getAuthTokens)

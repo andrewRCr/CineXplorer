@@ -210,7 +210,10 @@ fields. Keep the OAuth/mail values off the running server until the hardened dep
   ID/secret for `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. Keep the providers' default scopes.
   See [GitHub OAuth app setup](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app).
 - In ZeptoMail, obtain an agent API token with `cinexplorer@andrewcreekmore.dev` verified as a sender. Keep the token
-  for `ZEPTOMAIL_API_KEY`. A successful test message to Gmail and its inbox delivery are part of activation.
+  for `ZEPTOMAIL_API_KEY`. This setting is the full Authorization value: `Zoho-enczapikey`, one space, then the
+  token. Include the prefix once and keep the value in single quotes in the env file. See
+  [ZeptoMail authentication](https://www.zoho.com/cpaas/help/api/api-authentication.html).
+  A successful test message to Gmail and its inbox delivery are part of activation.
 
 | Provider | Authorized callback URLs |
 | --- | --- |

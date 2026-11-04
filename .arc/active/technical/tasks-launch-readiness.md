@@ -369,6 +369,8 @@ authentication gaps that matter once sign-up is public are closed.
       nightly job runs during them (Proven live 8)
 
 - [ ] **5.5 Credentials only now, then email and sign-in live** (R17; Proven live 9, 10, 13, 15)
+    - Clarified the full prefixed ZeptoMail Authorization value in the env example and runbook; the pinned client
+      sends that configured value verbatim.
     - Only with this change's images running on staging (5.2): `ZEPTOMAIL_API_KEY`,
       `ZEPTOMAIL_SENDER_EMAIL=cinexplorer@andrewcreekmore.dev` and the four OAuth variables go into
       `/opt/cinexplorer/backend.env`, by the runbook's entries; until then allauth's own sign-up and sign-in stay

@@ -252,12 +252,12 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: `actionlint` passed for both workflows, all 20 recovery-hook tests passed and markdown lint passed.
       Hosted trigger/concurrency evidence remains in 5.2 and after merge.
 
-- [ ] **4.2 CI checks the production Caddyfile and Compose file** (R7; Implemented 7)
-    - In the `images` job after the web image builds: `caddy validate` inside `cinexplorer-web:ci` with placeholder
-      `SITE_ADDRESS`, `ADMIN_BASIC_AUTH_USER` and a bcrypt-format `ADMIN_BASIC_AUTH_HASH`, then R7's Compose
-      `config --quiet` with `BACKEND_ENV_FILE` overridden (Phase 4 note on its path)
-    - Check: both commands pass locally the way the job runs them, and fail on a copy of the Caddyfile with an invalid
-      directive (mounted over `/etc/caddy/Caddyfile`) and on a Compose file with a syntax error
+- [x] **4.2 CI checks the production Caddyfile and Compose file** (R7; Implemented 7)
+    - The images job validates Caddy immediately after the web build with non-secret placeholder inputs and a valid
+      bcrypt fixture, then validates production Compose with the backend env example's absolute path.
+    - Checks: built the current web production image under an isolated local tag; both validation commands passed.
+      Caddy rejected a mounted copy with an invalid directive, and Compose rejected a syntax-error copy.
+      `actionlint` passed. The hosted job's evidence remains in 5.2.
 
 - [ ] **4.3 Write `infrastructure/deploy/deploy.sh`** (R1)
     - R1's two arguments, six steps, step markers and history line exactly as R1 states them, since every later

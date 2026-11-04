@@ -60,6 +60,13 @@ jobs:
           docker compose -f infrastructure/docker-compose.yml \
             -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py wait_for_db --timeout 60
 
+      - name: Check for missing migrations
+        env:
+          COMPOSE_PROJECT_NAME: cinexplorer-ci
+        run: |
+          docker compose -f infrastructure/docker-compose.yml \
+            -f infrastructure/docker-compose.ci.yml exec -T backend python manage.py makemigrations --check --dry-run
+
       - name: Run backend tests
         env:
           COMPOSE_PROJECT_NAME: cinexplorer-ci

@@ -310,7 +310,6 @@ def test_profile_endpoint_with_serialization_error() -> None:
     transaction=True,
     available_apps=[
         "apps.authentication",
-        "apps.accounts",
         "django.contrib.auth",
         "django.contrib.contenttypes",
         "ninja_jwt.token_blacklist",

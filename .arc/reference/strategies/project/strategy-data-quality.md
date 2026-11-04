@@ -1,6 +1,6 @@
 # Data Quality Strategy
 
-**Version:** 1.0 | **Updated:** 2025-12-15 | **Status:** Active
+**Version:** 1.1 | **Updated:** 2026-11-04 | **Status:** Active
 
 ## Purpose
 
@@ -123,18 +123,24 @@ def _passes_language_script_filter(movie, language_filter) -> bool:
 
 ### Stage 2: Blacklist Filter
 
-**Purpose:** Exclude specific TMDB IDs known to be problematic.
+**Purpose:** Exclude specific TMDB IDs known to be problematic, mostly adult titles TMDB doesn't flag as adult.
 
 ```python
-BLACKLISTED_TMDB_IDS = {
-    280460, 50633, 1113566, ...  # Mislabeled adult content, etc.
-}
-
-def _passes_blacklist_filter(movie) -> bool:
-    return movie.tmdb_id not in BLACKLISTED_TMDB_IDS
+def filter_movies_by_blacklist(movies):
+    blacklist_ids = get_blacklisted_ids()  # BlacklistedMovie table, cached 5 minutes
+    return [m for m in movies if m.tmdb_id not in blacklist_ids]
 ```
 
-**Maintenance:** Add IDs to blacklist as discovered. See ATOMIC-TASKS.md for pending review.
+**Source of truth:** `backend/apps/movie/data/blacklist.csv`, tracked in the repository: one row per TMDB ID with
+its reason and source, and no titles or other TMDB content. A `rule:` row belongs to a rule in `blacklist_rules.py`
+(a production company's catalogue, optionally limited to an era), which `regenerate_blacklist` rewrites from TMDB's
+discover endpoint; a `hand:` row is a reviewed pick, many of them recognisable only from the poster. A hand pick keeps
+an ID a rule also matches.
+
+**Maintenance:** change the file in a pull request (a new hand pick, or a rule and its regenerated rows). The
+`sync_blacklist` command makes the table match the file and clears the cache; it runs at dev setup, after a database
+reset and in every deploy. The admin shows the table read-only, so nothing is edited in place and lost with a
+database.
 
 ### Stage 3: Completeness Filter
 
@@ -397,17 +403,22 @@ TMDB: 353 movies
 
 ## Key Files Reference
 
-| File                     | Location                                           | Purpose                             |
-|--------------------------|----------------------------------------------------|-------------------------------------|
-| `filters.py`             | `backend/apps/movie/services/data_quality/`        | Filter pipeline implementation      |
-| `policy.py`              | `backend/apps/movie/services/data_quality/`        | VoteCountPolicy, CompletenessPolicy |
-| `param_transformer.py`   | `backend/apps/movie/services/api_boundary/`        | TMDB param transformation           |
-| `query_params.py`        | `backend/apps/movie/services/tmdb_api_boundary/`   | Query parameter handling            |
-| `browseParamMapper.ts`   | `frontend/src/utilities/`                          | Frontend → API param mapping        |
-| `populate_blacklist.py`  | `backend/apps/movie/management/commands/`          | Blacklist population command        |
+| File                      | Location                                         | Purpose                             |
+|---------------------------|--------------------------------------------------|-------------------------------------|
+| `filters.py`              | `backend/apps/movie/services/data_quality/`      | Filter pipeline implementation      |
+| `policy.py`               | `backend/apps/movie/services/data_quality/`      | VoteCountPolicy, CompletenessPolicy |
+| `param_transformer.py`    | `backend/apps/movie/services/api_boundary/`      | TMDB param transformation           |
+| `query_params.py`         | `backend/apps/movie/services/tmdb_api_boundary/` | Query parameter handling            |
+| `browseParamMapper.ts`    | `frontend/src/utilities/`                        | Frontend → API param mapping        |
+| `blacklist.csv`           | `backend/apps/movie/data/`                       | Blacklist source of truth           |
+| `blacklist_file.py`       | `backend/apps/movie/services/data_quality/`      | Blacklist file read, write, sync    |
+| `blacklist_rules.py`      | `backend/apps/movie/services/data_quality/`      | Blacklist rules and TMDB fetch      |
+| `sync_blacklist.py`       | `backend/apps/movie/management/commands/`        | Load the file into the table        |
+| `regenerate_blacklist.py` | `backend/apps/movie/management/commands/`        | Rewrite rule rows from TMDB         |
 
 ---
 
 ## Version History
 
+- **1.1** (2026-11-04): Blacklist kept as a tracked file, synced into the table
 - **1.0** (2025-12-15): Initial strategy document

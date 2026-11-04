@@ -26,12 +26,13 @@ class Item(BaseModel):
 @pytest.mark.parametrize(
     ("upstream_status", "client_status", "message"),
     [
-        (404, 404, "Resource not found"),
-        (429, 429, "Rate limit exceeded, please try again later"),
+        (400, 400, "Invalid request"),
+        (422, 400, "Invalid request"),
+        (404, 502, "External API error"),
+        (429, 503, "External API is busy, please try again later"),
         (504, 504, "External API timed out"),
         (401, 502, "External API error"),
         (403, 502, "External API error"),
-        (400, 502, "External API error"),
         (500, 502, "External API error"),
         (502, 502, "External API error"),
     ],
@@ -46,6 +47,16 @@ def test_raise_upstream_error_maps_status_to_a_fixed_error(
 
     assert exc_info.value.status_code == client_status
     assert exc_info.value.message == message
+
+
+def test_raise_upstream_error_keeps_not_found_on_a_lookup() -> None:
+    response = ApiResponse(status_code=404, error_message="TMDB request failed: 404")
+
+    with pytest.raises(HttpError) as exc_info:
+        raise_upstream_error(response, lookup=True)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.message == "Resource not found"
 
 
 @pytest.mark.parametrize(

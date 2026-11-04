@@ -18,26 +18,32 @@ from .api_response import ApiResponse
 logger = logging.getLogger(__name__)
 
 
-def raise_upstream_error(response: ApiResponse) -> NoReturn:
+def raise_upstream_error(response: ApiResponse, *, lookup: bool = False) -> NoReturn:
     """Raise the client-facing error for a failed upstream response.
 
-    Neither TMDB's status nor its error text reaches the client. When TMDB answered
-    that a resource does not exist or that requests are rate limited, the client gets
-    the same meaning with a fixed message. A timeout is a 504 and every other failure
-    is a 502, including TMDB rejecting the API key: passed through, that 401 would
-    read as the visitor's own session expiring.
+    Neither TMDB's status nor its error text reaches the client; every error carries a
+    fixed message. TMDB rejecting the request's parameters (400 or 422) is a 400, and
+    on a lookup by ID its 404 is a 404. TMDB rate limiting the server's shared key is a
+    503, a timeout is a 504, and every other failure is a 502, including TMDB rejecting
+    the API key: passed through, that 401 would read as the visitor's own session
+    expiring.
 
     Args:
         response: Failed ApiResponse from the TMDB client
+        lookup: True when the request fetched one resource by ID, so a 404 means that
+            resource does not exist rather than that the integration is broken
 
     Raises:
-        HttpError: 404, 429, 504 or 502, with a fixed message
+        HttpError: 400, 404, 502, 503 or 504, with a fixed message
     """
-    if response.status_code == 404:
+    status = response.status_code
+    if status == 404 and lookup:
         raise HttpError(404, "Resource not found")
-    if response.status_code == 429:
-        raise HttpError(429, "Rate limit exceeded, please try again later")
-    if response.status_code == 504:
+    if status in (400, 422):
+        raise HttpError(400, "Invalid request")
+    if status == 429:
+        raise HttpError(503, "External API is busy, please try again later")
+    if status == 504:
         raise HttpError(504, "External API timed out")
     raise HttpError(502, "External API error")
 

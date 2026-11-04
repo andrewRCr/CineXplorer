@@ -71,17 +71,18 @@ logger = logging.getLogger("cinexplorer.tmdb")
 
 
 def handle_tmdb_api_error(
-    api_response: ApiResponse, operation: str, **context: object
+    api_response: ApiResponse, operation: str, *, lookup: bool = False, **context: object
 ) -> NoReturn:
     """Log a failed TMDB response and raise the client-facing error for it.
 
     Args:
         api_response: ApiResponse object from TMDB client
         operation: Name of the operation that failed
+        lookup: True when the request fetched one resource by ID (see raise_upstream_error)
         **context: Additional context for logging
 
     Raises:
-        HttpError: 404, 429, 504 or 502 with a fixed message (see raise_upstream_error)
+        HttpError: 400, 404, 502, 503 or 504 with a fixed message (see raise_upstream_error)
     """
     correlation_id = getattr(api_response, "correlation_id", str(uuid.uuid4())[:8])
 
@@ -97,7 +98,7 @@ def handle_tmdb_api_error(
         },
     )
 
-    raise_upstream_error(api_response)
+    raise_upstream_error(api_response, lookup=lookup)
 
 
 def get_validated_response(
@@ -120,7 +121,8 @@ def get_validated_response(
         HttpError: If API error or invalid/empty data
     """
     if not api_response.is_success():
-        handle_tmdb_api_error(api_response, operation=operation, **context)
+        # Lists and searches: a 404 here means the integration broke, not a missing resource
+        handle_tmdb_api_error(api_response, operation=operation, lookup=False, **context)
 
     result = api_response.get_json_data()
     if not result:
@@ -132,7 +134,7 @@ def get_validated_response(
                 **context,
             },
         )
-        raise HttpError(500, "Failed to get valid response data from TMDB")
+        raise HttpError(502, "Failed to get valid response data from TMDB")
 
     return result
 

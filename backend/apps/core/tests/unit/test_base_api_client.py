@@ -14,6 +14,12 @@ import requests
 
 from apps.core.services.base_api_client import BaseApiClient
 
+# Exception text as requests renders it, quoting the request URL with its query string
+QUOTED_URL_ERROR = (
+    "HTTPSConnectionPool(host='api.example.com', port=443): Max retries exceeded with url: "
+    "/3/movie/popular?api_key=SECRET&page=1 (Caused by ConnectTimeoutError())"
+)
+
 
 class ConcreteApiClient(BaseApiClient):
     """Concrete implementation of BaseApiClient for testing."""
@@ -227,6 +233,32 @@ class TestBaseApiClientExceptionHandling:
         assert response.status_code == 502
         assert response.error_message == "API request failed"
         assert response.error_category == "request_error"
+
+    @pytest.mark.parametrize(
+        ("error", "field"),
+        [
+            (requests.exceptions.ConnectTimeout(QUOTED_URL_ERROR), "timeout_error"),
+            (requests.exceptions.RetryError(QUOTED_URL_ERROR), "request_error"),
+        ],
+    )
+    def test_exception_text_is_logged_with_the_api_key_redacted(
+        self, error: requests.exceptions.RequestException, field: str
+    ) -> None:
+        client = ConcreteApiClient(base_url="https://api.example.com")
+
+        with patch.object(client, "logger") as mock_logger:
+            response = client.handle_request_exception(
+                error=error,
+                correlation_id="test-redact",
+                endpoint="/3/movie/popular",
+                duration_ms=100,
+                url="https://api.example.com/3/movie/popular",
+            )
+
+        logged = mock_logger.error.call_args.kwargs["extra"][field]
+        assert "/3/movie/popular?api_key=[REDACTED]&page=1" in logged
+        assert "SECRET" not in logged
+        assert "SECRET" not in f"{response.error_message} {response.error_details}"
 
     def test_handle_exception_sanitizes_params(self) -> None:
         client = ConcreteApiClient(base_url="https://api.example.com")

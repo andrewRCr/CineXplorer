@@ -10,10 +10,11 @@ from django.db import models
 class BlacklistedMovie(models.Model):
     """Movies to exclude from all TMDB results.
 
-    Used to manually filter out specific TMDB IDs that slip through
-    automated filters (e.g., mislabeled content, non-movie entries).
+    Used to filter out specific TMDB IDs that slip through automated
+    filters (e.g., mislabeled content, non-movie entries).
 
-    Managed via Django admin - no deploy required to update blacklist.
+    Loaded from the tracked file `apps/movie/data/blacklist.csv` by the
+    `sync_blacklist` command; the admin shows it read-only.
     """
 
     tmdb_id = models.IntegerField(  # type: ignore[var-annotated]

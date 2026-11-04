@@ -169,12 +169,13 @@ docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env c
 
 ### Deploy the first version and create a verified account
 
-From `/opt/cinexplorer/repo/infrastructure`, pull, migrate as a one-off container, then start the stack. Stop if any
-command fails; do not continue to `up` after a failed migration.
+From `/opt/cinexplorer/repo/infrastructure`, pull, migrate and load the movie blacklist as one-off containers, then
+start the stack. Stop if any command fails; do not continue to `up` after a failed migration or sync.
 
 ```sh
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env pull
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate --noinput
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py sync_blacklist
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env ps
 curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/
@@ -240,8 +241,9 @@ pull-request CI run does not publish images. Deploy only from a run whose `ci-ok
 without waiting for the tests, so a run can publish images whose tests failed. Use the full commit SHA from that run;
 the image tag is `sha-` plus its first seven characters.
 
-In the server shell, record the current commit and tag before changing them. Keep these values for rollback in
-this terminal, and save them in your deployment notes outside the checkout:
+In the server shell, take a [backup](#back-up-the-database) first, then record the current commit and tag before
+changing them. Keep these values for rollback in this terminal, and save them in your deployment notes outside the
+checkout:
 
 ```sh
 cd /opt/cinexplorer/repo/infrastructure
@@ -259,20 +261,46 @@ chmod 600 /opt/cinexplorer/prod.env
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env config --quiet
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env pull
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate --noinput
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py sync_blacklist
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
 curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/
 ```
 
-Execute one command at a time and stop on failure. The previous containers keep serving until `up` recreates them;
-there is no zero-downtime guarantee or automatic recovery. A failed migration can leave schema changes behind:
-inspect its output before retrying or considering rollback. Confirm browser sign-in and watchlist persistence after
-a successful deploy. Caddy's data volume is retained, so the existing certificate is reused.
+Execute one command at a time and stop on failure. The previous containers keep serving until `up` recreates them; there
+is no zero-downtime guarantee or automatic recovery. A failed migration can leave schema changes behind: inspect its
+output before retrying or considering rollback. `sync_blacklist` makes the movie blacklist table match the version's
+`backend/apps/movie/data/blacklist.csv`, and refuses a malformed file without changing the table. Confirm browser
+sign-in and watchlist persistence after a successful deploy. Caddy's data volume is retained, so the existing
+certificate is reused.
+
+## Back up the database
+
+Take a backup before any step that can lose data: a deploy's `migrate`, a migration reversal, or anything that drops or
+recreates the database or its volume. From `/opt/cinexplorer/repo/infrastructure`:
+
+```sh
+mkdir -p /opt/cinexplorer/backups
+umask 077
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "/opt/cinexplorer/backups/cinexplorer-$(date +%F-%H%M).dump"
+ls -l /opt/cinexplorer/backups/
+```
+
+Stop if `pg_dump` fails or the file is empty. To restore, stop the backend, restore into the running database, and
+start it again:
+
+```sh
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env stop backend
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' < /opt/cinexplorer/backups/BACKUP_FILE.dump
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
+```
+
+Backups stay on the droplet, so they don't survive losing it; copy one off the server when it must.
 
 ## Roll back code and compare schema
 
-A rollback restores code, **not automatically the schema**. Reversing migrations can permanently discard the data
-they added; there is no backup/restore procedure here. If any required migration cannot be reversed, stop and roll
-forward with a corrected version instead. Never use `--fake` to bypass a failed migration.
+A rollback restores code, **not automatically the schema**. Reversing migrations can permanently discard the data they
+added; take a [backup](#back-up-the-database) before reversing any. If any required migration cannot be reversed, stop
+and roll forward with a corrected version instead. Never use `--fake` to bypass a failed migration.
 
 Stay at the newer checkout until schema comparison and any reversal are finished. Set the previous full commit and
 tag from your saved deployment notes if the shell variables above are no longer available. Record the newer tag:
@@ -308,6 +336,10 @@ IMAGE_TAG="$newer_tag" docker compose -f docker-compose.prod.yml --env-file /opt
 Repeat for each affected app in dependency order, then rerun the newer-image `showmigrations` command to confirm the
 applied set is compatible with the previous image. If there are no extra applied migrations, skip these reversal
 commands entirely.
+
+The rollback leaves the movie blacklist table as the newer version loaded it. If the previous version has the
+`sync_blacklist` command, run it after `migrate` below so the table matches that version's file; an older image has no
+such command.
 
 Only after the comparison/reversals succeed, switch checkout and tag, migrate any unapplied migrations belonging to
 the previous version, and start it:
@@ -347,8 +379,9 @@ with persistence disabled, so a restart clears throttle histories and cached dat
 Docker retains three 10 MB log files per container. Services restart unless explicitly stopped.
 
 Keep the project name and volumes stable across deploys. Do not run `down -v` on the server: it deletes database and
-certificate state. Env files live under `/opt/cinexplorer`, outside the checkout; the repository deploy key and
-registry credentials live under `/home/deploy/.ssh` and `/home/deploy/.docker` respectively.
+certificate state. Take a [backup](#back-up-the-database) before any step that drops or recreates the database. Env
+files live under `/opt/cinexplorer`, outside the checkout; the repository deploy key and registry credentials live under
+`/home/deploy/.ssh` and `/home/deploy/.docker` respectively.
 
 Security updates install automatically. When a required update requests a reboot, unattended-upgrades schedules it
 for 09:00 UTC. Inspect `/var/log/unattended-upgrades/`, `systemctl list-timers apt-daily*` and `swapon --show` when

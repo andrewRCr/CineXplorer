@@ -18,7 +18,7 @@ Usage:
 Options:
     --verbose       Show detailed error messages (first 5 per app)
     --only CHECKS   Run only specified checks (space-separated)
-                   Available: core authentication movie user_movie_data accounts config
+                   Available: core authentication movie user_movie_data config
 """
 
 from __future__ import annotations
@@ -92,7 +92,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run Pyright type checking on CineXplorer backend",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Available checks: core, authentication, movie, user_movie_data, accounts, config",
+        epilog="Available checks: core, authentication, movie, user_movie_data, config",
     )
     parser.add_argument(
         "--verbose",
@@ -126,11 +126,6 @@ def main() -> None:
             ["npx", "pyright", "apps/user_movie_data/", "--project", "."],
         ),
         (
-            "accounts",
-            "Accounts App",
-            ["npx", "pyright", "apps/accounts/", "--project", "."],
-        ),
-        (
             "config",
             "Config Module",
             ["npx", "pyright", "config/", "--project", "."],
@@ -143,7 +138,7 @@ def main() -> None:
         checks_to_run = [check for check in all_checks if check[0] in only_set]
         if not checks_to_run:
             print(f"Warning: No matching checks found for: {', '.join(args.only)}")
-            print("Available: core, authentication, movie, user_movie_data, accounts, config")
+            print("Available: core, authentication, movie, user_movie_data, config")
             sys.exit(1)
     else:
         checks_to_run = all_checks

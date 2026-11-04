@@ -71,7 +71,12 @@ def test_export_openapi_schema_writes_only_json_to_stdout() -> None:
     corrupt the schema that type generation reads. A fresh interpreter loads the API the
     way a real invocation does; inside this test process it is already imported.
     """
-    env = {**os.environ, "DEBUG": "True", "DJANGO_CONSOLE_LOG_LEVEL": "DEBUG"}
+    env = {
+        **os.environ,
+        "DEBUG": "True",
+        "DJANGO_LOG_LEVEL": "DEBUG",
+        "DJANGO_CONSOLE_LOG_LEVEL": "DEBUG",
+    }
     env.pop("TESTING", None)
 
     result = subprocess.run(

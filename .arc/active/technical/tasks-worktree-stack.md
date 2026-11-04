@@ -121,35 +121,15 @@ run beside it.
     - Rebuilt and restarted this worktree's backend. All 419 movie tests pass. CI retains all three Node test files.
       The merge's default message was rejected by the commit-message hook; completed with the required format.
 
-- [ ] **3.2 `seed_dev_data` gives a fresh database an account and the blacklist** (R11, R15; Criterion 2)
+- [x] **3.2 `seed_dev_data` gives a fresh database an account and the blacklist** (R11, R15; Criterion 2)
 
-    - [ ] **3.2.a Write tests** in `backend/apps/core/tests/integration/test_seed_dev_data.py` (new), through
-      `call_command`, against the real test database
-        - Outside `development` (`override_settings(ENVIRONMENT="staging")`): `CommandError` with a message; no user
-          created and the blacklist untouched
-        - A first run creates one user `dev` with `dev@example.com` and one `EmailAddress` for it, verified and
-          primary; `POST /api/token/` with `login` `dev` and password `cinexplorer-dev` answers `200` (it answers `403`
-          to an unverified address); a second run still leaves one user and one address
-        - An existing `dev` user, with another email and password and no `EmailAddress`, is left as it was
-        - Another user holding `DEV@Example.com`: `CommandError` naming the conflict, no `dev` user, nothing changed
-          (the user model's email constraint ignores case, and so does the check)
-        - From an empty blacklist table, the table's IDs afterwards equal the tracked file's (`read_blacklist` and
-          `BLACKLIST_FILE` in `apps/movie/services/data_quality/blacklist_file.py`)
-        - The output says whether the account was created and carries `sync_blacklist`'s summary
-        - Expect tests to FAIL initially
-
-    - [ ] **3.2.b Write `backend/apps/core/management/commands/seed_dev_data.py`**
-        - `CommandError` unless `settings.ENVIRONMENT == "development"`
-        - The conflict check (`email__iexact`, excluding `dev`) runs before any write
-        - The account: `get_or_create` on `username="dev"` through the configured user model's manager, then, when
-          created, `set_password` and the verified, primary `EmailAddress`, all in one `transaction.atomic`
-          (DEVELOPMENT-RULES § Data Integrity: no read followed by a separate write)
-        - Then `call_command("sync_blacklist", stdout=self.stdout)`
-        - Outside tests, #76's rules flag a hard-coded password by form: `S105` on a named constant, `S106` on a
-          `password=` keyword argument, and nothing on a positional `set_password("...")`. Suppress inline only the
-          rule Ruff reports for the form written, with the reason (a documented, development-only credential); an
-          unneeded `noqa` fails `RUF100`
-        - Tests should now PASS, with `main`'s lint and type rules (#76, #77) applied
+    - [x] **3.2.a Write tests:** six real-database cases, all failing first, cover environment refusal with no
+      writes, verified sign-in (and the unverified control), repeatability, an unchanged existing account,
+      case-insensitive email conflicts and blacklist synchronization from the tracked file including repeat repair.
+    - [x] **3.2.b Write the command:** development-only, conflict check before writes, configured user manager's
+      `get_or_create`, password and verified address created atomically, then `sync_blacklist` with its summary.
+      All 244 core tests pass; core Ruff passes, the new files are formatted and core Pyright reports zero errors,
+      warnings or information. Corrected the new test's token-response field, wrapping and type annotations.
 
 - [ ] **3.3 `browse` starts the stack, migrates and seeds** (R7, R14; Criterion 1)
 

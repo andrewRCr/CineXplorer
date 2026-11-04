@@ -200,13 +200,13 @@ going against its design and making upgrades difficult.
 
 **Why No JWT Tokens for OAuth?**
 
-Django-allauth headless mode has two distinct client types:
+The site exposes only four exact browser paths under `/_allauth/browser/v1/`:
+`auth/session` (`GET`, `DELETE`), `auth/password/request` (`POST`), `auth/password/reset` (`POST`), and
+`auth/provider/redirect` (`POST`). The middleware answers `404` for other paths or methods, including all
+`/_allauth/app/` requests and allauth's own sign-up and password sign-in. Those two operations use the project's
+endpoints and their throttles. Provider callbacks remain under `/accounts/`.
 
-- **Browser mode** (`/_allauth/browser/v1/`) - Uses HTTP-only session cookies (what we use)
-- **App mode** (`/_allauth/app/v1/`) - Uses `X-Session-Token` header (for mobile apps)
-
-The browser mode intentionally uses session cookies for security. While django-allauth supports a
-`HEADLESS_TOKEN_STRATEGY` setting, it's **only used for app mode**, not browser OAuth flows.
+Browser OAuth uses HTTP-only session cookies. The app client's session-token mechanism is unreachable.
 
 **Attempting to force JWT tokens for browser OAuth would require**:
 
@@ -223,35 +223,34 @@ The browser mode intentionally uses session cookies for security. While django-a
 
 ### CSRF Protection
 
-**How it works**:
+`CsrfProtectionMiddleware` subclasses Django's `CsrfViewMiddleware` and checks unsafe requests independently of
+authentication, including public sign-in, registration, refresh, password reset and session-only writes. Ninja's
+view exemption does not bypass these checks. Safe methods retain Django's behavior.
 
-1. **Backend sets `csrftoken` cookie** (readable by JavaScript)
-2. **Frontend reads cookie** for `POST/PUT/PATCH/DELETE` requests
-3. **Frontend sends token in `X-CSRFToken` header**
-4. **Backend validates** token matches cookie
+- Django validates the `csrftoken` cookie against `X-CSRFToken`, or the `csrfmiddlewaretoken` form field. Masked
+  tokens are accepted; a response token need not be identical to the cookie secret.
+- Origin and HTTPS Referer checks use Django's host and `CSRF_TRUSTED_ORIGINS` rules.
+- A refusal is always `403 {"detail": "CSRF token missing or invalid."}`, including in debug mode.
+- Only `POST /api/logs/` (anonymous reporting), `POST /api/dev-logs/write/` (development console capture), and
+  `/__debug__/` (the development toolbar's SQL panel) are exempt.
+- Responses for which `get_token` runs set the cookie, including allauth's session check. `GET /api/csrf/` also
+  explicitly sets it. Django test clients skip checks unless constructed with `enforce_csrf_checks=True`.
 
-**Implementation**:
+The frontend initializes a missing cookie before sending an unsafe request:
 
 ```typescript
-// frontend/src/services/apiClient.ts
-// Request interceptor attaches CSRF token automatically
-const unsafeMethods = ["post", "put", "patch", "delete"];
-if (config.method && unsafeMethods.includes(config.method.toLowerCase())) {
-  const csrfToken = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith("XSRF-TOKEN="))
-    ?.split("=")[1];
-  if (csrfToken) {
-    config.headers["X-CSRFToken"] = csrfToken;
-  }
-}
+await ensureCsrfTokenCookie(apiBaseUrl);
+const csrfToken = getCsrfToken(); // Reads csrftoken
+await apiClient.post("/logout/", {}, {
+  headers: { "X-CSRFToken": csrfToken || "" },
+});
 ```
 
-**OAuth CSRF Protection**:
-
-- OAuth uses **OAuth 2.0 state parameter** (more secure than cookies)
-- State is random, session-bound, validated on callback
-- CSRF token is optional but included for defense-in-depth
+The API client's request interceptor covers all four unsafe methods. Its bare refresh POST, password-reset
+completion, OAuth session DELETE and OAuth start form also initialize and send the token. Safe requests do not
+initialize a cookie. The OAuth start form submits synchronously when the cookie exists and waits for initialization
+when it is absent. Its `csrfmiddlewaretoken` is required; the provider callback separately validates OAuth's random,
+session-bound `state` parameter.
 
 ### CORS Configuration
 
@@ -421,7 +420,7 @@ URLs only register OAuth callback views (login/signup HTML views are disabled).
 
 ### Frontend: React + Axios
 
-**Authentication Hook** (`frontend/src/hooks/useAuth.ts`):
+**Authentication Hook** (`frontend/src/hooks/auth/useAuth.ts`):
 
 ```typescript
 export function useAuth() {
@@ -505,82 +504,36 @@ export function useAuth() {
 
 **API Client Configuration** (`frontend/src/services/apiClient.ts`):
 
+The client sends credentials for both authentication patterns and attaches an access token when one is stored.
+Its request interceptor initializes CSRF only for unsafe methods:
+
 ```typescript
-const apiClient = axios.create({
-  baseURL: BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,  // CRITICAL: Send cookies with every request
-});
-
-// Request interceptor: Attach JWT access token and CSRF token
-apiClient.interceptors.request.use((config) => {
-  // JWT pattern: Attach access token from sessionStorage
+apiClient.interceptors.request.use(async (config) => {
   const { access_token } = getAuthTokens();
-  if (access_token) {
-    config.headers.Authorization = `Bearer ${access_token}`;
-  }
+  if (access_token) config.headers.Authorization = `Bearer ${access_token}`;
 
-  // CSRF protection for unsafe methods
-  const unsafeMethods = ["post", "put", "patch", "delete"];
-  if (config.method && unsafeMethods.includes(config.method.toLowerCase())) {
-    const csrfToken = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("XSRF-TOKEN="))
-      ?.split("=")[1];
-    if (csrfToken) {
-      config.headers["X-CSRFToken"] = csrfToken;
-    }
+  if (config.method && ["post", "put", "patch", "delete"].includes(config.method.toLowerCase())) {
+    await ensureCsrfTokenCookie(apiBaseUrl);
+    config.headers["X-CSRFToken"] = getCsrfToken() || "";
   }
-
   return config;
 });
-
-// Response interceptor: Handle token refresh (JWT only)
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    // 401 = authentication error
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // Check if user has JWT tokens (email/password authentication)
-      const { access_token } = getAuthTokens();
-
-      // OAuth users won't have JWT tokens - let them handle 401 via session endpoint
-      if (!access_token) {
-        return Promise.reject(error);
-      }
-
-      // JWT user - attempt token refresh
-      originalRequest._retry = true;
-
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/auth/refresh`,
-          {},
-          { withCredentials: true }  // Send refresh token cookie
-        );
-
-        if (response.status === 200 && response.data.access_token) {
-          const newAccessToken = response.data.access_token;
-          setAuthTokens(newAccessToken);
-          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        // Refresh failed - clear tokens and redirect to login
-        clearAuthTokens();
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
-      }
-    }
-
-    return Promise.reject(error);
-  }
-);
 ```
+
+The response interceptor handles `401` for password users, queues concurrent callers and validates the refresh
+response before retrying. OAuth users have no access token and do not refresh. Every bare refresh POST includes
+credentials and CSRF:
+
+```typescript
+await ensureCsrfTokenCookie(apiBaseUrl);
+const response = await axios.post<unknown>(`${apiBaseUrl}/auth/refresh`, {}, {
+  withCredentials: true,
+  headers: { "X-CSRFToken": getCsrfToken() || "" },
+});
+```
+
+A failed or malformed refresh rejects all queued callers, clears tokens and redirects to
+`/login?session_expired=true`. The access token must be a nonempty string before it is stored or used in a retry.
 
 ---
 
@@ -588,21 +541,24 @@ apiClient.interceptors.response.use(
 
 ### JWT Authentication Endpoints (Django Ninja)
 
-| Endpoint              | Method | Auth Required | Purpose              | Request Body                                         | Response                                              |
-|-----------------------|--------|---------------|----------------------|------------------------------------------------------|-------------------------------------------------------|
-| `/api/token/`         | POST   | No            | Email/password login | `{username, password}`                               | `{access_token, refresh_token, user_id}` + Set-Cookie |
-| `/api/auth/refresh`   | POST   | Yes (cookie)  | Refresh access token | (empty)                                              | `{access_token}`                                      |
-| `/api/logout/`        | POST   | Yes (JWT)     | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                           |
-| `/api/auth/register/` | POST   | No            | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                         |
-| `/api/auth/user/`     | GET    | Yes (JWT)     | Get user profile     | N/A                                                  | `{id, username, email, ...}`                          |
+| Endpoint            | Method | Auth Required | Purpose              | Request Body                                         | Response                                              |
+|---------------------|--------|---------------|----------------------|------------------------------------------------------|-------------------------------------------------------|
+| `/api/token/`       | POST   | No            | Email/password login | `{login, password}`                                  | `{access_token, refresh_token, user_id}` + Set-Cookie |
+| `/api/auth/refresh` | POST   | Yes (cookie)  | Refresh access token | (empty)                                              | `{access_token}`                                      |
+| `/api/logout/`      | POST   | Yes (JWT)     | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                           |
+| `/api/register/`    | POST   | No            | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                         |
+| `/api/profile/`     | GET    | Yes (JWT)     | Get user profile     | N/A                                                  | `{id, username, email, ...}`                          |
 
 **Example: Login**:
 
 ```bash
-curl -X POST https://localhost:8000/api/token/ \
+curl -k -c cookies.txt https://localhost:8444/api/csrf/
+# Use the returned csrf_token value with the cookie jar.
+curl -k -b cookies.txt -c cookies.txt -X POST https://localhost:8444/api/token/ \
   -H "Content-Type: application/json" \
-  -d '{"username": "user@example.com", "password": "password123"}' \
-  -k
+  -H "Origin: https://localhost:8444" \
+  -H "X-CSRFToken: <csrf_token>" \
+  -d '{"login": "user@example.com", "password": "password123"}'
 
 # Response:
 # {
@@ -615,17 +571,24 @@ curl -X POST https://localhost:8000/api/token/ \
 
 ### OAuth Endpoints (django-allauth)
 
+The four browser paths listed below are the complete allowlist; every other headless path or method answers `404`.
+Unsafe methods require CSRF even before sign-in. Provider callbacks are outside the headless prefix.
+
 | Endpoint                                      | Method | Auth Required | Purpose                   | Request Body                                             | Response                                            |
 |-----------------------------------------------|--------|---------------|---------------------------|----------------------------------------------------------|-----------------------------------------------------|
 | `/_allauth/browser/v1/auth/provider/redirect` | POST   | No            | Initiate OAuth flow       | `{provider, callback_url, process, csrfmiddlewaretoken}` | 302 redirect to provider                            |
 | `/_allauth/browser/v1/auth/session`           | GET    | Yes (cookie)  | Check authentication      | N/A                                                      | `{data: {user, methods}, meta: {is_authenticated}}` |
 | `/_allauth/browser/v1/auth/session`           | DELETE | Yes (cookie)  | Logout OAuth user         | N/A                                                      | `200 OK` + Clear session cookie                     |
+| `/_allauth/browser/v1/auth/password/request`  | POST   | No            | Request password reset    | `{email}`                                                | `200 OK`                                            |
+| `/_allauth/browser/v1/auth/password/reset`    | POST   | No            | Complete password reset   | `{key, password}`                                        | `200` or `401` on success                           |
 | `/accounts/{provider}/login/callback/`        | GET    | No            | OAuth callback (internal) | N/A                                                      | 302 redirect to callback_url                        |
 
 **Example: Initiate Google OAuth**:
 
 ```javascript
-// Frontend creates and submits form
+// Initialize the required token before constructing the OAuth form.
+if (!getCsrfToken()) await ensureCsrfTokenCookie(apiBaseUrl);
+const csrfToken = getCsrfToken();
 const form = document.createElement("form");
 form.method = "POST";
 form.action = "https://localhost:8444/_allauth/browser/v1/auth/provider/redirect";
@@ -695,52 +658,15 @@ Django Ninja tries JWTAuth first, then SessionAuth if JWT fails. Whichever succe
 
 ### OAuth Flow Implementation
 
-**Login Component** (`frontend/src/pages/user/Login.tsx`):
+**OAuth hook** (`frontend/src/hooks/auth/useOAuthFlow.ts`):
+
+`initializeOAuth` ensures the CSRF cookie, builds the provider form with `csrfmiddlewaretoken`, records the provider
+and start time in session storage, and submits the form through the site's origin. The browser follows the provider
+redirect. Errors are reported to the caller's error callback; a throwing callback rejects the completion promise.
 
 ```typescript
-const initializeOAuthLogin = async (provider: string) => {
-  try {
-    console.log(`[OAuth] Initializing ${provider} OAuth login`);
-
-    // Get CSRF token from cookie
-    const csrfToken = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("csrftoken="))
-      ?.split("=")[1];
-
-    // Create form and submit through Caddy proxy
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "https://localhost:8444/_allauth/browser/v1/auth/provider/redirect";
-    form.target = "_self";  // Force full page reload
-
-    const fields = {
-      provider: provider,
-      callback_url: "https://localhost:8444/login",
-      process: "login",
-      ...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
-    };
-
-    Object.entries(fields).forEach(([key, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
-    });
-
-    // Track OAuth flow in sessionStorage (for callback detection)
-    sessionStorage.setItem('oauth_in_progress', provider);
-    sessionStorage.setItem('oauth_start_time', Date.now().toString());
-
-    // Submit form (triggers browser redirect to OAuth provider)
-    document.body.appendChild(form);
-    form.submit();
-  } catch (error) {
-    console.error("OAuth initialization error:", error);
-    setGeneralError("Failed to initiate OAuth login. Please try again.");
-  }
-};
+const { initializeOAuth } = useOAuthFlow(setGeneralError);
+<Button onClick={() => { void initializeOAuth("google"); }}>Google</Button>
 ```
 
 **OAuth UX Enhancements**:

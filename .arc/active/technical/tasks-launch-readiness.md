@@ -130,16 +130,16 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: full backend suite 947 passed; touched-app Ruff lint/format, scoped Pyright and task-list lint passed.
       The full run exposed the obsolete masked-token equality assertion, which now checks an enforcing request.
 
-- [ ] **2.4 The authentication reference and every description of the old design match the new one** (R27;
+- [x] **2.4 The authentication reference and every description of the old design match the new one** (R27;
   Implemented 12)
-    - `.arc/reference/strategies/project/strategy-authentication.md` throughout: its CSRF section and frontend code
-      samples to R20 and R21, and its description of allauth's headless clients to R24; its steps for adding a
-      provider change with 3.4
-    - `backend/config/api.py`'s and `apps/authentication/auth_ninja.py`'s CSRF comments, the OAuth start's docstring
-      in `useOAuthFlow.ts`, and the old-design text in `apps/authentication/tests/integration/test_security.py` and
-      `test_user_api.py`, each read and rewritten to what the code now does
-    - Remove `backend/scripts/test_csrf_protection.sh`
-    - Check: Implemented 12's `git grep` finds no text describing the old design (Phase 2 note on the hits it keeps)
+    - Updated the strategy's CSRF model, frontend request/form examples and allauth client/endpoint descriptions,
+      including masked tokens, Origin/Referer, required OAuth tokens and the complete allowlist. Authentication
+      examples use the current route and hook names. Provider setup changes accompany 3.4; refresh changes accompany 2.5.
+    - Updated API configuration, cookie-auth comments, OAuth-start documentation and security/user API test prose.
+      Removed the unused `backend/scripts/test_csrf_protection.sh`.
+    - The case-insensitive search finds no old-design description outside planning/archive records; its one source
+      hit explains hiding Ninja's `csrf_exempt` flag for Django validation. Checks: markdown lint, touched Python
+      lint/format, scoped Pyright, 259 authentication tests, four related OAuth tests, frontend types/lint/format passed.
 
 - [ ] **2.5 A password user stays signed in while the refresh token is valid** (R28; Implemented 10 and 12, and Proven
   live 15 in 5.5)

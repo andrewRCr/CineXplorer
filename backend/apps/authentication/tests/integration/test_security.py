@@ -181,8 +181,7 @@ def test_token_refresh_maintains_samesite_lax(
     login_payload = {"login": user_data["username"], "password": user_data["password"]}
     json_post(client, "/api/token/", cast(dict[str, object], login_payload))
 
-    # Refresh tokens (requires CSRF token - double-submit cookie pattern)
-    # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
+    # Refresh requests carry Django's csrftoken cookie and X-CSRFToken header.
     csrf_token = "test_csrf_token"
     client.cookies["csrftoken"] = csrf_token  # Set cookie
     refresh_response = client.post(

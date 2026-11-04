@@ -397,8 +397,7 @@ def test_refresh_token_cookie_updated(registered_user: tuple[Client, dict[str, s
     old_refresh = old_refresh_cookie.value if old_refresh_cookie else None
     refresh_url = "/api/token/refresh/"
 
-    # Refresh endpoint requires CSRF token (double-submit cookie pattern)
-    # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
+    # Refresh requests carry Django's csrftoken cookie and X-CSRFToken header.
     csrf_token = "test_csrf_token"
     client.cookies["csrftoken"] = csrf_token  # Django's default CSRF_COOKIE_NAME
     response = client.post(

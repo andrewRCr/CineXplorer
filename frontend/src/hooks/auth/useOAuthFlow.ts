@@ -185,20 +185,11 @@ export function useOAuthFlow(
     /**
      * Initialize OAuth login using django-allauth headless mode.
      *
-     * Security Model:
-     * - OAuth endpoints (/_allauth/) are CSRF-exempt in backend middleware
-     * - OAuth 2.0 'state' parameter provides CSRF protection at protocol level
-     * - State is random, session-bound, validated on callback (more secure than cookies)
-     * - CSRF token is optional but included for defense-in-depth
-     *
-     * Flow:
-     * 1. Get CSRF token from existing cookie (may not exist, that's OK)
-     * 2. Create form and submit through Caddy proxy
-     * 3. Browser follows OAuth redirect to provider
-     * 4. User authorizes on provider site (Google/GitHub)
-     * 5. Provider redirects to backend callback with OAuth code
-     * 6. Backend validates state, exchanges code, creates session
-     * 7. Backend redirects to frontend, useAuth detects session, logs in
+     * Django requires the csrftoken cookie and matching csrfmiddlewaretoken form field.
+     * If the cookie is missing, initialize it before constructing the form.
+     * The provider callback separately validates the session-bound OAuth state.
+     * Form submission navigates to the provider, whose callback creates the session;
+     * useAuth then detects that session when the browser returns.
      *
      * Note: Uses HTML form submission (not fetch) so browser follows OAuth redirect.
      */

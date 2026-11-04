@@ -16,6 +16,13 @@ import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
 import { toaster } from "@/components/core/chakra/toaster";
 
+declare module "axios" {
+    interface AxiosRequestConfig {
+        /** The caller renders email-delivery 503s; other failures still use the global toast. */
+        handlesEmailDeliveryFailure?: boolean;
+    }
+}
+
 // Debug: Log the base URL being used
 logger.debug("[apiClient] BASE_URL configured", { BASE_URL });
 
@@ -154,7 +161,14 @@ apiClient.interceptors.response.use(
 
         // Check for server errors (5xx) and show toast notification
         // This provides consistent user feedback for infrastructure/backend failures
-        if (error.response && error.response.status >= 500) {
+        const handledEmailFailure =
+            error.response?.status === 503 &&
+            error.config?.handlesEmailDeliveryFailure;
+        if (
+            error.response &&
+            error.response.status >= 500 &&
+            !handledEmailFailure
+        ) {
             toaster.error({
                 title: "Server error",
                 description: "Please try again later.",

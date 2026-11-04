@@ -1,9 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createElement } from "react";
+import { act, render, screen } from "@tests/helpers/test-renderer";
+import {
+    Toaster,
+    toaster,
+    priorityToaster,
+} from "@/components/core/chakra/toaster";
+import {
+    requestPasswordReset,
+    resendVerificationEmail,
+} from "@/services/authService";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import type { AxiosInstance } from "axios";
 import { HttpResponse, http } from "msw";
 import apiClient, { refreshAccessToken } from "../apiClient";
-import { apiBaseUrl } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";
 import { server } from "@tests/mocks/server";
 import { clearBrowserAuth, token } from "@tests/helpers/auth";
@@ -286,3 +297,58 @@ it.each(["later", "same", "earlier", "expired"] as const)(
         expect(refreshes).toBe(scenario === "later" ? 0 : 1);
     },
 );
+
+describe("email failures and the global server-error toast", () => {
+    beforeEach(() => {
+        act(() => {
+            toaster.remove();
+            priorityToaster.remove();
+        });
+        document.cookie = "csrftoken=django-csrf; path=/";
+    });
+    afterEach(() => {
+        act(() => {
+            toaster.remove();
+            priorityToaster.remove();
+        });
+    });
+    it.each([
+        ["reset", 503, false],
+        ["resend", 503, false],
+        ["reset", 500, true],
+        ["resend", 500, true],
+        ["other", 503, true],
+    ] as const)(
+        "%s %s shows a global error: %s",
+        async (endpoint, status, showsToast) => {
+            const url =
+                endpoint === "reset"
+                    ? `${siteOrigin}/_allauth/browser/v1/auth/password/request`
+                    : `${apiBaseUrl}/${endpoint === "resend" ? "resend-verification/" : "other"}`;
+            server.use(
+                http.post(url, () =>
+                    HttpResponse.json(
+                        { detail: "Mail unavailable" },
+                        { status },
+                    ),
+                ),
+            );
+            render(createElement(Toaster));
+            await act(async () => {
+                const request =
+                    endpoint === "reset"
+                        ? requestPasswordReset("viewer@example.com")
+                        : endpoint === "resend"
+                          ? resendVerificationEmail("x".repeat(64))
+                          : apiClient.post("/other");
+                await expect(request).rejects.toThrow();
+            });
+            if (showsToast)
+                expect(await screen.findByText("Server error")).toBeVisible();
+            else
+                expect(
+                    screen.queryByText("Server error"),
+                ).not.toBeInTheDocument();
+        },
+    );
+});

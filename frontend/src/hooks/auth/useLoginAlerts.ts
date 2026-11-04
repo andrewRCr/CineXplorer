@@ -2,7 +2,7 @@ import logger from "@/services/logger";
 import { useState, useCallback } from "react";
 import * as authService from "@/services/authService";
 import { priorityToaster } from "@/components/core/chakra/toaster";
-import { hasErrorStatus } from "@/utilities/axiosErrorUtils";
+import { getErrorMessage, hasErrorStatus } from "@/utilities/axiosErrorUtils";
 
 // ============================================================================
 // Types
@@ -83,6 +83,12 @@ export function useLoginAlerts() {
                         title: "Too many requests",
                         description:
                             "Please wait a moment before trying again.",
+                    });
+                } else if (hasErrorStatus(error, 503)) {
+                    priorityToaster.error({
+                        title: "Failed to send email",
+                        description:
+                            getErrorMessage(error) || "Please try again later.",
                     });
                 } else {
                     priorityToaster.error({

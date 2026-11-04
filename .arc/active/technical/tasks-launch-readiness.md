@@ -192,30 +192,19 @@ authentication gaps that matter once sign-up is public are closed.
       tests, lint and TypeScript passed. Backend checks: 497 core/authentication tests, Ruff and scoped Pyright
       passed; registration's failure behavior remains covered. Frontend generated types and documentation checked.
 
-- [ ] **3.3 The forgot-password page and the resend action show the failed-send message** (R22, frontend;
+- [x] **3.3 The forgot-password page and the resend action show the failed-send message** (R22, frontend;
   Implemented 3)
 
-    - [ ] **3.3.a Write tests** through the shared Mock Service Worker server, finding elements by role and
-      accessible name, acting through `userEvent`, and asserting each toast as rendered (Phase 3 note on toasts)
-        - `src/pages/user/__tests__/ForgotPassword.test.tsx`: a `503` with R22's body shows that message; a `500`, a
-          `400` and a network error each show the generic confirmation
-        - `src/pages/user/__tests__/Login.test.tsx`: an unverified user signs in and chooses the resend action; on a
-          `503` with R22's body the failure toast shows R22's message; a `429` keeps "Too many requests", and other
-          errors keep "Please try again later."
-        - `apiClient.test.ts`: no "Server error" toast for a `503` from the password-reset request or
-          resend-verification; still one for a `500` from either, and for a `503` from another endpoint
-        - Expect the `503` cases to FAIL initially; the other outcomes pass today and guard the change: after 3.3.b,
-          see each fail once (R22's message shown for every error; the toast skipped for every `503`)
-
-    - [ ] **3.3.b Show the message**
-        - `authService.requestPasswordReset` rethrows the axios error, which keeps the response's status and `detail`
-          message (today it throws a plain `Error` and drops both); `hasErrorStatus` and `getErrorMessage`
-          (`utilities/axiosErrorUtils.ts`) read only axios errors, and `getErrorMessage` reads `detail` first
-        - `ForgotPassword.tsx` shows the message on a `503`, with semantic tokens for any styling, and its confirmation
-          otherwise; `useLoginAlerts.ts` adds a `503` branch beside its `429` one
-        - `apiClient.ts`'s response interceptor skips the "Server error" toast for a `503` on a request the two calls
-          mark (a request config flag), and shows it as today otherwise
-        - Tests should now PASS
+    - [x] **3.3.a Write tests:** rendered pages use MSW and `userEvent`, including an unverified login followed
+      by the resend action. Toasters are mounted and their visible text asserted. Reset covers 503/500/400/network/
+      success; resend covers 503/429/500/400/network; the API client covers both handled 503s, both 500s and another
+      endpoint's 503. The four new 503 outcomes failed before implementation. All eleven already-working outcome
+      guards failed under controlled reconstructions, then passed with source restored.
+    - [x] **3.3.b Show the message:** password reset preserves the original Axios rejection; both callers show
+      the detail message on 503, retaining their other outcomes. A typed request flag suppresses the global toast
+      only for these handled 503s. Forgot-password uses the existing priority error toast without new styling.
+    - Checks: 221 related frontend tests passed (20 files), type-aware lint and TypeScript passed. Mechanical fixes
+      removed the unused Axios import and wrapped test toast-store cleanup in `act`; no new act warnings remain.
 
 - [ ] **3.4 Deployed environments take the OAuth apps from their environment** (R15; Implemented 6, first half)
 

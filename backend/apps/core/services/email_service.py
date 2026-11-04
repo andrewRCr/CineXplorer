@@ -1,6 +1,6 @@
 """Email utilities for sending transactional emails.
 
-Uses Django's email backend (django-zoho-zeptomail in production).
+Uses Django's email API with the project's bounded ZeptoMail backend.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ class UserEmailProtocol(Protocol):
 def send_welcome_email(user: UserEmailProtocol) -> bool:
     """Send welcome email after successful email verification.
 
-    Uses Django's email backend (django-zoho-zeptomail in production,
+    Uses Django's email API (the project's ZeptoMail backend in production,
     locmem in tests) to send the welcome email.
 
     Args:

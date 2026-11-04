@@ -235,10 +235,9 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
-# Email Configuration - ZeptoMail through django-zoho-zeptomail's backend
-# 0.0.4 or later sends a multipart message's text and HTML as separate
-# textbody and htmlbody fields (0.0.3 concatenated them into htmlbody)
-EMAIL_BACKEND = "zoho_zeptomail.backend.zeptomail_backend.ZohoZeptoMailEmailBackend"
+# The project backend bounds ZeptoMail requests and logs sanitized delivery outcomes.
+# Multipart conversion comes from the pinned django-zoho-zeptomail package.
+EMAIL_BACKEND = "apps.core.email_backend.ZeptoMailEmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get("ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com")
 ZOHO_ZEPTOMAIL_API_KEY_TOKEN = os.environ.get("ZEPTOMAIL_API_KEY", "")
 # Region setting - only define for non-US hosted accounts

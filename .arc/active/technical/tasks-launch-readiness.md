@@ -163,34 +163,19 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 3:** A failed email is a handled error, and the deployed host configures sign-in, its Site and health
 
-- [ ] **3.1 The ZeptoMail backend times out, logs quietly and never raises** (R23; Implemented 4, transport half)
+- [x] **3.1 The ZeptoMail backend times out, logs quietly and never raises** (R23; Implemented 4, transport half)
 
-    - [ ] **3.1.a Write tests** in `apps/core/tests/unit/test_zeptomail_backend.py`, through its stand-in at
-      `requests`' transport layer
-        - The request goes out with a timeout (the stand-in receives one)
-        - `send_messages` returns `0` without raising when the stand-in raises `requests.Timeout` or
-          `requests.ConnectionError`, answers a non-2xx in ZeptoMail's error format, or answers a non-2xx whose body
-          is not JSON (a gateway's HTML page)
-        - Nothing reaches stdout (`capsys`) on acceptance or on failure
-        - Acceptance logs at `INFO` and each failure at `WARNING`, with the status code or the exception's class and
-          the request identifier or error code when present; no record contains the API key, a recipient or the
-          message's content (`caplog`)
-        - Missing key: a subprocess with the key empty imports the backend's module and sends a message, which
-          returns `0`, logs a `WARNING` and makes no request; a module-level import of the package's message class
-          fails this case
-        - Expect tests to FAIL initially; the existing multipart test passes before and after, and guards what reaches
-          ZeptoMail
-
-    - [ ] **3.1.b Write the project backend** in `apps/core/email_backend.py` (Phase 3 note on its shape)
-        - `EMAIL_BACKEND` names it; the comment above it in `config/settings.py` and every docstring naming the
-          configured backend describe it: in `apps/authentication/adapters.py` the module docstring and
-          `CustomAccountAdapter`'s, in `apps/core/services/email_service.py` the module docstring and the function
-          docstring naming the package, and `apps/authentication/tests/integration/test_email_backend.py`'s module
-          docstring
-        - Check: `git grep -n -i zeptomail -- backend` finds no other text describing the package's backend as the one
-          in use
-        - `requirements/req.txt` pins `django-zoho-zeptomail==0.0.4`
-        - Tests should now PASS
+    - [x] **3.1.a Write tests:** shared HTTP-adapter stand-in covers acceptance, timeout, connection failure,
+      documented provider refusal and a gateway HTML response, checking `(10, 10)`, counts, quiet stdout and
+      sanitized log levels/identifiers. Current key/region and a fresh interpreter with no key are covered. All
+      seven new cases failed against the package backend; the existing multipart test passed before and after.
+    - [x] **3.1.b Write the project backend:** lazy message conversion and an explicit bounded POST, sanitized
+      outcomes, and zero sent on configuration, conversion or transport failure. Missing-key sends avoid the
+      package's message import. Configured it, updated backend descriptions, pinned the converter to `0.0.4`,
+      and added narrow stubs for the used external interfaces. The transport helper is reusable by 3.2.
+    - Checks: rebuilt the isolated backend image after the pin; 494 core/authentication tests passed. Ruff lint/
+      format and scoped Pyright passed. The response fixture follows the provider's documented error envelope;
+      no actual mail or provider credentials were used in the tests. The coupled cases share one backend change.
 
 - [ ] **3.2 A failed send answers `503`, and the resend token survives it** (R22, backend; Implemented 4 and 5)
 

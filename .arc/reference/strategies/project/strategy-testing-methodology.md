@@ -1,6 +1,6 @@
 # Testing Methodology Strategy
 
-**Version:** 1.5 | **Updated:** 2026-10-30 | **Status:** Active | **Scope:** Full-stack
+**Version:** 1.6 | **Updated:** 2026-11-03 | **Status:** Active | **Scope:** Full-stack
 
 ## Purpose
 
@@ -8,7 +8,6 @@ Testing standards and patterns for CineXplorer's full-stack infrastructure (Djan
 
 - **DRY principle** - Eliminate duplicate test utilities
 - **Type safety** - Consistent helper signatures (Python + TypeScript)
-- **Database compatibility** - `--keepdb` support
 - **Clear organization** - Know where to find/add utilities
 
 ## Table of Contents
@@ -67,7 +66,8 @@ These hold for every test, test-first or not. The full rules are in
 **Backend:**
 
 1. **API Integration Tests** - Full request/response via Django test client
-2. **Service Layer Tests** - Business logic isolated from HTTP/ORM
+2. **Service Layer Tests** - Business logic called directly, against the real test database, with only external
+   clients replaced
 3. **Specialized Tests** - Edge cases, mocks, performance
 
 **Frontend:**
@@ -83,6 +83,7 @@ These hold for every test, test-first or not. The full rules are in
 - Minimum: 80% branch coverage (general application code)
 - Critical paths: 90%+ branch coverage (auth, payments, data integrity)
 - Security-critical: 95%+ branch coverage (token management, session handling)
+- Current enforcement: CI fails below `fail_under` in `backend/pyproject.toml` (90%)
 - Focus: Integration over unit tests
 
 **Frontend:**
@@ -101,7 +102,8 @@ risk-based testing prioritization per industry best practices.
 
 ### Quality Gates
 
-**Backend:** 100% pass rate, 80%+ coverage, zero lint/type errors
+**Backend:** 100% pass rate, coverage at or above the floor CI enforces (`fail_under` in `backend/pyproject.toml`,
+90%), zero lint/type errors
 **Frontend:** 100% pass rate, zero lint/type errors, and the configured measured floors when running
 `npm run test:coverage`. Frontend CI runs tests without coverage; coverage enforcement is local.
 
@@ -460,7 +462,7 @@ csrf_token = get_csrf_token(client)
 response = client.post('/api/mutations/', data, HTTP_X_CSRFTOKEN=csrf_token)
 ```
 
-**Standards:** Type-safe `TypedDict` signatures, `get_or_create()` for unique constraints, `--keepdb` compatible.
+**Standards:** Type-safe `TypedDict` signatures.
 
 #### Tier 2: Domain Fixtures
 
@@ -489,7 +491,7 @@ create_movie(tmdb_id=550, **overrides)
 create_user_movie_data(user, movie, user_watched=True, user_rating=5)
 ```
 
-**Standards:** Import from core helpers, extend with domain defaults, use `get_or_create()`.
+**Standards:** Import from core helpers, extend with domain defaults.
 
 #### Tier 3: Inline Test Helpers
 
@@ -558,95 +560,19 @@ mock_response = Mock(spec=Response)  # Raises AttributeError on typos at runtime
 **Note:** `Mock(spec=SomeType)` provides runtime attribute checking (catches typos) but doesn't improve static
 type safety - Pyright sees `Mock` either way. Use `spec=` when runtime safety matters, not for type checking.
 
-### Centralized Mock Paths
+### Replacing Boundaries
 
-**Purpose:** Prevent stale mocks when implementations change by centralizing mock target paths.
+Replace only what [Test Discipline](#test-discipline) names, at its client:
 
-**Pattern:** Each app maintains a `mock_paths.py` file with constants for commonly-mocked module paths.
+- **TMDB:** inject a stub client into the service, built from `movie/tests/tmdb_test_builders.py` so its responses
+  and errors have TMDB's shapes. Tests of the HTTP client itself raise real `requests` exceptions.
+- **Mail:** Django's test outbox (`mailoutbox` in pytest-django); the test settings already swap the backend.
+- **Time:** freezegun.
+- **OAuth providers:** at the provider client allauth calls.
 
-```python
-# apps/{app}/tests/mock_paths.py
-"""Centralized mock target paths for {app} tests."""
-
-AUTH_SERVICE_SEND_VERIFICATION_EMAIL = (
-    "apps.authentication.services.authentication_service.send_verification_email_to_address"
-)
-
-AUTH_SERVICE_TRANSACTION_ATOMIC = (
-    "apps.authentication.services.authentication_service.transaction.atomic"
-)
-```
-
-**Usage:**
-
-```python
-from apps.authentication.tests.mock_paths import AUTH_SERVICE_SEND_VERIFICATION_EMAIL
-
-@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
-def test_registration_sends_email(mock_send_email: Mock) -> None:
-    mock_send_email.return_value = True
-    # ...
-```
-
-**Benefits:**
-
-- **Single update point:** When implementation changes, update one file
-- **Discoverability:** All mockable paths visible in one place
-- **Consistency:** Prevents typos and path drift across test files
-- **Refactoring safety:** IDE can find all usages when paths change
-
-**Current mock_paths.py files:**
-
-| App             | File                  | Paths                                         |
-|-----------------|-----------------------|-----------------------------------------------|
-| authentication  | `tests/mock_paths.py` | Email sending, transaction, schema validation |
-| core            | `tests/mock_paths.py` | TMDB settings, API client, DB connections     |
-| movie           | `tests/mock_paths.py` | TMDB client, blacklist, dedup, batch logger   |
-| user_movie_data | `tests/mock_paths.py` | Fetch movies batch                            |
-
-**When to add paths:**
-
-- Path is used in 2+ test files
-- Path targets internal implementation likely to change
-- Path is complex (nested modules, long strings)
-
-**Anti-pattern:** Hardcoding paths directly in test decorators.
-
-```python
-# ❌ WRONG - hardcoded path
-@patch("apps.authentication.services.authentication_service.send_verification_email_to_address")
-
-# ✅ CORRECT - centralized path
-@patch(AUTH_SERVICE_SEND_VERIFICATION_EMAIL)
-```
-
-### Database Compatibility
-
-**`--keepdb` Support:** Use `get_or_create()` for unique constraints.
-
-```python path=null start=null
-# ❌ WRONG - fails with --keepdb
-EmailAddress.objects.create(user=user, email=user.email, verified=True)
-
-# ✅ CORRECT - works with --keepdb
-EmailAddress.objects.get_or_create(
-    user=user, email=user.email,
-    defaults={'verified': True, 'primary': True}
-)
-```
-
-**Pattern:**
-
-```python path=null start=null
-def create_user(email_verified: bool = True, **params: Unpack[UserParams]) -> AbstractUser:
-    user = User.objects.create_user(**{**defaults, **params})
-    if email_verified:
-        EmailAddress.objects.get_or_create(
-            user=user, email=user.email,
-            defaults={'verified': True, 'primary': True}
-        )
-    return user
-```
+Don't patch the project's own functions, services, repositories or `transaction.atomic`. If a test can't reach a
+behavior without that, the code needs a seam: inject the dependency. The existing `mock_paths.py` files shrink as
+their tests are changed; add no new paths.
 
 ### Re-exporting Stdlib Utilities
 
@@ -660,21 +586,9 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 
 ### Current State
 
-**Test Organization Standardization Complete (2025-11):**
-
-- ✅ 441 tests across 48 test files
 - ✅ Unit/integration directory structure standardized across all apps
 - ✅ Parallel execution supported
 - ✅ CI/CD runs all tests via `pytest apps/`
-
-**Test Counts by App:**
-
-| App             | Test Files | Directory Structure                                   |
-|-----------------|------------|-------------------------------------------------------|
-| movie           | 23         | `unit/services/`, `unit/helpers/`, `integration/api/` |
-| authentication  | 13         | `integration/` (all integration tests)                |
-| user_movie_data | 6          | `unit/`, `integration/`                               |
-| core            | 6          | `integration/`                                        |
 
 **Test Infrastructure:**
 
@@ -697,13 +611,14 @@ __all__ = ["HTTPStatus", "create_user", "json_post", "json_patch", "json_put"]
 **❌ Don't:**
 
 - Copy-paste helpers between files
-- Use `create()` for unique constraints
+- Patch the project's own code (functions, services, repositories, `transaction.atomic`)
+- Mock a repository in a service test
+- Assert only what a mock was set up to return
 - Import DRF utilities in Django Ninja tests
 
 **✅ Do:**
 
 - Import from shared locations
-- Use `get_or_create()` with defaults
 - Use Django test client and stdlib
 
 ---
@@ -804,6 +719,9 @@ export function createMockUser(overrides: DeepPartial<MockUserData> = {}): MockU
 
 ### Testing Patterns
 
+Query elements by role and accessible name, interact with `userEvent`, and mock the network with MSW rather than
+internal modules.
+
 ```typescript path=null start=null
 // Component Testing
 describe('LoginPage', () => {
@@ -821,10 +739,11 @@ describe('LoginPage', () => {
 });
 
 // API Mocking (MSW)
+import { http, HttpResponse } from 'msw';
+import { setupServer } from 'msw/node';
+
 const server = setupServer(
-  rest.post('/api/token/', (req, res, ctx) => {
-    return res(ctx.json(createMockLoginResponse()));
-  })
+  http.post('/api/token/', () => HttpResponse.json(createMockLoginResponse())),
 );
 
 beforeAll(() => server.listen());
@@ -859,10 +778,6 @@ render(
 ### Current State
 
 - ✅ Vitest + React Testing Library configured
-- ✅ 321 tests passing
-- ⚠️ Test helpers consolidation deferred to Phase 6
-
-**Next:** Phase 5 integration with Django Ninja, Phase 6 helper consolidation.
 
 ### Anti-Patterns
 

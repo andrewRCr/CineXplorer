@@ -1,6 +1,6 @@
 # Service Layer Strategy
 
-**Version:** 1.0 | **Updated:** 2025-12-19 | **Status:** Active
+**Version:** 1.1 | **Updated:** 2026-11-03 | **Status:** Active
 
 ## Purpose
 
@@ -40,7 +40,7 @@ Use when implementing new services, understanding existing patterns, or onboardi
 │ API Layer (Django Ninja routes)                             │
 │ - HTTP concerns only: parse request, return response        │
 │ - Parameter extraction and validation                       │
-│ - Error handling (HttpError translation)                    │
+│ - Maps domain exceptions to responses (one handler)         │
 │ - Delegates ALL business logic to service layer             │
 └─────────────────────────────────────────────────────────────┘
                             │
@@ -51,12 +51,14 @@ Use when implementing new services, understanding existing patterns, or onboardi
 │ - Orchestration of multiple operations                      │
 │ - Data transformation and enrichment                        │
 │ - External API integration (TMDB)                           │
+│ - Raises domain exceptions, never HttpError                 │
 └─────────────────────────────────────────────────────────────┘
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ Repository / Data Access Layer                              │
-│ - ORM abstraction for internal data                         │
+│ Data Access Layer                                           │
+│ - The Django ORM, from services, or from a repository       │
+│   where a query is shared                                   │
 │ - API client abstraction for external data                  │
 │ - Query optimization (select_related, bulk queries)         │
 └─────────────────────────────────────────────────────────────┘
@@ -64,7 +66,8 @@ Use when implementing new services, understanding existing patterns, or onboardi
 
 ### Why This Matters
 
-- **Testability**: Services with injected dependencies can be tested with mocks
+- **Testability**: Services take their external clients (TMDB) by injection, so tests replace only that
+  boundary and run against the real database
 - **Separation of concerns**: API layer stays thin and focused on HTTP
 - **Reusability**: Service methods can be called from multiple API endpoints
 - **Maintainability**: Business logic changes don't require API layer changes
@@ -86,8 +89,8 @@ class MyService:
 
     Architecture:
         - Class-based with dependency injection
-        - [Repository/Client] injection for testability
-        - Raises HttpError for API-level error handling
+        - [External client] injection for testability
+        - Raises domain exceptions; the API layer maps them to responses
     """
 
     def __init__(
@@ -116,7 +119,7 @@ class MyService:
 - Private attributes (`_dependency`) for injected dependencies
 - Full type annotations (no `Any` usage)
 - Comprehensive docstrings with usage examples
-- Methods raise `HttpError` for API-level error handling
+- Raises domain exceptions; the API layer maps them to responses
 
 ### Decision Guide: Class vs Function
 
@@ -127,7 +130,7 @@ Use this guide when deciding whether to implement as a class-based service or st
 | Criterion                                             | Example                                                |
 |-------------------------------------------------------|--------------------------------------------------------|
 | Has external dependencies (API clients, repositories) | MovieService needs TMDBApiClient                       |
-| Needs to be mocked for testing                        | UserMovieDataService with mock repository              |
+| Wraps an external client tests replace                | MovieService with a stub TMDB client                   |
 | Has multiple related methods sharing state            | AuthenticationService with shared user model           |
 | Benefits from inheritance                             | BaseTMDBService shared by MovieService, KeywordService |
 | Stateful operations (caching, connection pooling)     | Future: services with connection pools                 |
@@ -141,16 +144,16 @@ Use this guide when deciding whether to implement as a class-based service or st
 | No need for mocking (logic is deterministic)  | Data quality filter functions           |
 | Called from within services (helper role)     | `_filter_non_visual_content()`          |
 
-**Rule of thumb:** If you need to mock dependencies for testing, use a class. If the logic is pure
-and deterministic, a function is fine.
+**Rule of thumb:** If it wraps an external client, use a class and inject the client. If the logic is pure and
+deterministic, a function is fine.
 
 ### Repository Pattern
 
-Repositories abstract ORM access, enabling testable services that don't depend on database implementation.
+Repositories are optional: a service can use the Django ORM directly. A repository gives a query several services
+share one home.
 
 **When to use:**
 
-- Service needs to access Django models
 - Multiple services share data access patterns
 - Complex queries that should be encapsulated
 
@@ -187,9 +190,9 @@ class UserMovieDataRepository:
 
 **Benefits:**
 
-- Services don't import Django ORM directly
-- Query optimization (select_related, prefetch_related) stays encapsulated
-- Tests can inject mock repositories instead of mocking ORM
+- One home for a query several services share, with its `select_related`/`prefetch_related`
+- Tests of a service that uses a repository use the real repository and the test database; a mock repository
+  asserts against a fiction
 
 ### Service Composition
 
@@ -285,7 +288,7 @@ def get_movie_service() -> MovieService:
     """
     Create MovieService with default dependencies.
 
-    For testing, bypass this factory and inject mocks directly
+    For testing, bypass this factory and inject a stub TMDB client
     into the service constructor.
 
     Example:
@@ -293,8 +296,8 @@ def get_movie_service() -> MovieService:
         service = get_movie_service()
 
         # Testing (bypass factory)
-        mock_client = MockTMDBApiClient()
-        service = MovieService(tmdb_client=mock_client)
+        stub_client = StubTMDBClient()
+        service = MovieService(tmdb_client=stub_client)
     """
     tmdb_client = TMDBApiClient()
     return MovieService(tmdb_client=tmdb_client)
@@ -303,7 +306,7 @@ def get_movie_service() -> MovieService:
 **Usage pattern:**
 
 - Production code uses factory: `service = get_movie_service()`
-- Tests bypass factory and inject mocks: `service = MovieService(tmdb_client=mock)`
+- Tests bypass the factory and inject a stub TMDB client: `service = MovieService(tmdb_client=stub)`
 
 ### Reference Implementations (Backend)
 
@@ -517,11 +520,13 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 
 - [Pagination Strategy](strategy-pagination.md) - Buffer mechanism, deduplication, cursor pagination
 - [Authentication Strategy](strategy-authentication.md) - Auth patterns, JWT, OAuth flows
-- [Testing Methodology](strategy-testing-methodology.md) - Testing services with mocks
+- [Testing Methodology](strategy-testing-methodology.md) - Testing services against the real database
 - [Type Safety Strategy](strategy-type-safety.md) - Type annotations in services
 
 ---
 
 ## Version History
 
+- **1.1** (2026-11-03): Domain exceptions in place of `HttpError`; tests use the real database, not mock
+  repositories
 - **1.0** (2025-12-19): Initial strategy document

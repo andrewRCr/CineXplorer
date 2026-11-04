@@ -15,10 +15,12 @@ work in these domains.
 
 **Engineering:**
 
-- `project/strategy-service-layer.md` - Class-based services, DI patterns, repository pattern, batch operations
+- `project/strategy-service-layer.md` - Class-based services, dependency injection, domain exceptions,
+  optional repositories, batch operations
 - `project/strategy-authentication.md` - Authentication patterns, session management, OAuth flows
 - `project/strategy-type-safety.md` - Type checking approach, Any usage policy, stub maintenance
-- `project/strategy-testing-methodology.md` - Testing philosophy, integration focus, test-first protocol
+- `project/strategy-testing-methodology.md` - Testing philosophy, real-database tests, replacing boundaries,
+  integration focus, test-first
 - `project/strategy-pagination.md` - Buffer mechanism, deduplication, cursor-based pagination, infinite scroll
 - `project/strategy-data-quality.md` - Filter pipeline, vote count policy, completeness, TMDB quirks
 

@@ -31,7 +31,7 @@
  */
 
 import { useState } from "react";
-import type { MovieListItem } from "@/@types/movie.d";
+import type { MovieListItem } from "@/types/movie";
 import { toggleMovieWatchlist } from "@/services/movieInteractionService";
 import { toaster } from "@/components/core/chakra/toaster";
 

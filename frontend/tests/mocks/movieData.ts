@@ -1,4 +1,4 @@
-import { type MovieListItem, type MovieDetail } from "@/@types/movie";
+import { type MovieListItem, type MovieDetail } from "@/types/movie";
 
 /**
  * Factory for creating mock movie list items (for grids, lists, cards).

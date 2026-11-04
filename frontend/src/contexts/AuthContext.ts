@@ -9,6 +9,6 @@
  * - Accessed by components using useAuthContext.
  */
 import { createContext } from "react";
-import type { AuthStateProps } from "../@types/auth-state";
+import type { AuthStateProps } from "@/types/auth-state";
 
 export const AuthContext = createContext<AuthStateProps | null>(null);

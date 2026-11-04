@@ -4,11 +4,9 @@ import type {
     MovieDetail,
     GenresResponse,
     MovieListResponse,
-    Keyword,
-    Person,
     KeywordListResponse,
     PersonListResponse,
-} from "../@types/movie";
+} from "@/types/movie";
 
 // Query parameter types for type-safe API calls
 export interface MovieQueryParams {
@@ -46,7 +44,7 @@ export interface PersonQueryParams {
 }
 
 // Re-export commonly used types for external consumers
-export type { MovieListResponse, MovieListItem, Keyword, Person };
+export type { MovieListResponse, MovieListItem };
 
 // Service instances for clean Django Ninja API endpoints
 // Note: baseURL already includes /api, so paths are relative to /api/

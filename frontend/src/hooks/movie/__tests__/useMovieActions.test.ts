@@ -13,7 +13,7 @@ import { act } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useMovieActions } from "../useMovieActions";
 import * as userMovieDataService from "@/services/userMovieDataService";
-import type { MovieListItem } from "@/@types/movie.d";
+import type { MovieListItem } from "@/types/movie";
 import type { components } from "@/types/api";
 import type { AxiosResponse } from "axios";
 

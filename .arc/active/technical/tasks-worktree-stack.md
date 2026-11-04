@@ -43,35 +43,15 @@ and remove it after its branch merges.
 
 ### **Phase 1:** A work unit's worktree starts with its session notes
 
-- [ ] **1.1 `seed-session-notes.mjs` writes a work unit's starting notes** (R16, R17, R13; Criterion 1)
+- [x] **1.1 `seed-session-notes.mjs` writes a work unit's starting notes** (R16, R17, R13; Criterion 1)
 
-    - [ ] **1.1.a Write tests** in `.arc/reference/harness-hooks/seed-session-notes.test.mjs` (new)
-        - Fixture as `compaction-recovery.test.mjs` builds one: git isolated from the developer's configuration
-          (its `GIT_ENV`), a main checkout with one folder under `.arc/user/`, and a linked worktree on a branch
-          `{type}/{name}` made with `git worktree add`; the script runs with the worktree as its working directory
-        - Refusals, each exiting non-zero and writing nothing, with its reason asserted: run in the main checkout; no
-          folder under the main checkout's `.arc/user/`, and two folders, the message naming what it found; a
-          detached HEAD; branches not of the form `{type}/{name}` (`main`, `Technical/x`, `technical/-x`,
-          `technical/a/b`); notes already in place, left byte for byte as they were
-        - The written file: `.arc/user/{identity}/{name}/SESSION-NOTES.md` in the worktree, none in the main
-          checkout; each field and section as R16 lists them; the path printed
-        - Expect tests to FAIL initially, each on its own assertion: a missing or crashing script cannot pass a case
-          that asserts a reason or a field
-
-    - [ ] **1.1.b Write `.arc/reference/harness-hooks/seed-session-notes.mjs`**
-        - Node's built-in modules only. The main checkout is the parent of
-          `git rev-parse --path-format=absolute --git-common-dir`; the script is in the main checkout when that
-          equals its own top level
-        - Identity as `compaction-recovery.mjs`'s `resolveIdentity` reads it (directories only, sorted). Mirror its
-          `mainCheckout` and `resolveIdentity` rather than import them: importing that module runs its hook entry point
-        - The branch form is R3's: `{type}` lowercase letters, `{name}` lowercase letters, digits and hyphens starting
-          with a letter or digit
-        - The skeleton is `session-handoff.md` § 2's, with R16's values
-        - Tests should now PASS
-
-    - [ ] **1.1.c Run the tests in CI:** the `markdown` job's "Test recovery hooks" step in `.github/workflows/ci.yml`
-      runs `seed-session-notes.test.mjs` beside `compaction-recovery.test.mjs`; rename the step to cover both
-      (Sequencing note on `technical/launch-readiness`, which moves this step)
+    - [x] **1.1.a Write tests:** ten isolated Git fixtures cover every refusal, preservation of existing notes,
+      all skeleton fields, the printed path and the absence of notes in the main checkout. Each case failed on its
+      assertion before implementation.
+    - [x] **1.1.b Write the script:** built-in Node modules locate the main checkout and identity, validate the
+      branch, and write planning notes exclusively in the linked worktree without overwriting an existing file.
+      Syntax checks and all 30 seeding and recovery tests pass.
+    - [x] **1.1.c Run the tests in CI:** the renamed session-hooks step runs both suites with `node --test`.
 
 ### **Phase 2:** One command creates and prepares a worktree, and its test stack runs
 

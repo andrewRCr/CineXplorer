@@ -57,47 +57,17 @@ and remove it after its branch merges.
 
 **Needs:** nothing for 2.1–2.3, whose tests replace Docker and npm; Docker and this worktree's test stack for 2.4.
 
-- [ ] **2.1 `provision` writes the worktree's `infrastructure/.env` with its own port and key** (R1, R4 step 3, R5, R6,
-  R13, R14; Criterion 1)
+- [x] **2.1 `provision` writes the worktree's `infrastructure/.env` with its own port and key** (R1, R4 step 3,
+  R5, R6, R13, R14; Criterion 1)
 
-    - [ ] **2.1.a Write the fixture and tests** in `scripts/worktree.test.mjs` (new)
-        - Fixture (R14): in a temporary folder, a bare `origin` whose `main` tracks `.gitignore` (the four env files,
-          `infrastructure/dev-certs/*.pem`, `.venv-backend`, `.claude`, `.codex`), `.worktreeinclude`,
-          `infrastructure/docker-compose.yml` and `infrastructure/docker-compose.worktree.yml` as stand-ins; a main
-          checkout cloned from it, holding stand-in gitignored files (`backend/config/.env`, `frontend/.env`,
-          `frontend/.env.development`, an `infrastructure/.env` without the worktree keys, `cert.pem` and `key.pem`)
-          and `.venv-backend`, `.claude` and `.codex` folders. Git isolated as in 1.1.a
-        - Stubs (Phase 2 note): `docker` and `npm` executables first on `PATH` append their arguments and working
-          directory to a log the test reads, and fail when the test asks. The `docker` stub answers as Docker does:
-          `compose ... config` with a `name:` line the test sets followed by a `services:` block holding a marker
-          value, standing in for the env files' values; a label-filtered `ls -q` with IDs the test supplies
-        - In worktrees made with `git worktree add` beside the main checkout as `{primary}.{name}`:
-            - no `infrastructure/.env`: the main checkout's is copied, then `COMPOSE_PROJECT_NAME=cinexplorer-{name}`,
-              `SITE_PORT` and a 50-character `[a-z0-9]` `WORKTREE_SECRET_KEY` are appended
-            - a file already setting `COMPOSE_PROJECT_NAME` and `SITE_PORT` keeps both values and gains only the key;
-              a second run changes nothing
-            - names: a folder `{primary}.Some-Name` gives `cinexplorer-some-name`; `{primary}.my_wt` refuses
-            - ports: the first worktree gets 8445; with other worktrees claiming 8445 and 8447, the next gets 8446;
-              with every port from 8445 to 8499 claimed, it refuses; a worktree folder deleted without
-              `git worktree remove` claims nothing
-        - `provision` in the main checkout refuses; `--help` describes the four commands; an unknown command refuses
-        - Every refusal case asserts its reason as well as the exit status and the absent side effects
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.b Write `scripts/worktree.mjs` with `provision`'s env step**
-        - Node's built-in modules only, run as `node scripts/worktree.mjs <command>` from a checkout's root. Each
-          refusal prints its reason and exits non-zero; a git, Docker or npm call that fails stops the script with
-          that command's output; no git call carries `--force`, `-D` or `-f`
-        - Three git calls answer through their exit status, which the script reads rather than treats as a failure:
-          `git check-ignore` (2.2), `git cat-file -e` (2.3) and `git merge-base --is-ancestor` (4.1)
-        - The main checkout is the parent of `git rev-parse --path-format=absolute --git-common-dir`; a linked
-          worktree's top level differs from it
-        - Keys are read by name at a line's start and appended when missing, never rewritten
-        - The port: the lowest from 8445 to 8499 that no other registered worktree's `infrastructure/.env` claims
-          (`git worktree list --porcelain`); the key from `crypto.randomInt` over `[a-z0-9]`
-        - Tests should now PASS
-
-    - [ ] **2.1.c Run the tests in CI** in 1.1.c's step
+    - [x] **2.1.a Write the fixture and tests:** real bare origins, isolated Git configuration and linked worktrees,
+      with faithful Docker/npm executable stubs. Eight tests cover help, main-checkout and name refusals, base env
+      copying, preserved keys, random keys, lowest-free allocation, deleted folders and all 55 ports occupied.
+      All eight failed before implementation.
+    - [x] **2.1.b Write `scripts/worktree.mjs` with the environment step:** append missing keys without changing
+      existing values, derive the project name from the folder, and allocate the lowest unclaimed port. Syntax
+      checks and all eight tests pass.
+    - [x] **2.1.c Run the tests in CI:** the session-hooks step includes `scripts/worktree.test.mjs`.
 
 - [ ] **2.2 `provision` copies the include files, links the shared folders, checks the project name and installs the
   frontend** (R2, R4 steps 1, 2, 4 and 5, R14; Criterion 1)

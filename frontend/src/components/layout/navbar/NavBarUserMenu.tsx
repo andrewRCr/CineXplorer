@@ -45,6 +45,7 @@ const NavBarUserMenu = () => {
   const { isAuthenticated, logout, user } = useAuthContext() ?? {};
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -185,7 +186,11 @@ const NavBarUserMenu = () => {
       {/* Trigger Button */}
       <Button
         ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          setPosition({ top: rect.bottom, left: rect.right });
+          setIsOpen(!isOpen);
+        }}
         size="sm"
         bg="layer-01"
         color="foreground"
@@ -206,8 +211,8 @@ const NavBarUserMenu = () => {
           <Box
             ref={dropdownRef}
             position="fixed"
-            top={`${buttonRef.current?.getBoundingClientRect().bottom ?? 0}px`}
-            left={`${buttonRef.current?.getBoundingClientRect().right ?? 0}px`}
+            top={`${position.top}px`}
+            left={`${position.left}px`}
             transform="translateX(-100%)"
             minW="200px"
             boxShadow="shadow-md"

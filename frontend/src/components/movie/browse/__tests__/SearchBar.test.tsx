@@ -37,14 +37,7 @@ describe("SearchBar Component", () => {
     it("displays search icon", () => {
       render(<SearchBar {...defaultProps} />);
 
-      // FiSearch icon is rendered as an SVG - check for its presence
-      const container = screen
-        .getByPlaceholderText("Search movies...")
-        .closest("div");
-      expect(container).toBeInTheDocument();
-
-      // We can't easily test for the specific icon, but we can verify structure
-      expect(container?.querySelector("svg")).toBeTruthy();
+      expect(screen.getByTestId("search-icon")).toBeInTheDocument();
     });
 
     it("renders with provided value", () => {
@@ -180,8 +173,7 @@ describe("SearchBar Component", () => {
     it("applies correct container styles", () => {
       render(<SearchBar {...defaultProps} />);
 
-      const input = screen.getByPlaceholderText("Search movies...");
-      const container = input.closest("div");
+      const container = screen.getByTestId("movie-search");
 
       expect(container).toBeInTheDocument();
       // Test that container has position relative for icon positioning
@@ -191,9 +183,7 @@ describe("SearchBar Component", () => {
     it("positions search icon correctly", () => {
       render(<SearchBar {...defaultProps} />);
 
-      const input = screen.getByPlaceholderText("Search movies...");
-      const container = input.closest("div");
-      const icon = container?.querySelector("svg");
+      const icon = screen.getByTestId("search-icon");
 
       expect(icon).toBeInTheDocument();
       // Icon should be positioned absolutely within the container

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   VStack,
   Text,
@@ -61,9 +61,8 @@ export const PasswordResetDialog = ({
   onDismiss,
   onSubmit,
 }: PasswordResetDialogProps) => {
-  const [resetState, setResetState] = useState<ResetState>(
-    resetKey ? "form" : null,
-  );
+  const [submissionState, setResetState] = useState<ResetState>(null);
+  const resetState = resetKey ? (submissionState ?? "form") : submissionState;
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -131,13 +130,6 @@ export const PasswordResetDialog = ({
     setResetState(null);
     onDismiss();
   };
-
-  // Update state when resetKey changes
-  useEffect(() => {
-    if (resetKey && resetState === null) {
-      setResetState("form");
-    }
-  }, [resetKey, resetState]);
 
   return (
     <Dialog.Root

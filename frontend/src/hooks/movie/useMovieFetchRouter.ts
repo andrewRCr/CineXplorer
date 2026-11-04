@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import type { MovieListResponse } from "@/services/movieService";
 import type { BrowseParams } from "@/types/browseTypes";
 import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
@@ -52,28 +52,15 @@ export function useMovieFetchRouter({
     request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
 } {
-    // Use refs to store the latest values without causing re-renders
-    const browseParamsRef = useRef(browseParams);
-    const baseFetcherRef = useRef(fetcher);
-
-    // Update refs when values change
-    browseParamsRef.current = browseParams;
-    baseFetcherRef.current = fetcher;
-
     const routedFetcher = useCallback(
         (page: number, tmdb_page_start?: number) => {
-            // Get current values from refs
-            const currentBrowseParams = browseParamsRef.current;
-            const currentBaseFetcher = baseFetcherRef.current;
-
             // Map browse params to API parameters
-            const apiParams = mapBrowseParamsToApi(currentBrowseParams);
+            const apiParams = mapBrowseParamsToApi(browseParams);
 
             // Always use the base fetcher (discover, top-rated, etc.)
-            return currentBaseFetcher(page, apiParams, tmdb_page_start);
+            return fetcher(page, apiParams, tmdb_page_start);
         },
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [browseParams], // Recreate fetcher when browse params change
+        [browseParams, fetcher],
     );
 
     return routedFetcher;

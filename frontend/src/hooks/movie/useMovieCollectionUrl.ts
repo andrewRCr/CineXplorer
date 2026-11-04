@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { type BrowseParams, BROWSE_PARAM_KEYS } from "@/types/browseTypes";
 import {
     parseBrowseParamsFromUrl,
     generateBrowseUrl,
 } from "@/utilities/browseUrlSync";
-import { deepEqual } from "@/utilities/objectComparator";
 
 /**
  * useMovieCollectionUrl
@@ -20,24 +19,10 @@ export const useMovieCollectionUrl = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Single source of truth for browse params (filters, sort)
-    // IMPORTANT: Initialize from URL synchronously to ensure scroll restoration
-    // uses the correct key on first render. Previously used DEFAULT_BROWSE_PARAMS
-    // which caused a timing bug where scroll key was calculated before URL sync.
-    const [browseParams, setBrowseParams] = useState<BrowseParams>(() =>
-        parseBrowseParamsFromUrl(location.search),
+    const browseParams = useMemo(
+        () => parseBrowseParamsFromUrl(location.search),
+        [location.search],
     );
-
-    // Sync browse params from URL when URL changes
-    useEffect(() => {
-        const urlBrowseParams = parseBrowseParamsFromUrl(location.search);
-
-        // Only update state if params actually changed (prevent unnecessary re-renders)
-        if (!deepEqual(browseParams, urlBrowseParams)) {
-            setBrowseParams(urlBrowseParams);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [location.search]); // browseParams intentionally omitted to prevent infinite loop
 
     // Update URL when browse params change
     const handleBrowseParamsChange = useCallback(

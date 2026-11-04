@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, act, waitFor } from "@tests/helpers/test-renderer";
+import { render, screen, waitFor } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import GenrePopover from "../GenrePopover";
 
@@ -73,9 +73,8 @@ describe("GenrePopover Component", () => {
       render(<GenrePopover {...defaultProps} />);
 
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       // Wait for popover content to appear
       await waitFor(() => {
@@ -93,9 +92,8 @@ describe("GenrePopover Component", () => {
       expect(triggerButton).toHaveAttribute("data-state", "closed");
 
       // Open the popover
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       // Should be open
       await waitFor(() => {
@@ -108,9 +106,8 @@ describe("GenrePopover Component", () => {
       render(<GenrePopover {...defaultProps} />);
 
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -134,9 +131,8 @@ describe("GenrePopover Component", () => {
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       await waitFor(() => {
         expect(triggerButton).toHaveAttribute("data-state", "open");
@@ -159,9 +155,8 @@ describe("GenrePopover Component", () => {
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       await waitFor(() => {
         expect(triggerButton).toHaveAttribute("data-state", "open");
@@ -180,9 +175,8 @@ describe("GenrePopover Component", () => {
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       // Should open normally without isOpen prop
       await waitFor(() => {
@@ -198,9 +192,8 @@ describe("GenrePopover Component", () => {
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -208,9 +201,8 @@ describe("GenrePopover Component", () => {
 
       // Select Action
       const actionCheckbox = screen.getByLabelText("Action");
-      await act(async () => {
-        await user.click(actionCheckbox);
-      });
+
+      await user.click(actionCheckbox);
 
       expect(mockOnChange).toHaveBeenCalledTimes(1);
       expect(mockOnChange).toHaveBeenCalledWith([28]);
@@ -222,9 +214,8 @@ describe("GenrePopover Component", () => {
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /2 selected/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -232,9 +223,8 @@ describe("GenrePopover Component", () => {
 
       // Deselect Action
       const actionCheckbox = screen.getByLabelText("Action");
-      await act(async () => {
-        await user.click(actionCheckbox);
-      });
+
+      await user.click(actionCheckbox);
 
       expect(mockOnChange).toHaveBeenCalledTimes(1);
       expect(mockOnChange).toHaveBeenCalledWith([35]); // Only Comedy remains
@@ -246,18 +236,16 @@ describe("GenrePopover Component", () => {
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
       });
 
       // Select Action
-      await act(async () => {
-        await user.click(screen.getByLabelText("Action"));
-      });
+
+      await user.click(screen.getByLabelText("Action"));
       expect(mockOnChange).toHaveBeenCalledWith([28]);
 
       // Update component state and keep popover open
@@ -267,18 +255,16 @@ describe("GenrePopover Component", () => {
       const updatedTrigger = screen.getByRole("button", {
         name: /1 selected/i,
       });
-      await act(async () => {
-        await user.click(updatedTrigger);
-      });
+
+      await user.click(updatedTrigger);
 
       await waitFor(() => {
         expect(screen.getByLabelText("Comedy")).toBeInTheDocument();
       });
 
       // Select Comedy
-      await act(async () => {
-        await user.click(screen.getByLabelText("Comedy"));
-      });
+
+      await user.click(screen.getByLabelText("Comedy"));
       expect(mockOnChange).toHaveBeenCalledWith([28, 35]);
     });
 
@@ -288,9 +274,8 @@ describe("GenrePopover Component", () => {
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /2 selected/i });
-      await act(async () => {
-        await user.click(triggerButton);
-      });
+
+      await user.click(triggerButton);
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -354,9 +339,8 @@ describe("GenrePopover Component", () => {
       );
 
       // Open popover
-      await act(async () => {
-        await user.click(screen.getByRole("button", { name: /1 selected/i }));
-      });
+
+      await user.click(screen.getByRole("button", { name: /1 selected/i }));
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -366,16 +350,14 @@ describe("GenrePopover Component", () => {
       expect(actionCheckbox.checked).toBe(true);
 
       // Close and change selection
-      await act(async () => {
-        await user.click(document.body);
-      });
+
+      await user.click(document.body);
 
       rerender(<GenrePopover {...defaultProps} selectedGenres={[35]} />);
 
       // Reopen popover
-      await act(async () => {
-        await user.click(screen.getByRole("button", { name: /1 selected/i }));
-      });
+
+      await user.click(screen.getByRole("button", { name: /1 selected/i }));
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -405,9 +387,8 @@ describe("GenrePopover Component", () => {
       render(<GenrePopover {...defaultProps} />);
 
       // Open the popover
-      await act(async () => {
-        await user.click(screen.getByRole("button", { name: /all genres/i }));
-      });
+
+      await user.click(screen.getByRole("button", { name: /all genres/i }));
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -433,9 +414,8 @@ describe("GenrePopover Component", () => {
       render(<GenrePopover {...defaultProps} />);
 
       // Open the popover
-      await act(async () => {
-        await user.click(screen.getByRole("button", { name: /all genres/i }));
-      });
+
+      await user.click(screen.getByRole("button", { name: /all genres/i }));
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -462,9 +442,8 @@ describe("GenrePopover Component", () => {
       ).toBeInTheDocument();
 
       // Open popover
-      await act(async () => {
-        await user.click(screen.getByRole("button", { name: /2 selected/i }));
-      });
+
+      await user.click(screen.getByRole("button", { name: /2 selected/i }));
 
       await waitFor(() => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
@@ -476,9 +455,8 @@ describe("GenrePopover Component", () => {
       expect(actionCheckbox.checked).toBe(true);
 
       // Deselect Action - should preserve unknown ID
-      await act(async () => {
-        await user.click(actionCheckbox);
-      });
+
+      await user.click(actionCheckbox);
       expect(mockOnChange).toHaveBeenCalledWith([999]);
     });
 

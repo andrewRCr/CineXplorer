@@ -32,7 +32,15 @@ const ClearBrowseParamsButton = ({
 
   if (!isVisible) {
     // Placeholder to reserve space and prevent layout shift
-    return <Box w={BUTTON_SIZE} h={BUTTON_SIZE} ml={2} flexShrink={0} />;
+    return (
+      <Box
+        data-testid="browse-reset-placeholder"
+        w={BUTTON_SIZE}
+        h={BUTTON_SIZE}
+        ml={2}
+        flexShrink={0}
+      />
+    );
   }
 
   return (

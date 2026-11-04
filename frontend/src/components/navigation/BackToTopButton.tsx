@@ -83,7 +83,7 @@ export function BackToTopButton({
         rounded="full"
         shadow="lg"
       >
-        <LuChevronUp />
+        <LuChevronUp data-testid="back-to-top-icon" />
       </IconButton>
     </Tooltip>
   );

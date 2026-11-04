@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@tests/helpers/test-renderer";
+import { render, screen, fireEvent } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import YearSelector from "../YearSelector";
 
@@ -184,9 +184,7 @@ describe("YearSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("1900") as HTMLInputElement;
 
-      await act(async () => {
-        await user.type(minInput, "2020");
-      });
+      await user.type(minInput, "2020");
 
       // Local state should update immediately
       expect(minInput.value).toBe("2020");
@@ -198,9 +196,7 @@ describe("YearSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("1900");
 
-      await act(async () => {
-        await user.type(minInput, "2020");
-      });
+      await user.type(minInput, "2020");
 
       // Should call onChange (with our mocked debounce, this is immediate)
       expect(mockOnMinYearChange).toHaveBeenCalled();
@@ -212,9 +208,7 @@ describe("YearSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("1900");
 
-      await act(async () => {
-        await user.clear(minInput);
-      });
+      await user.clear(minInput);
 
       // Should call onChange immediately for empty value (no debouncing)
       expect(mockOnMinYearChange).toHaveBeenCalledWith("");
@@ -227,10 +221,9 @@ describe("YearSelector Component", () => {
       const minInput = screen.getByPlaceholderText("1900");
       const maxInput = screen.getByPlaceholderText(currentYear.toString());
 
-      await act(async () => {
-        await user.type(minInput, "2020");
-        await user.type(maxInput, "2023");
-      });
+      await user.type(minInput, "2020");
+
+      await user.type(maxInput, "2023");
 
       expect(mockOnMinYearChange).toHaveBeenCalled();
       expect(mockOnMaxYearChange).toHaveBeenCalled();
@@ -244,9 +237,8 @@ describe("YearSelector Component", () => {
       render(<YearSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText("1900");
-      await act(async () => {
-        await user.type(minInput, "2020");
-      });
+
+      await user.type(minInput, "2020");
 
       // Verify debounce was called (mocked to execute immediately)
       expect(debounce).toHaveBeenCalled();
@@ -257,9 +249,8 @@ describe("YearSelector Component", () => {
       render(<YearSelector {...defaultProps} minYear="2020" />);
 
       const minInput = screen.getByPlaceholderText("1900");
-      await act(async () => {
-        await user.clear(minInput);
-      });
+
+      await user.clear(minInput);
 
       // Should call onChange immediately without debouncing
       expect(mockOnMinYearChange).toHaveBeenCalledWith("");
@@ -271,13 +262,11 @@ describe("YearSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("1900");
 
-      await act(async () => {
-        // Type something first
-        await user.type(minInput, "2020");
+      // Type something first
+      await user.type(minInput, "2020");
 
-        // Then clear it
-        await user.clear(minInput);
-      });
+      // Then clear it
+      await user.clear(minInput);
 
       expect(mockOnMinYearChange).toHaveBeenCalledWith("");
     });
@@ -319,9 +308,8 @@ describe("YearSelector Component", () => {
       render(<YearSelector {...defaultProps} minYear="2020" />);
 
       const minInput = screen.getByPlaceholderText("1900");
-      await act(async () => {
-        await user.clear(minInput);
-      });
+
+      await user.clear(minInput);
 
       expect(mockOnMinYearChange).toHaveBeenCalledWith("");
     });
@@ -457,15 +445,12 @@ describe("YearSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("1900");
 
-      await act(async () => {
-        // User types while props are changing
-        await user.type(minInput, "2020");
-      });
+      // User types while props are changing
+      await user.type(minInput, "2020");
 
-      act(() => {
-        rerender(<YearSelector {...defaultProps} minYear="2021" />);
-        rerender(<YearSelector {...defaultProps} minYear="2022" />);
-      });
+      rerender(<YearSelector {...defaultProps} minYear="2021" />);
+
+      rerender(<YearSelector {...defaultProps} minYear="2022" />);
 
       const updatedInput = screen.getByPlaceholderText(
         "1900",
@@ -552,11 +537,11 @@ describe("YearSelector Component", () => {
       await user.click(minInput);
       // Simulate having invalid values (like what might happen with direct DOM manipulation)
       // We'll use fireEvent to set invalid values directly
-      act(() => {
-        fireEvent.change(minInput, { target: { value: "1898" } });
-        fireEvent.change(maxInput, {
-          target: { value: (currentYear + 10).toString() },
-        });
+
+      fireEvent.change(minInput, { target: { value: "1898" } });
+
+      fireEvent.change(maxInput, {
+        target: { value: (currentYear + 10).toString() },
       });
 
       // Values should show as set
@@ -564,10 +549,10 @@ describe("YearSelector Component", () => {
       expect(maxInput.value).toBe((currentYear + 10).toString());
 
       // Blur should clamp the values
-      act(() => {
-        fireEvent.blur(minInput);
-        fireEvent.blur(maxInput);
-      });
+
+      fireEvent.blur(minInput);
+
+      fireEvent.blur(maxInput);
 
       // Values should be clamped to valid range
       expect(minInput.value).toBe("1900");

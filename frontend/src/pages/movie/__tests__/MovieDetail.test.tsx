@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen, waitFor } from "@tests/helpers/test-renderer";
+import { screen } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 import MovieDetail from "../MovieDetail";
 import { createMockMovieDetail } from "@tests/mocks/movieData";
@@ -76,25 +76,32 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        expect(backLink).toBeInTheDocument();
-
-        const href = backLink?.getAttribute("href") || "";
-
-        // Page params should NOT be included (infinite scroll migration)
-        expect(href).not.toContain("page=");
-        expect(href).not.toContain("tmdb_page_start=");
-
-        // Filter params should be preserved
-        expect(href).toContain("minYear=1980");
-        expect(href).toContain("maxYear=1990");
-        // Genres are URL-encoded (comma becomes %2C)
-        expect(href).toContain("genres=28%2C12");
-        expect(href).toContain("minRating=7.0");
-        expect(href).toContain("maxRating=10.0");
-        expect(href).toContain("sortBy=vote_average.desc");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      expect(backLink).toBeInTheDocument();
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Page params should NOT be included (infinite scroll migration)
+      expect(href).not.toContain("page=");
+
+      expect(href).not.toContain("tmdb_page_start=");
+
+      // Filter params should be preserved
+      expect(href).toContain("minYear=1980");
+
+      expect(href).toContain("maxYear=1990");
+
+      // Genres are URL-encoded (comma becomes %2C)
+      expect(href).toContain("genres=28%2C12");
+
+      expect(href).toContain("minRating=7.0");
+
+      expect(href).toContain("maxRating=10.0");
+
+      expect(href).toContain("sortBy=vote_average.desc");
     });
 
     it("parses genres array correctly from URL", async () => {
@@ -103,15 +110,17 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Should preserve genres exactly as received (URL-encoded)
-        expect(href).toContain("genres=28%2C12%2C35");
-        // Page should NOT be preserved
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Should preserve genres exactly as received (URL-encoded)
+      expect(href).toContain("genres=28%2C12%2C35");
+
+      // Page should NOT be preserved
+      expect(href).not.toContain("page=");
     });
 
     it("preserves filters but strips pagination params", async () => {
@@ -120,17 +129,22 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", originalURL);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Back URL should have route and filters, but NOT pagination
-        expect(href).toContain("/browse");
-        expect(href).not.toContain("page=");
-        expect(href).toContain("minYear=1990");
-        expect(href).toContain("maxYear=2000");
-        expect(href).toContain("minRating=8.0");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Back URL should have route and filters, but NOT pagination
+      expect(href).toContain("/browse");
+
+      expect(href).not.toContain("page=");
+
+      expect(href).toContain("minYear=1990");
+
+      expect(href).toContain("maxYear=2000");
+
+      expect(href).toContain("minRating=8.0");
     });
   });
 
@@ -140,15 +154,18 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Search route: /search?query=X (no page)
-        expect(href).toContain("/search");
-        expect(href).toContain("query=inception");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Search route: /search?query=X (no page)
+      expect(href).toContain("/search");
+
+      expect(href).toContain("query=inception");
+
+      expect(href).not.toContain("page=");
     });
 
     it("constructs browse back URL correctly", async () => {
@@ -156,14 +173,16 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Collection route: /browse (no page params)
-        expect(href).toContain("/browse");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Collection route: /browse (no page params)
+      expect(href).toContain("/browse");
+
+      expect(href).not.toContain("page=");
     });
 
     it("constructs now-playing back URL correctly", async () => {
@@ -171,13 +190,15 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        expect(href).toContain("/now-playing");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      expect(href).toContain("/now-playing");
+
+      expect(href).not.toContain("page=");
     });
 
     it("constructs upcoming back URL correctly", async () => {
@@ -185,13 +206,15 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        expect(href).toContain("/upcoming");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      expect(href).toContain("/upcoming");
+
+      expect(href).not.toContain("page=");
     });
   });
 
@@ -201,14 +224,17 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        expect(href).toContain("minYear=1980");
-        expect(href).toContain("maxYear=1983");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      expect(href).toContain("minYear=1980");
+
+      expect(href).toContain("maxYear=1983");
+
+      expect(href).not.toContain("page=");
     });
 
     it("handles rating filters", async () => {
@@ -216,14 +242,17 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        expect(href).toContain("minRating=7.0");
-        expect(href).toContain("maxRating=10.0");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      expect(href).toContain("minRating=7.0");
+
+      expect(href).toContain("maxRating=10.0");
+
+      expect(href).not.toContain("page=");
     });
 
     it("handles combined filters without pagination", async () => {
@@ -233,20 +262,27 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // All filters should be preserved (URL-encoded)
-        expect(href).not.toContain("page=");
-        expect(href).toContain("minYear=1990");
-        expect(href).toContain("maxYear=2000");
-        // Genres are URL-encoded
-        expect(href).toContain("genres=28%2C12");
-        expect(href).toContain("minRating=8.0");
-        expect(href).toContain("maxRating=10.0");
-        expect(href).toContain("sortBy=vote_count.desc");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // All filters should be preserved (URL-encoded)
+      expect(href).not.toContain("page=");
+
+      expect(href).toContain("minYear=1990");
+
+      expect(href).toContain("maxYear=2000");
+
+      // Genres are URL-encoded
+      expect(href).toContain("genres=28%2C12");
+
+      expect(href).toContain("minRating=8.0");
+
+      expect(href).toContain("maxRating=10.0");
+
+      expect(href).toContain("sortBy=vote_count.desc");
     });
 
     it("handles search with filters", async () => {
@@ -255,18 +291,24 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Search URL with filters, no page
-        expect(href).toContain("/search");
-        expect(href).toContain("query=action");
-        expect(href).toContain("minYear=2000");
-        expect(href).toContain("genres=28");
-        expect(href).toContain("minRating=7.0");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Search URL with filters, no page
+      expect(href).toContain("/search");
+
+      expect(href).toContain("query=action");
+
+      expect(href).toContain("minYear=2000");
+
+      expect(href).toContain("genres=28");
+
+      expect(href).toContain("minRating=7.0");
+
+      expect(href).not.toContain("page=");
     });
   });
 
@@ -277,17 +319,20 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        expect(href).toContain("/browse");
-        expect(href).not.toContain("page=");
-
-        // Should not include undefined/null params
-        expect(href).not.toContain("minYear=undefined");
-        expect(href).not.toContain("query=null");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      expect(href).toContain("/browse");
+
+      expect(href).not.toContain("page=");
+
+      // Should not include undefined/null params
+      expect(href).not.toContain("minYear=undefined");
+
+      expect(href).not.toContain("query=null");
     });
 
     it("defaults to now-playing when from param missing", async () => {
@@ -296,14 +341,16 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Should default to now-playing (current implementation behavior)
-        expect(href).toContain("/now-playing");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Should default to now-playing (current implementation behavior)
+      expect(href).toContain("/now-playing");
+
+      expect(href).not.toContain("page=");
     });
 
     it("URL-encodes special characters in params", async () => {
@@ -311,14 +358,16 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Should preserve URL encoding
-        expect(href).toContain("query=action%20%26%20adventure");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Should preserve URL encoding
+      expect(href).toContain("query=action%20%26%20adventure");
+
+      expect(href).not.toContain("page=");
     });
 
     it("handles empty string params correctly", async () => {
@@ -327,14 +376,16 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
       renderMovieDetailWithRoute("550", searchParams);
 
-      await waitFor(() => {
-        const backLink = screen.getByText("Back to Results").closest("a");
-        const href = backLink?.getAttribute("href") || "";
-
-        // Empty query should not be included in URL
-        expect(href).not.toContain("query=");
-        expect(href).not.toContain("page=");
+      const backLink = await screen.findByRole("link", {
+        name: "Back to Results",
       });
+
+      const href = backLink?.getAttribute("href") || "";
+
+      // Empty query should not be included in URL
+      expect(href).not.toContain("query=");
+
+      expect(href).not.toContain("page=");
     });
   });
 

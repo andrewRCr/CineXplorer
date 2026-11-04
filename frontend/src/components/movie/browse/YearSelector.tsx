@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useMemo, useEffect, useCallback } from "react";
 import { Box, Text, HStack } from "@chakra-ui/react";
 import { StyledInput } from "@/components/common";
 import { debounce } from "lodash";
+import useInputDraft from "@/hooks/useInputDraft";
 
 interface YearSelectorProps {
   minYear: string;
@@ -75,10 +76,6 @@ const YearSelector = ({
 
   const dateRangeInfo = getDateRangeInfo();
 
-  // Local state for immediate UI updates
-  const [localMinYear, setLocalMinYear] = useState(minYear);
-  const [localMaxYear, setLocalMaxYear] = useState(maxYear);
-
   // Clamp year to valid bounds for better UX
   const clampYear = useCallback(
     (year: string): string => {
@@ -96,44 +93,46 @@ const YearSelector = ({
     [currentYear],
   );
 
-  // Sync local state when props change (e.g., from URL or external updates)
-  // Clamp invalid values for better UX
-  useEffect(() => {
-    setLocalMinYear(clampYear(minYear));
-  }, [minYear, currentYear, clampYear]);
-
-  useEffect(() => {
-    setLocalMaxYear(clampYear(maxYear));
-  }, [maxYear, currentYear, clampYear]);
-
-  // Validate year input
-  const isValidYear = (year: string): boolean => {
-    if (!year) return true; // Empty is valid (clears filter)
-    const num = parseInt(year, 10);
-    return (
-      !isNaN(num) && year.length === 4 && num >= 1900 && num <= currentYear
-    );
-  };
-
-  // Debounced update functions - only call parent when we have valid input
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedMinYearUpdate = useCallback(
-    debounce((year: string) => {
-      if (isValidYear(year)) {
-        onMinYearChange(year);
-      }
-    }, 500),
-    [onMinYearChange, currentYear], // debounce function dependencies cannot be analyzed by ESLint
+  const [localMinYear, setLocalMinYear] = useInputDraft(
+    clampYear(minYear),
+    JSON.stringify([minYear, currentYear]),
+  );
+  const [localMaxYear, setLocalMaxYear] = useInputDraft(
+    clampYear(maxYear),
+    JSON.stringify([maxYear, currentYear]),
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedMaxYearUpdate = useCallback(
-    debounce((year: string) => {
-      if (isValidYear(year)) {
-        onMaxYearChange(year);
-      }
-    }, 500),
-    [onMaxYearChange, currentYear], // debounce function dependencies cannot be analyzed by ESLint
+  // Validate year input
+  const isValidYear = useCallback(
+    (year: string): boolean => {
+      if (!year) return true; // Empty is valid (clears filter)
+      const num = parseInt(year, 10);
+      return (
+        !isNaN(num) && year.length === 4 && num >= 1900 && num <= currentYear
+      );
+    },
+    [currentYear],
+  );
+
+  // Debounced update functions - only call parent when we have valid input
+  const debouncedMinYearUpdate = useMemo(
+    () =>
+      debounce((year: string) => {
+        if (isValidYear(year)) {
+          onMinYearChange(year);
+        }
+      }, 500),
+    [onMinYearChange, isValidYear],
+  );
+
+  const debouncedMaxYearUpdate = useMemo(
+    () =>
+      debounce((year: string) => {
+        if (isValidYear(year)) {
+          onMaxYearChange(year);
+        }
+      }, 500),
+    [onMaxYearChange, isValidYear],
   );
 
   // Handle input changes

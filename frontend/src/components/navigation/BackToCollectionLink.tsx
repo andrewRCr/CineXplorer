@@ -98,7 +98,7 @@ export function BackToCollectionLink({
         style={{ textDecoration: "none" }}
       >
         <Button variant={variant}>
-          <LuArrowLeft />
+          <LuArrowLeft data-testid="back-to-results-icon" />
           {label}
         </Button>
       </Link>

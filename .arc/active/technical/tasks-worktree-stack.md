@@ -198,8 +198,11 @@ worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed 
       cookie. Requests carried CSRF cookies/headers and the target origin. Summary retained in personal proofs,
       without token values.
 
-- [ ] **5.3 Hot reload works at a worktree's port** (Criterion 8)
-    - Edit a frontend source file in `proof-a`; the page at its port updates without a manual reload; revert the edit
+- [x] **5.3 Hot reload works at a worktree's port** (Criterion 8)
+    - Temporarily changed proof-a's navbar title. The Owner requested a repeat, then confirmed
+      "CineXplorer 2" appeared without a manual refresh. Vite logged the component update.
+    - Restored the saved original bytes; SHA-256 matches and proof-a's Git status is clean. Evidence retained in
+      personal proofs.
 
 - [ ] **5.4 `remove` cleans up a merged worktree and keeps an unmerged one** (Criterion 9)
     - `proof-b` has no commits of its own, so its branch is merged: `remove proof-b` leaves no containers, volumes,

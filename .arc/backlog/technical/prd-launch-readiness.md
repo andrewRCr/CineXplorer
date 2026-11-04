@@ -67,6 +67,13 @@ detail, and sign-in for accounts created from the server shell. It is not yet fi
       stdout (`zoho_zeptomail/backend/message.py`), which the production container's logs collect. It returns `0` for
       an error answer in ZeptoMail's JSON error format, and raises on a network error or an error body it cannot
       parse, such as a gateway's HTML page.
+    - `useAuth` decides whether a password user is signed in from the access token alone: `areTokensExpired()`
+      (`utilities/tokenUtils.ts`) reads only its expiry. Access tokens last 5 minutes and refresh tokens 14 days
+      (`SIMPLE_JWT`). On load, an expired access token sends the hook to allauth's session check, which finds nothing
+      for a password user, since a password sign-in makes no Django session; and the hook's 60-second check signs the
+      user out once the access token has expired. Only the API client uses the refresh token, after a request is
+      refused with `401`. A password user is therefore signed out after about 5 idle minutes, and appears signed out
+      after a reload.
 - **The sign-in client has no unit tests.** `hooks/auth/useAuth.ts`, `hooks/auth/useOAuthFlow.ts`,
   `services/authService.ts`, `utilities/tokenUtils.ts` and `utilities/csrfTokenFetcher.ts` have no tests of their
   own; one page test replaces `useAuth` with a mock. This change edits several of them, and the site's next changes
@@ -88,7 +95,8 @@ host, and the authentication gaps above are closed. The site stays at the stagin
    nothing.
 2. The database is copied off the server every night, and restoring a copy has been done once, end to end.
 3. A visitor on staging can sign up with an email address, verify it from the email, reset a forgotten password, and
-   sign in with Google or GitHub.
+   sign in with Google or GitHub; a visitor signed in with a password stays signed in, through an idle tab and a
+   reload, while their refresh token is valid.
 4. A site outage, a database outage, and a nightly job that fails or does not run each reach the maintainer by email.
 5. A cross-site request cannot act with a visitor's cookies, email sign-up and password sign-in go only through the
    site's own rate-limited endpoints, each anonymous authentication throttle counts only its own endpoint's requests,
@@ -269,8 +277,9 @@ host, and the authentication gaps above are closed. The site stays at the stagin
 ### Monitoring
 
 - **R13. Health check covers the database.** `GET /api/health-check/` runs `SELECT 1` on the default database
-  connection: `200 {"status": "healthy"}` when it succeeds, `503 {"status": "unhealthy"}` when it fails, with no error
-  detail in the body. The OpenAPI schema and the generated frontend types include the `503` response. Redis is not
+  connection: `200 {"status": "healthy"}` when it succeeds, `503 {"detail": "Service unavailable."}` when it fails,
+  in the project's error shape (R20) and with no error text from the database. The OpenAPI schema and the generated
+  frontend types include the `503` response. Redis is not
   checked. Both Compose files' backend health checks call this endpoint, so a database outage marks the backend
   unhealthy, and a deploy's `up --wait` fails while the database is down.
 - **R14. External monitors.** An UptimeRobot HTTP monitor requests `https://<site>/api/health-check/` every 5 minutes
@@ -335,9 +344,10 @@ host, and the authentication gaps above are closed. The site stays at the stagin
       it explicitly;
     - Django's test client still skips the check unless it is created with `enforce_csrf_checks=True`.
 
-  A refused request receives `403 {"error": "CSRF token missing or invalid."}`, the body refused requests receive
-  today. `security.W003` stays silenced, since Django's check looks for its own class path, and the comment beside it
-  names the three exemptions and their reasons.
+  A refused request receives `403 {"detail": "CSRF token missing or invalid."}`, in the `{"detail"}` shape the
+  project's new error bodies use, with no debug text in any environment. `security.W003` stays silenced, since
+  Django's check looks for its own class path, and the comment beside it names the three exemptions and their
+  reasons.
 - **R21. The frontend sends the token.** `getCsrfToken` and the API client's request interceptor read the `csrftoken`
   cookie. Before an unsafe request, the interceptor fetches `GET /api/csrf/` when the cookie is missing. Every unsafe
   request the frontend sends carries the token, including those made outside the interceptor:
@@ -351,15 +361,17 @@ host, and the authentication gaps above are closed. The site stays at the stagin
   The two development log calls are exempt (R20).
 - **R22. A failed send is a handled error.** When an email fails to send:
     - `POST /_allauth/browser/v1/auth/password/request` and `POST /api/resend-verification/` answer
-      `503 {"error": "We couldn't send the email. Please try again in a few minutes."}`, and the backend logs the
-      failure at `ERROR` without a traceback. For allauth's endpoint, a middleware turns an `EmailDeliveryError` raised
-      under `/_allauth/` into that response; the resend service catches it itself, and the resend endpoint declares
-      the `503` response, so the committed OpenAPI schema and generated frontend types include it.
+      `503 {"detail": "We couldn't send the email. Please try again in a few minutes."}`, and the backend logs the
+      failure at `ERROR` without a traceback: a fixed message naming the endpoint and, for resend-verification, the
+      user's ID, never the address or the exception's text, which carries the address. For allauth's endpoint, a
+      middleware turns an `EmailDeliveryError` raised under `/_allauth/` into that response; the resend service
+      catches it itself, and the resend endpoint declares the `503` response, so the committed OpenAPI schema and
+      generated frontend types include it.
     - The resend token is consumed only once the email has been sent: checking it reads it, and a successful send
       deletes it. After a failed send the same token stays valid and its 10-minute lifetime starts again, so a retry
       within the few minutes the message names sends the email. Two concurrent requests with one token may both send;
       the endpoint's throttle bounds that.
-    - `authService.requestPasswordReset` keeps the response's status and its `error` message when it rethrows, and
+    - `authService.requestPasswordReset` keeps the response's status and its `detail` message when it rethrows, and
       the forgot-password page shows that message on a `503`, keeping its generic confirmation for every other
       outcome. The login page's resend action shows that message in its failure toast on a `503`, in place of
       "Please try again later.", and keeps its current toasts for every other error.
@@ -396,13 +408,35 @@ host, and the authentication gaps above are closed. The site stays at the stagin
 - **R25. Sign-in client tests.** The frontend gains unit tests for the sign-in state the site keeps and the storage it
   keeps it in:
     - `useAuth`: the initial state from stored tokens; a password sign-in storing its tokens and fetching the
-      profile; a session found for a user signed in with Google or GitHub; an expired access token ending the
-      signed-in state; and sign-out for each kind of user clearing the stored state (with R21's token on the OAuth
+      profile; a session found for a user signed in with Google or GitHub; an expired access token and a failed
+      refresh ending the signed-in state, and an expired access token with a successful refresh keeping it (R28), on
+      load, at the periodic check and before the profile is fetched; a failed refresh on load clearing the stored
+      tokens; the refreshed token stored where the old one was; a refresh that waits for another tab's refresh and
+      uses the newer token that tab stored instead of requesting one; the hook and the API client's interceptor,
+      refreshing at the same moment, sending one refresh request; a user signed in with Google or GitHub never
+      requesting one; and sign-out for each kind of user clearing the stored state (with R21's token on the OAuth
       sign-out);
     - `utilities/tokenUtils.ts`: reading a token from a cookie, reading a token's expiry, choosing and reporting the
       storage in use, storing and clearing tokens, and `areTokensExpired`.
 
   They test behavior through each module's exports, with the network replaced at the request boundary.
+- **R28. A password user stays signed in while the refresh token is valid.** Before `useAuth` treats a user holding
+  an access token as signed out because that token has expired (on load, in its 60-second check, and before it
+  fetches the profile), it requests a new access token through the API client's refresh (`POST /api/auth/refresh`,
+  carrying R21's token). On success it stores the new access token in the storage that held the old one, so a
+  sign-in made without "remember me" still ends with the browser session, and the user stays signed in; on failure
+  the stored tokens are cleared and the user is signed out, as today. Each refresh rotates the refresh token and
+  blacklists the one it presented, so two refreshes at the same moment can fail. Within a tab, the hook and the API
+  client's response interceptor share one refresh in flight. Across tabs, which share the refresh cookie and
+  `localStorage`, refreshes take turns under the browser's Web Locks API (`navigator.locks`): holding the lock, a
+  refresh first reads the storage again and uses an access token another tab stored meanwhile, unexpired and expiring
+  later than its own, instead of requesting one; otherwise it requests one, presenting the cookie any earlier refresh
+  rotated. Where the API is missing, refreshes are shared within a tab only. These rules hold for the interceptor's
+  refreshes too. Users signed in with Google or GitHub hold no access token and are unaffected. Until the refresh
+  answers on load, the page shows the signed-out state, as it already does while a Google or GitHub user's session is
+  checked. The refresh runs in the hook's existing effects, an exception to the rule that server data is read through
+  TanStack Query: it renews a token rather than reading data a page shows, and moving the sign-in state onto
+  TanStack Query is a change of its own.
 
 ### Runbook
 
@@ -449,7 +483,10 @@ host, and the authentication gaps above are closed. The site stays at the stagin
   it describes CSRF, its CSRF section and its frontend code samples among them, to R20 and R21 (the `csrftoken`
   cookie, every unsafe request checked, the token on OAuth requests required); its description of allauth's headless
   clients to R24 (the browser endpoints the site uses, the `app` client closed); and its steps for adding a provider
-  to R15 (environment variables in deployed environments, database rows in development only). Every other comment,
+  to R15 (environment variables in deployed environments, database rows in development only); and its token refresh
+  flow and its response-interceptor sample to R28 (the refresh in `useAuth` on load, in the 60-second check and
+  before the profile is fetched; one refresh function the hook and the interceptor share; refreshes taking turns
+  across tabs under Web Locks, with no refresh made outside that function). Every other comment,
   docstring, test and document outside the archive that describes the old design is brought in line with R20 and R21
   too. The old design means `CsrfHeaderMiddleware` and its path-based exemptions, an `XSRF-TOKEN` cookie, CSRF-exempt
   sign-in, registration or allauth endpoints, and an optional token on OAuth requests. Beside the files R20 and R21
@@ -476,13 +513,17 @@ host, and the authentication gaps above are closed. The site stays at the stagin
 - An upstream fix to `django-zoho-zeptomail`, and the sender's display name.
 - CORS changes, and CSRF checks on safe methods.
 - End-to-end tests of sign-up and sign-in; R25's unit tests cover the client's sign-in state.
-- Any change to application behavior, the API schema or the generated frontend types beyond R13, R15, R16 and
-  R18–R24.
+- A sign-in state that is still being resolved, as distinct from signed out, and the moment on load that shows a
+  signed-in user as signed out (R28); moving the sign-in state onto TanStack Query; and the `{"error"}` bodies the
+  authentication endpoints return today.
+- Any change to application behavior, the API schema or the generated frontend types beyond R13, R15, R16,
+  R18–R24 and R28.
 
 ## 6. Design Considerations
 
-Two visible changes, both when an email cannot be sent (R22): the forgot-password page shows a message, and the login
-page's resend action shows that message in its own failure toast, without the global "Server error" toast beside it.
+Three visible changes. Two come when an email cannot be sent (R22): the forgot-password page shows a message, and the
+login page's resend action shows that message in its own failure toast, without the global "Server error" toast
+beside it. The third: a visitor signed in with a password is still signed in after an idle tab or a reload (R28).
 The pages otherwise look as they do today.
 
 ## 7. Design Decisions
@@ -595,6 +636,16 @@ The pages otherwise look as they do today.
 22. **Unit tests for the sign-in client in this change, and end-to-end tests later**: this change edits `useAuth`
     and the token handling around it, unit tests run in the frontend suite CI already runs, and an end-to-end suite
     needs its own environment and browser setup, which is a change of its own.
+23. **Refresh before signing a password user out**, over a longer access-token lifetime: a 5-minute access token
+    limits what a stolen one can do, and the 14-day refresh token in its HTTP-only cookie exists to renew it; the hook
+    asks for the same renewal the API client already makes after a `401`. A sign-in state that is still resolving,
+    which would hide the signed-out moment on load, is a change of its own.
+24. **Refreshes take turns across tabs under Web Locks**, over reading the storage again after a failed refresh:
+    Chrome runs the timers of hidden tabs on the same minute boundary, so two idle tabs' 60-second checks refresh at
+    the same instant, and the tab that loses may read the storage before the other has stored its token. With the
+    lock the second refresh starts only after the first has finished, so it finds the new token or presents the
+    rotated cookie and succeeds; that also serves sign-ins without "remember me", whose storage other tabs cannot
+    read. Current Chrome, Firefox and Safari provide the API.
 
 ## 8. Success Criteria
 
@@ -649,10 +700,16 @@ what was seen and where.
    endpoint with its listed methods still reaches allauth.
 10. R25's frontend tests pass in the frontend suite, covering each behavior R25 lists for `useAuth` and
     `utilities/tokenUtils.ts`.
-11. The authentication strategy states R20, R21, R24 and R15 wherever R27 lists; a case-insensitive `git grep -E`
-    outside the archive and this PRD for `CsrfHeaderMiddleware|XSRF-TOKEN|csrf[- ]exempt|path-based exemption|CSRF
-    token is optional` finds no text describing the old design; no test in `test_csrf_protection.py` asserts that
-    sign-in or registration needs no token; and `backend/scripts/test_csrf_protection.sh` no longer exists.
+11. [~] The authentication strategy states R20, R21, R24 and R15 wherever R27 lists; a case-insensitive
+    `git grep -E` outside the archive and this PRD for `CsrfHeaderMiddleware|XSRF-TOKEN|csrf[- ]exempt|path-based
+    exemption|CSRF token is optional` finds no text describing the old design; no test in `test_csrf_protection.py`
+    asserts that sign-in or registration needs no token; and `backend/scripts/test_csrf_protection.sh` no longer
+    exists. (Superseded by the 2026-11-04 amendment: criterion 12 adds R28's refresh.)
+12. The authentication strategy states R20, R21, R24, R15 and R28 wherever R27 lists; a case-insensitive
+    `git grep -E` outside the archive and this PRD for `CsrfHeaderMiddleware|XSRF-TOKEN|csrf[- ]exempt|path-based
+    exemption|CSRF token is optional` finds no text describing the old design; no test in `test_csrf_protection.py`
+    asserts that sign-in or registration needs no token; and `backend/scripts/test_csrf_protection.sh` no longer
+    exists.
 
 ### Proven live (with staging running this change, before merge)
 
@@ -709,6 +766,13 @@ what was seen and where.
     `DEPLOY_KNOWN_HOSTS`.
 13. A sign-in request to staging with valid credentials, an `Origin` from another site and no token answers `403`, and
     the same request from the site's own pages signs in.
+14. [~] Signed in with a password on staging, a tab left idle for 6 minutes still shows the user signed in, and so
+    does a reload of it; the watchlist then loads. (Superseded by the 2026-11-04 amendment: criterion 15 reopens the
+    page with the access token expired.)
+15. Signed in with a password and "remember me" on staging, a tab left idle on the watchlist page for 6 minutes still
+    shows the user signed in. With every tab of the site then closed for 6 minutes, opening the watchlist page shows
+    the user signed in and lists their watchlist, and the browser's network panel shows at least one request to
+    `/api/auth/refresh` during that load, each answered `200`.
 
 ### Proven after merge
 
@@ -749,3 +813,25 @@ criterion named beside it:
 The ZeptoMail token and both OAuth apps' credentials go into staging's backend env file only once this change's images
 are running there (criterion 2): until then, allauth's own sign-up and sign-in endpoints stay reachable (R24) and the
 authentication hardening (R18–R23) is not deployed.
+
+## Amendments
+
+- **2026-11-03,** during task generation, on the Owner's decisions (R25's wording and the error shape relayed by
+  `project-manager.CX`; those and the fix confirmed by the Owner in the planning session): R28 added, since
+  `useAuth` signs a password user out once the 5-minute access token expires, despite the 14-day refresh token
+  (found by reading the code; reproduced by hand before the fix lands). R25's expired-token case now names the
+  refresh's outcome, so its test does not fix that behavior in place. R20's and R22's new bodies use
+  `{"detail": ...}`, the shape the project's new error bodies follow; the `{"error"}` bodies the authentication
+  endpoints return today stay as they are. Introduction, Goal 3, Non-Goals, Design Considerations, Design Decision 23
+  and Proven live 14 follow.
+- **2026-11-04,** from the task list's first review and its fix check, on the Owner's approval: R28 stores a
+  refreshed token in the storage that held the old one (today's refresh moves a sign-in made without "remember me"
+  into `localStorage`), has refreshes take turns across tabs under Web Locks, reading the storage again before
+  refreshing (Design Decision 24), and records its refresh in the hook's effects as an exception to the TanStack
+  Query rule; R25 lists those cases, a failed refresh on load clearing the stored tokens, the single refresh, the
+  check before the profile is fetched and the Google and GitHub users who never refresh. Non-Goals add moving the
+  sign-in state onto TanStack Query. R22's failure log names the endpoint, never the email address, under the rule on
+  personal data in logs. R13's `503` takes the `{"detail"}` shape. Proven live 14 is superseded by 15, which reopens
+  the watchlist page after the access token has expired, so it exercises the refresh on load: in a tab left open,
+  the 60-second check keeps the token fresh, so a reload needs no refresh. R27 brings the authentication strategy's
+  token refresh flow to R28, so Implemented 11 is superseded by 12, which adds R28.

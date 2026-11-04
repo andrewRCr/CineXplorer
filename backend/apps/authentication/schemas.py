@@ -18,7 +18,7 @@ from ninja.orm import ModelSchema
 from pydantic import EmailStr, Field
 
 # Password validation constants
-PASSWORD_MIN_LENGTH = 8  # Minimum password length for registration and updates
+PASSWORD_MIN_LENGTH = 8  # Minimum password length for registration
 
 
 # Registration Schemas
@@ -102,23 +102,6 @@ class UserProfileSchema(ModelSchema):
     class Meta:
         model = get_user_model()
         fields = ["id", "username", "email", "first_name", "last_name"]
-
-
-class UserProfileUpdateSchema(Schema):
-    """Schema for user profile updates.
-
-    Manual Schema with all optional fields for partial updates (PATCH).
-    Password updates handled separately for security.
-    """
-
-    email: EmailStr | None = Field(default=None, description="Updated email address")
-    first_name: str | None = Field(default=None, max_length=150, description="Updated first name")
-    last_name: str | None = Field(default=None, max_length=150, description="Updated last name")
-    password: str | None = Field(
-        default=None,
-        min_length=PASSWORD_MIN_LENGTH,
-        description=f"Updated password (minimum {PASSWORD_MIN_LENGTH} characters)",
-    )
 
 
 # CSRF Token Schema
@@ -205,5 +188,4 @@ __all__ = [
     "TokenObtainInputSchema",
     "TokenResponseSchema",
     "UserProfileSchema",
-    "UserProfileUpdateSchema",
 ]

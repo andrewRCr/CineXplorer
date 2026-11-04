@@ -24,7 +24,6 @@ from apps.authentication.schemas import (
     TokenObtainInputSchema,
     TokenResponseSchema,
     UserProfileSchema,
-    UserProfileUpdateSchema,
 )
 from apps.authentication.services.service_factory import get_authentication_service
 from apps.authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
@@ -320,40 +319,6 @@ def get_user_profile(request: HttpRequest) -> UserProfileSchema:
     user = get_current_user(request)
     service = get_authentication_service()
     return service.get_user_profile(user)
-
-
-@auth_router.patch(
-    "/profile/", response={200: UserProfileSchema, 400: dict[str, object]}, auth=jwt_cookie_auth
-)
-def update_user_profile(
-    request: HttpRequest, payload: UserProfileUpdateSchema
-) -> Status[UserProfileSchema | dict[str, object]]:
-    """Update authenticated user's profile.
-
-    Supports partial updates (PATCH) for user profile fields including
-    password changes with proper hashing.
-
-    Args:
-        request: HTTP request object with authenticated user
-        payload: Fields to update (all optional)
-
-    Returns:
-        Status: the status code and response data
-            - 200: Profile updated successfully
-            - 400: Validation error
-
-    Password handling:
-        - Password is hashed using set_password() before saving
-        - Password is write-only (not returned in response)
-
-    Computed fields in response:
-        - email_verified: Checked via allauth EmailAddress model
-        - full_name: Concatenated first_name + last_name
-    """
-    user = get_current_user(request)
-    service = get_authentication_service()
-    profile = service.update_user_profile(user, payload)
-    return Status(200, profile)
 
 
 @auth_router.post(

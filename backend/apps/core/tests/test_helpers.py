@@ -272,8 +272,8 @@ def json_patch(
         HTTP response from the endpoint
 
     Example:
-        response = json_patch(self.client, '/api/profile/', {
-            'first_name': 'Updated'
+        response = json_patch(self.client, '/api/user-movie-data/1', {
+            'user_rating': 8
         }, HTTP_X_CSRFTOKEN='token123')
     """
     # Django test client returns _MonkeyPatchedWSGIResponse

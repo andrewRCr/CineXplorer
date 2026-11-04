@@ -307,31 +307,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /**
-         * Update User Profile
-         * @description Update authenticated user's profile.
-         *
-         *     Supports partial updates (PATCH) for user profile fields including
-         *     password changes with proper hashing.
-         *
-         *     Args:
-         *         request: HTTP request object with authenticated user
-         *         payload: Fields to update (all optional)
-         *
-         *     Returns:
-         *         Status: the status code and response data
-         *             - 200: Profile updated successfully
-         *             - 400: Validation error
-         *
-         *     Password handling:
-         *         - Password is hashed using set_password() before saving
-         *         - Password is write-only (not returned in response)
-         *
-         *     Computed fields in response:
-         *         - email_verified: Checked via allauth EmailAddress model
-         *         - full_name: Concatenated first_name + last_name
-         */
-        patch: operations["apps_authentication_api_update_user_profile"];
+        patch?: never;
         trace?: never;
     };
     "/api/verify-email/": {
@@ -1226,35 +1202,6 @@ export interface components {
             first_name?: string | null;
             /** Last Name */
             last_name?: string | null;
-        };
-        /**
-         * UserProfileUpdateSchema
-         * @description Schema for user profile updates.
-         *
-         *     Manual Schema with all optional fields for partial updates (PATCH).
-         *     Password updates handled separately for security.
-         */
-        UserProfileUpdateSchema: {
-            /**
-             * Email
-             * @description Updated email address
-             */
-            email?: string | null;
-            /**
-             * First Name
-             * @description Updated first name
-             */
-            first_name?: string | null;
-            /**
-             * Last Name
-             * @description Updated last name
-             */
-            last_name?: string | null;
-            /**
-             * Password
-             * @description Updated password (minimum 8 characters)
-             */
-            password?: string | null;
         };
         /**
          * EmailVerificationResponseSchema
@@ -2268,41 +2215,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserProfileSchema"];
-                };
-            };
-        };
-    };
-    apps_authentication_api_update_user_profile: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserProfileUpdateSchema"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["UserProfileSchema"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
                 };
             };
         };

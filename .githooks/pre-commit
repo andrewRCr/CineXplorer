@@ -72,8 +72,12 @@ done
 # ============================================================================
 # CHECK 4: Check for common merge conflict markers
 # ============================================================================
+# Git writes each marker as exactly seven characters: <<<<<<<, >>>>>>> and the diff3
+# base marker ||||||| are followed by a space and a label, and ======= stands alone on
+# its line. Longer runs, such as a docstring heading's underline, are not markers.
+conflict_marker_pattern='^(<<<<<<<|>>>>>>>|\|\|\|\|\|\|\|)([[:space:]]|$)|^=======[[:space:]]*$'
 conflict_markers=$(git diff --cached --name-only --diff-filter=ACMR | while read file; do
-    if grep -qE '^(<<<<<<<|=======|>>>>>>>)' "$file" 2>/dev/null; then
+    if grep -qE "$conflict_marker_pattern" "$file" 2>/dev/null; then
         echo "$file"
     fi
 done)

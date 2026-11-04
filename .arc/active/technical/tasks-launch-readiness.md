@@ -259,14 +259,16 @@ authentication gaps that matter once sign-up is public are closed.
       Caddy rejected a mounted copy with an invalid directive, and Compose rejected a syntax-error copy.
       `actionlint` passed. The hosted job's evidence remains in 5.2.
 
-- [ ] **4.3 Write `infrastructure/deploy/deploy.sh`** (R1)
-    - R1's two arguments, six steps, step markers and history line exactly as R1 states them, since every later
-      version reads what this one writes; every Compose command in the runbook's form (Phase 4 note)
-    - Step 1's previous version: the last history line's new commit and tag; with no log, the `backend` container's
-      image tag and `org.opencontainers.image.revision` label, whether it is running or stopped; with neither, `-`
-    - Check: `bash -n` and `shellcheck`; step 1 run locally against a scratch log and a stub `docker` on `PATH`
-      gives the previous version from a log line, from the container when there is no log, and `-` with neither;
-      Proven live 2 is the proof (5.2)
+- [x] **4.3 Write `infrastructure/deploy/deploy.sh`** (R1)
+    - Added the six stable step markers, clean-checkout check, target checkout/tag update, configuration/pull/
+      migrations, Site configuration, startup/public health check and success-only UTC history append. Every Compose
+      invocation uses the production file and external env file from the infrastructure directory.
+    - Previous version comes from the latest successful history entry, then a running/stopped backend container's
+      image tag/revision label, then placeholders. It never uses the checkout or configured image tag as history.
+    - Checks: Bash syntax, ShellCheck and test-harness Ruff passed. Six disposable Ubuntu-container cases cover
+      history priority, stopped-container fallback, no previous version, dirty refusal, migration failure and public
+      health failure. All six guards failed under narrow behavioral reconstructions and passed after restoration.
+      Actual deployment/locking evidence remains in 5.2.
 
 - [ ] **4.4 Install the deploy entry point and restrict the CI key** (R2, R3, R5, R12)
     - `bootstrap.sh` carries `/usr/local/bin/cinexplorer-deploy` (owned by root, mode `755`) and installs it with

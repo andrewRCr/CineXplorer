@@ -35,6 +35,7 @@
  *   - Styling: Simplified formatting
  */
 import { apiBaseUrl } from "@/config/baseUrls";
+import { getAuthTokens } from "@/utilities/tokenUtils";
 
 export enum LogLevel {
     DEBUG = 0,
@@ -1119,14 +1120,33 @@ class Logger {
      */
     private getCurrentUserId(): string | number | undefined {
         try {
-            // Use module path to avoid require() linting error
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const { getAuthTokens } = require("@/utilities/token");
             const { access_token } = getAuthTokens();
-            if (access_token) {
-                // Decode JWT payload to get user ID (basic decode, not verification)
-                const payload = JSON.parse(atob(access_token.split(".")[1]));
-                return payload.user_id || payload.sub;
+            if (!access_token) return undefined;
+
+            // Decode identity for log context only; this does not verify the token.
+            const parts = access_token.split(".");
+            const encodedPayload = parts[1];
+            if (parts.length !== 3 || !encodedPayload) return undefined;
+
+            const base64 = encodedPayload.replace(/-/g, "+").replace(/_/g, "/");
+            const bytes = Uint8Array.from(atob(base64), (char) =>
+                char.charCodeAt(0),
+            );
+            const payload: unknown = JSON.parse(
+                new TextDecoder().decode(bytes),
+            );
+            if (typeof payload !== "object" || payload === null)
+                return undefined;
+
+            const userId = "user_id" in payload ? payload.user_id : undefined;
+            const subject = "sub" in payload ? payload.sub : undefined;
+            for (const id of [userId, subject]) {
+                if (
+                    (typeof id === "string" && id.length > 0) ||
+                    (typeof id === "number" && Number.isFinite(id))
+                ) {
+                    return id;
+                }
             }
         } catch {
             // Silently fail if unable to get user ID

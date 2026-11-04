@@ -348,7 +348,11 @@ authentication gaps that matter once sign-up is public are closed.
       databases. Coupled backup tests failed against the prior script; blacklist guards also failed with only
       sync removed, then passed with it restored. The merged backend passed 1,029 tests with 94.94% coverage;
       backend lint/format/type checks and all 24 deployment-harness cases passed. Publication and live evidence
-      for this integration remain pending.
+      for this integration: both PR CI `41919363454` and manual CI `41919403178` passed at `cf0ef11b`.
+    - Deployed `cf0ef11b` to staging: fresh R2 backup succeeded before migrations, first blacklist sync added all
+      2,480 entries, and the second changed none. The table and cached IDs match the tracked file; three public
+      browse samples each returned 20 movies with no blacklist overlap. Both running image revisions match the
+      commit, public health passes, history records the prior `7608822a` version and local backup files are gone.
     - PR CI `41906416896` and manual CI `41906505768` passed at `7608822a`, publishing its images. The merged backend
       suite passed 990 tests with 94.71% coverage; backend type, lint, format and task markdown checks passed.
     - On staging, bootstrap installed the entry point, restricted CI key and nightly units; its second run reported
@@ -369,15 +373,22 @@ authentication gaps that matter once sign-up is public are closed.
       dedicated CI key exactly once with `restrict` and the forced deployment command.
 
 - [ ] **5.4 Backups, the restore rehearsal, maintenance and monitoring** (Proven live 4, 5, 7, 8)
-    - The backup by hand, its failure with a bucket that does not exist and the alert email, the next success, and
-      after the first night the timer's own ping (Proven live 4)
-    - A dump from R2 restored by the runbook's procedure into a local production stack built from this change's
-      images, then the staging account's sign-in and watchlist there (Proven live 5; Phase 5 note)
-    - The maintenance run by hand and, after the first night, the timer's own ping (Proven live 7)
-    - The outage checks with `backend` and then `db` stopped, in a shell holding the operations lock so no deploy or
-      nightly job runs during them (Proven live 8)
+    - Manual backup uploaded and cleaned up; deliberate invalid-bucket failure reached Healthchecks Down and its
+      email, then a successful run restored the check. Manual maintenance ran both cleanup commands; the Owner
+      confirmed its recent Up ping.
+    - Restored an R2 archive into the isolated local production stack using the runbook's recovery-copy and schema
+      replacement procedure. The Owner confirmed password sign-in and the same staging watchlist movie. Removed
+      the recovery copy after that confirmation and tore down the local stack and its isolated volumes.
+    - Controlled backend and database outages produced public 502 and 503 respectively. The Owner confirmed Down
+      emails within ten minutes and both recovery emails at the next five-minute monitor check. Services recovered
+      healthy and deployment history stayed unchanged.
+    - Remaining: after the first night, confirm both timers' own successful executions and Healthchecks pings;
+      manual runs do not prove timer-originated execution.
 
 - [ ] **5.5 Credentials only now, then email and sign-in live** (R17; Proven live 9, 10, 13, 15)
+    - With `cf0ef11b` serving, fresh-cookie HTTPS probes refused missing CSRF and a foreign Origin with 403, allowed
+      the matching token through to payload validation (422) and confirmed closed allauth sign-up returns 404.
+      Credentials still await private Owner entry; valid-credential cross-site refusal remains for the live checks.
     - Clarified the full prefixed ZeptoMail Authorization value in the env example and runbook; the pinned client
       sends that configured value verbatim.
     - Only with this change's images running on staging (5.2): `ZEPTOMAIL_API_KEY`,

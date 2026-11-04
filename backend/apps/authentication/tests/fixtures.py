@@ -36,7 +36,7 @@ from django.test import Client
 from apps.core.tests.test_helpers import create_user
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User as UserType
+    from apps.users.models import User as UserType
 
 User = get_user_model()
 

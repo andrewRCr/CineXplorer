@@ -29,8 +29,9 @@ from apps.authentication.adapters import CustomAccountAdapter, EmailDeliveryErro
 from apps.authentication.tests.fixtures import get_resend_token_from_login
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
     from django.test import Client
+
+    from apps.users.models import User
 
 
 # ============================================================================

@@ -26,8 +26,9 @@ from ninja_jwt.tokens import RefreshToken
 from apps.authentication.tests.mock_paths import AUTH_SERVICE_SEND_VERIFICATION_EMAIL
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
     from django.test import Client
+
+    from apps.users.models import User
 
 
 # ============================================================================

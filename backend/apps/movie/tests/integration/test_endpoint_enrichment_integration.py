@@ -34,7 +34,7 @@ from apps.movie.tests.test_helpers import (
 from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
+    from apps.users.models import User
 
 # HTTP status codes
 HTTP_200_OK = HTTPStatus.OK

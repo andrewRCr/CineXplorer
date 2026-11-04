@@ -10,7 +10,7 @@ from django.test import Client
 from django.urls import reverse
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User as UserType
+    from apps.users.models import User as UserType
 
 User = get_user_model()
 
@@ -60,8 +60,7 @@ def test_users_list(admin_client: tuple[Client, "UserType", "UserType"]) -> None
     """Tests that created test users are listed on the page."""
     client, _admin_user, user = admin_client
 
-    # Using Django's default User model (auth.User)
-    url = reverse("admin:auth_user_changelist")
+    url = reverse("admin:users_user_changelist")
     res = client.get(url)
 
     assert res.status_code == HTTPStatus.OK
@@ -74,8 +73,7 @@ def test_edit_user_page(admin_client: tuple[Client, "UserType", "UserType"]) -> 
     """Tests that the user edit page works as expected."""
     client, _admin_user, user = admin_client
 
-    # Using Django's default User model (auth.User)
-    url = reverse("admin:auth_user_change", args=[user.id])
+    url = reverse("admin:users_user_change", args=[user.id])
     res = client.get(url)
 
     assert res.status_code == HTTPStatus.OK
@@ -85,8 +83,7 @@ def test_create_user_page(admin_client: tuple[Client, "UserType", "UserType"]) -
     """Tests that the create user page works as expected."""
     client, _admin_user, _user = admin_client
 
-    # Using Django's default User model (auth.User)
-    url = reverse("admin:auth_user_add")
+    url = reverse("admin:users_user_add")
     res = client.get(url)
 
     assert res.status_code == HTTPStatus.OK

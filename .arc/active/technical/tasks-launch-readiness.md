@@ -86,29 +86,17 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 2:** Every unsafe request is CSRF-checked, the site sends the token, and password users stay signed in
 
-- [ ] **2.1 The sign-in client has unit tests** (R25; Implemented 10)
-    - Before this task's commit, merge `main` and apply the frontend standards that have landed (Implementation
-      Notes, Sequencing with `main`)
-    - These tests cover existing behavior, so they pass on arrival: see each fail once with the behavior it covers
-      broken, then restore it
+- [x] **2.1 The sign-in client has unit tests** (R25; Implemented 10)
 
-    - [ ] **2.1.a `utilities/tokenUtils.ts`** in `src/utilities/__tests__/tokenUtils.test.ts`
-        - `getTokenFromCookie` reads a named cookie and returns `null` when it is absent; `getTokenExpiration` reads a
-          token's `exp` and returns `null` for a malformed token
-        - `getCurrentStorageType` reports the storage in use; `setAuthTokens` stores in the storage it is given,
-          `getAuthTokens` reads the tokens back, and `clearAuthTokens` clears every storage
-        - `areTokensExpired` for a current token, an expired one and none
-
-    - [ ] **2.1.b `useAuth`** in `src/hooks/auth/__tests__/useAuth.test.tsx`, with the network replaced through the
-      shared Mock Service Worker server (Implementation Notes, Sequencing with `main`)
-        - The initial state from stored tokens, signed in and signed out
-        - A password sign-in stores its tokens and fetches the profile
-        - A session found on allauth's `auth/session` for a user signed in with Google or GitHub signs them in
-        - An expired access token and a failed refresh end the signed-in state, on load and at the periodic check
-          (today no refresh is requested, so this passes either way; 2.5.b adds the cases that tell a refresh's
-          success and failure apart, which fail until 2.5)
-        - Sign-out for a password user and for an OAuth user clears the stored state (2.2.a adds the OAuth sign-out's
-          token)
+    - [x] **2.1.a `utilities/tokenUtils.ts`:** twelve cases cover named cookies, JWT expiry, storage selection,
+      round trips, clearing both storages, and current, expired and absent tokens.
+    - [x] **2.1.b `useAuth`:** ten network-backed cases cover initial password/anonymous state, Google/GitHub
+      sessions, password sign-in with both remember-me settings, both sign-out paths, and expired access on load
+      and at the idle poll. Refresh-unavailable cases capture current behavior; 2.5 adds refresh outcomes.
+    - `origin/main` was fetched and the approved merge was already up to date. All 22 tests passed on arrival,
+      failed under controlled behavioral mutations, and passed after restoration. Mutation reports are retained
+      in this work unit's personal workspace. Related tests, frontend lint, Prettier and TypeScript passed after
+      generating the missing local Chakra recipe typings. Network helpers share the existing MSW server.
 
 - [ ] **2.2 The frontend sends Django's `csrftoken` on every unsafe request** (R21; Implemented 3)
 

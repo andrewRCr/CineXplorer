@@ -7,9 +7,8 @@ boundary in one place to improve maintainability and document type boundaries.
 Type Boundary Documentation:
 ---------------------------
 Pydantic's .model_dump() returns dict[str, Any] due to limitations in Pydantic's
-type system. This is acceptable per our type safety stratgey as Pydantic is an external API
-boundary. Data validation happens at Pydantic
-model construction, not at .model_dump() serialization.
+type system. Any is confined to this external serialization boundary. Data validation
+happens at Pydantic model construction, before .model_dump() serialization.
 
 The architectural pattern:
     Test Builder (Returns Pydantic Model)
@@ -98,9 +97,8 @@ def create_mock_paginated_response(
 
     Note:
         Pydantic's .model_dump() returns dict[str, Any] due to its type system.
-        This is acceptable per strategy-type-safety.md (lines 344, 361, 399) as
-        Pydantic is an external API boundary. Data is validated at model
-        construction - this is Pydantic's API boundary, not ours.
+        Any is confined to Pydantic's external serialization boundary. The data
+        has already been validated at model construction.
 
     When NOT to use:
         Do NOT use this helper for tests that intentionally test TMDB data quality
@@ -185,9 +183,8 @@ def create_mock_movie_detail_response(
 
     Note:
         Pydantic's .model_dump() returns dict[str, Any] due to its type system.
-        This is acceptable per strategy-type-safety.md (lines 344, 361, 399) as
-        Pydantic is an external API boundary. Data is validated at model
-        construction - this is Pydantic's API boundary, not ours.
+        Any is confined to Pydantic's external serialization boundary. The data
+        has already been validated at model construction.
     """
     # Build validated Pydantic model
     movie_detail = create_tmdb_movie_detail(

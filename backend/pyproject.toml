@@ -64,7 +64,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 "*/tests/**/*.py" = ["PT", "B", "PIE"]
 
 # Typing.Any exceptions for justified external API boundaries
-# See: .arc/reference/strategies/strategy-type-safety.md for justification policy
+# Document why Any is needed at each external API boundary.
 "apps/authentication/adapters.py" = ["ANN401"]  # Allauth library contracts
 "apps/authentication/auth_ninja.py" = ["ANN401"]  # Django settings & OpenAPI schemas
 "apps/core/services/metrics.py" = ["ANN401"]  # Monitoring system mixed-type labels

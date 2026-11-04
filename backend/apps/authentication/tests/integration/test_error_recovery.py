@@ -10,7 +10,7 @@ Tests critical error handling behaviors to ensure graceful degradation:
 These tests validate that the authentication infrastructure handles errors
 gracefully without exposing sensitive information or crashing.
 
-Authentication Pattern (from strategy-authentication.md):
+Authentication Pattern:
 - Access token: 5 minutes lifetime, stored in sessionStorage (client)
 - Refresh token: 14 days lifetime, HTTP-only cookie (XSS-proof)
 - Backend accepts: Authorization header OR access_token cookie (hybrid)

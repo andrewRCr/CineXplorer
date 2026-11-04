@@ -296,8 +296,9 @@ forms, and judgment stays with the primary agent.
 - **Judgment** (validation against ground truth, gates, commits): never delegated
 
 Run an independent review in a fresh subagent when the harness supports one: fresh context, at the primary's own
-capability by default, with read-only tools. Without subagents, skip it with a note (delegated review is advisory) or
-run it in a fresh session; never present a review in the primary's own context as independent.
+capability by default, and told in its prompt to stay read-only, since a general-purpose subagent can edit. Without
+subagents, skip it with a note (delegated review is advisory) or run it in a fresh session; never present a review in
+the primary's own context as independent.
 
 ### Review Findings
 

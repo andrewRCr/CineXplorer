@@ -275,7 +275,7 @@ def main() -> int:
             print(f"      → {issue['context']}")
         print()
 
-    print("\n💡 See .arc/reference/strategies/strategy-type-safety.md for guidelines")
+    print("\n💡 Match library signatures; justify Any; update stub headers and imports.")
     return 1
 
 if __name__ == "__main__":

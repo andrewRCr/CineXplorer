@@ -34,12 +34,11 @@
     "reportUnusedVariable": "warning",
     "reportImportCycles": "error",
     "reportPrivateUsage": "error",
-    // "reportAny": "error",  // Any usage prohibited per type safety strategy (use object instead)
+    // "reportAny": "error",  // Use object for unknown data; limit Any to external library contracts.
     // ^ not a built-in setting; part of basedpyright
 
     // Django ORM limitations (acceptable information-level warnings)
     // These patterns are inherent to Django's dynamic ORM and validated at runtime by tests
-    // Reference: .arc/reference/strategies/strategy-type-safety.md
     "reportUnknownMemberType": "information",
     "reportUnknownParameterType": "warning",
     "reportUnknownArgumentType": "information",

@@ -64,7 +64,8 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
   pass in one body line, in plain terms ("Independent review: 2 rounds, 6 findings fixed").
 - **Orientation** is `.arc/reference/constitution/DEVELOPMENT-RULES.md`, `.arc/reference/agent/AGENTS.md` and
   `.arc/reference/constitution/TECHNICAL-OVERVIEW.md`.
-- **Runner.** A Claude session spawns a fresh subagent per pass and fix check; the reviewer gets read-only tools.
+- **Runner.** A Claude session spawns a fresh general-purpose subagent per pass and fix check, and its prompt tells
+  it to stay read-only: nothing else stops it from editing.
   A Codex session without subagents runs the pass in a fresh Codex session given the same prompt. Either way the
   report names its runner, and a self-review is never presented as independent
   ([DEVELOPMENT-RULES § Sub-agent scope][sub-agent-scope]).

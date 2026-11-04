@@ -2,7 +2,7 @@
 Type stubs for django-allauth headless mode.
 
 ⚠️ MAINTENANCE CONTRACT
-========================
+------------------------
 Synchronized with: django-allauth v65.12.0
 Last verified: 2025-10-09
 
@@ -12,5 +12,4 @@ When upgrading django-allauth:
 3. Update "Last verified" date above
 
 This stub file exists because django-allauth has no official type stubs.
-See: .arc/reference/strategies/strategy-type-safety.md
 """

@@ -287,14 +287,13 @@ authentication gaps that matter once sign-up is public are closed.
     - Astra's bounded implementation advice supported the private worker/follower, atomic outcome and post-lock
       stale check; execution and validation stayed here. Real SSH restrictions remain for 5.3.
 
-- [ ] **4.5 Add the `deploy` job** (R4)
-    - `needs: [ci-ok]`; a condition admitting a push to `main` only; environment `staging`; `permissions:
-      contents: read`; concurrency group `deploy-staging` without cancellation; no checkout
-    - The key and the host key line written to files only the runner user can read; `ssh` as `deploy` to
-      `DEPLOY_HOST` with strict host key checking against that line and `ServerAliveInterval`, sending `$GITHUB_SHA`
-    - No `pull_request_target` or `workflow_run` trigger
-    - Check: `actionlint`; the job does not run on the draft pull request (5.2; Implemented 8); Proven after merge 1
-      and 3 are the proof (6.2)
+- [x] **4.5 Add the `deploy` job** (R4)
+    - The staging environment job runs only on a main push after `ci-ok`, with read-only contents permission,
+      no checkout and uncancelled `deploy-staging` concurrency. `ci-ok` remains independent of deployment.
+    - The job writes its key/known-host line into private temporary files, uses only that key with strict host-key
+      checking and SSH keepalives, and sends the run's full SHA as `deploy`. Cleanup preserves SSH's result.
+    - Checks: `actionlint` passed for both workflows and the diff is whitespace-clean. Hosted PR exclusion and
+      deployment behavior remain for 5.2 and after merge; no new privileged workflow triggers were added.
 
 - [ ] **4.6 Add the nightly backup and maintenance jobs** (R8, R11, R12)
     - `infrastructure/deploy/backup.sh` (R8's four steps and its `/fail` path) and `maintenance.sh` (R11), reading

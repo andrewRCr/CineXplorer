@@ -496,6 +496,37 @@ jobs:
           docker container ls -aq --filter "name=cinexplorer-typegen-${{ github.run_id }}" | xargs -r docker rm -f
           docker volume ls -q --filter "name=cinexplorer-typegen-${{ github.run_id }}" | xargs -r docker volume rm
 
+  deploy:
+    name: Deploy staging
+    needs: [ci-ok]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    environment: staging
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - name: Deploy the checked commit
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+        run: |
+          umask 077
+          ssh_dir="$(mktemp -d)"
+          trap 'rm -rf "$ssh_dir"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          chmod 600 "$ssh_dir/key" "$ssh_dir/known_hosts"
+          ssh -i "$ssh_dir/key" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$ssh_dir/known_hosts" \
+            -o ServerAliveInterval=30 \
+            "deploy@$DEPLOY_HOST" "$GITHUB_SHA"
+
   # The one required check: passes only when every job above succeeded
   ci-ok:
     name: ci-ok

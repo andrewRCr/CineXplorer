@@ -84,6 +84,7 @@ def user(db: None) -> User:
             assert user.email == "testuser@example.com"
     """
     from django.contrib.auth import get_user_model
+
     User = get_user_model()  # noqa: N806 - Django model naming convention
 
     # django-types limitation - UserManager.create_user type not inferred
@@ -93,7 +94,7 @@ def user(db: None) -> User:
             email="testuser@example.com",
             password="testpass123",
             username="testuser",
-        )
+        ),
     )
 
 

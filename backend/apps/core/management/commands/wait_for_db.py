@@ -22,15 +22,15 @@ class Command(BaseCommand):
     def add_arguments(self, parser: ArgumentParser) -> None:
         """Add command-line arguments."""
         parser.add_argument(
-            '--timeout',
+            "--timeout",
             type=int,
             default=60,
-            help='Maximum time to wait for database in seconds (default: 60)',
+            help="Maximum time to wait for database in seconds (default: 60)",
         )
 
     def handle(self, *args: object, **options: object) -> None:
         """Entry-point for command with timeout and exponential backoff."""
-        timeout: int = cast(int, options.get('timeout', 60))
+        timeout: int = cast(int, options.get("timeout", 60))
 
         start_time = time.monotonic()
         delay = 1  # Initial delay in seconds
@@ -53,17 +53,14 @@ class Command(BaseCommand):
                 # Direct connection check (lighter than self.check)
                 connections["default"].ensure_connection()
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"Database available (connected after {elapsed:.1f}s)"
-                    )
+                    self.style.SUCCESS(f"Database available (connected after {elapsed:.1f}s)")
                 )
                 return
 
             except OperationalError:
                 remaining = max(0, timeout - elapsed)
                 self.stdout.write(
-                    f"Database unavailable; retrying in {delay}s "
-                    f"(~{remaining:.0f}s remaining)"
+                    f"Database unavailable; retrying in {delay}s (~{remaining:.0f}s remaining)"
                 )
                 time.sleep(delay)
                 delay = min(delay * 2, MAX_DELAY)  # Exponential backoff with cap

@@ -29,6 +29,7 @@ Type Safety:
     - Depending on AtomicSetOperations Protocol (not raw Redis client)
     - Using HashableParams Protocol (satisfied by any Pydantic model)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -38,7 +39,7 @@ from typing import Protocol
 
 from apps.core.services.redis_client import get_atomic_set_client
 
-logger = logging.getLogger('cinexplorer.pagination')
+logger = logging.getLogger("cinexplorer.pagination")
 
 
 class HashableParams(Protocol):
@@ -52,6 +53,7 @@ class HashableParams(Protocol):
     def model_dump(self, *, exclude_none: bool = False) -> dict[str, object]:
         """Serialize params to dict for hashing."""
         ...
+
 
 # Constants
 CACHE_KEY_PREFIX = "pagination_session"
@@ -175,8 +177,7 @@ class DeduplicationTracker:
 
         except Exception as e:
             logger.warning(
-                f"Redis unavailable for clear_session: {e}. "
-                "Session may have stale state."
+                f"Redis unavailable for clear_session: {e}. Session may have stale state."
             )
 
     def _generate_cache_key(self, params: HashableParams) -> str:
@@ -213,9 +214,9 @@ class DeduplicationTracker:
 
         # Exclude pagination-related fields from hash - these don't affect
         # which movies should be deduplicated, only which page we're on
-        params_dict.pop('tmdb_page_start', None)
+        params_dict.pop("tmdb_page_start", None)
 
-        sorted_json = json.dumps(params_dict, sort_keys=True, separators=(',', ':'))
+        sorted_json = json.dumps(params_dict, sort_keys=True, separators=(",", ":"))
 
         # Generate short hash (8 chars is sufficient for uniqueness)
         return hashlib.sha256(sorted_json.encode()).hexdigest()[:8]

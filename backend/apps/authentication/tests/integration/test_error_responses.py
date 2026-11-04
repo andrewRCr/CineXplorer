@@ -141,7 +141,7 @@ def test_409_username_exists_uses_error_format(
 @pytest.mark.django_db
 @override_settings(
     TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
-    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+    ZEPTOMAIL_API_KEY="",  # Prevent real email sending (triggers dev_mode in adapters)
 )
 def test_429_rate_limit_uses_error_format(
     api_client: Client,
@@ -358,7 +358,7 @@ def test_csrf_error_uses_error_format_production(
 
     # Set access token cookie for authentication
     response_data = json_module.loads(login_response.content.decode())
-    api_client.cookies['access_token'] = response_data['access_token']
+    api_client.cookies["access_token"] = response_data["access_token"]
 
     # Try to refresh token WITHOUT CSRF token (should be rejected by middleware)
     response = api_client.post(
@@ -405,7 +405,7 @@ def test_csrf_error_includes_detail_in_debug_mode(
 
     # Set access token cookie for authentication
     response_data = json_module.loads(login_response.content.decode())
-    api_client.cookies['access_token'] = response_data['access_token']
+    api_client.cookies["access_token"] = response_data["access_token"]
 
     # Try to refresh token WITHOUT CSRF token (should be rejected by middleware)
     response = api_client.post(

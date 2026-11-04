@@ -38,18 +38,18 @@ from .policy import (
     CompletenessPolicy,
 )
 
-logger = logging.getLogger('cinexplorer.tmdb')
+logger = logging.getLogger("cinexplorer.tmdb")
 
 __all__ = [
-    'LATIN_SCRIPT_LANGUAGES',
-    'apply_data_quality_filters',
-    'contains_non_latin_script',
-    'filter_movies_by_blacklist',
-    'filter_movies_by_completeness',
-    'filter_movies_by_language_script',
-    'filter_movies_by_rating',
-    'filter_movies_by_year',
-    'get_blacklisted_ids',
+    "LATIN_SCRIPT_LANGUAGES",
+    "apply_data_quality_filters",
+    "contains_non_latin_script",
+    "filter_movies_by_blacklist",
+    "filter_movies_by_completeness",
+    "filter_movies_by_language_script",
+    "filter_movies_by_rating",
+    "filter_movies_by_year",
+    "get_blacklisted_ids",
 ]
 
 # ============================================================================
@@ -63,61 +63,63 @@ BLACKLIST_CACHE_TIMEOUT = 300  # 5 minutes
 # Languages that use Latin script. When filtering for these languages, we expect
 # original_title to be in Latin characters. CJK characters indicate mislabeling.
 # Matches frontend sortOptionFiltering.ts LATIN_SCRIPT_LANGUAGES.
-LATIN_SCRIPT_LANGUAGES: frozenset[str] = frozenset([
-    'en',  # English
-    'es',  # Spanish
-    'fr',  # French
-    'de',  # German
-    'it',  # Italian
-    'pt',  # Portuguese
-    'nl',  # Dutch
-    'sv',  # Swedish
-    'da',  # Danish
-    'no',  # Norwegian
-    'fi',  # Finnish
-    'pl',  # Polish
-    'tr',  # Turkish
-    'id',  # Indonesian
-    'ms',  # Malay
-    'vi',  # Vietnamese (uses Latin with diacritics)
-    'tl',  # Tagalog/Filipino
-])
+LATIN_SCRIPT_LANGUAGES: frozenset[str] = frozenset(
+    [
+        "en",  # English
+        "es",  # Spanish
+        "fr",  # French
+        "de",  # German
+        "it",  # Italian
+        "pt",  # Portuguese
+        "nl",  # Dutch
+        "sv",  # Swedish
+        "da",  # Danish
+        "no",  # Norwegian
+        "fi",  # Finnish
+        "pl",  # Polish
+        "tr",  # Turkish
+        "id",  # Indonesian
+        "ms",  # Malay
+        "vi",  # Vietnamese (uses Latin with diacritics)
+        "tl",  # Tagalog/Filipino
+    ]
+)
 
 # Regex pattern for non-Latin scripts that indicate language mislabeling
 # When a film is tagged as a Latin-script language (English, Spanish, etc.)
 # but has these characters in original_title, it's likely mislabeled
 _NON_LATIN_SCRIPT_PATTERN = re.compile(
-    r'['
+    r"["
     # CJK (Chinese, Japanese, Korean)
-    r'\u3000-\u303f'   # CJK Symbols and Punctuation
-    r'\u3040-\u309f'   # Hiragana
-    r'\u30a0-\u30ff'   # Katakana
-    r'\u4e00-\u9fff'   # CJK Unified Ideographs
-    r'\uac00-\ud7af'   # Hangul Syllables
-    r'\uff00-\uffef'   # Halfwidth and Fullwidth Forms
+    r"\u3000-\u303f"  # CJK Symbols and Punctuation
+    r"\u3040-\u309f"  # Hiragana
+    r"\u30a0-\u30ff"  # Katakana
+    r"\u4e00-\u9fff"  # CJK Unified Ideographs
+    r"\uac00-\ud7af"  # Hangul Syllables
+    r"\uff00-\uffef"  # Halfwidth and Fullwidth Forms
     # South Asian scripts (Indic)
-    r'\u0900-\u097f'   # Devanagari (Hindi, Marathi, Sanskrit)
-    r'\u0980-\u09ff'   # Bengali
-    r'\u0a80-\u0aff'   # Gujarati
-    r'\u0b00-\u0b7f'   # Oriya
-    r'\u0b80-\u0bff'   # Tamil
-    r'\u0c00-\u0c7f'   # Telugu
-    r'\u0c80-\u0cff'   # Kannada
-    r'\u0d00-\u0d7f'   # Malayalam
-    r'\u0d80-\u0dff'   # Sinhalese
+    r"\u0900-\u097f"  # Devanagari (Hindi, Marathi, Sanskrit)
+    r"\u0980-\u09ff"  # Bengali
+    r"\u0a80-\u0aff"  # Gujarati
+    r"\u0b00-\u0b7f"  # Oriya
+    r"\u0b80-\u0bff"  # Tamil
+    r"\u0c00-\u0c7f"  # Telugu
+    r"\u0c80-\u0cff"  # Kannada
+    r"\u0d00-\u0d7f"  # Malayalam
+    r"\u0d80-\u0dff"  # Sinhalese
     # Southeast Asian scripts
-    r'\u0e00-\u0e7f'   # Thai
-    r'\u0e80-\u0eff'   # Lao
-    r'\u1000-\u109f'   # Myanmar (Burmese)
+    r"\u0e00-\u0e7f"  # Thai
+    r"\u0e80-\u0eff"  # Lao
+    r"\u1000-\u109f"  # Myanmar (Burmese)
     # Middle Eastern scripts
-    r'\u0600-\u06ff'   # Arabic
-    r'\u0590-\u05ff'   # Hebrew
+    r"\u0600-\u06ff"  # Arabic
+    r"\u0590-\u05ff"  # Hebrew
     # European non-Latin scripts
-    r'\u0370-\u03ff'   # Greek
-    r'\u0400-\u04ff'   # Cyrillic (Russian, Ukrainian, etc.)
-    r'\u0530-\u058f'   # Armenian
-    r'\u10a0-\u10ff'   # Georgian
-    r']'
+    r"\u0370-\u03ff"  # Greek
+    r"\u0400-\u04ff"  # Cyrillic (Russian, Ukrainian, etc.)
+    r"\u0530-\u058f"  # Armenian
+    r"\u10a0-\u10ff"  # Georgian
+    r"]"
 )
 
 
@@ -199,10 +201,10 @@ def apply_data_quality_filters(
     movie_schemas: list[MovieListItemSchema] = []
     for m in movies:
         movie_dict = m.model_dump()
-        movie_dict['tmdb_id'] = movie_dict.pop('id')
+        movie_dict["tmdb_id"] = movie_dict.pop("id")
         # Normalize empty string dates to None (TMDB API quirk)
-        if movie_dict.get('release_date') == '':
-            movie_dict['release_date'] = None
+        if movie_dict.get("release_date") == "":
+            movie_dict["release_date"] = None
         movie_schemas.append(MovieListItemSchema.model_validate(movie_dict))
 
     # Apply filter pipeline
@@ -297,9 +299,7 @@ def get_blacklisted_ids() -> set[int]:
 
     from apps.movie.models import BlacklistedMovie
 
-    blacklist_ids = set(
-        BlacklistedMovie.objects.values_list("tmdb_id", flat=True)
-    )
+    blacklist_ids = set(BlacklistedMovie.objects.values_list("tmdb_id", flat=True))
 
     try:
         cache.set(BLACKLIST_CACHE_KEY, blacklist_ids, BLACKLIST_CACHE_TIMEOUT)

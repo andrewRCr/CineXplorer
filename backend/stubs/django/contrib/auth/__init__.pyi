@@ -23,6 +23,7 @@ custom models.pyi. Consider removing if maintenance burden increases.
 
 Note: This is a SUPPLEMENT to django-types. If redundancy is confirmed, may be removed.
 """
+
 from __future__ import annotations
 
 from typing import TypeVar
@@ -30,12 +31,10 @@ from typing import TypeVar
 from django.contrib.auth.models import AbstractBaseUser
 from django.http import HttpRequest
 
-_UserModel = TypeVar('_UserModel', bound=AbstractBaseUser)
-
+_UserModel = TypeVar("_UserModel", bound=AbstractBaseUser)
 
 def authenticate(
-    request: HttpRequest | None = None,
-    **credentials: object
+    request: HttpRequest | None = None, **credentials: object
 ) -> AbstractBaseUser | None:
     """
     Authenticate user with the given credentials.
@@ -50,7 +49,6 @@ def authenticate(
     Returns:
         User instance if authenticated, None if authentication fails
     """
-
 
 def get_user_model() -> type[AbstractBaseUser]:
     """

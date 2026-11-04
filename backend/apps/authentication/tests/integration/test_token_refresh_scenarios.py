@@ -304,7 +304,7 @@ def test_token_refresh_under_load_multiple_rapid_calls(
 
         # Step 4: Retry all failed requests with new access token
         # Frontend updates sessionStorage and retries with new token
-        new_access = new_tokens['access_token']
+        new_access = new_tokens["access_token"]
         retry_responses = [
             fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}"),
             fresh_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}"),

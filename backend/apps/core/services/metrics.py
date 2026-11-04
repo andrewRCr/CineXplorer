@@ -8,6 +8,7 @@ without requiring immediate infrastructure setup.
 Current implementation: Structured logging with metric-friendly format
 Future: Can be extended to emit to Prometheus, StatsD, or other backends
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,7 +32,7 @@ class MetricsService:
     def increment(
         metric_name: str,
         labels: dict[str, Any] | None = None,  # Any: Mixed types from monitoring systems
-        value: int = 1
+        value: int = 1,
     ) -> None:
         """
         Increment a counter metric.
@@ -57,7 +58,7 @@ class MetricsService:
                 "metric_name": metric_name,
                 "metric_value": value,
                 "metric_labels": labels,
-            }
+            },
         )
 
         # TODO: Add Prometheus/StatsD integration when monitoring backend is configured
@@ -68,7 +69,7 @@ class MetricsService:
         error_type: str,
         error_message: str,
         context: dict[str, Any] | None = None,  # Any: Error context accepts mixed diagnostic data
-        exception: Exception | None = None
+        exception: Exception | None = None,
     ) -> None:
         """
         Record an error event for monitoring/alerting.
@@ -97,15 +98,10 @@ class MetricsService:
 
         if exception:
             logger.exception(
-                f"ERROR_EVENT: {error_type} - {error_message}",
-                extra=log_extra,
-                exc_info=exception
+                f"ERROR_EVENT: {error_type} - {error_message}", extra=log_extra, exc_info=exception
             )
         else:
-            logger.error(
-                f"ERROR_EVENT: {error_type} - {error_message}",
-                extra=log_extra
-            )
+            logger.error(f"ERROR_EVENT: {error_type} - {error_message}", extra=log_extra)
 
         # TODO: Add Sentry/error tracking integration when configured
         # Example: sentry_sdk.capture_exception(exception, contexts=context)
@@ -118,7 +114,7 @@ _metrics = MetricsService()
 def increment(
     metric_name: str,
     labels: dict[str, Any] | None = None,  # Any: Labels accept mixed types from monitoring systems
-    value: int = 1
+    value: int = 1,
 ) -> None:
     """Convenience function for incrementing metrics."""
     _metrics.increment(metric_name, labels, value)
@@ -128,7 +124,7 @@ def record_error(
     error_type: str,
     error_message: str,
     context: dict[str, Any] | None = None,  # Any: Error context accepts mixed diagnostic data
-    exception: Exception | None = None
+    exception: Exception | None = None,
 ) -> None:
     """Convenience function for recording errors."""
     _metrics.record_error(error_type, error_message, context, exception)

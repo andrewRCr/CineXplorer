@@ -51,38 +51,40 @@ __all__ = ["NUMERIC_PARAMS", "PARAM_MAPPING", "build_tmdb_params"]
 # Parameter mapping: service parameter names (dot notation) → TMDB API parameter names
 # Single source of truth for BrowseServiceParams → TMDB API param transformations.
 PARAM_MAPPING: dict[str, str] = {
-    'sort_by': 'sort_by',
-    'genres': 'with_genres',
-    'year': 'year',
-    'vote_average.gte': 'vote_average.gte',
-    'vote_average.lte': 'vote_average.lte',
-    'vote_count.gte': 'vote_count.gte',
-    'vote_count.lte': 'vote_count.lte',
-    'keywords': 'with_keywords',
-    'people': 'with_people',
-    'release_date.gte': 'primary_release_date.gte',
-    'release_date.lte': 'primary_release_date.lte',
-    'certification': 'certification',
-    'certification_country': 'certification_country',
-    'with_release_type': 'with_release_type',
-    'region': 'region',
-    'tmdb_page_start': 'tmdb_page_start',
-    'language': 'with_original_language',  # Filter by movie's original language
+    "sort_by": "sort_by",
+    "genres": "with_genres",
+    "year": "year",
+    "vote_average.gte": "vote_average.gte",
+    "vote_average.lte": "vote_average.lte",
+    "vote_count.gte": "vote_count.gte",
+    "vote_count.lte": "vote_count.lte",
+    "keywords": "with_keywords",
+    "people": "with_people",
+    "release_date.gte": "primary_release_date.gte",
+    "release_date.lte": "primary_release_date.lte",
+    "certification": "certification",
+    "certification_country": "certification_country",
+    "with_release_type": "with_release_type",
+    "region": "region",
+    "tmdb_page_start": "tmdb_page_start",
+    "language": "with_original_language",  # Filter by movie's original language
 }
 
 # Numeric parameters that should preserve type (not convert to string)
 # Used during filter mapping to TMDB API parameters
 # Only dot notation needed since service layer uses dot notation exclusively
-NUMERIC_PARAMS: frozenset[str] = frozenset([
-    'year',
-    'primary_release_year',
-    'vote_average.gte',
-    'vote_average.lte',
-    'vote_count.gte',
-    'vote_count.lte',
-    'runtime.gte',
-    'runtime.lte',
-])
+NUMERIC_PARAMS: frozenset[str] = frozenset(
+    [
+        "year",
+        "primary_release_year",
+        "vote_average.gte",
+        "vote_average.lte",
+        "vote_count.gte",
+        "vote_count.lte",
+        "runtime.gte",
+        "runtime.lte",
+    ]
+)
 
 
 def build_tmdb_params(
@@ -90,7 +92,7 @@ def build_tmdb_params(
     rating_min: float | None = None,
     rating_max: float | None = None,
     min_vote_count: int | None = None,
-    **filters: str | int | float | bool | None
+    **filters: str | int | float | bool | None,
 ) -> dict[str, str | int | float | bool | None]:
     """
     Build TMDB API parameters from service-layer filters.
@@ -121,14 +123,11 @@ def build_tmdb_params(
 
     Example:
         >>> params = build_tmdb_params(
-        ...     page=1,
-        ...     rating_min=7.0,
-        ...     genres="28,12",
-        ...     sort_by="popularity.desc"
+        ...     page=1, rating_min=7.0, genres="28,12", sort_by="popularity.desc"
         ... )
-        >>> params['with_genres']
+        >>> params["with_genres"]
         '28,12'
-        >>> params['vote_average.gte']
+        >>> params["vote_average.gte"]
         7.0
 
     Note:
@@ -160,37 +159,37 @@ def build_tmdb_params(
                 params[tmdb_param] = str(filters[param_name])
 
     # Set default sort if not specified
-    if 'sort_by' not in params:
-        params['sort_by'] = 'popularity.desc'
+    if "sort_by" not in params:
+        params["sort_by"] = "popularity.desc"
 
     # Fix TMDB API bug: release_date sort doesn't work correctly with date range filters.
     # TMDB sorts by earliest regional release date globally, not the displayed release_date.
     # Using primary_release_date sort instead produces correct, consistent ordering.
     # See: https://www.themoviedb.org/talk/59d3f79ec3a3684561005cd5
-    if params.get('sort_by') == 'release_date.asc':
-        params['sort_by'] = 'primary_release_date.asc'
-    elif params.get('sort_by') == 'release_date.desc':
-        params['sort_by'] = 'primary_release_date.desc'
+    if params.get("sort_by") == "release_date.asc":
+        params["sort_by"] = "primary_release_date.asc"
+    elif params.get("sort_by") == "release_date.desc":
+        params["sort_by"] = "primary_release_date.desc"
 
     # Add rating filters to TMDB params for first-pass filtering
     # This prevents excessive backend filtering and buffer page fetching
     if rating_min is not None:
-        params['vote_average.gte'] = rating_min
+        params["vote_average.gte"] = rating_min
     if rating_max is not None:
-        params['vote_average.lte'] = rating_max
+        params["vote_average.lte"] = rating_max
 
     # Set vote_count.gte to match backend filter threshold for consistency
     # This ensures TMDB sends movies that will pass our backend vote count filter,
     # preventing excessive filtering that causes page underfill.
     # Priority: explicit min_vote_count > fallback for rating sorts
-    if min_vote_count is not None and 'vote_count.gte' not in params:
-        params['vote_count.gte'] = min_vote_count
+    if min_vote_count is not None and "vote_count.gte" not in params:
+        params["vote_count.gte"] = min_vote_count
     elif (
-        isinstance(params.get('sort_by', ''), str)
-        and 'vote_average' in str(params.get('sort_by', ''))
-        and 'vote_count.gte' not in params
+        isinstance(params.get("sort_by", ""), str)
+        and "vote_average" in str(params.get("sort_by", ""))
+        and "vote_count.gte" not in params
     ):
         # Fallback: rating sorts need some threshold even if min_vote_count not provided
-        params['vote_count.gte'] = VOTE_COUNT_THRESHOLD
+        params["vote_count.gte"] = VOTE_COUNT_THRESHOLD
 
     return params

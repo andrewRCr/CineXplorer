@@ -8,6 +8,7 @@ Tests the apply_buffer_if_needed function to verify:
 - Empty results after deduplication handled correctly
 
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -39,16 +40,14 @@ def convert_to_schema(tmdb_movie: TMDBMovieBase) -> MovieListItemSchema:
     """
     movie_dict = tmdb_movie.model_dump()
     # Rename id to tmdb_id for MovieListItemSchema
-    movie_dict['tmdb_id'] = movie_dict.pop('id')
+    movie_dict["tmdb_id"] = movie_dict.pop("id")
     # Normalize empty string dates to None (TMDB API quirk)
-    if movie_dict.get('release_date') == '':
-        movie_dict['release_date'] = None
+    if movie_dict.get("release_date") == "":
+        movie_dict["release_date"] = None
     return MovieListItemSchema.model_validate(movie_dict)
 
 
-def create_mock_fetch_func(
-    page_responses: dict[int, TMDBPaginatedMovieResponse]
-) -> Mock:
+def create_mock_fetch_func(page_responses: dict[int, TMDBPaginatedMovieResponse]) -> Mock:
     """Create mock fetch function that returns TMDBPaginatedMovieResponse for each page.
 
     The buffer method expects fetch_func to return a TMDBPaginatedMovieResponse
@@ -60,13 +59,14 @@ def create_mock_fetch_func(
     Returns:
         Mock function that returns TMDBPaginatedMovieResponse for given page number
     """
+
     def fetch_page(page: int) -> TMDBPaginatedMovieResponse:
         if page not in page_responses:
             # Return empty response for pages beyond what we defined
             return create_paginated_tmdb_response(
                 movies=[],
                 page=page,
-                total_pages=max(page_responses.keys()) if page_responses else 1
+                total_pages=max(page_responses.keys()) if page_responses else 1,
             )
         return page_responses[page]
 
@@ -88,10 +88,7 @@ def test_buffer_no_duplicates_returns_first_20() -> None:
     # Arrange: Create 20 unique movies for page 1
     page1_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 21)
     ]
@@ -126,10 +123,7 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
     # Arrange: Create page 1 with 19 movies (IDs 1-19)
     page1_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 20)  # 1-19
     ]
@@ -140,22 +134,17 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
             tmdb_id=19,  # DUPLICATE from page 1
             title="Movie 19",
             release_date="2023-01-01",
-            vote_average=7.0
+            vote_average=7.0,
         )
     ] + [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(20, 40)  # 20-39 (20 new movies)
     ]
 
     # Setup page responses
-    page_responses = {
-        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)
-    }
+    page_responses = {2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)}
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
@@ -192,10 +181,7 @@ def test_buffer_with_multiple_duplicates_continues_until_20_unique() -> None:
     # Arrange: Page 1 with 17 movies (IDs 1-17)
     page1_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 18)  # 1-17
     ]
@@ -282,10 +268,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
     # Arrange: Page 1 with 10 movies (IDs 1-10)
     page1_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 11)  # 1-10
     ]
@@ -296,10 +279,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
         # Each page has 9 duplicates + 1 new movie
         page_movies = [
             create_tmdb_movie(
-                tmdb_id=i,
-                title=f"Movie {i}",
-                release_date="2023-01-01",
-                vote_average=7.0
+                tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
             )
             for i in range(1, 10)  # Duplicates 1-9
         ] + [
@@ -307,7 +287,7 @@ def test_buffer_respects_max_buffer_pages_limit() -> None:
                 tmdb_id=10 + page_num - 1,  # One new movie per page
                 title=f"Movie {10 + page_num - 1}",
                 release_date="2023-01-01",
-                vote_average=7.0
+                vote_average=7.0,
             )
         ]
         page_responses[page_num] = create_paginated_tmdb_response(
@@ -352,19 +332,13 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
     # Arrange: Page 1 with movies 1-19 (Spirited Away at position 19)
     page1_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 20)  # 1-19
     ]
     # Make ID 19 "Spirited Away" for clarity
     page1_movies[-1] = create_tmdb_movie(
-        tmdb_id=129,
-        title="Spirited Away",
-        release_date="2001-07-20",
-        vote_average=8.5
+        tmdb_id=129, title="Spirited Away", release_date="2001-07-20", vote_average=8.5
     )
 
     # Page 2: Spirited Away appears FIRST (duplicate) + new movies 20-39
@@ -373,22 +347,17 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
             tmdb_id=129,  # DUPLICATE - Spirited Away
             title="Spirited Away",
             release_date="2001-07-20",
-            vote_average=8.5
+            vote_average=8.5,
         )
     ] + [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(20, 40)  # 20-39
     ]
 
     # Setup page responses
-    page_responses = {
-        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)
-    }
+    page_responses = {2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)}
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas
@@ -427,10 +396,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
     # Arrange: Page 1 with 10 movies (IDs 1-10)
     page1_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 11)  # 1-10
     ]
@@ -438,10 +404,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
     # Page 2: All duplicates (IDs 1-10 again)
     page2_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 11)  # Same IDs 1-10
     ]
@@ -449,10 +412,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
     # Page 3: New movies 11-30
     page3_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(11, 31)  # 11-30 (20 new)
     ]
@@ -500,10 +460,7 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
     # Arrange: Page 1 with 15 movies from 2020-2024 (IDs 1-15)
     page1_movies = [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(1, 16)  # 1-15
     ]
@@ -522,18 +479,13 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
         ),  # Filtered
     ] + [
         create_tmdb_movie(
-            tmdb_id=i,
-            title=f"Movie {i}",
-            release_date="2023-01-01",
-            vote_average=7.0
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
         )
         for i in range(16, 36)  # 16-35 (20 new movies from 2023)
     ]
 
     # Setup page responses
-    page_responses = {
-        2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)
-    }
+    page_responses = {2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)}
     mock_fetch = create_mock_fetch_func(page_responses)
 
     # Convert page 1 to schemas

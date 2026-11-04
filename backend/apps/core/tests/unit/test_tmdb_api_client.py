@@ -114,7 +114,7 @@ class TestTMDBApiClientResponseMetadata:
             "page": 1,
             "total_pages": 10,
             "total_results": 200,
-            "results": [{"id": 1}, {"id": 2}]
+            "results": [{"id": 1}, {"id": 2}],
         }
 
         metadata = client._extract_tmdb_response_metadata(data)
@@ -165,7 +165,7 @@ class TestTMDBApiClientRateLimitExtraction:
         headers = {
             "x-ratelimit-limit": "40",
             "x-ratelimit-remaining": "39",
-            "x-ratelimit-reset": "1234567890"
+            "x-ratelimit-reset": "1234567890",
         }
 
         info = client._extract_rate_limit_headers(headers)
@@ -210,12 +210,12 @@ class TestTMDBApiClientGetMethod:
         mock_settings.TMDB_API_KEY = "test-api-key"
         client = TMDBApiClient()
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"results": []}
             mock_response.headers = {}
-            mock_response.content = b'{}'
+            mock_response.content = b"{}"
             mock_get.return_value = mock_response
 
             client.get("discover/movie", params={"page": 1})
@@ -243,7 +243,7 @@ class TestTMDBApiClientGetMethod:
 
         client = TMDBApiClient()
 
-        with patch.object(client.session, 'get'), pytest.raises(ImproperlyConfigured):
+        with patch.object(client.session, "get"), pytest.raises(ImproperlyConfigured):
             client.get("movie/550")
 
 
@@ -255,22 +255,19 @@ class TestTMDBApiClientConvenienceMethods:
         mock_settings.TMDB_API_KEY = "test-key"
         client = TMDBApiClient()
 
-        with patch.object(client, 'get') as mock_get:
+        with patch.object(client, "get") as mock_get:
             mock_get.return_value = ApiResponse(status_code=200, data={"results": []})
 
             client.search_movies("The Matrix", page=2)
 
-            mock_get.assert_called_once_with(
-                "search/movie",
-                {"query": "The Matrix", "page": 2}
-            )
+            mock_get.assert_called_once_with("search/movie", {"query": "The Matrix", "page": 2})
 
     @patch(TMDB_SETTINGS)
     def test_get_movie_details_calls_correct_endpoint(self, mock_settings: Mock) -> None:
         mock_settings.TMDB_API_KEY = "test-key"
         client = TMDBApiClient()
 
-        with patch.object(client, 'get') as mock_get:
+        with patch.object(client, "get") as mock_get:
             mock_get.return_value = ApiResponse(status_code=200, data={"id": 550})
 
             client.get_movie_details(550)
@@ -282,14 +279,13 @@ class TestTMDBApiClientConvenienceMethods:
         mock_settings.TMDB_API_KEY = "test-key"
         client = TMDBApiClient()
 
-        with patch.object(client, 'get') as mock_get:
+        with patch.object(client, "get") as mock_get:
             mock_get.return_value = ApiResponse(status_code=200, data={"results": []})
 
             client.discover_movies(year=2023, with_genres="28")
 
             mock_get.assert_called_once_with(
-                "discover/movie",
-                params={"year": 2023, "with_genres": "28"}
+                "discover/movie", params={"year": 2023, "with_genres": "28"}
             )
 
     @patch(TMDB_SETTINGS)
@@ -297,7 +293,7 @@ class TestTMDBApiClientConvenienceMethods:
         mock_settings.TMDB_API_KEY = "test-key"
         client = TMDBApiClient()
 
-        with patch.object(client, 'get') as mock_get:
+        with patch.object(client, "get") as mock_get:
             mock_get.return_value = ApiResponse(status_code=200, data={"results": []})
 
             client.get_popular_movies(page=3)
@@ -309,7 +305,7 @@ class TestTMDBApiClientConvenienceMethods:
         mock_settings.TMDB_API_KEY = "test-key"
         client = TMDBApiClient()
 
-        with patch.object(client, 'get') as mock_get:
+        with patch.object(client, "get") as mock_get:
             mock_get.return_value = ApiResponse(status_code=200, data={"results": []})
 
             client.get_top_rated_movies(page=1)
@@ -321,7 +317,7 @@ class TestTMDBApiClientConvenienceMethods:
         mock_settings.TMDB_API_KEY = "test-key"
         client = TMDBApiClient()
 
-        with patch.object(client, 'get') as mock_get:
+        with patch.object(client, "get") as mock_get:
             mock_get.return_value = ApiResponse(status_code=200, data={"results": []})
 
             client.get_now_playing_movies(page=2)
@@ -342,10 +338,7 @@ class TestTMDBApiClientResponseProcessing:
         response.content = b"<html>Error</html>"
 
         result = client.process_successful_response(
-            response=response,
-            correlation_id="test-123",
-            endpoint="movie/550",
-            duration_ms=100
+            response=response, correlation_id="test-123", endpoint="movie/550", duration_ms=100
         )
 
         assert result.status_code == 502
@@ -363,12 +356,9 @@ class TestTMDBApiClientResponseProcessing:
             response.content = b""
             response.text = ""
 
-            with patch.object(client, 'logger') as mock_logger:
+            with patch.object(client, "logger") as mock_logger:
                 client.process_error_response(
-                    response=response,
-                    correlation_id="test",
-                    endpoint="/api",
-                    duration_ms=100
+                    response=response, correlation_id="test", endpoint="/api", duration_ms=100
                 )
 
                 # Verify appropriate log method was called

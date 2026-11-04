@@ -211,7 +211,7 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
     from apps.core.tests.test_helpers import authenticate_client
 
     # Authenticate using hybrid JWT pattern (sets access_token + refresh_token cookies)
-    authenticate_client(client, verified_user.username, 'testpass123')
+    authenticate_client(client, verified_user.username, "testpass123")
 
     # Set throttling flag for test-aware throttle classes
     client._test_enable_throttling = True  # type: ignore[attr-defined]
@@ -331,6 +331,7 @@ def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
         Supported providers: 'google', 'github'
         Raises ValueError for unsupported provider names
     """
+
     @contextmanager
     def _patch_oauth_requests(provider: str) -> Generator[tuple[Mock, Mock]]:
         """
@@ -345,10 +346,10 @@ def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
         Raises:
             ValueError: If provider is not 'google' or 'github'
         """
-        if provider not in ('google', 'github'):
+        if provider not in ("google", "github"):
             raise ValueError(f"Unsupported provider: {provider}")
 
-        with patch('requests.post') as mock_post, patch('requests.get') as mock_get:
+        with patch("requests.post") as mock_post, patch("requests.get") as mock_get:
             yield mock_post, mock_get
 
     return _patch_oauth_requests
@@ -391,6 +392,7 @@ def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures mo
         user2 = create_user(email='custom2@example.com', email_verified=False)
     """
     from apps.core.tests.test_helpers import create_user
+
     return create_user(email_verified=True)
 
 
@@ -415,6 +417,7 @@ def unverified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures 
             assert response.status_code == 403
     """
     from apps.authentication.tests.fixtures import create_unverified_user
+
     return create_unverified_user()
 
 
@@ -442,6 +445,7 @@ def register_payload() -> Any:  # noqa: ANN401 - RegisterPayload type from fixtu
         )
     """
     from apps.authentication.tests.fixtures import create_register_payload
+
     return create_register_payload()
 
 
@@ -470,6 +474,7 @@ def login_payload() -> Any:  # noqa: ANN401 - LoginPayload type from fixtures
         )
     """
     from apps.authentication.tests.fixtures import create_login_payload
+
     return create_login_payload()
 
 

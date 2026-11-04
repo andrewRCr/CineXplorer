@@ -27,6 +27,6 @@ data structures that will be validated by Pydantic models.
 """
 
 __all__ = [
-    'TMDBParams',
-    'TMDBResponseData',
+    "TMDBParams",
+    "TMDBResponseData",
 ]

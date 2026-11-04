@@ -39,5 +39,3 @@ class BlacklistedMovie(models.Model):
 
     def __str__(self) -> str:
         return f"TMDB {self.tmdb_id}: {self.reason}"
-
-

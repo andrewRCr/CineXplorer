@@ -19,6 +19,7 @@ Tests cover:
 - Latin vs non-Latin language handling
 - Integration with apply_data_quality_filters
 """
+
 from __future__ import annotations
 
 from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase

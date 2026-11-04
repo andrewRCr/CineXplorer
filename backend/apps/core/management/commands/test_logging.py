@@ -104,7 +104,7 @@ class Command(BaseCommand):
                 ]
                 for query, time_taken, description in test_queries:
                     log_slow_query(query, time_taken, params=("test_param",))
-                    self.stdout.write(f"    ✓ {description}: {time_taken*1000:.0f}ms")
+                    self.stdout.write(f"    ✓ {description}: {time_taken * 1000:.0f}ms")
         except Exception as e:
             self.stdout.write(self.style.WARNING(f"Database logging test failed: {e}"))
 

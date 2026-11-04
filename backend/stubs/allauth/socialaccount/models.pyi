@@ -25,6 +25,7 @@ Pattern: Custom stubs for third-party libraries without complete type informatio
 Status: NO official allauth stubs exist - this is REQUIRED (not a supplement)
 Provider-specific extra_data uses object because its JSON shape varies by provider.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
@@ -35,7 +36,6 @@ from django.db import models
 if TYPE_CHECKING:
     from django.contrib.sites.models import Site
     from django.db.models.manager import Manager, ManyToManyRelatedManager
-
 
 class SocialApp(models.Model):
     """
@@ -59,7 +59,6 @@ class SocialApp(models.Model):
 
     # Manager (override acceptable in stub files)
     objects: ClassVar[Manager[SocialApp]]  # pyright: ignore[reportIncompatibleVariableOverride]
-
 
 class SocialAccount(models.Model):
     """

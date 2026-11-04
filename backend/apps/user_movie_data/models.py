@@ -50,16 +50,14 @@ from django.db import models
 
 
 class UserMovieData(models.Model):
-    """ Represents a user's data about a particular movie. """
+    """Represents a user's data about a particular movie."""
 
     user = models.ForeignKey(  # type: ignore
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
     movie = models.ForeignKey(  # type: ignore
-        'core.Movie',
-        on_delete=models.CASCADE,
-        related_name='user_movie_data'
+        "core.Movie", on_delete=models.CASCADE, related_name="user_movie_data"
     )
     user_watched = models.BooleanField(  # type: ignore
         default=False, db_index=True
@@ -71,15 +69,17 @@ class UserMovieData(models.Model):
         default=False, db_index=True
     )
     user_rating = models.IntegerField(  # type: ignore
-        null=True, blank=True, default=None,
-        validators=[MinValueValidator(1), MaxValueValidator(10)]
+        null=True,
+        blank=True,
+        default=None,
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
     user_review = models.TextField(  # type: ignore
         blank=True, null=True
     )
 
     class Meta:
-        unique_together = ('user', 'movie')
+        unique_together = ("user", "movie")
 
     def __str__(self) -> str:
         # ForeignKey attribute access - django-types limitation with related field access

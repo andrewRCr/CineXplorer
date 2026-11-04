@@ -4,6 +4,7 @@ Mock OAuth provider implementations for testing.
 This module provides mock implementations of OAuth providers (Google, GitHub)
 for testing OAuth flows without requiring real external API calls.
 """
+
 from collections.abc import Generator
 from contextlib import contextmanager
 from unittest.mock import Mock, patch
@@ -20,7 +21,7 @@ class MockOAuthProvider:
     Provides common functionality for simulating OAuth flows in tests.
     """
 
-    provider_name: str = 'base'
+    provider_name: str = "base"
 
     def __init__(self, social_app: SocialApp | None = None) -> None:
         """
@@ -33,9 +34,9 @@ class MockOAuthProvider:
 
     def create_oauth_response(
         self,
-        user_email: str = 'oauth@example.com',
-        user_id: str = '123456789',
-        **extra_data: object
+        user_email: str = "oauth@example.com",
+        user_id: str = "123456789",
+        **extra_data: object,
     ) -> dict[str, object]:
         """
         Create a mock OAuth provider response.
@@ -51,9 +52,7 @@ class MockOAuthProvider:
         raise NotImplementedError("Subclasses must implement create_oauth_response")
 
     def create_callback_params(
-        self,
-        code: str = 'mock_auth_code',
-        state: str = 'mock_state'
+        self, code: str = "mock_auth_code", state: str = "mock_state"
     ) -> dict[str, str]:
         """
         Create mock OAuth callback parameters.
@@ -65,12 +64,9 @@ class MockOAuthProvider:
         Returns:
             Callback parameters dict
         """
-        return {
-            'code': code,
-            'state': state
-        }
+        return {"code": code, "state": state}
 
-    def mock_token_exchange(self, access_token: str = 'mock_access_token') -> Mock:
+    def mock_token_exchange(self, access_token: str = "mock_access_token") -> Mock:
         """
         Create a mock for the OAuth token exchange.
 
@@ -82,20 +78,20 @@ class MockOAuthProvider:
         """
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.headers = {'Content-Type': 'application/json'}
+        mock_response.headers = {"Content-Type": "application/json"}
         mock_response.json.return_value = {
-            'access_token': access_token,
-            'token_type': 'Bearer',
-            'expires_in': 3600
+            "access_token": access_token,
+            "token_type": "Bearer",
+            "expires_in": 3600,
         }
         mock_response.raise_for_status = Mock()  # No-op for 200 status
         return mock_response
 
     def mock_user_info_request(
         self,
-        user_email: str = 'oauth@example.com',
-        user_id: str = '123456789',
-        **extra_data: object
+        user_email: str = "oauth@example.com",
+        user_id: str = "123456789",
+        **extra_data: object,
     ) -> Mock:
         """
         Create a mock for the OAuth user info request.
@@ -110,11 +106,9 @@ class MockOAuthProvider:
         """
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.headers = {'Content-Type': 'application/json'}
+        mock_response.headers = {"Content-Type": "application/json"}
         mock_response.json.return_value = self.create_oauth_response(
-            user_email=user_email,
-            user_id=user_id,
-            **extra_data
+            user_email=user_email, user_id=user_id, **extra_data
         )
         mock_response.raise_for_status = Mock()  # No-op for 200 status
         return mock_response
@@ -127,13 +121,13 @@ class MockGoogleOAuth(MockOAuthProvider):
     Simulates Google's OAuth 2.0 flow for testing purposes.
     """
 
-    provider_name = 'google'
+    provider_name = "google"
 
     def create_oauth_response(
         self,
-        user_email: str = 'google@example.com',
-        user_id: str = '123456789',
-        **extra_data: object
+        user_email: str = "google@example.com",
+        user_id: str = "123456789",
+        **extra_data: object,
     ) -> dict[str, object]:
         """
         Create a mock Google OAuth response.
@@ -149,26 +143,25 @@ class MockGoogleOAuth(MockOAuthProvider):
             Mock Google userinfo response
         """
         response = {
-            'sub': user_id,
-            'email': user_email,
-            'email_verified': True,
-            'name': extra_data.get('name', 'Test User'),
-            'given_name': extra_data.get('given_name', 'Test'),
-            'family_name': extra_data.get('family_name', 'User'),
-            'picture': extra_data.get(
-                'picture',
-                'https://lh3.googleusercontent.com/a/default-user'
+            "sub": user_id,
+            "email": user_email,
+            "email_verified": True,
+            "name": extra_data.get("name", "Test User"),
+            "given_name": extra_data.get("given_name", "Test"),
+            "family_name": extra_data.get("family_name", "User"),
+            "picture": extra_data.get(
+                "picture", "https://lh3.googleusercontent.com/a/default-user"
             ),
-            'locale': extra_data.get('locale', 'en')
+            "locale": extra_data.get("locale", "en"),
         }
         response.update(extra_data)
         return response
 
     def mock_complete_flow(
         self,
-        user_email: str = 'google@example.com',
-        user_id: str = '123456789',
-        access_token: str = 'mock_google_token'
+        user_email: str = "google@example.com",
+        user_id: str = "123456789",
+        access_token: str = "mock_google_token",
     ) -> tuple[Mock, Mock]:
         """
         Mock the complete Google OAuth flow.
@@ -195,13 +188,13 @@ class MockGitHubOAuth(MockOAuthProvider):
     Simulates GitHub's OAuth 2.0 flow for testing purposes.
     """
 
-    provider_name = 'github'
+    provider_name = "github"
 
     def create_oauth_response(
         self,
-        user_email: str = 'github@example.com',
-        user_id: str = '987654321',
-        **extra_data: object
+        user_email: str = "github@example.com",
+        user_id: str = "987654321",
+        **extra_data: object,
     ) -> dict[str, object]:
         """
         Create a mock GitHub OAuth response.
@@ -217,29 +210,26 @@ class MockGitHubOAuth(MockOAuthProvider):
             Mock GitHub user response
         """
         response = {
-            'id': int(user_id),
-            'login': extra_data.get('login', 'testuser'),
-            'email': user_email,
-            'name': extra_data.get('name', 'Test User'),
-            'avatar_url': extra_data.get(
-                'avatar_url',
-                'https://avatars.githubusercontent.com/u/987654321'
+            "id": int(user_id),
+            "login": extra_data.get("login", "testuser"),
+            "email": user_email,
+            "name": extra_data.get("name", "Test User"),
+            "avatar_url": extra_data.get(
+                "avatar_url", "https://avatars.githubusercontent.com/u/987654321"
             ),
-            'bio': extra_data.get('bio', ''),
-            'location': extra_data.get('location', ''),
-            'blog': extra_data.get('blog', ''),
-            'html_url': extra_data.get('html_url', 'https://github.com/testuser'),
-            'public_repos': extra_data.get('public_repos', 0),
-            'followers': extra_data.get('followers', 0),
-            'following': extra_data.get('following', 0)
+            "bio": extra_data.get("bio", ""),
+            "location": extra_data.get("location", ""),
+            "blog": extra_data.get("blog", ""),
+            "html_url": extra_data.get("html_url", "https://github.com/testuser"),
+            "public_repos": extra_data.get("public_repos", 0),
+            "followers": extra_data.get("followers", 0),
+            "following": extra_data.get("following", 0),
         }
         response.update(extra_data)
         return response
 
     def mock_email_request(
-        self,
-        user_email: str = 'github@example.com',
-        verified: bool = True
+        self, user_email: str = "github@example.com", verified: bool = True
     ) -> Mock:
         """
         Create a mock for GitHub's emails endpoint.
@@ -255,21 +245,18 @@ class MockGitHubOAuth(MockOAuthProvider):
         """
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.headers = {'Content-Type': 'application/json'}
-        mock_response.json.return_value = [{
-            'email': user_email,
-            'primary': True,
-            'verified': verified,
-            'visibility': 'private'
-        }]
+        mock_response.headers = {"Content-Type": "application/json"}
+        mock_response.json.return_value = [
+            {"email": user_email, "primary": True, "verified": verified, "visibility": "private"}
+        ]
         mock_response.raise_for_status = Mock()  # No-op for 200 status
         return mock_response
 
     def mock_complete_flow(
         self,
-        user_email: str = 'github@example.com',
-        user_id: str = '987654321',
-        access_token: str = 'mock_github_token'
+        user_email: str = "github@example.com",
+        user_id: str = "987654321",
+        access_token: str = "mock_github_token",
     ) -> tuple[Mock, Mock, Mock]:
         """
         Mock the complete GitHub OAuth flow.
@@ -320,7 +307,7 @@ def mock_github_oauth_success() -> MockGitHubOAuth:
 
 
 @contextmanager
-def patch_oauth_requests(provider: str = 'google') -> Generator[tuple[Mock, Mock]]:
+def patch_oauth_requests(provider: str = "google") -> Generator[tuple[Mock, Mock]]:
     """
     Context manager for patching OAuth HTTP requests.
 
@@ -337,8 +324,8 @@ def patch_oauth_requests(provider: str = 'google') -> Generator[tuple[Mock, Mock
             # OAuth requests will be mocked
             response = client.get('/accounts/google/login/callback/', {...})
     """
-    if provider not in ('google', 'github'):
+    if provider not in ("google", "github"):
         raise ValueError(f"Unsupported provider: {provider}")
 
-    with patch('requests.post') as mock_post, patch('requests.get') as mock_get:
+    with patch("requests.post") as mock_post, patch("requests.get") as mock_get:
         yield mock_post, mock_get

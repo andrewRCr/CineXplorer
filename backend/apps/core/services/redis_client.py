@@ -23,6 +23,7 @@ Usage:
         members = client.smembers("my_set")  # Returns set[int]
         client.delete("my_set")
 """
+
 from __future__ import annotations
 
 import logging
@@ -30,7 +31,7 @@ from typing import Protocol
 
 from django.core.cache import cache
 
-logger = logging.getLogger('cinexplorer.redis')
+logger = logging.getLogger("cinexplorer.redis")
 
 
 class AtomicSetOperations(Protocol):

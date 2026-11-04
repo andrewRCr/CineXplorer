@@ -23,12 +23,13 @@ from django.utils.deprecation import MiddlewareMixin
 
 class RequestWithLogging(Protocol):
     """HttpRequest with logging middleware attributes."""
+
     correlation_id: str
     start_time: float
 
 
 # Get logger for request tracking
-logger = logging.getLogger('cinexplorer.requests')
+logger = logging.getLogger("cinexplorer.requests")
 
 
 class RequestLoggingMiddleware(MiddlewareMixin):
@@ -46,24 +47,33 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
     # Sensitive header names to exclude from logs
     SENSITIVE_HEADERS = {
-        'authorization', 'cookie', 'x-api-key', 'x-auth-token',
-        'x-csrf-token', 'x-forwarded-authorization'
+        "authorization",
+        "cookie",
+        "x-api-key",
+        "x-auth-token",
+        "x-csrf-token",
+        "x-forwarded-authorization",
     }
 
     # Sensitive parameter names to exclude from logs
     SENSITIVE_PARAMS = {
-        'password', 'token', 'api_key', 'secret', 'auth',
-        'csrf_token', 'csrfmiddlewaretoken'
+        "password",
+        "token",
+        "api_key",
+        "secret",
+        "auth",
+        "csrf_token",
+        "csrfmiddlewaretoken",
     }
 
     # Health check endpoints to filter (unless unhealthy)
     HEALTH_CHECK_PATHS = {
-        '/api/health-check/',
-        '/api/health-check',
-        '/health/',
-        '/health',
-        '/healthz/',
-        '/healthz'
+        "/api/health-check/",
+        "/api/health-check",
+        "/health/",
+        "/health",
+        "/healthz/",
+        "/healthz",
     }
 
     def _is_health_check(self, request: HttpRequest) -> bool:
@@ -92,7 +102,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         for key, value in request.headers.items():
             # Case-insensitive check for sensitive headers
             if key.lower() in self.SENSITIVE_HEADERS:
-                sanitized[key] = '[REDACTED]'
+                sanitized[key] = "[REDACTED]"
             else:
                 sanitized[key] = str(value)[:200]  # Truncate long headers
         return sanitized
@@ -112,12 +122,13 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
         # Parse query string and redact sensitive params
         from urllib.parse import parse_qsl, urlencode
+
         params = parse_qsl(query_string, keep_blank_values=True)
         sanitized_params = []
         for key, value in params:
             # Case-insensitive check for sensitive params
             if key.lower() in self.SENSITIVE_PARAMS:
-                sanitized_params.append((key, '[REDACTED]'))
+                sanitized_params.append((key, "[REDACTED]"))
             else:
                 sanitized_params.append((key, value))
         return urlencode(sanitized_params)
@@ -137,7 +148,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         request.start_time = time.time()  # type: ignore[attr-defined]
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get('QUERY_STRING', '')
+        query_string = request.META.get("QUERY_STRING", "")
         sanitized_query_string = self._sanitize_query_string(query_string)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
@@ -145,31 +156,31 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Get user context (safely handle anonymous users)
         user_info = self._get_user_context(request)
         client_ip = self._get_client_ip(request)
-        user_agent = request.META.get('HTTP_USER_AGENT', '')[:100]  # Truncate long user agents
+        user_agent = request.META.get("HTTP_USER_AGENT", "")[:100]  # Truncate long user agents
 
         # Create concise, informative log message
         log_message = f"{request.method} {full_url} from {client_ip}"
-        if user_info['is_authenticated']:
+        if user_info["is_authenticated"]:
             log_message += f" (user: {user_info['username']})"
 
         # Log with structured data for detailed analysis but readable message
-        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
         logger.info(
             log_message,
             extra={
-                'correlation_id': correlation_id,
-                'method': request.method,
-                'path': request.path,
-                'full_url': full_url,
-                'query_string': sanitized_query_string,
-                'user': user_info,
-                'client_ip': client_ip,
-                'user_agent': user_agent,
-                'referer': request.META.get('HTTP_REFERER', ''),
-                'event_type': 'request_start',
-                'is_ajax': is_ajax,
-                'is_health_check': self._is_health_check(request)
-            }
+                "correlation_id": correlation_id,
+                "method": request.method,
+                "path": request.path,
+                "full_url": full_url,
+                "query_string": sanitized_query_string,
+                "user": user_info,
+                "client_ip": client_ip,
+                "user_agent": user_agent,
+                "referer": request.META.get("HTTP_REFERER", ""),
+                "event_type": "request_start",
+                "is_ajax": is_ajax,
+                "is_health_check": self._is_health_check(request),
+            },
         )
 
     def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
@@ -186,17 +197,17 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
         # Calculate request duration
         duration: float | None = None
-        if hasattr(request, 'start_time'):
+        if hasattr(request, "start_time"):
             duration = time.time() - request.start_time  # type: ignore[attr-defined]
 
         # Get correlation ID (should exist from process_request)
-        correlation_id = getattr(request, 'correlation_id', 'unknown')
+        correlation_id = getattr(request, "correlation_id", "unknown")
 
         # Determine log level based on status code
         log_level = self._get_log_level_for_status(response.status_code)
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get('QUERY_STRING', '')
+        query_string = request.META.get("QUERY_STRING", "")
         sanitized_query_string = self._sanitize_query_string(query_string)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
@@ -217,7 +228,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         log_message = f"{base_msg} {full_url} ({duration_str}) cid={correlation_id}"
 
         # Add response size if significant
-        response_size = len(response.content) if hasattr(response, 'content') else 0
+        response_size = len(response.content) if hasattr(response, "content") else 0
         if response_size > 1024:  # Only log size if > 1KB
             size_kb = round(response_size / 1024, 1)
             log_message += f" [{size_kb}KB]"
@@ -228,23 +239,23 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             duration_ms = round(cast(float, duration) * 1000, 2)
 
         # Expose correlation ID to clients via response header
-        response['X-Request-ID'] = correlation_id
+        response["X-Request-ID"] = correlation_id
 
         # Log request completion with structured data
         logger.log(
             log_level,
             log_message,
             extra={
-                'correlation_id': correlation_id,
-                'method': request.method,
-                'path': request.path,
-                'full_url': full_url,
-                'status_code': response.status_code,
-                'duration_ms': duration_ms,
-                'response_size_bytes': response_size,
-                'event_type': 'request_complete',
-                'is_health_check': self._is_health_check(request)
-            }
+                "correlation_id": correlation_id,
+                "method": request.method,
+                "path": request.path,
+                "full_url": full_url,
+                "status_code": response.status_code,
+                "duration_ms": duration_ms,
+                "response_size_bytes": response_size,
+                "event_type": "request_complete",
+                "is_health_check": self._is_health_check(request),
+            },
         )
 
         return response
@@ -261,13 +272,13 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
         # Calculate duration if possible
         duration: float | None = None
-        if hasattr(request, 'start_time'):
+        if hasattr(request, "start_time"):
             duration = time.time() - request.start_time  # type: ignore[attr-defined]
 
-        correlation_id = getattr(request, 'correlation_id', 'unknown')
+        correlation_id = getattr(request, "correlation_id", "unknown")
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get('QUERY_STRING', '')
+        query_string = request.META.get("QUERY_STRING", "")
         sanitized_query_string = self._sanitize_query_string(query_string)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
@@ -278,9 +289,11 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         else:
             duration_str = "?ms"
         exception_msg = str(exception)[:200]
-        log_message = (f"💥 EXCEPTION {request.method} {full_url} "
-                       f"({duration_str}) cid={correlation_id} - "
-                       f"{exception.__class__.__name__}: {exception_msg}")
+        log_message = (
+            f"💥 EXCEPTION {request.method} {full_url} "
+            f"({duration_str}) cid={correlation_id} - "
+            f"{exception.__class__.__name__}: {exception_msg}"
+        )
 
         # Calculate duration in milliseconds for logging
         duration_ms = None
@@ -290,17 +303,17 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         logger.error(
             log_message,
             extra={
-                'correlation_id': correlation_id,
-                'method': request.method,
-                'path': request.path,
-                'full_url': full_url,
-                'exception_type': exception.__class__.__name__,
-                'exception_message': str(exception),
-                'duration_ms': duration_ms,
-                'event_type': 'request_exception',
-                'is_health_check': self._is_health_check(request)
+                "correlation_id": correlation_id,
+                "method": request.method,
+                "path": request.path,
+                "full_url": full_url,
+                "exception_type": exception.__class__.__name__,
+                "exception_message": str(exception),
+                "duration_ms": duration_ms,
+                "event_type": "request_exception",
+                "is_health_check": self._is_health_check(request),
             },
-            exc_info=True  # Include full traceback
+            exc_info=True,  # Include full traceback
         )
 
     def _get_user_context(self, request: HttpRequest) -> dict[str, object]:
@@ -313,21 +326,17 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         Returns:
             dict[str, object]: User context information
         """
-        user = getattr(request, 'user', None)
+        user = getattr(request, "user", None)
 
         if not user or isinstance(user, AnonymousUser):
-            return {
-                'id': None,
-                'username': 'anonymous',
-                'is_authenticated': False
-            }
+            return {"id": None, "username": "anonymous", "is_authenticated": False}
 
         return {
-            'id': user.id,
-            'username': getattr(user, 'username', 'unknown'),
-            'is_authenticated': True,
-            'is_staff': getattr(user, 'is_staff', False),
-            'is_superuser': getattr(user, 'is_superuser', False)
+            "id": user.id,
+            "username": getattr(user, "username", "unknown"),
+            "is_authenticated": True,
+            "is_staff": getattr(user, "is_staff", False),
+            "is_superuser": getattr(user, "is_superuser", False),
         }
 
     def _get_client_ip(self, request: HttpRequest) -> str:
@@ -341,15 +350,15 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             str: Client IP address
         """
         # Check for forwarded headers first (common in Docker/proxy setups)
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
         if x_forwarded_for:
-            return str(x_forwarded_for).split(',')[0].strip()
+            return str(x_forwarded_for).split(",")[0].strip()
 
-        x_real_ip = request.META.get('HTTP_X_REAL_IP')
+        x_real_ip = request.META.get("HTTP_X_REAL_IP")
         if x_real_ip:
             return str(x_real_ip)
 
-        return str(request.META.get('REMOTE_ADDR', 'unknown'))
+        return str(request.META.get("REMOTE_ADDR", "unknown"))
 
     def _get_log_level_for_status(self, status_code: int) -> int:
         """
@@ -389,4 +398,4 @@ def get_correlation_id(request: HttpRequest) -> str | None:
             correlation_id = get_correlation_id(request)
             logger.info("Processing view", extra={'correlation_id': correlation_id})
     """
-    return getattr(request, 'correlation_id', None)  # type: ignore[attr-defined]
+    return getattr(request, "correlation_id", None)  # type: ignore[attr-defined]

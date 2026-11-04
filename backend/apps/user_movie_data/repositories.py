@@ -27,6 +27,7 @@ Usage:
     mock_repository = MockUserMovieDataRepository()
     service = UserMovieDataService(repository=mock_repository)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -69,9 +70,7 @@ class UserMovieDataRepository:
     """
 
     def get_for_user_and_movies(
-        self,
-        user: AbstractBaseUser,
-        tmdb_ids: list[int]
+        self, user: AbstractBaseUser, tmdb_ids: list[int]
     ) -> dict[int, UserMovieData]:
         """
         Fetch UserMovieData records for a user and list of TMDB IDs.
@@ -103,9 +102,8 @@ class UserMovieDataRepository:
         """
         # Bulk query with select_related to avoid N+1
         user_data_qs = UserMovieData.objects.filter(
-            user=user,
-            movie__tmdb_id__in=tmdb_ids
-        ).select_related('movie')
+            user=user, movie__tmdb_id__in=tmdb_ids
+        ).select_related("movie")
 
         # Build lookup dictionary: {tmdb_id: UserMovieData}
         user_data_map: dict[int, UserMovieData] = {}
@@ -439,9 +437,7 @@ class UserMovieDataRepository:
 
         Example:
             >>> # Get user's watchlist
-            >>> results, meta = repository.get_filtered(
-            ...     user, page=1, watchlist_only=True
-            ... )
+            >>> results, meta = repository.get_filtered(user, page=1, watchlist_only=True)
             >>> print(f"Page {meta['page']} of {meta['total_pages']}")
 
         Note:

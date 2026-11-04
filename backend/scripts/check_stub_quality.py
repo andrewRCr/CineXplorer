@@ -23,14 +23,17 @@ from typing import TypedDict
 
 class StubIssue(TypedDict):
     """Type for reporting stub quality issues."""
+
     file: str
     line: int
     issue: str
     context: str
 
+
 def find_stub_files(stubs_dir: Path) -> list[Path]:
     """Find all .pyi files in stubs directory."""
     return sorted(stubs_dir.rglob("*.pyi"))
+
 
 def _iter_code_lines(lines: list[str]) -> Generator[tuple[int, str]]:
     """
@@ -46,10 +49,10 @@ def _iter_code_lines(lines: list[str]) -> Generator[tuple[int, str]]:
         stripped = line.strip()
 
         # Track docstring boundaries
-        if '"""' in stripped or '\'\'\'' in stripped:
+        if '"""' in stripped or "'''" in stripped:
             if not in_docstring:
                 in_docstring = True
-                docstring_delimiter = '"""' if '"""' in stripped else '\'\'\''
+                docstring_delimiter = '"""' if '"""' in stripped else "'''"
                 # Single-line docstring (e.g., """text""")
                 if stripped.count(docstring_delimiter) >= 2:
                     in_docstring = False
@@ -65,6 +68,7 @@ def _iter_code_lines(lines: list[str]) -> Generator[tuple[int, str]]:
             continue
 
         yield i, line
+
 
 def check_any_usage(file_path: Path) -> list[StubIssue]:
     """Check for typing.Any usage that isn't justified."""
@@ -87,10 +91,10 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
     for line in lines[:30]:
         # Check for typing.Any mention with justification in file header
         # Look for patterns like "Uses typing.Any" + "external library" / "third-party"
-        if 'typing.Any' in line or 'Any' in line:
+        if "typing.Any" in line or "Any" in line:
             # Check if any justification keywords appear in this line or nearby lines
-            header_context = '\n'.join(lines[:30]).lower()
-            keywords = ['external library', 'third-party', 'allauth']
+            header_context = "\n".join(lines[:30]).lower()
+            keywords = ["external library", "third-party", "allauth"]
             if any(keyword in header_context for keyword in keywords):
                 file_has_global_justification = True
                 break
@@ -103,13 +107,12 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
     has_justified_any = file_has_global_justification
     if not has_justified_any:
         for _, line in _iter_code_lines(lines):
-            if re.search(r'\bAny\b', line):
-                code_part = line.split('#')[0] if '#' in line else line
+            if re.search(r"\bAny\b", line):
+                code_part = line.split("#")[0] if "#" in line else line
                 has_pattern = any(
-                    re.search(pattern, line, re.IGNORECASE)
-                    for pattern in justified_patterns
+                    re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns
                 )
-                if 'Any' in code_part and has_pattern:
+                if "Any" in code_part and has_pattern:
                     has_justified_any = True
                     break
 
@@ -117,14 +120,14 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
     for i, line in _iter_code_lines(lines):
         # Check if line uses typing.Any (not just the word "Any" in comments)
         # Look for actual type annotations with Any
-        if re.search(r'\bAny\b', line):
+        if re.search(r"\bAny\b", line):
             # Exclude lines where Any is only mentioned in inline comments
-            code_part = line.split('#')[0] if '#' in line else line
-            if 'Any' not in code_part:
+            code_part = line.split("#")[0] if "#" in line else line
+            if "Any" not in code_part:
                 continue
 
             # Allow "from typing import Any" if file has justified uses
-            if 'from typing import Any' in line and has_justified_any:
+            if "from typing import Any" in line and has_justified_any:
                 continue
 
             # Check if it's justified:
@@ -134,27 +137,28 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
             # 2. Or inline comment on same line
             if not is_justified:
                 is_justified = any(
-                    re.search(pattern, line, re.IGNORECASE)
-                    for pattern in justified_patterns
+                    re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns
                 )
 
             # 3. Or previous line has justification comment
             if not is_justified and i > 1:
                 prev_line = lines[i - 2]
                 is_justified = any(
-                    re.search(pattern, prev_line, re.IGNORECASE)
-                    for pattern in justified_patterns
+                    re.search(pattern, prev_line, re.IGNORECASE) for pattern in justified_patterns
                 )
 
             if not is_justified:
-                issues.append({
-                    "file": str(file_path),
-                    "line": i,
-                    "issue": "Unjustified typing.Any usage",
-                    "context": line.strip()
-                })
+                issues.append(
+                    {
+                        "file": str(file_path),
+                        "line": i,
+                        "issue": "Unjustified typing.Any usage",
+                        "context": line.strip(),
+                    }
+                )
 
     return issues
+
 
 def check_maintenance_header(file_path: Path) -> list[StubIssue]:
     """Check if stub has required maintenance contract header."""
@@ -170,14 +174,17 @@ def check_maintenance_header(file_path: Path) -> list[StubIssue]:
 
     for element, error_msg in required_elements.items():
         if element not in content:
-            issues.append({
-                "file": str(file_path),
-                "line": 1,
-                "issue": error_msg,
-                "context": "File header missing required documentation"
-            })
+            issues.append(
+                {
+                    "file": str(file_path),
+                    "line": 1,
+                    "issue": error_msg,
+                    "context": "File header missing required documentation",
+                }
+            )
 
     return issues
+
 
 def check_unused_imports(file_path: Path) -> list[StubIssue]:
     """Check for imports that aren't used in the file."""
@@ -216,14 +223,17 @@ def check_unused_imports(file_path: Path) -> list[StubIssue]:
                 break
 
         if not usage_found:
-            issues.append({
-                "file": str(file_path),
-                "line": line_num,
-                "issue": f"Potentially unused import: {import_name}",
-                "context": lines[line_num - 1].strip()
-            })
+            issues.append(
+                {
+                    "file": str(file_path),
+                    "line": line_num,
+                    "issue": f"Potentially unused import: {import_name}",
+                    "context": lines[line_num - 1].strip(),
+                }
+            )
 
     return issues
+
 
 def main() -> int:
     """Run all stub quality checks."""
@@ -277,6 +287,7 @@ def main() -> int:
 
     print("\n💡 Match library signatures; justify Any; update stub headers and imports.")
     return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

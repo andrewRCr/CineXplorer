@@ -1,4 +1,5 @@
 """Unit tests for AuthenticationService email verification flows."""
+
 # pyright: reportPrivateUsage = false
 from __future__ import annotations
 
@@ -115,9 +116,7 @@ def mock_token_validation(
     return_user_id: int | None,
 ) -> Generator[Mock]:
     """Mock _validate_resend_token to return specified user_id (or None for invalid)."""
-    with patch.object(
-        service, "_validate_resend_token", return_value=return_user_id
-    ) as mock:
+    with patch.object(service, "_validate_resend_token", return_value=return_user_id) as mock:
         yield mock
 
 
@@ -258,9 +257,7 @@ class TestResendTokenGeneration:
         """Token generation stores hash in cache with user_id."""
         service, _ = auth_service_factory()
 
-        with patch(
-            "apps.authentication.services.authentication_service.cache"
-        ) as mock_cache:
+        with patch("apps.authentication.services.authentication_service.cache") as mock_cache:
             token = service._generate_resend_token(user_id=42)
 
         assert len(token) >= 48  # secrets.token_urlsafe(48) produces ~64 chars
@@ -275,9 +272,7 @@ class TestResendTokenGeneration:
         """Valid token returns user_id and is consumed (deleted from cache)."""
         service, _ = auth_service_factory()
 
-        with patch(
-            "apps.authentication.services.authentication_service.cache"
-        ) as mock_cache:
+        with patch("apps.authentication.services.authentication_service.cache") as mock_cache:
             mock_cache.get.return_value = 42
             result = service._validate_resend_token("valid-token")
 
@@ -291,9 +286,7 @@ class TestResendTokenGeneration:
         """Invalid token returns None without deleting."""
         service, _ = auth_service_factory()
 
-        with patch(
-            "apps.authentication.services.authentication_service.cache"
-        ) as mock_cache:
+        with patch("apps.authentication.services.authentication_service.cache") as mock_cache:
             mock_cache.get.return_value = None
             result = service._validate_resend_token("invalid-token")
 
@@ -318,9 +311,7 @@ class TestResendTokenGeneration:
         def fake_delete(key: str) -> None:
             fake_cache.pop(key, None)
 
-        with patch(
-            "apps.authentication.services.authentication_service.cache"
-        ) as mock_cache:
+        with patch("apps.authentication.services.authentication_service.cache") as mock_cache:
             mock_cache.set.side_effect = fake_set
             mock_cache.get.side_effect = fake_get
             mock_cache.delete.side_effect = fake_delete

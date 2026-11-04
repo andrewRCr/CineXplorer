@@ -16,6 +16,7 @@ Tests verify:
     - Pagination structure (minimal implementation)
     - User isolation (only sees own movies)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -43,7 +44,7 @@ HTTP_401_UNAUTHORIZED = HTTPStatus.UNAUTHORIZED
 # =========================
 # API URL
 # =========================
-USER_MOVIES_URL = '/api/user-movie-data/movies'
+USER_MOVIES_URL = "/api/user-movie-data/movies"
 
 
 # =========================
@@ -56,9 +57,9 @@ def movie1(db: None) -> Movie:
     """Create first test movie."""
     return Movie.objects.create(
         tmdb_id=12345,
-        title='Blade Runner',
-        poster_path='/blade_runner.jpg',
-        release_date='1982-06-25'
+        title="Blade Runner",
+        poster_path="/blade_runner.jpg",
+        release_date="1982-06-25",
     )
 
 
@@ -66,10 +67,7 @@ def movie1(db: None) -> Movie:
 def movie2(db: None) -> Movie:
     """Create second test movie."""
     return Movie.objects.create(
-        tmdb_id=54321,
-        title='Chinatown',
-        poster_path='/chinatown.jpg',
-        release_date='1974-06-20'
+        tmdb_id=54321, title="Chinatown", poster_path="/chinatown.jpg", release_date="1974-06-20"
     )
 
 
@@ -77,10 +75,7 @@ def movie2(db: None) -> Movie:
 def movie3(db: None) -> Movie:
     """Create third test movie."""
     return Movie.objects.create(
-        tmdb_id=99999,
-        title='The Matrix',
-        poster_path='/matrix.jpg',
-        release_date='1999-03-31'
+        tmdb_id=99999, title="The Matrix", poster_path="/matrix.jpg", release_date="1999-03-31"
     )
 
 
@@ -95,11 +90,7 @@ def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
     from apps.core.tests.test_helpers import authenticate_client, create_user
 
     # Create verified user (create_user() verifies email by default)
-    user = create_user(
-        username="testuser",
-        email="testuser@example.com",
-        password="testpass123"
-    )
+    user = create_user(username="testuser", email="testuser@example.com", password="testpass123")
 
     # Authenticate client (handles hybrid auth pattern automatically)
     authenticate_client(api_client, user.username, "testpass123")
@@ -135,7 +126,7 @@ def test_get_user_movies_returns_all_user_movies(
     mock_tmdb_get: Mock,
     authenticated_user: tuple[Client, User],
     movie1: Movie,
-    movie2: Movie
+    movie2: Movie,
 ) -> None:
     """
     Test that GET /api/user-movie-data/movies returns all movies user has interacted with.
@@ -150,14 +141,14 @@ def test_get_user_movies_returns_all_user_movies(
         movie=movie1,
         user_watched=True,
         user_on_watchlist=False,  # Not on watchlist
-        user_rating=9
+        user_rating=9,
     )
     UserMovieData.objects.create(
         user=user,
         movie=movie2,
         user_watched=False,
         user_on_watchlist=True,  # On watchlist
-        user_rating=None
+        user_rating=None,
     )
 
     # Arrange: Mock TMDB API responses for both movies
@@ -167,62 +158,59 @@ def test_get_user_movies_returns_all_user_movies(
             return ApiResponse(
                 status_code=200,
                 data={
-                    'id': 12345,
-                    'title': 'Blade Runner',
-                    'overview': 'A blade runner must pursue replicants.',
-                    'poster_path': '/blade_runner.jpg',
-                    'release_date': '1982-06-25',
-                    'vote_average': 8.1,
-                    'genres': [],
-                    'production_companies': []
-                }
+                    "id": 12345,
+                    "title": "Blade Runner",
+                    "overview": "A blade runner must pursue replicants.",
+                    "poster_path": "/blade_runner.jpg",
+                    "release_date": "1982-06-25",
+                    "vote_average": 8.1,
+                    "genres": [],
+                    "production_companies": [],
+                },
             )
         else:  # 54321
             return ApiResponse(
                 status_code=200,
                 data={
-                    'id': 54321,
-                    'title': 'Chinatown',
-                    'overview': 'A private detective investigating adultery.',
-                    'poster_path': '/chinatown.jpg',
-                    'release_date': '1974-06-20',
-                    'vote_average': 8.2,
-                    'genres': [],
-                    'production_companies': []
-                }
+                    "id": 54321,
+                    "title": "Chinatown",
+                    "overview": "A private detective investigating adultery.",
+                    "poster_path": "/chinatown.jpg",
+                    "release_date": "1974-06-20",
+                    "vote_average": 8.2,
+                    "genres": [],
+                    "production_companies": [],
+                },
             )
 
     mock_get_movie_details.side_effect = get_movie_details_side_effect
-    mock_tmdb_get.return_value = ApiResponse(
-        status_code=200,
-        data={'crew': [], 'cast': []}
-    )
+    mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})
 
     # Act: Get all user movies (no watchlist filter)
     # Note: Explicitly pass watchlist=false to avoid Django test client sending empty string
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'false'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "false"})
 
     # Assert: Response structure
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert 'results' in data
-    assert 'page' in data
-    assert 'total_pages' in data
-    assert 'total_results' in data
+    assert "results" in data
+    assert "page" in data
+    assert "total_pages" in data
+    assert "total_results" in data
 
     # Assert: Pagination metadata
-    assert data['page'] == 1
-    assert data['total_results'] == 2
+    assert data["page"] == 1
+    assert data["total_results"] == 2
 
     # Assert: Returns both movies (regardless of watchlist status)
-    assert len(data['results']) == 2
-    tmdb_ids = {movie['tmdb_id'] for movie in data['results']}
+    assert len(data["results"]) == 2
+    tmdb_ids = {movie["tmdb_id"] for movie in data["results"]}
     assert tmdb_ids == {12345, 54321}
 
     # Assert: Movies are enriched with user_movie_data
-    for movie_data in data['results']:
-        assert 'user_movie_data' in movie_data
-        assert movie_data['user_movie_data'] is not None
+    for movie_data in data["results"]:
+        assert "user_movie_data" in movie_data
+        assert movie_data["user_movie_data"] is not None
 
 
 @pytest.mark.django_db
@@ -234,7 +222,7 @@ def test_get_user_movies_with_watchlist_filter(
     authenticated_user: tuple[Client, User],
     movie1: Movie,
     movie2: Movie,
-    movie3: Movie
+    movie3: Movie,
 ) -> None:
     """
     Test that GET /api/user-movie-data/movies?watchlist=true filters to watchlist only.
@@ -249,63 +237,60 @@ def test_get_user_movies_with_watchlist_filter(
         movie=movie1,
         user_watched=True,
         user_on_watchlist=False,  # NOT on watchlist
-        user_rating=9
+        user_rating=9,
     )
     UserMovieData.objects.create(
         user=user,
         movie=movie2,
         user_watched=False,
         user_on_watchlist=True,  # ON watchlist
-        user_rating=None
+        user_rating=None,
     )
     UserMovieData.objects.create(
         user=user,
         movie=movie3,
         user_watched=True,
         user_on_watchlist=False,  # NOT on watchlist
-        user_rating=8
+        user_rating=8,
     )
 
     # Arrange: Mock TMDB API response for movie2 only
     mock_get_movie_details.return_value = ApiResponse(
         status_code=200,
         data={
-            'id': 54321,
-            'title': 'Chinatown',
-            'overview': 'A private detective investigating adultery.',
-            'poster_path': '/chinatown.jpg',
-            'release_date': '1974-06-20',
-            'vote_average': 8.2,
-            'genres': [],
-            'production_companies': []
-        }
+            "id": 54321,
+            "title": "Chinatown",
+            "overview": "A private detective investigating adultery.",
+            "poster_path": "/chinatown.jpg",
+            "release_date": "1974-06-20",
+            "vote_average": 8.2,
+            "genres": [],
+            "production_companies": [],
+        },
     )
-    mock_tmdb_get.return_value = ApiResponse(
-        status_code=200,
-        data={'crew': [], 'cast': []}
-    )
+    mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})
 
     # Act: Get watchlist movies only
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'true'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "true"})
 
     # Assert: Response structure
     assert res.status_code == HTTP_200_OK
     data = res.json()
 
     # Assert: Only returns watchlist movie (movie2)
-    assert data['total_results'] == 1
-    assert len(data['results']) == 1
-    assert data['results'][0]['tmdb_id'] == 54321
+    assert data["total_results"] == 1
+    assert len(data["results"]) == 1
+    assert data["results"][0]["tmdb_id"] == 54321
 
     # Assert: Enrichment includes user_movie_data
-    user_data = data['results'][0]['user_movie_data']
+    user_data = data["results"][0]["user_movie_data"]
     assert user_data is not None
-    assert user_data['user_on_watchlist'] is True
+    assert user_data["user_on_watchlist"] is True
 
 
 @pytest.mark.django_db
 def test_get_user_movies_returns_empty_list_when_no_movies(
-    authenticated_user: tuple[Client, User]
+    authenticated_user: tuple[Client, User],
 ) -> None:
     """
     Test that GET /api/user-movie-data/movies returns empty list when user has no movies.
@@ -316,27 +301,26 @@ def test_get_user_movies_returns_empty_list_when_no_movies(
 
     # Act: Get user movies (no data exists)
     # Note: Explicitly pass watchlist=false to avoid Django test client sending empty string
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'false'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "false"})
 
     # Assert: Response structure
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert 'results' in data
-    assert 'page' in data
-    assert 'total_pages' in data
-    assert 'total_results' in data
+    assert "results" in data
+    assert "page" in data
+    assert "total_pages" in data
+    assert "total_results" in data
 
     # Assert: Empty list
-    assert data['total_results'] == 0
-    assert data['total_pages'] == 0
-    assert data['page'] == 1
-    assert data['results'] == []
+    assert data["total_results"] == 0
+    assert data["total_pages"] == 0
+    assert data["page"] == 1
+    assert data["results"] == []
 
 
 @pytest.mark.django_db
 def test_get_user_movies_with_watchlist_filter_returns_empty_when_no_watchlist_movies(
-    authenticated_user: tuple[Client, User],
-    movie1: Movie
+    authenticated_user: tuple[Client, User], movie1: Movie
 ) -> None:
     """
     Test that GET /api/user-movie-data/movies?watchlist=true returns empty list.
@@ -351,17 +335,17 @@ def test_get_user_movies_with_watchlist_filter_returns_empty_when_no_watchlist_m
         movie=movie1,
         user_watched=True,
         user_on_watchlist=False,  # Not on watchlist
-        user_rating=9
+        user_rating=9,
     )
 
     # Act: Get watchlist movies
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'true'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "true"})
 
     # Assert: Empty list (no watchlist movies)
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert data['total_results'] == 0
-    assert data['results'] == []
+    assert data["total_results"] == 0
+    assert data["results"] == []
 
 
 # =========================
@@ -377,7 +361,7 @@ def test_get_user_movies_shows_only_current_users_movies(
     mock_tmdb_get: Mock,
     authenticated_user: tuple[Client, User],
     movie1: Movie,
-    movie2: Movie
+    movie2: Movie,
 ) -> None:
     """
     Test that GET /api/user-movie-data/movies only returns current user's movies.
@@ -387,56 +371,47 @@ def test_get_user_movies_shows_only_current_users_movies(
     client, user = authenticated_user
 
     # Arrange: Create data for current user
-    UserMovieData.objects.create(
-        user=user,
-        movie=movie1,
-        user_on_watchlist=True,
-        user_rating=9
-    )
+    UserMovieData.objects.create(user=user, movie=movie1, user_on_watchlist=True, user_rating=9)
 
     # Arrange: Create data for DIFFERENT user
     from apps.core.tests.test_helpers import create_user
+
     other_user = create_user(
-        username="otheruser",
-        email="other@example.com",
-        password="otherpass123"
+        username="otheruser", email="other@example.com", password="otherpass123"
     )
     UserMovieData.objects.create(
         user=other_user,
         movie=movie2,  # Different movie
         user_on_watchlist=True,
-        user_rating=10
+        user_rating=10,
     )
 
     # Arrange: Mock TMDB response (only for movie1)
     mock_get_movie_details.return_value = ApiResponse(
         status_code=200,
         data={
-            'id': 12345,
-            'title': 'Blade Runner',
-            'overview': 'A blade runner must pursue replicants.',
-            'poster_path': '/blade_runner.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1,
-            'genres': [],
-            'production_companies': []
-        }
+            "id": 12345,
+            "title": "Blade Runner",
+            "overview": "A blade runner must pursue replicants.",
+            "poster_path": "/blade_runner.jpg",
+            "release_date": "1982-06-25",
+            "vote_average": 8.1,
+            "genres": [],
+            "production_companies": [],
+        },
     )
-    mock_tmdb_get.return_value = ApiResponse(
-        status_code=200,
-        data={'crew': [], 'cast': []}
-    )
+    mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})
 
     # Act: Get movies as current user
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'false'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "false"})
 
     # Assert: Only sees own movie (movie1), not other_user's movie (movie2)
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert data['total_results'] == 1
-    assert len(data['results']) == 1
-    assert data['results'][0]['tmdb_id'] == 12345  # movie1
-    assert data['results'][0]['user_movie_data']['user_rating'] == 9
+    assert data["total_results"] == 1
+    assert len(data["results"]) == 1
+    assert data["results"][0]["tmdb_id"] == 12345  # movie1
+    assert data["results"][0]["user_movie_data"]["user_rating"] == 9
 
 
 # =========================
@@ -452,7 +427,7 @@ def test_get_user_movies_handles_tmdb_api_errors_gracefully(
     mock_tmdb_get: Mock,
     authenticated_user: tuple[Client, User],
     movie1: Movie,
-    movie2: Movie
+    movie2: Movie,
 ) -> None:
     """
     Test that watchlist endpoint handles TMDB API errors gracefully.
@@ -463,53 +438,43 @@ def test_get_user_movies_handles_tmdb_api_errors_gracefully(
     client, user = authenticated_user
 
     # Arrange: Create user movie data for two movies
-    UserMovieData.objects.create(
-        user=user,
-        movie=movie1,
-        user_on_watchlist=True
-    )
-    UserMovieData.objects.create(
-        user=user,
-        movie=movie2,
-        user_on_watchlist=True
-    )
+    UserMovieData.objects.create(user=user, movie=movie1, user_on_watchlist=True)
+    UserMovieData.objects.create(user=user, movie=movie2, user_on_watchlist=True)
 
     # Arrange: Mock TMDB responses - movie1 succeeds, movie2 fails (404)
     def get_movie_details_side_effect(tmdb_id: int, **kwargs: object) -> ApiResponse:
         """Return success for movie1, raise error for movie2."""
         from ninja.errors import HttpError
+
         if tmdb_id == 12345:
             return ApiResponse(
                 status_code=200,
                 data={
-                    'id': 12345,
-                    'title': 'Blade Runner',
-                    'overview': 'A blade runner must pursue replicants.',
-                    'poster_path': '/blade_runner.jpg',
-                    'release_date': '1982-06-25',
-                    'vote_average': 8.1,
-                    'genres': [],
-                    'production_companies': []
-                }
+                    "id": 12345,
+                    "title": "Blade Runner",
+                    "overview": "A blade runner must pursue replicants.",
+                    "poster_path": "/blade_runner.jpg",
+                    "release_date": "1982-06-25",
+                    "vote_average": 8.1,
+                    "genres": [],
+                    "production_companies": [],
+                },
             )
         else:  # movie2 - TMDB API error
             raise HttpError(404, "Movie not found in TMDB")
 
     mock_get_movie_details.side_effect = get_movie_details_side_effect
-    mock_tmdb_get.return_value = ApiResponse(
-        status_code=200,
-        data={'crew': [], 'cast': []}
-    )
+    mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})
 
     # Act: Get user movies
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'false'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "false"})
 
     # Assert: Request succeeds, returns only available movie (movie1)
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert data['total_results'] == 1
-    assert len(data['results']) == 1
-    assert data['results'][0]['tmdb_id'] == 12345
+    assert data["total_results"] == 1
+    assert len(data["results"]) == 1
+    assert data["results"][0]["tmdb_id"] == 12345
 
 
 @pytest.mark.django_db
@@ -519,7 +484,7 @@ def test_get_user_movies_enrichment_populates_user_movie_data(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
     authenticated_user: tuple[Client, User],
-    movie1: Movie
+    movie1: Movie,
 ) -> None:
     """
     Test that watchlist endpoint enriches movies with user_movie_data.
@@ -536,45 +501,42 @@ def test_get_user_movies_enrichment_populates_user_movie_data(
         user_on_watchlist=True,
         user_liked=True,
         user_rating=9,
-        user_review='Masterpiece!'
+        user_review="Masterpiece!",
     )
 
     # Arrange: Mock TMDB response
     mock_get_movie_details.return_value = ApiResponse(
         status_code=200,
         data={
-            'id': 12345,
-            'title': 'Blade Runner',
-            'overview': 'A blade runner must pursue replicants.',
-            'poster_path': '/blade_runner.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1,
-            'genres': [],
-            'production_companies': []
-        }
+            "id": 12345,
+            "title": "Blade Runner",
+            "overview": "A blade runner must pursue replicants.",
+            "poster_path": "/blade_runner.jpg",
+            "release_date": "1982-06-25",
+            "vote_average": 8.1,
+            "genres": [],
+            "production_companies": [],
+        },
     )
-    mock_tmdb_get.return_value = ApiResponse(
-        status_code=200,
-        data={'crew': [], 'cast': []}
-    )
+    mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})
 
     # Act
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'false'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "false"})
 
     # Assert: user_movie_data is populated with correct values
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert len(data['results']) == 1
+    assert len(data["results"]) == 1
 
-    movie_data = data['results'][0]
-    assert 'user_movie_data' in movie_data
-    user_data = movie_data['user_movie_data']
+    movie_data = data["results"][0]
+    assert "user_movie_data" in movie_data
+    user_data = movie_data["user_movie_data"]
     assert user_data is not None
-    assert user_data['user_watched'] is True
-    assert user_data['user_on_watchlist'] is True
-    assert user_data['user_liked'] is True
-    assert user_data['user_rating'] == 9
-    assert user_data['user_review'] == 'Masterpiece!'
+    assert user_data["user_watched"] is True
+    assert user_data["user_on_watchlist"] is True
+    assert user_data["user_liked"] is True
+    assert user_data["user_rating"] == 9
+    assert user_data["user_review"] == "Masterpiece!"
 
 
 # =========================
@@ -589,7 +551,7 @@ def test_get_user_movies_returns_pagination_structure(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
     authenticated_user: tuple[Client, User],
-    movie1: Movie
+    movie1: Movie,
 ) -> None:
     """
     Test that watchlist endpoint returns proper pagination structure.
@@ -600,51 +562,44 @@ def test_get_user_movies_returns_pagination_structure(
     client, user = authenticated_user
 
     # Arrange
-    UserMovieData.objects.create(
-        user=user,
-        movie=movie1,
-        user_on_watchlist=True
-    )
+    UserMovieData.objects.create(user=user, movie=movie1, user_on_watchlist=True)
 
     # Arrange: Mock TMDB response
     mock_get_movie_details.return_value = ApiResponse(
         status_code=200,
         data={
-            'id': 12345,
-            'title': 'Blade Runner',
-            'overview': 'A blade runner must pursue replicants.',
-            'poster_path': '/blade_runner.jpg',
-            'release_date': '1982-06-25',
-            'vote_average': 8.1,
-            'genres': [],
-            'production_companies': []
-        }
+            "id": 12345,
+            "title": "Blade Runner",
+            "overview": "A blade runner must pursue replicants.",
+            "poster_path": "/blade_runner.jpg",
+            "release_date": "1982-06-25",
+            "vote_average": 8.1,
+            "genres": [],
+            "production_companies": [],
+        },
     )
-    mock_tmdb_get.return_value = ApiResponse(
-        status_code=200,
-        data={'crew': [], 'cast': []}
-    )
+    mock_tmdb_get.return_value = ApiResponse(status_code=200, data={"crew": [], "cast": []})
 
     # Act
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'false'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "false"})
 
     # Assert: Pagination structure exists
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert 'page' in data
-    assert 'total_pages' in data
-    assert 'total_results' in data
-    assert 'results' in data
+    assert "page" in data
+    assert "total_pages" in data
+    assert "total_results" in data
+    assert "results" in data
 
     # Assert: Minimal implementation values
-    assert data['page'] == 1
-    assert data['total_pages'] == 1
-    assert data['total_results'] == 1
+    assert data["page"] == 1
+    assert data["total_pages"] == 1
+    assert data["total_results"] == 1
 
 
 @pytest.mark.django_db
 def test_get_user_movies_empty_list_pagination_structure(
-    authenticated_user: tuple[Client, User]
+    authenticated_user: tuple[Client, User],
 ) -> None:
     """
     Test pagination structure when no movies exist.
@@ -654,12 +609,12 @@ def test_get_user_movies_empty_list_pagination_structure(
     client, _user = authenticated_user
 
     # Act
-    res = client.get(USER_MOVIES_URL, {'watchlist': 'false'})
+    res = client.get(USER_MOVIES_URL, {"watchlist": "false"})
 
     # Assert: Pagination structure with 0 results
     assert res.status_code == HTTP_200_OK
     data = res.json()
-    assert data['page'] == 1
-    assert data['total_pages'] == 0
-    assert data['total_results'] == 0
-    assert data['results'] == []
+    assert data["page"] == 1
+    assert data["total_pages"] == 0
+    assert data["total_results"] == 0
+    assert data["results"] == []

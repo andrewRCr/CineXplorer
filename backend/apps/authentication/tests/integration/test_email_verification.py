@@ -93,7 +93,7 @@ def test_verify_email_with_already_verified_email_returns_400(
     verification_data = {"key": "some_key"}
 
     # Mock to return a confirmation for an already-verified email
-    with patch('allauth.account.models.EmailConfirmationHMAC.from_key') as mock_from_key:
+    with patch("allauth.account.models.EmailConfirmationHMAC.from_key") as mock_from_key:
         mock_confirmation = Mock()
         mock_email_address = Mock()
         mock_email_address.verified = True  # Already verified
@@ -146,11 +146,11 @@ def test_verify_email_handles_attribute_error(
     verification_data = {"key": "some_key"}
 
     # Mock to return confirmation object that raises AttributeError when accessing email_address
-    with patch('allauth.account.models.EmailConfirmationHMAC.from_key') as mock_from_key:
+    with patch("allauth.account.models.EmailConfirmationHMAC.from_key") as mock_from_key:
         mock_confirmation = Mock()
         # Standard unittest.mock pattern for AttributeError: create then delete attribute
         # PropertyMock doesn't work here because Mock uses __getattr__ for attribute access
-        mock_confirmation.configure_mock(**{'email_address': Mock()})
+        mock_confirmation.configure_mock(**{"email_address": Mock()})
         del mock_confirmation.email_address
 
         mock_from_key.return_value = mock_confirmation
@@ -177,7 +177,7 @@ def test_verify_email_handles_unexpected_exception(
     verification_data = {"key": "some_key"}
 
     # Mock EmailConfirmationHMAC.from_key to raise unexpected exception
-    with patch('allauth.account.models.EmailConfirmationHMAC.from_key') as mock_from_key:
+    with patch("allauth.account.models.EmailConfirmationHMAC.from_key") as mock_from_key:
         mock_from_key.side_effect = RuntimeError("Unexpected database error")
 
         response = api_client.post(
@@ -223,9 +223,7 @@ def test_resend_verification_with_valid_token_success(
     )
 
     # Get resend token by attempting login with unverified user
-    resend_token = get_resend_token_from_login(
-        api_client, unverified_user.username, "testpass123"
-    )
+    resend_token = get_resend_token_from_login(api_client, unverified_user.username, "testpass123")
     assert resend_token is not None, "Expected resend_token in 403 response"
 
     resend_data = {"resend_token": resend_token}
@@ -286,9 +284,7 @@ def test_resend_verification_token_is_consumed_after_use(
     )
 
     # Get resend token
-    resend_token = get_resend_token_from_login(
-        api_client, unverified_user.username, "testpass123"
-    )
+    resend_token = get_resend_token_from_login(api_client, unverified_user.username, "testpass123")
     assert resend_token is not None
 
     resend_data = {"resend_token": resend_token}

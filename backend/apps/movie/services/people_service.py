@@ -10,6 +10,7 @@ Architecture:
 - Methods return Pydantic schemas for type safety
 - Error handling via HttpError for API layer consistency
 """
+
 from __future__ import annotations
 
 from typing import cast
@@ -65,7 +66,7 @@ class PeopleService(BaseTMDBService):
         """
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("person/popular", cast(dict[str, object], params))
-        result = self._get_validated_response(response, operation='get_popular_people', page=page)
+        result = self._get_validated_response(response, operation="get_popular_people", page=page)
         return create_paginated_person_response_from_tmdb(result)
 
     def search_people(self, query: str) -> PersonListResponseSchema:
@@ -97,18 +98,13 @@ class PeopleService(BaseTMDBService):
         """
         # Return empty response for invalid queries (TMDB API requirement)
         if not query or len(query.strip()) < 2:
-            return PersonListResponseSchema(
-                page=1,
-                total_pages=0,
-                total_results=0,
-                results=[]
-            )
+            return PersonListResponseSchema(page=1, total_pages=0, total_results=0, results=[])
 
         response = self._tmdb_client.get("search/person", {"query": query})
-        result = self._get_validated_response(response, operation='search_people', query=query)
+        result = self._get_validated_response(response, operation="search_people", query=query)
 
         # Ensure we have results key for proper processing
-        if 'results' not in result:
-            result['results'] = []
+        if "results" not in result:
+            result["results"] = []
 
         return create_paginated_person_response_from_tmdb(result)

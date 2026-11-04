@@ -9,6 +9,7 @@ Related helpers:
 - `core/tests/test_helpers.py` for create_mock_user(), JSON helpers, CSRF tokens
 - `authentication/tests/fixtures.py` for integration-level factory data
 """
+
 from __future__ import annotations
 
 from datetime import timedelta

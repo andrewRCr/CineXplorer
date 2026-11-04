@@ -17,6 +17,7 @@ When upgrading django-ninja-jwt:
 Note: django-ninja-jwt uses the same SIMPLE_JWT Django settings key as
 djangorestframework-simplejwt, maintaining backward compatibility.
 """
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -67,7 +68,6 @@ class APISettings:
         Returns:
             Setting value
         """
-
 
 # Global settings instance
 api_settings: APISettings

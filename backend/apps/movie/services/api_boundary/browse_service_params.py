@@ -74,18 +74,16 @@ class BrowseServiceParams(BaseModel):
             Dictionary ready for build_tmdb_params() with dot notation keys
         """
         # Backend-only fields that shouldn't go to TMDB API
-        backend_only = {
-            'year_min', 'year_max', 'rating_min', 'rating_max', 'min_vote_count'
-        }
+        backend_only = {"year_min", "year_max", "rating_min", "rating_max", "min_vote_count"}
 
         # Map underscore to dot notation for TMDB API
         underscore_to_dot = {
-            'vote_average_gte': 'vote_average.gte',
-            'vote_average_lte': 'vote_average.lte',
-            'vote_count_gte': 'vote_count.gte',
-            'vote_count_lte': 'vote_count.lte',
-            'release_date_gte': 'release_date.gte',
-            'release_date_lte': 'release_date.lte',
+            "vote_average_gte": "vote_average.gte",
+            "vote_average_lte": "vote_average.lte",
+            "vote_count_gte": "vote_count.gte",
+            "vote_count_lte": "vote_count.lte",
+            "release_date_gte": "release_date.gte",
+            "release_date_lte": "release_date.lte",
         }
 
         result: dict[str, str | int | float | bool] = {}

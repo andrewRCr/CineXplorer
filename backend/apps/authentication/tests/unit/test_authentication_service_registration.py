@@ -1,4 +1,5 @@
 """Unit tests for AuthenticationService registration flow."""
+
 from __future__ import annotations
 
 from contextlib import nullcontext

@@ -69,20 +69,12 @@ def test_browse_returns_next_tmdb_page_start_after_buffer(
     """
     # Arrange: Create scenario where page 1 needs buffering (sparse results)
     # Page 1: 11 valid movies (triggers buffer)
-    page_1_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(1, 12)
-    ]
+    page_1_movies = [create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(1, 12)]
 
     # Pages 2-4: Fill buffer to reach 20 results (3 pages, 3 movies each = 9 more)
-    page_2_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(12, 15)
-    ]
-    page_3_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(15, 18)
-    ]
-    page_4_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(18, 21)
-    ]
+    page_2_movies = [create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(12, 15)]
+    page_3_movies = [create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(15, 18)]
+    page_4_movies = [create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(18, 21)]
 
     # Mock TMDB responses
     mock_tmdb_get.side_effect = [
@@ -170,9 +162,7 @@ def test_browse_fallback_when_tmdb_page_start_omitted(
     This ensures existing clients continue to work (though may see duplicates).
     """
     # Arrange: Simulate old-style request without metadata
-    page_2_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(21, 41)
-    ]
+    page_2_movies = [create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(21, 41)]
 
     mock_tmdb_get.return_value = create_mock_paginated_response(
         page_2_movies, page=2, total_pages=10
@@ -206,7 +196,8 @@ def test_browse_respects_max_buffer_pages_with_heavy_duplication(
     """
     # Arrange: Page 1 has 10 movies
     page_1_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0) for i in range(1, 11)  # IDs 1-10
+        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 8.0)
+        for i in range(1, 11)  # IDs 1-10
     ]
 
     # Pages 2-6: Each has 9 duplicates + 1 new movie (heavy duplication)
@@ -446,9 +437,7 @@ def test_page_1_stores_returned_ids_in_session(
     excludes IDs from page 1 (indirect verification via behavior).
     """
     # Page 1: IDs 1-20
-    page_1_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    page_1_movies = [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # Page 2: IDs 1-5 (duplicates) + IDs 21-35 (new) = 20 total
     # With session tracking, the 5 duplicates are filtered, leaving 15 movies.
@@ -499,25 +488,19 @@ def test_session_cleared_on_page_1_fresh_start(
     This tests that session state is properly reset, not just that page 1 returns data.
     """
     # Page 1: IDs 1-20
-    page_1_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    page_1_movies = [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # First page 2: IDs 21-40 (with duplicate ID 15 that should be excluded)
     first_page_2_movies = [
         create_tmdb_movie(15, "Movie 15", "2023-01-01", 8.0),  # Duplicate from page 1!
-    ] + [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
-    ]
+    ] + [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)]
 
     # Second page 2 (after fresh page 1): Same data - ID 15 should be excluded again
     # If session wasn't cleared, ID 15 would still be excluded from the old session
     # If session WAS cleared, ID 15 would be re-added to new session from fresh page 1
     second_page_2_movies = [
         create_tmdb_movie(15, "Movie 15", "2023-01-01", 8.0),  # Should be excluded
-    ] + [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
-    ]
+    ] + [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)]
 
     mock_tmdb_get.side_effect = [
         # First sequence: page 1 → page 2
@@ -582,23 +565,16 @@ def test_different_filter_combinations_use_different_sessions(
     """
     # Animation filter: IDs 1-20
     animation_page_1 = [
-        create_tmdb_movie(i, f"Animation {i}", "2023-01-01", 8.0)
-        for i in range(1, 21)
+        create_tmdb_movie(i, f"Animation {i}", "2023-01-01", 8.0) for i in range(1, 21)
     ]
 
     # Action filter: Also IDs 1-20 (different movies, same IDs - shouldn't conflict)
-    action_page_1 = [
-        create_tmdb_movie(i, f"Action {i}", "2023-01-01", 8.0)
-        for i in range(1, 21)
-    ]
+    action_page_1 = [create_tmdb_movie(i, f"Action {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # Animation page 2 with duplicate from animation page 1
     animation_page_2 = [
         create_tmdb_movie(1, "Animation 1", "2023-01-01", 8.0),  # Duplicate!
-    ] + [
-        create_tmdb_movie(i, f"Animation {i}", "2023-01-01", 8.0)
-        for i in range(21, 40)
-    ]
+    ] + [create_tmdb_movie(i, f"Animation {i}", "2023-01-01", 8.0) for i in range(21, 40)]
 
     mock_tmdb_get.side_effect = [
         create_mock_paginated_response(animation_page_1, page=1, total_pages=10),
@@ -654,17 +630,13 @@ def test_page_1_with_tmdb_page_start_preserves_session(
     This is critical for infinite scroll cross-page deduplication.
     """
     # Page 1: IDs 1-20 (initial load)
-    page_1_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    page_1_movies = [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # "Page 2" via infinite scroll: page=1, tmdb_page_start=2
     # Contains duplicate ID 5 which should be excluded if session preserved
     page_2_movies = [
         create_tmdb_movie(5, "Movie 5", "2023-01-01", 8.0),  # Duplicate from page 1!
-    ] + [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
-    ]
+    ] + [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)]
 
     mock_tmdb_get.side_effect = [
         create_mock_paginated_response(page_1_movies, page=1, total_pages=10),
@@ -715,9 +687,7 @@ def test_page_1_without_tmdb_page_start_clears_session(
     Contrast with test_page_1_with_tmdb_page_start_preserves_session.
     """
     # Page 1: IDs 1-20
-    page_1_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    page_1_movies = [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # Continuation: IDs 21-40
     continuation_movies = [
@@ -777,24 +747,18 @@ def test_different_pagination_context_headers_use_separate_sessions(
     Expected: Tab 2's page 2 excludes duplicates from Tab 2's page 1 (not Tab 1's).
     """
     # Page 1: IDs 1-20 (both tabs see this)
-    page_1_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    page_1_movies = [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # Page 2 for Tab 1: ID 5 (duplicate) + IDs 21-39
     tab1_page_2_movies = [
         create_tmdb_movie(5, "Movie 5", "2023-01-01", 8.0),  # Duplicate!
-    ] + [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
-    ]
+    ] + [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)]
 
     # Page 2 for Tab 2: ID 10 (duplicate) + IDs 41-59
     # Different duplicates to prove sessions are independent
     tab2_page_2_movies = [
         create_tmdb_movie(10, "Movie 10", "2023-01-01", 8.0),  # Duplicate!
-    ] + [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(41, 60)
-    ]
+    ] + [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(41, 60)]
 
     mock_tmdb_get.side_effect = [
         # Tab 1: page 1
@@ -812,15 +776,11 @@ def test_different_pagination_context_headers_use_separate_sessions(
     ]
 
     # Tab 1: page 1
-    tab1_p1 = api_client.get(
-        BROWSE_URL, {"page": 1}, HTTP_X_PAGINATION_CONTEXT="tab1-uuid"
-    )
+    tab1_p1 = api_client.get(BROWSE_URL, {"page": 1}, HTTP_X_PAGINATION_CONTEXT="tab1-uuid")
     assert tab1_p1.status_code == HTTPStatus.OK
 
     # Tab 2: page 1
-    tab2_p1 = api_client.get(
-        BROWSE_URL, {"page": 1}, HTTP_X_PAGINATION_CONTEXT="tab2-uuid"
-    )
+    tab2_p1 = api_client.get(BROWSE_URL, {"page": 1}, HTTP_X_PAGINATION_CONTEXT="tab2-uuid")
     assert tab2_p1.status_code == HTTPStatus.OK
 
     # Tab 1: page 2 (should exclude ID 5 from Tab 1's session)
@@ -864,16 +824,12 @@ def test_requests_without_context_header_work_backwards_compatible(
     Expected: Session tracking still works (uses default empty context).
     """
     # Page 1: IDs 1-20
-    page_1 = [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    page_1 = [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # Page 2: ID 1 (duplicate) + IDs 21-39 (new)
     page_2 = [
         create_tmdb_movie(1, "Movie 1", "2023-01-01", 8.0),  # Duplicate!
-    ] + [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)
-    ]
+    ] + [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(21, 40)]
 
     mock_tmdb_get.side_effect = [
         create_mock_paginated_response(page_1, page=1, total_pages=10),
@@ -921,16 +877,12 @@ def test_search_pagination_deduplicates_across_pages(
     Expected: Page 2 of search excludes IDs already shown on page 1.
     """
     # Search page 1: IDs 1-20
-    search_page_1 = [
-        create_tmdb_movie(i, f"Result {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    search_page_1 = [create_tmdb_movie(i, f"Result {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
     # Search page 2: ID 10 (duplicate) + IDs 21-39 (new)
     search_page_2 = [
         create_tmdb_movie(10, "Result 10", "2023-01-01", 8.0),  # Duplicate!
-    ] + [
-        create_tmdb_movie(i, f"Result {i}", "2023-01-01", 8.0) for i in range(21, 40)
-    ]
+    ] + [create_tmdb_movie(i, f"Result {i}", "2023-01-01", 8.0) for i in range(21, 40)]
 
     mock_tmdb_get.side_effect = [
         create_mock_paginated_response(search_page_1, page=1, total_pages=10),
@@ -984,13 +936,9 @@ def test_graceful_degradation_when_redis_unavailable(
     mock_cache.set.side_effect = Exception("Redis connection refused")
 
     # Page 1: IDs 1-20
-    page_1 = [
-        create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)
-    ]
+    page_1 = [create_tmdb_movie(i, f"Movie {i}", "2023-01-01", 8.0) for i in range(1, 21)]
 
-    mock_tmdb_get.return_value = create_mock_paginated_response(
-        page_1, page=1, total_pages=10
-    )
+    mock_tmdb_get.return_value = create_mock_paginated_response(page_1, page=1, total_pages=10)
 
     # Request should succeed despite Redis failure
     res = api_client.get(BROWSE_URL, {"page": 1})

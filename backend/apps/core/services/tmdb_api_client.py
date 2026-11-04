@@ -37,9 +37,9 @@ class TMDBApiClient(BaseApiClient):
         """
         super().__init__(
             base_url="https://api.themoviedb.org/3",
-            logger_name='cinexplorer.tmdb',
+            logger_name="cinexplorer.tmdb",
             timeout=timeout,
-            max_retries=max_retries
+            max_retries=max_retries,
         )
 
     def prepare_headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
@@ -53,9 +53,9 @@ class TMDBApiClient(BaseApiClient):
             Complete headers dictionary with standard TMDB headers
         """
         prepared_headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'CineXplorer/1.0'
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "CineXplorer/1.0",
         }
 
         if headers:
@@ -77,7 +77,7 @@ class TMDBApiClient(BaseApiClient):
             return {}
 
         # Remove API key from logging for security
-        return {k: v for k, v in params.items() if k != 'api_key'}
+        return {k: v for k, v in params.items() if k != "api_key"}
 
     def get_error_details(self, status_code: int) -> str:
         """
@@ -99,20 +99,15 @@ class TMDBApiClient(BaseApiClient):
             500: "Internal Server Error - TMDB API server error",
             502: "Bad Gateway - TMDB API gateway error",
             503: "Service Unavailable - TMDB API temporarily unavailable",
-            504: "Gateway Timeout - TMDB API request timed out"
+            504: "Gateway Timeout - TMDB API request timed out",
         }
 
         return tmdb_error_details.get(
-            status_code,
-            f"HTTP {status_code} - Unexpected response from TMDB API"
+            status_code, f"HTTP {status_code} - Unexpected response from TMDB API"
         )
 
     def process_successful_response(
-        self,
-        response: requests.Response,
-        correlation_id: str,
-        endpoint: str,
-        duration_ms: int
+        self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
         """
         Process successful TMDB API response with enhanced metadata extraction.
@@ -130,18 +125,21 @@ class TMDBApiClient(BaseApiClient):
             data = response.json()
         except ValueError as json_error:
             # Handle invalid JSON responses
-            self.logger.error("TMDB API returned invalid JSON", extra={
-                'correlation_id': correlation_id,
-                'json_error': str(json_error),
-                'endpoint': endpoint,
-                'status_code': response.status_code,
-                'duration_ms': duration_ms,
-                'error_type': 'json_parsing_error',
-                'response_preview': str(response.text)[:200],
-                'response_size_bytes': (
-                    len(response.content) if hasattr(response.content, '__len__') else 0
-                )
-            })
+            self.logger.error(
+                "TMDB API returned invalid JSON",
+                extra={
+                    "correlation_id": correlation_id,
+                    "json_error": str(json_error),
+                    "endpoint": endpoint,
+                    "status_code": response.status_code,
+                    "duration_ms": duration_ms,
+                    "error_type": "json_parsing_error",
+                    "response_preview": str(response.text)[:200],
+                    "response_size_bytes": (
+                        len(response.content) if hasattr(response.content, "__len__") else 0
+                    ),
+                },
+            )
 
             return ApiResponse(
                 status_code=502,
@@ -152,7 +150,7 @@ class TMDBApiClient(BaseApiClient):
                 endpoint=endpoint,
                 duration_ms=duration_ms,
                 headers=self._safe_headers_dict(response),
-                raw_response=response
+                raw_response=response,
             )
 
         # Extract TMDB-specific response metadata
@@ -160,58 +158,57 @@ class TMDBApiClient(BaseApiClient):
 
         # Enhanced logging for TMDB responses
         log_data: dict[str, object] = {
-            'correlation_id': correlation_id,
-            'endpoint': endpoint,
-            'status_code': response.status_code,
-            'duration_ms': duration_ms,
-            'response_size_bytes': (
-                len(response.content) if hasattr(response.content, '__len__') else 0
+            "correlation_id": correlation_id,
+            "endpoint": endpoint,
+            "status_code": response.status_code,
+            "duration_ms": duration_ms,
+            "response_size_bytes": (
+                len(response.content) if hasattr(response.content, "__len__") else 0
             ),
         }
 
         # Add TMDB metadata to logs if available
         if response_metadata:
-            log_data['response_metadata'] = response_metadata
+            log_data["response_metadata"] = response_metadata
 
         # Add rate limit info if available
         rate_limit_info = self._extract_rate_limit_headers(response.headers)
         if rate_limit_info:
-            log_data['rate_limit'] = rate_limit_info
+            log_data["rate_limit"] = rate_limit_info
 
         # Add performance warning for slow requests (>1000ms)
         if duration_ms > 1000:
             performance_log_data: dict[str, object] = dict(log_data)  # Copy the log data
-            performance_log_data['performance_warning'] = True
-            performance_log_data['threshold_exceeded'] = '1000ms'
-            performance_log_data['performance_ratio'] = round(duration_ms / 1000.0, 2)
-            performance_log_data['slow_request_impact'] = 'User experience degradation possible'
-            self.logger.warning(
-                "TMDB API request slow performance",
-                extra=performance_log_data
-            )
+            performance_log_data["performance_warning"] = True
+            performance_log_data["threshold_exceeded"] = "1000ms"
+            performance_log_data["performance_ratio"] = round(duration_ms / 1000.0, 2)
+            performance_log_data["slow_request_impact"] = "User experience degradation possible"
+            self.logger.warning("TMDB API request slow performance", extra=performance_log_data)
 
         self.logger.info("TMDB API request successful", extra=log_data)
 
         # DEBUG-level detailed logging: Log first few results for debugging
         # This helps diagnose TMDB filtering behavior and data quality issues
-        has_results = 'results' in data and hasattr(data['results'], '__iter__')
+        has_results = "results" in data and hasattr(data["results"], "__iter__")
         if self.logger.isEnabledFor(logging.DEBUG) and has_results:
-            results = data['results']
-            if hasattr(results, '__len__') and len(results) > 0:  # type: ignore[arg-type]
+            results = data["results"]
+            if hasattr(results, "__len__") and len(results) > 0:  # type: ignore[arg-type]
                 sample_count = min(3, len(results))  # type: ignore[arg-type]
                 sample_results: list[dict[str, object]] = []
                 for i in range(sample_count):
                     try:
                         movie = results[i]  # type: ignore[index]
                         # Extract key fields for debugging (title, year, ID)
-                        release = movie.get('release_date') if hasattr(movie, 'get') else None
-                        vote_avg = movie.get('vote_average') if hasattr(movie, 'get') else None
-                        sample_results.append({
-                            'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
-                            'title': movie.get('title') if hasattr(movie, 'get') else None,
-                            'release_date': release,
-                            'vote_average': vote_avg,
-                        })
+                        release = movie.get("release_date") if hasattr(movie, "get") else None
+                        vote_avg = movie.get("vote_average") if hasattr(movie, "get") else None
+                        sample_results.append(
+                            {
+                                "tmdb_id": movie.get("id") if hasattr(movie, "get") else None,
+                                "title": movie.get("title") if hasattr(movie, "get") else None,
+                                "release_date": release,
+                                "vote_average": vote_avg,
+                            }
+                        )
                     except (IndexError, TypeError, AttributeError):
                         continue
 
@@ -220,20 +217,20 @@ class TMDBApiClient(BaseApiClient):
                 for i in range(len(results)):  # type: ignore[arg-type]
                     try:
                         movie = results[i]  # type: ignore[index]
-                        release = movie.get('release_date') if hasattr(movie, 'get') else None
-                        vote_avg = movie.get('vote_average') if hasattr(movie, 'get') else None
-                        all_results.append({
-                            'tmdb_id': movie.get('id') if hasattr(movie, 'get') else None,
-                            'title': movie.get('title') if hasattr(movie, 'get') else None,
-                            'release_date': release,
-                            'vote_average': vote_avg,
-                        })
+                        release = movie.get("release_date") if hasattr(movie, "get") else None
+                        vote_avg = movie.get("vote_average") if hasattr(movie, "get") else None
+                        all_results.append(
+                            {
+                                "tmdb_id": movie.get("id") if hasattr(movie, "get") else None,
+                                "title": movie.get("title") if hasattr(movie, "get") else None,
+                                "release_date": release,
+                                "vote_average": vote_avg,
+                            }
+                        )
                     except (IndexError, TypeError, AttributeError):
                         continue
 
-                self.logger.debug(
-                    f"TMDB response (ALL {len(all_results)} results): {all_results}"
-                )
+                self.logger.debug(f"TMDB response (ALL {len(all_results)} results): {all_results}")
 
         return ApiResponse(
             status_code=response.status_code,
@@ -243,15 +240,11 @@ class TMDBApiClient(BaseApiClient):
             endpoint=endpoint,
             method="GET",
             duration_ms=duration_ms,
-            raw_response=response
+            raw_response=response,
         )
 
     def process_error_response(
-        self,
-        response: requests.Response,
-        correlation_id: str,
-        endpoint: str,
-        duration_ms: int
+        self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
         """
         Process TMDB API error response with enhanced error information.
@@ -271,37 +264,37 @@ class TMDBApiClient(BaseApiClient):
 
         # Enhanced logging for TMDB errors
         log_data: dict[str, object] = {
-            'correlation_id': correlation_id,
-            'endpoint': endpoint,
-            'status_code': response.status_code,
-            'duration_ms': duration_ms,
-            'error_category': error_category,
-            'response_size_bytes': (
-                len(response.content) if hasattr(response.content, '__len__') else 0
+            "correlation_id": correlation_id,
+            "endpoint": endpoint,
+            "status_code": response.status_code,
+            "duration_ms": duration_ms,
+            "error_category": error_category,
+            "response_size_bytes": (
+                len(response.content) if hasattr(response.content, "__len__") else 0
             ),
-            'error_response': (
-                str(response.text)[:500] if hasattr(response.text, '__getitem__')
+            "error_response": (
+                str(response.text)[:500]
+                if hasattr(response.text, "__getitem__")
                 else str(response.text)
-            )
+            ),
         }
 
         # Add TMDB rate limit info for debugging
         rate_limit_info = self._extract_rate_limit_headers(response.headers)
         if rate_limit_info:
-            log_data['rate_limit'] = rate_limit_info
+            log_data["rate_limit"] = rate_limit_info
 
         # Add performance warning for slow error responses (>1000ms)
         if duration_ms > 1000:
             performance_log_data: dict[str, object] = dict(log_data)  # Copy the log data
-            performance_log_data['performance_warning'] = True
-            performance_log_data['threshold_exceeded'] = '1000ms'
-            performance_log_data['performance_ratio'] = round(duration_ms / 1000.0, 2)
-            performance_log_data['slow_error_impact'] = (
-                'Error response time exceeds performance threshold'
+            performance_log_data["performance_warning"] = True
+            performance_log_data["threshold_exceeded"] = "1000ms"
+            performance_log_data["performance_ratio"] = round(duration_ms / 1000.0, 2)
+            performance_log_data["slow_error_impact"] = (
+                "Error response time exceeds performance threshold"
             )
             self.logger.warning(
-                "TMDB API error response slow performance",
-                extra=performance_log_data
+                "TMDB API error response slow performance", extra=performance_log_data
             )
 
         # Log with appropriate level based on status code
@@ -324,7 +317,7 @@ class TMDBApiClient(BaseApiClient):
             method="GET",
             duration_ms=duration_ms,
             headers=self._safe_headers_dict(response),
-            raw_response=response
+            raw_response=response,
         )
 
     def _extract_tmdb_response_metadata(self, data: dict[str, object]) -> dict[str, object] | None:
@@ -340,26 +333,26 @@ class TMDBApiClient(BaseApiClient):
         metadata: dict[str, object] = {}
 
         # Common TMDB pagination fields
-        if 'page' in data:
-            metadata['page'] = data['page']
-        if 'total_pages' in data:
-            metadata['total_pages'] = data['total_pages']
-        if 'total_results' in data:
-            metadata['total_results'] = data['total_results']
-        if 'results' in data:
-            results = data['results']
+        if "page" in data:
+            metadata["page"] = data["page"]
+        if "total_pages" in data:
+            metadata["total_pages"] = data["total_pages"]
+        if "total_results" in data:
+            metadata["total_results"] = data["total_results"]
+        if "results" in data:
+            results = data["results"]
             # Type-safe length check with hasattr
             # Note: hasattr check doesn't narrow object to Sized protocol in Pyright
-            if hasattr(results, '__len__'):
-                metadata['results_count'] = len(results)  # type: ignore[arg-type]  # Runtime-validated by hasattr
+            if hasattr(results, "__len__"):
+                metadata["results_count"] = len(results)  # type: ignore[arg-type]  # Runtime-validated by hasattr
             else:
-                metadata['results_count'] = 0
+                metadata["results_count"] = 0
 
         # Movie-specific fields
-        if 'id' in data and isinstance(data['id'], int):
-            metadata['movie_id'] = data['id']
-        if 'title' in data:
-            metadata['movie_title'] = data['title']
+        if "id" in data and isinstance(data["id"], int):
+            metadata["movie_id"] = data["id"]
+        if "title" in data:
+            metadata["movie_title"] = data["title"]
 
         # Remove None values for cleaner logs
         metadata = {k: v for k, v in metadata.items() if v is not None}
@@ -377,7 +370,7 @@ class TMDBApiClient(BaseApiClient):
             Dictionary with rate limit info or None if not available
         """
         # Handle test mocks and empty headers safely
-        if not headers or not hasattr(headers, '__contains__'):
+        if not headers or not hasattr(headers, "__contains__"):
             return None
 
         rate_limit_info: dict[str, object] = {}
@@ -392,7 +385,7 @@ class TMDBApiClient(BaseApiClient):
                 continue
 
             # Convert numeric values to integers
-            if key in ['limit', 'remaining', 'retry_after', 'reset']:
+            if key in ["limit", "remaining", "retry_after", "reset"]:
                 try:
                     rate_limit_info[key] = int(value)  # type: ignore[arg-type]  # Runtime-validated in try/except
                 except (ValueError, TypeError):
@@ -407,7 +400,7 @@ class TMDBApiClient(BaseApiClient):
         endpoint: str,
         params: dict[str, object] | None = None,
         headers: dict[str, str] | None = None,
-        **kwargs: object
+        **kwargs: object,
     ) -> ApiResponse:
         """
         Make a GET request to TMDB API with automatic API key injection.
@@ -426,7 +419,7 @@ class TMDBApiClient(BaseApiClient):
             params = {}
 
         # Guard against missing TMDB API key
-        api_key = getattr(settings, 'TMDB_API_KEY', None)
+        api_key = getattr(settings, "TMDB_API_KEY", None)
         if not api_key:
             raise ImproperlyConfigured(
                 "TMDB_API_KEY is not configured in Django settings. "
@@ -440,12 +433,7 @@ class TMDBApiClient(BaseApiClient):
         return super().get(endpoint, params, headers, **kwargs)
 
     # Convenience methods for common TMDB operations
-    def search_movies(
-        self,
-        query: str,
-        page: int = 1,
-        **kwargs: object
-    ) -> ApiResponse:
+    def search_movies(self, query: str, page: int = 1, **kwargs: object) -> ApiResponse:
         """
         Search for movies by title.
 

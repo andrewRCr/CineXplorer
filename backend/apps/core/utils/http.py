@@ -20,10 +20,7 @@ def get_client_info(request: HttpRequest) -> tuple[str, str]:
 
     Example:
         >>> client_ip, user_agent = get_client_info(request)
-        >>> logger.info(
-        ...     "User action",
-        ...     extra={"client_ip": client_ip, "user_agent": user_agent}
-        ... )
+        >>> logger.info("User action", extra={"client_ip": client_ip, "user_agent": user_agent})
     """
     client_ip = request.META.get("REMOTE_ADDR", "unknown")
     user_agent = request.META.get("HTTP_USER_AGENT", "unknown")
@@ -49,8 +46,7 @@ def build_error_response(
 
     Example:
         >>> response = build_error_response(
-        ...     "Token has been revoked",
-        ...     debug_detail="Token blacklisted at 2025-10-20 14:30:00"
+        ...     "Token has been revoked", debug_detail="Token blacklisted at 2025-10-20 14:30:00"
         ... )
         >>> # In production (DEBUG=False): {"error": "Token has been revoked"}
         >>> # In dev (DEBUG=True): {"error": "...", "detail": "Token blacklisted..."}

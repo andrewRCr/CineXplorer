@@ -4,6 +4,7 @@ Unit tests for service factory functions.
 This module tests the factory functions that create service instances with
 appropriate dependencies injected.
 """
+
 from __future__ import annotations
 
 from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService

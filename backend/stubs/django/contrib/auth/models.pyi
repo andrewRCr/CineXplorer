@@ -30,6 +30,7 @@ Why we need this (Task 7.1 discovery):
 Note: This is a SUPPLEMENT to django-types. We define what django-types cannot infer.
 If future django-types versions add explicit `id` field, this stub may become redundant.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -51,26 +52,19 @@ class UserManager(Manager[AbstractUser]):
     """Manager for User/AbstractUser with custom methods."""
 
     def create_user(
-        self,
-        username: str,
-        email: str = "",
-        password: str | None = None,
-        **extra_fields: object
+        self, username: str, email: str = "", password: str | None = None, **extra_fields: object
     ) -> AbstractUser:
         """Create and save a regular user with the given username, email, and password."""
 
     def create_superuser(
-        self,
-        username: str,
-        email: str = "",
-        password: str | None = None,
-        **extra_fields: object
+        self, username: str, email: str = "", password: str | None = None, **extra_fields: object
     ) -> AbstractUser:
         """Create and save a superuser with the given username, email, and password."""
 
 # Dummy base classes for stub file - extend models.Model for proper type variance
 class AbstractBaseUser(models.Model):
     """Base user with authentication support."""
+
     id: int  # Primary key
     is_authenticated: bool  # Property that returns True for authenticated users
     is_anonymous: bool  # Property that returns False for authenticated users
@@ -121,11 +115,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     def get_full_name(self) -> str: ...
     def get_short_name(self) -> str: ...
     def email_user(
-        self,
-        subject: str,
-        message: str,
-        from_email: str | None = None,
-        **kwargs: object
+        self, subject: str, message: str, from_email: str | None = None, **kwargs: object
     ) -> None: ...
 
 class User(AbstractUser):  # type: ignore[django-manager-missing]

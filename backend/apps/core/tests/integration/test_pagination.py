@@ -9,6 +9,7 @@
 
 **Target Coverage:** 90%+ (critical path - pagination is used across multiple endpoints)
 """
+
 from __future__ import annotations
 
 import pytest
@@ -26,7 +27,7 @@ def movies(db: object) -> list[Movie]:
             tmdb_id=1000 + i,
             title=f"Test Movie {i}",
             poster_path=f"/poster{i}.jpg",
-            release_date=f"2024-01-{i:02d}" if i <= 31 else None
+            release_date=f"2024-01-{i:02d}" if i <= 31 else None,
         )
         movies_list.append(movie)
     return movies_list
@@ -309,12 +310,12 @@ class TestPaginateQueryset:
 
         # Test various page sizes
         test_cases = [
-            (5, 5),   # 25 / 5 = 5 pages
+            (5, 5),  # 25 / 5 = 5 pages
             (10, 3),  # 25 / 10 = 3 pages (rounded up)
             (20, 2),  # 25 / 20 = 2 pages (rounded up)
             (25, 1),  # 25 / 25 = 1 page
             (30, 1),  # 25 / 30 = 1 page
-            (100, 1), # 25 / 100 = 1 page
+            (100, 1),  # 25 / 100 = 1 page
         ]
 
         for page_size, expected_pages in test_cases:
@@ -331,11 +332,7 @@ class TestPaginateQueryset:
 
     def test_single_item_queryset(self, db: object) -> None:
         """Test paginating a QuerySet with exactly one item."""
-        Movie.objects.create(
-            tmdb_id=9999,
-            title="Single Movie",
-            poster_path="/single.jpg"
-        )
+        Movie.objects.create(tmdb_id=9999, title="Single Movie", poster_path="/single.jpg")
         queryset = Movie.objects.filter(tmdb_id=9999)
 
         paginated_qs, metadata = paginate_queryset(queryset, page=1)
@@ -354,7 +351,7 @@ class TestPaginateQueryset:
 
         assert paginated_qs.count() == 5
         assert metadata["total_results"] == 10  # Only 10 movies match filter
-        assert metadata["total_pages"] == 2     # 10 / 5 = 2 pages
+        assert metadata["total_pages"] == 2  # 10 / 5 = 2 pages
 
     def test_queryset_with_select_related(self, db: object, movies: list[Movie]) -> None:
         """Test that pagination preserves select_related optimization."""

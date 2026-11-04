@@ -12,6 +12,7 @@ Hybrid Authentication:
 - Priority 2: HTTP-only cookie (backward compatibility)
 - Supports both frontend localStorage and cookie-based clients
 """
+
 from __future__ import annotations
 
 import logging
@@ -28,7 +29,7 @@ from ninja_jwt.settings import api_settings
 from ninja_jwt.tokens import AccessToken
 
 # Get logger for authentication events
-logger = logging.getLogger('cinexplorer.auth')
+logger = logging.getLogger("cinexplorer.auth")
 
 
 def get_jwt_cookie_name() -> str:
@@ -40,12 +41,8 @@ def get_jwt_cookie_name() -> str:
     Returns:
         The configured cookie name, defaulting to 'access_token'.
     """
-    jwt_settings = cast(dict[str, Any], getattr(
-        settings,
-        'SIMPLE_JWT',
-        {}
-    ))
-    return cast(str, jwt_settings.get('ACCESS_TOKEN_NAME', 'access_token'))
+    jwt_settings = cast(dict[str, Any], getattr(settings, "SIMPLE_JWT", {}))
+    return cast(str, jwt_settings.get("ACCESS_TOKEN_NAME", "access_token"))
 
 
 def get_token_from_request(request: HttpRequest) -> tuple[str | None, str]:
@@ -63,22 +60,22 @@ def get_token_from_request(request: HttpRequest) -> tuple[str | None, str]:
         Tuple of (token, source) where source is 'header' or 'cookie'
     """
     # Priority 1: Check Authorization header for Bearer token
-    auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-    if auth_header.startswith('Bearer '):
+    auth_header = request.META.get("HTTP_AUTHORIZATION", "")
+    if auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()  # Remove 'Bearer ' prefix
         if token:
             logger.debug("Token found in Authorization header")
-            return token, 'header'
+            return token, "header"
 
     # Priority 2: Check HTTP-only cookie (backward compatibility)
     cookie_name = get_jwt_cookie_name()
     token = request.COOKIES.get(cookie_name)
     if token:
         logger.debug("Token found in cookie")
-        return token, 'cookie'
+        return token, "cookie"
 
     logger.debug("No token found in header or cookie")
-    return None, 'none'
+    return None, "none"
 
 
 class JWTCookieAuth(APIKeyCookie):
@@ -159,8 +156,8 @@ class JWTCookieAuth(APIKeyCookie):
                 user_id = validated_token.payload[api_settings.USER_ID_CLAIM]
                 user = User.objects.get(**{api_settings.USER_ID_FIELD: user_id})
 
-                if user and hasattr(user, 'id'):
-                    username = getattr(cast(object, user), 'username', 'unknown')
+                if user and hasattr(user, "id"):
+                    username = getattr(cast(object, user), "username", "unknown")
                     logger.debug(f"Successfully authenticated user {username} (via JWT {source})")
                     return cast(AbstractUser, user)
 
@@ -173,8 +170,7 @@ class JWTCookieAuth(APIKeyCookie):
                 logger.warning(f"JWT token from {source} valid but user not found in database")
             except Exception as e:
                 logger.error(
-                    f"Unexpected authentication error (token from {source}): {e}",
-                    exc_info=True
+                    f"Unexpected authentication error (token from {source}): {e}", exc_info=True
                 )
 
         # Priority 3: Check Django session (OAuth users)
@@ -182,7 +178,7 @@ class JWTCookieAuth(APIKeyCookie):
         # Cast request.user to AbstractUser for type safety
         user = cast(AbstractUser, request.user)  # pyright: ignore[reportUnknownMemberType]
         if user.is_authenticated:
-            username = getattr(cast(object, user), 'username', 'unknown')
+            username = getattr(cast(object, user), "username", "unknown")
             logger.debug(f"Successfully authenticated user {username} (via Django session)")
             return user
 
@@ -220,12 +216,9 @@ def get_current_user(request: HttpRequest) -> AbstractUser:
 
         if not user:
             logger.info(f"Authentication failed for request to {request.path}")
-            raise HttpError(
-                401,
-                "Authentication required"
-            )
+            raise HttpError(401, "Authentication required")
 
-        username = getattr(cast(object, user), 'username', 'unknown')
+        username = getattr(cast(object, user), "username", "unknown")
         logger.debug(f"User {username} authenticated for {request.path}")
         return user
     except HttpError:
@@ -233,10 +226,7 @@ def get_current_user(request: HttpRequest) -> AbstractUser:
         raise
     except Exception as e:
         logger.error(f"Unexpected error in get_current_user: {e}", exc_info=True)
-        raise HttpError(
-            500,
-            "Internal authentication error"
-        ) from e
+        raise HttpError(500, "Internal authentication error") from e
 
 
 def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
@@ -261,7 +251,7 @@ def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
         user = jwt_cookie_auth.authenticate(request, None)
 
         if user:
-            username = getattr(cast(object, user), 'username', 'unknown')
+            username = getattr(cast(object, user), "username", "unknown")
             logger.debug(f"Optional auth: User {username} authenticated")
         else:
             logger.debug("Optional auth: No authenticated user (this is okay)")
@@ -289,10 +279,10 @@ def get_auth_error_responses() -> dict[int, dict[str, Any]]:
                     "example": {
                         "detail": "Authentication required",
                         "error_code": "AUTH_REQUIRED",
-                        "type": "authentication_error"
+                        "type": "authentication_error",
                     }
                 }
-            }
+            },
         },
         500: {
             "description": "Internal authentication error",
@@ -301,9 +291,9 @@ def get_auth_error_responses() -> dict[int, dict[str, Any]]:
                     "example": {
                         "detail": "Internal authentication error",
                         "error_code": "AUTH_INTERNAL_ERROR",
-                        "type": "server_error"
+                        "type": "server_error",
                     }
                 }
-            }
-        }
+            },
+        },
     }

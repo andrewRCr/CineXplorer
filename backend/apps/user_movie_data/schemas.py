@@ -7,6 +7,7 @@ Pattern Guidelines:
 - Use ModelSchema for Django model CRUD (automatic type inference with django-stubs)
 - Use manual Schema for input DTOs with non-model fields (create/update operations)
 """
+
 from __future__ import annotations
 
 from ninja import Schema
@@ -43,12 +44,10 @@ class UserMovieDataDetailSchema(ModelSchema):
     """
 
     tmdb_id: int | None = Field(
-        None,
-        description="TMDB ID of the associated movie (computed from obj.movie.tmdb_id)"
+        None, description="TMDB ID of the associated movie (computed from obj.movie.tmdb_id)"
     )
     title: str | None = Field(
-        None,
-        description="Title of the associated movie (computed from obj.movie.title)"
+        None, description="Title of the associated movie (computed from obj.movie.title)"
     )
 
     class Meta:
@@ -97,32 +96,18 @@ class UserMovieDataCreateSchema(Schema):
     which is not directly on the UserMovieData model (requires FK lookup).
     """
 
-    movie_id: int = Field(
-        ...,
-        description="ID of the Movie object (database ID, not TMDB ID)"
-    )
+    movie_id: int = Field(..., description="ID of the Movie object (database ID, not TMDB ID)")
     user_watched: bool = Field(
-        default=False,
-        description="Whether the user has marked this movie as watched"
+        default=False, description="Whether the user has marked this movie as watched"
     )
     user_on_watchlist: bool = Field(
-        default=False,
-        description="Whether the movie is on the user's watchlist"
+        default=False, description="Whether the movie is on the user's watchlist"
     )
-    user_liked: bool = Field(
-        default=False,
-        description="Whether the user has liked this movie"
-    )
+    user_liked: bool = Field(default=False, description="Whether the user has liked this movie")
     user_rating: int | None = Field(
-        default=None,
-        ge=1,
-        le=10,
-        description="User's rating of the movie (1-10)"
+        default=None, ge=1, le=10, description="User's rating of the movie (1-10)"
     )
-    user_review: str | None = Field(
-        default=None,
-        description="User's text review of the movie"
-    )
+    user_review: str | None = Field(default=None, description="User's text review of the movie")
 
 
 class UserMovieDataUpdateSchema(Schema):
@@ -133,27 +118,18 @@ class UserMovieDataUpdateSchema(Schema):
     """
 
     user_watched: bool | None = Field(
-        default=None,
-        description="Whether the user has marked this movie as watched"
+        default=None, description="Whether the user has marked this movie as watched"
     )
     user_on_watchlist: bool | None = Field(
-        default=None,
-        description="Whether the movie is on the user's watchlist"
+        default=None, description="Whether the movie is on the user's watchlist"
     )
     user_liked: bool | None = Field(
-        default=None,
-        description="Whether the user has liked this movie"
+        default=None, description="Whether the user has liked this movie"
     )
     user_rating: int | None = Field(
-        default=None,
-        ge=1,
-        le=10,
-        description="User's rating of the movie (1-10)"
+        default=None, ge=1, le=10, description="User's rating of the movie (1-10)"
     )
-    user_review: str | None = Field(
-        default=None,
-        description="User's text review of the movie"
-    )
+    user_review: str | None = Field(default=None, description="User's text review of the movie")
 
 
 __all__ = [

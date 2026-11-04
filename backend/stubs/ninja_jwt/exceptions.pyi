@@ -17,6 +17,7 @@ When upgrading django-ninja-jwt:
 Note: django-ninja-jwt is a direct fork of djangorestframework-simplejwt with
 identical exception API.
 """
+
 from __future__ import annotations
 
 class TokenError(Exception):
@@ -24,13 +25,11 @@ class TokenError(Exception):
     Base exception for all token-related errors.
     """
 
-
 class InvalidToken(TokenError):  # noqa: N818
     """
     Exception raised when a token is invalid (expired, malformed, etc.).
     Note: Name matches django-ninja-jwt library (cannot rename to InvalidTokenError).
     """
-
 
 class TokenBackendError(TokenError):
     """

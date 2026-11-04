@@ -30,10 +30,7 @@ class PaginatedResponse[T](Schema):
         >>> def list_movies(request: HttpRequest, page: int = 1) -> PaginatedResponse[MovieSchema]:
         ...     movies = get_paginated_movies(page)
         ...     return PaginatedResponse(
-        ...         page=page,
-        ...         total_pages=10,
-        ...         total_results=100,
-        ...         results=movies
+        ...         page=page, total_pages=10, total_results=100, results=movies
         ...     )
     """
 

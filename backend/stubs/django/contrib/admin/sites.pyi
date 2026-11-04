@@ -15,6 +15,7 @@ When upgrading Django or django-types:
 4. Verify signatures match Django's actual implementation
 5. Update "Last verified" date above
 """
+
 from __future__ import annotations
 
 from django.contrib.admin.options import ModelAdmin
@@ -41,14 +42,14 @@ class AdminSite:
     password_change_template: str | None
     password_change_done_template: str | None
 
-    def __init__(self, name: str = 'admin') -> None:
+    def __init__(self, name: str = "admin") -> None:
         """Initialize AdminSite with optional name."""
 
     def register(
         self,
         model_or_iterable: type[Model] | list[type[Model]],
         admin_class: type[ModelAdmin] | None = None,
-        **options: object
+        **options: object,
     ) -> None:
         """
         Register model(s) with this admin site.
@@ -102,9 +103,7 @@ class AdminSite:
         """
 
     def index(
-        self,
-        request: HttpRequest,
-        extra_context: dict[str, object] | None = None
+        self, request: HttpRequest, extra_context: dict[str, object] | None = None
     ) -> HttpResponse:
         """
         Display admin index page.
@@ -118,10 +117,7 @@ class AdminSite:
         """
 
     def app_index(
-        self,
-        request: HttpRequest,
-        app_label: str,
-        extra_context: dict[str, object] | None = None
+        self, request: HttpRequest, app_label: str, extra_context: dict[str, object] | None = None
     ) -> HttpResponse:
         """
         Display admin index page for a specific app.

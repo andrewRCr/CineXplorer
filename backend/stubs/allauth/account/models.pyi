@@ -24,6 +24,7 @@ Purpose: Eliminates 17+ type: ignore[attr-defined] comments in authentication co
 Pattern: Custom stubs for third-party libraries without complete type information
 Status: NO official allauth stubs exist - this is REQUIRED (not a supplement)
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -62,7 +63,6 @@ class EmailAddress(models.Model):  # type: ignore[django-manager-missing]
     def send_confirmation(self, request: HttpRequest | None = None, signup: bool = False) -> None:
         """Send email confirmation to this email address."""
 
-
 class EmailAddressManager(Manager[EmailAddress]):
     """Custom manager for EmailAddress model with allauth-specific methods."""
 
@@ -72,7 +72,7 @@ class EmailAddressManager(Manager[EmailAddress]):
         user: AbstractBaseUser,
         email: str,
         confirm: bool = False,
-        signup: bool = False
+        signup: bool = False,
     ) -> EmailAddress:
         """
         Add email address for user and optionally send confirmation.
@@ -93,7 +93,6 @@ class EmailAddressManager(Manager[EmailAddress]):
 
     def get_verified(self, user: AbstractBaseUser) -> EmailAddress | None:
         """Get verified email address for user."""
-
 
 class EmailConfirmation(models.Model):
     """
@@ -126,7 +125,6 @@ class EmailConfirmation(models.Model):
 
     def key_expired(self) -> bool:
         """Check if confirmation key has expired."""
-
 
 class EmailConfirmationHMAC:
     """

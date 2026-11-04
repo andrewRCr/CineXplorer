@@ -26,13 +26,13 @@ class JWTSettings:
     def __init__(self) -> None:
         """Initialize JWT settings from Django SIMPLE_JWT configuration."""
         jwt_config = settings.SIMPLE_JWT  # type: ignore[misc]  # Django settings are dynamic
-        self.refresh_token_name: str = str(jwt_config['REFRESH_TOKEN_NAME'])
-        self.access_token_name: str = str(jwt_config['ACCESS_TOKEN_NAME'])
+        self.refresh_token_name: str = str(jwt_config["REFRESH_TOKEN_NAME"])
+        self.access_token_name: str = str(jwt_config["ACCESS_TOKEN_NAME"])
         # Django settings dynamic types
-        self.refresh_lifetime: timedelta = jwt_config['REFRESH_TOKEN_LIFETIME']  # type: ignore[assignment]
-        self.access_lifetime: timedelta = jwt_config['ACCESS_TOKEN_LIFETIME']  # type: ignore[assignment]
-        self.samesite: Literal['Lax', 'Strict', 'None'] = (
-            jwt_config.get('JWT_COOKIE_SAMESITE', 'Lax')  # type: ignore[assignment]
+        self.refresh_lifetime: timedelta = jwt_config["REFRESH_TOKEN_LIFETIME"]  # type: ignore[assignment]
+        self.access_lifetime: timedelta = jwt_config["ACCESS_TOKEN_LIFETIME"]  # type: ignore[assignment]
+        self.samesite: Literal["Lax", "Strict", "None"] = jwt_config.get(  # type: ignore[assignment]
+            "JWT_COOKIE_SAMESITE", "Lax"
         )
 
 
@@ -55,7 +55,7 @@ def set_auth_cookie(
     token_name: str,
     token_value: str,
     lifetime: timedelta,
-    samesite: Literal['Lax', 'Strict', 'None'] = 'Lax',
+    samesite: Literal["Lax", "Strict", "None"] = "Lax",
 ) -> None:
     """Set authentication token as HTTP-only secure cookie.
 
@@ -74,7 +74,7 @@ def set_auth_cookie(
         ...     jwt_settings.refresh_token_name,
         ...     refresh_token,
         ...     jwt_settings.refresh_lifetime,
-        ...     jwt_settings.samesite
+        ...     jwt_settings.samesite,
         ... )
     """
     response.set_cookie(
@@ -106,13 +106,11 @@ def extract_user_id_from_token(token_value: str) -> str | int:
     """
     try:
         import jwt
-        payload = jwt.decode(
-            token_value,
-            options={"verify_signature": False}
-        )
-        return payload.get('user_id', 'unknown')
+
+        payload = jwt.decode(token_value, options={"verify_signature": False})
+        return payload.get("user_id", "unknown")
     except Exception:
-        return 'unknown'
+        return "unknown"
 
 
 def blacklist_token(token: RefreshToken) -> None:

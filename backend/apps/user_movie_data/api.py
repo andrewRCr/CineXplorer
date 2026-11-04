@@ -11,6 +11,7 @@ Architecture:
 - Service layer: Business logic (CRUD, TMDB integration, filtering)
 - Repository layer: Data access abstraction
 """
+
 from __future__ import annotations
 
 from django.http import HttpRequest
@@ -74,8 +75,7 @@ def get_user_movies(
 
 @user_movie_data_router.get("/by-tmdb-id", response=UserMovieDataDetailSchema)
 def get_user_movie_data_by_tmdb_id(
-    request: HttpRequest,
-    tmdb_id: int
+    request: HttpRequest, tmdb_id: int
 ) -> UserMovieDataDetailSchema:
     """
     Retrieve user movie data for a specific movie by TMDB ID.
@@ -103,8 +103,7 @@ def get_user_movie_data_by_tmdb_id(
 
 @user_movie_data_router.post("", response=UserMovieDataDetailSchema)
 def create_user_movie_data(
-    request: HttpRequest,
-    payload: UserMovieDataCreateSchema
+    request: HttpRequest, payload: UserMovieDataCreateSchema
 ) -> UserMovieDataDetailSchema:
     """
     Create new user movie data entry.
@@ -144,9 +143,7 @@ def create_user_movie_data(
 
 @user_movie_data_router.patch("/{id}", response=UserMovieDataDetailSchema)
 def update_user_movie_data(
-    request: HttpRequest,
-    id: int,
-    payload: UserMovieDataUpdateSchema
+    request: HttpRequest, id: int, payload: UserMovieDataUpdateSchema
 ) -> UserMovieDataDetailSchema:
     """
     Update existing user movie data entry.

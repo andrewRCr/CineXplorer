@@ -3,6 +3,7 @@
 This module defines authentication and user management API endpoints
 using Django Ninja with established API patterns.
 """
+
 from __future__ import annotations
 
 from django.conf import settings
@@ -39,9 +40,9 @@ auth_router = Router(tags=["Authentication"])
         201: RegisterResponseSchema,
         400: dict[str, object],
         409: dict[str, object],
-        500: dict[str, object]
+        500: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle('3/h')],
+    throttle=[TestAwareAnonThrottle("3/h")],
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
@@ -87,7 +88,7 @@ def register_user(
         401: dict[str, object],
         403: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle('5/m')],
+    throttle=[TestAwareAnonThrottle("5/m")],
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
@@ -133,7 +134,7 @@ def obtain_token(
     "/token/refresh/",
     auth=None,
     response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object]},
-    throttle=[TestAwareUserThrottle('10/m')],
+    throttle=[TestAwareUserThrottle("10/m")],
 )
 def refresh_token(
     request: HttpRequest, response: HttpResponse
@@ -174,9 +175,9 @@ def refresh_token(
     response={
         200: HybridTokenRefreshResponseSchema,
         400: dict[str, object],
-        401: dict[str, object]
+        401: dict[str, object],
     },
-    throttle=[TestAwareUserThrottle('10/m')],
+    throttle=[TestAwareUserThrottle("10/m")],
 )
 def hybrid_refresh_token(
     request: HttpRequest, response: HttpResponse
@@ -322,13 +323,10 @@ def get_user_profile(request: HttpRequest) -> UserProfileSchema:
 
 
 @auth_router.patch(
-    "/profile/",
-    response={200: UserProfileSchema, 400: dict[str, object]},
-    auth=jwt_cookie_auth
+    "/profile/", response={200: UserProfileSchema, 400: dict[str, object]}, auth=jwt_cookie_auth
 )
 def update_user_profile(
-    request: HttpRequest,
-    payload: UserProfileUpdateSchema
+    request: HttpRequest, payload: UserProfileUpdateSchema
 ) -> Status[UserProfileSchema | dict[str, object]]:
     """Update authenticated user's profile.
 
@@ -386,7 +384,7 @@ def verify_email(
     "/resend-verification/",
     auth=None,
     response={200: ResendVerificationResponseSchema, 400: dict[str, object]},
-    throttle=[TestAwareAnonThrottle('3/h')],  # Rate limit to prevent email spam abuse
+    throttle=[TestAwareAnonThrottle("3/h")],  # Rate limit to prevent email spam abuse
 )
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationInputSchema

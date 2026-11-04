@@ -84,9 +84,7 @@ def test_resend_verification_sends_email_to_outbox(
     )
 
     # Get resend token by attempting login
-    resend_token = get_resend_token_from_login(
-        api_client, unverified_user.username, "testpass123"
-    )
+    resend_token = get_resend_token_from_login(api_client, unverified_user.username, "testpass123")
     assert resend_token is not None
 
     # Clear any existing emails (login attempt may send verification email)
@@ -128,9 +126,7 @@ def test_resend_verification_email_contains_verification_link(
     )
 
     # Get resend token by attempting login
-    resend_token = get_resend_token_from_login(
-        api_client, unverified_user.username, "testpass123"
-    )
+    resend_token = get_resend_token_from_login(api_client, unverified_user.username, "testpass123")
     assert resend_token is not None
 
     mail.outbox.clear()
@@ -202,9 +198,7 @@ def test_resend_verification_does_not_send_email_for_already_verified(
     )
 
     # Get resend token while unverified
-    resend_token = get_resend_token_from_login(
-        api_client, unverified_user.username, "testpass123"
-    )
+    resend_token = get_resend_token_from_login(api_client, unverified_user.username, "testpass123")
     assert resend_token is not None
 
     # Now verify the email (simulating user verified via another path)

@@ -76,6 +76,7 @@ class ApiErrorSchema(Schema):
     field: str | None = None  # For validation errors on specific fields
     details: dict[str, object] | None = None
 
+
 # Frontend Logging Schemas
 
 

@@ -46,9 +46,7 @@ class AbstractTokenStrategy(abc.ABC):
         Default implementation: Returns 'x-session-token' header value.
         """
 
-    def create_access_token_payload(
-        self, request: HttpRequest
-    ) -> dict[str, Any] | None:
+    def create_access_token_payload(self, request: HttpRequest) -> dict[str, Any] | None:
         """
         Create access token response payload.
 

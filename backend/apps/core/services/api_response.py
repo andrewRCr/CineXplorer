@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 # Shared mapping of standard rate limit headers to normalized keys
 # Used by both ApiResponse and API clients for consistent rate limit handling
 RATE_LIMIT_HEADER_MAPPING: dict[str, str] = {
-    'x-ratelimit-limit': 'limit',
-    'x-ratelimit-remaining': 'remaining',
-    'x-ratelimit-reset': 'reset',
-    'retry-after': 'retry_after'
+    "x-ratelimit-limit": "limit",
+    "x-ratelimit-remaining": "remaining",
+    "x-ratelimit-reset": "reset",
+    "retry-after": "retry_after",
 }
 
 
@@ -114,7 +114,7 @@ class ApiResponse:
             value = self.get_header(header_name)
             if value is not None:
                 # Try to convert numeric values to integers
-                if key in ['limit', 'remaining', 'reset', 'retry_after']:
+                if key in ["limit", "remaining", "reset", "retry_after"]:
                     try:
                         rate_limit_info[key] = int(value)
                     except ValueError:
@@ -129,24 +129,24 @@ class ApiResponse:
         content_info: dict[str, object] = {}
 
         if self.headers:
-            content_info['content_type'] = self.get_header('content-type')
-            content_info['content_length'] = self.get_header('content-length')
+            content_info["content_type"] = self.get_header("content-type")
+            content_info["content_length"] = self.get_header("content-length")
 
             # Convert content length to integer if possible
-            content_length = content_info['content_length']
+            content_length = content_info["content_length"]
             if content_length:
                 with contextlib.suppress(ValueError):
-                    content_info['content_length'] = int(content_length)
+                    content_info["content_length"] = int(content_length)
 
         # Add data size information (in bytes)
         if self.data is not None:
             if isinstance(self.data, str):
-                content_info['data_size'] = len(self.data.encode('utf-8'))
+                content_info["data_size"] = len(self.data.encode("utf-8"))
             elif isinstance(self.data, (dict, list)):
                 try:
-                    content_info['data_size'] = len(json.dumps(self.data).encode('utf-8'))
+                    content_info["data_size"] = len(json.dumps(self.data).encode("utf-8"))
                 except (TypeError, ValueError):
-                    content_info['data_size'] = None
+                    content_info["data_size"] = None
 
         return content_info
 
@@ -159,22 +159,22 @@ class ApiResponse:
             return None
 
         error_summary: dict[str, object] = {
-            'status_code': self.status_code,
-            'error_message': self.error_message,
-            'error_details': self.error_details,
-            'error_category': self.error_category,
-            'correlation_id': self.correlation_id,
-            'endpoint': self.endpoint,
-            'method': self.method,
-            'duration_ms': self.duration_ms
+            "status_code": self.status_code,
+            "error_message": self.error_message,
+            "error_details": self.error_details,
+            "error_category": self.error_category,
+            "correlation_id": self.correlation_id,
+            "endpoint": self.endpoint,
+            "method": self.method,
+            "duration_ms": self.duration_ms,
         }
 
         # Add rate limit info for rate limit errors or any response with Retry-After
         # Some backends use 503/529 with Retry-After for throttling instead of 429
-        if self.is_rate_limited() or self.get_header('retry-after') is not None:
+        if self.is_rate_limited() or self.get_header("retry-after") is not None:
             rate_limit_info = self.get_rate_limit_info()
             if rate_limit_info:
-                error_summary['rate_limit_info'] = rate_limit_info
+                error_summary["rate_limit_info"] = rate_limit_info
 
         # Remove None values for cleaner output
         return {k: v for k, v in error_summary.items() if v is not None}
@@ -194,7 +194,7 @@ class ApiResponse:
         error_dict: dict[str, object] = {
             "error": self.error_message or f"Request failed with status {self.status_code}",
             "status": self.status_code,
-            "correlation_id": self.correlation_id
+            "correlation_id": self.correlation_id,
         }
 
         if self.error_details:

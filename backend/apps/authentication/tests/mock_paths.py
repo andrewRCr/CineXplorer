@@ -27,6 +27,4 @@ AUTH_SERVICE_TRANSACTION_ATOMIC = (
 )
 
 # Schema paths
-AUTH_SCHEMA_PROFILE_MODEL_VALIDATE = (
-    "apps.authentication.schemas.UserProfileSchema.model_validate"
-)
+AUTH_SCHEMA_PROFILE_MODEL_VALIDATE = "apps.authentication.schemas.UserProfileSchema.model_validate"

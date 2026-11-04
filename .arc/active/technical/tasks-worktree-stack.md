@@ -204,12 +204,22 @@ worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed 
     - Restored the saved original bytes; SHA-256 matches and proof-a's Git status is clean. Evidence retained in
       personal proofs.
 
-- [ ] **5.4 `remove` cleans up a merged worktree and keeps an unmerged one** (Criterion 9)
-    - `proof-b` has no commits of its own, so its branch is merged: `remove proof-b` leaves no containers, volumes,
-      networks or images labelled `com.docker.compose.project=cinexplorer-proof-b`, no folder and no local branch
-    - Commit once in `proof-a`: `remove proof-a` refuses and leaves its folder, branch and stack in place; then
-      `remove proof-a --keep-branch` removes the folder and stack and keeps the branch at that commit
-    - Delete the sandbox afterwards (Phase 5 note)
+- [x] **5.4 `remove` cleans up a merged worktree and keeps unmerged work** (Criterion 9)
+    - Each throwaway started with five containers, three volumes, one network and two built images. Merged
+      `proof-b` removal left no labelled resources, checkout, registration or local branch; proof-a and the primary
+      retained identical resource IDs and running/health states and answered healthy.
+    - An empty proof-a commit made it unmerged. Ordinary removal refused with the ancestry reason and preserved
+      its commit, clean status, registration, resource IDs and running/health states; its health URL still answered
+      200. `--keep-branch` then removed every labelled resource, checkout and registration while preserving branch
+      commit `6d189c81`; `cat-file` resolved that commit before intentional sandbox deletion.
+    - Deleted only `~/dev/scratch/worktree-stack-proof/` after the proof. Primary resource IDs and running/health
+      states stayed unchanged through both removals; its health endpoint remains 200. Detailed summaries and logs
+      are retained in personal proofs.
+    - Before cleanup, the independently updated primary (#82) needed `python-json-logger`, absent from its old
+      image. A canonical rebuild was cancelled after very slow Alpine downloads. Restored it with a local image
+      layer adding only the pinned 4.2.0 wheel: import and dependency checks passed under the original user; image
+      user, entrypoint, command, working directory and labels were preserved. No tracked primary files changed.
+      A rollback image tag and the repair recipe/metadata are retained; this does not prove the canonical rebuild.
 
 ### **Phase 6:** Verification
 

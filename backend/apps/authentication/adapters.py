@@ -16,6 +16,9 @@ if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
 
 
+EMAIL_DELIVERY_FAILURE_MESSAGE = "We couldn't send the email. Please try again in a few minutes."
+
+
 class EmailDeliveryError(Exception):
     """Raised when email delivery fails."""
 

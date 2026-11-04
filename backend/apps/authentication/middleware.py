@@ -6,9 +6,11 @@ import json
 import logging
 from collections.abc import Callable
 
-from django.http import HttpRequest, HttpResponseForbidden, HttpResponseNotFound
+from django.http import HttpRequest, HttpResponseForbidden, HttpResponseNotFound, JsonResponse
 from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.deprecation import MiddlewareMixin
+
+from apps.authentication.adapters import EMAIL_DELIVERY_FAILURE_MESSAGE, EmailDeliveryError
 
 logger = logging.getLogger("cinexplorer.auth")
 
@@ -54,4 +56,14 @@ class AllauthEndpointMiddleware(MiddlewareMixin):
             "/_allauth/"
         ) and request.method not in self.allowed_methods.get(request.path, set()):
             return HttpResponseNotFound()
+        return None
+
+
+class AllauthEmailDeliveryMiddleware(MiddlewareMixin):
+    """Give allauth's mail failures the same retryable response as the API."""
+
+    def process_exception(self, request: HttpRequest, exception: Exception) -> JsonResponse | None:
+        if request.path.startswith("/_allauth/") and isinstance(exception, EmailDeliveryError):
+            logger.error("%s | endpoint=%s", EMAIL_DELIVERY_FAILURE_MESSAGE, request.path)
+            return JsonResponse({"detail": EMAIL_DELIVERY_FAILURE_MESSAGE}, status=503)
         return None

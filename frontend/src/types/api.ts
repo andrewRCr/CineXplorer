@@ -1242,6 +1242,14 @@ export interface components {
             message: string;
         };
         /**
+         * EmailDeliveryErrorSchema
+         * @description A retryable failure to send a transactional email.
+         */
+        EmailDeliveryErrorSchema: {
+            /** Detail */
+            detail: string;
+        };
+        /**
          * ResendVerificationInputSchema
          * @description Schema for resend verification email input.
          *
@@ -2285,6 +2293,15 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailDeliveryErrorSchema"];
                 };
             };
         };

@@ -13,6 +13,7 @@ from ninja import Router, Status
 from apps.authentication.auth_ninja import get_current_user, jwt_cookie_auth
 from apps.authentication.schemas import (
     CsrfTokenResponseSchema,
+    EmailDeliveryErrorSchema,
     EmailVerificationInputSchema,
     EmailVerificationResponseSchema,
     HybridTokenRefreshResponseSchema,
@@ -353,7 +354,11 @@ def verify_email(
 @auth_router.post(
     "/resend-verification/",
     auth=None,
-    response={200: ResendVerificationResponseSchema, 400: dict[str, object]},
+    response={
+        200: ResendVerificationResponseSchema,
+        400: dict[str, object],
+        503: EmailDeliveryErrorSchema,
+    },
     throttle=[ResendVerificationThrottle("3/h")],  # Rate limit to prevent email spam abuse
 )
 def resend_verification(

@@ -177,36 +177,20 @@ authentication gaps that matter once sign-up is public are closed.
       format and scoped Pyright passed. The response fixture follows the provider's documented error envelope;
       no actual mail or provider credentials were used in the tests. The coupled cases share one backend change.
 
-- [ ] **3.2 A failed send answers `503`, and the resend token survives it** (R22, backend; Implemented 4 and 5)
+- [x] **3.2 A failed send answers `503`, and the resend token survives it** (R22, backend; Implemented 4 and 5)
 
-    - [ ] **3.2.a Write tests** in `apps/authentication/tests/integration/test_failed_email_send.py` (new): a failed
-      send goes through the project backend (3.1), with a placeholder API key set and 3.1's stand-in at `requests`'
-      transport layer answering ZeptoMail's error format; a successful send uses the locmem backend's outbox
-        - `POST /_allauth/browser/v1/auth/password/request` for an address with an account, and for one without,
-          answers `503` with R22's body
-        - `POST /api/resend-verification/` with a valid token answers `503` with R22's body
-        - Each logs one `ERROR` record on `cinexplorer.auth` without exception info, naming the endpoint and, for
-          resend, the user's ID, and no record on that logger contains the address or the exception's text
-          (`assertLogs`; Phase 3 note on the log)
-        - With the token's remaining lifetime shortened, a failed resend restarts it at the full 10 minutes (read from
-          Redis; Phase 3 note); presented again with the locmem backend, the same token sends the email, and presented
-          a third time it is spent: the generic success answer, and no email
-        - Registration's response to a failed send stays as its existing tests assert
-        - Expect tests to FAIL initially
-
-    - [ ] **3.2.b Handle the failure**
-        - A middleware in `apps/authentication/middleware.py` turns an `EmailDeliveryError` raised under `/_allauth/`
-          into R22's `503` (`process_exception`) and logs it at `ERROR` without the traceback, with R22's fixed
-          message (Phase 3 note on the log)
-        - `AuthenticationService.resend_verification` (`apps/authentication/services/authentication_service.py`):
-          checking the token reads it without deleting it; a successful send deletes it; on `EmailDeliveryError` it
-          logs R22's fixed message with the user's ID, sets the token again for its full lifetime and reports the
-          failure, which the endpoint answers with R22's `503` (Phase 3 note on how the service reports it); the
-          endpoint's `response=` declares the `503` with a schema whose one field is `detail` (none exists yet; Phase 2
-          note on the body)
-        - Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts`; the diff shows resend-verification's new
-          response and nothing unrelated
-        - Tests should now PASS
+    - [x] **3.2.a Write tests:** enforcing clients and the project backend exercise failed password requests
+      for known/unknown addresses and both resend address-record paths, with sanitized auth logs. Real Redis
+      lifetime checks cover renewal from 30 seconds to 600, successful retry, spent-token reuse and read-only
+      validation. The five cases failed before their changes; controlled omissions of renewal/consumption and an
+      unsafe log failed the new guards. Replaced two obsolete consume-on-read mock cases with these real flows.
+    - [x] **3.2.b Handle the failure:** allauth middleware returns the fixed detail-only 503; resend catches
+      delivery failures, logs the endpoint/user ID without traceback, renews the token and raises `UpstreamError`.
+      Only a successful send consumes it. Declared and regenerated the resend 503 and its one-field schema.
+    - Merged approved `origin/main` through `32850e40`; kept refresh behavior and main's hook/timing updates.
+      Corrected redundant cleanup and an empty `act` call for its new lint rules. Merge checks: 206 related frontend
+      tests, lint and TypeScript passed. Backend checks: 497 core/authentication tests, Ruff and scoped Pyright
+      passed; registration's failure behavior remains covered. Frontend generated types and documentation checked.
 
 - [ ] **3.3 The forgot-password page and the resend action show the failed-send message** (R22, frontend;
   Implemented 3)

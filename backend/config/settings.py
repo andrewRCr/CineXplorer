@@ -100,6 +100,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     # Close unused allauth endpoints before checking CSRF on the reachable views.
     "apps.authentication.middleware.AllauthEndpointMiddleware",
+    "apps.authentication.middleware.AllauthEmailDeliveryMiddleware",
     "apps.authentication.middleware.CsrfProtectionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

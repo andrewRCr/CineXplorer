@@ -384,6 +384,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailDeliveryErrorSchema"
+                }
+              }
+            }
           }
         },
         "description": "Resend email verification to the provided email address.\n\nArgs:\n    request: Django HTTP request\n    payload: Email address to resend verification to\n\nReturns:\n    Success message (even if email doesn't exist for security)",
@@ -3604,6 +3614,20 @@
           "message"
         ],
         "title": "ResendVerificationResponseSchema",
+        "type": "object"
+      },
+      "EmailDeliveryErrorSchema": {
+        "description": "A retryable failure to send a transactional email.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "EmailDeliveryErrorSchema",
         "type": "object"
       },
       "ResendVerificationInputSchema": {

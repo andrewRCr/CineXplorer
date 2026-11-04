@@ -418,9 +418,11 @@ def test_refresh_token_cookie_updated(registered_user: tuple[Client, dict[str, s
 def test_csrf_token_endpoint_sets_cookie(api_client: Client) -> None:
     """CSRF token endpoint sets csrftoken cookie and returns token in body."""
     from django.conf import settings
+    from django.test import Client
 
     csrf_url = "/api/csrf/"
-    response = api_client.get(csrf_url)
+    client = Client(enforce_csrf_checks=True)
+    response = client.get(csrf_url)
     assert response.status_code == 200
 
     # Check that Django's CSRF cookie is set (configurable via CSRF_COOKIE_NAME)
@@ -429,12 +431,15 @@ def test_csrf_token_endpoint_sets_cookie(api_client: Client) -> None:
         f"Expected cookie '{csrf_cookie_name}' not found. "
         f"Available cookies: {list(response.cookies.keys())}"
     )
-    token_in_cookie = response.cookies[csrf_cookie_name].value
 
     # Verify token is also returned in response body
     body = response.content.decode(response.charset or "utf-8")
     token_in_body = json.loads(body)["csrf_token"]
-    assert token_in_cookie == token_in_body
+    # Django masks the response token; prove it validates against the cookie.
+    logout_response = client.post(
+        "/api/logout/", content_type="application/json", HTTP_X_CSRFTOKEN=token_in_body
+    )
+    assert logout_response.status_code == 200
 
 
 # =========================

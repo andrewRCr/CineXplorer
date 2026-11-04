@@ -113,48 +113,22 @@ authentication gaps that matter once sign-up is public are closed.
       The coupled cases exercise one CSRF contract across the direct browser request paths. Astra's bounded
       source check found no material issue; the verification phase remains pending.
 
-- [ ] **2.3 Every unsafe request is CSRF-checked** (R20; Implemented 2, and Proven live 13 in 5.5)
+- [x] **2.3 Every unsafe request is CSRF-checked** (R20; Implemented 2, and Proven live 13 in 5.5)
 
-    - [ ] **2.3.a Rewrite `apps/authentication/tests/integration/test_csrf_protection.py`** around
-      `Client(enforce_csrf_checks=True)`
-        - For each of sign-in (`POST /api/token/`), registration (`/api/register/`), logout (`/api/logout/`), email
-          verification (`/api/verify-email/`), resend-verification (`/api/resend-verification/`), both refresh
-          endpoints (`/api/token/refresh/`, `/api/auth/refresh`), allauth's
-          `POST /_allauth/browser/v1/auth/password/request`, and `POST /api/user-movie-data` by a user signed in by
-          session alone (`force_login`, no JWT): no token, and a token that does not match the cookie, each answer
-          `403` with R20's body; a matching cookie and `X-CSRFToken` pass the check (the answer is not R20's `403`)
-        - With a matching token and another site's `Origin` on an HTTPS request (`secure=True`), sign-in answers `403`
-        - `POST /api/logs/` without a token is accepted, and so is `POST /api/dev-logs/write/` under
-          `ENVIRONMENT=development`
-        - Remove `test_csrf_exempts_login_endpoint` and `test_csrf_exempts_register_endpoint`, and rewrite the module
-          docstring to describe the checks the file makes; where a refused request would change data, the case also
-          asserts the data is unchanged, as #59's watchlist-rating cases do.
-          `test_unauthenticated_patch_fails_with_401_not_403`, whose docstring says authentication is checked before
-          CSRF, becomes a test that an unauthenticated `PATCH` from the enforcing client with a matching token passes
-          the check and answers `401`, renamed to match
-        - `apps/authentication/tests/integration/test_error_responses.py`: its two CSRF tests
-          (`test_csrf_error_uses_error_format_production`, `test_csrf_error_includes_detail_in_debug_mode`) pass today
-          only because the old middleware checks any request carrying an `access_token` cookie, and expect the old
-          `{"error"}` body and debug text. They become enforcing-client tests that assert R20's whole body with `DEBUG`
-          off and on, and the module docstring's line on the CSRF error format describes the new refusal
-        - `apps/user_movie_data/tests/integration/test_user_movie_data_api.py`: `test_unauthenticated_update_denied`
-          and `test_unauthenticated_delete_denied` send on the client their fixture signed in, so the `403` they assert
-          is the old cookie-gated check, and after 2.3 the request would succeed. They send from a new `Client()` with
-          no credentials and assert `401` and the entry unchanged; their note on CSRF goes
-        - Expect every no-token and mismatched-token case and the two error-format cases to FAIL initially; the
-          matching-token and exemption cases pass today and guard the change: after 2.3.b, see each fail once (the
-          header left out, an exemption removed). The two unauthenticated cases pass before and after
-
-    - [ ] **2.3.b Replace `CsrfHeaderMiddleware` with a subclass of Django's `CsrfViewMiddleware`** in
-      `apps/authentication/middleware.py`
-        - It checks `POST`, `PUT`, `PATCH` and `DELETE` even on views marked CSRF-exempt, skips `/api/logs/`,
-          `/api/dev-logs/write/` and `/__debug__/`, and answers a refusal with R20's `403` body (overriding
-          `_reject`; Phase 2 note on the body); `CsrfHeaderMiddleware`, its path list and its module docstring go
-        - `config/settings.py`: the `MIDDLEWARE` entry and its comment, and the comment beside the `security.W003`
-          silence naming the three exemptions and their reasons
-        - `get_csrf_token` keeps setting the cookie itself (Phase 2 note)
-        - Tests should now PASS; then `pytest apps/` in this checkout's stack, since the middleware sits in front of
-          every app
+    - [x] **2.3.a Rewrite the CSRF tests:** enforcing clients exercise missing, mismatched and matching tokens
+      across all nine specified POST paths plus session-only PATCH and DELETE. Refusals preserve users, email
+      verification state, messages and movie entries; HTTPS cross-site Origin is rejected. Error-body tests cover
+      DEBUG off/on, anonymous movie writes use fresh clients, and token endpoint tests prove a returned masked
+      token works instead of requiring it to equal the cookie secret.
+    - [x] **2.3.b Replace the middleware:** `CsrfProtectionMiddleware` delegates to Django with the callback's
+      exemption hidden, retains its token, Origin/Referer and test-client behavior, and returns the fixed JSON
+      refusal. Only the two log POSTs and development toolbar are exempt. Updated middleware registration and
+      the system-check comment.
+    - Fail-first evidence: 25 behavioral failures before implementation; all eleven matching-token cases failed
+      when their header was omitted, both log cases failed with exemptions omitted, and the token endpoint case
+      failed with an incorrect returned token. Restored before final checks. The cases share one middleware change.
+    - Checks: full backend suite 947 passed; touched-app Ruff lint/format, scoped Pyright and task-list lint passed.
+      The full run exposed the obsolete masked-token equality assertion, which now checks an enforcing request.
 
 - [ ] **2.4 The authentication reference and every description of the old design match the new one** (R27;
   Implemented 12)

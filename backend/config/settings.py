@@ -98,11 +98,9 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # Custom CSRF middleware with path-based exemptions (workaround for Django Ninja bug #1464)
-    # Must run AFTER AuthenticationMiddleware to check request.user.is_authenticated
-    # Replaces Django's CsrfViewMiddleware to avoid conflict with Django Ninja
+    # Close unused allauth endpoints before checking CSRF on the reachable views.
     "apps.authentication.middleware.AllauthEndpointMiddleware",
-    "apps.authentication.middleware.CsrfHeaderMiddleware",
+    "apps.authentication.middleware.CsrfProtectionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
@@ -391,13 +389,10 @@ CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
 # This is safe - CSRF tokens are defense mechanisms, not secrets
 CSRF_COOKIE_HTTPONLY = False
 
-# CsrfHeaderMiddleware deliberately replaces Django's CsrfViewMiddleware:
-# it validates X-CSRFToken on unsafe requests carrying the JWT cookie.
-# Django admin views apply csrf_protect themselves. Token checks do not cover
-# exempt public auth endpoints (registration, sign-in, logout, email verification
-# and resend; refresh stays checked), allauth's headless browser endpoints, or
-# session-only API authentication. Those paths rely on SameSite=Lax; Ninja parses
-# JSON regardless of content type, so cross-site forms can still force sign-in.
+# Our CsrfViewMiddleware subclass checks unsafe requests even on Ninja's exempt views.
+# Only POST /api/logs/ (anonymous reporting), POST /api/dev-logs/write/ (development
+# console capture), and /__debug__/ (the development toolbar's SQL panel) are exempt.
+# Django's system check looks for its own class path rather than subclasses.
 SILENCED_SYSTEM_CHECKS = ["security.W003"]
 
 

@@ -46,6 +46,7 @@ class EmailAddress(models.Model):  # type: ignore[django-manager-missing]
 
     # Fields
     user: AbstractBaseUser
+    user_id: int
     email: str
     verified: bool
     primary: bool

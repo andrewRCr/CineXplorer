@@ -68,17 +68,14 @@ The CineXplorer Team
             fail_silently=False,
         )
 
-        logger.info(
-            "Welcome email sent successfully",
-            extra={"user_id": user.id, "user_email": user.email},
-        )
+        logger.info("Welcome email sent successfully", extra={"user_id": user.id})
         return True
 
     except Exception as e:
+        # The exception's text can carry the address, so only its type is logged.
         logger.error(
             "Error sending welcome email",
-            extra={"user_id": user.id, "user_email": user.email, "error": str(e)},
-            exc_info=True,
+            extra={"user_id": user.id, "error_type": type(e).__name__},
         )
         return False
 

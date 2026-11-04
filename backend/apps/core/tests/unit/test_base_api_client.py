@@ -190,9 +190,8 @@ class TestBaseApiClientExceptionHandling:
             params={"page": 1},
         )
 
-        assert response.status_code == 408
-        assert response.error_message is not None
-        assert "timeout" in response.error_message.lower()
+        assert response.status_code == 504
+        assert response.error_message == "API request timed out"
         assert response.error_category == "network_error"
         assert response.correlation_id == "test-123"
         assert response.endpoint == "/api/test"
@@ -209,9 +208,8 @@ class TestBaseApiClientExceptionHandling:
             url="https://api.example.com/api/data",
         )
 
-        assert response.status_code == 503
-        assert response.error_message is not None
-        assert "connection" in response.error_message.lower()
+        assert response.status_code == 502
+        assert response.error_message == "API connection failed"
         assert response.error_category == "network_error"
 
     def test_handle_generic_request_exception(self) -> None:
@@ -226,7 +224,8 @@ class TestBaseApiClientExceptionHandling:
             url="https://api.example.com/api/resource",
         )
 
-        assert response.status_code == 500
+        assert response.status_code == 502
+        assert response.error_message == "API request failed"
         assert response.error_category == "request_error"
 
     def test_handle_exception_sanitizes_params(self) -> None:
@@ -368,7 +367,7 @@ class TestBaseApiClientGetMethod:
 
             result = client.get("/users")
 
-            assert result.status_code == 503
+            assert result.status_code == 502
             assert result.error_category == "network_error"
 
     def test_get_uses_timeout(self) -> None:

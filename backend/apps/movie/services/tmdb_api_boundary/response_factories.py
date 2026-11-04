@@ -30,10 +30,12 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Mapping
+from typing import NoReturn
 
 from ninja.errors import HttpError
 
 from apps.core.services.api_response import ApiResponse
+from apps.core.services.validators import raise_upstream_error
 from apps.core.tmdb_models.tmdb_responses import (
     TMDBCreditsResponse,
     TMDBGenreListResponse,
@@ -68,8 +70,10 @@ logger = logging.getLogger("cinexplorer.tmdb")
 # =========================
 
 
-def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: object) -> None:
-    """Handle TMDB API errors by raising appropriate HttpError exceptions.
+def handle_tmdb_api_error(
+    api_response: ApiResponse, operation: str, **context: object
+) -> NoReturn:
+    """Log a failed TMDB response and raise the client-facing error for it.
 
     Args:
         api_response: ApiResponse object from TMDB client
@@ -77,7 +81,7 @@ def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: 
         **context: Additional context for logging
 
     Raises:
-        HttpError: With appropriate status code and message
+        HttpError: 404, 429, 504 or 502 with a fixed message (see raise_upstream_error)
     """
     correlation_id = getattr(api_response, "correlation_id", str(uuid.uuid4())[:8])
 
@@ -93,15 +97,7 @@ def handle_tmdb_api_error(api_response: ApiResponse, operation: str, **context: 
         },
     )
 
-    # Map TMDB status codes to appropriate HTTP errors
-    if api_response.status_code == 404:
-        raise HttpError(404, "Resource not found")
-    elif api_response.status_code == 429:
-        raise HttpError(429, "Rate limit exceeded, please try again later")
-    elif 400 <= api_response.status_code < 500:
-        raise HttpError(400, "Invalid request")
-    else:
-        raise HttpError(500, "External API error")
+    raise_upstream_error(api_response)
 
 
 def get_validated_response(

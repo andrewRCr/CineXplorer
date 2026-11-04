@@ -8,6 +8,7 @@ the service layer.
 from __future__ import annotations
 
 import logging
+from typing import NoReturn
 
 from ninja.errors import HttpError
 from pydantic import BaseModel, ValidationError
@@ -15,6 +16,30 @@ from pydantic import BaseModel, ValidationError
 from .api_response import ApiResponse
 
 logger = logging.getLogger(__name__)
+
+
+def raise_upstream_error(response: ApiResponse) -> NoReturn:
+    """Raise the client-facing error for a failed upstream response.
+
+    Neither TMDB's status nor its error text reaches the client. When TMDB answered
+    that a resource does not exist or that requests are rate limited, the client gets
+    the same meaning with a fixed message. A timeout is a 504 and every other failure
+    is a 502, including TMDB rejecting the API key: passed through, that 401 would
+    read as the visitor's own session expiring.
+
+    Args:
+        response: Failed ApiResponse from the TMDB client
+
+    Raises:
+        HttpError: 404, 429, 504 or 502, with a fixed message
+    """
+    if response.status_code == 404:
+        raise HttpError(404, "Resource not found")
+    if response.status_code == 429:
+        raise HttpError(429, "Rate limit exceeded, please try again later")
+    if response.status_code == 504:
+        raise HttpError(504, "External API timed out")
+    raise HttpError(502, "External API error")
 
 
 def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) -> T:
@@ -35,7 +60,7 @@ def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) 
     """
     # Check if the API call was successful
     if not response.is_success():
-        raise HttpError(response.status_code, response.error_message or "TMDB API request failed")
+        raise_upstream_error(response)
 
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
@@ -76,7 +101,7 @@ def validate_tmdb_list_response[T: BaseModel](
     """
     # Check if the API call was successful
     if not response.is_success():
-        raise HttpError(response.status_code, response.error_message or "TMDB API request failed")
+        raise_upstream_error(response)
 
     # Type narrowing - ensure we have list data
     if not isinstance(response.data, list):
@@ -115,7 +140,7 @@ def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model:
     """
     # Check if the API call was successful
     if not response.is_success():
-        raise HttpError(response.status_code, response.error_message or "TMDB API request failed")
+        raise_upstream_error(response)
 
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
@@ -137,6 +162,7 @@ def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model:
 
 
 __all__ = [
+    "raise_upstream_error",
     "validate_tmdb_list_response",
     "validate_tmdb_paginated_response",
     "validate_tmdb_response",

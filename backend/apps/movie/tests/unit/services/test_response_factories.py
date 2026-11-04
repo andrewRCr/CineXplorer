@@ -209,23 +209,28 @@ class TestHandleTmdbApiError:
         assert exc_info.value.status_code == 429
         assert "rate limit" in str(exc_info.value.message).lower()
 
-    def test_raises_400_for_client_errors(self) -> None:
-        """Should raise HttpError(400) for 4xx client errors (except 404, 429)."""
-        api_response = ApiResponse(status_code=422, data=None, error_message="Validation error")
+    @pytest.mark.parametrize("status_code", [400, 401, 403, 422, 500, 502, 503])
+    def test_raises_502_for_other_upstream_failures(self, status_code: int) -> None:
+        """Should raise a fixed HttpError(502) for any other failed TMDB response."""
+        api_response = ApiResponse(
+            status_code=status_code, data=None, error_message="api_key=SECRET rejected"
+        )
 
         with pytest.raises(HttpError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation")
 
-        assert exc_info.value.status_code == 400
+        assert exc_info.value.status_code == 502
+        assert exc_info.value.message == "External API error"
 
-    def test_raises_500_for_server_errors(self) -> None:
-        """Should raise HttpError(500) for 5xx server errors."""
-        api_response = ApiResponse(status_code=503, data=None, error_message="Service unavailable")
+    def test_raises_504_for_timeouts(self) -> None:
+        """Should raise HttpError(504) when the request to TMDB timed out."""
+        api_response = ApiResponse(status_code=504, data=None, error_message="timed out")
 
         with pytest.raises(HttpError) as exc_info:
             handle_tmdb_api_error(api_response, operation="test_operation")
 
-        assert exc_info.value.status_code == 500
+        assert exc_info.value.status_code == 504
+        assert exc_info.value.message == "External API timed out"
 
 
 class TestGetValidatedResponse:

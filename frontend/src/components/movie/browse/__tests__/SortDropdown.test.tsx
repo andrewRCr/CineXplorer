@@ -1,18 +1,6 @@
-/**
- * SortDropdown Component Tests
- *
- * KNOWN ISSUE: Tests produce "act() warning" noise from Chakra UI v3's Select component.
- * This is a known limitation of Chakra UI v3's Ark UI state machine architecture.
- * The warnings do NOT indicate test failures or bugs - tests correctly verify behavior.
- *
- * Research conducted Dec 2025 confirmed:
- * - Issue is internal to Chakra/Ark UI state machines, not our test code
- * - No clean fix exists; CSS animation disabling doesn't help (it's JS state, not CSS)
- * - Kent C. Dodds recommends accepting warnings over suppressing them
- * - See: https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning
- */
+/** SortDropdown rendering and selection tests. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@tests/helpers/test-renderer";
+import { act, render, screen } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import SortDropdown from "../SortDropdown";
 import { createMockBrowseParams } from "@tests/mocks/browseParams";
@@ -75,13 +63,18 @@ describe("SortDropdown", () => {
 
       // Open dropdown and select option
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
-      await user.click(screen.getByText("Newest"));
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
+      await act(async () => {
+        await user.click(screen.getByText("Newest"));
+      });
 
       expect(mockOnSortChange).toHaveBeenCalledWith("release_date.desc");
     });
 
-    it("shows all 6 sort options when language is Latin-script", async () => {
+    it("shows all 5 sort options when language is Latin-script", async () => {
       const user = userEvent.setup();
 
       render(
@@ -92,7 +85,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Should have all 5 options (use getAllByRole to count option elements)
       const options = screen.getAllByRole("option");
@@ -116,7 +112,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Highest Rated should be in italics (disabled styling)
       const highestRatedOption = screen.getByText("Highest Rated");
@@ -135,7 +134,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Highest Rated should NOT be in italics
       const highestRatedOption = screen.getByText("Highest Rated");
@@ -155,7 +157,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Should have only 4 options (no title sorts)
       const options = screen.getAllByRole("option");
@@ -176,7 +181,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Title sort should NOT be present
       expect(screen.queryByText("Alphabetical")).not.toBeInTheDocument();
@@ -193,7 +201,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Title sort should NOT be present
       expect(screen.queryByText("Alphabetical")).not.toBeInTheDocument();
@@ -210,7 +221,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Title sort SHOULD be present
       expect(screen.getByText("Alphabetical")).toBeInTheDocument();
@@ -227,7 +241,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Title sort SHOULD be present
       expect(screen.getByText("Alphabetical")).toBeInTheDocument();
@@ -244,7 +261,10 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await user.click(trigger);
+      await act(async () => {
+        await user.click(trigger);
+      });
+      await screen.findByRole("listbox");
 
       // Title sort SHOULD be present
       expect(screen.getByText("Alphabetical")).toBeInTheDocument();

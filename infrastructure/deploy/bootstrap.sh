@@ -103,12 +103,149 @@ else
     changed 'deploy docker membership'
 fi
 ensure_dir /home/deploy/.ssh 700 deploy deploy
-write_file /home/deploy/.ssh/authorized_keys 600 deploy deploy < /root/.ssh/authorized_keys
+cat /root/.ssh/authorized_keys > "$scratch/authorized_keys"
+if [[ -f /opt/cinexplorer/ci-deploy.pub ]]; then
+    printf '\nrestrict,command="/usr/local/bin/cinexplorer-deploy --from-ci" %s\n' \
+        "$(cat /opt/cinexplorer/ci-deploy.pub)" >> "$scratch/authorized_keys"
+fi
+write_file /home/deploy/.ssh/authorized_keys 600 deploy deploy < "$scratch/authorized_keys"
 printf 'deploy ALL=(ALL) NOPASSWD: ALL\n' > "$scratch/sudoers"
 visudo -cf "$scratch/sudoers"
 write_file /etc/sudoers.d/deploy 440 < "$scratch/sudoers"
 visudo -c
 ensure_dir /opt/cinexplorer 755 deploy deploy
+ensure_dir /opt/cinexplorer/deploy-logs 700 deploy deploy
+ensure_dir /opt/cinexplorer/backups 700 deploy deploy
+write_file /usr/local/bin/cinexplorer-deploy 755 <<'DEPLOY_ENTRY'
+#!/usr/bin/env bash
+# Restricted CI entry point and trusted manual deployment interface.
+set -euo pipefail
+umask 077
+fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
+if [[ $# -eq 1 && $1 == --from-ci ]]; then
+    target=${SSH_ORIGINAL_COMMAND:-}
+    source=ci
+elif [[ $# -eq 1 ]]; then
+    target=$1
+    source=manual
+else
+    fail 'Usage: cinexplorer-deploy <full-commit-sha> or --from-ci'
+fi
+[[ $target =~ ^[0-9a-f]{40}$ ]] || fail 'Expected exactly 40 lowercase hexadecimal commit characters.'
+
+scratch=$(mktemp -d /tmp/cinexplorer-deploy.XXXXXX)
+worker=$scratch/worker.sh
+cat > "$worker" <<'WORKER'
+#!/usr/bin/env bash
+set -euo pipefail
+trap '' HUP PIPE
+umask 077
+target=$1
+source=$2
+status_file=$3
+scratch=$4
+fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+finish() {
+    result=$?
+    trap - EXIT
+    set +e
+    if ((result == 0)); then
+        printf 'Deploy succeeded (exit 0).\n'
+    else
+        printf 'Deploy failed (exit %s).\n' "$result"
+    fi
+    rm -rf "$scratch"
+    if [[ -n $status_file ]]; then
+        printf '%s\n' "$result" > "$status_file.tmp"
+        mv "$status_file.tmp" "$status_file"
+    fi
+    exit "$result"
+}
+trap finish EXIT
+
+check_ci_version() {
+    git merge-base --is-ancestor "$target" origin/main ||
+        fail 'CI target must be reachable from origin/main.'
+    if [[ -s /opt/cinexplorer/deploy-history.log ]]; then
+        read -r _ _ _ _ deployed _ < <(tail -n 1 /opt/cinexplorer/deploy-history.log)
+        [[ $deployed =~ ^[0-9a-f]{40}$ ]] || fail 'Invalid deployed version in history.'
+        if [[ $target != "$deployed" ]]; then
+            if git merge-base --is-ancestor "$target" "$deployed"; then
+                fail "Refusing an older CI target; deployed version is $deployed."
+            else
+                comparison=$?
+                [[ $comparison -eq 1 ]] || fail 'Unable to compare deployed version.'
+            fi
+        fi
+    fi
+}
+
+cd /opt/cinexplorer/repo
+git fetch origin
+git cat-file -e "$target^{commit}" || fail 'Target commit does not exist.'
+if [[ $source == ci ]]; then check_ci_version; fi
+
+if [[ $source == ci || ${CINEXPLORER_OPS_LOCK:-} != held ]]; then
+    exec 9> /opt/cinexplorer/ops.lock
+    flock -w 1800 9 || fail 'Timed out waiting for the operations lock.'
+fi
+# A manual deploy may have advanced history while this CI deploy waited.
+if [[ $source == ci ]]; then check_ci_version; fi
+if ! git show "$target:infrastructure/deploy/deploy.sh" > "$scratch/target.sh"; then
+    fail 'Target has no deploy script; use the manual deploy steps in infrastructure/deploy/README.md.'
+fi
+bash "$scratch/target.sh" "$target" "$source"
+WORKER
+
+if [[ $source == manual ]]; then
+    exec bash "$worker" "$target" manual '' "$scratch"
+fi
+
+log=$(mktemp "/opt/cinexplorer/deploy-logs/$(date -u +%Y%m%dT%H%M%SZ)-${target:0:7}.XXXXXX")
+status_file=$log.status
+# Only the detached worker owns its scratch files and the whole-run lock.
+trap '' HUP PIPE
+setsid --fork --wait bash "$worker" "$target" ci "$status_file" "$scratch" \
+    < /dev/null > "$log" 2>&1 &
+runner=$!
+exec 8< "$log"
+pending=''
+forward_markers() {
+    local line=''
+    while IFS= read -r line <&8; do
+        line=$pending$line
+        pending=''
+        case "$line" in
+            '==> 1 Check checkout and record previous version'|\
+            '==> 2 Select target version'|\
+            '==> 3 Pull images and migrate'|\
+            '==> 4 Configure Site'|\
+            '==> 5 Start services and check health'|\
+            '==> 6 Record successful deployment') printf '%s\n' "$line" ;;
+        esac
+    done
+    pending+=$line
+}
+while [[ ! -f $status_file ]]; do
+    forward_markers
+    if ! kill -0 "$runner" 2>/dev/null; then
+        wait "$runner" || true
+        [[ -f $status_file ]] || fail "Deploy worker did not report an outcome. Log: $log"
+    fi
+    sleep 0.1
+done
+forward_markers
+read -r status < "$status_file"
+[[ $status =~ ^[0-9]+$ && $status -le 255 ]] || fail "Invalid deploy outcome. Log: $log"
+wait "$runner" || true
+if ((status == 0)); then
+    printf 'Deploy succeeded (exit 0). Log: %s\n' "$log"
+else
+    printf 'Deploy failed (exit %s). Log: %s\n' "$status" "$log"
+fi
+exit "$status"
+DEPLOY_ENTRY
 
 if [[ $(timedatectl show --property=Timezone --value) == UTC ]]; then
     unchanged 'UTC timezone'

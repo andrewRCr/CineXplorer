@@ -270,20 +270,22 @@ authentication gaps that matter once sign-up is public are closed.
       health failure. All six guards failed under narrow behavioral reconstructions and passed after restoration.
       Actual deployment/locking evidence remains in 5.2.
 
-- [ ] **4.4 Install the deploy entry point and restrict the CI key** (R2, R3, R5, R12)
-    - `bootstrap.sh` carries `/usr/local/bin/cinexplorer-deploy` (owned by root, mode `755`) and installs it with
-      `write_file`: both forms with R2's checks and refusals in R2's order, the operations lock as R5 states it, and
-      the CI form's detachment from its session (Phase 4 note)
-    - `bootstrap.sh` creates `/opt/cinexplorer/deploy-logs/` and `/opt/cinexplorer/backups/` (mode `700`, owned by
-      `deploy`), and writes `deploy`'s `authorized_keys` as root's keys followed by R3's line when
-      `/opt/cinexplorer/ci-deploy.pub` exists
-    - Check: `bash -n` and `shellcheck` on the bootstrap and the entry point's content. In an isolated Ubuntu 24.04
-      container, as the bootstrap was checked before: the first run reports the new items `CHANGED` and the second
-      every step `UNCHANGED`, with and without `ci-deploy.pub`. Against a scratch repository with an `origin` and a
-      stub `deploy.sh`: the CI form refuses a malformed argument, a commit not reachable from `origin/main` and an
-      ancestor of the last history line's new version; the manual form refuses a commit without the script, naming
-      the runbook's manual steps, and does not wait for the lock inside the locked shell; a CI deploy whose session
-      is killed after its first marker still finishes and records its outcome in its log file
+- [x] **4.4 Install the deploy entry point and restrict the CI key** (R2, R3, R5, R12)
+    - Bootstrap installs the root-owned 755 entry point, private deploy-owned log/backup directories and the CI
+      key's exact restricted forced-command line after the owner's keys, or the owner's keys alone when absent.
+    - Both invocation forms fetch and validate the target, lock operations and run a temporary copy of its script;
+      trusted manual shells reuse their held lock. CI rejects malformed/off-main/stale targets before locking and
+      rechecks stale history after waiting, allowing the current version to be rerun.
+    - CI uses a detached worker, private full log, exact marker allowlist and atomic status sidecar. It keeps its
+      lock and records its outcome after the follower's session is killed; failures return their actual status
+      and log path without private output. Missing scripts name the runbook's manual steps.
+    - Checks: Bash syntax/ShellCheck passed for bootstrap and both embedded scripts; harness Ruff passed.
+      All 16 deploy/bootstrap/entry-point tests passed in disposable Ubuntu containers with real Git, flock,
+      Docker packages and SSH/sudo parsers. Both key configurations were unchanged on the second sudo run.
+      Twelve narrow reconstructions failed their guards, then all tests passed after restoration. Corrected the
+      test session launcher's missing `setsid --wait`, used deploy-owned history and distinct owner/CI fixture keys.
+    - Astra's bounded implementation advice supported the private worker/follower, atomic outcome and post-lock
+      stale check; execution and validation stayed here. Real SSH restrictions remain for 5.3.
 
 - [ ] **4.5 Add the `deploy` job** (R4)
     - `needs: [ci-ok]`; a condition admitting a push to `main` only; environment `staging`; `permissions:

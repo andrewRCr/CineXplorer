@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 from apps.authentication.tests.fixtures import create_social_app
 
 if TYPE_CHECKING:
+    from django.contrib.auth.models import AbstractUser
     from django.test import Client
 
 
@@ -22,11 +23,11 @@ def test_allauth_signup_is_closed(api_client: Client) -> None:
         content_type="application/json",
     )
     assert response.status_code == 404
-    assert not User.objects.filter(username="bypassed").exists()
+    assert not get_user_model().objects.filter(username="bypassed").exists()
 
 
 @pytest.mark.django_db
-def test_allauth_password_login_is_closed(api_client: Client, verified_user: User) -> None:
+def test_allauth_password_login_is_closed(api_client: Client, verified_user: AbstractUser) -> None:
     response = api_client.post(
         "/_allauth/browser/v1/auth/login",
         {"username": verified_user.username, "password": "testpass123"},

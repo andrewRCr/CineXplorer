@@ -78,7 +78,8 @@ authentication gaps that matter once sign-up is public are closed.
       before the change. Each allowed case failed with `404` when its entry was temporarily omitted, then passed
       after restoration. Password-reset throttling is disabled in test settings alongside email confirmation.
     - [x] **1.3.b Add the allowlist and remove the unused token strategy:** `AllauthEndpointMiddleware`
-      runs before CSRF and matches the four exact browser paths and methods. Removed `HEADLESS_TOKEN_STRATEGY`
+      runs before CSRF and matches the four exact browser paths and methods. User assertions resolve the configured
+      model, with abstract annotations in this and the rate-limit tests, ready for a user-model swap. Removed `HEADLESS_TOKEN_STRATEGY`
       and its adapter description; provider callbacks remain under `/accounts/`.
     - Checks: authentication suite 233 passed; ten allowlist cases passed again after type refinements;
       Ruff lint/format and scoped Pyright passed. The endpoint cases share one allowlist implementation.

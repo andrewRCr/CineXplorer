@@ -22,7 +22,7 @@ from apps.core.tests.test_helpers import get_csrf_token
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from django.contrib.auth.models import User
+    from django.contrib.auth.models import AbstractUser
     from django.test import Client
 
 
@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 @pytest.mark.django_db
 def test_login_allows_5_rapid_attempts(
     api_client: Client,
-    verified_user: User,
+    verified_user: AbstractUser,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
 ) -> None:
@@ -68,7 +68,7 @@ def test_login_allows_5_rapid_attempts(
 )
 def test_login_throttles_6th_attempt(
     api_client: Client,
-    verified_user: User,
+    verified_user: AbstractUser,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
 ) -> None:
@@ -299,7 +299,7 @@ def test_allauth_uses_last_forwarded_address(staging_proxy_settings: dict[str, i
 @pytest.mark.parametrize("same_client", [True, False])
 def test_forwarded_clients_share_only_their_own_login_limit(
     api_client: Client,
-    verified_user: User,
+    verified_user: AbstractUser,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
     staging_proxy_settings: dict[str, int],
@@ -363,7 +363,7 @@ def test_frontend_logs_throttle_without_writing_rejected_report(
 @override_settings(TESTING=False, ZEPTOMAIL_API_KEY="")
 def test_frontend_logs_do_not_consume_login_limit(
     api_client: Client,
-    verified_user: User,
+    verified_user: AbstractUser,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
 ) -> None:
@@ -390,7 +390,7 @@ def test_frontend_logs_do_not_consume_login_limit(
 @pytest.mark.parametrize("endpoint", ["/api/register/", "/api/resend-verification/"])
 def test_login_attempts_do_not_consume_other_auth_limits(
     api_client: Client,
-    verified_user: User,
+    verified_user: AbstractUser,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
     endpoint: str,
@@ -418,7 +418,7 @@ def test_login_attempts_do_not_consume_other_auth_limits(
 @pytest.mark.parametrize("endpoint", ["/api/register/", "/api/resend-verification/"])
 def test_other_auth_attempts_do_not_consume_login_limit(
     api_client: Client,
-    verified_user: User,
+    verified_user: AbstractUser,
     clear_throttle_cache: Iterator[None],
     enable_throttling_for_test: Iterator[None],
     endpoint: str,

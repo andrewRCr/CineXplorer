@@ -165,7 +165,7 @@ const VirtualizedMovieGrid = () => {
         clearTimeout(fetchTimeoutRef.current);
       }
       fetchTimeoutRef.current = setTimeout(() => {
-        fetchNextPage();
+        void fetchNextPage();
       }, FETCH_DEBOUNCE);
     }
 
@@ -217,7 +217,9 @@ const VirtualizedMovieGrid = () => {
       />
 
       {/* Error State */}
-      {isError && <GridErrorState error={error} onRetry={() => refetch()} />}
+      {isError && (
+        <GridErrorState error={error} onRetry={() => void refetch()} />
+      )}
 
       {/* Empty State */}
       {isEmpty && !isError && <GridEmptyState />}

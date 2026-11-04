@@ -44,7 +44,7 @@ const Featured = () => {
 
           <VStack gap={4}>
             <Button
-              onClick={() => navigate(ROUTES.BROWSE)}
+              onClick={() => void navigate(ROUTES.BROWSE)}
               variant="subtle"
               size="lg"
               width="100%"
@@ -53,7 +53,7 @@ const Featured = () => {
             </Button>
 
             <Button
-              onClick={() => navigate(ROUTES.NOW_PLAYING)}
+              onClick={() => void navigate(ROUTES.NOW_PLAYING)}
               variant="subtle"
               size="lg"
               width="100%"
@@ -62,7 +62,7 @@ const Featured = () => {
             </Button>
 
             <Button
-              onClick={() => navigate(ROUTES.UPCOMING)}
+              onClick={() => void navigate(ROUTES.UPCOMING)}
               variant="subtle"
               size="lg"
               width="100%"

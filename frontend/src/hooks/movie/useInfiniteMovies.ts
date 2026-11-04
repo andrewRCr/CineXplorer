@@ -1,4 +1,8 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import {
+    useInfiniteQuery,
+    type InfiniteData,
+    type UseInfiniteQueryResult,
+} from "@tanstack/react-query";
 import { useMemo } from "react";
 import type { MovieListResponse, MovieListItem } from "@/types/movie";
 
@@ -30,6 +34,11 @@ export interface UseInfiniteMoviesOptions {
 /**
  * Return type for useInfiniteMovies hook
  */
+type MovieInfiniteQueryResult = UseInfiniteQueryResult<
+    InfiniteData<MovieListResponse>,
+    Error
+>;
+
 export interface UseInfiniteMoviesResult {
     /** Flattened array of movies from all fetched pages */
     movies: MovieListItem[];
@@ -44,7 +53,7 @@ export interface UseInfiniteMoviesResult {
     totalResults: number | undefined;
 
     /** Fetch the next page of results */
-    fetchNextPage: () => void;
+    fetchNextPage: MovieInfiniteQueryResult["fetchNextPage"];
 
     /** Whether there are more pages to fetch */
     hasNextPage: boolean;
@@ -65,7 +74,7 @@ export interface UseInfiniteMoviesResult {
     isError: boolean;
 
     /** Refetch the query */
-    refetch: () => void;
+    refetch: MovieInfiniteQueryResult["refetch"];
 }
 
 /**

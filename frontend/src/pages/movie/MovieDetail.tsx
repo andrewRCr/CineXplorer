@@ -256,7 +256,7 @@ const MovieDetail = () => {
             }}
             loading={userMovieDataLoading && isAuthenticated}
             onClick={() =>
-              update({
+              void update({
                 user_on_watchlist: !userMovieData?.user_on_watchlist,
               })
             }

@@ -27,12 +27,12 @@ const formatError = (error: Error): string => {
 const safeStringify = (value: unknown): string => {
     const seen = new WeakSet<object>();
 
-    return JSON.stringify(value, (_key, val) => {
+    return JSON.stringify(value, (_key, val: unknown): unknown => {
         if (typeof val === "object" && val !== null) {
-            if (seen.has(val as object)) {
+            if (seen.has(val)) {
                 return "[Circular]";
             }
-            seen.add(val as object);
+            seen.add(val);
         }
         return val;
     });

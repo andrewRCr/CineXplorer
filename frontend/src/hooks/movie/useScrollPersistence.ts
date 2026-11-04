@@ -1,3 +1,4 @@
+import { isRecord } from "@/utilities/typeGuards";
 /**
  * useScrollPersistence - Manages scroll position persistence for virtualized grids.
  *
@@ -108,13 +109,14 @@ export const useScrollPersistence = ({
     // - Direct URL navigation has no state → reset to top
     const location = useLocation();
     const navigate = useNavigate();
+    const navigationState: unknown = location.state;
+    const restoreScroll =
+        isRecord(navigationState) && navigationState.restoreScroll === true;
 
     // Capture restore signal synchronously for immediate use on mount.
     // Initial value handles component mount; effect below handles subsequent
     // navigations (React Router v6 doesn't remount on navigation).
-    const shouldRestoreScrollRef = useRef(
-        location.state?.restoreScroll === true,
-    );
+    const shouldRestoreScrollRef = useRef(restoreScroll);
     const hasRestoredScrollRef = useRef(false);
     const prevLocationKeyRef = useRef(location.key);
 
@@ -123,15 +125,14 @@ export const useScrollPersistence = ({
     useEffect(() => {
         if (prevLocationKeyRef.current !== location.key) {
             // New navigation - update refs for this navigation
-            shouldRestoreScrollRef.current =
-                location.state?.restoreScroll === true;
+            shouldRestoreScrollRef.current = restoreScroll;
             hasRestoredScrollRef.current = false;
             prevLocationKeyRef.current = location.key;
         }
 
         // Clear location state after capturing it, so refresh won't restore scroll
-        if (location.state?.restoreScroll) {
-            navigate(location.pathname + location.search, {
+        if (restoreScroll) {
+            void navigate(location.pathname + location.search, {
                 replace: true,
                 state: null,
             });
@@ -140,7 +141,7 @@ export const useScrollPersistence = ({
         location.key,
         location.pathname,
         location.search,
-        location.state,
+        restoreScroll,
         navigate,
     ]);
 

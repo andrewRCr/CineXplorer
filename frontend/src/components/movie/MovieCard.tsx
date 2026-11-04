@@ -357,7 +357,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                     variant="ghost"
                     color={isOnWatchlist ? "tertiary" : undefined}
                     size="sm"
-                    onClick={handleWatchlistToggle}
+                    onClick={(event) => void handleWatchlistToggle(event)}
                     disabled={isUpdating}
                   >
                     {isOnWatchlist ? <RiPlayListFill /> : <RiPlayListAddLine />}

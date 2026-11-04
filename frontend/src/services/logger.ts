@@ -289,7 +289,7 @@ class Logger {
             this.config.enableBackendReporting &&
             level >= this.config.backendReportingThreshold
         ) {
-            this.reportToBackend(logEntry);
+            void this.reportToBackend(logEntry);
         }
     }
 
@@ -502,9 +502,7 @@ class Logger {
             typeof localStorage !== "undefined"
         ) {
             try {
-                const criticalLogs = JSON.parse(
-                    localStorage.getItem("cinexplorer_critical_logs") || "[]",
-                );
+                const criticalLogs = this.getCriticalLogsFromStorage();
                 criticalLogs.push({
                     ...entry,
                     timestamp: entry.timestamp.toISOString(),
@@ -694,9 +692,10 @@ class Logger {
             return [];
         }
         try {
-            return JSON.parse(
+            const logs: unknown = JSON.parse(
                 localStorage.getItem("cinexplorer_critical_logs") || "[]",
             );
+            return Array.isArray(logs) ? logs : [];
         } catch {
             return [];
         }
@@ -1021,7 +1020,7 @@ class Logger {
 
         try {
             // Convert to string to check size and sanitize
-            let sanitized = JSON.parse(JSON.stringify(data));
+            let sanitized: unknown = JSON.parse(JSON.stringify(data));
 
             // Remove sensitive fields recursively
             sanitized = this.removeSensitiveFields(sanitized);

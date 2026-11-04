@@ -201,7 +201,7 @@ export const PasswordResetDialog = ({
                     color="on-primary"
                     _hover={{ bg: "primary-hover" }}
                     _active={{ bg: "primary-active" }}
-                    onClick={handleSubmit}
+                    onClick={() => void handleSubmit()}
                     w="full"
                     size="lg"
                   >

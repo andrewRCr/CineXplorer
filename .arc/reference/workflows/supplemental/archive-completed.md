@@ -362,15 +362,17 @@ git pull --ff-only origin main
 
 ### 9) Delete Child Branch
 
-A work unit run in a linked worktree removes it first, from the main checkout
-([worktree-sessions.md § Removal](worktree-sessions.md#removal)): git refuses to delete a branch a worktree has checked
-out.
+For a work unit run in a linked worktree, run from the main checkout
+([worktree-sessions.md § Removal](worktree-sessions.md#removal)):
 
 ```bash
-# Delete locally
-git branch -d {child-branch-name}
+node scripts/worktree.mjs remove {name}  # also deletes the merged local branch
+```
 
-# Delete remotely (if pushed)
+For a work unit run in place, delete its local branch with `git branch -d {child-branch-name}`. Then, in either
+case, delete the remote branch if pushed:
+
+```bash
 git push origin --delete {child-branch-name}
 ```
 

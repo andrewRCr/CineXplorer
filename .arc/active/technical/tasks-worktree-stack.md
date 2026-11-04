@@ -170,14 +170,12 @@ run beside it.
       before teardown; stop/remove containers, then volumes/networks/images; remove the checkout; delete only a
       merged branch after setting its upstream to `origin/main`; prune. Syntax checks and all 49 worktree tests pass.
 
-- [ ] **4.2 The workflows remove worktrees with `remove`** (R12)
-    - `worktree-sessions.md` § Removal gives `remove`, and `remove --keep-branch` for a review checkout or abandoned
-      work. It says removal deletes the worktree's gitignored files, a work unit's session notes and review records
-      among them, so paused work keeps its worktree
-    - `archive-completed.md` § 9 and `run-errand.md` § 6 give `remove` and say it deletes the local branch, keeping
-      their remote-deletion and archival steps; `run-errand.md` § 6 gives `--keep-branch` for an abandoned errand
-    - Check: `git grep -n docker-compose.test-stack.yml -- ':!.arc/reference/archive' ':!.arc/backlog' ':!.arc/active'`
-      finds nothing (the planning documents and the archive name the old file on purpose)
+- [x] **4.2 The workflows remove worktrees with `remove`** (R12)
+    - Worktree, archive and errand cleanup now use `remove`, including local branch deletion. Remote deletion and
+      archival remain explicit caller steps; review or abandoned checkouts use `--keep-branch`, while paused work
+      keeps its notes and worktree.
+    - Markdown lint passes for all three documents. The old override name appears nowhere outside planning
+      documents and the archive, as checked by the task's `git grep` command.
 
 ### **Phase 5:** Worktrees serve beside the main checkout, stay apart, and are removed
 

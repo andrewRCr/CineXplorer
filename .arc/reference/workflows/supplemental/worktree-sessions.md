@@ -160,29 +160,32 @@ docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-com
 
 ## Removal
 
-After the pull request merges, and before the branch is deleted: git refuses to delete a branch a worktree has checked
-out. Run removal commands from the primary. A separate conversation rooted in the worktree hands off and ends
-first. A same-session errand instead runs `errand-return` from its session home and confirms that home is active
-before removing the checkout; the conversation can then continue.
+After the pull request merges, run from the primary:
 
 ```bash
-W="${PWD}.{name}"
-docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \
-  config | grep '^name:'   # name: cinexplorer-{name}
-docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \
-  down -v --rmi local
-git worktree remove "$W"
+node scripts/worktree.mjs remove {name}
 ```
 
-Then delete the branch the caller's way, [archive-completed.md § 9](archive-completed.md#9-delete-child-branch) for a
-work unit or [run-errand.md § 6](run-errand.md#6-clean-up)'s `git branch -d` for an errand, and run
-`git fetch --prune`.
+A separate conversation rooted in the worktree hands off and ends first. A same-session errand instead runs
+`errand-return` from its session home and confirms that home is active before removal; the conversation can then
+continue.
 
-- **The stack step** applies to a worktree whose `infrastructure/.env` names a project. Naming the worktree's own files
-  by absolute path makes Compose read that worktree's `.env`; `config` must report its name before `down -v`, which
-  deletes that project's volumes (`--rmi local` also removes the backend image built for it). A worktree without the
-  file never had a stack and skips the step.
-- **A refusal** from `git worktree remove` protects uncommitted or untracked work. Inspect it; never `--force`.
-- **What goes:** the checkout's gitignored files, among them the copied `.env` files, `node_modules`, and a work
-  unit's session notes and review records, which [archive-completed.md](archive-completed.md) § 10 deletes anyway;
-  the merged task list's Review Log is the durable record. The links go, not the primary's folders they point to.
+`remove` fetches `origin` and refuses an unmerged branch, a locked worktree, uncommitted or untracked work, or an
+unexpected Compose project name before deleting anything. It stops and removes containers and removes volumes,
+networks and built images carrying the worktree's project label, even if the containers were already stopped or
+removed. It then removes the checkout, deletes the merged local branch and prunes remote-tracking refs. An env file
+that names no project skips Docker teardown. Remote branch deletion and archival remain the caller's steps
+([archive-completed.md § 9](archive-completed.md#9-delete-child-branch), [run-errand.md § 6](run-errand.md#6-clean-up)).
+
+For a review checkout or abandoned work whose branch must stay:
+
+```bash
+node scripts/worktree.mjs remove {name} --keep-branch
+```
+
+This skips only the merged-branch requirement and branch deletion; all other refusals and stack teardown still
+apply. An unmerged branch is never deleted by this script.
+
+Removal deletes the checkout's gitignored files: copied env files, `node_modules`, and a work unit's session notes
+and review records among them. Paused work keeps its worktree. The merged task list's Review Log is the durable
+review record; links are removed without touching the primary's folders they point to.

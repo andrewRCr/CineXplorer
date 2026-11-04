@@ -1,3 +1,4 @@
+import logger from "@/services/logger";
 import {
   Box,
   type BoxProps,
@@ -93,10 +94,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
         if (item.isAction) {
           // Handle special action buttons (like Log)
           // TODO: Implement actual log action
-          console.log("Log action triggered");
+          logger.debug("Log action triggered");
         } else {
           // Navigate to the path
-          navigate(item.path);
+          void navigate(item.path);
         }
         // Call optional callback (for closing drawer)
         onNavigate?.();
@@ -132,7 +133,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
             size="sm"
             onClick={() => {
               // TODO: Implement actual log action
-              console.log("Log action triggered");
+              logger.debug("Log action triggered");
               onNavigate?.();
             }}
           >

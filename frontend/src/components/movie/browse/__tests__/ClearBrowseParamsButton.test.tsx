@@ -299,16 +299,14 @@ describe("ClearBrowseParamsButton Component", () => {
     });
 
     it("renders placeholder when not visible to prevent layout shift", () => {
-      const { container } = render(
-        <ClearBrowseParamsButton {...defaultProps} />,
-      );
+      render(<ClearBrowseParamsButton {...defaultProps} />);
 
       // Should render a placeholder div, not a button
       const button = screen.queryByRole("button");
       expect(button).not.toBeInTheDocument();
 
       // Placeholder should exist
-      const placeholder = container.firstChild;
+      const placeholder = screen.getByTestId("browse-reset-placeholder");
       expect(placeholder).toBeInTheDocument();
     });
 

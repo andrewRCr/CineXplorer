@@ -1,3 +1,4 @@
+import { isRecord } from "@/utilities/typeGuards";
 /**
  * useAuth
  *
@@ -16,7 +17,13 @@
  */
 import { siteOrigin } from "@/config/baseUrls";
 import { ROUTES } from "@/constants/routes";
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+    useState,
+    useEffect,
+    useLayoutEffect,
+    useCallback,
+    useRef,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import type {
     AuthStateProps,
@@ -44,11 +51,25 @@ type UserProfile = components["schemas"]["UserProfileSchema"];
 // Derive base URL for allauth endpoints (not under /api/)
 const ALLAUTH_SESSION_URL = `${siteOrigin}/_allauth/browser/v1/auth/session`;
 
-// Helper type for allauth session response
-interface AllauthSessionResponse {
-    meta?: { is_authenticated?: boolean };
-    data?: { user?: UserProfile };
-}
+const isUserProfile = (value: unknown): value is UserProfile => {
+    if (!isRecord(value) || typeof value.username !== "string") return false;
+
+    const nullableStrings = ["email", "first_name", "last_name", "full_name"];
+    return (
+        nullableStrings.every(
+            (key) =>
+                value[key] === undefined ||
+                value[key] === null ||
+                typeof value[key] === "string",
+        ) &&
+        (value.id === undefined ||
+            value.id === null ||
+            typeof value.id === "number") &&
+        (value.email_verified === undefined ||
+            value.email_verified === null ||
+            typeof value.email_verified === "boolean")
+    );
+};
 
 /**
  * Check OAuth session status via allauth session endpoint.
@@ -63,8 +84,14 @@ async function checkOAuthSession(): Promise<UserProfile | null> {
         });
 
         if (response.ok) {
-            const data: AllauthSessionResponse = await response.json();
-            if (data?.meta?.is_authenticated && data?.data?.user) {
+            const data: unknown = await response.json();
+            if (
+                isRecord(data) &&
+                isRecord(data.meta) &&
+                data.meta.is_authenticated === true &&
+                isRecord(data.data) &&
+                isUserProfile(data.data.user)
+            ) {
                 return data.data.user;
             }
         }
@@ -115,7 +142,7 @@ export function useAuth(): AuthStateProps {
                 const { access_token } = getAuthTokens();
                 // Only call getUserDetails if user has JWT tokens (email/password flow)
                 if (access_token) {
-                    getUserDetailsRef.current?.();
+                    void getUserDetailsRef.current?.();
                 }
                 return;
             }
@@ -154,7 +181,7 @@ export function useAuth(): AuthStateProps {
             }
         };
 
-        checkExistingAuth();
+        void checkExistingAuth();
         // Intentional: must run exactly once on mount to check for existing session.
         // Adding isAuthenticated would cause infinite loops.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -167,7 +194,7 @@ export function useAuth(): AuthStateProps {
             // Only call getUserDetails if user has JWT tokens (email/password flow)
             // OAuth users have session cookies only, user data already set from session endpoint
             if (access_token) {
-                getUserDetailsRef.current?.();
+                void getUserDetailsRef.current?.();
             }
         }
     }, [isAuthenticated]);
@@ -183,7 +210,7 @@ export function useAuth(): AuthStateProps {
             // OAuth users have session cookies only, no JWT tokens
             if (isAuthenticated && access_token && areTokensExpired()) {
                 logger.debug("Tokens expired during session, logging out...");
-                logoutRef.current?.();
+                void logoutRef.current?.();
             }
         };
 
@@ -220,7 +247,7 @@ export function useAuth(): AuthStateProps {
                 logger.error("OAuth authentication failed", {
                     error: oauthError,
                 });
-                navigate(ROUTES.LOGIN, {
+                void navigate(ROUTES.LOGIN, {
                     state: {
                         oauthError: true,
                         message:
@@ -285,7 +312,7 @@ export function useAuth(): AuthStateProps {
                         title: `Welcome back, ${displayName}!`,
                     });
 
-                    navigate(ROUTES.HOME);
+                    void navigate(ROUTES.HOME);
                     return;
                 } else {
                     logger.debug(
@@ -299,7 +326,7 @@ export function useAuth(): AuthStateProps {
             }
         };
 
-        handleOAuthCallback();
+        void handleOAuthCallback();
         // Intentional: only re-run when URL changes, not when auth state changes.
         // Adding isAuthenticated/navigate would cause loops during OAuth redirect handling.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -314,7 +341,7 @@ export function useAuth(): AuthStateProps {
         setIsAuthenticated(false);
         setUser(null);
         clearAuthTokens();
-        navigate(ROUTES.LOGIN);
+        void navigate(ROUTES.LOGIN);
 
         // Show logout success toast (appears on login page after redirect)
         // Uses priorityToaster for auth flow consistency (top-right, same as login)
@@ -379,8 +406,10 @@ export function useAuth(): AuthStateProps {
 
     // Update refs to latest callback versions - enables effects to use stable refs
     // while still calling the latest callback implementation
-    logoutRef.current = logout;
-    getUserDetailsRef.current = getUserDetails;
+    useLayoutEffect(() => {
+        logoutRef.current = logout;
+        getUserDetailsRef.current = getUserDetails;
+    }, [logout, getUserDetails]);
 
     const login = async (
         username: string,

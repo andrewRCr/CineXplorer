@@ -92,11 +92,11 @@ class Command(BaseCommand):
 
                 # Simulate different query performance levels
                 test_queries = [
-                    ("SELECT * FROM auth_user WHERE id = %s", 0.05, "Fast query"),
-                    ("SELECT * FROM auth_user ORDER BY username", 0.15, "Slow query"),
-                    ("SELECT COUNT(*) FROM auth_user", 0.6, "Warning-level slow query"),
+                    ("SELECT * FROM users_user WHERE id = %s", 0.05, "Fast query"),
+                    ("SELECT * FROM users_user ORDER BY username", 0.15, "Slow query"),
+                    ("SELECT COUNT(*) FROM users_user", 0.6, "Warning-level slow query"),
                     (
-                        "SELECT * FROM auth_user WHERE username LIKE '%test%'",
+                        "SELECT * FROM users_user WHERE username LIKE '%test%'",
                         2.5,
                         "Critical slow query",
                     ),

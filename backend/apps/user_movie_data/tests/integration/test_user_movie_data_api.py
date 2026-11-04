@@ -26,8 +26,9 @@ from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.tests.mock_paths import TMDB_CLIENT_GET_MOVIE_DETAILS
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
     from django.test import Client
+
+    from apps.users.models import User
 
 # =========================
 # Django Ninja API URLs

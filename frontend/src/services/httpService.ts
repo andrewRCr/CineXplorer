@@ -53,8 +53,8 @@ class HttpService {
      * Create a new entity.
      * @param entity - The data for the new entity.
      */
-    create<T>(entity: T) {
-        return apiClient.post(this.endpoint, entity);
+    create<TRequest, TResponse = unknown>(entity: TRequest) {
+        return apiClient.post<TResponse>(this.endpoint, entity);
     }
 
     /**
@@ -62,8 +62,11 @@ class HttpService {
      * @param id - The unique identifier of the entity to update.
      * @param entity - The updated data for the entity.
      */
-    update<T>(id: string | number, entity: T) {
-        return apiClient.patch(`${this.endpoint}/${id}`, entity);
+    update<TRequest, TResponse = unknown>(
+        id: string | number,
+        entity: TRequest,
+    ) {
+        return apiClient.patch<TResponse>(`${this.endpoint}/${id}`, entity);
     }
 
     /**

@@ -61,6 +61,10 @@ export default defineConfig({
 
     resolve: {
         alias: {
+            // React and user-event must share DOM's configured event and async wrappers.
+            "@testing-library/dom": createRequire(import.meta.url).resolve(
+                "@testing-library/dom",
+            ),
             // Only the MSW server entry needs Node exports; app imports keep browser conditions.
             "msw/node": createRequire(import.meta.url).resolve("msw/node"),
             "@": resolve(__dirname, "./src"),

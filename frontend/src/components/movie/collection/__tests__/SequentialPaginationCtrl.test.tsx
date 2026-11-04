@@ -1,3 +1,4 @@
+import { within } from "@testing-library/react";
 /**
  * Tests for SequentialPaginationCtrl component
  *
@@ -198,8 +199,12 @@ describe("SequentialPaginationCtrl", () => {
       const nextButton = screen.getByRole("button", { name: /next/i });
 
       // Both buttons should contain SVG icons
-      expect(prevButton.querySelector("svg")).toBeInTheDocument();
-      expect(nextButton.querySelector("svg")).toBeInTheDocument();
+      expect(
+        within(prevButton).getByTestId("previous-page-icon"),
+      ).toBeInTheDocument();
+      expect(
+        within(nextButton).getByTestId("next-page-icon"),
+      ).toBeInTheDocument();
     });
 
     it("has data-testid for testing", () => {

@@ -66,7 +66,7 @@ const ErrorDisplay: React.FC<{
       .writeText(JSON.stringify(errorDetails, null, 2))
       .then(() => {
         // Could show a toast here if toast context is available
-        console.log("Error details copied to clipboard");
+        logger.debug("Error details copied to clipboard");
       })
       .catch(() => {
         // Fallback for older browsers
@@ -166,7 +166,16 @@ const ErrorDisplay: React.FC<{
                     aria-label="Copy error ID"
                     size="sm"
                     variant="ghost"
-                    onClick={() => navigator.clipboard.writeText(errorId)}
+                    onClick={() => {
+                      void navigator.clipboard
+                        .writeText(errorId)
+                        .catch((error: unknown) => {
+                          logger.warn("Could not copy error ID", {
+                            errorType:
+                              error instanceof Error ? error.name : "unknown",
+                          });
+                        });
+                    }}
                   >
                     <LuCopy />
                   </IconButton>
@@ -365,7 +374,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     });
 
     // Also report as critical error to backend
-    logger.reportCriticalError(
+    void logger.reportCriticalError(
       `React Error Boundary caught error: ${error.message}`,
       {
         errorId,
@@ -410,7 +419,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       });
 
       // Send another report to backend to flag as "user reported"
-      logger.reportCriticalError(
+      void logger.reportCriticalError(
         `User-reported error: ${error.message}`,
         {
           errorId,

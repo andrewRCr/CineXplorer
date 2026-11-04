@@ -25,8 +25,9 @@ from ninja_jwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from apps.core.tests.test_helpers import get_csrf_token
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
     from django.test import Client
+
+    from apps.users.models import User
 
 
 # ============================================================================

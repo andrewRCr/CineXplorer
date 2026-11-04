@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, act } from "@tests/helpers/test-renderer";
+import { render, screen, fireEvent } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import RatingSelector from "../RatingSelector";
 
@@ -116,9 +116,8 @@ describe("RatingSelector Component", () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText("0.0");
-      await act(async () => {
-        await user.type(minInput, "7.5");
-      });
+
+      await user.type(minInput, "7.5");
 
       // Should pass 7.5 directly on TMDB scale
       expect(mockOnMinRatingChange).toHaveBeenCalled();
@@ -270,9 +269,7 @@ describe("RatingSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("0.0") as HTMLInputElement;
 
-      await act(async () => {
-        await user.type(minInput, "7.5");
-      });
+      await user.type(minInput, "7.5");
 
       expect(minInput.value).toBe("7.5");
     });
@@ -283,9 +280,7 @@ describe("RatingSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("0.0");
 
-      await act(async () => {
-        await user.type(minInput, "7.5");
-      });
+      await user.type(minInput, "7.5");
 
       // Should call onChange (with our mocked debounce, this is immediate)
       expect(mockOnMinRatingChange).toHaveBeenCalled();
@@ -297,9 +292,7 @@ describe("RatingSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("0.0");
 
-      await act(async () => {
-        await user.clear(minInput);
-      });
+      await user.clear(minInput);
 
       // Should call onChange immediately for empty value (no debouncing)
       expect(mockOnMinRatingChange).toHaveBeenCalledWith("");
@@ -312,10 +305,9 @@ describe("RatingSelector Component", () => {
       const minInput = screen.getByPlaceholderText("0.0");
       const maxInput = screen.getByPlaceholderText("10");
 
-      await act(async () => {
-        await user.type(minInput, "6.0");
-        await user.type(maxInput, "8.0");
-      });
+      await user.type(minInput, "6.0");
+
+      await user.type(maxInput, "8.0");
 
       expect(mockOnMinRatingChange).toHaveBeenCalled();
       expect(mockOnMaxRatingChange).toHaveBeenCalled();
@@ -329,9 +321,8 @@ describe("RatingSelector Component", () => {
       render(<RatingSelector {...defaultProps} />);
 
       const minInput = screen.getByPlaceholderText("0.0");
-      await act(async () => {
-        await user.type(minInput, "7.5");
-      });
+
+      await user.type(minInput, "7.5");
 
       // Verify debounce was called (mocked to execute immediately)
       expect(debounce).toHaveBeenCalled();
@@ -342,9 +333,8 @@ describe("RatingSelector Component", () => {
       render(<RatingSelector {...defaultProps} minRating="7.0" />);
 
       const minInput = screen.getByPlaceholderText("0.0");
-      await act(async () => {
-        await user.clear(minInput);
-      });
+
+      await user.clear(minInput);
 
       // Should call onChange immediately without debouncing
       expect(mockOnMinRatingChange).toHaveBeenCalledWith("");
@@ -356,13 +346,11 @@ describe("RatingSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("0.0");
 
-      await act(async () => {
-        // Type something first
-        await user.type(minInput, "7.5");
+      // Type something first
+      await user.type(minInput, "7.5");
 
-        // Then clear it
-        await user.clear(minInput);
-      });
+      // Then clear it
+      await user.clear(minInput);
 
       expect(mockOnMinRatingChange).toHaveBeenCalledWith("");
     });
@@ -535,15 +523,12 @@ describe("RatingSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("0.0");
 
-      await act(async () => {
-        // User types while props are changing
-        await user.type(minInput, "7.5");
-      });
+      // User types while props are changing
+      await user.type(minInput, "7.5");
 
-      act(() => {
-        rerender(<RatingSelector {...defaultProps} minRating="8.0" />);
-        rerender(<RatingSelector {...defaultProps} minRating="6.5" />);
-      });
+      rerender(<RatingSelector {...defaultProps} minRating="8.0" />);
+
+      rerender(<RatingSelector {...defaultProps} minRating="6.5" />);
 
       const updatedInput = screen.getByPlaceholderText(
         "0.0",
@@ -558,10 +543,9 @@ describe("RatingSelector Component", () => {
       const minInput = screen.getByPlaceholderText("0.0");
       const maxInput = screen.getByPlaceholderText("10");
 
-      await act(async () => {
-        await user.type(minInput, "0");
-        await user.type(maxInput, "10");
-      });
+      await user.type(minInput, "0");
+
+      await user.type(maxInput, "10");
 
       expect(mockOnMinRatingChange).toHaveBeenCalled();
       expect(mockOnMaxRatingChange).toHaveBeenCalled();
@@ -625,9 +609,7 @@ describe("RatingSelector Component", () => {
 
       const minInput = screen.getByPlaceholderText("0.0");
 
-      await act(async () => {
-        await user.type(minInput, "8.5");
-      });
+      await user.type(minInput, "8.5");
 
       // Should pass 8.5 directly on TMDB scale (no conversion)
       expect(mockOnMinRatingChange).toHaveBeenCalled();
@@ -721,20 +703,20 @@ describe("RatingSelector Component", () => {
       const maxInput = screen.getByPlaceholderText("10") as HTMLInputElement;
 
       // Simulate having invalid values using fireEvent
-      act(() => {
-        fireEvent.change(minInput, { target: { value: "-10" } });
-        fireEvent.change(maxInput, { target: { value: "15" } });
-      });
+
+      fireEvent.change(minInput, { target: { value: "-10" } });
+
+      fireEvent.change(maxInput, { target: { value: "15" } });
 
       // Values should show as set initially
       expect(minInput.value).toBe("-10");
       expect(maxInput.value).toBe("15");
 
       // Blur should clamp the values
-      act(() => {
-        fireEvent.blur(minInput);
-        fireEvent.blur(maxInput);
-      });
+
+      fireEvent.blur(minInput);
+
+      fireEvent.blur(maxInput);
 
       // Values should be clamped to valid range (0-10 scale)
       expect(minInput.value).toBe("0");

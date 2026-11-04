@@ -10,6 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('core', '0002_alter_user_email'),
+        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [

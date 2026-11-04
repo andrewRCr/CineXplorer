@@ -22,7 +22,8 @@ Architecture Notes:
     - These factories are pure functions with no side effects
     - They use the TMDB models from apps.core.tmdb_models for input validation
     - They create schemas from apps.movie.schemas for application use
-    - Error handling follows the standard HttpError pattern for API consistency
+    - A failed TMDB response raises a domain exception from apps.core.exceptions; data that
+      fails to convert is logged and its error re-raised, so the API answers it as a 500
 """
 
 from __future__ import annotations
@@ -32,8 +33,7 @@ import uuid
 from collections.abc import Mapping
 from typing import NoReturn
 
-from ninja.errors import HttpError
-
+from apps.core.exceptions import UpstreamError
 from apps.core.services.api_response import ApiResponse
 from apps.core.services.validators import raise_upstream_error
 from apps.core.tmdb_models.tmdb_responses import (
@@ -82,7 +82,8 @@ def handle_tmdb_api_error(
         **context: Additional context for logging
 
     Raises:
-        HttpError: 400, 404, 502, 503 or 504 with a fixed message (see raise_upstream_error)
+        NotFoundError, InvalidInputError or UpstreamError: 404, 400, or 502, 503 or 504,
+            with a fixed message (see raise_upstream_error)
     """
     correlation_id = getattr(api_response, "correlation_id", str(uuid.uuid4())[:8])
 
@@ -118,7 +119,8 @@ def get_validated_response(
         Validated JSON data dictionary
 
     Raises:
-        HttpError: If API error or invalid/empty data
+        InvalidInputError or UpstreamError: If the TMDB request failed (see raise_upstream_error)
+        UpstreamError: If TMDB answered without data
     """
     if not api_response.is_success():
         # Lists and searches: a 404 here means the integration broke, not a missing resource
@@ -134,7 +136,7 @@ def get_validated_response(
                 **context,
             },
         )
-        raise HttpError(502, "Failed to get valid response data from TMDB")
+        raise UpstreamError("Failed to get valid response data from TMDB")
 
     return result
 
@@ -195,7 +197,8 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
         MovieListItemSchema instance with validated data
 
     Raises:
-        HttpError: If data validation fails or required fields are missing
+        pydantic.ValidationError: If data validation fails or required fields are missing;
+            the error is logged and re-raised
 
     Note:
         TMDB API quirk: Sometimes returns empty string for release_date instead of null.
@@ -238,7 +241,7 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
                 "error_type": type(e).__name__,
             },
         )
-        raise HttpError(500, "Failed to process movie data") from e
+        raise
 
 
 def create_movie_detail_from_tmdb(
@@ -257,7 +260,7 @@ def create_movie_detail_from_tmdb(
         MovieDetailSchema instance with validated data
 
     Raises:
-        HttpError: If data validation fails
+        pydantic.ValidationError: If data validation fails; the error is logged and re-raised
     """
     try:
         # First, validate against TMDB response structures for type safety
@@ -372,7 +375,7 @@ def create_movie_detail_from_tmdb(
                 "error_type": type(e).__name__,
             },
         )
-        raise HttpError(500, "Failed to process movie details") from e
+        raise
 
 
 def create_paginated_movie_response_from_tmdb(
@@ -390,7 +393,7 @@ def create_paginated_movie_response_from_tmdb(
         MovieListResponseSchema instance
 
     Raises:
-        HttpError: If data validation fails
+        pydantic.ValidationError: If data validation fails; the error is logged and re-raised
     """
     try:
         # First, validate against TMDB response structure for type safety
@@ -420,7 +423,7 @@ def create_paginated_movie_response_from_tmdb(
                 "error_type": type(e).__name__,
             },
         )
-        raise HttpError(500, "Failed to process movie search results") from e
+        raise
 
 
 # =========================
@@ -443,7 +446,7 @@ def create_paginated_keyword_response_from_tmdb(
         KeywordListResponseSchema instance
 
     Raises:
-        HttpError: If data validation fails
+        pydantic.ValidationError: If data validation fails; the error is logged and re-raised
     """
     try:
         # First, validate against TMDB response structure for type safety
@@ -474,7 +477,7 @@ def create_paginated_keyword_response_from_tmdb(
                 "error_type": type(e).__name__,
             },
         )
-        raise HttpError(500, "Failed to process keyword results") from e
+        raise
 
 
 def create_paginated_person_response_from_tmdb(
@@ -492,7 +495,7 @@ def create_paginated_person_response_from_tmdb(
         PersonListResponseSchema instance
 
     Raises:
-        HttpError: If data validation fails
+        pydantic.ValidationError: If data validation fails; the error is logged and re-raised
     """
     try:
         # First, validate against TMDB response structure for type safety
@@ -531,7 +534,7 @@ def create_paginated_person_response_from_tmdb(
                 "error_type": type(e).__name__,
             },
         )
-        raise HttpError(500, "Failed to process person results") from e
+        raise
 
 
 def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[GenreSchema]:
@@ -547,7 +550,7 @@ def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[Gen
         List of GenreSchema instances
 
     Raises:
-        HttpError: If data validation fails
+        pydantic.ValidationError: If data validation fails; the error is logged and re-raised
     """
     try:
         # First, validate against TMDB response structure for type safety
@@ -568,4 +571,4 @@ def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[Gen
                 "error_type": type(e).__name__,
             },
         )
-        raise HttpError(500, "Failed to process genre data") from e
+        raise

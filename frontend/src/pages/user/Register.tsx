@@ -52,7 +52,7 @@ const Register = () => {
           // Dismiss loading toast and navigate to login
           // Login page will show persistent success alert (non-blocking, top-right)
           priorityToaster.dismiss(toastId);
-          navigate(ROUTES.LOGIN, {
+          void navigate(ROUTES.LOGIN, {
             state: {
               registrationSuccess: true,
               message:

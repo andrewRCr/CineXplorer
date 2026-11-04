@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useMemo } from "react";
 import { Box, Text, HStack } from "@chakra-ui/react";
 import { StyledInput } from "@/components/common";
 import { debounce } from "lodash";
+import useInputDraft from "@/hooks/useInputDraft";
 
 interface RatingSelectorProps {
   minRating: string;
@@ -10,34 +11,24 @@ interface RatingSelectorProps {
   onMaxRatingChange: (rating: string) => void;
 }
 
+// Validate rating input (0-10 TMDB scale with decimals)
+const isValidRating = (rating: string): boolean => {
+  if (!rating) return true; // Empty is valid (clears filter)
+  const num = parseFloat(rating);
+  // Allow 1-3 characters max (e.g., "7", "7.5", "10")
+  // This prevents excessive decimal places like "7.123"
+  if (rating.length > 3) return false;
+  return !isNaN(num) && num >= 0 && num <= 10;
+};
+
 const RatingSelector = ({
   minRating,
   maxRating,
   onMinRatingChange,
   onMaxRatingChange,
 }: RatingSelectorProps) => {
-  // Local state for immediate UI updates
-  const [localMinRating, setLocalMinRating] = useState(minRating);
-  const [localMaxRating, setLocalMaxRating] = useState(maxRating);
-
-  // Sync local state when props change (no conversion needed - native 0-10 scale)
-  useEffect(() => {
-    setLocalMinRating(minRating);
-  }, [minRating]);
-
-  useEffect(() => {
-    setLocalMaxRating(maxRating);
-  }, [maxRating]);
-
-  // Validate rating input (0-10 TMDB scale with decimals)
-  const isValidRating = (rating: string): boolean => {
-    if (!rating) return true; // Empty is valid (clears filter)
-    const num = parseFloat(rating);
-    // Allow 1-3 characters max (e.g., "7", "7.5", "10")
-    // This prevents excessive decimal places like "7.123"
-    if (rating.length > 3) return false;
-    return !isNaN(num) && num >= 0 && num <= 10;
-  };
+  const [localMinRating, setLocalMinRating] = useInputDraft(minRating);
+  const [localMaxRating, setLocalMaxRating] = useInputDraft(maxRating);
 
   // Check if min/max relationship is logical
   const hasLogicalRange = (): boolean => {
@@ -63,24 +54,24 @@ const RatingSelector = ({
   };
 
   // Debounced update functions with validation (no conversion needed)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedMinRatingUpdate = useCallback(
-    debounce((rating: string) => {
-      if (isValidRating(rating)) {
-        onMinRatingChange(rating);
-      }
-    }, 500), // Consistent with YearSelector debounce
-    [onMinRatingChange], // debounce function dependencies cannot be analyzed by ESLint
+  const debouncedMinRatingUpdate = useMemo(
+    () =>
+      debounce((rating: string) => {
+        if (isValidRating(rating)) {
+          onMinRatingChange(rating);
+        }
+      }, 500), // Consistent with YearSelector debounce
+    [onMinRatingChange],
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedMaxRatingUpdate = useCallback(
-    debounce((rating: string) => {
-      if (isValidRating(rating)) {
-        onMaxRatingChange(rating);
-      }
-    }, 500),
-    [onMaxRatingChange], // debounce function dependencies cannot be analyzed by ESLint
+  const debouncedMaxRatingUpdate = useMemo(
+    () =>
+      debounce((rating: string) => {
+        if (isValidRating(rating)) {
+          onMaxRatingChange(rating);
+        }
+      }, 500),
+    [onMaxRatingChange],
   );
 
   // Handle input changes

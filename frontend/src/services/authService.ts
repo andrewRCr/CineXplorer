@@ -1,3 +1,4 @@
+import { isRecord } from "@/utilities/typeGuards";
 import { apiBaseUrl as BASE_URL, siteOrigin } from "@/config/baseUrls";
 import axios from "axios";
 import apiClient from "./apiClient";
@@ -287,10 +288,19 @@ export async function resetPassword(
     }
 
     // 400 or other = error (invalid/expired key, password validation failed)
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage =
-        errorData.errors?.[0]?.message ||
-        errorData.detail ||
+    const errorData: unknown = await response.json().catch(() => null);
+    let errorMessage =
         "Password reset failed. The link may be expired or invalid.";
+    if (isRecord(errorData)) {
+        const firstError: unknown = Array.isArray(errorData.errors)
+            ? errorData.errors[0]
+            : undefined;
+        const message = isRecord(firstError) ? firstError.message : undefined;
+        if (typeof message === "string" && message) {
+            errorMessage = message;
+        } else if (typeof errorData.detail === "string" && errorData.detail) {
+            errorMessage = errorData.detail;
+        }
+    }
     throw new Error(errorMessage);
 }

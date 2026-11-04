@@ -70,7 +70,7 @@ export const getScrollStorageKey = (
             if (Array.isArray(v)) {
                 return v.length > 0 ? `${k}=${v.join(",")}` : null;
             }
-            return `${k}=${v}`;
+            return `${k}=${String(v)}`;
         })
         .filter(Boolean)
         .join("&");

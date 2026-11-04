@@ -63,7 +63,7 @@ from django.http import HttpResponse
 from django.test import Client
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User as UserType
+    from apps.users.models import User as UserType
 
 # Re-export HTTPStatus for convenience in test files
 __all__ = [

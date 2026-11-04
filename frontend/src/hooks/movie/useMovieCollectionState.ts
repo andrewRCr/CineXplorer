@@ -84,49 +84,79 @@ export const useMovieCollectionState = ({
         [defaultBrowseParams],
     );
 
-    // Local UI state for non-URL-synced features
-    const [localIsAdvancedPanelOpen, setLocalIsAdvancedPanelOpen] =
-        useState(false);
-
     // For non-URL-synced mode, maintain local browse params
     const [localBrowseParams, setLocalBrowseParams] = useState<BrowseParams>(
         initialLocalBrowseParams,
     );
 
     // Choose between URL-synced or local state
-    const browseParams = enableUrlSync ? urlBrowseParams : localBrowseParams;
+    const rawBrowseParams = enableUrlSync ? urlBrowseParams : localBrowseParams;
+    const needsSortReset =
+        isTitleSort(rawBrowseParams.sortBy) &&
+        !isLatinScriptLanguage(rawBrowseParams.language);
+    const browseParams = useMemo(
+        () =>
+            needsSortReset
+                ? { ...rawBrowseParams, sortBy: DEFAULT_SORT }
+                : rawBrowseParams,
+        [rawBrowseParams, needsSortReset],
+    );
+    if (!enableUrlSync && needsSortReset) setLocalBrowseParams(browseParams);
+    // The URL is external state; render the normalized values while replacing it.
+    useEffect(() => {
+        if (enableUrlSync && needsSortReset)
+            urlHandleBrowseParamsChange({ sortBy: DEFAULT_SORT });
+    }, [enableUrlSync, needsSortReset, urlHandleBrowseParamsChange]);
 
     // Track previous filter hash to detect filter changes (not initial mount)
     const prevFilterHashRef = useRef<string | null>(null);
 
-    // Ref for stable callback access in effects (avoids unnecessary re-runs)
-    const onBrowseParamsChangeRef = useRef<typeof onBrowseParamsChange | null>(
-        null,
-    );
+    const [panel, setPanel] = useState(() => ({
+        params: browseParams,
+        enabled: enableAdvancedFilters,
+        lastHash:
+            enableAdvancedFilters && hasAdvancedFilterValues(browseParams)
+                ? getAdvancedFilterHash(browseParams)
+                : null,
+        open:
+            enableAdvancedFilters &&
+            hasAdvancedFilterValues(browseParams) &&
+            !hasUserOverride(browseParams),
+    }));
+    let panelOpen = panel.open;
+    if (
+        panel.params !== browseParams ||
+        panel.enabled !== enableAdvancedFilters
+    ) {
+        const hash =
+            enableAdvancedFilters && hasAdvancedFilterValues(browseParams)
+                ? getAdvancedFilterHash(browseParams)
+                : null;
+        if (
+            hash !== null &&
+            ((panel.lastHash !== null && hash !== panel.lastHash) ||
+                !hasUserOverride(browseParams))
+        ) {
+            panelOpen = true;
+        }
+        setPanel({
+            params: browseParams,
+            enabled: enableAdvancedFilters,
+            lastHash: hash ?? panel.lastHash,
+            open: panelOpen,
+        });
+    }
 
-    // Auto-expand advanced panel when advanced filters become active (from URL or user input)
-    // Respects user override: if user manually closed panel with these filters, don't re-expand
+    // Persist override changes after the render has committed.
     useEffect(() => {
         if (enableAdvancedFilters && hasAdvancedFilterValues(browseParams)) {
-            const currentHash = getAdvancedFilterHash(browseParams);
-
-            // Check if filters changed (not initial mount, and different hash)
-            // prevFilterHashRef.current === null means initial mount - don't clear override
+            const hash = getAdvancedFilterHash(browseParams);
             if (
                 prevFilterHashRef.current !== null &&
-                currentHash !== prevFilterHashRef.current
-            ) {
-                // Filters actually changed during this session - clear override
+                prevFilterHashRef.current !== hash
+            )
                 clearUserOverride();
-            }
-
-            // Update ref for next comparison
-            prevFilterHashRef.current = currentHash;
-
-            // Only auto-expand if user hasn't overridden for this filter combination
-            if (!hasUserOverride(browseParams)) {
-                setLocalIsAdvancedPanelOpen(true);
-            }
+            prevFilterHashRef.current = hash;
         }
     }, [browseParams, enableAdvancedFilters]);
 
@@ -149,29 +179,12 @@ export const useMovieCollectionState = ({
         [enableUrlSync, urlHandleBrowseParamsChange],
     );
 
-    // Keep ref updated for stable access in effects
-    onBrowseParamsChangeRef.current = onBrowseParamsChange;
-
-    // Auto-reset title sort when language changes to non-Latin or "All Languages"
-    // Title sorts (A-Z, Z-A) only make sense for Latin-script languages
-    // Uses ref to avoid re-running when unrelated browseParams change
-    useEffect(() => {
-        if (
-            isTitleSort(browseParams.sortBy) &&
-            !isLatinScriptLanguage(browseParams.language)
-        ) {
-            onBrowseParamsChangeRef.current?.({ sortBy: DEFAULT_SORT });
-        }
-    }, [browseParams.language, browseParams.sortBy]);
-
     // Advanced panel toggle with better UX
-    const isAdvancedPanelOpen = enableAdvancedFilters
-        ? localIsAdvancedPanelOpen
-        : false;
+    const isAdvancedPanelOpen = enableAdvancedFilters ? panelOpen : false;
     const setIsAdvancedPanelOpen = useCallback(
         (open: boolean) => {
             if (enableAdvancedFilters) {
-                setLocalIsAdvancedPanelOpen(open);
+                setPanel((current) => ({ ...current, open }));
             }
         },
         [enableAdvancedFilters],

@@ -136,10 +136,10 @@ describe("Footer Component", () => {
     });
 
     it("organizes content in vertical stack layout", () => {
-      const { container } = render(<Footer />);
+      render(<Footer />);
 
       // Should have VStack structure with proper gap
-      const footer = container.querySelector("footer");
+      const footer = screen.getByRole("contentinfo");
       expect(footer).toBeInTheDocument();
 
       // Check that content is organized properly
@@ -267,8 +267,8 @@ describe("Footer Component", () => {
 
   describe("Component Structure", () => {
     it("renders without crashing", () => {
-      const { container } = render(<Footer />);
-      expect(container).toBeInTheDocument();
+      render(<Footer />);
+      expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     });
 
     it("maintains consistent component structure", () => {
@@ -289,17 +289,17 @@ describe("Footer Component", () => {
     });
 
     it("uses proper HTML semantics", () => {
-      const { container } = render(<Footer />);
+      render(<Footer />);
 
-      const footer = container.querySelector("footer");
+      const footer = screen.getByRole("contentinfo");
       expect(footer).toBeInTheDocument();
 
       // Should contain proper link element
-      const link = container.querySelector('a[href*="themoviedb.org"]');
+      const link = screen.getByRole("link", { name: "TMDB API Documentation" });
       expect(link).toBeInTheDocument();
 
       // Should contain proper image element
-      const img = container.querySelector('img[alt="TMDB Logo"]');
+      const img = screen.getByAltText("TMDB Logo");
       expect(img).toBeInTheDocument();
     });
   });
@@ -336,8 +336,8 @@ describe("Footer Component", () => {
 
     it("handles theme color constants gracefully", () => {
       // Component should render even if theme constants are missing
-      const { container } = render(<Footer />);
-      expect(container).toBeInTheDocument();
+      render(<Footer />);
+      expect(screen.getByRole("contentinfo")).toBeInTheDocument();
 
       // Essential content should still be present
       expect(
@@ -348,10 +348,10 @@ describe("Footer Component", () => {
 
   describe("Performance Considerations", () => {
     it("renders efficiently without expensive operations", () => {
-      const { container } = render(<Footer />);
+      render(<Footer />);
 
       // Should render quickly with static content
-      expect(container).toBeInTheDocument();
+      expect(screen.getByRole("contentinfo")).toBeInTheDocument();
       expect(screen.getByRole("contentinfo")).toBeInTheDocument();
     });
 

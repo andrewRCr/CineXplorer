@@ -59,7 +59,7 @@ Happy exploring!
 The CineXplorer Team
 """
 
-        send_mail(
+        sent_count = send_mail(
             subject=subject,
             message=plain_text,
             from_email=None,  # Uses DEFAULT_FROM_EMAIL
@@ -67,6 +67,10 @@ The CineXplorer Team
             html_message=html_body,
             fail_silently=False,
         )
+        if sent_count == 0:
+            # The backend reports that it sent nothing, as when the provider declines the message.
+            logger.error("Welcome email not sent", extra={"user_id": user.id})
+            return False
 
         logger.info("Welcome email sent successfully", extra={"user_id": user.id})
         return True

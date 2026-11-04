@@ -23,7 +23,7 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse
 from ninja_jwt.exceptions import TokenError
 from ninja_jwt.tokens import RefreshToken
@@ -290,6 +290,18 @@ class AuthenticationService:
                 "user_id": user.id,
                 "email": user.email,
                 "email_sent": True,
+            }
+        except IntegrityError as exc:
+            # A rival account took the username or address after the checks above, and the
+            # database's unique constraints refused this one. The error's text quotes the
+            # value, so only its type is logged.
+            self._logger.warning(
+                "Registration failed: Username or email taken during registration | "
+                f"username={payload.username} | ip={client_ip} | "
+                f"error_type={type(exc).__name__}"
+            )
+            return 409, {
+                "error": "Username or email address already associated with an existing account."
             }
         except Exception as exc:
             # Transaction automatically rolled back - no manual cleanup needed.

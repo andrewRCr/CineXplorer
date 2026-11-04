@@ -12,7 +12,7 @@ interface MobileMenuButtonProps {
  */
 const MobileMenuButton: React.FC<MobileMenuButtonProps> = ({ size = "md" }) => {
   const handleOpen = () => {
-    sidebarDrawer.open("sidebar", {
+    void sidebarDrawer.open("sidebar", {
       placement: "start",
     });
   };

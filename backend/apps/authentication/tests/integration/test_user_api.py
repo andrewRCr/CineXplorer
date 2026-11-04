@@ -38,9 +38,10 @@ from apps.authentication.tests.fixtures import create_register_payload
 from apps.core.tests.test_helpers import HTTPStatus, create_user, get_csrf_token, json_post
 
 if TYPE_CHECKING:
-    from django.contrib.auth.models import User
     from django.http import HttpResponse
     from django.test import Client
+
+    from apps.users.models import User
 
 # Django Ninja endpoints (use direct paths, not reverse() for Django Ninja)
 CREATE_USER_URL: str = "/api/register/"

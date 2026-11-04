@@ -1,3 +1,4 @@
+import logger from "@/services/logger";
 import { useState, useCallback } from "react";
 import * as authService from "@/services/authService";
 import { priorityToaster } from "@/components/core/chakra/toaster";
@@ -72,7 +73,9 @@ export function useLoginAlerts() {
                     description: "Check your inbox for the verification link.",
                 });
             } catch (error: unknown) {
-                console.error("Resend verification error:", error);
+                logger.error("Resend verification error:", {
+                    errorType: error instanceof Error ? error.name : "unknown",
+                });
 
                 // Check for rate limiting (429)
                 if (hasErrorStatus(error, 429)) {

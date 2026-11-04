@@ -22,8 +22,9 @@ from apps.core.tests.test_helpers import get_csrf_token
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from django.contrib.auth.models import User
     from django.test import Client
+
+    from apps.users.models import User
 
 
 # ============================================================================

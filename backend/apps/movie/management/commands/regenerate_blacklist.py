@@ -25,8 +25,9 @@ from apps.movie.services.data_quality.blacklist_file import (
 )
 from apps.movie.services.data_quality.blacklist_rules import (
     RULES,
+    BlacklistRule,
     RuleFetchError,
-    apply_rule,
+    apply_rules,
     fetch_rule_ids,
 )
 
@@ -45,7 +46,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args: object, **options: object) -> None:
-        """Fetch every rule, then write the file once."""
+        """Fetch every rule, then apply them together and write the file once."""
         path = Path(str(options["file"]))
         try:
             entries = read_blacklist(path)
@@ -53,12 +54,16 @@ class Command(BaseCommand):
             raise CommandError(f"Blacklist not regenerated: {exc}") from exc
 
         client = TMDBApiClient()
+        results: list[tuple[BlacklistRule, set[int]]] = []
         for rule in RULES:
             try:
-                ids = fetch_rule_ids(client, rule)
+                results.append((rule, fetch_rule_ids(client, rule)))
             except RuleFetchError as exc:
                 raise CommandError(f"Blacklist not regenerated, file unchanged: {exc}") from exc
-            entries, added, removed = apply_rule(entries, rule, ids)
+
+        entries, changes = apply_rules(entries, results)
+        for rule, ids in results:
+            added, removed = changes[rule.source]
             self.stdout.write(
                 f"{rule.source}: {len(ids)} on TMDB, {added} added, {removed} removed"
             )

@@ -2,6 +2,11 @@
 Tests for the custom Django management commands module.
 """
 
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -56,3 +61,34 @@ def test_wait_for_db_delay(
     )
     # Verify sleep was called 5 times (once per OperationalError retry)
     assert patched_sleep.call_count == 5
+
+
+def test_export_openapi_schema_writes_only_json_to_stdout() -> None:
+    """The schema export's stdout is the schema alone, even with debug logging on stdout.
+
+    The development stack runs with DEBUG on and a DEBUG console handler writing to stdout,
+    and building the API logs while the command loads, so anything logged then would
+    corrupt the schema that type generation reads. A fresh interpreter loads the API the
+    way a real invocation does; inside this test process it is already imported.
+    """
+    env = {
+        **os.environ,
+        "DEBUG": "True",
+        "DJANGO_LOG_LEVEL": "DEBUG",
+        "DJANGO_CONSOLE_LOG_LEVEL": "DEBUG",
+    }
+    env.pop("TESTING", None)
+
+    result = subprocess.run(
+        [sys.executable, "manage.py", "export_openapi_schema"],
+        cwd=Path(__file__).resolve().parents[3],
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    schema = json.loads(result.stdout)
+    assert schema["openapi"].startswith("3.")

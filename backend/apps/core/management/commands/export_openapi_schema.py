@@ -7,12 +7,11 @@ where direct Python imports might have Django settings configuration issues.
 import json
 import logging
 import sys
+import warnings
 from typing import Any
 
 from django.core.management.base import BaseCommand
 from django.utils.functional import Promise
-
-from config.api import api
 
 
 class LazyTranslationEncoder(json.JSONEncoder):
@@ -48,19 +47,25 @@ class Command(BaseCommand):
             help="Output minified JSON (no indentation)"
         )
 
+    def execute(self, *args: Any, **options: Any) -> str | None:  # Any: Django command signature
+        """Run the command with logging off, so stdout carries only the schema.
+
+        Logging is off from before the system checks: they load the URLconf, and with it the
+        API, whose setup logs. A console handler on stdout would put those lines in the schema.
+        """
+        logging.disable(logging.CRITICAL)
+        try:
+            return super().execute(*args, **options)
+        finally:
+            logging.disable(logging.NOTSET)
+
     def handle(self, *args: Any, **options: Any) -> None:  # Any: Django command signature
         """Export the OpenAPI schema."""
-        # Temporarily disable all logging to prevent output corruption
-        original_level = logging.root.level
-        logging.root.setLevel(logging.CRITICAL + 1)
-
-        # Also disable any custom loggers that might interfere
-        django_logger = logging.getLogger('django')
-        original_django_level = django_logger.level
-        django_logger.setLevel(logging.CRITICAL + 1)
+        # Imported here, not at module level: loading this command must not build the API
+        # before execute() has turned logging off.
+        from config.api import api
 
         # Disable Django warnings that might corrupt JSON output
-        import warnings
         warnings.filterwarnings('ignore')
 
         try:
@@ -94,7 +99,3 @@ class Command(BaseCommand):
                 self.style.ERROR(f"Failed to export OpenAPI schema: {e}")
             )
             raise
-        finally:
-            # Always restore original logging levels
-            logging.root.setLevel(original_level)
-            django_logger.setLevel(original_django_level)

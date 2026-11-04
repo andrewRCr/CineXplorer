@@ -924,7 +924,7 @@ With `HEADLESS_ONLY = True`, traditional URLs only register OAuth callbacks (log
 1. Navigate to APIs & Services → Credentials
 2. Select OAuth 2.0 Client ID
 3. Authorized redirect URIs:
-   - Development: `http://localhost:8000/accounts/google/login/callback/`
+   - Development: `https://localhost:8444/accounts/google/login/callback/`
    - Production: `https://yourdomain.com/accounts/google/login/callback/`
 
 **GitHub OAuth App**:
@@ -932,7 +932,7 @@ With `HEADLESS_ONLY = True`, traditional URLs only register OAuth callbacks (log
 1. Navigate to Settings → Developer settings → OAuth Apps
 2. Select your app
 3. Authorization callback URL:
-   - Development: `http://localhost:8000/accounts/github/login/callback/`
+   - Development: `https://localhost:8444/accounts/github/login/callback/`
    - Production: `https://yourdomain.com/accounts/github/login/callback/`
 
 **Testing OAuth Changes**:
@@ -993,13 +993,17 @@ Run before production deployment:
    ]
    ```
 
-4. **Add OAuth credentials** via Django admin:
-   - Navigate to `/admin/socialaccount/socialapp/`
-   - Add new Social Application
-   - Provider: Select from dropdown
-   - Client ID: From OAuth app settings
-   - Secret key: From OAuth app settings
-   - Sites: Select your site(s)
+4. **Configure the app for its environment**:
+   - Development uses Django admin's `/admin/socialaccount/socialapp/`: add a Social Application with the
+     provider, client ID, secret and development Site. The four Google/GitHub environment variables are ignored.
+   - Staging and production read `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` and
+     `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET` from the backend env file into
+     `SOCIALACCOUNT_PROVIDERS[provider]["APP"]`. Set both variables for a provider or neither; a partial pair
+     stops startup and names the missing variable. An unconfigured provider cannot sign in.
+   - A new provider also needs its complete credential-pair handling in settings. Keep allauth's default scopes
+     unless the application needs more.
+   - Use separate apps for deployed hosts. Never add a database Social Application for a provider that also has
+     a settings app: allauth's lookup rejects the duplicate.
 
 5. **Add UI button** in `Login.tsx`:
 

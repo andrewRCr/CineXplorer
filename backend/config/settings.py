@@ -319,6 +319,20 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Use email for social account matching
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Auto-link accounts with same email
 
+# Development uses SocialApp rows; deployed environments use complete credential pairs.
+SOCIALACCOUNT_PROVIDERS: dict[str, dict[str, dict[str, str]]] = {}
+if ENVIRONMENT != "development":
+    for _provider, _prefix in (("google", "GOOGLE"), ("github", "GITHUB")):
+        _client_id = str(env(f"{_prefix}_CLIENT_ID", default=""))
+        _client_secret = str(env(f"{_prefix}_CLIENT_SECRET", default=""))
+        if bool(_client_id) != bool(_client_secret):
+            _missing = f"{_prefix}_CLIENT_SECRET" if _client_id else f"{_prefix}_CLIENT_ID"
+            raise ImproperlyConfigured(f"{_missing} is required to configure {_provider}.")
+        if _client_id:
+            SOCIALACCOUNT_PROVIDERS[_provider] = {
+                "APP": {"client_id": _client_id, "secret": _client_secret}
+            }
+
 # Login/Logout redirect URLs
 LOGIN_REDIRECT_URL = FRONTEND_URL  # Redirect to frontend after login
 ACCOUNT_LOGOUT_REDIRECT_URL = FRONTEND_URL  # Redirect to frontend after logout

@@ -206,24 +206,18 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: 221 related frontend tests passed (20 files), type-aware lint and TypeScript passed. Mechanical fixes
       removed the unused Axios import and wrapped test toast-store cleanup in `act`; no new act warnings remain.
 
-- [ ] **3.4 Deployed environments take the OAuth apps from their environment** (R15; Implemented 6, first half)
+- [x] **3.4 Deployed environments take the OAuth apps from their environment** (R15; Implemented 6, first half)
 
-    - [ ] **3.4.a Write tests** in `apps/authentication/tests/integration/test_environment_config.py`, with
-      `load_settings` (`apps/core/tests/test_helpers.py`)
-        - Under `staging`: both Google variables set yields one settings app for Google with those values; neither
-          yields none; either alone fails with `ImproperlyConfigured` naming the other; likewise for GitHub
-        - Under `development`, all four set yields no settings apps
-        - Expect the both-set and one-alone cases to FAIL initially; the neither-set and `development` cases pass
-          today and guard the change: after 3.4.b, see each fail once (the apps read in every environment; an app
-          built when neither variable is set)
-
-    - [ ] **3.4.b Read the apps in `config/settings.py`** into `SOCIALACCOUNT_PROVIDERS[<provider>]["APP"]` outside
-      development
-        - `backend/config/.env.example`: the four variables are read only in deployed environments, development keeps
-          its database rows, and the production checklist's OAuth item names the four variables in the backend env
-          file (its maintenance item changes with 4.6)
-        - `strategy-authentication.md`'s steps for adding a provider (R27)
-        - Tests should now PASS
+    - [x] **3.4.a Write tests:** seventeen real-settings subprocess cases cover complete, absent and either
+      partial pair for both providers in staging/production, plus development ignoring all four values. Twelve
+      complete/partial cases failed before implementation. Controlled reconstructions made the four absent-pair
+      guards and the development guard fail, then all passed after restoration.
+    - [x] **3.4.b Read the apps in `config/settings.py`:** complete deployed pairs populate each provider's
+      `APP`, partial pairs raise `ImproperlyConfigured` naming the missing variable, and development keeps database
+      apps. Updated env guidance/checklist and the provider setup reference, including development callback URLs
+      through the HTTPS proxy and avoiding duplicate database/settings apps.
+    - Checks: 279 authentication tests passed; Ruff lint/format, scoped Pyright and markdown lint passed.
+      The coupled configuration cases share one credential-pair implementation; no actual credentials were used.
 
 - [ ] **3.5 Each deploy sets the Site record from the deployment** (R16; Implemented 6, second half)
 

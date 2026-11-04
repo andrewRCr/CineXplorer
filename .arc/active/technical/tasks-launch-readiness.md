@@ -352,9 +352,12 @@ authentication gaps that matter once sign-up is public are closed.
       was empty. The earlier `f49b6837` commit was refused with the manual-runbook instruction; history and checkout
       remained unchanged.
 
-- [ ] **5.3 The CI key runs only the deploy** (Proven live 1)
-    - From a local terminal with the CI key, each refusal Proven live 1 lists, with `deploy-history.log` unchanged
-      after each; then `deploy`'s `authorized_keys` on the server
+- [x] **5.3 The CI key runs only the deploy** (Proven live 1)
+    - With only the dedicated CI identity and pinned host key, verified refusal of invalid SHA input, the deployed
+      branch commit not reachable from `main`, the older deployed `main` commit (naming the current version), shell
+      and arbitrary-command requests. Deployment history remained unchanged after each.
+    - Port forwarding was administratively prohibited. The server's final `authorized_keys` line contains the
+      dedicated CI key exactly once with `restrict` and the forced deployment command.
 
 - [ ] **5.4 Backups, the restore rehearsal, maintenance and monitoring** (Proven live 4, 5, 7, 8)
     - The backup by hand, its failure with a bucket that does not exist and the alert email, the next success, and

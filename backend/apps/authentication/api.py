@@ -26,7 +26,12 @@ from apps.authentication.schemas import (
     UserProfileSchema,
 )
 from apps.authentication.services.service_factory import get_authentication_service
-from apps.authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
+from apps.authentication.throttles import (
+    LoginThrottle,
+    RegistrationThrottle,
+    ResendVerificationThrottle,
+    TestAwareUserThrottle,
+)
 
 # Create authentication router
 auth_router = Router(tags=["Authentication"])
@@ -41,7 +46,7 @@ auth_router = Router(tags=["Authentication"])
         409: dict[str, object],
         500: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle("3/h")],
+    throttle=[RegistrationThrottle("3/h")],
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
@@ -87,7 +92,7 @@ def register_user(
         401: dict[str, object],
         403: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle("5/m")],
+    throttle=[LoginThrottle("5/m")],
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
@@ -349,7 +354,7 @@ def verify_email(
     "/resend-verification/",
     auth=None,
     response={200: ResendVerificationResponseSchema, 400: dict[str, object]},
-    throttle=[TestAwareAnonThrottle("3/h")],  # Rate limit to prevent email spam abuse
+    throttle=[ResendVerificationThrottle("3/h")],  # Rate limit to prevent email spam abuse
 )
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationInputSchema

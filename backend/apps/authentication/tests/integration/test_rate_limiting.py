@@ -382,3 +382,64 @@ def test_frontend_logs_do_not_consume_login_limit(
             ).status_code
             == 200
         )
+
+
+@pytest.mark.enable_throttling
+@pytest.mark.django_db
+@override_settings(TESTING=False, ZEPTOMAIL_API_KEY="")
+@pytest.mark.parametrize("endpoint", ["/api/register/", "/api/resend-verification/"])
+def test_login_attempts_do_not_consume_other_auth_limits(
+    api_client: Client,
+    verified_user: User,
+    clear_throttle_cache: Iterator[None],
+    enable_throttling_for_test: Iterator[None],
+    endpoint: str,
+) -> None:
+    for _ in range(5):
+        response = api_client.post(
+            "/api/token/",
+            {"login": verified_user.username, "password": "testpass123"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+
+    payload = (
+        {"username": "independent", "email": "independent@example.com", "password": "TestPass123!"}
+        if endpoint == "/api/register/"
+        else {"resend_token": "x" * 32}
+    )
+    response = api_client.post(endpoint, payload, content_type="application/json")
+    assert response.status_code == (201 if endpoint == "/api/register/" else 200)
+
+
+@pytest.mark.enable_throttling
+@pytest.mark.django_db
+@override_settings(TESTING=False, ZEPTOMAIL_API_KEY="")
+@pytest.mark.parametrize("endpoint", ["/api/register/", "/api/resend-verification/"])
+def test_other_auth_attempts_do_not_consume_login_limit(
+    api_client: Client,
+    verified_user: User,
+    clear_throttle_cache: Iterator[None],
+    enable_throttling_for_test: Iterator[None],
+    endpoint: str,
+) -> None:
+    for index in range(3):
+        payload = (
+            {
+                "username": f"independent{index}",
+                "email": f"independent{index}@example.com",
+                "password": "TestPass123!",
+            }
+            if endpoint == "/api/register/"
+            else {"resend_token": "x" * 32}
+        )
+        response = api_client.post(endpoint, payload, content_type="application/json")
+        assert response.status_code == (201 if endpoint == "/api/register/" else 200)
+
+    for _ in range(5):
+        response = api_client.post(
+            "/api/token/",
+            {"login": verified_user.username, "password": "testpass123"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200

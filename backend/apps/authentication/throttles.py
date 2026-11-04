@@ -117,3 +117,21 @@ class TestAwareUserThrottle(UserRateThrottle):
 
         # Production mode or test with throttling enabled
         return super().allow_request(request)
+
+
+class RegistrationThrottle(TestAwareAnonThrottle):
+    """Count registration attempts independently of other authentication requests."""
+
+    scope = "auth_register"
+
+
+class LoginThrottle(TestAwareAnonThrottle):
+    """Count password sign-in attempts independently of other authentication requests."""
+
+    scope = "auth_login"
+
+
+class ResendVerificationThrottle(TestAwareAnonThrottle):
+    """Count verification resend attempts independently of other authentication requests."""
+
+    scope = "auth_resend_verification"

@@ -51,25 +51,15 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 1:** Each sign-in endpoint counts only its own requests, and allauth answers only what the site uses
 
-- [ ] **1.1 Each anonymous authentication throttle keeps its own history** (R18; Implemented 1)
+- [x] **1.1 Each anonymous authentication throttle keeps its own history** (R18; Implemented 1)
 
-    - [ ] **1.1.a Write tests** in `apps/authentication/tests/integration/test_rate_limiting.py`, with its
-      `clear_throttle_cache` and `enable_throttling_for_test` fixtures
-        - After five sign-in attempts from one client, that client's registration and resend-verification requests are
-          not refused with `429`
-        - After three registrations, and separately after three resend-verification requests, five sign-ins from the
-          same client all succeed
-        - The existing per-endpoint limit tests stay as they are, since rates are unchanged
-        - Expect the cross-endpoint cases to FAIL initially: today every one of these requests lands in the one
-          `throttle_anon_<ip>` history
-
-    - [ ] **1.1.b Give each endpoint its own scope** in `apps/authentication/throttles.py`
-        - Subclasses of `TestAwareAnonThrottle` with the scopes `auth_register`, `auth_login` and
-          `auth_resend_verification`, as `FrontendLogThrottle` (`apps/core/throttles.py`) does for `frontend_logs`;
-          each still takes its rate where the endpoint declares it
-        - `apps/authentication/api.py` uses them for registration (`3/h`), sign-in (`5/m`) and resend-verification
-          (`3/h`)
-        - Tests should now PASS
+    - [x] **1.1.a Write tests:** four cross-endpoint cases in `test_rate_limiting.py` prove that sign-in
+      attempts do not consume registration/resend capacity, and vice versa. All four failed with `429` against
+      the shared history before the change; the cases share one indivisible scope change.
+    - [x] **1.1.b Give each endpoint its own scope:** `RegistrationThrottle`, `LoginThrottle` and
+      `ResendVerificationThrottle` use `auth_register`, `auth_login` and `auth_resend_verification`, respectively.
+      The endpoint rates remain `3/h`, `5/m` and `3/h`.
+    - Checks: authentication suite 219 passed; Ruff lint/format and scoped Pyright passed.
 
 - [ ] **1.2 Concurrent requests are each counted under their own key** (R19; Implemented 1)
 

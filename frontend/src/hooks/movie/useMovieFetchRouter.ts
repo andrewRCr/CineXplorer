@@ -14,11 +14,6 @@ import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
  * - Manages stable references to prevent unnecessary re-renders
  * - Returns a fetcher function compatible with the pagination hooks
  *
- * **Data Flow Position:**
- * ```
- * RouteConfigHelper → [useMovieFetchRouter] → usePaginatedMovies → useApiRequest
- * ```
- *
  * **Example:**
  * ```typescript
  * const routedFetcher = useMovieFetchRouter({

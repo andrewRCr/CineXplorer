@@ -22,8 +22,8 @@ import {
   Stack,
   Separator,
   Image,
+  Tag,
 } from "@chakra-ui/react";
-import { Tag } from "@chakra-ui/tag";
 import MovieUserScore from "@/components/movie/MovieUserScore";
 import { useUserMovieData } from "@/hooks/movie/useUserMovieData";
 import useAuthContext from "@/hooks/auth/useAuthContext";
@@ -175,9 +175,9 @@ const MovieDetail = () => {
           {/* Header: Genres */}
           <Flex gap={2} wrap="wrap" justify="center" align="center">
             {movie.genres?.map((genre: Genre) => (
-              <Tag key={genre.id} bg="badge" color="on-badge">
-                {genre.name}
-              </Tag>
+              <Tag.Root key={genre.id} bg="badge" color="on-badge">
+                <Tag.Label>{genre.name}</Tag.Label>
+              </Tag.Root>
             ))}
           </Flex>
           {/* Header: Spoken Languages */}
@@ -354,9 +354,9 @@ const MovieDetail = () => {
         <Flex gap={2} wrap="wrap" justify="center">
           {movie.production_companies?.map(
             (company: ProductionCompany, idx: number) => (
-              <Tag key={company.id || idx} bg="badge" color="on-badge">
-                {company.name}
-              </Tag>
+              <Tag.Root key={company.id || idx} bg="badge" color="on-badge">
+                <Tag.Label>{company.name}</Tag.Label>
+              </Tag.Root>
             ),
           )}
         </Flex>

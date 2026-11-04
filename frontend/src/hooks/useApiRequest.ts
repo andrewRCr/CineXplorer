@@ -31,7 +31,7 @@ interface FetcherResult<T> {
  * ```
  *
  * **Design:** Generic reusable hook - not specific to movies or any domain.
- * Used by usePaginatedMovies, useMovieDetail, and other data-fetching hooks.
+ * Used by useMovieDetail to manage the request lifecycle.
  *
  * @param fetcher - Function that returns { request: Promise, cancel: () => void }
  * @returns Object with data, error, loading state, and state setters

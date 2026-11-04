@@ -23,7 +23,6 @@ import { createMockBrowseParams } from "@tests/mocks/browseParams";
 
 /**
  * Helper to create mock paginated response
- * (Reusing pattern from usePaginatedMovies.test.ts)
  */
 function createMockPaginatedResponse(
     overrides?: Partial<MovieListResponse>,

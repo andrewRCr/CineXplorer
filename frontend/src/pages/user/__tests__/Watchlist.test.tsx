@@ -1,187 +1,69 @@
-/**
- * Tests for Watchlist page component
- *
- * This page displays the user's watchlist movies using the userMovieService
- * (movie-first pattern with enrichment).
- *
- * Test Coverage:
- * - Data fetching on mount
- * - Movie list display with user data
- * - Empty state handling
- * - Loading states
- */
-
-import { render, screen, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { BrowserRouter } from "react-router-dom";
-import { Provider as ChakraProvider } from "../../../components/core/chakra/provider";
+import { HttpResponse, http } from "msw";
+import { describe, expect, it } from "vitest";
+import { render, screen } from "@tests/helpers/test-renderer";
+import { server } from "@tests/mocks/server";
+import { apiBaseUrl } from "@/config/baseUrls";
+import type { MovieListResponseSchema } from "@/services/userMovieService";
 import Watchlist from "../Watchlist";
-import * as userMovieService from "../../../services/userMovieService";
-import type { MovieListItem, MovieListResponse } from "@/@types/movie.d";
 
-// Helper to wrap component with Router and ChakraProvider
-function renderWithProviders(component: React.ReactElement) {
-  return render(
-    <ChakraProvider>
-      <BrowserRouter>{component}</BrowserRouter>
-    </ChakraProvider>,
-  );
-}
-
-// Mock the userMovieService
-vi.mock("../../../services/userMovieService", () => ({
-  getUserMovies: vi.fn(),
-}));
+const userMoviesUrl = `${apiBaseUrl}/user-movie-data/movies`;
+const emptyWatchlist: MovieListResponseSchema = {
+  page: 1,
+  total_pages: 0,
+  total_results: 0,
+  results: [],
+};
 
 describe("Watchlist Page", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it("displays watchlisted movies and excludes other movies", async () => {
+    render(<Watchlist />);
+
+    expect(await screen.findByText("Fight Club")).toBeInTheDocument();
+    expect(screen.getByText("Forrest Gump")).toBeInTheDocument();
+    expect(screen.queryByText("Already watched")).not.toBeInTheDocument();
   });
 
-  /**
-   * Test: Fetches watchlist data on mount
-   *
-   * Scenario: Page loads
-   * Expected: Calls getUserMovies with watchlist: true parameter
-   */
-  it("should fetch watchlist data on mount", async () => {
-    // Arrange: Mock empty response
-    const mockResponse: MovieListResponse = {
-      page: 1,
-      total_pages: 0,
-      total_results: 0,
-      results: [],
-    };
+  it("shows the empty state when no movies are on the watchlist", async () => {
+    server.use(
+      http.get(userMoviesUrl, () => HttpResponse.json(emptyWatchlist)),
+    );
+    render(<Watchlist />);
 
-    vi.mocked(userMovieService.getUserMovies).mockReturnValue({
-      request: Promise.resolve({ data: mockResponse }),
-      cancel: () => {},
-    });
-
-    // Act: Render component
-    renderWithProviders(<Watchlist />);
-
-    // Assert: Should call service with watchlist filter
-    await waitFor(() => {
-      expect(userMovieService.getUserMovies).toHaveBeenCalledWith({
-        watchlist: true,
-      });
-    });
+    expect(
+      await screen.findByText("No movies on watchlist"),
+    ).toBeInTheDocument();
   });
 
-  /**
-   * Test: Displays movie list when data present
-   *
-   * Scenario: User has movies on watchlist
-   * Expected: Renders movie titles in a list
-   */
-  it("should display movie list when data is present", async () => {
-    // Arrange: Mock response with movies
-    const mockMovies: MovieListItem[] = [
-      {
-        tmdb_id: 550,
-        title: "Fight Club",
-        poster_path: "/fight-club.jpg",
-        release_date: "1999-10-15",
-        vote_average: 8.4,
-        user_movie_data: {
-          id: 1,
-          tmdb_id: 550,
-          title: "Fight Club",
-          user_watched: false,
-          user_on_watchlist: true,
-          user_liked: false,
-          user_rating: null,
-          user_review: null,
-        },
-      },
-      {
-        tmdb_id: 13,
-        title: "Forrest Gump",
-        poster_path: "/forrest-gump.jpg",
-        release_date: "1994-07-06",
-        vote_average: 8.8,
-        user_movie_data: {
-          id: 2,
-          tmdb_id: 13,
-          title: "Forrest Gump",
-          user_watched: true,
-          user_on_watchlist: true,
-          user_liked: true,
-          user_rating: 9,
-          user_review: "Amazing movie!",
-        },
-      },
-    ];
-
-    const mockResponse: MovieListResponse = {
-      page: 1,
-      total_pages: 1,
-      total_results: 2,
-      results: mockMovies,
-    };
-
-    vi.mocked(userMovieService.getUserMovies).mockReturnValue({
-      request: Promise.resolve({ data: mockResponse }),
-      cancel: () => {},
+  it("keeps the loading state until the request finishes", async () => {
+    let finishRequest: (() => void) | undefined;
+    const pending = new Promise<void>((resolve) => {
+      finishRequest = resolve;
     });
+    server.use(
+      http.get(userMoviesUrl, async () => {
+        await pending;
+        return HttpResponse.json(emptyWatchlist);
+      }),
+    );
+    render(<Watchlist />);
 
-    // Act: Render component
-    renderWithProviders(<Watchlist />);
-
-    // Assert: Should display both movie titles
-    await waitFor(() => {
-      expect(screen.getByText("Fight Club")).toBeInTheDocument();
-      expect(screen.getByText("Forrest Gump")).toBeInTheDocument();
-    });
+    expect(screen.getByText("Loading watchlist...")).toBeInTheDocument();
+    finishRequest?.();
+    expect(
+      await screen.findByText("No movies on watchlist"),
+    ).toBeInTheDocument();
   });
 
-  /**
-   * Test: Shows empty state when no movies
-   *
-   * Scenario: User has empty watchlist
-   * Expected: Displays "No movies on watchlist" message
-   */
-  it("should show empty state when no movies on watchlist", async () => {
-    // Arrange: Mock empty response
-    const mockResponse: MovieListResponse = {
-      page: 1,
-      total_pages: 0,
-      total_results: 0,
-      results: [],
-    };
+  it("shows an error when the request fails", async () => {
+    server.use(
+      http.get(userMoviesUrl, () =>
+        HttpResponse.json({ detail: "Service unavailable" }, { status: 503 }),
+      ),
+    );
+    render(<Watchlist />);
 
-    vi.mocked(userMovieService.getUserMovies).mockReturnValue({
-      request: Promise.resolve({ data: mockResponse }),
-      cancel: () => {},
-    });
-
-    // Act: Render component
-    renderWithProviders(<Watchlist />);
-
-    // Assert: Should show empty state message
-    await waitFor(() => {
-      expect(screen.getByText("No movies on watchlist")).toBeInTheDocument();
-    });
-  });
-
-  /**
-   * Test: Shows loading state while fetching
-   *
-   * Scenario: Data is being fetched
-   * Expected: Displays loading indicator
-   */
-  it("should show loading state while fetching data", () => {
-    // Arrange: Mock pending promise (never resolves during test)
-    vi.mocked(userMovieService.getUserMovies).mockReturnValue({
-      request: new Promise(() => {}), // Never resolves
-      cancel: () => {},
-    });
-
-    // Act: Render component
-    renderWithProviders(<Watchlist />);
-
-    // Assert: Should show loading state
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText("Error: Request failed with status code 503"),
+    ).toBeInTheDocument();
   });
 });

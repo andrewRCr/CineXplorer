@@ -10,8 +10,7 @@ import { render, screen } from "@tests/helpers/test-renderer";
 import { defaultSystem as projectSystem } from "@/theme";
 import MovieUserScore from "../MovieUserScore";
 
-// The shared renderer uses Chakra's own system, which lacks the project badge recipe, and jsdom skips styles
-// inside CSS @layer blocks. Variant checks therefore render under a layer-free copy of the project system.
+// jsdom skips styles inside CSS @layer blocks. Variant checks render under a layer-free project system.
 const badgeStyleSystem = createSystem(projectSystem._config, {
   disableLayers: true,
 });

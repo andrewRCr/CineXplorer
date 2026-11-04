@@ -3,20 +3,6 @@ import { render, screen, fireEvent } from "@tests/helpers/test-renderer";
 import SearchBar from "../SearchBar";
 
 // Mock the COLORS constant since it's used in the component
-vi.mock("@/constants/theme", () => ({
-  COLORS: {
-    background: { main: "#ffffff" },
-    border: { main: "#e2e8f0" },
-    text: {
-      main: "#1a202c",
-      secondary: "#4a5568",
-    },
-    tertiary: {
-      primary: "#3182ce",
-      secondary: "#2c5aa0",
-    },
-  },
-}));
 
 describe("SearchBar Component", () => {
   const mockOnChange = vi.fn();

@@ -32,10 +32,10 @@ React + Vitest frontend. This replaces arc-framework's own project override.
   per QUICK-REFERENCE), never from the host venv.
 - **Boundaries** are TMDB, the OAuth providers, ZeptoMail and time. Mock them at the client with responses shaped like
   the real service's, including its error shapes; let the database be real.
-- **Chakra recipe variants.** The shared test renderer wraps Chakra's own `defaultSystem`, which lacks the project
-  recipes, and recipe styles sit in `@layer` blocks that jsdom's `getComputedStyle` skips, so the obvious assertion
-  passes falsely. Render under `createSystem(defaultSystem._config, { disableLayers: true })` with `defaultSystem`
-  from `@/theme`, then assert the token on `background`.
+- **Chakra recipe variants.** Shared renderers provide the project's default system. Recipe styles sit in `@layer`
+  blocks that jsdom's `getComputedStyle` skips, so variant style checks need a layer-free system. Render under
+  `createSystem(defaultSystem._config, { disableLayers: true })` with `defaultSystem` from `@/theme`, then assert the
+  token on `background`.
 - **Layout, fixtures and commands** are in `.arc/reference/strategies/project/strategy-testing-methodology.md`.
 
 ## testing-standards.default

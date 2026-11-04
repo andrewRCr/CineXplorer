@@ -69,10 +69,8 @@ class UserMovieDataDetailSchema(ModelSchema):
         This method provides type-safe conversion from Django ORM to Pydantic schema
         including computed fields from the related Movie object.
 
-        Note on type checking: Django model field access shows as "unknown" in Pyright
-        due to django-stubs generic field type limitations (documented in
-        _docs/notes/type-safety-status-auth-modernization.md lines 32-47).
-        MyPy with django-stubs validates these correctly at runtime.
+        Companion model stubs provide the field and relation types that Pyright
+        needs to check access to the related movie's attributes.
 
         Args:
             obj: UserMovieData instance (should have movie prefetched via select_related)

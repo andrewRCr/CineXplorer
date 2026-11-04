@@ -174,3 +174,205 @@ with override_settings(TMDB_API_KEY="json-log-private-key-marker"):
     assert "/3/genre/movie/list?api_key=[REDACTED]" in diagnostic
     assert record["params"] == {}
     assert "json-log-private-key-marker" not in output
+
+
+def _render_frontend(payload: dict[str, object], environment: str) -> str:
+    return _render(
+        f"""
+import django
+django.setup()
+from django.test import Client
+response = Client().post(
+    "/api/logs/", data={payload!r}, content_type="application/json", secure=True,
+)
+assert response.status_code == 201, response.content
+""",
+        environment,
+    )
+
+
+def _frontend_payload() -> dict[str, object]:
+    return {
+        "level": "ERROR",
+        "message": "Email verification error:",
+        "timestamp": "2026-11-04T20:00:00Z",
+        "correlation_id": "browser-error-correlation",
+        "url": "https://example.com/login",
+    }
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        (
+            "https://private-user:private-password@example.com:8443/login"
+            "?verify=private-verification#private-fragment",
+            "https://example.com:8443/login",
+        ),
+        ("/login?reset=private-reset#private-fragment", "/login"),
+        ("https://[broken?verify=private-verification", ""),
+    ],
+)
+def test_frontend_url_context_omits_credentials(environment: str, url: str, expected: str) -> None:
+    payload = {
+        **_frontend_payload(),
+        "url": url,
+        "data": {"context": {"url": url, "previous": url, "action": url, "attempt": 2}},
+        "browser_info": {"language": "en-US", "viewport": {"width": 1280, "height": 720}},
+        "recent_interactions": [{"type": "navigation", "url": url, "previous": url}],
+    }
+    output = _render_frontend(payload, environment)
+    records = [_one_record(line) for line in output.splitlines()]
+    records = [record for record in records if record.get("frontend_log") is True]
+    assert {record["logger"] for record in records} == {"frontend", "app"}
+    for record in records:
+        assert record["frontend_url"] == expected
+        assert record["frontend_data"] == {
+            "context": {"url": expected, "previous": expected, "action": expected, "attempt": 2}
+        }
+        assert record["recent_interactions"] == [
+            {"type": "navigation", "url": expected, "previous": expected}
+        ]
+        assert record["browser_info"] == payload["browser_info"]
+        assert record["correlation_id"] == "browser-error-correlation"
+    assert "private-" not in output
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
+def test_frontend_errors_omit_serialized_request_bodies(environment: str) -> None:
+    # AxiosError.toJSON serializes config.data as a JSON string, not an object.
+    error = {
+        "message": "Request failed with status code 500",
+        "name": "AxiosError",
+        "code": "ERR_BAD_RESPONSE",
+        "status": 500,
+        "config": {
+            "method": "post",
+            "url": "/verify-email/",
+            "headers": {"Content-Type": "application/json"},
+            "data": json.dumps({"key": "private-verification-body"}),
+        },
+    }
+    output = _render_frontend({**_frontend_payload(), "data": error}, environment)
+    records = [_one_record(line) for line in output.splitlines()]
+    records = [record for record in records if record.get("frontend_log") is True]
+    assert records
+    for record in records:
+        assert record["frontend_data"] == {
+            "message": "Request failed with status code 500",
+            "name": "AxiosError",
+            "code": "ERR_BAD_RESPONSE",
+            "status": 500,
+        }
+        assert record["correlation_id"] == "browser-error-correlation"
+    assert "private-verification-body" not in output
+
+
+def test_frontend_truncated_data_omits_opaque_serialized_content() -> None:
+    # Oversized frontend diagnostics arrive as a truncated serialized data string.
+    output = _render_frontend(
+        {
+            **_frontend_payload(),
+            "data": {
+                "_truncated": True,
+                "_originalSize": 12000,
+                "data": '{"config":{"data":"private-verification-body"...[truncated]',
+            },
+        },
+        "production",
+    )
+    records = [_one_record(line) for line in output.splitlines()]
+    records = [record for record in records if record.get("frontend_log") is True]
+    assert records
+    assert all(
+        record["frontend_data"] == {"_truncated": True, "_originalSize": 12000}
+        for record in records
+    )
+    assert "private-verification-body" not in output
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
+@pytest.mark.parametrize(
+    ("referer", "expected"),
+    [
+        (
+            "https://private-user:private-password@example.com/login"
+            "?verify=private-verification#private-fragment",
+            "https://example.com/login",
+        ),
+        ("https://[broken?verify=private-verification", ""),
+    ],
+)
+def test_request_logs_sanitize_referer(environment: str, referer: str, expected: str) -> None:
+    output = _render(
+        f"""
+import django
+django.setup()
+from django.http import HttpResponse
+from django.test import RequestFactory
+from middleware.logging import RequestLoggingMiddleware
+http_request = RequestFactory().get("/api/movies/", HTTP_REFERER={referer!r})
+RequestLoggingMiddleware(lambda request: HttpResponse())(http_request)
+""",
+        environment,
+    )
+    records = [_one_record(line) for line in output.splitlines()]
+    [started] = [record for record in records if record.get("event_type") == "request_start"]
+    assert started["referer"] == expected
+    assert started["path"] == "/api/movies/"
+    assert "private-" not in output
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
+def test_request_query_logs_redact_verification_reset_and_oauth_credentials(
+    environment: str,
+) -> None:
+    parameters = {
+        "vErIfY": "private-verification",
+        "reset": "private-reset",
+        "code": "private-oauth-code",
+        "state": "private-oauth-state",
+        "access_token": "private-access-token",
+        "refresh_token": "private-refresh-token",
+        "id_token": "private-id-token",
+        "key": "private-key",
+        "page": "2",
+    }
+    output = _render(
+        f"""
+import django
+django.setup()
+from django.http import HttpResponse
+from django.test import RequestFactory
+from middleware.logging import RequestLoggingMiddleware
+http_request = RequestFactory().get("/accounts/google/login/callback/", data={parameters!r})
+middleware = RequestLoggingMiddleware(lambda request: HttpResponse())
+middleware(http_request)
+try:
+    raise ValueError("Safe diagnostic")
+except ValueError as exc:
+    middleware.process_exception(http_request, exc)
+""",
+        environment,
+    )
+    from urllib.parse import parse_qsl, urlsplit
+
+    records = [_one_record(line) for line in output.splitlines()]
+    assert {record["event_type"] for record in records} == {
+        "request_start",
+        "request_complete",
+        "request_exception",
+    }
+    expected = {key: "2" if key == "page" else "[REDACTED]" for key in parameters}
+    for record in records:
+        full_url = record["full_url"]
+        assert isinstance(full_url, str)
+        assert dict(parse_qsl(urlsplit(full_url).query)) == expected
+        assert record["method"] == "GET"
+        assert isinstance(record["correlation_id"], str)
+        if record["event_type"] == "request_start":
+            query_string = record["query_string"]
+            assert isinstance(query_string, str)
+            assert dict(parse_qsl(query_string)) == expected
+    assert "private-" not in output

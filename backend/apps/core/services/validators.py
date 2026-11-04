@@ -10,8 +10,9 @@ from __future__ import annotations
 import logging
 from typing import NoReturn
 
-from ninja.errors import HttpError
 from pydantic import BaseModel, ValidationError
+
+from apps.core.exceptions import InvalidInputError, NotFoundError, UpstreamError
 
 from .api_response import ApiResponse
 
@@ -34,18 +35,20 @@ def raise_upstream_error(response: ApiResponse, *, lookup: bool = False) -> NoRe
             resource does not exist rather than that the integration is broken
 
     Raises:
-        HttpError: 400, 404, 502, 503 or 504, with a fixed message
+        NotFoundError: 404, for a lookup TMDB answered with 404
+        InvalidInputError: 400, when TMDB rejected the request's parameters
+        UpstreamError: 503 when TMDB is busy, 504 on a timeout, 502 otherwise
     """
     status = response.status_code
     if status == 404 and lookup:
-        raise HttpError(404, "Resource not found")
+        raise NotFoundError("Resource not found")
     if status in (400, 422):
-        raise HttpError(400, "Invalid request")
+        raise InvalidInputError("Invalid request")
     if status == 429:
-        raise HttpError(503, "External API is busy, please try again later")
+        raise UpstreamError("External API is busy, please try again later", status_code=503)
     if status == 504:
-        raise HttpError(504, "External API timed out")
-    raise HttpError(502, "External API error")
+        raise UpstreamError("External API timed out", status_code=504)
+    raise UpstreamError("External API error")
 
 
 def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) -> T:
@@ -62,7 +65,9 @@ def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) 
         Validated Pydantic model instance
 
     Raises:
-        HttpError: If response failed, data format invalid, or validation failed
+        InvalidInputError: If TMDB rejected the request's parameters (see raise_upstream_error)
+        UpstreamError: If the response failed otherwise, or its data has the wrong format or
+            fails validation
     """
     # Check if the API call was successful
     if not response.is_success():
@@ -70,7 +75,7 @@ def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) 
 
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
-        raise HttpError(502, f"Expected dict response from TMDB API, got {type(response.data)}")
+        raise UpstreamError(f"Expected dict response from TMDB API, got {type(response.data)}")
 
     # Validate with Pydantic model
     try:
@@ -84,7 +89,7 @@ def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) 
                 "response_data_keys": list(response.data.keys()),
             },
         )
-        raise HttpError(502, "TMDB response validation failed") from e
+        raise UpstreamError("TMDB response validation failed") from e
 
 
 def validate_tmdb_list_response[T: BaseModel](
@@ -103,7 +108,9 @@ def validate_tmdb_list_response[T: BaseModel](
         List of validated Pydantic model instances
 
     Raises:
-        HttpError: If response failed, data format invalid, or validation failed
+        InvalidInputError: If TMDB rejected the request's parameters (see raise_upstream_error)
+        UpstreamError: If the response failed otherwise, or its data has the wrong format or
+            fails validation
     """
     # Check if the API call was successful
     if not response.is_success():
@@ -111,7 +118,7 @@ def validate_tmdb_list_response[T: BaseModel](
 
     # Type narrowing - ensure we have list data
     if not isinstance(response.data, list):
-        raise HttpError(502, f"Expected list response from TMDB API, got {type(response.data)}")
+        raise UpstreamError(f"Expected list response from TMDB API, got {type(response.data)}")
 
     # Validate each item in the list
     try:
@@ -125,7 +132,7 @@ def validate_tmdb_list_response[T: BaseModel](
                 "list_length": len(response.data),
             },
         )
-        raise HttpError(502, "TMDB list response validation failed") from e
+        raise UpstreamError("TMDB list response validation failed") from e
 
 
 def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model: type[T]) -> T:
@@ -142,7 +149,9 @@ def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model:
         Validated Pydantic model instance containing results and pagination
 
     Raises:
-        HttpError: If response failed, data format invalid, or validation failed
+        InvalidInputError: If TMDB rejected the request's parameters (see raise_upstream_error)
+        UpstreamError: If the response failed otherwise, or its data has the wrong format or
+            fails validation
     """
     # Check if the API call was successful
     if not response.is_success():
@@ -150,7 +159,7 @@ def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model:
 
     # Type narrowing - ensure we have dict data
     if not isinstance(response.data, dict):
-        raise HttpError(502, f"Expected dict response from TMDB API, got {type(response.data)}")
+        raise UpstreamError(f"Expected dict response from TMDB API, got {type(response.data)}")
 
     # Validate the paginated response structure
     try:
@@ -164,7 +173,7 @@ def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model:
                 "response_data_keys": list(response.data.keys()),
             },
         )
-        raise HttpError(502, "TMDB paginated response validation failed") from e
+        raise UpstreamError("TMDB paginated response validation failed") from e
 
 
 __all__ = [

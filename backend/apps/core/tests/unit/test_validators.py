@@ -5,9 +5,9 @@ from __future__ import annotations
 from collections.abc import Callable
 
 import pytest
-from ninja.errors import HttpError
 from pydantic import BaseModel
 
+from apps.core.exceptions import DomainError, InvalidInputError, NotFoundError, UpstreamError
 from apps.core.services.api_response import ApiResponse
 from apps.core.services.validators import (
     raise_upstream_error,
@@ -24,39 +24,39 @@ class Item(BaseModel):
 
 
 @pytest.mark.parametrize(
-    ("upstream_status", "client_status", "message"),
+    ("upstream_status", "error_class", "client_status", "message"),
     [
-        (400, 400, "Invalid request"),
-        (422, 400, "Invalid request"),
-        (404, 502, "External API error"),
-        (429, 503, "External API is busy, please try again later"),
-        (504, 504, "External API timed out"),
-        (401, 502, "External API error"),
-        (403, 502, "External API error"),
-        (500, 502, "External API error"),
-        (502, 502, "External API error"),
+        (400, InvalidInputError, 400, "Invalid request"),
+        (422, InvalidInputError, 400, "Invalid request"),
+        (404, UpstreamError, 502, "External API error"),
+        (429, UpstreamError, 503, "External API is busy, please try again later"),
+        (504, UpstreamError, 504, "External API timed out"),
+        (401, UpstreamError, 502, "External API error"),
+        (403, UpstreamError, 502, "External API error"),
+        (500, UpstreamError, 502, "External API error"),
+        (502, UpstreamError, 502, "External API error"),
     ],
 )
 def test_raise_upstream_error_maps_status_to_a_fixed_error(
-    upstream_status: int, client_status: int, message: str
+    upstream_status: int, error_class: type[DomainError], client_status: int, message: str
 ) -> None:
     response = ApiResponse(status_code=upstream_status, error_message="api_key=SECRET failed")
 
-    with pytest.raises(HttpError) as exc_info:
+    with pytest.raises(error_class) as exc_info:
         raise_upstream_error(response)
 
     assert exc_info.value.status_code == client_status
-    assert exc_info.value.message == message
+    assert exc_info.value.detail == message
 
 
 def test_raise_upstream_error_keeps_not_found_on_a_lookup() -> None:
     response = ApiResponse(status_code=404, error_message="TMDB request failed: 404")
 
-    with pytest.raises(HttpError) as exc_info:
+    with pytest.raises(NotFoundError) as exc_info:
         raise_upstream_error(response, lookup=True)
 
     assert exc_info.value.status_code == 404
-    assert exc_info.value.message == "Resource not found"
+    assert exc_info.value.detail == "Resource not found"
 
 
 @pytest.mark.parametrize(
@@ -68,8 +68,8 @@ def test_validators_do_not_echo_upstream_status_or_text(
 ) -> None:
     response = ApiResponse(status_code=401, error_message="request failed: api_key=SECRET")
 
-    with pytest.raises(HttpError) as exc_info:
+    with pytest.raises(UpstreamError) as exc_info:
         validate(response, Item)
 
     assert exc_info.value.status_code == 502
-    assert "SECRET" not in str(exc_info.value.message)
+    assert "SECRET" not in exc_info.value.detail

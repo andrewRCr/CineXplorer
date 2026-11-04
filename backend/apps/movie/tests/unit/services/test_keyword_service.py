@@ -16,8 +16,8 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 import pytest
-from ninja.errors import HttpError
 
+from apps.core.exceptions import UpstreamError
 from apps.core.services.api_response import ApiResponse
 from apps.movie.schemas import KeywordListResponseSchema
 from apps.movie.tests.tmdb_test_builders import TMDBKeywordResponse
@@ -92,7 +92,7 @@ def test_get_popular_keywords_uses_injected_client() -> None:
 
 
 def test_get_popular_keywords_handles_api_error() -> None:
-    """Test get_popular_keywords raises HttpError when TMDB API fails."""
+    """Test get_popular_keywords raises UpstreamError when TMDB API fails."""
     from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client that returns error response
@@ -100,9 +100,9 @@ def test_get_popular_keywords_handles_api_error() -> None:
     mock_response = ApiResponse(status_code=500, data=None)
     mock_client.get.return_value = mock_response
 
-    # Act & Assert: Service raises HttpError
+    # Act & Assert: Service raises UpstreamError
     service = KeywordService(tmdb_client=mock_client)
-    with pytest.raises(HttpError):
+    with pytest.raises(UpstreamError):
         service.get_popular_keywords(page=1)
 
 
@@ -197,7 +197,7 @@ def test_search_keywords_handles_empty_query() -> None:
 
 
 def test_search_keywords_handles_api_error() -> None:
-    """Test search_keywords raises HttpError when TMDB API fails."""
+    """Test search_keywords raises UpstreamError when TMDB API fails."""
     from apps.movie.services.keyword_service import KeywordService
 
     # Arrange: Create mock client that returns error response
@@ -205,9 +205,9 @@ def test_search_keywords_handles_api_error() -> None:
     mock_response = ApiResponse(status_code=404, data=None)
     mock_client.get.return_value = mock_response
 
-    # Act & Assert: Service raises HttpError
+    # Act & Assert: Service raises UpstreamError
     service = KeywordService(tmdb_client=mock_client)
-    with pytest.raises(HttpError):
+    with pytest.raises(UpstreamError):
         service.search_keywords(query="nonexistent")
 
 

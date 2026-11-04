@@ -17,8 +17,8 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock
 
 import pytest
-from ninja.errors import HttpError
 
+from apps.core.exceptions import NotFoundError
 from apps.core.services.api_response import ApiResponse
 from apps.movie.schemas import (
     MovieDetailSchema,
@@ -118,7 +118,7 @@ def test_get_movie_by_id_uses_injected_client() -> None:
 
 
 def test_get_movie_by_id_handles_movie_not_found() -> None:
-    """Test get_movie_by_id raises HttpError(404) when movie not found."""
+    """Test get_movie_by_id raises NotFoundError (404) when movie not found."""
     from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client returns 404
@@ -128,8 +128,8 @@ def test_get_movie_by_id_handles_movie_not_found() -> None:
 
     service = MovieService(tmdb_client=mock_client)
 
-    # Act & Assert: Should raise HttpError(404)
-    with pytest.raises(HttpError) as exc_info:
+    # Act & Assert: Should raise NotFoundError (404)
+    with pytest.raises(NotFoundError) as exc_info:
         service.get_movie_by_id(999999)
 
     assert exc_info.value.status_code == 404

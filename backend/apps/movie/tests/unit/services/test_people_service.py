@@ -16,8 +16,8 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 import pytest
-from ninja.errors import HttpError
 
+from apps.core.exceptions import UpstreamError
 from apps.core.services.api_response import ApiResponse
 from apps.movie.schemas import PersonListResponseSchema
 from apps.movie.tests.tmdb_test_builders import TMDBPersonResponse
@@ -105,7 +105,7 @@ def test_get_popular_people_uses_injected_client() -> None:
 
 
 def test_get_popular_people_handles_api_error() -> None:
-    """Test get_popular_people raises HttpError when TMDB API fails."""
+    """Test get_popular_people raises UpstreamError when TMDB API fails."""
     from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client that returns error response
@@ -113,9 +113,9 @@ def test_get_popular_people_handles_api_error() -> None:
     mock_response = ApiResponse(status_code=500, data=None)
     mock_client.get.return_value = mock_response
 
-    # Act & Assert: Service raises HttpError
+    # Act & Assert: Service raises UpstreamError
     service = PeopleService(tmdb_client=mock_client)
-    with pytest.raises(HttpError):
+    with pytest.raises(UpstreamError):
         service.get_popular_people(page=1)
 
 
@@ -225,7 +225,7 @@ def test_search_people_handles_empty_query() -> None:
 
 
 def test_search_people_handles_api_error() -> None:
-    """Test search_people raises HttpError when TMDB API fails."""
+    """Test search_people raises UpstreamError when TMDB API fails."""
     from apps.movie.services.people_service import PeopleService
 
     # Arrange: Create mock client that returns error response
@@ -233,9 +233,9 @@ def test_search_people_handles_api_error() -> None:
     mock_response = ApiResponse(status_code=404, data=None)
     mock_client.get.return_value = mock_response
 
-    # Act & Assert: Service raises HttpError
+    # Act & Assert: Service raises UpstreamError
     service = PeopleService(tmdb_client=mock_client)
-    with pytest.raises(HttpError):
+    with pytest.raises(UpstreamError):
         service.search_people(query="nonexistent")
 
 

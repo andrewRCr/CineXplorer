@@ -22,7 +22,8 @@ Architecture Notes:
     - These factories are pure functions with no side effects
     - They use the TMDB models from apps.core.tmdb_models for input validation
     - They create schemas from apps.movie.schemas for application use
-    - Error handling follows the standard HttpError pattern for API consistency
+    - A failed TMDB response raises a domain exception from apps.core.exceptions; data that
+      fails to convert raises HttpError(500)
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ from typing import NoReturn
 
 from ninja.errors import HttpError
 
+from apps.core.exceptions import UpstreamError
 from apps.core.services.api_response import ApiResponse
 from apps.core.services.validators import raise_upstream_error
 from apps.core.tmdb_models.tmdb_responses import (
@@ -82,7 +84,8 @@ def handle_tmdb_api_error(
         **context: Additional context for logging
 
     Raises:
-        HttpError: 400, 404, 502, 503 or 504 with a fixed message (see raise_upstream_error)
+        NotFoundError, InvalidInputError or UpstreamError: 404, 400, or 502, 503 or 504,
+            with a fixed message (see raise_upstream_error)
     """
     correlation_id = getattr(api_response, "correlation_id", str(uuid.uuid4())[:8])
 
@@ -118,7 +121,8 @@ def get_validated_response(
         Validated JSON data dictionary
 
     Raises:
-        HttpError: If API error or invalid/empty data
+        InvalidInputError or UpstreamError: If the TMDB request failed (see raise_upstream_error)
+        UpstreamError: If TMDB answered without data
     """
     if not api_response.is_success():
         # Lists and searches: a 404 here means the integration broke, not a missing resource
@@ -134,7 +138,7 @@ def get_validated_response(
                 **context,
             },
         )
-        raise HttpError(502, "Failed to get valid response data from TMDB")
+        raise UpstreamError("Failed to get valid response data from TMDB")
 
     return result
 

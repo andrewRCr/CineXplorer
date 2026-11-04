@@ -281,10 +281,9 @@ def test_token_refresh_with_blacklist_unavailable() -> None:
 
 @pytest.mark.django_db
 def test_profile_endpoint_with_serialization_error() -> None:
-    """Verify profile endpoint handles serialization errors gracefully.
+    """Verify profile endpoint answers a serialization error with a fixed JSON 500.
 
-    Tests error handling when schema serialization fails.
-    Django Ninja propagates exception - verify it doesn't crash server.
+    The error's own text stays out of the response.
     """
     user = create_user(username="testuser", email_verified=True)
     refresh = RefreshToken.for_user(cast(AbstractBaseUser, user))
@@ -297,13 +296,11 @@ def test_profile_endpoint_with_serialization_error() -> None:
     with patch(AUTH_SCHEMA_PROFILE_MODEL_VALIDATE) as mock_model_validate:
         mock_model_validate.side_effect = ValueError("Serialization failed")
 
-        # Django test client raises exception by default (check_exception=True)
-        # This verifies error is properly raised (not silently swallowed)
-        with pytest.raises(ValueError) as exc_info:
-            client.get("/api/profile/")
+        response = client.get("/api/profile/")
 
-        # Verify the exception message
-        assert "Serialization failed" in str(exc_info.value)
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert response.json() == {"detail": "Internal server error"}
+    assert "Serialization failed" not in response.content.decode()
 
 
 @pytest.mark.django_db(

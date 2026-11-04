@@ -21,48 +21,48 @@ address), and the dev database's data.
 
 ## Provisioning
 
-From the primary's root, for a branch `{type}/{name}`:
+From the primary's root:
 
 ```bash
-W="${PWD}.{name}"
-git fetch origin
-git worktree add -b {type}/{name} "$W" origin/main
-
-# Gitignored setup a new checkout does not carry
-for f in backend/config/.env frontend/.env frontend/.env.development infrastructure/.env; do
-  cp "$f" "$W/$f"
-done
-printf '\nCOMPOSE_PROJECT_NAME=cinexplorer-{name}\n' >> "$W/infrastructure/.env"
-for d in .venv-backend .claude .codex; do
-  ln -sfT "$PWD/$d" "$W/$d"
-done
-
-cd "$W"
-docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # name: cinexplorer-{name}
-(cd frontend && npm ci && npm run typegen)
+node scripts/worktree.mjs create technical/{name} --work-unit  # planned work, with starting notes
+node scripts/worktree.mjs create fix/{name}                   # an errand, without notes
+node scripts/worktree.mjs create fix/{name} --existing        # an existing local or origin branch
 ```
 
-- **Branch:** `-b` cuts a new branch from `origin/main`, for an errand or a work unit. A work unit is provisioned
-  before its planning starts: the PRD and task list are written and committed on this branch, and
-  [activate-work-unit.md](activate-work-unit.md) runs here later, skipping its Step 1. For an existing branch, such
-  as one under review, run `git worktree add "$W" {branch}` instead; git refuses while another checkout has that
-  branch.
-- **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`. Without it the worktree's project
-  is `infrastructure` too, and every `docker compose` command there acts on the primary's containers and volumes.
-  Never copy `infrastructure/.env` without adding the name, and check it with `config` before the first Compose
-  command. The `grep` keeps the rest of `config`'s output, which includes values from the `.env` files, off the screen.
-- **Links:** `.venv-backend`, `.claude` and `.codex` point at the primary's, so the worktree shares its Python
-  environment, harness settings and recovery hooks. `ln -sfT` replaces a link left by an earlier run instead of
-  writing a new one inside the primary's folder. `.gitignore` names them without a trailing slash, which matches a
-  link as well as a folder; keep it that way, or the links show as untracked.
+`create` fetches `origin`, creates the sibling `{primary}.{name}` and provisions it. New branches start from
+`origin/main` with no upstream; the printed first-push command sets their own upstream. `--existing` refuses a
+branch checked out elsewhere or lacking the worktree override: merge `main` into an older branch first.
+`--work-unit` cannot be combined with `--existing`.
+
+To prepare a checkout another tool created, or bring an existing worktree up to date, run from that worktree:
+
+```bash
+node scripts/worktree.mjs provision
+```
+
+Provisioning copies missing ignored files matched by `.worktreeinclude` (backend and frontend env files and
+certificates), links shared tools, appends missing project, browser-port and signing-key values to
+`infrastructure/.env`, checks the resolved Compose project name, then runs `npm ci` and `npm run typegen` in
+`frontend/`. Docker must be running. Repeating it preserves existing files and keys and repeats the check and
+install. A failed `create` leaves its checkout in place and prints the commands to finish setup there.
+
+- **Branch:** a work unit is provisioned before planning starts: the PRD and task list are written and committed on
+  this branch. [activate-work-unit.md](activate-work-unit.md) runs in the worktree later, skipping its branch step.
+- **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`; provisioning confirms it is
+  `cinexplorer-{name}` and prints only the name, keeping the env values in the rest of `config` off the screen.
+  Without a name, a base-file command would act on the primary's `infrastructure` project; the worktree override
+  refuses to resolve instead.
+- **Links:** `.venv-backend`, `.claude` and `.codex` point at the primary's, sharing its Python environment, harness
+  settings and recovery hooks. Provisioning creates only missing entries. `.gitignore` names them without a
+  trailing slash, which matches a link as well as a folder; keep it that way.
 - **Install warnings:** npm holds back the install scripts of esbuild and msw and says so. Neither is needed: esbuild
   runs from its platform package, and the project configures no msw worker directory.
 - **Codex:** no step of its own. A linked worktree uses the primary's project trust and its approved project hooks,
   so approve those hooks once in a Codex session on the primary (`/hooks`).
-- **Notes:** a work unit's session notes live in the worktree's own `.arc/user/{identity}/{name}/`. Create them
-  here from [session-handoff.md](session-handoff.md)'s skeleton: State `planning`, Task List and Next Task
-  `[none yet]`, and Next Action the PRD. Activation later turns them to execution. The inbox and working memory stay
-  in the main checkout ([user-inbox.md](user-inbox.md)).
+- **Notes:** `create --work-unit` writes a work unit's starting notes in its own
+  `.arc/user/{identity}/{name}/SESSION-NOTES.md`: State `planning`, Task List and Next Task `[none yet]`, and Next
+  Action the PRD. Activation later turns them to execution. The inbox and working memory stay in the main checkout
+  ([user-inbox.md](user-inbox.md)).
 
 ## Same-Session Errands
 
@@ -83,9 +83,9 @@ worktree removal and works while the primary remains on an older branch; it does
 hook source. `.claude` hook configuration is unchanged.
 
 `$errand <concern or inbox title>` follows [run-errand.md](run-errand.md) in the current conversation. The agent
-creates and provisions a sibling checkout, then records its selection with `errand-enter`, run from the session
-home. For documentation and harness work, provisioning needs only the shared tool/harness links; copy environment
-files, install frontend dependencies or start a test stack only when the checks need them.
+creates and provisions a sibling checkout with `node scripts/worktree.mjs create {type}/{name}`, then records its
+selection with `errand-enter`, run from the session home. Creation needs Docker running and installs frontend
+dependencies even for documentation or harness work; start a stack only when the checks need it.
 
 The session-scoped record lives in shared Git metadata and uses the Codex thread/session identifier. The identifiers
 must agree; missing or different identifiers stop entry. Recovery validates the checkout's registration, repository
@@ -109,12 +109,13 @@ to the entire parent directory. Git metadata and the installed harness are share
 
 ## Test Stack
 
-A worktree runs backend tests in its own test-only stack: `dev-db`, `redis` and an idle backend, with no published
-ports and a memory limit on each container (`infrastructure/docker-compose.test-stack.yml`). Every command names both
-compose files; the second one refuses to resolve until `infrastructure/.env` names the project.
+A worktree runs backend tests with `dev-db`, `redis` and the serving HTTPS backend, with no published ports and a
+memory limit on each container (`infrastructure/docker-compose.worktree.yml`). Every command names both Compose
+files; the override refuses to resolve until `provision` has supplied `COMPOSE_PROJECT_NAME`, `SITE_PORT` and
+`WORKTREE_SECRET_KEY` in `infrastructure/.env`.
 
 ```bash
-S="-f infrastructure/docker-compose.yml -f infrastructure/docker-compose.test-stack.yml"
+S="-f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml"
 docker compose $S up -d dev-db redis backend
 docker compose $S exec -T backend nice -n 15 pytest apps/            # the full suite
 docker compose $S exec -T backend nice -n 15 pytest apps/{app}/      # the apps a task touched

@@ -10,9 +10,10 @@ execution.
 
 ## Where It Runs
 
-- **In the work unit's linked worktree (the default).** Provisioning created the worktree and its branch before
-  planning began ([worktree-sessions.md § Provisioning](worktree-sessions.md#provisioning)), the PRD and task list
-  were written there, and activation runs there too. The main checkout stays on `main` throughout.
+- **In the work unit's linked worktree (the default).** `create --work-unit` created the worktree, branch and
+  starting notes before planning began
+  ([worktree-sessions.md § Provisioning](worktree-sessions.md#provisioning)). The PRD and task list were written
+  there, and activation runs there too. The main checkout stays on `main` throughout.
 - **In place on the main checkout (the exception).** Only when the Owner chooses a single checkout for this work
   unit. Step 1 creates the branch before anything is committed, so no planning commit lands on `main`, and the main
   checkout then stays on the work unit's branch until it merges.
@@ -36,7 +37,7 @@ In place, also:
 
 ### Step 1: Create the Branch (in place only)
 
-In the worktree, skip this step: provisioning created the branch.
+In the worktree, skip this step: `create` made the branch.
 
 ```bash
 git fetch origin
@@ -93,10 +94,10 @@ Edit `.arc/backlog/ROADMAP.md`:
 
 ### Step 7: Update the Session Notes
 
-In the worktree, provisioning created the notes at `.arc/user/{identity}/{name}/SESSION-NOTES.md` (gitignored; see
-the [personal workspace README](../../../user/README.md)). Update their pointer fields and keep the rest: State
-`executing`, Task List the task list's filename, Next Task the first task, Last Completed `[none]`, and Next Action
-the first task.
+In the worktree, `create --work-unit` wrote the starting notes at `.arc/user/{identity}/{name}/SESSION-NOTES.md`
+(gitignored; see the [personal workspace README](../../../user/README.md)). Update their pointer fields and keep
+the rest: State `executing`, Task List the task list's filename, Next Task the first task, Last Completed `[none]`,
+and Next Action the first task.
 
 Where there are no notes yet, as in place, create them from the skeleton in [session-handoff.md](session-handoff.md)
 with those values, the branch, and `Commit at Handoff` `[none yet]`.

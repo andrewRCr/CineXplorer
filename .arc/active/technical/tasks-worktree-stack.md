@@ -102,27 +102,13 @@ and remove it after its branch merges.
       all five services, only Caddy publishing `127.0.0.1:8445:8444`, and a memory limit on each. Frontend and Caddy
       limits remain provisional until 3.4 measures them.
 
-- [ ] **2.5 The workflows create worktrees with `create`, and the rules record the seeding script's path** (R12)
-    - `worktree-sessions.md` § Provisioning gives `create`, `create --existing`, `create --work-unit` and `provision`,
-      the last also for bringing an existing worktree up to date (certificates, port, key), in place of the manual
-      steps. It keeps the section's two points: a work unit is provisioned before its planning starts, its PRD and task
-      list are committed on its branch, and activation runs in the worktree later, skipping its branch step; and its
-      session notes start in planning state, now written by `create --work-unit`, which activation turns to execution.
-      The bullets that stay true (project name, install warnings, Codex) stay; the Links bullet describes the links
-      `provision` makes, without `ln -sfT`
-    - § Test Stack as a whole: it names `docker-compose.worktree.yml` in its prose and commands, says the backend
-      serves rather than idles, and says the override refuses to resolve until `provision` has written
-      `COMPOSE_PROJECT_NAME`, `SITE_PORT` and `WORKTREE_SECRET_KEY`
-    - § Same-Session Errands, `run-errand.md` § Where It Runs and the errand skill
-      (`.arc/reference/agent/skills/errand/SKILL.md`): an errand's worktree is set up by `create`, which needs Docker
-      running and installs the frontend's dependencies, in place of setting it up only as far as its checks need
-    - `run-errand.md` § 1 creates a linked worktree with `create`; its in-place `git switch -c` gains `--no-track`
-    - `activate-work-unit.md` § Where It Runs, Step 1's worktree line and Step 7, and `.arc/user/README.md` § Who
-      writes what, say `create` made the worktree and branch and `create --work-unit` wrote the notes, where they now
-      say provisioning did
-    - `DEVELOPMENT-RULES.md` § Code Documentation Standards records Decision 16's exception: the seeding script's path
-      and the `--work-unit` flag in `scripts/worktree.mjs` and its tests. The root `AGENTS.md` review guideline on
-      repository contract coherence defers to it. For the header, Phase 2 note
+- [x] **2.5 The workflows create worktrees with `create`, and the rules record the seeding path** (R12)
+    - Provisioning now documents new/existing branches, optional starting notes, repeatable preparation, shared
+      links, preserved files and keys, Docker and frontend-install requirements, and the serving test-stack override.
+    - Errand workflow and skill use `create`; activation and the workspace README name `create --work-unit` as the
+      source of starting notes. The in-place errand branch uses `--no-track`.
+    - DEVELOPMENT-RULES and the root review guideline record the narrow seeding-path, flag and stand-in exception.
+      Markdown lint passes for all seven documents after correcting new line wrapping.
 
 ### **Phase 3:** A worktree serves the app on its own port
 

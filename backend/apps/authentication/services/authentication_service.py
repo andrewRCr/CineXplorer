@@ -217,6 +217,8 @@ class AuthenticationService:
         """Register a new user and send email verification."""
         client_ip, _ = self._client_info_getter(request)
         forbidden_usernames = settings.FORBIDDEN_USERNAMES
+        # allauth lowercases an email before matching it at sign-in, so store it lowercase.
+        email = payload.email.lower()
 
         if payload.username.lower() in forbidden_usernames:
             self._logger.warning(
@@ -232,10 +234,9 @@ class AuthenticationService:
             )
             return 409, {"error": "Username already associated with an existing account."}
 
-        if self._user_model.objects.filter(email=payload.email).exists():
+        if self._user_model.objects.filter(email__iexact=email).exists():
             self._logger.warning(
-                "Registration failed: Email already exists | "
-                f"email={payload.email} | ip={client_ip}"
+                f"Registration failed: Email already exists | email={email} | ip={client_ip}"
             )
             return 409, {"error": "Email address already associated with an existing account."}
 
@@ -255,7 +256,7 @@ class AuthenticationService:
             with transaction.atomic():
                 user = self._user_model.objects.create_user(
                     username=payload.username,
-                    email=payload.email,
+                    email=email,
                     password=payload.password,
                     first_name=payload.first_name or "",
                     last_name=payload.last_name or "",
@@ -264,7 +265,7 @@ class AuthenticationService:
                 # Create email address record (without sending - we'll send manually)
                 email_address = self._email_address_model.objects.create(
                     user=user,
-                    email=payload.email,
+                    email=email,
                     verified=False,
                     primary=True,
                 )
@@ -282,7 +283,7 @@ class AuthenticationService:
             self._logger.info(
                 "Registration successful | "
                 f"user_id={user.id} | username={payload.username} | "
-                f"email={payload.email} | ip={client_ip}"
+                f"email={email} | ip={client_ip}"
             )
 
             return 201, {
@@ -297,7 +298,7 @@ class AuthenticationService:
             # Transaction automatically rolled back - no manual cleanup needed
             self._logger.error(
                 "Registration failed: Email sending error | "
-                f"username={payload.username} | email={payload.email} | "
+                f"username={payload.username} | email={email} | "
                 f"ip={client_ip} | error={exc!s}"
             )
             return 500, {

@@ -153,6 +153,31 @@ def test_user_with_same_email_exists_error(api_client: Client) -> None:
 
 
 @pytest.mark.django_db
+def test_user_with_same_email_in_another_case_exists_error(api_client: Client) -> None:
+    """An email that differs from an existing account's only in case is already taken."""
+    create_user(**create_register_payload(email="Taken@Example.com"))  # type: ignore[arg-type]
+    test_payload = create_register_payload(username="differentUsername", email="taken@EXAMPLE.com")
+    res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], test_payload))
+
+    assert res.status_code == HTTPStatus.CONFLICT
+    user_exists = get_user_model().objects.filter(username=test_payload["username"]).exists()
+    assert not user_exists
+
+
+@pytest.mark.django_db
+def test_registration_stores_email_in_lowercase(api_client: Client) -> None:
+    """Registration stores the address in lowercase on the user and on its email record."""
+    payload = create_register_payload(email="Mixed.Case@Example.COM")
+    res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], payload))
+
+    assert res.status_code == HTTPStatus.CREATED
+    assert json.loads(res.content)["email"] == "mixed.case@example.com"
+    user = get_user_model().objects.get(username=payload["username"])
+    assert user.email == "mixed.case@example.com"  # type: ignore[attr-defined]
+    assert EmailAddress.objects.get(user=user).email == "mixed.case@example.com"
+
+
+@pytest.mark.django_db
 def test_password_too_short_error(api_client: Client) -> None:
     """Tests an error is returned if password < PASSWORD_MIN_LENGTH."""
     # Use password shorter than minimum (currently 8 characters)
@@ -185,6 +210,20 @@ def test_create_token_for_user_via_email(api_client: Client) -> None:
     auth_payload = {"login": user_details["email"], "password": user_details["password"]}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
     assert res.status_code == HTTPStatus.OK
+
+
+@pytest.mark.django_db
+def test_sign_in_by_email_ignores_case(api_client: Client) -> None:
+    """A user who registered with capitals in the address signs in with it typed in any case."""
+    payload = create_register_payload(email="Mixed.Case@Example.com")
+    res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], payload))
+    assert res.status_code == HTTPStatus.CREATED
+    EmailAddress.objects.filter(user__username=payload["username"]).update(verified=True)
+
+    for login in ["Mixed.Case@Example.com", "mixed.case@example.com", "MIXED.CASE@EXAMPLE.COM"]:
+        auth_payload = {"login": login, "password": payload["password"]}
+        res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
+        assert res.status_code == HTTPStatus.OK, login
 
 
 @pytest.mark.django_db

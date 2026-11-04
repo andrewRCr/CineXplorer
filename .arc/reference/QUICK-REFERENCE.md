@@ -32,7 +32,8 @@
 - **Docker:** this checkout's own Compose project. On the primary, 5 containers (backend, frontend, redis, caddy,
   postgres); in a linked worktree, its test stack's 3 (backend, redis, postgres) while one is up, otherwise none
   ([worktree-sessions.md](workflows/supplemental/worktree-sessions.md))
-- **Backend venv:** `.venv-backend/bin/` on Python 3.13 (built with `uv`), with ruff and pytest
+- **Backend venv:** `.venv-backend/bin/` on Python 3.13 (built with `uv`), with ruff and pytest, synced from the
+  hashed development lock ([Backend Dependencies](#backend-dependencies))
 
 ### Critical Path Reference
 
@@ -126,6 +127,25 @@ npx pyright
 docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/ --fix
 
 # Note: From inside backend/ directory, use apps/ not backend/apps/
+```
+
+### Backend Dependencies
+
+The `.in` files in `backend/requirements/` are what you edit; each has a hashed lock beside it (`req.txt`,
+`req.prod.txt`, `req.dev.txt`) that the images and CI install. `req.dev.in` and `req.prod.in` include `req.in`, so
+the development and production locks pin shared packages to the same versions. CI fails when a lock no longer matches
+its inputs, or when a locked package has a known vulnerability.
+
+```bash
+# After editing an .in file: regenerate the locks, then rebuild the backend image
+backend/requirements/lock.sh
+docker compose -f infrastructure/docker-compose.yml build backend
+
+# Sync the host venv with the development lock
+uv pip sync backend/requirements/req.dev.txt --python .venv-backend/bin/python --require-hashes
+
+# Check the locks for known vulnerabilities (CI runs the same)
+.venv-backend/bin/pip-audit --require-hashes --disable-pip -r backend/requirements/req.prod.txt -r backend/requirements/req.dev.txt
 ```
 
 ### Testing (Backend)

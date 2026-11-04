@@ -13,7 +13,7 @@ describe("PageHeader Component", () => {
     it("renders with default props", () => {
       render(<PageHeader title="Test Title" />);
 
-      const header = screen.getByText("Test Title").parentElement;
+      const header = screen.getByTestId("page-header-title");
       expect(header).toBeInTheDocument();
 
       // Default size is 'lg' - check for corresponding styles
@@ -38,56 +38,31 @@ describe("PageHeader Component", () => {
 
     it("applies correct minimum heights for different sizes", () => {
       const { rerender } = render(<PageHeader title="Test" size="sm" />);
-      let container =
-        screen.getByText("Test").closest("[data-testid]") ||
-        screen.getByText("Test").parentElement?.parentElement;
-
-      // Note: We're testing the component structure, not exact pixel values
-      // The actual minHeight is applied to the container
-      expect(container).toBeInTheDocument();
-
-      // Test rerendering with different size
+      expect(screen.getByTestId("page-header")).toHaveStyle({
+        minHeight: "40px",
+      });
       rerender(<PageHeader title="Test" size="xl" />);
-      container =
-        screen.getByText("Test").closest("[data-testid]") ||
-        screen.getByText("Test").parentElement?.parentElement;
-      expect(container).toBeInTheDocument();
+      expect(screen.getByTestId("page-header")).toHaveStyle({
+        minHeight: "70px",
+      });
     });
   });
 
   describe("Accent Line Feature", () => {
-    it("shows tertiary line by default", () => {
-      // The tertiary line is an implementation detail
-      // Better to test that showAccent prop works as expected
-      const { container } = render(<PageHeader title="Test Title" />);
-
-      // Test that the component renders (tertiary line is visual detail)
-      expect(screen.getByText("Test Title")).toBeInTheDocument();
-      // We can verify the component structure exists
-      expect(container.firstChild).toBeInTheDocument();
-    });
-
-    it("hides tertiary line when showAccent is false", () => {
-      // Test the prop interface - component should render without tertiary
-      const { container } = render(
-        <PageHeader title="Test Title" showAccent={false} />,
-      );
-
-      expect(screen.getByText("Test Title")).toBeInTheDocument();
-      expect(container.firstChild).toBeInTheDocument();
-      // Visual tertiary absence would be tested via visual regression
-    });
-
-    it("shows tertiary line when showAccent is explicitly true", () => {
-      // Testing the prop interface rather than CSS implementation
-      const { container } = render(
-        <PageHeader title="Test Title" showAccent={true} />,
-      );
-
-      expect(screen.getByText("Test Title")).toBeInTheDocument();
-      expect(container.firstChild).toBeInTheDocument();
-      // The tertiary line is a visual feature - in real testing we'd use visual regression
-    });
+    it.each([undefined, true, false])(
+      "renders the accent when showAccent is %s",
+      (showAccent) => {
+        render(<PageHeader title="Test Title" showAccent={showAccent} />);
+        expect(screen.getByText("Test Title")).toBeInTheDocument();
+        if (showAccent === false) {
+          expect(
+            screen.queryByTestId("page-header-accent"),
+          ).not.toBeInTheDocument();
+        } else {
+          expect(screen.getByTestId("page-header-accent")).toBeInTheDocument();
+        }
+      },
+    );
   });
 
   describe("Children Support", () => {
@@ -147,12 +122,9 @@ describe("PageHeader Component", () => {
     it("applies italic font style to title", () => {
       render(<PageHeader title="Italic Title" />);
 
-      const title = screen.getByText("Italic Title");
-      // The title text is rendered inside a span, but the italic style is applied to the parent Box
-      const styledParent =
-        title.closest('[style*="italic"], [class*="italic"]') ||
-        title.parentElement;
-      expect(styledParent).toHaveStyle({ fontStyle: "italic" });
+      expect(screen.getByTestId("page-header-title")).toHaveStyle({
+        fontStyle: "italic",
+      });
     });
 
     it("applies consistent text styling", () => {
@@ -168,8 +140,7 @@ describe("PageHeader Component", () => {
     it("has proper layout classes for flex positioning", () => {
       render(<PageHeader title="Layout Test" />);
 
-      const container =
-        screen.getByText("Layout Test").parentElement?.parentElement;
+      const container = screen.getByTestId("page-header");
       // The component should have flex layout styles applied
       expect(container).toBeInTheDocument();
     });
@@ -180,7 +151,7 @@ describe("PageHeader Component", () => {
       render(<PageHeader title="Accessible Header" as="header" />);
 
       // Should render as a semantic header element
-      const header = document.querySelector("header");
+      const header = screen.getByRole("banner");
       expect(header).toBeInTheDocument();
       expect(header).toHaveTextContent("Accessible Header");
     });

@@ -1,8 +1,8 @@
+import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   render,
   screen,
-  fireEvent,
   isInaccessible,
   within,
 } from "@tests/helpers/test-renderer";
@@ -83,7 +83,7 @@ describe("MovieCard Component", () => {
 
       render(<MovieCard {...defaultProps} movie={testMovie} />);
 
-      const links = document.querySelectorAll('a[href*="/movie/550"]');
+      const links = screen.getAllByRole("link", { name: testMovie.title });
       expect(links.length).toBeGreaterThan(0);
     });
 
@@ -99,7 +99,7 @@ describe("MovieCard Component", () => {
         />,
       );
 
-      const link = document.querySelector('a[href*="/movie/123"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       // Page params should NOT be included (infinite scroll migration)
       expect(link?.getAttribute("href")).not.toContain("page=");
       expect(link?.getAttribute("href")).toContain("from=top-rated");
@@ -111,7 +111,7 @@ describe("MovieCard Component", () => {
 
       render(<MovieCard movie={testMovie} />);
 
-      const link = document.querySelector('a[href="/movie/456"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       expect(link).toBeInTheDocument();
     });
   });
@@ -276,38 +276,21 @@ describe("MovieCard Component", () => {
     it("triggers hover state on mouse enter", async () => {
       render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
-      // Find card by a more stable selector - the title link
-      const movieLink = screen.getByText("Test Movie").closest("a");
+      const movieLink = screen.getByText("Test Movie", { selector: "a" });
+      const user = userEvent.setup();
+      await user.hover(movieLink);
+      await user.unhover(movieLink);
       expect(movieLink).toBeInTheDocument();
-
-      // Test that hover interactions don't crash the component
-      const cardContainer = movieLink?.closest("div");
-      if (cardContainer) {
-        fireEvent.mouseEnter(cardContainer);
-        fireEvent.mouseLeave(cardContainer);
-      }
-
-      // Component should still render after hover
-      expect(screen.getByText("Test Movie")).toBeInTheDocument();
     });
 
     it("handles hover state changes without errors", async () => {
       render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
-      // Test hover behavior on the main card element
-      const movieTitle = screen.getByText("Test Movie");
-      const cardElement = movieTitle.closest("div");
-
-      expect(cardElement).toBeInTheDocument();
-
-      // Simulate hover interactions
-      if (cardElement) {
-        fireEvent.mouseEnter(cardElement);
-        fireEvent.mouseLeave(cardElement);
-      }
-
-      // Component should remain functional
-      expect(screen.getByText("Test Movie")).toBeInTheDocument();
+      const movieLink = screen.getByText("Test Movie", { selector: "a" });
+      const user = userEvent.setup();
+      await user.hover(movieLink);
+      await user.unhover(movieLink);
+      expect(movieLink).toBeInTheDocument();
     });
   });
 
@@ -345,12 +328,9 @@ describe("MovieCard Component", () => {
     it("applies responsive width configuration", () => {
       render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
-      // Component uses useBreakpointValue - we can verify it renders
-      // Actual responsive behavior would need viewport testing
-      const container =
-        document.querySelector('[style*="width"]') ||
-        document.querySelector("div");
-      expect(container).toBeInTheDocument();
+      expect(
+        screen.getByText("Test Movie", { selector: "a" }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -418,7 +398,7 @@ describe("MovieCard Component", () => {
 
       render(<MovieCard {...defaultProps} movie={testMovie} />);
 
-      const links = document.querySelectorAll('a[href*="/movie/789"]');
+      const links = screen.getAllByRole("link", { name: testMovie.title });
       links.forEach((link) => {
         expect(link).toBeInTheDocument();
       });
@@ -427,7 +407,7 @@ describe("MovieCard Component", () => {
     it("maintains proper focus behavior", () => {
       render(<MovieCard {...defaultProps} movie={createMockMovieListItem()} />);
 
-      const links = document.querySelectorAll("a");
+      const links = screen.getAllByRole("link");
       expect(links.length).toBeGreaterThan(0);
 
       // Links should be focusable
@@ -471,7 +451,7 @@ describe("MovieCard Component", () => {
       const testMovie = createMockMovieListItem({ tmdb_id: 550 });
 
       // Render with full filter params in URL
-      const { container } = render(
+      render(
         <MovieCard
           {...defaultProps}
           movie={testMovie}
@@ -481,7 +461,7 @@ describe("MovieCard Component", () => {
       );
 
       // Find link to detail page
-      const link = container.querySelector('a[href*="/movie/550"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       expect(link).toBeInTheDocument();
 
       const href = link?.getAttribute("href") || "";
@@ -509,7 +489,7 @@ describe("MovieCard Component", () => {
         },
       );
 
-      const link = document.querySelector('a[href*="/movie/123"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       const href = link?.getAttribute("href") || "";
 
       // Page params should NOT be preserved (infinite scroll)
@@ -532,7 +512,7 @@ describe("MovieCard Component", () => {
 
       render(<MovieCard {...defaultProps} movie={testMovie} />);
 
-      const link = document.querySelector('a[href*="/movie/456"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       const href = link?.getAttribute("href") || "";
 
       // After implementation with useSearchParams(), unknown params
@@ -557,7 +537,7 @@ describe("MovieCard Component", () => {
         />,
       );
 
-      const link = document.querySelector('a[href*="/movie/789"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       const href = link?.getAttribute("href") || "";
 
       // Should include from, but NOT page (infinite scroll) or empty query
@@ -576,7 +556,7 @@ describe("MovieCard Component", () => {
       // Genres are passed as comma-separated string in URL
       render(<MovieCard {...defaultProps} movie={testMovie} />);
 
-      const link = document.querySelector('a[href*="/movie/111"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       const href = link?.getAttribute("href") || "";
 
       // After implementation, should handle genres=28,12,35 format
@@ -595,7 +575,7 @@ describe("MovieCard Component", () => {
         />,
       );
 
-      const link = document.querySelector('a[href*="/movie/222"]');
+      const link = screen.getByText(testMovie.title, { selector: "a" });
       const href = link?.getAttribute("href") || "";
 
       // Should properly encode special characters

@@ -7,7 +7,7 @@ import {
     it,
     vi,
 } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { siteOrigin } from "@/config/baseUrls";
 import logger from "@/services/logger";
 import { useOAuthFlow } from "../useOAuthFlow";
@@ -26,6 +26,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    vi.useRealTimers();
     submittedForms.forEach((form) => form.remove());
     localStorage.clear();
     sessionStorage.clear();
@@ -72,5 +73,30 @@ describe("OAuth initialization contract", () => {
         const completion = result.current.initializeOAuth("github");
 
         await expect(completion).rejects.toBe(callbackError);
+    });
+});
+
+describe("OAuth navigation timing", () => {
+    it("holds a fast return for the minimum display time", () => {
+        vi.useFakeTimers();
+        sessionStorage.setItem("oauth_in_progress", "google");
+        sessionStorage.setItem("oauth_start_time", String(Date.now() - 100));
+        const { result } = renderHook(() => useOAuthFlow());
+        expect(result.current.canNavigate).toBe(false);
+        act(() => {
+            vi.advanceTimersByTime(499);
+        });
+        expect(result.current.canNavigate).toBe(false);
+        act(() => {
+            vi.advanceTimersByTime(1);
+        });
+        expect(result.current.canNavigate).toBe(true);
+    });
+
+    it("allows navigation immediately after a slow return", () => {
+        sessionStorage.setItem("oauth_in_progress", "github");
+        sessionStorage.setItem("oauth_start_time", String(Date.now() - 3000));
+        const { result } = renderHook(() => useOAuthFlow());
+        expect(result.current.canNavigate).toBe(true);
     });
 });

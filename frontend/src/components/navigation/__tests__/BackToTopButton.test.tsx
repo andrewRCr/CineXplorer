@@ -1,3 +1,4 @@
+import { within } from "@testing-library/react";
 /**
  * Tests for BackToTopButton component
  *
@@ -260,7 +261,7 @@ describe("BackToTopButton", () => {
       const button = screen.getByRole("button", { name: /scroll to top/i });
 
       // Button should contain an SVG icon
-      const icon = button.querySelector("svg");
+      const icon = within(button).getByTestId("back-to-top-icon");
       expect(icon).toBeInTheDocument();
     });
 

@@ -1,6 +1,6 @@
 /** SortDropdown rendering and selection tests. */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, render, screen } from "@tests/helpers/test-renderer";
+import { render, screen } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import SortDropdown from "../SortDropdown";
 import { createMockBrowseParams } from "@tests/mocks/browseParams";
@@ -63,13 +63,11 @@ describe("SortDropdown", () => {
 
       // Open dropdown and select option
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
-      await act(async () => {
-        await user.click(screen.getByText("Newest"));
-      });
+
+      await user.click(screen.getByText("Newest"));
 
       expect(mockOnSortChange).toHaveBeenCalledWith("release_date.desc");
     });
@@ -85,9 +83,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Should have all 5 options (use getAllByRole to count option elements)
@@ -114,9 +111,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Highest Rated should be in italics (disabled styling)
@@ -136,9 +132,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Highest Rated should NOT be in italics
@@ -159,9 +154,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Should have only 4 options (no title sorts)
@@ -185,9 +179,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Title sort should NOT be present
@@ -205,9 +198,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Title sort should NOT be present
@@ -225,9 +217,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Title sort SHOULD be present
@@ -245,9 +236,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Title sort SHOULD be present
@@ -265,9 +255,8 @@ describe("SortDropdown", () => {
       );
 
       const trigger = screen.getByRole("combobox");
-      await act(async () => {
-        await user.click(trigger);
-      });
+
+      await user.click(trigger);
       await screen.findByRole("listbox");
 
       // Title sort SHOULD be present

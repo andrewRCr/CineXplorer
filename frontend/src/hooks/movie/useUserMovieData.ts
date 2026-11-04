@@ -37,89 +37,116 @@ export function useUserMovieData(tmdbId: string): {
     error: string | null;
     update: (changes: Partial<UserMovieDataUpdate>) => Promise<void>;
 } {
-    const [data, setData] = useState<UserMovieData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    // Track mounted state to prevent setState after unmount
-    const mounted = useRef(true);
+    const id = parseValidTmdbId(tmdbId);
+    const [state, setState] = useState<{
+        tmdbId: string;
+        data: UserMovieData | null;
+        loading: boolean;
+        error: string | null;
+    }>(() => ({
+        tmdbId,
+        data: null,
+        loading: id !== null,
+        error: id === null ? "Invalid movie ID format" : null,
+    }));
+    const changed = state.tmdbId !== tmdbId;
+    const current = changed
+        ? {
+              ...state,
+              tmdbId,
+              data: id === null ? null : state.data,
+              loading: id !== null,
+              error: id === null ? "Invalid movie ID format" : state.error,
+          }
+        : state;
+    if (changed) setState(current);
+    const { data, loading, error } = current;
+    const activeRequest = useRef<{ active: boolean } | null>(null);
 
     useEffect(() => {
-        mounted.current = true;
-        const tmdbIdNum = parseValidTmdbId(tmdbId);
-        if (tmdbIdNum === null) {
-            setError("Invalid movie ID format");
-            setData(null);
-            setLoading(false);
-            return;
-        }
-
-        setLoading(true);
-        const req = getUserMovieDataByTmdbId({ tmdb_id: tmdbIdNum });
-
+        const scope = { active: true };
+        activeRequest.current = scope;
+        if (id === null)
+            return () => {
+                scope.active = false;
+            };
+        const req = getUserMovieDataByTmdbId({ tmdb_id: id });
         req.request
             .then((res) => {
-                if (!mounted.current) return;
+                if (!scope.active) return;
                 if (isUserMovieData(res.data)) {
-                    setData(res.data);
-                    setError(null);
-                } else {
-                    logger.error("Invalid UserMovieData response", {
-                        response: res.data,
+                    setState({
+                        tmdbId,
+                        data: res.data,
+                        error: null,
+                        loading: false,
                     });
-                    setError("Invalid response format from server");
-                    setData(null);
+                } else {
+                    logger.error("Invalid UserMovieData response");
+                    setState({
+                        tmdbId,
+                        data: null,
+                        error: "Invalid response format from server",
+                        loading: false,
+                    });
                 }
             })
             .catch((err: unknown) => {
-                if (!mounted.current) return;
-                setError(
-                    err instanceof Error
-                        ? err.message
-                        : "Failed to fetch user movie data",
-                );
-                setData(null);
-            })
-            .finally(() => {
-                if (mounted.current) setLoading(false);
+                if (!scope.active) return;
+                setState({
+                    tmdbId,
+                    data: null,
+                    error:
+                        err instanceof Error
+                            ? err.message
+                            : "Failed to fetch user movie data",
+                    loading: false,
+                });
             });
-
         return () => {
-            mounted.current = false;
-            if (req && typeof req.cancel === "function") {
-                req.cancel();
-            }
+            scope.active = false;
+            req.cancel();
         };
-    }, [tmdbId]);
+    }, [tmdbId, id]);
 
     const update = async (changes: Partial<UserMovieDataUpdate>) => {
-        if (!data || !data.id) {
+        const scope = activeRequest.current;
+        if (!data || !data.id || !scope?.active) {
             logger.warn("Cannot update: no user movie data loaded");
             return;
         }
-        if (mounted.current) setLoading(true);
+        setState((previous) => ({ ...previous, loading: true }));
         try {
             const response = await updateUserMovieData(data.id, changes);
-            if (!mounted.current) return;
+            if (!scope.active) return;
             if (isUserMovieData(response.data)) {
-                setData(response.data);
-                setError(null);
-            } else {
-                logger.error("Invalid UserMovieData update response", {
-                    response: response.data,
+                setState({
+                    tmdbId,
+                    data: response.data,
+                    error: null,
+                    loading: false,
                 });
-                setError("Invalid response format from server");
+            } else {
+                logger.error("Invalid UserMovieData update response");
+                setState((previous) => ({
+                    ...previous,
+                    error: "Invalid response format from server",
+                    loading: false,
+                }));
             }
         } catch (err: unknown) {
-            if (!mounted.current) return;
-            logger.error("Failed to update user movie data", { error: err });
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Failed to update user movie data",
-            );
-        } finally {
-            if (mounted.current) setLoading(false);
+            if (!scope.active) return;
+            logger.error("Failed to update user movie data", {
+                errorType: err instanceof Error ? err.name : "unknown",
+            });
+            setState((previous) => ({
+                ...previous,
+                error:
+                    err instanceof Error
+                        ? err.message
+                        : "Failed to update user movie data",
+                loading: false,
+            }));
         }
     };
 

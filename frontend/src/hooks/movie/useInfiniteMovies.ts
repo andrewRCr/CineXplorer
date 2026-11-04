@@ -110,16 +110,18 @@ export function useInfiniteMovies({
         },
     });
 
+    const queryPages = query.data?.pages;
+
     // Flatten all pages into single movies array (for infinite scroll)
     const movies = useMemo(() => {
-        if (!query.data?.pages) return [];
-        return query.data.pages.flatMap((page) => page.results ?? []);
-    }, [query.data?.pages]);
+        if (!queryPages) return [];
+        return queryPages.flatMap((page) => page.results ?? []);
+    }, [queryPages]);
 
     // Raw pages array (for sequential/discrete page access)
     const pages = useMemo(() => {
-        return query.data?.pages ?? [];
-    }, [query.data?.pages]);
+        return queryPages ?? [];
+    }, [queryPages]);
 
     // Total results from first page (consistent across all pages)
     const totalResults = pages[0]?.total_results;

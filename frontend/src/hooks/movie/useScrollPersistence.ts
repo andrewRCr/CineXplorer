@@ -34,6 +34,7 @@ import {
     useRef,
     useCallback,
     useMemo,
+    useState,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -239,13 +240,13 @@ export const useScrollPersistence = ({
 
     // Get initial offset for virtualizer
     // Only use saved position for back-navigation (explicit signal), not refresh
-    const initialOffset = useMemo(
-        () =>
-            shouldRestoreScrollRef.current
-                ? getSavedScrollPosition(scrollStorageKey)
-                : 0,
-        [scrollStorageKey],
-    );
+    const [initialRestoration, setInitialRestoration] = useState(() => ({
+        key: scrollStorageKey,
+        offset: restoreScroll ? getSavedScrollPosition(scrollStorageKey) : 0,
+    }));
+    const keyChanged = initialRestoration.key !== scrollStorageKey;
+    if (keyChanged) setInitialRestoration({ key: scrollStorageKey, offset: 0 });
+    const initialOffset = keyChanged ? 0 : initialRestoration.offset;
 
     // --------------------------------------------------------------------------
     // Scroll Position Saving

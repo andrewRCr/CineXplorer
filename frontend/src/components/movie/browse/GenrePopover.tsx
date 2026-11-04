@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Box,
   Button,
@@ -37,12 +37,11 @@ const GenrePopover = ({
 }: GenrePopoverProps) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-  // Close popover when drawer closes
-  useEffect(() => {
-    if (!isDrawerOpen) {
-      setIsPopoverOpen(false);
-    }
-  }, [isDrawerOpen]);
+  const [drawerOpen, setDrawerOpen] = useState(isDrawerOpen);
+  if (drawerOpen !== isDrawerOpen) {
+    setDrawerOpen(isDrawerOpen);
+    if (!isDrawerOpen) setIsPopoverOpen(false);
+  }
 
   // Convert numeric IDs to string array for CheckboxGroup
   const selectedValues = selectedGenres.map((id) => String(id));

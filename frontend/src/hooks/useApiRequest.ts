@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { CanceledError } from "@/services/apiClient";
 
 interface ApiRequestResult<T> {
@@ -40,33 +40,45 @@ export function useApiRequest<T>(
     fetcher: () => FetcherResult<T>,
 ): ApiRequestResult<T> {
     const [data, setData] = useState<T | undefined>();
-    const [error, setError] = useState<string>("");
-    const [isLoading, setIsLoading] = useState(true);
+    const [state, setState] = useState({ fetcher, error: "", isLoading: true });
+    const changed = state.fetcher !== fetcher;
+    if (changed) setState({ fetcher, error: "", isLoading: true });
+    const error = changed ? "" : state.error;
+    const isLoading = changed || state.isLoading;
+    const setError = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+        (next) => {
+            setState((current) => ({
+                ...current,
+                error: typeof next === "function" ? next(current.error) : next,
+            }));
+        },
+        [],
+    );
 
     useEffect(() => {
-        setIsLoading(true);
-        setError("");
+        let active = true;
 
         const { request, cancel } = fetcher();
 
         request
             .then((res) => {
+                if (!active) return;
                 // Atomic update of data and loading state
                 setData(res.data);
-                setIsLoading(false);
+                setState((current) => ({ ...current, isLoading: false }));
             })
             .catch((err: unknown) => {
-                if (err instanceof CanceledError) return;
+                if (!active || err instanceof CanceledError) return;
 
                 // Safely extract error message
                 const message =
                     err instanceof Error ? err.message : String(err);
 
-                setError(message);
-                setIsLoading(false); // Also set loading to false on error
+                setState({ fetcher, error: message, isLoading: false });
             });
 
         return () => {
+            active = false;
             cancel();
         };
     }, [fetcher]);

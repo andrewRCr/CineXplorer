@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
 import { useChakraContext } from "@chakra-ui/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { act } from "@testing-library/react";
+
 import { describe, expect, it } from "vitest";
-import { render } from "@tests/helpers/test-renderer";
+import { render, screen } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 
 const renderers = [
@@ -51,36 +51,34 @@ function FailingQueryProbe() {
 
 describe.each(renderers)("$name providers", ({ render }) => {
   it("provides the application's semantic theme tokens", () => {
-    const view = render(<ThemeProbe />);
-    expect(view.getByLabelText("Layer color")).toHaveTextContent(
+    render(<ThemeProbe />);
+    expect(screen.getByLabelText("Layer color")).toHaveTextContent(
       "var(--chakra-colors-layer-01)",
     );
   });
 
   it("isolates cached data between separate renders", async () => {
-    const first = render(<QueryProbe value="First result" />);
-    expect(await first.findByText("First result")).toBeInTheDocument();
-    first.unmount();
+    const view = render(<QueryProbe value="First result" />);
+    expect(await screen.findByText("First result")).toBeInTheDocument();
+    view.unmount();
 
-    const second = render(<QueryProbe value="Second result" />);
-    expect(await second.findByText("Second result")).toBeInTheDocument();
+    render(<QueryProbe value="Second result" />);
+    expect(await screen.findByText("Second result")).toBeInTheDocument();
   });
 
   it("keeps its cached query result when rerendered", async () => {
     const view = render(<QueryProbe value="Cached result" />);
-    expect(await view.findByText("Cached result")).toBeInTheDocument();
+    expect(await screen.findByText("Cached result")).toBeInTheDocument();
 
-    await act(async () => {
-      view.rerender(<QueryProbe value="Replacement result" />);
-    });
-    expect(view.getByText("Cached result")).toBeInTheDocument();
-    expect(view.getByLabelText("Query cache")).toHaveTextContent(
+    view.rerender(<QueryProbe value="Replacement result" />);
+    expect(screen.getByText("Cached result")).toBeInTheDocument();
+    expect(screen.getByLabelText("Query cache")).toHaveTextContent(
       "Cache: Cached result",
     );
   });
 
   it("reports query failures without waiting for retries", async () => {
-    const view = render(<FailingQueryProbe />);
-    expect(await view.findByText("Query unavailable")).toBeInTheDocument();
+    render(<FailingQueryProbe />);
+    expect(await screen.findByText("Query unavailable")).toBeInTheDocument();
   });
 });

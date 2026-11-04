@@ -1,3 +1,4 @@
+import { within } from "@testing-library/react";
 /**
  * Tests for BackToCollectionLink component
  *
@@ -345,7 +346,7 @@ describe("BackToCollectionLink", () => {
 
       // Arrow is rendered as LuArrowLeft icon (SVG)
       const button = screen.getByRole("button");
-      const svg = button.querySelector("svg");
+      const svg = within(button).getByTestId("back-to-results-icon");
       expect(svg).toBeInTheDocument();
     });
   });

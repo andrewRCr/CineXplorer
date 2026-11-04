@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { HStack, Button, Input } from "@chakra-ui/react";
+import useInputDraft from "@/hooks/useInputDraft";
 import { FiSearch, FiX } from "react-icons/fi";
 
 interface ExpandableSearchInputProps {
@@ -13,20 +14,23 @@ const ExpandableSearchInput = ({
   onQueryChange,
   pageSource,
 }: ExpandableSearchInputProps) => {
-  const [localQuery, setLocalQuery] = useState(query);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [localQuery, setLocalQuery] = useInputDraft(query);
+  const [expansion, setExpansion] = useState({ pageSource, open: false });
+  const sourceChanged = expansion.pageSource !== pageSource;
+  if (sourceChanged) {
+    setExpansion({ pageSource, open: false });
+  }
+  const isExpanded = !sourceChanged && expansion.open;
+  const setIsExpanded = useCallback((open: boolean) => {
+    setExpansion((current) => ({ ...current, open }));
+  }, []);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Track focus timeout for cleanup
   const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Cancel pending focus when the externally selected collection changes.
   useEffect(() => {
-    setLocalQuery(query);
-  }, [query]);
-
-  // Close search bar when page source changes (e.g., via sidebar navigation)
-  useEffect(() => {
-    setIsExpanded(false);
     // Clear any pending focus timeout when page source changes
     if (focusTimeoutRef.current) {
       clearTimeout(focusTimeoutRef.current);
@@ -66,7 +70,7 @@ const ExpandableSearchInput = ({
         focusTimeoutRef.current = null; // Clear reference after execution
       }, 100);
     }
-  }, [isExpanded]);
+  }, [isExpanded, setIsExpanded]);
 
   const collapse = useCallback(() => {
     setIsExpanded(false);
@@ -76,7 +80,7 @@ const ExpandableSearchInput = ({
       focusTimeoutRef.current = null;
     }
     // Don't clear the query on close, only when parent calls onQueryChange
-  }, []);
+  }, [setIsExpanded]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -94,7 +98,7 @@ const ExpandableSearchInput = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setLocalQuery(e.target.value);
     },
-    [],
+    [setLocalQuery],
   );
 
   return (

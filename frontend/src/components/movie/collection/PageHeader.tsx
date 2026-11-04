@@ -122,6 +122,7 @@ const PageHeader = forwardRef(
 
     return (
       <Box
+        data-testid="page-header"
         ref={ref}
         as={Component}
         flexShrink={0}
@@ -133,6 +134,7 @@ const PageHeader = forwardRef(
         {...props}
       >
         <Box
+          data-testid="page-header-title"
           fontSize={styles.fontSize}
           fontWeight="normal"
           fontStyle="italic"
@@ -149,6 +151,7 @@ const PageHeader = forwardRef(
             {/* Accent underline only under main title */}
             {showAccent && (
               <Box
+                data-testid="page-header-accent"
                 position="absolute"
                 bottom="-2px"
                 left="0"

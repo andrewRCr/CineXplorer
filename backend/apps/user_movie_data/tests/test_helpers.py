@@ -67,8 +67,7 @@ def create_mock_user_movie_data(
     user_rating: int | None = None,
     user_review: str | None = None,
 ) -> Mock:
-    """
-    Create a mock UserMovieData record for unit tests.
+    """Create a mock UserMovieData record for unit tests.
 
     Creates a Mock object that mimics a UserMovieData Django model instance,
     including the related Movie object.
@@ -118,8 +117,7 @@ def create_mock_movie(
     poster_path: str | None = "/poster.jpg",
     release_date: date | None = None,
 ) -> Mock:
-    """
-    Create a mock Movie model instance for unit tests.
+    """Create a mock Movie model instance for unit tests.
 
     Creates a Mock object that mimics a Movie Django model instance.
     Use this when testing service methods that need a Movie object
@@ -159,8 +157,7 @@ def create_movie_schema(
     vote_average: float | None = 8.0,
     runtime: int | None = 120,
 ) -> MovieListItemSchema:
-    """
-    Create a MovieListItemSchema for testing without database.
+    """Create a MovieListItemSchema for testing without database.
 
     Use this for unit tests that need MovieListItemSchema objects
     (e.g., testing enrichment service).
@@ -199,8 +196,7 @@ def create_movie_detail_schema(
     runtime: int | None = 120,
     overview: str = "Test movie overview",
 ) -> MovieDetailSchema:
-    """
-    Create a MovieDetailSchema for testing TMDB fetch results.
+    """Create a MovieDetailSchema for testing TMDB fetch results.
 
     Use this when mocking MovieService.get_movie_by_id() return values.
 
@@ -243,8 +239,7 @@ def create_pagination_metadata(
     total_pages: int = 1,
     total_results: int = 0,
 ) -> dict[str, int]:
-    """
-    Create pagination metadata dictionary for repository mock returns.
+    """Create pagination metadata dictionary for repository mock returns.
 
     Provides a clean way to create pagination metadata without long inline dicts.
 

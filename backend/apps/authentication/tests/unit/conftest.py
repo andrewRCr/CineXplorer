@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture()
 def auth_service_factory() -> AuthServiceFactory:
-    """
-    Build AuthenticationService with injectable mock dependencies.
+    """Build AuthenticationService with injectable mock dependencies.
 
     Returns:
         Factory function to build service + dependency mocks.

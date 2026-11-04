@@ -1,5 +1,4 @@
-"""
-Unit tests for MovieService class-based architecture.
+"""Unit tests for MovieService class-based architecture.
 
 Tests the MovieService class with dependency injection pattern, verifying:
 - Constructor injection of TMDB client

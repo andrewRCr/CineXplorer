@@ -1,8 +1,6 @@
-"""
-Stub namespace package for Django contrib modules.
+"""Stub namespace package for Django contrib modules.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.1.x + django-types 0.22.0
 Last verified: 2025-10-09
 

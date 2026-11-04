@@ -1,5 +1,4 @@
-"""
-KeywordService - TMDB keyword integration service.
+"""KeywordService - TMDB keyword integration service.
 
 This service provides keyword-related operations with dependency injection pattern,
 encapsulating TMDB API interactions for keyword discovery and search.
@@ -23,8 +22,7 @@ from apps.movie.services.tmdb_api_boundary.response_factories import (
 
 
 class KeywordService(BaseTMDBService):
-    """
-    Service for TMDB keyword operations with dependency injection.
+    """Service for TMDB keyword operations with dependency injection.
 
     This service handles keyword-related TMDB API interactions, providing
     methods for discovering popular keywords and searching for keywords by query.
@@ -44,8 +42,7 @@ class KeywordService(BaseTMDBService):
     """
 
     def get_popular_keywords(self, page: int = 1) -> KeywordListResponseSchema:
-        """
-        Retrieve popular keywords from TMDB.
+        """Retrieve popular keywords from TMDB.
 
         Args:
             page: Page number for pagination (default: 1)
@@ -70,8 +67,7 @@ class KeywordService(BaseTMDBService):
         return create_paginated_keyword_response_from_tmdb(result)
 
     def search_keywords(self, query: str) -> KeywordListResponseSchema:
-        """
-        Search for keywords by query string.
+        """Search for keywords by query string.
 
         For queries that are empty or less than 2 characters, returns an empty
         response without making an API call (TMDB API requirement).

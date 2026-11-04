@@ -1,8 +1,6 @@
-"""
-Type stubs for allauth.account.adapter module.
+"""Type stubs for allauth.account.adapter module.
 
-⚠️ MAINTENANCE CONTRACT
-------------------------
+Maintenance Contract:
 Synchronized with: django-allauth 65.12.0
 Last verified: 2025-10-09
 
@@ -25,8 +23,7 @@ if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
 
 class DefaultAccountAdapter:
-    """
-    Base adapter class for django-allauth account functionality.
+    """Base adapter class for django-allauth account functionality.
 
     Custom adapters should inherit from this class and override specific methods.
     """

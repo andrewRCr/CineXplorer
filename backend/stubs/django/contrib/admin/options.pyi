@@ -1,10 +1,8 @@
-"""
-Type stub file for django.contrib.admin.options module.
+"""Type stub file for django.contrib.admin.options module.
 
 Provides type definitions for ModelAdmin and related admin options classes.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.2.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -26,8 +24,7 @@ from django.forms import ModelForm
 from django.http import HttpRequest
 
 class ModelAdmin:
-    """
-    Base class for model admin interfaces.
+    """Base class for model admin interfaces.
 
     Provides common admin functionality like list_display, list_filter,
     search_fields, ordering, etc.

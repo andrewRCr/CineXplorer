@@ -1,5 +1,4 @@
-"""
-Django Ninja API endpoints for core app.
+"""Django Ninja API endpoints for core app.
 
 This module provides:
 - General health check endpoint (GET /health-check/)
@@ -55,8 +54,7 @@ core_router = Router(tags=["core"])
 def frontend_log(
     request: HttpRequest, payload: FrontendLogEntrySchema
 ) -> Status[FrontendLogSuccessResponse | FrontendLogErrorResponse]:
-    """
-    Receive frontend log entries for centralized logging.
+    """Receive frontend log entries for centralized logging.
 
     This endpoint allows the frontend to send log entries to the backend
     for centralized logging, monitoring, and debugging.
@@ -115,8 +113,7 @@ def frontend_log(
 
 @core_router.get("/health-check/", auth=None)
 def health_check(request: HttpRequest) -> dict[str, str]:
-    """
-    General health check endpoint for Docker orchestration.
+    """General health check endpoint for Docker orchestration.
 
     This lightweight endpoint confirms the Django application is running
     and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
@@ -140,8 +137,7 @@ def health_check(request: HttpRequest) -> dict[str, str]:
     "codes and categories for frontend type generation via OpenAPI.",
 )
 def get_error_codes(request: HttpRequest) -> list[ApiErrorSchema]:
-    """
-    Return all available error codes with their categories.
+    """Return all available error codes with their categories.
 
     This endpoint serves two purposes:
     1. Documents all error codes and their categories
@@ -189,8 +185,7 @@ def get_error_codes(request: HttpRequest) -> list[ApiErrorSchema]:
 
 @core_router.get("/logs/health/", auth=None, response=LogHealthCheckResponse)
 def log_health_check(request: HttpRequest) -> LogHealthCheckResponse:
-    """
-    Health check endpoint for the logging system.
+    """Health check endpoint for the logging system.
 
     This endpoint verifies that the logging system is working correctly
     and can receive frontend logs.
@@ -235,8 +230,7 @@ def log_health_check(request: HttpRequest) -> LogHealthCheckResponse:
 
 
 def _validate_log_entry(data: FrontendLogEntrySchema) -> str | None:
-    """
-    Validate the log entry data.
+    """Validate the log entry data.
 
     Args:
         data: Frontend log entry schema
@@ -260,8 +254,7 @@ def _validate_log_entry(data: FrontendLogEntrySchema) -> str | None:
 
 
 def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bool:
-    """
-    Process the frontend log entry.
+    """Process the frontend log entry.
 
     Args:
         data: Frontend log entry schema
@@ -348,15 +341,14 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
 def write_dev_console_log(
     request: HttpRequest, payload: DevConsoleLogRequest
 ) -> Status[DevConsoleLogResponse]:
-    """
-    Development-only endpoint to write browser console logs to file.
+    """Development-only endpoint to write browser console logs to file.
 
     This endpoint receives formatted log lines from the frontend logger
     and appends them to backend/logs/frontend.log for AI debugging.
 
     Args:
         request: HTTP request object
-        log_line: Formatted log line to write to file
+        payload: Request body holding the formatted log line to write to file
 
     Returns:
         Status response indicating success or failure
@@ -409,8 +401,7 @@ def write_dev_console_log(
     response={500: dict[str, str], 403: dict[str, str]},
 )
 def debug_error_500(request: HttpRequest) -> Status[dict[str, str]]:
-    """
-    Development-only endpoint that returns a 500 error for testing.
+    """Development-only endpoint that returns a 500 error for testing.
 
     Use this to verify frontend error handling (e.g., toast notifications
     for server errors).

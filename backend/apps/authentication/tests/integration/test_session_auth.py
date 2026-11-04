@@ -1,5 +1,4 @@
-"""
-Tests for Django session-based authentication with Django Ninja endpoints.
+"""Tests for Django session-based authentication with Django Ninja endpoints.
 
 This module verifies that OAuth users (who authenticate via Django sessions)
 can successfully make authenticated API calls to Django Ninja endpoints without
@@ -24,8 +23,7 @@ User = get_user_model()
 
 @pytest.mark.django_db
 def test_session_authentication_works_with_django_ninja_endpoints():
-    """
-    Verify that Django session authentication works with Django Ninja endpoints.
+    """Verify that Django session authentication works with Django Ninja endpoints.
 
     This test simulates an OAuth user (who has a Django session but no JWT tokens)
     making an authenticated API call to a protected Django Ninja endpoint.
@@ -57,8 +55,7 @@ def test_session_authentication_works_with_django_ninja_endpoints():
 
 @pytest.mark.django_db
 def test_session_authentication_supports_write_operations():
-    """
-    Verify that session-authenticated users can perform write operations.
+    """Verify that session-authenticated users can perform write operations.
 
     This test ensures that OAuth users can create and modify data via
     authenticated POST/PATCH requests using only session cookies.
@@ -115,8 +112,7 @@ def test_session_authentication_supports_write_operations():
 
 @pytest.mark.django_db
 def test_unauthenticated_requests_rejected():
-    """
-    Verify that unauthenticated requests (no JWT, no session) are rejected.
+    """Verify that unauthenticated requests (no JWT, no session) are rejected.
 
     This ensures our authentication layer properly rejects requests that
     have neither JWT tokens nor valid session cookies.
@@ -137,8 +133,7 @@ def test_unauthenticated_requests_rejected():
 
 @pytest.mark.django_db
 def test_jwt_authentication_still_works():
-    """
-    Verify that JWT authentication (email/password pattern) still works.
+    """Verify that JWT authentication (email/password pattern) still works.
 
     This test ensures that adding session authentication support didn't
     break the existing JWT authentication flow.
@@ -193,8 +188,7 @@ def test_jwt_authentication_still_works():
 
 @pytest.mark.django_db
 def test_jwt_token_refresh_works():
-    """
-    Verify that JWT token refresh endpoint generates new tokens.
+    """Verify that JWT token refresh endpoint generates new tokens.
 
     This test ensures that the /api/token/refresh/ endpoint correctly:
     - Reads refresh token from HTTP-only cookie
@@ -253,8 +247,7 @@ def test_jwt_token_refresh_works():
 
 @pytest.mark.django_db
 def test_session_auth_persists_across_requests():
-    """
-    Verify that session authentication persists across multiple API calls.
+    """Verify that session authentication persists across multiple API calls.
 
     This test ensures that OAuth users (with session cookies) can make
     multiple authenticated requests without needing to re-authenticate.
@@ -281,8 +274,7 @@ def test_session_auth_persists_across_requests():
 
 @pytest.mark.django_db
 def test_oauth_logout_clears_session():
-    """
-    Verify that logout clears session for OAuth users.
+    """Verify that logout clears session for OAuth users.
 
     This test ensures that calling /api/logout/ effectively ends the
     session for OAuth users, requiring re-authentication for future requests.
@@ -321,8 +313,7 @@ def test_oauth_logout_clears_session():
 
 @pytest.mark.django_db
 def test_jwt_logout_clears_cookies():
-    """
-    Verify that JWT logout clears HTTP-only cookies.
+    """Verify that JWT logout clears HTTP-only cookies.
 
     This test ensures that /api/logout/ endpoint properly clears
     the refresh token cookie for JWT-authenticated users.

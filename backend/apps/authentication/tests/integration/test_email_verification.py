@@ -1,5 +1,4 @@
-"""
-Comprehensive email verification endpoint tests.
+"""Comprehensive email verification endpoint tests.
 
 Tests for POST /api/verify-email/ and POST /api/resend-verification/ endpoints.
 Covers lines 828-847 and 873-885 in authentication/api.py.

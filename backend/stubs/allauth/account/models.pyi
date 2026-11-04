@@ -1,11 +1,9 @@
-"""
-Type stub file for django-allauth account models.
+"""Type stub file for django-allauth account models.
 
 Provides explicit type annotations for allauth's EmailAddress and EmailConfirmation
 models. NO official type stubs exist for django-allauth.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-allauth 0.63.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -38,8 +36,7 @@ if TYPE_CHECKING:
     from django.db.models.manager import Manager
 
 class EmailAddress(models.Model):  # type: ignore[django-manager-missing]
-    """
-    Type stub for allauth's EmailAddress model.
+    """Type stub for allauth's EmailAddress model.
 
     Represents an email address associated with a user account,
     including verification status and primary email designation.
@@ -74,8 +71,7 @@ class EmailAddressManager(Manager[EmailAddress]):
         confirm: bool = False,
         signup: bool = False,
     ) -> EmailAddress:
-        """
-        Add email address for user and optionally send confirmation.
+        """Add email address for user and optionally send confirmation.
 
         Args:
             request: HTTP request context
@@ -95,8 +91,7 @@ class EmailAddressManager(Manager[EmailAddress]):
         """Get verified email address for user."""
 
 class EmailConfirmation(models.Model):
-    """
-    Type stub for allauth's EmailConfirmation model.
+    """Type stub for allauth's EmailConfirmation model.
 
     Represents an email confirmation key/token for verifying email addresses.
 
@@ -113,8 +108,7 @@ class EmailConfirmation(models.Model):
 
     # Instance methods
     def confirm(self, request: HttpRequest | None = None) -> EmailAddress:
-        """
-        Confirm the email address associated with this confirmation.
+        """Confirm the email address associated with this confirmation.
 
         Args:
             request: HTTP request context
@@ -127,8 +121,7 @@ class EmailConfirmation(models.Model):
         """Check if confirmation key has expired."""
 
 class EmailConfirmationHMAC:
-    """
-    Type stub for allauth's EmailConfirmationHMAC.
+    """Type stub for allauth's EmailConfirmationHMAC.
 
     HMAC-based email confirmation that doesn't require database storage.
     Used for generating and validating email confirmation keys.
@@ -139,8 +132,7 @@ class EmailConfirmationHMAC:
     key: str
 
     def __init__(self, email_address: EmailAddress) -> None:
-        """
-        Create HMAC confirmation for email address.
+        """Create HMAC confirmation for email address.
 
         Args:
             email_address: EmailAddress to create confirmation for
@@ -148,8 +140,7 @@ class EmailConfirmationHMAC:
 
     @classmethod
     def from_key(cls, key: str) -> EmailConfirmationHMAC | None:
-        """
-        Validate and load EmailConfirmationHMAC from key.
+        """Validate and load EmailConfirmationHMAC from key.
 
         Args:
             key: HMAC confirmation key to validate
@@ -159,8 +150,7 @@ class EmailConfirmationHMAC:
         """
 
     def confirm(self, request: HttpRequest | None = None) -> EmailAddress:
-        """
-        Confirm the email address associated with this HMAC confirmation.
+        """Confirm the email address associated with this HMAC confirmation.
 
         Args:
             request: HTTP request context

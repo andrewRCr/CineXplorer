@@ -1,8 +1,6 @@
-"""
-Type stubs for django-allauth headless internal utilities.
+"""Type stubs for django-allauth headless internal utilities.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-allauth v65.12.0
 Last verified: 2025-10-09
 

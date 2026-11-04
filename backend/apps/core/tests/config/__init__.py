@@ -1,3 +1,1 @@
-"""
-Tests for configuration modules.
-"""
+"""Tests for configuration modules."""

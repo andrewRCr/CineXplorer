@@ -1,11 +1,9 @@
-"""
-Type stubs for django-environ.
+"""Type stubs for django-environ.
 
 Provides type annotations for django-environ's Env class.
 NO official type stubs exist for django-environ.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-environ 0.12.0 + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 

@@ -1,12 +1,10 @@
-"""
-Type stub file for django.contrib.auth module.
+"""Type stub file for django.contrib.auth module.
 
 This file SUPPLEMENTS django-types for authentication functions. django-types 0.22.0
 provides complete coverage, but this stub provides additional type safety and
 documentation value.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.2.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -36,8 +34,7 @@ _UserModel = TypeVar("_UserModel", bound=AbstractBaseUser)
 def authenticate(
     request: HttpRequest | None = None, **credentials: object
 ) -> AbstractBaseUser | None:
-    """
-    Authenticate user with the given credentials.
+    """Authenticate user with the given credentials.
 
     Returns the user instance if credentials are valid, None otherwise.
     Commonly used with username/email and password.
@@ -51,8 +48,7 @@ def authenticate(
     """
 
 def get_user_model() -> type[AbstractBaseUser]:
-    """
-    Return the User model that is active in this project.
+    """Return the User model that is active in this project.
 
     Returns the custom user model if AUTH_USER_MODEL is set,
     otherwise returns django.contrib.auth.models.User.

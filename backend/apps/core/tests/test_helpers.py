@@ -30,8 +30,7 @@ cross-cutting test utilities.
 - User (unit): create_mock_user() - creates Mock object for unit tests
 - Types: HTTPStatus (stdlib enum), UserParams (TypedDict)
 
-HTTP Status Codes
------------------
+HTTP Status Codes:
 We use Python's stdlib `http.HTTPStatus` enum instead of DRF's status module:
 - Zero dependencies (part of Python stdlib)
 - Type-safe (IntEnum with full mypy/pyright support)
@@ -94,8 +93,7 @@ class UserParams(TypedDict, total=False):
 
 
 def authenticate_client(client: Client, username: str, password: str) -> None:
-    """
-    Authenticate a test client using JWT tokens (hybrid auth pattern).
+    """Authenticate a test client using JWT tokens (hybrid auth pattern).
 
     This helper encapsulates the hybrid authentication pattern where:
     - Login endpoint only sets refresh_token as HTTP-only cookie
@@ -128,8 +126,7 @@ def authenticate_client(client: Client, username: str, password: str) -> None:
 
 
 def login_and_get_tokens(client: Client, username: str, password: str) -> tuple[str, str]:
-    """
-    Login and return access and refresh tokens (hybrid auth pattern).
+    """Login and return access and refresh tokens (hybrid auth pattern).
 
     Unlike authenticate_client(), this function returns tokens as strings
     without modifying the client. Useful for tests that need explicit
@@ -166,8 +163,7 @@ def login_and_get_tokens(client: Client, username: str, password: str) -> tuple[
 
 
 def create_fresh_client(refresh_token: str | None = None) -> Client:
-    """
-    Create a fresh Django test client without session authentication.
+    """Create a fresh Django test client without session authentication.
 
     This is useful for JWT token refresh tests where you need to ensure
     there's NO Django session fallback, only pure JWT authentication.
@@ -206,8 +202,7 @@ def create_fresh_client(refresh_token: str | None = None) -> Client:
 
 
 def get_csrf_token(client: Client) -> str:
-    """
-    Retrieve a valid CSRF token from /api/csrf/ endpoint.
+    """Retrieve a valid CSRF token from /api/csrf/ endpoint.
 
     This helper is used by tests that need to make authenticated POST/PATCH/DELETE
     requests to Django Ninja endpoints protected by CSRF middleware.
@@ -316,8 +311,7 @@ def json_put(client: Client, url: str, data: dict[str, object], **kwargs: object
 
 
 def create_user(email_verified: bool = True, **params: Unpack[UserParams]) -> "UserType":
-    """
-    Create and return a new user for testing.
+    """Create and return a new user for testing.
 
     Args:
         email_verified: Whether to mark the user's email as verified (default: True)
@@ -396,8 +390,7 @@ def create_user(email_verified: bool = True, **params: Unpack[UserParams]) -> "U
 def create_user_and_auth_payload(
     **params: Unpack[UserParams],
 ) -> tuple["UserType", dict[str, str]]:
-    """
-    Create a user and return both the user instance and authentication payload.
+    """Create a user and return both the user instance and authentication payload.
 
     Combines user creation with auth payload generation for login/token tests.
     This eliminates the common 3-line pattern of creating user details,
@@ -453,8 +446,7 @@ def create_mock_user(
     username: str = "testuser",
     email: str = "testuser@example.com",
 ) -> Mock:
-    """
-    Create a mock User object for unit tests (no database).
+    """Create a mock User object for unit tests (no database).
 
     Use this for unit tests where you need a user-like object but don't want
     database access. For integration tests that need a real User in the

@@ -258,8 +258,7 @@ class PersonListResponseSchema(Schema):
 
 
 class MovieDiscoverFilterSchema(Schema):
-    """
-    Schema for TMDB discover endpoint filtering with two-pass architecture.
+    """Schema for TMDB discover endpoint filtering with two-pass architecture.
 
     Extracts parameters for both:
     1. TMDB API filtering (primary) - Reduces millions of movies to thousands
@@ -352,8 +351,7 @@ class MovieDiscoverFilterSchema(Schema):
     @field_validator("*", mode="before")
     @classmethod
     def convert_empty_strings_to_none(cls, v: object) -> object:
-        """
-        Convert empty strings to None for all string fields.
+        """Convert empty strings to None for all string fields.
 
         This handles the Django Test Client / Django Ninja 1.4.3 behavior of
         sending empty strings for omitted parameters, ensuring Pydantic validation

@@ -1,11 +1,9 @@
-"""
-Type stub file for django-allauth socialaccount models.
+"""Type stub file for django-allauth socialaccount models.
 
 Provides explicit type annotations for allauth's SocialApp and SocialAccount
 models used in OAuth authentication. NO official type stubs exist for django-allauth.
 
-⚠️ MAINTENANCE CONTRACT
-------------------------
+Maintenance Contract:
 Synchronized with: django-allauth 65.12.0 + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -38,8 +36,7 @@ if TYPE_CHECKING:
     from django.db.models.manager import Manager, ManyToManyRelatedManager
 
 class SocialApp(models.Model):
-    """
-    Type stub for allauth's SocialApp model.
+    """Type stub for allauth's SocialApp model.
 
     Represents an OAuth provider configuration (client ID, secret, etc.)
     for social authentication.
@@ -61,8 +58,7 @@ class SocialApp(models.Model):
     objects: ClassVar[Manager[SocialApp]]  # pyright: ignore[reportIncompatibleVariableOverride]
 
 class SocialAccount(models.Model):
-    """
-    Type stub for allauth's SocialAccount model.
+    """Type stub for allauth's SocialAccount model.
 
     Represents a user's social authentication account (OAuth connection
     to a specific provider).

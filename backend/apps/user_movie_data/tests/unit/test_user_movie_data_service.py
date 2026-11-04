@@ -1,5 +1,4 @@
-"""
-Unit tests for UserMovieDataService.
+"""Unit tests for UserMovieDataService.
 
 This module tests the user movie data service which handles CRUD operations
 for user-specific movie interactions (watchlist, ratings, reviews).

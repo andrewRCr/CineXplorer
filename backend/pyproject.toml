@@ -39,10 +39,12 @@ select = [
     "PT",    # flake8-pytest-style
     "SIM",   # flake8-simplify
     "ANN401", # Explicit typing.Any detection (type safety quality gate)
+    "D",     # pydocstyle: docstring conventions (Google style, below)
 ]
 
 # Ignore specific rules
 ignore = [
+    "D1",      # Missing docstrings: not every module, class and function needs one
     "DJ001",   # Django model without __str__ (not always needed)
     "RUF012",  # Mutable class attributes (Django/DRF/Pydantic Meta classes)
 ]
@@ -50,6 +52,10 @@ ignore = [
 [tool.ruff.lint.mccabe]
 # Maximum complexity (matches .flake8 max-complexity = 10)
 max-complexity = 10
+
+[tool.ruff.lint.pydocstyle]
+# Google style: summary on the first line, then Args/Returns/Raises sections
+convention = "google"
 
 [tool.ruff.lint.isort]
 # Django-aware import sorting

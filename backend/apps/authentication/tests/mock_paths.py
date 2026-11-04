@@ -1,5 +1,4 @@
-"""
-Centralized mock target paths for authentication app tests.
+"""Centralized mock target paths for authentication app tests.
 
 This module provides constants for commonly-mocked module paths,
 eliminating string duplication across test files and ensuring

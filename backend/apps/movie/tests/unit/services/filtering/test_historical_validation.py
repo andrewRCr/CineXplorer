@@ -1,5 +1,4 @@
-"""
-Unit tests for historical date validation in TMDB result processing.
+"""Unit tests for historical date validation in TMDB result processing.
 
 Tests the historical validation logic that filters out movies with impossible
 release dates (before 1888, the year of the first film ever made).

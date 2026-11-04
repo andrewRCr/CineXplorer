@@ -1,6 +1,4 @@
-"""
-Tests for core models.
-"""
+"""Tests for core models."""
 
 from typing import TYPE_CHECKING, cast
 
@@ -24,7 +22,6 @@ User = get_user_model()
 @pytest.mark.django_db
 def test_create_user_with_username_and_email_successful() -> None:
     """Tests creating a user with both a username and email; case: success."""
-
     username: str = "testUser"
     email: str = "test@example.com"
     password: str = "testpass123"
@@ -47,7 +44,6 @@ def test_create_user_with_username_and_email_successful() -> None:
 @pytest.mark.django_db
 def test_new_user_email_normalized() -> None:
     """Tests newly created user's email is normalized."""
-
     sample_emails: list[list[str]] = [
         ["test1@EXAMPLE.com", "test1@example.com"],
         ["Test2@Example.com", "Test2@example.com"],
@@ -67,7 +63,6 @@ def test_new_user_email_normalized() -> None:
 @pytest.mark.django_db
 def test_new_user_without_username_raises_error() -> None:
     """Tests that creating a user without a username raises a ValueError."""
-
     with pytest.raises(ValueError):
         # django-types limitation - UserManager.create_user type not inferred
         User.objects.create_user("", "testUser@example.com")  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
@@ -81,7 +76,6 @@ def test_django_user_model_allows_empty_email_at_model_level() -> None:
     ACCOUNT_SIGNUP_FIELDS configuration. This test verifies model-level
     behavior only. Serializer/form-level validation is tested separately.
     """
-
     # Django's default User model allows empty email at model level
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
@@ -96,7 +90,6 @@ def test_django_user_model_allows_empty_email_at_model_level() -> None:
 @pytest.mark.django_db
 def test_create_superuser() -> None:
     """Tests creating a new superuser."""
-
     # django-types limitation - UserManager.create_superuser type not inferred
     user = cast(
         "UserType",
@@ -117,7 +110,6 @@ def test_create_superuser() -> None:
 @pytest.mark.django_db
 def test_create_default_user_movie_data() -> None:
     """Tests that creating a default UserMovieData object for a user is successful."""
-
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
         "UserType",
@@ -145,7 +137,6 @@ def test_create_default_user_movie_data() -> None:
 @pytest.mark.django_db
 def test_create_nondefault_user_movie_data() -> None:
     """Tests that creating a non-default UserMovieData object for a user is successful."""
-
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
         "UserType",

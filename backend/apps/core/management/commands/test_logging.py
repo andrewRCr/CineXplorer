@@ -1,5 +1,4 @@
-"""
-Django management command to test logging configuration.
+"""Django management command to test logging configuration.
 
 This command tests all aspects of the logging system to ensure proper integration.
 """

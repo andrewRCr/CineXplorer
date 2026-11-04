@@ -1,5 +1,4 @@
-"""
-Lightweight metrics and monitoring service for CineXplorer.
+"""Lightweight metrics and monitoring service for CineXplorer.
 
 Provides a simple abstraction for recording metrics and errors that can be
 extended to integrate with monitoring systems (Prometheus, Datadog, Sentry, etc.)
@@ -18,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsService:
-    """
-    Simple metrics service using structured logging.
+    """Simple metrics service using structured logging.
 
     This provides a metrics abstraction that can be easily extended to integrate
     with monitoring backends (Prometheus, Datadog, Sentry, etc.) when needed.
@@ -34,8 +32,7 @@ class MetricsService:
         labels: dict[str, Any] | None = None,  # Any: Mixed types from monitoring systems
         value: int = 1,
     ) -> None:
-        """
-        Increment a counter metric.
+        """Increment a counter metric.
 
         Args:
             metric_name: Metric name (e.g., 'login_failed_total')
@@ -71,8 +68,7 @@ class MetricsService:
         context: dict[str, Any] | None = None,  # Any: Error context accepts mixed diagnostic data
         exception: Exception | None = None,
     ) -> None:
-        """
-        Record an error event for monitoring/alerting.
+        """Record an error event for monitoring/alerting.
 
         Args:
             error_type: Error classification (e.g., 'authentication_failure')

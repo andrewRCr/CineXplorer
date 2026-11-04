@@ -1,5 +1,4 @@
-"""
-Unit tests for year filtering in TMDB result processing.
+"""Unit tests for year filtering in TMDB result processing.
 
 Tests the year filtering logic that handles TMDB API quirks where movies
 with incorrect release years are sometimes returned (e.g., re-releases,

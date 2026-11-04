@@ -1,5 +1,4 @@
-"""
-API Response wrapper for consistent handling of HTTP responses.
+"""API Response wrapper for consistent handling of HTTP responses.
 
 This module provides a standardized way to handle API responses across
 all HTTP clients in the application, ensuring consistent access to
@@ -28,8 +27,7 @@ RATE_LIMIT_HEADER_MAPPING: dict[str, str] = {
 
 @dataclass
 class ApiResponse:
-    """
-    Standardized wrapper for HTTP API responses.
+    """Standardized wrapper for HTTP API responses.
 
     Provides consistent access to response data, metadata, timing,
     and error information regardless of the underlying HTTP client.
@@ -75,8 +73,8 @@ class ApiResponse:
         return self.data is not None
 
     def get_json_data(self) -> dict[str, object] | None:
-        """
-        Get response data as JSON dictionary.
+        """Get response data as JSON dictionary.
+
         Returns None if data is not a dictionary.
         """
         if isinstance(self.data, dict):
@@ -101,8 +99,8 @@ class ApiResponse:
         return default
 
     def get_rate_limit_info(self) -> dict[str, object] | None:
-        """
-        Extract rate limiting information from headers.
+        """Extract rate limiting information from headers.
+
         Returns None if no rate limit headers are found.
         """
         if not self.headers:
@@ -151,8 +149,8 @@ class ApiResponse:
         return content_info
 
     def get_error_summary(self) -> dict[str, object] | None:
-        """
-        Get a comprehensive error summary if the response indicates an error.
+        """Get a comprehensive error summary if the response indicates an error.
+
         Returns None for successful responses.
         """
         if self.is_success():
@@ -180,8 +178,8 @@ class ApiResponse:
         return {k: v for k, v in error_summary.items() if v is not None}
 
     def to_legacy_dict(self) -> dict[str, object]:
-        """
-        Convert to legacy dictionary format for backward compatibility.
+        """Convert to legacy dictionary format for backward compatibility.
+
         This matches the current error format used in movie_service.py.
         """
         if self.is_success():

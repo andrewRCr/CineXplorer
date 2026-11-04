@@ -1,5 +1,4 @@
-"""
-Base API Client for consistent HTTP request handling.
+"""Base API Client for consistent HTTP request handling.
 
 This module provides a reusable base class for HTTP API clients with
 standardized logging, error handling, timing, correlation IDs, and
@@ -21,8 +20,7 @@ from .api_response import ApiResponse
 
 
 class BaseApiClient(ABC):
-    """
-    Abstract base class for HTTP API clients.
+    """Abstract base class for HTTP API clients.
 
     Provides common functionality for HTTP requests including:
     - Correlation ID generation and tracking
@@ -39,8 +37,7 @@ class BaseApiClient(ABC):
         timeout: int = 30,
         max_retries: int = 0,
     ) -> None:
-        """
-        Initialize the base API client.
+        """Initialize the base API client.
 
         Args:
             base_url: Base URL for API endpoints
@@ -82,8 +79,8 @@ class BaseApiClient(ABC):
 
     @abstractmethod
     def prepare_headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
-        """
-        Prepare headers for the request.
+        """Prepare headers for the request.
+
         Subclasses should implement this to add authentication, API keys, etc.
 
         Args:
@@ -95,8 +92,7 @@ class BaseApiClient(ABC):
 
     @abstractmethod
     def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
-        """
-        Get sanitized parameters for logging (remove sensitive data).
+        """Get sanitized parameters for logging (remove sensitive data).
 
         Args:
             params: Original parameters dictionary
@@ -106,8 +102,7 @@ class BaseApiClient(ABC):
         """
 
     def classify_error(self, status_code: int) -> str:
-        """
-        Classify error based on HTTP status code.
+        """Classify error based on HTTP status code.
 
         Args:
             status_code: HTTP status code
@@ -126,8 +121,7 @@ class BaseApiClient(ABC):
 
     @staticmethod
     def _safe_headers_dict(response: requests.Response) -> dict[str, str]:
-        """
-        Safely extract headers as a dictionary from a response object.
+        """Safely extract headers as a dictionary from a response object.
 
         Handles both real Response objects and mock objects in tests,
         returning an empty dict if headers cannot be extracted.
@@ -147,8 +141,8 @@ class BaseApiClient(ABC):
             return {}
 
     def get_error_details(self, status_code: int) -> str:
-        """
-        Get human-readable error details for status code.
+        """Get human-readable error details for status code.
+
         Subclasses can override for API-specific error messages.
 
         Args:
@@ -175,8 +169,7 @@ class BaseApiClient(ABC):
     def process_successful_response(
         self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
-        """
-        Process a successful HTTP response.
+        """Process a successful HTTP response.
 
         Args:
             response: Requests response object
@@ -249,8 +242,7 @@ class BaseApiClient(ABC):
     def process_error_response(
         self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
-        """
-        Process an error HTTP response.
+        """Process an error HTTP response.
 
         Args:
             response: Requests response object with error status
@@ -313,8 +305,7 @@ class BaseApiClient(ABC):
         url: str,
         params: dict[str, object] | None = None,
     ) -> ApiResponse:
-        """
-        Handle request exceptions (network errors, timeouts, etc.).
+        """Handle request exceptions (network errors, timeouts, etc.).
 
         Args:
             error: The exception that occurred
@@ -440,8 +431,7 @@ class BaseApiClient(ABC):
         headers: dict[str, str] | None = None,
         **kwargs: object,
     ) -> ApiResponse:
-        """
-        Make a GET request to the API.
+        """Make a GET request to the API.
 
         Args:
             endpoint: API endpoint (relative to base_url)

@@ -1,6 +1,4 @@
-"""
-Command to wait for the database to be available before starting the core app.
-"""
+"""Command to wait for the database to be available before starting the core app."""
 
 import sys
 import time
@@ -13,8 +11,7 @@ from django.db.utils import OperationalError
 
 
 class Command(BaseCommand):
-    """
-    Django command to wait for the database to be available before starting the core app.
+    """Django command to wait for the database to be available before starting the core app.
 
     Supports configurable timeout and exponential backoff to avoid log spam.
     """

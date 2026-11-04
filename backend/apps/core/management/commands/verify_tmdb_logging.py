@@ -1,5 +1,4 @@
-"""
-Django management command to verify TMDB API logging captures all expected metadata.
+"""Django management command to verify TMDB API logging captures all expected metadata.
 
 This command makes a single TMDB API call and then examines the log output
 to verify that all structured logging data is being captured correctly.

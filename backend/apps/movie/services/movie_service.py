@@ -44,8 +44,7 @@ logger = logging.getLogger("cinexplorer.tmdb")
 
 
 class MovieService(BaseTMDBService):
-    """
-    Movie service with dependency injection for TMDB integration.
+    """Movie service with dependency injection for TMDB integration.
 
     This service encapsulates all TMDB API interactions with constructor-based
     dependency injection, enabling testability and maintaining separation of
@@ -75,8 +74,7 @@ class MovieService(BaseTMDBService):
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Core TMDB discover wrapper with full filtering capabilities.
+        """Core TMDB discover wrapper with full filtering capabilities.
 
         This is the foundational discovery method that other service methods build upon.
         Date-constrained methods (get_now_playing_movies, get_upcoming_movies) call this
@@ -106,6 +104,7 @@ class MovieService(BaseTMDBService):
                 - release_date_gte/lte: Release date range
                 - with_release_type: Release type (2|3 for theatrical)
                 - certification: Certification rating
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with discovered movies, including
@@ -170,8 +169,7 @@ class MovieService(BaseTMDBService):
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Retrieves movies currently playing in theaters with filtering.
+        """Retrieves movies currently playing in theaters with filtering.
 
         This is a thin wrapper around discover_movies() with protected date range
         and release type presets. The date range covers the "theater planning window"
@@ -193,6 +191,7 @@ class MovieService(BaseTMDBService):
         Args:
             page: Page number for pagination
             params: BrowseServiceParams model with user-provided filters
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with now playing movies
@@ -227,8 +226,7 @@ class MovieService(BaseTMDBService):
         params: BrowseServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Retrieves upcoming movies releasing soon in theaters with filtering.
+        """Retrieves upcoming movies releasing soon in theaters with filtering.
 
         This is a thin wrapper around discover_movies() with protected date range
         and release type presets. The date range covers the "upcoming planning window"
@@ -250,6 +248,7 @@ class MovieService(BaseTMDBService):
         Args:
             page: Page number for pagination
             params: BrowseServiceParams model with user-provided filters
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with upcoming movies
@@ -291,8 +290,7 @@ class MovieService(BaseTMDBService):
         params: SearchServiceParams | None = None,
         dedup_tracker: DeduplicationTracker | None = None,
     ) -> MovieListResponseSchema:
-        """
-        Searches for movies by query string using TMDB.
+        """Searches for movies by query string using TMDB.
 
         Args:
             page: Page number for pagination
@@ -345,8 +343,7 @@ class MovieService(BaseTMDBService):
     # ========================================================================
 
     def get_movie_by_id(self, tmdb_id: int) -> MovieDetailSchema:
-        """
-        Retrieves movie details and credits from TMDB by movie ID.
+        """Retrieves movie details and credits from TMDB by movie ID.
 
         Args:
             tmdb_id: TMDB movie ID
@@ -405,8 +402,7 @@ class MovieService(BaseTMDBService):
     # ========================================================================
 
     def get_movie_genres(self) -> list[GenreSchema]:
-        """
-        Retrieves the list of movie genres from TMDB.
+        """Retrieves the list of movie genres from TMDB.
 
         Returns:
             List of GenreSchema instances

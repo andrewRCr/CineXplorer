@@ -1,5 +1,4 @@
-"""
-Type stubs for freezegun library.
+"""Type stubs for freezegun library.
 
 Library: freezegun 1.5.1
 Purpose: Time mocking for tests
@@ -29,8 +28,7 @@ def freeze_time(
     as_arg: bool = False,
     auto_tick_seconds: int = 0,
 ) -> AbstractContextManager[Any]:
-    """
-    Context manager/decorator to freeze time for testing.
+    """Context manager/decorator to freeze time for testing.
 
     Args:
         time_to_freeze: Time to freeze to (ISO string or datetime)

@@ -1,5 +1,4 @@
-"""
-Response validation utilities for type-safe API response processing.
+"""Response validation utilities for type-safe API response processing.
 
 This module provides validators that bridge the gap between generic ApiResponse
 objects and specific Pydantic model validation, ensuring type safety throughout
@@ -19,8 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) -> T:
-    """
-    Type-safe validation of TMDB API responses.
+    """Type-safe validation of TMDB API responses.
 
     Bridges the gap between generic ApiResponse.data and specific Pydantic models
     by performing proper type narrowing and validation.
@@ -61,8 +59,7 @@ def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) 
 def validate_tmdb_list_response[T: BaseModel](
     response: ApiResponse, item_model: type[T]
 ) -> list[T]:
-    """
-    Type-safe validation of TMDB API list responses.
+    """Type-safe validation of TMDB API list responses.
 
     Validates responses that contain lists of items, ensuring each item
     conforms to the expected Pydantic model.
@@ -101,8 +98,7 @@ def validate_tmdb_list_response[T: BaseModel](
 
 
 def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model: type[T]) -> T:
-    """
-    Type-safe validation of TMDB paginated responses.
+    """Type-safe validation of TMDB paginated responses.
 
     Specifically for TMDB responses that contain pagination metadata
     along with results (like search results, discover results, etc.).

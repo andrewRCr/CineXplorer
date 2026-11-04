@@ -1,5 +1,4 @@
-"""
-Unit tests for rating filtering in TMDB result processing.
+"""Unit tests for rating filtering in TMDB result processing.
 
 Tests the rating filtering logic that handles TMDB API quirks where movies
 with placeholder ratings (0.0) or incorrect ratings are sometimes returned.

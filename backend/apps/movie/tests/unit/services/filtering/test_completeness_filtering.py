@@ -1,5 +1,4 @@
-"""
-Unit tests for completeness filtering in TMDB result processing.
+"""Unit tests for completeness filtering in TMDB result processing.
 
 Tests the data completeness validation that ensures movies have required fields
 for proper display (poster, title, overview). TMDB data quality issues often

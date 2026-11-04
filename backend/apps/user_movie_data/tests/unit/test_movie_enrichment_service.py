@@ -1,5 +1,4 @@
-"""
-Unit tests for MovieEnrichmentService.
+"""Unit tests for MovieEnrichmentService.
 
 This module tests the movie enrichment service which populates movie data
 with user-specific information (watchlist status, ratings, reviews).

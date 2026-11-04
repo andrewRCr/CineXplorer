@@ -1,5 +1,4 @@
-"""
-Request logging middleware for CineXplorer.
+"""Request logging middleware for CineXplorer.
 
 This middleware provides:
 - UUID-based correlation IDs for request tracking
@@ -33,8 +32,7 @@ logger = logging.getLogger("cinexplorer.requests")
 
 
 class RequestLoggingMiddleware(MiddlewareMixin):
-    """
-    Middleware to log HTTP requests and responses with correlation IDs.
+    """Middleware to log HTTP requests and responses with correlation IDs.
 
     This middleware:
     1. Generates a unique correlation ID for each request
@@ -77,8 +75,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
     }
 
     def _is_health_check(self, request: HttpRequest) -> bool:
-        """
-        Check if this is a health check request.
+        """Check if this is a health check request.
 
         Args:
             request: The HTTP request
@@ -89,8 +86,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         return request.path in self.HEALTH_CHECK_PATHS
 
     def _sanitize_headers(self, request: HttpRequest) -> dict[str, str]:
-        """
-        Sanitize request headers by redacting sensitive values.
+        """Sanitize request headers by redacting sensitive values.
 
         Args:
             request: The HTTP request
@@ -108,8 +104,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         return sanitized
 
     def _sanitize_query_string(self, query_string: str) -> str:
-        """
-        Sanitize query string by redacting sensitive parameter values.
+        """Sanitize query string by redacting sensitive parameter values.
 
         Args:
             query_string: Raw query string from request
@@ -134,8 +129,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         return urlencode(sanitized_params)
 
     def process_request(self, request: HttpRequest) -> None:
-        """
-        Process incoming request - generate correlation ID and log request start.
+        """Process incoming request - generate correlation ID and log request start.
 
         Args:
             request: The incoming HTTP request
@@ -184,8 +178,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         )
 
     def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
-        """
-        Process outgoing response - log request completion with timing.
+        """Process outgoing response - log request completion with timing.
 
         Args:
             request: The HTTP request
@@ -194,7 +187,6 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         Returns:
             HttpResponse: The unmodified response
         """
-
         # Calculate request duration
         duration: float | None = None
         if hasattr(request, "start_time"):
@@ -261,8 +253,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         return response
 
     def process_exception(self, request: HttpRequest, exception: Exception) -> None:
-        """
-        Process unhandled exceptions - log with correlation ID.
+        """Process unhandled exceptions - log with correlation ID.
 
         Args:
             request: The HTTP request
@@ -317,8 +308,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         )
 
     def _get_user_context(self, request: HttpRequest) -> dict[str, object]:
-        """
-        Get user context for logging (safely handles anonymous users).
+        """Get user context for logging (safely handles anonymous users).
 
         Args:
             request: The HTTP request
@@ -340,8 +330,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         }
 
     def _get_client_ip(self, request: HttpRequest) -> str:
-        """
-        Get client IP address, handling proxies.
+        """Get client IP address, handling proxies.
 
         Args:
             request: The HTTP request
@@ -361,8 +350,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         return str(request.META.get("REMOTE_ADDR", "unknown"))
 
     def _get_log_level_for_status(self, status_code: int) -> int:
-        """
-        Determine appropriate log level based on HTTP status code.
+        """Determine appropriate log level based on HTTP status code.
 
         Args:
             status_code: HTTP response status code
@@ -379,8 +367,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
 
 def get_correlation_id(request: HttpRequest) -> str | None:
-    """
-    Utility function to get correlation ID from request object.
+    """Utility function to get correlation ID from request object.
 
     This function can be used throughout the application to access
     the correlation ID for the current request.

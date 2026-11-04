@@ -1,5 +1,4 @@
-"""
-Unit tests for language script filtering - detecting mislabeled TMDB content.
+"""Unit tests for language script filtering - detecting mislabeled TMDB content.
 
 TMDB has data quality issues where films are tagged with incorrect original_language
 values. This filter catches films tagged as Latin-script languages (English, Spanish,

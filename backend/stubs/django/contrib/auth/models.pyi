@@ -1,11 +1,9 @@
-"""
-Type stub file for django.contrib.auth.models.
+"""Type stub file for django.contrib.auth.models.
 
 This file SUPPLEMENTS django-types to provide explicit type annotations that django-types
 cannot infer, specifically the `id` field on AbstractBaseUser and AbstractUser.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.1.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -78,8 +76,7 @@ class AbstractBaseUser(models.Model):
 class PermissionsMixin(models.Model): ...
 
 class AbstractUser(AbstractBaseUser, PermissionsMixin):
-    """
-    Type stub for Django's AbstractUser model with explicit field types.
+    """Type stub for Django's AbstractUser model with explicit field types.
 
     This provides complete type information for all standard User model fields,
     eliminating "unknown type" warnings in Pyright/Pylance.
@@ -119,8 +116,8 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
     ) -> None: ...
 
 class User(AbstractUser):  # type: ignore[django-manager-missing]
-    """
-    Type stub for Django's concrete User model.
+    """Type stub for Django's concrete User model.
+
     Inherits all fields from AbstractUser.
     """
 

@@ -1,5 +1,4 @@
-"""
-Unit tests for buffer mechanism in TMDB result processing.
+"""Unit tests for buffer mechanism in TMDB result processing.
 
 Tests the buffer logic that maintains consistent page sizes (20 results per page)
 even when filtering removes some results. The buffer mechanism fetches additional

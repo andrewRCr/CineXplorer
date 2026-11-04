@@ -1,5 +1,4 @@
-"""
-Integration tests for the UserMovieData Django Ninja API endpoints.
+"""Integration tests for the UserMovieData Django Ninja API endpoints.
 
 This module contains comprehensive tests for the user movie data API,
 including authentication, CRUD operations, and user-specific data filtering.
@@ -84,8 +83,7 @@ def other_user(db: None) -> User:
 
 @pytest.fixture
 def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
-    """
-    Create an authenticated user and return (client, user) tuple.
+    """Create an authenticated user and return (client, user) tuple.
 
     Creates a verified user (can login) and authenticates via the JWT token
     endpoint which sets the necessary cookies for Django Ninja JWTCookieAuth.
@@ -123,8 +121,7 @@ def user_movie_data(authenticated_user: tuple[Client, User], movie: Movie) -> Us
 
 @pytest.mark.django_db
 def test_unauthenticated_get_by_tmdb_id_denied(api_client: Client) -> None:
-    """
-    Test that unauthenticated GET by TMDB ID is denied.
+    """Test that unauthenticated GET by TMDB ID is denied.
 
     The /by-tmdb-id endpoint requires JWT authentication.
     """
@@ -145,8 +142,7 @@ def test_unauthenticated_create_denied(api_client: Client, movie: Movie) -> None
 
 @pytest.mark.django_db
 def test_unauthenticated_update_denied(api_client: Client, user_movie_data: UserMovieData) -> None:
-    """
-    Test that unauthenticated PATCH requests are denied.
+    """Test that unauthenticated PATCH requests are denied.
 
     NOTE: Returns 403 (CSRF error) not 401 because CSRF middleware runs
     before endpoint authentication. This is expected behavior.
@@ -159,8 +155,7 @@ def test_unauthenticated_update_denied(api_client: Client, user_movie_data: User
 
 @pytest.mark.django_db
 def test_unauthenticated_delete_denied(api_client: Client, user_movie_data: UserMovieData) -> None:
-    """
-    Test that unauthenticated DELETE requests are denied.
+    """Test that unauthenticated DELETE requests are denied.
 
     NOTE: Returns 403 (CSRF error) not 401 because CSRF middleware runs
     before endpoint authentication. This is expected behavior.
@@ -354,8 +349,7 @@ def test_create_user_movie_data_duplicate_returns_400(
 def test_create_user_movie_data_invalid_movie_id_returns_404(
     mock_get_movie_details: Mock, authenticated_user: tuple[Client, User]
 ) -> None:
-    """
-    Test that creating with nonexistent movie_id returns 404.
+    """Test that creating with nonexistent movie_id returns 404.
 
     The TMDB client is mocked with the error response it builds when TMDB
     answers 404 for an unknown movie ID, so the test needs no API key.
@@ -388,8 +382,7 @@ def test_create_user_movie_data_invalid_movie_id_returns_404(
 def test_create_user_movie_data_invalid_rating_returns_422(
     authenticated_user: tuple[Client, User], movie: Movie, invalid_rating: int
 ) -> None:
-    """
-    Test that creating with invalid rating (outside 1-10 range) returns 422.
+    """Test that creating with invalid rating (outside 1-10 range) returns 422.
 
     Parametrized to test: below minimum (0), above maximum (11), and negative.
     """

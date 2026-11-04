@@ -1,5 +1,4 @@
-"""
-Tests for email backend integration with django-zoho-zeptomail.
+"""Tests for email backend integration with django-zoho-zeptomail.
 
 These tests verify:
 1. Test environment uses locmem backend (emails captured, not sent)

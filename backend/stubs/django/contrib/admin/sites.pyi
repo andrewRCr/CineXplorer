@@ -1,10 +1,8 @@
-"""
-Type stub file for django.contrib.admin.sites module.
+"""Type stub file for django.contrib.admin.sites module.
 
 Provides type definitions for AdminSite and the global admin.site instance.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.2.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -23,8 +21,7 @@ from django.db.models import Model
 from django.http import HttpRequest, HttpResponse
 
 class AdminSite:
-    """
-    Django admin site - central registry for model admin classes.
+    """Django admin site - central registry for model admin classes.
 
     The default instance is available at django.contrib.admin.site.
     """
@@ -51,8 +48,7 @@ class AdminSite:
         admin_class: type[ModelAdmin] | None = None,
         **options: object,
     ) -> None:
-        """
-        Register model(s) with this admin site.
+        """Register model(s) with this admin site.
 
         Usage:
             admin.site.register(MyModel)
@@ -66,16 +62,14 @@ class AdminSite:
         """
 
     def unregister(self, model_or_iterable: type[Model] | list[type[Model]]) -> None:
-        """
-        Unregister model(s) from this admin site.
+        """Unregister model(s) from this admin site.
 
         Args:
             model_or_iterable: Model class or list of model classes to unregister
         """
 
     def is_registered(self, model: type[Model]) -> bool:
-        """
-        Check if a model is registered with this admin site.
+        """Check if a model is registered with this admin site.
 
         Args:
             model: Model class to check
@@ -92,8 +86,7 @@ class AdminSite:
         """URL patterns for this admin site (for URL configuration)."""
 
     def each_context(self, request: HttpRequest) -> dict[str, object]:
-        """
-        Return common context variables for all admin views.
+        """Return common context variables for all admin views.
 
         Args:
             request: HTTP request object
@@ -105,8 +98,7 @@ class AdminSite:
     def index(
         self, request: HttpRequest, extra_context: dict[str, object] | None = None
     ) -> HttpResponse:
-        """
-        Display admin index page.
+        """Display admin index page.
 
         Args:
             request: HTTP request object
@@ -119,8 +111,7 @@ class AdminSite:
     def app_index(
         self, request: HttpRequest, app_label: str, extra_context: dict[str, object] | None = None
     ) -> HttpResponse:
-        """
-        Display admin index page for a specific app.
+        """Display admin index page for a specific app.
 
         Args:
             request: HTTP request object

@@ -1,8 +1,6 @@
-"""
-Type stubs for django-allauth sessionkit module.
+"""Type stubs for django-allauth sessionkit module.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-allauth v65.12.0
 Last verified: 2025-10-09
 
@@ -17,8 +15,7 @@ Purpose: Provides type information for allauth's session utilities
 from django.contrib.sessions.backends.base import SessionBase
 
 def session_store(session_key: str | None = None) -> SessionBase:
-    """
-    Get Django session store instance.
+    """Get Django session store instance.
 
     Args:
         session_key: Optional session key to load specific session

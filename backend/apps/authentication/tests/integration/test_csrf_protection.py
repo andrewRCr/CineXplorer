@@ -1,5 +1,4 @@
-"""
-Comprehensive CSRF Protection Tests for Django Ninja + Django Middleware Integration.
+"""Comprehensive CSRF Protection Tests for Django Ninja + Django Middleware Integration.
 
 These tests verify that Django's CsrfViewMiddleware properly protects endpoints
 even with csrf=False set on Django Ninja's API and auth classes (workaround for bug #1464).
@@ -37,8 +36,7 @@ PROFILE_URL = "/api/profile/"
 
 @pytest.fixture
 def csrf_client(api_client: Client, db: None) -> tuple[Client, "User"]:
-    """
-    Create authenticated client for CSRF tests.
+    """Create authenticated client for CSRF tests.
 
     Returns tuple of (Django test client with JWT cookies, user object).
     User returned for tests that need to verify database changes.
@@ -60,8 +58,7 @@ def csrf_client(api_client: Client, db: None) -> tuple[Client, "User"]:
 
 @pytest.mark.django_db
 def test_csrf_blocks_patch_without_token(csrf_client: tuple[Client, "User"]) -> None:
-    """
-    CRITICAL: PATCH request without CSRF token should be blocked (403).
+    """CRITICAL: PATCH request without CSRF token should be blocked (403).
 
     This verifies Django's CsrfViewMiddleware is active even with csrf=False
     on Django Ninja API/auth classes.
@@ -80,8 +77,7 @@ def test_csrf_blocks_patch_without_token(csrf_client: tuple[Client, "User"]) -> 
 
 @pytest.mark.django_db
 def test_csrf_accepts_patch_with_valid_token(csrf_client: tuple[Client, "User"], db: None) -> None:
-    """
-    CRITICAL: PATCH request WITH valid CSRF token should succeed (200).
+    """CRITICAL: PATCH request WITH valid CSRF token should succeed (200).
 
     This verifies Django's CSRF middleware accepts valid tokens.
     """
@@ -110,8 +106,7 @@ def test_csrf_accepts_patch_with_valid_token(csrf_client: tuple[Client, "User"],
 
 @pytest.mark.django_db
 def test_csrf_exempts_get_requests(csrf_client: tuple[Client, "User"]) -> None:
-    """
-    GET requests should NOT require CSRF tokens (safe method).
+    """GET requests should NOT require CSRF tokens (safe method).
 
     This verifies Django's CSRF middleware exempts safe methods.
     """
@@ -124,8 +119,7 @@ def test_csrf_exempts_get_requests(csrf_client: tuple[Client, "User"]) -> None:
 
 @pytest.mark.django_db
 def test_csrf_exempts_login_endpoint(api_client: Client, db: None) -> None:
-    """
-    Login endpoint (auth=None) should NOT require CSRF token.
+    """Login endpoint (auth=None) should NOT require CSRF token.
 
     This verifies Django Ninja properly exempts auth=None endpoints.
     """
@@ -143,8 +137,7 @@ def test_csrf_exempts_login_endpoint(api_client: Client, db: None) -> None:
 
 @pytest.mark.django_db
 def test_csrf_exempts_register_endpoint(api_client: Client, db: None) -> None:
-    """
-    Register endpoint (auth=None) should NOT require CSRF token.
+    """Register endpoint (auth=None) should NOT require CSRF token.
 
     This verifies Django Ninja properly exempts auth=None endpoints.
     """
@@ -165,8 +158,7 @@ def test_csrf_exempts_register_endpoint(api_client: Client, db: None) -> None:
 
 @pytest.mark.django_db
 def test_csrf_token_endpoint_generates_valid_token(api_client: Client, db: None) -> None:
-    """
-    /api/csrf/ endpoint should generate a valid Django CSRF token.
+    """/api/csrf/ endpoint should generate a valid Django CSRF token.
 
     This verifies the CSRF endpoint integration with Django's token generation.
     """
@@ -191,8 +183,7 @@ def test_csrf_token_endpoint_generates_valid_token(api_client: Client, db: None)
 
 @pytest.mark.django_db
 def test_csrf_token_from_endpoint_works_for_requests(csrf_client: tuple[Client, "User"]) -> None:
-    """
-    INTEGRATION: CSRF token from /api/csrf/ should work for subsequent requests.
+    """INTEGRATION: CSRF token from /api/csrf/ should work for subsequent requests.
 
     This tests the full flow: get token → use token → request succeeds.
     """
@@ -216,8 +207,7 @@ def test_csrf_token_from_endpoint_works_for_requests(csrf_client: tuple[Client, 
 
 @pytest.mark.django_db
 def test_csrf_rejects_invalid_token(csrf_client: tuple[Client, "User"]) -> None:
-    """
-    CSRF middleware should reject invalid/fake tokens.
+    """CSRF middleware should reject invalid/fake tokens.
 
     This verifies token validation is actually performed.
     """
@@ -244,8 +234,7 @@ def test_csrf_rejects_invalid_token(csrf_client: tuple[Client, "User"]) -> None:
 
 @pytest.mark.django_db
 def test_unauthenticated_patch_fails_with_401_not_403(api_client: Client, db: None) -> None:
-    """
-    Unauthenticated PATCH should fail with 401 (not 403 CSRF).
+    """Unauthenticated PATCH should fail with 401 (not 403 CSRF).
 
     This verifies authentication is checked before CSRF.
     """
@@ -265,8 +254,7 @@ def test_unauthenticated_patch_fails_with_401_not_403(api_client: Client, db: No
 
 @pytest.mark.django_db
 def test_csrf_enforced_before_jwt_validation(csrf_client: tuple[Client, "User"]) -> None:
-    """
-    CSRF middleware runs before endpoint JWT validation.
+    """CSRF middleware runs before endpoint JWT validation.
 
     This means expired JWT + no CSRF token returns 403 (not 401).
     This is a minor UX issue but acceptable middleware ordering trade-off.
@@ -292,8 +280,7 @@ def test_csrf_enforced_before_jwt_validation(csrf_client: tuple[Client, "User"])
 def test_csrf_token_valid_for_multiple_requests(
     csrf_client: tuple[Client, "User"], db: None
 ) -> None:
-    """
-    Single CSRF token valid for multiple requests (session lifetime).
+    """Single CSRF token valid for multiple requests (session lifetime).
 
     Django CSRF tokens don't expire per-request, only per session.
     This is expected behavior and improves performance.
@@ -325,8 +312,7 @@ def test_csrf_token_valid_for_multiple_requests(
 
 @pytest.mark.django_db
 def test_refresh_endpoint_requires_csrf(csrf_client: tuple[Client, "User"]) -> None:
-    """
-    Token refresh endpoint requires CSRF (Option A decision).
+    """Token refresh endpoint requires CSRF (Option A decision).
 
     Rationale: Limits stolen session lifetime to 5 minutes (access token lifetime).
     Without CSRF, stolen JWT cookies can be refreshed indefinitely.

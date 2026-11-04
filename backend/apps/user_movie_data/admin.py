@@ -1,6 +1,4 @@
-"""
-Django admin interface customization for user movie data.
-"""
+"""Django admin interface customization for user movie data."""
 
 from django.contrib import admin
 

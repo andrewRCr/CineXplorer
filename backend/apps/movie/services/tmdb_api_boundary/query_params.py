@@ -1,5 +1,4 @@
-"""
-TMDB API parameter building.
+"""TMDB API parameter building.
 
 This module handles the conversion of BrowseServiceParams to TMDB API parameters,
 including parameter name mapping and type preservation logic.
@@ -94,8 +93,7 @@ def build_tmdb_params(
     min_vote_count: int | None = None,
     **filters: str | int | float | bool | None,
 ) -> dict[str, str | int | float | bool | None]:
-    """
-    Build TMDB API parameters from service-layer filters.
+    """Build TMDB API parameters from service-layer filters.
 
     Converts service parameter names to TMDB API parameter names, preserves
     numeric types for appropriate parameters, and adds default values.

@@ -1,5 +1,4 @@
-"""
-Mock OAuth provider implementations for testing.
+"""Mock OAuth provider implementations for testing.
 
 This module provides mock implementations of OAuth providers (Google, GitHub)
 for testing OAuth flows without requiring real external API calls.
@@ -15,8 +14,7 @@ from apps.authentication.tests.fixtures import create_social_app
 
 
 class MockOAuthProvider:
-    """
-    Base class for mock OAuth providers.
+    """Base class for mock OAuth providers.
 
     Provides common functionality for simulating OAuth flows in tests.
     """
@@ -24,8 +22,7 @@ class MockOAuthProvider:
     provider_name: str = "base"
 
     def __init__(self, social_app: SocialApp | None = None) -> None:
-        """
-        Initialize the mock OAuth provider.
+        """Initialize the mock OAuth provider.
 
         Args:
             social_app: SocialApp instance (created if not provided)
@@ -38,8 +35,7 @@ class MockOAuthProvider:
         user_id: str = "123456789",
         **extra_data: object,
     ) -> dict[str, object]:
-        """
-        Create a mock OAuth provider response.
+        """Create a mock OAuth provider response.
 
         Args:
             user_email: Email address from OAuth provider
@@ -54,8 +50,7 @@ class MockOAuthProvider:
     def create_callback_params(
         self, code: str = "mock_auth_code", state: str = "mock_state"
     ) -> dict[str, str]:
-        """
-        Create mock OAuth callback parameters.
+        """Create mock OAuth callback parameters.
 
         Args:
             code: Authorization code
@@ -67,8 +62,7 @@ class MockOAuthProvider:
         return {"code": code, "state": state}
 
     def mock_token_exchange(self, access_token: str = "mock_access_token") -> Mock:
-        """
-        Create a mock for the OAuth token exchange.
+        """Create a mock for the OAuth token exchange.
 
         Args:
             access_token: Mock access token
@@ -93,8 +87,7 @@ class MockOAuthProvider:
         user_id: str = "123456789",
         **extra_data: object,
     ) -> Mock:
-        """
-        Create a mock for the OAuth user info request.
+        """Create a mock for the OAuth user info request.
 
         Args:
             user_email: User's email address
@@ -115,8 +108,7 @@ class MockOAuthProvider:
 
 
 class MockGoogleOAuth(MockOAuthProvider):
-    """
-    Mock implementation of Google OAuth provider.
+    """Mock implementation of Google OAuth provider.
 
     Simulates Google's OAuth 2.0 flow for testing purposes.
     """
@@ -129,8 +121,7 @@ class MockGoogleOAuth(MockOAuthProvider):
         user_id: str = "123456789",
         **extra_data: object,
     ) -> dict[str, object]:
-        """
-        Create a mock Google OAuth response.
+        """Create a mock Google OAuth response.
 
         Simulates the response from Google's userinfo endpoint.
 
@@ -163,8 +154,7 @@ class MockGoogleOAuth(MockOAuthProvider):
         user_id: str = "123456789",
         access_token: str = "mock_google_token",
     ) -> tuple[Mock, Mock]:
-        """
-        Mock the complete Google OAuth flow.
+        """Mock the complete Google OAuth flow.
 
         Returns mocks for both token exchange and user info requests.
 
@@ -182,8 +172,7 @@ class MockGoogleOAuth(MockOAuthProvider):
 
 
 class MockGitHubOAuth(MockOAuthProvider):
-    """
-    Mock implementation of GitHub OAuth provider.
+    """Mock implementation of GitHub OAuth provider.
 
     Simulates GitHub's OAuth 2.0 flow for testing purposes.
     """
@@ -196,8 +185,7 @@ class MockGitHubOAuth(MockOAuthProvider):
         user_id: str = "987654321",
         **extra_data: object,
     ) -> dict[str, object]:
-        """
-        Create a mock GitHub OAuth response.
+        """Create a mock GitHub OAuth response.
 
         Simulates the response from GitHub's user endpoint.
 
@@ -231,8 +219,7 @@ class MockGitHubOAuth(MockOAuthProvider):
     def mock_email_request(
         self, user_email: str = "github@example.com", verified: bool = True
     ) -> Mock:
-        """
-        Create a mock for GitHub's emails endpoint.
+        """Create a mock for GitHub's emails endpoint.
 
         GitHub requires a separate API call to fetch user emails.
 
@@ -258,8 +245,7 @@ class MockGitHubOAuth(MockOAuthProvider):
         user_id: str = "987654321",
         access_token: str = "mock_github_token",
     ) -> tuple[Mock, Mock, Mock]:
-        """
-        Mock the complete GitHub OAuth flow.
+        """Mock the complete GitHub OAuth flow.
 
         Returns mocks for token exchange, user info, and email requests.
 
@@ -279,8 +265,7 @@ class MockGitHubOAuth(MockOAuthProvider):
 
 # Convenience functions for common test scenarios
 def mock_google_oauth_success() -> MockGoogleOAuth:
-    """
-    Create a fully configured mock Google OAuth provider for successful flow.
+    """Create a fully configured mock Google OAuth provider for successful flow.
 
     Returns:
         Configured MockGoogleOAuth instance
@@ -293,8 +278,7 @@ def mock_google_oauth_success() -> MockGoogleOAuth:
 
 
 def mock_github_oauth_success() -> MockGitHubOAuth:
-    """
-    Create a fully configured mock GitHub OAuth provider for successful flow.
+    """Create a fully configured mock GitHub OAuth provider for successful flow.
 
     Returns:
         Configured MockGitHubOAuth instance
@@ -308,8 +292,7 @@ def mock_github_oauth_success() -> MockGitHubOAuth:
 
 @contextmanager
 def patch_oauth_requests(provider: str = "google") -> Generator[tuple[Mock, Mock]]:
-    """
-    Context manager for patching OAuth HTTP requests.
+    """Context manager for patching OAuth HTTP requests.
 
     Use this to mock the external HTTP requests made during OAuth flow.
 

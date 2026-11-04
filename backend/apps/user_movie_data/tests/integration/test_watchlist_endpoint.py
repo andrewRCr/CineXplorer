@@ -1,5 +1,4 @@
-"""
-Integration tests for the watchlist endpoint.
+"""Integration tests for the watchlist endpoint.
 
 This module tests the GET /api/user-movie-data/movies endpoint which returns
 a paginated list of movies the user has interacted with, optionally filtered
@@ -81,8 +80,7 @@ def movie3(db: None) -> Movie:
 
 @pytest.fixture
 def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
-    """
-    Create an authenticated user and return (client, user) tuple.
+    """Create an authenticated user and return (client, user) tuple.
 
     Creates a verified user (can login) and authenticates via the JWT token
     endpoint which sets the necessary cookies for Django Ninja JWTCookieAuth.
@@ -128,8 +126,7 @@ def test_get_user_movies_returns_all_user_movies(
     movie1: Movie,
     movie2: Movie,
 ) -> None:
-    """
-    Test that GET /api/user-movie-data/movies returns all movies user has interacted with.
+    """Test that GET /api/user-movie-data/movies returns all movies user has interacted with.
 
     This includes movies on watchlist, watched movies, rated movies, etc.
     """
@@ -224,8 +221,7 @@ def test_get_user_movies_with_watchlist_filter(
     movie2: Movie,
     movie3: Movie,
 ) -> None:
-    """
-    Test that GET /api/user-movie-data/movies?watchlist=true filters to watchlist only.
+    """Test that GET /api/user-movie-data/movies?watchlist=true filters to watchlist only.
 
     Only movies where user_on_watchlist=True should be returned.
     """
@@ -292,8 +288,7 @@ def test_get_user_movies_with_watchlist_filter(
 def test_get_user_movies_returns_empty_list_when_no_movies(
     authenticated_user: tuple[Client, User],
 ) -> None:
-    """
-    Test that GET /api/user-movie-data/movies returns empty list when user has no movies.
+    """Test that GET /api/user-movie-data/movies returns empty list when user has no movies.
 
     This is the initial state for new users or after removing all movies.
     """
@@ -322,8 +317,7 @@ def test_get_user_movies_returns_empty_list_when_no_movies(
 def test_get_user_movies_with_watchlist_filter_returns_empty_when_no_watchlist_movies(
     authenticated_user: tuple[Client, User], movie1: Movie
 ) -> None:
-    """
-    Test that GET /api/user-movie-data/movies?watchlist=true returns empty list.
+    """Test that GET /api/user-movie-data/movies?watchlist=true returns empty list.
 
     When user has movies but NONE are on watchlist, should return empty list.
     """
@@ -363,8 +357,7 @@ def test_get_user_movies_shows_only_current_users_movies(
     movie1: Movie,
     movie2: Movie,
 ) -> None:
-    """
-    Test that GET /api/user-movie-data/movies only returns current user's movies.
+    """Test that GET /api/user-movie-data/movies only returns current user's movies.
 
     Users should not be able to see other users' movie data.
     """
@@ -429,8 +422,7 @@ def test_get_user_movies_handles_tmdb_api_errors_gracefully(
     movie1: Movie,
     movie2: Movie,
 ) -> None:
-    """
-    Test that watchlist endpoint handles TMDB API errors gracefully.
+    """Test that watchlist endpoint handles TMDB API errors gracefully.
 
     If a movie is no longer available in TMDB (removed/deleted), it should be
     skipped rather than breaking the entire request.
@@ -486,8 +478,7 @@ def test_get_user_movies_enrichment_populates_user_movie_data(
     authenticated_user: tuple[Client, User],
     movie1: Movie,
 ) -> None:
-    """
-    Test that watchlist endpoint enriches movies with user_movie_data.
+    """Test that watchlist endpoint enriches movies with user_movie_data.
 
     This verifies the enrichment service is being called correctly.
     """
@@ -553,8 +544,7 @@ def test_get_user_movies_returns_pagination_structure(
     authenticated_user: tuple[Client, User],
     movie1: Movie,
 ) -> None:
-    """
-    Test that watchlist endpoint returns proper pagination structure.
+    """Test that watchlist endpoint returns proper pagination structure.
 
     Note: Minimal implementation returns all results on page 1. Full pagination
     to be implemented in API Layer P2.
@@ -601,8 +591,7 @@ def test_get_user_movies_returns_pagination_structure(
 def test_get_user_movies_empty_list_pagination_structure(
     authenticated_user: tuple[Client, User],
 ) -> None:
-    """
-    Test pagination structure when no movies exist.
+    """Test pagination structure when no movies exist.
 
     Empty list should have total_pages=0 but still return valid pagination structure.
     """

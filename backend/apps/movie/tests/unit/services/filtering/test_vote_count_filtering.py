@@ -1,5 +1,4 @@
-"""
-Unit tests for vote count quality filtering in TMDB result processing.
+"""Unit tests for vote count quality filtering in TMDB result processing.
 
 Tests the tiered vote count threshold logic:
 - STRICT (200 votes): For rating-dependent sorts without rating filters

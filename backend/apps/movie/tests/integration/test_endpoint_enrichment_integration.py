@@ -1,5 +1,4 @@
-"""
-Integration tests for movie endpoint enrichment.
+"""Integration tests for movie endpoint enrichment.
 
 These tests verify that movie discovery endpoints correctly integrate with
 the MovieEnrichmentService to populate user_movie_data fields for authenticated users.
@@ -46,8 +45,8 @@ HTTP_200_OK = HTTPStatus.OK
 
 
 def create_movie_stub(tmdb_id: int, title: str = "Test Movie") -> Movie:
-    """
-    Create and return a new Movie stub object.
+    """Create and return a new Movie stub object.
+
     This mimics the behavior of the service layer, which creates a local stub
     for a movie fetched from the TMDB API.
     """
@@ -84,8 +83,7 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     endpoint: str,
     mock_path: str,
 ) -> None:
-    """
-    Test that discovery endpoints include user_movie_data for authenticated users.
+    """Test that discovery endpoints include user_movie_data for authenticated users.
 
     Parametrized to test: now-playing, upcoming, search, and discover endpoints.
     All should enrich movies with user-specific data when user is authenticated.
@@ -151,8 +149,7 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
 def test_discovery_endpoint_works_for_unauthenticated_user(
     api_client: Client, endpoint: str, mock_path: str
 ) -> None:
-    """
-    Test that discovery endpoints work for unauthenticated users.
+    """Test that discovery endpoints work for unauthenticated users.
 
     Parametrized to test: now-playing, upcoming, search, and discover endpoints.
     All should return movies with user_movie_data as None for unauthenticated users.
@@ -205,8 +202,7 @@ def test_discovery_endpoint_returns_none_for_movies_without_user_data(
     endpoint: str,
     mock_path: str,
 ) -> None:
-    """
-    Test that discovery endpoints return None for movies without UserMovieData.
+    """Test that discovery endpoints return None for movies without UserMovieData.
 
     Parametrized to test: now-playing, upcoming, search, and discover endpoints.
     Even with an authenticated user, movies without UserMovieData entries should
@@ -247,8 +243,7 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     api_client: Client,
     user: User,  # type: ignore[valid-type]
 ) -> None:
-    """
-    Test that movie detail endpoint includes user_movie_data for authenticated users.
+    """Test that movie detail endpoint includes user_movie_data for authenticated users.
 
     This verifies the enrichment integration added in Task 7 (OAuth headless migration)
     for the detail endpoint specifically.
@@ -306,8 +301,7 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
 def test_movie_detail_endpoint_works_for_unauthenticated_user(
     mock_get_movie_details: Mock, mock_tmdb_get: Mock, api_client: Client
 ) -> None:
-    """
-    Test that movie detail endpoint works for unauthenticated users.
+    """Test that movie detail endpoint works for unauthenticated users.
 
     This verifies that enrichment is transparent and doesn't break public API access.
     """
@@ -359,8 +353,7 @@ def test_enrichment_handles_multiple_movies_efficiently(
     endpoint: str,
     mock_path: str,
 ) -> None:
-    """
-    Test that enrichment handles multiple movies with mixed user data efficiently.
+    """Test that enrichment handles multiple movies with mixed user data efficiently.
 
     Verifies that:
     - Movies with user data are enriched

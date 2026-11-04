@@ -1,5 +1,4 @@
-"""
-Tests for the frontend logging API endpoints (Django Ninja).
+"""Tests for the frontend logging API endpoints (Django Ninja).
 
 This module tests the Django Ninja API endpoints that receive frontend log entries
 and process them for centralized logging.

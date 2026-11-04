@@ -1,3 +1,1 @@
-"""
-Development scripts and utilities for the CineXplorer backend.
-"""
+"""Development scripts and utilities for the CineXplorer backend."""

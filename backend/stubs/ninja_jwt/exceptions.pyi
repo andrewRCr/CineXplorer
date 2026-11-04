@@ -1,10 +1,8 @@
-"""
-Type stub file for django-ninja-jwt exceptions.
+"""Type stub file for django-ninja-jwt exceptions.
 
 Provides type annotations for JWT-related exceptions.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-ninja-jwt 5.3.x (as of 2025-01-27)
 Last verified: 2025-01-27
 
@@ -21,17 +19,13 @@ identical exception API.
 from __future__ import annotations
 
 class TokenError(Exception):
-    """
-    Base exception for all token-related errors.
-    """
+    """Base exception for all token-related errors."""
 
 class InvalidToken(TokenError):  # noqa: N818
-    """
-    Exception raised when a token is invalid (expired, malformed, etc.).
+    """Exception raised when a token is invalid (expired, malformed, etc.).
+
     Note: Name matches django-ninja-jwt library (cannot rename to InvalidTokenError).
     """
 
 class TokenBackendError(TokenError):
-    """
-    Exception raised when token backend operations fail.
-    """
+    """Exception raised when token backend operations fail."""

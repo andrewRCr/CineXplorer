@@ -1,5 +1,4 @@
-"""
-Type definitions for API layer type safety.
+"""Type definitions for API layer type safety.
 
 This module provides type aliases and utilities for maintaining type safety
 across the movie API layer, bridging the gap between generic API responses

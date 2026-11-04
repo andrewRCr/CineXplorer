@@ -1,5 +1,4 @@
-"""
-TMDB API boundary layer.
+"""TMDB API boundary layer.
 
 This package handles transformation between application domain and TMDB API:
 - query_params: Building parameters FOR TMDB API requests

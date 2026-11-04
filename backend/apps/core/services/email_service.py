@@ -24,8 +24,7 @@ class UserEmailProtocol(Protocol):
 
 
 def send_welcome_email(user: UserEmailProtocol) -> bool:
-    """
-    Send welcome email after successful email verification.
+    """Send welcome email after successful email verification.
 
     Uses Django's email backend (django-zoho-zeptomail in production,
     locmem in tests) to send the welcome email.

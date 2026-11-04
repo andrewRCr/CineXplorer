@@ -1,8 +1,6 @@
-"""
-Type stubs for django-ninja-jwt package.
+"""Type stubs for django-ninja-jwt package.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-ninja-jwt 5.3.x
 Last verified: 2025-10-09
 

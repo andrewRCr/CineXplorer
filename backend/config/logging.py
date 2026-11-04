@@ -1,5 +1,4 @@
-"""
-Django logging configuration for CineXplorer.
+"""Django logging configuration for CineXplorer.
 
 This module provides logging configuration that supports:
 - Environment-based log levels (DJANGO_LOG_LEVEL)
@@ -49,8 +48,7 @@ from typing import TypedDict
 
 
 class HealthCheckFilter(logging.Filter):
-    """
-    Custom filter to suppress health check requests from console output.
+    """Custom filter to suppress health check requests from console output.
 
     This filter detects health check requests and prevents them from
     cluttering the console during development while preserving them
@@ -138,8 +136,7 @@ LOG_STORAGE_ESTIMATES = {
 
 
 def validate_log_level(level: str | None) -> str:
-    """
-    Validate and normalize log level from environment variable.
+    """Validate and normalize log level from environment variable.
 
     Args:
         level (str): Log level string to validate
@@ -392,8 +389,7 @@ def _get_loggers_config(
 def get_logging_config(
     log_dir: str | None = None, *, environment: str = "development"
 ) -> dict[str, object]:
-    """
-    Return Django logging configuration dictionary.
+    """Return Django logging configuration dictionary.
 
     Args:
         log_dir (str, optional): Directory for log files. If None, uses default.
@@ -529,8 +525,7 @@ def get_logging_config(
 
 # Create logger instances for easy import
 def get_logger(name: str = "cinexplorer") -> logging.Logger:
-    """
-    Get a logger instance for the specified name.
+    """Get a logger instance for the specified name.
 
     Args:
         name (str): Logger name, defaults to 'cinexplorer'
@@ -549,8 +544,7 @@ db_logger = get_logger("django.db.backends")
 
 
 def demo_formatters():
-    """
-    Demonstrate different formatter outputs.
+    """Demonstrate different formatter outputs.
 
     This function can be called during development to see how different
     formatters render the same log message. Useful for testing and
@@ -594,8 +588,7 @@ def demo_formatters():
 
 
 def get_log_file_info(log_dir: str = "/backend/logs") -> dict[str, object]:
-    """
-    Get information about current log files and their sizes.
+    """Get information about current log files and their sizes.
 
     Args:
         log_dir (str): Directory containing log files
@@ -646,8 +639,7 @@ def get_log_file_info(log_dir: str = "/backend/logs") -> dict[str, object]:
 
 
 def print_log_status(log_dir: str = "/backend/logs") -> None:
-    """
-    Print a formatted summary of log file status.
+    """Print a formatted summary of log file status.
 
     Args:
         log_dir (str): Directory containing log files
@@ -698,8 +690,7 @@ def print_log_status(log_dir: str = "/backend/logs") -> None:
 def log_slow_query(
     query_sql: str, query_time: float, params: tuple[object, ...] | None = None
 ) -> None:
-    """
-    Log slow database queries with performance analysis.
+    """Log slow database queries with performance analysis.
 
     Args:
         query_sql (str): The SQL query that was executed
@@ -740,8 +731,7 @@ def log_slow_query(
 
 
 def get_database_performance_summary():
-    """
-    Get summary of database performance thresholds for monitoring.
+    """Get summary of database performance thresholds for monitoring.
 
     Returns:
         dict: Database performance configuration and thresholds
@@ -774,9 +764,7 @@ def get_database_performance_summary():
 
 
 def print_database_logging_info():
-    """
-    Print formatted information about database logging configuration.
-    """
+    """Print formatted information about database logging configuration."""
     perf_summary = get_database_performance_summary()
     print("\n=== Database Logging Configuration ===")
     print("Performance Thresholds:")

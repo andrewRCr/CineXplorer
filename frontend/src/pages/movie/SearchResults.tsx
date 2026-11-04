@@ -10,7 +10,7 @@ const SearchResults = () => {
   // Handle empty search query - redirect to home
   useEffect(() => {
     if (!initialQuery.trim()) {
-      navigate("/", { replace: true });
+      void navigate("/", { replace: true });
     }
   }, [initialQuery, navigate]);
 

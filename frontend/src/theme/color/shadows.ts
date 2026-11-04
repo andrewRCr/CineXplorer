@@ -144,7 +144,9 @@ export function getShadowValues(
         default: {
             // Exhaustiveness check: TypeScript will error if a case is missing
             const _exhaustiveCheck: never = designSystem;
-            throw new Error(`Unhandled design system: ${_exhaustiveCheck}`);
+            throw new Error(
+                `Unhandled design system: ${String(_exhaustiveCheck)}`,
+            );
         }
     }
 }

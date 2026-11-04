@@ -1,6 +1,6 @@
 import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
-import { type ThemeName } from "@/theme";
+import type { ThemeName } from "@/theme";
 import {
   ColorModeButton,
   useColorMode,
@@ -100,7 +100,7 @@ export default function ThemeDebug() {
               ).map((t) => (
                 <Button
                   key={t}
-                  onClick={() => setTheme(t as ThemeName)}
+                  onClick={() => setTheme(t)}
                   size="sm"
                   variant="subtle"
                   bg={theme === t ? "button-subtle-selected" : "button-subtle"}

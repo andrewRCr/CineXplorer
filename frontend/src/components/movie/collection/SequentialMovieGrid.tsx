@@ -121,7 +121,7 @@ const SequentialMovieGrid = () => {
         hasPrev={hasPrev}
         hasNext={hasNext}
         onPrev={handlePrev}
-        onNext={handleNext}
+        onNext={() => void handleNext()}
         isLoading={isFetchingNextPage}
       />
     ),
@@ -139,7 +139,9 @@ const SequentialMovieGrid = () => {
       />
 
       {/* Error State */}
-      {isError && <GridErrorState error={error} onRetry={() => refetch()} />}
+      {isError && (
+        <GridErrorState error={error} onRetry={() => void refetch()} />
+      )}
 
       {/* Empty State */}
       {isEmpty && !isError && <GridEmptyState />}

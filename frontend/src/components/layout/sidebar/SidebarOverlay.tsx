@@ -27,13 +27,13 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
 
   // Callback to close drawer after navigation
   const handleNavigationCallback = () => {
-    sidebarDrawer.close("sidebar");
+    void sidebarDrawer.close("sidebar");
   };
 
   // Handler for navigating to home from logo/text
   const handleHomeNavigation = () => {
-    navigate("/");
-    sidebarDrawer.close("sidebar");
+    void navigate("/");
+    void sidebarDrawer.close("sidebar");
   };
 
   return (
@@ -119,7 +119,7 @@ export const sidebarDrawer = createOverlay<SidebarDrawerProps>((props) => {
                   size="xs"
                   color="foreground"
                   flexShrink={0}
-                  onClick={() => sidebarDrawer.close("sidebar")}
+                  onClick={() => void sidebarDrawer.close("sidebar")}
                   aria-label="Close menu"
                   mt="1px"
                 >

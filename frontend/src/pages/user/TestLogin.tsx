@@ -1,3 +1,4 @@
+import { isRecord } from "@/utilities/typeGuards";
 import { apiBaseUrl as BASE_URL } from "@/config/baseUrls";
 import { Button } from "@chakra-ui/react";
 import { useState } from "react";
@@ -11,13 +12,19 @@ const TestLogin = () => {
   // store authenticated user's username/email
   const getUserDetails = async () => {
     try {
-      const userInfoResponse = await apiClient.get(`${BASE_URL}/user/me/`, {
-        withCredentials: true, // ensure cookies are sent
-        headers: {
-          "Content-Type": "application/json",
+      const userInfoResponse = await apiClient.get<unknown>(
+        `${BASE_URL}/user/me/`,
+        {
+          withCredentials: true, // ensure cookies are sent
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      });
+      );
       const userDetails = userInfoResponse.data;
+      if (!isRecord(userDetails) || typeof userDetails.username !== "string") {
+        throw new Error("User details did not include a username");
+      }
       setUsername(userDetails.username);
       return undefined;
     } catch (error) {
@@ -29,8 +36,8 @@ const TestLogin = () => {
     <>
       <div>{authContext?.isAuthenticated?.toString() ?? "Not logged in"}</div>
       <div>
-        <Button onClick={authContext?.logout}>Logout</Button>
-        <Button onClick={getUserDetails}>Get User Details</Button>
+        <Button onClick={() => void authContext?.logout()}>Logout</Button>
+        <Button onClick={() => void getUserDetails()}>Get User Details</Button>
         <div>Username: {username}</div>
       </div>
     </>

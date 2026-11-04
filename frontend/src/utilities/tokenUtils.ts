@@ -1,3 +1,4 @@
+import { isRecord } from "@/utilities/typeGuards";
 /**
  * Utility functions for authentication token management.
  *
@@ -56,10 +57,14 @@ export function getTokenExpiration(token: string): Date | null {
                 .join(""),
         );
 
-        const decoded = JSON.parse(jsonPayload);
+        const decoded: unknown = JSON.parse(jsonPayload);
 
         // JWT exp claim is in seconds, Date expects milliseconds
-        if (decoded.exp && typeof decoded.exp === "number") {
+        if (
+            isRecord(decoded) &&
+            decoded.exp &&
+            typeof decoded.exp === "number"
+        ) {
             return new Date(decoded.exp * 1000);
         }
 

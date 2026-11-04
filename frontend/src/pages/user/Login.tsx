@@ -1,3 +1,4 @@
+import { isRecord } from "@/utilities/typeGuards";
 import { ROUTES } from "@/constants/routes";
 import { Box, VStack, Text, HStack, Checkbox, Button } from "@chakra-ui/react";
 import {
@@ -120,7 +121,7 @@ const Login = () => {
         priorityToaster.success({
           title: `Welcome back, ${response.data.displayName}!`,
         });
-        navigate(ROUTES.HOME);
+        void navigate(ROUTES.HOME);
       } else {
         priorityToaster.dismiss(toastId);
         handleLoginError(response.error);
@@ -198,7 +199,7 @@ const Login = () => {
 
       // Pre-fill the username field with verified email (reduces friction)
       if (response.email) {
-        formik.setFieldValue("username", response.email);
+        void formik.setFieldValue("username", response.email);
       }
 
       // Clear the token from URL to prevent re-verification attempts
@@ -250,7 +251,7 @@ const Login = () => {
         description: "You are now logged in.",
         duration: 4000,
       });
-      navigate(ROUTES.HOME);
+      void navigate(ROUTES.HOME);
     } else {
       priorityToaster.success({
         title: "Password reset successfully!",
@@ -270,32 +271,38 @@ const Login = () => {
   // ==========================================================================
 
   useEffect(() => {
+    const state: unknown = location.state;
+    if (!isRecord(state)) return;
+    const message =
+      typeof state.message === "string" && state.message
+        ? state.message
+        : undefined;
+
     // Email verified redirect (from verification link)
-    if (location.state?.emailVerified) {
+    if (state.emailVerified === true) {
       priorityToaster.success({
         title: "Email verified!",
-        description: location.state.message || "You can now log in.",
+        description: message || "You can now log in.",
         duration: 6000,
       });
-      navigate(location.pathname, { replace: true, state: {} });
+      void navigate(location.pathname, { replace: true, state: {} });
     }
 
     // Registration success redirect
-    if (location.state?.registrationSuccess) {
+    if (state.registrationSuccess === true) {
       showRegistrationSuccess(
-        location.state.message ||
+        message ||
           "Account created! Please check your email to verify your account before logging in.",
       );
-      navigate(location.pathname, { replace: true, state: {} });
+      void navigate(location.pathname, { replace: true, state: {} });
     }
 
     // OAuth error redirect
-    if (location.state?.oauthError) {
+    if (state.oauthError === true) {
       showGeneralError(
-        location.state.message ||
-          "OAuth authentication failed. Please try again.",
+        message || "OAuth authentication failed. Please try again.",
       );
-      navigate(location.pathname, { replace: true, state: {} });
+      void navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, navigate, showGeneralError, showRegistrationSuccess]);
 
@@ -319,7 +326,7 @@ const Login = () => {
     // 3. OAuth timing gate allows navigation (for fast OAuth UX)
     if (authContext?.isAuthenticated && !isLoggingIn && oauthCanNavigate) {
       logger.debug("User already authenticated, redirecting to home");
-      navigate(ROUTES.HOME, { replace: true });
+      void navigate(ROUTES.HOME, { replace: true });
     }
   }, [authContext?.isAuthenticated, navigate, isLoggingIn, oauthCanNavigate]);
 
@@ -405,10 +412,13 @@ const Login = () => {
               name="rememberMe"
               checked={formik.values.rememberMe}
               onCheckedChange={(details) => {
-                formik.setFieldValue("rememberMe", Boolean(details.checked));
+                void formik.setFieldValue(
+                  "rememberMe",
+                  Boolean(details.checked),
+                );
               }}
               onBlur={() => {
-                formik.setFieldTouched("rememberMe", true);
+                void formik.setFieldTouched("rememberMe", true);
               }}
             >
               <Checkbox.HiddenInput />
@@ -466,7 +476,7 @@ const Login = () => {
                 flex="1"
                 variant="outline"
                 fontSize="16px"
-                onClick={handleGoogleLogin}
+                onClick={() => void handleGoogleLogin()}
               >
                 <FaGoogle size={18} style={{ marginRight: "8px" }} />
                 Google
@@ -475,7 +485,7 @@ const Login = () => {
                 flex="1"
                 variant="outline"
                 fontSize="16px"
-                onClick={handleGithubLogin}
+                onClick={() => void handleGithubLogin()}
               >
                 <FaGithub size={18} style={{ marginRight: "8px" }} />
                 GitHub
@@ -513,7 +523,7 @@ const Login = () => {
                     ? {
                         label: "Resend verification",
                         onClick: () =>
-                          handleResendVerification(alert.resendToken),
+                          void handleResendVerification(alert.resendToken),
                       }
                     : undefined
                 }
@@ -554,7 +564,7 @@ const Login = () => {
       <EmailVerificationDialog
         verificationState={verificationState}
         verificationMessage={verificationMessage}
-        onVerify={handleVerifyEmail}
+        onVerify={() => void handleVerifyEmail()}
         onDismiss={() => {
           setVerificationState(null);
           window.history.replaceState({}, "", ROUTES.LOGIN);

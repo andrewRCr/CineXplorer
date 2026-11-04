@@ -66,8 +66,8 @@ const NavBarUserMenu = () => {
 
   const handleLogout = () => {
     setIsOpen(false);
-    logout?.();
-    navigate(ROUTES.HOME);
+    void logout?.();
+    void navigate(ROUTES.HOME);
   };
 
   // ==========================================================================

@@ -1,3 +1,4 @@
+import logger from "@/services/logger";
 /**
  * useOAuthFlow
  *
@@ -50,7 +51,7 @@ export function useOAuthFlow(
         () => {
             const oauthProvider = sessionStorage.getItem("oauth_in_progress");
             if (oauthProvider) {
-                console.log(
+                logger.debug(
                     `[OAuth] Component initializing with OAuth flow in progress: ${oauthProvider}`,
                 );
                 return { provider: oauthProvider, loading: true };
@@ -77,7 +78,7 @@ export function useOAuthFlow(
 
     // Clear loading state (called when auth resolution completes - success or failure)
     const clearLoading = useCallback(() => {
-        console.log("[OAuth] Clearing loading state (auth resolved)");
+        logger.debug("[OAuth] Clearing loading state (auth resolved)");
         setOauthLoading(null);
         sessionStorage.removeItem("oauth_in_progress");
         sessionStorage.removeItem("oauth_start_time");
@@ -94,7 +95,7 @@ export function useOAuthFlow(
         const checkFlag = () => {
             const flag = sessionStorage.getItem("oauth_in_progress");
             if (!flag) {
-                console.log(
+                logger.debug(
                     "[OAuth] Flag cleared externally after delay, stopping loading state",
                 );
                 setOauthLoading(null);
@@ -129,7 +130,7 @@ export function useOAuthFlow(
             const startTime = parseInt(startTimeStr, 10);
             const elapsedTime = Date.now() - startTime;
 
-            console.log(
+            logger.debug(
                 `[OAuth] Detected return from ${oauthProvider} OAuth flow after ${elapsedTime}ms`,
             );
 
@@ -139,20 +140,20 @@ export function useOAuthFlow(
 
                 // Display spinner for MINIMUM_DISPLAY_TIME from NOW
                 // This ensures consistent visible duration regardless of OAuth speed
-                console.log(
+                logger.debug(
                     `[OAuth] Fast OAuth detected, enforcing ${MINIMUM_DISPLAY_TIME}ms minimum display time`,
                 );
 
                 displayTimeoutId = setTimeout(() => {
                     if (isMounted) {
-                        console.log(
+                        logger.debug(
                             "[OAuth] Minimum display time elapsed, allowing navigation",
                         );
                         setMinDisplayTimeElapsed(true);
                     }
                 }, MINIMUM_DISPLAY_TIME);
             } else {
-                console.log(
+                logger.debug(
                     "[OAuth] Slow OAuth detected, no minimum display time needed",
                 );
                 // Slow OAuth - user already waited, allow immediate navigation
@@ -168,7 +169,7 @@ export function useOAuthFlow(
             }
             // Only clear OAuth flags if we were in an OAuth flow
             if (oauthProvider) {
-                console.log(
+                logger.debug(
                     "[OAuth] Component unmounting, clearing OAuth flags",
                 );
                 sessionStorage.removeItem("oauth_in_progress");
@@ -198,58 +199,70 @@ export function useOAuthFlow(
      * Note: Uses HTML form submission (not fetch) so browser follows OAuth redirect.
      */
     const initializeOAuth = useCallback(
-        async (provider: string): Promise<void> => {
-            try {
-                console.log(`[OAuth] Initializing ${provider} OAuth login`);
+        (provider: string): Promise<void> =>
+            // Keep submission synchronous and escaping errors as promise rejections.
+            new Promise<void>((resolve) => {
+                try {
+                    logger.debug(
+                        `[OAuth] Initializing ${provider} OAuth login`,
+                    );
 
-                // Get CSRF token from cookie (if available)
-                const csrfToken = document.cookie
-                    .split("; ")
-                    .find((row) => row.startsWith("csrftoken="))
-                    ?.split("=")[1];
+                    // Get CSRF token from cookie (if available)
+                    const csrfToken = document.cookie
+                        .split("; ")
+                        .find((row) => row.startsWith("csrftoken="))
+                        ?.split("=")[1];
 
-                // Create form and submit through Caddy proxy
-                // Use absolute URL with protocol to force full page navigation
-                const form = document.createElement("form");
-                form.method = "POST";
-                form.action = `${siteOrigin}/_allauth/browser/v1/auth/provider/redirect`;
-                // CRITICAL: Force full page reload, prevent React Router interception
-                form.target = "_self";
+                    // Create form and submit through Caddy proxy
+                    // Use absolute URL with protocol to force full page navigation
+                    const form = document.createElement("form");
+                    form.method = "POST";
+                    form.action = `${siteOrigin}/_allauth/browser/v1/auth/provider/redirect`;
+                    // CRITICAL: Force full page reload, prevent React Router interception
+                    form.target = "_self";
 
-                // Add form fields
-                const fields: Record<string, string> = {
-                    provider: provider,
-                    callback_url: `${siteOrigin}/login`,
-                    process: "login",
-                    ...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
-                };
+                    // Add form fields
+                    const fields: Record<string, string> = {
+                        provider: provider,
+                        callback_url: `${siteOrigin}/login`,
+                        process: "login",
+                        ...(csrfToken
+                            ? { csrfmiddlewaretoken: csrfToken }
+                            : {}),
+                    };
 
-                Object.entries(fields).forEach(([key, value]) => {
-                    const input = document.createElement("input");
-                    input.type = "hidden";
-                    input.name = key;
-                    input.value = value;
-                    form.appendChild(input);
-                });
+                    Object.entries(fields).forEach(([key, value]) => {
+                        const input = document.createElement("input");
+                        input.type = "hidden";
+                        input.name = key;
+                        input.value = value;
+                        form.appendChild(input);
+                    });
 
-                // Set flag to indicate OAuth flow is in progress
-                // Store provider name and timestamp for UX timing decisions on return
-                sessionStorage.setItem("oauth_in_progress", provider);
-                sessionStorage.setItem(
-                    "oauth_start_time",
-                    Date.now().toString(),
-                );
+                    // Set flag to indicate OAuth flow is in progress
+                    // Store provider name and timestamp for UX timing decisions on return
+                    sessionStorage.setItem("oauth_in_progress", provider);
+                    sessionStorage.setItem(
+                        "oauth_start_time",
+                        Date.now().toString(),
+                    );
 
-                // Submit form immediately - don't show overlay before navigation
-                // The white flash during navigation is browser behavior we can't control
-                // The overlay is used on RETURN from OAuth (handled in index.html)
-                document.body.appendChild(form);
-                form.submit();
-            } catch (error) {
-                console.error("OAuth initialization error:", error);
-                setError("Failed to initiate OAuth login. Please try again.");
-            }
-        },
+                    // Submit form immediately - don't show overlay before navigation
+                    // The white flash during navigation is browser behavior we can't control
+                    // The overlay is used on RETURN from OAuth (handled in index.html)
+                    document.body.appendChild(form);
+                    form.submit();
+                } catch (error) {
+                    logger.error("OAuth initialization error:", {
+                        errorType:
+                            error instanceof Error ? error.name : "unknown",
+                    });
+                    setError(
+                        "Failed to initiate OAuth login. Please try again.",
+                    );
+                }
+                resolve();
+            }),
         [setError],
     );
 

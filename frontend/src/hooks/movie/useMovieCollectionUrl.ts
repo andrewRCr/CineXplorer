@@ -72,7 +72,7 @@ export const useMovieCollectionUrl = () => {
                 finalParams.set(key, value);
             });
 
-            navigate(`${location.pathname}?${finalParams.toString()}`, {
+            void navigate(`${location.pathname}?${finalParams.toString()}`, {
                 replace: true,
             });
         },

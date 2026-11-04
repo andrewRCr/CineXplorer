@@ -15,7 +15,7 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
   const handleSearch = () => {
     if (query.trim()) {
       // Navigate to search results page with the query parameter
-      navigate(
+      void navigate(
         `${ROUTES.SEARCH_RESULTS}?query=${encodeURIComponent(query.trim())}`,
       );
       // Call optional callback (useful for closing mobile drawer)

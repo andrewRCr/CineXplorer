@@ -41,5 +41,24 @@ export default tseslint.config([
             ],
         },
     },
+    {
+        files: ["src/**/*.{ts,tsx}"],
+        ignores: ["src/**/__tests__/**", "src/**/*.{test,spec}.{ts,tsx}"],
+        extends: [tseslint.configs.recommendedTypeChecked],
+        languageOptions: {
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
+        },
+    },
+    {
+        files: ["src/**/*.{js,jsx,ts,tsx}", "tests/**/*.{js,jsx,ts,tsx}"],
+        rules: { "no-console": "error" },
+    },
+    {
+        files: ["src/services/logger.ts", "src/services/consoleCapture.ts"],
+        rules: { "no-console": "off" },
+    },
     eslintConfigPrettier,
 ]);

@@ -1,3 +1,4 @@
+import logger from "@/services/logger";
 /**
  * Utility functions for CSRF token management.
  *
@@ -36,7 +37,9 @@ export async function ensureCsrfTokenCookie(baseUrl: string): Promise<void> {
             await new Promise((resolve) => setTimeout(resolve, 100));
         } catch (error) {
             // Log error and rethrow so callers can handle appropriately
-            console.error("Failed to initialize CSRF token:", error);
+            logger.error("Failed to initialize CSRF token:", {
+                errorType: error instanceof Error ? error.name : "unknown",
+            });
             throw error;
         }
     }

@@ -16,8 +16,6 @@ factory functions for common test data needs.
     3. **Domain Fixtures**: This file (authentication-specific fixtures)
     4. **Domain Factories**: `fixtures.py` (create_social_app, create_register_payload, etc.)
 
-See strategy-testing-methodology.md for full architecture.
-
 Fixture Architecture:
     This conftest.py provides pytest fixtures (dependency-injected, single instance).
     For tests needing multiple instances or custom parameters, use the factory

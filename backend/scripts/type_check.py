@@ -20,8 +20,6 @@ Options:
     --verbose       Show detailed error messages (first 5 per app)
     --only CHECKS   Run only specified checks (space-separated)
                    Available: core authentication movie user_movie_data accounts config
-
-Reference: .arc/reference/strategies/strategy-type-safety.md
 """
 from __future__ import annotations
 
@@ -191,7 +189,7 @@ def main() -> None:
         print("Run with --verbose to see error previews")
         print("\nNext steps:")
         print("  1. Review errors in apps with highest error counts")
-        print("  2. Check .arc/reference/strategies/strategy-type-safety.md for patterns")
+        print("  2. Use object for unknown data and validate external payloads with typed models")
         print("  3. Use custom stubs (backend/stubs/) or pyright ignores as needed")
 
     print("\nType Safety Status:")

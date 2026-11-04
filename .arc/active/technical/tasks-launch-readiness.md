@@ -336,6 +336,8 @@ authentication gaps that matter once sign-up is public are closed.
     - The ZeptoMail token and the OAuth credentials stay off the server until 5.5
 
 - [ ] **5.2 Publish this branch's images and take the change on staging** (Proven live 3, 2)
+    - Published the initial branch and opened draft PR #78. Its manual CI run exposed a Site-domain default typing
+      error; the correction preserves the development default and the unset deployed value.
     - Push the branch (its first push, `git push -u origin technical/launch-readiness`, with the Owner's approval) and
       dispatch a manual CI run at the exact commit to deploy, which publishes its `sha-` images
     - Open a draft pull request against `main`, with the Owner's approval: its runs are the evidence for Implemented

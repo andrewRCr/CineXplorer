@@ -267,8 +267,8 @@ if not ZOHO_ZEPTOMAIL_API_KEY_TOKEN and not DEBUG and "test" not in sys.argv:
 
 # django-allauth Configuration
 SITE_ID = 1  # Required for django.contrib.sites
-SITE_DOMAIN = env(
-    "SITE_DOMAIN", default="localhost:8444" if ENVIRONMENT == "development" else None
+SITE_DOMAIN = os.environ.get(
+    "SITE_DOMAIN", "localhost:8444" if ENVIRONMENT == "development" else None
 )
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
 

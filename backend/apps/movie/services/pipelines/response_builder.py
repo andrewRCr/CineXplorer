@@ -28,10 +28,10 @@ def convert_schema_to_tmdb_movie(schema: MovieListItemSchema) -> TMDBMovieBase:
     """
     movie_dict = schema.model_dump(exclude={"user_movie_data"})
     # Map tmdb_id → id
-    movie_dict['id'] = movie_dict.pop('tmdb_id')
+    movie_dict["id"] = movie_dict.pop("tmdb_id")
     # Convert date object to string if present
-    if movie_dict.get('release_date'):
-        movie_dict['release_date'] = movie_dict['release_date'].strftime('%Y-%m-%d')
+    if movie_dict.get("release_date"):
+        movie_dict["release_date"] = movie_dict["release_date"].strftime("%Y-%m-%d")
     return TMDBMovieBase.model_validate(movie_dict)
 
 
@@ -40,7 +40,7 @@ def build_filtered_response(
     page: int,
     total_pages: int,
     total_results: int,
-    next_tmdb_page_start: int | None = None
+    next_tmdb_page_start: int | None = None,
 ) -> MovieListResponseSchema:
     """Build a paginated movie response from filtered MovieListItemSchema list.
 
@@ -73,10 +73,7 @@ def build_filtered_response(
 
     # Create TMDB response structure
     filtered_response = TMDBPaginatedMovieResponse(
-        page=page,
-        total_pages=total_pages,
-        total_results=total_results,
-        results=tmdb_movies
+        page=page, total_pages=total_pages, total_results=total_results, results=tmdb_movies
     )
 
     # Convert to application schema

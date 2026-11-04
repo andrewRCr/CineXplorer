@@ -9,6 +9,7 @@ Tests the tiered vote count threshold logic:
 These tests verify the filtering EFFECT through MovieService, complementing
 the policy decision tests in test_vote_count_policy.py.
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -36,7 +37,7 @@ def test_general_browsing_applies_moderate_threshold() -> None:
     niche content through.
     """
     # Arrange: Mock client returns movies with various vote counts
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         # Above moderate threshold (3 votes) - should pass
@@ -72,7 +73,7 @@ def test_vote_average_sort_applies_strict_threshold() -> None:
     Here we test the filtering behavior directly with explicit threshold.
     """
     # Arrange: Mock client returns movies with various vote counts
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         # Above strict threshold (200 votes) - should pass
@@ -90,10 +91,7 @@ def test_vote_average_sort_applies_strict_threshold() -> None:
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Request with strict threshold (as computed by param_transformer for vote_average sorts)
-    params = BrowseServiceParams(
-        sort_by="vote_average.desc",
-        min_vote_count=STRICT_VOTE_THRESHOLD
-    )
+    params = BrowseServiceParams(sort_by="vote_average.desc", min_vote_count=STRICT_VOTE_THRESHOLD)
     result = service.discover_movies(page=1, params=params)
 
     # Assert: Only movies with 200+ votes returned (strict threshold applied)
@@ -101,8 +99,7 @@ def test_vote_average_sort_applies_strict_threshold() -> None:
     returned_ids = {movie.tmdb_id for movie in result.results}
     assert returned_ids == {1, 2}, f"< {STRICT_VOTE_THRESHOLD} votes should be filtered"
     assert all(
-        m.vote_count is not None and m.vote_count >= STRICT_VOTE_THRESHOLD
-        for m in result.results
+        m.vote_count is not None and m.vote_count >= STRICT_VOTE_THRESHOLD for m in result.results
     )
 
 
@@ -117,7 +114,7 @@ def test_vote_count_bypass_allows_all_movies() -> None:
     Here we test the filtering behavior directly with explicit bypass (None).
     """
     # Arrange: Mock client returns movies with various vote counts including very low
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         create_tmdb_movie(1, "Alpha Movie", "2022-01-01", 8.0, vote_count=100),
@@ -134,8 +131,7 @@ def test_vote_count_bypass_allows_all_movies() -> None:
 
     # Act: Request with bypassed threshold (explicit None)
     result = service.discover_movies(
-        page=1,
-        params=BrowseServiceParams(sort_by="popularity.desc", min_vote_count=None)
+        page=1, params=BrowseServiceParams(sort_by="popularity.desc", min_vote_count=None)
     )
 
     # Assert: ALL movies returned when threshold is bypassed
@@ -145,19 +141,26 @@ def test_vote_count_bypass_allows_all_movies() -> None:
 def test_vote_count_filter_excludes_movies_without_vote_count() -> None:
     """Test that movies missing vote_count field are excluded when threshold applied."""
     # Arrange: Mock client returns movies with missing vote_count
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     movie_with_votes: TMDBMovieBaseRawDict = {
-        'id': 1, 'title': "Has Vote Count", 'poster_path': '/poster1.jpg',
-        'release_date': "2022-01-01", 'vote_average': 8.0, 'vote_count': 100,
-        'genre_ids': [18, 28],  # Drama, Action
-        'overview': 'A great movie with vote count data.'
+        "id": 1,
+        "title": "Has Vote Count",
+        "poster_path": "/poster1.jpg",
+        "release_date": "2022-01-01",
+        "vote_average": 8.0,
+        "vote_count": 100,
+        "genre_ids": [18, 28],  # Drama, Action
+        "overview": "A great movie with vote count data.",
     }
     movie_without_votes: TMDBMovieBaseRawDict = {
-        'id': 2, 'title': "No Vote Count", 'poster_path': '/poster2.jpg',
-        'release_date': "2022-02-01", 'vote_average': 8.5,
-        'genre_ids': [12, 35],  # Adventure, Comedy
-        'overview': 'A movie without vote count data.',
+        "id": 2,
+        "title": "No Vote Count",
+        "poster_path": "/poster2.jpg",
+        "release_date": "2022-02-01",
+        "vote_average": 8.5,
+        "genre_ids": [12, 35],  # Adventure, Comedy
+        "overview": "A movie without vote count data.",
         # vote_count field missing (TMDB data quality issue)
     }
 
@@ -191,7 +194,7 @@ def test_moderate_threshold_between_strict_and_bypass() -> None:
     Note: min_vote_count is computed by param_transformer in production.
     Here we test the filtering behavior directly with explicit thresholds.
     """
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # Movie with 50 votes - passes moderate (3), fails strict (200)
     tmdb_movies = [
@@ -205,15 +208,13 @@ def test_moderate_threshold_between_strict_and_bypass() -> None:
 
     # General browsing - should PASS (moderate threshold = 3)
     result_general = service.discover_movies(
-        page=1,
-        params=BrowseServiceParams(min_vote_count=MODERATE_VOTE_THRESHOLD)
+        page=1, params=BrowseServiceParams(min_vote_count=MODERATE_VOTE_THRESHOLD)
     )
     assert len(result_general.results) == 1, "50 votes should pass moderate threshold"
 
     # Rating sort without filter - should FAIL (strict threshold = 200)
     params_rating = BrowseServiceParams(
-        sort_by="vote_average.desc",
-        min_vote_count=STRICT_VOTE_THRESHOLD
+        sort_by="vote_average.desc", min_vote_count=STRICT_VOTE_THRESHOLD
     )
     result_rating = service.discover_movies(page=1, params=params_rating)
     assert len(result_rating.results) == 0, "50 votes should fail strict threshold"

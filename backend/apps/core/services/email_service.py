@@ -2,6 +2,7 @@
 
 Uses Django's email backend (django-zoho-zeptomail in production).
 """
+
 from __future__ import annotations
 
 import logging

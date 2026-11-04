@@ -35,7 +35,6 @@ class Env:
     """Environment variable reader with type conversion."""
 
     def __init__(self, **schema: object) -> None: ...
-
     def __call__(
         self,
         var: str,
@@ -43,26 +42,21 @@ class Env:
         cast: object = None,
         parse_default: bool = False,
     ) -> str | bytes: ...
-
     @overload
     def bool(self, var: str, default: bool) -> bool: ...
-
     @overload
     def bool(self, var: str, default: NoValue = NOTSET) -> bool: ...
-
     def str(
         self,
         var: str,
         default: str | NoValue = NOTSET,
         multiline: bool = False,
     ) -> str: ...
-
     def int(
         self,
         var: str,
         default: int | NoValue = NOTSET,
     ) -> int: ...
-
     @staticmethod
     def read_env(
         env_file: str | None = None,

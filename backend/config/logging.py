@@ -62,15 +62,15 @@ class HealthCheckFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         # Check if this is a health check related message
-        message = getattr(record, 'getMessage', lambda: str(record.msg))()
+        message = getattr(record, "getMessage", lambda: str(record.msg))()
 
         # Common health check patterns to detect
         health_check_patterns = [
-            '/api/health-check/',
-            'health-check',
-            'GET /api/health-check',
+            "/api/health-check/",
+            "health-check",
+            "GET /api/health-check",
             '"GET /api/health-check/',  # Werkzeug format
-            'api/health-check',  # Our new format patterns
+            "api/health-check",  # Our new format patterns
         ]
 
         # Check if this message is about a health check
@@ -82,14 +82,14 @@ class HealthCheckFilter(logging.Filter):
         # This is a health check - only allow it if it indicates an error
         # Look for error status codes (4xx, 5xx) or error indicators
         error_indicators = [
-            '❌',  # Our error emoji
-            '⚠️',  # Our warning emoji
-            ' 4',  # Status codes 4xx
-            ' 5',  # Status codes 5xx
-            'ERROR',
-            'EXCEPTION',
-            'CRITICAL',
-            'WARNING',
+            "❌",  # Our error emoji
+            "⚠️",  # Our warning emoji
+            " 4",  # Status codes 4xx
+            " 5",  # Status codes 5xx
+            "ERROR",
+            "EXCEPTION",
+            "CRITICAL",
+            "WARNING",
         ]
 
         # Allow through if this health check message indicates an error
@@ -152,7 +152,7 @@ def validate_log_level(level: str | None) -> str:
 
     # Log invalid level (but use print since logging isn't configured yet)
     if level:
-        levels_str = ', '.join(VALID_LOG_LEVELS)
+        levels_str = ", ".join(VALID_LOG_LEVELS)
         print(
             f"Warning: Invalid DJANGO_LOG_LEVEL '{level}'. Using 'INFO'. "
             f"Valid levels: {levels_str}"
@@ -416,18 +416,18 @@ def get_logging_config(
 
     # Check if we're in testing environment (takes precedence over CI)
     is_testing = (
-        "test" in sys.argv or
-        os.getenv("TESTING", "False").lower() == "true" or
-        "pytest" in sys.modules or
-        "unittest" in sys.modules
+        "test" in sys.argv
+        or os.getenv("TESTING", "False").lower() == "true"
+        or "pytest" in sys.modules
+        or "unittest" in sys.modules
     )
 
     # Multiple ways to detect CI environment
     is_ci = (
-        os.getenv("CI", "False").lower() == "true" or
-        os.getenv("GITHUB_ACTIONS", "False").lower() == "true" or
-        os.getenv("CONTINUOUS_INTEGRATION", "False").lower() == "true" or
-        bool(os.getenv("BUILD_NUMBER"))  # Jenkins
+        os.getenv("CI", "False").lower() == "true"
+        or os.getenv("GITHUB_ACTIONS", "False").lower() == "true"
+        or os.getenv("CONTINUOUS_INTEGRATION", "False").lower() == "true"
+        or bool(os.getenv("BUILD_NUMBER"))  # Jenkins
     ) and not is_testing  # CI detection only applies if not testing
 
     disable_files = is_ci or environment in ("staging", "production")
@@ -437,7 +437,7 @@ def get_logging_config(
     if is_testing:
         print(
             "Testing environment detected. Using minimal logging for clean test output.",
-            file=sys.stderr
+            file=sys.stderr,
         )
     elif is_ci:
         print("CI environment detected. Environment variables:", file=sys.stderr)
@@ -674,17 +674,16 @@ def print_log_status(log_dir: str = "/backend/logs") -> None:
         current_files = [f for f in files if f["is_current"]]
         rotated_files = [f for f in files if not f["is_current"]]
         total_size = sum(
-            float(f["size_mb"]) if isinstance(f["size_mb"], (int, float)) else 0.0
-            for f in files
+            float(f["size_mb"]) if isinstance(f["size_mb"], (int, float)) else 0.0 for f in files
         )
         print(f"  {base_name}:")
         print(f"    Total size: {total_size:.2f} MB")
         print(f"    Current: {len(current_files)} file(s)")
         print(f"    Rotated: {len(rotated_files)} backup(s)")
     print("\nRotation Configuration:")
-    max_bytes = LOG_ROTATION_CONFIG['max_bytes']
+    max_bytes = LOG_ROTATION_CONFIG["max_bytes"]
     assert isinstance(max_bytes, int), "max_bytes should be an integer"
-    print(f"  Max file size: {max_bytes / (1024*1024):.0f} MB")
+    print(f"  Max file size: {max_bytes / (1024 * 1024):.0f} MB")
     print(f"  Default backups: {LOG_ROTATION_CONFIG['backup_count_default']}")
     print(f"  Error log backups: {LOG_ROTATION_CONFIG['backup_count_errors']}")
     print("\nEstimated maximum storage:")
@@ -756,12 +755,14 @@ def get_database_performance_summary():
         "thresholds_seconds": DB_QUERY_PERFORMANCE,
         "logging_levels": {
             "fast_queries": "DEBUG (not logged by default)",
-            "slow_queries": (f'INFO (>{DB_QUERY_PERFORMANCE["slow_query_threshold"]*1000:.0f}ms)'),
+            "slow_queries": (
+                f"INFO (>{DB_QUERY_PERFORMANCE['slow_query_threshold'] * 1000:.0f}ms)"
+            ),
             "warning_queries": (
-                f'WARNING (>{DB_QUERY_PERFORMANCE["warning_threshold"]*1000:.0f}ms)'
+                f"WARNING (>{DB_QUERY_PERFORMANCE['warning_threshold'] * 1000:.0f}ms)"
             ),
             "critical_queries": (
-                f'CRITICAL (>{DB_QUERY_PERFORMANCE["critical_threshold"]*1000:.0f}ms)'
+                f"CRITICAL (>{DB_QUERY_PERFORMANCE['critical_threshold'] * 1000:.0f}ms)"
             ),
         },
         "recommendations": {

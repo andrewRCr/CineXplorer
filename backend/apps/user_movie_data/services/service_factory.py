@@ -11,6 +11,7 @@ Available factories:
 - get_movie_enrichment_service() - For enriching movie data with user context
 - get_user_movie_data_service() - For CRUD operations on user movie data
 """
+
 from __future__ import annotations
 
 from apps.movie.services.service_factory import get_movie_service

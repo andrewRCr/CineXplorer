@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.django_db
-@override_settings(FORBIDDEN_USERNAMES=['admin', 'root', 'system'])
+@override_settings(FORBIDDEN_USERNAMES=["admin", "root", "system"])
 def test_forbidden_username_registration_returns_409(
     api_client: Client,
 ) -> None:
@@ -106,14 +106,14 @@ def test_email_sending_failure_rolls_back_user_and_returns_500(
     assert "email_sent" in data, "Response should contain 'email_sent' field"
     assert data["email_sent"] is False, "'email_sent' should be False"
     assert (
-        "unable to send" in data["error"].lower()
-        or "verification email" in data["error"].lower()
+        "unable to send" in data["error"].lower() or "verification email" in data["error"].lower()
     )
 
     # Verify user was rolled back (transaction.atomic on email failure)
     user_model = get_user_model()
-    assert not user_model.objects.filter(username="testuser_email_fail").exists(), \
+    assert not user_model.objects.filter(username="testuser_email_fail").exists(), (
         "User should be rolled back when email fails to send"
+    )
 
 
 # ============================================================================
@@ -145,11 +145,12 @@ def test_token_blacklist_attribute_error_handling(
 
     # Get CSRF token
     from apps.core.tests.test_helpers import get_csrf_token
+
     csrf_token = get_csrf_token(api_client)
 
     # Mock RefreshToken.blacklist() to raise AttributeError
     with patch.object(
-        RefreshToken, 'blacklist', side_effect=AttributeError("blacklist() not available")
+        RefreshToken, "blacklist", side_effect=AttributeError("blacklist() not available")
     ):
         # Refresh should still succeed despite blacklist failure
         response = api_client.post(
@@ -188,11 +189,12 @@ def test_token_blacklist_unexpected_error_logged(
 
     # Get CSRF token
     from apps.core.tests.test_helpers import get_csrf_token
+
     csrf_token = get_csrf_token(api_client)
 
     # Mock RefreshToken.blacklist() to raise unexpected exception
     with patch.object(
-        RefreshToken, 'blacklist', side_effect=RuntimeError("Database connection lost")
+        RefreshToken, "blacklist", side_effect=RuntimeError("Database connection lost")
     ):
         # Refresh should still succeed despite blacklist failure
         response = api_client.post(
@@ -227,6 +229,7 @@ def test_blacklisted_token_jwt_decode_failure_handling(
     """
     # Get CSRF token
     from apps.core.tests.test_helpers import get_csrf_token
+
     csrf_token = get_csrf_token(api_client)
 
     # Set a completely malformed token (not even valid JWT structure)
@@ -274,15 +277,17 @@ def test_unexpected_token_refresh_error_returns_400(
 
     # Get CSRF token
     from apps.core.tests.test_helpers import get_csrf_token
+
     csrf_token = get_csrf_token(api_client)
 
     # Mock get_user_model().objects.get() to raise unexpected exception
     # This happens after RefreshToken validation, triggering the general except block
     from django.contrib.auth import get_user_model
+
     user_model = get_user_model()
 
     with patch.object(
-        user_model.objects, 'get', side_effect=RuntimeError("Database connection timeout")
+        user_model.objects, "get", side_effect=RuntimeError("Database connection timeout")
     ):
         response = api_client.post(
             "/api/token/refresh/",

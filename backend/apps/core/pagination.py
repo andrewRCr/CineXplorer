@@ -59,10 +59,8 @@ MAX_PAGE_SIZE = 100
 MIN_PAGE_SIZE = 1
 
 
-def paginate_queryset[ModelT: 'Model'](
-    queryset: QuerySet[ModelT],
-    page: int,
-    page_size: int | None = None
+def paginate_queryset[ModelT: "Model"](
+    queryset: QuerySet[ModelT], page: int, page_size: int | None = None
 ) -> tuple[QuerySet[ModelT], PaginationMetadata]:
     """Paginate a Django QuerySet and return results with metadata.
 
@@ -107,7 +105,7 @@ def paginate_queryset[ModelT: 'Model'](
         >>> # Page beyond available results
         >>> movies, meta = paginate_queryset(qs, page=999)
         >>> print(movies.count())  # 0
-        >>> print(meta['total_pages'])  # 5
+        >>> print(meta["total_pages"])  # 5
 
         >>> # Empty QuerySet
         >>> empty_qs = Movie.objects.filter(tmdb_id=999999)

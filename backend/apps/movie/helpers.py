@@ -113,8 +113,7 @@ def enrich_response_with_user_movie_data(
     """
     user = get_current_user_optional(request)
     response.results = _enrichment_service.enrich_movies_with_user_movie_data(
-        response.results,
-        user
+        response.results, user
     )
     return response
 
@@ -153,10 +152,7 @@ def enrich_single_movie_with_user_movie_data(
         ...     return enrich_single_movie_with_user_movie_data(request, movie)
     """
     user = get_current_user_optional(request)
-    enriched_list = _enrichment_service.enrich_movies_with_user_movie_data(
-        [movie],
-        user
-    )
+    enriched_list = _enrichment_service.enrich_movies_with_user_movie_data([movie], user)
     return enriched_list[0]
 
 
@@ -196,12 +192,12 @@ def merge_with_preset(
         >>> preset = {
         ...     "primary_release_date.gte": "2025-10-01",
         ...     "primary_release_date.lte": "2025-11-05",
-        ...     "with_release_type": "2|3"
+        ...     "with_release_type": "2|3",
         ... }
         >>> protected = [
         ...     "primary_release_date.gte",
         ...     "primary_release_date.lte",
-        ...     "with_release_type"
+        ...     "with_release_type",
         ... ]
         >>> merge_with_preset(user_filters, preset, protected)
         {

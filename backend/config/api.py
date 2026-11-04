@@ -7,6 +7,7 @@ This module creates the central NinjaAPI instance with:
 - Global error handling and logging
 - Type-safe endpoint registration
 """
+
 from __future__ import annotations
 
 from ninja import NinjaAPI

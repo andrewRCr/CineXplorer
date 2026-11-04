@@ -11,6 +11,7 @@ Architecture:
 - Single responsibility: enrich movie data with user context
 - Repository pattern for data access abstraction
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -54,10 +55,7 @@ class MovieEnrichmentService:
         enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
     """
 
-    def __init__(
-        self,
-        user_movie_data_repository: UserMovieDataRepository | None = None
-    ) -> None:
+    def __init__(self, user_movie_data_repository: UserMovieDataRepository | None = None) -> None:
         """
         Initialize the movie enrichment service.
 
@@ -80,12 +78,11 @@ class MovieEnrichmentService:
         else:
             # Import here to avoid circular dependency
             from apps.user_movie_data.repositories import UserMovieDataRepository
+
             self._repository = UserMovieDataRepository()
 
     def enrich_movies_with_user_movie_data(
-        self,
-        movies: list[MovieListItemSchema],
-        user: AbstractBaseUser | None
+        self, movies: list[MovieListItemSchema], user: AbstractBaseUser | None
     ) -> list[MovieListItemSchema]:
         """
         Enrich movie schemas with user movie data.
@@ -136,8 +133,8 @@ class MovieEnrichmentService:
         tmdb_ids = [movie.tmdb_id for movie in movies]
 
         # Use repository to fetch UserMovieData (dependency injection)
-        user_data_map: dict[int, UserMovieData] = (
-            self._repository.get_for_user_and_movies(user, tmdb_ids)
+        user_data_map: dict[int, UserMovieData] = self._repository.get_for_user_and_movies(
+            user, tmdb_ids
         )
 
         # Create new enriched movie instances (non-mutating approach)
@@ -150,7 +147,7 @@ class MovieEnrichmentService:
                 # Use model_copy() to preserve all fields from original
                 enriched_movie = movie.model_copy(
                     update={
-                        'user_movie_data': UserMovieDataSchema(
+                        "user_movie_data": UserMovieDataSchema(
                             id=user_movie_data.id,
                             tmdb_id=movie.tmdb_id,  # From MovieListItemSchema parameter
                             title=movie.title,  # From MovieListItemSchema parameter

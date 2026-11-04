@@ -46,6 +46,7 @@ class Movie(models.Model):
     Represents a minimal local stub for a TMDB movie.
     Used as an anchor for user-specific data.
     """
+
     tmdb_id = models.PositiveIntegerField(  # type: ignore
         primary_key=True
     )

@@ -119,6 +119,9 @@ npx pyright
 # Host venv (FAST with auto-fix) - Recommended for development
 .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
 
+# Formatter (CI fails on unformatted backend files)
+.venv-backend/bin/ruff format backend/
+
 # Docker (consistent across environments)
 docker compose -f infrastructure/docker-compose.yml exec backend ruff check apps/ config/ --fix
 

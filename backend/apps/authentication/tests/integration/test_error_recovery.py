@@ -68,10 +68,7 @@ def test_corrupted_jwt_token_returns_401() -> None:
     client = create_fresh_client()
 
     # Attempt authenticated request with corrupted token
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {corrupted_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {corrupted_token}")
 
     # Verify rejection
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -94,10 +91,7 @@ def test_malformed_jwt_format_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {malformed_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {malformed_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -125,10 +119,7 @@ def test_jwt_with_invalid_signature_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {invalid_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {invalid_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -151,10 +142,7 @@ def test_jwt_missing_token_parts_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {incomplete_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {incomplete_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -168,10 +156,7 @@ def test_empty_authorization_header_returns_401() -> None:
     """
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=""
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION="")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -191,10 +176,7 @@ def test_invalid_authorization_scheme_returns_401() -> None:
     client = create_fresh_client()
 
     # Try with "Basic" scheme instead of "Bearer"
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Basic {access_token_str}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Basic {access_token_str}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -216,10 +198,7 @@ def test_token_for_nonexistent_user_returns_401() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {access_token_str}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {access_token_str}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -239,9 +218,7 @@ def test_malformed_json_in_token_refresh_request() -> None:
 
     # Send malformed JSON
     response = client.post(
-        "/api/token/refresh/",
-        data="{not valid json}",
-        content_type="application/json"
+        "/api/token/refresh/", data="{not valid json}", content_type="application/json"
     )
 
     # Should handle gracefully (either 400 or process without body)
@@ -274,10 +251,7 @@ def test_database_error_during_authentication_returns_500() -> None:
     with patch("django.contrib.auth.models.User.objects.get") as mock_get:
         mock_get.side_effect = Exception("Database connection lost")
 
-        response = client.get(
-            "/api/profile/",
-            HTTP_AUTHORIZATION=f"Bearer {access_token_str}"
-        )
+        response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {access_token_str}")
 
         # Should return 500 (server error), not 401 (auth error)
         # Note: Actual behavior depends on exception handling middleware
@@ -347,12 +321,12 @@ def test_profile_endpoint_with_serialization_error() -> None:
 @pytest.mark.django_db(
     transaction=True,
     available_apps=[
-        'apps.authentication',
-        'apps.accounts',
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
-        'ninja_jwt.token_blacklist',
-    ]
+        "apps.authentication",
+        "apps.accounts",
+        "django.contrib.auth",
+        "django.contrib.contenttypes",
+        "ninja_jwt.token_blacklist",
+    ],
 )
 def test_concurrent_token_refresh_requests() -> None:
     """
@@ -392,7 +366,7 @@ def test_concurrent_token_refresh_requests() -> None:
     user = create_user(
         username=f"testuser_{unique_id}",
         email=f"testuser_{unique_id}@example.com",
-        email_verified=True
+        email_verified=True,
     )
     refresh = RefreshToken.for_user(cast(AbstractBaseUser, user))
     refresh_token_str = str(refresh)
@@ -449,10 +423,9 @@ def test_sql_injection_attempt_in_login(api_client: Client) -> None:
     Django ORM protects against SQL injection, but test edge case.
     """
     # Attempt SQL injection in username field
-    response = json_post(api_client, "/api/token/", {
-        "login": "admin' OR '1'='1",
-        "password": "password"
-    })
+    response = json_post(
+        api_client, "/api/token/", {"login": "admin' OR '1'='1", "password": "password"}
+    )
 
     # Should return 401 (invalid credentials), not 500 (SQL error)
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -470,10 +443,7 @@ def test_extremely_long_token_in_header() -> None:
     # Create extremely long token (10KB)
     long_token = "A" * 10000
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {long_token}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {long_token}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
@@ -494,9 +464,6 @@ def test_null_bytes_in_authorization_header() -> None:
 
     client = create_fresh_client()
 
-    response = client.get(
-        "/api/profile/",
-        HTTP_AUTHORIZATION=f"Bearer {token_with_null}"
-    )
+    response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {token_with_null}")
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED

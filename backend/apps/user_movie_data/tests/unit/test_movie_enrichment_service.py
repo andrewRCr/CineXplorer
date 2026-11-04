@@ -19,6 +19,7 @@ See Also:
     - user_movie_data/tests/test_helpers.py for shared mock builders
     - core/tests/test_helpers.py for create_mock_user()
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -64,12 +65,12 @@ def test_enrich_with_authenticated_user_populates_user_movie_data() -> None:
         user_on_watchlist=False,
         user_liked=True,
         user_rating=9,
-        user_review='Excellent sci-fi film!',
+        user_review="Excellent sci-fi film!",
     )
     mock_repo.get_for_user_and_movies.return_value = {12345: mock_user_movie_data}
 
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies = [create_movie_schema(tmdb_id=12345, title='Blade Runner')]
+    movies = [create_movie_schema(tmdb_id=12345, title="Blade Runner")]
 
     # Act
     enriched_movies = service.enrich_movies_with_user_movie_data(movies, mock_user)
@@ -81,12 +82,12 @@ def test_enrich_with_authenticated_user_populates_user_movie_data() -> None:
     assert enriched_movie.user_movie_data is not None
     assert enriched_movie.user_movie_data.id == 1
     assert enriched_movie.user_movie_data.tmdb_id == 12345
-    assert enriched_movie.user_movie_data.title == 'Blade Runner'
+    assert enriched_movie.user_movie_data.title == "Blade Runner"
     assert enriched_movie.user_movie_data.user_watched is True
     assert enriched_movie.user_movie_data.user_on_watchlist is False
     assert enriched_movie.user_movie_data.user_liked is True
     assert enriched_movie.user_movie_data.user_rating == 9
-    assert enriched_movie.user_movie_data.user_review == 'Excellent sci-fi film!'
+    assert enriched_movie.user_movie_data.user_review == "Excellent sci-fi film!"
 
     # Verify repository was called correctly
     mock_repo.get_for_user_and_movies.assert_called_once_with(mock_user, [12345])
@@ -98,9 +99,7 @@ def test_enrich_multiple_movies_with_mixed_user_data() -> None:
     mock_user = Mock()
     mock_repo = Mock()
 
-    mock_umd1 = create_mock_user_movie_data(
-        record_id=1, user_watched=True, user_rating=9
-    )
+    mock_umd1 = create_mock_user_movie_data(record_id=1, user_watched=True, user_rating=9)
     mock_umd2 = create_mock_user_movie_data(
         record_id=2, user_on_watchlist=True, user_watched=False
     )
@@ -113,9 +112,9 @@ def test_enrich_multiple_movies_with_mixed_user_data() -> None:
 
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
     movies = [
-        create_movie_schema(tmdb_id=12345, title='Blade Runner'),
-        create_movie_schema(tmdb_id=54321, title='Chinatown'),
-        create_movie_schema(tmdb_id=99999, title='The Matrix'),
+        create_movie_schema(tmdb_id=12345, title="Blade Runner"),
+        create_movie_schema(tmdb_id=54321, title="Chinatown"),
+        create_movie_schema(tmdb_id=99999, title="The Matrix"),
     ]
 
     # Act
@@ -149,7 +148,7 @@ def test_enrich_with_unauthenticated_user_returns_same_list() -> None:
     # Arrange
     mock_repo = Mock()
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies = [create_movie_schema(tmdb_id=12345, title='Blade Runner')]
+    movies = [create_movie_schema(tmdb_id=12345, title="Blade Runner")]
 
     # Act
     enriched_movies = service.enrich_movies_with_user_movie_data(movies, None)
@@ -194,7 +193,7 @@ def test_movies_without_user_data_have_none_field() -> None:
     mock_repo.get_for_user_and_movies.return_value = {}  # No user data for any movie
 
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies = [create_movie_schema(tmdb_id=12345, title='Blade Runner')]
+    movies = [create_movie_schema(tmdb_id=12345, title="Blade Runner")]
 
     # Act
     enriched_movies = service.enrich_movies_with_user_movie_data(movies, mock_user)
@@ -207,12 +206,12 @@ def test_movies_without_user_data_have_none_field() -> None:
 def test_user_isolation_uses_correct_user_in_repository_call() -> None:
     """Test that enrichment passes the correct user to repository."""
     # Arrange
-    mock_user = Mock(id=42, username='testuser')
+    mock_user = Mock(id=42, username="testuser")
     mock_repo = Mock()
     mock_repo.get_for_user_and_movies.return_value = {}
 
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies = [create_movie_schema(tmdb_id=12345, title='Blade Runner')]
+    movies = [create_movie_schema(tmdb_id=12345, title="Blade Runner")]
 
     # Act
     service.enrich_movies_with_user_movie_data(movies, mock_user)
@@ -243,7 +242,7 @@ def test_enrichment_preserves_original_movie_data() -> None:
     movies = [
         create_movie_schema(
             tmdb_id=12345,
-            title='Blade Runner',
+            title="Blade Runner",
             vote_average=original_vote_average,
             runtime=original_runtime,
         )
@@ -254,7 +253,7 @@ def test_enrichment_preserves_original_movie_data() -> None:
 
     # Assert: Original fields preserved
     assert enriched_movies[0].tmdb_id == 12345
-    assert enriched_movies[0].title == 'Blade Runner'
+    assert enriched_movies[0].title == "Blade Runner"
     assert enriched_movies[0].vote_average == original_vote_average
     assert enriched_movies[0].runtime == original_runtime
     # User data added
@@ -275,7 +274,7 @@ def test_enrichment_does_not_mutate_input_list() -> None:
     mock_repo.get_for_user_and_movies.return_value = {12345: mock_umd}
 
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies = [create_movie_schema(tmdb_id=12345, title='Blade Runner')]
+    movies = [create_movie_schema(tmdb_id=12345, title="Blade Runner")]
     original_user_movie_data = movies[0].user_movie_data
 
     # Act
@@ -295,7 +294,7 @@ def test_enrichment_returns_new_list_with_new_instances() -> None:
     mock_repo.get_for_user_and_movies.return_value = {12345: mock_umd}
 
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies = [create_movie_schema(tmdb_id=12345, title='Blade Runner')]
+    movies = [create_movie_schema(tmdb_id=12345, title="Blade Runner")]
 
     # Act
     enriched_movies = service.enrich_movies_with_user_movie_data(movies, mock_user)
@@ -323,9 +322,9 @@ def test_enrichment_preserves_all_fields_in_new_instances() -> None:
     movies = [
         create_movie_schema(
             tmdb_id=12345,
-            title='Blade Runner',
-            release_date='1982-06-25',
-            poster_path='/blade_runner.jpg',
+            title="Blade Runner",
+            release_date="1982-06-25",
+            poster_path="/blade_runner.jpg",
             vote_average=8.5,
             runtime=117,
         )
@@ -361,18 +360,16 @@ def test_repository_called_with_all_tmdb_ids() -> None:
 
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
     movies = [
-        create_movie_schema(tmdb_id=111, title='Movie 1'),
-        create_movie_schema(tmdb_id=222, title='Movie 2'),
-        create_movie_schema(tmdb_id=333, title='Movie 3'),
+        create_movie_schema(tmdb_id=111, title="Movie 1"),
+        create_movie_schema(tmdb_id=222, title="Movie 2"),
+        create_movie_schema(tmdb_id=333, title="Movie 3"),
     ]
 
     # Act
     service.enrich_movies_with_user_movie_data(movies, mock_user)
 
     # Assert: Repository called once with all tmdb_ids
-    mock_repo.get_for_user_and_movies.assert_called_once_with(
-        mock_user, [111, 222, 333]
-    )
+    mock_repo.get_for_user_and_movies.assert_called_once_with(mock_user, [111, 222, 333])
 
 
 def test_repository_not_called_for_none_user() -> None:
@@ -380,7 +377,7 @@ def test_repository_not_called_for_none_user() -> None:
     # Arrange
     mock_repo = Mock()
     service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-    movies = [create_movie_schema(tmdb_id=12345, title='Blade Runner')]
+    movies = [create_movie_schema(tmdb_id=12345, title="Blade Runner")]
 
     # Act
     service.enrich_movies_with_user_movie_data(movies, None)

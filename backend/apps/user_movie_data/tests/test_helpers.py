@@ -35,6 +35,7 @@ user_movie_data domain (UserMovieData, MovieEnrichmentService, etc.).
 - create_movie_detail_schema() - MovieDetailSchema for testing
 - create_pagination_metadata() - Pagination dict helper
 """
+
 from __future__ import annotations
 
 from datetime import date

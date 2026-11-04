@@ -24,9 +24,7 @@ TMDB_CLIENT_GET_MOVIE_DETAILS = (
 )
 
 # Batch pipeline's local tmdb_client reference (module-level import)
-BATCH_TMDB_GET_MOVIE_DETAILS = (
-    "apps.movie.services.pipelines.batch.tmdb_client.get_movie_details"
-)
+BATCH_TMDB_GET_MOVIE_DETAILS = "apps.movie.services.pipelines.batch.tmdb_client.get_movie_details"
 
 # =============================================================================
 # Data Quality / Filtering Paths

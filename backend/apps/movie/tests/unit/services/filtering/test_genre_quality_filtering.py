@@ -4,6 +4,7 @@ Unit tests for genre quality filtering in TMDB result processing.
 Tests the genre completeness validation that ensures movies have at least one
 genre assigned. Empty genres are a strong signal of data quality problems.
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -25,7 +26,7 @@ def test_genre_filter_excludes_movies_with_empty_genres() -> None:
     on rating filters).
     """
     # Arrange: Mock client returns movies with and without genres
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # TMDB returns mix of complete movies and incomplete (no genres) entries
     tmdb_movies = [
@@ -59,7 +60,7 @@ def test_genre_filter_excludes_movies_with_empty_genres() -> None:
 
     # Verify all returned movies have genres
     for movie in result.results:
-        assert hasattr(movie, 'genre_ids'), "MovieListItemSchema should have genre_ids field"
+        assert hasattr(movie, "genre_ids"), "MovieListItemSchema should have genre_ids field"
         assert isinstance(movie.genre_ids, list), "genre_ids should be a list"
         assert len(movie.genre_ids) > 0, "Movies should have at least one genre"
 
@@ -71,13 +72,13 @@ def test_genre_filter_works_with_completeness_checks() -> None:
     All completeness filters should work together consistently.
     """
     # Arrange: Mix of complete/incomplete movies with various issues
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         # Complete movie (has poster, title, genres)
         create_tmdb_movie(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100),
         # Missing poster (should be filtered)
-        create_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=''),
+        create_tmdb_movie(2, "No Poster", "2022-01-01", 8.0, vote_count=150, poster_path=""),
         # Missing genres (should be filtered)
         create_tmdb_movie(3, "No Genres", "2022-01-01", 6.5, vote_count=75, genre_ids=[]),
         # Another complete movie
@@ -108,7 +109,7 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
     When rating filter is active, both should apply together.
     """
     # Arrange: Mock client returns movies with various genre/vote combinations
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         # Pass both filters (has genres + 3+ votes)
@@ -138,5 +139,5 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
 
     # Verify all returned movies pass both filters
     for movie in result.results:
-        assert hasattr(movie, 'genre_ids') and len(movie.genre_ids) > 0
+        assert hasattr(movie, "genre_ids") and len(movie.genre_ids) > 0
         assert movie.vote_count is not None and movie.vote_count >= 3

@@ -5,7 +5,6 @@ Tests the helper methods on ApiResponse dataclass that provide
 convenient access to response data, headers, and error information.
 """
 
-
 from apps.core.services.api_response import RATE_LIMIT_HEADER_MAPPING, ApiResponse
 
 
@@ -115,17 +114,11 @@ class TestApiResponseHeaderAccess:
     """Tests for header access methods."""
 
     def test_get_header_returns_value_for_exact_match(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"Content-Type": "application/json"}
-        )
+        response = ApiResponse(status_code=200, headers={"Content-Type": "application/json"})
         assert response.get_header("Content-Type") == "application/json"
 
     def test_get_header_returns_value_case_insensitive(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"Content-Type": "application/json"}
-        )
+        response = ApiResponse(status_code=200, headers={"Content-Type": "application/json"})
         assert response.get_header("content-type") == "application/json"
 
     def test_get_header_returns_default_when_not_found(self) -> None:
@@ -149,44 +142,29 @@ class TestApiResponseRateLimitInfo:
         assert response.get_rate_limit_info() is None
 
     def test_get_rate_limit_info_returns_none_when_no_rate_headers(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"Content-Type": "application/json"}
-        )
+        response = ApiResponse(status_code=200, headers={"Content-Type": "application/json"})
         assert response.get_rate_limit_info() is None
 
     def test_get_rate_limit_info_extracts_limit(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"x-ratelimit-limit": "100"}
-        )
+        response = ApiResponse(status_code=200, headers={"x-ratelimit-limit": "100"})
         info = response.get_rate_limit_info()
         assert info is not None
         assert info["limit"] == 100
 
     def test_get_rate_limit_info_extracts_remaining(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"x-ratelimit-remaining": "50"}
-        )
+        response = ApiResponse(status_code=200, headers={"x-ratelimit-remaining": "50"})
         info = response.get_rate_limit_info()
         assert info is not None
         assert info["remaining"] == 50
 
     def test_get_rate_limit_info_extracts_reset(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"x-ratelimit-reset": "1234567890"}
-        )
+        response = ApiResponse(status_code=200, headers={"x-ratelimit-reset": "1234567890"})
         info = response.get_rate_limit_info()
         assert info is not None
         assert info["reset"] == 1234567890
 
     def test_get_rate_limit_info_extracts_retry_after(self) -> None:
-        response = ApiResponse(
-            status_code=429,
-            headers={"retry-after": "60"}
-        )
+        response = ApiResponse(status_code=429, headers={"retry-after": "60"})
         info = response.get_rate_limit_info()
         assert info is not None
         assert info["retry_after"] == 60
@@ -198,8 +176,8 @@ class TestApiResponseRateLimitInfo:
                 "x-ratelimit-limit": "100",
                 "x-ratelimit-remaining": "0",
                 "x-ratelimit-reset": "1234567890",
-                "retry-after": "30"
-            }
+                "retry-after": "30",
+            },
         )
         info = response.get_rate_limit_info()
         assert info is not None
@@ -209,10 +187,7 @@ class TestApiResponseRateLimitInfo:
         assert info["retry_after"] == 30
 
     def test_get_rate_limit_info_handles_non_numeric_values(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"x-ratelimit-limit": "not-a-number"}
-        )
+        response = ApiResponse(status_code=200, headers={"x-ratelimit-limit": "not-a-number"})
         info = response.get_rate_limit_info()
         assert info is not None
         assert info["limit"] == "not-a-number"
@@ -222,18 +197,12 @@ class TestApiResponseContentInfo:
     """Tests for content information extraction."""
 
     def test_get_content_info_extracts_content_type(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"content-type": "application/json"}
-        )
+        response = ApiResponse(status_code=200, headers={"content-type": "application/json"})
         info = response.get_content_info()
         assert info["content_type"] == "application/json"
 
     def test_get_content_info_extracts_content_length_as_int(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            headers={"content-length": "1234"}
-        )
+        response = ApiResponse(status_code=200, headers={"content-length": "1234"})
         info = response.get_content_info()
         assert info["content_length"] == 1234
 
@@ -270,7 +239,7 @@ class TestApiResponseErrorSummary:
             error_category="server_error",
             correlation_id="abc-123",
             endpoint="/api/test",
-            duration_ms=150
+            duration_ms=150,
         )
         summary = response.get_error_summary()
         assert summary is not None
@@ -284,9 +253,7 @@ class TestApiResponseErrorSummary:
 
     def test_get_error_summary_includes_rate_limit_info_for_429(self) -> None:
         response = ApiResponse(
-            status_code=429,
-            error_message="Rate limited",
-            headers={"retry-after": "60"}
+            status_code=429, error_message="Rate limited", headers={"retry-after": "60"}
         )
         summary = response.get_error_summary()
         assert summary is not None
@@ -298,9 +265,7 @@ class TestApiResponseErrorSummary:
     def test_get_error_summary_includes_rate_limit_info_when_retry_after_present(self) -> None:
         # Some servers return 503 with Retry-After for throttling
         response = ApiResponse(
-            status_code=503,
-            error_message="Service unavailable",
-            headers={"retry-after": "120"}
+            status_code=503, error_message="Service unavailable", headers={"retry-after": "120"}
         )
         summary = response.get_error_summary()
         assert summary is not None
@@ -333,9 +298,7 @@ class TestApiResponseLegacyDict:
 
     def test_to_legacy_dict_returns_error_format_for_error(self) -> None:
         response = ApiResponse(
-            status_code=500,
-            error_message="Server error",
-            correlation_id="abc-123"
+            status_code=500, error_message="Server error", correlation_id="abc-123"
         )
         legacy = response.to_legacy_dict()
         assert legacy["error"] == "Server error"
@@ -347,7 +310,7 @@ class TestApiResponseLegacyDict:
             status_code=400,
             error_message="Bad request",
             error_details="Invalid parameter",
-            correlation_id="xyz-789"
+            correlation_id="xyz-789",
         )
         legacy = response.to_legacy_dict()
         assert legacy["error_details"] == "Invalid parameter"
@@ -364,11 +327,7 @@ class TestApiResponseStringRepresentation:
     """Tests for string representation."""
 
     def test_str_includes_success_for_200(self) -> None:
-        response = ApiResponse(
-            status_code=200,
-            correlation_id="abc-123",
-            duration_ms=150
-        )
+        response = ApiResponse(status_code=200, correlation_id="abc-123", duration_ms=150)
         result = str(response)
         assert "SUCCESS" in result
         assert "200" in result
@@ -387,13 +346,13 @@ class TestRateLimitHeaderMappingConstant:
 
     def test_mapping_contains_expected_keys(self) -> None:
         expected_keys = {
-            'x-ratelimit-limit',
-            'x-ratelimit-remaining',
-            'x-ratelimit-reset',
-            'retry-after'
+            "x-ratelimit-limit",
+            "x-ratelimit-remaining",
+            "x-ratelimit-reset",
+            "retry-after",
         }
         assert set(RATE_LIMIT_HEADER_MAPPING.keys()) == expected_keys
 
     def test_mapping_contains_expected_values(self) -> None:
-        expected_values = {'limit', 'remaining', 'reset', 'retry_after'}
+        expected_values = {"limit", "remaining", "reset", "retry_after"}
         assert set(RATE_LIMIT_HEADER_MAPPING.values()) == expected_values

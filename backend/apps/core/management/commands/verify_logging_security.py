@@ -19,7 +19,7 @@ from apps.core.services.tmdb_api_client import TMDBApiClient
 
 
 class Command(BaseCommand):
-    help = 'Verify sensitive data (API keys) are excluded from log output'
+    help = "Verify sensitive data (API keys) are excluded from log output"
 
     def handle(self, *args: object, **options: object) -> None:
         self.stdout.write("🔐 Starting sensitive data exclusion verification...")
@@ -59,12 +59,12 @@ class Command(BaseCommand):
 
         # Set up log capture on multiple loggers (including upstream libraries)
         loggers_to_test = [
-            'cinexplorer.tmdb',
-            'cinexplorer',
-            'cinexplorer.requests',
-            'django',           # Django framework logging
-            'urllib3',          # HTTP transport layer
-            'requests',         # Requests library
+            "cinexplorer.tmdb",
+            "cinexplorer",
+            "cinexplorer.requests",
+            "django",  # Django framework logging
+            "urllib3",  # HTTP transport layer
+            "requests",  # Requests library
         ]
 
         capture_handlers: list[tuple[logging.Logger, SecurityLogCapture, int]] = []
@@ -90,7 +90,7 @@ class Command(BaseCommand):
 
             # Test 2: Search movies
             self.stdout.write("  🔍 Testing search_movies...")
-            result2 = client.search_movies(query='Inception', page=1)
+            result2 = client.search_movies(query="Inception", page=1)
 
             # Test 3: Movie details
             self.stdout.write("  📄 Testing get_movie_details...")
@@ -115,18 +115,20 @@ class Command(BaseCommand):
 
                 # Check main message for API key
                 if api_key in message:
-                    security_violations.append({
-                        'type': 'message',
-                        'record': i + 1,
-                        'logger': record.name,
-                        'function': record.funcName,
-                        'violation': "API key found in log message"
-                    })
+                    security_violations.append(
+                        {
+                            "type": "message",
+                            "record": i + 1,
+                            "logger": record.name,
+                            "function": record.funcName,
+                            "violation": "API key found in log message",
+                        }
+                    )
                     violation_found = True
 
                 # Check extra fields
                 for attr_name in dir(record):
-                    if attr_name.startswith('_'):
+                    if attr_name.startswith("_"):
                         continue
 
                     try:
@@ -142,14 +144,16 @@ class Command(BaseCommand):
 
                         # Search for API key in attribute
                         if api_key in attr_str:
-                            security_violations.append({
-                                'type': 'attribute',
-                                'record': i + 1,
-                                'logger': record.name,
-                                'function': record.funcName,
-                                'attribute': attr_name,
-                                'violation': f"API key found in attribute '{attr_name}'"
-                            })
+                            security_violations.append(
+                                {
+                                    "type": "attribute",
+                                    "record": i + 1,
+                                    "logger": record.name,
+                                    "function": record.funcName,
+                                    "attribute": attr_name,
+                                    "violation": f"API key found in attribute '{attr_name}'",
+                                }
+                            )
                             violation_found = True
 
                     except Exception:
@@ -179,7 +183,7 @@ class Command(BaseCommand):
                     )
                     self.stdout.write(f"    Logger: {violation['logger']}")
                     self.stdout.write(f"    Function: {violation['function']}")
-                    if 'attribute' in violation:
+                    if "attribute" in violation:
                         self.stdout.write(f"    Attribute: {violation['attribute']}")
                 self.stdout.write("\n🚨 CRITICAL: API key found in logs! Security issue detected.")
             else:
@@ -191,7 +195,7 @@ class Command(BaseCommand):
             api_results: list[tuple[str, ApiResponse]] = [
                 ("get_popular_movies", result1),
                 ("search_movies", result2),
-                ("get_movie_details", result3)
+                ("get_movie_details", result3),
             ]
 
             for endpoint, api_response in api_results:
@@ -200,8 +204,8 @@ class Command(BaseCommand):
                     self.stdout.write(f"  ❌ {endpoint}: {api_response.error_message}")
                 elif api_response.data is not None and isinstance(api_response.data, Mapping):
                     # For list endpoints (popular, search), check 'results' array
-                    if 'results' in api_response.data:
-                        results = api_response.data['results']
+                    if "results" in api_response.data:
+                        results = api_response.data["results"]
                         # Use isinstance(Sized) for type narrowing
                         if isinstance(results, Sized):
                             count = len(results)
@@ -233,25 +237,19 @@ class Command(BaseCommand):
     def _check_log_files_security(self, api_key: str, partial_key: str) -> None:
         """Check actual log files for API key presence."""
         # Get log directory from settings, with fallback to BASE_DIR / "logs"
-        log_dir = getattr(settings, 'LOG_DIR', None)
+        log_dir = getattr(settings, "LOG_DIR", None)
         log_dir = Path(settings.BASE_DIR) / "logs" if log_dir is None else Path(log_dir)
 
-        log_files = [
-            "cinexplorer.log",
-            "django.log",
-            "requests.log",
-            "database.log",
-            "errors.log"
-        ]
+        log_files = ["cinexplorer.log", "django.log", "requests.log", "database.log", "errors.log"]
 
         for log_file in log_files:
             file_path = log_dir / log_file
             try:
                 if file_path.exists():
-                    with open(file_path, encoding='utf-8') as f:
+                    with open(file_path, encoding="utf-8") as f:
                         # Read last 100 lines to check recent entries
                         lines = f.readlines()[-100:]
-                        content = ''.join(lines)
+                        content = "".join(lines)
 
                     if api_key in content:
                         self.stdout.write(f"  ❌ {log_file}: API key found in file!")

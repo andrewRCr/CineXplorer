@@ -32,9 +32,7 @@ class DefaultAccountAdapter:
     """
 
     def __init__(self, request: HttpRequest | None = None) -> None: ...
-
     def get_client_ip(self, request: HttpRequest) -> str: ...
-
     def render_mail(
         self,
         template_prefix: str,
@@ -56,6 +54,5 @@ class DefaultAccountAdapter:
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation
     ) -> str:
         """Construct the email confirmation (activation) URL."""
-
 
 def get_adapter(request: HttpRequest | None = None) -> DefaultAccountAdapter: ...

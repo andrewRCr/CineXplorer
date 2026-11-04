@@ -7,6 +7,7 @@ appropriate dependencies injected, following the dependency injection pattern.
 Factory functions simplify service instantiation in production code while
 maintaining testability through constructor injection.
 """
+
 from __future__ import annotations
 
 from apps.core.services.tmdb_api_client import TMDBApiClient

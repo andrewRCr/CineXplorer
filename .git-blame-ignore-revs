@@ -1,0 +1,5 @@
+# Formatting-only commits that blame looks past. GitHub reads this file; locally, run
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style(backend): format with ruff
+f46cabd5347221e182d43cf3690308dd0124ccfc

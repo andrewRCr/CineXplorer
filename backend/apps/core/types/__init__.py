@@ -8,6 +8,6 @@ for maintaining type safety across the application layers.
 from .api_types import TMDBParams, TMDBResponseData
 
 __all__ = (
-    'TMDBParams',
-    'TMDBResponseData',
+    "TMDBParams",
+    "TMDBResponseData",
 )

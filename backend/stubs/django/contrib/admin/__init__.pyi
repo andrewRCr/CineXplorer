@@ -24,6 +24,7 @@ errors in admin.py files.
 Note: This is a SUPPLEMENT to django-types. If django-types improves admin coverage,
 this stub may become redundant and can be removed.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -33,13 +34,12 @@ from django.contrib.admin.options import ModelAdmin
 from django.contrib.admin.sites import AdminSite, site
 from django.db.models import Model
 
-__all__ = ['AdminSite', 'ModelAdmin', 'register', 'site']
+__all__ = ["AdminSite", "ModelAdmin", "register", "site"]
 
-_ModelAdminT = TypeVar('_ModelAdminT', bound=ModelAdmin)
+_ModelAdminT = TypeVar("_ModelAdminT", bound=ModelAdmin)
 
 def register(
-    *models: type[Model],
-    site: AdminSite | None = None
+    *models: type[Model], site: AdminSite | None = None
 ) -> Callable[[type[_ModelAdminT]], type[_ModelAdminT]]:
     """
     Register model(s) with the admin site.

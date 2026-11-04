@@ -1,4 +1,5 @@
 """Service factory for authentication domain."""
+
 from __future__ import annotations
 
 from apps.authentication.services.authentication_service import AuthenticationService

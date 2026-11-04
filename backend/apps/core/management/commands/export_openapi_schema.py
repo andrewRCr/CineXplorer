@@ -4,6 +4,7 @@ Django management command to export OpenAPI schema for CI/CD workflows.
 This command provides a reliable way to export the OpenAPI schema in CI environments
 where direct Python imports might have Django settings configuration issues.
 """
+
 import json
 import logging
 import sys
@@ -36,15 +37,10 @@ class Command(BaseCommand):
     def add_arguments(self, parser: Any) -> None:  # Any: Django ArgumentParser not typed
         """Add command arguments."""
         parser.add_argument(
-            "--indent",
-            type=int,
-            default=2,
-            help="JSON indentation level (default: 2)"
+            "--indent", type=int, default=2, help="JSON indentation level (default: 2)"
         )
         parser.add_argument(
-            "--minify",
-            action="store_true",
-            help="Output minified JSON (no indentation)"
+            "--minify", action="store_true", help="Output minified JSON (no indentation)"
         )
 
     def execute(self, *args: Any, **options: Any) -> str | None:  # Any: Django command signature
@@ -66,7 +62,7 @@ class Command(BaseCommand):
         from config.api import api
 
         # Disable Django warnings that might corrupt JSON output
-        warnings.filterwarnings('ignore')
+        warnings.filterwarnings("ignore")
 
         try:
             # Get the OpenAPI schema from the Django Ninja API instance
@@ -75,18 +71,12 @@ class Command(BaseCommand):
             # Format JSON output based on options
             if options["minify"]:
                 output = json.dumps(
-                    schema,
-                    separators=(",", ":"),
-                    ensure_ascii=False,
-                    cls=LazyTranslationEncoder
+                    schema, separators=(",", ":"), ensure_ascii=False, cls=LazyTranslationEncoder
                 )
             else:
                 indent = options["indent"]
                 output = json.dumps(
-                    schema,
-                    indent=indent,
-                    ensure_ascii=False,
-                    cls=LazyTranslationEncoder
+                    schema, indent=indent, ensure_ascii=False, cls=LazyTranslationEncoder
                 )
 
             # Output ONLY the JSON directly to stdout
@@ -95,7 +85,5 @@ class Command(BaseCommand):
             sys.stdout.flush()
 
         except Exception as e:
-            self.stderr.write(
-                self.style.ERROR(f"Failed to export OpenAPI schema: {e}")
-            )
+            self.stderr.write(self.style.ERROR(f"Failed to export OpenAPI schema: {e}"))
             raise

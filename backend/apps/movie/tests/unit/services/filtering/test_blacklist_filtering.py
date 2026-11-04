@@ -14,6 +14,7 @@ Test Organization:
 DRY Note: The create_movie_schema() helper is designed to be reusable
 for other filter tests that need MovieListItemSchema instances.
 """
+
 from __future__ import annotations
 
 from datetime import date

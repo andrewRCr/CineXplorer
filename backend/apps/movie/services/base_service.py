@@ -11,6 +11,7 @@ Architecture:
 - Common response validation for simple endpoints
 - DRY foundation for MovieService, KeywordService, PeopleService
 """
+
 from __future__ import annotations
 
 import logging
@@ -42,7 +43,7 @@ class BaseTMDBService:
                 return response.get_json_data()
     """
 
-    logger: ClassVar[logging.Logger] = logging.getLogger('cinexplorer.tmdb')
+    logger: ClassVar[logging.Logger] = logging.getLogger("cinexplorer.tmdb")
 
     def __init__(self, tmdb_client: TMDBApiClient | None = None) -> None:
         """
@@ -63,10 +64,7 @@ class BaseTMDBService:
         self._tmdb_client = tmdb_client if tmdb_client is not None else TMDBApiClient()
 
     def _get_validated_response(
-        self,
-        api_response: ApiResponse,
-        operation: str,
-        **context: object
+        self, api_response: ApiResponse, operation: str, **context: object
     ) -> dict[str, object]:
         """
         Validate API response and return JSON data as untyped dictionary.

@@ -1,4 +1,5 @@
 """Unit tests for AuthenticationService profile operations."""
+
 from __future__ import annotations
 
 from typing import Protocol, cast
@@ -50,6 +51,7 @@ def test_update_user_profile_updates_fields_and_password(
     assert profile_dict["email"] == "new@example.com"
     assert profile_dict["full_name"] == "New Name"
     user.refresh_from_db()
+
     class PasswordCheckProtocol(Protocol):
         def check_password(self, raw_password: str) -> bool:
             """Validate a raw password."""

@@ -11,6 +11,7 @@ These tests use mocked TMDBApiClient to verify service behavior without external
 
 Test Coverage Target: 80% (general service layer coverage)
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -50,7 +51,7 @@ def test_movie_service_constructor_with_injected_client() -> None:
 
     # Arrange: Create mock client
     mock_client = Mock(
-        spec=['get', 'get_movie_details', 'search_movies', 'get_now_playing_movies']
+        spec=["get", "get_movie_details", "search_movies", "get_now_playing_movies"]
     )
 
     # Act: Inject client via constructor
@@ -69,8 +70,8 @@ def test_movie_service_constructor_with_default_client() -> None:
 
     # Assert: Service has a TMDBApiClient instance (access protected attr for testing)
     assert service._tmdb_client is not None  # pyright: ignore[reportPrivateUsage]
-    assert hasattr(service._tmdb_client, 'get')  # pyright: ignore[reportPrivateUsage]
-    assert hasattr(service._tmdb_client, 'get_movie_details')  # pyright: ignore[reportPrivateUsage]
+    assert hasattr(service._tmdb_client, "get")  # pyright: ignore[reportPrivateUsage]
+    assert hasattr(service._tmdb_client, "get_movie_details")  # pyright: ignore[reportPrivateUsage]
 
 
 # ============================================================================
@@ -83,26 +84,23 @@ def test_get_movie_by_id_uses_injected_client() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange: Create mock client with successful responses
-    mock_client = Mock(spec=['get', 'get_movie_details'])
+    mock_client = Mock(spec=["get", "get_movie_details"])
 
     # Mock movie details response
     mock_details_response = create_mock_movie_detail_response(
         tmdb_id=123,
-        title='Test Movie',
-        release_date='2023-01-01',
+        title="Test Movie",
+        release_date="2023-01-01",
         vote_average=8.0,
         runtime=120,
-        overview='Test overview',
-        genres=[{'id': 1, 'name': 'Action'}],
-        poster_path='/test.jpg'
+        overview="Test overview",
+        genres=[{"id": 1, "name": "Action"}],
+        poster_path="/test.jpg",
     )
     mock_client.get_movie_details.return_value = mock_details_response
 
     # Mock credits response
-    credits_data: TMDBCreditsResponse = {
-        'cast': [],
-        'crew': []
-    }
+    credits_data: TMDBCreditsResponse = {"cast": [], "crew": []}
     mock_credits_response = ApiResponse(status_code=200, data=credits_data)
     mock_client.get.return_value = mock_credits_response
 
@@ -114,9 +112,7 @@ def test_get_movie_by_id_uses_injected_client() -> None:
 
     # Assert: Injected client was called, not global
     # append_to_response='release_dates' fetches certification data for MovieDetail
-    mock_client.get_movie_details.assert_called_once_with(
-        123, append_to_response='release_dates'
-    )
+    mock_client.get_movie_details.assert_called_once_with(123, append_to_response="release_dates")
     mock_client.get.assert_called_once_with("movie/123/credits")
     assert isinstance(result, MovieDetailSchema)
     assert result.tmdb_id == 123
@@ -127,12 +123,8 @@ def test_get_movie_by_id_handles_movie_not_found() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client returns 404
-    mock_client = Mock(spec=['get_movie_details'])
-    mock_response = ApiResponse(
-        status_code=404,
-        data=None,
-        error_message="Movie not found"
-    )
+    mock_client = Mock(spec=["get_movie_details"])
+    mock_response = ApiResponse(status_code=404, data=None, error_message="Movie not found")
     mock_client.get_movie_details.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -154,29 +146,22 @@ def test_search_movies_uses_injected_client() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client
-    mock_client = Mock(spec=['search_movies'])
+    mock_client = Mock(spec=["search_movies"])
 
-    movie = create_tmdb_movie(1, 'Test Movie', '2023-01-01', 8.0, poster_path='/test.jpg')
-    mock_api_response = create_mock_paginated_response(
-        movies=[movie],
-        page=1,
-        total_pages=1
-    )
+    movie = create_tmdb_movie(1, "Test Movie", "2023-01-01", 8.0, poster_path="/test.jpg")
+    mock_api_response = create_mock_paginated_response(movies=[movie], page=1, total_pages=1)
     mock_client.search_movies.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call search_movies
     from apps.movie.services.api_boundary import SearchServiceParams
+
     result = service.search_movies(page=2, params=SearchServiceParams(query="test"))
 
     # Assert: Injected client was called with correct params
     mock_client.search_movies.assert_called_once_with(
-        query="test",
-        page=2,
-        include_adult=False,
-        language="en-US",
-        region="US"
+        query="test", page=2, include_adult=False, language="en-US", region="US"
     )
     assert isinstance(result, MovieListResponseSchema)
     assert len(result.results) == 1
@@ -187,33 +172,28 @@ def test_search_movies_filters_soundtrack_results() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock response with soundtrack entry
-    mock_client = Mock(spec=['search_movies'])
+    mock_client = Mock(spec=["search_movies"])
 
     movies = [
-        create_tmdb_movie(1, 'Real Movie', '2023-01-01', 8.0, poster_path='/real.jpg'),
+        create_tmdb_movie(1, "Real Movie", "2023-01-01", 8.0, poster_path="/real.jpg"),
+        create_tmdb_movie(2, "Movie Soundtrack", "2023-01-01", 7.0, poster_path="/soundtrack.jpg"),
         create_tmdb_movie(
-            2, 'Movie Soundtrack', '2023-01-01', 7.0, poster_path='/soundtrack.jpg'
+            3, "Original Motion Picture Score", "2023-01-01", 6.0, poster_path="/score.jpg"
         ),
-        create_tmdb_movie(
-            3, 'Original Motion Picture Score', '2023-01-01', 6.0, poster_path='/score.jpg'
-        )
     ]
-    mock_api_response = create_mock_paginated_response(
-        movies=movies,
-        page=1,
-        total_pages=1
-    )
+    mock_api_response = create_mock_paginated_response(movies=movies, page=1, total_pages=1)
     mock_client.search_movies.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
 
     # Act: Call search_movies
     from apps.movie.services.api_boundary import SearchServiceParams
+
     result = service.search_movies(page=1, params=SearchServiceParams(query="test"))
 
     # Assert: Only real movie returned (soundtracks filtered)
     assert len(result.results) == 1
-    assert result.results[0].title == 'Real Movie'
+    assert result.results[0].title == "Real Movie"
 
 
 def test_search_movies_returns_empty_for_short_query() -> None:
@@ -222,7 +202,7 @@ def test_search_movies_returns_empty_for_short_query() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client
-    mock_client = Mock(spec=['search_movies'])
+    mock_client = Mock(spec=["search_movies"])
     service = MovieService(tmdb_client=mock_client)
 
     # Act
@@ -246,13 +226,13 @@ def test_discover_movies_uses_injected_client() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange: Mock client
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     discover_response: TMDBMovieResponse = {
-        'results': [],
-        'page': 1,
-        'total_pages': 1,
-        'total_results': 0
+        "results": [],
+        "page": 1,
+        "total_pages": 1,
+        "total_results": 0,
     }
     mock_api_response = ApiResponse(status_code=200, data=discover_response)
     mock_client.get.return_value = mock_api_response
@@ -261,10 +241,11 @@ def test_discover_movies_uses_injected_client() -> None:
 
     # Act: Call discover with BrowseServiceParams
     from apps.movie.services.api_boundary import BrowseServiceParams
+
     params = BrowseServiceParams(
-        genres='28,12',  # Should map to with_genres
+        genres="28,12",  # Should map to with_genres
         year=2023,
-        vote_average_gte=7.5  # Underscore notation for Pydantic field
+        vote_average_gte=7.5,  # Underscore notation for Pydantic field
     )
     service.discover_movies(page=2, params=params)
 
@@ -275,10 +256,10 @@ def test_discover_movies_uses_injected_client() -> None:
     params = call_args[0][1]
 
     assert endpoint == "discover/movie"
-    assert params['page'] == 2
-    assert params['with_genres'] == '28,12'
-    assert params['year'] == 2023
-    assert params['vote_average.gte'] == 7.5
+    assert params["page"] == 2
+    assert params["with_genres"] == "28,12"
+    assert params["year"] == 2023
+    assert params["vote_average.gte"] == 7.5
 
 
 def test_discover_movies_sets_default_parameters() -> None:
@@ -286,9 +267,12 @@ def test_discover_movies_sets_default_parameters() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
     discover_response: TMDBMovieResponse = {
-        'results': [], 'page': 1, 'total_pages': 1, 'total_results': 0
+        "results": [],
+        "page": 1,
+        "total_pages": 1,
+        "total_results": 0,
     }
     mock_api_response = ApiResponse(status_code=200, data=discover_response)
     mock_client.get.return_value = mock_api_response
@@ -302,10 +286,10 @@ def test_discover_movies_sets_default_parameters() -> None:
     call_args = mock_client.get.call_args
     params = call_args[0][1]
 
-    assert params['include_adult'] is False
-    assert params['include_video'] is False
-    assert params['language'] == 'en-US'
-    assert params['sort_by'] == 'popularity.desc'
+    assert params["include_adult"] is False
+    assert params["include_video"] is False
+    assert params["language"] == "en-US"
+    assert params["sort_by"] == "popularity.desc"
 
 
 # ============================================================================
@@ -318,14 +302,10 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
-    movie = create_tmdb_movie(1, 'Now Playing', '2023-01-01', 8.0, poster_path='/now.jpg')
-    mock_api_response = create_mock_paginated_response(
-        movies=[movie],
-        page=1,
-        total_pages=1
-    )
+    movie = create_tmdb_movie(1, "Now Playing", "2023-01-01", 8.0, poster_path="/now.jpg")
+    mock_api_response = create_mock_paginated_response(movies=[movie], page=1, total_pages=1)
     mock_client.get.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -339,12 +319,12 @@ def test_get_now_playing_movies_uses_injected_client() -> None:
     endpoint = call_args[0][0]
     params = call_args[0][1]
 
-    assert endpoint == 'discover/movie'
-    assert params['page'] == 2
+    assert endpoint == "discover/movie"
+    assert params["page"] == 2
     # Date range preset applied (mapped to TMDB parameter names)
-    assert 'primary_release_date.gte' in params
-    assert 'primary_release_date.lte' in params
-    assert params['with_release_type'] == '2|3'
+    assert "primary_release_date.gte" in params
+    assert "primary_release_date.lte" in params
+    assert params["with_release_type"] == "2|3"
     assert isinstance(result, MovieListResponseSchema)
     # Result now passes backend filtering (complete mock data with genre_ids, vote_count)
     assert len(result.results) == 1
@@ -360,14 +340,10 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
-    movie = create_tmdb_movie(1, 'Upcoming', '2024-01-01', 8.0, poster_path='/upcoming.jpg')
-    mock_api_response = create_mock_paginated_response(
-        movies=[movie],
-        page=1,
-        total_pages=1
-    )
+    movie = create_tmdb_movie(1, "Upcoming", "2024-01-01", 8.0, poster_path="/upcoming.jpg")
+    mock_api_response = create_mock_paginated_response(movies=[movie], page=1, total_pages=1)
     mock_client.get.return_value = mock_api_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -382,8 +358,8 @@ def test_get_upcoming_movies_uses_injected_client() -> None:
     params = call_args[0][1]
 
     assert endpoint == "discover/movie"
-    assert 'primary_release_date.gte' in params
-    assert 'primary_release_date.lte' in params
+    assert "primary_release_date.gte" in params
+    assert "primary_release_date.lte" in params
     assert isinstance(result, MovieListResponseSchema)
 
 
@@ -401,7 +377,7 @@ def test_get_movie_service_factory_creates_service_with_default_client() -> None
 
     # Assert: Service has proper client (access protected attr for testing)
     assert service is not None
-    assert hasattr(service, '_tmdb_client')
+    assert hasattr(service, "_tmdb_client")
     assert service._tmdb_client is not None  # pyright: ignore[reportPrivateUsage]
 
 
@@ -427,13 +403,10 @@ def test_get_movie_genres_uses_injected_client() -> None:
     from apps.movie.services.movie_service import MovieService
 
     # Arrange
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     genres_response: TMDBGenreListResponse = {
-        'genres': [
-            {'id': 1, 'name': 'Action'},
-            {'id': 2, 'name': 'Comedy'}
-        ]
+        "genres": [{"id": 1, "name": "Action"}, {"id": 2, "name": "Comedy"}]
     }
     mock_api_response = ApiResponse(status_code=200, data=genres_response)
     mock_client.get.return_value = mock_api_response
@@ -446,4 +419,4 @@ def test_get_movie_genres_uses_injected_client() -> None:
     # Assert
     mock_client.get.assert_called_once_with("genre/movie/list")
     assert len(result) == 2
-    assert result[0].name == 'Action'
+    assert result[0].name == "Action"

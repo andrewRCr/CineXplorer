@@ -65,7 +65,7 @@ def test_login_allows_5_rapid_attempts(
 @pytest.mark.django_db
 @override_settings(
     TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
-    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+    ZEPTOMAIL_API_KEY="",  # Prevent real email sending (triggers dev_mode in adapters)
 )
 def test_login_throttles_6th_attempt(
     api_client: Client,
@@ -135,7 +135,7 @@ def test_registration_allows_3_attempts_in_hour(
 @pytest.mark.django_db
 @override_settings(
     TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
-    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+    ZEPTOMAIL_API_KEY="",  # Prevent real email sending (triggers dev_mode in adapters)
 )
 def test_registration_throttles_4th_attempt(
     api_client: Client,
@@ -219,7 +219,7 @@ def test_token_refresh_allows_10_rapid_attempts(
 @pytest.mark.django_db
 @override_settings(
     TESTING=False,  # Required: TestAware throttles bypass when TESTING=True
-    ZEPTOMAIL_API_KEY=''  # Prevent real email sending (triggers dev_mode in adapters)
+    ZEPTOMAIL_API_KEY="",  # Prevent real email sending (triggers dev_mode in adapters)
 )
 def test_token_refresh_throttles_11th_attempt(
     authenticated_client_with_throttling: Client,

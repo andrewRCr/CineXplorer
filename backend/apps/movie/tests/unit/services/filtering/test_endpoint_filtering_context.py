@@ -4,6 +4,7 @@ Unit tests for endpoint-specific filtering context and combined filter behavior.
 Tests filtering behavior across different endpoints (now playing, upcoming, discover)
 and combined filtering scenarios (year + rating together, no filters at all).
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -18,7 +19,7 @@ from apps.movie.tests.tmdb_test_builders import create_tmdb_movie
 def test_filtering_applies_to_now_playing_endpoint() -> None:
     """Test that filtering applies to get_now_playing_movies endpoint."""
     # Arrange: Mock client returns now playing movies with mixed data
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # Now playing includes some 2021 movies (extended theatrical runs)
     tmdb_movies = [
@@ -49,7 +50,7 @@ def test_filtering_applies_to_now_playing_endpoint() -> None:
 def test_filtering_applies_to_upcoming_endpoint() -> None:
     """Test that filtering applies to get_upcoming_movies endpoint."""
     # Arrange: Mock client returns upcoming movies with mixed ratings
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # Upcoming movies often have placeholder 0.0 ratings
     tmdb_movies = [
@@ -80,7 +81,7 @@ def test_filtering_applies_to_upcoming_endpoint() -> None:
 def test_no_filters_returns_all_results_unchanged() -> None:
     """Test that when no filters applied, all results are returned unchanged."""
     # Arrange: Mock client returns 20 diverse movies
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         create_tmdb_movie(i, f"Movie {i}", f"{2020 + (i % 5)}-01-01", 5.0 + (i * 0.2))
@@ -109,12 +110,9 @@ def test_no_buffer_fetch_when_no_filters_applied() -> None:
     return TMDB results as-is (no buffer logic).
     """
     # Arrange: Mock client returns 20 movies
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
-    tmdb_movies = [
-        create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 7.0)
-        for i in range(1, 21)
-    ]
+    tmdb_movies = [create_tmdb_movie(i, f"Movie {i}", "2022-01-01", 7.0) for i in range(1, 21)]
 
     mock_response = create_mock_paginated_response(tmdb_movies, page=1, total_pages=5)
     mock_client.get.return_value = mock_response
@@ -132,7 +130,7 @@ def test_no_buffer_fetch_when_no_filters_applied() -> None:
 def test_combined_year_and_rating_filtering() -> None:
     """Test that year and rating filters work together correctly."""
     # Arrange: Mock client returns movies with various year/rating combinations
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         # Correct year AND rating - should be kept
@@ -154,8 +152,7 @@ def test_combined_year_and_rating_filtering() -> None:
 
     # Act: Request 2022 movies rated 7.5+
     result = service.discover_movies(
-        page=1,
-        params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
+        page=1, params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
     # Assert: Only movies matching both criteria returned

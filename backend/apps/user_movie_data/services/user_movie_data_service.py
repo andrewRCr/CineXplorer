@@ -24,6 +24,7 @@ Usage:
         movie_service=mock_movie_service,
     )
 """
+
 from __future__ import annotations
 
 import logging
@@ -90,6 +91,7 @@ class UserMovieDataService:
             self._repository = repository
         else:
             from apps.user_movie_data.repositories import UserMovieDataRepository
+
             self._repository = UserMovieDataRepository()
 
         # Inject movie service or create default
@@ -97,6 +99,7 @@ class UserMovieDataService:
             self._movie_service = movie_service
         else:
             from apps.movie.services.service_factory import get_movie_service
+
             self._movie_service = get_movie_service()
 
     # =========================================================================
@@ -318,11 +321,7 @@ class UserMovieDataService:
             return []
 
         movie_lookup = {movie.tmdb_id: movie for movie in movies}
-        ordered_movies = [
-            movie_lookup[tmdb_id]
-            for tmdb_id in tmdb_ids
-            if tmdb_id in movie_lookup
-        ]
+        ordered_movies = [movie_lookup[tmdb_id] for tmdb_id in tmdb_ids if tmdb_id in movie_lookup]
 
         enrichment_service = MovieEnrichmentService(
             user_movie_data_repository=self._repository,

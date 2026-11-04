@@ -322,7 +322,7 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
 
     # Extract access token from response body and set as cookie
     response_data = json_module.loads(response.content.decode())
-    client.cookies['access_token'] = response_data['access_token']
+    client.cookies["access_token"] = response_data["access_token"]
 
     # Simulate CSRF token and cookie (double-submit cookie pattern)
     # Must use Django's default cookie name 'csrftoken' (not 'XSRF-TOKEN')
@@ -391,7 +391,7 @@ def test_token_obtain_sets_jwt_cookies(registered_user: tuple[Client, dict[str, 
     # Verify access_token is in response body (NOT cookie)
     response_data = json_module.loads(response.content.decode())
     assert "access_token" in response_data
-    assert response_data['access_token'] is not None
+    assert response_data["access_token"] is not None
 
     # Verify access_token is NOT set as cookie (hybrid auth pattern)
     assert "access_token" not in client.cookies
@@ -504,7 +504,7 @@ def test_throttling_bypassed_by_default(api_client: Client) -> None:
     for i in range(10):
         response = json_post(api_client, TOKEN_URL, cast(dict[str, object], login_data))
         assert response.status_code == HTTPStatus.OK, (
-            f"Request {i+1} failed with status {response.status_code}. "
+            f"Request {i + 1} failed with status {response.status_code}. "
             "Expected all requests to succeed (throttling should be bypassed)."
         )
 
@@ -541,9 +541,9 @@ def test_throttling_infrastructure_ready() -> None:
     user_throttle = TestAwareUserThrottle("10/m")
 
     # Verify throttle classes have allow_request method
-    assert hasattr(
-        anon_throttle, "allow_request"
-    ), "TestAwareAnonThrottle should have allow_request method"
-    assert hasattr(
-        user_throttle, "allow_request"
-    ), "TestAwareUserThrottle should have allow_request method"
+    assert hasattr(anon_throttle, "allow_request"), (
+        "TestAwareAnonThrottle should have allow_request method"
+    )
+    assert hasattr(user_throttle, "allow_request"), (
+        "TestAwareUserThrottle should have allow_request method"
+    )

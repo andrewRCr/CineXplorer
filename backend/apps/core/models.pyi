@@ -7,6 +7,7 @@ enabling perfect type inference in Pyright/Pylance.
 ⚠️ MAINTENANCE: Keep in sync with models.py
 When adding/modifying fields in models.py, update this file accordingly.
 """
+
 from datetime import date
 
 from django.db import models

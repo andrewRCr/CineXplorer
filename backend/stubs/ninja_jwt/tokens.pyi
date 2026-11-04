@@ -28,6 +28,7 @@ Status: Official stubs exist but INCOMPLETE - this is REQUIRED (supplements offi
 Note: django-ninja-jwt is a direct fork of djangorestframework-simplejwt with
 identical token API, so these stubs mirror the simplejwt stubs structure.
 """
+
 from __future__ import annotations
 
 from typing import Protocol
@@ -41,7 +42,6 @@ class _TokenProtocol(Protocol):
     All token classes in ninja-jwt implement __str__ for token string serialization.
     """
     def __str__(self) -> str: ...
-
 
 class Token:
     """
@@ -76,14 +76,12 @@ class Token:
             Token instance with user claims
         """
 
-
 class AccessToken(Token):
     """
     Access token for API authentication.
 
     Short-lived token used for authenticating API requests.
     """
-
 
 class RefreshToken(Token):
     """

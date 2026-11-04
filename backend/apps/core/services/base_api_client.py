@@ -37,7 +37,7 @@ class BaseApiClient(ABC):
         base_url: str,
         logger_name: str | None = None,
         timeout: int = 30,
-        max_retries: int = 0
+        max_retries: int = 0,
     ) -> None:
         """
         Initialize the base API client.
@@ -48,7 +48,7 @@ class BaseApiClient(ABC):
             timeout: Request timeout in seconds
             max_retries: Maximum number of retries for failed requests
         """
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.max_retries = max_retries
 
@@ -56,7 +56,7 @@ class BaseApiClient(ABC):
         if logger_name:
             self.logger = logging.getLogger(logger_name)
         else:
-            self.logger = logging.getLogger(f'{__name__}.{self.__class__.__name__}')
+            self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         # Set up session with retry logic if max_retries > 0
         self.session = requests.Session()
@@ -65,7 +65,7 @@ class BaseApiClient(ABC):
                 total=max_retries,
                 backoff_factor=1,  # Wait 1s, 2s, 4s, 8s between retries
                 status_forcelist=[429, 500, 502, 503, 504],  # Retry on these status codes
-                allowed_methods=["HEAD", "GET", "OPTIONS"]  # Safe methods only
+                allowed_methods=["HEAD", "GET", "OPTIONS"],  # Safe methods only
             )
             adapter = HTTPAdapter(max_retries=retry_strategy)
             self.session.mount("https://", adapter)
@@ -77,7 +77,7 @@ class BaseApiClient(ABC):
 
     def build_url(self, endpoint: str) -> str:
         """Build the full URL from base URL and endpoint."""
-        endpoint = endpoint.lstrip('/')
+        endpoint = endpoint.lstrip("/")
         return f"{self.base_url}/{endpoint}"
 
     @abstractmethod
@@ -139,7 +139,7 @@ class BaseApiClient(ABC):
             Headers as a dictionary, or empty dict if extraction fails
         """
         try:
-            if hasattr(response.headers, 'items'):
+            if hasattr(response.headers, "items"):
                 return dict(response.headers)
             return {}
         except (TypeError, AttributeError):
@@ -167,20 +167,13 @@ class BaseApiClient(ABC):
             500: "Internal Server Error - API server error",
             502: "Bad Gateway - API gateway error",
             503: "Service Unavailable - API temporarily unavailable",
-            504: "Gateway Timeout - API request timed out"
+            504: "Gateway Timeout - API request timed out",
         }
 
-        return error_details.get(
-            status_code,
-            f"HTTP {status_code} - Unexpected response from API"
-        )
+        return error_details.get(status_code, f"HTTP {status_code} - Unexpected response from API")
 
     def process_successful_response(
-        self,
-        response: requests.Response,
-        correlation_id: str,
-        endpoint: str,
-        duration_ms: int
+        self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
         """
         Process a successful HTTP response.
@@ -200,18 +193,21 @@ class BaseApiClient(ABC):
             # Handle invalid JSON responses
             error_message = f"Invalid JSON in response: {json_error}"
 
-            self.logger.error("API returned invalid JSON", extra={
-                'correlation_id': correlation_id,
-                'endpoint': endpoint,
-                'status_code': response.status_code,
-                'duration_ms': duration_ms,
-                'error_type': 'json_parsing_error',
-                'json_error': str(json_error),
-                'response_preview': str(response.text)[:200],
-                'response_size_bytes': (
-                    len(response.content) if hasattr(response.content, '__len__') else 0
-                )
-            })
+            self.logger.error(
+                "API returned invalid JSON",
+                extra={
+                    "correlation_id": correlation_id,
+                    "endpoint": endpoint,
+                    "status_code": response.status_code,
+                    "duration_ms": duration_ms,
+                    "error_type": "json_parsing_error",
+                    "json_error": str(json_error),
+                    "response_preview": str(response.text)[:200],
+                    "response_size_bytes": (
+                        len(response.content) if hasattr(response.content, "__len__") else 0
+                    ),
+                },
+            )
 
             return ApiResponse(
                 status_code=500,  # Treat as server error
@@ -222,19 +218,22 @@ class BaseApiClient(ABC):
                 endpoint=endpoint,
                 duration_ms=duration_ms,
                 headers=self._safe_headers_dict(response),
-                raw_response=response
+                raw_response=response,
             )
 
         # Log successful response
-        self.logger.info("API request successful", extra={
-            'correlation_id': correlation_id,
-            'endpoint': endpoint,
-            'status_code': response.status_code,
-            'duration_ms': duration_ms,
-            'response_size_bytes': (
-                len(response.content) if hasattr(response.content, '__len__') else 0
-            )
-        })
+        self.logger.info(
+            "API request successful",
+            extra={
+                "correlation_id": correlation_id,
+                "endpoint": endpoint,
+                "status_code": response.status_code,
+                "duration_ms": duration_ms,
+                "response_size_bytes": (
+                    len(response.content) if hasattr(response.content, "__len__") else 0
+                ),
+            },
+        )
 
         return ApiResponse(
             status_code=response.status_code,
@@ -244,15 +243,11 @@ class BaseApiClient(ABC):
             endpoint=endpoint,
             method="GET",  # Default, subclasses can override
             duration_ms=duration_ms,
-            raw_response=response
+            raw_response=response,
         )
 
     def process_error_response(
-        self,
-        response: requests.Response,
-        correlation_id: str,
-        endpoint: str,
-        duration_ms: int
+        self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
     ) -> ApiResponse:
         """
         Process an error HTTP response.
@@ -272,18 +267,19 @@ class BaseApiClient(ABC):
 
         # Log error with appropriate level based on status code
         log_data = {
-            'correlation_id': correlation_id,
-            'endpoint': endpoint,
-            'status_code': response.status_code,
-            'duration_ms': duration_ms,
-            'error_category': error_category,
-            'response_size_bytes': (
-                len(response.content) if hasattr(response.content, '__len__') else 0
+            "correlation_id": correlation_id,
+            "endpoint": endpoint,
+            "status_code": response.status_code,
+            "duration_ms": duration_ms,
+            "error_category": error_category,
+            "response_size_bytes": (
+                len(response.content) if hasattr(response.content, "__len__") else 0
             ),
-            'error_response': (
-                str(response.text)[:500] if hasattr(response.text, '__getitem__')
+            "error_response": (
+                str(response.text)[:500]
+                if hasattr(response.text, "__getitem__")
                 else str(response.text)
-            )
+            ),
         }
 
         if response.status_code >= 500:
@@ -305,7 +301,7 @@ class BaseApiClient(ABC):
             method="GET",  # Default, subclasses can override
             duration_ms=duration_ms,
             headers=self._safe_headers_dict(response),
-            raw_response=response
+            raw_response=response,
         )
 
     def handle_request_exception(
@@ -315,7 +311,7 @@ class BaseApiClient(ABC):
         endpoint: str,
         duration_ms: int,
         url: str,
-        params: dict[str, object] | None = None
+        params: dict[str, object] | None = None,
     ) -> ApiResponse:
         """
         Handle request exceptions (network errors, timeouts, etc.).
@@ -335,60 +331,66 @@ class BaseApiClient(ABC):
 
         # Add performance warning for slow exceptions (>1000ms)
         if duration_ms > 1000:
-            self.logger.warning("API request exception slow performance", extra={
-                'correlation_id': correlation_id,
-                'endpoint': endpoint,
-                'duration_ms': duration_ms,
-                'performance_warning': True,
-                'threshold_exceeded': '1000ms',
-                'performance_ratio': round(duration_ms / 1000.0, 2),
-                'slow_exception_impact': (
-                    'Exception handling time exceeds performance threshold'
-                ),
-                'error_type': type(error).__name__
-            })
+            self.logger.warning(
+                "API request exception slow performance",
+                extra={
+                    "correlation_id": correlation_id,
+                    "endpoint": endpoint,
+                    "duration_ms": duration_ms,
+                    "performance_warning": True,
+                    "threshold_exceeded": "1000ms",
+                    "performance_ratio": round(duration_ms / 1000.0, 2),
+                    "slow_exception_impact": (
+                        "Exception handling time exceeds performance threshold"
+                    ),
+                    "error_type": type(error).__name__,
+                },
+            )
 
         if isinstance(error, requests.exceptions.Timeout):
-            self.logger.error("API request timeout", extra={
-                'correlation_id': correlation_id,
-                'endpoint': endpoint,
-                'duration_ms': duration_ms,
-                'error_type': 'timeout_error',
-                'error_category': 'network_error',
-                'timeout_error': str(error),
-                'url': url,
-                'params': sanitized_params,
-                'timeout_threshold_exceeded': duration_ms > 30000
-            })
+            self.logger.error(
+                "API request timeout",
+                extra={
+                    "correlation_id": correlation_id,
+                    "endpoint": endpoint,
+                    "duration_ms": duration_ms,
+                    "error_type": "timeout_error",
+                    "error_category": "network_error",
+                    "timeout_error": str(error),
+                    "url": url,
+                    "params": sanitized_params,
+                    "timeout_threshold_exceeded": duration_ms > 30000,
+                },
+            )
 
             return ApiResponse(
                 status_code=408,
                 error_message=f"API request timeout: {error}",
                 error_details=(
-                    "The request timed out. This may indicate network issues "
-                    "or high API load."
+                    "The request timed out. This may indicate network issues or high API load."
                 ),
                 error_category="network_error",
                 correlation_id=correlation_id,
                 endpoint=endpoint,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
 
         elif isinstance(error, requests.exceptions.ConnectionError):
-            self.logger.error("API connection error", extra={
-                'correlation_id': correlation_id,
-                'endpoint': endpoint,
-                'duration_ms': duration_ms,
-                'error_type': 'connection_error',
-                'error_category': 'network_error',
-                'connection_error': str(error),
-                'url': url,
-                'base_url': self.base_url,
-                'params': sanitized_params,
-                'network_diagnostic': (
-                    'Unable to establish connection to API'
-                )
-            })
+            self.logger.error(
+                "API connection error",
+                extra={
+                    "correlation_id": correlation_id,
+                    "endpoint": endpoint,
+                    "duration_ms": duration_ms,
+                    "error_type": "connection_error",
+                    "error_category": "network_error",
+                    "connection_error": str(error),
+                    "url": url,
+                    "base_url": self.base_url,
+                    "params": sanitized_params,
+                    "network_diagnostic": ("Unable to establish connection to API"),
+                },
+            )
 
             return ApiResponse(
                 status_code=503,
@@ -400,23 +402,26 @@ class BaseApiClient(ABC):
                 error_category="network_error",
                 correlation_id=correlation_id,
                 endpoint=endpoint,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
 
         else:
             # Generic request exception
-            self.logger.error("API request exception", extra={
-                'correlation_id': correlation_id,
-                'endpoint': endpoint,
-                'duration_ms': duration_ms,
-                'error_type': type(error).__name__,
-                'error_category': 'request_error',
-                'request_error': str(error),
-                'url': url,
-                'params': sanitized_params,
-                'exception_module': type(error).__module__,
-                'is_critical': True
-            })
+            self.logger.error(
+                "API request exception",
+                extra={
+                    "correlation_id": correlation_id,
+                    "endpoint": endpoint,
+                    "duration_ms": duration_ms,
+                    "error_type": type(error).__name__,
+                    "error_category": "request_error",
+                    "request_error": str(error),
+                    "url": url,
+                    "params": sanitized_params,
+                    "exception_module": type(error).__module__,
+                    "is_critical": True,
+                },
+            )
 
             return ApiResponse(
                 status_code=500,
@@ -425,7 +430,7 @@ class BaseApiClient(ABC):
                 error_category="request_error",
                 correlation_id=correlation_id,
                 endpoint=endpoint,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
 
     def get(
@@ -433,7 +438,7 @@ class BaseApiClient(ABC):
         endpoint: str,
         params: dict[str, object] | None = None,
         headers: dict[str, str] | None = None,
-        **kwargs: object
+        **kwargs: object,
     ) -> ApiResponse:
         """
         Make a GET request to the API.
@@ -455,14 +460,17 @@ class BaseApiClient(ABC):
         sanitized_params = self.get_sanitized_params(params)
 
         # Log request start
-        self.logger.info("API request started", extra={
-            'correlation_id': correlation_id,
-            'endpoint': endpoint,
-            'method': 'GET',
-            'url': url,
-            'params': sanitized_params,
-            'param_count': len(sanitized_params) if sanitized_params else 0
-        })
+        self.logger.info(
+            "API request started",
+            extra={
+                "correlation_id": correlation_id,
+                "endpoint": endpoint,
+                "method": "GET",
+                "url": url,
+                "params": sanitized_params,
+                "param_count": len(sanitized_params) if sanitized_params else 0,
+            },
+        )
 
         # DEBUG-level: Log full request parameters for debugging
         if self.logger.isEnabledFor(logging.DEBUG) and params:
@@ -493,9 +501,7 @@ class BaseApiClient(ABC):
                     response, correlation_id, endpoint, duration_ms
                 )
             else:
-                return self.process_error_response(
-                    response, correlation_id, endpoint, duration_ms
-                )
+                return self.process_error_response(response, correlation_id, endpoint, duration_ms)
 
         except requests.exceptions.RequestException as error:
             duration_ms = int((time.time() - start_time) * 1000)

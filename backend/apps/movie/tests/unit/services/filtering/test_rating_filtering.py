@@ -4,6 +4,7 @@ Unit tests for rating filtering in TMDB result processing.
 Tests the rating filtering logic that handles TMDB API quirks where movies
 with placeholder ratings (0.0) or incorrect ratings are sometimes returned.
 """
+
 from __future__ import annotations
 
 from unittest.mock import Mock
@@ -27,7 +28,7 @@ def test_discover_movies_filters_incorrect_ratings() -> None:
     movies with 0.0 ratings (placeholder ratings for certain releases).
     """
     # Arrange: Mock client returns mix of correct and incorrect ratings
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # User requests movies rated 7.5+
     # TMDB returns 20 movies, but 5 have placeholder 0.0 ratings
@@ -84,7 +85,7 @@ def test_discover_movies_filters_incorrect_ratings() -> None:
 def test_rating_filtering_handles_range() -> None:
     """Test rating filtering works with both min and max rating (range filtering)."""
     # Arrange: Mock client returns movies with various ratings
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     tmdb_movies = [
         # In range (7.0-8.0) - should be kept
@@ -119,12 +120,15 @@ def test_rating_filtering_handles_range() -> None:
 def test_rating_filtering_handles_missing_ratings() -> None:
     """Test that movies with missing vote_average are filtered out."""
     # Arrange: Mock client returns some movies without ratings
-    mock_client = Mock(spec=['get'])
+    mock_client = Mock(spec=["get"])
 
     # Movie with missing rating to test TMDB data quality handling
     movie_without_rating: TMDBMovieBaseRawDict = {
-        'id': 2, 'title': "Movie without rating", 'poster_path': '/test.jpg',
-        'release_date': "2022-01-01", 'vote_average': None  # TMDB data quality issue
+        "id": 2,
+        "title": "Movie without rating",
+        "poster_path": "/test.jpg",
+        "release_date": "2022-01-01",
+        "vote_average": None,  # TMDB data quality issue
     }
 
     tmdb_movies: list[TMDBMovieBaseRawDict] = [  # type: ignore[assignment]

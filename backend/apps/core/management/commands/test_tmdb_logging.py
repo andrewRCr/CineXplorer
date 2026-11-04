@@ -17,7 +17,7 @@ from apps.movie.services.service_factory import get_movie_service
 
 
 class Command(BaseCommand):
-    help = 'Test TMDB API logging by exercising typical API operations'
+    help = "Test TMDB API logging by exercising typical API operations"
 
     def __init__(self) -> None:
         super().__init__()
@@ -25,38 +25,38 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser: ArgumentParser) -> None:
         parser.add_argument(
-            '--operations',
+            "--operations",
             type=str,
-            default='all',
-            help='Which operations to test: all, discover, search, details, popular, or specific'
+            default="all",
+            help="Which operations to test: all, discover, search, details, popular, or specific",
         )
         parser.add_argument(
-            '--delay',
+            "--delay",
             type=float,
             default=0.5,
-            help='Delay between requests in seconds (default: 0.5)'
+            help="Delay between requests in seconds (default: 0.5)",
         )
 
     def handle(self, *args: object, **options: object) -> None:
         self.stdout.write("🎬 Starting TMDB API logging test...")
 
-        operations: str = cast(str, options.get('operations', 'all'))
-        delay: float = cast(float, options.get('delay', 0.5))
+        operations: str = cast(str, options.get("operations", "all"))
+        delay: float = cast(float, options.get("delay", 0.5))
 
         # Test operations mapping
         test_operations = {
-            'discover': self.test_discover_movies,
-            'search': self.test_search_movies,
-            'details': self.test_movie_details,
-            'popular': self.test_popular_movies,
-            'now_playing': self.test_now_playing,
-            'upcoming': self.test_upcoming_movies
+            "discover": self.test_discover_movies,
+            "search": self.test_search_movies,
+            "details": self.test_movie_details,
+            "popular": self.test_popular_movies,
+            "now_playing": self.test_now_playing,
+            "upcoming": self.test_upcoming_movies,
         }
 
-        if operations == 'all':
+        if operations == "all":
             operations_to_run = test_operations.keys()
         else:
-            operations_to_run = [op.strip() for op in operations.split(',')]
+            operations_to_run = [op.strip() for op in operations.split(",")]
 
         self.stdout.write(f"📋 Running operations: {', '.join(operations_to_run)}")
         self.stdout.write(f"⏱️ Delay between requests: {delay}s")
@@ -87,7 +87,7 @@ class Command(BaseCommand):
         """Test discover movies API call."""
         self.stdout.write("  📊 Discover popular movies...")
         try:
-            params = BrowseServiceParams(sort_by='popularity.desc')
+            params = BrowseServiceParams(sort_by="popularity.desc")
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🎭 Found {len(result.results)} movies")
         except HttpError as e:
@@ -99,7 +99,7 @@ class Command(BaseCommand):
         """Test search movies API call."""
         self.stdout.write("  🔍 Searching for 'Inception'...")
         try:
-            params = SearchServiceParams(query='Inception')
+            params = SearchServiceParams(query="Inception")
             result = self.movie_service.search_movies(page=1, params=params)
             self.stdout.write(f"  🎬 Found {len(result.results)} results")
         except HttpError as e:
@@ -113,7 +113,7 @@ class Command(BaseCommand):
         try:
             result = self.movie_service.get_movie_by_id(27205)
             title = result.title
-            year = str(result.release_date.year) if result.release_date else 'Unknown'
+            year = str(result.release_date.year) if result.release_date else "Unknown"
             self.stdout.write(f"  🎯 Retrieved: {title} ({year})")
         except HttpError as e:
             self.stdout.write(f"  ❌ Error: {e.message}")
@@ -124,7 +124,7 @@ class Command(BaseCommand):
         """Test popular movies API call."""
         self.stdout.write("  🌟 Getting popular movies...")
         try:
-            params = BrowseServiceParams(sort_by='popularity.desc')
+            params = BrowseServiceParams(sort_by="popularity.desc")
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🏆 Found {len(result.results)} popular movies")
         except HttpError as e:

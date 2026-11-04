@@ -319,9 +319,7 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
     outstanding_after_refresh = OutstandingToken.objects.filter(
         user=verified_user  # type: ignore[misc]
     ).count()
-    assert outstanding_after_refresh == 2, (
-        "Refresh should create new outstanding token (2 total)"
-    )
+    assert outstanding_after_refresh == 2, "Refresh should create new outstanding token (2 total)"
 
     # Refresh again - creates another outstanding token
     second_refresh_response = api_client.post(

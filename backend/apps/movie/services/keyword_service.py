@@ -9,6 +9,7 @@ Architecture:
 - Methods return Pydantic schemas for type safety
 - Error handling via HttpError for API layer consistency
 """
+
 from __future__ import annotations
 
 from typing import cast
@@ -64,7 +65,7 @@ class KeywordService(BaseTMDBService):
         params: TMDBParams = {"page": page}
         response = self._tmdb_client.get("keyword/popular", cast(dict[str, object], params))
         result = self._get_validated_response(
-            response, operation='get_popular_keywords', page=page
+            response, operation="get_popular_keywords", page=page
         )
         return create_paginated_keyword_response_from_tmdb(result)
 
@@ -97,18 +98,13 @@ class KeywordService(BaseTMDBService):
         """
         # Return empty response for invalid queries (TMDB API requirement)
         if not query or len(query.strip()) < 2:
-            return KeywordListResponseSchema(
-                page=1,
-                total_pages=0,
-                total_results=0,
-                results=[]
-            )
+            return KeywordListResponseSchema(page=1, total_pages=0, total_results=0, results=[])
 
         response = self._tmdb_client.get("search/keyword", {"query": query})
-        result = self._get_validated_response(response, operation='search_keywords', query=query)
+        result = self._get_validated_response(response, operation="search_keywords", query=query)
 
         # Ensure we have results key for proper processing
-        if 'results' not in result:
-            result['results'] = []
+        if "results" not in result:
+            result["results"] = []
 
         return create_paginated_keyword_response_from_tmdb(result)

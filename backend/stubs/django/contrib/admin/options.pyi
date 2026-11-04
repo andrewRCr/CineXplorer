@@ -15,6 +15,7 @@ When upgrading Django or django-types:
 4. Verify signatures match Django's actual implementation
 5. Update "Last verified" date above
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
@@ -81,47 +82,26 @@ class ModelAdmin:
         """Return QuerySet of all model instances for admin."""
 
     def get_form(
-        self,
-        request: HttpRequest,
-        obj: Model | None = None,
-        **kwargs: object
+        self, request: HttpRequest, obj: Model | None = None, **kwargs: object
     ) -> type[ModelForm]:
         """Return ModelForm class for add/change forms."""
 
-    def save_model(
-        self,
-        request: HttpRequest,
-        obj: Model,
-        form: ModelForm,
-        change: bool
-    ) -> None:
+    def save_model(self, request: HttpRequest, obj: Model, form: ModelForm, change: bool) -> None:
         """Save model instance (called after successful form submission)."""
 
     def delete_model(self, request: HttpRequest, obj: Model) -> None:
         """Delete model instance."""
 
-    def has_view_permission(
-        self,
-        request: HttpRequest,
-        obj: Model | None = None
-    ) -> bool:
+    def has_view_permission(self, request: HttpRequest, obj: Model | None = None) -> bool:
         """Return True if user can view this object."""
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         """Return True if user can add objects."""
 
-    def has_change_permission(
-        self,
-        request: HttpRequest,
-        obj: Model | None = None
-    ) -> bool:
+    def has_change_permission(self, request: HttpRequest, obj: Model | None = None) -> bool:
         """Return True if user can change this object."""
 
-    def has_delete_permission(
-        self,
-        request: HttpRequest,
-        obj: Model | None = None
-    ) -> bool:
+    def has_delete_permission(self, request: HttpRequest, obj: Model | None = None) -> bool:
         """Return True if user can delete this object."""
 
     def has_module_permission(self, request: HttpRequest) -> bool:

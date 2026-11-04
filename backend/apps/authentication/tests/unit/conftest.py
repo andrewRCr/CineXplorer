@@ -1,4 +1,5 @@
 """Unit test fixtures for AuthenticationService."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -12,6 +13,7 @@ from apps.authentication.tests.unit.types import AuthServiceDeps, AuthServiceFac
 if TYPE_CHECKING:
     from apps.authentication.services.authentication_service import AuthenticationService
 
+
 @pytest.fixture()
 def auth_service_factory() -> AuthServiceFactory:
     """
@@ -20,6 +22,7 @@ def auth_service_factory() -> AuthServiceFactory:
     Returns:
         Factory function to build service + dependency mocks.
     """
+
     def _factory(**overrides: object) -> tuple[AuthenticationService, AuthServiceDeps]:
         from apps.authentication.services.authentication_service import AuthenticationService
 
@@ -37,6 +40,7 @@ def auth_service_factory() -> AuthServiceFactory:
         blacklist_token_fn = Mock()
         check_token_blacklist_fn = Mock()
         extract_user_id_fn = Mock(return_value="unknown")
+
         def build_error_response_mock(
             message: str,
             **_: object,

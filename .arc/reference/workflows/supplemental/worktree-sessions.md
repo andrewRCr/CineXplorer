@@ -42,10 +42,11 @@ docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # n
 (cd frontend && npm ci && npm run typegen)
 ```
 
-- **Branch:** `-b` cuts a new branch from `origin/main`, for an errand or a work unit. For a work unit it stands in
-  for [activate-work-unit.md](activate-work-unit.md) Step 2, and the steps after it run in the worktree. For an
-  existing branch, such as one under review, run `git worktree add "$W" {branch}` instead; git refuses while another
-  checkout has that branch.
+- **Branch:** `-b` cuts a new branch from `origin/main`, for an errand or a work unit. A work unit is provisioned
+  before its planning starts: the PRD and task list are written and committed on this branch, and
+  [activate-work-unit.md](activate-work-unit.md) runs here later, skipping its Step 1. For an existing branch, such
+  as one under review, run `git worktree add "$W" {branch}` instead; git refuses while another checkout has that
+  branch.
 - **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`. Without it the worktree's project
   is `infrastructure` too, and every `docker compose` command there acts on the primary's containers and volumes.
   Never copy `infrastructure/.env` without adding the name, and check it with `config` before the first Compose
@@ -58,8 +59,10 @@ docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # n
   runs from its platform package, and the project configures no msw worker directory.
 - **Codex:** no step of its own. A linked worktree uses the primary's project trust and its approved project hooks,
   so approve those hooks once in a Codex session on the primary (`/hooks`).
-- **Notes:** a work unit's session notes live in the worktree's own `.arc/user/{identity}/{name}/`. The inbox and
-  working memory stay in the main checkout ([user-inbox.md](user-inbox.md)).
+- **Notes:** a work unit's session notes live in the worktree's own `.arc/user/{identity}/{name}/`. Create them
+  here from [session-handoff.md](session-handoff.md)'s skeleton: State `planning`, Task List and Next Task
+  `[none yet]`, and Next Action the PRD. Activation later turns them to execution. The inbox and working memory stay
+  in the main checkout ([user-inbox.md](user-inbox.md)).
 
 ## Same-Session Errands
 

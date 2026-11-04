@@ -4,11 +4,9 @@ import type {
     MovieDetail,
     GenresResponse,
     MovieListResponse,
-    Keyword,
-    Person,
     KeywordListResponse,
-    PersonListResponse
-} from "../@types/movie";
+    PersonListResponse,
+} from "@/types/movie";
 
 // Query parameter types for type-safe API calls
 export interface MovieQueryParams {
@@ -46,7 +44,7 @@ export interface PersonQueryParams {
 }
 
 // Re-export commonly used types for external consumers
-export type { MovieListResponse, MovieListItem, Keyword, Person };
+export type { MovieListResponse, MovieListItem };
 
 // Service instances for clean Django Ninja API endpoints
 // Note: baseURL already includes /api, so paths are relative to /api/
@@ -70,7 +68,7 @@ export const fetchSearchPeopleService = create("/people/search");
  */
 export const fetchPaginatedMovies = (
     service: ReturnType<typeof create>,
-    params?: MovieQueryParams
+    params?: MovieQueryParams,
 ) => {
     return service.getPaginated<MovieListResponse>(params);
 };
@@ -80,7 +78,7 @@ export const fetchPaginatedMovies = (
  */
 export const fetchSingleMovie = (
     service: ReturnType<typeof create>,
-    tmdb_id: string | number
+    tmdb_id: string | number,
 ) => {
     return service.get<MovieDetail>(`/${tmdb_id}`);
 };
@@ -88,9 +86,7 @@ export const fetchSingleMovie = (
 /**
  * Fetch movie genres using auto-generated response types
  */
-export const fetchGenres = (
-    service: ReturnType<typeof create>
-) => {
+export const fetchGenres = (service: ReturnType<typeof create>) => {
     return service.get<GenresResponse>("");
 };
 
@@ -99,7 +95,7 @@ export const fetchGenres = (
  */
 export const fetchPaginatedKeywords = (
     service: ReturnType<typeof create>,
-    params?: KeywordQueryParams
+    params?: KeywordQueryParams,
 ) => {
     return service.getPaginated<KeywordListResponse>(params);
 };
@@ -109,7 +105,7 @@ export const fetchPaginatedKeywords = (
  */
 export const fetchPaginatedPeople = (
     service: ReturnType<typeof create>,
-    params?: PersonQueryParams
+    params?: PersonQueryParams,
 ) => {
     return service.getPaginated<PersonListResponse>(params);
 };

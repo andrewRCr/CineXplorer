@@ -25,7 +25,14 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const radioRecipe = defineSlotRecipe({
     className: "radioGroup",
 
-    slots: ["root", "item", "itemControl", "itemIndicator", "label", "itemText"],
+    slots: [
+        "root",
+        "item",
+        "itemControl",
+        "itemIndicator",
+        "label",
+        "itemText",
+    ],
 
     base: {
         root: {

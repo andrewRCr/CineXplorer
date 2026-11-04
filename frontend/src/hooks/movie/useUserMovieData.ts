@@ -76,7 +76,7 @@ export function useUserMovieData(tmdbId: string): {
                 setError(
                     err instanceof Error
                         ? err.message
-                        : "Failed to fetch user movie data"
+                        : "Failed to fetch user movie data",
                 );
                 setData(null);
             })
@@ -116,7 +116,7 @@ export function useUserMovieData(tmdbId: string): {
             setError(
                 err instanceof Error
                     ? err.message
-                    : "Failed to update user movie data"
+                    : "Failed to update user movie data",
             );
         } finally {
             if (mounted.current) setLoading(false);

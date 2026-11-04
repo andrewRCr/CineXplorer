@@ -4,7 +4,10 @@ import type { MovieListResponse } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 
 // Reusable fetcher function type
-type MovieFetcher = (page: number, tmdb_page_start?: number) => {
+type MovieFetcher = (
+    page: number,
+    tmdb_page_start?: number,
+) => {
     request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
 };
@@ -70,7 +73,9 @@ interface ResolvedContext {
  * @param props - Optional props to override or supplement outlet context
  * @returns Resolved context with fetcher and browse params
  */
-export function useMovieCollectionContext(props: MovieGridProps): ResolvedContext {
+export function useMovieCollectionContext(
+    props: MovieGridProps,
+): ResolvedContext {
     // Get context from parent layout, or use props as fallback
     const context = useOutletContext<MovieCollectionContext>();
     const {
@@ -90,7 +95,8 @@ export function useMovieCollectionContext(props: MovieGridProps): ResolvedContex
         const query = props.query || contextQuery;
         const title = props.title || contextTitle;
         // Default to true (render PageHeader) unless explicitly set to false
-        const renderPageHeader = props.renderPageHeader ?? contextRenderPageHeader ?? true;
+        const renderPageHeader =
+            props.renderPageHeader ?? contextRenderPageHeader ?? true;
         const enhancedFetcher = props.enhancedFetcher || contextEnhancedFetcher;
         const browseParams = props.browseParams || contextBrowseParams;
 

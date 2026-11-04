@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.17 | **Updated:** 2026-10-30 | **Hash:** `b8wobidt`
+**Version:** 2.18 | **Updated:** 2026-11-03 | **Hash:** `8xoe0p18`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -55,7 +55,7 @@ commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
 
 1. **Backend Tests**: 100% pass rate
    - **MUST run via Docker** (requires database connection to PostgreSQL/Redis)
-   - **Test runner**: pytest (migration complete 2025-10-13, 103/103 tests converted)
+   - **Test runner**: pytest
    - **NEVER run from host venv** - tests require Docker network access
 
 2. **Frontend Tests**: 100% pass rate
@@ -335,20 +335,43 @@ This makes the protocol visible during execution.
 
 - **Test-first protocol**: See Task Management Protocol section above for when to write tests before vs. after implementation
 - **Integration focus**: Prefer flow-level coverage over isolated units when practical
+- **Real database, replaced boundaries**: Backend tests use the real test database and replace only the boundaries
+  [testing-standards](../methods/testing-standards.md) names (TMDB, the OAuth providers, ZeptoMail, time), at their
+  client. Mail goes to Django's test outbox, and transactions run for real. Don't patch the project's own services,
+  repositories or transactions; if a test needs to, the code needs a seam.
+- **Frontend tests through the user's eyes**: Mock the network with MSW, not internal modules; query by role and
+  accessible name; interact through `userEvent`.
 - **Every check that runs must pass**, at the moment the quality gates above assign it
 - **Command patterns**: See [QUICK-REFERENCE.md](../QUICK-REFERENCE.md) for execution commands
 - **Detailed guidance**: See [Testing Methodology Strategy](../strategies/project/strategy-testing-methodology.md)
 
 ## Code Quality Principles
 
-Apply standard software engineering principles:
+Favor readability, and prefer composing what exists over new abstraction ([Proportionality](#proportionality)). The
+rules below are the checkable part: lint and type checks enforce what they can, and review checks the rest.
 
-- **DRY** (don't repeat yourself)
-- **SOLID** (single responsibility, open/closed, dependency inversion)
-- **KISS** (keep it simple)
-- **YAGNI** (you aren't gonna need it)
+### Errors and Logging
 
-Separate concerns, prefer composition over duplication, favor readability when principles conflict.
+- Catch the narrowest exception that can be raised. A broad `except` either re-raises, or is the deliberate edge of an
+  operation that degrades gracefully, and then logs with `logger.exception`.
+- An external service's error text, exception text or status code never reaches a client. The client gets a fixed
+  message and a status this API chooses; the detail goes to the log, with secrets removed.
+- Logs carry no secrets or personal data at any level: no email addresses, tokens, keys or verification codes. Log an
+  identifier, such as the user's ID.
+
+### Data Integrity (Backend)
+
+- A model records `created_at` and `updated_at`, unless it is immutable reference data.
+- An invariant the data must hold (uniqueness, a value range, a required pairing) is a database constraint
+  (`UniqueConstraint`, `CheckConstraint`), not only a validator or a service check.
+- Writes that must succeed together run in one `transaction.atomic` block. A lookup that creates on a miss uses
+  `get_or_create`, or a constraint and a retry, never a read followed by a separate write.
+
+### API Contracts (Backend)
+
+- Error responses share one shape, `{"detail": ...}`, as Django Ninja returns them.
+- PATCH tells an absent field (leave unchanged) from an explicit `null` (clear it).
+- An endpoint that reads or writes a user's data checks ownership, with tests for another user and for no user.
 
 ### Layered Architecture (Backend)
 
@@ -357,6 +380,10 @@ business logic (filtering, calculations, presets, orchestration).
 
 **Rule of thumb:** If an API route does more than extract params → call service → return response, the extra
 logic likely belongs in Service layer.
+
+Services raise domain exceptions (not found, not permitted, an upstream service unavailable), never Ninja's
+`HttpError`. One handler in the API layer maps them to responses. Services written before this rule move to it when
+they are next changed.
 
 ### Component Styling Standards (Frontend)
 
@@ -387,6 +414,14 @@ Use absolute imports (`@/`) for cross-directory references and relative imports 
 
 **Why:** Absolute imports are resilient to file moves and make import paths self-documenting. The `@/` alias maps
 to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
+
+### Frontend Data and Accessibility
+
+- Server data, anything fetched from the API, is read through TanStack Query with keys from one key factory, and
+  changed through mutations that update or invalidate the cache. Components and hooks don't fetch in `useEffect`.
+- No `any`. An `as` cast or a non-null `!` only where the type system can't express an invariant the code
+  guarantees, with a comment naming it.
+- An icon-only control has an accessible name (`aria-label`), and a toggle exposes its state (`aria-pressed`).
 
 ### Code Documentation Standards
 

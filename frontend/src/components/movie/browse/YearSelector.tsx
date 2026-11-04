@@ -22,12 +22,17 @@ const YearSelector = ({
   const currentYear = new Date().getFullYear();
 
   // Check if year filter should be disabled due to route constraints
-  const isRouteConstrained = pageSource === "now-playing" || pageSource === "upcoming";
+  const isRouteConstrained =
+    pageSource === "now-playing" || pageSource === "upcoming";
 
   // Calculate date range for route-constrained pages
   const getDateRangeInfo = () => {
     if (!isRouteConstrained) {
-      return { text: "", startPlaceholder: "1900", endPlaceholder: currentYear.toString() };
+      return {
+        text: "",
+        startPlaceholder: "1900",
+        endPlaceholder: currentYear.toString(),
+      };
     }
 
     const today = new Date();
@@ -61,7 +66,11 @@ const YearSelector = ({
       };
     }
 
-    return { text: "", startPlaceholder: "1900", endPlaceholder: currentYear.toString() };
+    return {
+      text: "",
+      startPlaceholder: "1900",
+      endPlaceholder: currentYear.toString(),
+    };
   };
 
   const dateRangeInfo = getDateRangeInfo();
@@ -71,18 +80,21 @@ const YearSelector = ({
   const [localMaxYear, setLocalMaxYear] = useState(maxYear);
 
   // Clamp year to valid bounds for better UX
-  const clampYear = useCallback((year: string): string => {
-    if (!year) return year; // Keep empty values
-    const num = parseInt(year, 10);
-    if (isNaN(num)) {
-      // For non-numeric values, clamp to closest valid year
-      return "1900"; // Default to earliest valid year
-    }
-    // Clamp numeric values to valid range
-    if (num < 1900) return "1900";
-    if (num > currentYear) return currentYear.toString();
-    return year; // Already valid
-  }, [currentYear]);
+  const clampYear = useCallback(
+    (year: string): string => {
+      if (!year) return year; // Keep empty values
+      const num = parseInt(year, 10);
+      if (isNaN(num)) {
+        // For non-numeric values, clamp to closest valid year
+        return "1900"; // Default to earliest valid year
+      }
+      // Clamp numeric values to valid range
+      if (num < 1900) return "1900";
+      if (num > currentYear) return currentYear.toString();
+      return year; // Already valid
+    },
+    [currentYear],
+  );
 
   // Sync local state when props change (e.g., from URL or external updates)
   // Clamp invalid values for better UX
@@ -103,7 +115,6 @@ const YearSelector = ({
     );
   };
 
-
   // Debounced update functions - only call parent when we have valid input
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedMinYearUpdate = useCallback(
@@ -112,7 +123,7 @@ const YearSelector = ({
         onMinYearChange(year);
       }
     }, 500),
-    [onMinYearChange, currentYear] // debounce function dependencies cannot be analyzed by ESLint
+    [onMinYearChange, currentYear], // debounce function dependencies cannot be analyzed by ESLint
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -122,7 +133,7 @@ const YearSelector = ({
         onMaxYearChange(year);
       }
     }, 500),
-    [onMaxYearChange, currentYear] // debounce function dependencies cannot be analyzed by ESLint
+    [onMaxYearChange, currentYear], // debounce function dependencies cannot be analyzed by ESLint
   );
 
   // Handle input changes
@@ -195,8 +206,8 @@ const YearSelector = ({
     pageSource === "now-playing"
       ? "Now Playing"
       : pageSource === "upcoming"
-      ? "Upcoming"
-      : "";
+        ? "Upcoming"
+        : "";
 
   return (
     <Box>

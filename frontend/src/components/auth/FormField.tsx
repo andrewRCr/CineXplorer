@@ -109,12 +109,7 @@ export const FormField = ({
         w="100%"
         position="relative"
       >
-        <Field.Label
-          htmlFor={name}
-          fontSize="16px"
-          fontWeight="medium"
-          mb={2}
-        >
+        <Field.Label htmlFor={name} fontSize="16px" fontWeight="medium" mb={2}>
           {label}
         </Field.Label>
         <StyledInput

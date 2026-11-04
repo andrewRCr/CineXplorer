@@ -107,9 +107,8 @@ const userMoviesService = create("/user-movie-data/movies");
  */
 export const getUserMovies = (params?: UserMoviesQueryParams) => {
     const controller = new AbortController();
-    const request = userMoviesService
-        .getPaginated<MovieListResponseSchema>(params)
-        .request;
+    const request =
+        userMoviesService.getPaginated<MovieListResponseSchema>(params).request;
 
     return { request, cancel: () => controller.abort() };
 };

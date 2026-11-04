@@ -51,8 +51,7 @@ import { adjustColor, deriveInteractionStates } from "../utils";
  * IBM Carbon palette type (light or dark mode).
  */
 export type CarbonPalette =
-    | typeof ibmCarbonPaletteLight
-    | typeof ibmCarbonPaletteDark;
+    typeof ibmCarbonPaletteLight | typeof ibmCarbonPaletteDark;
 
 /**
  * Create IBM Carbon adapter mapping to unified theme vocabulary.
@@ -110,9 +109,10 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Derive borderSubtle01 as midpoint between subtle00 and subtle02
     // In light mode (alternating): same as subtle00/02
     // In dark mode (progressive): +6.3% from subtle00
-    const borderSubtle01 = mode === "light"
-        ? palette.border_subtle_00
-        : adjustColor(palette.border_subtle_00, 6.3);
+    const borderSubtle01 =
+        mode === "light"
+            ? palette.border_subtle_00
+            : adjustColor(palette.border_subtle_00, 6.3);
     const borderSubtle02 = palette.border_subtle_02; // Low-contrast dividers on layer-02
     const borderStrong01 = palette.border_strong_01; // Accessible borders on layer-01
     const borderStrong02 = palette.border_strong_02; // Accessible borders on layer-02
@@ -140,7 +140,8 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     const secondary = palette.bg_button_secondary;
-    const onSecondary = mode === "light" ? palette.fg_onEmphasis : palette.fg_default;
+    const onSecondary =
+        mode === "light" ? palette.fg_onEmphasis : palette.fg_default;
 
     // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_layer_01; // Use layer-01 for muted
@@ -157,12 +158,14 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Status colors: destructive, success, warning, info (all official Carbon tokens)
     const destructive = palette.bg_danger;
     const onDestructive = palette.fg_onEmphasis;
-    const success = mode === "light"
-        ? palette.bg_success_hover // Tweaked for WCAG: use darker hover value (official #24a148 had 3.35:1 contrast)
-        : palette.bg_success;
+    const success =
+        mode === "light"
+            ? palette.bg_success_hover // Tweaked for WCAG: use darker hover value (official #24a148 had 3.35:1 contrast)
+            : palette.bg_success;
     const onSuccess = palette.fg_onEmphasis;
     const warning = palette.fg_warning;
-    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
+    const onWarning =
+        mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
     const info = palette.fg_info;
     const onInfo = palette.fg_onEmphasis;
 

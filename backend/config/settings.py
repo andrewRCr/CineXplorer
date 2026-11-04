@@ -72,7 +72,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",  # Required for django-allauth
-    "apps.accounts",
     "apps.core",
     "corsheaders",
     # django-allauth

@@ -101,7 +101,7 @@ const NavBar = () => {
           <HStack
             justifyContent="space-between"
             w="100%"
-            display={{ base: 'flex', lg: 'none' }}
+            display={{ base: "flex", lg: "none" }}
           >
             {/* Left - Hamburger Menu */}
             <Box>
@@ -121,7 +121,7 @@ const NavBar = () => {
           <HStack
             justifyContent="space-between"
             w="100%"
-            display={{ base: 'none', lg: 'flex' }}
+            display={{ base: "none", lg: "flex" }}
           >
             {/* Left - Logo and Title together */}
             <LogoAndTitle />
@@ -136,12 +136,8 @@ const NavBar = () => {
       </Container>
 
       {/* Desktop User Navigation Tabs - Secondary Row */}
-      <Box bg="layer-01" display={{ base: 'none', lg: 'block' }}>
-        <Container
-          maxW="container.xl"
-          px={{ base: 2, md: 6, lg: 8 }}
-          w="100%"
-        >
+      <Box bg="layer-01" display={{ base: "none", lg: "block" }}>
+        <Container maxW="container.xl" px={{ base: 2, md: 6, lg: 8 }} w="100%">
           <HStack gap={1} pt={0} pb={0}>
             {/* LOG Button */}
             <IconButton
@@ -170,9 +166,7 @@ const NavBar = () => {
                     bg={isTabActive(item.path) ? "tertiary" : undefined}
                     color={isTabActive(item.path) ? "on-tertiary" : undefined}
                     _hover={{
-                      bg: isTabActive(item.path)
-                        ? "tertiary"
-                        : "tertiary/8",
+                      bg: isTabActive(item.path) ? "tertiary" : "tertiary/8",
                       opacity: isTabActive(item.path) ? 0.92 : 1,
                     }}
                     borderRadius="md"
@@ -182,7 +176,7 @@ const NavBar = () => {
                     {item.label}
                   </Button>
                 </Link>
-              )
+              ),
             )}
           </HStack>
         </Container>

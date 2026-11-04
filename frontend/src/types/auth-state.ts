@@ -1,3 +1,7 @@
+import type { components } from "./api";
+
+type UserProfile = components["schemas"]["UserProfileSchema"];
+
 /**
  * Auth Error - structured error type for authentication failures
  */
@@ -16,8 +20,7 @@ export interface AuthError {
  * @template T - The success data type (displayName for login, void for register)
  */
 export type AuthResult<T> =
-    | { success: true; data: T }
-    | { success: false; error: AuthError };
+    { success: true; data: T } | { success: false; error: AuthError };
 
 /**
  * Login success data - returned by login() for component to use in success feedback
@@ -30,14 +33,14 @@ export interface AuthStateProps {
     login: (
         username: string,
         password: string,
-        rememberMe?: boolean
+        rememberMe?: boolean,
     ) => Promise<AuthResult<LoginSuccessData>>;
     isAuthenticated: boolean;
-    user: User | null;
+    user: UserProfile | null;
     logout: () => Promise<void>;
     register: (
         username: string,
         email: string,
-        password: string
+        password: string,
     ) => Promise<AuthResult<void>>;
 }

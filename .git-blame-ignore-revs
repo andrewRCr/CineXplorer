@@ -6,3 +6,6 @@ f46cabd5347221e182d43cf3690308dd0124ccfc
 
 # style(backend): apply ruff's docstring fixes
 c94ee8084b6d14328557958484a192905107c183
+
+# style(ui): format frontend files with Prettier
+176dd1b00b43b2f6b560e7f42ad71c82eec2638a

@@ -8,9 +8,7 @@ import ClearBrowseParamsButton from "./ClearBrowseParamsButton";
 interface QuickBrowseBarProps {
   browseParams: BrowseParams;
   onBrowseParamsChange: (
-    params:
-      | Partial<BrowseParams>
-      | ((prev: BrowseParams) => BrowseParams)
+    params: Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams),
   ) => void;
   isAdvancedOpen?: boolean;
   /** Whether advanced filters are currently applied (for toggle button indicator) */
@@ -29,7 +27,7 @@ const QuickBrowseBar = ({
 }: QuickBrowseBarProps) => {
   const updateParam = <K extends keyof BrowseParams>(
     key: K,
-    value: BrowseParams[K]
+    value: BrowseParams[K],
   ) => {
     onBrowseParamsChange((prev) => {
       return { ...prev, [key]: value };
@@ -49,13 +47,7 @@ const QuickBrowseBar = ({
   };
 
   return (
-    <HStack
-      w="100%"
-      py={2}
-      justify="center"
-      align="center"
-      gap={0}
-    >
+    <HStack w="100%" py={2} justify="center" align="center" gap={0}>
       {/* Browse by label */}
       <Text
         fontSize="sm"

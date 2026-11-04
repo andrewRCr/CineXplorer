@@ -220,9 +220,11 @@ export const gitlabPajamasPaletteDark = {
 /**
  * Type-safe palette color names for light mode.
  */
-export type GitLabPajamasPaletteColorLight = keyof typeof gitlabPajamasPaletteLight;
+export type GitLabPajamasPaletteColorLight =
+    keyof typeof gitlabPajamasPaletteLight;
 
 /**
  * Type-safe palette color names for dark mode.
  */
-export type GitLabPajamasPaletteColorDark = keyof typeof gitlabPajamasPaletteDark;
+export type GitLabPajamasPaletteColorDark =
+    keyof typeof gitlabPajamasPaletteDark;

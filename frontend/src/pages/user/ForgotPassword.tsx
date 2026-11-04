@@ -72,47 +72,47 @@ const ForgotPassword = () => {
       <AuthFormCard>
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">
-              <Text fontSize="20px" fontWeight="semibold">
-                Reset your password
-              </Text>
-              <Text fontSize="16px" color="on-muted">
-                Enter your email address and we'll send you a link to reset your
-                password.
-              </Text>
-              <FormField
-                name="email"
-                label="Email Address"
-                type="email"
-                value={formik.values.email}
-                error={formik.errors.email}
-                touched={formik.touched.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                autoFocus
-              />
+            <Text fontSize="20px" fontWeight="semibold">
+              Reset your password
+            </Text>
+            <Text fontSize="16px" color="on-muted">
+              Enter your email address and we'll send you a link to reset your
+              password.
+            </Text>
+            <FormField
+              name="email"
+              label="Email Address"
+              type="email"
+              value={formik.values.email}
+              error={formik.errors.email}
+              touched={formik.touched.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              autoFocus
+            />
 
-              <Button
-                type="submit"
-                variant="solid"
-                bg="primary"
-                color="on-primary"
-                _hover={{ bg: "primary-hover" }}
-                _active={{ bg: "primary-active" }}
-                width="full"
-                fontSize="16px"
-                loading={formik.isSubmitting}
-                loadingText="Sending..."
-              >
-                Send reset link
-              </Button>
+            <Button
+              type="submit"
+              variant="solid"
+              bg="primary"
+              color="on-primary"
+              _hover={{ bg: "primary-hover" }}
+              _active={{ bg: "primary-active" }}
+              width="full"
+              fontSize="16px"
+              loading={formik.isSubmitting}
+              loadingText="Sending..."
+            >
+              Send reset link
+            </Button>
 
-              <Text textAlign="center" w="100%" fontSize="16px">
-                Remember your password?{" "}
-                <TextLink to={ROUTES.LOGIN}>Sign in</TextLink>
-              </Text>
-            </VStack>
-          </form>
-        </AuthFormCard>
+            <Text textAlign="center" w="100%" fontSize="16px">
+              Remember your password?{" "}
+              <TextLink to={ROUTES.LOGIN}>Sign in</TextLink>
+            </Text>
+          </VStack>
+        </form>
+      </AuthFormCard>
     </Box>
   );
 };

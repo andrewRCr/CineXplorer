@@ -4,17 +4,6 @@ import userEvent from "@testing-library/user-event";
 import GenreSelector from "../GenreSelector";
 
 // Mock the COLORS constant and genre options
-vi.mock("@/constants/theme", () => ({
-  COLORS: {
-    background: { main: "#ffffff" },
-    border: { main: "#e2e8f0" },
-    text: {
-      main: "#1a202c",
-      secondary: "#4a5568",
-    },
-    tertiary: { primary: "#3182ce" },
-  },
-}));
 
 // Mock the genre options to have a predictable test set
 vi.mock("@/constants/browseOptions", () => ({
@@ -67,10 +56,10 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(false);
@@ -81,10 +70,10 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[28, 35]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
       const dramaCheckbox = screen.getByLabelText("Drama") as HTMLInputElement;
 
@@ -162,40 +151,38 @@ describe("GenreSelector Component", () => {
       const user = userEvent.setup();
       const { rerender } = render(<GenreSelector {...defaultProps} />);
 
-      const genreIds = [28, 35, 18, 27, 878]; // Action, Comedy, Drama, Horror, Sci-Fi
-      const genreLabels = [
-        "Action",
-        "Comedy",
-        "Drama",
-        "Horror",
-        "Science Fiction",
+      const genres = [
+        { id: 28, label: "Action" },
+        { id: 35, label: "Comedy" },
+        { id: 18, label: "Drama" },
+        { id: 27, label: "Horror" },
+        { id: 878, label: "Science Fiction" },
       ];
 
       let selectedIds: number[] = [];
 
       // Select each genre one by one
-      for (let index = 0; index < genreLabels.length; index++) {
-        const label = genreLabels[index];
+      for (const { id, label } of genres) {
         const checkbox = screen.getByLabelText(label);
         await act(async () => {
           await user.click(checkbox);
         });
 
-        selectedIds = [...selectedIds, genreIds[index]];
+        selectedIds = [...selectedIds, id];
         expect(mockOnChange).toHaveBeenCalledWith(selectedIds);
 
         // Update the component with new selection
         act(() => {
           rerender(
-            <GenreSelector {...defaultProps} selectedGenres={selectedIds} />
+            <GenreSelector {...defaultProps} selectedGenres={selectedIds} />,
           );
         });
       }
 
       // All checkboxes should be checked
-      genreLabels.forEach((label) => {
-        const checkbox = screen.getByLabelText(label) as HTMLInputElement;
-        expect(checkbox.checked).toBe(true);
+      genres.forEach(({ label }) => {
+        const checkbox = screen.getByLabelText(label);
+        expect(checkbox).toBeChecked();
       });
     });
   });
@@ -203,7 +190,7 @@ describe("GenreSelector Component", () => {
   describe("Controlled Component Behavior", () => {
     it("reflects selectedGenres prop changes", () => {
       const { rerender } = render(
-        <GenreSelector {...defaultProps} selectedGenres={[28]} />
+        <GenreSelector {...defaultProps} selectedGenres={[28]} />,
       );
 
       let actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
@@ -214,7 +201,7 @@ describe("GenreSelector Component", () => {
 
       actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(false);
@@ -223,7 +210,7 @@ describe("GenreSelector Component", () => {
 
     it("handles empty selectedGenres array", () => {
       const { rerender } = render(
-        <GenreSelector {...defaultProps} selectedGenres={[28, 35]} />
+        <GenreSelector {...defaultProps} selectedGenres={[28, 35]} />,
       );
 
       // Initially some genres are selected
@@ -235,7 +222,7 @@ describe("GenreSelector Component", () => {
 
       actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(false);
@@ -246,11 +233,11 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[28, 18]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       const dramaCheckbox = screen.getByLabelText("Drama") as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(true);
@@ -277,7 +264,7 @@ describe("GenreSelector Component", () => {
     it("preserves existing order when removing genres", async () => {
       const user = userEvent.setup();
       render(
-        <GenreSelector {...defaultProps} selectedGenres={[28, 35, 18, 27]} />
+        <GenreSelector {...defaultProps} selectedGenres={[28, 35, 18, 27]} />,
       );
 
       // Remove Comedy (35) from middle
@@ -295,7 +282,7 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[28, 28, 35]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
 
       // Should still show as checked despite duplicate
@@ -400,7 +387,7 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[999, 28]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       expect(actionCheckbox.checked).toBe(true);
 
@@ -458,7 +445,10 @@ describe("GenreSelector Component", () => {
       });
 
       render(
-        <GenreSelector selectedGenres={[]} onChange={mockOnChangeWithLogging} />
+        <GenreSelector
+          selectedGenres={[]}
+          onChange={mockOnChangeWithLogging}
+        />,
       );
 
       const actionCheckbox = screen.getByLabelText("Action");
@@ -488,11 +478,10 @@ describe("GenreSelector Component", () => {
         }[id];
 
         const checkbox = screen.getByLabelText(
-          label as string
+          label as string,
         ) as HTMLInputElement;
         expect(checkbox.checked).toBe(true);
       });
     });
-
   });
 });

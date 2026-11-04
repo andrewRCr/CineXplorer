@@ -31,13 +31,13 @@ interface FetcherResult<T> {
  * ```
  *
  * **Design:** Generic reusable hook - not specific to movies or any domain.
- * Used by usePaginatedMovies, useMovieDetail, and other data-fetching hooks.
+ * Used by useMovieDetail to manage the request lifecycle.
  *
  * @param fetcher - Function that returns { request: Promise, cancel: () => void }
  * @returns Object with data, error, loading state, and state setters
  */
 export function useApiRequest<T>(
-    fetcher: () => FetcherResult<T>
+    fetcher: () => FetcherResult<T>,
 ): ApiRequestResult<T> {
     const [data, setData] = useState<T | undefined>();
     const [error, setError] = useState<string>("");
@@ -59,9 +59,8 @@ export function useApiRequest<T>(
                 if (err instanceof CanceledError) return;
 
                 // Safely extract error message
-                const message = err instanceof Error
-                    ? err.message
-                    : String(err);
+                const message =
+                    err instanceof Error ? err.message : String(err);
 
                 setError(message);
                 setIsLoading(false); // Also set loading to false on error

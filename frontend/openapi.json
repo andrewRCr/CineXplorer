@@ -310,54 +310,6 @@
             "JWTCookieAuth": []
           }
         ]
-      },
-      "patch": {
-        "operationId": "apps_authentication_api_update_user_profile",
-        "summary": "Update User Profile",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserProfileSchema"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "description": "Update authenticated user's profile.\n\nSupports partial updates (PATCH) for user profile fields including\npassword changes with proper hashing.\n\nArgs:\n    request: HTTP request object with authenticated user\n    payload: Fields to update (all optional)\n\nReturns:\n    Status: the status code and response data\n        - 200: Profile updated successfully\n        - 400: Validation error\n\nPassword handling:\n    - Password is hashed using set_password() before saving\n    - Password is write-only (not returned in response)\n\nComputed fields in response:\n    - email_verified: Checked via allauth EmailAddress model\n    - full_name: Concatenated first_name + last_name",
-        "tags": [
-          "Authentication"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserProfileUpdateSchema"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTCookieAuth": []
-          }
-        ]
       }
     },
     "/api/verify-email/": {
@@ -1383,7 +1335,7 @@
             }
           }
         },
-        "description": "Retrieve movies currently playing in theaters with filtering and user-specific data.\n\nThin HTTP wrapper that delegates to service layer for business logic.\nSee MovieService.get_now_playing_movies() for implementation details including\ndate range presets, protected parameters, and user filter capabilities.\n\nQuery Parameters:\n    filters: MovieDiscoverFilterSchema with all optional filter parameters\n\nReturns:\n    MovieListResponseSchema: Paginated movies with user data if authenticated\n\nRaises:\n    HttpError: 400 for invalid parameters, 500 for TMDB API errors",
+        "description": "Retrieve movies currently playing in theaters with filtering and user-specific data.\n\nThin HTTP wrapper that delegates to service layer for business logic.\nSee MovieService.get_now_playing_movies() for implementation details including\ndate range presets, protected parameters, and user filter capabilities.\n\nQuery Parameters:\n    filters: MovieDiscoverFilterSchema with all optional filter parameters\n\nReturns:\n    MovieListResponseSchema: Paginated movies with user data if authenticated\n\nRaises:\n    HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,\n        is busy or times out",
         "tags": [
           "movies"
         ]
@@ -2099,7 +2051,7 @@
             }
           }
         },
-        "description": "Retrieve upcoming movies with filtering and user-specific data.\n\nThin HTTP wrapper that delegates to service layer for business logic.\nSee MovieService.get_upcoming_movies() for implementation details including\ndate range presets, protected parameters, and user filter capabilities.\n\nQuery Parameters:\n    filters: MovieDiscoverFilterSchema with all optional filter parameters\n\nReturns:\n    MovieListResponseSchema: Paginated movies with user data if authenticated\n\nRaises:\n    HttpError: 400 for invalid parameters, 500 for TMDB API errors",
+        "description": "Retrieve upcoming movies with filtering and user-specific data.\n\nThin HTTP wrapper that delegates to service layer for business logic.\nSee MovieService.get_upcoming_movies() for implementation details including\ndate range presets, protected parameters, and user filter capabilities.\n\nQuery Parameters:\n    filters: MovieDiscoverFilterSchema with all optional filter parameters\n\nReturns:\n    MovieListResponseSchema: Paginated movies with user data if authenticated\n\nRaises:\n    HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,\n        is busy or times out",
         "tags": [
           "movies"
         ]
@@ -2886,7 +2838,7 @@
             }
           }
         },
-        "description": "Browse movies with advanced filtering options and user-specific data.\n\nThis is a thin wrapper around the TMDB discover endpoint with zero presets,\ngiving users full control over all filter parameters. Unlike now-playing and\nupcoming endpoints which protect date ranges, this endpoint allows unrestricted\nfiltering for general movie browsing.\n\nThis endpoint implements a two-pass filtering architecture:\n1. TMDB API filtering (primary) - Reduces millions of movies to thousands\n2. Backend filtering (second-pass) - Catches TMDB data quality issues\n\nThe schema layer extracts parameters for both passes from incoming filter\nparameters. For example, release_date_gte=\"2020-01-01\" generates both:\n- release_date.gte for TMDB API (primary filter)\n- year_min=2020 for backend filtering (data hygiene)\n\nThis ensures users see only movies matching their filters, even when TMDB\nAPI returns movies with incorrect release dates or ratings.\n\nUses FilterSchema to handle 40+ optional parameters cleanly, with automatic\nempty string to None conversion to handle Django Ninja 1.4.3 + Pydantic 2.12.0\nvalidation behavior.\n\nQuery Parameters (all in filters schema):\n    filters: MovieDiscoverFilterSchema with all TMDB discover parameters\n        - page: Page number for pagination (default: 1)\n        - with_genres: Comma-separated genre IDs to include\n        - genres: Alias for with_genres (frontend convenience)\n        - decade: Decade filter (e.g., \"1990s\" → converts to date range)\n        - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)\n        - vote_average_gte/lte: Rating range filtering (both TMDB + backend)\n        - release_date_gte/lte: Date range filtering (both TMDB + backend)\n        - primary_release_year: Filter by release year\n        - [... many other TMDB discover parameters]\n\nReturns:\n    MovieListResponseSchema: Paginated list of movies with user data if authenticated\n\nRaises:\n    HttpError: 400 for invalid parameters, 500 for TMDB API errors",
+        "description": "Browse movies with advanced filtering options and user-specific data.\n\nThis is a thin wrapper around the TMDB discover endpoint with zero presets,\ngiving users full control over all filter parameters. Unlike now-playing and\nupcoming endpoints which protect date ranges, this endpoint allows unrestricted\nfiltering for general movie browsing.\n\nThis endpoint implements a two-pass filtering architecture:\n1. TMDB API filtering (primary) - Reduces millions of movies to thousands\n2. Backend filtering (second-pass) - Catches TMDB data quality issues\n\nThe schema layer extracts parameters for both passes from incoming filter\nparameters. For example, release_date_gte=\"2020-01-01\" generates both:\n- release_date.gte for TMDB API (primary filter)\n- year_min=2020 for backend filtering (data hygiene)\n\nThis ensures users see only movies matching their filters, even when TMDB\nAPI returns movies with incorrect release dates or ratings.\n\nUses FilterSchema to handle 40+ optional parameters cleanly, with automatic\nempty string to None conversion to handle Django Ninja 1.4.3 + Pydantic 2.12.0\nvalidation behavior.\n\nQuery Parameters (all in filters schema):\n    filters: MovieDiscoverFilterSchema with all TMDB discover parameters\n        - page: Page number for pagination (default: 1)\n        - with_genres: Comma-separated genre IDs to include\n        - genres: Alias for with_genres (frontend convenience)\n        - decade: Decade filter (e.g., \"1990s\" → converts to date range)\n        - sort_by: Sort criteria (popularity.desc, vote_average.desc, etc.)\n        - vote_average_gte/lte: Rating range filtering (both TMDB + backend)\n        - release_date_gte/lte: Date range filtering (both TMDB + backend)\n        - primary_release_year: Filter by release year\n        - [... many other TMDB discover parameters]\n\nReturns:\n    MovieListResponseSchema: Paginated list of movies with user data if authenticated\n\nRaises:\n    HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,\n        is busy or times out",
         "tags": [
           "movies"
         ]
@@ -2919,7 +2871,7 @@
             }
           }
         },
-        "description": "Retrieve detailed information for a specific movie by TMDB ID.\n\nThis endpoint fetches comprehensive movie details including cast, crew,\ngenres, production companies, and user-specific data if authenticated.\n\nArgs:\n    request: HTTP request object for user context\n    tmdb_id: The TMDB ID of the movie to retrieve\n\nReturns:\n    MovieDetailSchema: Complete movie details with user data if authenticated\n\nRaises:\n    HttpError: 404 if movie not found, 500 for TMDB API errors",
+        "description": "Retrieve detailed information for a specific movie by TMDB ID.\n\nThis endpoint fetches comprehensive movie details including cast, crew,\ngenres, production companies, and user-specific data if authenticated.\n\nArgs:\n    request: HTTP request object for user context\n    tmdb_id: The TMDB ID of the movie to retrieve\n\nReturns:\n    MovieDetailSchema: Complete movie details with user data if authenticated\n\nRaises:\n    HttpError: 404 if movie not found, or 502, 503 or 504 when TMDB fails,\n        is busy or times out",
         "tags": [
           "movies"
         ]
@@ -3601,65 +3553,6 @@
           "username"
         ],
         "title": "UserProfileSchema",
-        "type": "object"
-      },
-      "UserProfileUpdateSchema": {
-        "description": "Schema for user profile updates.\n\nManual Schema with all optional fields for partial updates (PATCH).\nPassword updates handled separately for security.",
-        "properties": {
-          "email": {
-            "anyOf": [
-              {
-                "format": "email",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated email address",
-            "title": "Email"
-          },
-          "first_name": {
-            "anyOf": [
-              {
-                "maxLength": 150,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated first name",
-            "title": "First Name"
-          },
-          "last_name": {
-            "anyOf": [
-              {
-                "maxLength": 150,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated last name",
-            "title": "Last Name"
-          },
-          "password": {
-            "anyOf": [
-              {
-                "minLength": 8,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Updated password (minimum 8 characters)",
-            "title": "Password"
-          }
-        },
-        "title": "UserProfileUpdateSchema",
         "type": "object"
       },
       "EmailVerificationResponseSchema": {

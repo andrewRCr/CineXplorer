@@ -16,11 +16,7 @@ export type Certification = "G" | "PG" | "PG-13" | "R" | "NC-17" | "NR";
  * Badge variant type matching the Badge recipe variants
  */
 export type CertificationVariant =
-  | "success"
-  | "info"
-  | "warning"
-  | "error"
-  | "neutral";
+    "success" | "info" | "warning" | "error" | "neutral";
 
 /**
  * Maps MPAA certification to Badge recipe variant
@@ -34,15 +30,15 @@ export type CertificationVariant =
  * - NR (Not Rated): neutral (gray) - no rating info
  */
 export const CERTIFICATION_VARIANT_MAP: Record<
-  Certification,
-  CertificationVariant
+    Certification,
+    CertificationVariant
 > = {
-  G: "success",
-  PG: "info",
-  "PG-13": "warning",
-  R: "error",
-  "NC-17": "error",
-  NR: "neutral",
+    G: "success",
+    PG: "info",
+    "PG-13": "warning",
+    R: "error",
+    "NC-17": "error",
+    NR: "neutral",
 };
 
 /**
@@ -50,12 +46,12 @@ export const CERTIFICATION_VARIANT_MAP: Record<
  * Used for filter UI and validation
  */
 export const CERTIFICATION_OPTIONS: Certification[] = [
-  "NR",
-  "G",
-  "PG",
-  "PG-13",
-  "R",
-  "NC-17",
+    "NR",
+    "G",
+    "PG",
+    "PG-13",
+    "R",
+    "NC-17",
 ];
 
 /**
@@ -63,10 +59,10 @@ export const CERTIFICATION_OPTIONS: Certification[] = [
  * Returns "neutral" for unknown certifications
  */
 export function getCertificationVariant(
-  certification: string | null | undefined
+    certification: string | null | undefined,
 ): CertificationVariant {
-  if (!certification) return "neutral";
-  return (
-    CERTIFICATION_VARIANT_MAP[certification as Certification] ?? "neutral"
-  );
+    if (!certification) return "neutral";
+    return (
+        CERTIFICATION_VARIANT_MAP[certification as Certification] ?? "neutral"
+    );
 }

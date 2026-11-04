@@ -293,7 +293,7 @@ describe("BackToTopButton", () => {
       });
       rerender(<BackToTopButton />);
       expect(
-        screen.getByRole("button", { name: /scroll to top/i })
+        screen.getByRole("button", { name: /scroll to top/i }),
       ).toBeInTheDocument();
 
       // Scroll back up
@@ -302,7 +302,7 @@ describe("BackToTopButton", () => {
       });
       rerender(<BackToTopButton />);
       expect(
-        screen.queryByRole("button", { name: /scroll to top/i })
+        screen.queryByRole("button", { name: /scroll to top/i }),
       ).not.toBeInTheDocument();
 
       // Scroll down again
@@ -311,7 +311,7 @@ describe("BackToTopButton", () => {
       });
       rerender(<BackToTopButton />);
       expect(
-        screen.getByRole("button", { name: /scroll to top/i })
+        screen.getByRole("button", { name: /scroll to top/i }),
       ).toBeInTheDocument();
     });
   });

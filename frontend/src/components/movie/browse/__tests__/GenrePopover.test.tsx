@@ -37,19 +37,25 @@ describe("GenrePopover Component", () => {
     it("renders trigger button with 'All genres' when nothing selected", () => {
       render(<GenrePopover {...defaultProps} />);
 
-      expect(screen.getByRole("button", { name: /all genres/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /all genres/i }),
+      ).toBeInTheDocument();
     });
 
     it("renders trigger button with count when genres selected", () => {
       render(<GenrePopover {...defaultProps} selectedGenres={[28, 35]} />);
 
-      expect(screen.getByRole("button", { name: /2 selected/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /2 selected/i }),
+      ).toBeInTheDocument();
     });
 
     it("renders trigger button with singular count for one genre", () => {
       render(<GenrePopover {...defaultProps} selectedGenres={[28]} />);
 
-      expect(screen.getByRole("button", { name: /1 selected/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /1 selected/i }),
+      ).toBeInTheDocument();
     });
 
     it("popover content is closed initially", () => {
@@ -122,7 +128,9 @@ describe("GenrePopover Component", () => {
   describe("isOpen Prop (Drawer Auto-Close)", () => {
     it("closes popover when isOpen prop changes to false", async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<GenrePopover {...defaultProps} isOpen={true} />);
+      const { rerender } = render(
+        <GenrePopover {...defaultProps} isOpen={true} />,
+      );
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
@@ -145,7 +153,9 @@ describe("GenrePopover Component", () => {
 
     it("keeps popover open when isOpen remains true", async () => {
       const user = userEvent.setup();
-      const { rerender } = render(<GenrePopover {...defaultProps} isOpen={true} />);
+      const { rerender } = render(
+        <GenrePopover {...defaultProps} isOpen={true} />,
+      );
 
       // Open the popover
       const triggerButton = screen.getByRole("button", { name: /all genres/i });
@@ -254,7 +264,9 @@ describe("GenrePopover Component", () => {
       rerender(<GenrePopover {...defaultProps} selectedGenres={[28]} />);
 
       // Need to re-open popover after rerender
-      const updatedTrigger = screen.getByRole("button", { name: /1 selected/i });
+      const updatedTrigger = screen.getByRole("button", {
+        name: /1 selected/i,
+      });
       await act(async () => {
         await user.click(updatedTrigger);
       });
@@ -284,8 +296,12 @@ describe("GenrePopover Component", () => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
       });
 
-      const actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
-      const comedyCheckbox = screen.getByLabelText("Comedy") as HTMLInputElement;
+      const actionCheckbox = screen.getByLabelText(
+        "Action",
+      ) as HTMLInputElement;
+      const comedyCheckbox = screen.getByLabelText(
+        "Comedy",
+      ) as HTMLInputElement;
       const dramaCheckbox = screen.getByLabelText("Drama") as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(true);
@@ -297,34 +313,44 @@ describe("GenrePopover Component", () => {
   describe("Controlled Component Behavior", () => {
     it("reflects selectedGenres prop changes in trigger text", () => {
       const { rerender } = render(
-        <GenrePopover {...defaultProps} selectedGenres={[28]} />
+        <GenrePopover {...defaultProps} selectedGenres={[28]} />,
       );
 
-      expect(screen.getByRole("button", { name: /1 selected/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /1 selected/i }),
+      ).toBeInTheDocument();
 
       // Update selectedGenres prop
-      rerender(<GenrePopover {...defaultProps} selectedGenres={[28, 35, 18]} />);
+      rerender(
+        <GenrePopover {...defaultProps} selectedGenres={[28, 35, 18]} />,
+      );
 
-      expect(screen.getByRole("button", { name: /3 selected/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /3 selected/i }),
+      ).toBeInTheDocument();
     });
 
     it("handles empty selectedGenres array", () => {
       const { rerender } = render(
-        <GenrePopover {...defaultProps} selectedGenres={[28, 35]} />
+        <GenrePopover {...defaultProps} selectedGenres={[28, 35]} />,
       );
 
-      expect(screen.getByRole("button", { name: /2 selected/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /2 selected/i }),
+      ).toBeInTheDocument();
 
       // Clear all selections
       rerender(<GenrePopover {...defaultProps} selectedGenres={[]} />);
 
-      expect(screen.getByRole("button", { name: /all genres/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /all genres/i }),
+      ).toBeInTheDocument();
     });
 
     it("reflects selectedGenres changes in checkbox state", async () => {
       const user = userEvent.setup();
       const { rerender } = render(
-        <GenrePopover {...defaultProps} selectedGenres={[28]} />
+        <GenrePopover {...defaultProps} selectedGenres={[28]} />,
       );
 
       // Open popover
@@ -356,7 +382,9 @@ describe("GenrePopover Component", () => {
       });
 
       actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
-      const comedyCheckbox = screen.getByLabelText("Comedy") as HTMLInputElement;
+      const comedyCheckbox = screen.getByLabelText(
+        "Comedy",
+      ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(false);
       expect(comedyCheckbox.checked).toBe(true);
@@ -429,7 +457,9 @@ describe("GenrePopover Component", () => {
       render(<GenrePopover {...defaultProps} selectedGenres={[999, 28]} />);
 
       // Trigger text should show count including unknown ID
-      expect(screen.getByRole("button", { name: /2 selected/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /2 selected/i }),
+      ).toBeInTheDocument();
 
       // Open popover
       await act(async () => {
@@ -440,7 +470,9 @@ describe("GenrePopover Component", () => {
         expect(screen.getByLabelText("Action")).toBeInTheDocument();
       });
 
-      const actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
+      const actionCheckbox = screen.getByLabelText(
+        "Action",
+      ) as HTMLInputElement;
       expect(actionCheckbox.checked).toBe(true);
 
       // Deselect Action - should preserve unknown ID
@@ -454,7 +486,9 @@ describe("GenrePopover Component", () => {
       const allGenreIds = [28, 35, 18, 27, 878];
       render(<GenrePopover {...defaultProps} selectedGenres={allGenreIds} />);
 
-      expect(screen.getByRole("button", { name: /5 selected/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /5 selected/i }),
+      ).toBeInTheDocument();
     });
   });
 });

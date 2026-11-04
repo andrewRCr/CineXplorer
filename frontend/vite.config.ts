@@ -11,15 +11,21 @@ export default defineConfig({
     plugins: [react(), tsconfigPaths()],
     resolve: {
         alias: {
-            // Note: @/types/* is handled by tsconfigPaths() plugin which supports
-            // multiple fallback paths (./src/@types/* and ./src/types/*)
             "@": resolve(__dirname, "./src"),
             shared: resolve(__dirname, "../shared"),
         },
-        // Explicitly handle @types as a local directory, not a scoped package
-        conditions: ['import', 'module', 'browser', 'default'],
-        mainFields: ['browser', 'module', 'main'],
-        extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.d.ts'],
+        conditions: ["import", "module", "browser", "default"],
+        mainFields: ["browser", "module", "main"],
+        extensions: [
+            ".mjs",
+            ".js",
+            ".mts",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".json",
+            ".d.ts",
+        ],
     },
     server: {
         watch: {

@@ -14,19 +14,18 @@
  * - Always uses base fetcher (even when query is present)
  */
 
-import { renderHook } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useMovieFetchRouter } from '../useMovieFetchRouter';
-import type { MovieListResponse } from '@/types/movie';
-import type { BrowseParams } from '@/types/browseTypes';
-import { createMockBrowseParams } from '@tests/mocks/browseParams';
+import { renderHook } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { useMovieFetchRouter } from "../useMovieFetchRouter";
+import type { MovieListResponse } from "@/types/movie";
+import type { BrowseParams } from "@/types/browseTypes";
+import { createMockBrowseParams } from "@tests/mocks/browseParams";
 
 /**
  * Helper to create mock paginated response
- * (Reusing pattern from usePaginatedMovies.test.ts)
  */
 function createMockPaginatedResponse(
-    overrides?: Partial<MovieListResponse>
+    overrides?: Partial<MovieListResponse>,
 ): MovieListResponse {
     return {
         page: 1,
@@ -35,9 +34,9 @@ function createMockPaginatedResponse(
         results: [
             {
                 tmdb_id: 123,
-                title: 'Test Movie 1',
-                poster_path: '/test1.jpg',
-                release_date: '2024-01-01',
+                title: "Test Movie 1",
+                poster_path: "/test1.jpg",
+                release_date: "2024-01-01",
                 vote_average: 8.5,
                 user_movie_data: null,
             },
@@ -52,17 +51,21 @@ function createMockPaginatedResponse(
  */
 function createMockBaseFetcher() {
     const mockFn = vi.fn(
-        (_page: number, _filters?: Record<string, string | number | number[]>, _tmdb_page_start?: number) => ({
+        (
+            _page: number,
+            _filters?: Record<string, string | number | number[]>,
+            _tmdb_page_start?: number,
+        ) => ({
             request: Promise.resolve({ data: createMockPaginatedResponse() }),
             cancel: vi.fn(),
-        })
+        }),
     );
     return mockFn;
 }
 
 // Use shared createMockBrowseParams fixture from @tests/mocks/browseParams
 
-describe('useMovieFetchRouter - pagination metadata passing', () => {
+describe("useMovieFetchRouter - pagination metadata passing", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -73,8 +76,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
      * Scenario: Parent component calls routed fetcher with tmdb_page_start
      * Expected: Parameter is accepted without errors
      */
-    describe('parameter acceptance', () => {
-        it('should accept tmdb_page_start as optional third parameter', () => {
+    describe("parameter acceptance", () => {
+        it("should accept tmdb_page_start as optional third parameter", () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams = createMockBrowseParams();
@@ -83,7 +86,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                })
+                }),
             );
 
             // Act: Call routed fetcher with tmdb_page_start
@@ -91,10 +94,14 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
 
             // Assert: Should not throw, function accepts parameter
             // Note: createEmptyFilters includes sortBy which gets passed through
-            expect(mockBaseFetcher).toHaveBeenCalledWith(1, { sort_by: 'popularity.desc' }, 5);
+            expect(mockBaseFetcher).toHaveBeenCalledWith(
+                1,
+                { sort_by: "popularity.desc" },
+                5,
+            );
         });
 
-        it('should work without tmdb_page_start for backward compatibility', () => {
+        it("should work without tmdb_page_start for backward compatibility", () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams = createMockBrowseParams();
@@ -103,7 +110,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                })
+                }),
             );
 
             // Act: Call routed fetcher without tmdb_page_start
@@ -111,7 +118,11 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
 
             // Assert: Should work with undefined parameter
             // Note: createEmptyFilters includes sortBy which gets passed through
-            expect(mockBaseFetcher).toHaveBeenCalledWith(1, { sort_by: 'popularity.desc' }, undefined);
+            expect(mockBaseFetcher).toHaveBeenCalledWith(
+                1,
+                { sort_by: "popularity.desc" },
+                undefined,
+            );
         });
     });
 
@@ -121,22 +132,22 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
      * Scenario: Using discover/top-rated/etc endpoints (no search query)
      * Expected: Parameter flows through to base fetcher
      */
-    describe('base fetcher - tmdb_page_start passing', () => {
-        it('should pass tmdb_page_start to base fetcher when provided', () => {
+    describe("base fetcher - tmdb_page_start passing", () => {
+        it("should pass tmdb_page_start to base fetcher when provided", () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams: BrowseParams = {
                 ...createMockBrowseParams(),
                 genres: [28],
-                minRating: '7.0',
-                maxRating: '10.0',
+                minRating: "7.0",
+                maxRating: "10.0",
             };
 
             const { result } = renderHook(() =>
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                })
+                }),
             );
 
             // Act: Navigate to page 2 with metadata
@@ -146,15 +157,15 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             expect(mockBaseFetcher).toHaveBeenCalledWith(
                 2,
                 expect.objectContaining({
-                    genres: '28',
-                    vote_average_gte: '7.0',
-                    vote_average_lte: '10.0',
+                    genres: "28",
+                    vote_average_gte: "7.0",
+                    vote_average_lte: "10.0",
                 }),
-                5
+                5,
             );
         });
 
-        it('should pass undefined tmdb_page_start when omitted', () => {
+        it("should pass undefined tmdb_page_start when omitted", () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams = createMockBrowseParams();
@@ -163,7 +174,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                })
+                }),
             );
 
             // Act: First page request without metadata
@@ -171,7 +182,11 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
 
             // Assert: Parameter is undefined (backward compatible)
             // Note: createEmptyFilters includes sortBy which gets passed through
-            expect(mockBaseFetcher).toHaveBeenCalledWith(1, { sort_by: 'popularity.desc' }, undefined);
+            expect(mockBaseFetcher).toHaveBeenCalledWith(
+                1,
+                { sort_by: "popularity.desc" },
+                undefined,
+            );
         });
     });
 
@@ -185,8 +200,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
      * is reserved for potential future use but doesn't trigger
      * search endpoint switching in the current implementation.
      */
-    describe('filter handling - always uses base fetcher', () => {
-        it('should use base fetcher with multiple filters', () => {
+    describe("filter handling - always uses base fetcher", () => {
+        it("should use base fetcher with multiple filters", () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams: BrowseParams = {
@@ -199,7 +214,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                })
+                }),
             );
 
             // Act: Request with filters
@@ -209,10 +224,10 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             expect(mockBaseFetcher).toHaveBeenCalledWith(
                 2,
                 expect.objectContaining({
-                    genres: '28',
-                    release_date_gte: '2020-01-01',
+                    genres: "28",
+                    release_date_gte: "2020-01-01",
                 }),
-                7
+                7,
             );
         });
     });
@@ -223,8 +238,8 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
      * Scenario: Code using old signature (page only)
      * Expected: Functions normally without errors
      */
-    describe('backward compatibility', () => {
-        it('should maintain existing behavior when tmdb_page_start not used', () => {
+    describe("backward compatibility", () => {
+        it("should maintain existing behavior when tmdb_page_start not used", () => {
             // Arrange
             const mockBaseFetcher = createMockBaseFetcher();
             const mockBrowseParams: BrowseParams = {
@@ -236,7 +251,7 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
                 useMovieFetchRouter({
                     fetcher: mockBaseFetcher,
                     browseParams: mockBrowseParams,
-                })
+                }),
             );
 
             // Act: Use old calling pattern (page only)
@@ -246,9 +261,9 @@ describe('useMovieFetchRouter - pagination metadata passing', () => {
             expect(mockBaseFetcher).toHaveBeenCalledWith(
                 3,
                 expect.objectContaining({
-                    genres: '28,12',
+                    genres: "28,12",
                 }),
-                undefined
+                undefined,
             );
         });
     });

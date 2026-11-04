@@ -2,178 +2,129 @@
 
 ## Directory Structure
 
-```
+```text
 frontend/
-├── tests/                      # Test configuration & integration tests
-│   ├── setup.ts               # Global test setup (Vitest config)
-│   ├── helpers/               # Test utility functions
-│   │   └── test-renderer.tsx  # Custom render with providers
-│   ├── mocks/                 # Mock data & API responses
-│   │   ├── movieData.ts       # Movie mock factories
-│   │   └── apiMocks.ts        # API service mocks
-│   └── README.md              # This file
+├── tests/
+│   ├── setup.ts                         # Browser shims and MSW lifecycle
+│   ├── browser-storage.ts               # jsdom storage before MSW loads
+│   ├── helpers/
+│   │   ├── test-providers.tsx            # App theme and isolated query client
+│   │   ├── test-renderer.tsx             # Shared render with MemoryRouter
+│   │   └── test-renderer-with-routes.tsx  # Route-aware render helpers
+│   ├── mocks/
+│   │   ├── handlers/                    # Shared HTTP response handlers
+│   │   ├── server.ts                    # MSW Node server
+│   │   └── movieData.ts                 # Movie fixture factories
+│   └── integration/
 └── src/
-    └── components/
-        └── __tests__/         # Component unit tests (co-located)
-            └── Component.test.tsx
+    └── .../__tests__/                   # Co-located component and hook tests
 ```
-
-## Testing Philosophy
-
-### Co-located Tests
-
-- Unit tests are placed in `__tests__/` directories next to components
-- Integration tests go in the main `tests/` directory
-- This keeps tests close to the code they're testing
-
-### Test Types
-
-1. **Unit Tests** - Individual components/hooks/utilities
-2. **Integration Tests** - Component interactions, routing, API integration
-3. **End-to-End Tests** - Full user workflows (separate E2E setup)
 
 ## Running Tests
 
+Run these commands from `frontend/`:
+
 ```bash
-# Run all tests
 npm run test
-
-# Run tests in watch mode
 npm run test:watch
-
-# Run tests with coverage
 npm run test:coverage
-
-# Run specific test file
-npm run test MovieCard.test.tsx
-
-# Run tests for specific directory
-npm run test src/components/movie
-```
-
-## Test Structure Guidelines
-
-### 1. Component Tests
-
-```typescript
-describe('ComponentName', () => {
-  beforeEach(() => {
-    // Reset mocks, setup common data
-  });
-
-  it('renders correctly with default props', () => {
-    // Test basic rendering
-  });
-
-  it('handles user interactions', () => {
-    // Test click handlers, form submissions, etc.
-  });
-
-  it('handles edge cases', () => {
-    // Test error states, missing data, etc.
-  });
-});
-```
-
-### 2. Hook Tests
-
-```typescript
-describe('useCustomHook', () => {
-  it('returns expected initial state', () => {
-    // Test initial values
-  });
-
-  it('updates state correctly', () => {
-    // Test state changes
-  });
-});
-```
-
-## Mock Strategy
-
-### API Mocks
-
-- Use factory functions for consistent mock data
-- Mock at the service layer, not the HTTP layer
-- Reset mocks between tests
-
-### Component Mocks
-
-- Mock heavy/complex child components
-- Mock external dependencies (router, etc.)
-- Use real implementations when possible
-
-## Best Practices
-
-### ✅ Do
-
-- Test user behavior, not implementation details
-- Use semantic queries (`getByRole`, `getByLabelText`)
-- Test error states and edge cases
-- Keep tests focused and isolated
-- Use descriptive test names
-
-### ❌ Don't
-
-- Test implementation details
-- Use snapshot testing excessively
-- Create overly complex test setups
-- Test third-party library functionality
-- Ignore async behavior
-
-## Available Testing Utilities
-
-### Custom Render
-
-```typescript
-import { render } from '@tests/helpers/test-renderer';
-// Includes Chakra UI and React Router providers
-```
-
-### Mock Factories
-
-```typescript
-import { createMockMovieListItem, createMockMovieListItems, createMockMovieDetail } from '@tests/mocks/movieData';
-```
-
-### API Mocks
-
-```typescript
-import { mockMovieService, resetAllMocks } from '@tests/mocks/apiMocks';
-```
-
-## Coverage Goals
-
-- **Lines**: 70%+ (configured in vitest.config.ts)
-- **Functions**: 70%+
-- **Branches**: 70%+
-- **Statements**: 70%+
-
-Focus on testing critical paths and user-facing functionality rather than achieving 100% coverage.
-
-## TypeScript Configuration
-
-The test environment is fully TypeScript compatible:
-
-- **Path Aliases**: `@tests/*`, `@shared`, `@/*` all work correctly
-- **jest-dom Matchers**: `toBeInTheDocument()`, `toHaveAttribute()` fully typed
-- **JSX Support**: Full React component testing with proper type checking
-- **Shared Types**: Access to shared API types from backend
-
-### VSCode Integration
-
-The project includes VSCode settings for optimal TypeScript experience:
-
-- Auto-imports from path aliases
-- Proper IntelliSense for test utilities
-- Error highlighting for test files
-
-### Type Checking
-
-```bash
-# Check all TypeScript (including tests)
+npm run test -- src/pages/user/__tests__/Watchlist.test.tsx
+npm run typegen
 npm run type-check
-
-# Run tests with TypeScript validation
-npm test
 ```
+
+Vitest executes the tests; TypeScript checking is a separate command. Generate
+Chakra's types before type-checking in a fresh checkout.
+
+## Shared Renderers
+
+Import `render`, queries, and async utilities from the shared renderer:
+
+```tsx
+import { render, screen } from "@tests/helpers/test-renderer";
+import Watchlist from "@/pages/user/Watchlist";
+
+render(<Watchlist />);
+expect(await screen.findByText("Fight Club")).toBeInTheDocument();
+```
+
+Both shared renderers provide:
+
+- The application's default IBM Carbon Chakra system, including its semantic
+  tokens and recipes.
+- A fresh TanStack Query client for each render call, with query and mutation
+  retries disabled. Its cache survives `rerender` and is separate from other
+  renders. Unused query caches do not schedule garbage-collection timers.
+- A memory router. For route parameters, history entries, or navigation across
+  routes, use `renderWithRoute` or `renderWithRoutes` from
+  `@tests/helpers/test-renderer-with-routes`.
+
+The shared renderers do not mount theme selection, color-mode management, or
+background persistence. Tests of theme switching and saved preferences must
+explicitly mount the production providers they exercise and control storage and
+document state. The global `next-themes` mock also limits color-mode integration
+coverage.
+
+For computed recipe-style assertions, jsdom skips CSS `@layer` blocks. Use a
+layer-free copy of the project system, as `MovieUserScore.test.tsx` does, and
+assert the semantic token rather than a raw color.
+
+## Network Responses with MSW
+
+Keep the component, hooks, services, and HTTP client real. Replace API responses
+at the HTTP boundary with MSW 2's `http` and `HttpResponse` APIs.
+
+The global setup starts the Node server with `onUnhandledRequest: "error"`.
+Unexpected requests are blocked rather than sent to a live backend. Each test's
+runtime handlers are reset afterward, and the server closes after the file.
+Vitest resolves only MSW's server entry through Node; application dependencies
+keep their browser exports.
+
+Shared happy-path handlers live in `tests/mocks/handlers/`. Add a test-local
+handler for empty, delayed, or error responses:
+
+```tsx
+import { http, HttpResponse } from "msw";
+import { render, screen } from "@tests/helpers/test-renderer";
+import { server } from "@tests/mocks/server";
+import { apiBaseUrl } from "@/config/baseUrls";
+import Watchlist from "@/pages/user/Watchlist";
+
+it("shows an empty watchlist", async () => {
+    server.use(
+        http.get(`${apiBaseUrl}/user-movie-data/movies`, () =>
+            HttpResponse.json({
+                page: 1,
+                total_pages: 0,
+                total_results: 0,
+                results: [],
+            }),
+        ),
+    );
+
+    render(<Watchlist />);
+    expect(
+        await screen.findByText("No movies on watchlist"),
+    ).toBeInTheDocument();
+});
+```
+
+`Watchlist.test.tsx` also covers filtering, loading until a request completes,
+and an HTTP failure. Its fixtures follow the generated API response types. Finish
+delayed requests before ending a test so later tests inherit no pending work.
+
+## Test Discipline
+
+- Assert user-visible behavior, including error and empty states.
+- Prefer role and accessible-name queries; use `userEvent` for interactions.
+- Await asynchronous UI updates with `findBy*` or `waitFor`.
+- Keep state and network responses isolated between tests.
+- Use fixture factories from `@tests/mocks/movieData` for reusable movie data.
+- Run integration flows against real components and services; avoid assertions
+  whose only outcome is a mocked service's call arguments.
+
+## Coverage
+
+`npm run test:coverage` enforces the measured regression floors in
+`vitest.config.ts`. Ordinary `npm run test` does not measure coverage. Prioritize
+critical paths, error handling, and meaningful assertions over a percentage.

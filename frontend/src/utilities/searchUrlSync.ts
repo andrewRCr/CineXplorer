@@ -19,11 +19,11 @@ import { DEFAULT_SEARCH_PARAMS } from "@/types/searchTypes";
  * // => { query: "batman" }
  */
 export function parseSearchParamsFromUrl(search: string): SearchParams {
-  const params = new URLSearchParams(search);
+    const params = new URLSearchParams(search);
 
-  return {
-    query: params.get("query") || DEFAULT_SEARCH_PARAMS.query,
-  };
+    return {
+        query: params.get("query") || DEFAULT_SEARCH_PARAMS.query,
+    };
 }
 
 /**
@@ -40,13 +40,13 @@ export function parseSearchParamsFromUrl(search: string): SearchParams {
  * // => "query=batman"
  */
 export function generateSearchUrl(searchParams: SearchParams): string {
-  const params = new URLSearchParams();
+    const params = new URLSearchParams();
 
-  if (searchParams.query) {
-    params.set("query", searchParams.query);
-  }
+    if (searchParams.query) {
+        params.set("query", searchParams.query);
+    }
 
-  return params.toString();
+    return params.toString();
 }
 
 /**
@@ -56,5 +56,5 @@ export function generateSearchUrl(searchParams: SearchParams): string {
  * @returns True if there's an active movie search query
  */
 export function hasActiveSearch(searchParams: SearchParams): boolean {
-  return Boolean(searchParams.query.trim());
+    return Boolean(searchParams.query.trim());
 }

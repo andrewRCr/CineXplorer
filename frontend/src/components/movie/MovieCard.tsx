@@ -51,7 +51,9 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   const titleRef = useRef<HTMLParagraphElement>(null);
 
   // Local state for watchlist to handle immediate UI updates
-  const [localWatchlistState, setLocalWatchlistState] = useState<boolean | null>(null);
+  const [localWatchlistState, setLocalWatchlistState] = useState<
+    boolean | null
+  >(null);
 
   // Movie actions hook for watchlist, watched, liked, etc.
   const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
@@ -62,8 +64,9 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
 
   // Watchlist state: prefer local state (after toggle), fallback to prop
   const isOnWatchlist = useMemo(
-    () => localWatchlistState ?? movie.user_movie_data?.user_on_watchlist ?? false,
-    [localWatchlistState, movie.user_movie_data]
+    () =>
+      localWatchlistState ?? movie.user_movie_data?.user_on_watchlist ?? false,
+    [localWatchlistState, movie.user_movie_data],
   );
 
   // Format release date for display
@@ -75,9 +78,9 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
     const dateParts = movie.release_date.split("-");
     if (dateParts.length !== 3) return "Release date unknown";
 
-    const year = Number.parseInt(dateParts[0], 10);
-    const month = Number.parseInt(dateParts[1], 10);
-    const day = Number.parseInt(dateParts[2], 10);
+    const year = Number.parseInt(dateParts[0] ?? "", 10);
+    const month = Number.parseInt(dateParts[1] ?? "", 10);
+    const day = Number.parseInt(dateParts[2] ?? "", 10);
 
     if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
       return "Release date unknown";
@@ -136,7 +139,9 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
     const element = titleRef.current;
     // Simple heuristic: if scrollHeight > clientHeight, it's truncated
     // Works in all modern browsers (IE9+)
-    setIsTitleTruncated(element.scrollHeight > element.clientHeight + TRUNCATION_HEIGHT_BUFFER);
+    setIsTitleTruncated(
+      element.scrollHeight > element.clientHeight + TRUNCATION_HEIGHT_BUFFER,
+    );
   }, []);
 
   // Debounced resize handler for truncation check
@@ -209,7 +214,10 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
         _hover={{ bg: "layer-hover-01" }}
       >
         {/* Poster Image */}
-        <Link to={`/movie/${movie.tmdb_id}${queryString}`} style={{ display: "block", textDecoration: "none" }}>
+        <Link
+          to={`/movie/${movie.tmdb_id}${queryString}`}
+          style={{ display: "block", textDecoration: "none" }}
+        >
           <Box position="relative" paddingBottom="150%" overflow="hidden">
             <Image
               position="absolute"
@@ -246,10 +254,15 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: "vertical",
                 }}
-                onMouseEnter={() => isTitleTruncated && setIsTitleTooltipOpen(true)}
+                onMouseEnter={() =>
+                  isTitleTruncated && setIsTitleTooltipOpen(true)
+                }
                 onMouseLeave={() => setIsTitleTooltipOpen(false)}
               >
-                <Link to={`/movie/${movie.tmdb_id}${queryString}`} style={{ textDecoration: "none", color: "inherit" }}>
+                <Link
+                  to={`/movie/${movie.tmdb_id}${queryString}`}
+                  style={{ textDecoration: "none", color: "inherit" }}
+                >
                   {movie.title}
                 </Link>
               </Text>
@@ -304,11 +317,18 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
 
             {/* Date and Score Row */}
             <Box>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
                 <Text fontSize="sm" fontFamily="sourcesans" color="on-muted">
                   {formattedDate}
                 </Text>
-                <MovieUserScore score={movie.vote_average} voteCount={movie.vote_count} />
+                <MovieUserScore
+                  score={movie.vote_average}
+                  voteCount={movie.vote_count}
+                />
               </Box>
             </Box>
           </Card.Body>
@@ -328,7 +348,9 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                   </IconButton>
                 </Tooltip>
                 <Tooltip
-                  content={isOnWatchlist ? "Remove from watchlist" : "Add to watchlist"}
+                  content={
+                    isOnWatchlist ? "Remove from watchlist" : "Add to watchlist"
+                  }
                   openDelay={500}
                 >
                   <IconButton

@@ -39,8 +39,7 @@ import {
  * GitHub Primer palette type (light or dark mode).
  */
 export type GitHubPalette =
-    | typeof githubPaletteLight
-    | typeof githubPaletteDark;
+    typeof githubPaletteLight | typeof githubPaletteDark;
 
 /**
  * Create GitHub Primer adapter mapping to unified theme vocabulary.
@@ -104,17 +103,19 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     // PRIMARY: Green background token for action buttons (ADR-010)
     // Token type: BACKGROUND (for filled buttons)
     // Rationale: GitHub uses green for positive actions ("merge", "create", primary CTAs)
-    const primary = mode === "light"
-        ? palette.bg_success_hover // Tweaked for WCAG: slightly darker green (official #1f883d had 4.24:1 on layer-01)
-        : palette.bg_success_hover; // Tweaked for WCAG: lighter background in dark mode (official #238636 had 4.09:1 contrast)
+    const primary =
+        mode === "light"
+            ? palette.bg_success_hover // Tweaked for WCAG: slightly darker green (official #1f883d had 4.24:1 on layer-01)
+            : palette.bg_success_hover; // Tweaked for WCAG: lighter background in dark mode (official #238636 had 4.09:1 contrast)
     const onPrimary = palette.fg_onEmphasis;
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     // Uses derived medium gray for distinction from muted
-    const secondary = mode === "light"
-        ? "#5f656f" // Tweaked for WCAG: darker neutral gray (official #8c929d had 3.13:1 contrast)
-        : palette.bg_button_secondary;
+    const secondary =
+        mode === "light"
+            ? "#5f656f" // Tweaked for WCAG: darker neutral gray (official #8c929d had 3.13:1 contrast)
+            : palette.bg_button_secondary;
     const onSecondary =
         mode === "light"
             ? palette.fg_onEmphasis // Light mode: white text on dark gray
@@ -132,13 +133,11 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive + success
-    const destructive = mode === "light"
-        ? palette.bg_danger
-        : palette.bg_danger_hover; // Tweaked for WCAG: lighter background in dark mode (official #da3633 had 4.11:1 contrast)
+    const destructive =
+        mode === "light" ? palette.bg_danger : palette.bg_danger_hover; // Tweaked for WCAG: lighter background in dark mode (official #da3633 had 4.11:1 contrast)
     const onDestructive = palette.fg_onEmphasis;
-    const success = mode === "light"
-        ? palette.bg_success
-        : palette.bg_success_hover; // Tweaked for WCAG: lighter background in dark mode (official #238636 had 4.09:1 contrast)
+    const success =
+        mode === "light" ? palette.bg_success : palette.bg_success_hover; // Tweaked for WCAG: lighter background in dark mode (official #238636 had 4.09:1 contrast)
     const onSuccess = palette.fg_onEmphasis;
 
     // Shadows (official Primer shadow tokens)
@@ -165,7 +164,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const borderHierarchy = deriveBorderHierarchy(
         palette.border_default, // Subtle base
         palette.border_emphasis, // Strong base for accessible UI component borders
-        mode === "light" ? "alternating" : "progressive" // Pattern selection per ADR-008
+        mode === "light" ? "alternating" : "progressive", // Pattern selection per ADR-008
     );
     const borderSubtle01 = borderHierarchy.subtle01; // Same as subtle00 (light) or +6.3% (dark)
     const borderSubtle02 = borderHierarchy.subtle02; // Same as subtle00 (light) or +12.6% (dark)
@@ -195,7 +194,8 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Additional status colors (derived - Primer lacks official tokens)
     const warning = mode === "light" ? "#bf8700" : "#d29922";
-    const onWarning = mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
+    const onWarning =
+        mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
     const info = palette.fg_accent; // Primer intentionally uses accent for info
     const onInfo = palette.fg_onEmphasis;
 
@@ -208,11 +208,12 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.bg_muted,
             mutedForeground: palette.fg_muted,
-            secondaryHover: mode === "light"
-                ? "#6f757d" // Tweaked for WCAG: darker gray for drag-active (official #7a808b had 3.97:1 contrast)
-                : palette.bg_button_secondary_hover,
+            secondaryHover:
+                mode === "light"
+                    ? "#6f757d" // Tweaked for WCAG: darker gray for drag-active (official #7a808b had 3.97:1 contrast)
+                    : palette.bg_button_secondary_hover,
         },
-        mode
+        mode,
     );
 
     // ===================================================================

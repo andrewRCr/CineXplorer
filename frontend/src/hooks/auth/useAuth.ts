@@ -18,7 +18,12 @@ import { siteOrigin } from "@/config/baseUrls";
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import type { AuthStateProps, AuthResult, AuthError, LoginSuccessData } from "@/@types/auth-state";
+import type {
+    AuthStateProps,
+    AuthResult,
+    AuthError,
+    LoginSuccessData,
+} from "@/types/auth-state";
 import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
@@ -53,8 +58,8 @@ interface AllauthSessionResponse {
 async function checkOAuthSession(): Promise<UserProfile | null> {
     try {
         const response = await fetch(ALLAUTH_SESSION_URL, {
-            method: 'GET',
-            credentials: 'include',
+            method: "GET",
+            credentials: "include",
         });
 
         if (response.ok) {
@@ -69,7 +74,7 @@ async function checkOAuthSession(): Promise<UserProfile | null> {
     }
 }
 
-export function useAuth(): AuthStateProps & { user: UserProfile | null } {
+export function useAuth(): AuthStateProps {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
         // Hybrid auth: Instant authentication detection from localStorage/cookie
         // Priority: cookie → localStorage → sessionStorage (handled by getAuthTokens)
@@ -77,11 +82,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         const isExpired = areTokensExpired();
         const hasAuthFlag = getInitialAuthenticatedValue();
 
-        logger.debug('[useAuth] Initial state calculation', {
+        logger.debug("[useAuth] Initial state calculation", {
             has_access_token: access_token !== null,
             is_expired: isExpired,
             has_auth_flag: hasAuthFlag,
-            result: access_token !== null && !isExpired && hasAuthFlag
+            result: access_token !== null && !isExpired && hasAuthFlag,
         });
 
         // Three conditions must be met:
@@ -97,7 +102,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
     // Refs to hold latest callback versions - breaks circular dependency in effects
     // Effects can call ref.current() without needing the callback in dependency array
     const logoutRef = useRef<() => Promise<void>>(() => Promise.resolve());
-    const getUserDetailsRef = useRef<() => Promise<unknown>>(() => Promise.resolve());
+    const getUserDetailsRef = useRef<() => Promise<unknown>>(() =>
+        Promise.resolve(),
+    );
 
     // On initial mount, check for existing authentication (JWT or session)
     // This runs ONCE on mount to detect existing sessions
@@ -116,7 +123,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Check for JWT tokens in cookie/localStorage (email/password flow)
             const { access_token, storage } = getAuthTokens();
             if (access_token && !areTokensExpired()) {
-                logger.debug(`[useAuth] Initial mount: JWT session detected in ${storage}`);
+                logger.debug(
+                    `[useAuth] Initial mount: JWT session detected in ${storage}`,
+                );
 
                 // If token came from cookie, store it in localStorage for future use
                 if (storage === "cookie") {
@@ -130,14 +139,18 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
             // No JWT tokens found - check for OAuth session cookie
             // This handles page refreshes for OAuth users (Google/GitHub login)
-            logger.debug('[useAuth] No JWT tokens found, checking for OAuth session...');
+            logger.debug(
+                "[useAuth] No JWT tokens found, checking for OAuth session...",
+            );
             const oauthUser = await checkOAuthSession();
             if (oauthUser) {
-                logger.debug('[useAuth] OAuth session detected, user authenticated');
+                logger.debug(
+                    "[useAuth] OAuth session detected, user authenticated",
+                );
                 setUser(oauthUser);
                 setIsAuthenticated(true);
             } else {
-                logger.debug('[useAuth] No active session found');
+                logger.debug("[useAuth] No active session found");
             }
         };
 
@@ -194,20 +207,25 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         const handleOAuthCallback = async () => {
             // Guard against double-invocation (StrictMode, fast re-renders)
             if (hasHandledOAuthRef.current) {
-                logger.debug('[useAuth] OAuth callback already handled, skipping');
+                logger.debug(
+                    "[useAuth] OAuth callback already handled, skipping",
+                );
                 return;
             }
             const params = new URLSearchParams(location.search);
-            const oauthError = params.get('error');
+            const oauthError = params.get("error");
 
             // OAuth error handling (check first)
             if (oauthError) {
-                logger.error("OAuth authentication failed", { error: oauthError });
+                logger.error("OAuth authentication failed", {
+                    error: oauthError,
+                });
                 navigate(ROUTES.LOGIN, {
                     state: {
                         oauthError: true,
-                        message: "OAuth authentication failed. Please try again."
-                    }
+                        message:
+                            "OAuth authentication failed. Please try again.",
+                    },
                 });
                 return;
             }
@@ -215,11 +233,11 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             // Check if we just came from an OAuth redirect
             // Only check session if we have a referrer or state indicating OAuth flow
             // This prevents auto-login on every /login page visit
-            const oauthInProgress = sessionStorage.getItem('oauth_in_progress');
+            const oauthInProgress = sessionStorage.getItem("oauth_in_progress");
             const isFromOAuthRedirect =
-                document.referrer.includes('google.com') ||
-                document.referrer.includes('github.com') ||
-                oauthInProgress !== null;  // Check for existence, not 'true' (value is provider name)
+                document.referrer.includes("google.com") ||
+                document.referrer.includes("github.com") ||
+                oauthInProgress !== null; // Check for existence, not 'true' (value is provider name)
 
             // ONLY run callback handling for:
             // 1. OAuth redirects (from Google/GitHub with oauth_in_progress flag)
@@ -229,17 +247,19 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 return; // Skip callback handling for normal navigation
             }
 
-            logger.debug('[useAuth] Callback handler running', {
+            logger.debug("[useAuth] Callback handler running", {
                 pathname: location.pathname,
                 search: location.search,
                 isFromOAuthRedirect,
-                oauthError
+                oauthError,
             });
 
             // Check if we're on the OAuth callback path (e.g., /login after OAuth redirect)
             // OAuth authentication uses session cookies (NO tokens in URL)
             if (location.pathname === ROUTES.LOGIN && isFromOAuthRedirect) {
-                logger.debug('[useAuth] OAuth redirect detected, checking session...');
+                logger.debug(
+                    "[useAuth] OAuth redirect detected, checking session...",
+                );
 
                 // Mark as handled BEFORE async operation to prevent race conditions
                 hasHandledOAuthRef.current = true;
@@ -248,16 +268,19 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
 
                 // Clear OAuth flags AFTER session check completes
                 // useOAuthFlow monitors this and will clear its loading state
-                sessionStorage.removeItem('oauth_in_progress');
-                sessionStorage.removeItem('oauth_start_time');
+                sessionStorage.removeItem("oauth_in_progress");
+                sessionStorage.removeItem("oauth_start_time");
 
                 if (oauthUser) {
-                    logger.debug('[useAuth] OAuth callback - authenticated via session cookie');
+                    logger.debug(
+                        "[useAuth] OAuth callback - authenticated via session cookie",
+                    );
                     setUser(oauthUser);
                     setIsAuthenticated(true);
 
                     // Show welcome toast for OAuth login (priority position)
-                    const displayName = oauthUser.first_name || oauthUser.username;
+                    const displayName =
+                        oauthUser.first_name || oauthUser.username;
                     priorityToaster.success({
                         title: `Welcome back, ${displayName}!`,
                     });
@@ -265,7 +288,9 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                     navigate(ROUTES.HOME);
                     return;
                 } else {
-                    logger.debug('[useAuth] Session response shows not authenticated');
+                    logger.debug(
+                        "[useAuth] Session response shows not authenticated",
+                    );
                     // OAuth failed - flags already cleared above
                     // useOAuthFlow will detect this and show login form
                     // Reset ref so user can retry OAuth
@@ -298,23 +323,27 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         try {
             if (isJWTUser) {
                 // JWT user - logout via custom endpoint
-                logger.debug('[useAuth] Logging out JWT user via /api/logout/');
+                logger.debug("[useAuth] Logging out JWT user via /api/logout/");
                 await authService.logout();
             } else {
                 // OAuth user - logout via session endpoint
-                logger.debug('[useAuth] Logging out OAuth user via session endpoint');
+                logger.debug(
+                    "[useAuth] Logging out OAuth user via session endpoint",
+                );
                 const response = await fetch(ALLAUTH_SESSION_URL, {
-                    method: 'DELETE',
-                    credentials: 'include', // Send session cookie
+                    method: "DELETE",
+                    credentials: "include", // Send session cookie
                     headers: {
-                        'Content-Type': 'application/json',
+                        "Content-Type": "application/json",
                     },
                 });
 
                 // 401 is acceptable - means session already expired/cleared
                 // We've already cleared local state, so logout succeeded from UX perspective
                 if (!response.ok && response.status !== 401) {
-                    logger.warn(`[useAuth] Session DELETE returned ${response.status}, but local state already cleared`);
+                    logger.warn(
+                        `[useAuth] Session DELETE returned ${response.status}, but local state already cleared`,
+                    );
                 }
             }
         } catch (error) {
@@ -338,6 +367,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             setUser(userDetails);
             // Ensure isAuthenticated is true when user details are successfully fetched
             setIsAuthenticated(true);
+            return undefined;
         } catch (error) {
             logger.error("Error fetching user details", { error });
             setUser(null);
@@ -355,10 +385,12 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
     const login = async (
         username: string,
         password: string,
-        rememberMe: boolean = false
+        rememberMe: boolean = false,
     ): Promise<AuthResult<LoginSuccessData>> => {
         try {
-            logger.debug('[useAuth] login() called, attempting authentication...');
+            logger.debug(
+                "[useAuth] login() called, attempting authentication...",
+            );
             const response = await authService.login(username, password);
 
             const user_id = response.user_id;
@@ -382,7 +414,7 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
             }
 
             // Login response missing required tokens
-            logger.error('[useAuth] login() response missing tokens', {
+            logger.error("[useAuth] login() response missing tokens", {
                 hasUserId: !!user_id,
                 hasAccessToken: !!accessToken,
                 hasRefreshToken: !!refreshToken,
@@ -392,24 +424,36 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
                 success: false,
                 error: {
                     status: 500,
-                    message: 'Login failed: invalid server response',
+                    message: "Login failed: invalid server response",
                 },
             };
         } catch (error: unknown) {
-            logger.error('[useAuth] login() error', { error });
+            logger.error("[useAuth] login() error", { error });
             const authError: AuthError = {
                 status: 500,
-                message: 'Login failed',
+                message: "Login failed",
             };
 
             if (isAxiosError(error) && error.response) {
                 const { status, data } = error.response;
-                const responseData = data as { detail?: string; error?: string; code?: string; email?: string; resend_token?: string } | undefined;
+                const responseData = data as
+                    | {
+                          detail?: string;
+                          error?: string;
+                          code?: string;
+                          email?: string;
+                          resend_token?: string;
+                      }
+                    | undefined;
                 authError.status = status || 500;
-                authError.message = responseData?.detail || responseData?.error || 'Login failed';
+                authError.message =
+                    responseData?.detail ||
+                    responseData?.error ||
+                    "Login failed";
                 if (responseData?.code) authError.code = responseData.code;
                 if (responseData?.email) authError.email = responseData.email;
-                if (responseData?.resend_token) authError.resend_token = responseData.resend_token;
+                if (responseData?.resend_token)
+                    authError.resend_token = responseData.resend_token;
             } else if (error instanceof Error) {
                 authError.message = error.message;
             }
@@ -418,11 +462,10 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         }
     };
 
-
     const register = async (
         username: string,
         email: string,
-        password: string
+        password: string,
     ): Promise<AuthResult<void>> => {
         try {
             await authService.register(username, email, password);
@@ -430,14 +473,19 @@ export function useAuth(): AuthStateProps & { user: UserProfile | null } {
         } catch (error: unknown) {
             const authError: AuthError = {
                 status: 500,
-                message: 'Registration failed',
+                message: "Registration failed",
             };
 
             if (isAxiosError(error) && error.response) {
                 const { status, data } = error.response;
-                const responseData = data as { detail?: string; error?: string; code?: string } | undefined;
+                const responseData = data as
+                    | { detail?: string; error?: string; code?: string }
+                    | undefined;
                 authError.status = status || 500;
-                authError.message = responseData?.detail || responseData?.error || 'Registration failed';
+                authError.message =
+                    responseData?.detail ||
+                    responseData?.error ||
+                    "Registration failed";
                 if (responseData?.code) authError.code = responseData.code;
             } else if (error instanceof Error) {
                 authError.message = error.message;

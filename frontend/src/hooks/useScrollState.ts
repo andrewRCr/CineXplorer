@@ -16,30 +16,30 @@ export type ScrollDirection = "up" | "down" | "idle";
 
 /** Options for configuring scroll state behavior */
 export interface UseScrollStateOptions {
-  /**
-   * Scroll distance (px) before isPastThreshold becomes true
-   * @default 200
-   */
-  threshold?: number;
+    /**
+     * Scroll distance (px) before isPastThreshold becomes true
+     * @default 200
+     */
+    threshold?: number;
 
-  /**
-   * Minimum scroll distance (px) required to change direction
-   * Prevents direction flicker from small scroll movements
-   * @default 10
-   */
-  hysteresis?: number;
+    /**
+     * Minimum scroll distance (px) required to change direction
+     * Prevents direction flicker from small scroll movements
+     * @default 10
+     */
+    hysteresis?: number;
 }
 
 /** Return value from useScrollState hook */
 export interface ScrollState {
-  /** Current vertical scroll position in pixels */
-  scrollY: number;
+    /** Current vertical scroll position in pixels */
+    scrollY: number;
 
-  /** Current scroll direction */
-  direction: ScrollDirection;
+    /** Current scroll direction */
+    direction: ScrollDirection;
 
-  /** True when scrollY >= threshold */
-  isPastThreshold: boolean;
+    /** True when scrollY >= threshold */
+    isPastThreshold: boolean;
 }
 
 /** Default configuration values */
@@ -64,82 +64,82 @@ const DEFAULT_HYSTERESIS = 10;
  * ```
  */
 export function useScrollState(options?: UseScrollStateOptions): ScrollState {
-  const { threshold = DEFAULT_THRESHOLD, hysteresis = DEFAULT_HYSTERESIS } =
-    options ?? {};
+    const { threshold = DEFAULT_THRESHOLD, hysteresis = DEFAULT_HYSTERESIS } =
+        options ?? {};
 
-  // Current scroll position
-  const [scrollY, setScrollY] = useState(0);
+    // Current scroll position
+    const [scrollY, setScrollY] = useState(0);
 
-  // Current direction
-  const [direction, setDirection] = useState<ScrollDirection>("idle");
+    // Current direction
+    const [direction, setDirection] = useState<ScrollDirection>("idle");
 
-  // Track the position where direction last changed (for hysteresis calculation)
-  const directionChangePositionRef = useRef(0);
+    // Track the position where direction last changed (for hysteresis calculation)
+    const directionChangePositionRef = useRef(0);
 
-  // Track if RAF is pending to avoid queueing multiple updates
-  const rafPendingRef = useRef(false);
+    // Track if RAF is pending to avoid queueing multiple updates
+    const rafPendingRef = useRef(false);
 
-  // Track mounted state to prevent stale callbacks after unmount
-  const mountedRef = useRef(true);
+    // Track mounted state to prevent stale callbacks after unmount
+    const mountedRef = useRef(true);
 
-  // Handle scroll event with RAF throttling
-  const handleScroll = useCallback(() => {
-    if (rafPendingRef.current) return;
+    // Handle scroll event with RAF throttling
+    const handleScroll = useCallback(() => {
+        if (rafPendingRef.current) return;
 
-    rafPendingRef.current = true;
+        rafPendingRef.current = true;
 
-    requestAnimationFrame(() => {
-      rafPendingRef.current = false;
-      if (!mountedRef.current) return;
+        requestAnimationFrame(() => {
+            rafPendingRef.current = false;
+            if (!mountedRef.current) return;
 
-      const currentScrollY = window.scrollY;
-      const previousScrollY = directionChangePositionRef.current;
-      const delta = currentScrollY - previousScrollY;
+            const currentScrollY = window.scrollY;
+            const previousScrollY = directionChangePositionRef.current;
+            const delta = currentScrollY - previousScrollY;
 
-      // Update scroll position
-      setScrollY(currentScrollY);
+            // Update scroll position
+            setScrollY(currentScrollY);
 
-      // Determine direction with hysteresis
-      if (currentScrollY === 0) {
-        // At top of page - reset to idle
-        setDirection("idle");
-        directionChangePositionRef.current = 0;
-      } else if (Math.abs(delta) >= hysteresis) {
-        // Movement exceeds hysteresis threshold
-        const newDirection: ScrollDirection = delta > 0 ? "down" : "up";
-        setDirection(newDirection);
-        directionChangePositionRef.current = currentScrollY;
-      }
-      // If delta < hysteresis, keep current direction (flicker prevention)
-    });
-  }, [hysteresis]);
+            // Determine direction with hysteresis
+            if (currentScrollY === 0) {
+                // At top of page - reset to idle
+                setDirection("idle");
+                directionChangePositionRef.current = 0;
+            } else if (Math.abs(delta) >= hysteresis) {
+                // Movement exceeds hysteresis threshold
+                const newDirection: ScrollDirection = delta > 0 ? "down" : "up";
+                setDirection(newDirection);
+                directionChangePositionRef.current = currentScrollY;
+            }
+            // If delta < hysteresis, keep current direction (flicker prevention)
+        });
+    }, [hysteresis]);
 
-  // Set up and clean up scroll listener
-  useEffect(() => {
-    mountedRef.current = true;
-    // Initialize with current scroll position
-    setScrollY(window.scrollY);
-    directionChangePositionRef.current = window.scrollY;
+    // Set up and clean up scroll listener
+    useEffect(() => {
+        mountedRef.current = true;
+        // Initialize with current scroll position
+        setScrollY(window.scrollY);
+        directionChangePositionRef.current = window.scrollY;
 
-    // Use passive: true for better scroll performance (indicates we won't call preventDefault)
-    const listenerOptions: AddEventListenerOptions = { passive: true };
-    window.addEventListener("scroll", handleScroll, listenerOptions);
+        // Use passive: true for better scroll performance (indicates we won't call preventDefault)
+        const listenerOptions: AddEventListenerOptions = { passive: true };
+        window.addEventListener("scroll", handleScroll, listenerOptions);
 
-    return () => {
-      mountedRef.current = false;
-      window.removeEventListener("scroll", handleScroll, listenerOptions);
-    };
-  }, [handleScroll]);
+        return () => {
+            mountedRef.current = false;
+            window.removeEventListener("scroll", handleScroll, listenerOptions);
+        };
+    }, [handleScroll]);
 
-  // Memoize return object for stable reference
-  const state = useMemo<ScrollState>(
-    () => ({
-      scrollY,
-      direction,
-      isPastThreshold: scrollY >= threshold,
-    }),
-    [scrollY, direction, threshold]
-  );
+    // Memoize return object for stable reference
+    const state = useMemo<ScrollState>(
+        () => ({
+            scrollY,
+            direction,
+            isPastThreshold: scrollY >= threshold,
+        }),
+        [scrollY, direction, threshold],
+    );
 
-  return state;
+    return state;
 }

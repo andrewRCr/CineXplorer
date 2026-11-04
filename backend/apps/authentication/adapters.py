@@ -50,9 +50,12 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         msg = self.render_mail(template_prefix, email, context)
         sent_count = msg.send()
         if sent_count == 0:
-            raise EmailDeliveryError(
-                f"Email delivery failed for {email} (template: {template_prefix})"
-            )
+            # Name the template and the user, never the address: this text reaches the logs.
+            detail = f"template: {template_prefix}"
+            user_id = getattr(context.get("user"), "pk", None)
+            if user_id is not None:
+                detail += f", user ID: {user_id}"
+            raise EmailDeliveryError(f"Email delivery failed ({detail})")
 
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation

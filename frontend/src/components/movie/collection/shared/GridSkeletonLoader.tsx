@@ -7,7 +7,12 @@
 import { Box, Skeleton } from "@chakra-ui/react";
 import MovieCard from "../../MovieCard";
 import MovieCardContainer from "../../MovieCardContainer";
-import { CARD_WIDTH, GAP, SKELETON_COUNT, placeholderMovie } from "./gridConstants";
+import {
+  CARD_WIDTH,
+  GAP,
+  SKELETON_COUNT,
+  placeholderMovie,
+} from "./gridConstants";
 
 interface GridSkeletonLoaderProps {
   /** Number of skeleton items to display. Defaults to SKELETON_COUNT (20). */

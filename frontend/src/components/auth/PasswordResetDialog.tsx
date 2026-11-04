@@ -49,7 +49,10 @@ interface PasswordResetDialogProps {
   /** Handler for dialog dismiss */
   onDismiss: () => void;
   /** Function to submit the password reset */
-  onSubmit: (key: string, password: string) => Promise<{ success: boolean; autoLoggedIn: boolean }>;
+  onSubmit: (
+    key: string,
+    password: string,
+  ) => Promise<{ success: boolean; autoLoggedIn: boolean }>;
 }
 
 export const PasswordResetDialog = ({
@@ -58,7 +61,9 @@ export const PasswordResetDialog = ({
   onDismiss,
   onSubmit,
 }: PasswordResetDialogProps) => {
-  const [resetState, setResetState] = useState<ResetState>(resetKey ? "form" : null);
+  const [resetState, setResetState] = useState<ResetState>(
+    resetKey ? "form" : null,
+  );
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -111,7 +116,7 @@ export const PasswordResetDialog = ({
       setSubmitError(
         error instanceof Error
           ? error.message
-          : "Password reset failed. Please try again."
+          : "Password reset failed. Please try again.",
       );
     }
   };
@@ -157,9 +162,7 @@ export const PasswordResetDialog = ({
             <Dialog.Body pb={6}>
               {resetState === "form" && (
                 <VStack gap={4} align="stretch">
-                  <Text color="on-muted">
-                    Enter your new password below.
-                  </Text>
+                  <Text color="on-muted">Enter your new password below.</Text>
                   <FormField
                     name="password"
                     label="New Password"

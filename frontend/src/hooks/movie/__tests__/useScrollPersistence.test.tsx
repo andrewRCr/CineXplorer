@@ -15,7 +15,15 @@
  */
 
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  assert,
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+} from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useScrollPersistence } from "../useScrollPersistence";
@@ -70,14 +78,22 @@ const originalAddEventListener = window.addEventListener.bind(window);
 const originalRemoveEventListener = window.removeEventListener.bind(window);
 
 // Helper to create wrapper with MemoryRouter
-function createWrapper(initialEntries: string[] = ["/browse"], initialState?: object) {
+function createWrapper(
+  initialEntries: string[] = ["/browse"],
+  initialState?: object,
+) {
+  const [initialEntry] = initialEntries;
+  assert.isDefined(initialEntry);
+  const [pathname, search] = initialEntry.split("?");
+  assert.isDefined(pathname);
+
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
       <MemoryRouter
         initialEntries={[
           {
-            pathname: initialEntries[0].split("?")[0],
-            search: initialEntries[0].includes("?") ? `?${initialEntries[0].split("?")[1]}` : "",
+            pathname,
+            search: search === undefined ? "" : `?${search}`,
             state: initialState,
           },
         ]}
@@ -101,14 +117,20 @@ describe("useScrollPersistence", () => {
       if (event === "scroll") {
         scrollListeners.push(handler as () => void);
       }
-      originalAddEventListener(event, handler as EventListenerOrEventListenerObject);
+      originalAddEventListener(
+        event,
+        handler as EventListenerOrEventListenerObject,
+      );
     });
 
     window.removeEventListener = vi.fn((event, handler) => {
       if (event === "scroll") {
         scrollListeners = scrollListeners.filter((l) => l !== handler);
       }
-      originalRemoveEventListener(event, handler as EventListenerOrEventListenerObject);
+      originalRemoveEventListener(
+        event,
+        handler as EventListenerOrEventListenerObject,
+      );
     });
   });
 
@@ -128,9 +150,12 @@ describe("useScrollPersistence", () => {
 
   describe("initial offset behavior", () => {
     it("returns 0 when no saved position exists", () => {
-      const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
-        wrapper: createWrapper(),
-      });
+      const { result } = renderHook(
+        () => useScrollPersistence(defaultOptions),
+        {
+          wrapper: createWrapper(),
+        },
+      );
 
       expect(result.current.initialOffset).toBe(0);
     });
@@ -139,9 +164,12 @@ describe("useScrollPersistence", () => {
       // Save a scroll position first (JSON format with position and timestamp)
       mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
 
-      const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
-        wrapper: createWrapper(), // No restoreScroll state
-      });
+      const { result } = renderHook(
+        () => useScrollPersistence(defaultOptions),
+        {
+          wrapper: createWrapper(), // No restoreScroll state
+        },
+      );
 
       // Should return 0 because this is fresh navigation, not back-navigation
       expect(result.current.initialOffset).toBe(0);
@@ -151,15 +179,21 @@ describe("useScrollPersistence", () => {
       // Save a scroll position first (JSON format with position and timestamp)
       mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
 
-      const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
-        wrapper: createWrapper(["/browse"], { restoreScroll: true }),
-      });
+      const { result } = renderHook(
+        () => useScrollPersistence(defaultOptions),
+        {
+          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+        },
+      );
 
       expect(result.current.initialOffset).toBe(500);
     });
 
     it("includes query in storage key for search routes", () => {
-      mockSessionStorage.setItem("scroll-search--q=inception", createStorageEntry(750));
+      mockSessionStorage.setItem(
+        "scroll-search--q=inception",
+        createStorageEntry(750),
+      );
 
       const { result } = renderHook(
         () =>
@@ -168,7 +202,11 @@ describe("useScrollPersistence", () => {
             source: "search",
             query: "inception",
           }),
-        { wrapper: createWrapper(["/search?q=inception"], { restoreScroll: true }) }
+        {
+          wrapper: createWrapper(["/search?q=inception"], {
+            restoreScroll: true,
+          }),
+        },
       );
 
       expect(result.current.initialOffset).toBe(750);
@@ -198,7 +236,7 @@ describe("useScrollPersistence", () => {
       // Verify position saved as JSON with timestamp
       expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
         "scroll-discover-",
-        expect.stringContaining('"position":300')
+        expect.stringContaining('"position":300'),
       );
     });
 
@@ -240,23 +278,20 @@ describe("useScrollPersistence", () => {
       expect(mockSessionStorage.setItem).toHaveBeenCalledTimes(1);
       expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
         "scroll-discover-",
-        expect.stringContaining('"position":300')
+        expect.stringContaining('"position":300'),
       );
     });
   });
 
   describe("filter change behavior", () => {
     it("resets scroll to top when filter params change", () => {
-      const { rerender } = renderHook(
-        (props) => useScrollPersistence(props),
-        {
-          wrapper: createWrapper(),
-          initialProps: {
-            ...defaultOptions,
-            browseParams: { minYear: "2024" },
-          },
-        }
-      );
+      const { rerender } = renderHook((props) => useScrollPersistence(props), {
+        wrapper: createWrapper(),
+        initialProps: {
+          ...defaultOptions,
+          browseParams: { minYear: "2024" },
+        },
+      });
 
       // Change filters
       rerender({
@@ -268,13 +303,10 @@ describe("useScrollPersistence", () => {
     });
 
     it("resets scroll to top when source changes", () => {
-      const { rerender } = renderHook(
-        (props) => useScrollPersistence(props),
-        {
-          wrapper: createWrapper(),
-          initialProps: defaultOptions,
-        }
-      );
+      const { rerender } = renderHook((props) => useScrollPersistence(props), {
+        wrapper: createWrapper(),
+        initialProps: defaultOptions,
+      });
 
       // Change source
       rerender({
@@ -288,13 +320,10 @@ describe("useScrollPersistence", () => {
 
   describe("error state behavior", () => {
     it("resets scroll to top on error", () => {
-      const { rerender } = renderHook(
-        (props) => useScrollPersistence(props),
-        {
-          wrapper: createWrapper(),
-          initialProps: defaultOptions,
-        }
-      );
+      const { rerender } = renderHook((props) => useScrollPersistence(props), {
+        wrapper: createWrapper(),
+        initialProps: defaultOptions,
+      });
 
       // Trigger error state
       rerender({
@@ -308,21 +337,24 @@ describe("useScrollPersistence", () => {
 
   describe("cleanup", () => {
     it("removes scroll listener on unmount", () => {
-      const { unmount } = renderHook(() => useScrollPersistence(defaultOptions), {
-        wrapper: createWrapper(),
-      });
+      const { unmount } = renderHook(
+        () => useScrollPersistence(defaultOptions),
+        {
+          wrapper: createWrapper(),
+        },
+      );
 
       expect(window.addEventListener).toHaveBeenCalledWith(
         "scroll",
         expect.any(Function),
-        { passive: true }
+        { passive: true },
       );
 
       unmount();
 
       expect(window.removeEventListener).toHaveBeenCalledWith(
         "scroll",
-        expect.any(Function)
+        expect.any(Function),
       );
     });
   });
@@ -330,11 +362,17 @@ describe("useScrollPersistence", () => {
   describe("edge cases", () => {
     it("handles saved position larger than available", () => {
       // Save a very large position (beyond any realistic content height)
-      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(999999));
+      mockSessionStorage.setItem(
+        "scroll-discover-",
+        createStorageEntry(999999),
+      );
 
-      const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
-        wrapper: createWrapper(["/browse"], { restoreScroll: true }),
-      });
+      const { result } = renderHook(
+        () => useScrollPersistence(defaultOptions),
+        {
+          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+        },
+      );
 
       // Should still return the saved position - actual scrolling is browser's concern
       // This verifies the hook doesn't try to validate position against content height
@@ -367,14 +405,17 @@ describe("useScrollPersistence", () => {
       expect(mockSessionStorage.setItem).toHaveBeenCalledTimes(1);
       expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
         "scroll-discover-",
-        expect.stringContaining('"position":900')
+        expect.stringContaining('"position":900'),
       );
     });
 
     it("cancels debounced save on unmount", () => {
-      const { unmount } = renderHook(() => useScrollPersistence(defaultOptions), {
-        wrapper: createWrapper(),
-      });
+      const { unmount } = renderHook(
+        () => useScrollPersistence(defaultOptions),
+        {
+          wrapper: createWrapper(),
+        },
+      );
 
       // Trigger scroll event
       mockScrollY = 500;
@@ -401,9 +442,12 @@ describe("useScrollPersistence", () => {
       // Use JSON format - position 0 should be preserved, not treated as falsy
       mockSessionStorage.setItem("scroll-discover-", createStorageEntry(0));
 
-      const { result } = renderHook(() => useScrollPersistence(defaultOptions), {
-        wrapper: createWrapper(["/browse"], { restoreScroll: true }),
-      });
+      const { result } = renderHook(
+        () => useScrollPersistence(defaultOptions),
+        {
+          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+        },
+      );
 
       // Position 0 should be returned (not default to something else)
       expect(result.current.initialOffset).toBe(0);
@@ -411,16 +455,13 @@ describe("useScrollPersistence", () => {
 
     it("generates different keys for different genre combinations", () => {
       // Test with genres = [28]
-      const { rerender } = renderHook(
-        (props) => useScrollPersistence(props),
-        {
-          wrapper: createWrapper(),
-          initialProps: {
-            ...defaultOptions,
-            browseParams: { genres: [28] },
-          },
-        }
-      );
+      const { rerender } = renderHook((props) => useScrollPersistence(props), {
+        wrapper: createWrapper(),
+        initialProps: {
+          ...defaultOptions,
+          browseParams: { genres: [28] },
+        },
+      });
 
       mockScrollY = 100;
       act(() => {
@@ -458,7 +499,9 @@ describe("useScrollPersistence", () => {
       // Either no save calls, or if there are, they shouldn't save the intermediate position (300)
       if (setCalls.length > 0) {
         // If saved, it should NOT be the intermediate scroll position
-        expect(setCalls[setCalls.length - 1][1]).not.toContain('"position":300');
+        const lastCall = setCalls[setCalls.length - 1];
+        assert.isDefined(lastCall);
+        expect(lastCall[1]).not.toContain('"position":300');
       }
     });
   });

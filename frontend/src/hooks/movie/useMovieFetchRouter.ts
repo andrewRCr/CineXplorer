@@ -14,11 +14,6 @@ import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
  * - Manages stable references to prevent unnecessary re-renders
  * - Returns a fetcher function compatible with the pagination hooks
  *
- * **Data Flow Position:**
- * ```
- * RouteConfigHelper → [useMovieFetchRouter] → usePaginatedMovies → useApiRequest
- * ```
- *
  * **Example:**
  * ```typescript
  * const routedFetcher = useMovieFetchRouter({
@@ -36,7 +31,7 @@ import { mapBrowseParamsToApi } from "@/utilities/browseParamMapper";
 type FetcherFn = (
     page: number,
     params?: Record<string, string | number | number[]>,
-    tmdb_page_start?: number
+    tmdb_page_start?: number,
 ) => {
     request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
@@ -50,7 +45,10 @@ interface UseMovieFetchRouterOptions {
 export function useMovieFetchRouter({
     fetcher,
     browseParams,
-}: UseMovieFetchRouterOptions): (page: number, tmdb_page_start?: number) => {
+}: UseMovieFetchRouterOptions): (
+    page: number,
+    tmdb_page_start?: number,
+) => {
     request: Promise<{ data: MovieListResponse }>;
     cancel: () => void;
 } {
@@ -75,7 +73,7 @@ export function useMovieFetchRouter({
             return currentBaseFetcher(page, apiParams, tmdb_page_start);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        [browseParams] // Recreate fetcher when browse params change
+        [browseParams], // Recreate fetcher when browse params change
     );
 
     return routedFetcher;

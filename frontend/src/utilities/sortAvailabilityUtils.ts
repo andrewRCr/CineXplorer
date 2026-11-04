@@ -17,20 +17,20 @@ import { sortOptions } from "@/constants/browseOptions";
  * These languages support meaningful alphabetical sorting.
  */
 const LATIN_SCRIPT_LANGUAGES = new Set([
-  "en", // English
-  "fr", // French
-  "es", // Spanish
-  "de", // German
-  "pt", // Portuguese
-  "it", // Italian
-  "nl", // Dutch
-  "sv", // Swedish
-  "da", // Danish
-  "pl", // Polish
-  "cs", // Czech
-  "tr", // Turkish
-  "tl", // Tagalog
-  "id", // Indonesian
+    "en", // English
+    "fr", // French
+    "es", // Spanish
+    "de", // German
+    "pt", // Portuguese
+    "it", // Italian
+    "nl", // Dutch
+    "sv", // Swedish
+    "da", // Danish
+    "pl", // Polish
+    "cs", // Czech
+    "tr", // Turkish
+    "tl", // Tagalog
+    "id", // Indonesian
 ]);
 
 /**
@@ -45,8 +45,8 @@ const TITLE_SORT_VALUE = "original_title.asc";
  * @returns true if the language uses Latin script, false otherwise
  */
 export function isLatinScriptLanguage(language: string): boolean {
-  if (!language) return false; // "All Languages" - can't assume Latin
-  return LATIN_SCRIPT_LANGUAGES.has(language);
+    if (!language) return false; // "All Languages" - can't assume Latin
+    return LATIN_SCRIPT_LANGUAGES.has(language);
 }
 
 /**
@@ -59,10 +59,10 @@ export function isLatinScriptLanguage(language: string): boolean {
  * @returns Filtered array of sort options
  */
 export function getAvailableSortOptions(language: string): SortOption[] {
-  if (isLatinScriptLanguage(language)) {
-    return sortOptions;
-  }
-  return sortOptions.filter((option) => option.value !== TITLE_SORT_VALUE);
+    if (isLatinScriptLanguage(language)) {
+        return sortOptions;
+    }
+    return sortOptions.filter((option) => option.value !== TITLE_SORT_VALUE);
 }
 
 /**
@@ -72,5 +72,5 @@ export function getAvailableSortOptions(language: string): SortOption[] {
  * @returns true if it's the alphabetical title sort
  */
 export function isTitleSort(sortBy: string): boolean {
-  return sortBy === TITLE_SORT_VALUE;
+    return sortBy === TITLE_SORT_VALUE;
 }

@@ -87,26 +87,33 @@ jobs:
           path: backend/coverage.xml
           retention-days: 30
 
-      - name: Run backend lint
-        run: |
-          docker compose exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff check apps/ config/
+  backend-checks:
+    name: Backend checks
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Check backend formatting
-        run: |
-          docker compose exec -T -e RUFF_CACHE_DIR=/tmp/.ruff_cache backend ruff format --check .
-
-      - name: Setup Python for type checking
+      - name: Setup Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.13'
           cache: 'pip'
           cache-dependency-path: 'backend/requirements/*.txt'
 
-      - name: Install Python dependencies for Pyright
+      - name: Install Python dependencies
         run: |
           python -m venv .venv-backend
           .venv-backend/bin/pip install -q --upgrade pip
           .venv-backend/bin/pip install -q -r backend/requirements/req.txt -r backend/requirements/req.dev.txt
+
+      - name: Run backend lint
+        run: .venv-backend/bin/ruff check backend/apps/ backend/config/
+
+      - name: Check backend formatting
+        run: .venv-backend/bin/ruff format --check backend/
 
       - name: Setup Node.js for Pyright
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -269,6 +276,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check frontend formatting
+        run: npm run format:check
 
       - name: Generate types from schema (if available)
         if: ${{ hashFiles('frontend/openapi.json') != '' }}
@@ -492,7 +502,7 @@ jobs:
   # The one required check: passes only when every job above succeeded
   ci-ok:
     name: ci-ok
-    needs: [backend, images, markdown, frontend, type-generation]
+    needs: [backend, backend-checks, images, markdown, frontend, type-generation]
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
     steps:

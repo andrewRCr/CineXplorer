@@ -22,7 +22,6 @@ from apps.authentication.schemas import (
     RegisterInputSchema,
     ResendVerificationInputSchema,
     TokenObtainInputSchema,
-    UserProfileUpdateSchema,
 )
 
 __all__ = [
@@ -32,7 +31,6 @@ __all__ = [
     "create_register_input",
     "create_resend_verification_input",
     "create_token_input",
-    "create_user_profile_update_input",
     "normalize_response_data",
 ]
 
@@ -80,18 +78,6 @@ def create_resend_verification_input(**overrides: str) -> ResendVerificationInpu
     data: dict[str, str] = {"resend_token": "a" * 64}  # 64-char opaque token
     merged = {**data, **overrides}
     return ResendVerificationInputSchema(**merged)
-
-
-def create_user_profile_update_input(**overrides: str | None) -> UserProfileUpdateSchema:
-    """Build UserProfileUpdateSchema with sensible defaults."""
-    data: dict[str, str | None] = {
-        "email": "updated@example.com",
-        "first_name": "Updated",
-        "last_name": "User",
-        "password": "updatedpass123",
-    }
-    merged = {**data, **overrides}
-    return UserProfileUpdateSchema(**merged)
 
 
 def create_mock_jwt_settings(**overrides: str | timedelta) -> SimpleNamespace:

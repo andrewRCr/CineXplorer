@@ -32,7 +32,17 @@ import { layoutSemanticTokens } from "./layout/semantic-tokens";
 import { zIndexSemanticTokens } from "./layout/z-index";
 
 // Import recipes
-import { buttonRecipe, selectRecipe, alertRecipe, badgeRecipe, checkboxRecipe, radioRecipe, switchRecipe, tooltipRecipe, toastRecipe } from "./recipes";
+import {
+    buttonRecipe,
+    selectRecipe,
+    alertRecipe,
+    badgeRecipe,
+    checkboxRecipe,
+    radioRecipe,
+    switchRecipe,
+    tooltipRecipe,
+    toastRecipe,
+} from "./recipes";
 
 /**
  * Theme Registry
@@ -87,9 +97,7 @@ function createBaseTokens(theme: Theme) {
 
     for (const tokenKey of unifiedKeys) {
         // Extract shadow tokens separately
-        if (
-            shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
-        ) {
+        if (shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])) {
             lightShadows[tokenKey] = {
                 value: theme.lightUnified[tokenKey],
             };
@@ -134,9 +142,7 @@ function createSemanticTokens(theme: Theme) {
 
     for (const tokenKey of unifiedKeys) {
         // Create semantic shadow tokens
-        if (
-            shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])
-        ) {
+        if (shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])) {
             shadows[tokenKey] = {
                 value: {
                     base: `{shadows.light.${tokenKey}}`,

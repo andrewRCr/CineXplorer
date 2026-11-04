@@ -1,10 +1,10 @@
 """Authentication security logging tests.
 
-Tests the logging implementation from Task 6 (Authentication Event Logging):
-- Failed login attempts log WARNING with IP, username, user agent
+Tests the authentication event logging:
+- Failed login attempts log WARNING with IP and user agent, never the typed sign-in name
 - Successful logins log INFO with user_id, IP, user agent
 - Blacklisted token reuse logs WARNING with user_id, IP, user agent
-- Successful registration logs INFO with IP, username, email
+- Successful registration logs INFO with user_id, username and IP, never the email address
 - Passwords NEVER appear in any log output (security critical)
 - Token values NEVER appear in any log output (security critical)
 
@@ -70,9 +70,8 @@ def test_failed_login_logs_warning_with_forensic_data(
     assert "Invalid credentials" in log_output, "Should include error message"
 
     # Verify forensic data
-    assert "login=nonexistent_user" in log_output or "nonexistent_user" in log_output, (
-        "Should log attempted username"
-    )
+    # The typed sign-in name can be an email address, so it is not logged
+    assert "nonexistent_user" not in log_output, "Should not log the typed sign-in name"
     assert "ip=" in log_output, "Should log IP address"
     assert "user_agent=" in log_output, "Should log user agent"
 
@@ -118,9 +117,7 @@ def test_successful_login_logs_info_with_user_id(
     assert (
         f"user_id={verified_user.id}" in log_output or f"user={verified_user.id}" in log_output
     ), "Should log user_id"
-    assert (
-        f"login={verified_user.username}" in log_output or verified_user.username in log_output
-    ), "Should log login identifier"
+    assert "login=" not in log_output, "Should not log the typed sign-in name"
     assert "ip=" in log_output, "Should log IP address"
     assert "user_agent=" in log_output, "Should log user agent"
 
@@ -234,9 +231,7 @@ def test_successful_registration_logs_info(
     # Verify log contains user info and forensic data
     assert "user_id=" in log_output or "user=" in log_output, "Should log user_id"
     assert "username=newuser" in log_output or "newuser" in log_output, "Should log username"
-    assert "email=newuser@example.com" in log_output or "newuser@example.com" in log_output, (
-        "Should log email"
-    )
+    assert "newuser@example.com" not in log_output, "Should not log the email address"
     assert "ip=" in log_output, "Should log IP address"
 
     # Verify log level

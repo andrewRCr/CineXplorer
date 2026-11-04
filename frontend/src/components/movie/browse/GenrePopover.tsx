@@ -99,7 +99,10 @@ const GenrePopover = ({
               overflowY="auto"
               w="320px"
             >
-              <CheckboxGroup value={selectedValues} onValueChange={handleValueChange}>
+              <CheckboxGroup
+                value={selectedValues}
+                onValueChange={handleValueChange}
+              >
                 <SimpleGrid columns={2} gap={2}>
                   {genreItems.map((item) => {
                     const isSelected = selectedValues.includes(item.value);
@@ -112,7 +115,9 @@ const GenrePopover = ({
                       >
                         <Checkbox.HiddenInput />
                         <Checkbox.Control
-                          borderColor={isSelected ? "tertiary" : "border-strong-01"}
+                          borderColor={
+                            isSelected ? "tertiary" : "border-strong-01"
+                          }
                           _checked={{
                             bg: "tertiary",
                             borderColor: "tertiary",

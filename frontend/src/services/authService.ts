@@ -2,7 +2,10 @@ import { apiBaseUrl as BASE_URL, siteOrigin } from "@/config/baseUrls";
 import axios from "axios";
 import apiClient from "./apiClient";
 import type { components } from "@/types/api";
-import { getCsrfToken, ensureCsrfTokenCookie } from "@/utilities/csrfTokenFetcher";
+import {
+    getCsrfToken,
+    ensureCsrfTokenCookie,
+} from "@/utilities/csrfTokenFetcher";
 import logger from "./logger";
 
 // Type aliases from generated API schema
@@ -27,7 +30,7 @@ type LogoutResponse = components["schemas"]["LogoutResponseSchema"];
  */
 export async function login(
     username: string,
-    password: string
+    password: string,
 ): Promise<TokenResponse> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
@@ -41,16 +44,12 @@ export async function login(
         password,
     };
 
-    const response = await apiClient.post<TokenResponse>(
-        `/token/`,
-        payload,
-        {
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrfToken || "",
-            },
-        }
-    );
+    const response = await apiClient.post<TokenResponse>(`/token/`, payload, {
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken || "",
+        },
+    });
 
     return response.data;
 }
@@ -71,7 +70,7 @@ export async function register(
     email: string,
     password: string,
     firstName: string = "",
-    lastName: string = ""
+    lastName: string = "",
 ): Promise<TokenResponse> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
@@ -96,7 +95,7 @@ export async function register(
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
             },
-        }
+        },
     );
 
     return response.data;
@@ -124,7 +123,7 @@ export async function logout(): Promise<LogoutResponse> {
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
             },
-        }
+        },
     );
 
     return response.data;
@@ -148,7 +147,9 @@ export async function getUserProfile(): Promise<UserProfile> {
  * @param token - Email verification token from URL
  * @returns Verification result with message and email (for pre-filling login form)
  */
-export async function verifyEmail(token: string): Promise<{ message: string; email: string }> {
+export async function verifyEmail(
+    token: string,
+): Promise<{ message: string; email: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
@@ -164,7 +165,7 @@ export async function verifyEmail(token: string): Promise<{ message: string; ema
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
             },
-        }
+        },
     );
 
     return response.data;
@@ -178,7 +179,7 @@ export async function verifyEmail(token: string): Promise<{ message: string; ema
  * @returns Confirmation message
  */
 export async function resendVerificationEmail(
-    resendToken: string
+    resendToken: string,
 ): Promise<{ message: string }> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
@@ -195,7 +196,7 @@ export async function resendVerificationEmail(
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
             },
-        }
+        },
     );
 
     return response.data;
@@ -225,14 +226,19 @@ export async function requestPasswordReset(email: string): Promise<void> {
                     "Content-Type": "application/json",
                     "X-CSRFToken": csrfToken || "",
                 },
-            }
+            },
         );
     } catch (error) {
         // Normalize error message from axios error response
         if (axios.isAxiosError(error) && error.response?.data) {
-            const errorData = error.response.data as { detail?: string; message?: string };
+            const errorData = error.response.data as {
+                detail?: string;
+                message?: string;
+            };
             throw new Error(
-                errorData.detail || errorData.message || "Failed to send reset email"
+                errorData.detail ||
+                    errorData.message ||
+                    "Failed to send reset email",
             );
         }
         throw new Error("Failed to send reset email");
@@ -253,7 +259,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
  */
 export async function resetPassword(
     key: string,
-    password: string
+    password: string,
 ): Promise<{ success: boolean; autoLoggedIn: boolean }> {
     const csrfToken = getCsrfToken();
 
@@ -267,7 +273,7 @@ export async function resetPassword(
             },
             credentials: "include",
             body: JSON.stringify({ key, password }),
-        }
+        },
     );
 
     // 200 = success + auto-logged in

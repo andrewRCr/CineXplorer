@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Toaster as ChakraToaster,
@@ -7,12 +7,12 @@ import {
   Stack,
   Toast,
   createToaster,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 
 /**
  * Toast status types for styling and duration configuration.
  */
-type ToastType = "success" | "error" | "warning" | "info" | "loading"
+type ToastType = "success" | "error" | "warning" | "info" | "loading";
 
 /**
  * Default duration for each toast status, in milliseconds:
@@ -28,18 +28,18 @@ const statusDurations: Record<ToastType, number | undefined> = {
   warning: 6000,
   error: 8000,
   loading: undefined, // Persists until dismissed
-}
+};
 
 // Toast options type (matches Chakra's toast options)
 type ToastOptions = {
-  id?: string
-  title?: React.ReactNode
-  description?: React.ReactNode
-  duration?: number
-  closable?: boolean
-  action?: { label: string; onClick: () => void }
-  [key: string]: unknown
-}
+  id?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  duration?: number;
+  closable?: boolean;
+  action?: { label: string; onClick: () => void };
+  [key: string]: unknown;
+};
 
 /**
  * Wraps a Chakra toaster with policy-based duration defaults.
@@ -49,15 +49,17 @@ type ToastOptions = {
  *   toaster.success({ title: "Saved" })           // Uses 4s default
  *   toaster.success({ title: "Saved", duration: 6000 })  // Override to 6s
  */
-function wrapWithDurationDefaults(baseToaster: ReturnType<typeof createToaster>) {
+function wrapWithDurationDefaults(
+  baseToaster: ReturnType<typeof createToaster>,
+) {
   const withDefaults = (type: ToastType) => (options: ToastOptions) => {
-    const defaultDuration = statusDurations[type]
+    const defaultDuration = statusDurations[type];
     return baseToaster[type]({
       ...options,
       // Use explicit duration if provided, otherwise use policy default
       duration: options.duration ?? defaultDuration,
-    })
-  }
+    });
+  };
 
   return {
     // Preserve all base toaster functionality
@@ -68,53 +70,62 @@ function wrapWithDurationDefaults(baseToaster: ReturnType<typeof createToaster>)
     warning: withDefaults("warning"),
     info: withDefaults("info"),
     loading: withDefaults("loading"),
-  }
+  };
 }
 
 // Create raw toasters (internal use only)
 const rawToaster = createToaster({
   placement: "bottom-end",
   pauseOnPageIdle: true,
-})
+});
 
 const rawPriorityToaster = createToaster({
   placement: "top-end",
   pauseOnPageIdle: true,
-})
+});
 
 /**
  * Default toaster - bottom-right positioning for routine feedback.
  * Use for: save confirmations, background updates, non-critical notifications.
  * Duration defaults applied per status type (see statusDurations).
  */
-export const toaster = wrapWithDurationDefaults(rawToaster)
+export const toaster = wrapWithDurationDefaults(rawToaster);
 
 /**
  * Priority toaster - top-right positioning for important notifications.
  * Use for: auth success (login, registration, email verified), critical confirmations.
  * Duration defaults applied per status type (see statusDurations).
  */
-export const priorityToaster = wrapWithDurationDefaults(rawPriorityToaster)
+export const priorityToaster = wrapWithDurationDefaults(rawPriorityToaster);
 
 /**
  * Status-based styling for toasts using semantic tokens.
  * Uses solid layer background with colored left accent for readability over content.
  * Unlike inline alerts (10% opacity), toasts overlay UI and need higher contrast.
  */
-const statusStyles: Record<ToastType, { accentColor: string; titleColor: string }> = {
+const statusStyles: Record<
+  ToastType,
+  { accentColor: string; titleColor: string }
+> = {
   success: { accentColor: "success", titleColor: "success" },
   error: { accentColor: "destructive", titleColor: "destructive" },
   warning: { accentColor: "warning", titleColor: "warning" },
   info: { accentColor: "info", titleColor: "info" },
   loading: { accentColor: "info", titleColor: "info" },
-}
+};
 
 /**
  * Shared toast renderer for consistent styling across both toaster instances.
  */
-const renderToast = (toast: { type?: string; title?: React.ReactNode; description?: React.ReactNode; action?: { label: string; onClick?: () => void }; closable?: boolean }) => {
-  const status = (toast.type as ToastType) || "info"
-  const styles = statusStyles[status]
+const renderToast = (toast: {
+  type?: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: { label: string; onClick?: () => void };
+  closable?: boolean;
+}) => {
+  const status = (toast.type as ToastType) || "info";
+  const styles = statusStyles[status];
 
   return (
     <Toast.Root
@@ -170,15 +181,17 @@ const renderToast = (toast: { type?: string; title?: React.ReactNode; descriptio
         />
       )}
     </Toast.Root>
-  )
-}
+  );
+};
 
 /**
  * Layout-aware offsets for toaster positioning.
  * Uses CSS calc with layout tokens so toasts don't overlap navbar/footer.
  */
-const topOffset = "calc(var(--chakra-sizes-layout-navbar) + var(--chakra-spacing-4))"
-const bottomOffset = "calc(var(--chakra-sizes-layout-footer) + var(--chakra-spacing-4))"
+const topOffset =
+  "calc(var(--chakra-sizes-layout-navbar) + var(--chakra-spacing-4))";
+const bottomOffset =
+  "calc(var(--chakra-sizes-layout-footer) + var(--chakra-spacing-4))";
 
 /**
  * Default Toaster - renders bottom-right toasts.
@@ -197,8 +210,8 @@ export const Toaster = () => {
         {renderToast}
       </ChakraToaster>
     </Portal>
-  )
-}
+  );
+};
 
 /**
  * Priority Toaster - renders top-right toasts.
@@ -217,5 +230,5 @@ export const PriorityToaster = () => {
         {renderToast}
       </ChakraToaster>
     </Portal>
-  )
-}
+  );
+};

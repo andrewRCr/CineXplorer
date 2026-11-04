@@ -10,7 +10,7 @@
  */
 export function getCsrfToken(): string | null {
     const match = document.cookie.match(new RegExp("(^| )XSRF-TOKEN=([^;]+)"));
-    return match ? match[2] : null;
+    return match?.[2] ?? null;
 }
 
 /**
@@ -22,11 +22,13 @@ export function getCsrfToken(): string | null {
 export async function ensureCsrfTokenCookie(baseUrl: string): Promise<void> {
     if (!getCsrfToken()) {
         try {
-            const response = await fetch(`${baseUrl}/csrf/`, { credentials: "include" });
+            const response = await fetch(`${baseUrl}/csrf/`, {
+                credentials: "include",
+            });
 
             if (!response.ok) {
                 throw new Error(
-                    `CSRF token fetch failed: ${response.status} ${response.statusText}`
+                    `CSRF token fetch failed: ${response.status} ${response.statusText}`,
                 );
             }
 

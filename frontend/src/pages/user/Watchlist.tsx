@@ -11,10 +11,10 @@
  * - Shows loading state while fetching
  */
 
-import { useState, useEffect } from 'react';
-import { Box, Text, VStack } from '@chakra-ui/react';
-import { getUserMovies } from '../../services/userMovieService';
-import type { MovieListItem } from '@/@types/movie.d';
+import { useState, useEffect } from "react";
+import { Box, Text, VStack } from "@chakra-ui/react";
+import { getUserMovies } from "../../services/userMovieService";
+import type { MovieListItem } from "@/types/movie";
 
 const Watchlist = () => {
   const [movies, setMovies] = useState<MovieListItem[]>([]);
@@ -33,7 +33,8 @@ const Watchlist = () => {
 
         setMovies(response.data.results || []);
       } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load watchlist';
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load watchlist";
         setError(errorMessage);
       } finally {
         setIsLoading(false);

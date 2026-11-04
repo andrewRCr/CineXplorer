@@ -156,7 +156,8 @@ def get_now_playing_movies(
         MovieListResponseSchema: Paginated movies with user data if authenticated
 
     Raises:
-        HttpError: 400 for invalid parameters, 500 for TMDB API errors
+        HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,
+            is busy or times out
     """
     # Create deduplication tracker from request context
     dedup_tracker = _create_dedup_tracker(request)
@@ -190,7 +191,8 @@ def get_upcoming_movies(
         MovieListResponseSchema: Paginated movies with user data if authenticated
 
     Raises:
-        HttpError: 400 for invalid parameters, 500 for TMDB API errors
+        HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,
+            is busy or times out
     """
     # Create deduplication tracker from request context
     dedup_tracker = _create_dedup_tracker(request)
@@ -280,7 +282,8 @@ def browse_movies(
         MovieListResponseSchema: Paginated list of movies with user data if authenticated
 
     Raises:
-        HttpError: 400 for invalid parameters, 500 for TMDB API errors
+        HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,
+            is busy or times out
     """
     # Create deduplication tracker from request context
     dedup_tracker = _create_dedup_tracker(request)
@@ -316,7 +319,8 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
         MovieDetailSchema: Complete movie details with user data if authenticated
 
     Raises:
-        HttpError: 404 if movie not found, 500 for TMDB API errors
+        HttpError: 404 if movie not found, or 502, 503 or 504 when TMDB fails,
+            is busy or times out
     """
     # Fetch movie details from TMDB
     movie_data = _movie_service.get_movie_by_id(tmdb_id)

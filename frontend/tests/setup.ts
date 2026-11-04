@@ -1,63 +1,48 @@
+import "./browser-storage";
 import "@testing-library/jest-dom";
+import { server } from "./mocks/server";
 
 // Global test setup - runs before each test file
 
-// Node 25+ defines its own localStorage and sessionStorage globals, which keep
-// Vitest from installing jsdom's (localStorage is undefined unless Node gets
-// --localstorage-file). Install jsdom's Storage the way Vitest installs other
-// window globals; reading Node's getter to test for this would log a warning.
-declare const jsdom: { window: Pick<Window, "localStorage" | "sessionStorage"> };
-for (const key of ["localStorage", "sessionStorage"] as const) {
-	let override: Storage | undefined;
-	Object.defineProperty(globalThis, key, {
-		configurable: true,
-		get: () => override ?? jsdom.window[key],
-		set: (value: Storage) => {
-			override = value;
-		},
-	});
-}
-
 // Mock window.matchMedia since it's not available in jsdom
 Object.defineProperty(window, "matchMedia", {
-	writable: true,
-	value: vi.fn().mockImplementation((query) => ({
-		matches: false,
-		media: query,
-		onchange: null,
-		addListener: vi.fn(), // deprecated
-		removeListener: vi.fn(), // deprecated
-		addEventListener: vi.fn(),
-		removeEventListener: vi.fn(),
-		dispatchEvent: vi.fn(),
-	})),
+    writable: true,
+    value: vi.fn().mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(), // deprecated
+        removeListener: vi.fn(), // deprecated
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
 });
 
 // Mock IntersectionObserver since it's not available in jsdom
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-	observe: vi.fn(),
-	disconnect: vi.fn(),
-	unobserve: vi.fn(),
+    observe: vi.fn(),
+    disconnect: vi.fn(),
+    unobserve: vi.fn(),
 }));
 
 // Mock ResizeObserver since it's not available in jsdom
 // This is needed for @floating-ui/dom which is used by Chakra UI Select
 class ResizeObserverMock {
-	 
-	constructor(_callback: ResizeObserverCallback) {
-		// Callback parameter kept for interface compatibility but not used in mock
-	}
-	
-	observe = vi.fn();
-	unobserve = vi.fn();
-	disconnect = vi.fn();
+    constructor(_callback: ResizeObserverCallback) {
+        // Callback parameter kept for interface compatibility but not used in mock
+    }
+
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
 }
 
 global.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
 
 // Also ensure window.ResizeObserver is available
-if (typeof window !== 'undefined') {
-	window.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
+if (typeof window !== "undefined") {
+    window.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
 }
 
 // Mock scrollIntoView since it's not implemented in jsdom
@@ -70,21 +55,21 @@ HTMLElement.prototype.scrollTo = vi.fn();
 
 // Mock window.location methods
 Object.defineProperty(window, "location", {
-	value: {
-		assign: vi.fn(),
-		replace: vi.fn(),
-		reload: vi.fn(),
-		href: "http://localhost:3000",
-		origin: "http://localhost:3000",
-		protocol: "http:",
-		host: "localhost:3000",
-		hostname: "localhost",
-		port: "3000",
-		pathname: "/",
-		search: "",
-		hash: "",
-	},
-	writable: true,
+    value: {
+        assign: vi.fn(),
+        replace: vi.fn(),
+        reload: vi.fn(),
+        href: "http://localhost:3000",
+        origin: "http://localhost:3000",
+        protocol: "http:",
+        host: "localhost:3000",
+        hostname: "localhost",
+        port: "3000",
+        pathname: "/",
+        search: "",
+        hash: "",
+    },
+    writable: true,
 });
 
 // Disable CSS animations/transitions in tests for faster, more deterministic tests
@@ -100,16 +85,25 @@ style.textContent = `
 document.head.appendChild(style);
 
 // Mock next-themes since it's not available in test environment
-vi.mock('next-themes', () => ({
-	useTheme: () => ({
-		theme: 'light',
-		setTheme: vi.fn(),
-		resolvedTheme: 'light',
-	}),
-	ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
+vi.mock("next-themes", () => ({
+    useTheme: () => ({
+        theme: "light",
+        setTheme: vi.fn(),
+        resolvedTheme: "light",
+    }),
+    ThemeProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
-// Clean up after each test
+beforeAll(() => {
+    server.listen({ onUnhandledRequest: "error" });
+});
+
+// Restore shared defaults after every test; runtime handlers never leak.
 afterEach(() => {
-	vi.clearAllMocks();
+    server.resetHandlers();
+    vi.clearAllMocks();
+});
+
+afterAll(() => {
+    server.close();
 });

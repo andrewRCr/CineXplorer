@@ -39,7 +39,6 @@ from apps.authentication.schemas import (
     TokenObtainInputSchema,
     TokenResponseSchema,
     UserProfileSchema,
-    UserProfileUpdateSchema,
 )
 from apps.authentication.utils import (
     JWTSettings,
@@ -218,6 +217,8 @@ class AuthenticationService:
         """Register a new user and send email verification."""
         client_ip, _ = self._client_info_getter(request)
         forbidden_usernames = settings.FORBIDDEN_USERNAMES
+        # allauth lowercases an email before matching it at sign-in, so store it lowercase.
+        email = payload.email.lower()
 
         if payload.username.lower() in forbidden_usernames:
             self._logger.warning(
@@ -233,11 +234,8 @@ class AuthenticationService:
             )
             return 409, {"error": "Username already associated with an existing account."}
 
-        if self._user_model.objects.filter(email=payload.email).exists():
-            self._logger.warning(
-                "Registration failed: Email already exists | "
-                f"email={payload.email} | ip={client_ip}"
-            )
+        if self._user_model.objects.filter(email__iexact=email).exists():
+            self._logger.warning(f"Registration failed: Email already exists | ip={client_ip}")
             return 409, {"error": "Email address already associated with an existing account."}
 
         try:
@@ -256,7 +254,7 @@ class AuthenticationService:
             with transaction.atomic():
                 user = self._user_model.objects.create_user(
                     username=payload.username,
-                    email=payload.email,
+                    email=email,
                     password=payload.password,
                     first_name=payload.first_name or "",
                     last_name=payload.last_name or "",
@@ -265,7 +263,7 @@ class AuthenticationService:
                 # Create email address record (without sending - we'll send manually)
                 email_address = self._email_address_model.objects.create(
                     user=user,
-                    email=payload.email,
+                    email=email,
                     verified=False,
                     primary=True,
                 )
@@ -282,8 +280,7 @@ class AuthenticationService:
             # Transaction committed successfully - user and email records created
             self._logger.info(
                 "Registration successful | "
-                f"user_id={user.id} | username={payload.username} | "
-                f"email={payload.email} | ip={client_ip}"
+                f"user_id={user.id} | username={payload.username} | ip={client_ip}"
             )
 
             return 201, {
@@ -295,11 +292,12 @@ class AuthenticationService:
                 "email_sent": True,
             }
         except Exception as exc:
-            # Transaction automatically rolled back - no manual cleanup needed
+            # Transaction automatically rolled back - no manual cleanup needed.
+            # The exception's text can carry the address, so only its type is logged.
             self._logger.error(
                 "Registration failed: Email sending error | "
-                f"username={payload.username} | email={payload.email} | "
-                f"ip={client_ip} | error={exc!s}"
+                f"username={payload.username} | ip={client_ip} | "
+                f"error_type={type(exc).__name__}"
             )
             return 500, {
                 "error": (
@@ -336,8 +334,7 @@ class AuthenticationService:
 
         if not authenticated_user:
             self._logger.warning(
-                "Login failed: Invalid credentials | "
-                f"login={login} | ip={client_ip} | user_agent={user_agent}"
+                f"Login failed: Invalid credentials | ip={client_ip} | user_agent={user_agent}"
             )
             return 401, {"error": "Unable to authenticate with provided credentials."}
 
@@ -349,8 +346,7 @@ class AuthenticationService:
             verified=True,
         ).exists():
             self._logger.warning(
-                "Login failed: Email not verified | "
-                f"user_id={user.id} | login={login} | ip={client_ip}"
+                f"Login failed: Email not verified | user_id={user.id} | ip={client_ip}"
             )
             resend_token = self._generate_resend_token(user.id)
             return 403, {
@@ -376,9 +372,7 @@ class AuthenticationService:
         )
 
         self._logger.info(
-            "Login successful | "
-            f"user_id={user.id} | login={login} | "
-            f"ip={client_ip} | user_agent={user_agent}"
+            f"Login successful | user_id={user.id} | ip={client_ip} | user_agent={user_agent}"
         )
 
         return 200, {
@@ -570,30 +564,6 @@ class AuthenticationService:
         profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
         return profile
 
-    def update_user_profile(
-        self,
-        user: UserProtocol,
-        payload: UserProfileUpdateSchema,
-    ) -> UserProfileSchema:
-        """Update user profile fields with validation."""
-        update_data = payload.model_dump(exclude_unset=True)
-        password = update_data.pop("password", None)
-
-        for field, value in update_data.items():
-            setattr(user, field, value)
-
-        if password:
-            user.set_password(password)
-
-        user.save()
-        profile = UserProfileSchema.model_validate(user)
-        profile.email_verified = self._email_address_model.objects.filter(
-            user=user,
-            verified=True,
-        ).exists()
-        profile.full_name = f"{user.first_name} {user.last_name}".strip() or None
-        return profile
-
     # =========================================================================
     # Email Verification
     # =========================================================================
@@ -605,10 +575,7 @@ class AuthenticationService:
     ) -> tuple[int, EmailVerificationResponseSchema | dict[str, str]]:
         """Verify email address using confirmation key."""
         try:
-            self._logger.info(f"Attempting to verify email with key: {payload.key[:20]}...")
-
             confirmation = self._email_confirmation_hmac.from_key(payload.key)
-            self._logger.info(f"HMAC verification result: {confirmation}")
 
             if not confirmation:
                 self._logger.info("HMAC failed, trying database lookup")
@@ -616,10 +583,12 @@ class AuthenticationService:
 
             email_address = confirmation.email_address
             if email_address.verified:
-                self._logger.warning(f"Email {email_address.email} already verified")
+                self._logger.warning(
+                    f"Email verification skipped: user_id={email_address.user_id} already verified"
+                )
                 return 400, {"error": "Email address is already verified."}
 
-            self._logger.info(f"Confirming email {email_address.email}")
+            self._logger.info(f"Confirming email for user_id={email_address.user_id}")
             confirmation.confirm(request)
 
             # Send welcome email after successful verification

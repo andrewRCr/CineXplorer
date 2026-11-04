@@ -1,4 +1,10 @@
-import { Box, HStack, Select, createListCollection, Button } from "@chakra-ui/react";
+import {
+  Box,
+  HStack,
+  Select,
+  createListCollection,
+  Button,
+} from "@chakra-ui/react";
 import { memo, useMemo, useCallback } from "react";
 import { FiFilter } from "react-icons/fi";
 import {
@@ -26,9 +32,7 @@ const getFilterValueTextProps = (isDisabled: boolean, isActive: boolean) => ({
 interface ConnectedDropdownsProps {
   filters: BrowseParams;
   onFiltersChange: (
-    filters:
-      | Partial<BrowseParams>
-      | ((prev: BrowseParams) => BrowseParams)
+    filters: Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams),
   ) => void;
   onToggleAdvanced?: () => void;
   isAdvancedOpen?: boolean;
@@ -46,29 +50,33 @@ const ConnectedDropdowns = ({
   pageSource,
 }: ConnectedDropdownsProps) => {
   // Memoize the filter update function to prevent recreation
-  const updateFilter = useCallback(<K extends keyof BrowseParams>(
-    key: K,
-    value: BrowseParams[K]
-  ) => {
-    onFiltersChange((prevFilters) => {
-      const newFilters = { ...prevFilters, [key]: value };
-      return newFilters;
-    });
-  }, [onFiltersChange]);
+  const updateFilter = useCallback(
+    <K extends keyof BrowseParams>(key: K, value: BrowseParams[K]) => {
+      onFiltersChange((prevFilters) => {
+        const newFilters = { ...prevFilters, [key]: value };
+        return newFilters;
+      });
+    },
+    [onFiltersChange],
+  );
 
   // Memoize expensive genre display calculations
   const genreDisplayData = useMemo(() => {
     const isMultipleGenres = filters.genres.length > 1;
-    const selectedGenreId = filters.genres.length === 1 ? filters.genres[0] : null;
-    const isAdvancedGenre = selectedGenreId !== null &&
-      !coreGenreOptions.some((g) => String(g.value) === String(selectedGenreId));
+    const selectedGenreId =
+      filters.genres.length === 1 ? filters.genres[0] : null;
+    const isAdvancedGenre =
+      selectedGenreId !== null &&
+      !coreGenreOptions.some(
+        (g) => String(g.value) === String(selectedGenreId),
+      );
 
     let genreDisplay = null;
     if (isMultipleGenres) {
       genreDisplay = { value: "multiple", label: "Multiple" };
     } else if (isAdvancedGenre) {
       const genre = genreOptions.find(
-        (g) => String(g.value) === String(selectedGenreId)
+        (g) => String(g.value) === String(selectedGenreId),
       );
       genreDisplay = {
         value: String(selectedGenreId),
@@ -88,14 +96,18 @@ const ConnectedDropdowns = ({
   // Memoize year display calculations
   const yearDisplayData = useMemo(() => {
     // Check if year filter should be disabled due to route constraints (now-playing/upcoming)
-    const isRouteConstrained = pageSource === "now-playing" || pageSource === "upcoming";
+    const isRouteConstrained =
+      pageSource === "now-playing" || pageSource === "upcoming";
 
     // Use shared utility for year filter analysis
     const yearAnalysis = analyzeYearFilter(filters.minYear, filters.maxYear);
 
     // Determine if this should show as "Custom" (disabled, italic)
     // Route-constrained pages override this with their own display
-    const isYearCustom = !yearAnalysis.isEmpty && !yearAnalysis.isInPresets && !yearAnalysis.isSameYear;
+    const isYearCustom =
+      !yearAnalysis.isEmpty &&
+      !yearAnalysis.isInPresets &&
+      !yearAnalysis.isSameYear;
 
     let yearDisplayValue = "";
     let isYearSpan = false;
@@ -131,7 +143,9 @@ const ConnectedDropdowns = ({
       isDecadeRange: yearAnalysis.isDecadeRange,
       isYearCustom,
       yearDisplayValue,
-      yearDisplayLabel: isRouteConstrained ? yearDisplayValue : yearAnalysis.displayLabel,
+      yearDisplayLabel: isRouteConstrained
+        ? yearDisplayValue
+        : yearAnalysis.displayLabel,
       isRouteConstrained,
       isYearSpan,
     };
@@ -142,31 +156,52 @@ const ConnectedDropdowns = ({
 
   // Active filter visual indication - show primary color when filter has non-default value
   // Disabled filters (multiple/advanced/route-constrained) keep their muted style
-  const hasActiveGenre = filters.genres.length > 0 && !genreDisplayData.isGenreDisabled;
-  const hasActiveYear = (filters.minYear !== "" || filters.maxYear !== "") &&
-    !yearDisplayData.isYearCustom && !yearDisplayData.isRouteConstrained;
+  const hasActiveGenre =
+    filters.genres.length > 0 && !genreDisplayData.isGenreDisabled;
+  const hasActiveYear =
+    (filters.minYear !== "" || filters.maxYear !== "") &&
+    !yearDisplayData.isYearCustom &&
+    !yearDisplayData.isRouteConstrained;
 
   // Memoize collections to prevent array recreation on every render
-  const genreCollection = useMemo(() => createListCollection({
-    items: [
-      ...(genreDisplayData.genreDisplay && genreDisplayData.genreDisplay.value !== "multiple"
-        ? [{
-            label: genreDisplayData.genreDisplay.label,
-            value: genreDisplayData.genreDisplay.value,
-          }]
-        : []),
-      ...(genreDisplayData.isMultipleGenres ? [{ label: "Multiple", value: "multiple" }] : []),
-      ...coreGenreOptions.map((option) => ({
-        label: option.label,
-        value: String(option.value),
-      })),
-    ],
-  }), [genreDisplayData]);
+  const genreCollection = useMemo(
+    () =>
+      createListCollection({
+        items: [
+          ...(genreDisplayData.genreDisplay &&
+          genreDisplayData.genreDisplay.value !== "multiple"
+            ? [
+                {
+                  label: genreDisplayData.genreDisplay.label,
+                  value: genreDisplayData.genreDisplay.value,
+                },
+              ]
+            : []),
+          ...(genreDisplayData.isMultipleGenres
+            ? [{ label: "Multiple", value: "multiple" }]
+            : []),
+          ...coreGenreOptions.map((option) => ({
+            label: option.label,
+            value: String(option.value),
+          })),
+        ],
+      }),
+    [genreDisplayData],
+  );
 
   const yearCollection = useMemo(() => {
     const allItems = [
-      ...(yearDisplayData.isRouteConstrained ? [{ label: yearDisplayData.yearDisplayValue, value: yearDisplayData.yearDisplayValue }] : []),
-      ...(yearDisplayData.isYearCustom ? [{ label: yearDisplayData.yearDisplayLabel, value: "custom" }] : []),
+      ...(yearDisplayData.isRouteConstrained
+        ? [
+            {
+              label: yearDisplayData.yearDisplayValue,
+              value: yearDisplayData.yearDisplayValue,
+            },
+          ]
+        : []),
+      ...(yearDisplayData.isYearCustom
+        ? [{ label: yearDisplayData.yearDisplayLabel, value: "custom" }]
+        : []),
       ...yearOptions.map((option) => ({
         label: option.label,
         value: option.value,
@@ -176,14 +211,19 @@ const ConnectedDropdowns = ({
     // Deduplicate by value to prevent React key conflicts
     // (e.g., now-playing in 2025 adds "2025" but yearOptions also includes it)
     const seen = new Set<string>();
-    const uniqueItems = allItems.filter(item => {
+    const uniqueItems = allItems.filter((item) => {
       if (seen.has(item.value)) return false;
       seen.add(item.value);
       return true;
     });
 
     return createListCollection({ items: uniqueItems });
-  }, [yearDisplayData.isYearCustom, yearDisplayData.isRouteConstrained, yearDisplayData.yearDisplayValue, yearDisplayData.yearDisplayLabel]);
+  }, [
+    yearDisplayData.isYearCustom,
+    yearDisplayData.isRouteConstrained,
+    yearDisplayData.yearDisplayValue,
+    yearDisplayData.yearDisplayLabel,
+  ]);
 
   return (
     <HStack gap={0} align="stretch">
@@ -200,13 +240,11 @@ const ConnectedDropdowns = ({
           }
           onValueChange={(details) => {
             const value = details.value[0];
-            updateFilter(
-              "genres",
-              value ? [parseInt(value, 10)] : []
-            );
+            updateFilter("genres", value ? [parseInt(value, 10)] : []);
           }}
           disabled={genreDisplayData.isGenreDisabled}
-          positioning={{ placement: "bottom-start", gutter: 2 }}>
+          positioning={{ placement: "bottom-start", gutter: 2 }}
+        >
           <Select.Trigger
             w={GENRE_WIDTH}
             {...BROWSE_SELECT_TRIGGER_BASE_PROPS}
@@ -222,7 +260,7 @@ const ConnectedDropdowns = ({
               placeholder="Any Genre"
               {...getFilterValueTextProps(
                 genreDisplayData.isGenreDisabled,
-                hasActiveGenre
+                hasActiveGenre,
               )}
             />
             <Select.Indicator />
@@ -245,7 +283,7 @@ const ConnectedDropdowns = ({
           collection={yearCollection}
           value={[yearDisplayData.yearDisplayValue]}
           onValueChange={(details) => {
-            const value = details.value[0];
+            const value = details.value[0] ?? "";
             if (value.endsWith("'s")) {
               const startYear = parseInt(value.slice(0, 4));
               const endYear = startYear + 9;
@@ -268,7 +306,9 @@ const ConnectedDropdowns = ({
               }));
             }
           }}
-          disabled={yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained}
+          disabled={
+            yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained
+          }
           positioning={{ placement: "bottom-start", gutter: 2 }}
         >
           <Select.Trigger
@@ -285,8 +325,9 @@ const ConnectedDropdowns = ({
             <Select.ValueText
               placeholder="Year"
               {...getFilterValueTextProps(
-                yearDisplayData.isYearCustom || yearDisplayData.isRouteConstrained,
-                hasActiveYear
+                yearDisplayData.isYearCustom ||
+                  yearDisplayData.isRouteConstrained,
+                hasActiveYear,
               )}
             />
             <Select.Indicator />
@@ -318,7 +359,11 @@ const ConnectedDropdowns = ({
           borderRadius="0 4px 4px 0"
           borderColor="button-outline"
           // Active filter indication: primary color when panel is open or advanced filters applied
-          color={isAdvancedOpen || hasActiveAdvancedFilters ? "primary" : "on-button-outline"}
+          color={
+            isAdvancedOpen || hasActiveAdvancedFilters
+              ? "primary"
+              : "on-button-outline"
+          }
           _hover={{
             bg: "tertiary/8",
           }}
@@ -338,24 +383,30 @@ const ConnectedDropdowns = ({
 };
 
 // Memoize the component to prevent unnecessary re-renders
-const MemoizedConnectedDropdowns = memo(ConnectedDropdowns, (prevProps, nextProps) => {
-  // Custom comparison function for optimal performance
-  return (
-    // Compare filter values that actually affect this component
-    prevProps.filters.genres.length === nextProps.filters.genres.length &&
-    prevProps.filters.genres.every((genre, index) => genre === nextProps.filters.genres[index]) &&
-    prevProps.filters.minYear === nextProps.filters.minYear &&
-    prevProps.filters.maxYear === nextProps.filters.maxYear &&
-    // Compare function references
-    prevProps.onFiltersChange === nextProps.onFiltersChange &&
-    prevProps.onToggleAdvanced === nextProps.onToggleAdvanced &&
-    // Compare state for active filter indication
-    prevProps.isAdvancedOpen === nextProps.isAdvancedOpen &&
-    prevProps.hasActiveAdvancedFilters === nextProps.hasActiveAdvancedFilters &&
-    // Compare pageSource for route-based disabling
-    prevProps.pageSource === nextProps.pageSource
-  );
-});
+const MemoizedConnectedDropdowns = memo(
+  ConnectedDropdowns,
+  (prevProps, nextProps) => {
+    // Custom comparison function for optimal performance
+    return (
+      // Compare filter values that actually affect this component
+      prevProps.filters.genres.length === nextProps.filters.genres.length &&
+      prevProps.filters.genres.every(
+        (genre, index) => genre === nextProps.filters.genres[index],
+      ) &&
+      prevProps.filters.minYear === nextProps.filters.minYear &&
+      prevProps.filters.maxYear === nextProps.filters.maxYear &&
+      // Compare function references
+      prevProps.onFiltersChange === nextProps.onFiltersChange &&
+      prevProps.onToggleAdvanced === nextProps.onToggleAdvanced &&
+      // Compare state for active filter indication
+      prevProps.isAdvancedOpen === nextProps.isAdvancedOpen &&
+      prevProps.hasActiveAdvancedFilters ===
+        nextProps.hasActiveAdvancedFilters &&
+      // Compare pageSource for route-based disabling
+      prevProps.pageSource === nextProps.pageSource
+    );
+  },
+);
 
 MemoizedConnectedDropdowns.displayName = "ConnectedDropdowns";
 

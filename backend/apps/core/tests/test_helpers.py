@@ -48,6 +48,7 @@ Example:
 
 import json
 import os
+import socket
 import subprocess
 import sys
 import uuid
@@ -69,6 +70,7 @@ __all__ = [
     "HTTPStatus",
     "UserParams",
     "authenticate_client",
+    "closed_local_port",
     "create_fresh_client",
     "create_mock_user",
     "create_user",
@@ -270,8 +272,8 @@ def json_patch(
         HTTP response from the endpoint
 
     Example:
-        response = json_patch(self.client, '/api/profile/', {
-            'first_name': 'Updated'
+        response = json_patch(self.client, '/api/user-movie-data/1', {
+            'user_rating': 8
         }, HTTP_X_CSRFTOKEN='token123')
     """
     # Django test client returns _MonkeyPatchedWSGIResponse
@@ -577,3 +579,10 @@ print("SETTINGS_RESULT=" + json.dumps(values, default=str))
         if line.startswith("SETTINGS_RESULT=")
     )
     return cast(dict[str, object], json.loads(payload))
+
+
+def closed_local_port() -> int:
+    """Return a local port with nothing listening on it, so connecting to it fails."""
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]

@@ -15,8 +15,8 @@ const SearchBar = ({
 }: SearchBarProps) => {
   const [isHovered, setIsHovered] = useState(false);
   return (
-    <Box 
-      position="relative" 
+    <Box
+      position="relative"
       maxW="400px"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

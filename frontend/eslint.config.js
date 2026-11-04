@@ -3,6 +3,7 @@ import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default tseslint.config([
     {
@@ -14,7 +15,7 @@ export default tseslint.config([
             // react-refresh/only-export-components but aligns with Chakra's documented
             // snippet architecture.
             // See: https://www.chakra-ui.com/docs/components/concepts/color-mode
-            "src/components/core/chakra/**"
+            "src/components/core/chakra/**",
         ],
     },
     {
@@ -34,10 +35,11 @@ export default tseslint.config([
             "@typescript-eslint/no-unused-vars": [
                 "warn",
                 {
-                    "argsIgnorePattern": "^_",
-                    "varsIgnorePattern": "^_"
-                }
+                    argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
+                },
             ],
         },
     },
+    eslintConfigPrettier,
 ]);

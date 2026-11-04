@@ -16,7 +16,7 @@ import { vi } from "vitest";
 import { MemoryRouter, type MemoryRouterProps } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { defaultSystem } from "@/theme";
-import type { MovieListItem, MovieListResponse } from "@/@types/movie";
+import type { MovieListItem, MovieListResponse } from "@/types/movie";
 import type { UseInfiniteMoviesResult } from "@/hooks/movie/useInfiniteMovies";
 
 // ============================================================================
@@ -36,14 +36,14 @@ export const renderWithProvider = (
   ui: React.ReactElement,
   routerOptions?: {
     initialEntries?: MemoryRouterProps["initialEntries"];
-  }
+  },
 ) => {
   const { initialEntries = ["/"] } = routerOptions ?? {};
 
   return render(
     <MemoryRouter initialEntries={initialEntries}>
       <ChakraProvider value={defaultSystem}>{ui}</ChakraProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 };
 
@@ -67,7 +67,7 @@ export const renderWithProvider = (
  * });
  */
 export const createMockMovie = (
-  overrides: Partial<MovieListItem> & { tmdb_id: number }
+  overrides: Partial<MovieListItem> & { tmdb_id: number },
 ): MovieListItem => {
   const { tmdb_id, ...rest } = overrides;
   return {
@@ -101,13 +101,13 @@ export const createMockMovie = (
 export const createMockMovies = (
   count: number,
   startId = 1,
-  titlePrefix = "Movie"
+  titlePrefix = "Movie",
 ): MovieListItem[] =>
   Array.from({ length: count }, (_, i) =>
     createMockMovie({
       tmdb_id: startId + i,
       title: `${titlePrefix} ${startId + i}`,
-    })
+    }),
   );
 
 // ============================================================================
@@ -138,7 +138,7 @@ export const createMockPage = (
     hasNext?: boolean;
     totalResults?: number;
     totalPages?: number;
-  } = {}
+  } = {},
 ): MovieListResponse => {
   const { hasNext = true, totalResults = 200, totalPages = 10 } = options;
 
@@ -187,7 +187,7 @@ export const createMockHookFunctions = () => ({
  */
 export const createMockHookReturn = (
   overrides: Partial<UseInfiniteMoviesResult> = {},
-  mockFns = createMockHookFunctions()
+  mockFns = createMockHookFunctions(),
 ): UseInfiniteMoviesResult => ({
   // Data
   movies: overrides.movies ?? [],
@@ -253,8 +253,8 @@ export const createMockIntersectionObserver = () => {
   const mockDisconnect = vi.fn();
   const mockUnobserve = vi.fn();
 
-  let storedCallback: ((entries: { isIntersecting: boolean }[]) => void) | null =
-    null;
+  let storedCallback:
+    ((entries: { isIntersecting: boolean }[]) => void) | null = null;
 
   const mockObserver = vi.fn((callback: typeof storedCallback) => {
     storedCallback = callback;
@@ -371,7 +371,9 @@ export const createMockResizeObserver = () => {
 
   const simulateResize = (rect: { width: number; height?: number }) => {
     if (storedCallback) {
-      storedCallback([{ contentRect: { width: rect.width, height: rect.height ?? 0 } }]);
+      storedCallback([
+        { contentRect: { width: rect.width, height: rect.height ?? 0 } },
+      ]);
     }
   };
 

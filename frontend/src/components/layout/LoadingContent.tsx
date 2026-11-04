@@ -1,5 +1,5 @@
 import { Box, Text, VStack, Spinner } from "@chakra-ui/react";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 interface LoadingContentProps {
   /**
@@ -17,7 +17,7 @@ interface LoadingContentProps {
    * - 'layout': Full-page layout with background (for Suspense fallback)
    * @default 'layout'
    */
-  mode?: 'content' | 'layout';
+  mode?: "content" | "layout";
 }
 
 /**
@@ -32,7 +32,7 @@ interface LoadingContentProps {
 const LoadingContent = ({
   message = "Loading...",
   icon,
-  mode = 'layout'
+  mode = "layout",
 }: LoadingContentProps) => {
   const content = (
     <VStack gap={icon ? 6 : 4}>
@@ -65,7 +65,7 @@ const LoadingContent = ({
     </VStack>
   );
 
-  if (mode === 'content') {
+  if (mode === "content") {
     // Content-only mode (for use within existing layouts)
     return (
       <Box
@@ -82,12 +82,7 @@ const LoadingContent = ({
 
   // Layout mode (full-page with background for Suspense fallback)
   return (
-    <Box
-      minH="100vh"
-      display="flex"
-      flexDirection="column"
-      bg="background"
-    >
+    <Box minH="100vh" display="flex" flexDirection="column" bg="background">
       <Box flex="1" display="flex" alignItems="center" justifyContent="center">
         {content}
       </Box>

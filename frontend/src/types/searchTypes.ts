@@ -17,13 +17,13 @@
  * - language (search in specific language)
  */
 export interface SearchParams {
-  /** The search query string */
-  query: string;
+    /** The search query string */
+    query: string;
 }
 
 /**
  * Default search parameters - empty/inactive state
  */
 export const DEFAULT_SEARCH_PARAMS: SearchParams = {
-  query: "",
+    query: "",
 };

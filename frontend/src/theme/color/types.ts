@@ -1105,4 +1105,3 @@ export interface UnifiedTheme {
      */
     ring: string;
 }
-

@@ -26,11 +26,7 @@ export interface AxiosErrorLike {
  * Returns true if the error has a response property (characteristic of Axios errors).
  */
 export function isAxiosError(error: unknown): error is AxiosErrorLike {
-    return (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error
-    );
+    return typeof error === "object" && error !== null && "response" in error;
 }
 
 /**
@@ -65,10 +61,12 @@ export function getErrorMessage(error: unknown): string {
     if (isAxiosError(error)) {
         // Check various backend error message formats
         const data = error.response?.data;
-        return data?.detail ?? data?.error ?? data?.message ?? error.message ?? '';
+        return (
+            data?.detail ?? data?.error ?? data?.message ?? error.message ?? ""
+        );
     }
     if (error instanceof Error) {
         return error.message;
     }
-    return '';
+    return "";
 }

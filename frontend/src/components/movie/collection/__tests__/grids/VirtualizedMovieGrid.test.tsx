@@ -21,7 +21,16 @@
  */
 
 import { screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from "vitest";
+import {
+  assert,
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  type Mock,
+} from "vitest";
 
 // Shared test utilities
 import {
@@ -99,7 +108,7 @@ describe("VirtualizedMovieGrid", () => {
    */
   const createMockVirtualizer = (
     itemCount: number,
-    visibleRange: [number, number] = [0, Math.min(itemCount, 12)]
+    visibleRange: [number, number] = [0, Math.min(itemCount, 12)],
   ) => {
     const [start, end] = visibleRange;
     mockVirtualItems = Array.from({ length: end - start }, (_, i) => ({
@@ -136,7 +145,7 @@ describe("VirtualizedMovieGrid", () => {
     // Setup virtualizer mock
     mockScrollToOffset = vi.fn();
     (useWindowVirtualizer as Mock).mockReturnValue(
-      createMockVirtualizer(0, [0, 0])
+      createMockVirtualizer(0, [0, 0]),
     );
 
     // Setup default context mock - provides queryKey for scroll position keying
@@ -149,7 +158,7 @@ describe("VirtualizedMovieGrid", () => {
 
     // Setup default hook mock - empty state
     (useInfiniteMovies as Mock).mockReturnValue(
-      createMockHookReturn({}, mockFns)
+      createMockHookReturn({}, mockFns),
     );
   });
 
@@ -174,17 +183,20 @@ describe("VirtualizedMovieGrid", () => {
 
       // Virtualizer reports only items 0-11 are visible
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(50, [0, 12])
+        createMockVirtualizer(50, [0, 12]),
       );
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies: allMovies,
-          pages: [createMockPage(1, allMovies)],
-          pageCount: 1,
-          totalResults: 500,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies: allMovies,
+            pages: [createMockPage(1, allMovies)],
+            pageCount: 1,
+            totalResults: 500,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -211,14 +223,17 @@ describe("VirtualizedMovieGrid", () => {
 
       // Simulate scrolled state: items 20-31 visible
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(50, [20, 32])
+        createMockVirtualizer(50, [20, 32]),
       );
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies: allMovies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies: allMovies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -247,10 +262,13 @@ describe("VirtualizedMovieGrid", () => {
      */
     it("shows skeleton loaders during initial data fetch", () => {
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          isLoading: true,
-          isFetching: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            isLoading: true,
+            isFetching: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -268,16 +286,19 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(20);
 
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(20, [0, 12])
+        createMockVirtualizer(20, [0, 12]),
       );
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-          isFetching: true,
-          isFetchingNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+            isFetching: true,
+            isFetchingNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -302,10 +323,13 @@ describe("VirtualizedMovieGrid", () => {
      */
     it("displays error message when fetch fails", () => {
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          error: new Error("Network error"),
-          isError: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            error: new Error("Network error"),
+            isError: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -318,10 +342,13 @@ describe("VirtualizedMovieGrid", () => {
      */
     it("calls refetch when retry button clicked", () => {
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          error: new Error("Network error"),
-          isError: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            error: new Error("Network error"),
+            isError: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -345,11 +372,14 @@ describe("VirtualizedMovieGrid", () => {
      */
     it("shows 'no movies found' when results are empty", () => {
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies: [],
-          hasNextPage: false,
-          isLoading: false,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies: [],
+            hasNextPage: false,
+            isLoading: false,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -377,12 +407,15 @@ describe("VirtualizedMovieGrid", () => {
       (useWindowVirtualizer as Mock).mockReturnValue(mockVirtualizer);
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-          isFetching: false,
-          isFetchingNextPage: false,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+            isFetching: false,
+            isFetchingNextPage: false,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -403,16 +436,19 @@ describe("VirtualizedMovieGrid", () => {
 
       // Near bottom but already fetching
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(20, [15, 20])
+        createMockVirtualizer(20, [15, 20]),
       );
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-          isFetching: true,
-          isFetchingNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+            isFetching: true,
+            isFetchingNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -432,15 +468,18 @@ describe("VirtualizedMovieGrid", () => {
 
       // At bottom, but no more pages
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(20, [15, 20])
+        createMockVirtualizer(20, [15, 20]),
       );
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: false, // No more pages
-          isFetching: false,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: false, // No more pages
+            isFetching: false,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -458,15 +497,18 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(20);
 
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(20, [0, 12])
+        createMockVirtualizer(20, [0, 12]),
       );
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: false,
-          isFetching: false,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: false,
+            isFetching: false,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -490,7 +532,7 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(50);
 
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(50, [0, 12])
+        createMockVirtualizer(50, [0, 12]),
       );
 
       // Context provides queryKey for storage key generation
@@ -502,16 +544,22 @@ describe("VirtualizedMovieGrid", () => {
       });
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
 
       // Simulate scroll event
-      Object.defineProperty(window, "scrollY", { value: 500, configurable: true });
+      Object.defineProperty(window, "scrollY", {
+        value: 500,
+        configurable: true,
+      });
       fireEvent.scroll(window);
 
       // Debounce delay
@@ -526,6 +574,7 @@ describe("VirtualizedMovieGrid", () => {
 
       // Value should be JSON with the scroll position
       const lastCall = setItemCalls[setItemCalls.length - 1];
+      assert.isDefined(lastCall);
       expect(lastCall[1]).toContain('"position":500');
     });
   });
@@ -541,7 +590,10 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(50);
 
       // Pre-populate saved scroll position (JSON format with position and timestamp)
-      sessionStorageMock.setStoredValue("scroll-discover-", createStorageEntry(750));
+      sessionStorageMock.setStoredValue(
+        "scroll-discover-",
+        createStorageEntry(750),
+      );
 
       (useMovieCollectionContext as Mock).mockReturnValue({
         source: "discover",
@@ -551,23 +603,28 @@ describe("VirtualizedMovieGrid", () => {
       });
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       // Simulate back-navigation via location state
       // (set by BackToCollectionLink component)
       renderWithProvider(<VirtualizedMovieGrid />, {
-        initialEntries: [{ pathname: "/browse", state: { restoreScroll: true } }],
+        initialEntries: [
+          { pathname: "/browse", state: { restoreScroll: true } },
+        ],
       });
 
       // Virtualizer should have been created with initialOffset
       expect(useWindowVirtualizer).toHaveBeenCalledWith(
         expect.objectContaining({
           initialOffset: 750,
-        })
+        }),
       );
     });
 
@@ -581,10 +638,13 @@ describe("VirtualizedMovieGrid", () => {
       sessionStorageMock.clearStorage();
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -593,7 +653,7 @@ describe("VirtualizedMovieGrid", () => {
       expect(useWindowVirtualizer).toHaveBeenCalledWith(
         expect.objectContaining({
           initialOffset: 0,
-        })
+        }),
       );
     });
   });
@@ -612,7 +672,10 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(50);
 
       // Save position for "action" filter (proper JSON format for consistency)
-      sessionStorageMock.setStoredValue("scroll-discover-action", createStorageEntry(500));
+      sessionStorageMock.setStoredValue(
+        "scroll-discover-action",
+        createStorageEntry(500),
+      );
 
       // But render with "comedy" filter - different queryKey
       (useMovieCollectionContext as Mock).mockReturnValue({
@@ -623,10 +686,13 @@ describe("VirtualizedMovieGrid", () => {
       });
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -636,7 +702,7 @@ describe("VirtualizedMovieGrid", () => {
       expect(useWindowVirtualizer).toHaveBeenCalledWith(
         expect.objectContaining({
           initialOffset: 0,
-        })
+        }),
       );
     });
   });
@@ -655,10 +721,13 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(20);
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -668,12 +737,14 @@ describe("VirtualizedMovieGrid", () => {
         expect.objectContaining({
           count: 20,
           estimateSize: expect.any(Function),
-        })
+        }),
       );
 
       // Verify estimateSize returns correct value
-      const config = (useWindowVirtualizer as Mock).mock.calls[0][0];
-      expect(config.estimateSize()).toBe(449); // Fixed card height
+      const [firstCall] = vi.mocked(useWindowVirtualizer).mock.calls;
+      assert.isDefined(firstCall);
+      const config = firstCall[0];
+      expect(config.estimateSize(0)).toBe(449); // Fixed card height
     });
 
     /**
@@ -683,10 +754,13 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(20);
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -694,7 +768,7 @@ describe("VirtualizedMovieGrid", () => {
       expect(useWindowVirtualizer).toHaveBeenCalledWith(
         expect.objectContaining({
           gap: 16, // Standard spacing between cards
-        })
+        }),
       );
     });
   });
@@ -722,14 +796,17 @@ describe("VirtualizedMovieGrid", () => {
 
       // In jsdom with 0 container width, columnCount = 1, so rowCount = 20
       (useWindowVirtualizer as Mock).mockReturnValue(
-        createMockVirtualizer(20, [0, 12])
+        createMockVirtualizer(20, [0, 12]),
       );
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -739,7 +816,7 @@ describe("VirtualizedMovieGrid", () => {
       expect(useWindowVirtualizer).toHaveBeenCalledWith(
         expect.objectContaining({
           count: 20,
-        })
+        }),
       );
 
       // Verify component renders visible cards
@@ -776,11 +853,14 @@ describe("VirtualizedMovieGrid", () => {
       (useWindowVirtualizer as Mock).mockReturnValue(mockVirtualizer);
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: false, // No more results
-          totalResults: 3,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: false, // No more results
+            totalResults: 3,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -802,9 +882,7 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(1); // Just 1 movie
 
       const mockVirtualizer = {
-        getVirtualItems: () => [
-          { index: 0, start: 0, size: 449 },
-        ],
+        getVirtualItems: () => [{ index: 0, start: 0, size: 449 }],
         getTotalSize: () => 449,
         scrollToOffset: mockScrollToOffset,
         scrollOffset: 0,
@@ -814,11 +892,14 @@ describe("VirtualizedMovieGrid", () => {
       (useWindowVirtualizer as Mock).mockReturnValue(mockVirtualizer);
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: false,
-          totalResults: 1,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: false,
+            totalResults: 1,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);
@@ -861,12 +942,15 @@ describe("VirtualizedMovieGrid", () => {
       (useWindowVirtualizer as Mock).mockReturnValue(mockVirtualizer);
 
       (useInfiniteMovies as Mock).mockReturnValue(
-        createMockHookReturn({
-          movies,
-          hasNextPage: true,
-          isFetching: false,
-          isFetchingNextPage: false,
-        }, mockFns)
+        createMockHookReturn(
+          {
+            movies,
+            hasNextPage: true,
+            isFetching: false,
+            isFetchingNextPage: false,
+          },
+          mockFns,
+        ),
       );
 
       renderWithProvider(<VirtualizedMovieGrid />);

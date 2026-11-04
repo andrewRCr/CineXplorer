@@ -9,8 +9,10 @@ root = true
 # Defaults for all files
 [*]
 charset = utf-8
-end_of_line = lf              # Matches .gitattributes - all files use Unix line endings
-insert_final_newline = true   # Files should end with newline (Git best practice)
+# Matches .gitattributes - all files use Unix line endings
+end_of_line = lf
+# Files should end with newline (Git best practice)
+insert_final_newline = true
 trim_trailing_whitespace = true
 
 # Python (PEP 8 standard)
@@ -39,7 +41,8 @@ indent_size = 2
 [*.md]
 indent_style = space
 indent_size = 4
-trim_trailing_whitespace = false  # Markdown uses trailing spaces for line breaks
+# Markdown uses trailing spaces for line breaks
+trim_trailing_whitespace = false
 
 # Configuration files (2 spaces - standard)
 [*.{toml,ini,cfg,conf}]

@@ -15,6 +15,8 @@ from apps.core.tests.test_helpers import create_user, get_csrf_token
 from apps.user_movie_data.models import UserMovieData
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from django.core.mail import EmailMessage
 
 pytestmark = pytest.mark.django_db
@@ -150,11 +152,12 @@ def test_log_reporting_accepts_post_without_csrf() -> None:
 
 
 @override_settings(ENVIRONMENT="development")
-def test_development_log_reporting_accepts_post_without_csrf() -> None:
+def test_development_log_reporting_accepts_post_without_csrf(tmp_path: Path) -> None:
     client = Client(enforce_csrf_checks=True)
-    response = client.post(
-        "/api/dev-logs/write/", {"log_line": "CSRF test"}, content_type="application/json"
-    )
+    with override_settings(BASE_DIR=tmp_path):
+        response = client.post(
+            "/api/dev-logs/write/", {"log_line": "CSRF test"}, content_type="application/json"
+        )
     assert response.status_code == 200
 
 

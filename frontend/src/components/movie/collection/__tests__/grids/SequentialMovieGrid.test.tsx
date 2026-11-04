@@ -1,5 +1,13 @@
 import { screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
+import {
+  assert,
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  type Mock,
+} from "vitest";
 import SequentialMovieGrid from "../../SequentialMovieGrid";
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
 import { useMovieCollectionContext } from "@/hooks/movie/useMovieCollectionContext";
@@ -180,6 +188,7 @@ describe("SequentialMovieGrid", () => {
 
       // Use getAllByLabelText since pagination appears in both header and footer
       const nextButtons = screen.getAllByLabelText(/next page/i);
+      assert.isDefined(nextButtons[0]);
       fireEvent.click(nextButtons[0]);
 
       await waitFor(() => {
@@ -211,6 +220,7 @@ describe("SequentialMovieGrid", () => {
 
       // Click next (use getAllByLabelText since pagination appears in both header and footer)
       const nextButtons = screen.getAllByLabelText(/next page/i);
+      assert.isDefined(nextButtons[0]);
       fireEvent.click(nextButtons[0]);
 
       // Should show page 2 movies (not page 1)
@@ -241,6 +251,7 @@ describe("SequentialMovieGrid", () => {
 
       // Click next (page 2 is cached) - use getAllByLabelText since pagination appears in both header and footer
       const nextButtons = screen.getAllByLabelText(/next page/i);
+      assert.isDefined(nextButtons[0]);
       fireEvent.click(nextButtons[0]);
 
       // Should NOT call fetchNextPage since page 2 is cached
@@ -278,6 +289,7 @@ describe("SequentialMovieGrid", () => {
 
       // Navigate to page 2 (use getAllByLabelText since pagination appears in both header and footer)
       const nextButtons = screen.getAllByLabelText(/next page/i);
+      assert.isDefined(nextButtons[0]);
       fireEvent.click(nextButtons[0]);
 
       await waitFor(() => {
@@ -286,6 +298,7 @@ describe("SequentialMovieGrid", () => {
 
       // Navigate back to page 1
       const prevButtons = screen.getAllByLabelText(/previous page/i);
+      assert.isDefined(prevButtons[0]);
       fireEvent.click(prevButtons[0]);
 
       await waitFor(() => {

@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from "react";
+import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import {
   Box,
   Button,
@@ -320,7 +320,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     const errorId =
       this.state.errorId ||
       `ERR_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -428,14 +428,14 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     }
   };
 
-  componentWillUnmount() {
+  override componentWillUnmount() {
     // Clean up timeout when component unmounts
     if (this.resetTimeoutId) {
       clearTimeout(this.resetTimeoutId);
     }
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       // Custom fallback UI
       if (this.props.fallback) {

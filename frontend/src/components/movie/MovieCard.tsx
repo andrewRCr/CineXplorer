@@ -78,9 +78,9 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
     const dateParts = movie.release_date.split("-");
     if (dateParts.length !== 3) return "Release date unknown";
 
-    const year = Number.parseInt(dateParts[0], 10);
-    const month = Number.parseInt(dateParts[1], 10);
-    const day = Number.parseInt(dateParts[2], 10);
+    const year = Number.parseInt(dateParts[0] ?? "", 10);
+    const month = Number.parseInt(dateParts[1] ?? "", 10);
+    const day = Number.parseInt(dateParts[2] ?? "", 10);
 
     if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
       return "Release date unknown";

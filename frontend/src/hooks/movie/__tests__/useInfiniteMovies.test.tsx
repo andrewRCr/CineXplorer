@@ -99,13 +99,13 @@ describe("useInfiniteMovies", () => {
 
       // Should have movies flattened from pages
       expect(result.current.movies).toHaveLength(2);
-      expect(result.current.movies[0].tmdb_id).toBe(123);
-      expect(result.current.movies[1].tmdb_id).toBe(456);
+      expect(result.current.movies[0]?.tmdb_id).toBe(123);
+      expect(result.current.movies[1]?.tmdb_id).toBe(456);
 
       // Should expose raw pages array for sequential pagination
       expect(result.current.pages).toHaveLength(1);
       expect(result.current.pageCount).toBe(1);
-      expect(result.current.pages[0].results).toHaveLength(2);
+      expect(result.current.pages[0]?.results).toHaveLength(2);
     });
 
     it("should flatten movies from multiple pages", async () => {
@@ -165,8 +165,8 @@ describe("useInfiniteMovies", () => {
       });
 
       // Movies should be flattened from both pages
-      expect(result.current.movies[0].tmdb_id).toBe(1);
-      expect(result.current.movies[1].tmdb_id).toBe(2);
+      expect(result.current.movies[0]?.tmdb_id).toBe(1);
+      expect(result.current.movies[1]?.tmdb_id).toBe(2);
     });
   });
 
@@ -338,7 +338,7 @@ describe("useInfiniteMovies", () => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.movies[0].tmdb_id).toBe(100);
+      expect(result.current.movies[0]?.tmdb_id).toBe(100);
 
       // Change filter (query key)
       rerender({ queryKey: ["movies", { genre: "comedy" }] });
@@ -503,8 +503,8 @@ describe("useInfiniteMovies", () => {
 
       // Movies should be flattened correctly, skipping empty page
       expect(result.current.movies).toHaveLength(2);
-      expect(result.current.movies[0].tmdb_id).toBe(1);
-      expect(result.current.movies[1].tmdb_id).toBe(3);
+      expect(result.current.movies[0]?.tmdb_id).toBe(1);
+      expect(result.current.movies[1]?.tmdb_id).toBe(3);
     });
 
     it("handles cursor becoming null after non-null (end of results)", async () => {

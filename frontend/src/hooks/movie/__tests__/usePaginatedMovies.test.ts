@@ -201,7 +201,7 @@ describe("usePaginatedMovies", () => {
             expect(result.current.page).toBe(2);
             expect(result.current.next_tmdb_page_start).toBe(9);
             expect(result.current.movies).toHaveLength(1);
-            expect(result.current.movies[0].tmdb_id).toBe(789);
+            expect(result.current.movies[0]?.tmdb_id).toBe(789);
         });
     });
 
@@ -263,7 +263,7 @@ describe("usePaginatedMovies", () => {
             });
             expect(result.current.page).toBe(1);
             expect(result.current.next_tmdb_page_start).toBe(3);
-            expect(result.current.movies[0].tmdb_id).toBe(999);
+            expect(result.current.movies[0]?.tmdb_id).toBe(999);
         });
     });
 

@@ -25,12 +25,12 @@ Two constraints bound the choice:
 
 ### Alternatives Considered
 
-- **(a) A Redis cache for all TMDB GETs.** About 1–1.5 days. Cold loads stay serial, and a big cache crowds out
+- **(a) A Redis cache for all TMDB GETs.** The smallest change. Cold loads stay serial, and a big cache crowds out
   throttle and resend state under the 48 MB cap.
-- **Lean: paginate, fetch each page's movies in parallel, and add a refresh job.** About 1.25–1.75 days. TMDB stays
-  on the Library's critical path.
-- **(b) Store the card fields on `Movie`, paginate, and refresh (chosen).** About 1.75–2.75 days. Ratings can drift by
-  up to a day.
+- **Lean: paginate, fetch each page's movies in parallel, and add a refresh job.** Slightly larger. TMDB stays on
+  the Library's critical path.
+- **(b) Store the card fields on `Movie`, paginate, and refresh (chosen).** The largest of the three: new columns,
+  a migration and a nightly job. Ratings can drift by up to a day.
 
 ## Decision
 

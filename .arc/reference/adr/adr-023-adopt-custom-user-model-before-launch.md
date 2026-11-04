@@ -14,27 +14,31 @@ is a hard migration. CineXplorer started with one (`AUTH_USER_MODEL = "accounts.
 that reason no longer applies.
 
 The question came up again on 2026-11-03, before a planned rework of the model that stores each user's movie data.
-The swap was estimated at about 2 days, and the decision was to keep Django's `User` and add a `Profile` one-to-one
-when a field needed it. The next day the Owner doubted the estimate, and a probe on a throwaway copy of the code
-measured the swap instead:
+The swap was judged too large a change to make before launch, and the decision was to keep Django's `User` and add a
+`Profile` one-to-one when a field needed it. The next day the Owner doubted that judgement, and a probe on a
+throwaway copy of the code measured the change instead:
 
 - Pyright reported no errors before the swap and none after.
 - Two migrations needed a `swappable_dependency` line, and a fresh database migrated cleanly in the right order. No
   migrations had to be squashed.
 - 883 of 888 backend tests passed unchanged. Three admin tests and two tests that name Django's `User` directly
   failed.
-- The whole change, with a case-insensitive unique email constraint, came to about 3.5–5 hours.
+- Beyond those, the change needed only a `users` app with its admin page, a case-insensitive unique email
+  constraint with registration's handling of a race on it, and the test files that import the user model.
 
 CineXplorer has no real users yet, and staging holds one account. Existing databases can't take the swap in place
 (Django refuses with `InconsistentMigrationHistory`), so the development and staging databases are reset. After
-launch the same change means a subclass on `db_table="auth_user"`, rehearsed on a restored backup: about 2–3 days.
+launch the same change means a subclass on `db_table="auth_user"` and a migration of real user data, rehearsed on a
+restored backup.
 
 ### Alternatives Considered
 
 - **Keep `User`; add a `Profile` one-to-one when a field needs it.** No cost now. Email uniqueness stays in
   application code, and any later swap happens against real data.
-- **Swap after launch if a need appears.** About 2–3 days, rehearsed on a restored backup.
-- **Swap now, before launch (chosen).** About 3.5–5 hours, plus resetting two databases that hold no real users.
+- **Swap after launch if a need appears.** A larger change: a subclass over the existing table and a migration of
+  real user data, rehearsed on a restored backup.
+- **Swap now, before launch (chosen).** The change the probe measured, plus resetting two databases that hold no
+  real users.
 
 ## Decision
 

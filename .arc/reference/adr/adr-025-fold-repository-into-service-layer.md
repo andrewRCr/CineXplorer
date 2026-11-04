@@ -28,7 +28,8 @@ Every model change also has to edit the repository's method signatures.
   wouldn't catch a broken model change.
 - **Keep the repository, with its tests moved to the real database.** About the same cost as folding it, but every
   model change still edits the repository's signatures as well as the service.
-- **Fold it into the service, with a `QuerySet` for the shared filters (chosen).** About 1.5–2 days.
+- **Fold it into the service, with a `QuerySet` for the shared filters (chosen).** The 39 mock-based tests move to
+  the real database first, then the repository's code moves into the service.
 
 ## Decision
 

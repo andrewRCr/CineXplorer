@@ -165,12 +165,27 @@ function create(root, main, branch, { existing, workUnit }) {
     console.log(`Worktree: ${path}\nFirst push: git push -u origin ${branch}\nIn the worktree: node scripts/worktree.mjs browse`);
 }
 
+function browse(root, main) {
+    linked(root, main);
+    const contents = readEnv(root);
+    for (const key of ["COMPOSE_PROJECT_NAME", "SITE_PORT", "WORKTREE_SECRET_KEY"]) {
+        if (!envValue(contents, key)) throw new Error(`Missing ${key}; run node scripts/worktree.mjs provision first.`);
+    }
+    const compose = [...COMPOSE, "--profile", "browser"];
+    console.log(run(root, "docker", [...compose, "up", "-d", "--wait"]));
+    for (const args of [["migrate", "--noinput"], ["seed_dev_data"]]) {
+        console.log(run(root, "docker", [...compose, "exec", "-T", "backend", "python", "manage.py", ...args]));
+    }
+    console.log(`https://localhost:${envValue(contents, "SITE_PORT")}\nSign in: dev / cinexplorer-dev`);
+}
+
 function main() {
     const [command, ...args] = process.argv.slice(2);
     if (command === "--help" || command === "-h") return console.log(HELP);
     if (!["create", "provision", "browse", "remove"].includes(command)) throw new Error(`Unknown command: ${command ?? "[none]"}. Use --help.`);
     const { root, main } = context();
     if (command === "provision" && args.length === 0) return provision(root, main);
+    if (command === "browse" && args.length === 0) return browse(root, main);
     if (command === "create" && args.length >= 1 && args.slice(1).every((arg) => ["--existing", "--work-unit"].includes(arg))) {
         return create(root, main, args[0], { existing: args.includes("--existing"), workUnit: args.includes("--work-unit") });
     }

@@ -131,22 +131,13 @@ run beside it.
       All 244 core tests pass; core Ruff passes, the new files are formatted and core Pyright reports zero errors,
       warnings or information. Corrected the new test's token-response field, wrapping and type annotations.
 
-- [ ] **3.3 `browse` starts the stack, migrates and seeds** (R7, R14; Criterion 1)
+- [x] **3.3 `browse` starts the stack, migrates and seeds** (R7, R14; Criterion 1)
 
-    - [ ] **3.3.a Write tests** in `scripts/worktree.test.mjs`
-        - Refusals, each with its reason asserted: in the main checkout, and in a worktree whose
-          `infrastructure/.env` lacks `COMPOSE_PROJECT_NAME`, `SITE_PORT` or `WORKTREE_SECRET_KEY`, each
-        - The calls, in order, in the worktree, each `docker compose` naming both files and `--profile browser`:
-          `up -d --wait`, then `exec -T backend python manage.py migrate --noinput`, then
-          `exec -T backend python manage.py seed_dev_data`; the output gives `https://localhost:{SITE_PORT}` and the
-          dev account's sign-in
-        - When `up` fails, the log shows the `up` call, the output carries the stub's failure output, no `manage.py`
-          call follows, and the exit is non-zero
-        - Expect tests to FAIL initially
-
-    - [ ] **3.3.b Implement `browse`**
-        - `up -d --wait` builds images the project lacks and waits for running services and healthy health checks
-        - Tests should now PASS
+    - [x] **3.3.a Write tests:** six fail-first cases cover the main checkout, each missing environment key,
+      ordered browser-profile startup/migrate/seed calls, the printed URL and sign-in, and stopping with command
+      output when startup fails.
+    - [x] **3.3.b Implement `browse`:** refuse unprovisioned checkouts, start all five services with `up -d --wait`,
+      migrate and seed, then print the URL and dev sign-in. Syntax checks and all 36 worktree tests pass.
 
 - [ ] **3.4 This worktree's browsable stack serves its app, and the limits are measured** (R7, R9; Criterion 4)
     - `node scripts/worktree.mjs browse` here; `https://localhost:{SITE_PORT}/` and `/api/health-check/` answer `200`;

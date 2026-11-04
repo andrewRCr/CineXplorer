@@ -375,3 +375,45 @@ test("a seeding refusal keeps the provisioned worktree and offers retry", (t) =>
     assert.match(envOf(join(f.parent, "primary.new")), /^SITE_PORT=8445$/m);
     assert.deepEqual(f.calls().map((call) => call.command), ["docker", "npm", "npm", "seed"]);
 });
+
+const BROWSER = [...COMPOSE, "--profile", "browser"];
+const BROWSE_ENV = "COMPOSE_PROJECT_NAME=cinexplorer-sample\nSITE_PORT=8445\nWORKTREE_SECRET_KEY=example\n";
+
+test("browse refuses the main checkout before any Docker call", (t) => {
+    const f = fixture(t);
+    refusal(f.invoke(f.main, ["browse"]), /main checkout/i);
+    assert.deepEqual(f.calls(), []);
+});
+
+for (const key of ["COMPOSE_PROJECT_NAME", "SITE_PORT", "WORKTREE_SECRET_KEY"]) {
+    test(`browse refuses a missing ${key} before any Docker call`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", BROWSE_ENV.split("\n").filter((line) => !line.startsWith(`${key}=`)).join("\n"));
+        refusal(f.invoke(path, ["browse"]), new RegExp(`${key}.*provision`, "i"));
+        assert.deepEqual(f.calls(), []);
+    });
+}
+
+test("browse waits for the stack then migrates and seeds in order", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    const result = f.invoke(path, ["browse"]);
+    success(result);
+    assert.deepEqual(f.calls(), [
+        { command: "docker", args: [...BROWSER, "up", "-d", "--wait"], cwd: path },
+        { command: "docker", args: [...BROWSER, "exec", "-T", "backend", "python", "manage.py", "migrate", "--noinput"], cwd: path },
+        { command: "docker", args: [...BROWSER, "exec", "-T", "backend", "python", "manage.py", "seed_dev_data"], cwd: path },
+    ]);
+    assert.match(result.stdout, /https:\/\/localhost:8445/);
+    assert.match(result.stdout, /dev.*cinexplorer-dev/);
+});
+
+test("a failed stack start prints its output and never migrates or seeds", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    refusal(f.invoke(path, ["browse"], { CX_FAIL: "up" }), /stub command failed: up/);
+    assert.deepEqual(f.calls(), [{ command: "docker", args: [...BROWSER, "up", "-d", "--wait"], cwd: path }]);
+});

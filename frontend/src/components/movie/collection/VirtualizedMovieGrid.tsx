@@ -54,7 +54,7 @@ const VirtualizedMovieGrid = () => {
   // Build stable query key from actual filter values
   const queryKey = useMemo(
     () => ["movies", "virtualized", source, query, browseParams],
-    [source, query, browseParams]
+    [source, query, browseParams],
   );
 
   const {
@@ -197,7 +197,9 @@ const VirtualizedMovieGrid = () => {
     if (typeof title === "string") return title;
     // Object with main/secondary - combine them
     const titleObj = title as { main: string; secondary?: string };
-    return titleObj.secondary ? `${titleObj.main}${titleObj.secondary}` : titleObj.main;
+    return titleObj.secondary
+      ? `${titleObj.main}${titleObj.secondary}`
+      : titleObj.main;
   }, [title]);
 
   // --------------------------------------------------------------------------
@@ -239,7 +241,7 @@ const VirtualizedMovieGrid = () => {
                 const rowStartIndex = virtualRow.index * columnCount;
                 const rowMovies = movies.slice(
                   rowStartIndex,
-                  rowStartIndex + columnCount
+                  rowStartIndex + columnCount,
                 );
 
                 return (
@@ -260,7 +262,11 @@ const VirtualizedMovieGrid = () => {
                         key={movie.tmdb_id}
                         data-testid="movie-card-container"
                       >
-                        <MovieCard movie={movie} source={source} query={query} />
+                        <MovieCard
+                          movie={movie}
+                          source={source}
+                          query={query}
+                        />
                       </MovieCardContainer>
                     ))}
                   </Box>

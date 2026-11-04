@@ -27,13 +27,15 @@ const SUB_NAV_TEST_ID = "collapsible-sub-nav";
 const DRAWER_TEST_ID = "collapsible-sub-nav-drawer";
 
 /** Renders CollapsibleSubNav with default props and optional overrides */
-function renderSubNav(props: {
-  isCollapsed?: boolean;
-  children?: React.ReactNode;
-  drawerContent?: React.ReactNode;
-  isDrawerOpen?: boolean;
-  onHeightChange?: (height: number) => void;
-} = {}) {
+function renderSubNav(
+  props: {
+    isCollapsed?: boolean;
+    children?: React.ReactNode;
+    drawerContent?: React.ReactNode;
+    isDrawerOpen?: boolean;
+    onHeightChange?: (height: number) => void;
+  } = {},
+) {
   const {
     isCollapsed = false,
     children = <div>Test Content</div>,
@@ -50,7 +52,7 @@ function renderSubNav(props: {
       onHeightChange={onHeightChange}
     >
       {children}
-    </CollapsibleSubNav>
+    </CollapsibleSubNav>,
   );
 }
 
@@ -257,7 +259,7 @@ describe("CollapsibleSubNav", () => {
   describe("Edge Cases", () => {
     it("handles empty children gracefully", () => {
       const { container } = render(
-        <CollapsibleSubNav isCollapsed={false}>{null}</CollapsibleSubNav>
+        <CollapsibleSubNav isCollapsed={false}>{null}</CollapsibleSubNav>,
       );
 
       expect(container).toBeInTheDocument();
@@ -268,24 +270,24 @@ describe("CollapsibleSubNav", () => {
       const { rerender } = render(
         <CollapsibleSubNav isCollapsed={false}>
           <span>Content</span>
-        </CollapsibleSubNav>
+        </CollapsibleSubNav>,
       );
 
       // Rapid toggles
       rerender(
         <CollapsibleSubNav isCollapsed={true}>
           <span>Content</span>
-        </CollapsibleSubNav>
+        </CollapsibleSubNav>,
       );
       rerender(
         <CollapsibleSubNav isCollapsed={false}>
           <span>Content</span>
-        </CollapsibleSubNav>
+        </CollapsibleSubNav>,
       );
       rerender(
         <CollapsibleSubNav isCollapsed={true}>
           <span>Content</span>
-        </CollapsibleSubNav>
+        </CollapsibleSubNav>,
       );
 
       // Should still render correctly
@@ -302,7 +304,7 @@ describe("CollapsibleSubNav", () => {
       expect(screen.getByText("Advanced Filters Drawer")).toBeInTheDocument();
       expect(screen.getByTestId(DRAWER_TEST_ID)).toHaveAttribute(
         "aria-hidden",
-        "false"
+        "false",
       );
     });
 

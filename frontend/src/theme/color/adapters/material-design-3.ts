@@ -39,7 +39,8 @@ import {
 /**
  * Material Design 3 palette type (light or dark mode).
  */
-export type MaterialPalette = typeof materialPaletteLight | typeof materialPaletteDark;
+export type MaterialPalette =
+    typeof materialPaletteLight | typeof materialPaletteDark;
 
 /**
  * Create Material Design 3 adapter mapping to unified theme vocabulary.
@@ -55,7 +56,8 @@ export type MaterialPalette = typeof materialPaletteLight | typeof materialPalet
  */
 export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Select palette based on mode
-    const palette = mode === "light" ? materialPaletteLight : materialPaletteDark;
+    const palette =
+        mode === "light" ? materialPaletteLight : materialPaletteDark;
 
     // ===================================================================
     // SECTION 1: OFFICIAL MAPPINGS (Material Baseline)
@@ -79,15 +81,18 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Core structure (ADR-008 compliant mapping)
     const background = palette.surface; // #FEF7FF light, #141218 dark (page background)
     const foreground = palette.onSurface; // #1D1B20 light, #E6E0E9 dark
-    const layer01 = mode === "light"
-        ? palette.surfaceContainerHigh // #ECE6F0 light (gray - alternates from white)
-        : palette.surfaceContainer; // #211F26 dark (progressive)
-    const layer02 = mode === "light"
-        ? palette.surface // #FEF7FF light (white - alternates back!)
-        : palette.surfaceContainerHigh; // #2B2930 dark (progressive)
-    const layer03 = mode === "light"
-        ? palette.surfaceContainerHigh // #ECE6F0 light (gray - alternates back!)
-        : palette.surfaceContainerHighest; // #36343B dark (progressive)
+    const layer01 =
+        mode === "light"
+            ? palette.surfaceContainerHigh // #ECE6F0 light (gray - alternates from white)
+            : palette.surfaceContainer; // #211F26 dark (progressive)
+    const layer02 =
+        mode === "light"
+            ? palette.surface // #FEF7FF light (white - alternates back!)
+            : palette.surfaceContainerHigh; // #2B2930 dark (progressive)
+    const layer03 =
+        mode === "light"
+            ? palette.surfaceContainerHigh // #ECE6F0 light (gray - alternates back!)
+            : palette.surfaceContainerHighest; // #36343B dark (progressive)
 
     // Popover (typically layer-02 or layer-03 context)
     const popover = layer02;
@@ -170,12 +175,14 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Note: Material's tertiary colors require stronger adjustments for visibility:
     // - Light mode: -20% (vs -10% in other themes) for better contrast with maroon base
     // - Dark mode: +30% (vs +10% in other themes) because base is already very light (#EFB8C8)
-    const tertiaryHover = mode === "light"
-        ? adjustColor(palette.tertiary, -20) // Darken for light mode (increased for visibility)
-        : adjustColor(palette.tertiary, 30); // Lighten for dark mode (increased for visibility)
-    const tertiaryActive = mode === "light"
-        ? adjustColor(palette.tertiary, -15) // More pronounced darkening
-        : adjustColor(palette.tertiary, 5); // Subtle lightening
+    const tertiaryHover =
+        mode === "light"
+            ? adjustColor(palette.tertiary, -20) // Darken for light mode (increased for visibility)
+            : adjustColor(palette.tertiary, 30); // Lighten for dark mode (increased for visibility)
+    const tertiaryActive =
+        mode === "light"
+            ? adjustColor(palette.tertiary, -15) // More pronounced darkening
+            : adjustColor(palette.tertiary, 5); // Subtle lightening
 
     // SHADOWS: Material baseline doesn't define shadows (relies on surface tonal elevation)
     // Rationale for derived shadows:
@@ -187,15 +194,18 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
     //   - Conservative opacity ensures shadows supplement rather than conflict with tonal elevation
     // Note: CineXplorer's unified theme system prioritizes consistent vocabulary across themes
     //       over perfect fidelity to any single design system (ADR-006)
-    const shadowSm = mode === "light"
-        ? "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
-        : "0 1px 2px 0 rgba(0, 0, 0, 0.3)";
-    const shadowMd = mode === "light"
-        ? "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
-        : "0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3)";
-    const shadowLg = mode === "light"
-        ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
-        : "0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)";
+    const shadowSm =
+        mode === "light"
+            ? "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
+            : "0 1px 2px 0 rgba(0, 0, 0, 0.3)";
+    const shadowMd =
+        mode === "light"
+            ? "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
+            : "0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3)";
+    const shadowLg =
+        mode === "light"
+            ? "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+            : "0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3)";
 
     // Focus ring: Use tertiary accent for consistency
     const ring = palette.tertiary;
@@ -218,7 +228,10 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.surfaceVariant,
             mutedForeground: palette.onSurfaceVariant,
-            secondaryHover: adjustColor(palette.secondary, mode === "light" ? -5 : 5),
+            secondaryHover: adjustColor(
+                palette.secondary,
+                mode === "light" ? -5 : 5,
+            ),
         },
         mode,
     );

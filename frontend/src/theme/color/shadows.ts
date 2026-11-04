@@ -127,11 +127,8 @@ export const pajamasShadows = {
  */
 export function getShadowValues(
     designSystem:
-        | "github-primer"
-        | "ibm-carbon"
-        | "gitlab-pajamas"
-        | "material-design-3",
-    mode: "light" | "dark"
+        "github-primer" | "ibm-carbon" | "gitlab-pajamas" | "material-design-3",
+    mode: "light" | "dark",
 ): ShadowValues {
     switch (designSystem) {
         case "github-primer":

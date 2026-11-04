@@ -102,7 +102,7 @@ export function createExtensions(
         /** Secondary hover state (for drag active) */
         secondaryHover: string;
     },
-    mode: "light" | "dark"
+    mode: "light" | "dark",
 ): ExtensionTokens {
     const badgeFg = themeBase.mutedForeground;
 

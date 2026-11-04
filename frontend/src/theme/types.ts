@@ -7,7 +7,6 @@
 
 import type { UnifiedTheme } from "./color/types";
 
-
 /**
  * Complete theme definition with unified adapter tokens.
  *

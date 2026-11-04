@@ -10,12 +10,7 @@ interface BaseLayoutProps {
 
 const BaseLayout = ({ children }: BaseLayoutProps) => {
   return (
-    <Box
-      minH="100vh"
-      display="flex"
-      flexDirection="column"
-      bg="background"
-    >
+    <Box minH="100vh" display="flex" flexDirection="column" bg="background">
       {/* NavBar */}
       <NavBar />
 

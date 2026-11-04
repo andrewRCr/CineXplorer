@@ -6,10 +6,10 @@ import { useMemo } from "react";
  * - Numbers > 10,000 shown as "10,000+" (TMDB API caps at 10,000)
  */
 function formatTotalResults(total: number | undefined): string {
-  if (total === undefined || isNaN(total)) return "0";
-  if (total < 0) return "0";
-  if (total > 10000) return "10,000+";
-  return total.toLocaleString();
+    if (total === undefined || isNaN(total)) return "0";
+    if (total < 0) return "0";
+    if (total > 10000) return "10,000+";
+    return total.toLocaleString();
 }
 
 /**
@@ -19,16 +19,17 @@ function formatTotalResults(total: number | undefined): string {
  * Handles the 10,000+ cap for large result sets
  */
 export function useInfiniteResultsText(
-  totalResults: number | undefined,
-  isLoading: boolean
+    totalResults: number | undefined,
+    isLoading: boolean,
 ): string {
-  return useMemo(() => {
-    if (isLoading && totalResults === undefined) return "Loading results...";
-    if (totalResults === undefined || totalResults === 0) return "";
+    return useMemo(() => {
+        if (isLoading && totalResults === undefined)
+            return "Loading results...";
+        if (totalResults === undefined || totalResults === 0) return "";
 
-    const totalText = formatTotalResults(totalResults);
-    return `${totalText} results`;
-  }, [totalResults, isLoading]);
+        const totalText = formatTotalResults(totalResults);
+        return `${totalText} results`;
+    }, [totalResults, isLoading]);
 }
 
 /**
@@ -37,20 +38,20 @@ export function useInfiniteResultsText(
  * Shows: "Showing X-Y of Z results" for discrete page ranges
  */
 export function useSequentialResultsText(
-  pageIndex: number,
-  pageSize: number,
-  currentPageCount: number,
-  totalResults: number | undefined,
-  isLoading: boolean
+    pageIndex: number,
+    pageSize: number,
+    currentPageCount: number,
+    totalResults: number | undefined,
+    isLoading: boolean,
 ): string {
-  return useMemo(() => {
-    if (isLoading && currentPageCount === 0) return "Loading results...";
-    if (currentPageCount === 0) return "";
+    return useMemo(() => {
+        if (isLoading && currentPageCount === 0) return "Loading results...";
+        if (currentPageCount === 0) return "";
 
-    const startIndex = pageIndex * pageSize + 1;
-    const endIndex = pageIndex * pageSize + currentPageCount;
-    const totalText = formatTotalResults(totalResults);
+        const startIndex = pageIndex * pageSize + 1;
+        const endIndex = pageIndex * pageSize + currentPageCount;
+        const totalText = formatTotalResults(totalResults);
 
-    return `Showing ${startIndex.toLocaleString()}-${endIndex.toLocaleString()} of ${totalText} results`;
-  }, [pageIndex, pageSize, currentPageCount, totalResults, isLoading]);
+        return `Showing ${startIndex.toLocaleString()}-${endIndex.toLocaleString()} of ${totalText} results`;
+    }, [pageIndex, pageSize, currentPageCount, totalResults, isLoading]);
 }

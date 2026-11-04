@@ -41,7 +41,7 @@ function createWrapper() {
  * Helper to create mock paginated response
  */
 function createMockResponse(
-  overrides?: Partial<MovieListResponse>
+  overrides?: Partial<MovieListResponse>,
 ): MovieListResponse {
   return {
     page: 1,
@@ -85,7 +85,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Initially loading
@@ -150,7 +150,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -193,7 +193,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -203,7 +203,7 @@ describe("useInfiniteMovies", () => {
       // First call should have no pageParam (initial fetch)
       expect(mockFetcher).toHaveBeenCalledTimes(1);
       expect(mockFetcher).toHaveBeenCalledWith(
-        expect.objectContaining({ pageParam: undefined })
+        expect.objectContaining({ pageParam: undefined }),
       );
 
       // Trigger next page
@@ -215,7 +215,7 @@ describe("useInfiniteMovies", () => {
 
       // Second call should have tmdb_page_start from first response
       expect(mockFetcher).toHaveBeenLastCalledWith(
-        expect.objectContaining({ pageParam: 5 })
+        expect.objectContaining({ pageParam: 5 }),
       );
     });
   });
@@ -225,7 +225,7 @@ describe("useInfiniteMovies", () => {
       const mockFetcher = vi.fn().mockResolvedValue(
         createMockResponse({
           next_tmdb_page_start: 5,
-        })
+        }),
       );
 
       const { result } = renderHook(
@@ -234,7 +234,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -248,7 +248,7 @@ describe("useInfiniteMovies", () => {
       const mockFetcher = vi.fn().mockResolvedValue(
         createMockResponse({
           next_tmdb_page_start: null,
-        })
+        }),
       );
 
       const { result } = renderHook(
@@ -257,7 +257,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -278,7 +278,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -331,7 +331,7 @@ describe("useInfiniteMovies", () => {
         {
           wrapper: createWrapper(),
           initialProps: { queryKey: ["movies", { genre: "action" }] },
-        }
+        },
       );
 
       await waitFor(() => {
@@ -363,7 +363,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -383,7 +383,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -395,11 +395,9 @@ describe("useInfiniteMovies", () => {
   describe("isFetching states", () => {
     it("should have isFetchingNextPage=true while loading more", async () => {
       let resolveSecondPage: (value: MovieListResponse) => void;
-      const secondPagePromise = new Promise<MovieListResponse>(
-        (resolve) => {
-          resolveSecondPage = resolve;
-        }
-      );
+      const secondPagePromise = new Promise<MovieListResponse>((resolve) => {
+        resolveSecondPage = resolve;
+      });
 
       const page1 = createMockResponse({ next_tmdb_page_start: 3 });
 
@@ -414,7 +412,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "test"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -488,7 +486,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "edge-empty"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -541,7 +539,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "end-cursor"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {
@@ -573,7 +571,7 @@ describe("useInfiniteMovies", () => {
         {
           wrapper: createWrapper(),
           initialProps: { queryKey: { ...queryKeyValue } },
-        }
+        },
       );
 
       await waitFor(() => {
@@ -595,11 +593,9 @@ describe("useInfiniteMovies", () => {
 
     it("handles fetchNextPage call while already fetching", async () => {
       let resolveFirstFetch: (value: MovieListResponse) => void;
-      const firstFetchPromise = new Promise<MovieListResponse>(
-        (resolve) => {
-          resolveFirstFetch = resolve;
-        }
-      );
+      const firstFetchPromise = new Promise<MovieListResponse>((resolve) => {
+        resolveFirstFetch = resolve;
+      });
 
       const mockFetcher = vi.fn().mockReturnValue(firstFetchPromise);
 
@@ -609,7 +605,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "concurrent"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       // Initial fetch is in progress
@@ -655,7 +651,7 @@ describe("useInfiniteMovies", () => {
             queryKey: ["movies", "page-zero"],
             fetcher: mockFetcher,
           }),
-        { wrapper: createWrapper() }
+        { wrapper: createWrapper() },
       );
 
       await waitFor(() => {

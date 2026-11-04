@@ -18,7 +18,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       expect(screen.getByText("Sort by")).toBeInTheDocument();
@@ -29,7 +29,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ sortBy: "vote_average.desc" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       // Check the combobox trigger displays the selected value
@@ -42,7 +42,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ sortBy: "popularity.desc" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -58,7 +58,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       // Open dropdown and select option
@@ -81,7 +81,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ language: "en" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -95,7 +95,9 @@ describe("SortDropdown", () => {
       expect(options).toHaveLength(5);
 
       // Verify alphabetical sort exists
-      expect(screen.getByRole("option", { name: "Alphabetical" })).toBeInTheDocument();
+      expect(
+        screen.getByRole("option", { name: "Alphabetical" }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -108,7 +110,7 @@ describe("SortDropdown", () => {
           browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
           pageSource="upcoming"
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -130,7 +132,7 @@ describe("SortDropdown", () => {
           browseParams={createMockBrowseParams()}
           onSortChange={mockOnSortChange}
           pageSource="popular"
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -153,7 +155,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ language: "" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -167,7 +169,9 @@ describe("SortDropdown", () => {
       expect(options).toHaveLength(4);
 
       // Title sort should NOT be present
-      expect(screen.queryByRole("option", { name: "Alphabetical" })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("option", { name: "Alphabetical" }),
+      ).not.toBeInTheDocument();
     });
 
     it("hides title sorts for non-Latin languages (Japanese)", async () => {
@@ -177,7 +181,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ language: "ja" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -197,7 +201,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ language: "ko" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -217,7 +221,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ language: "en" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -237,7 +241,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ language: "fr" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");
@@ -257,7 +261,7 @@ describe("SortDropdown", () => {
         <SortDropdown
           browseParams={createMockBrowseParams({ language: "es" })}
           onSortChange={mockOnSortChange}
-        />
+        />,
       );
 
       const trigger = screen.getByRole("combobox");

@@ -1,14 +1,16 @@
 import { ROUTES } from "@/constants/routes";
+import { Box, VStack, Text, HStack, Checkbox, Button } from "@chakra-ui/react";
 import {
-  Box,
-  VStack,
-  Text,
-  HStack,
-  Checkbox,
-  Button,
-} from "@chakra-ui/react";
-import { TextLink, FloatingAlert, FloatingAlertContainer } from "@/components/common";
-import { AuthFormCard, FormField, EmailVerificationDialog, PasswordResetDialog } from "@/components/auth";
+  TextLink,
+  FloatingAlert,
+  FloatingAlertContainer,
+} from "@/components/common";
+import {
+  AuthFormCard,
+  FormField,
+  EmailVerificationDialog,
+  PasswordResetDialog,
+} from "@/components/auth";
 import type { VerificationState } from "@/components/auth";
 import { useFormik } from "formik";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
@@ -105,7 +107,11 @@ const Login = () => {
       const toastId = "login-toast";
       priorityToaster.loading({ id: toastId, title: "Logging in..." });
 
-      const response = await login(username, password, formik.values.rememberMe);
+      const response = await login(
+        username,
+        password,
+        formik.values.rememberMe,
+      );
       setIsLoggingIn(false);
 
       if (response.success) {
@@ -160,11 +166,13 @@ const Login = () => {
 
   const verifyToken = searchParams.get("verify");
   const [verificationState, setVerificationState] = useState<VerificationState>(
-    verifyToken ? "pending" : null
+    verifyToken ? "pending" : null,
   );
   const [verificationMessage, setVerificationMessage] = useState("");
   const hasVerifiedRef = useRef(false);
-  const verificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const verificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   // Cleanup verification timeout on unmount
   useEffect(() => {
@@ -184,7 +192,9 @@ const Login = () => {
     try {
       const response = await authService.verifyEmail(verifyToken);
       setVerificationState("success");
-      setVerificationMessage(response.message || "Email verified successfully!");
+      setVerificationMessage(
+        response.message || "Email verified successfully!",
+      );
 
       // Pre-fill the username field with verified email (reduces friction)
       if (response.email) {
@@ -210,7 +220,8 @@ const Login = () => {
       hasVerifiedRef.current = false; // Allow retry
 
       // Extract error message
-      let errorMessage = "Verification failed. The link may be expired or invalid.";
+      let errorMessage =
+        "Verification failed. The link may be expired or invalid.";
       if (isAxiosError(error)) {
         const data = error.response?.data as { error?: string } | undefined;
         if (data?.error) errorMessage = data.error;
@@ -225,7 +236,9 @@ const Login = () => {
   // ==========================================================================
 
   const resetKey = searchParams.get("reset");
-  const [passwordResetKey, setPasswordResetKey] = useState<string | null>(resetKey);
+  const [passwordResetKey, setPasswordResetKey] = useState<string | null>(
+    resetKey,
+  );
 
   const handlePasswordResetSuccess = (autoLoggedIn: boolean) => {
     setPasswordResetKey(null);
@@ -271,7 +284,7 @@ const Login = () => {
     if (location.state?.registrationSuccess) {
       showRegistrationSuccess(
         location.state.message ||
-          "Account created! Please check your email to verify your account before logging in."
+          "Account created! Please check your email to verify your account before logging in.",
       );
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -279,7 +292,8 @@ const Login = () => {
     // OAuth error redirect
     if (location.state?.oauthError) {
       showGeneralError(
-        location.state.message || "OAuth authentication failed. Please try again."
+        location.state.message ||
+          "OAuth authentication failed. Please try again.",
       );
       navigate(location.pathname, { replace: true, state: {} });
     }
@@ -468,7 +482,13 @@ const Login = () => {
               </Button>
             </HStack>
 
-            <Text mt="4px" textAlign="center" w="100%" fontSize="16px" color="foreground">
+            <Text
+              mt="4px"
+              textAlign="center"
+              w="100%"
+              fontSize="16px"
+              color="foreground"
+            >
               Don't have an account?{" "}
               <TextLink to={ROUTES.REGISTER}>Register</TextLink>
             </Text>
@@ -481,34 +501,37 @@ const Login = () => {
           ==================================================================== */}
 
       {/* Blocking alerts (center) - auth errors and workflow requirements */}
-      {alert && (alert.type === "general" || alert.type === "emailVerification") && (
-        <FloatingAlertContainer>
-          {alert.type === "emailVerification" && (
-            <FloatingAlert
-              status="info"
-              onDismiss={clearAlert}
-              action={
-                alert.resendToken
-                  ? {
-                      label: "Resend verification",
-                      onClick: () => handleResendVerification(alert.resendToken),
-                    }
-                  : undefined
-              }
-            >
-              {alert.message}
-            </FloatingAlert>
-          )}
-          {alert.type === "general" && (
-            <FloatingAlert status="error" onDismiss={clearAlert}>
-              {alert.message}
-            </FloatingAlert>
-          )}
-        </FloatingAlertContainer>
-      )}
+      {alert &&
+        (alert.type === "general" || alert.type === "emailVerification") && (
+          <FloatingAlertContainer>
+            {alert.type === "emailVerification" && (
+              <FloatingAlert
+                status="info"
+                onDismiss={clearAlert}
+                action={
+                  alert.resendToken
+                    ? {
+                        label: "Resend verification",
+                        onClick: () =>
+                          handleResendVerification(alert.resendToken),
+                      }
+                    : undefined
+                }
+              >
+                {alert.message}
+              </FloatingAlert>
+            )}
+            {alert.type === "general" && (
+              <FloatingAlert status="error" onDismiss={clearAlert}>
+                {alert.message}
+              </FloatingAlert>
+            )}
+          </FloatingAlertContainer>
+        )}
 
       {/* Non-blocking alerts (top-right) - success CTAs and session state that persist but don't block */}
-      {(alert?.type === "registrationSuccess" || alert?.type === "sessionExpired") && (
+      {(alert?.type === "registrationSuccess" ||
+        alert?.type === "sessionExpired") && (
         <FloatingAlertContainer position="top-right">
           {alert?.type === "registrationSuccess" && (
             <FloatingAlert status="success" onDismiss={clearAlert}>

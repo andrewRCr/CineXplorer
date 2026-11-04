@@ -24,7 +24,7 @@ export function getTokenFromCookie(name: string): string | null {
     const parts = value.split(`; ${name}=`);
 
     if (parts.length === 2) {
-        const cookieValue = parts.pop()?.split(';').shift();
+        const cookieValue = parts.pop()?.split(";").shift();
         return cookieValue ? decodeURIComponent(cookieValue) : null;
     }
 
@@ -39,23 +39,26 @@ export function getTokenFromCookie(name: string): string | null {
 export function getTokenExpiration(token: string): Date | null {
     try {
         // JWT structure: header.payload.signature
-        const parts = token.split('.');
+        const parts = token.split(".");
         if (parts.length !== 3) return null;
 
         // Decode base64url payload (middle part)
         const payload = parts[1];
-        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+        const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
         const jsonPayload = decodeURIComponent(
             atob(base64)
-                .split('')
-                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                .join('')
+                .split("")
+                .map(
+                    (c) =>
+                        "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2),
+                )
+                .join(""),
         );
 
         const decoded = JSON.parse(jsonPayload);
 
         // JWT exp claim is in seconds, Date expects milliseconds
-        if (decoded.exp && typeof decoded.exp === 'number') {
+        if (decoded.exp && typeof decoded.exp === "number") {
             return new Date(decoded.exp * 1000);
         }
 
@@ -111,9 +114,10 @@ export function getCurrentStorageType(): TokenStorage {
 export const setAuthTokens = (
     accessToken: string,
     refreshToken?: string,
-    storage: TokenStorage = "localStorage"
+    storage: TokenStorage = "localStorage",
 ) => {
-    const storageObj = storage === "localStorage" ? localStorage : sessionStorage;
+    const storageObj =
+        storage === "localStorage" ? localStorage : sessionStorage;
 
     // Store access token with standardized key name (matches backend cookie name)
     storageObj.setItem("access_token", accessToken);

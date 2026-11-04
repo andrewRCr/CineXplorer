@@ -9,11 +9,11 @@ export default defineConfig({
     test: {
         // Environment configuration
         environment: "jsdom",
-        
+
         // Global test setup
         globals: true,
         setupFiles: ["./tests/setup.ts"],
-        
+
         // Coverage configuration
         coverage: {
             provider: "v8",
@@ -43,26 +43,21 @@ export default defineConfig({
             "src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
             "tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
         ],
-        exclude: [
-            "node_modules/",
-            "dist/",
-            ".git/",
-        ],
+        exclude: ["node_modules/", "dist/", ".git/"],
 
         // Performance and behavior
         testTimeout: 10000,
         hookTimeout: 10000,
         teardownTimeout: 5000,
-        
+
         // Reporter configuration
         reporters: ["verbose"],
-        
+
         // Mock configuration
         clearMocks: true,
         restoreMocks: true,
-        
     },
-    
+
     resolve: {
         alias: {
             // Note: @/types/* is handled by tsconfigPaths() plugin which supports
@@ -71,8 +66,17 @@ export default defineConfig({
             "@shared": resolve(__dirname, "../shared"),
             "@tests": resolve(__dirname, "./tests"),
         },
-        conditions: ['import', 'module', 'browser', 'default'],
-        mainFields: ['browser', 'module', 'main'],
-        extensions: ['.mjs', '.js', '.mts', '.ts', '.jsx', '.tsx', '.json', '.d.ts'],
+        conditions: ["import", "module", "browser", "default"],
+        mainFields: ["browser", "module", "main"],
+        extensions: [
+            ".mjs",
+            ".js",
+            ".mts",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".json",
+            ".d.ts",
+        ],
     },
 });

@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
+import { useEffect } from "react";
 import {
   ColorModeProvider,
   type ColorModeProviderProps,
   useColorMode,
-} from "./color-mode"
-import { ThemeSelectProvider } from "./theme-provider"
-import { useThemeSelect } from "@/hooks/useThemeSelect"
-import { getTheme } from "@/theme"
+} from "./color-mode";
+import { ThemeSelectProvider } from "./theme-provider";
+import { useThemeSelect } from "@/hooks/useThemeSelect";
+import { getTheme } from "@/theme";
 
-const BG_STORAGE_KEY = "cinexplorer-bg"
+const BG_STORAGE_KEY = "cinexplorer-bg";
 
 /**
  * Syncs the current theme's background color to localStorage and document.
@@ -18,24 +18,25 @@ const BG_STORAGE_KEY = "cinexplorer-bg"
  * The index.html script reads this value before React loads.
  */
 function BackgroundSync() {
-  const { theme } = useThemeSelect()
-  const { colorMode } = useColorMode()
+  const { theme } = useThemeSelect();
+  const { colorMode } = useColorMode();
 
   useEffect(() => {
-    const themeConfig = getTheme(theme)
-    const bg = colorMode === "dark"
-      ? themeConfig.darkUnified.background
-      : themeConfig.lightUnified.background
+    const themeConfig = getTheme(theme);
+    const bg =
+      colorMode === "dark"
+        ? themeConfig.darkUnified.background
+        : themeConfig.lightUnified.background;
 
     // Store for next page load (read by index.html script)
-    localStorage.setItem(BG_STORAGE_KEY, bg)
+    localStorage.setItem(BG_STORAGE_KEY, bg);
 
     // Apply immediately to prevent any flash during this session
-    document.documentElement.style.backgroundColor = bg
-    document.body.style.backgroundColor = bg
-  }, [theme, colorMode])
+    document.documentElement.style.backgroundColor = bg;
+    document.body.style.backgroundColor = bg;
+  }, [theme, colorMode]);
 
-  return null
+  return null;
 }
 
 export function Provider(props: ColorModeProviderProps) {
@@ -46,5 +47,5 @@ export function Provider(props: ColorModeProviderProps) {
         {props.children}
       </ColorModeProvider>
     </ThemeSelectProvider>
-  )
+  );
 }

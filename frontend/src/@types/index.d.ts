@@ -7,11 +7,11 @@
 // export * from 'shared'; // Commented out to avoid path resolution issues during build
 
 // Movie-related types (includes shared + frontend-specific)
-export * from './movie';
+export * from "./movie";
 
 // Common UI and utility types
-export * from './common';
+export * from "./common";
 
 // Authentication and user types
-export * from './auth-state';
-export * from './user';
+export * from "./auth-state";
+export * from "./user";

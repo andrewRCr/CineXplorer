@@ -27,7 +27,7 @@ const LoadingLayout = () => {
   }, []);
 
   // Check if we're returning from an OAuth flow
-  const oauthProvider = sessionStorage.getItem('oauth_in_progress');
+  const oauthProvider = sessionStorage.getItem("oauth_in_progress");
 
   // Show OAuth-specific loading if coming back from OAuth provider
   // Use BaseLayout to match AuthLayout structure (prevents spinner position jump)

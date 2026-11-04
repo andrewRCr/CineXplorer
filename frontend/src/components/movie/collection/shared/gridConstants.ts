@@ -21,14 +21,14 @@ export const SKELETON_COUNT = 20;
  * Uses MovieListItem shape (genre_ids, not genres) to match API response.
  */
 export const placeholderMovie: MovieListItem = {
-  tmdb_id: 0,
-  title: "Loading Movie Title",
-  release_date: "2000-01-01",
-  poster_path: "",
-  vote_average: 0,
-  overview: "Loading overview...",
-  genre_ids: [],
-  runtime: 0,
+    tmdb_id: 0,
+    title: "Loading Movie Title",
+    release_date: "2000-01-01",
+    poster_path: "",
+    vote_average: 0,
+    overview: "Loading overview...",
+    genre_ids: [],
+    runtime: 0,
 };
 
 /**
@@ -39,6 +39,6 @@ export const placeholderMovie: MovieListItem = {
  * Each card needs CARD_WIDTH + GAP, except the last card in row.
  */
 export const calculateColumnCount = (containerWidth: number): number => {
-  if (containerWidth <= 0) return 1;
-  return Math.max(1, Math.floor((containerWidth + GAP) / (CARD_WIDTH + GAP)));
+    if (containerWidth <= 0) return 1;
+    return Math.max(1, Math.floor((containerWidth + GAP) / (CARD_WIDTH + GAP)));
 };

@@ -122,30 +122,27 @@ const MovieCollectionLayout = ({
 
   // Memoized outlet context to prevent unnecessary re-renders
   // Note: Pagination is handled internally by child components via TanStack Query
-  const outletContext = useMemo(
-    () => {
-      return {
-        fetcher: actualFetcher,
-        source: actualSource,
-        // searchQuery is extracted from URL ?query= param for search routes
-        query: searchQuery,
-        title: actualTitle,
-        renderPageHeader,
-        enhancedFetcher,
-        // browseParams for TanStack Query cache key (filter changes invalidate cache)
-        browseParams,
-      };
-    },
-    [
-      actualFetcher,
-      actualSource,
-      searchQuery,
-      actualTitle,
+  const outletContext = useMemo(() => {
+    return {
+      fetcher: actualFetcher,
+      source: actualSource,
+      // searchQuery is extracted from URL ?query= param for search routes
+      query: searchQuery,
+      title: actualTitle,
       renderPageHeader,
       enhancedFetcher,
+      // browseParams for TanStack Query cache key (filter changes invalidate cache)
       browseParams,
-    ]
-  );
+    };
+  }, [
+    actualFetcher,
+    actualSource,
+    searchQuery,
+    actualTitle,
+    renderPageHeader,
+    enhancedFetcher,
+    browseParams,
+  ]);
 
   return (
     <Box

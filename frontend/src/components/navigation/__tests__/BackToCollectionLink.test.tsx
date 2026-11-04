@@ -25,9 +25,7 @@ import { BackToCollectionLink } from "../BackToCollectionLink";
  * Creates URLSearchParams from a simple object.
  * Convenience helper for test readability.
  */
-function createSearchParams(
-  params: Record<string, string>
-): URLSearchParams {
+function createSearchParams(params: Record<string, string>): URLSearchParams {
   return new URLSearchParams(params);
 }
 
@@ -290,7 +288,7 @@ describe("BackToCollectionLink", () => {
         <BackToCollectionLink
           searchParams={searchParams}
           label="Return to Search"
-        />
+        />,
       );
 
       expect(screen.getByText("Return to Search")).toBeInTheDocument();
@@ -321,7 +319,7 @@ describe("BackToCollectionLink", () => {
 
       // Should render without error when ghost variant is passed
       render(
-        <BackToCollectionLink searchParams={searchParams} variant="ghost" />
+        <BackToCollectionLink searchParams={searchParams} variant="ghost" />,
       );
 
       const button = screen.getByRole("button");
@@ -333,7 +331,7 @@ describe("BackToCollectionLink", () => {
 
       // Should render without error when solid variant is passed
       render(
-        <BackToCollectionLink searchParams={searchParams} variant="solid" />
+        <BackToCollectionLink searchParams={searchParams} variant="solid" />,
       );
 
       const button = screen.getByRole("button");

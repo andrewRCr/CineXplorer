@@ -57,10 +57,7 @@ export { createExtensions } from "./extensions";
  * Supported design system theme names.
  */
 export type ThemeName =
-    | "github-primer"
-    | "ibm-carbon"
-    | "gitlab-pajamas"
-    | "material-design-3";
+    "github-primer" | "ibm-carbon" | "gitlab-pajamas" | "material-design-3";
 
 /**
  * Factory function to create a UnifiedTheme from design system identifier.
@@ -82,7 +79,7 @@ export type ThemeName =
  */
 export function createUnifiedTheme(
     themeName: ThemeName,
-    mode: "light" | "dark"
+    mode: "light" | "dark",
 ): UnifiedTheme {
     switch (themeName) {
         case "github-primer":

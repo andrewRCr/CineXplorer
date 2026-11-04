@@ -69,10 +69,8 @@ export function CollapsibleSubNav({
   onHeightChange,
 }: CollapsibleSubNavProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const ResizeObserverImpl = useRef<
-    typeof ResizeObserver | undefined
-  >(
-    typeof ResizeObserver !== "undefined" ? ResizeObserver : undefined
+  const ResizeObserverImpl = useRef<typeof ResizeObserver | undefined>(
+    typeof ResizeObserver !== "undefined" ? ResizeObserver : undefined,
   );
 
   // Use ref to avoid effect re-runs when callback identity changes
@@ -81,7 +79,11 @@ export function CollapsibleSubNav({
 
   // Report height changes (for spacing calculations in parent layouts)
   useEffect(() => {
-    if (!onHeightChangeRef.current || !containerRef.current || !ResizeObserverImpl.current)
+    if (
+      !onHeightChangeRef.current ||
+      !containerRef.current ||
+      !ResizeObserverImpl.current
+    )
       return;
 
     const observer = new ResizeObserverImpl.current((entries) => {

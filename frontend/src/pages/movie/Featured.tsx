@@ -1,6 +1,14 @@
-import { Box, Heading, Text, Button, VStack, Container, Card } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/constants/routes';
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  VStack,
+  Container,
+  Card,
+} from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 
 const Featured = () => {
   const navigate = useNavigate();
@@ -15,12 +23,7 @@ const Featured = () => {
         justifyContent="center"
         py={8}
       >
-        <Heading
-          as="h1"
-          size="4xl"
-          textAlign="center"
-          mb={2}
-        >
+        <Heading as="h1" size="4xl" textAlign="center" mb={2}>
           Welcome to CineXplorer
         </Heading>
 
@@ -34,17 +37,8 @@ const Featured = () => {
           Discover, track, and explore your favorite movies
         </Text>
 
-        <Card.Root
-          bg="layer-01"
-          p={8}
-          width="100%"
-          maxW="500px"
-        >
-          <Heading
-            as="h2"
-            size="xl"
-            mb={6}
-          >
+        <Card.Root bg="layer-01" p={8} width="100%" maxW="500px">
+          <Heading as="h2" size="xl" mb={6}>
             Browse Movies
           </Heading>
 

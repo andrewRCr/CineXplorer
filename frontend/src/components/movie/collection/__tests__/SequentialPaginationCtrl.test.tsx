@@ -60,7 +60,7 @@ describe("SequentialPaginationCtrl", () => {
           hasPrev={true}
           hasNext={true}
           isLoading={true}
-        />
+        />,
       );
 
       const prevButton = screen.getByRole("button", { name: /previous/i });
@@ -74,9 +74,7 @@ describe("SequentialPaginationCtrl", () => {
   describe("Click Handlers", () => {
     it("calls onPrev when prev button is clicked", () => {
       const onPrev = vi.fn();
-      render(
-        <SequentialPaginationCtrl {...defaultProps} onPrev={onPrev} />
-      );
+      render(<SequentialPaginationCtrl {...defaultProps} onPrev={onPrev} />);
 
       const prevButton = screen.getByRole("button", { name: /previous/i });
       fireEvent.click(prevButton);
@@ -86,9 +84,7 @@ describe("SequentialPaginationCtrl", () => {
 
     it("calls onNext when next button is clicked", () => {
       const onNext = vi.fn();
-      render(
-        <SequentialPaginationCtrl {...defaultProps} onNext={onNext} />
-      );
+      render(<SequentialPaginationCtrl {...defaultProps} onNext={onNext} />);
 
       const nextButton = screen.getByRole("button", { name: /next/i });
       fireEvent.click(nextButton);
@@ -103,7 +99,7 @@ describe("SequentialPaginationCtrl", () => {
           {...defaultProps}
           hasPrev={false}
           onPrev={onPrev}
-        />
+        />,
       );
 
       const prevButton = screen.getByRole("button", { name: /previous/i });
@@ -119,7 +115,7 @@ describe("SequentialPaginationCtrl", () => {
           {...defaultProps}
           hasNext={false}
           onNext={onNext}
-        />
+        />,
       );
 
       const nextButton = screen.getByRole("button", { name: /next/i });
@@ -137,7 +133,7 @@ describe("SequentialPaginationCtrl", () => {
           onPrev={onPrev}
           onNext={onNext}
           isLoading={true}
-        />
+        />,
       );
 
       const prevButton = screen.getByRole("button", { name: /previous/i });
@@ -156,11 +152,9 @@ describe("SequentialPaginationCtrl", () => {
       render(<SequentialPaginationCtrl {...defaultProps} />);
 
       expect(
-        screen.getByRole("button", { name: /previous/i })
+        screen.getByRole("button", { name: /previous/i }),
       ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /next/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
     });
 
     it("has navigation role on container", () => {
@@ -184,7 +178,7 @@ describe("SequentialPaginationCtrl", () => {
           {...defaultProps}
           onPrev={onPrev}
           onNext={onNext}
-        />
+        />,
       );
 
       const prevButton = screen.getByRole("button", { name: /previous/i });
@@ -212,7 +206,7 @@ describe("SequentialPaginationCtrl", () => {
       render(<SequentialPaginationCtrl {...defaultProps} />);
 
       expect(
-        screen.getByTestId("sequential-pagination-ctrl")
+        screen.getByTestId("sequential-pagination-ctrl"),
       ).toBeInTheDocument();
     });
   });
@@ -224,7 +218,7 @@ describe("SequentialPaginationCtrl", () => {
           {...defaultProps}
           hasPrev={false}
           hasNext={false}
-        />
+        />,
       );
 
       const prevButton = screen.getByRole("button", { name: /previous/i });
@@ -245,11 +239,11 @@ describe("SequentialPaginationCtrl", () => {
           hasNext={true}
           onPrev={onPrev}
           onNext={onNext}
-        />
+        />,
       );
 
       expect(
-        screen.getByTestId("sequential-pagination-ctrl")
+        screen.getByTestId("sequential-pagination-ctrl"),
       ).toBeInTheDocument();
     });
   });

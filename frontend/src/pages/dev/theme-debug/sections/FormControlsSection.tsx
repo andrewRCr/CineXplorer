@@ -1,4 +1,16 @@
-import { Box, Text, VStack, HStack, Input, Code, Checkbox, RadioGroup, Switch, Select, createListCollection } from "@chakra-ui/react";
+import {
+  Box,
+  Text,
+  VStack,
+  HStack,
+  Input,
+  Code,
+  Checkbox,
+  RadioGroup,
+  Switch,
+  Select,
+  createListCollection,
+} from "@chakra-ui/react";
 import { useState } from "react";
 import { StyledInput, StyledTextarea } from "@/components/common";
 
@@ -33,18 +45,37 @@ export function FormControlsSection() {
   });
 
   return (
-    <Box id="form-controls" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
-      <Text fontSize="xl" fontWeight="bold" mb={4}>Form Controls</Text>
+    <Box
+      id="form-controls"
+      bg="layer-01"
+      p={6}
+      borderRadius="md"
+      borderWidth="1px"
+      borderColor="border-strong-01"
+    >
+      <Text fontSize="xl" fontWeight="bold" mb={4}>
+        Form Controls
+      </Text>
       <VStack align="stretch" gap={4}>
         {/* Text Input States (5.2.a) */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Text Input States</Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+          <Text fontSize="lg" fontWeight="bold" mb={2}>
+            Text Input States
+          </Text>
+          <Box
+            bg="background"
+            p={4}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-subtle-00"
+          >
             <VStack align="stretch" gap={3}>
               <HStack gap={4} wrap="wrap" align="start">
                 {/* Default */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
-                  <Text fontSize="sm" fontWeight="medium">Default:</Text>
+                  <Text fontSize="sm" fontWeight="medium">
+                    Default:
+                  </Text>
                   <StyledInput
                     placeholder="Enter text"
                     value={textValue}
@@ -54,16 +85,17 @@ export function FormControlsSection() {
 
                 {/* Disabled */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
-                  <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
-                  <StyledInput
-                    placeholder="Disabled input"
-                    disabled
-                  />
+                  <Text fontSize="sm" fontWeight="medium">
+                    Disabled:
+                  </Text>
+                  <StyledInput placeholder="Disabled input" disabled />
                 </VStack>
 
                 {/* Error */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
-                  <Text fontSize="sm" fontWeight="medium">Error:</Text>
+                  <Text fontSize="sm" fontWeight="medium">
+                    Error:
+                  </Text>
                   <Input
                     placeholder="Error state"
                     borderColor="destructive"
@@ -71,12 +103,17 @@ export function FormControlsSection() {
                     color="foreground"
                     _focus={{ borderColor: "destructive" }}
                   />
-                  <Text fontSize="xs" color="on-destructive">This field is required</Text>
+                  <Text fontSize="xs" color="on-destructive">
+                    This field is required
+                  </Text>
                 </VStack>
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: <Code fontSize="xs">border-strong-01</Code> (default border), <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border via --focus-color)
+                Tokens: <Code fontSize="xs">border-strong-01</Code> (default
+                border), <Code fontSize="xs">border-strong-02</Code> (hover),{" "}
+                <Code fontSize="xs">tertiary</Code> (focus border via
+                --focus-color)
               </Text>
             </VStack>
           </Box>
@@ -84,12 +121,22 @@ export function FormControlsSection() {
 
         {/* Textarea States (5.2.b) */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Textarea States</Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+          <Text fontSize="lg" fontWeight="bold" mb={2}>
+            Textarea States
+          </Text>
+          <Box
+            bg="background"
+            p={4}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-subtle-00"
+          >
             <VStack align="stretch" gap={3}>
               {/* Default */}
               <VStack align="start" gap={1}>
-                <Text fontSize="sm" fontWeight="medium">Default:</Text>
+                <Text fontSize="sm" fontWeight="medium">
+                  Default:
+                </Text>
                 <StyledTextarea
                   placeholder="Enter multiline text"
                   rows={3}
@@ -100,7 +147,9 @@ export function FormControlsSection() {
 
               {/* Disabled */}
               <VStack align="start" gap={1}>
-                <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
+                <Text fontSize="sm" fontWeight="medium">
+                  Disabled:
+                </Text>
                 <StyledTextarea
                   placeholder="Disabled textarea"
                   rows={3}
@@ -117,13 +166,23 @@ export function FormControlsSection() {
 
         {/* Select/Dropdown (5.2.c) */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Select/Dropdown</Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+          <Text fontSize="lg" fontWeight="bold" mb={2}>
+            Select/Dropdown
+          </Text>
+          <Box
+            bg="background"
+            p={4}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-subtle-00"
+          >
             <VStack align="stretch" gap={3}>
               <HStack gap={4} wrap="wrap" align="start">
                 {/* Default */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
-                  <Text fontSize="sm" fontWeight="medium">Default:</Text>
+                  <Text fontSize="sm" fontWeight="medium">
+                    Default:
+                  </Text>
                   <Select.Root
                     collection={selectCollection}
                     value={selectValue}
@@ -164,7 +223,9 @@ export function FormControlsSection() {
 
                 {/* Disabled */}
                 <VStack align="start" gap={1} flex="1" minW="200px">
-                  <Text fontSize="sm" fontWeight="medium">Disabled:</Text>
+                  <Text fontSize="sm" fontWeight="medium">
+                    Disabled:
+                  </Text>
                   <Select.Root
                     collection={disabledSelectCollection}
                     value={["option1"]}
@@ -193,7 +254,15 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Tokens: Trigger uses <Code fontSize="xs">border-strong-01</Code> border (default), <Code fontSize="xs">border-strong-02</Code> + <Code fontSize="xs">tertiary/8</Code> (hover), <Code fontSize="xs">tertiary</Code> border-only focus (keyboard only, matches StyledInput pattern). Content uses <Code fontSize="xs">muted</Code> bg. Items: selected state uses <Code fontSize="xs">tertiary</Code> + <Code fontSize="xs">on-tertiary</Code>, hover (non-selected) uses <Code fontSize="xs">tertiary/12</Code>.
+                Tokens: Trigger uses <Code fontSize="xs">border-strong-01</Code>{" "}
+                border (default), <Code fontSize="xs">border-strong-02</Code> +{" "}
+                <Code fontSize="xs">tertiary/8</Code> (hover),{" "}
+                <Code fontSize="xs">tertiary</Code> border-only focus (keyboard
+                only, matches StyledInput pattern). Content uses{" "}
+                <Code fontSize="xs">muted</Code> bg. Items: selected state uses{" "}
+                <Code fontSize="xs">tertiary</Code> +{" "}
+                <Code fontSize="xs">on-tertiary</Code>, hover (non-selected)
+                uses <Code fontSize="xs">tertiary/12</Code>.
               </Text>
             </VStack>
           </Box>
@@ -201,8 +270,16 @@ export function FormControlsSection() {
 
         {/* Checkbox States (5.2.d) */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Checkbox States</Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+          <Text fontSize="lg" fontWeight="bold" mb={2}>
+            Checkbox States
+          </Text>
+          <Box
+            bg="background"
+            p={4}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-subtle-00"
+          >
             <VStack align="stretch" gap={3}>
               <HStack gap={6} wrap="wrap">
                 {/* Unchecked */}
@@ -237,7 +314,8 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Checked state: <Code fontSize="xs">primary</Code> background, <Code fontSize="xs">on-primary</Code> checkmark
+                Checked state: <Code fontSize="xs">primary</Code> background,{" "}
+                <Code fontSize="xs">on-primary</Code> checkmark
               </Text>
             </VStack>
           </Box>
@@ -245,10 +323,21 @@ export function FormControlsSection() {
 
         {/* Radio Button States (5.2.e) */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Radio Button States</Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+          <Text fontSize="lg" fontWeight="bold" mb={2}>
+            Radio Button States
+          </Text>
+          <Box
+            bg="background"
+            p={4}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-subtle-00"
+          >
             <VStack align="stretch" gap={3}>
-              <RadioGroup.Root value={radioValue} onValueChange={(e) => setRadioValue(e.value || "option1")}>
+              <RadioGroup.Root
+                value={radioValue}
+                onValueChange={(e) => setRadioValue(e.value || "option1")}
+              >
                 <VStack align="start" gap={2}>
                   <RadioGroup.Item value="option1">
                     <RadioGroup.ItemHiddenInput />
@@ -275,7 +364,8 @@ export function FormControlsSection() {
               </RadioGroup.Root>
 
               <Text fontSize="xs" color="foreground/60">
-                Selected state: <Code fontSize="xs">primary</Code> fill with <Code fontSize="xs">on-primary</Code> dot
+                Selected state: <Code fontSize="xs">primary</Code> fill with{" "}
+                <Code fontSize="xs">on-primary</Code> dot
               </Text>
             </VStack>
           </Box>
@@ -283,8 +373,16 @@ export function FormControlsSection() {
 
         {/* Switch/Toggle States (5.2.f) */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Switch/Toggle States</Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+          <Text fontSize="lg" fontWeight="bold" mb={2}>
+            Switch/Toggle States
+          </Text>
+          <Box
+            bg="background"
+            p={4}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-subtle-00"
+          >
             <VStack align="stretch" gap={3}>
               <HStack gap={6} wrap="wrap">
                 {/* Off */}
@@ -319,7 +417,10 @@ export function FormControlsSection() {
               </HStack>
 
               <Text fontSize="xs" color="foreground/60">
-                Track uses <Code fontSize="xs">secondary</Code> (off), <Code fontSize="xs">primary</Code> (on). Thumb uses <Code fontSize="xs">background</Code>. Note: Uses secondary instead of muted for better visibility when disabled.
+                Track uses <Code fontSize="xs">secondary</Code> (off),{" "}
+                <Code fontSize="xs">primary</Code> (on). Thumb uses{" "}
+                <Code fontSize="xs">background</Code>. Note: Uses secondary
+                instead of muted for better visibility when disabled.
               </Text>
             </VStack>
           </Box>
@@ -327,11 +428,21 @@ export function FormControlsSection() {
 
         {/* Number Input with Steppers (5.2.g) */}
         <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={2}>Number Input</Text>
-          <Box bg="background" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-00">
+          <Text fontSize="lg" fontWeight="bold" mb={2}>
+            Number Input
+          </Text>
+          <Box
+            bg="background"
+            p={4}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-subtle-00"
+          >
             <VStack align="stretch" gap={3}>
               <VStack align="start" gap={1}>
-                <Text fontSize="sm" fontWeight="medium">With steppers:</Text>
+                <Text fontSize="sm" fontWeight="medium">
+                  With steppers:
+                </Text>
                 <Input
                   type="number"
                   value={numberValue}
@@ -342,11 +453,11 @@ export function FormControlsSection() {
                   maxW="200px"
                   css={{
                     "&:hover:not(:focus)": {
-                      borderColor: "var(--chakra-colors-border-strong-02)"
+                      borderColor: "var(--chakra-colors-border-strong-02)",
                     },
                     "&:focus": {
-                      borderColor: "var(--chakra-colors-tertiary)"
-                    }
+                      borderColor: "var(--chakra-colors-tertiary)",
+                    },
                   }}
                 />
               </VStack>
@@ -360,11 +471,24 @@ export function FormControlsSection() {
 
         {/* Implementation Note */}
         <Box p={4}>
-          <Text fontSize="sm" color="foreground/80" fontStyle="italic" lineHeight="1.7">
-            <strong>Implementation:</strong> All form controls follow layer-aware border hierarchy: <Code fontSize="xs">border-strong-01</Code> (default),
-            <Code fontSize="xs">border-strong-02</Code> (hover), <Code fontSize="xs">tertiary</Code> (focus border via <Code fontSize="xs">--focus-color</Code>).
-            Focus rings use <Code fontSize="xs">--focus-ring-color</Code> with <Code fontSize="xs">ring</Code> token + <Code fontSize="xs">focusVisibleRing="outside"</Code> for keyboard-only visibility (WCAG compliant).
-            Checked/selected states use <Code fontSize="xs">primary</Code> with <Code fontSize="xs">on-primary</Code> for contrast.
+          <Text
+            fontSize="sm"
+            color="foreground/80"
+            fontStyle="italic"
+            lineHeight="1.7"
+          >
+            <strong>Implementation:</strong> All form controls follow
+            layer-aware border hierarchy:{" "}
+            <Code fontSize="xs">border-strong-01</Code> (default),
+            <Code fontSize="xs">border-strong-02</Code> (hover),{" "}
+            <Code fontSize="xs">tertiary</Code> (focus border via{" "}
+            <Code fontSize="xs">--focus-color</Code>). Focus rings use{" "}
+            <Code fontSize="xs">--focus-ring-color</Code> with{" "}
+            <Code fontSize="xs">ring</Code> token +{" "}
+            <Code fontSize="xs">focusVisibleRing="outside"</Code> for
+            keyboard-only visibility (WCAG compliant). Checked/selected states
+            use <Code fontSize="xs">primary</Code> with{" "}
+            <Code fontSize="xs">on-primary</Code> for contrast.
           </Text>
         </Box>
       </VStack>

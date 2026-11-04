@@ -78,18 +78,24 @@ const ExpandableSearchInput = ({
     // Don't clear the query on close, only when parent calls onQueryChange
   }, []);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSubmit();
-    } else if (e.key === "Escape") {
-      collapse();
-    }
-  }, [handleSubmit, collapse]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        handleSubmit();
+      } else if (e.key === "Escape") {
+        collapse();
+      }
+    },
+    [handleSubmit, collapse],
+  );
 
   // Memoize input change handler
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalQuery(e.target.value);
-  }, []);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setLocalQuery(e.target.value);
+    },
+    [],
+  );
 
   return (
     <HStack
@@ -122,7 +128,8 @@ const ExpandableSearchInput = ({
         color="foreground"
         css={{
           "&:hover:not(:focus)": {
-            backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+            backgroundColor:
+              "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
           },
           "&:focus": {
             backgroundColor: "var(--chakra-colors-background)",

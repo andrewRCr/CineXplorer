@@ -20,9 +20,13 @@ const Sidebar: React.FC = () => {
       maxH="calc(100vh - var(--chakra-sizes-layout-navbar) - var(--chakra-sizes-layout-subnav) - 1rem)"
       overflowY="auto"
       zIndex="sidebar"
-      style={{ willChange: 'transform' }}
+      style={{ willChange: "transform" }}
     >
-      <SidebarContent layer="02" listboxBg="layer-02" listboxProps={{ borderRadius: "md", my: 3 }} />
+      <SidebarContent
+        layer="02"
+        listboxBg="layer-02"
+        listboxProps={{ borderRadius: "md", my: 3 }}
+      />
     </Box>
   );
 };

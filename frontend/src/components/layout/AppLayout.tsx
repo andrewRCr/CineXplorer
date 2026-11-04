@@ -1,9 +1,6 @@
 import BaseLayout from "./BaseLayout";
 import Sidebar from "./sidebar/Sidebar";
-import {
-  Box,
-  Container,
-} from "@chakra-ui/react";
+import { Box, Container } from "@chakra-ui/react";
 import { Outlet } from "react-router-dom";
 
 const AppLayout = () => {
@@ -22,7 +19,7 @@ const AppLayout = () => {
           width="layout-sidebar"
           flexShrink={0}
           mr={6}
-          display={{ base: 'none', lg: 'block' }}
+          display={{ base: "none", lg: "block" }}
         >
           <Sidebar />
         </Box>

@@ -1,6 +1,10 @@
 import { ROUTES } from "@/constants/routes";
 import { Box, Button, VStack, Text } from "@chakra-ui/react";
-import { TextLink, FloatingAlert, FloatingAlertContainer } from "@/components/common";
+import {
+  TextLink,
+  FloatingAlert,
+  FloatingAlertContainer,
+} from "@/components/common";
 import { AuthFormCard, FormField } from "@/components/auth";
 import { useFormik } from "formik";
 import { useState } from "react";
@@ -51,7 +55,8 @@ const Register = () => {
           navigate(ROUTES.LOGIN, {
             state: {
               registrationSuccess: true,
-              message: "Account created! Check your email to verify your account before logging in.",
+              message:
+                "Account created! Check your email to verify your account before logging in.",
             },
           });
         } else {
@@ -75,62 +80,62 @@ const Register = () => {
       <AuthFormCard>
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">
-              <FormField
-                name="email"
-                label="Email Address"
-                type="email"
-                value={formik.values.email}
-                error={formik.errors.email}
-                touched={formik.touched.email}
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  setRegistrationError("");
-                }}
-                onBlur={formik.handleBlur}
-                autoFocus
-              />
-              <FormField
-                name="username"
-                label="CineXplorer Username"
-                value={formik.values.username}
-                error={formik.errors.username}
-                touched={formik.touched.username}
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  setRegistrationError("");
-                }}
-                onBlur={formik.handleBlur}
-              />
-              <FormField
-                name="password"
-                label="Password"
-                type="password"
-                value={formik.values.password}
-                error={formik.errors.password}
-                touched={formik.touched.password}
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  setRegistrationError("");
-                }}
-                onBlur={formik.handleBlur}
-              />
+            <FormField
+              name="email"
+              label="Email Address"
+              type="email"
+              value={formik.values.email}
+              error={formik.errors.email}
+              touched={formik.touched.email}
+              onChange={(e) => {
+                formik.handleChange(e);
+                setRegistrationError("");
+              }}
+              onBlur={formik.handleBlur}
+              autoFocus
+            />
+            <FormField
+              name="username"
+              label="CineXplorer Username"
+              value={formik.values.username}
+              error={formik.errors.username}
+              touched={formik.touched.username}
+              onChange={(e) => {
+                formik.handleChange(e);
+                setRegistrationError("");
+              }}
+              onBlur={formik.handleBlur}
+            />
+            <FormField
+              name="password"
+              label="Password"
+              type="password"
+              value={formik.values.password}
+              error={formik.errors.password}
+              touched={formik.touched.password}
+              onChange={(e) => {
+                formik.handleChange(e);
+                setRegistrationError("");
+              }}
+              onBlur={formik.handleBlur}
+            />
 
-              <Button
-                type="submit"
-                width="full"
-                fontSize="16px"
-                loading={formik.isSubmitting}
-                loadingText="Registering..."
-              >
-                Register
-              </Button>
-              <Text mt="16px" textAlign="center" w="100%" fontSize="16px">
-                Already have an account?{" "}
-                <TextLink to={ROUTES.LOGIN}>Sign In</TextLink>
-              </Text>
-            </VStack>
-          </form>
-        </AuthFormCard>
+            <Button
+              type="submit"
+              width="full"
+              fontSize="16px"
+              loading={formik.isSubmitting}
+              loadingText="Registering..."
+            >
+              Register
+            </Button>
+            <Text mt="16px" textAlign="center" w="100%" fontSize="16px">
+              Already have an account?{" "}
+              <TextLink to={ROUTES.LOGIN}>Sign In</TextLink>
+            </Text>
+          </VStack>
+        </form>
+      </AuthFormCard>
 
       {/* Floating alert - positioned above form, no layout shift */}
       {/* Registration errors use persistent alert; success redirects to login with alert there */}

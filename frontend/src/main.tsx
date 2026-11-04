@@ -27,5 +27,5 @@ createRoot(document.getElementById("root")!).render(
       </Provider>
       <QueryDevtoolsToggle />
     </QueryClientProvider>
-  </StrictMode>
+  </StrictMode>,
 );

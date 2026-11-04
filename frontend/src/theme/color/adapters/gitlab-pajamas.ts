@@ -48,8 +48,7 @@ import {
  * GitLab Pajamas palette type (light or dark mode).
  */
 export type PajamasPalette =
-    | typeof gitlabPajamasPaletteLight
-    | typeof gitlabPajamasPaletteDark;
+    typeof gitlabPajamasPaletteLight | typeof gitlabPajamasPaletteDark;
 
 /**
  * Create GitLab Pajamas adapter mapping to unified theme vocabulary.
@@ -88,21 +87,24 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // DERIVED: Alternating pattern (ADR-008) - Carbon-inspired for consistency
     // Dark mode: Progressive lightening (7% adjustment from layer-01)
     // Light mode: Alternating (bg_default ↔ bg_section pattern)
-    const layer02 = mode === "light"
-        ? palette.bg_default // Alternates back to background (white)
-        : adjustColor(palette.bg_section, 7); // Progressive for dark mode
+    const layer02 =
+        mode === "light"
+            ? palette.bg_default // Alternates back to background (white)
+            : adjustColor(palette.bg_section, 7); // Progressive for dark mode
 
     // Popover (typically layer-02 context with shadow)
     const popover = palette.bg_elevated;
     const popoverForeground = palette.fg_default;
 
     // Border (accessible contrast)
-    const borderSubtle00 = mode === "light"
-        ? "#e1e1e3" // Tweaked for WCAG: minimally darker (official #ececef had 1.18:1 visibility, need 1.3:1)
-        : palette.border_subtle;
-    const borderStrong01 = mode === "light"
-        ? "#888" // Tweaked for WCAG: darker gray (official #bfbfc3 had 1.55:1, need 3:1 for UI)
-        : "#707078"; // Tweaked for WCAG: lighter gray for dark mode (official #626168 had 2.42:1, need 3:1)
+    const borderSubtle00 =
+        mode === "light"
+            ? "#e1e1e3" // Tweaked for WCAG: minimally darker (official #ececef had 1.18:1 visibility, need 1.3:1)
+            : palette.border_subtle;
+    const borderStrong01 =
+        mode === "light"
+            ? "#888" // Tweaked for WCAG: darker gray (official #bfbfc3 had 1.55:1, need 3:1 for UI)
+            : "#707078"; // Tweaked for WCAG: lighter gray for dark mode (official #626168 had 2.42:1, need 3:1)
 
     // Semantic colors (official Pajamas) - ADR-010 compliant mappings
     // GitLab Pajamas brand colors per design.gitlab.com/brand-design/color:
@@ -124,20 +126,23 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // PRIMARY: Brand orange for action buttons (ADR-010)
     // Token type: BACKGROUND (for filled buttons)
     // Rationale: Light mode uses darkened orange for WCAG compliance, dark mode uses brightest for impact
-    const primary = mode === "light"
-        ? "#b54400" // Tweaked for WCAG: darkened orange for outline buttons too (official #fc6d26 had 2.86:1 contrast)
-        : palette.brand_orange;
+    const primary =
+        mode === "light"
+            ? "#b54400" // Tweaked for WCAG: darkened orange for outline buttons too (official #fc6d26 had 2.86:1 contrast)
+            : palette.brand_orange;
     const onPrimary = palette.fg_onEmphasis;
 
     // SECONDARY: Gray background + mandatory 1px border (ADR-010)
     // Token type: BACKGROUND + BORDER
     // Uses neutral gray for visibility on light backgrounds
-    const secondary = mode === "light"
-        ? "#5f656f" // Tweaked for WCAG: darker neutral gray (official #8c929d had 3.13:1 contrast)
-        : "#6b6b6b"; // Tweaked for WCAG: minimally darker (official #6f6f6f had 4.26:1 contrast)
-    const onSecondary = mode === "light"
-        ? palette.fg_onEmphasis  // Light mode: white text on dark gray
-        : palette.fg_default;     // Dark mode: light gray text on dark gray
+    const secondary =
+        mode === "light"
+            ? "#5f656f" // Tweaked for WCAG: darker neutral gray (official #8c929d had 3.13:1 contrast)
+            : "#6b6b6b"; // Tweaked for WCAG: minimally darker (official #6f6f6f had 4.26:1 contrast)
+    const onSecondary =
+        mode === "light"
+            ? palette.fg_onEmphasis // Light mode: white text on dark gray
+            : palette.fg_default; // Dark mode: light gray text on dark gray
 
     // MUTED: Deemphasized, non-interactive
     const muted = palette.bg_section; // Use section token for muted
@@ -148,9 +153,10 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // Rationale: GitLab uses purple for links (Purple 02p light, Purple 01p dark)
     // Brand-aligned but semantically distinct from brand token
     // Distinction: tertiary is FOREGROUND (links), primary is BACKGROUND (buttons)
-    const tertiary = mode === "light"
-        ? "#7557c0" // Tweaked for WCAG: minimally darker (official #7759c2 had 4.46:1, just needs 4.5:1)
-        : "#ac8ef7"; // Tweaked for WCAG: minimally lighter (official #a989f5 had 4.48:1 on layer-02, just needs 4.5:1)
+    const tertiary =
+        mode === "light"
+            ? "#7557c0" // Tweaked for WCAG: minimally darker (official #7759c2 had 4.46:1, just needs 4.5:1)
+            : "#ac8ef7"; // Tweaked for WCAG: minimally lighter (official #a989f5 had 4.48:1 on layer-02, just needs 4.5:1)
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive, success, warning, info (official GitLab tokens)
@@ -175,9 +181,10 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     // DERIVED: layer-03 alternates again (ADR-008)
     // Dark mode: Progressive lightening continues from layer-02
     // Light mode: Alternates back to gray (same as layer-01)
-    const layer03 = mode === "light"
-        ? palette.bg_section // Alternates back to gray (matches layer-01)
-        : adjustColor(layer02, 7); // Progressive for dark mode
+    const layer03 =
+        mode === "light"
+            ? palette.bg_section // Alternates back to gray (matches layer-01)
+            : adjustColor(layer02, 7); // Progressive for dark mode
 
     // Border hierarchy: Pajamas provides two border colors (subtle + strong)
     // Derivation: Generate per-layer borders following Carbon's architectural pattern
@@ -225,9 +232,10 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
         {
             muted: palette.bg_section,
             mutedForeground: palette.fg_muted,
-            secondaryHover: mode === "light"
-                ? "#6f757d" // Tweaked for WCAG: darker for drag-active (official #7a808b had 3.97:1)
-                : palette.bg_button_secondary_hover,
+            secondaryHover:
+                mode === "light"
+                    ? "#6f757d" // Tweaked for WCAG: darker for drag-active (official #7a808b had 3.97:1)
+                    : palette.bg_button_secondary_hover,
         },
         mode,
     );

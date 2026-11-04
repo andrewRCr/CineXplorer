@@ -56,36 +56,36 @@ npm run test src/components/movie
 ### 1. Component Tests
 
 ```typescript
-describe('ComponentName', () => {
-  beforeEach(() => {
-    // Reset mocks, setup common data
-  });
+describe("ComponentName", () => {
+    beforeEach(() => {
+        // Reset mocks, setup common data
+    });
 
-  it('renders correctly with default props', () => {
-    // Test basic rendering
-  });
+    it("renders correctly with default props", () => {
+        // Test basic rendering
+    });
 
-  it('handles user interactions', () => {
-    // Test click handlers, form submissions, etc.
-  });
+    it("handles user interactions", () => {
+        // Test click handlers, form submissions, etc.
+    });
 
-  it('handles edge cases', () => {
-    // Test error states, missing data, etc.
-  });
+    it("handles edge cases", () => {
+        // Test error states, missing data, etc.
+    });
 });
 ```
 
 ### 2. Hook Tests
 
 ```typescript
-describe('useCustomHook', () => {
-  it('returns expected initial state', () => {
-    // Test initial values
-  });
+describe("useCustomHook", () => {
+    it("returns expected initial state", () => {
+        // Test initial values
+    });
 
-  it('updates state correctly', () => {
-    // Test state changes
-  });
+    it("updates state correctly", () => {
+        // Test state changes
+    });
 });
 ```
 
@@ -126,20 +126,24 @@ describe('useCustomHook', () => {
 ### Custom Render
 
 ```typescript
-import { render } from '@tests/helpers/test-renderer';
+import { render } from "@tests/helpers/test-renderer";
 // Includes Chakra UI and React Router providers
 ```
 
 ### Mock Factories
 
 ```typescript
-import { createMockMovieListItem, createMockMovieListItems, createMockMovieDetail } from '@tests/mocks/movieData';
+import {
+    createMockMovieListItem,
+    createMockMovieListItems,
+    createMockMovieDetail,
+} from "@tests/mocks/movieData";
 ```
 
 ### API Mocks
 
 ```typescript
-import { mockMovieService, resetAllMocks } from '@tests/mocks/apiMocks';
+import { mockMovieService, resetAllMocks } from "@tests/mocks/apiMocks";
 ```
 
 ## Coverage Goals

@@ -37,7 +37,7 @@ const PageHeader = forwardRef(
       children,
       ...props
     }: PageHeaderProps<T>,
-    ref: React.Ref<HTMLElement>
+    ref: React.Ref<HTMLElement>,
   ) => {
     const Component = as || "div";
     const styles = sizeStyles[size];
@@ -46,8 +46,14 @@ const PageHeader = forwardRef(
     >("reset");
 
     // Refs to track timer IDs for cleanup
-    const titleTimersRef = useRef<{ ready?: ReturnType<typeof setTimeout>; animating?: ReturnType<typeof setTimeout> }>({});
-    const mountTimersRef = useRef<{ initial?: ReturnType<typeof setTimeout>; animating?: ReturnType<typeof setTimeout> }>({});
+    const titleTimersRef = useRef<{
+      ready?: ReturnType<typeof setTimeout>;
+      animating?: ReturnType<typeof setTimeout>;
+    }>({});
+    const mountTimersRef = useRef<{
+      initial?: ReturnType<typeof setTimeout>;
+      animating?: ReturnType<typeof setTimeout>;
+    }>({});
 
     // Trigger animation on title change
     useEffect(() => {
@@ -166,7 +172,7 @@ const PageHeader = forwardRef(
         </Box>
       </Box>
     );
-  }
+  },
 );
 
 PageHeader.displayName = "PageHeader";

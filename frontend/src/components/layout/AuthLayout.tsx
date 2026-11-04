@@ -9,11 +9,7 @@ const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
     <BaseLayout>
       {/* Full viewport container for auth pages */}
-      <Box
-        position="relative"
-        flex="1"
-        w="100%"
-      >
+      <Box position="relative" flex="1" w="100%">
         {children}
       </Box>
     </BaseLayout>

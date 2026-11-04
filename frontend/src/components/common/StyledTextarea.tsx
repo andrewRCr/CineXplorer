@@ -43,7 +43,10 @@ interface StyledTextareaProps extends TextareaProps {
   layer?: "01" | "02";
 }
 
-export const StyledTextarea = ({ layer = "01", ...props }: StyledTextareaProps) => {
+export const StyledTextarea = ({
+  layer = "01",
+  ...props
+}: StyledTextareaProps) => {
   const borderHover = layer === "01" ? "border-strong-02" : "border-strong-03";
 
   return (
@@ -54,11 +57,13 @@ export const StyledTextarea = ({ layer = "01", ...props }: StyledTextareaProps) 
       css={{
         "&:hover:not(:focus)": {
           borderColor: `var(--chakra-colors-${borderHover})`,
-          backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+          backgroundColor:
+            "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
         },
         "&:focus": {
           borderColor: "var(--chakra-colors-tertiary)",
-          backgroundColor: layer === "01" ? "transparent" : "var(--chakra-colors-background)",
+          backgroundColor:
+            layer === "01" ? "transparent" : "var(--chakra-colors-background)",
           outline: "none",
         },
       }}

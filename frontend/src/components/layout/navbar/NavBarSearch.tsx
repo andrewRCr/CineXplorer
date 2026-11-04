@@ -16,7 +16,7 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
     if (query.trim()) {
       // Navigate to search results page with the query parameter
       navigate(
-        `${ROUTES.SEARCH_RESULTS}?query=${encodeURIComponent(query.trim())}`
+        `${ROUTES.SEARCH_RESULTS}?query=${encodeURIComponent(query.trim())}`,
       );
       // Call optional callback (useful for closing mobile drawer)
       onSearch?.();
@@ -43,7 +43,8 @@ const NavBarSearch = ({ onSearch }: NavBarSearchProps = {}) => {
       css={{
         "&:hover:not(:focus-within)": {
           borderColor: "var(--chakra-colors-border-strong-02)",
-          backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+          backgroundColor:
+            "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
         },
         "&:focus-within": {
           borderColor: "var(--chakra-colors-tertiary)",

@@ -70,7 +70,7 @@ const RatingSelector = ({
         onMinRatingChange(rating);
       }
     }, 500), // Consistent with YearSelector debounce
-    [onMinRatingChange] // debounce function dependencies cannot be analyzed by ESLint
+    [onMinRatingChange], // debounce function dependencies cannot be analyzed by ESLint
   );
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,7 +80,7 @@ const RatingSelector = ({
         onMaxRatingChange(rating);
       }
     }, 500),
-    [onMaxRatingChange] // debounce function dependencies cannot be analyzed by ESLint
+    [onMaxRatingChange], // debounce function dependencies cannot be analyzed by ESLint
   );
 
   // Handle input changes
@@ -122,7 +122,10 @@ const RatingSelector = ({
       debouncedMinRatingUpdate.cancel();
       // Always update parent state, even if clamped to empty string
       // This ensures visual state matches filter state
-      if (clampedValue === "" || (clampedValue && isValidRating(clampedValue))) {
+      if (
+        clampedValue === "" ||
+        (clampedValue && isValidRating(clampedValue))
+      ) {
         onMinRatingChange(clampedValue);
       }
     }
@@ -136,7 +139,10 @@ const RatingSelector = ({
       debouncedMaxRatingUpdate.cancel();
       // Always update parent state, even if clamped to empty string
       // This ensures visual state matches filter state
-      if (clampedValue === "" || (clampedValue && isValidRating(clampedValue))) {
+      if (
+        clampedValue === "" ||
+        (clampedValue && isValidRating(clampedValue))
+      ) {
         onMaxRatingChange(clampedValue);
       }
     }
@@ -173,7 +179,8 @@ const RatingSelector = ({
           // Active filter indication: primary color when rating has value
           color={localMinRating ? "primary" : "foreground"}
           borderColor={
-            (localMinRating && !isValidRating(localMinRating)) || !hasLogicalRange()
+            (localMinRating && !isValidRating(localMinRating)) ||
+            !hasLogicalRange()
               ? "destructive"
               : undefined
           }
@@ -182,9 +189,9 @@ const RatingSelector = ({
             boxShadow: "0 0 0 1px var(--chakra-colors-destructive)",
           }}
         />
-      <Text fontSize="sm" color="on-muted">
-        to
-      </Text>
+        <Text fontSize="sm" color="on-muted">
+          to
+        </Text>
         <StyledInput
           layer="01"
           placeholder="10"
@@ -203,7 +210,8 @@ const RatingSelector = ({
           // Active filter indication: primary color when rating has value
           color={localMaxRating ? "primary" : "foreground"}
           borderColor={
-            (localMaxRating && !isValidRating(localMaxRating)) || !hasLogicalRange()
+            (localMaxRating && !isValidRating(localMaxRating)) ||
+            !hasLogicalRange()
               ? "destructive"
               : undefined
           }

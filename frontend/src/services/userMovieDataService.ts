@@ -36,9 +36,12 @@ import create from "./httpService";
 import type { components } from "@/types/api";
 
 // Type-safe schema imports from generated OpenAPI types
-type UserMovieDataDetailSchema = components["schemas"]["UserMovieDataDetailSchema"];
-type UserMovieDataCreateSchema = components["schemas"]["UserMovieDataCreateSchema"];
-type UserMovieDataUpdateSchema = components["schemas"]["UserMovieDataUpdateSchema"];
+type UserMovieDataDetailSchema =
+    components["schemas"]["UserMovieDataDetailSchema"];
+type UserMovieDataCreateSchema =
+    components["schemas"]["UserMovieDataCreateSchema"];
+type UserMovieDataUpdateSchema =
+    components["schemas"]["UserMovieDataUpdateSchema"];
 
 // Query parameter types for type-safe API calls
 export interface GetUserMovieDataByTmdbIdParams {
@@ -80,11 +83,14 @@ const userMovieDataByTmdbIdService = create("/user-movie-data/by-tmdb-id");
  *   // 404 means user has no data for this movie yet
  * }
  */
-export const getUserMovieDataByTmdbId = (params: GetUserMovieDataByTmdbIdParams) => {
+export const getUserMovieDataByTmdbId = (
+    params: GetUserMovieDataByTmdbIdParams,
+) => {
     const controller = new AbortController();
-    const request = userMovieDataByTmdbIdService
-        .getPaginated<UserMovieDataDetailSchema>(params)
-        .request;
+    const request =
+        userMovieDataByTmdbIdService.getPaginated<UserMovieDataDetailSchema>(
+            params,
+        ).request;
 
     return { request, cancel: () => controller.abort() };
 };
@@ -134,7 +140,10 @@ export const createUserMovieData = (data: UserMovieDataCreateSchema) => {
  *   user_rating: 8
  * })
  */
-export const updateUserMovieData = (id: number, data: UserMovieDataUpdateSchema) => {
+export const updateUserMovieData = (
+    id: number,
+    data: UserMovieDataUpdateSchema,
+) => {
     return userMovieDataService.update<UserMovieDataUpdateSchema>(id, data);
 };
 

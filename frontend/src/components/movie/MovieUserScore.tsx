@@ -33,10 +33,12 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   // Helper to get TMDB badge variant (0-10 scale)
   // Traffic-light mapping: High (success) → Medium (warning) → Low (error)
   // Badge recipe provides solid backgrounds with on-* color pairs
-  const getTmdbBadgeVariant = (tmdbScore: number): "success" | "warning" | "error" => {
-    if (tmdbScore >= 7.5) return "success";  // High: Green
-    if (tmdbScore < 5.0) return "error";     // Low: Red
-    return "warning";                         // Medium: Yellow
+  const getTmdbBadgeVariant = (
+    tmdbScore: number,
+  ): "success" | "warning" | "error" => {
+    if (tmdbScore >= 7.5) return "success"; // High: Green
+    if (tmdbScore < 5.0) return "error"; // Low: Red
+    return "warning"; // Medium: Yellow
   };
 
   // Helper to get the TMDB badge for the selected presentation
@@ -46,7 +48,11 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
 
     // A missing average or a missing or zero count means TMDB has no votes to show
     if (score == null || !voteCount) {
-      return { variant: "neutral", label: isDetailed ? "Not yet rated" : "—", title: "No TMDB votes yet" };
+      return {
+        variant: "neutral",
+        label: isDetailed ? "Not yet rated" : "—",
+        title: "No TMDB votes yet",
+      };
     }
 
     // Too few votes: cards hold a placeholder, the detail page shows the average with its count
@@ -57,16 +63,26 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
             label: `${score.toFixed(1)} · ${voteCount} ${voteCount === 1 ? "vote" : "votes"}`,
             title: "TMDB Rating",
           }
-        : { variant: "neutral", label: "—", title: `Fewer than ${SCORE_DISPLAY_MIN_VOTES} TMDB votes` };
+        : {
+            variant: "neutral",
+            label: "—",
+            title: `Fewer than ${SCORE_DISPLAY_MIN_VOTES} TMDB votes`,
+          };
     }
 
-    return { variant: getTmdbBadgeVariant(score), label: score.toFixed(1), title: "TMDB Rating" };
+    return {
+      variant: getTmdbBadgeVariant(score),
+      label: score.toFixed(1),
+      title: "TMDB Rating",
+    };
   };
 
   // Helper to get user rating badge variant (1-10 scale)
   // Uses same traffic-light variants as TMDB scores
   // Traffic-light mapping: High (success) → Medium (warning) → Low (error)
-  const getUserRatingBadgeVariant = (rating: number): "success" | "warning" | "error" => {
+  const getUserRatingBadgeVariant = (
+    rating: number,
+  ): "success" | "warning" | "error" => {
     if (rating >= 8) return "success";
     if (rating < 5) return "error";
     return "warning";
@@ -76,14 +92,8 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   if (userRatingOnly && userRating) {
     const variant = getUserRatingBadgeVariant(userRating);
     return (
-      <Badge
-        variant={variant}
-        fontSize="12px"
-        paddingX={1}
-        title="Your Rating"
-      >
-        <VisuallyHidden>Your Rating: </VisuallyHidden>
-        ★ {userRating}/10
+      <Badge variant={variant} fontSize="12px" paddingX={1} title="Your Rating">
+        <VisuallyHidden>Your Rating: </VisuallyHidden>★ {userRating}/10
       </Badge>
     );
   }
@@ -110,8 +120,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
           paddingX={1}
           title="Your Rating"
         >
-          <VisuallyHidden>Your Rating: </VisuallyHidden>
-          ★ {userRating}
+          <VisuallyHidden>Your Rating: </VisuallyHidden>★ {userRating}
         </Badge>
       </HStack>
     );

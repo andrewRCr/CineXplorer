@@ -2,7 +2,14 @@ import useMovieDetail from "@/hooks/movie/useMovieDetail";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { fetchMovieDetail } from "@/services/movieService";
-import type { MovieDetail as MovieDetailType, Genre, CastMember, CrewMember, ProductionCompany, SpokenLanguage } from "@/types/movie";
+import type {
+  MovieDetail as MovieDetailType,
+  Genre,
+  CastMember,
+  CrewMember,
+  ProductionCompany,
+  SpokenLanguage,
+} from "@/types/movie";
 import CertificationBadge from "@/components/movie/CertificationBadge";
 import { BackToCollectionLink } from "@/components/navigation";
 import {
@@ -48,10 +55,11 @@ const MovieDetail = () => {
 
   // extract key crew members (creative leads)
   const director = movie?.crew?.find(
-    (member: CrewMember) => member.job === "Director"
+    (member: CrewMember) => member.job === "Director",
   );
   const writers = movie?.crew?.filter(
-    (member: CrewMember) => member.job && ["Writer", "Screenplay"].includes(member.job)
+    (member: CrewMember) =>
+      member.job && ["Writer", "Screenplay"].includes(member.job),
   );
 
   const jobPrefixMap: Record<string, string> = {
@@ -94,7 +102,7 @@ const MovieDetail = () => {
   }
 
   // Check for non-404 errors first (actual errors)
-  const is404 = error && (error.includes('404') || error.includes('not found'));
+  const is404 = error && (error.includes("404") || error.includes("not found"));
 
   if (error && !is404) {
     return (
@@ -110,9 +118,7 @@ const MovieDetail = () => {
           <Heading as="h2" size="xl" mb={4}>
             Error Loading Movie
           </Heading>
-          <Text color="on-muted">
-            {error}
-          </Text>
+          <Text color="on-muted">{error}</Text>
         </Box>
       </Box>
     );
@@ -168,7 +174,7 @@ const MovieDetail = () => {
           </Text>
           {/* Header: Genres */}
           <Flex gap={2} wrap="wrap" justify="center" align="center">
-          {movie.genres?.map((genre: Genre) => (
+            {movie.genres?.map((genre: Genre) => (
               <Tag key={genre.id} bg="badge" color="on-badge">
                 {genre.name}
               </Tag>
@@ -197,7 +203,11 @@ const MovieDetail = () => {
           {/* Header: User Score */}
           <Text fontWeight="bold">
             User Score:{" "}
-            <MovieUserScore score={movie.vote_average} voteCount={movie.vote_count} presentation="detailed" />
+            <MovieUserScore
+              score={movie.vote_average}
+              voteCount={movie.vote_count}
+              presentation="detailed"
+            />
           </Text>
           {/* Header: Key Crew Section (creative leads) */}
           <Box mt={2}>
@@ -208,12 +218,14 @@ const MovieDetail = () => {
             )}
             {/* Group writers by job and use custom prefix */}
             {["Writer", "Screenplay"].map((job) => {
-            const jobWriters = writers?.filter((w: CrewMember) => w.job === job);
+              const jobWriters = writers?.filter(
+                (w: CrewMember) => w.job === job,
+              );
               return jobWriters && jobWriters.length > 0 ? (
                 <Text key={job}>
                   {jobPrefixMap[job]}{" "}
                   <strong>
-              {jobWriters.map((w: CrewMember) => w.name).join(", ")}
+                    {jobWriters.map((w: CrewMember) => w.name).join(", ")}
                   </strong>
                 </Text>
               ) : null;
@@ -234,8 +246,14 @@ const MovieDetail = () => {
                This is deferred until comprehensive MovieDetail redesign. */}
           <Button
             bg={userMovieData?.user_on_watchlist ? "secondary" : "primary"}
-            color={userMovieData?.user_on_watchlist ? "on-secondary" : "on-primary"}
-            _hover={{ bg: userMovieData?.user_on_watchlist ? "secondary-hover" : "primary-hover" }}
+            color={
+              userMovieData?.user_on_watchlist ? "on-secondary" : "on-primary"
+            }
+            _hover={{
+              bg: userMovieData?.user_on_watchlist
+                ? "secondary-hover"
+                : "primary-hover",
+            }}
             loading={userMovieDataLoading && isAuthenticated}
             onClick={() =>
               update({
@@ -276,7 +294,7 @@ const MovieDetail = () => {
         </Heading>
         <Flex gap={4} wrap="wrap" justify="center">
           {/* Show top N cast members */}
-        {movie.cast?.slice(0, 5).map((actor: CastMember, idx: number) => (
+          {movie.cast?.slice(0, 5).map((actor: CastMember, idx: number) => (
             <Box
               key={actor.id || idx}
               bg="layer-01"
@@ -310,9 +328,9 @@ const MovieDetail = () => {
                   "Director of Photography",
                   "Editor",
                   "Composer",
-                ].includes(member.job)
+                ].includes(member.job),
             )
-        .map((member: CrewMember) => (
+            .map((member: CrewMember) => (
               <Box
                 key={`${member.id}-${member.job}`}
                 bg="layer-01"
@@ -334,11 +352,13 @@ const MovieDetail = () => {
           Production Companies
         </Heading>
         <Flex gap={2} wrap="wrap" justify="center">
-        {movie.production_companies?.map((company: ProductionCompany, idx: number) => (
-            <Tag key={company.id || idx} bg="badge" color="on-badge">
-              {company.name}
-            </Tag>
-          ))}
+          {movie.production_companies?.map(
+            (company: ProductionCompany, idx: number) => (
+              <Tag key={company.id || idx} bg="badge" color="on-badge">
+                {company.name}
+              </Tag>
+            ),
+          )}
         </Flex>
       </Box>
     </Box>

@@ -26,7 +26,14 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const toastRecipe = defineSlotRecipe({
     className: "toast",
 
-    slots: ["root", "indicator", "title", "description", "actionTrigger", "closeTrigger"],
+    slots: [
+        "root",
+        "indicator",
+        "title",
+        "description",
+        "actionTrigger",
+        "closeTrigger",
+    ],
 
     base: {
         root: {

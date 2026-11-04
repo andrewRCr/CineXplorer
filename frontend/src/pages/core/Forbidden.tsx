@@ -1,6 +1,13 @@
-import { Box, Heading, Text, Button, VStack, Container } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/constants/routes';
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  VStack,
+  Container,
+} from "@chakra-ui/react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 
 const Forbidden = () => {
   const navigate = useNavigate();
@@ -15,21 +22,11 @@ const Forbidden = () => {
         justifyContent="center"
         py={8}
       >
-        <Heading
-          as="h1"
-          size="4xl"
-          textAlign="center"
-          mb={2}
-        >
+        <Heading as="h1" size="4xl" textAlign="center" mb={2}>
           403
         </Heading>
 
-        <Heading
-          as="h2"
-          size="xl"
-          textAlign="center"
-          mb={4}
-        >
+        <Heading as="h2" size="xl" textAlign="center" mb={4}>
           Access Denied
         </Heading>
 
@@ -40,7 +37,8 @@ const Forbidden = () => {
           mb={8}
           maxW="500px"
         >
-          You don't have permission to access this page. Please sign in with an account that has the required permissions.
+          You don't have permission to access this page. Please sign in with an
+          account that has the required permissions.
         </Text>
 
         <VStack gap={4}>

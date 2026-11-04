@@ -13,7 +13,7 @@ from __future__ import annotations
 from unittest.mock import Mock
 
 import pytest
-from ninja.errors import HttpError
+from pydantic import ValidationError
 
 from apps.core.exceptions import InvalidInputError, NotFoundError, UpstreamError
 from apps.core.services.api_response import ApiResponse
@@ -365,17 +365,17 @@ class TestCreateMovieBaseFromTmdb:
         assert result.tmdb_id == 100
         assert result.title == "Minimal Movie"
 
-    def test_raises_http_error_on_invalid_data(self) -> None:
-        """Should raise HttpError when data validation fails."""
+    def test_reraises_validation_error_on_invalid_data(self) -> None:
+        """Should log and re-raise the validation error when data validation fails."""
         tmdb_data = {
             # Missing required 'id' field
             "title": "Invalid Movie",
         }
 
-        with pytest.raises(HttpError) as exc_info:
+        with pytest.raises(ValidationError) as exc_info:
             create_movie_base_from_tmdb(tmdb_data)
 
-        assert exc_info.value.status_code == 500
+        assert any(error["loc"] == ("id",) for error in exc_info.value.errors())
 
 
 class TestCreateMovieDetailFromTmdb:

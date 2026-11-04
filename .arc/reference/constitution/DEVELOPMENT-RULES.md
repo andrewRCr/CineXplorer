@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.19 | **Updated:** 2026-11-04 | **Hash:** `hq4hhkin`
+**Version:** 2.19 | **Updated:** 2026-11-04 | **Hash:** `begswalg`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -359,7 +359,8 @@ rules below are the checkable part: lint and type checks enforce what they can, 
 - An external service's error text, exception text or status code never reaches a client. The client gets a fixed
   message and a status this API chooses; the detail goes to the log, with secrets and personal data removed.
 - Logs carry no secrets or personal data at any level: no email addresses, tokens, keys or verification codes. Log an
-  identifier, such as the user's ID.
+  identifier, such as the user's ID. The one exception is the API's handler for unhandled errors, which logs the
+  traceback: it can't tell which errors carry personal data, and an unexpected error can't be diagnosed without one.
 
 ### Data Integrity (Backend)
 

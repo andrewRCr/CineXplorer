@@ -387,24 +387,28 @@ authentication gaps that matter once sign-up is public are closed.
     - Remaining: after the first night, confirm both timers' own successful executions and Healthchecks pings;
       manual runs do not prove timer-originated execution.
 
-- [ ] **5.5 Credentials only now, then email and sign-in live** (R17; Proven live 9, 13, 15, 16)
-    - With `cf0ef11b` serving, fresh-cookie HTTPS probes refused missing CSRF and a foreign Origin with 403, allowed
-      the matching token through to payload validation (422) and confirmed closed allauth sign-up returns 404.
-      Valid-credential cross-site refusal remains for the live checks.
-    - Clarified the full prefixed ZeptoMail Authorization value in the env example and runbook; the pinned client
-      sends that configured value verbatim.
-    - After hardening checks passed, the Owner entered the saved ZeptoMail key and complete Google/GitHub pairs
-      privately in `backend.env`. Verified all six fields, the sender, mode 600/deploy ownership and exactly one
-      ZeptoMail Authorization prefix without displaying values.
-    - Redeployed the tested `cf0ef11b` build. Backup succeeded, blacklist sync changed nothing, and the backend
-      was recreated with values matching the saved configuration. Both providers' supported headless forms return
-      302 to their authorization pages with exact staging callbacks; Google requests only email and profile.
-    - The Owner confirmed Google sign-in works in Testing with an empty test-user list, and the added watchlist
-      movie remains after reload. Approved the Google Testing amendment without an independent review. The Owner
-      also confirmed GitHub sign-in and the same watchlist/reload check work.
-    - Proven live 9 (Gmail sign-up, verification, sign-in, password reset and the logs), 16 (Google and GitHub
-      sign-in and the watchlist), 13 (a cross-site sign-in refused, the site's own accepted) and 15 (a password user
-      still signed in after an idle tab, and after reopening the watchlist page once the access token has expired)
+- [x] **5.5 Credentials only now, then email and sign-in live** (R17; Proven live 13, 15, 16, 17)
+    - Installed OAuth/mail values privately only after deployed hardening checks passed. Verified all six fields,
+      sender, mode-600 deploy ownership and exactly one ZeptoMail Authorization prefix without displaying values.
+      Redeployed tested `cf0ef11b`; backup succeeded, blacklist sync changed nothing and the recreated backend loaded
+      values matching saved configuration. Both provider redirects use exact staging callbacks.
+    - The Owner confirmed Google sign-in in Testing with an empty test-user list and only email/profile scopes,
+      GitHub sign-in, and both providers' watchlist persistence after reload. Approved the Google Testing amendment
+      without an independent review.
+    - Proton Mail delivered verification/reset to Inbox from the configured sender; recipient DKIM passed for
+      `andrewcreekmore.dev`. The Owner completed verification, password sign-in and a used password reset. ZeptoMail's
+      saved original contains multipart/alternative and text/plain; the Owner confirmed both text links use staging.
+      Approved the inbox-provider amendment without review; Gmail delivery is untested. Proton's reconstructed export
+      is not used as MIME proof.
+    - The live valid-credential probe refused foreign Origin with or without a matching token (403), accepted the
+      same credentials with own Origin/token (200) and completed logout (200). Its first attempt reached credential
+      rejection (401); the retry passed without an application change. Reports contain only safe metadata.
+    - With the reset password and Remember Me in Firefox, six minutes idle preserved sign-in and the watchlist.
+      After every staging tab was closed for six minutes, reopening restored the account/movie and captured
+      `/api/auth/refresh` returning 200. Two same-profile tabs also stayed signed in with the movie after six minutes.
+    - Live mail logs show accepted sends (201), with no raw provider response lines or known account addresses or
+      provider secrets found by the private audit. Markdown, criterion-copy and runbook shell checks passed; the
+      deployed-code CI remains the exact `cf0ef11b` run. Formal verification remains in Phase 6.
 
 ### **Phase 6:** Verification
 
@@ -677,13 +681,15 @@ what was seen and where.
 - [ ] With `backend` stopped, UptimeRobot alerts the maintainer by email within 10 minutes, and again on recovery once it
   is started. With `db` stopped, `curl` of the health check returns `503` and UptimeRobot alerts likewise; once `db`
   is started, the health check returns `200`.
-- [ ] Signing up on staging with a Gmail address delivers the verification email to that Gmail inbox, not its spam
+- [~] Signing up on staging with a Gmail address delivers the verification email to that Gmail inbox, not its spam
   folder, from `cinexplorer@andrewcreekmore.dev`. Gmail's "Show original" view shows DKIM passing for
   `andrewcreekmore.dev` and a `multipart/alternative` message with a `text/plain` part containing the verification
   link. Following the link verifies the address, and the visitor then signs in with the password. A password reset
   for the same address delivers a reset email to the inbox whose text part names
   `staging.cinexplorer.andrewcreekmore.dev` and whose link sets a new password that then signs in. The backend's logs
   show each send's outcome and no ZeptoMail response printed raw.
+  (Superseded by the 2026-11-04 inbox-provider amendment: criterion 17
+  uses the maintainer's inbox and records recipient and sender-original evidence separately.)
 - [~] Signing in with Google, using an account that is not on the Google Cloud project's test-user list, succeeds, which
   shows the consent screen published and the deployed client, its redirect URI and the env file wired together.
   Signing in with GitHub succeeds. Each signed-in user then adds a movie to the watchlist, and it is still there after
@@ -710,6 +716,15 @@ what was seen and where.
   succeeds with only basic identity scopes (`email`, `profile`, and optionally `openid`). The project may remain in
   Testing. This proves the deployed client, its redirect URI and the environment credentials work together. Signing
   in with GitHub succeeds. Each signed-in user adds a movie to the watchlist and still sees it after a reload.
+
+- [ ] Signing up on staging with an email address whose inbox the maintainer controls delivers the verification email
+  to that inbox, not its spam folder, from `cinexplorer@andrewcreekmore.dev`. The receiving provider's authentication
+  results show DKIM passing for `andrewcreekmore.dev`. ZeptoMail's saved original shows a `multipart/alternative`
+  message with a `text/plain` part containing the staging verification link. Following the link verifies the address,
+  and the visitor then signs in with the password. A password reset for the same address delivers a reset email to
+  the inbox; its saved original's text part names `staging.cinexplorer.andrewcreekmore.dev`, and its link sets a new
+  password that then signs in. The backend logs show each send's outcome and no raw ZeptoMail response. The evidence
+  records the receiving provider and the source of the MIME observation separately.
 
 ### Proven after merge
 
@@ -988,3 +1003,14 @@ what was seen and where.
   Both providers' watchlist reload requirements remain; criterion boxes stay for verification.
 - **Review:** contained amendment at medium depth; author checks covered reader independence, binding completeness,
   coherence and source grounding across the footprint. The Owner declined the offered independent review.
+
+### 2026-11-04 — Inbox-provider amendment
+
+- **Evidence:** the Owner has no Gmail inbox; Proton delivered verification/reset to Inbox with the expected sender
+  and DKIM pass. ZeptoMail's saved original has multipart/alternative and text/plain, with both staging links
+  confirmed; actual verification, password sign-in and reset passed.
+- **Approved change:** retain/supersede Proven live 9, append 17 in both copies, and propagate the controlled-inbox
+  requirement and explicit recipient/sender-original evidence split to Dependencies, Task 5.5 and runbook.
+  Gmail-specific delivery remains untested; no application or provider-settings change is implied.
+- **Review:** contained amendment at medium depth; author checks covered reader independence, binding completeness,
+  coherence and source grounding across the footprint. The Owner explicitly approved without an independent review.

@@ -760,13 +760,15 @@ what was seen and where.
 8. With `backend` stopped, UptimeRobot alerts the maintainer by email within 10 minutes, and again on recovery once it
    is started. With `db` stopped, `curl` of the health check returns `503` and UptimeRobot alerts likewise; once `db`
    is started, the health check returns `200`.
-9. Signing up on staging with a Gmail address delivers the verification email to that Gmail inbox, not its spam
+9. [~] Signing up on staging with a Gmail address delivers the verification email to that Gmail inbox, not its spam
    folder, from `cinexplorer@andrewcreekmore.dev`. Gmail's "Show original" view shows DKIM passing for
    `andrewcreekmore.dev` and a `multipart/alternative` message with a `text/plain` part containing the verification
    link. Following the link verifies the address, and the visitor then signs in with the password. A password reset
    for the same address delivers a reset email to the inbox whose text part names
    `staging.cinexplorer.andrewcreekmore.dev` and whose link sets a new password that then signs in. The backend's logs
    show each send's outcome and no ZeptoMail response printed raw.
+   (Superseded by the 2026-11-04 inbox-provider amendment: criterion 17
+   uses the maintainer's inbox and records recipient and sender-original evidence separately.)
 10. [~] Signing in with Google, using an account that is not on the Google Cloud project's test-user list, succeeds, which
     shows the consent screen published and the deployed client, its redirect URI and the env file wired together.
     Signing in with GitHub succeeds. Each signed-in user then adds a movie to the watchlist, and it is still there after
@@ -793,6 +795,15 @@ what was seen and where.
     succeeds with only basic identity scopes (`email`, `profile`, and optionally `openid`). The project may remain in
     Testing. This proves the deployed client, its redirect URI and the environment credentials work together. Signing
     in with GitHub succeeds. Each signed-in user adds a movie to the watchlist and still sees it after a reload.
+
+17. Signing up on staging with an email address whose inbox the maintainer controls delivers the verification email
+    to that inbox, not its spam folder, from `cinexplorer@andrewcreekmore.dev`. The receiving provider's authentication
+    results show DKIM passing for `andrewcreekmore.dev`. ZeptoMail's saved original shows a `multipart/alternative`
+    message with a `text/plain` part containing the staging verification link. Following the link verifies the address,
+    and the visitor then signs in with the password. A password reset for the same address delivers a reset email to
+    the inbox; its saved original's text part names `staging.cinexplorer.andrewcreekmore.dev`, and its link sets a new
+    password that then signs in. The backend logs show each send's outcome and no raw ZeptoMail response. The evidence
+    records the receiving provider and the source of the MIME observation separately.
 
 ### Proven after merge
 
@@ -821,8 +832,10 @@ criterion named beside it:
   later website work (Stage 4), once the application homepage, privacy policy and terms pages are live.
 - **GitHub:** an OAuth App for the deployed hosts (criteria 16 and 11).
 - **ZeptoMail:** a send-mail token for a mail agent with `andrewcreekmore.dev` verified; its DKIM record is already in
-  place (criterion 9). If the first verification email lands in Gmail's spam folder, the remedy is DNS, such as a
-  `_dmarc` record for `andrewcreekmore.dev`, not a change to this work.
+  place (criterion 17). The maintainer supplies an address whose inbox they control and records the receiving
+  provider; Inbox placement and DKIM are observed there, and MIME/plain-text links in ZeptoMail's saved original.
+  If the first verification email lands in that inbox's spam folder, diagnose the recipient-provider result and DNS,
+  such as a `_dmarc` record for `andrewcreekmore.dev`, rather than changing the application blindly.
 - **Cloudflare R2:** a private bucket, a token limited to it with object read and write, and the 30-day lifecycle rule
   (criteria 4 and 6).
 - **Healthchecks.io:** the `backup` and `maintenance` checks with email alerts (criteria 4 and 7).
@@ -873,3 +886,10 @@ authentication hardening (R18–R23) is not deployed.
   checks remain. Consent-screen publication moves to the later website work (Stage 4), once homepage, privacy and
   terms pages are live. Goal 6 narrows the hostname-move promise to credentials, callbacks and sender configuration.
   The task list and runbook follow. The Owner declined the offered independent review for this contained amendment.
+- **2026-11-04, inbox provider,** on the Owner's approval without an independent review: criterion 9 is retained
+  and superseded by 17, using the maintainer's available inbox. Proton Mail delivered verification/reset to Inbox,
+  DKIM passed, and verification/password sign-in/reset worked. ZeptoMail's saved original supplies the MIME and
+  plain-text evidence because Proton's export reconstructs one selected body; the Owner confirmed both MIME types
+  and both plain-text links use staging. Sender, Inbox placement, DKIM, verification/reset behavior, staging links
+  and quiet logs remain required. Gmail-specific delivery was not tested and is not claimed. Dependencies, task
+  references and runbook follow; application behavior and provider settings do not change.

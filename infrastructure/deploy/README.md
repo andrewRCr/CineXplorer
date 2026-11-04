@@ -216,7 +216,9 @@ fields. Keep the OAuth/mail values off the running server until the hardened dep
   for `ZEPTOMAIL_API_KEY`. This setting is the full Authorization value: `Zoho-enczapikey`, one space, then the
   token. Include the prefix once and keep the value in single quotes in the env file. See
   [ZeptoMail authentication](https://www.zoho.com/cpaas/help/api/api-authentication.html).
-  A successful test message to Gmail and its inbox delivery are part of activation.
+  Use an address whose inbox you control for activation and record its provider. Confirm Inbox delivery and DKIM
+  at that provider, and inspect MIME/plain-text links in ZeptoMail's saved original. Record the recipient provider
+  and MIME evidence source separately; do not claim delivery at providers you did not test.
 
 | Provider | Authorized callback URLs |
 | --- | --- |
@@ -294,6 +296,11 @@ complete OAuth pairs in `backend.env`, keep mode 600 and redeploy the same commi
 Application rows for those providers. The Site domain is derived from `SITE_ADDRESS` on every deploy.
 
 Prove email registration, inbox verification and sign-in, verification resend and password reset in a browser.
+Check the received sender and DKIM, then the verification and reset links in the original's plain-text parts.
+ZeptoMail exposes saved originals under the agent's **Emails → Logs → View Details → Content Preview**, including
+**View Original** and **Download EML**, when content saving was already enabled. If an inbox provider reconstructs
+exports, use this sender-side original for MIME evidence and record that limitation. Keep messages and tokens
+private. See [Zoho's original-message instructions](https://www.zoho.com/cpaas/help/processed-emails.html).
 Sign in with Google and GitHub. Leave a password session idle beyond six minutes and reload it; it must stay
 signed in while refresh remains valid. In two same-profile tabs with Remember Me, leave both idle and confirm both
 remain signed in. Review logs for errors without copying credentials, addresses or verification tokens into notes.

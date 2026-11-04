@@ -10,25 +10,25 @@
  * - User personalization features
  */
 
-import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
-import { Provider as ChakraProvider } from '@/components/core/chakra/provider';
-import Featured from '../Featured';
+import { render, screen } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { BrowserRouter } from "react-router-dom";
+import { Provider as ChakraProvider } from "@/components/core/chakra/provider";
+import Featured from "../Featured";
 
 function renderWithProviders(component: React.ReactElement) {
   return render(
     <ChakraProvider>
       <BrowserRouter>{component}</BrowserRouter>
-    </ChakraProvider>
+    </ChakraProvider>,
   );
 }
 
-describe('Featured Page', () => {
-  it('renders without errors', () => {
+describe("Featured Page", () => {
+  it("renders without errors", () => {
     renderWithProviders(<Featured />);
 
     // Verify basic content renders
-    expect(screen.getByText('Welcome to CineXplorer')).toBeInTheDocument();
+    expect(screen.getByText("Welcome to CineXplorer")).toBeInTheDocument();
   });
 });

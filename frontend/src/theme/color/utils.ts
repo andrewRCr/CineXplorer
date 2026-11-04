@@ -45,9 +45,10 @@ export function adjustColor(hex: string, percent: number): string {
 
     // Calculate adjustment
     const adjust = (value: number) => {
-        const adjusted = percent > 0
-            ? value + ((255 - value) * percent) / 100 // Lighten
-            : value + (value * percent) / 100; // Darken
+        const adjusted =
+            percent > 0
+                ? value + ((255 - value) * percent) / 100 // Lighten
+                : value + (value * percent) / 100; // Darken
         return Math.round(Math.max(0, Math.min(255, adjusted)));
     };
 
@@ -146,7 +147,7 @@ export function deriveBorderHierarchy(
     const strong02 = adjustColor(baseStrong, 20.8);
     return {
         subtle00: baseSubtle,
-        subtle01: adjustColor(baseSubtle, 6.3),  // Midpoint between 00 and 02
+        subtle01: adjustColor(baseSubtle, 6.3), // Midpoint between 00 and 02
         subtle02: adjustColor(baseSubtle, 12.6), // Carbon delta
         strong01: baseStrong,
         strong02: strong02, // Carbon delta
@@ -237,9 +238,9 @@ export function deriveInteractionStates(
     active: string;
 } {
     return {
-        hover: blendColors(layerColor, foregroundColor, 0.12),      // 12% overlay (improved from MD3's 8% for better contrast)
-        selected: blendColors(layerColor, foregroundColor, 0.16),   // 16% overlay (improved from MD3's 10%, aligns with active per ADR-016)
-        active: blendColors(layerColor, foregroundColor, 0.16),     // 16% overlay (improved from MD3's 10%, aligns with selected per ADR-016)
+        hover: blendColors(layerColor, foregroundColor, 0.12), // 12% overlay (improved from MD3's 8% for better contrast)
+        selected: blendColors(layerColor, foregroundColor, 0.16), // 16% overlay (improved from MD3's 10%, aligns with active per ADR-016)
+        active: blendColors(layerColor, foregroundColor, 0.16), // 16% overlay (improved from MD3's 10%, aligns with selected per ADR-016)
     };
 }
 

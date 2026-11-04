@@ -122,7 +122,9 @@ const NavBarUserMenu = () => {
       });
 
       // Filter inside useMemo to avoid new array reference each render
-      const mobileNavItems = USER_NAVIGATION_ITEMS.filter((item) => !item.isAction);
+      const mobileNavItems = USER_NAVIGATION_ITEMS.filter(
+        (item) => !item.isAction,
+      );
       mobileNavItems.forEach((item) => {
         items.push({
           key: item.value,
@@ -136,9 +138,21 @@ const NavBarUserMenu = () => {
 
     // Always-visible items
     items.push(
-      { key: "profile", type: "profile", label: "Profile", to: ROUTES.PROFILE, position: "middle" },
-      { key: "settings", type: "settings", label: "Settings", to: ROUTES.SETTINGS, position: "middle" },
-      { key: "logout", type: "logout", label: "Logout", position: "middle" }
+      {
+        key: "profile",
+        type: "profile",
+        label: "Profile",
+        to: ROUTES.PROFILE,
+        position: "middle",
+      },
+      {
+        key: "settings",
+        type: "settings",
+        label: "Settings",
+        to: ROUTES.SETTINGS,
+        position: "middle",
+      },
+      { key: "logout", type: "logout", label: "Logout", position: "middle" },
     );
 
     // Recalculate positions based on final array
@@ -209,7 +223,13 @@ const NavBarUserMenu = () => {
                   key={item.key}
                   icon={item.icon}
                   to={item.to}
-                  onClick={item.type === "logout" ? handleLogout : item.type === "log" ? handleLogClick : closeMenu}
+                  onClick={
+                    item.type === "logout"
+                      ? handleLogout
+                      : item.type === "log"
+                        ? handleLogClick
+                        : closeMenu
+                  }
                   position={item.position}
                 >
                   {item.label}

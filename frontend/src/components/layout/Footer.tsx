@@ -28,9 +28,15 @@ const Footer = () => {
         {import.meta.env.DEV && (
           <HStack gap={3} fontSize="xs" color="on-muted">
             <Text fontWeight="medium">Debug:</Text>
-            <TextLink to="/dev/theme-debug" fontSize="xs">Theme</TextLink>
-            <TextLink to="/dev/layout-debug" fontSize="xs">Layout</TextLink>
-            <TextLink to="/dev/typography-debug" fontSize="xs">Typography</TextLink>
+            <TextLink to="/dev/theme-debug" fontSize="xs">
+              Theme
+            </TextLink>
+            <TextLink to="/dev/layout-debug" fontSize="xs">
+              Layout
+            </TextLink>
+            <TextLink to="/dev/typography-debug" fontSize="xs">
+              Typography
+            </TextLink>
           </HStack>
         )}
 

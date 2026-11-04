@@ -23,18 +23,21 @@
  * - userMovieService.ts: Movie-first queries with enrichment
  */
 
-import type { MovieListItem } from '@/@types/movie.d';
-import type { components } from '@/types/api';
+import type { MovieListItem } from "@/@types/movie.d";
+import type { components } from "@/types/api";
 import {
     createUserMovieData,
     updateUserMovieData,
     getUserMovieDataByTmdbId,
-} from './userMovieDataService';
-import { getErrorStatus, getErrorMessage } from '@/utilities/axiosErrorUtils';
+} from "./userMovieDataService";
+import { getErrorStatus, getErrorMessage } from "@/utilities/axiosErrorUtils";
 
-type UserMovieDataDetailSchema = components['schemas']['UserMovieDataDetailSchema'];
-type UserMovieDataCreateSchema = components['schemas']['UserMovieDataCreateSchema'];
-type UserMovieDataUpdateSchema = components['schemas']['UserMovieDataUpdateSchema'];
+type UserMovieDataDetailSchema =
+    components["schemas"]["UserMovieDataDetailSchema"];
+type UserMovieDataCreateSchema =
+    components["schemas"]["UserMovieDataCreateSchema"];
+type UserMovieDataUpdateSchema =
+    components["schemas"]["UserMovieDataUpdateSchema"];
 
 /**
  * Toggle a movie's watchlist status
@@ -59,7 +62,7 @@ type UserMovieDataUpdateSchema = components['schemas']['UserMovieDataUpdateSchem
  * const result = await toggleMovieWatchlist(movieWithData);
  */
 export async function toggleMovieWatchlist(
-    movie: MovieListItem
+    movie: MovieListItem,
 ): Promise<UserMovieDataDetailSchema> {
     // Case 1: No existing user data → CREATE
     if (!movie.user_movie_data) {
@@ -80,15 +83,24 @@ export async function toggleMovieWatchlist(
             // Backend returns 400 when entry already exists for this user/movie
             if (getErrorStatus(error) === 400) {
                 const errorMsg = getErrorMessage(error).toLowerCase();
-                if (errorMsg.includes('already exists') || errorMsg.includes('unique constraint')) {
+                if (
+                    errorMsg.includes("already exists") ||
+                    errorMsg.includes("unique constraint")
+                ) {
                     // Fetch the current data and TOGGLE (not always set to true)
                     // This handles the case where movie.user_movie_data is stale
-                    const { request } = getUserMovieDataByTmdbId({ tmdb_id: movie.tmdb_id });
-                    const existingDataResponse = await request;
-                    const currentStatus = existingDataResponse.data.user_on_watchlist ?? false;
-                    const updateResponse = await updateUserMovieData(existingDataResponse.data.id!, {
-                        user_on_watchlist: !currentStatus,
+                    const { request } = getUserMovieDataByTmdbId({
+                        tmdb_id: movie.tmdb_id,
                     });
+                    const existingDataResponse = await request;
+                    const currentStatus =
+                        existingDataResponse.data.user_on_watchlist ?? false;
+                    const updateResponse = await updateUserMovieData(
+                        existingDataResponse.data.id!,
+                        {
+                            user_on_watchlist: !currentStatus,
+                        },
+                    );
                     return updateResponse.data;
                 }
             }
@@ -103,7 +115,10 @@ export async function toggleMovieWatchlist(
         user_on_watchlist: !currentWatchlistStatus,
     };
 
-    const response = await updateUserMovieData(movie.user_movie_data.id!, updatePayload);
+    const response = await updateUserMovieData(
+        movie.user_movie_data.id!,
+        updatePayload,
+    );
     return response.data;
 }
 
@@ -116,12 +131,12 @@ export async function toggleMovieWatchlist(
  * @param _movie - Movie object with optional user_movie_data
  * @returns Promise with updated UserMovieData
  */
- 
+
 export async function toggleMovieWatched(
-    _movie: MovieListItem
+    _movie: MovieListItem,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
-    throw new Error('toggleMovieWatched not yet implemented');
+    throw new Error("toggleMovieWatched not yet implemented");
 }
 
 /**
@@ -133,12 +148,12 @@ export async function toggleMovieWatched(
  * @param _movie - Movie object with optional user_movie_data
  * @returns Promise with updated UserMovieData
  */
- 
+
 export async function toggleMovieLiked(
-    _movie: MovieListItem
+    _movie: MovieListItem,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
-    throw new Error('toggleMovieLiked not yet implemented');
+    throw new Error("toggleMovieLiked not yet implemented");
 }
 
 /**
@@ -151,13 +166,13 @@ export async function toggleMovieLiked(
  * @param _rating - Rating value (1-10)
  * @returns Promise with updated UserMovieData
  */
- 
+
 export async function setMovieRating(
     _movie: MovieListItem,
-    _rating: number
+    _rating: number,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (may need UI modal integration)
-    throw new Error('setMovieRating not yet implemented');
+    throw new Error("setMovieRating not yet implemented");
 }
 
 /**
@@ -170,11 +185,11 @@ export async function setMovieRating(
  * @param _review - Review text
  * @returns Promise with updated UserMovieData
  */
- 
+
 export async function setMovieReview(
     _movie: MovieListItem,
-    _review: string
+    _review: string,
 ): Promise<UserMovieDataDetailSchema> {
     // TODO: Implement (may need UI modal integration)
-    throw new Error('setMovieReview not yet implemented');
+    throw new Error("setMovieReview not yet implemented");
 }

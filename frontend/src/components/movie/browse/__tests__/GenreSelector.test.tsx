@@ -67,10 +67,10 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(false);
@@ -81,10 +81,10 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[28, 35]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
       const dramaCheckbox = screen.getByLabelText("Drama") as HTMLInputElement;
 
@@ -187,7 +187,7 @@ describe("GenreSelector Component", () => {
         // Update the component with new selection
         act(() => {
           rerender(
-            <GenreSelector {...defaultProps} selectedGenres={selectedIds} />
+            <GenreSelector {...defaultProps} selectedGenres={selectedIds} />,
           );
         });
       }
@@ -203,7 +203,7 @@ describe("GenreSelector Component", () => {
   describe("Controlled Component Behavior", () => {
     it("reflects selectedGenres prop changes", () => {
       const { rerender } = render(
-        <GenreSelector {...defaultProps} selectedGenres={[28]} />
+        <GenreSelector {...defaultProps} selectedGenres={[28]} />,
       );
 
       let actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
@@ -214,7 +214,7 @@ describe("GenreSelector Component", () => {
 
       actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(false);
@@ -223,7 +223,7 @@ describe("GenreSelector Component", () => {
 
     it("handles empty selectedGenres array", () => {
       const { rerender } = render(
-        <GenreSelector {...defaultProps} selectedGenres={[28, 35]} />
+        <GenreSelector {...defaultProps} selectedGenres={[28, 35]} />,
       );
 
       // Initially some genres are selected
@@ -235,7 +235,7 @@ describe("GenreSelector Component", () => {
 
       actionCheckbox = screen.getByLabelText("Action") as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(false);
@@ -246,11 +246,11 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[28, 18]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       const dramaCheckbox = screen.getByLabelText("Drama") as HTMLInputElement;
       const comedyCheckbox = screen.getByLabelText(
-        "Comedy"
+        "Comedy",
       ) as HTMLInputElement;
 
       expect(actionCheckbox.checked).toBe(true);
@@ -277,7 +277,7 @@ describe("GenreSelector Component", () => {
     it("preserves existing order when removing genres", async () => {
       const user = userEvent.setup();
       render(
-        <GenreSelector {...defaultProps} selectedGenres={[28, 35, 18, 27]} />
+        <GenreSelector {...defaultProps} selectedGenres={[28, 35, 18, 27]} />,
       );
 
       // Remove Comedy (35) from middle
@@ -295,7 +295,7 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[28, 28, 35]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
 
       // Should still show as checked despite duplicate
@@ -400,7 +400,7 @@ describe("GenreSelector Component", () => {
       render(<GenreSelector {...defaultProps} selectedGenres={[999, 28]} />);
 
       const actionCheckbox = screen.getByLabelText(
-        "Action"
+        "Action",
       ) as HTMLInputElement;
       expect(actionCheckbox.checked).toBe(true);
 
@@ -458,7 +458,10 @@ describe("GenreSelector Component", () => {
       });
 
       render(
-        <GenreSelector selectedGenres={[]} onChange={mockOnChangeWithLogging} />
+        <GenreSelector
+          selectedGenres={[]}
+          onChange={mockOnChangeWithLogging}
+        />,
       );
 
       const actionCheckbox = screen.getByLabelText("Action");
@@ -488,11 +491,10 @@ describe("GenreSelector Component", () => {
         }[id];
 
         const checkbox = screen.getByLabelText(
-          label as string
+          label as string,
         ) as HTMLInputElement;
         expect(checkbox.checked).toBe(true);
       });
     });
-
   });
 });

@@ -13,13 +13,13 @@ import type { SearchParams } from "@/types/searchTypes";
  * These are the actual query parameters sent to the backend search API.
  */
 export interface SearchApiParams {
-  query: string;
-  page?: number;
-  // Future expansion:
-  // year_min?: number;
-  // year_max?: number;
-  // vote_average_gte?: number;
-  // vote_average_lte?: number;
+    query: string;
+    page?: number;
+    // Future expansion:
+    // year_min?: number;
+    // year_max?: number;
+    // vote_average_gte?: number;
+    // vote_average_lte?: number;
 }
 
 /**
@@ -28,8 +28,10 @@ export interface SearchApiParams {
  * @param searchParams - Frontend search parameters
  * @returns API-ready parameters object
  */
-export function mapSearchParamsToApi(searchParams: SearchParams): SearchApiParams {
-  return {
-    query: searchParams.query,
-  };
+export function mapSearchParamsToApi(
+    searchParams: SearchParams,
+): SearchApiParams {
+    return {
+        query: searchParams.query,
+    };
 }

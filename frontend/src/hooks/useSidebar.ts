@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useBreakpointValue } from '@chakra-ui/react';
+import { useState, useEffect } from "react";
+import { useBreakpointValue } from "@chakra-ui/react";
 
 export interface UseSidebarReturn {
     isOpen: boolean;
@@ -12,7 +12,7 @@ export interface UseSidebarReturn {
 
 /**
  * Custom hook for managing sidebar state and responsive behavior
- * 
+ *
  * Handles:
  * - Sidebar open/closed state
  * - Responsive behavior (drawer on mobile, persistent on desktop)
@@ -24,15 +24,19 @@ export const useSidebar = (): UseSidebarReturn => {
 
     // useBreakpointValue acceptable here: controls behavioral logic (drawer vs persistent),
     // not just visibility. See ADR-007 for CSS-vs-JS responsive patterns.
-    const isMobile = useBreakpointValue({
-        base: true,
-        lg: false
-    }, { ssr: false }) ?? true;
-    
+    const isMobile =
+        useBreakpointValue(
+            {
+                base: true,
+                lg: false,
+            },
+            { ssr: false },
+        ) ?? true;
+
     // On desktop (lg+), sidebar should be persistent and visible
     // On mobile/tablet (base-md), sidebar should be a drawer
     const shouldShowAsDrawer = isMobile;
-    
+
     // Auto-open sidebar on desktop by default
     useEffect(() => {
         if (!isMobile) {
@@ -41,11 +45,11 @@ export const useSidebar = (): UseSidebarReturn => {
             setIsOpen(false);
         }
     }, [isMobile]);
-    
+
     const onOpen = () => setIsOpen(true);
     const onClose = () => setIsOpen(false);
-    const onToggle = () => setIsOpen(prev => !prev);
-    
+    const onToggle = () => setIsOpen((prev) => !prev);
+
     return {
         isOpen,
         onOpen,

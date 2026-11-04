@@ -19,9 +19,7 @@ interface BrowseControlsSectionProps {
   hasActiveAdvancedFilters?: boolean;
   browseParams: BrowseParams;
   onBrowseParamsChange: (
-    params:
-      | Partial<BrowseParams>
-      | ((prev: BrowseParams) => BrowseParams)
+    params: Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams),
   ) => void;
   onToggleAdvancedPanel: () => void;
   /** Direct setter for advanced panel state (for auto-close without override logic) */
@@ -48,7 +46,9 @@ const BrowseControlsSection = ({
   // Force expand state - temporarily overrides scroll-based collapse
   // Used by BackToTopButton to expand sub-nav when scrolling to top
   const [forceExpand, setForceExpand] = useState(false);
-  const forceExpandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const forceExpandTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   // Collapse when: scrolled past threshold AND scrolling down AND not force-expanded
   // Expand when: scrolling up OR at top of page (direction === 'idle') OR force-expanded
@@ -83,7 +83,10 @@ const BrowseControlsSection = ({
     setForceExpand(true);
     // Clear force expand after a short delay (scroll animation completes ~300ms)
     // The sub-nav will stay expanded due to direction='idle' at top of page
-    forceExpandTimeoutRef.current = setTimeout(() => setForceExpand(false), 500);
+    forceExpandTimeoutRef.current = setTimeout(
+      () => setForceExpand(false),
+      500,
+    );
   }, []);
 
   if (!showControls) return null;

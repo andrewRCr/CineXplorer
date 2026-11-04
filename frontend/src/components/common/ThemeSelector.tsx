@@ -18,11 +18,13 @@ interface ThemeOption {
  * Theme options auto-discovered from theme registry.
  * Displays user-friendly labels while using technical theme names as values.
  */
-const THEME_OPTIONS: ThemeOption[] = Object.entries(themeRegistry).map(([value, theme]) => ({
-  value: value as ThemeName,
-  label: theme.name,
-  description: theme.label,
-}));
+const THEME_OPTIONS: ThemeOption[] = Object.entries(themeRegistry).map(
+  ([value, theme]) => ({
+    value: value as ThemeName,
+    label: theme.name,
+    description: theme.label,
+  }),
+);
 
 /**
  * ThemeSelector Component
@@ -63,10 +65,7 @@ export function ThemeSelector() {
     <ClientOnly fallback={<Skeleton height="10" width="32" />}>
       <Menu.Root positioning={{ placement: "top-start", gutter: 8 }}>
         <Menu.Trigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-          >
+          <Button variant="outline" size="sm">
             {displayLabel}
           </Button>
         </Menu.Trigger>

@@ -10,7 +10,7 @@ import { getPaginationContextId } from "./paginationContext";
 import { toaster } from "@/components/core/chakra/toaster";
 
 // Debug: Log the base URL being used
-logger.debug('[apiClient] BASE_URL configured', { BASE_URL });
+logger.debug("[apiClient] BASE_URL configured", { BASE_URL });
 
 /**
  * Axios client configured for two-pattern authentication.
@@ -81,9 +81,14 @@ apiClient.interceptors.request.use((config) => {
     // Attach pagination context ID for movie endpoints (multi-tab isolation)
     // This ID is unique per page load and helps the backend track which movies
     // have been returned in this tab's pagination session
-    const movieEndpoints = ["/movies/browse", "/movies/now-playing", "/movies/upcoming", "/movies/search"];
+    const movieEndpoints = [
+        "/movies/browse",
+        "/movies/now-playing",
+        "/movies/upcoming",
+        "/movies/search",
+    ];
     const url = config.url ?? "";
-    if (movieEndpoints.some(endpoint => url.includes(endpoint))) {
+    if (movieEndpoints.some((endpoint) => url.includes(endpoint))) {
         config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
 
@@ -110,7 +115,9 @@ apiClient.interceptors.response.use(
             // Continue to reject the error so callers can still handle it
         }
 
-        const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+        const originalRequest = error.config as InternalAxiosRequestConfig & {
+            _retry?: boolean;
+        };
 
         // Check for authentication error (401 only - 403 is authorization, not authentication)
         // Note: This refresh flow only applies to email/password (JWT) authentication
@@ -147,7 +154,7 @@ apiClient.interceptors.response.use(
                 const response = await axios.post(
                     `${BASE_URL}/auth/refresh`,
                     {},
-                    { withCredentials: true } // Send refresh token cookie
+                    { withCredentials: true }, // Send refresh token cookie
                 );
 
                 // If refresh is successful, update access token in localStorage
@@ -179,7 +186,7 @@ apiClient.interceptors.response.use(
 
         // For all other errors, just pass them along
         return Promise.reject(error);
-    }
+    },
 );
 
 export default apiClient;

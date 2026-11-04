@@ -34,7 +34,8 @@ import { type MovieListItem } from "@/types/movie";
  * - "Prev" simply decrements index (data already cached by TanStack Query)
  */
 const SequentialMovieGrid = () => {
-  const { source, query, finalFetcher, browseParams } = useMovieCollectionContext({});
+  const { source, query, finalFetcher, browseParams } =
+    useMovieCollectionContext({});
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   // Build stable query key (same as VirtualizedMovieGrid for cache sharing)
@@ -96,7 +97,8 @@ const SequentialMovieGrid = () => {
   const hasNext = currentPageIndex < pageCount - 1 || hasNextPage;
 
   // Empty state check
-  const isEmpty = !isLoading && currentPageMovies.length === 0 && pageCount === 0;
+  const isEmpty =
+    !isLoading && currentPageMovies.length === 0 && pageCount === 0;
 
   // Derive page size from first page, fallback to TMDB default
   const pageSize = pages[0]?.results?.length ?? 20;
@@ -107,9 +109,10 @@ const SequentialMovieGrid = () => {
     pageSize,
     currentPageMovies.length,
     totalResults,
-    isLoading
+    isLoading,
   );
-  const showHeaderFooter = (currentPageMovies.length > 0 || isLoading) && !isEmpty;
+  const showHeaderFooter =
+    (currentPageMovies.length > 0 || isLoading) && !isEmpty;
 
   // Memoized pagination controls (same for header and footer)
   const paginationControls = useMemo(
@@ -122,7 +125,7 @@ const SequentialMovieGrid = () => {
         isLoading={isFetchingNextPage}
       />
     ),
-    [hasPrev, hasNext, handlePrev, handleNext, isFetchingNextPage]
+    [hasPrev, hasNext, handlePrev, handleNext, isFetchingNextPage],
   );
 
   return (

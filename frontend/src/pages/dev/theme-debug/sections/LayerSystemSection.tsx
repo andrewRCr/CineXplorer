@@ -8,68 +8,153 @@ export function LayerSystemSection() {
   const { colorMode } = useColorMode();
 
   return (
-    <Box id="layers" bg="layer-01" p={6} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
-      <Text fontSize="xl" fontWeight="bold" mb={4}>Layers: Surfaces & Containers</Text>
+    <Box
+      id="layers"
+      bg="layer-01"
+      p={6}
+      borderRadius="md"
+      borderWidth="1px"
+      borderColor="border-strong-01"
+    >
+      <Text fontSize="xl" fontWeight="bold" mb={4}>
+        Layers: Surfaces & Containers
+      </Text>
       <VStack align="stretch" gap={6}>
         {/* Basic Hierarchy */}
         <Box>
-          <Text fontSize="md" fontWeight="semibold" mb={3}>Basic Layer Hierarchy</Text>
+          <Text fontSize="md" fontWeight="semibold" mb={3}>
+            Basic Layer Hierarchy
+          </Text>
           <VStack align="stretch" gap={2}>
-            <Box bg="background" p={4} borderWidth="1px" borderColor="border-strong-01">
-              <Text color="foreground" fontWeight="bold">background</Text>
-              <Text color="foreground/60" fontSize="sm">Base page background (lowest)</Text>
+            <Box
+              bg="background"
+              p={4}
+              borderWidth="1px"
+              borderColor="border-strong-01"
+            >
+              <Text color="foreground" fontWeight="bold">
+                background
+              </Text>
+              <Text color="foreground/60" fontSize="sm">
+                Base page background (lowest)
+              </Text>
             </Box>
-            <Box bg="layer-01" p={4} borderWidth="1px" borderColor="border-strong-01">
-              <Text color="foreground" fontWeight="bold">layer-01</Text>
-              <Text color="foreground/60" fontSize="sm">Cards, panels (first elevation)</Text>
+            <Box
+              bg="layer-01"
+              p={4}
+              borderWidth="1px"
+              borderColor="border-strong-01"
+            >
+              <Text color="foreground" fontWeight="bold">
+                layer-01
+              </Text>
+              <Text color="foreground/60" fontSize="sm">
+                Cards, panels (first elevation)
+              </Text>
             </Box>
-            <Box bg="layer-02" p={4} borderWidth="1px" borderColor="border-strong-02">
-              <Text color="foreground" fontWeight="bold">layer-02</Text>
-              <Text color="foreground/60" fontSize="sm">Elevated panels, popovers (second elevation)</Text>
+            <Box
+              bg="layer-02"
+              p={4}
+              borderWidth="1px"
+              borderColor="border-strong-02"
+            >
+              <Text color="foreground" fontWeight="bold">
+                layer-02
+              </Text>
+              <Text color="foreground/60" fontSize="sm">
+                Elevated panels, popovers (second elevation)
+              </Text>
             </Box>
-            <Box bg="layer-03" p={4} borderWidth="1px" borderColor="border-strong-03">
-              <Text color="foreground" fontWeight="bold">layer-03</Text>
-              <Text color="foreground/60" fontSize="sm">Highest elevation (dropdowns, modals)</Text>
+            <Box
+              bg="layer-03"
+              p={4}
+              borderWidth="1px"
+              borderColor="border-strong-03"
+            >
+              <Text color="foreground" fontWeight="bold">
+                layer-03
+              </Text>
+              <Text color="foreground/60" fontSize="sm">
+                Highest elevation (dropdowns, modals)
+              </Text>
             </Box>
           </VStack>
         </Box>
 
         {/* ADR-008 Explanation */}
-        <Box bg="muted" p={4} borderRadius="md" borderWidth="1px" borderColor="border-subtle-02">
+        <Box
+          bg="muted"
+          p={4}
+          borderRadius="md"
+          borderWidth="1px"
+          borderColor="border-subtle-02"
+        >
           <Text fontSize="sm" fontWeight="semibold" mb={2} color="foreground">
             ADR-008: Light Mode Alternating Pattern
           </Text>
           <VStack align="start" gap={2}>
             <Text fontSize="sm" color="on-muted">
-              <strong>Light mode:</strong> Layers alternate (white → gray → white → gray) to create clear visual nesting.
-              Progressive darkening on white becomes indistinguishable.
+              <strong>Light mode:</strong> Layers alternate (white → gray →
+              white → gray) to create clear visual nesting. Progressive
+              darkening on white becomes indistinguishable.
             </Text>
             <Text fontSize="sm" color="on-muted">
-              <strong>Dark mode:</strong> Layers progressively lighten (darkest → progressively lighter) for depth perception.
+              <strong>Dark mode:</strong> Layers progressively lighten (darkest
+              → progressively lighter) for depth perception.
             </Text>
             <Text fontSize="sm" color="on-muted" fontStyle="italic">
-              Current mode: <strong>{colorMode}</strong> - Switch modes to see the difference in pattern.
+              Current mode: <strong>{colorMode}</strong> - Switch modes to see
+              the difference in pattern.
             </Text>
           </VStack>
         </Box>
 
         {/* Nested Example - Demonstrates Alternating */}
         <Box>
-          <Text fontSize="md" fontWeight="semibold" mb={3}>Nested Surfaces Example</Text>
+          <Text fontSize="md" fontWeight="semibold" mb={3}>
+            Nested Surfaces Example
+          </Text>
           <Text fontSize="sm" color="on-muted" mb={3}>
             {colorMode === "light"
               ? "Light mode: Notice how layers alternate (white→gray→white) creating visual 'popup' effect"
-              : "Dark mode: Notice progressive lightening for depth perception"
-            }
+              : "Dark mode: Notice progressive lightening for depth perception"}
           </Text>
-          <Box bg="background" p={4} borderWidth="1px" borderColor="border-strong-01">
-            <Text fontSize="xs" color="foreground/60" mb={2}>background (page)</Text>
-            <Box bg="layer-01" p={4} borderWidth="1px" borderColor="border-strong-01">
-              <Text fontSize="xs" color="foreground/60" mb={2}>layer-01 (card)</Text>
-              <Box bg="layer-02" p={4} borderWidth="1px" borderColor="border-strong-02">
-                <Text fontSize="xs" color="foreground/60" mb={2}>layer-02 (modal)</Text>
-                <Box bg="layer-03" p={3} borderWidth="1px" borderColor="border-strong-03">
-                  <Text fontSize="xs" color="foreground">layer-03 (dropdown over modal)</Text>
+          <Box
+            bg="background"
+            p={4}
+            borderWidth="1px"
+            borderColor="border-strong-01"
+          >
+            <Text fontSize="xs" color="foreground/60" mb={2}>
+              background (page)
+            </Text>
+            <Box
+              bg="layer-01"
+              p={4}
+              borderWidth="1px"
+              borderColor="border-strong-01"
+            >
+              <Text fontSize="xs" color="foreground/60" mb={2}>
+                layer-01 (card)
+              </Text>
+              <Box
+                bg="layer-02"
+                p={4}
+                borderWidth="1px"
+                borderColor="border-strong-02"
+              >
+                <Text fontSize="xs" color="foreground/60" mb={2}>
+                  layer-02 (modal)
+                </Text>
+                <Box
+                  bg="layer-03"
+                  p={3}
+                  borderWidth="1px"
+                  borderColor="border-strong-03"
+                >
+                  <Text fontSize="xs" color="foreground">
+                    layer-03 (dropdown over modal)
+                  </Text>
                 </Box>
               </Box>
             </Box>
@@ -78,9 +163,12 @@ export function LayerSystemSection() {
 
         {/* Card with Hover State */}
         <Box>
-          <Text fontSize="md" fontWeight="semibold" mb={3}>Interactive Card (Hover State)</Text>
+          <Text fontSize="md" fontWeight="semibold" mb={3}>
+            Interactive Card (Hover State)
+          </Text>
           <Text fontSize="sm" color="on-muted" mb={3}>
-            Demonstrates <code>layer-hover-01</code> and <code>tertiary/8</code> opacity pattern
+            Demonstrates <code>layer-hover-01</code> and <code>tertiary/8</code>{" "}
+            opacity pattern
           </Text>
           <HStack gap={4} wrap="wrap">
             <Box
@@ -94,8 +182,12 @@ export function LayerSystemSection() {
               transition="all 0.2s"
               minW="200px"
             >
-              <Text fontWeight="bold" mb={2}>Movie Card</Text>
-              <Text fontSize="sm" color="on-muted">Hover to see layer-hover-01</Text>
+              <Text fontWeight="bold" mb={2}>
+                Movie Card
+              </Text>
+              <Text fontSize="sm" color="on-muted">
+                Hover to see layer-hover-01
+              </Text>
             </Box>
             <Box
               bg="layer-01"
@@ -108,20 +200,33 @@ export function LayerSystemSection() {
               transition="all 0.2s"
               minW="200px"
             >
-              <Text fontWeight="bold" mb={2}>List Item</Text>
-              <Text fontSize="sm" color="on-muted">Hover to see tertiary/8</Text>
+              <Text fontWeight="bold" mb={2}>
+                List Item
+              </Text>
+              <Text fontSize="sm" color="on-muted">
+                Hover to see tertiary/8
+              </Text>
             </Box>
           </HStack>
         </Box>
 
         {/* Modal/Dialog Example */}
         <Box>
-          <Text fontSize="md" fontWeight="semibold" mb={3}>Modal/Dialog Pattern</Text>
+          <Text fontSize="md" fontWeight="semibold" mb={3}>
+            Modal/Dialog Pattern
+          </Text>
           <Text fontSize="sm" color="on-muted" mb={3}>
             Shows backdrop overlay and <code>layer-02</code> surface
           </Text>
           {/* Simulated backdrop */}
-          <Box position="relative" bg="background" p={8} borderRadius="md" borderWidth="1px" borderColor="border-strong-01">
+          <Box
+            position="relative"
+            bg="background"
+            p={8}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor="border-strong-01"
+          >
             {/* Backdrop overlay */}
             <Box
               position="absolute"
@@ -156,7 +261,8 @@ export function LayerSystemSection() {
                 </Text>
               </HStack>
               <Text fontSize="sm" color="on-muted" mb={4}>
-                Modal uses <code>layer-02</code> surface with <code>foreground/30</code> backdrop
+                Modal uses <code>layer-02</code> surface with{" "}
+                <code>foreground/30</code> backdrop
               </Text>
               <HStack justify="flex-end" gap={2}>
                 <Box
@@ -189,9 +295,12 @@ export function LayerSystemSection() {
 
         {/* Popover/Menu Dropdown */}
         <Box>
-          <Text fontSize="md" fontWeight="semibold" mb={3}>Popover/Menu Dropdown</Text>
+          <Text fontSize="md" fontWeight="semibold" mb={3}>
+            Popover/Menu Dropdown
+          </Text>
           <Text fontSize="sm" color="on-muted" mb={3}>
-            Uses <code>popover</code> surface (contextual layer-02 or layer-03). Trigger follows outline button pattern.
+            Uses <code>popover</code> surface (contextual layer-02 or layer-03).
+            Trigger follows outline button pattern.
           </Text>
           <Box position="relative">
             {/* Trigger button - uses outline button pattern */}
@@ -225,7 +334,7 @@ export function LayerSystemSection() {
               minW="200px"
               overflow="hidden"
             >
-              {['Edit Item', 'Duplicate', 'Share', 'Delete'].map((item, i) => (
+              {["Edit Item", "Duplicate", "Share", "Delete"].map((item, i) => (
                 <Box
                   key={item}
                   px={4}
@@ -247,8 +356,10 @@ export function LayerSystemSection() {
         {/* Validation Note */}
         <Box p={4} borderTopWidth="1px" borderColor="border-subtle-02">
           <Text fontSize="sm" color="foreground/80" fontStyle="italic">
-            Expected: Each layer should be visually distinct. Layer-03 should NOT match background.
-            {colorMode === "light" && " Light mode should alternate (white→gray→white)."}
+            Expected: Each layer should be visually distinct. Layer-03 should
+            NOT match background.
+            {colorMode === "light" &&
+              " Light mode should alternate (white→gray→white)."}
             {colorMode === "dark" && " Dark mode should progressively lighten."}
           </Text>
         </Box>

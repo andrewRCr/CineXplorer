@@ -54,11 +54,13 @@ export const StyledInput = ({ layer = "01", ...props }: StyledInputProps) => {
         borderColor: `var(--chakra-colors-border-strong-0${layerNum})`,
         "&:hover:not(:focus)": {
           borderColor: `var(--chakra-colors-border-strong-0${layerNum + 1})`,
-          backgroundColor: "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
+          backgroundColor:
+            "color-mix(in srgb, var(--chakra-colors-tertiary) 8%, transparent)",
         },
         "&:focus": {
           borderColor: "var(--chakra-colors-tertiary)",
-          backgroundColor: layerNum === 1 ? "transparent" : "var(--chakra-colors-background)",
+          backgroundColor:
+            layerNum === 1 ? "transparent" : "var(--chakra-colors-background)",
           outline: "none",
         },
       }}

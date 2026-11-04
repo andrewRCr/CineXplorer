@@ -1,6 +1,13 @@
-import { Box, Heading, Text, Button, VStack, Container } from '@chakra-ui/react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ROUTES } from '@/constants/routes';
+import {
+  Box,
+  Heading,
+  Text,
+  Button,
+  VStack,
+  Container,
+} from "@chakra-ui/react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
 
 const NotFound = () => {
   const navigate = useNavigate();
@@ -16,21 +23,11 @@ const NotFound = () => {
         justifyContent="center"
         py={8}
       >
-        <Heading
-          as="h1"
-          size="4xl"
-          textAlign="center"
-          mb={2}
-        >
+        <Heading as="h1" size="4xl" textAlign="center" mb={2}>
           404
         </Heading>
 
-        <Heading
-          as="h2"
-          size="xl"
-          textAlign="center"
-          mb={4}
-        >
+        <Heading as="h2" size="xl" textAlign="center" mb={4}>
           Page Not Found
         </Heading>
 
@@ -41,7 +38,11 @@ const NotFound = () => {
           mb={8}
           maxW="500px"
         >
-          The page <Text as="span" fontWeight="semibold" color="foreground">{location.pathname}</Text> doesn't exist or has been moved.
+          The page{" "}
+          <Text as="span" fontWeight="semibold" color="foreground">
+            {location.pathname}
+          </Text>{" "}
+          doesn't exist or has been moved.
         </Text>
 
         <VStack gap={4}>
@@ -53,11 +54,7 @@ const NotFound = () => {
             Go to Home
           </Button>
 
-          <Button
-            onClick={() => navigate(-1)}
-            variant="ghost"
-            size="md"
-          >
+          <Button onClick={() => navigate(-1)} variant="ghost" size="md">
             Go Back
           </Button>
         </VStack>

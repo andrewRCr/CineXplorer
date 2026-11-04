@@ -1,32 +1,32 @@
 /**
  * Frontend logging service for CineXplorer.
- * 
+ *
  * Provides centralized logging with configurable levels and environment-based behavior.
  * Integrates with existing API client for backend error reporting.
- * 
+ *
  * Environment-based Configuration:
- * 
+ *
  * DEVELOPMENT:
  *   - Log Level: DEBUG (all messages)
  *   - Console: Enabled with detailed formatting and styling
  *   - Storage: 1000 entries maximum
  *   - Backend Reporting: ERROR+ levels
  *   - Styling: Full color coding and timestamps
- * 
+ *
  * PRODUCTION:
  *   - Log Level: ERROR (critical messages only)
  *   - Console: Disabled for security
  *   - Storage: 50 entries maximum  
  *   - Backend Reporting: WARN+ levels
  *   - Styling: Simple formatting when console enabled
- * 
+ *
  * TEST:
  *   - Log Level: WARN (reduce noise in tests)
  *   - Console: Enabled for debugging tests
  *   - Storage: 100 entries maximum
  *   - Backend Reporting: Disabled
  *   - Styling: Minimal formatting
- * 
+ *
  * STAGING:
  *   - Log Level: WARN (moderate verbosity)
  *   - Console: Enabled for debugging
@@ -73,7 +73,17 @@ interface FailedReport {
 }
 
 interface UserInteraction {
-    type: 'click' | 'navigation' | 'form_submit' | 'input_change' | 'scroll' | 'resize' | 'focus' | 'blur' | 'key_press' | 'custom';
+    type:
+        | "click"
+        | "navigation"
+        | "form_submit"
+        | "input_change"
+        | "scroll"
+        | "resize"
+        | "focus"
+        | "blur"
+        | "key_press"
+        | "custom";
     timestamp: Date;
     target?: string; // Element selector or description
     data?: Record<string, unknown>; // Additional context
@@ -97,19 +107,25 @@ class Logger {
 
         // Enhanced environment detection
         const environment = this.detectEnvironment();
-        const isDevelopment = environment === 'development';
-        const isProduction = environment === 'production';
-        const isTest = environment === 'test';
-        
+        const isDevelopment = environment === "development";
+        const isProduction = environment === "production";
+        const isTest = environment === "test";
+
         // Environment-specific default configurations
         this.config = {
             // Development: Verbose logging for debugging
-            level: isDevelopment ? LogLevel.DEBUG : isTest ? LogLevel.WARN : LogLevel.ERROR,
+            level: isDevelopment
+                ? LogLevel.DEBUG
+                : isTest
+                  ? LogLevel.WARN
+                  : LogLevel.ERROR,
             enableConsole: !isProduction, // Console disabled in production
             enableStorage: true, // Always enable storage for debugging
             maxStorageEntries: isDevelopment ? 1000 : isTest ? 100 : 50,
             enableBackendReporting: !isTest, // Disable backend reporting in tests
-            backendReportingThreshold: isDevelopment ? LogLevel.ERROR : LogLevel.WARN,
+            backendReportingThreshold: isDevelopment
+                ? LogLevel.ERROR
+                : LogLevel.WARN,
             ...config, // Allow override of defaults
         };
 
@@ -120,7 +136,7 @@ class Logger {
         // }
 
         // Initialize logger with environment context
-        this.info('Frontend Logger initialized', {
+        this.info("Frontend Logger initialized", {
             environment,
             viteMode: import.meta.env.MODE,
             sessionId: this.sessionId,
@@ -178,11 +194,14 @@ class Logger {
             additionalData,
             // Include recent user interactions for debugging context
             ...(this.interactionTrackingEnabled && {
-                recentInteractions: this.getRecentInteractions(3)
-            })
+                recentInteractions: this.getRecentInteractions(3),
+            }),
         };
 
-        this.error(`JavaScript Error: ${context ? `[${context}] ` : ''}${error.message}`, errorData);
+        this.error(
+            `JavaScript Error: ${context ? `[${context}] ` : ""}${error.message}`,
+            errorData,
+        );
     }
 
     /**
@@ -193,7 +212,7 @@ class Logger {
         method: string,
         status?: number,
         error?: unknown,
-        requestData?: unknown
+        requestData?: unknown,
     ): void {
         const apiErrorData = {
             endpoint,
@@ -204,7 +223,10 @@ class Logger {
             timestamp: new Date().toISOString(),
         };
 
-        this.error(`API Error: ${method.toUpperCase()} ${endpoint}${status ? ` (${status})` : ''}`, apiErrorData);
+        this.error(
+            `API Error: ${method.toUpperCase()} ${endpoint}${status ? ` (${status})` : ""}`,
+            apiErrorData,
+        );
     }
 
     /**
@@ -212,7 +234,7 @@ class Logger {
      */
     setCorrelationId(correlation_id: string): void {
         // Store correlation ID for subsequent logs in this context
-        this.logStorage.forEach(entry => {
+        this.logStorage.forEach((entry) => {
             if (!entry.correlation_id) {
                 entry.correlation_id = correlation_id;
             }
@@ -234,8 +256,14 @@ class Logger {
             message,
             timestamp: new Date(),
             data,
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
-            url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
+            user_agent:
+                typeof navigator !== "undefined"
+                    ? navigator.userAgent
+                    : "test-environment",
+            url:
+                typeof window !== "undefined"
+                    ? window.location.href
+                    : "test-environment",
             user_id: this.getCurrentUserId(),
             session_id: this.sessionId,
         };
@@ -251,12 +279,15 @@ class Logger {
         }
 
         // File logging for development (AI debugging)
-        if (this.detectEnvironment() === 'development') {
+        if (this.detectEnvironment() === "development") {
             this.logToFile(logEntry);
         }
 
         // Backend reporting for critical errors
-        if (this.config.enableBackendReporting && level >= this.config.backendReportingThreshold) {
+        if (
+            this.config.enableBackendReporting &&
+            level >= this.config.backendReportingThreshold
+        ) {
             this.reportToBackend(logEntry);
         }
     }
@@ -266,36 +297,61 @@ class Logger {
      */
     private logToConsole(entry: LogEntry): void {
         const environment = this.detectEnvironment();
-        const isDevelopment = environment === 'development';
-        
+        const isDevelopment = environment === "development";
+
         // Different formatting for development vs other environments
         if (isDevelopment) {
             // Detailed formatting for development
             const timestamp = entry.timestamp.toISOString();
             const prefix = `[${timestamp}] [${LogLevel[entry.level]}] [CineXplorer]`;
-            
+
             switch (entry.level) {
                 case LogLevel.DEBUG:
-                    console.debug(`%c${prefix}%c ${entry.message}`, 'color: #888; font-size: 11px', 'color: inherit', entry.data);
+                    console.debug(
+                        `%c${prefix}%c ${entry.message}`,
+                        "color: #888; font-size: 11px",
+                        "color: inherit",
+                        entry.data,
+                    );
                     break;
                 case LogLevel.INFO:
-                    console.info(`%c${prefix}%c ${entry.message}`, 'color: #0066cc; font-weight: bold', 'color: inherit', entry.data);
+                    console.info(
+                        `%c${prefix}%c ${entry.message}`,
+                        "color: #0066cc; font-weight: bold",
+                        "color: inherit",
+                        entry.data,
+                    );
                     break;
                 case LogLevel.WARN:
-                    console.warn(`%c${prefix}%c ${entry.message}`, 'color: #ff8800; font-weight: bold', 'color: inherit', entry.data);
+                    console.warn(
+                        `%c${prefix}%c ${entry.message}`,
+                        "color: #ff8800; font-weight: bold",
+                        "color: inherit",
+                        entry.data,
+                    );
                     break;
                 case LogLevel.ERROR:
-                    console.error(`%c${prefix}%c ${entry.message}`, 'color: #cc0000; font-weight: bold', 'color: inherit', entry.data);
+                    console.error(
+                        `%c${prefix}%c ${entry.message}`,
+                        "color: #cc0000; font-weight: bold",
+                        "color: inherit",
+                        entry.data,
+                    );
                     break;
                 case LogLevel.CRITICAL:
-                    console.error(`%c${prefix}%c ${entry.message}`, 'color: #ffffff; background-color: #cc0000; padding: 2px 4px; font-weight: bold', 'color: inherit', entry.data);
+                    console.error(
+                        `%c${prefix}%c ${entry.message}`,
+                        "color: #ffffff; background-color: #cc0000; padding: 2px 4px; font-weight: bold",
+                        "color: inherit",
+                        entry.data,
+                    );
                     break;
             }
         } else {
             // Simplified formatting for non-development environments
-            const timestamp = entry.timestamp.toTimeString().split(' ')[0]; // HH:MM:SS format
+            const timestamp = entry.timestamp.toTimeString().split(" ")[0]; // HH:MM:SS format
             const prefix = `[${timestamp}] ${LogLevel[entry.level]}`;
-            
+
             // Only show important logs in production console (if enabled)
             switch (entry.level) {
                 case LogLevel.WARN:
@@ -337,12 +393,15 @@ class Logger {
         const message = entry.message;
 
         // Include data if present (formatted for readability)
-        let dataStr = '';
+        let dataStr = "";
         if (entry.data) {
             try {
                 const jsonData = JSON.stringify(entry.data, null, 2);
                 // Indent each line of the JSON for nice formatting
-                const indentedData = jsonData.split('\n').map(line => '  ' + line).join('\n');
+                const indentedData = jsonData
+                    .split("\n")
+                    .map((line) => "  " + line)
+                    .join("\n");
                 dataStr = `\n  Data:\n${indentedData}`;
             } catch {
                 dataStr = `\n  Data: [Could not serialize]`;
@@ -354,9 +413,9 @@ class Logger {
         // Send to Django backend endpoint (fire-and-forget)
         // Use configured API base URL to route through proxy (avoid CORS issues)
         fetch(`${apiBaseUrl}/dev-logs/write/`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
             body: JSON.stringify({ log_line: logLine }),
         }).catch(() => {
@@ -371,7 +430,7 @@ class Logger {
     private async reportToBackend(entry: LogEntry): Promise<void> {
         try {
             // Import API client dynamically to avoid circular dependencies
-            const { default: apiClient } = await import('./apiClient');
+            const { default: apiClient } = await import("./apiClient");
 
             // Prepare sanitized payload for backend
             const payload = {
@@ -384,28 +443,30 @@ class Logger {
                 url: entry.url,
                 user_id: entry.user_id,
                 session_id: entry.session_id,
-                source: 'frontend',
+                source: "frontend",
                 environment: this.detectEnvironment(),
                 browser_info: this.getBrowserInfo(),
             };
 
             // Send to backend with timeout
             const response = await Promise.race([
-                apiClient.post('/logs/', payload),
-                new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Backend logging timeout')), 5000)
-                )
+                apiClient.post("/logs/", payload),
+                new Promise((_, reject) =>
+                    setTimeout(
+                        () => reject(new Error("Backend logging timeout")),
+                        5000,
+                    ),
+                ),
             ]);
 
             // Log successful backend reporting in development
-            if (this.detectEnvironment() === 'development') {
-                console.debug('Successfully reported log to backend:', {
+            if (this.detectEnvironment() === "development") {
+                console.debug("Successfully reported log to backend:", {
                     level: LogLevel[entry.level],
                     message: entry.message,
-                    response: response
+                    response: response,
                 });
             }
-
         } catch (error) {
             // Enhanced error handling for backend reporting failures
             this.handleBackendReportingError(error, entry);
@@ -416,43 +477,55 @@ class Logger {
      * Handle backend reporting errors with fallback strategies
      */
     private handleBackendReportingError(error: unknown, entry: LogEntry): void {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        
+        const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+
         // Store failed reports for potential retry
         this.storeFailedBackendReport(entry, errorMessage);
-        
+
         // Log to console in development, suppress in production
-        if (this.detectEnvironment() === 'development') {
-            console.warn('Failed to report log to backend:', {
+        if (this.detectEnvironment() === "development") {
+            console.warn("Failed to report log to backend:", {
                 error: errorMessage,
                 originalLog: {
                     level: LogLevel[entry.level],
                     message: entry.message,
-                    timestamp: entry.timestamp
-                }
+                    timestamp: entry.timestamp,
+                },
             });
         }
-        
+
         // For critical errors, also store in localStorage as last resort (browser only)
-        if (entry.level === LogLevel.CRITICAL && typeof localStorage !== 'undefined') {
+        if (
+            entry.level === LogLevel.CRITICAL &&
+            typeof localStorage !== "undefined"
+        ) {
             try {
-                const criticalLogs = JSON.parse(localStorage.getItem('cinexplorer_critical_logs') || '[]');
+                const criticalLogs = JSON.parse(
+                    localStorage.getItem("cinexplorer_critical_logs") || "[]",
+                );
                 criticalLogs.push({
                     ...entry,
                     timestamp: entry.timestamp.toISOString(),
                     backendReportFailed: true,
-                    backendError: errorMessage
+                    backendError: errorMessage,
                 });
-                
+
                 // Keep only last 10 critical logs in localStorage
                 if (criticalLogs.length > 10) {
                     criticalLogs.shift();
                 }
-                
-                localStorage.setItem('cinexplorer_critical_logs', JSON.stringify(criticalLogs));
+
+                localStorage.setItem(
+                    "cinexplorer_critical_logs",
+                    JSON.stringify(criticalLogs),
+                );
             } catch (storageError) {
                 // If localStorage also fails, there's nothing more we can do
-                console.error('Failed to store critical log in localStorage:', storageError);
+                console.error(
+                    "Failed to store critical log in localStorage:",
+                    storageError,
+                );
             }
         }
     }
@@ -464,14 +537,14 @@ class Logger {
         if (!this.failedReports) {
             this.failedReports = [];
         }
-        
+
         this.failedReports.push({
             entry,
             error,
             timestamp: new Date(),
-            retryCount: 0
+            retryCount: 0,
         });
-        
+
         // Limit failed reports storage
         if (this.failedReports.length > 50) {
             this.failedReports.shift();
@@ -483,7 +556,7 @@ class Logger {
      */
     getLogs(level?: LogLevel): LogEntry[] {
         if (level !== undefined) {
-            return this.logStorage.filter(entry => entry.level >= level);
+            return this.logStorage.filter((entry) => entry.level >= level);
         }
         return [...this.logStorage];
     }
@@ -508,18 +581,20 @@ class Logger {
      * Manually report a critical error to backend (public method)
      */
     async reportCriticalError(
-        message: string, 
+        message: string,
         errorData?: unknown,
-        context?: string
+        context?: string,
     ): Promise<boolean> {
         try {
             // Enhance error data with user interactions for debugging context
             const enhancedErrorData = {
-                ...(errorData && typeof errorData === 'object' ? errorData : { originalData: errorData }),
+                ...(errorData && typeof errorData === "object"
+                    ? errorData
+                    : { originalData: errorData }),
                 // Add recent user interactions if tracking is enabled
                 ...(this.interactionTrackingEnabled && {
-                    recentInteractions: this.getRecentInteractions(5)
-                })
+                    recentInteractions: this.getRecentInteractions(5),
+                }),
             };
 
             // Create a critical log entry
@@ -528,29 +603,35 @@ class Logger {
                 message: context ? `[${context}] ${message}` : message,
                 timestamp: new Date(),
                 data: enhancedErrorData,
-                user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
-                url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
+                user_agent:
+                    typeof navigator !== "undefined"
+                        ? navigator.userAgent
+                        : "test-environment",
+                url:
+                    typeof window !== "undefined"
+                        ? window.location.href
+                        : "test-environment",
                 user_id: this.getCurrentUserId(),
                 session_id: this.sessionId,
             };
-            
+
             // Report to backend immediately
             await this.reportToBackend(logEntry);
-            
+
             // Also log locally
             this.critical(message, enhancedErrorData);
-            
+
             return true;
         } catch (error) {
-            this.error('Failed to report critical error manually', {
+            this.error("Failed to report critical error manually", {
                 originalMessage: message,
                 errorData,
-                reportError: error
+                reportError: error,
             });
             return false;
         }
     }
-    
+
     /**
      * Retry failed backend reports
      */
@@ -558,18 +639,18 @@ class Logger {
         if (!this.failedReports || this.failedReports.length === 0) {
             return { success: 0, failed: 0 };
         }
-        
+
         let successCount = 0;
         let failedCount = 0;
         const remainingReports: FailedReport[] = [];
-        
+
         for (const failedReport of this.failedReports) {
             // Skip reports that have been retried too many times
             if (failedReport.retryCount >= 3) {
                 failedCount++;
                 continue;
             }
-            
+
             try {
                 await this.reportToBackend(failedReport.entry);
                 successCount++;
@@ -578,68 +659,72 @@ class Logger {
                 remainingReports.push(failedReport);
                 failedCount++;
             }
-            
+
             // Small delay between retries
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        
+
         // Update failed reports list
         this.failedReports = remainingReports;
-        
+
         if (successCount > 0 || failedCount > 0) {
-            this.info('Retry failed backend reports completed', {
+            this.info("Retry failed backend reports completed", {
                 success: successCount,
                 failed: failedCount,
-                remaining: remainingReports.length
+                remaining: remainingReports.length,
             });
         }
-        
+
         return { success: successCount, failed: failedCount };
     }
-    
+
     /**
      * Get failed backend reports for inspection
      */
     getFailedReports(): FailedReport[] {
         return [...this.failedReports];
     }
-    
+
     /**
      * Get critical logs stored in localStorage (fallback storage)
      */
     getCriticalLogsFromStorage(): unknown[] {
-        if (typeof localStorage === 'undefined') {
+        if (typeof localStorage === "undefined") {
             return [];
         }
         try {
-            return JSON.parse(localStorage.getItem('cinexplorer_critical_logs') || '[]');
+            return JSON.parse(
+                localStorage.getItem("cinexplorer_critical_logs") || "[]",
+            );
         } catch {
             return [];
         }
     }
-    
+
     /**
      * Clear critical logs from localStorage
      */
     clearCriticalLogsFromStorage(): void {
-        if (typeof localStorage === 'undefined') {
-            this.warn('localStorage not available (test environment)');
+        if (typeof localStorage === "undefined") {
+            this.warn("localStorage not available (test environment)");
             return;
         }
         try {
-            localStorage.removeItem('cinexplorer_critical_logs');
-            this.info('Cleared critical logs from localStorage');
+            localStorage.removeItem("cinexplorer_critical_logs");
+            this.info("Cleared critical logs from localStorage");
         } catch (error) {
-            this.warn('Failed to clear critical logs from localStorage', { error });
+            this.warn("Failed to clear critical logs from localStorage", {
+                error,
+            });
         }
     }
-    
+
     /**
      * Update logger configuration
      */
     updateConfig(newConfig: Partial<LoggerConfig>): void {
         this.config = { ...this.config, ...newConfig };
-        this.info('Logger configuration updated', { newConfig: this.config });
+        this.info("Logger configuration updated", { newConfig: this.config });
     }
 
     // ============= USER INTERACTION TRACKING =============
@@ -648,7 +733,7 @@ class Logger {
      * Enable user interaction tracking (development mode only)
      */
     public enableInteractionTracking(): void {
-        if (typeof window === 'undefined' || this.interactionTrackingEnabled) {
+        if (typeof window === "undefined" || this.interactionTrackingEnabled) {
             return; // Don't enable in SSR or if already enabled
         }
 
@@ -657,10 +742,12 @@ class Logger {
         // Track clicks with element identification
         const clickListener = (event: Event) => {
             const target = event.target as Element;
-            this.trackInteraction('click', {
+            this.trackInteraction("click", {
                 target: this.getElementIdentifier(target),
-                coordinates: event instanceof MouseEvent ? 
-                    { x: event.clientX, y: event.clientY } : undefined,
+                coordinates:
+                    event instanceof MouseEvent
+                        ? { x: event.clientX, y: event.clientY }
+                        : undefined,
                 button: event instanceof MouseEvent ? event.button : undefined,
             });
         };
@@ -668,19 +755,19 @@ class Logger {
         // Track form submissions
         const formSubmitListener = (event: Event) => {
             const form = event.target as HTMLFormElement;
-            this.trackInteraction('form_submit', {
+            this.trackInteraction("form_submit", {
                 target: this.getElementIdentifier(form),
-                action: form.action || 'none',
-                method: form.method || 'GET',
+                action: form.action || "none",
+                method: form.method || "GET",
             });
         };
 
         // Track key presses (limited to important keys)
         const keyListener = (event: KeyboardEvent) => {
             // Only track important navigation/action keys
-            const importantKeys = ['Enter', 'Escape', 'Tab', 'F5'];
+            const importantKeys = ["Enter", "Escape", "Tab", "F5"];
             if (importantKeys.includes(event.key)) {
-                this.trackInteraction('key_press', {
+                this.trackInteraction("key_press", {
                     key: event.key,
                     ctrlKey: event.ctrlKey,
                     altKey: event.altKey,
@@ -692,7 +779,7 @@ class Logger {
 
         // Track window resize for debugging responsive issues
         const resizeListener = () => {
-            this.trackInteraction('resize', {
+            this.trackInteraction("resize", {
                 viewport: {
                     width: window.innerWidth,
                     height: window.innerHeight,
@@ -702,29 +789,39 @@ class Logger {
 
         // Track navigation events
         const navigationListener = () => {
-            this.trackInteraction('navigation', {
+            this.trackInteraction("navigation", {
                 url: window.location.href,
-                previous: typeof document !== 'undefined' ? (document.referrer || 'direct') : 'test-environment',
+                previous:
+                    typeof document !== "undefined"
+                        ? document.referrer || "direct"
+                        : "test-environment",
             });
         };
 
         // Add event listeners
-        document.addEventListener('click', clickListener, true);
-        document.addEventListener('submit', formSubmitListener, true);
-        document.addEventListener('keydown', keyListener);
-        window.addEventListener('resize', resizeListener);
-        window.addEventListener('popstate', navigationListener);
+        document.addEventListener("click", clickListener, true);
+        document.addEventListener("submit", formSubmitListener, true);
+        document.addEventListener("keydown", keyListener);
+        window.addEventListener("resize", resizeListener);
+        window.addEventListener("popstate", navigationListener);
 
         // Store listeners for cleanup
         this.interactionListeners = [
-            () => document.removeEventListener('click', clickListener, true),
-            () => document.removeEventListener('submit', formSubmitListener, true),
-            () => document.removeEventListener('keydown', keyListener),
-            () => window.removeEventListener('resize', resizeListener),
-            () => window.removeEventListener('popstate', navigationListener),
+            () => document.removeEventListener("click", clickListener, true),
+            () =>
+                document.removeEventListener(
+                    "submit",
+                    formSubmitListener,
+                    true,
+                ),
+            () => document.removeEventListener("keydown", keyListener),
+            () => window.removeEventListener("resize", resizeListener),
+            () => window.removeEventListener("popstate", navigationListener),
         ];
 
-        this.debug('User interaction tracking enabled for development debugging');
+        this.debug(
+            "User interaction tracking enabled for development debugging",
+        );
     }
 
     /**
@@ -736,19 +833,19 @@ class Logger {
         }
 
         // Remove all event listeners
-        this.interactionListeners.forEach(cleanup => cleanup());
+        this.interactionListeners.forEach((cleanup) => cleanup());
         this.interactionListeners = [];
 
         this.interactionTrackingEnabled = false;
-        this.debug('User interaction tracking disabled');
+        this.debug("User interaction tracking disabled");
     }
 
     /**
      * Track a user interaction (internal method)
      */
     private trackInteraction(
-        type: UserInteraction['type'], 
-        data?: Record<string, unknown>
+        type: UserInteraction["type"],
+        data?: Record<string, unknown>,
     ): void {
         if (!this.interactionTrackingEnabled) {
             return;
@@ -757,7 +854,10 @@ class Logger {
         const interaction: UserInteraction = {
             type,
             timestamp: new Date(),
-            url: typeof window !== 'undefined' ? window.location.href : 'test-environment',
+            url:
+                typeof window !== "undefined"
+                    ? window.location.href
+                    : "test-environment",
             session_id: this.sessionId,
             ...data,
         };
@@ -777,8 +877,11 @@ class Logger {
     /**
      * Manually track a custom interaction (public method)
      */
-    public trackCustomInteraction(description: string, data?: Record<string, unknown>): void {
-        this.trackInteraction('custom', {
+    public trackCustomInteraction(
+        description: string,
+        data?: Record<string, unknown>,
+    ): void {
+        this.trackInteraction("custom", {
             target: description,
             ...data,
         });
@@ -804,7 +907,7 @@ class Logger {
      * Get element identifier for interaction tracking
      */
     private getElementIdentifier(element: Element | null): string {
-        if (!element) return 'unknown';
+        if (!element) return "unknown";
 
         // Try ID first
         if (element.id) {
@@ -812,21 +915,23 @@ class Logger {
         }
 
         // Try data attributes for React components
-        const testId = element.getAttribute('data-testid');
+        const testId = element.getAttribute("data-testid");
         if (testId) {
             return `[data-testid="${testId}"]`;
         }
 
         // Try role attribute
-        const role = element.getAttribute('role');
+        const role = element.getAttribute("role");
         if (role) {
             return `[role="${role}"]`;
         }
 
         // Fallback to tag name + class
         let identifier = element.tagName.toLowerCase();
-        if (element.className && typeof element.className === 'string') {
-            const classes = element.className.split(' ').filter(c => c.trim());
+        if (element.className && typeof element.className === "string") {
+            const classes = element.className
+                .split(" ")
+                .filter((c) => c.trim());
             if (classes.length > 0) {
                 identifier += `.${classes[0]}`;
             }
@@ -838,36 +943,48 @@ class Logger {
     /**
      * Detect current environment with fallbacks
      */
-    private detectEnvironment(): 'development' | 'production' | 'test' | 'staging' {
+    private detectEnvironment():
+        "development" | "production" | "test" | "staging" {
         // Primary detection via Vite environment
         const viteMode = import.meta.env.MODE;
-        
+
         // Check for explicit environment variables
         const nodeEnv = import.meta.env.VITE_NODE_ENV;
         const appEnv = import.meta.env.VITE_APP_ENV;
-        
+
         // Test environment detection
-        if (viteMode === 'test' || nodeEnv === 'test' || 
-            typeof window !== 'undefined' && (window as { __VITEST__?: boolean }).__VITEST__) {
-            return 'test';
+        if (
+            viteMode === "test" ||
+            nodeEnv === "test" ||
+            (typeof window !== "undefined" &&
+                (window as { __VITEST__?: boolean }).__VITEST__)
+        ) {
+            return "test";
         }
-        
+
         // Production environment detection
-        if (viteMode === 'production' || nodeEnv === 'production' || 
-            appEnv === 'production' || !import.meta.env.DEV) {
-            return 'production';
+        if (
+            viteMode === "production" ||
+            nodeEnv === "production" ||
+            appEnv === "production" ||
+            !import.meta.env.DEV
+        ) {
+            return "production";
         }
-        
+
         // Staging environment detection
-        if (viteMode === 'staging' || nodeEnv === 'staging' || 
-            appEnv === 'staging') {
-            return 'staging';
+        if (
+            viteMode === "staging" ||
+            nodeEnv === "staging" ||
+            appEnv === "staging"
+        ) {
+            return "staging";
         }
-        
+
         // Default to development
-        return 'development';
+        return "development";
     }
-    
+
     /**
      * Get current environment information
      */
@@ -882,12 +999,12 @@ class Logger {
         return {
             environment,
             viteMode: import.meta.env.MODE,
-            isProduction: environment === 'production',
-            isDevelopment: environment === 'development',
+            isProduction: environment === "production",
+            isDevelopment: environment === "development",
             config: { ...this.config },
         };
     }
-    
+
     /**
      * Generate unique session ID
      */
@@ -900,63 +1017,73 @@ class Logger {
      */
     private sanitizeDataForBackend(data: unknown): unknown {
         if (!data) return data;
-        
+
         try {
             // Convert to string to check size and sanitize
             let sanitized = JSON.parse(JSON.stringify(data));
-            
+
             // Remove sensitive fields recursively
             sanitized = this.removeSensitiveFields(sanitized);
-            
+
             // Limit size to prevent large payloads
             const serialized = JSON.stringify(sanitized);
             if (serialized.length > 10000) {
                 return {
                     _truncated: true,
                     _originalSize: serialized.length,
-                    data: serialized.substring(0, 10000) + '...[truncated]'
+                    data: serialized.substring(0, 10000) + "...[truncated]",
                 };
             }
-            
+
             return sanitized;
         } catch {
             // If sanitization fails, return safe fallback
             return {
                 _sanitizationError: true,
                 _originalType: typeof data,
-                message: 'Data could not be sanitized for backend transmission'
+                message: "Data could not be sanitized for backend transmission",
             };
         }
     }
-    
+
     /**
      * Remove sensitive fields from object recursively
      */
     private removeSensitiveFields(obj: unknown): unknown {
-        if (!obj || typeof obj !== 'object') return obj;
-        
+        if (!obj || typeof obj !== "object") return obj;
+
         const sensitiveFields = [
-            'password', 'token', 'api_key', 'secret', 'auth', 'authorization',
-            'csrf', 'cookie', 'session', 'key', 'private', 'credential'
+            "password",
+            "token",
+            "api_key",
+            "secret",
+            "auth",
+            "authorization",
+            "csrf",
+            "cookie",
+            "session",
+            "key",
+            "private",
+            "credential",
         ];
-        
+
         if (Array.isArray(obj)) {
-            return obj.map(item => this.removeSensitiveFields(item));
+            return obj.map((item) => this.removeSensitiveFields(item));
         }
-        
+
         const cleaned: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
             const lowerKey = key.toLowerCase();
-            if (sensitiveFields.some(field => lowerKey.includes(field))) {
-                cleaned[key] = '[FILTERED]';
+            if (sensitiveFields.some((field) => lowerKey.includes(field))) {
+                cleaned[key] = "[FILTERED]";
             } else {
                 cleaned[key] = this.removeSensitiveFields(value);
             }
         }
-        
+
         return cleaned;
     }
-    
+
     /**
      * Get browser information for backend reporting
      */
@@ -968,17 +1095,25 @@ class Logger {
         timezone: string;
     } {
         return {
-            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : 'test-environment',
-            language: typeof navigator !== 'undefined' ? navigator.language : 'en-US',
-            platform: typeof navigator !== 'undefined' ? navigator.platform : 'test-environment',
+            user_agent:
+                typeof navigator !== "undefined"
+                    ? navigator.userAgent
+                    : "test-environment",
+            language:
+                typeof navigator !== "undefined" ? navigator.language : "en-US",
+            platform:
+                typeof navigator !== "undefined"
+                    ? navigator.platform
+                    : "test-environment",
             viewport: {
-                width: typeof window !== 'undefined' ? window.innerWidth : 1920,
-                height: typeof window !== 'undefined' ? window.innerHeight : 1080
+                width: typeof window !== "undefined" ? window.innerWidth : 1920,
+                height:
+                    typeof window !== "undefined" ? window.innerHeight : 1080,
             },
-            timezone: 'UTC'
+            timezone: "UTC",
         };
     }
-    
+
     /**
      * Get current user ID from authentication context
      */
@@ -986,11 +1121,11 @@ class Logger {
         try {
             // Use module path to avoid require() linting error
             // eslint-disable-next-line @typescript-eslint/no-require-imports
-            const { getAuthTokens } = require('@/utilities/token');
+            const { getAuthTokens } = require("@/utilities/token");
             const { access_token } = getAuthTokens();
             if (access_token) {
                 // Decode JWT payload to get user ID (basic decode, not verification)
-                const payload = JSON.parse(atob(access_token.split('.')[1]));
+                const payload = JSON.parse(atob(access_token.split(".")[1]));
                 return payload.user_id || payload.sub;
             }
         } catch {

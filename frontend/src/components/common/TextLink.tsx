@@ -1,5 +1,8 @@
 import { Link as ChakraLink } from "@chakra-ui/react";
-import { Link as RouterLink, type LinkProps as RouterLinkProps } from "react-router-dom";
+import {
+  Link as RouterLink,
+  type LinkProps as RouterLinkProps,
+} from "react-router-dom";
 import type { ReactNode } from "react";
 
 /**
@@ -49,7 +52,12 @@ interface TextLinkProps extends Omit<RouterLinkProps, "color" | "mask"> {
   [key: string]: unknown;
 }
 
-export const TextLink = ({ to, children, color = "tertiary", ...props }: TextLinkProps) => {
+export const TextLink = ({
+  to,
+  children,
+  color = "tertiary",
+  ...props
+}: TextLinkProps) => {
   return (
     <ChakraLink
       asChild

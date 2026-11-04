@@ -11,29 +11,29 @@
  * - Loading states
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { BrowserRouter } from 'react-router-dom';
-import { Provider as ChakraProvider } from '../../../components/core/chakra/provider';
-import Watchlist from '../Watchlist';
-import * as userMovieService from '../../../services/userMovieService';
-import type { MovieListItem, MovieListResponse } from '@/@types/movie.d';
+import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { BrowserRouter } from "react-router-dom";
+import { Provider as ChakraProvider } from "../../../components/core/chakra/provider";
+import Watchlist from "../Watchlist";
+import * as userMovieService from "../../../services/userMovieService";
+import type { MovieListItem, MovieListResponse } from "@/@types/movie.d";
 
 // Helper to wrap component with Router and ChakraProvider
 function renderWithProviders(component: React.ReactElement) {
   return render(
     <ChakraProvider>
       <BrowserRouter>{component}</BrowserRouter>
-    </ChakraProvider>
+    </ChakraProvider>,
   );
 }
 
 // Mock the userMovieService
-vi.mock('../../../services/userMovieService', () => ({
+vi.mock("../../../services/userMovieService", () => ({
   getUserMovies: vi.fn(),
 }));
 
-describe('Watchlist Page', () => {
+describe("Watchlist Page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -44,7 +44,7 @@ describe('Watchlist Page', () => {
    * Scenario: Page loads
    * Expected: Calls getUserMovies with watchlist: true parameter
    */
-  it('should fetch watchlist data on mount', async () => {
+  it("should fetch watchlist data on mount", async () => {
     // Arrange: Mock empty response
     const mockResponse: MovieListResponse = {
       page: 1,
@@ -75,19 +75,19 @@ describe('Watchlist Page', () => {
    * Scenario: User has movies on watchlist
    * Expected: Renders movie titles in a list
    */
-  it('should display movie list when data is present', async () => {
+  it("should display movie list when data is present", async () => {
     // Arrange: Mock response with movies
     const mockMovies: MovieListItem[] = [
       {
         tmdb_id: 550,
-        title: 'Fight Club',
-        poster_path: '/fight-club.jpg',
-        release_date: '1999-10-15',
+        title: "Fight Club",
+        poster_path: "/fight-club.jpg",
+        release_date: "1999-10-15",
         vote_average: 8.4,
         user_movie_data: {
           id: 1,
           tmdb_id: 550,
-          title: 'Fight Club',
+          title: "Fight Club",
           user_watched: false,
           user_on_watchlist: true,
           user_liked: false,
@@ -97,19 +97,19 @@ describe('Watchlist Page', () => {
       },
       {
         tmdb_id: 13,
-        title: 'Forrest Gump',
-        poster_path: '/forrest-gump.jpg',
-        release_date: '1994-07-06',
+        title: "Forrest Gump",
+        poster_path: "/forrest-gump.jpg",
+        release_date: "1994-07-06",
         vote_average: 8.8,
         user_movie_data: {
           id: 2,
           tmdb_id: 13,
-          title: 'Forrest Gump',
+          title: "Forrest Gump",
           user_watched: true,
           user_on_watchlist: true,
           user_liked: true,
           user_rating: 9,
-          user_review: 'Amazing movie!',
+          user_review: "Amazing movie!",
         },
       },
     ];
@@ -131,8 +131,8 @@ describe('Watchlist Page', () => {
 
     // Assert: Should display both movie titles
     await waitFor(() => {
-      expect(screen.getByText('Fight Club')).toBeInTheDocument();
-      expect(screen.getByText('Forrest Gump')).toBeInTheDocument();
+      expect(screen.getByText("Fight Club")).toBeInTheDocument();
+      expect(screen.getByText("Forrest Gump")).toBeInTheDocument();
     });
   });
 
@@ -142,7 +142,7 @@ describe('Watchlist Page', () => {
    * Scenario: User has empty watchlist
    * Expected: Displays "No movies on watchlist" message
    */
-  it('should show empty state when no movies on watchlist', async () => {
+  it("should show empty state when no movies on watchlist", async () => {
     // Arrange: Mock empty response
     const mockResponse: MovieListResponse = {
       page: 1,
@@ -161,7 +161,7 @@ describe('Watchlist Page', () => {
 
     // Assert: Should show empty state message
     await waitFor(() => {
-      expect(screen.getByText('No movies on watchlist')).toBeInTheDocument();
+      expect(screen.getByText("No movies on watchlist")).toBeInTheDocument();
     });
   });
 
@@ -171,7 +171,7 @@ describe('Watchlist Page', () => {
    * Scenario: Data is being fetched
    * Expected: Displays loading indicator
    */
-  it('should show loading state while fetching data', () => {
+  it("should show loading state while fetching data", () => {
     // Arrange: Mock pending promise (never resolves during test)
     vi.mocked(userMovieService.getUserMovies).mockReturnValue({
       request: new Promise(() => {}), // Never resolves

@@ -25,7 +25,7 @@ const SortDropdown = ({
   // Get available sort options based on language (hides title sorts for non-Latin)
   const availableSortOptions = useMemo(
     () => getAvailableSortOptions(browseParams.language),
-    [browseParams.language]
+    [browseParams.language],
   );
 
   // Disable "Highest Rated" in Upcoming view - upcoming movies have few/no votes,
@@ -40,7 +40,7 @@ const SortDropdown = ({
             option.value === "vote_average.desc" && pageSource === "upcoming",
         })),
       }),
-    [availableSortOptions, pageSource]
+    [availableSortOptions, pageSource],
   );
 
   return (

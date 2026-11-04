@@ -25,21 +25,30 @@ import type { BrowseParams } from "@/types/browseTypes";
  */
 
 // Helper: Add genres filter if present
-function addGenres(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
+function addGenres(
+    params: Record<string, string | number | number[]>,
+    browseParams: BrowseParams,
+) {
     if (browseParams.genres.length > 0) {
         params.genres = browseParams.genres.join(",");
     }
 }
 
 // Helper: Add language filter if present
-function addLanguage(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
+function addLanguage(
+    params: Record<string, string | number | number[]>,
+    browseParams: BrowseParams,
+) {
     if (browseParams.language) {
         params.language = browseParams.language;
     }
 }
 
 // Helper: Add certification filter if present
-function addCertifications(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
+function addCertifications(
+    params: Record<string, string | number | number[]>,
+    browseParams: BrowseParams,
+) {
     if (browseParams.certifications && browseParams.certifications.length > 0) {
         // TMDB uses pipe (|) for OR logic between certifications
         params.certification = browseParams.certifications.join("|");
@@ -49,7 +58,10 @@ function addCertifications(params: Record<string, string | number | number[]>, b
 }
 
 // Helper: Add rating filters
-function addRatings(params: Record<string, string | number | number[]>, browseParams: BrowseParams) {
+function addRatings(
+    params: Record<string, string | number | number[]>,
+    browseParams: BrowseParams,
+) {
     if (browseParams.minRating) {
         params.vote_average_gte = browseParams.minRating;
     }
@@ -61,7 +73,7 @@ function addRatings(params: Record<string, string | number | number[]>, browsePa
 // Helper: Add release date range with NaN validation
 function addReleaseDateRange(
     params: Record<string, string | number | number[]>,
-    browseParams: BrowseParams
+    browseParams: BrowseParams,
 ) {
     // Handle maxYear-only case (e.g., "movies before 2000")
     if (!browseParams.minYear) {
@@ -84,14 +96,16 @@ function addReleaseDateRange(
         : new Date().getFullYear();
 
     // NaN check for maxYear (fallback to current year if invalid)
-    const endYear = isNaN(effectiveMaxYear) ? new Date().getFullYear() : effectiveMaxYear;
+    const endYear = isNaN(effectiveMaxYear)
+        ? new Date().getFullYear()
+        : effectiveMaxYear;
 
     params.release_date_gte = `${startYear}-01-01`;
     params.release_date_lte = `${endYear}-12-31`;
 }
 
 export function mapBrowseParamsToApi(
-    browseParams: BrowseParams
+    browseParams: BrowseParams,
 ): Record<string, string | number | number[]> {
     const apiParams: Record<string, string | number | number[]> = {};
 

@@ -25,7 +25,7 @@
  * Required because ThemeSelector uses useThemeSelect hook which needs ThemeSelectProvider context
  */
 export const mockThemeSelector = () => ({
-  ThemeSelector: () => <div data-testid="theme-selector">Theme Selector</div>
+  ThemeSelector: () => <div data-testid="theme-selector">Theme Selector</div>,
 });
 
 /**
@@ -33,5 +33,7 @@ export const mockThemeSelector = () => ({
  * Simplifies testing of components that include theme controls
  */
 export const mockColorModeButton = () => ({
-  ColorModeButton: () => <button data-testid="color-mode-button">Color Mode</button>
+  ColorModeButton: () => (
+    <button data-testid="color-mode-button">Color Mode</button>
+  ),
 });

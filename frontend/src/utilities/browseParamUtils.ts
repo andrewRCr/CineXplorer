@@ -44,15 +44,15 @@ import { isYearFilterAdvanced } from "@/utilities/yearFilterAnalysis";
  * @returns true if any FILTER is active (non-default)
  */
 export function hasActiveFilters(params: BrowseParams): boolean {
-  return (
-    params.genres.length > 0 ||
-    params.minYear !== "" ||
-    params.maxYear !== "" ||
-    params.minRating !== "" ||
-    params.maxRating !== "" ||
-    params.language !== "" ||
-    (params.certifications?.length ?? 0) > 0
-  );
+    return (
+        params.genres.length > 0 ||
+        params.minYear !== "" ||
+        params.maxYear !== "" ||
+        params.minRating !== "" ||
+        params.maxRating !== "" ||
+        params.language !== "" ||
+        (params.certifications?.length ?? 0) > 0
+    );
 }
 
 /**
@@ -65,7 +65,7 @@ export function hasActiveFilters(params: BrowseParams): boolean {
  * @returns true if any parameter is active (non-default)
  */
 export function hasActiveBrowseParams(params: BrowseParams): boolean {
-  return hasActiveFilters(params) || params.sortBy !== DEFAULT_SORT;
+    return hasActiveFilters(params) || params.sortBy !== DEFAULT_SORT;
 }
 
 /**
@@ -90,16 +90,16 @@ export function hasActiveBrowseParams(params: BrowseParams): boolean {
  * @returns Number of active filter groups (0-5)
  */
 export function countActiveParams(params: BrowseParams): number {
-  let count = 0;
+    let count = 0;
 
-  if (params.genres.length > 0) count++;
-  if (params.minYear !== "" || params.maxYear !== "") count++;
-  if (params.minRating !== "" || params.maxRating !== "") count++;
-  // Sort intentionally excluded - it's a preference, not a filter
-  if (params.language !== "") count++;
-  if ((params.certifications?.length ?? 0) > 0) count++;
+    if (params.genres.length > 0) count++;
+    if (params.minYear !== "" || params.maxYear !== "") count++;
+    if (params.minRating !== "" || params.maxRating !== "") count++;
+    // Sort intentionally excluded - it's a preference, not a filter
+    if (params.language !== "") count++;
+    if ((params.certifications?.length ?? 0) > 0) count++;
 
-  return count;
+    return count;
 }
 
 /**
@@ -109,7 +109,7 @@ export function countActiveParams(params: BrowseParams): number {
  * @returns true if it matches DEFAULT_SORT ("popularity.desc")
  */
 export function isDefaultSort(sortBy: string): boolean {
-  return sortBy === DEFAULT_SORT;
+    return sortBy === DEFAULT_SORT;
 }
 
 /**
@@ -135,33 +135,36 @@ export function isDefaultSort(sortBy: string): boolean {
  * @returns true if any advanced filter values are present
  */
 export function hasAdvancedFilterValues(filters: BrowseParams): boolean {
-  // Rating filters are advanced-only
-  if (filters.minRating || filters.maxRating) return true;
+    // Rating filters are advanced-only
+    if (filters.minRating || filters.maxRating) return true;
 
-  // Year filters that are not QuickBrowseBar presets are advanced
-  if (isYearFilterAdvanced(filters.minYear, filters.maxYear)) return true;
+    // Year filters that are not QuickBrowseBar presets are advanced
+    if (isYearFilterAdvanced(filters.minYear, filters.maxYear)) return true;
 
-  // Multiple genres are advanced-only (minimal supports single genre only)
-  if (filters.genres.length > 1) return true;
+    // Multiple genres are advanced-only (minimal supports single genre only)
+    if (filters.genres.length > 1) return true;
 
-  // Non-core genres are advanced-only
-  if (filters.genres.length === 1) {
-    const genreId = String(filters.genres[0]);
-    if (!CORE_GENRE_IDS_SET.has(genreId)) {
-      return true;
+    // Non-core genres are advanced-only
+    if (filters.genres.length === 1) {
+        const genreId = String(filters.genres[0]);
+        if (!CORE_GENRE_IDS_SET.has(genreId)) {
+            return true;
+        }
     }
-  }
 
-  // Check for invalid sort options (uses sortOptions from browseOptions.ts)
-  if (filters.sortBy && !sortOptions.some((opt) => opt.value === filters.sortBy)) {
-    return true;
-  }
+    // Check for invalid sort options (uses sortOptions from browseOptions.ts)
+    if (
+        filters.sortBy &&
+        !sortOptions.some((opt) => opt.value === filters.sortBy)
+    ) {
+        return true;
+    }
 
-  // Language filter is advanced-only (only visible in expanded panel)
-  if (filters.language) return true;
+    // Language filter is advanced-only (only visible in expanded panel)
+    if (filters.language) return true;
 
-  // Certification filter is advanced-only
-  if (filters.certifications?.length) return true;
+    // Certification filter is advanced-only
+    if (filters.certifications?.length) return true;
 
-  return false;
+    return false;
 }

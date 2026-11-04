@@ -7,22 +7,22 @@
  * - Uses tooltip recipe for consistent styling (popover/on-popover tokens)
  * - Portalled by default for proper z-index stacking
  */
-import { Tooltip as ChakraTooltip, Portal } from "@chakra-ui/react"
-import * as React from "react"
+import { Tooltip as ChakraTooltip, Portal } from "@chakra-ui/react";
+import * as React from "react";
 
 export interface TooltipProps extends ChakraTooltip.RootProps {
   /** Whether to show the arrow indicator (default: true) */
-  showArrow?: boolean
+  showArrow?: boolean;
   /** Whether to render in a portal (default: true) */
-  portalled?: boolean
+  portalled?: boolean;
   /** Container ref for portal rendering */
-  portalRef?: React.RefObject<HTMLElement>
+  portalRef?: React.RefObject<HTMLElement>;
   /** Tooltip content */
-  content: React.ReactNode
+  content: React.ReactNode;
   /** Props passed to Tooltip.Content */
-  contentProps?: ChakraTooltip.ContentProps
+  contentProps?: ChakraTooltip.ContentProps;
   /** Whether the tooltip is disabled */
-  disabled?: boolean
+  disabled?: boolean;
 }
 
 export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
@@ -36,9 +36,9 @@ export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
       contentProps,
       portalRef,
       ...rest
-    } = props
+    } = props;
 
-    if (disabled) return children
+    if (disabled) return children;
 
     return (
       <ChakraTooltip.Root {...rest}>
@@ -56,6 +56,6 @@ export const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
           </ChakraTooltip.Positioner>
         </Portal>
       </ChakraTooltip.Root>
-    )
+    );
   },
-)
+);

@@ -30,10 +30,10 @@
  * - MovieCard.tsx: Component integration
  */
 
-import { useState } from 'react';
-import type { MovieListItem } from '@/@types/movie.d';
-import { toggleMovieWatchlist } from '@/services/movieInteractionService';
-import { toaster } from '@/components/core/chakra/toaster';
+import { useState } from "react";
+import type { MovieListItem } from "@/@types/movie.d";
+import { toggleMovieWatchlist } from "@/services/movieInteractionService";
+import { toaster } from "@/components/core/chakra/toaster";
 
 interface UseMovieActionsProps {
     movie: MovieListItem;
@@ -85,7 +85,9 @@ interface UseMovieActionsReturn {
  * Note: Component should handle optimistic UI updates locally.
  * Hook only manages API call state (loading, error).
  */
-export function useMovieActions({ movie }: UseMovieActionsProps): UseMovieActionsReturn {
+export function useMovieActions({
+    movie,
+}: UseMovieActionsProps): UseMovieActionsReturn {
     const [isUpdating, setIsUpdating] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -113,17 +115,25 @@ export function useMovieActions({ movie }: UseMovieActionsProps): UseMovieAction
             // Success toast based on new state (not stale prop)
             // Note: Undo action deferred - requires state sync infrastructure (see backlog)
             toaster.success({
-                title: isNowOnWatchlist ? "Added to watchlist" : "Removed from watchlist",
+                title: isNowOnWatchlist
+                    ? "Added to watchlist"
+                    : "Removed from watchlist",
             });
         } catch (err: unknown) {
             // Error: Extract message from various error formats
-            let errorMessage = 'Failed to update watchlist';
+            let errorMessage = "Failed to update watchlist";
             if (err instanceof Error) {
                 errorMessage = err.message;
-            } else if (typeof err === 'object' && err !== null) {
+            } else if (typeof err === "object" && err !== null) {
                 // Handle Axios-like errors
-                const axiosErr = err as { response?: { data?: { detail?: string } }; message?: string };
-                errorMessage = axiosErr.response?.data?.detail ?? axiosErr.message ?? errorMessage;
+                const axiosErr = err as {
+                    response?: { data?: { detail?: string } };
+                    message?: string;
+                };
+                errorMessage =
+                    axiosErr.response?.data?.detail ??
+                    axiosErr.message ??
+                    errorMessage;
             }
             setError(errorMessage);
 

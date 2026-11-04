@@ -35,7 +35,8 @@ import {
  * ```
  */
 
-export type VerificationState = "pending" | "verifying" | "success" | "error" | null;
+export type VerificationState =
+  "pending" | "verifying" | "success" | "error" | null;
 
 interface EmailVerificationDialogProps {
   /** Current verification state */
@@ -71,14 +72,17 @@ export const EmailVerificationDialog = ({
           <Dialog.Content bg="layer-01" maxW="400px">
             <Dialog.Header>
               <Dialog.Title>
-                {verificationState === "error" ? "Verification Failed" : "Verify Your Email"}
+                {verificationState === "error"
+                  ? "Verification Failed"
+                  : "Verify Your Email"}
               </Dialog.Title>
             </Dialog.Header>
             <Dialog.Body pb={6}>
               {verificationState === "pending" && (
                 <VStack gap={4}>
                   <Text textAlign="center">
-                    Click the button below to complete your email verification for CineXplorer.
+                    Click the button below to complete your email verification
+                    for CineXplorer.
                   </Text>
                   <Button
                     variant="solid"
@@ -113,13 +117,15 @@ export const EmailVerificationDialog = ({
                     {verificationMessage}
                   </Text>
                   <Text fontSize="sm" color="on-muted" textAlign="center">
-                    You can log in and request a new verification email if needed.
+                    You can log in and request a new verification email if
+                    needed.
                   </Text>
                 </VStack>
               )}
             </Dialog.Body>
             {/* Show footer with dismiss option for pending/error states */}
-            {(verificationState === "pending" || verificationState === "error") && (
+            {(verificationState === "pending" ||
+              verificationState === "error") && (
               <Dialog.Footer>
                 <Dialog.ActionTrigger asChild>
                   <Button variant="ghost" size="sm">

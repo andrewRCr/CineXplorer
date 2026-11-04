@@ -11,10 +11,10 @@
  * - Backward compatibility when metadata absent
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { usePaginatedMovies } from '../usePaginatedMovies';
-import type { MovieListResponse } from '@/types/movie';
+import { renderHook, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { usePaginatedMovies } from "../usePaginatedMovies";
+import type { MovieListResponse } from "@/types/movie";
 
 /**
  * Helper to create mock fetch function matching the FetchArrayFn type
@@ -31,7 +31,7 @@ function createMockFetcher(mockResponse: MovieListResponse) {
  * Helper to create mock paginated response with metadata
  */
 function createMockPaginatedResponse(
-    overrides?: Partial<MovieListResponse>
+    overrides?: Partial<MovieListResponse>,
 ): MovieListResponse {
     return {
         page: 1,
@@ -40,17 +40,17 @@ function createMockPaginatedResponse(
         results: [
             {
                 tmdb_id: 123,
-                title: 'Test Movie 1',
-                poster_path: '/test1.jpg',
-                release_date: '2024-01-01',
+                title: "Test Movie 1",
+                poster_path: "/test1.jpg",
+                release_date: "2024-01-01",
                 vote_average: 8.5,
                 user_movie_data: null,
             },
             {
                 tmdb_id: 456,
-                title: 'Test Movie 2',
-                poster_path: '/test2.jpg',
-                release_date: '2024-02-01',
+                title: "Test Movie 2",
+                poster_path: "/test2.jpg",
+                release_date: "2024-02-01",
                 vote_average: 7.8,
                 user_movie_data: null,
             },
@@ -59,7 +59,7 @@ function createMockPaginatedResponse(
     };
 }
 
-describe('usePaginatedMovies', () => {
+describe("usePaginatedMovies", () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
@@ -70,8 +70,8 @@ describe('usePaginatedMovies', () => {
      * Scenario: API returns pagination metadata with next_tmdb_page_start field
      * Expected: Hook exposes metadata for subsequent pagination requests
      */
-    describe('pagination metadata - storing next_tmdb_page_start', () => {
-        it('should store next_tmdb_page_start when present in API response', async () => {
+    describe("pagination metadata - storing next_tmdb_page_start", () => {
+        it("should store next_tmdb_page_start when present in API response", async () => {
             // Arrange: Response includes next_tmdb_page_start metadata
             const mockResponse = createMockPaginatedResponse({
                 page: 1,
@@ -81,7 +81,9 @@ describe('usePaginatedMovies', () => {
             const mockFetcher = createMockFetcher(mockResponse);
 
             // Act
-            const { result } = renderHook(() => usePaginatedMovies(mockFetcher));
+            const { result } = renderHook(() =>
+                usePaginatedMovies(mockFetcher),
+            );
 
             // Assert: Hook should expose next_tmdb_page_start
             await waitFor(() => {
@@ -93,7 +95,7 @@ describe('usePaginatedMovies', () => {
             expect(result.current.movies).toHaveLength(2);
         });
 
-        it('should handle next_tmdb_page_start as null when no buffering occurred', async () => {
+        it("should handle next_tmdb_page_start as null when no buffering occurred", async () => {
             // Arrange: Response with null metadata (no buffering needed)
             const mockResponse = createMockPaginatedResponse({
                 page: 1,
@@ -103,7 +105,9 @@ describe('usePaginatedMovies', () => {
             const mockFetcher = createMockFetcher(mockResponse);
 
             // Act
-            const { result } = renderHook(() => usePaginatedMovies(mockFetcher));
+            const { result } = renderHook(() =>
+                usePaginatedMovies(mockFetcher),
+            );
 
             // Assert: Hook should expose null metadata
             await waitFor(() => {
@@ -113,7 +117,7 @@ describe('usePaginatedMovies', () => {
             expect(result.current.next_tmdb_page_start).toBeNull();
         });
 
-        it('should handle next_tmdb_page_start as undefined when field absent (backward compatibility)', async () => {
+        it("should handle next_tmdb_page_start as undefined when field absent (backward compatibility)", async () => {
             // Arrange: Response without next_tmdb_page_start field (old API format)
             const mockResponse = createMockPaginatedResponse({
                 page: 1,
@@ -123,7 +127,9 @@ describe('usePaginatedMovies', () => {
             const mockFetcher = createMockFetcher(mockResponse);
 
             // Act
-            const { result } = renderHook(() => usePaginatedMovies(mockFetcher));
+            const { result } = renderHook(() =>
+                usePaginatedMovies(mockFetcher),
+            );
 
             // Assert: Hook should handle missing field gracefully
             await waitFor(() => {
@@ -144,8 +150,8 @@ describe('usePaginatedMovies', () => {
      * The actual inclusion in API requests is handled by the parent component
      * (useMovieFetchRouter or similar) which consumes this hook's return value.
      */
-    describe('pagination metadata - using tmdb_page_start for continuation', () => {
-        it('should expose next_tmdb_page_start for parent component to use in next request', async () => {
+    describe("pagination metadata - using tmdb_page_start for continuation", () => {
+        it("should expose next_tmdb_page_start for parent component to use in next request", async () => {
             // Arrange: First page response with metadata
             const firstPageResponse = createMockPaginatedResponse({
                 page: 1,
@@ -159,9 +165,9 @@ describe('usePaginatedMovies', () => {
                 results: [
                     {
                         tmdb_id: 789,
-                        title: 'Test Movie 3',
-                        poster_path: '/test3.jpg',
-                        release_date: '2024-03-01',
+                        title: "Test Movie 3",
+                        poster_path: "/test3.jpg",
+                        release_date: "2024-03-01",
                         vote_average: 9.0,
                         user_movie_data: null,
                     },
@@ -175,7 +181,7 @@ describe('usePaginatedMovies', () => {
                     initialProps: {
                         fetcher: createMockFetcher(firstPageResponse),
                     },
-                }
+                },
             );
 
             // Assert: First page metadata available
@@ -209,8 +215,8 @@ describe('usePaginatedMovies', () => {
      * When filters change, parent creates new fetcher → hook receives new response
      * → metadata updates automatically from new response.
      */
-    describe('pagination metadata - filter change reset', () => {
-        it('should reset metadata when receiving response from new filter context', async () => {
+    describe("pagination metadata - filter change reset", () => {
+        it("should reset metadata when receiving response from new filter context", async () => {
             // Arrange: Initial response with buffering metadata
             const initialResponse = createMockPaginatedResponse({
                 page: 2,
@@ -224,9 +230,9 @@ describe('usePaginatedMovies', () => {
                 results: [
                     {
                         tmdb_id: 999,
-                        title: 'Filtered Movie',
-                        poster_path: '/filtered.jpg',
-                        release_date: '2024-04-01',
+                        title: "Filtered Movie",
+                        poster_path: "/filtered.jpg",
+                        release_date: "2024-04-01",
                         vote_average: 8.0,
                         user_movie_data: null,
                     },
@@ -240,7 +246,7 @@ describe('usePaginatedMovies', () => {
                     initialProps: {
                         fetcher: createMockFetcher(initialResponse),
                     },
-                }
+                },
             );
 
             await waitFor(() => {
@@ -267,8 +273,8 @@ describe('usePaginatedMovies', () => {
      * Scenario: API doesn't include next_tmdb_page_start (old behavior)
      * Expected: Hook functions normally, metadata is undefined
      */
-    describe('backward compatibility', () => {
-        it('should work correctly when API response lacks pagination metadata', async () => {
+    describe("backward compatibility", () => {
+        it("should work correctly when API response lacks pagination metadata", async () => {
             // Arrange: Response without any metadata fields
             const mockResponse = createMockPaginatedResponse({
                 page: 2,
@@ -278,7 +284,9 @@ describe('usePaginatedMovies', () => {
             const mockFetcher = createMockFetcher(mockResponse);
 
             // Act
-            const { result } = renderHook(() => usePaginatedMovies(mockFetcher));
+            const { result } = renderHook(() =>
+                usePaginatedMovies(mockFetcher),
+            );
 
             // Assert: Hook still provides all standard functionality
             await waitFor(() => {
@@ -298,8 +306,8 @@ describe('usePaginatedMovies', () => {
      *
      * Ensure new metadata fields don't break existing loading/error handling
      */
-    describe('loading and error states', () => {
-        it('should handle loading state correctly', async () => {
+    describe("loading and error states", () => {
+        it("should handle loading state correctly", async () => {
             // Arrange: Delayed response
             let resolveResponse: (value: { data: MovieListResponse }) => void;
             const mockFetcher = () => ({
@@ -310,7 +318,9 @@ describe('usePaginatedMovies', () => {
             });
 
             // Act
-            const { result } = renderHook(() => usePaginatedMovies(mockFetcher));
+            const { result } = renderHook(() =>
+                usePaginatedMovies(mockFetcher),
+            );
 
             // Assert: Initially loading
             expect(result.current.isLoading).toBe(true);
@@ -328,7 +338,7 @@ describe('usePaginatedMovies', () => {
             expect(result.current.movies).toHaveLength(2);
         });
 
-        it('should expose next_tmdb_page_start as undefined during loading', async () => {
+        it("should expose next_tmdb_page_start as undefined during loading", async () => {
             // Arrange: Delayed response
             let resolveResponse: (value: { data: MovieListResponse }) => void;
             const mockFetcher = () => ({
@@ -339,7 +349,9 @@ describe('usePaginatedMovies', () => {
             });
 
             // Act
-            const { result } = renderHook(() => usePaginatedMovies(mockFetcher));
+            const { result } = renderHook(() =>
+                usePaginatedMovies(mockFetcher),
+            );
 
             // Assert: Metadata undefined while loading
             expect(result.current.next_tmdb_page_start).toBeUndefined();
@@ -347,7 +359,9 @@ describe('usePaginatedMovies', () => {
             // Resolve with metadata
             await waitFor(() => {
                 resolveResponse!({
-                    data: createMockPaginatedResponse({ next_tmdb_page_start: 5 }),
+                    data: createMockPaginatedResponse({
+                        next_tmdb_page_start: 5,
+                    }),
                 });
             });
 

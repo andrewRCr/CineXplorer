@@ -27,7 +27,7 @@ vi.mock("../../../MovieCardContainer", () => ({
 const createMockPage = (
   pageNum: number,
   movies: MovieListItem[],
-  hasNext = true
+  hasNext = true,
 ): MovieListResponse => ({
   page: pageNum,
   results: movies,
@@ -129,7 +129,9 @@ describe("SequentialMovieGrid", () => {
       renderWithProvider(<SequentialMovieGrid />);
 
       // With 2 movies on page 1 of 200 total results
-      expect(screen.getByText(/showing 1-2 of 200 results/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/showing 1-2 of 200 results/i),
+      ).toBeInTheDocument();
     });
 
     it("shows loading skeleton while fetching initial data", () => {
@@ -189,10 +191,7 @@ describe("SequentialMovieGrid", () => {
       // Simulate two pages already cached
       (useInfiniteMovies as Mock).mockReturnValue({
         movies: [...page1Movies, ...page2Movies],
-        pages: [
-          createMockPage(1, page1Movies),
-          createMockPage(2, page2Movies),
-        ],
+        pages: [createMockPage(1, page1Movies), createMockPage(2, page2Movies)],
         pageCount: 2,
         totalResults: 200,
         fetchNextPage: mockFetchNextPage,
@@ -225,10 +224,7 @@ describe("SequentialMovieGrid", () => {
       // Two pages already cached
       (useInfiniteMovies as Mock).mockReturnValue({
         movies: [...page1Movies, ...page2Movies],
-        pages: [
-          createMockPage(1, page1Movies),
-          createMockPage(2, page2Movies),
-        ],
+        pages: [createMockPage(1, page1Movies), createMockPage(2, page2Movies)],
         pageCount: 2,
         totalResults: 200,
         fetchNextPage: mockFetchNextPage,
@@ -265,10 +261,7 @@ describe("SequentialMovieGrid", () => {
       // Two pages cached
       (useInfiniteMovies as Mock).mockReturnValue({
         movies: [...page1Movies, ...page2Movies],
-        pages: [
-          createMockPage(1, page1Movies),
-          createMockPage(2, page2Movies),
-        ],
+        pages: [createMockPage(1, page1Movies), createMockPage(2, page2Movies)],
         pageCount: 2,
         totalResults: 200,
         fetchNextPage: mockFetchNextPage,
@@ -305,16 +298,19 @@ describe("SequentialMovieGrid", () => {
   describe("Handles variable page sizes gracefully", () => {
     it("displays whatever movies the API returns per page", () => {
       // Simulate variable page size (15 movies on page 1)
-      const variableSizeMovies: MovieListItem[] = Array.from({ length: 15 }, (_, i) => ({
-        tmdb_id: i + 1,
-        title: `Variable Movie ${i + 1}`,
-        release_date: "2023-01-01",
-        poster_path: `/path${i + 1}.jpg`,
-        vote_average: 7.0,
-        overview: `Overview ${i + 1}`,
-        genre_ids: [28],
-        runtime: 100,
-      }));
+      const variableSizeMovies: MovieListItem[] = Array.from(
+        { length: 15 },
+        (_, i) => ({
+          tmdb_id: i + 1,
+          title: `Variable Movie ${i + 1}`,
+          release_date: "2023-01-01",
+          poster_path: `/path${i + 1}.jpg`,
+          vote_average: 7.0,
+          overview: `Overview ${i + 1}`,
+          genre_ids: [28],
+          runtime: 100,
+        }),
+      );
 
       (useInfiniteMovies as Mock).mockReturnValue({
         movies: variableSizeMovies,
@@ -432,7 +428,9 @@ describe("SequentialMovieGrid", () => {
       renderWithProvider(<SequentialMovieGrid />);
 
       // Should show "Showing 1-2 of 200 results"
-      expect(screen.getByText(/showing 1-2 of 200 results/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/showing 1-2 of 200 results/i),
+      ).toBeInTheDocument();
     });
 
     it("caps large result sets at 10,000+", () => {
@@ -454,7 +452,9 @@ describe("SequentialMovieGrid", () => {
       renderWithProvider(<SequentialMovieGrid />);
 
       // Should show "Showing 1-2 of 10,000+ results"
-      expect(screen.getByText(/showing 1-2 of 10,000\+ results/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/showing 1-2 of 10,000\+ results/i),
+      ).toBeInTheDocument();
     });
   });
 });

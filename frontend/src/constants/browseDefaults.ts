@@ -22,14 +22,14 @@ export const DEFAULT_SORT: SortOptionValue = "popularity.desc";
  * - Comparing against to detect "has active browse params"
  */
 export const DEFAULT_BROWSE_PARAMS: BrowseParams = {
-  genres: [],
-  minYear: "",
-  maxYear: "",
-  minRating: "",
-  maxRating: "",
-  sortBy: DEFAULT_SORT,
-  language: "",
-  certifications: [],
+    genres: [],
+    minYear: "",
+    maxYear: "",
+    minRating: "",
+    maxRating: "",
+    sortBy: DEFAULT_SORT,
+    language: "",
+    certifications: [],
 };
 
 /**
@@ -44,14 +44,14 @@ export const DEFAULT_BROWSE_PARAMS: BrowseParams = {
  * String format used because URL params and form values are strings.
  */
 export const CORE_GENRE_IDS = [
-  "28",    // Action
-  "35",    // Comedy
-  "99",    // Documentary
-  "18",    // Drama
-  "10751", // Family
-  "27",    // Horror
-  "878",   // Science Fiction
-  "53",    // Thriller
+    "28", // Action
+    "35", // Comedy
+    "99", // Documentary
+    "18", // Drama
+    "10751", // Family
+    "27", // Horror
+    "878", // Science Fiction
+    "53", // Thriller
 ] as const;
 
 /**

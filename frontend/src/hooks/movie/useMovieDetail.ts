@@ -8,7 +8,9 @@ type FetchDetailFn = () => {
     cancel: () => void;
 };
 
-const useMovieDetail = (fetchFn: FetchDetailFn): {
+const useMovieDetail = (
+    fetchFn: FetchDetailFn,
+): {
     movie: MovieDetail | undefined;
     error: string;
     setMovie: React.Dispatch<React.SetStateAction<MovieDetail | undefined>>;

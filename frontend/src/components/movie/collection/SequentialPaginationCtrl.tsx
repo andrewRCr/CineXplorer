@@ -56,7 +56,7 @@ export const SequentialPaginationCtrl = memo(function SequentialPaginationCtrl({
         onPrev();
       }
     },
-    [hasPrev, isLoading, onPrev]
+    [hasPrev, isLoading, onPrev],
   );
 
   const handleNext = useCallback(
@@ -67,7 +67,7 @@ export const SequentialPaginationCtrl = memo(function SequentialPaginationCtrl({
         onNext();
       }
     },
-    [hasNext, isLoading, onNext]
+    [hasNext, isLoading, onNext],
   );
 
   const isPrevDisabled = !hasPrev || isLoading;

@@ -23,8 +23,7 @@ interface AdvancedFiltersPanelProps {
   browseParams: BrowseParams;
   onBrowseParamsChange: (
     paramsOrUpdater:
-      | Partial<BrowseParams>
-      | ((prev: BrowseParams) => BrowseParams)
+      Partial<BrowseParams> | ((prev: BrowseParams) => BrowseParams),
   ) => void;
   onToggleCollapse?: () => void;
   pageSource?: string;
@@ -49,7 +48,7 @@ const AdvancedFiltersPanel = ({
           value: option.value,
         })),
       }),
-    []
+    [],
   );
 
   const updateParam = useCallback(
@@ -59,7 +58,7 @@ const AdvancedFiltersPanel = ({
         [key]: value,
       }));
     },
-    [onBrowseParamsChange]
+    [onBrowseParamsChange],
   );
 
   // Clear filters but preserve sort (sort is user preference, not a filter)

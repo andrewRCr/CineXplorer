@@ -22,8 +22,8 @@ export const layoutSemanticTokens = {
          */
         "layout-navbar": {
             value: {
-                base: "{sizes.navbar-height-mobile}",   // Mobile: 64px
-                lg: "{sizes.navbar-height-desktop}",    // Desktop: 93px
+                base: "{sizes.navbar-height-mobile}", // Mobile: 64px
+                lg: "{sizes.navbar-height-desktop}", // Desktop: 93px
             },
         },
 

@@ -1,7 +1,10 @@
 import { Box, Text, VStack, HStack, Button } from "@chakra-ui/react";
 import { useThemeSelect } from "@/hooks/useThemeSelect";
 import { type ThemeName } from "@/theme";
-import { ColorModeButton, useColorMode } from "@/components/core/chakra/color-mode";
+import {
+  ColorModeButton,
+  useColorMode,
+} from "@/components/core/chakra/color-mode";
 
 // Section components
 import { SemanticColorsSection } from "./sections/SemanticColorsSection";
@@ -22,17 +25,17 @@ import { InteractiveListsSection } from "./sections/InteractiveListsSection";
  * Theme display name mappings
  */
 const THEME_DISPLAY_NAMES: Record<ThemeName, string> = {
-  'ibm-carbon': 'IBM Carbon',
-  'github-primer': 'GitHub Primer',
-  'gitlab-pajamas': 'GitLab Pajamas',
-  'material-design-3': 'Material Design 3',
+  "ibm-carbon": "IBM Carbon",
+  "github-primer": "GitHub Primer",
+  "gitlab-pajamas": "GitLab Pajamas",
+  "material-design-3": "Material Design 3",
 } as const;
 
 const THEME_SHORT_NAMES: Record<ThemeName, string> = {
-  'ibm-carbon': 'IBM',
-  'github-primer': 'GitHub',
-  'gitlab-pajamas': 'GitLab',
-  'material-design-3': 'Material',
+  "ibm-carbon": "IBM",
+  "github-primer": "GitHub",
+  "gitlab-pajamas": "GitLab",
+  "material-design-3": "Material",
 } as const;
 
 /**
@@ -48,21 +51,18 @@ export default function ThemeDebug() {
     const element = document.getElementById(sectionId);
     if (element) {
       // Calculate header offset from layout token (navbar + sticky header)
-      const navbarHeight = getComputedStyle(document.documentElement)
-        .getPropertyValue('--chakra-sizes-layout-navbar');
+      const navbarHeight = getComputedStyle(
+        document.documentElement,
+      ).getPropertyValue("--chakra-sizes-layout-navbar");
       const headerOffset = navbarHeight ? parseInt(navbarHeight, 10) : 120; // Fallback to 120px
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.scrollY - headerOffset;
-      window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
   };
 
   return (
-    <Box
-      bg="background"
-      color="foreground"
-      minH="100vh"
-    >
+    <Box bg="background" color="foreground" minH="100vh">
       {/* Sticky Header - flush with navbar bottom, no gap */}
       <Box
         position="sticky"
@@ -73,7 +73,7 @@ export default function ThemeDebug() {
         px={6}
         py={3}
         zIndex={5}
-        style={{ willChange: 'transform' }}
+        style={{ willChange: "transform" }}
       >
         <VStack align="stretch" gap={3}>
           {/* Top row: Title and controls */}
@@ -90,15 +90,31 @@ export default function ThemeDebug() {
 
             {/* Theme Switcher */}
             <HStack gap={2} flexShrink={0}>
-              {(['ibm-carbon', 'github-primer', 'gitlab-pajamas', 'material-design-3'] as const).map((t) => (
+              {(
+                [
+                  "ibm-carbon",
+                  "github-primer",
+                  "gitlab-pajamas",
+                  "material-design-3",
+                ] as const
+              ).map((t) => (
                 <Button
                   key={t}
                   onClick={() => setTheme(t as ThemeName)}
                   size="sm"
                   variant="subtle"
                   bg={theme === t ? "button-subtle-selected" : "button-subtle"}
-                  color={theme === t ? "on-button-subtle-selected" : "on-button-subtle"}
-                  _hover={{ bg: theme === t ? "button-subtle-selected" : "secondary-hover" }}
+                  color={
+                    theme === t
+                      ? "on-button-subtle-selected"
+                      : "on-button-subtle"
+                  }
+                  _hover={{
+                    bg:
+                      theme === t
+                        ? "button-subtle-selected"
+                        : "secondary-hover",
+                  }}
                   _active={{ bg: "secondary-active" }}
                 >
                   {THEME_SHORT_NAMES[t]}
@@ -116,15 +132,21 @@ export default function ThemeDebug() {
 
           {/* Jump links row - compact hyperlink style with grouping */}
           <Box borderTopWidth="1px" borderColor="border-subtle-02" pt={2}>
-            <HStack gap={3} flexWrap="wrap" justify="center" fontSize="sm" pb={0}>
+            <HStack
+              gap={3}
+              flexWrap="wrap"
+              justify="center"
+              fontSize="sm"
+              pb={0}
+            >
               {/* Foundation group */}
               {[
-                { id: 'semantic-colors', label: 'Colors' },
-                { id: 'cinexplorer-extensions', label: 'Extensions' },
-                { id: 'layers', label: 'Layers' },
-                { id: 'shadows', label: 'Shadows' },
-                { id: 'borders', label: 'Borders' },
-                { id: 'opacity-system', label: 'Opacity' },
+                { id: "semantic-colors", label: "Colors" },
+                { id: "cinexplorer-extensions", label: "Extensions" },
+                { id: "layers", label: "Layers" },
+                { id: "shadows", label: "Shadows" },
+                { id: "borders", label: "Borders" },
+                { id: "opacity-system", label: "Opacity" },
               ].map(({ id, label }) => (
                 <Text
                   key={id}
@@ -140,12 +162,14 @@ export default function ThemeDebug() {
               ))}
 
               {/* Separator */}
-              <Text color="border" fontSize="lg" userSelect="none">|</Text>
+              <Text color="border" fontSize="lg" userSelect="none">
+                |
+              </Text>
 
               {/* Interaction group */}
               {[
-                { id: 'interaction-states', label: 'States' },
-                { id: 'ui-elements', label: 'UI' },
+                { id: "interaction-states", label: "States" },
+                { id: "ui-elements", label: "UI" },
               ].map(({ id, label }) => (
                 <Text
                   key={id}
@@ -161,15 +185,17 @@ export default function ThemeDebug() {
               ))}
 
               {/* Separator */}
-              <Text color="border" fontSize="lg" userSelect="none">|</Text>
+              <Text color="border" fontSize="lg" userSelect="none">
+                |
+              </Text>
 
               {/* Components group */}
               {[
-                { id: 'button-patterns', label: 'Buttons' },
-                { id: 'form-controls', label: 'Forms' },
-                { id: 'navigation-patterns', label: 'Navigation' },
-                { id: 'feedback-status', label: 'Feedback' },
-                { id: 'interactive-lists', label: 'Lists' },
+                { id: "button-patterns", label: "Buttons" },
+                { id: "form-controls", label: "Forms" },
+                { id: "navigation-patterns", label: "Navigation" },
+                { id: "feedback-status", label: "Feedback" },
+                { id: "interactive-lists", label: "Lists" },
               ].map(({ id, label }) => (
                 <Text
                   key={id}
@@ -208,7 +234,6 @@ export default function ThemeDebug() {
         <NavigationPatternsSection />
         <FeedbackStatusSection />
         <InteractiveListsSection />
-
       </VStack>
     </Box>
   );

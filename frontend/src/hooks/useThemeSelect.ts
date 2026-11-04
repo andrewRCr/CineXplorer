@@ -8,7 +8,9 @@ interface ThemeContextValue {
     setTheme: (theme: ThemeName) => void;
 }
 
-export const ThemeContext = React.createContext<ThemeContextValue | undefined>(undefined);
+export const ThemeContext = React.createContext<ThemeContextValue | undefined>(
+    undefined,
+);
 
 export const STORAGE_KEY = "cinexplorer-theme";
 
@@ -29,7 +31,9 @@ export const STORAGE_KEY = "cinexplorer-theme";
 export function useThemeSelect(): ThemeContextValue {
     const context = React.useContext(ThemeContext);
     if (context === undefined) {
-        throw new Error("useThemeSelect must be used within a ThemeSelectProvider");
+        throw new Error(
+            "useThemeSelect must be used within a ThemeSelectProvider",
+        );
     }
     return context;
 }

@@ -4,7 +4,11 @@ import * as React from "react";
 import { ChakraProvider } from "@chakra-ui/react";
 import type { ThemeName } from "@/theme";
 import { createThemeSystem, getTheme } from "@/theme";
-import { ThemeContext, STORAGE_KEY, getInitialTheme } from "@/hooks/useThemeSelect";
+import {
+  ThemeContext,
+  STORAGE_KEY,
+  getInitialTheme,
+} from "@/hooks/useThemeSelect";
 
 /**
  * Theme Selection Provider
@@ -27,8 +31,13 @@ import { ThemeContext, STORAGE_KEY, getInitialTheme } from "@/hooks/useThemeSele
  * setTheme("ibm-carbon") // Switch to IBM Carbon theme
  * ```
  */
-export function ThemeSelectProvider({ children }: { children: React.ReactNode }) {
-  const [themeName, setThemeNameState] = React.useState<ThemeName>(getInitialTheme);
+export function ThemeSelectProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [themeName, setThemeNameState] =
+    React.useState<ThemeName>(getInitialTheme);
 
   // Initialize system from saved theme (lazy initializer ensures persistence works)
   const [system, setSystem] = React.useState(() => {
@@ -51,14 +60,12 @@ export function ThemeSelectProvider({ children }: { children: React.ReactNode })
 
   const contextValue = React.useMemo(
     () => ({ theme: themeName, setTheme }),
-    [themeName, setTheme]
+    [themeName, setTheme],
   );
 
   return (
     <ThemeContext.Provider value={contextValue}>
-      <ChakraProvider value={system}>
-        {children}
-      </ChakraProvider>
+      <ChakraProvider value={system}>{children}</ChakraProvider>
     </ThemeContext.Provider>
   );
 }

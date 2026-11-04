@@ -49,7 +49,7 @@ export const usePaginatedMovies = (fetchFn: FetchArrayFn) => {
         useApiRequest<MovieListResponse>(stableFetcher);
 
     // Extract pagination info and movies array
-    const movies = isLoading ? [] : data?.results ?? [];
+    const movies = isLoading ? [] : (data?.results ?? []);
     const total_pages = data?.total_pages ?? 1;
     const total_results = data?.total_results ?? movies.length;
     const page = data?.page; // Don't provide default when data is undefined

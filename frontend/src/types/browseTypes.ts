@@ -21,18 +21,18 @@
  * - original_title.desc removed (Z-A broken for Latin languages due to Unicode ordering)
  */
 export type SortOptionValue =
-  | "popularity.desc"
-  | "vote_average.desc"
-  | "release_date.desc"
-  | "release_date.asc"
-  | "original_title.asc";
+    | "popularity.desc"
+    | "vote_average.desc"
+    | "release_date.desc"
+    | "release_date.asc"
+    | "original_title.asc";
 
 /**
  * Sort option for UI dropdowns
  */
 export interface SortOption {
-  value: SortOptionValue;
-  label: string;
+    value: SortOptionValue;
+    label: string;
 }
 
 /**
@@ -54,14 +54,14 @@ export interface SortOption {
  * Array fields use empty array ([]) as the "not set" value.
  */
 export interface BrowseParams {
-  genres: number[];
-  minYear: string;
-  maxYear: string;
-  minRating: string;
-  maxRating: string;
-  sortBy: SortOptionValue;
-  language: string;
-  certifications: string[];
+    genres: number[];
+    minYear: string;
+    maxYear: string;
+    minRating: string;
+    maxRating: string;
+    sortBy: SortOptionValue;
+    language: string;
+    certifications: string[];
 }
 
 /**
@@ -71,22 +71,23 @@ export interface BrowseParams {
  * Compile-time checks ensure this stays in sync with BrowseParams interface.
  */
 export const BROWSE_PARAM_KEYS = [
-  "genres",
-  "minYear",
-  "maxYear",
-  "minRating",
-  "maxRating",
-  "sortBy",
-  "language",
-  "certifications",
+    "genres",
+    "minYear",
+    "maxYear",
+    "minRating",
+    "maxRating",
+    "sortBy",
+    "language",
+    "certifications",
 ] as const satisfies readonly (keyof BrowseParams)[];
 
 // Compile-time check: error if any BrowseParams key is missing from array
-type _AssertKeysComplete = Exclude<
-  keyof BrowseParams,
-  (typeof BROWSE_PARAM_KEYS)[number]
-> extends never
-  ? true
-  : "Missing keys in BROWSE_PARAM_KEYS";
+type _AssertKeysComplete =
+    Exclude<
+        keyof BrowseParams,
+        (typeof BROWSE_PARAM_KEYS)[number]
+    > extends never
+        ? true
+        : "Missing keys in BROWSE_PARAM_KEYS";
 const _assertKeysComplete: _AssertKeysComplete = true;
 void _assertKeysComplete; // Prevent unused variable warning

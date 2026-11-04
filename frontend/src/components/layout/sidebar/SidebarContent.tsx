@@ -70,7 +70,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
     // Find the navigation item that matches the current path
     for (const section of NAVIGATION_SECTIONS) {
       const matchingItem = section.items.find(
-        (item) => item.path === currentPath
+        (item) => item.path === currentPath,
       );
       if (matchingItem) {
         return [matchingItem.value];
@@ -87,7 +87,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
     // Find the navigation item by value
     for (const section of NAVIGATION_SECTIONS) {
       const item = section.items.find(
-        (navItem) => navItem.value === selectedValue
+        (navItem) => navItem.value === selectedValue,
       );
       if (item) {
         if (item.isAction) {
@@ -106,10 +106,10 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
   };
 
   const userSection = NAVIGATION_SECTIONS.find(
-    (section) => section.title === "User"
+    (section) => section.title === "User",
   );
   const browseSection = NAVIGATION_SECTIONS.find(
-    (section) => section.title === "Browse"
+    (section) => section.title === "Browse",
   );
 
   return (
@@ -146,33 +146,62 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
       {userSection && browseSection && (
         <Box bg={listboxBg} {...listboxProps}>
           <Listbox.Root
-          collection={createListCollection({
-            items: [
-              // User items (excluding Log action)
-              ...userSection.items
-                .filter((item) => !item.isAction)
-                .map((item) => ({
+            collection={createListCollection({
+              items: [
+                // User items (excluding Log action)
+                ...userSection.items
+                  .filter((item) => !item.isAction)
+                  .map((item) => ({
+                    label: item.label,
+                    value: item.value,
+                    section: "user",
+                  })),
+                // Browse items
+                ...browseSection.items.map((item) => ({
                   label: item.label,
                   value: item.value,
-                  section: "user",
+                  section: "browse",
                 })),
-              // Browse items
-              ...browseSection.items.map((item) => ({
-                label: item.label,
-                value: item.value,
-                section: "browse",
-              })),
-            ],
-          })}
-          value={getCurrentActiveValue()}
-          onValueChange={handleNavigation}
-          selectionMode="single"
-        >
-          <Listbox.Content background="transparent">
-            {/* User items */}
-            {userSection.items
-              .filter((item) => !item.isAction)
-              .map((item) => (
+              ],
+            })}
+            value={getCurrentActiveValue()}
+            onValueChange={handleNavigation}
+            selectionMode="single"
+          >
+            <Listbox.Content background="transparent">
+              {/* User items */}
+              {userSection.items
+                .filter((item) => !item.isAction)
+                .map((item) => (
+                  <Listbox.Item
+                    key={item.value}
+                    item={{ label: item.label, value: item.value }}
+                    {...layerItemProps}
+                  >
+                    <Listbox.ItemText>{item.label}</Listbox.ItemText>
+                  </Listbox.Item>
+                ))}
+
+              {/* Separator inside the listbox */}
+              <Box px={3} py={2}>
+                <Separator borderColor="border-subtle-01" />
+              </Box>
+
+              {/* Browse section header inside listbox */}
+              <Box px={3} py={1}>
+                <Text
+                  fontSize="xs"
+                  fontWeight="medium"
+                  color="on-muted"
+                  textTransform="uppercase"
+                  letterSpacing="wider"
+                >
+                  {browseSection.title}
+                </Text>
+              </Box>
+
+              {/* Browse items */}
+              {browseSection.items.map((item) => (
                 <Listbox.Item
                   key={item.value}
                   item={{ label: item.label, value: item.value }}
@@ -181,37 +210,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
                   <Listbox.ItemText>{item.label}</Listbox.ItemText>
                 </Listbox.Item>
               ))}
-
-            {/* Separator inside the listbox */}
-            <Box px={3} py={2}>
-              <Separator borderColor="border-subtle-01" />
-            </Box>
-
-            {/* Browse section header inside listbox */}
-            <Box px={3} py={1}>
-              <Text
-                fontSize="xs"
-                fontWeight="medium"
-                color="on-muted"
-                textTransform="uppercase"
-                letterSpacing="wider"
-              >
-                {browseSection.title}
-              </Text>
-            </Box>
-
-            {/* Browse items */}
-            {browseSection.items.map((item) => (
-              <Listbox.Item
-                key={item.value}
-                item={{ label: item.label, value: item.value }}
-                {...layerItemProps}
-              >
-                <Listbox.ItemText>{item.label}</Listbox.ItemText>
-              </Listbox.Item>
-            ))}
-          </Listbox.Content>
-        </Listbox.Root>
+            </Listbox.Content>
+          </Listbox.Root>
         </Box>
       )}
     </VStack>

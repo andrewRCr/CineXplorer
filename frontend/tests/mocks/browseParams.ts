@@ -20,10 +20,10 @@ import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
  * const params = createMockBrowseParams({ genres: [28], minRating: "7.0" });
  */
 export function createMockBrowseParams(
-  overrides: Partial<BrowseParams> = {}
+    overrides: Partial<BrowseParams> = {},
 ): BrowseParams {
-  return {
-    ...DEFAULT_BROWSE_PARAMS,
-    ...overrides,
-  };
+    return {
+        ...DEFAULT_BROWSE_PARAMS,
+        ...overrides,
+    };
 }

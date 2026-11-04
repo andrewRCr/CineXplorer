@@ -1,4 +1,4 @@
-FROM python:3.13-alpine3.24 AS base
+FROM python:3.13-alpine3.24@sha256:7984cf56ceaddebe4fefeb75d64000b9f45d8b77b11a09b24524da6cdc3af0c8 AS base
 LABEL maintainer="andrew.creekmore@me.com"
 
 ENV PYTHONUNBUFFERED=1

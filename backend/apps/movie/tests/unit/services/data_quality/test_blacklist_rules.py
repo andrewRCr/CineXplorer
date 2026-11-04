@@ -104,7 +104,7 @@ def test_fetch_limits_an_era_rule_to_its_release_dates() -> None:
 def test_a_failed_page_fails_the_whole_rule() -> None:
     tmdb = FakeTMDB([[{"id": 1, "adult": False}], [{"id": 2, "adult": False}]], fail_on_page=2)
 
-    with pytest.raises(RuleFetchError, match="rule:studio-42"):
+    with pytest.raises(RuleFetchError, match=r"rule:studio-42: TMDB page 2 failed \(status 503\)"):
         fetch_rule_ids(tmdb, STUDIO, pause=lambda _seconds: None)
 
 
@@ -178,13 +178,31 @@ def test_a_malformed_or_incomplete_page_fails_the_rule(
         fetch_rule_ids(ScriptedTMDB(data), STUDIO, pause=lambda _seconds: None)
 
 
-def test_fetch_fails_when_a_later_page_reports_different_counts() -> None:
+@pytest.mark.parametrize(
+    ("second_page", "error"),
+    [
+        pytest.param(
+            {"total_pages": 2, "total_results": 4, "results": [{"id": 3}, {"id": 4}]},
+            "rule:studio-42: TMDB page 2 reports 4 titles on 2 pages",
+            id="fewer pages",
+        ),
+        pytest.param(
+            {"total_pages": 3, "total_results": 6, "results": [{"id": 3}, {"id": 4}]},
+            "rule:studio-42: TMDB page 2 reports 6 titles on 3 pages",
+            id="more titles on as many pages",
+        ),
+    ],
+)
+def test_fetch_fails_when_a_later_page_reports_different_counts(
+    second_page: dict[str, object], error: str
+) -> None:
     tmdb = ScriptedTMDB(
         {"total_pages": 3, "total_results": 5, "results": [{"id": 1}, {"id": 2}]},
-        {"total_pages": 2, "total_results": 4, "results": [{"id": 3}, {"id": 4}]},
+        second_page,
+        {"total_pages": 3, "total_results": 6, "results": [{"id": 5}, {"id": 6}]},
     )
 
-    with pytest.raises(RuleFetchError, match="rule:studio-42: TMDB page 2 reports 4 titles"):
+    with pytest.raises(RuleFetchError, match=error):
         fetch_rule_ids(tmdb, STUDIO, pause=lambda _seconds: None)
 
 
@@ -264,8 +282,12 @@ def test_regenerate_moves_an_id_to_the_earlier_rule_and_keeps_hand_picks(tmp_pat
     write_blacklist([hand_pick, BlacklistEntry(5, last.reason, last.source)], path)
 
     def tmdb_get(endpoint: str, params: dict[str, object]) -> ApiResponse:
-        matches = params["with_companies"] == str(first.company_id)
-        results = [{"id": 3, "adult": False}, {"id": 5, "adult": False}] if matches else []
+        company = params["with_companies"]
+        results: list[dict[str, object]] = []
+        if company == str(first.company_id):
+            results = [{"id": 3, "adult": False}, {"id": 5, "adult": False}]
+        elif company == str(last.company_id):
+            results = [{"id": 5, "adult": False}]
         return ApiResponse(
             status_code=200,
             data={"total_pages": 1, "total_results": len(results), "results": results},

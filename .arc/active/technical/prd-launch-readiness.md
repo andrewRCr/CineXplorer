@@ -363,10 +363,10 @@ host, and the authentication gaps above are closed. The site stays at the stagin
     - `POST /_allauth/browser/v1/auth/password/request` and `POST /api/resend-verification/` answer
       `503 {"detail": "We couldn't send the email. Please try again in a few minutes."}`, and the backend logs the
       failure at `ERROR` without a traceback: a fixed message naming the endpoint and, for resend-verification, the
-      user's ID, never the address or the exception's text, which carries the address. For allauth's endpoint, a
-      middleware turns an `EmailDeliveryError` raised under `/_allauth/` into that response; the resend service
-      catches it itself, and the resend endpoint declares the `503` response, so the committed OpenAPI schema and
-      generated frontend types include it.
+      user's ID, never the address or the exception's text. For allauth's endpoint, a middleware turns an
+      `EmailDeliveryError` raised under `/_allauth/` into that response; the resend service catches it itself, and
+      the resend endpoint declares the `503` response, so the committed OpenAPI schema and generated frontend types
+      include it.
     - The resend token is consumed only once the email has been sent: checking it reads it, and a successful send
       deletes it. After a failed send the same token stays valid and its 10-minute lifetime starts again, so a retry
       within the few minutes the message names sends the email. Two concurrent requests with one token may both send;
@@ -835,3 +835,6 @@ authentication hardening (R18–R23) is not deployed.
   the watchlist page after the access token has expired, so it exercises the refresh on load: in a tab left open,
   the 60-second check keeps the token fresh, so a reload needs no refresh. R27 brings the authentication strategy's
   token refresh flow to R28, so Implemented 11 is superseded by 12, which adds R28.
+- **2026-11-04,** at the merge of `main` before implementation: R22 no longer gives as its reason that the exception's
+  text carries the address, since `main` (#62) took the address out of `EmailDeliveryError`'s message; the log rule
+  is unchanged.

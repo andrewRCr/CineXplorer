@@ -645,11 +645,13 @@ authentication gaps that matter once sign-up is public are closed.
 - **allauth's password request** lets the adapter's `EmailDeliveryError` out of its view, so `process_exception`
   sees it; Django calls `process_exception` only for exceptions from the view
 - **The failure log:** the middleware has the request's path and the resend service the user's ID from the token;
-  neither logs the exception's text, whose message names the address (`adapters.py`). `EmailDeliveryError` stays as
-  it is; a separate errand changes its message and registration's log line. Both log to `cinexplorer.auth`, and
-  the `cinexplorer` loggers do not propagate to the root logger where `caplog` listens, so tests capture them with
-  `assertLogs`, as `test_logging.py` does, and count that logger's records only (`django.request` also logs each
-  `5xx`). 3.1's backend logs through `logging.getLogger(__name__)`, which propagates, so its tests keep `caplog`
+  neither logs the exception's text. `EmailDeliveryError` stays as it is: since #62 its message names the template
+  and the user's ID instead of the address (`adapters.py`), registration's failed send logs only the exception's
+  type, since a mail error's text can quote the recipient, and `test_log_privacy.py` checks the authentication and
+  email log records for addresses. Both new logs go to `cinexplorer.auth`, and the `cinexplorer` loggers do not
+  propagate to the root logger where `caplog` listens, so tests capture them with `assertLogs`, as `test_logging.py`
+  does, and count that logger's records only (`django.request` also logs each `5xx`). 3.1's backend logs through
+  `logging.getLogger(__name__)`, which propagates, so its tests keep `caplog`
 - **How the resend service reports a failed send:** merge `main` before 3.2. If it then has the domain exceptions
   and the API-layer handler that maps them, the service raises the "upstream service unavailable" exception and the
   handler answers R22's `503`; otherwise the service returns the failure the way its other outcomes return today,

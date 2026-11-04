@@ -20,6 +20,10 @@ class BootstrapTests(unittest.TestCase):
                     "/usr/local/bin/cinexplorer-deploy",
                     "/opt/cinexplorer/deploy-logs",
                     "/opt/cinexplorer/backups",
+                    "/etc/systemd/system/cinexplorer-backup.service",
+                    "/etc/systemd/system/cinexplorer-backup.timer",
+                    "/etc/systemd/system/cinexplorer-maintenance.service",
+                    "/etc/systemd/system/cinexplorer-maintenance.timer",
                 ):
                     self.assertIn(f"CHANGED: {path}", first.splitlines())
                 permissions = fixture.run(
@@ -47,11 +51,17 @@ class BootstrapTests(unittest.TestCase):
                     )
                 else:
                     self.assertEqual(keys, root_keys)
+                for timer in ("cinexplorer-backup.timer", "cinexplorer-maintenance.timer"):
+                    fixture.run(["systemctl", "is-enabled", "--quiet", timer])
+                    fixture.run(["systemctl", "is-active", "--quiet", timer])
+                actions = fixture.read("/fixture-state/service-actions")
+                self.assertEqual(actions.splitlines().count("daemon-reload"), 1)
                 second = fixture.run(
                     ["sudo", "bash", "/source/bootstrap.sh"], user="deploy"
                 ).stdout
                 self.assertNotIn("CHANGED:", second.replace("UNCHANGED:", ""))
                 self.assertEqual(fixture.read("/home/deploy/.ssh/authorized_keys"), keys)
+                self.assertEqual(fixture.read("/fixture-state/service-actions"), actions)
 
 
 if __name__ == "__main__":

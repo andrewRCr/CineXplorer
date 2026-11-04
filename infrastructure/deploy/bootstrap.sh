@@ -20,6 +20,7 @@ trap 'rm -rf "$scratch"' EXIT
 # Read desired contents from stdin; preserve timestamps when contents and metadata match.
 write_file() {
     local path=$1 mode=$2 owner=${3:-root} group=${4:-root}
+    last_file_changed=false
     cat > "$scratch/content"
     if [[ -f $path ]] && cmp -s "$scratch/content" "$path" &&
         [[ $(stat -c '%a:%U:%G' "$path") == "$mode:$owner:$group" ]]; then
@@ -27,6 +28,7 @@ write_file() {
         return
     fi
     install -o "$owner" -g "$group" -m "$mode" "$scratch/content" "$path"
+    last_file_changed=true
     changed "$path"
 }
 
@@ -246,6 +248,72 @@ else
 fi
 exit "$status"
 DEPLOY_ENTRY
+
+units_changed=false
+write_file /etc/systemd/system/cinexplorer-backup.service 644 <<'NIGHTLY_BACKUP_SERVICE'
+[Unit]
+Description=CineXplorer nightly backup
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+UMask=0077
+EnvironmentFile=/opt/cinexplorer/ops.env
+TimeoutStartSec=infinity
+ExecStart=/usr/bin/flock -w 1800 /opt/cinexplorer/ops.lock /usr/bin/bash /opt/cinexplorer/repo/infrastructure/deploy/backup.sh
+NIGHTLY_BACKUP_SERVICE
+if $last_file_changed; then units_changed=true; fi
+write_file /etc/systemd/system/cinexplorer-backup.timer 644 <<'NIGHTLY_BACKUP_TIMER'
+[Unit]
+Description=Schedule CineXplorer nightly backup
+
+[Timer]
+OnCalendar=*-*-* 10:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+NIGHTLY_BACKUP_TIMER
+if $last_file_changed; then units_changed=true; fi
+write_file /etc/systemd/system/cinexplorer-maintenance.service 644 <<'NIGHTLY_MAINTENANCE_SERVICE'
+[Unit]
+Description=CineXplorer nightly maintenance
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+UMask=0077
+EnvironmentFile=/opt/cinexplorer/ops.env
+TimeoutStartSec=infinity
+ExecStart=/usr/bin/flock -w 1800 /opt/cinexplorer/ops.lock /usr/bin/bash /opt/cinexplorer/repo/infrastructure/deploy/maintenance.sh
+NIGHTLY_MAINTENANCE_SERVICE
+if $last_file_changed; then units_changed=true; fi
+write_file /etc/systemd/system/cinexplorer-maintenance.timer 644 <<'NIGHTLY_MAINTENANCE_TIMER'
+[Unit]
+Description=Schedule CineXplorer nightly maintenance
+
+[Timer]
+OnCalendar=*-*-* 10:30:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+NIGHTLY_MAINTENANCE_TIMER
+if $last_file_changed; then units_changed=true; fi
+if $units_changed; then
+    systemctl daemon-reload
+    changed 'nightly systemd units reloaded'
+else
+    unchanged 'nightly systemd units'
+fi
+ensure_service cinexplorer-backup.timer
+ensure_service cinexplorer-maintenance.timer
 
 if [[ $(timedatectl show --property=Timezone --value) == UTC ]]; then
     unchanged 'UTC timezone'

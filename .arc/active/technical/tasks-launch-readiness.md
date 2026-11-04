@@ -295,19 +295,20 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: `actionlint` passed for both workflows and the diff is whitespace-clean. Hosted PR exclusion and
       deployment behavior remain for 5.2 and after merge; no new privileged workflow triggers were added.
 
-- [ ] **4.6 Add the nightly backup and maintenance jobs** (R8, R11, R12)
-    - `infrastructure/deploy/backup.sh` (R8's four steps and its `/fail` path) and `maintenance.sh` (R11), reading
-      their settings from the environment `ops.env` provides; `infrastructure/ops.env.example` lists every variable
-      with no real values
-    - The rclone image pinned to a release line and configured by `RCLONE_CONFIG_<remote>_*` variables only
-    - `bootstrap.sh` carries the four units: each service `Type=oneshot` as `deploy`, with
-      `EnvironmentFile=/opt/cinexplorer/ops.env` and its script started under
-      `flock -w 1800 /opt/cinexplorer/ops.lock`; each timer daily at its UTC time with `Persistent=true`;
-      `systemctl daemon-reload` when a unit changed, and both timers enabled and started
-    - `backend/config/.env.example`'s production checklist names the nightly timers in place of its daily
-      `flushexpiredtokens` cron job (R15)
-    - Check: `bash -n`, `shellcheck` and `systemd-analyze verify` on the units; 4.4's container run again, first run
-      `CHANGED`, second `UNCHANGED`; Proven live 3, 4 and 7 are the proof
+- [x] **4.6 Add the nightly backup and maintenance jobs** (R8, R11, R12)
+    - Backup creates a private custom-format dump, checks its archive, uploads through pinned `rclone/rclone:1.75.2`
+      with environment-only R2 configuration, removes the local file and pings success. Failures retain their status
+      and report the failed step's last output lines to `/fail`. Scoped R2 tokens use `no_check_bucket`.
+    - Maintenance runs both cleanup commands and reports success/failure the same way. Added the complete operations
+      env template without real credentials, and replaced the backend env example's cron instructions with timers.
+    - Bootstrap carries both oneshot services and persistent UTC timers, using deploy's environment file and the
+      shared 30-minute lock. Changed unit files trigger daemon reload; both timers are enabled/started. Repeated
+      bootstrap runs remain unchanged.
+    - Checks: Bash syntax, ShellCheck (including both embedded deploy scripts), systemd unit verification and harness
+      Ruff passed. The official pinned rclone image ran successfully. All 20 deployment-harness tests passed after
+      nine behavioral guard reconstructions; both bootstrap key cases remained idempotent. Job tests cover dump,
+      validation, upload and heartbeat failures, independent cleanup commands and archive deletion before success.
+      Actual R2/monitor pings, restored data and first-night evidence remain in 5.4.
 
 - [ ] **4.7 Update the runbook, `infrastructure/deploy/README.md`** (R26, with R9, R10 and R14)
     - Each item R26 lists, in the order a maintainer meets them: first-time setup's additions, with R9's bucket

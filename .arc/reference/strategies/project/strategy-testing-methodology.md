@@ -87,8 +87,12 @@ These hold for every test, test-first or not. The full rules are in
 
 **Frontend:**
 
-- Minimum: 80% branch coverage (component/feature coverage)
-- Critical paths: 90%+ branch coverage (auth, checkout, flows)
+- Long-term target: 80% branch coverage (component/feature coverage)
+- Critical-path target: 90%+ branch coverage (auth, checkout, flows)
+- Current enforcement: the measured floors in `frontend/vitest.config.ts`, initially set one whole percentage point
+  below each rounded-down baseline metric. These floors prevent regressions while coverage improves toward the targets.
+- Scope: `src/**`, excluding `src/pages/dev/**`, `src/main.tsx` and the configuration's existing exclusions;
+  unexecuted source files remain included.
 - Focus: User behavior over implementation
 
 **Rationale:** Targets align with industry consensus (Google "commendable" tier, Microsoft standard, OWASP
@@ -98,7 +102,8 @@ risk-based testing prioritization per industry best practices.
 ### Quality Gates
 
 **Backend:** 100% pass rate, 80%+ coverage, zero lint/type errors
-**Frontend:** 100% pass rate, 80%+ coverage, zero lint/type errors
+**Frontend:** 100% pass rate, zero lint/type errors, and the configured measured floors when running
+`npm run test:coverage`. Frontend CI runs tests without coverage; coverage enforcement is local.
 
 ---
 

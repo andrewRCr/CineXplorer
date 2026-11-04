@@ -5,6 +5,10 @@ import {
     getAuthTokens,
     setAuthTokens,
 } from "@/utilities/tokenUtils";
+import {
+    ensureCsrfTokenCookie,
+    getCsrfToken,
+} from "@/utilities/csrfTokenFetcher";
 import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
 import { toaster } from "@/components/core/chakra/toaster";
@@ -58,7 +62,7 @@ function onTokenRefreshed(token: string): void {
 }
 
 // Request interceptor: Attach JWT access token (email/password), CSRF token, and pagination context
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(async (config) => {
     // Attach JWT access token from storage (email/password authentication only)
     // OAuth users authenticate via session cookie automatically (no Authorization header needed)
     const { access_token } = getAuthTokens();
@@ -69,10 +73,8 @@ apiClient.interceptors.request.use((config) => {
     // Attach CSRF token from cookie for unsafe methods (required for both auth patterns)
     const unsafeMethods = ["post", "put", "patch", "delete"];
     if (config.method && unsafeMethods.includes(config.method.toLowerCase())) {
-        const csrfToken = document.cookie
-            .split("; ")
-            .find((row) => row.startsWith("XSRF-TOKEN="))
-            ?.split("=")[1];
+        await ensureCsrfTokenCookie(BASE_URL);
+        const csrfToken = getCsrfToken();
         if (csrfToken) {
             config.headers["X-CSRFToken"] = csrfToken;
         }
@@ -151,10 +153,14 @@ apiClient.interceptors.response.use(
             try {
                 // Call JWT token refresh endpoint (email/password authentication only)
                 // Validates HTTP-only refresh token cookie
+                await ensureCsrfTokenCookie(BASE_URL);
                 const response = await axios.post(
                     `${BASE_URL}/auth/refresh`,
                     {},
-                    { withCredentials: true }, // Send refresh token cookie
+                    {
+                        withCredentials: true,
+                        headers: { "X-CSRFToken": getCsrfToken() || "" },
+                    },
                 );
 
                 // If refresh is successful, update access token in localStorage

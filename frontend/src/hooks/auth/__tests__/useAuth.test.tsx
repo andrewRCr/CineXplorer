@@ -132,3 +132,42 @@ describe("sign-in and sign-out", () => {
     expect(localStorage.getItem("access_token")).toBeNull();
   });
 });
+
+it.each([true, false])(
+  "ends the OAuth server session using Django's CSRF token (cookie present: %s)",
+  async (present) => {
+    if (present) document.cookie = "csrftoken=django-csrf; path=/";
+    let active = true;
+    server.use(
+      http.get(`${apiBaseUrl}/csrf/`, () => {
+        document.cookie = "csrftoken=django-csrf; path=/";
+        return HttpResponse.json({});
+      }),
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, () =>
+        active
+          ? HttpResponse.json({
+              meta: { is_authenticated: true },
+              data: { user: profile },
+            })
+          : HttpResponse.json({ status: 401 }, { status: 401 }),
+      ),
+      http.delete(
+        `${siteOrigin}/_allauth/browser/v1/auth/session`,
+        ({ request }) => {
+          if (request.headers.get("X-CSRFToken") !== "django-csrf")
+            return HttpResponse.json({}, { status: 403 });
+          active = false;
+          return HttpResponse.json({ status: 401 }, { status: 401 });
+        },
+      ),
+    );
+    const { result } = mountAuth();
+    await waitFor(() => expect(result.current.user).toEqual(profile));
+    await act(async () => {
+      await result.current.logout();
+    });
+    expect(
+      (await fetch(`${siteOrigin}/_allauth/browser/v1/auth/session`)).status,
+    ).toBe(401);
+  },
+);

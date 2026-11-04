@@ -8,7 +8,11 @@
  * This hook isolates OAuth-specific concerns that would otherwise clutter
  * login/register components with state management and timing logic.
  */
-import { siteOrigin } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
+import {
+    ensureCsrfTokenCookie,
+    getCsrfToken,
+} from "@/utilities/csrfTokenFetcher";
 import { useState, useEffect, useCallback } from "react";
 
 // Constants for OAuth timing UX
@@ -202,11 +206,8 @@ export function useOAuthFlow(
             try {
                 console.log(`[OAuth] Initializing ${provider} OAuth login`);
 
-                // Get CSRF token from cookie (if available)
-                const csrfToken = document.cookie
-                    .split("; ")
-                    .find((row) => row.startsWith("csrftoken="))
-                    ?.split("=")[1];
+                await ensureCsrfTokenCookie(apiBaseUrl);
+                const csrfToken = getCsrfToken();
 
                 // Create form and submit through Caddy proxy
                 // Use absolute URL with protocol to force full page navigation

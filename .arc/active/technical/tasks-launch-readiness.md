@@ -98,32 +98,20 @@ authentication gaps that matter once sign-up is public are closed.
       in this work unit's personal workspace. Related tests, frontend lint, Prettier and TypeScript passed after
       generating the missing local Chakra recipe typings. Network helpers share the existing MSW server.
 
-- [ ] **2.2 The frontend sends Django's `csrftoken` on every unsafe request** (R21; Implemented 3)
+- [x] **2.2 The frontend sends Django's `csrftoken` on every unsafe request** (R21; Implemented 3)
 
-    - [ ] **2.2.a Write tests**
-        - `src/utilities/__tests__/csrfTokenFetcher.test.ts`: `getCsrfToken` returns the `csrftoken` cookie's value
-          (today it reads another cookie, so it returns nothing)
-        - `src/services/__tests__/apiClient.test.ts` (new): an unsafe request carries the cookie's value as
-          `X-CSRFToken`; with no cookie, the client requests `GET /api/csrf/` first and sends the token that sets; a
-          safe request requests nothing extra; after a `401`, the refresh retry's `POST /api/auth/refresh` carries
-          `X-CSRFToken`
-        - `useAuth.test.tsx`: the OAuth sign-out's `DELETE` on `auth/session` carries the token
-        - `src/services/__tests__/authService.test.ts` (new): `resetPassword`'s request carries the token
-        - `src/hooks/auth/__tests__/useOAuthFlow.test.ts` (new): the start form carries `csrfmiddlewaretoken` with the
-          cookie's value, and with no cookie `GET /api/csrf/` is requested before the form is submitted
-        - Expect every case to FAIL initially except two that pass today and guard the change: the start form's
-          `csrfmiddlewaretoken` with the cookie present (`useOAuthFlow.ts` already reads `csrftoken`) and the safe
-          request that requests nothing extra; see each fail once (the form field left out, the cookie fetched before
-          a `GET`)
-
-    - [ ] **2.2.b Read and send `csrftoken`**
-        - `getCsrfToken` (`utilities/csrfTokenFetcher.ts`) and the request interceptor (`services/apiClient.ts`) read
-          `csrftoken`, and their comments naming `XSRF-TOKEN` go; before an unsafe request with no cookie, the
-          interceptor awaits `ensureCsrfTokenCookie`
-        - The response interceptor's refresh retry (a bare `axios.post` to `/auth/refresh`) sends `X-CSRFToken`
-        - The OAuth sign-out's `fetch` `DELETE` (`hooks/auth/useAuth.ts`) and `authService.resetPassword` ensure the
-          cookie and send the header; `useOAuthFlow.ts` ensures the cookie before it builds the start form
-        - Tests should now PASS
+    - [x] **2.2.a Write tests:** fourteen CSRF cases cover the cookie reader, all four unsafe API verbs,
+      initialization before unsafe requests, safe GETs, the refresh POST, password-reset completion, OAuth
+      sign-out, and OAuth form submission. Reset, sign-out and form cases cover both present and missing cookies.
+      Eleven cases failed against the original behavior. The two already-working guards failed with safe-request
+      initialization added or the form field omitted; the added missing-cookie sign-out case failed with
+      initialization omitted. All passed after restoration and implementation.
+    - [x] **2.2.b Read and send `csrftoken`:** the helper reuses the token-cookie reader; the unsafe-request
+      interceptor, bare refresh request, OAuth DELETE, password-reset fetch and OAuth start form await cookie
+      initialization and send Django's token. Safe requests do not initialize it.
+    - Checks: 178 related frontend tests passed (16 files), frontend lint, TypeScript and Prettier passed.
+      The coupled cases exercise one CSRF contract across the direct browser request paths. Astra's bounded
+      source check found no material issue; the verification phase remains pending.
 
 - [ ] **2.3 Every unsafe request is CSRF-checked** (R20; Implemented 2, and Proven live 13 in 5.5)
 

@@ -14,7 +14,11 @@
  * - State is shared via AuthContext.
  * - Components access state using useAuthContext.
  */
-import { siteOrigin } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
+import {
+    ensureCsrfTokenCookie,
+    getCsrfToken,
+} from "@/utilities/csrfTokenFetcher";
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -330,11 +334,13 @@ export function useAuth(): AuthStateProps {
                 logger.debug(
                     "[useAuth] Logging out OAuth user via session endpoint",
                 );
+                await ensureCsrfTokenCookie(apiBaseUrl);
                 const response = await fetch(ALLAUTH_SESSION_URL, {
                     method: "DELETE",
                     credentials: "include", // Send session cookie
                     headers: {
                         "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfToken() || "",
                     },
                 });
 

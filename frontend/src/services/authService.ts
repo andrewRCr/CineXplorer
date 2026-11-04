@@ -261,6 +261,7 @@ export async function resetPassword(
     key: string,
     password: string,
 ): Promise<{ success: boolean; autoLoggedIn: boolean }> {
+    await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
     const response = await fetch(

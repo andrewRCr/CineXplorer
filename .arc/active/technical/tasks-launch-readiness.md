@@ -231,20 +231,16 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: 239 core tests passed; Ruff lint/format, scoped Pyright and production Compose `config --quiet`
       passed. The command and its settings cases are one deployment-identity concern.
 
-- [ ] **3.6 The health check covers the database** (R13; Implemented 5)
+- [x] **3.6 The health check covers the database** (R13; Implemented 5)
 
-    - [ ] **3.6.a Write tests** in `apps/core/tests/integration/test_health_check.py` (new)
-        - `GET /api/health-check/` answers `200 {"status": "healthy"}`, and R13's `503` body, whole, when the database
-          query fails (Phase 3 note on a real database failure)
-        - Expect the `503` case to FAIL initially; the `200` case passes today and guards the change: after 3.6.b, see
-          it fail once with the query made to fail
-
-    - [ ] **3.6.b Query the database** with `SELECT 1` on the default connection, from a function in
-      `apps/core/services/` that the endpoint (`apps/core/api.py`) calls
-        - The endpoint declares its `200` and `503` responses, and its docstring, which is its API description and
-          says today that Compose checks the dependencies, is rewritten
-        - Regenerate the API types; the diff shows the health check's responses and description
-        - Tests should now PASS
+    - [x] **3.6.a Write tests:** real database requests assert both complete bodies; a closed local port makes
+      the driver fail without patching project code. The outage case initially returned 200. Both cases pass with
+      the query; the healthy guard failed when the SQL was temporarily made to fail, then passed after restoration.
+    - [x] **3.6.b Query the database:** the service runs `SELECT 1` on the default connection and maps database
+      failures to a fixed 503 through the domain handler. Declared both responses, rewrote the endpoint description
+      and regenerated only the health contract and its response types. Redis remains outside the readiness check.
+    - Checks: 241 core tests passed; Ruff lint/format, scoped Pyright and frontend TypeScript passed. The full
+      backend suite remains for CI/verification; the affected core and authentication apps have passed their checks.
 
 ### **Phase 4:** The server deploys, backs up and cleans up on its own
 

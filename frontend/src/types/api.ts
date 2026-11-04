@@ -413,17 +413,10 @@ export interface paths {
         };
         /**
          * Health Check
-         * @description General health check endpoint for Docker orchestration.
+         * @description Check application and database readiness with a query on the default connection.
          *
-         *     This lightweight endpoint confirms the Django application is running
-         *     and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
-         *     validated independently by Docker Compose health checks.
-         *
-         *     Args:
-         *         request: HTTP request object
-         *
-         *     Returns:
-         *         Status response indicating the application is healthy
+         *     Return healthy when SELECT 1 succeeds, or a fixed service-unavailable response
+         *     when the database cannot answer. This endpoint does not check Redis.
          */
         get: operations["apps_core_api_health_check"];
         put?: never;
@@ -1329,6 +1322,25 @@ export interface components {
             } | null;
             /** Recent Interactions */
             recent_interactions?: unknown[] | null;
+        };
+        /**
+         * HealthCheckResponse
+         * @description A successful readiness response.
+         */
+        HealthCheckResponse: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "healthy";
+        };
+        /**
+         * ServiceUnavailableResponse
+         * @description A readiness failure without internal connection details.
+         */
+        ServiceUnavailableResponse: {
+            /** Detail */
+            detail: string;
         };
         /**
          * ApiErrorSchema
@@ -2371,7 +2383,18 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HealthCheckResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceUnavailableResponse"];
+                };
             };
         };
     };

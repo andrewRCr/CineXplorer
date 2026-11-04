@@ -28,8 +28,11 @@ from .schemas import (
     FrontendLogEntrySchema,
     FrontendLogErrorResponse,
     FrontendLogSuccessResponse,
+    HealthCheckResponse,
     LogHealthCheckResponse,
+    ServiceUnavailableResponse,
 )
+from .services.health_service import check_database_connection
 from .throttles import FrontendLogThrottle
 
 # Get logger instances
@@ -111,21 +114,19 @@ def frontend_log(
         )
 
 
-@core_router.get("/health-check/", auth=None)
-def health_check(request: HttpRequest) -> dict[str, str]:
-    """General health check endpoint for Docker orchestration.
+@core_router.get(
+    "/health-check/",
+    auth=None,
+    response={200: HealthCheckResponse, 503: ServiceUnavailableResponse},
+)
+def health_check(request: HttpRequest) -> HealthCheckResponse:
+    """Check application and database readiness with a query on the default connection.
 
-    This lightweight endpoint confirms the Django application is running
-    and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
-    validated independently by Docker Compose health checks.
-
-    Args:
-        request: HTTP request object
-
-    Returns:
-        Status response indicating the application is healthy
+    Return healthy when SELECT 1 succeeds, or a fixed service-unavailable response
+    when the database cannot answer. This endpoint does not check Redis.
     """
-    return {"status": "healthy"}
+    check_database_connection()
+    return HealthCheckResponse(status="healthy")
 
 
 @core_router.get(

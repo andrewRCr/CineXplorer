@@ -482,10 +482,27 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                }
+              }
+            }
           }
         },
-        "description": "General health check endpoint for Docker orchestration.\n\nThis lightweight endpoint confirms the Django application is running\nand responsive. Infrastructure dependencies (PostgreSQL, Redis) are\nvalidated independently by Docker Compose health checks.\n\nArgs:\n    request: HTTP request object\n\nReturns:\n    Status response indicating the application is healthy",
+        "description": "Check application and database readiness with a query on the default connection.\n\nReturn healthy when SELECT 1 succeeds, or a fixed service-unavailable response\nwhen the database cannot answer. This endpoint does not check Redis.",
         "tags": [
           "core"
         ]
@@ -3832,6 +3849,35 @@
           "timestamp"
         ],
         "title": "FrontendLogEntrySchema",
+        "type": "object"
+      },
+      "HealthCheckResponse": {
+        "description": "A successful readiness response.",
+        "properties": {
+          "status": {
+            "const": "healthy",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "HealthCheckResponse",
+        "type": "object"
+      },
+      "ServiceUnavailableResponse": {
+        "description": "A readiness failure without internal connection details.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail"
+        ],
+        "title": "ServiceUnavailableResponse",
         "type": "object"
       },
       "ApiErrorSchema": {

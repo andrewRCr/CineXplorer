@@ -71,31 +71,17 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: authentication suite 223 passed; four concurrency cases passed again after type refinements;
       Ruff lint/format and scoped Pyright passed. The four cases share one indivisible state-isolation change.
 
-- [ ] **1.3 Only the allauth endpoints the site uses answer** (R24; Implemented 9)
+- [x] **1.3 Only the allauth endpoints the site uses answer** (R24; Implemented 9)
 
-    - [ ] **1.3.a Write tests** in `apps/authentication/tests/integration/test_allauth_allowlist.py` (new)
-        - `POST /_allauth/browser/v1/auth/signup` with a new account's fields answers `404` and creates no user;
-          `POST /_allauth/browser/v1/auth/login` with a verified user's credentials answers `404` and signs nobody in
-        - `GET /_allauth/app/v1/auth/session`, `GET /_allauth/browser/v1/config` and a listed path with an unlisted
-          method (`POST /_allauth/browser/v1/auth/session`) answer `404`
-        - Each listed endpoint with each listed method reaches allauth, shown by an answer only allauth gives:
-          `GET` and `DELETE` on `auth/session` answer allauth's `401` to an anonymous visitor,
-          `auth/password/request` for an unknown address answers `200`, `auth/password/reset` with an invalid key
-          answers `400`, and `auth/provider/redirect` with a Google app (`create_social_app` in
-          `apps/authentication/tests/fixtures.py`) redirects to Google
-        - `config/settings_test.py` turns off allauth's `reset_password` limit beside `confirm_email`, for the reason
-          its comment gives (the counts persist in Redis between runs); this and later tasks post to
-          `auth/password/request`
-        - Expect the `404` cases to FAIL initially; the listed cases pass today and guard the list: see each fail once
-          with its entry left off
-
-    - [ ] **1.3.b Add the allowlist and remove the unused token strategy**
-        - A middleware in `apps/authentication/middleware.py` answers `404` to every request under `/_allauth/`
-          outside R24's four paths and their methods; in `MIDDLEWARE` it comes before the CSRF middleware, so an
-          unlisted unsafe request answers `404` and not `403` once 2.3 checks every request
-        - Remove `HEADLESS_TOKEN_STRATEGY` (`config/settings.py`), which names a module that does not exist and
-          serves only the `app` client, and the line naming it in `apps/authentication/adapters.py`'s module docstring
-        - Tests should now PASS
+    - [x] **1.3.a Write tests:** ten endpoint cases cover closed sign-up/password sign-in, the app client,
+      config and an unlisted method, plus all five allowed path/method combinations. The five closed cases failed
+      before the change. Each allowed case failed with `404` when its entry was temporarily omitted, then passed
+      after restoration. Password-reset throttling is disabled in test settings alongside email confirmation.
+    - [x] **1.3.b Add the allowlist and remove the unused token strategy:** `AllauthEndpointMiddleware`
+      runs before CSRF and matches the four exact browser paths and methods. Removed `HEADLESS_TOKEN_STRATEGY`
+      and its adapter description; provider callbacks remain under `/accounts/`.
+    - Checks: authentication suite 233 passed; ten allowlist cases passed again after type refinements;
+      Ruff lint/format and scoped Pyright passed. The endpoint cases share one allowlist implementation.
 
 ### **Phase 2:** Every unsafe request is CSRF-checked, the site sends the token, and password users stay signed in
 

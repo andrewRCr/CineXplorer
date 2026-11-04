@@ -2,7 +2,6 @@
 
 Customizes email confirmation URLs to point to the frontend application.
 Email sending is handled by Django's email backend (django-zoho-zeptomail).
-JWT token generation is handled by HEADLESS_TOKEN_STRATEGY setting.
 """
 
 from __future__ import annotations

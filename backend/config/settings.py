@@ -100,6 +100,7 @@ MIDDLEWARE = [
     # Custom CSRF middleware with path-based exemptions (workaround for Django Ninja bug #1464)
     # Must run AFTER AuthenticationMiddleware to check request.user.is_authenticated
     # Replaces Django's CsrfViewMiddleware to avoid conflict with Django Ninja
+    "apps.authentication.middleware.AllauthEndpointMiddleware",
     "apps.authentication.middleware.CsrfHeaderMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -303,7 +304,7 @@ ACCOUNT_ADAPTER = "apps.authentication.adapters.CustomAccountAdapter"
 
 # Headless Mode Configuration (for SPA/React frontend)
 # Provides JSON API endpoints instead of HTML templates
-# Must be True to enable Token Strategy API for OAuth JWT generation
+# Serve frontend-oriented authentication endpoints without account templates
 HEADLESS_ONLY = True
 HEADLESS_FRONTEND_URLS = {
     # Note: account_confirm_email is handled by CustomAccountAdapter.get_email_confirmation_url()
@@ -312,10 +313,6 @@ HEADLESS_FRONTEND_URLS = {
     "account_signup": f"{FRONTEND_URL}/auth/signup",
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
 }
-
-# Token Strategy - JWT token generation for headless mode
-# Official django-allauth extension point for custom token generation
-HEADLESS_TOKEN_STRATEGY = "apps.authentication.token_strategy.JWTTokenStrategy"
 
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login

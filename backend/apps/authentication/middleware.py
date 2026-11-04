@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import logging
 
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponseNotFound, JsonResponse
 from django.utils.deprecation import MiddlewareMixin
 
 logger = logging.getLogger("cinexplorer.auth")
@@ -143,4 +143,22 @@ class CsrfHeaderMiddleware(MiddlewareMixin):
                     )
                 return JsonResponse(error_response, status=403)
 
+        return None
+
+
+class AllauthEndpointMiddleware(MiddlewareMixin):
+    """Expose only the headless browser operations used by the frontend."""
+
+    allowed_methods = {
+        "/_allauth/browser/v1/auth/session": {"GET", "DELETE"},
+        "/_allauth/browser/v1/auth/password/request": {"POST"},
+        "/_allauth/browser/v1/auth/password/reset": {"POST"},
+        "/_allauth/browser/v1/auth/provider/redirect": {"POST"},
+    }
+
+    def process_request(self, request: HttpRequest) -> HttpResponseNotFound | None:
+        if request.path.startswith(
+            "/_allauth/"
+        ) and request.method not in self.allowed_methods.get(request.path, set()):
+            return HttpResponseNotFound()
         return None

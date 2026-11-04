@@ -15,13 +15,14 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"  # pyright: igno
 # - ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS: Django-allauth setting
 EMAIL_VERIFICATION_EXPIRY_DAYS = 1  # pyright: ignore[reportConstantRedefinition]
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = EMAIL_VERIFICATION_EXPIRY_DAYS  # pyright: ignore[reportConstantRedefinition]
-# Disable email verification rate limiting for tests
+# Disable email confirmation and password-reset rate limiting for tests
 # Production default is "1/180s/key" (1 email per 3 minutes per address)
 # which causes test failures when the same test runs multiple times
 # because rate limit state persists in Redis between test runs.
 # Setting to empty string disables the rate limit for this action.
 ACCOUNT_RATE_LIMITS = {  # pyright: ignore[reportConstantRedefinition]
     "confirm_email": "",  # Disable rate limiting for email confirmation in tests
+    "reset_password": "",  # Password-request tests also reuse addresses across runs
 }
 FRONTEND_URL = "http://testserver"  # pyright: ignore[reportConstantRedefinition]
 

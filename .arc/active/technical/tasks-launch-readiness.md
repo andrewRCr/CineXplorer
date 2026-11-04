@@ -244,14 +244,13 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 4:** The server deploys, backs up and cleans up on its own
 
-- [ ] **4.1 `.arc/`-only pushes start no CI run, and manual runs queue apart** (R6, R4; Implemented 8)
-    - `ci.yml`: `paths-ignore: ['.arc/**']` on the `push` trigger only
-    - `.github/workflows/docs.yml` (new), callable (`workflow_call`) and run on a push to `main` that changes
-      `.arc/**`, holds the `markdown` job's two steps; `ci.yml`'s `markdown` job calls it, and `ci-ok`'s `needs` stays
-      as it is
-    - The workflow's concurrency group gives `workflow_dispatch` runs a group of their own; push runs on `main` keep
-      theirs, uncancelled
-    - Check: `actionlint`; the draft pull request's run (5.2; Implemented 8) and Proven after merge 2 are the proof
+- [x] **4.1 `.arc/`-only pushes start no CI run, and manual runs queue apart** (R6, R4; Implemented 8)
+    - The push trigger ignores `.arc/**`; pull requests/manual runs remain unfiltered. Manual dispatches use their
+      run ID in the concurrency group, apart from push/PR groups; main push runs retain their uncancelled group.
+    - Extracted the existing documentation job into a reusable workflow that also runs on main pushes touching
+      `.arc/**`. CI keeps its `markdown` job ID and `ci-ok` dependencies unchanged.
+    - Checks: `actionlint` passed for both workflows, all 20 recovery-hook tests passed and markdown lint passed.
+      Hosted trigger/concurrency evidence remains in 5.2 and after merge.
 
 - [ ] **4.2 CI checks the production Caddyfile and Compose file** (R7; Implemented 7)
     - In the `images` job after the web image builds: `caddy validate` inside `cinexplorer-web:ci` with placeholder

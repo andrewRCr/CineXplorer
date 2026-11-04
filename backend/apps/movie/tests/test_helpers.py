@@ -118,7 +118,7 @@ def create_mock_paginated_response(
     # Pydantic .model_dump() boundary - see module docstring for details
     return ApiResponse(
         status_code=status_code,
-        data=tmdb_response.model_dump(),  # type: ignore[arg-type]
+        data=tmdb_response.model_dump(),
         headers=headers,
         correlation_id=correlation_id,
     )
@@ -188,13 +188,13 @@ def create_mock_movie_detail_response(
         vote_average=vote_average,
         runtime=runtime,
         overview=overview,
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,  # pyright: ignore[reportArgumentType]
     )
 
     # Pydantic .model_dump() boundary - see module docstring for details
     return ApiResponse(
         status_code=status_code,
-        data=movie_detail.model_dump(),  # type: ignore[arg-type]
+        data=movie_detail.model_dump(),
         headers=headers,
         correlation_id=correlation_id,
     )

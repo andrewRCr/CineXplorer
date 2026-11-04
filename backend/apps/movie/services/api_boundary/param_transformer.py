@@ -116,7 +116,7 @@ def transform_to_service_params(schema: MovieDiscoverFilterSchema) -> BrowseServ
     # Apply field mappings
     for http_field, service_param in HTTP_TO_SERVICE_MAPPING.items():
         if http_field in data:
-            params[service_param] = data[http_field]  # type: ignore[assignment]
+            params[service_param] = data[http_field]
 
     # Apply derived parameters (backend filtering, aliases, transformations)
     _apply_derived_params(data, params)

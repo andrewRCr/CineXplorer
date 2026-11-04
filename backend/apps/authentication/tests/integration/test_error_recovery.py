@@ -380,13 +380,13 @@ def test_concurrent_token_refresh_requests() -> None:
             responses.append(future.result())
 
     # At least one should succeed (first one to acquire lock)
-    success_count = sum(1 for r in responses if r.status_code == HTTPStatus.OK)  # type: ignore[attr-defined]
+    success_count = sum(1 for r in responses if r.status_code == HTTPStatus.OK)
     assert success_count >= 1, "At least one concurrent refresh should succeed"
 
     # Others may fail due to rotation (old token blacklisted)
     # This is acceptable behavior - frontend should retry
     for response in responses:
-        assert response.status_code in [  # type: ignore[attr-defined]
+        assert response.status_code in [
             HTTPStatus.OK,
             HTTPStatus.UNAUTHORIZED,  # Token rotated by another request
         ]

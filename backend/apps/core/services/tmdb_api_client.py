@@ -202,12 +202,12 @@ class TMDBApiClient(BaseApiClient):
         has_results = "results" in data and hasattr(data["results"], "__iter__")
         if self.logger.isEnabledFor(logging.DEBUG) and has_results:
             results = data["results"]
-            if hasattr(results, "__len__") and len(results) > 0:  # type: ignore[arg-type]
-                sample_count = min(3, len(results))  # type: ignore[arg-type]
+            if hasattr(results, "__len__") and len(results) > 0:
+                sample_count = min(3, len(results))
                 sample_results: list[dict[str, object]] = []
                 for i in range(sample_count):
                     try:
-                        movie = results[i]  # type: ignore[index]
+                        movie = results[i]
                         # Extract key fields for debugging (title, year, ID)
                         release = movie.get("release_date") if hasattr(movie, "get") else None
                         vote_avg = movie.get("vote_average") if hasattr(movie, "get") else None
@@ -224,9 +224,9 @@ class TMDBApiClient(BaseApiClient):
 
                 # Log ALL results for complete debugging visibility
                 all_results: list[dict[str, object]] = []
-                for i in range(len(results)):  # type: ignore[arg-type]
+                for i in range(len(results)):
                     try:
-                        movie = results[i]  # type: ignore[index]
+                        movie = results[i]
                         release = movie.get("release_date") if hasattr(movie, "get") else None
                         vote_avg = movie.get("vote_average") if hasattr(movie, "get") else None
                         all_results.append(
@@ -341,7 +341,7 @@ class TMDBApiClient(BaseApiClient):
             # Type-safe length check with hasattr
             # Note: hasattr check doesn't narrow object to Sized protocol in Pyright
             if hasattr(results, "__len__"):
-                metadata["results_count"] = len(results)  # type: ignore[arg-type]  # Runtime-validated by hasattr
+                metadata["results_count"] = len(results)  # pyright: ignore[reportArgumentType]  # Runtime-validated by hasattr
             else:
                 metadata["results_count"] = 0
 
@@ -375,7 +375,7 @@ class TMDBApiClient(BaseApiClient):
         # Use try/except for safe access to non-dict or mock header objects
         for header_name, key in RATE_LIMIT_HEADER_MAPPING.items():
             try:
-                value = headers[header_name]  # type: ignore[index]  # Mock object support
+                value = headers[header_name]  # pyright: ignore[reportIndexIssue, reportUnknownVariableType]  # Mock object support
             except (TypeError, KeyError, IndexError):
                 # Skip non-subscriptable or missing headers
                 continue
@@ -383,7 +383,7 @@ class TMDBApiClient(BaseApiClient):
             # Convert numeric values to integers
             if key in ["limit", "remaining", "retry_after", "reset"]:
                 try:
-                    rate_limit_info[key] = int(value)  # type: ignore[arg-type]  # Runtime-validated in try/except
+                    rate_limit_info[key] = int(value)  # pyright: ignore[reportUnknownArgumentType]  # Runtime-validated in try/except
                 except (ValueError, TypeError):
                     rate_limit_info[key] = value
             else:

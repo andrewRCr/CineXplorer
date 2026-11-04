@@ -23,14 +23,14 @@ from django.test import Client, override_settings
 @pytest.mark.django_db
 def test_x_frame_options_deny_header(api_client: Client) -> None:
     """Response includes X-Frame-Options: DENY header (clickjacking protection)."""
-    response: HttpResponse = api_client.get("/api/csrf/")  # type: ignore[assignment]
+    response: HttpResponse = api_client.get("/api/csrf/")
     assert response.get("X-Frame-Options") == "DENY"
 
 
 @pytest.mark.django_db
 def test_x_content_type_options_nosniff_header(api_client: Client) -> None:
     """Response includes X-Content-Type-Options: nosniff header (MIME sniffing protection)."""
-    response: HttpResponse = api_client.get("/api/csrf/")  # type: ignore[assignment]
+    response: HttpResponse = api_client.get("/api/csrf/")
     assert response.get("X-Content-Type-Options") == "nosniff"
 
 
@@ -63,7 +63,7 @@ def test_csrf_cookie_secure_production() -> None:
 @override_settings(ENVIRONMENT="production", DEBUG=False, SECURE_HSTS_SECONDS=31536000)
 def test_hsts_header_present_production(api_client: Client) -> None:
     """HSTS header present in production environment with 1 year duration."""
-    response: HttpResponse = api_client.get("/api/csrf/", secure=True)  # type: ignore[assignment]
+    response: HttpResponse = api_client.get("/api/csrf/", secure=True)
     hsts_header = response.get("Strict-Transport-Security")
     assert hsts_header is not None
     assert "max-age=31536000" in hsts_header
@@ -101,13 +101,13 @@ def samesite_user(api_client: Client) -> tuple[dict[str, str], Client]:
         "first_name": "SameSite",
         "last_name": "User",
     }
-    create_user(**user_data)  # type: ignore[arg-type]
+    create_user(**user_data)  # pyright: ignore[reportArgumentType]
 
     # Ensure email is verified (required for login)
     user = get_user_model().objects.get(email=user_data["email"])
     EmailAddress.objects.get_or_create(
         user=user,
-        email=user.email,  # type: ignore[attr-defined]
+        email=user.email,  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
         defaults={"verified": True, "primary": True},
     )
 

@@ -88,7 +88,7 @@ def user(db: None) -> User:
     # django-types limitation - UserManager.create_user type not inferred
     return cast(
         "User",
-        User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             email="testuser@example.com",
             password="testpass123",
             username="testuser",
@@ -117,7 +117,7 @@ def auth_client(api_client: Client, user: User) -> Client:
             assert response.status_code == 200
     """
     # Force login with the test user
-    api_client.force_login(user)  # type: ignore[arg-type]  # Django test client accepts AbstractBaseUser
+    api_client.force_login(user)  # pyright: ignore[reportArgumentType]  # Django test client accepts AbstractBaseUser
     return api_client
 
 

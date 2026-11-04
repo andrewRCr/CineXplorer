@@ -29,7 +29,7 @@ def test_create_user_with_username_and_email_successful() -> None:
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
         "UserType",
-        User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             username=username,
             email=email,
             password=password,
@@ -38,7 +38,7 @@ def test_create_user_with_username_and_email_successful() -> None:
 
     assert user.username == username
     assert user.email == email
-    assert user.check_password(password)  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+    assert user.check_password(password)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
 
 @pytest.mark.django_db
@@ -55,7 +55,7 @@ def test_new_user_email_normalized() -> None:
         # django-types limitation - UserManager.create_user type not inferred
         user = cast(
             "UserType",
-            User.objects.create_user(f"testUser{i}", email),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            User.objects.create_user(f"testUser{i}", email),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
         )
         assert user.email == expected
 
@@ -65,7 +65,7 @@ def test_new_user_without_username_raises_error() -> None:
     """Tests that creating a user without a username raises a ValueError."""
     with pytest.raises(ValueError, match="The given username must be set"):
         # django-types limitation - UserManager.create_user type not inferred
-        User.objects.create_user("", "testUser@example.com")  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_user("", "testUser@example.com")  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
 
 
 @pytest.mark.django_db
@@ -80,7 +80,7 @@ def test_user_model_allows_empty_email_at_model_level() -> None:
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
         "UserType",
-        User.objects.create_user("testUser", ""),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_user("testUser", ""),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     )
     assert user.pk is not None  # Verify user was persisted
     assert user.username == "testUser"
@@ -93,7 +93,7 @@ def test_create_superuser() -> None:
     # django-types limitation - UserManager.create_superuser type not inferred
     user = cast(
         "UserType",
-        User.objects.create_superuser(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_superuser(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             "testUser", "testUser@example.com", "testPass123"
         ),
     )
@@ -113,7 +113,7 @@ def test_create_default_user_movie_data() -> None:
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
         "UserType",
-        User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             "testUser", "testUser@example.com", "testPass123"
         ),
     )
@@ -140,7 +140,7 @@ def test_create_nondefault_user_movie_data() -> None:
     # django-types limitation - UserManager.create_user type not inferred
     user = cast(
         "UserType",
-        User.objects.create_user(  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+        User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
             "testUser", "testUser@example.com", "testPass123"
         ),
     )

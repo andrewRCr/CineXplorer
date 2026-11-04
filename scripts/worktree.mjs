@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { randomInt } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 const COMPOSE = ["compose", "-f", "infrastructure/docker-compose.yml", "-f", "infrastructure/docker-compose.worktree.yml"];
@@ -95,7 +95,29 @@ function provisionEnv(root, main) {
 
 function provision(root, main) {
     linked(root, main);
+    nameOf(root, main);
+    const included = git(main, "ls-files", "--others", "--ignored", `--exclude-from=${join(root, ".worktreeinclude")}`, "-z");
+    for (const file of included.split("\0").filter(Boolean)) {
+        const target = join(root, file);
+        if (existsSync(target)) continue;
+        const ignored = spawnSync("git", ["check-ignore", "-q", "--", file], { cwd: root, encoding: "utf8" });
+        if (ignored.error) throw ignored.error;
+        if (ignored.status === 1) continue;
+        if (ignored.status !== 0) throw new Error(ignored.stderr || "git check-ignore failed");
+        mkdirSync(dirname(target), { recursive: true });
+        copyFileSync(join(main, file), target);
+    }
+    for (const folder of [".venv-backend", ".claude", ".codex"]) {
+        const target = join(root, folder);
+        if (!lstatSync(target, { throwIfNoEntry: false })) symlinkSync(join(main, folder), target, "dir");
+    }
     provisionEnv(root, main);
+    const config = run(root, "docker", [...COMPOSE, "config"]);
+    const project = config.match(/^name:\s*(\S+)\s*$/m)?.[1];
+    const expected = `cinexplorer-${nameOf(root, main)}`;
+    if (project !== expected) throw new Error(`Compose project must be ${expected}; resolved ${project ?? "[no name]"}.`);
+    console.log(`name: ${project}`);
+    for (const args of [["ci"], ["run", "typegen"]]) console.log(run(join(root, "frontend"), "npm", args));
 }
 
 function main() {

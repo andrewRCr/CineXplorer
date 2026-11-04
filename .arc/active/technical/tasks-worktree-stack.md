@@ -69,33 +69,14 @@ and remove it after its branch merges.
       checks and all eight tests pass.
     - [x] **2.1.c Run the tests in CI:** the session-hooks step includes `scripts/worktree.test.mjs`.
 
-- [ ] **2.2 `provision` copies the include files, links the shared folders, checks the project name and installs the
+- [x] **2.2 `provision` copies include files, links shared folders, checks the project and installs the
   frontend** (R2, R4 steps 1, 2, 4 and 5, R14; Criterion 1)
 
-    - [ ] **2.2.a Write tests** in `scripts/worktree.test.mjs`
-        - Copies each file `.worktreeinclude` matches from the main checkout; keeps a copy the worktree already has;
-          skips a matched file the worktree's ignore rules don't ignore (an extra fixture pattern for an untracked,
-          unignored file)
-        - Links `.venv-backend`, `.claude` and `.codex` to the main checkout's; leaves an entry already there
-        - Calls `docker compose` with both files and `config` in the worktree: a `name: cinexplorer-{name}` answer
-          passes, and the output carries the name line and never the stub's marker; another name refuses
-        - Runs `npm ci`, then `npm run typegen`, in `frontend/`; when `npm ci` fails, provisioning stops with its
-          output and a non-zero exit, and `typegen` does not run
-        - In a worktree made by `git worktree add` alone with the include files already copied, as a post-create
-          command finds it, `provision` completes and keeps them; a second run adds nothing and repeats the check and
-          the install
-        - Every refusal case asserts its reason
-        - Expect tests to FAIL initially
-
-    - [ ] **2.2.b Add `.worktreeinclude` and the remaining steps**
-        - `.worktreeinclude` at the root lists `backend/config/.env`, `frontend/.env`, `frontend/.env.development` and
-          `infrastructure/dev-certs/*.pem`, and not `infrastructure/.env`
-        - The copy reads the worktree's own `.worktreeinclude`, the branch's list: in the main checkout,
-          `git ls-files --others --ignored --exclude-from=<worktree>/.worktreeinclude` names the untracked files the
-          patterns match (today exactly the five files), and each is copied where the worktree lacks it and
-          `git check-ignore` there confirms the worktree ignores it
-        - Steps run in R4's order: copy, link, env (2.1), check, install
-        - Tests should now PASS
+    - [x] **2.2.a Write tests:** five fail-first cases cover ignored include files, existing copies and folders,
+      shared links, project-name checking without configuration disclosure, install failure and repeated provisioning
+      after an external tool copied the files.
+    - [x] **2.2.b Add `.worktreeinclude` and the remaining steps:** copy, link, append env, check the resolved name,
+      then `npm ci` and `npm run typegen`. Syntax checks and all 13 worktree tests pass.
 
 - [ ] **2.3 `create` cuts a branch into a provisioned worktree** (R3, R14; Criterion 1)
 

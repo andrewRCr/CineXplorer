@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import {
-    existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync,
+    existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, writeFileSync,
 } from "node:fs";
 import { devNull, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -176,4 +176,70 @@ test("allocation refuses a full port range without writing the environment", (t)
     refusal(f.invoke(path, ["provision"]), /no.*port.*8445.*8499/i);
     assert.equal(existsSync(join(path, "infrastructure/.env")), false);
     assert.deepEqual(f.calls(), []);
+});
+
+test("provision copies only included ignored files and keeps existing copies and folders", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(f.main, "unignored.txt", "do not copy\n");
+    write(path, ".worktreeinclude", readFileSync(join(path, ".worktreeinclude"), "utf8") + "unignored.txt\n");
+    write(path, "frontend/.env", "keep this copy\n");
+    mkdirSync(join(path, ".claude"));
+    const result = f.invoke(path, ["provision"]);
+    success(result);
+    for (const file of ["backend/config/.env", "frontend/.env.development", "infrastructure/dev-certs/cert.pem", "infrastructure/dev-certs/key.pem"]) {
+        assert.equal(readFileSync(join(path, file), "utf8"), readFileSync(join(f.main, file), "utf8"));
+    }
+    assert.equal(readFileSync(join(path, "frontend/.env"), "utf8"), "keep this copy\n");
+    assert.equal(existsSync(join(path, "unignored.txt")), false);
+    for (const folder of [".venv-backend", ".codex"]) assert.equal(readlinkSync(join(path, folder)), join(f.main, folder));
+    assert.equal(realpathSync(join(path, ".claude")), join(path, ".claude"));
+});
+
+test("provision checks only the project name then installs and typegens in the frontend", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    const result = f.invoke(path, ["provision"]);
+    success(result);
+    assert.match(result.stdout, /name: cinexplorer-sample/);
+    assert.doesNotMatch(result.stdout + result.stderr, /hidden-marker/);
+    assert.deepEqual(f.calls(), [
+        { command: "docker", args: [...COMPOSE, "config"], cwd: path },
+        { command: "npm", args: ["ci"], cwd: join(path, "frontend") },
+        { command: "npm", args: ["run", "typegen"], cwd: join(path, "frontend") },
+    ]);
+});
+
+test("provision refuses a different Compose project without leaking configuration or installing", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    const result = f.invoke(path, ["provision"], { CX_PROJECT: "infrastructure" });
+    refusal(result, /project.*cinexplorer-sample.*infrastructure/i);
+    assert.doesNotMatch(result.stdout + result.stderr, /hidden-marker/);
+    assert.deepEqual(f.calls(), [{ command: "docker", args: [...COMPOSE, "config"], cwd: path }]);
+});
+
+test("a failed frontend install stops provisioning with its output", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    refusal(f.invoke(path, ["provision"], { CX_FAIL: "ci" }), /stub command failed: ci/);
+    assert.deepEqual(f.calls().filter((call) => call.command === "npm"), [
+        { command: "npm", args: ["ci"], cwd: join(path, "frontend") },
+    ]);
+});
+
+test("provision works after an external tool copied the files and repeats the check and install", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    for (const file of ["backend/config/.env", "frontend/.env", "frontend/.env.development",
+        "infrastructure/dev-certs/cert.pem", "infrastructure/dev-certs/key.pem"]) {
+        write(path, file, "already copied\n");
+    }
+    success(f.invoke(path, ["provision"]));
+    const first = envOf(path);
+    success(f.invoke(path, ["provision"]));
+    assert.equal(envOf(path), first);
+    assert.equal(readFileSync(join(path, "backend/config/.env"), "utf8"), "already copied\n");
+    assert.equal(f.calls().length, 6);
+    assert.deepEqual(f.calls().slice(3), f.calls().slice(0, 3));
 });

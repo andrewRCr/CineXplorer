@@ -3,6 +3,7 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { resolve } from "path";
+import { createRequire } from "node:module";
 
 export default defineConfig({
     plugins: [react(), tsconfigPaths()],
@@ -60,6 +61,8 @@ export default defineConfig({
 
     resolve: {
         alias: {
+            // Only the MSW server entry needs Node exports; app imports keep browser conditions.
+            "msw/node": createRequire(import.meta.url).resolve("msw/node"),
             // Note: @/types/* is handled by tsconfigPaths() plugin which supports
             // multiple fallback paths (./src/@types/* and ./src/types/*)
             "@": resolve(__dirname, "./src"),

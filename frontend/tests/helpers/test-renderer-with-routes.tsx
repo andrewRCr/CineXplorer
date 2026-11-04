@@ -2,7 +2,7 @@
 import { type ReactElement } from "react";
 import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
+import { TestProviders } from "./test-providers";
 
 /**
  * Route configuration for integration tests
@@ -62,25 +62,24 @@ export const renderWithRoutes = (
 
   const AllProviders = ({ children }: { children: React.ReactNode }) => {
     return (
-      <ChakraProvider value={defaultSystem}>
-        <MemoryRouter initialEntries={entries}>
-          <Routes>
-            {routes.map((route, index) => (
-              <Route
-                key={route.path || `route-${index}`}
-                path={route.path}
-                element={route.element}
-              />
-            ))}
-            {/* Render children if provided (for flexibility) */}
-            {children}
-          </Routes>
-        </MemoryRouter>
-      </ChakraProvider>
+      <TestProviders>
+        <MemoryRouter initialEntries={entries}>{children}</MemoryRouter>
+      </TestProviders>
     );
   };
 
-  return render(<AllProviders>{null}</AllProviders>, renderOptions);
+  return render(
+    <Routes>
+      {routes.map((route, index) => (
+        <Route
+          key={route.path || `route-${index}`}
+          path={route.path}
+          element={route.element}
+        />
+      ))}
+    </Routes>,
+    { wrapper: AllProviders, ...renderOptions },
+  );
 };
 
 /**

@@ -4,17 +4,6 @@ import userEvent from "@testing-library/user-event";
 import GenreSelector from "../GenreSelector";
 
 // Mock the COLORS constant and genre options
-vi.mock("@/constants/theme", () => ({
-  COLORS: {
-    background: { main: "#ffffff" },
-    border: { main: "#e2e8f0" },
-    text: {
-      main: "#1a202c",
-      secondary: "#4a5568",
-    },
-    tertiary: { primary: "#3182ce" },
-  },
-}));
 
 // Mock the genre options to have a predictable test set
 vi.mock("@/constants/browseOptions", () => ({

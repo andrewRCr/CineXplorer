@@ -2,14 +2,14 @@
 import { type ReactElement } from "react";
 import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { ChakraProvider, defaultSystem } from "@chakra-ui/react";
+import { TestProviders } from "./test-providers";
 
 // Custom render function that includes common providers
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
   return (
-    <ChakraProvider value={defaultSystem}>
+    <TestProviders>
       <MemoryRouter>{children}</MemoryRouter>
-    </ChakraProvider>
+    </TestProviders>
   );
 };
 

@@ -11,17 +11,6 @@ import { createMockMovieListItem } from "@tests/mocks/movieData";
 import MovieCard from "../MovieCard";
 
 // Mock the COLORS constant since it's used in the component
-vi.mock("@/constants/theme", () => ({
-  COLORS: {
-    background: { main: "#ffffff" },
-    border: { main: "#e2e8f0" },
-    text: {
-      main: "#1a202c",
-      secondary: "#4a5568",
-    },
-    tertiary: { primary: "#3182ce" },
-  },
-}));
 
 describe("MovieCard Component", () => {
   const defaultProps = {

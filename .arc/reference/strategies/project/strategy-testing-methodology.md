@@ -1,6 +1,6 @@
 # Testing Methodology Strategy
 
-**Version:** 1.5 | **Updated:** 2026-10-30 | **Status:** Active | **Scope:** Full-stack
+**Version:** 1.6 | **Updated:** 2026-11-03 | **Status:** Active | **Scope:** Full-stack
 
 ## Purpose
 
@@ -834,9 +834,9 @@ afterAll(() => server.close());
 
 ### Asserting Chakra Recipe Styles
 
-The shared renderer (`tests/helpers/test-renderer.tsx`) wraps Chakra's own `defaultSystem` from `@chakra-ui/react`,
-which doesn't include the project's recipes. Recipe styles also sit in CSS `@layer` blocks, which jsdom's
-`getComputedStyle` skips. So a style assertion under the shared renderer can pass without the recipe ever applying.
+The shared renderers provide the project's default system, including its recipes. Recipe styles sit in CSS
+`@layer` blocks, which jsdom's `getComputedStyle` skips. A style assertion under the shared renderer can therefore
+pass without checking the recipe's computed style.
 
 To test that a recipe variant applies a token, render under the project theme with layers disabled, then assert the
 computed style:

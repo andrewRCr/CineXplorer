@@ -2,17 +2,6 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@tests/helpers/test-renderer";
 import Footer from "../Footer";
 
-// Mock the theme constants
-vi.mock("@/constants/theme", () => ({
-  COLORS: {
-    background: { footer: "#f8f9fa" },
-    border: { main: "#e2e8f0" },
-    text: {
-      muted: "#6b7280",
-    },
-  },
-}));
-
 // Mock the TMDB logo import
 vi.mock("../../../assets/tmdb_logo_alt_short.svg", () => ({
   default: "/mock-tmdb-logo.svg",

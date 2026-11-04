@@ -3,19 +3,6 @@ import { render, screen, fireEvent, act } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import RatingSelector from "../RatingSelector";
 
-// Mock the theme constants
-vi.mock("@/constants/theme", () => ({
-  COLORS: {
-    background: { main: "#ffffff" },
-    border: { main: "#e2e8f0" },
-    text: {
-      main: "#1a202c",
-      secondary: "#4a5568",
-    },
-    tertiary: { primary: "#3182ce", secondary: "#2b77cb" },
-  },
-}));
-
 // Mock lodash debounce
 vi.mock("lodash", async () => {
   const actual = await vi.importActual("lodash");

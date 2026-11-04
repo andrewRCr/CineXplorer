@@ -219,23 +219,17 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: 279 authentication tests passed; Ruff lint/format, scoped Pyright and markdown lint passed.
       The coupled configuration cases share one credential-pair implementation; no actual credentials were used.
 
-- [ ] **3.5 Each deploy sets the Site record from the deployment** (R16; Implemented 6, second half)
+- [x] **3.5 Each deploy sets the Site record from the deployment** (R16; Implemented 6, second half)
 
-    - [ ] **3.5.a Write tests**
-        - `apps/core/tests/test_commands.py`: with `SITE_DOMAIN` set, `configure_site` sets the `SITE_ID` record's
-          domain to it and its name to `CineXplorer` and reports a change; a second run reports none; under `staging`
-          with the setting unset (`override_settings`), the command exits non-zero naming `SITE_DOMAIN`
-        - With `load_settings`: `SITE_DOMAIN` is `localhost:8444` under `development` when unset; under `staging` when
-          unset, the settings load and leave it unset
-        - Expect tests to FAIL initially
-
-    - [ ] **3.5.b Add the setting and the command**
-        - `SITE_DOMAIN` in `config/settings.py` from the `SITE_DOMAIN` variable, with a default in development only
-        - `apps/core/management/commands/configure_site.py`, raising `CommandError` naming `SITE_DOMAIN` when it is
-          unset
-        - `infrastructure/docker-compose.prod.yml` sets `SITE_DOMAIN` to `${SITE_ADDRESS}` for `backend`, beside
-          `FRONTEND_URL`
-        - Tests should now PASS
+    - [x] **3.5.a Write tests:** real Site records prove domain/name updates, changed/unchanged reporting and
+      repeat-run idempotence; missing deployed configuration raises `CommandError` without changing records.
+      Subprocess cases prove the development default and staging's unset value with settings still loading. All
+      four cases failed before the command/setting existed and pass after implementation.
+    - [x] **3.5.b Add the setting and command:** `SITE_DOMAIN` defaults only in development; `configure_site`
+      creates or updates the `SITE_ID` row, clears Site's cache after a change and refuses an unset domain.
+      Production Compose supplies the bare `SITE_ADDRESS` beside the derived frontend URL.
+    - Checks: 239 core tests passed; Ruff lint/format, scoped Pyright and production Compose `config --quiet`
+      passed. The command and its settings cases are one deployment-identity concern.
 
 - [ ] **3.6 The health check covers the database** (R13; Implemented 5)
 

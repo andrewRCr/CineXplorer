@@ -41,6 +41,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       DJANGO_ALLOWED_HOSTS: ${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host},localhost
       FRONTEND_URL: https://${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host}
+      SITE_DOMAIN: ${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host}
       BACKEND_URL: https://${SITE_ADDRESS:?Set SITE_ADDRESS to the bare site host}
     mem_limit: 640m
     healthcheck:

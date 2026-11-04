@@ -1,0 +1,15 @@
+# Dependency and generated output
+node_modules/
+dist/
+dist-ssr/
+build/
+coverage/
+.nyc_output/
+.vite/
+test-results/
+playwright-report/
+
+# Owned by npm and API generators
+package-lock.json
+openapi.json
+src/types/api.ts

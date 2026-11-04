@@ -14,7 +14,8 @@
 # Required project, port and key values keep a worktree's resources and tokens apart.
 # A full suite (903 tests, 4 workers) with the HTTPS server running peaked at 651.2 MiB in
 # the backend and 103.9 MiB in dev-db. Limits leave headroom above those measured peaks.
-# Frontend and Caddy limits are provisional until measured while browsing and hot reloading.
+# During browser navigation and CSS hot reload, frontend peaked at 497.2 MiB and Caddy
+# at 33.76 MiB; their limits are 1024 MiB and 128 MiB, leaving headroom.
 
 name: ${COMPOSE_PROJECT_NAME:?set COMPOSE_PROJECT_NAME in infrastructure/.env}
 
@@ -42,7 +43,7 @@ services:
     environment:
       VITE_BASE_URL: https://localhost:${SITE_PORT:?run worktree provision first}
       VITE_BASE_API_URL: https://localhost:${SITE_PORT:?run worktree provision first}/api
-    mem_limit: 512m
+    mem_limit: 1024m
 
   caddy:
     profiles: ["browser"]

@@ -139,13 +139,16 @@ run beside it.
     - [x] **3.3.b Implement `browse`:** refuse unprovisioned checkouts, start all five services with `up -d --wait`,
       migrate and seed, then print the URL and dev sign-in. Syntax checks and all 36 worktree tests pass.
 
-- [ ] **3.4 This worktree's browsable stack serves its app, and the limits are measured** (R7, R9; Criterion 4)
-    - `node scripts/worktree.mjs browse` here; `https://localhost:{SITE_PORT}/` and `/api/health-check/` answer `200`;
-      a second `browse` applies no migration and leaves the account as it is
-    - With the app loaded and navigated in the browser (the Owner) and hot reload active, sample the frontend's and
-      Caddy's memory; set their limits with headroom and record the peaks in the override's header comment
-    - Rerun 2.4.c's `config` check with every limit measured (Criterion 4)
-    - Stop with `down`, both files and `--profile browser`; the volumes stay
+- [x] **3.4 This worktree's browsable stack serves its app, and limits are measured** (R7, R9; Criterion 4)
+    - `browse` started all five services; `/` and `/api/health-check/` answered 200, as did the primary health
+      endpoint. A second run applied no migrations, left the dev account unchanged (fingerprint comparison) and
+      reported no blacklist changes.
+    - The Owner browsed while memory sampling ran; 34 recent API responses were 200, and temporary CSS edits
+      triggered hot reload and were restored byte for byte. Frontend peak 497.2 MiB, Caddy peak 33.76 MiB; final
+      limits 1024 MiB and 128 MiB. The frontend's provisional 512 MiB cap was raised in place before further
+      measurement; no OOM occurred. Peaks are recorded in the override and personal proofs.
+    - Browser-profile config has five services, all measured limits and only Caddy's loopback port. Stopped with
+      both files and the browser profile; all three project volumes remain.
 
 - [ ] **3.5 The workflows and references describe both stacks** (R12)
     - `worktree-sessions.md`:

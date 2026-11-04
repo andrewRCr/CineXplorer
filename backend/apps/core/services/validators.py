@@ -82,11 +82,12 @@ def validate_tmdb_response[T: BaseModel](response: ApiResponse, model: type[T]) 
         return model.model_validate(response.data)
     except ValidationError as e:
         logger.error(
-            "TMDB response validation failed",
+            "TMDB response validation failed | error_type=%s",
+            type(e).__name__,
             extra={
                 "model": model.__name__,
-                "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys()),
+                "error_type": type(e).__name__,
+                "error_count": e.error_count(),
             },
         )
         raise UpstreamError("TMDB response validation failed") from e
@@ -125,11 +126,13 @@ def validate_tmdb_list_response[T: BaseModel](
         return [item_model.model_validate(item) for item in response.data]
     except ValidationError as e:
         logger.error(
-            "TMDB list response validation failed",
+            "TMDB list response validation failed | error_type=%s",
+            type(e).__name__,
             extra={
                 "item_model": item_model.__name__,
-                "validation_errors": e.errors(),
                 "list_length": len(response.data),
+                "error_type": type(e).__name__,
+                "error_count": e.error_count(),
             },
         )
         raise UpstreamError("TMDB list response validation failed") from e
@@ -166,11 +169,12 @@ def validate_tmdb_paginated_response[T: BaseModel](response: ApiResponse, model:
         return model.model_validate(response.data)
     except ValidationError as e:
         logger.error(
-            "TMDB paginated response validation failed",
+            "TMDB paginated response validation failed | error_type=%s",
+            type(e).__name__,
             extra={
                 "model": model.__name__,
-                "validation_errors": e.errors(),
-                "response_data_keys": list(response.data.keys()),
+                "error_type": type(e).__name__,
+                "error_count": e.error_count(),
             },
         )
         raise UpstreamError("TMDB paginated response validation failed") from e

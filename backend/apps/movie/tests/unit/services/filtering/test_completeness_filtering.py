@@ -14,7 +14,6 @@ from apps.movie.services.api_boundary import BrowseServiceParams
 from apps.movie.services.movie_service import MovieService
 from apps.movie.tests.test_helpers import create_mock_paginated_response
 from apps.movie.tests.tmdb_test_builders import (
-    TMDBMovieBaseRawDict,
     create_paginated_tmdb_response,
     create_tmdb_movie,
 )
@@ -53,9 +52,9 @@ def test_filter_movies_excludes_missing_poster() -> None:
 def test_filter_movies_excludes_empty_title() -> None:
     """Test that movies with empty or whitespace-only titles are excluded."""
     # Arrange: Mock movies with various title states
-    # Note: We need to override TypedDict validation, so create dicts directly
+    # Raw payloads deliberately contain incomplete values.
 
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+    tmdb_movies: list[dict[str, object]] = [
         create_tmdb_movie(1, "Valid Title", "2022-01-01", 7.5).model_dump(),
         {  # Empty title
             "id": 2,
@@ -65,7 +64,7 @@ def test_filter_movies_excludes_empty_title() -> None:
             "vote_average": 8.0,
             "vote_count": 100,
             "runtime": None,
-        },  # type: ignore
+        },
         create_tmdb_movie(3, "Another Valid", "2022-01-01", 7.8).model_dump(),
         {  # Whitespace-only title
             "id": 4,
@@ -75,12 +74,12 @@ def test_filter_movies_excludes_empty_title() -> None:
             "vote_average": 8.2,
             "vote_count": 100,
             "runtime": None,
-        },  # type: ignore
+        },
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -124,7 +123,7 @@ def test_filter_movies_completeness_with_all_valid() -> None:
 def test_completeness_filter_applies_with_other_filters() -> None:
     """Test that completeness filter works in combination with year/rating filters."""
     # Arrange: Mix of complete/incomplete movies with year/rating variations
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+    tmdb_movies: list[dict[str, object]] = [
         # Complete, matching all filters
         create_tmdb_movie(1, "Perfect Movie", "2022-01-01", 8.0).model_dump(),
         # Missing poster, matches year/rating (should be excluded)
@@ -144,12 +143,12 @@ def test_completeness_filter_applies_with_other_filters() -> None:
             "vote_average": 8.0,
             "vote_count": 100,
             "runtime": None,
-        },  # type: ignore
+        },
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -167,8 +166,10 @@ def test_completeness_filter_applies_with_other_filters() -> None:
 
     # Verify all movies have complete data and match filters
     for movie in result.results:
-        assert movie.poster_path is not None and movie.poster_path != ""
-        assert movie.title is not None and movie.title.strip() != ""
+        assert movie.poster_path is not None
+        assert movie.poster_path != ""
+        assert movie.title is not None
+        assert movie.title.strip() != ""
         assert movie.release_date is not None
         assert movie.release_date.year == 2022
         assert movie.vote_average is not None
@@ -183,7 +184,7 @@ def test_filter_movies_excludes_empty_overview() -> None:
     These should be filtered out for display quality.
     """
     # Arrange: Mock movies with various overview states
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+    tmdb_movies: list[dict[str, object]] = [
         # Valid overview - should pass
         create_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5).model_dump(),
         # Empty overview - should be filtered
@@ -196,7 +197,7 @@ def test_filter_movies_excludes_empty_overview() -> None:
             "vote_count": 100,
             "overview": "",
             "genre_ids": [18, 28],
-        },  # type: ignore
+        },
         # Whitespace-only overview - should be filtered
         {
             "id": 3,
@@ -207,14 +208,14 @@ def test_filter_movies_excludes_empty_overview() -> None:
             "vote_count": 100,
             "overview": "   ",
             "genre_ids": [18, 28],
-        },  # type: ignore
+        },
         # Another valid overview - should pass
         create_tmdb_movie(4, "Another Valid", "2022-01-01", 8.2).model_dump(),
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -243,7 +244,7 @@ def test_filter_movies_excludes_placeholder_overview() -> None:
     TMDB actually uses (empty strings being the majority).
     """
     # Arrange: Mock movies with placeholder and valid overviews
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+    tmdb_movies: list[dict[str, object]] = [
         # Valid overview - should pass
         create_tmdb_movie(1, "Valid Overview", "2022-01-01", 7.5).model_dump(),
         # Placeholder "Details Here" - should be filtered
@@ -256,7 +257,7 @@ def test_filter_movies_excludes_placeholder_overview() -> None:
             "vote_count": 0,
             "overview": "Details Here",
             "genre_ids": [18, 10749],
-        },  # type: ignore
+        },
         # Lowercase placeholder "details here" - should be filtered (case-insensitive)
         {
             "id": 3,
@@ -267,7 +268,7 @@ def test_filter_movies_excludes_placeholder_overview() -> None:
             "vote_count": 0,
             "overview": "details here",
             "genre_ids": [18],
-        },  # type: ignore
+        },
         # Mixed case "Details here" - should be filtered (case-insensitive)
         {
             "id": 4,
@@ -278,14 +279,14 @@ def test_filter_movies_excludes_placeholder_overview() -> None:
             "vote_count": 100,
             "overview": "Details here",
             "genre_ids": [28],
-        },  # type: ignore
+        },
         # Another valid overview - should pass
         create_tmdb_movie(5, "Another Valid", "2022-01-01", 8.2).model_dump(),
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client = Mock(spec=["get"])
     mock_client.get.return_value = mock_response
 
@@ -314,7 +315,7 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
     # Arrange: Mix of complete/incomplete movies with various issues
     mock_client = Mock(spec=["get"])
 
-    tmdb_movies: list[TMDBMovieBaseRawDict] = [
+    tmdb_movies: list[dict[str, object]] = [
         # Complete movie (has poster, title, genres, overview) - should pass
         create_tmdb_movie(1, "Complete Movie", "2022-01-01", 7.5, vote_count=100).model_dump(),
         # Missing poster - should be filtered
@@ -331,7 +332,7 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
             "vote_count": 75,
             "overview": "",
             "genre_ids": [18, 28],
-        },  # type: ignore
+        },
         # Placeholder overview - should be filtered
         {
             "id": 4,
@@ -342,7 +343,7 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
             "vote_count": 200,
             "overview": "Details Here",
             "genre_ids": [18],
-        },  # type: ignore
+        },
         # Missing genres - should be filtered
         create_tmdb_movie(
             5, "No Genres", "2022-01-01", 8.0, vote_count=100, genre_ids=[]
@@ -352,8 +353,8 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
     ]
 
     # Pattern 2: Testing intentionally invalid data
-    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # type: ignore[arg-type]
-    mock_response = ApiResponse(200, data=tmdb_response.model_dump())  # type: ignore[arg-type]
+    tmdb_response = create_paginated_tmdb_response(tmdb_movies, page=1, total_pages=1)  # pyright: ignore[reportArgumentType]
+    mock_response = ApiResponse(200, data=tmdb_response.model_dump())
     mock_client.get.return_value = mock_response
 
     service = MovieService(tmdb_client=mock_client)
@@ -368,8 +369,12 @@ def test_overview_filter_works_with_other_completeness_checks() -> None:
 
     # Verify all returned movies have complete data
     for movie in result.results:
-        assert movie.poster_path is not None and movie.poster_path != ""
-        assert movie.title is not None and movie.title.strip() != ""
-        assert hasattr(movie, "genre_ids") and len(movie.genre_ids) > 0
-        assert movie.overview is not None and movie.overview.strip() != ""
+        assert movie.poster_path is not None
+        assert movie.poster_path != ""
+        assert movie.title is not None
+        assert movie.title.strip() != ""
+        assert hasattr(movie, "genre_ids")
+        assert len(movie.genre_ids) > 0
+        assert movie.overview is not None
+        assert movie.overview.strip() != ""
         assert movie.overview.strip().lower() != "details here"

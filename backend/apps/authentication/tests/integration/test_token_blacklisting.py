@@ -235,7 +235,7 @@ def test_blacklist_table_contains_revoked_token(
 ) -> None:
     """Test that database blacklist table contains entry for revoked token."""
     # Clear any existing entries for THIS USER only (avoid affecting other tests)
-    OutstandingToken.objects.filter(user=verified_user).delete()  # type: ignore[misc]
+    OutstandingToken.objects.filter(user=verified_user).delete()
 
     # Login to get initial tokens
     login_data = {
@@ -256,9 +256,7 @@ def test_blacklist_table_contains_revoked_token(
     csrf_token = get_csrf_token(api_client)
 
     # Count blacklist entries for THIS USER before refresh
-    initial_user_blacklist = BlacklistedToken.objects.filter(
-        token__user=verified_user  # type: ignore[misc]
-    ).count()
+    initial_user_blacklist = BlacklistedToken.objects.filter(token__user=verified_user).count()
 
     # Refresh token - this should blacklist the old one
     refresh_response = api_client.post(
@@ -269,9 +267,7 @@ def test_blacklist_table_contains_revoked_token(
     assert refresh_response.status_code == HTTPStatus.OK
 
     # Verify blacklist entry was created for THIS USER
-    final_user_blacklist = BlacklistedToken.objects.filter(
-        token__user=verified_user  # type: ignore[misc]
-    ).count()
+    final_user_blacklist = BlacklistedToken.objects.filter(token__user=verified_user).count()
     assert final_user_blacklist > initial_user_blacklist, (
         "Blacklist table should contain entry for revoked token"
     )
@@ -284,7 +280,7 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
 ) -> None:
     """Test that database outstanding tokens table tracks all issued tokens."""
     # Clear any existing tokens for clean test
-    OutstandingToken.objects.filter(user=verified_user).delete()  # type: ignore[misc]
+    OutstandingToken.objects.filter(user=verified_user).delete()
 
     # Login to get initial tokens
     login_data = {
@@ -299,9 +295,7 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
     assert login_response.status_code == HTTPStatus.OK
 
     # Verify outstanding token created for login
-    outstanding_after_login = OutstandingToken.objects.filter(
-        user=verified_user  # type: ignore[misc]
-    ).count()
+    outstanding_after_login = OutstandingToken.objects.filter(user=verified_user).count()
     assert outstanding_after_login == 1, "Login should create 1 outstanding token"
 
     # Get CSRF token
@@ -316,9 +310,7 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
     assert refresh_response.status_code == HTTPStatus.OK
 
     # Verify outstanding token count increased
-    outstanding_after_refresh = OutstandingToken.objects.filter(
-        user=verified_user  # type: ignore[misc]
-    ).count()
+    outstanding_after_refresh = OutstandingToken.objects.filter(user=verified_user).count()
     assert outstanding_after_refresh == 2, "Refresh should create new outstanding token (2 total)"
 
     # Refresh again - creates another outstanding token
@@ -330,14 +322,12 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
     assert second_refresh_response.status_code == HTTPStatus.OK
 
     # Verify all tokens tracked
-    outstanding_after_second_refresh = OutstandingToken.objects.filter(
-        user=verified_user  # type: ignore[misc]
-    ).count()
+    outstanding_after_second_refresh = OutstandingToken.objects.filter(user=verified_user).count()
     assert outstanding_after_second_refresh == 3, (
         "Second refresh should create 3rd outstanding token"
     )
 
     # Verify tokens belong to correct user
-    user_tokens = OutstandingToken.objects.filter(user=verified_user)  # type: ignore[misc]
+    user_tokens = OutstandingToken.objects.filter(user=verified_user)
     for token in user_tokens:
         assert token.user == verified_user, "All tokens should belong to test user"

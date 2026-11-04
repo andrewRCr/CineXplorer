@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from apps.authentication.services.authentication_service import AuthenticationService
 
 
-@pytest.fixture()
+@pytest.fixture
 def auth_service_factory() -> AuthServiceFactory:
     """Build AuthenticationService with injectable mock dependencies.
 

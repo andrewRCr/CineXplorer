@@ -6,6 +6,7 @@ processing built on top of the BaseApiClient infrastructure.
 """
 
 import logging
+from typing import Any
 
 import requests
 from django.conf import settings
@@ -119,18 +120,18 @@ class TMDBApiClient(BaseApiClient):
         except ValueError as json_error:
             # Handle invalid JSON responses
             self.logger.error(
-                "TMDB API returned invalid JSON",
+                "TMDB API returned invalid JSON | error_type=%s",
+                type(json_error).__name__,
                 extra={
                     "correlation_id": correlation_id,
-                    "json_error": str(json_error),
                     "endpoint": endpoint,
                     "status_code": response.status_code,
                     "duration_ms": duration_ms,
                     "error_type": "json_parsing_error",
-                    "response_preview": str(response.text)[:200],
-                    "response_size_bytes": (
-                        len(response.content) if hasattr(response.content, "__len__") else 0
-                    ),
+                    "response_size_bytes": len(response.content)
+                    if hasattr(response.content, "__len__")
+                    else 0,
+                    "exception_type": type(json_error).__name__,
                 },
             )
 
@@ -180,17 +181,33 @@ class TMDBApiClient(BaseApiClient):
 
         self.logger.info("TMDB API request successful", extra=log_data)
 
+        self._log_response_results(data)
+
+        return ApiResponse(
+            status_code=response.status_code,
+            data=data,
+            headers=self._safe_headers_dict(response),
+            correlation_id=correlation_id,
+            endpoint=endpoint,
+            method="GET",
+            duration_ms=duration_ms,
+            raw_response=response,
+        )
+
+    # Any is confined to the external JSON payload, before its schema validation.
+    def _log_response_results(self, data: dict[str, Any]) -> None:
+        """Log detailed movie metadata after successful response processing."""
         # DEBUG-level detailed logging: Log first few results for debugging
         # This helps diagnose TMDB filtering behavior and data quality issues
         has_results = "results" in data and hasattr(data["results"], "__iter__")
         if self.logger.isEnabledFor(logging.DEBUG) and has_results:
             results = data["results"]
-            if hasattr(results, "__len__") and len(results) > 0:  # type: ignore[arg-type]
-                sample_count = min(3, len(results))  # type: ignore[arg-type]
+            if hasattr(results, "__len__") and len(results) > 0:
+                sample_count = min(3, len(results))
                 sample_results: list[dict[str, object]] = []
                 for i in range(sample_count):
                     try:
-                        movie = results[i]  # type: ignore[index]
+                        movie = results[i]
                         # Extract key fields for debugging (title, year, ID)
                         release = movie.get("release_date") if hasattr(movie, "get") else None
                         vote_avg = movie.get("vote_average") if hasattr(movie, "get") else None
@@ -207,9 +224,9 @@ class TMDBApiClient(BaseApiClient):
 
                 # Log ALL results for complete debugging visibility
                 all_results: list[dict[str, object]] = []
-                for i in range(len(results)):  # type: ignore[arg-type]
+                for i in range(len(results)):
                     try:
-                        movie = results[i]  # type: ignore[index]
+                        movie = results[i]
                         release = movie.get("release_date") if hasattr(movie, "get") else None
                         vote_avg = movie.get("vote_average") if hasattr(movie, "get") else None
                         all_results.append(
@@ -224,17 +241,6 @@ class TMDBApiClient(BaseApiClient):
                         continue
 
                 self.logger.debug(f"TMDB response (ALL {len(all_results)} results): {all_results}")
-
-        return ApiResponse(
-            status_code=response.status_code,
-            data=data,
-            headers=self._safe_headers_dict(response),
-            correlation_id=correlation_id,
-            endpoint=endpoint,
-            method="GET",
-            duration_ms=duration_ms,
-            raw_response=response,
-        )
 
     def process_error_response(
         self, response: requests.Response, correlation_id: str, endpoint: str, duration_ms: int
@@ -335,7 +341,7 @@ class TMDBApiClient(BaseApiClient):
             # Type-safe length check with hasattr
             # Note: hasattr check doesn't narrow object to Sized protocol in Pyright
             if hasattr(results, "__len__"):
-                metadata["results_count"] = len(results)  # type: ignore[arg-type]  # Runtime-validated by hasattr
+                metadata["results_count"] = len(results)  # pyright: ignore[reportArgumentType]  # Runtime-validated by hasattr
             else:
                 metadata["results_count"] = 0
 
@@ -369,7 +375,7 @@ class TMDBApiClient(BaseApiClient):
         # Use try/except for safe access to non-dict or mock header objects
         for header_name, key in RATE_LIMIT_HEADER_MAPPING.items():
             try:
-                value = headers[header_name]  # type: ignore[index]  # Mock object support
+                value = headers[header_name]  # pyright: ignore[reportIndexIssue, reportUnknownVariableType]  # Mock object support
             except (TypeError, KeyError, IndexError):
                 # Skip non-subscriptable or missing headers
                 continue
@@ -377,7 +383,7 @@ class TMDBApiClient(BaseApiClient):
             # Convert numeric values to integers
             if key in ["limit", "remaining", "retry_after", "reset"]:
                 try:
-                    rate_limit_info[key] = int(value)  # type: ignore[arg-type]  # Runtime-validated in try/except
+                    rate_limit_info[key] = int(value)  # pyright: ignore[reportUnknownArgumentType]  # Runtime-validated in try/except
                 except (ValueError, TypeError):
                     rate_limit_info[key] = value
             else:

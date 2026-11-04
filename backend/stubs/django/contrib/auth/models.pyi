@@ -115,11 +115,11 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
         self, subject: str, message: str, from_email: str | None = None, **kwargs: object
     ) -> None: ...
 
-class User(AbstractUser):  # type: ignore[django-manager-missing]
+class User(AbstractUser):
     """Type stub for Django's concrete User model.
 
     Inherits all fields from AbstractUser.
     """
 
     # Manager (UserManager with create_user method)
-    objects: ClassVar[UserManager]  # pyright: ignore[reportIncompatibleVariableOverride]
+    objects: ClassVar[UserManager]

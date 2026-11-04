@@ -30,6 +30,7 @@ import logging
 from typing import Protocol
 
 from django.core.cache import cache
+from redis.exceptions import RedisError
 
 logger = logging.getLogger("cinexplorer.redis")
 
@@ -117,31 +118,31 @@ class DjangoRedisAdapter:
         Returns object type to avoid redis.Redis generic issues.
         We know it's a Redis client internally.
         """
-        cache_backend = cache._cache  # type: ignore[attr-defined]
-        return cache_backend.get_client(write=True)  # type: ignore[attr-defined]
+        cache_backend = cache._cache  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+        return cache_backend.get_client(write=True)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
     def sadd(self, key: str, *values: int) -> int:
         """Atomically add values to a set."""
         if not values:
             return 0
-        result = self._client.sadd(key, *values)  # type: ignore[union-attr]
-        return int(result)  # type: ignore[arg-type]
+        result = self._client.sadd(key, *values)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+        return int(result)  # pyright: ignore[reportUnknownArgumentType]
 
     def smembers(self, key: str) -> set[int]:
         """Get all members of a set as integers."""
-        raw_result = self._client.smembers(key)  # type: ignore[union-attr]
+        raw_result = self._client.smembers(key)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         # Redis returns bytes, convert to int
-        return {int(member) for member in raw_result}  # type: ignore[union-attr]
+        return {int(member) for member in raw_result}  # pyright: ignore[reportUnknownArgumentType, reportUnknownVariableType]
 
     def delete(self, key: str) -> bool:
         """Delete a key."""
-        result = self._client.delete(key)  # type: ignore[union-attr]
-        return bool(result)  # type: ignore[arg-type]
+        result = self._client.delete(key)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+        return bool(result)  # pyright: ignore[reportUnknownArgumentType]
 
     def expire(self, key: str, seconds: int) -> bool:
         """Set TTL on a key."""
-        result = self._client.expire(key, seconds)  # type: ignore[union-attr]
-        return bool(result)  # type: ignore[arg-type]
+        result = self._client.expire(key, seconds)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+        return bool(result)  # pyright: ignore[reportUnknownArgumentType]
 
 
 def get_atomic_set_client() -> AtomicSetOperations | None:
@@ -168,6 +169,10 @@ def get_atomic_set_client() -> AtomicSetOperations | None:
             "Ensure CACHES['default']['BACKEND'] is RedisCache."
         )
         return None
-    except Exception as e:
-        logger.warning(f"Failed to initialize Redis adapter: {e}")
+    except RedisError as e:
+        logger.error(
+            "Failed to initialize Redis adapter | error_type=%s",
+            type(e).__name__,
+            extra={"error_type": type(e).__name__},
+        )
         return None

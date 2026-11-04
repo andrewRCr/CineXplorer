@@ -115,12 +115,11 @@ and remove it after its branch merges.
 **Needs:** Docker and this worktree's own stack, and the Owner at the browser for 3.4. The main checkout's stack may
 run beside it.
 
-- [ ] **3.1 Merge `main` with the tracked blacklist** (R11's dependency)
-    - Once #75 has merged, and on the Owner's approval of the merge: `git fetch origin` and `git merge origin/main`,
-      which also brings #76, #77 and #79 (Sequencing note). If #75 has not merged, stop here: 3.2 needs
-      `sync_blacklist`
-    - Rebuild the backend image (`main` now pins its base image by digest), then `pytest apps/movie/` passes in this
-      worktree's test stack
+- [x] **3.1 Merge `main` with the tracked blacklist** (R11's dependency)
+    - The Owner explicitly approved the merge. Confirmed #75 merged, then merged `origin/main` at `031327a5`,
+      bringing the tracked blacklist, `sync_blacklist`, focused Ruff rules, rule-specific suppressions and image pins.
+    - Rebuilt and restarted this worktree's backend. All 419 movie tests pass. CI retains all three Node test files.
+      The merge's default message was rejected by the commit-message hook; completed with the required format.
 
 - [ ] **3.2 `seed_dev_data` gives a fresh database an account and the blacklist** (R11, R15; Criterion 2)
 

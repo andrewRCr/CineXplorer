@@ -138,5 +138,7 @@ def test_combined_genre_and_vote_filters_with_rating_filter() -> None:
 
     # Verify all returned movies pass both filters
     for movie in result.results:
-        assert hasattr(movie, "genre_ids") and len(movie.genre_ids) > 0
-        assert movie.vote_count is not None and movie.vote_count >= 3
+        assert hasattr(movie, "genre_ids")
+        assert len(movie.genre_ids) > 0
+        assert movie.vote_count is not None
+        assert movie.vote_count >= 3

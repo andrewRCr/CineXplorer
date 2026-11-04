@@ -80,6 +80,10 @@ cp backend/config/.env.example backend/config/.env
 
 # Run with Docker
 docker-compose -f infrastructure/docker-compose.yml up --build
+
+# In a second terminal, once the stack is up: create the tables and load the movie blacklist
+docker-compose -f infrastructure/docker-compose.yml exec backend python manage.py migrate
+docker-compose -f infrastructure/docker-compose.yml exec backend python manage.py sync_blacklist
 ```
 
 Access at `https://localhost:8444` (accept the self-signed certificate warning).

@@ -249,11 +249,11 @@ def json_post(client: Client, url: str, data: dict[str, object], **kwargs: objec
         })
     """
     # Django test client returns _MonkeyPatchedWSGIResponse
-    return client.post(  # type: ignore[return-value]
+    return client.post(
         url,
         json.dumps(data),
         content_type="application/json",
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -277,11 +277,11 @@ def json_patch(
         }, HTTP_X_CSRFTOKEN='token123')
     """
     # Django test client returns _MonkeyPatchedWSGIResponse
-    return client.patch(  # type: ignore[return-value]
+    return client.patch(
         url,
         json.dumps(data),
         content_type="application/json",
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -304,11 +304,11 @@ def json_put(client: Client, url: str, data: dict[str, object], **kwargs: object
         })
     """
     # Django test client returns _MonkeyPatchedWSGIResponse
-    return client.put(  # type: ignore[return-value]
+    return client.put(
         url,
         json.dumps(data),
         content_type="application/json",
-        **kwargs,  # type: ignore[arg-type]
+        **kwargs,  # pyright: ignore[reportArgumentType]
     )
 
 
@@ -369,7 +369,7 @@ def create_user(email_verified: bool = True, **params: Unpack[UserParams]) -> "U
         # Create new user
         user = cast(
             "UserType",
-            User.objects.create_user(**user_data),  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
+            User.objects.create_user(**user_data),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
         )
 
     # Mark email as verified if requested using allauth EmailAddress API

@@ -35,7 +35,7 @@ from django.http import HttpRequest
 if TYPE_CHECKING:
     from django.db.models.manager import Manager
 
-class EmailAddress(models.Model):  # type: ignore[django-manager-missing]
+class EmailAddress(models.Model):
     """Type stub for allauth's EmailAddress model.
 
     Represents an email address associated with a user account,

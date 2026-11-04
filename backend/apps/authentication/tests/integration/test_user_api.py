@@ -96,7 +96,7 @@ def registered_user(api_client: Client) -> tuple[Client, dict[str, str]]:
     user = get_user_model().objects.get(email=user_data["email"])
     email_address, created = EmailAddress.objects.get_or_create(
         user=user,
-        email=user.email,  # type: ignore[attr-defined]  # _UserModel has email attribute
+        email=user.email,  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]  # _UserModel has email attribute
         defaults={"verified": True, "primary": True},
     )
     # If EmailAddress already existed (from previous test run), ensure it's verified
@@ -119,8 +119,8 @@ def test_create_user_success(api_client: Client) -> None:
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], payload))
 
     assert res.status_code == HTTPStatus.CREATED
-    user: User = get_user_model().objects.get(username=payload["username"])  # type: ignore[assignment]
-    assert user.check_password(payload["password"])  # type: ignore[no-untyped-call]
+    user: User = get_user_model().objects.get(username=payload["username"])  # pyright: ignore[reportAssignmentType]
+    assert user.check_password(payload["password"])  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     content_str: str = res.content.decode(res.charset or "utf-8")
     assert "password" not in content_str
 
@@ -131,7 +131,7 @@ def test_user_with_username_exists_error(api_client: Client) -> None:
     control_payload = create_register_payload()
     test_payload = create_register_payload(email="differentEmail@example.com")
 
-    create_user(**control_payload)  # type: ignore[arg-type]
+    create_user(**control_payload)
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], test_payload))
 
     assert res.status_code == HTTPStatus.CONFLICT
@@ -145,7 +145,7 @@ def test_user_with_same_email_exists_error(api_client: Client) -> None:
     control_payload = create_register_payload()
     test_payload = create_register_payload(username="differentUsername")
 
-    create_user(**control_payload)  # type: ignore[arg-type]
+    create_user(**control_payload)
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], test_payload))
 
     assert res.status_code == HTTPStatus.CONFLICT
@@ -156,7 +156,7 @@ def test_user_with_same_email_exists_error(api_client: Client) -> None:
 @pytest.mark.django_db
 def test_user_with_same_email_in_another_case_exists_error(api_client: Client) -> None:
     """An email that differs from an existing account's only in case is already taken."""
-    create_user(**create_register_payload(email="Taken@Example.com"))  # type: ignore[arg-type]
+    create_user(**create_register_payload(email="Taken@Example.com"))
     test_payload = create_register_payload(username="differentUsername", email="taken@EXAMPLE.com")
     res = json_post(api_client, CREATE_USER_URL, cast(dict[str, object], test_payload))
 
@@ -174,7 +174,7 @@ def test_registration_stores_email_in_lowercase(api_client: Client) -> None:
     assert res.status_code == HTTPStatus.CREATED
     assert json.loads(res.content)["email"] == "mixed.case@example.com"
     user = get_user_model().objects.get(username=payload["username"])
-    assert user.email == "mixed.case@example.com"  # type: ignore[attr-defined]
+    assert user.email == "mixed.case@example.com"  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     assert EmailAddress.objects.get(user=user).email == "mixed.case@example.com"
 
 
@@ -195,7 +195,7 @@ def test_password_too_short_error(api_client: Client) -> None:
 def test_create_token_for_user_via_username(api_client: Client) -> None:
     """Tests generating a token via username/pw for user authentication."""
     user_details = create_register_payload()
-    create_user(**user_details)  # type: ignore[arg-type]
+    create_user(**user_details)
 
     auth_payload = {"login": user_details["username"], "password": user_details["password"]}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
@@ -206,7 +206,7 @@ def test_create_token_for_user_via_username(api_client: Client) -> None:
 def test_create_token_for_user_via_email(api_client: Client) -> None:
     """Tests generating a token via email/pw for user authentication."""
     user_details = create_register_payload()
-    create_user(**user_details)  # type: ignore[arg-type]
+    create_user(**user_details)
 
     auth_payload = {"login": user_details["email"], "password": user_details["password"]}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
@@ -231,7 +231,7 @@ def test_sign_in_by_email_ignores_case(api_client: Client) -> None:
 def test_create_token_bad_password(api_client: Client) -> None:
     """Tests that an error is returned if user password is invalid."""
     user_details = create_register_payload(password="goodPassword")
-    create_user(**user_details)  # type: ignore[arg-type]
+    create_user(**user_details)
 
     auth_payload = {"login": user_details["username"], "password": "badPassword"}
     res = json_post(api_client, TOKEN_URL, cast(dict[str, object], auth_payload))
@@ -265,7 +265,7 @@ def test_create_token_blank_password(api_client: Client) -> None:
 @pytest.mark.django_db
 def test_retrieve_profile_unauthorized(api_client: Client) -> None:
     """Tests that authentication is required to manage a user profile."""
-    res: HttpResponse = api_client.get(ME_URL)  # type: ignore[assignment]
+    res: HttpResponse = api_client.get(ME_URL)
     assert res.status_code == HTTPStatus.UNAUTHORIZED
 
 
@@ -312,7 +312,7 @@ def test_profile_cannot_be_changed_through_the_api(
 
     assert res.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     user.refresh_from_db()
-    assert user.check_password("testpass123")  # type: ignore[no-untyped-call]
+    assert user.check_password("testpass123")  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
     assert user.email == "private@example.com"
     assert user.first_name == "Private"
 

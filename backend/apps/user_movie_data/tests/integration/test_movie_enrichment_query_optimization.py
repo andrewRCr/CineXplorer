@@ -33,9 +33,9 @@ User = get_user_model()
 
 
 @pytest.fixture
-def user(db: None) -> User:  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+def user(db: None) -> User:  # pyright: ignore[reportInvalidTypeForm, reportUnknownParameterType]
     """Create a test user for enrichment tests."""
-    return User.objects.create_user(  # pyright: ignore[reportReturnType,reportAttributeAccessIssue,reportUnknownMemberType,reportUnknownVariableType]
+    return User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         username="testuser", email="testuser@example.com", password="testpass123"
     )
 
@@ -60,7 +60,7 @@ def movie2(db: None) -> Movie:
 
 
 @pytest.fixture
-def user_movie_data1(user: User, movie1: Movie) -> UserMovieData:  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+def user_movie_data1(user: User, movie1: Movie) -> UserMovieData:  # pyright: ignore[reportInvalidTypeForm, reportUnknownParameterType]
     """Create UserMovieData for movie1."""
     return UserMovieData.objects.create(
         user=user,
@@ -74,7 +74,7 @@ def user_movie_data1(user: User, movie1: Movie) -> UserMovieData:  # pyright: ig
 
 
 @pytest.fixture
-def user_movie_data2(user: User, movie2: Movie) -> UserMovieData:  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+def user_movie_data2(user: User, movie2: Movie) -> UserMovieData:  # pyright: ignore[reportInvalidTypeForm, reportUnknownParameterType]
     """Create UserMovieData for movie2."""
     return UserMovieData.objects.create(
         user=user,
@@ -94,7 +94,7 @@ def user_movie_data2(user: User, movie2: Movie) -> UserMovieData:  # pyright: ig
 
 @pytest.mark.django_db
 def test_bulk_query_optimization_single_query(
-    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    user: User,  # pyright: ignore[reportInvalidTypeForm, reportUnknownParameterType]
     movie1: Movie,
     movie2: Movie,
     user_movie_data1: UserMovieData,
@@ -120,7 +120,7 @@ def test_bulk_query_optimization_single_query(
     ]
 
     # Act & Assert: Should execute exactly 1 query regardless of movie count
-    with django_assert_num_queries(1):  # type: ignore[operator]
+    with django_assert_num_queries(1):  # pyright: ignore[reportCallIssue]
         enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Verify both movies were enriched
@@ -131,7 +131,7 @@ def test_bulk_query_optimization_single_query(
 
 @pytest.mark.django_db
 def test_bulk_query_with_many_movies(
-    user: User,  # pyright: ignore[reportInvalidTypeForm,reportUnknownParameterType]
+    user: User,  # pyright: ignore[reportInvalidTypeForm, reportUnknownParameterType]
     django_assert_num_queries: object,
 ) -> None:
     """Test that query count stays at 1 even with many movies."""
@@ -157,7 +157,7 @@ def test_bulk_query_with_many_movies(
     service = MovieEnrichmentService()
 
     # Act & Assert: Still only 1 query for 10 movies
-    with django_assert_num_queries(1):  # type: ignore[operator]
+    with django_assert_num_queries(1):  # pyright: ignore[reportCallIssue]
         enriched_movies = service.enrich_movies_with_user_movie_data(movies_data, user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Verify all movies were enriched

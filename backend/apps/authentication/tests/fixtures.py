@@ -190,8 +190,7 @@ def create_login_payload(
     """
     if use_email:
         return {"email": identifier, "password": password}
-    else:
-        return {"username": identifier, "password": password}
+    return {"username": identifier, "password": password}
 
 
 # API interaction helpers

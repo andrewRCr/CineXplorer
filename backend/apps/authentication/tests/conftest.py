@@ -80,7 +80,7 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 from unittest.mock import Mock, patch
 
-import pytest  # type: ignore[import-untyped]  # pytest-django not yet in requirements
+import pytest  # pytest-django not yet in requirements
 from django.core.cache import cache
 
 if TYPE_CHECKING:
@@ -93,7 +93,7 @@ from apps.authentication.tests.oauth_mocks import (
 )
 
 
-@pytest.fixture(autouse=True)  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture(autouse=True)  # pytest decorator type
 def use_dummy_cache(settings: object) -> None:
     """Configure DummyCache by default for all tests (autouse).
 
@@ -109,10 +109,9 @@ def use_dummy_cache(settings: object) -> None:
     """
     # DummyCache configured by default - no action needed
     # Tests will automatically use DummyCache unless overridden
-    pass
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def enable_throttling_for_test(
     request: Any,  # noqa: ANN401 - pytest.FixtureRequest not in stubs
     settings: Any,  # noqa: ANN401 - Django settings dynamic
@@ -135,7 +134,7 @@ def enable_throttling_for_test(
         # Switch to LocMemCache for real throttling
         # LocMemCache is in-memory cache suitable for testing (no Redis needed)
         # Override CACHES setting for this test only
-        settings.CACHES = {  # type: ignore[attr-defined]  # Django settings dynamic
+        settings.CACHES = {  # Django settings dynamic
             "default": {
                 "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
                 "LOCATION": "throttle-test-cache",
@@ -148,7 +147,7 @@ def enable_throttling_for_test(
     cache.clear()
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def clear_throttle_cache() -> Iterator[None]:
     """Clear throttle cache before and after test execution.
 
@@ -174,7 +173,7 @@ def clear_throttle_cache() -> Iterator[None]:
     cache.clear()
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def authenticated_client_with_throttling(client: Client, verified_user: Any) -> Client:  # noqa: ANN401
     """Provide authenticated client with throttling enabled.
 
@@ -209,7 +208,7 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
     authenticate_client(client, verified_user.username, "testpass123")
 
     # Set throttling flag for test-aware throttle classes
-    client._test_enable_throttling = True  # type: ignore[attr-defined]
+    client._test_enable_throttling = True  # pyright: ignore[reportAttributeAccessIssue]
 
     return client
 
@@ -222,7 +221,7 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
 # ============================================================================
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def google_oauth_provider() -> MockGoogleOAuth:
     """Provide a mock Google OAuth provider for testing OAuth flows.
 
@@ -254,7 +253,7 @@ def google_oauth_provider() -> MockGoogleOAuth:
     return MockGoogleOAuth()
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def github_oauth_provider() -> MockGitHubOAuth:
     """Provide a mock GitHub OAuth provider for testing OAuth flows.
 
@@ -287,7 +286,7 @@ def github_oauth_provider() -> MockGitHubOAuth:
     return MockGitHubOAuth()
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
     """Provide a context manager for patching OAuth HTTP requests.
 
@@ -355,7 +354,7 @@ def oauth_request_patcher() -> Any:  # noqa: ANN401 - complex callable type
 # ============================================================================
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures module
     """Provide a user with verified email address.
 
@@ -386,7 +385,7 @@ def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures mo
     return create_user(email_verified=True)
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def unverified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures module
     """Provide a user with unverified email address.
 
@@ -410,7 +409,7 @@ def unverified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures 
     return create_unverified_user()
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def register_payload() -> Any:  # noqa: ANN401 - RegisterPayload type from fixtures
     """Provide a registration API payload with default values.
 
@@ -437,7 +436,7 @@ def register_payload() -> Any:  # noqa: ANN401 - RegisterPayload type from fixtu
     return create_register_payload()
 
 
-@pytest.fixture  # type: ignore[misc]  # pytest decorator type
+@pytest.fixture  # pytest decorator type
 def login_payload() -> Any:  # noqa: ANN401 - LoginPayload type from fixtures
     """Provide a login API payload with default values (username-based).
 

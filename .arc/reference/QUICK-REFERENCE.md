@@ -324,38 +324,49 @@ docker compose -f infrastructure/docker-compose.yml down
 
 ## Movie Blacklist Operations
 
-**IMPORTANT:** App is registered as `movie` not `apps.movie` - use correct import path.
+The blacklist's source of truth is `backend/apps/movie/data/blacklist.csv`: one row per TMDB movie ID
+(`tmdb_id,reason,source`), sorted by ID, with no titles or other TMDB content. Change it in a pull request; the admin
+shows the table read-only, and `sync_blacklist` loads the file.
+
+- **Source:** `rule:{name}` rows belong to a rule in `apps/movie/services/data_quality/blacklist_rules.py`, which
+  rewrites them; `hand:{how-it-was-found}-{yyyy-mm}` rows are reviewed picks, kept as they are. An ID appears once,
+  and a hand pick keeps it when a rule also matches.
+- **Add a hand pick:** add a row in ID order, with a reason and a `hand:` source, then sync.
+- **Add or change a rule:** edit `RULES`, regenerate, and review the file's diff.
+- **Sync** at dev setup, after any database reset, and in every deploy. It adds, removes and re-words rows to match
+  the file, refuses a malformed file without changing anything, and clears the cached blacklist.
 
 ```bash
-# Add single movie to blacklist
-docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
-from movie.models import BlacklistedMovie
-movie, created = BlacklistedMovie.objects.get_or_create(
-    tmdb_id=123456,
-    defaults={'reason': 'Description of why blacklisted'}
-)
-print(f'{"Added" if created else "Already exists"}: {movie.tmdb_id}')
-print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
-EOF
+# Rewrite the rule rows from TMDB (hand picks are untouched; the file is written only if every query succeeds)
+docker compose -f infrastructure/docker-compose.yml exec backend python manage.py regenerate_blacklist
 
-# Bulk blacklist (example: list of IDs)
-docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
-from movie.models import BlacklistedMovie
-ids_to_blacklist = [111, 222, 333]
-for tmdb_id in ids_to_blacklist:
-    movie, created = BlacklistedMovie.objects.get_or_create(
-        tmdb_id=tmdb_id,
-        defaults={'reason': 'Bulk blacklist: [category]'}
-    )
-print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
-EOF
-
-# Check current blacklist count
-docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
-from movie.models import BlacklistedMovie
-print(f'Total blacklisted: {BlacklistedMovie.objects.count()}')
-EOF
+# Load the file into the database
+docker compose -f infrastructure/docker-compose.yml exec backend python manage.py sync_blacklist
 ```
+
+### Reset the Dev Database
+
+Dump it first, outside `/tmp`, and check the dump isn't empty before removing anything.
+
+```bash
+C="-f infrastructure/docker-compose.yml"
+mkdir -p ~/dev/backups
+docker compose $C exec -T dev-db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' \
+  > ~/dev/backups/cinexplorer-dev-$(date +%F-%H%M).dump
+ls -l ~/dev/backups/
+
+docker compose $C stop backend
+docker compose $C rm -sf dev-db
+docker volume rm infrastructure_dev-db-data
+docker compose $C up -d --wait dev-db
+docker compose $C up -d backend
+docker compose $C exec backend python manage.py migrate
+docker compose $C exec backend python manage.py sync_blacklist
+```
+
+The volume is named for the Compose project: `infrastructure_dev-db-data` in the main checkout,
+`{COMPOSE_PROJECT_NAME}_dev-db-data` in a linked worktree. A dump restores into the running `dev-db` with
+`docker compose $C exec -T dev-db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' < {dump}`.
 
 ---
 

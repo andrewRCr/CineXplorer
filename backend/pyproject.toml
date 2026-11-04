@@ -145,10 +145,8 @@ omit = [
 parallel = true
 
 [tool.coverage.report]
-# Minimum coverage threshold (will fail if below this)
-# Target: 80% general (pending service layer work), 90%+ critical paths (API layer complete)
-# Current: 71.67% reflects API layer completion; service layer deferred to Backend Modernization PRD
-fail_under = 71
+# Fail when application statement coverage drops below the regression floor.
+fail_under = 90
 
 # Precision for coverage percentages
 precision = 2

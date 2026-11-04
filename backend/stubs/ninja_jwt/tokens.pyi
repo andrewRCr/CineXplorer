@@ -5,7 +5,7 @@ Provides explicit type annotations for django-ninja-jwt's Token, RefreshToken, a
 AccessToken classes. Official type stubs exist but are INCOMPLETE.
 
 ⚠️ MAINTENANCE CONTRACT
-========================
+------------------------
 Synchronized with: django-ninja-jwt 5.3.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -22,7 +22,7 @@ verification on ninja-jwt upgrades (~80 lines to maintain).
 
 Purpose: Eliminates type: ignore comments on RefreshToken usage, adds payload typing
 Pattern: Custom stubs for third-party libraries with incomplete type information
-Compliance: Zero typing.Any usage per DEVELOPMENT-RULES.md (uses dict[str, object])
+Token payloads use dict[str, object] because claim values have varying types.
 Status: Official stubs exist but INCOMPLETE - this is REQUIRED (supplements official stubs)
 
 Note: django-ninja-jwt is a direct fork of djangorestframework-simplejwt with
@@ -38,7 +38,6 @@ class _TokenProtocol(Protocol):
     """
     Protocol for JWT token objects that can be converted to strings.
 
-    Avoids using typing.Any per DEVELOPMENT-RULES.md type safety standards.
     All token classes in ninja-jwt implement __str__ for token string serialization.
     """
     def __str__(self) -> str: ...

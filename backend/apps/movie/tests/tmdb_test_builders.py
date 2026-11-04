@@ -3,8 +3,8 @@
 These builders create validated Pydantic model instances representing TMDB API responses,
 used across service layer tests for consistent and type-safe mock data.
 
-Following type safety strategy validation boundary pattern: Test data is validated
-at construction using the same Pydantic models as production code, eliminating
+Test data is validated at construction using the same Pydantic models as
+production code, eliminating
 the need for cast() and ensuring tests use realistic, validated data.
 
 """

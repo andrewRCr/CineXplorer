@@ -2,7 +2,7 @@
 Core database models.
 
 ⚠️ TYPE STUB SYNC REQUIRED ⚠️
-===============================
+-------------------------------
 This file has a companion type stub file: backend/apps/core/models.pyi
 
 When adding, removing, or modifying model fields in this file, you MUST
@@ -28,9 +28,6 @@ This file uses `# type: ignore` comments on Django model field definitions.
 - ✅ Schemas accessing model fields (100% type-safe via .pyi)
 - ✅ Any code importing and using these models (100% type-safe via .pyi)
 - ⚠️ Only the field definitions themselves show as "unknown" (unavoidable)
-
-This is the recommended approach per our type safety strategy.
-See: _docs/reference/type-safety-strategy.md
 
 Maintenance Checklist:
 ----------------------

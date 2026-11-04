@@ -5,7 +5,7 @@ Provides explicit type annotations for allauth's SocialApp and SocialAccount
 models used in OAuth authentication. NO official type stubs exist for django-allauth.
 
 ⚠️ MAINTENANCE CONTRACT
-========================
+------------------------
 Synchronized with: django-allauth 65.12.0 + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -23,7 +23,7 @@ allauth, this is acceptable (OAuth models rarely change).
 Purpose: Eliminates "Stub file not found" errors in authentication test fixtures
 Pattern: Custom stubs for third-party libraries without complete type information
 Status: NO official allauth stubs exist - this is REQUIRED (not a supplement)
-Compliance: Zero typing.Any usage per DEVELOPMENT-RULES.md (uses object for extra_data)
+Provider-specific extra_data uses object because its JSON shape varies by provider.
 """
 from __future__ import annotations
 

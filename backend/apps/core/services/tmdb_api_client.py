@@ -403,10 +403,6 @@ class TMDBApiClient(BaseApiClient):
         Returns:
             ApiResponse object with TMDB response data or error information
         """
-        # Ensure params dict exists and inject API key
-        if params is None:
-            params = {}
-
         # Guard against missing TMDB API key
         api_key = getattr(settings, "TMDB_API_KEY", None)
         if not api_key:
@@ -415,11 +411,10 @@ class TMDBApiClient(BaseApiClient):
                 "Please set TMDB_API_KEY in your environment or settings file."
             )
 
-        # Inject TMDB API key
-        params["api_key"] = api_key
+        # Add the key to a copy, so the caller's params never hold it
+        request_params: dict[str, object] = {**(params or {}), "api_key": api_key}
 
-        # Call parent get method with prepared parameters
-        return super().get(endpoint, params, headers, **kwargs)
+        return super().get(endpoint, request_params, headers, **kwargs)
 
     # Convenience methods for common TMDB operations
     def search_movies(self, query: str, page: int = 1, **kwargs: object) -> ApiResponse:

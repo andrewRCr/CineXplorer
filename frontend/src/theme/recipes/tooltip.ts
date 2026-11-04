@@ -3,7 +3,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 /**
  * Tooltip slot recipe implementing semantic token styling
  *
- * Uses popover/on-popover tokens per strategy-color-tokens.md.
+ * Uses the popover/on-popover tokens.
  * Arrow included by default for visual clarity.
  *
  * Slots:

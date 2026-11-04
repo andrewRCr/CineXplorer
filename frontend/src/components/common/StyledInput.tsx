@@ -18,8 +18,6 @@ import { Input, type InputProps } from "@chakra-ui/react";
  * - Highly custom inputs that need different styling (use Chakra Input directly)
  * - Inputs that need outline rings (use Chakra Input with `_focusVisible`)
  *
- * See strategy-semantic-tokens.md "Form Controls" for complete usage guide.
- *
  * @example
  * ```tsx
  * // On layer-01 (default)

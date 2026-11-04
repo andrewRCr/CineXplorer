@@ -18,14 +18,11 @@ export function OpacitySystemSection() {
 
         {/* Introduction */}
         <Box>
-          <Text fontSize="sm" color="on-muted" mb={3}>
+          <Text fontSize="sm" color="on-muted">
             The opacity system allows any semantic token to use transparency with <code>/opacity</code> syntax
             (e.g., <code>primary/80</code> = 80% opacity). Per <strong>ADR-009</strong> and <strong>ADR-016</strong>,
             interaction states use a dual opacity system: MD3 baseline (8%/12%) for outline/ghost/secondary buttons,
             and improved (12%/16%) for solid buttons and layer surfaces to ensure better visibility across themes.
-          </Text>
-          <Text fontSize="sm" color="on-muted">
-            See <strong>strategy-component-styling.md</strong> "Opacity Modifier Reference" section (lines 1105-1121) for complete patterns.
           </Text>
         </Box>
 
@@ -196,8 +193,7 @@ export function OpacitySystemSection() {
         <Box p={3} borderTopWidth="1px" borderColor="border-subtle-02">
           <Text fontSize="xs" color="foreground/70" fontStyle="italic">
             <strong>References:</strong> ADR-009 (Material Design 3 Opacity Overlays),
-            ADR-016 (Improve Interaction State Contrast),
-            strategy-component-styling.md "Opacity Modifier Reference" section (lines 1105-1121)
+            ADR-016 (Improve Interaction State Contrast)
           </Text>
         </Box>
 

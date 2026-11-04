@@ -4,8 +4,6 @@
  * Displays the user's watchlist movies using the userMovieService
  * (movie-first pattern with enrichment).
  *
- * Minimal implementation for OAuth validation - full features in API Layer P2.
- *
  * Architecture:
  * - Uses userMovieService.getUserMovies({ watchlist: true })
  * - Displays simple text list of movie titles

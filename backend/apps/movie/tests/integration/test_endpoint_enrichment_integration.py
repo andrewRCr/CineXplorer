@@ -46,6 +46,7 @@ HTTP_200_OK = HTTPStatus.OK
 
 def create_movie_stub(tmdb_id: int, title: str = "Test Movie") -> Movie:
     """Create and return a new Movie stub object.
+
     This mimics the behavior of the service layer, which creates a local stub
     for a movie fetched from the TMDB API.
     """

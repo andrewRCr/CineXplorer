@@ -4,8 +4,7 @@ This file SUPPLEMENTS django-types for authentication functions. django-types 0.
 provides complete coverage, but this stub provides additional type safety and
 documentation value.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.2.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 

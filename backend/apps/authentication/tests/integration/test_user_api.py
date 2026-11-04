@@ -237,6 +237,7 @@ def test_retrieve_profile_unauthorized(api_client: Client) -> None:
 @pytest.mark.django_db
 def test_retrieve_profile_success(authenticated_user: tuple[Client, User]) -> None:
     """Authenticated user can retrieve their profile (GET is not CSRF-protected).
+
     Expect 200 OK.
     """
     client, user = authenticated_user
@@ -289,6 +290,7 @@ def test_update_profile_no_csrf_authenticated(db: None) -> None:
 @pytest.mark.django_db
 def test_update_profile_with_csrf_authenticated(db: None) -> None:
     """Authenticated PATCH to profile with valid CSRF token.
+
     Expect 200 OK.
 
     Hybrid Authentication Pattern:
@@ -338,6 +340,7 @@ def test_update_profile_with_csrf_authenticated(db: None) -> None:
 @pytest.mark.django_db
 def test_unauthenticated_profile_access(api_client: Client) -> None:
     """Unauthenticated GET to profile endpoint.
+
     Expect 401 Unauthorized.
     """
     res = api_client.get(ME_URL)
@@ -347,6 +350,7 @@ def test_unauthenticated_profile_access(api_client: Client) -> None:
 @pytest.mark.django_db
 def test_unauthenticated_profile_update(api_client: Client) -> None:
     """Unauthenticated PATCH to profile endpoint.
+
     Expect 401 Unauthorized (auth fails before CSRF).
     """
     payload = {"first_name": "Hacker"}

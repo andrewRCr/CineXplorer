@@ -2,8 +2,7 @@
 
 Provides type definitions for AdminSite and the global admin.site instance.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.2.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 

@@ -348,7 +348,7 @@ def write_dev_console_log(
 
     Args:
         request: HTTP request object
-        log_line: Formatted log line to write to file
+        payload: Request body holding the formatted log line to write to file
 
     Returns:
         Status response indicating success or failure

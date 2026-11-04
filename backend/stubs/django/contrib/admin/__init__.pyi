@@ -4,8 +4,7 @@ This file SUPPLEMENTS django-types 0.22.0 for Django admin functionality. django
 has incomplete coverage for django.contrib.admin, leading to ~100 type errors across
 admin.py files in our apps.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.2.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 

@@ -3,8 +3,7 @@
 Provides explicit type annotations for allauth's EmailAddress and EmailConfirmation
 models. NO official type stubs exist for django-allauth.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-allauth 0.63.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 

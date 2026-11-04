@@ -2,8 +2,7 @@
 
 Provides type annotations for JWT-related exceptions.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-ninja-jwt 5.3.x (as of 2025-01-27)
 Last verified: 2025-01-27
 
@@ -24,6 +23,7 @@ class TokenError(Exception):
 
 class InvalidToken(TokenError):  # noqa: N818
     """Exception raised when a token is invalid (expired, malformed, etc.).
+
     Note: Name matches django-ninja-jwt library (cannot rename to InvalidTokenError).
     """
 

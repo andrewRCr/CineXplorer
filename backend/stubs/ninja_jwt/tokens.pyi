@@ -3,8 +3,7 @@
 Provides explicit type annotations for django-ninja-jwt's Token, RefreshToken, and
 AccessToken classes. Official type stubs exist but are INCOMPLETE.
 
-⚠️ MAINTENANCE CONTRACT
-------------------------
+Maintenance Contract:
 Synchronized with: django-ninja-jwt 5.3.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 

@@ -30,8 +30,7 @@ cross-cutting test utilities.
 - User (unit): create_mock_user() - creates Mock object for unit tests
 - Types: HTTPStatus (stdlib enum), UserParams (TypedDict)
 
-HTTP Status Codes
------------------
+HTTP Status Codes:
 We use Python's stdlib `http.HTTPStatus` enum instead of DRF's status module:
 - Zero dependencies (part of Python stdlib)
 - Type-safe (IntEnum with full mypy/pyright support)

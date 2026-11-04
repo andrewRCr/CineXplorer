@@ -80,6 +80,7 @@ class BaseApiClient(ABC):
     @abstractmethod
     def prepare_headers(self, headers: dict[str, str] | None = None) -> dict[str, str]:
         """Prepare headers for the request.
+
         Subclasses should implement this to add authentication, API keys, etc.
 
         Args:
@@ -141,6 +142,7 @@ class BaseApiClient(ABC):
 
     def get_error_details(self, status_code: int) -> str:
         """Get human-readable error details for status code.
+
         Subclasses can override for API-specific error messages.
 
         Args:

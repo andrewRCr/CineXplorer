@@ -3,8 +3,7 @@
 This file SUPPLEMENTS django-types to provide explicit type annotations that django-types
 cannot infer, specifically the `id` field on AbstractBaseUser and AbstractUser.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: Django 5.1.x + django-types 0.22.0 (as of 2025-10-09)
 Last verified with django-types: 2025-10-09
 
@@ -118,6 +117,7 @@ class AbstractUser(AbstractBaseUser, PermissionsMixin):
 
 class User(AbstractUser):  # type: ignore[django-manager-missing]
     """Type stub for Django's concrete User model.
+
     Inherits all fields from AbstractUser.
     """
 

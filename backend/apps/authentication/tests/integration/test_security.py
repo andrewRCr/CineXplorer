@@ -86,6 +86,7 @@ def test_hsts_header_absent_development() -> None:
 @pytest.fixture
 def samesite_user(api_client: Client) -> tuple[dict[str, str], Client]:
     """Create user with verified email for JWT SameSite cookie tests.
+
     Returns tuple of (user_data, client) with logged-in session ready.
     """
     from allauth.account.models import EmailAddress

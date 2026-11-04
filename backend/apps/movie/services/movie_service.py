@@ -104,6 +104,7 @@ class MovieService(BaseTMDBService):
                 - release_date_gte/lte: Release date range
                 - with_release_type: Release type (2|3 for theatrical)
                 - certification: Certification rating
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with discovered movies, including
@@ -190,6 +191,7 @@ class MovieService(BaseTMDBService):
         Args:
             page: Page number for pagination
             params: BrowseServiceParams model with user-provided filters
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with now playing movies
@@ -246,6 +248,7 @@ class MovieService(BaseTMDBService):
         Args:
             page: Page number for pagination
             params: BrowseServiceParams model with user-provided filters
+            dedup_tracker: Optional tracker for cross-page deduplication
 
         Returns:
             MovieListResponseSchema with upcoming movies

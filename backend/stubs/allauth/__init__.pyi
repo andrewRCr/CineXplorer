@@ -4,8 +4,7 @@ This empty stub file marks the allauth package as having type information,
 preventing Pyright from raising 'import-untyped' warnings when importing
 from allauth modules.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-allauth 65.12.0
 Last verified: 2025-10-09
 

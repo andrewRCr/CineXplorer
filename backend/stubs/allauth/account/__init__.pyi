@@ -3,8 +3,7 @@
 This empty stub file provides package structure for allauth.account module,
 allowing Pyright to find type definitions in models.pyi.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-allauth 65.12.0
 Last verified: 2025-10-09
 

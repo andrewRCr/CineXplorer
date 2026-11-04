@@ -1,7 +1,6 @@
 """Type stubs for django-allauth sessionkit module.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-allauth v65.12.0
 Last verified: 2025-10-09
 

@@ -1,4 +1,5 @@
 """Test settings for Django tests.
+
 Uses Django's in-memory email backend to capture emails without sending.
 """
 

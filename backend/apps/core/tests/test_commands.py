@@ -22,6 +22,7 @@ from apps.core.tests.mock_paths import WAIT_FOR_DB_CONNECTIONS
 @patch(WAIT_FOR_DB_CONNECTIONS)
 def test_wait_for_db_ready(patched_connections: MagicMock) -> None:
     """Tests waiting for the database.
+
     Case: database is ready.
     """
     # Mock the default connection's ensure_connection to succeed immediately
@@ -42,6 +43,7 @@ def test_wait_for_db_delay(
     patched_sleep: MagicMock,
 ) -> None:
     """Tests waiting for the database.
+
     Case: receiving an OperationalError.
     """
     # Mock to raise OperationalError 5 times, then succeed

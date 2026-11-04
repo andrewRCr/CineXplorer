@@ -5,7 +5,6 @@ validated Pydantic data. Centralizes the validation→serialization→ApiRespons
 boundary in one place to improve maintainability and document type boundaries.
 
 Type Boundary Documentation:
----------------------------
 Pydantic's .model_dump() returns dict[str, Any] due to limitations in Pydantic's
 type system. Any is confined to this external serialization boundary. Data validation
 happens at Pydantic model construction, before .model_dump() serialization.

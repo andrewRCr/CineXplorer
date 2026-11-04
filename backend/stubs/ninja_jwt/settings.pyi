@@ -2,8 +2,7 @@
 
 Provides type annotations for JWT settings configuration.
 
-⚠️ MAINTENANCE CONTRACT
-========================
+Maintenance Contract:
 Synchronized with: django-ninja-jwt 5.3.x (as of 2025-01-27)
 Last verified: 2025-01-27
 

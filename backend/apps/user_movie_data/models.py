@@ -3,8 +3,7 @@
 This module contains models related to user interactions with movies,
 including watchlist status, ratings, reviews, and viewing history.
 
-⚠️ TYPE STUB SYNC REQUIRED ⚠️
--------------------------------
+Type Stub Sync Required:
 This file has a companion type stub file: backend/apps/user_movie_data/models.pyi
 
 When adding, removing, or modifying model fields in this file, you MUST
@@ -15,7 +14,6 @@ enabling perfect type inference in Pyright/Pylance and eliminating
 "unknown type" warnings.
 
 Type Ignore Usage:
-------------------
 This file uses `# type: ignore` comments on Django model field definitions.
 
 **Why this is justified:**
@@ -32,7 +30,6 @@ This file uses `# type: ignore` comments on Django model field definitions.
 - ⚠️ Only the field definitions themselves show as "unknown" (unavoidable)
 
 Maintenance Checklist:
-----------------------
 When modifying this file:
 1. Update the model definition here (models.py)
 2. Update the type stub file (models.pyi)

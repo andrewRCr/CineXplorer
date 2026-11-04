@@ -2,7 +2,7 @@
 Type stubs for django-allauth AbstractTokenStrategy.
 
 ⚠️ MAINTENANCE CONTRACT
-========================
+------------------------
 Synchronized with: django-allauth v65.12.0
 Last verified: 2025-10-09
 
@@ -13,11 +13,10 @@ When upgrading django-allauth:
 4. Update "Last verified" date above
 
 NOTE: Uses typing.Any in create_access_token_payload return type to match
-official library interface. This is acceptable per type-safety.md as it's
-a third-party library contract we don't control.
+official library interface. The external contract permits heterogeneous metadata
+whose shape is defined by the configured token strategy.
 
 This stub file exists because django-allauth has no official type stubs.
-See: .arc/reference/strategies/strategy-type-safety.md
 """
 
 import abc

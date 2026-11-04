@@ -59,7 +59,7 @@ Happy exploring!
 The CineXplorer Team
 """
 
-        send_mail(
+        sent_count = send_mail(
             subject=subject,
             message=plain_text,
             from_email=None,  # Uses DEFAULT_FROM_EMAIL
@@ -67,6 +67,10 @@ The CineXplorer Team
             html_message=html_body,
             fail_silently=False,
         )
+        if sent_count == 0:
+            # The backend reports that it sent nothing, as when the provider declines the message.
+            logger.error("Welcome email not sent", extra={"user_id": user.id})
+            return False
 
         logger.info("Welcome email sent successfully", extra={"user_id": user.id})
         return True
@@ -74,7 +78,8 @@ The CineXplorer Team
     except Exception as e:
         # The exception's text can carry the address, so only its type is logged.
         logger.error(
-            "Error sending welcome email",
+            "Error sending welcome email | error_type=%s",
+            type(e).__name__,
             extra={"user_id": user.id, "error_type": type(e).__name__},
         )
         return False

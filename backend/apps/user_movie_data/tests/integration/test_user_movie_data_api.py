@@ -267,7 +267,7 @@ def test_create_user_movie_data_success(
         HTTP_X_CSRFTOKEN=csrf_token,
     )
 
-    # Assert: Response
+    # Check the HTTP response
     assert res.status_code == HTTPStatus.OK
     data = res.json()
     assert data["user_watched"] is True
@@ -418,7 +418,7 @@ def test_update_user_movie_data_partial_success(
         url, data=payload, content_type="application/json", HTTP_X_CSRFTOKEN=csrf_token
     )
 
-    # Assert: Response
+    # Check the HTTP response
     assert res.status_code == HTTPStatus.OK
     data = res.json()
     assert data["user_rating"] == 10
@@ -534,7 +534,7 @@ def test_delete_user_movie_data_success(
     # Act
     res = client.delete(url, HTTP_X_CSRFTOKEN=csrf_token)
 
-    # Assert: Response
+    # Check the HTTP response
     assert res.status_code == HTTPStatus.NO_CONTENT
 
     # Assert: Object removed from database

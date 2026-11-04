@@ -80,9 +80,9 @@ These hold for every test, test-first or not. The full rules are in
 
 **Backend:**
 
-- Minimum: 80% branch coverage (general application code)
-- Critical paths: 90%+ branch coverage (auth, payments, data integrity)
-- Security-critical: 95%+ branch coverage (token management, session handling)
+- Minimum: 90% statement coverage (general application code)
+- Critical paths: 90%+ statement coverage (auth, payments, data integrity)
+- Security-critical: 95%+ statement coverage (token management, session handling)
 - Current enforcement: CI fails below `fail_under` in `backend/pyproject.toml` (90%)
 - Focus: Integration over unit tests
 
@@ -105,7 +105,7 @@ risk-based testing prioritization per industry best practices.
 **Backend:** 100% pass rate, coverage at or above the floor CI enforces (`fail_under` in `backend/pyproject.toml`,
 90%), zero lint/type errors
 **Frontend:** 100% pass rate, zero lint/type errors, and the configured measured floors when running
-`npm run test:coverage`. Frontend CI runs tests without coverage; coverage enforcement is local.
+`npm run test:coverage`. Frontend CI enforces the same floors and uploads a compact JSON coverage summary.
 
 ---
 
@@ -738,18 +738,21 @@ describe('LoginPage', () => {
   });
 });
 
-// API Mocking (MSW)
+// API Mocking (MSW): override a response on the shared server for this test file.
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+import { apiBaseUrl } from '@/config/baseUrls';
+import { server } from '@tests/mocks/server';
 
-const server = setupServer(
-  http.post('/api/token/', () => HttpResponse.json(createMockLoginResponse())),
-);
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+beforeEach(() => {
+  server.use(
+    http.get(`${apiBaseUrl}/user-movie-data/movies`, () =>
+      HttpResponse.json({ page: 1, total_pages: 0, total_results: 0, results: [] }),
+    ),
+  );
+});
 ```
+
+`tests/setup.ts` starts the shared server, resets runtime handlers after each test and closes it after the suite.
 
 ### Asserting Chakra Recipe Styles
 

@@ -31,7 +31,8 @@ def throttle_requests(
     first = RequestFactory().get("/", REMOTE_ADDR="192.0.2.1")
     second = RequestFactory().get("/", REMOTE_ADDR="192.0.2.2")
     for index, http_request in enumerate((first, second)):
-        setattr(http_request, "_test_enable_throttling", True)
+        # Test-only Django request attributes are absent from the request stubs.
+        setattr(http_request, "_test_enable_throttling", True)  # noqa: B010
         http_request.user = create_user(username=f"concurrent{index}")
     yield throttle, first, second
     for http_request in (first, second):
@@ -47,7 +48,8 @@ def test_interleaved_requests_record_each_clients_history(
     throttle, first, second = throttle_requests
     backend = throttle.cache
     first_key, second_key = throttle.get_cache_key(first), throttle.get_cache_key(second)
-    assert first_key is not None and second_key is not None
+    assert first_key is not None
+    assert second_key is not None
     backend.delete_many([first_key, second_key])
     history_read, release = Event(), Event()
     original_get = backend.get
@@ -85,7 +87,8 @@ def test_refused_request_wait_uses_its_own_history(
 ) -> None:
     throttle, first, second = throttle_requests
     first_key, second_key = throttle.get_cache_key(first), throttle.get_cache_key(second)
-    assert first_key is not None and second_key is not None
+    assert first_key is not None
+    assert second_key is not None
     throttle.cache.delete_many([first_key, second_key])
     throttle.cache.set(first_key, [990.0, 980.0], 60)
     monkeypatch.setattr(throttle, "timer", lambda: 1000.0)

@@ -64,7 +64,8 @@ def test_wait_for_db_delay(
     assert patched_sleep.call_count == 5
 
 
-def test_export_openapi_schema_writes_only_json_to_stdout() -> None:
+@pytest.mark.parametrize("log_level", ["DEBUG", "INVALID_LEVEL"])
+def test_export_openapi_schema_writes_only_json_to_stdout(log_level: str) -> None:
     """The schema export's stdout is the schema alone, even with debug logging on stdout.
 
     The development stack runs with DEBUG on and a DEBUG console handler writing to stdout,
@@ -75,7 +76,7 @@ def test_export_openapi_schema_writes_only_json_to_stdout() -> None:
     env = {
         **os.environ,
         "DEBUG": "True",
-        "DJANGO_LOG_LEVEL": "DEBUG",
+        "DJANGO_LOG_LEVEL": log_level,
         "DJANGO_CONSOLE_LOG_LEVEL": "DEBUG",
     }
     env.pop("TESTING", None)
@@ -93,6 +94,8 @@ def test_export_openapi_schema_writes_only_json_to_stdout() -> None:
     assert result.returncode == 0, result.stderr
     schema = json.loads(result.stdout)
     assert schema["openapi"].startswith("3.")
+    if log_level == "INVALID_LEVEL":
+        assert "Invalid DJANGO_LOG_LEVEL" in result.stderr
 
 
 @pytest.mark.django_db
@@ -122,7 +125,7 @@ def test_configure_site_requires_deployed_site_domain() -> None:
 
 
 @pytest.mark.parametrize(
-    "environment,expected", [("development", "localhost:8444"), ("staging", None)]
+    ("environment", "expected"), [("development", "localhost:8444"), ("staging", None)]
 )
 def test_site_domain_settings_default(environment: str, expected: str | None) -> None:
     from apps.core.tests.test_helpers import load_settings

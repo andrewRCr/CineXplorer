@@ -38,17 +38,10 @@ class Command(BaseCommand):
         """Create partial key pattern for safe display."""
         if len(api_key) >= 8:
             return f"{api_key[:4]}...{api_key[-4:]}"
-        else:
-            return "***REDACTED***"
+        return "***REDACTED***"
 
     def _run_security_test(self, api_key: str, partial_key: str) -> None:
-        """Run the complete security test suite.
-
-        Note: This method has high complexity (C901) due to comprehensive
-        security testing logic that validates API key exclusion across
-        multiple log handlers, record attributes, and file outputs.
-        The complexity is acceptable for this security verification utility.
-        """
+        """Capture API diagnostics and report sensitive-data violations."""
         # Capture log records
         log_records: list[logging.LogRecord] = []
 
@@ -106,58 +99,10 @@ class Command(BaseCommand):
             total_records_checked = len(log_records)
 
             for i, record in enumerate(log_records):
-                # Get the formatted message
                 message = record.getMessage()
-
-                # Check all attributes of the record
-                violation_found = False
-
-                # Check main message for API key
-                if api_key in message:
-                    security_violations.append(
-                        {
-                            "type": "message",
-                            "record": i + 1,
-                            "logger": record.name,
-                            "function": record.funcName,
-                            "violation": "API key found in log message",
-                        }
-                    )
-                    violation_found = True
-
-                # Check extra fields
-                for attr_name in dir(record):
-                    if attr_name.startswith("_"):
-                        continue
-
-                    try:
-                        attr_value = getattr(record, attr_name)
-                        if attr_value is None:
-                            continue
-
-                        # Convert to string for searching
-                        if isinstance(attr_value, (dict, list)):
-                            attr_str = json.dumps(attr_value)
-                        else:
-                            attr_str = str(attr_value)
-
-                        # Search for API key in attribute
-                        if api_key in attr_str:
-                            security_violations.append(
-                                {
-                                    "type": "attribute",
-                                    "record": i + 1,
-                                    "logger": record.name,
-                                    "function": record.funcName,
-                                    "attribute": attr_name,
-                                    "violation": f"API key found in attribute '{attr_name}'",
-                                }
-                            )
-                            violation_found = True
-
-                    except Exception:
-                        # Skip attributes that can't be converted
-                        continue
+                violations = self._find_record_violations(record, i + 1, api_key, message)
+                security_violations.extend(violations)
+                violation_found = bool(violations)
 
                 # Show progress for detailed records
                 if i < 5 or violation_found:
@@ -168,26 +113,7 @@ class Command(BaseCommand):
                     else:
                         self.stdout.write("       ✅ No sensitive data found")
 
-            # Report results
-            self.stdout.write("\n🎯 Security Verification Results")
-            self.stdout.write("=" * 50)
-            self.stdout.write(f"Total log records analyzed: {total_records_checked}")
-            self.stdout.write(f"Security violations found: {len(security_violations)}")
-
-            if security_violations:
-                self.stdout.write("\n❌ SECURITY VIOLATIONS DETECTED:")
-                for violation in security_violations:
-                    self.stdout.write(
-                        f"  - Record {violation['record']}: {violation['violation']}"
-                    )
-                    self.stdout.write(f"    Logger: {violation['logger']}")
-                    self.stdout.write(f"    Function: {violation['function']}")
-                    if "attribute" in violation:
-                        self.stdout.write(f"    Attribute: {violation['attribute']}")
-                self.stdout.write("\n🚨 CRITICAL: API key found in logs! Security issue detected.")
-            else:
-                self.stdout.write("\n✅ SECURITY PASSED: No API keys found in any log output")
-                self.stdout.write("✅ Sensitive data properly excluded from logging")
+            self._report_security_violations(security_violations, total_records_checked)
 
             # Verify API calls succeeded
             self.stdout.write("\n📊 API Call Results:")
@@ -198,32 +124,14 @@ class Command(BaseCommand):
             ]
 
             for endpoint, api_response in api_results:
-                # ApiResponse.data is Mapping[str, object] | Sequence[object] | str | None
-                if not api_response.is_success():
-                    self.stdout.write(f"  ❌ {endpoint}: {api_response.error_message}")
-                elif api_response.data is not None and isinstance(api_response.data, Mapping):
-                    # For list endpoints (popular, search), check 'results' array
-                    if "results" in api_response.data:
-                        results = api_response.data["results"]
-                        # Use isinstance(Sized) for type narrowing
-                        if isinstance(results, Sized):
-                            count = len(results)
-                            self.stdout.write(f"  ✅ {endpoint}: {count} item(s) returned")
-                        else:
-                            self.stdout.write(f"  ✅ {endpoint}: Results returned (count unknown)")
-                    else:
-                        # For detail endpoints (get_movie_details), single item
-                        self.stdout.write(f"  ✅ {endpoint}: 1 item returned")
-                else:
-                    status = api_response.status_code
-                    self.stdout.write(f"  ⚠️ {endpoint}: No data returned (status {status})")
+                self._report_api_result(endpoint, api_response)
 
             # Check log files for API key presence
             self.stdout.write("\n📁 Log File Security Check:")
             self._check_log_files_security(api_key, partial_key)
 
         except Exception as e:
-            self.stdout.write(f"\n❌ Security test failed: {e}")
+            self.stdout.write(f"\n❌ Security test failed: {type(e).__name__}")
 
         finally:
             # Clean up handlers and restore original logger levels
@@ -232,6 +140,109 @@ class Command(BaseCommand):
                 logger.setLevel(original_level)
 
         self.stdout.write("\n🔐 Sensitive data exclusion verification completed!")
+
+    def _find_record_violations(
+        self,
+        record: logging.LogRecord,
+        record_number: int,
+        api_key: str,
+        message: str,
+    ) -> list[dict[str, object]]:
+        """Collect message and attribute violations without discarding duplicates."""
+        # Check all attributes of the record
+        violations: list[dict[str, object]] = []
+
+        # Check main message for API key
+        if api_key in message:
+            violations.append(
+                {
+                    "type": "message",
+                    "record": record_number,
+                    "logger": record.name,
+                    "function": record.funcName,
+                    "violation": "API key found in log message",
+                }
+            )
+
+        # Check extra fields
+        for attr_name in dir(record):
+            if attr_name.startswith("_"):
+                continue
+
+            try:
+                attr_value = getattr(record, attr_name)
+                if attr_value is None:
+                    continue
+
+                # Convert to string for searching
+                if isinstance(attr_value, (dict, list)):
+                    attr_str = json.dumps(attr_value)
+                else:
+                    attr_str = str(attr_value)
+
+                # Search for API key in attribute
+                if api_key in attr_str:
+                    violations.append(
+                        {
+                            "type": "attribute",
+                            "record": record_number,
+                            "logger": record.name,
+                            "function": record.funcName,
+                            "attribute": attr_name,
+                            "violation": f"API key found in attribute '{attr_name}'",
+                        }
+                    )
+
+            except Exception as exc:
+                self.stderr.write(f"Skipped unreadable log attribute ({type(exc).__name__})")
+
+        return violations
+
+    def _report_security_violations(
+        self,
+        security_violations: list[dict[str, object]],
+        total_records_checked: int,
+    ) -> None:
+        """Report counts and each detected log-field violation."""
+        # Report results
+        self.stdout.write("\n🎯 Security Verification Results")
+        self.stdout.write("=" * 50)
+        self.stdout.write(f"Total log records analyzed: {total_records_checked}")
+        self.stdout.write(f"Security violations found: {len(security_violations)}")
+
+        if security_violations:
+            self.stdout.write("\n❌ SECURITY VIOLATIONS DETECTED:")
+            for violation in security_violations:
+                self.stdout.write(f"  - Record {violation['record']}: {violation['violation']}")
+                self.stdout.write(f"    Logger: {violation['logger']}")
+                self.stdout.write(f"    Function: {violation['function']}")
+                if "attribute" in violation:
+                    self.stdout.write(f"    Attribute: {violation['attribute']}")
+            self.stdout.write("\n🚨 CRITICAL: API key found in logs! Security issue detected.")
+        else:
+            self.stdout.write("\n✅ SECURITY PASSED: No API keys found in any log output")
+            self.stdout.write("✅ Sensitive data properly excluded from logging")
+
+    def _report_api_result(self, endpoint: str, api_response: ApiResponse) -> None:
+        """Report one endpoint result without altering the captured response."""
+        if not api_response.is_success():
+            self.stdout.write(f"  ❌ {endpoint}: {api_response.error_message}")
+        elif api_response.data is not None and isinstance(api_response.data, Mapping):
+            # For list endpoints (popular, search), check 'results' array
+            if "results" in api_response.data:
+                results = api_response.data["results"]
+                # Use isinstance(Sized) for type narrowing
+                if isinstance(results, Sized):
+                    count = len(results)
+                    self.stdout.write(f"  ✅ {endpoint}: {count} item(s) returned")
+                else:
+                    self.stdout.write(f"  ✅ {endpoint}: Results returned (count unknown)")
+            else:
+                # For detail endpoints (get_movie_details), single item
+                self.stdout.write(f"  ✅ {endpoint}: 1 item returned")
+        else:
+            status = api_response.status_code
+            self.stdout.write(f"  ⚠️ {endpoint}: No data returned (status {status})")
 
     def _check_log_files_security(self, api_key: str, partial_key: str) -> None:
         """Check actual log files for API key presence."""
@@ -257,5 +268,5 @@ class Command(BaseCommand):
                 else:
                     self.stdout.write(f"  ⚠️ {log_file}: File not found")
 
-            except Exception as e:
-                self.stdout.write(f"  ❌ {log_file}: Error reading file - {e}")
+            except (OSError, UnicodeError) as e:
+                self.stderr.write(f"  ❌ {log_file}: Error reading file ({type(e).__name__})")

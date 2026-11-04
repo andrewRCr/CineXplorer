@@ -63,7 +63,7 @@ def test_new_user_email_normalized() -> None:
 @pytest.mark.django_db
 def test_new_user_without_username_raises_error() -> None:
     """Tests that creating a user without a username raises a ValueError."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="The given username must be set"):
         # django-types limitation - UserManager.create_user type not inferred
         User.objects.create_user("", "testUser@example.com")  # pyright: ignore[reportUnknownMemberType, reportAttributeAccessIssue]
 

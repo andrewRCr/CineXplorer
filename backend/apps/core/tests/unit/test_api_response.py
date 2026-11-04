@@ -215,7 +215,8 @@ class TestApiResponseContentInfo:
         info = response.get_content_info()
         assert "data_size" in info
         data_size = info["data_size"]
-        assert isinstance(data_size, int) and data_size > 0
+        assert isinstance(data_size, int)
+        assert data_size > 0
 
     def test_get_content_info_handles_no_headers(self) -> None:
         response = ApiResponse(status_code=200, headers=None)

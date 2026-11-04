@@ -41,6 +41,8 @@ Parameter Flow Reference (HTTP → BrowseServiceParams → TMDB API):
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from ..data_quality.policy import VOTE_COUNT_THRESHOLD
 
 # Note: BrowseServiceParams imported here for internal use only.
@@ -84,6 +86,21 @@ NUMERIC_PARAMS: frozenset[str] = frozenset(
         "runtime.lte",
     ]
 )
+
+
+def _apply_mapped_filters(
+    params: dict[str, str | int | float | bool | None],
+    filters: Mapping[str, str | int | float | bool | None],
+) -> None:
+    """Map provided filters while preserving numeric values."""
+    # Apply filters using module-level mapping constants
+    for param_name, tmdb_param in PARAM_MAPPING.items():
+        if param_name in filters and filters[param_name] is not None:
+            # Preserve data types for numeric parameters, convert others to string
+            if param_name in NUMERIC_PARAMS:
+                params[tmdb_param] = filters[param_name]
+            else:
+                params[tmdb_param] = str(filters[param_name])
 
 
 def build_tmdb_params(
@@ -143,18 +160,10 @@ def build_tmdb_params(
         # undefined - it may ignore date filters or check ALL release dates worldwide.
         # See: TMDB API research (external-research-analyst, 2025-10-27)
         # For year-based filtering, we use primary_release_date without region.
-        # "region": filters.get('region', 'US'),  # REMOVED - incompatible
         "page": page,
     }
 
-    # Apply filters using module-level mapping constants
-    for param_name, tmdb_param in PARAM_MAPPING.items():
-        if param_name in filters and filters[param_name] is not None:
-            # Preserve data types for numeric parameters, convert others to string
-            if param_name in NUMERIC_PARAMS:
-                params[tmdb_param] = filters[param_name]
-            else:
-                params[tmdb_param] = str(filters[param_name])
+    _apply_mapped_filters(params, filters)
 
     # Set default sort if not specified
     if "sort_by" not in params:

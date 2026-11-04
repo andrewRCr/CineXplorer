@@ -5,18 +5,13 @@ Provides isolation from database dependencies for true unit testing.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from apps.movie.tests.mock_paths import BLACKLIST_GET_IDS
 
-if TYPE_CHECKING:
-    from pytest import MonkeyPatch
-
 
 @pytest.fixture(autouse=True)
-def mock_blacklist_query(monkeypatch: MonkeyPatch) -> None:
+def mock_blacklist_query(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mock blacklist database query for all service unit tests.
 
     The blacklist filter queries the database for blacklisted movie IDs.

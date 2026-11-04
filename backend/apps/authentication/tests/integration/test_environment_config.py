@@ -294,7 +294,7 @@ def test_development_host_and_origin_defaults() -> None:
     }
 
 
-@pytest.mark.parametrize("environment,present", [("staging", False), ("development", True)])
+@pytest.mark.parametrize(("environment", "present"), [("staging", False), ("development", True)])
 def test_development_tooling_matches_environment(environment: str, present: bool) -> None:
     from apps.core.tests.test_helpers import load_settings
 
@@ -313,7 +313,7 @@ def test_development_tooling_matches_environment(environment: str, present: bool
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("environment,expected", [("staging", 403), ("development", 500)])
+@pytest.mark.parametrize(("environment", "expected"), [("staging", 403), ("development", 500)])
 def test_debug_error_route_environment(environment: str, expected: int) -> None:
     from django.test import Client
     from django.urls import resolve
@@ -338,7 +338,7 @@ def test_dev_log_route_denies_staging_even_with_debug() -> None:
 
 
 @pytest.mark.parametrize(
-    "environment,storages",
+    ("environment", "storages"),
     [
         (
             "staging",
@@ -370,7 +370,7 @@ def test_static_configuration(environment: str, storages: dict[str, object] | No
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "path,expected", [("/api/health-check/", 200), ("/api/logs/health/", 301)]
+    ("path", "expected"), [("/api/health-check/", 200), ("/api/logs/health/", 301)]
 )
 def test_https_redirect_exempts_only_health_check(path: str, expected: int) -> None:
     from django.test import Client
@@ -383,7 +383,7 @@ def test_https_redirect_exempts_only_health_check(path: str, expected: int) -> N
 
 
 @pytest.mark.parametrize(
-    "environment,file_logging,console_level",
+    ("environment", "file_logging", "console_level"),
     [
         ("staging", False, "INFO"),
         ("production", False, "INFO"),

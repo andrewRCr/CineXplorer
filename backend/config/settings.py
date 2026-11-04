@@ -121,8 +121,8 @@ _base_internal_ips = [
 try:
     hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
     _docker_network_ips = [".".join([*ip.split(".")[:-1], "1"]) for ip in ips]
-except (socket.gaierror, socket.herror, Exception) as e:
-    logging.warning("Docker network detection failed: %s", e)
+except (socket.gaierror, socket.herror) as e:
+    logging.getLogger(__name__).warning("Docker network detection failed (%s)", type(e).__name__)
     _docker_network_ips = []
 
 INTERNAL_IPS = _base_internal_ips + _docker_network_ips
@@ -483,31 +483,29 @@ def ensure_log_directory():
     if is_ci or ENVIRONMENT in ("staging", "production"):
         # Deployed and CI logging have no file handlers
         return None  # Signals that file logging is disabled
-    else:
-        # In development, use the standard logs directory
-        log_dir = os.path.join(BASE_DIR, "logs")
+    # In development, use the standard logs directory
+    log_dir = os.path.join(BASE_DIR, "logs")
 
-        try:
-            os.makedirs(log_dir, exist_ok=True)
-            # Verify write permissions
-            test_file = os.path.join(log_dir, ".write_test")
-            with open(test_file, "w") as f:
-                f.write("test")
-            os.remove(test_file)
-            return log_dir
-        except (PermissionError, OSError):
-            # Fallback to temp directory if we can't create the intended directory
-            import tempfile
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        # Verify write permissions
+        test_file = os.path.join(log_dir, ".write_test")
+        with open(test_file, "w") as f:
+            f.write("test")
+        os.remove(test_file)
+        return log_dir
+    except (PermissionError, OSError):
+        # Fallback to temp directory if we can't create the intended directory
+        import tempfile
 
-            # Use gettempdir() instead of mkdtemp() to avoid creating orphaned directories
-            fallback_dir = os.path.join(tempfile.gettempdir(), "cinexplorer-logs")
-            os.makedirs(fallback_dir, exist_ok=True)
-            print(
-                f"Warning: Could not create log directory {log_dir}, "
-                f"using fallback: {fallback_dir}",
-                file=sys.stderr,
-            )
-            return fallback_dir
+        # Use gettempdir() instead of mkdtemp() to avoid creating orphaned directories
+        fallback_dir = os.path.join(tempfile.gettempdir(), "cinexplorer-logs")
+        os.makedirs(fallback_dir, exist_ok=True)
+        print(
+            f"Warning: Could not create log directory {log_dir}, using fallback: {fallback_dir}",
+            file=sys.stderr,
+        )
+        return fallback_dir
 
 
 # Create log directory during settings initialization
@@ -530,7 +528,7 @@ def _get_logging_config() -> Mapping[str, object]:
     try:
         return get_logging_config(log_dir=LOG_DIRECTORY, environment=ENVIRONMENT)
     except Exception as e:
-        print(f"Error configuring logging: {e}", file=sys.stderr)
+        print(f"Error configuring logging ({type(e).__name__})", file=sys.stderr)
         # Fallback to basic console-only logging
         return {
             "version": 1,
@@ -575,4 +573,4 @@ except Exception as e:
     # If logging setup fails, print to stderr so we can see it
     import sys
 
-    print(f"Warning: Logging setup failed: {e}", file=sys.stderr)
+    print(f"Warning: Logging setup failed ({type(e).__name__})", file=sys.stderr)

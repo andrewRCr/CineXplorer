@@ -39,7 +39,7 @@ def test_allauth_password_login_is_closed(api_client: Client, verified_user: Abs
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "path,method",
+    ("path", "method"),
     [
         ("/_allauth/app/v1/auth/session", "get"),
         ("/_allauth/browser/v1/config", "get"),

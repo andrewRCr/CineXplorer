@@ -121,7 +121,7 @@ class EmailConfirmationHMACProtocol(Protocol):
 
 # Resend token configuration
 RESEND_TOKEN_EXPIRY_SECONDS = 600  # 10 minutes
-RESEND_TOKEN_CACHE_PREFIX = "resend_verification_token:"
+RESEND_VERIFICATION_CACHE_PREFIX = "resend_verification_token:"
 
 
 class AuthenticationService:
@@ -188,7 +188,7 @@ class AuthenticationService:
         """
         token = secrets.token_urlsafe(48)  # 64 chars base64
         token_hash = hashlib.sha256(token.encode()).hexdigest()
-        cache_key = f"{RESEND_TOKEN_CACHE_PREFIX}{token_hash}"
+        cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{token_hash}"
         cache.set(cache_key, user_id, timeout=RESEND_TOKEN_EXPIRY_SECONDS)
         self._logger.debug(f"Generated resend token for user_id={user_id}")
         return token
@@ -200,7 +200,7 @@ class AuthenticationService:
         Returns None if token is invalid, expired, or already used.
         """
         token_hash = hashlib.sha256(token.encode()).hexdigest()
-        cache_key = f"{RESEND_TOKEN_CACHE_PREFIX}{token_hash}"
+        cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{token_hash}"
         user_id = cache.get(cache_key)
         if user_id is not None:
             self._logger.debug(f"Validated resend token for user_id={user_id}")
@@ -308,9 +308,8 @@ class AuthenticationService:
             # Transaction automatically rolled back - no manual cleanup needed.
             # The exception's text can carry the address, so only its type is logged.
             self._logger.error(
-                "Registration failed: Email sending error | "
-                f"username={payload.username} | ip={client_ip} | "
-                f"error_type={type(exc).__name__}"
+                f"Registration failed: Email sending error | error_type={type(exc).__name__}",
+                extra={"error_type": type(exc).__name__},
             )
             return 500, {
                 "error": (
@@ -464,8 +463,9 @@ class AuthenticationService:
             return 400, {"error": f"Invalid or expired refresh token: {exc!s}"}
         except Exception as exc:
             self._logger.error(
-                f"Unexpected error during token refresh: {exc!s}",
-                exc_info=True,
+                "Unexpected error during token refresh | error_type=%s",
+                type(exc).__name__,
+                extra={"error_type": type(exc).__name__},
             )
             return 400, {"error": "An error occurred during token refresh. Please try again."}
 
@@ -520,7 +520,6 @@ class AuthenticationService:
                 f"Hybrid token refresh successful | user_id={user_id} | ip={client_ip}"
             )
 
-            assert isinstance(jwt_settings.access_lifetime, timedelta)
             return 200, {
                 "access_token": access_token,
                 "expires_in": int(jwt_settings.access_lifetime.total_seconds()),
@@ -543,8 +542,9 @@ class AuthenticationService:
             return 400, {"error": f"Invalid or expired refresh token: {exc!s}"}
         except Exception as exc:
             self._logger.error(
-                f"Unexpected error during hybrid token refresh: {exc!s}",
-                exc_info=True,
+                "Unexpected error during hybrid token refresh | error_type=%s",
+                type(exc).__name__,
+                extra={"error_type": type(exc).__name__},
             )
             return 400, {"error": "An error occurred during token refresh. Please try again."}
 
@@ -612,15 +612,24 @@ class AuthenticationService:
                 "email": email_address.email,
             }
         except self._email_confirmation_model.DoesNotExist as exc:
-            self._logger.error(f"EmailConfirmation not found: {exc}")
+            self._logger.error(
+                "Email confirmation was not found | error_type=%s",
+                type(exc).__name__,
+                extra={"error_type": type(exc).__name__},
+            )
             return 400, {"error": "Invalid or expired verification link."}
         except AttributeError as exc:
-            self._logger.error(f"AttributeError during verification: {exc}")
+            self._logger.error(
+                "Email verification could not read confirmation data | error_type=%s",
+                type(exc).__name__,
+                extra={"error_type": type(exc).__name__},
+            )
             return 400, {"error": "Invalid or expired verification link."}
         except Exception as exc:
             self._logger.error(
-                f"Unexpected error during verification: {exc}",
-                exc_info=True,
+                "Unexpected error during verification | error_type=%s",
+                type(exc).__name__,
+                extra={"error_type": type(exc).__name__},
             )
             return 400, {"error": "Invalid or expired verification link."}
 
@@ -643,7 +652,7 @@ class AuthenticationService:
             return 200, {"message": "Verification email sent successfully."}
 
         token_hash = hashlib.sha256(payload.resend_token.encode()).hexdigest()
-        cache_key = f"{RESEND_TOKEN_CACHE_PREFIX}{token_hash}"
+        cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{token_hash}"
         try:
             user = self._user_model.objects.get(id=user_id)
 

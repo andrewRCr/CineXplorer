@@ -294,7 +294,15 @@ jobs:
         run: npm run verify-contrast:ci
 
       - name: Run frontend tests
-        run: npm run test -- --reporter=default
+        run: npm run test:coverage -- --reporter=default --coverage.reporter=text --coverage.reporter=json-summary
+
+      - name: Upload frontend coverage summary
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/coverage-summary.json
+          retention-days: 30
 
       - name: Build verification
         run: npm run build

@@ -340,6 +340,9 @@ authentication gaps that matter once sign-up is public are closed.
       error; the correction preserves the development default and the unset deployed value.
     - The development-log CSRF test writes to a temporary directory, keeping the real file operation independent of
       checkout permissions; CI had returned `500` for the unwritable checkout log.
+    - Integrated `main` through `1f980b45`, preserving strict CSRF enforcement and the Site tests alongside upstream
+      diagnostic tests. Updated resend-prefix references and test styles for upstream renames and lint rules; the
+      mail backend retains its documented best-effort exception boundary.
     - Push the branch (its first push, `git push -u origin technical/launch-readiness`, with the Owner's approval) and
       dispatch a manual CI run at the exact commit to deploy, which publishes its `sha-` images
     - Open a draft pull request against `main`, with the Owner's approval: its runs are the evidence for Implemented

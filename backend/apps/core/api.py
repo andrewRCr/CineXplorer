@@ -108,10 +108,9 @@ def frontend_log(
 
     if success:
         return Status(201, FrontendLogSuccessResponse(success=True, message="Log entry received"))
-    else:
-        return Status(
-            500, FrontendLogErrorResponse(success=False, error="Failed to process log entry")
-        )
+    return Status(
+        500, FrontendLogErrorResponse(success=False, error="Failed to process log entry")
+    )
 
 
 @core_router.get(
@@ -220,7 +219,11 @@ def log_health_check(request: HttpRequest) -> LogHealthCheckResponse:
         )
 
     except Exception as e:
-        app_logger.error(f"Logging health check failed: {e!s}")
+        app_logger.error(
+            "Logging health check failed | error_type=%s",
+            type(e).__name__,
+            extra={"error_type": type(e).__name__},
+        )
         raise HttpError(
             500,
             "Logging system unhealthy",
@@ -323,13 +326,10 @@ def _process_log_entry(data: FrontendLogEntrySchema, request: HttpRequest) -> bo
         return True
 
     except Exception as e:
-        error_msg = f"Failed to process frontend log entry: {e!s}"
         app_logger.error(
-            error_msg,
-            extra={
-                "correlation_id": get_correlation_id(request),
-                "original_data": data.dict(),
-            },
+            "Failed to process frontend log entry | error_type=%s",
+            type(e).__name__,
+            extra={"correlation_id": get_correlation_id(request), "error_type": type(e).__name__},
         )
         return False
 
@@ -386,7 +386,11 @@ def write_dev_console_log(
         return Status(200, DevConsoleLogResponse(status="ok", file=str(log_file.name)))
 
     except Exception as e:
-        app_logger.error(f"Failed to write dev console log: {e!s}")
+        app_logger.error(
+            "Failed to write dev console log | error_type=%s",
+            type(e).__name__,
+            extra={"error_type": type(e).__name__},
+        )
         return Status(
             500,
             DevConsoleLogResponse(

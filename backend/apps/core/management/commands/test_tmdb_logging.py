@@ -67,7 +67,7 @@ class Command(BaseCommand):
                     test_operations[operation]()
                     self.stdout.write(f"✅ {operation} completed")
                 except Exception as e:
-                    self.stdout.write(f"❌ {operation} failed: {e}")
+                    self.stdout.write(f"❌ {operation} failed: {type(e).__name__}")
 
                 if delay > 0:
                     time.sleep(delay)
@@ -89,7 +89,7 @@ class Command(BaseCommand):
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🎭 Found {len(result.results)} movies")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {e!s}")
+            self.stdout.write(f"  ❌ Error: {type(e).__name__}")
 
     def test_search_movies(self) -> None:
         """Test search movies API call."""
@@ -99,7 +99,7 @@ class Command(BaseCommand):
             result = self.movie_service.search_movies(page=1, params=params)
             self.stdout.write(f"  🎬 Found {len(result.results)} results")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {e!s}")
+            self.stdout.write(f"  ❌ Error: {type(e).__name__}")
 
     def test_movie_details(self) -> None:
         """Test movie details API call."""
@@ -110,7 +110,7 @@ class Command(BaseCommand):
             year = str(result.release_date.year) if result.release_date else "Unknown"
             self.stdout.write(f"  🎯 Retrieved: {title} ({year})")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {e!s}")
+            self.stdout.write(f"  ❌ Error: {type(e).__name__}")
 
     def test_popular_movies(self) -> None:
         """Test popular movies API call."""
@@ -120,7 +120,7 @@ class Command(BaseCommand):
             result = self.movie_service.discover_movies(page=1, params=params)
             self.stdout.write(f"  🏆 Found {len(result.results)} popular movies")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {e!s}")
+            self.stdout.write(f"  ❌ Error: {type(e).__name__}")
 
     def test_now_playing(self) -> None:
         """Test now playing movies API call."""
@@ -129,7 +129,7 @@ class Command(BaseCommand):
             result = self.movie_service.get_now_playing_movies(page=1)
             self.stdout.write(f"  🎭 Found {len(result.results)} now playing movies")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {e!s}")
+            self.stdout.write(f"  ❌ Error: {type(e).__name__}")
 
     def test_upcoming_movies(self) -> None:
         """Test upcoming movies API call."""
@@ -138,4 +138,4 @@ class Command(BaseCommand):
             result = self.movie_service.get_upcoming_movies(page=1)
             self.stdout.write(f"  📅 Found {len(result.results)} upcoming movies")
         except Exception as e:
-            self.stdout.write(f"  ❌ Error: {e!s}")
+            self.stdout.write(f"  ❌ Error: {type(e).__name__}")

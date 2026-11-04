@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from unittest import TestCase
 
 import pytest
 from pydantic import BaseModel
@@ -73,3 +74,30 @@ def test_validators_do_not_echo_upstream_status_or_text(
 
     assert exc_info.value.status_code == 502
     assert "SECRET" not in exc_info.value.detail
+
+
+@pytest.mark.parametrize(
+    ("validate", "is_list"),
+    [
+        (validate_tmdb_response, False),
+        (validate_tmdb_list_response, True),
+        (validate_tmdb_paginated_response, False),
+    ],
+)
+def test_validation_logs_exclude_input_values_and_payload_keys(
+    validate: Callable[[ApiResponse, type[Item]], object],
+    is_list: bool,
+) -> None:
+    private_value = "private-upstream-value-91c4"
+    malformed = {"id": private_value, private_value: "unexpected field"}
+    response = ApiResponse(200, data=[malformed] if is_list else malformed)
+    with (
+        TestCase().assertLogs("apps.core.services.validators", level="ERROR") as captured,
+        pytest.raises(UpstreamError, match="response validation failed"),
+    ):
+        validate(response, Item)
+
+    assert private_value not in " ".join(captured.output)
+    assert "ValidationError" in " ".join(captured.output)
+    assert all(private_value not in repr(record.__dict__) for record in captured.records)
+    assert all(record.exc_info is None for record in captured.records)

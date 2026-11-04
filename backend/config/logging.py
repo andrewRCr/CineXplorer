@@ -152,7 +152,8 @@ def validate_log_level(level: str | None) -> str:
         levels_str = ", ".join(VALID_LOG_LEVELS)
         print(
             f"Warning: Invalid DJANGO_LOG_LEVEL '{level}'. Using 'INFO'. "
-            f"Valid levels: {levels_str}"
+            f"Valid levels: {levels_str}",
+            file=sys.stderr,
         )
 
     return "INFO"
@@ -633,7 +634,8 @@ def get_log_file_info(log_dir: str = "/backend/logs") -> dict[str, object]:
             continue
     info["total_size_mb"] = round(total_size, 2)
     files_list = info["files"]
-    assert isinstance(files_list, list), "files should be a list"
+    if not isinstance(files_list, list):
+        raise TypeError("files should be a list")
     info["file_count"] = len(files_list)
     return info
 
@@ -655,7 +657,8 @@ def print_log_status(log_dir: str = "/backend/logs") -> None:
     # Group files by type
     file_groups: dict[str, list[dict[str, object]]] = {}
     files_list = info["files"]
-    assert isinstance(files_list, list), "files should be a list"
+    if not isinstance(files_list, list):
+        raise TypeError("files should be a list")
     for file_info in files_list:
         base_name = file_info["name"].split(".")[0] + ".log"
         if base_name not in file_groups:
@@ -674,7 +677,6 @@ def print_log_status(log_dir: str = "/backend/logs") -> None:
         print(f"    Rotated: {len(rotated_files)} backup(s)")
     print("\nRotation Configuration:")
     max_bytes = LOG_ROTATION_CONFIG["max_bytes"]
-    assert isinstance(max_bytes, int), "max_bytes should be an integer"
     print(f"  Max file size: {max_bytes / (1024 * 1024):.0f} MB")
     print(f"  Default backups: {LOG_ROTATION_CONFIG['backup_count_default']}")
     print(f"  Error log backups: {LOG_ROTATION_CONFIG['backup_count_errors']}")

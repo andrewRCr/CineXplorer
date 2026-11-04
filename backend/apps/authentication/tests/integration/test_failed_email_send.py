@@ -14,7 +14,7 @@ from django.core.cache import cache
 from django.test import Client, override_settings
 from redis import Redis
 
-from apps.authentication.services.authentication_service import RESEND_TOKEN_CACHE_PREFIX
+from apps.authentication.services.authentication_service import RESEND_VERIFICATION_CACHE_PREFIX
 from apps.authentication.services.service_factory import get_authentication_service
 from apps.core.tests.email_transport import ERROR_RESPONSE_BODY, zeptomail_api_stand_in
 from apps.core.tests.test_helpers import create_user, get_csrf_token
@@ -95,7 +95,7 @@ def test_failed_resend_renews_lifetime_and_successful_retry_spends_token(
     with_address: bool, mailoutbox: list[EmailMessage]
 ) -> None:
     client, csrf, token, user_id = prepare_resend(with_address=with_address)
-    cache_key = f"{RESEND_TOKEN_CACHE_PREFIX}{hashlib.sha256(token.encode()).hexdigest()}"
+    cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{hashlib.sha256(token.encode()).hexdigest()}"
     redis_key = cache.make_key(cache_key)
     # redis-py leaves from_url's optional **kwargs untyped.
     redis_client = Redis.from_url(settings.CACHES["default"]["LOCATION"])  # pyright: ignore[reportUnknownMemberType]
@@ -152,7 +152,7 @@ def test_failed_resend_renews_lifetime_and_successful_retry_spends_token(
 def test_checking_resend_token_does_not_spend_it() -> None:
     _, _, token, user_id = prepare_resend()
     service = get_authentication_service()
-    cache_key = f"{RESEND_TOKEN_CACHE_PREFIX}{hashlib.sha256(token.encode()).hexdigest()}"
+    cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{hashlib.sha256(token.encode()).hexdigest()}"
     try:
         # The token reader's contract is distinct from the send that consumes it.
         assert service._validate_resend_token(token) == user_id  # pyright: ignore[reportPrivateUsage]

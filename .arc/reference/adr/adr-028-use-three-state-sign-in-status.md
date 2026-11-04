@@ -21,7 +21,8 @@ signed-out visitor reaches these pages unguarded.
 
 - **Alongside the authentication work being done for launch.** That work also edits `useAuth`, so this one waits
   until it merges.
-- **Right after it merges, before the core screens (chosen).** About 1–1.5 days.
+- **Right after it merges, before the core screens (chosen).** A frontend change to `useAuth`, its callers and the
+  routes.
 - **The session as a TanStack query now.** Deferred until the query structure exists
   ([ADR-027](adr-027-read-server-data-through-tanstack-query.md)).
 

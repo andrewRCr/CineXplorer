@@ -40,6 +40,16 @@ select = [
     "SIM",   # flake8-simplify
     "ANN401", # Explicit typing.Any detection (type safety quality gate)
     "D",     # pydocstyle: docstring conventions (Google style, below)
+    "C90",   # McCabe complexity
+    "BLE",   # Blind exception catches
+    "S",     # Security checks
+    "T20",   # Print statements
+    "TRY400", # Exception logging with traceback
+    "PGH",   # Blanket suppressions
+    "RET",   # Return consistency
+    "ERA",   # Commented-out code
+    "LOG",   # Logging practices
+    "G201",  # Exception logging
 ]
 
 # Ignore specific rules
@@ -65,18 +75,78 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 [tool.ruff.lint.per-file-ignores]
 # Allow unused imports in __init__.py files
 "__init__.py" = ["F401"]
-# Allow fixtures and test-specific patterns in tests
-"tests/**/*.py" = ["PT", "B", "PIE"]
-"*/tests/**/*.py" = ["PT", "B", "PIE"]
+# Test assertions and deliberately fake credentials are not runtime security boundaries.
+"tests/**/*.py" = ["S101", "S105", "S106"]
+"*/tests/**/*.py" = ["S101", "S105", "S106"]
 
 # Typing.Any exceptions for justified external API boundaries
 # Document why Any is needed at each external API boundary.
 "apps/authentication/adapters.py" = ["ANN401"]  # Allauth library contracts
-"apps/authentication/auth_ninja.py" = ["ANN401"]  # Django settings & OpenAPI schemas
+# JWT/session failures deliberately become unauthenticated results or fixed HTTP errors.
+# Log only exception types: token/ORM failures can include private values. ANN401 is for
+# third-party settings and OpenAPI contracts.
+"apps/authentication/auth_ninja.py" = ["ANN401", "BLE001", "TRY400"]
 "apps/core/services/metrics.py" = ["ANN401"]  # Monitoring system mixed-type labels
 "apps/core/management/commands/export_openapi_schema.py" = ["ANN401"]  # OpenAPI schema dict
 "apps/core/management/commands/wait_for_db.py" = ["N806", "ANN401"]  # ALL_CAPS OK, Django command args
 "stubs/**/*.pyi" = ["ANN401"]  # Type stubs may use Any for external library contracts
+
+
+# Registration, refresh and verification preserve safe failure responses even when an
+# arbitrary identity/mail dependency fails; its text and traceback may contain PII.
+"apps/authentication/services/authentication_service.py" = ["BLE001", "TRY400"]
+# Blacklist writes are explicitly best effort during rotation, including unexpected
+# dependency failures. Their exceptions can quote token/user data, so log only types.
+"apps/authentication/utils.py" = ["BLE001", "TRY400"]
+# Logging endpoints are best effort, including custom handler failures; client payloads
+# and file-write exceptions must not reach a second log record or traceback.
+"apps/core/api.py" = ["BLE001", "TRY400"]
+# Diagnostic commands continue reporting when the dependency they exercise fails.
+"apps/core/management/commands/test_logging.py" = ["BLE001"]
+"apps/core/management/commands/test_tmdb_logging.py" = ["BLE001"]
+"apps/core/management/commands/verify_logging_security.py" = ["BLE001"]
+"apps/core/management/commands/verify_tmdb_logging.py" = ["BLE001"]
+# Invalid-JSON exceptions contain response documents; report metadata without tracebacks.
+"apps/core/services/base_api_client.py" = ["TRY400"]
+# TRY400: invalid-JSON errors must not expose their response document in a traceback.
+# ANN401: the raw external JSON remains dynamic before schema validation, preserving
+# existing duck-typed diagnostics without introducing a new parsing policy.
+"apps/core/services/tmdb_api_client.py" = ["TRY400", "ANN401"]
+# Welcome mail is best effort across template and transport failures; errors can quote recipients.
+"apps/core/services/email_service.py" = ["BLE001", "TRY400"]
+# Mail configuration, conversion and transport failures count as unsent; their
+# exception text can contain recipients or credentials, so only types are logged.
+"apps/core/email_backend.py" = ["BLE001"]
+# ValidationError embeds raw input, so validation logs use safe counts/types, never tracebacks.
+"apps/core/services/validators.py" = ["TRY400"]
+"apps/movie/services/tmdb_api_boundary/response_factories.py" = ["TRY400"]
+# Redis connection exceptions can quote credentials; keep only their type in logs.
+"apps/core/services/redis_client.py" = ["TRY400"]
+"apps/movie/services/deduplication_tracker.py" = ["TRY400"]
+# Optional cache storage must not prevent authoritative database access, regardless of backend.
+# A backend/serialization exception may include private values, so log only its type.
+"apps/movie/services/data_quality/filters.py" = ["BLE001", "TRY400"]
+# One unexpected dependency failure must not abort the whole movie batch; HTTP errors may
+# contain request URLs and credentials, so error logs exclude exception text and tracebacks.
+"apps/movie/services/pipelines/batch.py" = ["BLE001", "TRY400"]
+# Error-code literals are identifiers, not credentials.
+"apps/core/schemas.py" = ["S105"]
+# Bootstrap/fallback diagnostics must work before logging is reliable and go to stderr.
+# HEADLESS_TOKEN_STRATEGY is a Django class path, not a token value.
+"config/settings.py" = ["BLE001", "T201", "S105"]
+# These are pre-configuration diagnostics and explicit terminal-report functions.
+"config/logging.py" = ["T201"]
+# Test-only database identity selection compares against deliberately dummy credentials.
+"config/settings_test.py" = ["S105"]
+# These provider fixtures intentionally use dummy token defaults, never production credentials.
+"apps/authentication/tests/oauth_mocks.py" = ["S107"]
+"apps/authentication/tests/test_helpers.py" = ["S107"]
+# Shared test fixtures live outside tests/ and deliberately create users with fake passwords.
+"apps/conftest.py" = ["S106"]
+# These subprocesses use sys.executable and fixed programs with repository-owned test input;
+# arguments are passed without a shell and never come from an application request.
+"apps/core/tests/test_commands.py" = ["S603"]
+"apps/core/tests/test_helpers.py" = ["S603"]
 
 [tool.ruff.format]
 # Use double quotes (Python default)

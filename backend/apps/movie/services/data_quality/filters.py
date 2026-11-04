@@ -90,7 +90,7 @@ LATIN_SCRIPT_LANGUAGES: frozenset[str] = frozenset(
 # but has these characters in original_title, it's likely mislabeled
 _NON_LATIN_SCRIPT_PATTERN = re.compile(
     r"["
-    # CJK (Chinese, Japanese, Korean)
+    # Chinese, Japanese and Korean scripts
     r"\u3000-\u303f"  # CJK Symbols and Punctuation
     r"\u3040-\u309f"  # Hiragana
     r"\u30a0-\u30ff"  # Katakana
@@ -211,11 +211,9 @@ def apply_data_quality_filters(
     movie_schemas = filter_movies_by_blacklist(movie_schemas)
     movie_schemas = filter_movies_by_completeness(movie_schemas)
     movie_schemas = filter_movies_by_year(movie_schemas, year_min, year_max)
-    movie_schemas = filter_movies_by_rating(
+    return filter_movies_by_rating(
         movie_schemas, rating_min, rating_max, min_vote_count=min_vote_count
     )
-
-    return movie_schemas
 
 
 # ============================================================================
@@ -293,9 +291,13 @@ def get_blacklisted_ids() -> set[int]:
         cached = cache.get(BLACKLIST_CACHE_KEY)
         if cached is not None:
             return cached
-    except Exception:
-        # Cache unavailable - fall through to database query
-        logger.warning("Cache unavailable for blacklist lookup, querying database")
+    except Exception as exc:
+        # A cache failure must not prevent the authoritative database lookup.
+        logger.error(
+            "Cache unavailable for blacklist lookup, querying database | error_type=%s",
+            type(exc).__name__,
+            extra={"error_type": type(exc).__name__},
+        )
 
     from apps.movie.models import BlacklistedMovie
 
@@ -303,9 +305,13 @@ def get_blacklisted_ids() -> set[int]:
 
     try:
         cache.set(BLACKLIST_CACHE_KEY, blacklist_ids, BLACKLIST_CACHE_TIMEOUT)
-    except Exception:
-        # Cache unavailable - continue without caching
-        logger.warning("Cache unavailable for blacklist storage")
+    except Exception as exc:
+        # Storing an optional cache entry is best effort.
+        logger.error(
+            "Cache unavailable for blacklist storage | error_type=%s",
+            type(exc).__name__,
+            extra={"error_type": type(exc).__name__},
+        )
 
     logger.debug(f"Loaded {len(blacklist_ids)} blacklisted movie IDs from database")
 

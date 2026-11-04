@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent, act } from "@tests/helpers/test-renderer";
+import { render, screen, act } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import GenreSelector from "../GenreSelector";
 
@@ -365,21 +365,21 @@ describe("GenreSelector Component", () => {
       });
     });
 
-    it("supports keyboard navigation", () => {
+    it("supports keyboard navigation", async () => {
+      const user = userEvent.setup();
       render(<GenreSelector {...defaultProps} />);
 
       const actionCheckbox = screen.getByLabelText("Action");
-
-      // Should be focusable
-      actionCheckbox.focus();
+      await act(async () => {
+        await user.tab();
+      });
       expect(actionCheckbox).toHaveFocus();
 
-      // Should be toggleable with space key
-      act(() => {
-        fireEvent.keyDown(actionCheckbox, { key: " " });
+      await act(async () => {
+        await user.keyboard("[Space]");
       });
-      // Note: Chakra UI checkboxes might not respond to keyDown directly
-      // but should still be keyboard accessible through normal browser behavior
+      expect(mockOnChange).toHaveBeenCalledTimes(1);
+      expect(mockOnChange).toHaveBeenCalledWith([28]);
     });
 
     it("provides meaningful section title", () => {

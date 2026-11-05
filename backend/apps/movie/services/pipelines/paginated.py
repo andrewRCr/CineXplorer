@@ -10,6 +10,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMovieResponse
+from apps.movie.constants import TMDB_MAX_PAGE
 
 from ...schemas import MovieListItemSchema, MovieListResponseSchema
 from ..api_boundary import BrowseServiceParams, SearchServiceParams
@@ -59,7 +60,7 @@ def apply_buffer_if_needed(
     Args:
         filtered_movies: Movies from current page after filtering
         current_page: Current page number
-        total_pages: Total pages available
+        total_pages: Total pages reported by TMDB
         params: Service params with filter values (BrowseServiceParams or SearchServiceParams)
         fetch_next_page_func: Function to fetch next page (takes page number)
         dedup_tracker: Optional tracker for cross-page session deduplication
@@ -100,8 +101,9 @@ def apply_buffer_if_needed(
             dedup_tracker.add_returned_ids(params, new_ids)
         return (deduplicated_initial, 1)
 
-    # If we're on the last page, return what we have
-    if current_page >= total_pages:
+    # If we're on the last page TMDB serves, return what we have
+    last_available_page = min(total_pages, TMDB_MAX_PAGE)
+    if current_page >= last_available_page:
         # Track new IDs returned
         new_ids = [m.tmdb_id for m in deduplicated_initial if m.tmdb_id not in session_ids]
         if dedup_tracker and new_ids:
@@ -115,7 +117,9 @@ def apply_buffer_if_needed(
 
     pages_fetched = 0
     while (
-        len(combined_movies) < 20 and next_page <= total_pages and pages_fetched < max_buffer_pages
+        len(combined_movies) < 20
+        and next_page <= last_available_page
+        and pages_fetched < max_buffer_pages
     ):
         # Fetch next page and apply same filters
         buffer_response = fetch_next_page_func(next_page)
@@ -266,7 +270,10 @@ def fetch_with_filters_and_buffer(
     # - We returned 0 results (buffer exhausted with no unique movies found)
     # This ensures frontend hasNextPage becomes false cleanly
     next_tmdb_page_start: int | None = None
-    if calculated_next_page <= tmdb_response.total_pages and len(final_movies) > 0:
+    if (
+        calculated_next_page <= min(tmdb_response.total_pages, TMDB_MAX_PAGE)
+        and len(final_movies) > 0
+    ):
         next_tmdb_page_start = calculated_next_page
 
     # Step 7: Build filtered response with pagination metadata

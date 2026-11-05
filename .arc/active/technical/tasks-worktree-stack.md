@@ -2,9 +2,10 @@
 
 **PRD:** `prd-worktree-stack.md`
 **Created:** 2026-11-04
+**Completed:** 2026-11-04
 **Branch:** `technical/worktree-stack`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -54,8 +55,6 @@ and remove it after its branch merges.
     - [x] **1.1.c Run the tests in CI:** the renamed session-hooks step runs both suites with `node --test`.
 
 ### **Phase 2:** One command creates and prepares a worktree, and its test stack runs
-
-**Needs:** nothing for 2.1–2.3, whose tests replace Docker and npm; Docker and this worktree's test stack for 2.4.
 
 - [x] **2.1 `provision` writes the worktree's `infrastructure/.env` with its own port and key** (R1, R4 step 3,
   R5, R6, R13, R14; Criterion 1)
@@ -111,9 +110,6 @@ and remove it after its branch merges.
       Markdown lint passes for all seven documents after correcting new line wrapping.
 
 ### **Phase 3:** A worktree serves the app on its own port
-
-**Needs:** Docker and this worktree's own stack, and the Owner at the browser for 3.4. The main checkout's stack may
-run beside it.
 
 - [x] **3.1 Merge `main` with the tracked blacklist** (R11's dependency)
     - The Owner explicitly approved the merge. Confirmed #75 merged, then merged `origin/main` at `031327a5`,
@@ -179,9 +175,6 @@ run beside it.
 
 ### **Phase 5:** Worktrees serve beside the main checkout, stay apart, and are removed
 
-**Needs:** the main checkout's stack running on 8444, and the Owner at the browser for 5.2 and 5.3. The throwaway
-worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed by 5.4.
-
 - [x] **5.1 Two worktrees made by `create` serve at their own ports** (Criterion 6)
     - Isolated sandbox `~/dev/scratch/worktree-stack-proof/` has this branch's `af6d7888` as its own `main`.
       `create chore/proof-a --work-unit` and `create chore/proof-b` provisioned and browsed successfully on 8445
@@ -223,127 +216,140 @@ worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed 
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+- [x] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
+    - Full local run and author criteria walk passed. Independent verification Pass 1 found no implementation
+      defect, with its raw-record limitation for the earlier browser reload confirmation recorded in the Review Log.
+      The Owner-requested manual CI run 41930723137 passed on the exact reviewed head, including `ci-ok`, closing
+      criterion 1. All nine criteria are met; their evidence is recorded below.
 
 ## Implementation Notes
 
-### Sequencing with `main`
+### Integration with `main`
 
-- `origin/main` has moved since the PRD: #76 (focused Ruff rules; `S105` and `S106` allowed only in tests), #77
-  (rule-specific type-check suppressions, and Pyright run with `--warnings` in CI) and #79 (Dependabot for npm and
-  Docker, with the base images pinned by digest). Phases 1, 2 and 4 add no backend code; 3.1 merges `main` before
-  any, and needs #75 (the tracked blacklist and `sync_blacklist`) merged first
-- `technical/launch-readiness` also changes `infrastructure/` and CI: whichever of the two merges second merges `main`
-  first. It moves the "Test recovery hooks" step from `ci.yml`'s `markdown` job into a new
-  `.github/workflows/docs.yml`; whichever merges second keeps this change's `node --test` files in that step
-- That branch's CSRF change puts Django's check on every unsafe request. Requests through a worktree's Caddy are
-  same-origin, and the override names the worktree's origin in `CSRF_TRUSTED_ORIGINS`, so a browser's requests pass.
-  For `curl` (5.2), what counts is whether the change is in the code a given stack runs: a sandbox worktree runs this
-  branch, which has it once a merge of `main` brings it in; the main checkout runs whatever branch it has checked
-  out. Against such a stack, take the `csrftoken` cookie from `GET /api/csrf/`, send its value as `X-CSRFToken`,
-  and send `Origin: https://localhost:{port}`: on HTTPS, Django refuses a request with neither `Origin` nor
-  `Referer` before it reads the token
-- R12's Provisioning edits build on #69 (activation in a work unit's own worktree), already merged here (`cc4560d2`)
-- The inbox errand that adds `.mjs` to the pre-commit check of process references: if it lands first, it skips the
-  seeding script's recorded path
+- `technical/launch-readiness` also changes infrastructure and CI. Whichever work unit merges second merges `main`
+  first. Its move of session-hook tests to `docs.yml` must retain the recovery, notes-seeding and worktree suites.
+- The worktree override supplies its own origin for CSRF. HTTPS requests made with `curl` carry the `csrftoken`
+  cookie, its value in `X-CSRFToken`, and the target `Origin`; Django rejects an HTTPS request without an origin or
+  referer before reading the token. The applicable check depends on the code each stack runs.
+- The installed errand harness is refreshed from the main checkout after merge with
+  `node .arc/reference/harness-hooks/install-errand-harness.mjs`.
 
-### Running things here
+### Verification commands
 
-- Before any frontend check, run `npm ci` and `npm run typegen` in `frontend/`: this checkout's `node_modules` predates
-  `main`'s dependency changes. No Compose volumes exist for `cinexplorer-worktree-stack`, so its first test stack
-  starts on a fresh database
-- `scripts/` and `.arc/reference/harness-hooks/` have no lint configuration: check their files with `node --check`
-  and their tests (`node --test`)
-- **One backend test run at a time** across every stack on the machine, the main checkout's included
-- Memory peaks: sample `docker stats --no-stream --format '{{.Name}} {{.MemUsage}}'` about once a second through the
-  measured activity and keep the highest value per container
+- `scripts/` and `.arc/reference/harness-hooks/` have no lint configuration. Their checks use `node --check` and
+  `node --test`.
+- Backend test runs are serialized across the machine's stacks. Memory measurements sampled
+  `docker stats --no-stream --format '{{.Name}} {{.MemUsage}}'` about once a second and retained each container's peak.
 
-### Phase 2
+### Provisioning and Compose behavior
 
-- **Stubs stay faithful:** real `docker compose config` prints `name:` then `services:` with the env files' values
-  inlined, so the stub answers the same shape and the test proves the marker never reaches the output. Real label
-  listings return IDs; an empty answer would make the teardown order untestable
-- **Fixture speed:** the full-range allocation case needs 55 registered worktrees; `git worktree add --no-checkout`
-  keeps that quick, with only `infrastructure/.env` written in each
-- **`--existing` on an `origin`-only branch:** `git worktree add {path} {branch}` creates a local branch tracking
-  `origin/{branch}`, which suits a branch checked out for review
-- **The links stay ignored:** `.gitignore` names `.venv-backend`, `.claude` and `.codex` without a trailing slash,
-  which matches a link as well as a folder
-- **Compose merging:** an override's `ports` list adds to the base file's. `!reset []` empties it; `caddy` needs
-  `!override` so the base file's `8444:8444` does not stay beside the loopback binding. `environment` lists merge by
-  key, so the override's values replace the base file's and the `env_file`'s
-- **Precedence:** Vite gives `VITE_*` variables already in the environment priority over its `.env` files, and
-  `frontend/src/config/baseUrls.ts` reads both; `settings.py` reads `backend/config/.env` with `read_env`, which
-  leaves variables already set
-- **DEVELOPMENT-RULES' header:** no document states when it changes, and its history is mixed: some changes left it
-  alone, and 2026-10-30 raised `Version` twice. Its last three changes (2026-11-03 and 2026-11-04) follow one
-  pattern: a new `Hash` and `Updated` date each time, with `Version` raised by the first change of a day. Follow that
-- **After the merge:** refresh the installed errand skill from the main checkout with
-  `node .arc/reference/harness-hooks/install-errand-harness.mjs`
+- **Faithful stubs:** real `docker compose config` prints `name:` then `services:`, with env values inlined. The
+  test stub has that shape and proves its secret marker never reaches output. Label listings return IDs so tests
+  exercise teardown ordering.
+- **Fixture speed:** the full-range allocation case registers 55 worktrees with `git worktree add --no-checkout`
+  and writes only their `infrastructure/.env` files.
+- **Existing remote branches:** `git worktree add {path} {branch}` creates a local branch tracking
+  `origin/{branch}` when only that remote branch exists, which suits a review checkout.
+- **Ignored links:** `.gitignore` names `.venv-backend`, `.claude` and `.codex` without a trailing slash, matching
+  links as well as folders.
+- **Compose merging:** `!reset []` empties inherited port lists; Caddy uses `!override` to replace the base binding.
+  Environment lists merge by key, so the override replaces the base file's values and those from `env_file`.
+- **Environment precedence:** Vite prioritizes existing `VITE_*` variables, and the frontend URL configuration reads
+  both. Django's `read_env` leaves existing environment variables in place, preserving the worktree's key and origins.
+- **Rules header:** its history mixes unchanged headers and version increments. The recent pattern refreshed
+  `Hash` and `Updated` for changes while raising `Version` only on the first change of a day; the work followed that
+  pattern without another version increment.
 
-### Phase 3
+### Development sign-in
 
-- **Sign-in in tests:** `POST /api/token/` takes `login` (username or email) and `password`; its `5/m` throttle applies
-  only when a test enables throttling. `create_user` in `apps/core/tests/test_helpers.py` shows the verified
-  `EmailAddress` pattern
+- `POST /api/token/` accepts `login` (username or email) and `password`; its `5/m` throttle applies only when a
+  test enables throttling. The core test helper supplies the verified allauth `EmailAddress` pattern.
 
-### Phase 4
+### Safe removal
 
-- `git branch -d` checks the branch is merged into its upstream when it has one, otherwise into `HEAD`. Setting the
-  upstream to `origin/main` first lets a merged branch delete while the main checkout has another branch checked out
-- A list command with `--filter label=...` and `-q` prints nothing when no resource matches; skip that kind
+- `git branch -d` checks a branch's upstream when it has one, otherwise `HEAD`. Setting the upstream to
+  `origin/main` permits merged-branch deletion while the primary has another branch checked out.
+- A label-filtered listing prints nothing when no resource matches; removal skips that resource kind.
 
-### Phase 5
+### Live proof setup
 
-- **Why a sandbox:** `create` cuts branches from `origin/main`, which gains `.worktreeinclude` and the override only
-  when this change merges, so before the merge a throwaway made from it cannot be provisioned or browsed. The sandbox
-  makes this branch the `main` that `create` sees, and runs the same script:
-    - a bare repository in `~/dev/scratch/worktree-stack-proof/` (its own folder: nothing else under
-      `~/dev/scratch/` is touched) holding this branch's head as `main`, and a clone of it there as the
-      sandbox's main checkout, with the main checkout's gitignored env files and certificates copied in, an empty
-      `.arc/user/{identity}/` folder for `--work-unit`'s identity, and `.venv-backend`, `.claude` and `.codex` linked
-      to the main checkout's
-    - port allocation counts only the sandbox's worktrees, so stop this worktree's browsable stack first, or its
-      port may be allocated again
-    - afterwards remove `~/dev/scratch/worktree-stack-proof/`; the throwaways' Compose resources went with 5.4
+- Before merge, `create` cannot provision a throwaway from the real `origin/main`, which lacks this change. The
+  live proof used this branch as a sandbox origin's `main`, with copied ignored env files and certificates, an
+  identity folder for notes seeding, and links to shared tools. The sandbox ran the unchanged script.
+- Port allocation sees only its repository's registered worktrees, so the parent worktree's stack was stopped
+  during sandbox proofs to avoid reusing a live port. The throwaway resources and sandbox were removed afterward.
 
 ## Success Criteria
 
 ### Implemented (checkable locally and in CI)
 
-- [ ] 1. `node --test scripts/worktree.test.mjs` and
+- [x] 1. `node --test scripts/worktree.test.mjs` and
   `node --test .arc/reference/harness-hooks/seed-session-notes.test.mjs` pass, in CI as well, covering R14's and
   R17's cases. They fail when allocation returns a port another worktree claims, when `provision` changes an existing
   key, when seeding overwrites existing notes, or when `remove` makes a Docker call or changes anything for an
   unmerged branch without `--keep-branch`, a worktree with uncommitted changes, a locked worktree, or a project name
   other than `cinexplorer-{name}`, or makes a Docker call when the worktree's `infrastructure/.env` names no project.
-- [ ] 2. The backend tests for `seed_dev_data` pass, covering R15's cases.
-- [ ] 3. `docker compose -f infrastructure/docker-compose.yml config` in the main checkout gives the same published
+
+  Evidence: Local Node suites pass all 79 tests, and eight isolated safety mutations are caught by assertions. The
+  same suites passed in hosted CI run 41930723137 on f6f853e0, whose Docs job and all other jobs, including ci-ok,
+  succeeded. The workflow runs both new suites alongside recovery tests.
+
+- [x] 2. The backend tests for `seed_dev_data` pass, covering R15's cases.
+
+  Evidence: The full Docker backend run passes all 957 tests, including the six real-database seeding cases for
+  refusal, verified sign-in, repeatability, preserved accounts, email conflicts and blacklist repair.
+- [x] 3. `docker compose -f infrastructure/docker-compose.yml config` in the main checkout gives the same published
   ports as before this change: 8444, 8000, 5173, 5432 and 6379.
-- [ ] 4. In a provisioned worktree, `config` with both files and `--profile browser` lists all five services and shows
+
+  Evidence: Sanitized primary Compose output confirms published ports 8444, 8000, 5173, 5432 and 6379. The protected
+  base Compose, Caddyfiles and settings have no branch diff.
+- [x] 4. In a provisioned worktree, `config` with both files and `--profile browser` lists all five services and shows
   `caddy` as the only one with a published port, bound to `127.0.0.1:{SITE_PORT}`, and a memory limit on every
   service.
-- [ ] 5. In a worktree set up by hand before this change, `provision` keeps its `COMPOSE_PROJECT_NAME` and adds the
+
+  Evidence: Current browser-profile Compose output has five services, only Caddy publishing 127.0.0.1:8445:8444, and
+  limits of 1024/512/128/1024/128 MiB for backend/database/Redis/frontend/Caddy.
+- [x] 5. In a worktree set up by hand before this change, `provision` keeps its `COMPOSE_PROJECT_NAME` and adds the
   missing keys and certificates, and its test stack (`up -d dev-db redis backend`) then runs `pytest apps/` to a
   pass.
 
+  Evidence: The original manual-worktree preparation preserved its project and added the port, key and certificates;
+  its first full run passed 903 tests. This same checkout now starts the serving test stack healthy and passes all
+  957 backend tests. Preservation and external-tool preparation assertions pass again.
+
 ### Proven live (on this machine, with the main checkout's stack running)
 
-- [ ] 6. Two throwaway worktrees made by `create`, one of them with `--work-unit`, and started by `browse` each answer
+- [x] 6. Two throwaway worktrees made by `create`, one of them with `--work-unit`, and started by `browse` each answer
   `200` on `/` and `/api/health-check/` at their own ports, while `https://localhost:8444` still does. The one made
   with `--work-unit` holds starting session notes at `.arc/user/{identity}/{name}/SESSION-NOTES.md`, and the other
   holds none.
-- [ ] 7. In the maintainer's browser, at a worktree's port: signing in as the dev account succeeds, a movie added to
+
+  Evidence: Repeated at the exact reviewed head in a disposable sandbox. startup-recheck.json records successful
+  create/browse commands, HTTP 200 for / and /api/health-check/ on 8445, 8446 and the primary's 8444, planning notes
+  only for --work-unit, and cleanup. startup-cleanup.json confirms no labelled resources remain.
+
+- [x] 7. In the maintainer's browser, at a worktree's port: signing in as the dev account succeeds, a movie added to
   the watchlist is still there after a reload, the worktree's backend log shows the requests, and the main checkout's
   database has no new rows for them. With a refresh cookie that worktree's stack issued to the dev account
   (`POST /api/token/`), `POST /api/auth/refresh` to that worktree's stack returns new tokens, and the same request to
   `https://localhost:8444` is refused with 400 and the error "Invalid or expired refresh token", the signature
   failure, and returns no tokens. (A validly signed token whose user is missing on that stack also gets 400, with a
   different error, so the error text is what shows the key differs.)
-- [ ] 8. Editing a frontend source file in a worktree updates the page at its port without a manual reload.
-- [ ] 9. `remove` on a merged throwaway worktree whose stack ran leaves no containers, volumes, networks or images
+
+  Evidence: Owner-confirmed sign-in and watchlist persistence are supported by watchlist-isolation.json: primary
+  counts stay 1,0,0 and the worktree logs sign-in, creation and reads. token-isolation.json records the same cookie
+  accepted there and rejected on the primary with 400, the signature error and no tokens.
+- [x] 8. Editing a frontend source file in a worktree updates the page at its port without a manual reload.
+
+  Evidence: visible-hot-reload.json retains the Owner confirmation that the changed navbar appeared without a manual
+  refresh; the source was restored byte for byte and Git status was clean.
+- [x] 9. `remove` on a merged throwaway worktree whose stack ran leaves no containers, volumes, networks or images
   labelled with its project, no folder and no local branch. On an unmerged one it refuses and leaves all of them in
   place; with `--keep-branch` it removes the folder and stack and keeps the branch at its commit.
+
+  Evidence: live-removal.json records merged removal with no labelled resources, folder, registration or branch;
+  unmerged refusal with identical resources and commit; and --keep-branch removal preserving that commit. Neighbor
+  resource IDs, running/health states and HTTP health were preserved.
 
 ## Review Log
 
@@ -479,3 +485,54 @@ worktrees are made in a sandbox clone (Phase 5 note), never pushed, and removed 
 - **Stop reason:** converged (confirmed minors only); a further fix check declined by the Owner, the fixes being
   local and source-verified.
 - **Elapsed:** about 12 minutes.
+
+### 2026-11-04 · Verification · Author criteria walk
+
+- **Scope:** complete branch diff from `031327a5` to `f6f853e0`, with the resulting tree; no implementation edits.
+- **Rubric:** the nine Success Criteria and their governing requirements. Criteria 2–9 have local or retained live
+  evidence above. Criterion 1 has local execution and CI wiring, but stays open because the exact head has no
+  hosted CI execution yet.
+- **Gates:** backend 957 passed; frontend 810 passed; Node worktree/notes/recovery suites 79 passed; Ruff and
+  backend format pass; frontend ESLint and TypeScript pass; Pyright has zero errors and warnings (38 information
+  diagnostics); Markdown lint has zero issues. All changed JavaScript files pass syntax checks.
+- **Safety-test sensitivity:** eight mutations in isolated copies are caught by assertions, including the dirty
+  worktree mutation checked against both modified tracked and untracked files. Tracked source is untouched.
+- **Evidence:** detailed run logs, sanitized Compose summary and mutation results remain in the worktree's
+  personal verification proofs. Live proof records are checked against the unchanged implementation at this head.
+- **Independent companion:** Pass 1 completed below. Task 6.1 stays open for criterion 1's hosted execution. No
+  code-review pass has run; that is the later, separate completion stage.
+
+### 2026-11-04 · Verification · Pass 1
+
+- **Runner:** fresh read-only Codex subagent `/root/verification_pass1`; rubric: all nine Success Criteria against
+  the PRD, complete `031327a5...f6f853e0` diff and resulting tree. The reviewer received neutral snapshots with
+  task markings removed, not the author criteria walk. Exact prompt, neutral supplements and report are retained
+  in the personal review folder.
+- **Findings:** zero implementation findings; no finding-driven changes or dispositions. This is a limited
+  verification result, not an all-criteria clean result.
+- **Evidence limits:** criterion 1 has no actual hosted CI run at the reviewed head (GitHub returned zero runs).
+  Criterion 7's raw JSON does not explicitly record the browser reload observation. The primary retains criterion 7
+  as met from the explicit Owner confirmation recorded in Task 5.2, supported by the logged watchlist reads and
+  unchanged primary counts; the independent raw-record limitation remains visible here.
+- **Additional observation:** repeated criterion 6 without source changes in a disposable sandbox. Both new stacks
+  and the primary returned 200 at both required URLs; only the worktree created with `--work-unit` had planning
+  notes. The reviewer read the raw results before returning. Both worktrees, their labelled Docker resources and
+  the sandbox were removed; the primary stayed healthy.
+- **Outcome:** criteria 2–9 met; criterion 1 remains open for hosted CI. Task 6.1 and both status headers remain
+  incomplete. Stop for the Owner to choose how to sequence that proof before continuing completion preparation.
+- **Elapsed:** 8.3 minutes from retained prompt to report, including the extra live observation.
+
+### 2026-11-04 · Verification · Hosted CI closure
+
+- **Owner direction:** run hosted CI before completion preparation or a pull request. Pushed the already reviewed
+  `f6f853e0` commit and manually dispatched the existing workflow on `technical/worktree-stack`; no new commit or
+  workflow change was needed. The manual workflow published the production images under commit tags.
+- **Evidence:** [CI run 41930723137](https://github.com/andrewRCr/CineXplorer/actions/runs/41930723137) completed
+  successfully on `f6f853e0f52a0af6d2f1330ef2ca8b77bb94da8d`. Backend, Backend checks, Frontend, Docs, API types,
+  Images and `ci-ok` all succeeded. The exact target, original deadline and job results are retained in personal
+  verification proofs.
+- **Result:** criterion 1 is now met, all nine criteria are marked, Task 6.1 is complete, and the task-list and PRD
+  status headers are Complete. The independent pass's earlier raw-record limit for the Owner's browser reload
+  observation remains recorded; no implementation changes were made to obtain this CI evidence.
+- **Next:** completion preparation starts at `archive-completed.md` § 1b. Code review remains the later, separate
+  stage. Local verification documentation changes remain uncommitted.

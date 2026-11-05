@@ -120,19 +120,28 @@ export const useScrollPersistence = ({
     const shouldRestoreScrollRef = useRef(restoreScroll);
     const hasRestoredScrollRef = useRef(false);
     const prevLocationKeyRef = useRef(location.key);
+    // Set while the replace below clears the signal; that replace changes the
+    // location key, but isn't a new navigation
+    const clearingRestoreStateRef = useRef(false);
 
     // Update restore signal on subsequent navigations (non-remount case).
     // Skip on initial mount since useRef already captured the correct value.
     useEffect(() => {
         if (prevLocationKeyRef.current !== location.key) {
-            // New navigation - update refs for this navigation
-            shouldRestoreScrollRef.current = restoreScroll;
-            hasRestoredScrollRef.current = false;
             prevLocationKeyRef.current = location.key;
+            if (clearingRestoreStateRef.current) {
+                // Keep a pending restore until the content it waits for arrives
+                clearingRestoreStateRef.current = false;
+            } else {
+                // New navigation - update refs for this navigation
+                shouldRestoreScrollRef.current = restoreScroll;
+                hasRestoredScrollRef.current = false;
+            }
         }
 
         // Clear location state after capturing it, so refresh won't restore scroll
         if (restoreScroll) {
+            clearingRestoreStateRef.current = true;
             void navigate(location.pathname + location.search, {
                 replace: true,
                 state: null,
@@ -160,10 +169,14 @@ export const useScrollPersistence = ({
     const restorationGuardTimeoutRef = useRef<ReturnType<
         typeof setTimeout
     > | null>(null);
+    // The delayed re-scroll checks this, so it never scrolls a page shown after unmount
+    const isMountedRef = useRef(false);
 
     // Clean up restoration timeouts on unmount
     useEffect(() => {
+        isMountedRef.current = true;
         return () => {
+            isMountedRef.current = false;
             if (restorationTimeoutRef.current) {
                 clearTimeout(restorationTimeoutRef.current);
             }
@@ -212,6 +225,7 @@ export const useScrollPersistence = ({
                 // position and measured correct heights. The rAF ensures layout is complete,
                 // then the 50ms allows virtualizer to update its measurements.
                 requestAnimationFrame(() => {
+                    if (!isMountedRef.current) return;
                     restorationTimeoutRef.current = setTimeout(() => {
                         window.scrollTo(0, savedPosition);
                         // Step 3: Guard removal - wait for content to stabilize before allowing

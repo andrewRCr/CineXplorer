@@ -32,7 +32,8 @@ page sizes (20, then 15, then 18, etc.).
 
 ### The Solution
 
-A **buffer mechanism** fetches additional TMDB pages to maintain consistent 20-result pages.
+A **buffer mechanism** fetches additional TMDB pages to top a short page up to at least 20 results. It returns every
+unique movie it read, since the next cursor starts after the last page read.
 A **deduplication tracker** prevents the same movie from appearing twice across pagination requests.
 
 ```
@@ -46,11 +47,11 @@ Frontend Request: /browse?certification=R&tmdb_page_start=7
 │ 2. Apply data quality filters           → 14 good movies    │
 │ 3. Check dedup (Redis)                  → 14 unique movies  │
 │ 4. Need 6 more → Buffer pages 8, 9      → +8 good movies    │
-│ 5. Return 20 movies + next cursor       → tmdb_page_start=10│
+│ 5. Return all 22 movies + next cursor   → tmdb_page_start=10│
 └─────────────────────────────────────────────────────────────┘
                             │
                             ▼
-Frontend: Store next cursor, display 20 movies
+Frontend: Store next cursor, display the 22 movies
 ```
 
 ---
@@ -59,7 +60,7 @@ Frontend: Store next cursor, display 20 movies
 
 ### How It Works
 
-Located in `paginated.py:apply_buffer_if_needed()` (lines 28-145).
+Located in `paginated.py:apply_buffer_if_needed()`.
 
 ```python
 # Simplified logic
@@ -69,9 +70,9 @@ def apply_buffer_if_needed(filtered_movies, fetch_next_page_func, dedup_tracker,
 
     # If we have 20+, no buffering needed
     if len(combined_movies) >= 20:
-        return combined_movies[:20], pages_consumed=1
+        return combined_movies, pages_consumed=1
 
-    # Buffer: fetch additional pages until we have 20 or hit limit
+    # Buffer: fetch additional pages until we have at least 20 or hit limit
     pages_fetched = 0
     max_buffer_pages = 5
 
@@ -82,7 +83,8 @@ def apply_buffer_if_needed(filtered_movies, fetch_next_page_func, dedup_tracker,
         combined_movies.extend(deduplicated_buffer)
         pages_fetched += 1
 
-    return combined_movies[:20], pages_consumed=(1 + pages_fetched)
+    # Every unique movie read: the next cursor skips the pages read, so none may be held back
+    return combined_movies, pages_consumed=(1 + pages_fetched)
 ```
 
 ### Configuration
@@ -90,7 +92,10 @@ def apply_buffer_if_needed(filtered_movies, fetch_next_page_func, dedup_tracker,
 | Parameter          | Value | Rationale                              |
 |--------------------|-------|----------------------------------------|
 | `max_buffer_pages` | 5     | Balances API calls vs page consistency |
-| Target page size   | 20    | Matches TMDB's default, good UX        |
+| Top-up target      | 20    | Matches TMDB's default, good UX        |
+
+A topped-up response holds up to 39 movies: fewer than 20 from the first page, plus the whole of the page that took it
+past 20. It holds fewer than 20 only when the buffer limit or the last TMDB page stops it first.
 
 ### When Buffer Activates
 

@@ -256,8 +256,8 @@ def test_buffer_movies_also_pass_filters_no_leakage() -> None:
         page=1, params=BrowseServiceParams(year_min=2022, year_max=2022, rating_min=7.5)
     )
 
-    # Assert: Result contains 20 movies (15 from page 1 + 5 from page 2)
-    assert len(result.results) == 20
+    # Assert: Result contains 25 movies (15 from page 1 + the 10 valid from page 2)
+    assert len(result.results) == 25
 
     # Critical: ALL movies must match filters (no leakage from buffer)
     invalid_ids = {100 + i for i in range(1, 11)}

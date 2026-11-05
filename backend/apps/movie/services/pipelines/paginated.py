@@ -1,7 +1,7 @@
 """Pagination and buffer management utilities for TMDB movie responses.
 
 This module provides composable helper functions for paginated movie fetching,
-filtering, and buffer management to maintain consistent page sizes.
+filtering, and buffer management that tops up short pages.
 """
 
 from __future__ import annotations
@@ -44,16 +44,17 @@ def apply_buffer_if_needed(
     fetch_next_page_func: Callable[[int], TMDBPaginatedMovieResponse],
     dedup_tracker: DeduplicationTracker | None = None,
 ) -> tuple[list[MovieListItemSchema], int]:
-    """Apply smart buffer mechanism to maintain consistent page sizes.
+    """Top up a short page from the TMDB pages after it.
 
     Smart buffer logic:
-    - If we have >= 20 results: Return first 20 (full page achieved)
+    - If we have >= 20 results: Return them (full page achieved)
     - If we have < 20 results AND more pages available: Keep fetching
-      additional pages until we reach 20 results or run out of pages
+      additional pages until we have at least 20 results or run out of pages
     - Safety limit: Maximum 5 additional page fetches to prevent pathological cases
 
-    This ensures consistent 20-result pages even with very restrictive filters
-    (e.g., rating 0-6.0) as long as sufficient results exist in the dataset.
+    Every unique movie read is returned, so a topped-up response can hold up to 39.
+    The next request starts after the last page read, so a movie held back here
+    would never be shown.
 
     Args:
         filtered_movies: Movies from current page after filtering
@@ -65,7 +66,7 @@ def apply_buffer_if_needed(
 
     Returns:
         Tuple of (movies, pages_consumed) where:
-        - movies: Up to 20 movies with buffer applied if needed
+        - movies: Every unique movie from the pages read
         - pages_consumed: Total TMDB pages consumed (includes initial page)
 
     Note:
@@ -91,14 +92,13 @@ def apply_buffer_if_needed(
     # Filter out movies already returned in this session from initial results
     deduplicated_initial = _deduplicate_movies(filtered_movies, seen_ids)
 
-    # Full page achieved - return first 20
+    # Full page achieved - no top-up needed
     if len(deduplicated_initial) >= 20:
-        final_movies = deduplicated_initial[:20]
         # Track new IDs returned (exclude session_ids we already had)
-        new_ids = [m.tmdb_id for m in final_movies if m.tmdb_id not in session_ids]
+        new_ids = [m.tmdb_id for m in deduplicated_initial if m.tmdb_id not in session_ids]
         if dedup_tracker and new_ids:
             dedup_tracker.add_returned_ids(params, new_ids)
-        return (final_movies, 1)
+        return (deduplicated_initial, 1)
 
     # If we're on the last page, return what we have
     if current_page >= total_pages:
@@ -108,7 +108,7 @@ def apply_buffer_if_needed(
             dedup_tracker.add_returned_ids(params, new_ids)
         return (deduplicated_initial, 1)
 
-    # Smart buffering: Keep fetching pages until we have 20 unique results or run out
+    # Smart buffering: Keep fetching pages until we have at least 20 unique results or run out
     combined_movies = deduplicated_initial
     next_page = current_page + 1
     max_buffer_pages = 5  # Safety limit to prevent excessive API calls
@@ -135,16 +135,16 @@ def apply_buffer_if_needed(
         next_page += 1
         pages_fetched += 1
 
-    # Return up to 20 unique movies + total pages consumed (initial + buffered)
-    final_movies = combined_movies[:20]
+    # Return every unique movie read + total pages consumed (initial + buffered). The next
+    # request starts after the last page read, so nothing read may be held back.
     total_pages_consumed = 1 + pages_fetched
 
     # Track new IDs returned (exclude session_ids we already had)
-    new_ids = [m.tmdb_id for m in final_movies if m.tmdb_id not in session_ids]
+    new_ids = [m.tmdb_id for m in combined_movies if m.tmdb_id not in session_ids]
     if dedup_tracker and new_ids:
         dedup_tracker.add_returned_ids(params, new_ids)
 
-    return (final_movies, total_pages_consumed)
+    return (combined_movies, total_pages_consumed)
 
 
 def fetch_with_filters_and_buffer(

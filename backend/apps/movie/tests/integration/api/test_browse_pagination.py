@@ -9,6 +9,7 @@ Tests the smart buffer pagination mechanism including:
 - Backward navigation consistency
 """
 
+from typing import cast
 from unittest.mock import Mock, patch
 
 import pytest
@@ -1015,4 +1016,53 @@ def test_browse_returns_null_next_page_when_buffer_returns_empty(
     assert len(data["results"]) == 0
     assert data["next_tmdb_page_start"] is None, (
         "next_tmdb_page_start should be null when buffer returns empty results"
+    )
+
+
+@patch(TMDB_CLIENT_GET)
+def test_infinite_scroll_shows_every_qualifying_title_when_a_page_tops_up(
+    mock_tmdb_get: Mock,
+    api_client: Client,
+) -> None:
+    """A response topped up from the next TMDB page keeps that page's remaining titles.
+
+    TMDB page 1 has one title without a poster, so the first response tops up from page 2.
+    Page 3 repeats the last title of page 2, as popularity drift between requests does.
+    Scrolling to the end shows every qualifying title on the four pages exactly once.
+    """
+    pages = {
+        page: [
+            create_tmdb_movie(movie_id, f"Movie {movie_id}", "2023-01-01", 8.0)
+            for movie_id in range((page - 1) * 20 + 1, page * 20 + 1)
+        ]
+        for page in range(1, 5)
+    }
+    pages[1][0] = create_tmdb_movie(1, "No Poster", "2023-01-01", 8.0, poster_path="")
+    pages[3][0] = create_tmdb_movie(40, "Movie 40", "2023-01-01", 8.0)
+
+    def tmdb_page(endpoint: str, params: dict[str, object] | None = None) -> ApiResponse:
+        page = cast(int, (params or {})["page"])
+        return create_mock_paginated_response(
+            pages[page], page=page, total_pages=4, total_results=80
+        )
+
+    mock_tmdb_get.side_effect = tmdb_page
+
+    shown: list[int] = []
+    cursor: int | None = None
+    for _ in range(10):
+        query: dict[str, int] = {"page": 1}
+        if cursor is not None:
+            query["tmdb_page_start"] = cursor
+        res = api_client.get(BROWSE_URL, query)
+        assert res.status_code == HTTPStatus.OK
+        data = res.json()
+        shown.extend(movie["tmdb_id"] for movie in data["results"])
+        cursor = data["next_tmdb_page_start"]
+        if cursor is None:
+            break
+
+    assert cursor is None, "The scroll should reach the last TMDB page"
+    assert sorted(shown) == [*range(2, 41), *range(42, 81)], (
+        "Every qualifying title appears exactly once"
     )

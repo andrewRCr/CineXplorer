@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import {
-    existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, writeFileSync,
+    existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, writeFileSync,
 } from "node:fs";
 import { devNull, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -14,6 +14,8 @@ const GIT_ENV = {
     GIT_AUTHOR_NAME: "Test", GIT_AUTHOR_EMAIL: "test@example.com",
     GIT_COMMITTER_NAME: "Test", GIT_COMMITTER_EMAIL: "test@example.com",
 };
+// Fixture project selection must not inherit the host shell's Compose project.
+delete GIT_ENV.COMPOSE_PROJECT_NAME;
 const COMPOSE = ["compose", "-f", "infrastructure/docker-compose.yml", "-f", "infrastructure/docker-compose.worktree.yml"];
 
 function git(cwd, ...args) {
@@ -69,7 +71,7 @@ if (process.env.CX_FAIL && [command, ...args].includes(process.env.CX_FAIL)) {
 }
 if (command === 'docker' && args.includes('config')) {
     const env = readFileSync(join(process.cwd(), 'infrastructure/.env'), 'utf8');
-    const project = process.env.CX_PROJECT || env.match(/^COMPOSE_PROJECT_NAME=(.*)$/m)?.[1];
+    const project = process.env.CX_PROJECT ?? process.env.COMPOSE_PROJECT_NAME ?? env.match(/^COMPOSE_PROJECT_NAME=(.*)$/m)?.[1];
     console.log('name: ' + project + '\\nservices:\\n  backend:\\n    environment:\\n      SECRET: hidden-marker');
 }
 if (command === 'docker' && args.includes('ls')) console.log(process.env.CX_IDS || '');
@@ -199,6 +201,26 @@ test("provision copies only included ignored files and keeps existing copies and
     assert.equal(existsSync(join(path, "unignored.txt")), false);
     for (const folder of [".venv-backend", ".codex"]) assert.equal(readlinkSync(join(path, folder)), join(f.main, folder));
     assert.equal(realpathSync(join(path, ".claude")), join(path, ".claude"));
+});
+
+test("provision skips missing shared tools and links later installations without replacing local tools", (t) => {
+    const f = fixture(t);
+    const folders = [".venv-backend", ".claude", ".codex"];
+    for (const folder of folders) rmSync(join(f.main, folder), { recursive: true });
+    const path = f.worktree();
+    success(f.invoke(path, ["provision"]));
+    for (const folder of folders) {
+        assert.equal(lstatSync(join(path, folder), { throwIfNoEntry: false }), undefined);
+    }
+    mkdirSync(join(path, ".codex"));
+    write(path, ".codex/local.txt", "keep local settings\n");
+    for (const folder of folders) mkdirSync(join(f.main, folder));
+    success(f.invoke(path, ["provision"]));
+    for (const folder of [".venv-backend", ".claude"]) {
+        assert.equal(readlinkSync(join(path, folder)), join(f.main, folder));
+    }
+    assert.equal(lstatSync(join(path, ".codex")).isDirectory(), true);
+    assert.equal(readFileSync(join(path, ".codex/local.txt"), "utf8"), "keep local settings\n");
 });
 
 test("provision checks only the project name then installs and typegens in the frontend", (t) => {
@@ -395,13 +417,31 @@ for (const key of ["COMPOSE_PROJECT_NAME", "SITE_PORT", "WORKTREE_SECRET_KEY"]) 
     });
 }
 
+for (const scenario of [
+    { name: "another project in the env file", contents: BROWSE_ENV.replace("cinexplorer-sample", "infrastructure"), env: {}, reason: /project.*cinexplorer-sample.*infrastructure/i },
+    { name: "an overriding project from the environment", contents: BROWSE_ENV, env: { COMPOSE_PROJECT_NAME: "infrastructure" }, reason: /project.*cinexplorer-sample.*infrastructure/i },
+    { name: "failed configuration resolution", contents: BROWSE_ENV, env: { CX_FAIL: "config" }, reason: /stub command failed: config/ },
+]) {
+    test(`browse refuses ${scenario.name} before stateful commands`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", scenario.contents);
+        const result = f.invoke(path, ["browse"], scenario.env);
+        refusal(result, scenario.reason);
+        assert.doesNotMatch(result.stdout + result.stderr, /hidden-marker/);
+        assert.ok(f.calls().every((call) => call.command === "docker" && call.args.includes("config")),
+            "a refused project must never reach startup or database commands");
+    });
+}
+
 test("browse waits for the stack then migrates and seeds in order", (t) => {
     const f = fixture(t);
     const path = f.worktree();
     write(path, "infrastructure/.env", BROWSE_ENV);
     const result = f.invoke(path, ["browse"]);
     success(result);
-    assert.deepEqual(f.calls(), [
+    assert.doesNotMatch(result.stdout + result.stderr, /hidden-marker/);
+    assert.deepEqual(f.calls().filter((call) => !call.args.includes("config")), [
         { command: "docker", args: [...BROWSER, "up", "-d", "--wait"], cwd: path },
         { command: "docker", args: [...BROWSER, "exec", "-T", "backend", "python", "manage.py", "migrate", "--noinput"], cwd: path },
         { command: "docker", args: [...BROWSER, "exec", "-T", "backend", "python", "manage.py", "seed_dev_data"], cwd: path },
@@ -415,7 +455,9 @@ test("a failed stack start prints its output and never migrates or seeds", (t) =
     const path = f.worktree();
     write(path, "infrastructure/.env", BROWSE_ENV);
     refusal(f.invoke(path, ["browse"], { CX_FAIL: "up" }), /stub command failed: up/);
-    assert.deepEqual(f.calls(), [{ command: "docker", args: [...BROWSER, "up", "-d", "--wait"], cwd: path }]);
+    assert.deepEqual(f.calls().filter((call) => !call.args.includes("config")), [
+        { command: "docker", args: [...BROWSER, "up", "-d", "--wait"], cwd: path },
+    ]);
 });
 
 function preserved(f, path, args, reason) {

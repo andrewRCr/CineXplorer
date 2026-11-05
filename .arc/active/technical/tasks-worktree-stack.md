@@ -222,6 +222,15 @@ and remove it after its branch merges.
       The Owner-requested manual CI run 41930723137 passed on the exact reviewed head, including `ci-ok`, closing
       criterion 1. All nine criteria are met; their evidence is recorded below.
 
+- [x] **6.2 Repair provisioning and browser startup preconditions**
+    - [x] **6.2.a Prove and fix project refusal:** three new cases failed before implementation: wrong file project,
+      environment override and configuration failure. Provisioning and browsing now share the effective-project
+      check; mismatches stop before startup or database commands, and configuration values stay out of output.
+    - [x] **6.2.b Prove and fix optional tool links:** the missing-source lifecycle failed on a dangling link before
+      the fix. Provisioning skips missing sources, links later-installed tools and preserves existing local folders.
+    - [x] **6.2.c Verify the batch:** both scripts pass syntax checks; all 83 worktree, notes-seeding and recovery
+      tests pass. Requirements, guidance and completion metadata reflect the repairs; affected Markdown is linted.
+
 ## Implementation Notes
 
 ### Integration with `main`
@@ -550,3 +559,29 @@ and remove it after its branch merges.
   prepared PR-based CodeRabbit review under `archive-completed.md` § 6, with the request held until the final
   published head passes CI and publication/request approval is given. The author preflight supplies no independent
   review evidence.
+
+### 2026-11-04 · Code review · Hosted Pass 1
+
+- **Runner and target:** CodeRabbit review 5778118443 on PR #87 at
+  `3324e453a680fc846d47bef66f2f2e9e6decce25`; all 24 changed paths selected. The single request, provider
+  acknowledgement, submitted review, complete inline comments and thread states are retained in personal records.
+  CI, including `ci-ok`, passed on that head before the request.
+- **Source-verified set:** one major, one minor and three rejected proposals. The review supplied four inline
+  comments and an additional docstring-coverage advisory in its body. The Owner approved the complete set.
+- **Approved dispositions:**
+    - F1 major (reviewer: minor): reuse the effective Compose-project check before `browse` makes stateful calls.
+      Fixtures reproduce startup/migration/seeding under a wrong project; real Compose output confirms environment
+      precedence. FIX (local correction)
+    - F2 minor: skip absent shared-tool sources while retaining destination preservation. The reproduced dangling
+      links prevent later directory creation with `EEXIST`. FIX (local correction)
+    - F3: retain the completion status required by the specific verification instructions; separately capture the
+      pre-existing conflict with the formatting strategy's merged/delivered definition. REJECT
+    - F4: retain the current main-only branch policy; stacked-child cleanup is outside that policy. REJECT
+    - F5: the provider's 80% docstring advisory is not a repository quality requirement. No blanket docstring
+      additions or provider configuration changes ride in this repair. REJECT
+- **Advisor:** Astra `/root/advisor_browse_guard` recommended sharing the resolved-name check instead of checking
+  only the file value, preserving missing-key refusal first and configuration secrecy. Adopted; the primary
+  reproduced and validated the source facts. This was bounded advice, not another code-review pass.
+- **Outcome:** material repair approved; Task 6.2 records the batch. A local fix check is recommended after the
+  repaired head's CI; replies and resolution of four threads wait for that decision. A further hosted request and
+  merge remain separate approvals.

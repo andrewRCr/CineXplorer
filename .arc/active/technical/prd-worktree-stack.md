@@ -112,8 +112,8 @@ prepares a worktree, one starts its browsable stack, and one removes it after it
   repeats the check and the install:
     1. Copy each untracked file in the main checkout that a `.worktreeinclude` pattern matches and that the worktree's
        ignore rules ignore, unless the worktree already has it.
-    2. Link `.venv-backend`, `.claude` and `.codex` to the main checkout's, where the worktree has no entry of that
-       name.
+    2. Link `.venv-backend`, `.claude` and `.codex` to the main checkout's existing folders, where the worktree has
+       no entry of that name. Skip absent sources; a later provisioning run can link them after installation.
     3. Write `infrastructure/.env` (R5).
     4. Check that `docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml
        config` resolves to the project name R5 writes, `cinexplorer-{name}`. Print only the name line, since the rest
@@ -131,8 +131,11 @@ prepares a worktree, one starts its browsable stack, and one removes it after it
   range is claimed. The port stays with the worktree until it is removed. A worktree folder deleted without
   `git worktree remove` claims nothing, since its `infrastructure/.env` went with it.
 - **R7. `browse`.** Run from a provisioned linked worktree; it refuses in the main checkout and where
-  `infrastructure/.env` lacks a key R5 writes. It starts all five services with the `browser` profile, building images
-  it lacks, and waits until they run and those with health checks report healthy. It then runs
+  `infrastructure/.env` lacks a key R5 writes. Before startup or database commands, it resolves the Compose project
+  and refuses unless it is `cinexplorer-{name}` as R5 defines it, including any environment override. Configuration
+  failures also stop browsing, and the resolved configuration is never printed. It starts all five services with the
+  `browser` profile, building images it lacks, and waits until they run and those with health checks report healthy.
+  It then runs
   `python manage.py migrate --noinput` and `python manage.py seed_dev_data` in the backend, and prints
   `https://localhost:{SITE_PORT}` with the dev account's sign-in (R11). Run again on a running stack, it applies only
   migrations not yet applied, leaves the dev account as it is and syncs the blacklist again. Stopping is the Compose
@@ -465,3 +468,7 @@ None.
   `technical/launch-readiness` adds), so a stack accepts another stack's cookie only on a page signed in there
   earlier; the access token's home is the origin's browser storage, since a sign-in without "remember me" uses
   `sessionStorage`. Wording only; the design is unchanged.
+
+- **2026-11-04,** on the Owner's approval of the hosted review responses: R4 explicitly skips absent shared-tool
+  sources, and R7 checks the effective Compose project before startup or database commands. These clarify the
+  existing provisioning and isolation contracts; the Success Criteria are unchanged.

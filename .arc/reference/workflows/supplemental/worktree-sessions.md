@@ -41,10 +41,11 @@ node scripts/worktree.mjs provision
 ```
 
 Provisioning copies missing ignored files matched by `.worktreeinclude` (backend and frontend env files and
-certificates), links shared tools, appends missing project, browser-port and signing-key values to
+certificates), links installed shared tools, appends missing project, browser-port and signing-key values to
 `infrastructure/.env`, checks the resolved Compose project name, then runs `npm ci` and `npm run typegen` in
 `frontend/`. Docker must be running. Repeating it preserves existing files and keys and repeats the check and
-install. A failed `create` leaves its checkout in place and prints the commands to finish setup there.
+install. Missing shared-tool folders are skipped; a later run links them once installed in the primary. A failed
+`create` leaves its checkout in place and prints the commands to finish setup there.
 
 - **Branch:** a work unit is provisioned before planning starts: the PRD and task list are written and committed on
   this branch. [activate-work-unit.md](activate-work-unit.md) runs in the worktree later, skipping its branch step.
@@ -139,8 +140,10 @@ From a provisioned worktree's root:
 node scripts/worktree.mjs browse
 ```
 
-This starts all five services with the `browser` profile, waits for them to run and for health checks to pass,
-then applies migrations and runs `seed_dev_data`. The printed address is `https://localhost:{SITE_PORT}`; sign in
+This validates the effective Compose project name, including environment overrides, before starting the stack or
+changing its database. It then starts all five services with the `browser` profile, waits for them to run and for
+health checks to pass, then applies migrations and runs `seed_dev_data`. The printed address is
+`https://localhost:{SITE_PORT}`; sign in
 as `dev` with password `cinexplorer-dev`. The account is verified and the tracked blacklist is loaded. Repeating
 `browse` applies only new migrations, leaves an existing dev account unchanged and syncs the blacklist again.
 

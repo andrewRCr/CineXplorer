@@ -14,7 +14,8 @@ Docker resources and local branch.
 ## Key Deliverables
 
 - A dependency-free Node script with `create`, `provision`, `browse` and `remove`, plus `.worktreeinclude` for ignored
-  development files. Provisioning preserves existing files and keys; planned work can start with session notes.
+  development files. Provisioning preserves existing files and keys, skips absent shared tools and links them after
+  installation; planned work can start with session notes.
 - A shared Compose override for test and browser modes, with isolated projects, databases and signing keys, a
   loopback-only browser entry point, and measured memory limits for every service.
 - A development-only seed command that creates a verified sign-in account once and synchronizes the tracked movie
@@ -24,6 +25,8 @@ Docker resources and local branch.
 
 ## Implementation Highlights
 
+- Provisioning and browser startup validate the effective Compose project before stateful operations, including
+  project-name overrides from the environment.
 - Port allocation chooses the lowest unclaimed registered-worktree port and keeps it in that checkout's env file.
   The override derives frontend API URLs and backend origins from that value without rewriting copied app settings.
 - Each stack's signing key rejects refresh tokens issued by another stack. Cookies remain shared across localhost

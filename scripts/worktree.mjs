@@ -93,6 +93,14 @@ function provisionEnv(root, main) {
     }
 }
 
+function checkedProject(root, main) {
+    const config = run(root, "docker", [...COMPOSE, "config"]);
+    const project = config.match(/^name:\s*(\S+)\s*$/m)?.[1];
+    const expected = `cinexplorer-${nameOf(root, main)}`;
+    if (project !== expected) throw new Error(`Compose project must be ${expected}; resolved ${project ?? "[no name]"}.`);
+    return project;
+}
+
 function provision(root, main) {
     linked(root, main);
     nameOf(root, main);
@@ -109,13 +117,11 @@ function provision(root, main) {
     }
     for (const folder of [".venv-backend", ".claude", ".codex"]) {
         const target = join(root, folder);
-        if (!lstatSync(target, { throwIfNoEntry: false })) symlinkSync(join(main, folder), target, "dir");
+        const source = join(main, folder);
+        if (existsSync(source) && !lstatSync(target, { throwIfNoEntry: false })) symlinkSync(source, target, "dir");
     }
     provisionEnv(root, main);
-    const config = run(root, "docker", [...COMPOSE, "config"]);
-    const project = config.match(/^name:\s*(\S+)\s*$/m)?.[1];
-    const expected = `cinexplorer-${nameOf(root, main)}`;
-    if (project !== expected) throw new Error(`Compose project must be ${expected}; resolved ${project ?? "[no name]"}.`);
+    const project = checkedProject(root, main);
     console.log(`name: ${project}`);
     for (const args of [["ci"], ["run", "typegen"]]) console.log(run(join(root, "frontend"), "npm", args));
 }
@@ -171,6 +177,7 @@ function browse(root, main) {
     for (const key of ["COMPOSE_PROJECT_NAME", "SITE_PORT", "WORKTREE_SECRET_KEY"]) {
         if (!envValue(contents, key)) throw new Error(`Missing ${key}; run node scripts/worktree.mjs provision first.`);
     }
+    checkedProject(root, main);
     const compose = [...COMPOSE, "--profile", "browser"];
     console.log(run(root, "docker", [...compose, "up", "-d", "--wait"]));
     for (const args of [["migrate", "--noinput"], ["seed_dev_data"]]) {

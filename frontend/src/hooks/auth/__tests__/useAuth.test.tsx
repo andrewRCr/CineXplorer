@@ -19,7 +19,7 @@ import {
   token,
 } from "@tests/helpers/auth";
 
-import apiClient from "@/services/apiClient";
+import apiClient, { refreshAccessToken } from "@/services/apiClient";
 import { gate, installWebLocks } from "@tests/helpers/web-locks";
 
 function AuthStatusProbe() {
@@ -443,4 +443,179 @@ describe("password session renewal", () => {
     expect(sessionStorage.getItem("access_token")).toBe(refreshed);
     expect(localStorage.getItem("access_token")).toBeNull();
   });
+});
+
+describe("sign-out during idle renewal", () => {
+  beforeEach(() => installWebLocks());
+  it.each(
+    (["localStorage", "sessionStorage"] as const).flatMap((storage) =>
+      (["lock", "response"] as const).flatMap((heldAt) =>
+        [false, true].map((signInAgain) => ({ storage, heldAt, signInAgain })),
+      ),
+    ),
+  )(
+    "keeps sign-out authoritative ($storage, held at $heldAt, sign in again: $signInAgain)",
+    async ({ storage, heldAt, signInAgain }) => {
+      vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+      setAuthTokens(token(), undefined, storage);
+      const { result } = mountAuth();
+      await vi.waitFor(async () => {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(10);
+        });
+        expect(result.current.user).toEqual(profile);
+      });
+      const release = gate();
+      const entered = gate();
+      let refreshes = 0;
+      const staleToken = token(Math.floor(Date.now() / 1000) + 600);
+      const newToken = token(Math.floor(Date.now() / 1000) + 900);
+      server.use(
+        http.post(`${apiBaseUrl}/auth/refresh`, async () => {
+          refreshes++;
+          entered.release();
+          if (heldAt === "response") await release.wait;
+          return HttpResponse.json({ access_token: staleToken });
+        }),
+        http.post(`${apiBaseUrl}/token/`, () =>
+          HttpResponse.json({
+            user_id: profile.id,
+            username: profile.username,
+            access_token: newToken,
+            refresh_token: "new-refresh",
+          }),
+        ),
+      );
+      const otherTab =
+        heldAt === "lock"
+          ? navigator.locks.request("cinexplorer-auth-refresh", async () => {
+              entered.release();
+              await release.wait;
+            })
+          : Promise.resolve();
+      if (heldAt === "lock") await entered.wait;
+      setAuthTokens(token(1), undefined, storage);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60000);
+      });
+      if (heldAt === "response") await entered.wait;
+      // Observe completion through the same public renewal shared by its callers.
+      const renewal = refreshAccessToken().catch(() => undefined);
+      try {
+        await act(async () => {
+          await result.current.logout();
+        });
+        expect(result.current.isAuthenticated).toBe(false);
+        expect(result.current.user).toBeNull();
+        expect(localStorage.getItem("access_token")).toBeNull();
+        expect(sessionStorage.getItem("access_token")).toBeNull();
+        if (signInAgain) {
+          await act(async () => {
+            await result.current.login(
+              "viewer",
+              "password",
+              storage === "localStorage",
+            );
+          });
+        }
+      } finally {
+        await act(async () => {
+          release.release();
+          await otherTab;
+          await renewal;
+        });
+      }
+      expect(result.current.isAuthenticated).toBe(signInAgain);
+      expect(result.current.user).toEqual(signInAgain ? profile : null);
+      expect(window[storage].getItem("access_token")).toBe(
+        signInAgain ? newToken : null,
+      );
+      expect(
+        window[
+          storage === "localStorage" ? "sessionStorage" : "localStorage"
+        ].getItem("access_token"),
+      ).toBeNull();
+      expect(refreshes).toBe(heldAt === "response" ? 1 : 0);
+    },
+  );
+});
+
+describe("obsolete renewal callers", () => {
+  beforeEach(() => installWebLocks());
+  it.each(
+    (["load", "profile", "interceptor"] as const).flatMap((caller) =>
+      [
+        { refreshSucceeds: true, signInAgain: false },
+        { refreshSucceeds: true, signInAgain: true },
+        { refreshSucceeds: false, signInAgain: true },
+      ].map((outcome) => ({ caller, ...outcome })),
+    ),
+  )(
+    "ignores old $caller completion (refresh succeeds: $refreshSucceeds, sign in again: $signInAgain)",
+    async ({ caller, refreshSucceeds, signInAgain }) => {
+      installWebLocks();
+      const release = gate();
+      const entered = gate();
+      let logins = 0;
+      const newToken = token(Math.floor(Date.now() / 1000) + 900);
+      server.use(
+        http.post(`${apiBaseUrl}/auth/refresh`, async () => {
+          entered.release();
+          await release.wait;
+          return refreshSucceeds
+            ? HttpResponse.json({ access_token: token() })
+            : HttpResponse.json({}, { status: 401 });
+        }),
+        http.post(`${apiBaseUrl}/token/`, () => {
+          logins++;
+          return HttpResponse.json({
+            user_id: profile.id,
+            username: profile.username,
+            access_token:
+              caller === "profile" && logins === 1 ? token(1) : newToken,
+            refresh_token: "refresh",
+          });
+        }),
+        http.get(`${apiBaseUrl}/renewal-overlap`, () =>
+          HttpResponse.json({}, { status: 401 }),
+        ),
+      );
+      if (caller === "load") setAuthTokens(token(1));
+      if (caller === "interceptor") setAuthTokens(token());
+      const { result } = mountAuth();
+      let pending: Promise<unknown> | undefined;
+      if (caller === "profile") {
+        act(() => {
+          pending = result.current.login("viewer", "password");
+        });
+      } else if (caller === "interceptor") {
+        await waitFor(() => expect(result.current.user).toEqual(profile));
+        pending = apiClient.get("/renewal-overlap").catch(() => undefined);
+      }
+      await entered.wait;
+      const renewal = refreshAccessToken().catch(() => undefined);
+      try {
+        await act(async () => {
+          await result.current.logout();
+        });
+        if (signInAgain) {
+          await act(async () => {
+            await result.current.login("viewer", "password");
+          });
+        }
+      } finally {
+        await act(async () => {
+          release.release();
+          await renewal;
+          await pending;
+        });
+      }
+      expect(result.current.isAuthenticated).toBe(signInAgain);
+      expect(result.current.user).toEqual(signInAgain ? profile : null);
+      expect(sessionStorage.getItem("access_token")).toBe(
+        signInAgain ? newToken : null,
+      );
+      expect(localStorage.getItem("access_token")).toBeNull();
+    },
+  );
 });

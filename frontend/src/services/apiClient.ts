@@ -53,6 +53,19 @@ const apiClient = axios.create({
 });
 
 let pendingRefresh: Promise<string> | null = null;
+let refreshController: AbortController | null = null;
+let authSessionVersion = 0;
+
+/** Identify asynchronous work belonging to the current sign-in. */
+export const getAuthSessionVersion = () => authSessionVersion;
+
+/** Retire old renewal work before clearing credentials or accepting a new sign-in. */
+export function invalidateAuthSession(): void {
+    authSessionVersion++;
+    refreshController?.abort();
+    refreshController = null;
+    pendingRefresh = null;
+}
 
 /** Renew a password session once per tab, serializing rotating cookies across tabs. */
 export function refreshAccessToken(): Promise<string> {
@@ -61,10 +74,21 @@ export function refreshAccessToken(): Promise<string> {
     const { access_token: startingToken } = getAuthTokens();
     if (!startingToken)
         return Promise.reject(new Error("No password session to refresh"));
+    const sessionVersion = getAuthSessionVersion();
+    const controller = new AbortController();
+    refreshController = controller;
+    const assertCurrentSession = () => {
+        if (
+            sessionVersion !== getAuthSessionVersion() ||
+            !getAuthTokens().access_token
+        )
+            throw new CanceledError("Authentication session changed");
+    };
     const startingExpiry = getTokenExpiration(startingToken);
     const storage = getCurrentStorageType();
 
     const renew = async (): Promise<string> => {
+        assertCurrentSession();
         const { access_token: currentToken } = getAuthTokens();
         const currentExpiry = currentToken
             ? getTokenExpiration(currentToken)
@@ -80,14 +104,19 @@ export function refreshAccessToken(): Promise<string> {
         }
 
         await ensureCsrfTokenCookie(BASE_URL);
+        assertCurrentSession();
         const response = await axios.post<unknown>(
             `${BASE_URL}/auth/refresh`,
             {},
             {
                 withCredentials: true,
+                signal: controller.signal,
                 headers: { "X-CSRFToken": getCsrfToken() || "" },
             },
         );
+        assertCurrentSession();
+        if (getAuthTokens().access_token !== currentToken)
+            throw new CanceledError("Authentication credentials changed");
         const data = response.data;
         if (
             response.status !== 200 ||
@@ -106,10 +135,15 @@ export function refreshAccessToken(): Promise<string> {
     const renewal = navigator.locks
         ? navigator.locks.request("cinexplorer-auth-refresh", renew)
         : renew();
-    pendingRefresh = renewal.finally(() => {
-        pendingRefresh = null;
+    const pending = renewal.finally(() => {
+        // An obsolete completion must not erase a newer session's shared promise.
+        if (pendingRefresh === pending) {
+            pendingRefresh = null;
+            refreshController = null;
+        }
     });
-    return pendingRefresh;
+    pendingRefresh = pending;
+    return pending;
 }
 
 // Request interceptor: Attach JWT access token (email/password), CSRF token, and pagination context
@@ -199,14 +233,22 @@ apiClient.interceptors.response.use(
             }
 
             originalRequest._retry = true;
+            const sessionVersion = getAuthSessionVersion();
             let renewedToken: string;
             try {
                 renewedToken = await refreshAccessToken();
             } catch (refreshError) {
+                if (
+                    axios.isCancel(refreshError) ||
+                    sessionVersion !== getAuthSessionVersion()
+                )
+                    throw refreshError;
                 clearAuthTokens();
                 window.location.href = "/login?session_expired=true";
                 throw refreshError;
             }
+            if (sessionVersion !== getAuthSessionVersion())
+                throw new CanceledError("Authentication session changed");
             // Retry failures must not clear a successfully renewed session.
             originalRequest.headers.Authorization = `Bearer ${renewedToken}`;
             return apiClient(originalRequest);

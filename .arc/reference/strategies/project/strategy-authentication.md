@@ -120,9 +120,10 @@ going against its design and making upgrades difficult.
 **Token Refresh Flow**:
 
 `useAuth` renews an expired access token on load, at its 60-second idle check, and before fetching the profile.
-Password users remain signed in when renewal succeeds. Failure clears stored tokens and the signed-in state;
-provider sessions have no access token and never request a refresh. On load the existing signed-out display remains
-until renewal answers. These effects renew credentials; moving authentication state onto TanStack Query is separate.
+Password users remain signed in when renewal succeeds. A current session's failure clears stored tokens and the
+signed-in state; provider sessions have no access token and never request a refresh. On load the existing signed-out
+display remains until renewal answers. These effects renew credentials; moving authentication state onto TanStack
+Query is separate.
 
 The hook and the API client's `401` interceptor call the same exported `refreshAccessToken()` function. It returns
 one pending promise per tab, so every caller receives the same token or failure. On browsers with Web Locks it holds
@@ -134,6 +135,15 @@ sign-in stays in session storage. Without Web Locks, the pending promise still c
 
 Only this function posts a refresh. The interceptor retains its redirect on refresh failure; the hook only clears
 its authentication state. A failed retry of the original API request does not invalidate a successful refresh.
+
+Explicit sign-out invalidates this tab's pending renewal before clearing credentials. Queued work checks the session
+version before starting a request; sent work is canceled before the logout request, and completion checks precede
+storage writes. The successful logout response deletes any refresh cookie applied before cancellation; later headers
+from that canceled request cannot replace the deletion or a subsequent sign-in's cookie. This concerns renewal
+controlled by the signing-out tab. Hook and interceptor continuations ignore cancellation or a changed session version
+rather than restoring authentication or clearing a later sign-in. A successful new password sign-in retires prior work
+and clears both storages before storing its chosen credentials. An older promise's finalizer cannot release a newer
+session's shared promise.
 
 ---
 
@@ -467,14 +477,17 @@ refresh-failure handler. Its refresh branch is:
 
 ```typescript
 originalRequest._retry = true;
+const sessionVersion = getAuthSessionVersion();
 let renewedToken: string;
 try {
   renewedToken = await refreshAccessToken();
 } catch (refreshError) {
+  if (axios.isCancel(refreshError) || sessionVersion !== getAuthSessionVersion()) throw refreshError;
   clearAuthTokens();
   window.location.href = "/login?session_expired=true";
   throw refreshError;
 }
+if (sessionVersion !== getAuthSessionVersion()) throw new CanceledError("Authentication session changed");
 originalRequest.headers.Authorization = `Bearer ${renewedToken}`;
 return apiClient(originalRequest);
 ```

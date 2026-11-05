@@ -350,14 +350,14 @@ export interface paths {
         put?: never;
         /**
          * Resend Verification
-         * @description Resend email verification to the provided email address.
+         * @description Resend email verification using an opaque token from sign-in.
          *
          *     Args:
          *         request: Django HTTP request
-         *         payload: Email address to resend verification to
+         *         payload: Resend token issued after sign-in requires email verification
          *
          *     Returns:
-         *         Success message (even if email doesn't exist for security)
+         *         Generic 200 confirmation, including invalid or expired tokens, or a 503 delivery failure.
          */
         post: operations["apps_authentication_api_resend_verification"];
         delete?: never;

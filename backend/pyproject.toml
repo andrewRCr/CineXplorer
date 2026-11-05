@@ -132,7 +132,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 # Error-code literals are identifiers, not credentials.
 "apps/core/schemas.py" = ["S105"]
 # Bootstrap/fallback diagnostics must work before logging is reliable and go to stderr.
-# HEADLESS_TOKEN_STRATEGY is a Django class path, not a token value.
+# ACCESS_TOKEN_NAME and REFRESH_TOKEN_NAME are cookie names, not token values.
 "config/settings.py" = ["BLE001", "T201", "S105"]
 # These are pre-configuration diagnostics and explicit terminal-report functions.
 "config/logging.py" = ["T201"]

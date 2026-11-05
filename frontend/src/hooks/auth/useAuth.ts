@@ -35,7 +35,12 @@ import type {
     AuthError,
     LoginSuccessData,
 } from "@/types/auth-state";
-import { refreshAccessToken } from "@/services/apiClient";
+import {
+    getAuthSessionVersion,
+    invalidateAuthSession,
+    refreshAccessToken,
+} from "@/services/apiClient";
+import { isCancel } from "axios";
 import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
@@ -141,14 +146,21 @@ export function useAuth(): AuthStateProps {
     // This runs ONCE on mount to detect existing sessions
     useEffect(() => {
         const checkExistingAuth = async () => {
+            const sessionVersion = getAuthSessionVersion();
             const { access_token, storage } = getAuthTokens();
             if (access_token) {
                 try {
                     if (areTokensExpired()) await refreshAccessToken();
                     else if (storage === "cookie") setAuthTokens(access_token);
                     // The authentication-state effect owns profile loading.
-                    setIsAuthenticated(true);
-                } catch {
+                    if (sessionVersion === getAuthSessionVersion())
+                        setIsAuthenticated(true);
+                } catch (error) {
+                    if (
+                        isCancel(error) ||
+                        sessionVersion !== getAuthSessionVersion()
+                    )
+                        return;
                     clearAuthTokens();
                     setUser(null);
                     setIsAuthenticated(false);
@@ -162,6 +174,7 @@ export function useAuth(): AuthStateProps {
                 "[useAuth] No JWT tokens found, checking for OAuth session...",
             );
             const oauthUser = await checkOAuthSession();
+            if (sessionVersion !== getAuthSessionVersion()) return;
             if (oauthUser) {
                 logger.debug(
                     "[useAuth] OAuth session detected, user authenticated",
@@ -192,11 +205,17 @@ export function useAuth(): AuthStateProps {
     // Provider sessions have no access token and are managed by allauth.
     useEffect(() => {
         const checkTokenExpiration = async () => {
+            const sessionVersion = getAuthSessionVersion();
             const { access_token } = getAuthTokens();
             if (isAuthenticated && access_token && areTokensExpired()) {
                 try {
                     await refreshAccessToken();
-                } catch {
+                } catch (error) {
+                    if (
+                        isCancel(error) ||
+                        sessionVersion !== getAuthSessionVersion()
+                    )
+                        return;
                     clearAuthTokens();
                     setUser(null);
                     setIsAuthenticated(false);
@@ -328,6 +347,8 @@ export function useAuth(): AuthStateProps {
         const { access_token } = getAuthTokens();
         const isJWTUser = access_token !== null;
 
+        // Invalidate queued and in-flight renewal before clearing the session.
+        invalidateAuthSession();
         // Clear local state and tokens
         setIsAuthenticated(false);
         setUser(null);
@@ -373,6 +394,7 @@ export function useAuth(): AuthStateProps {
     }, [navigate]);
 
     const getUserDetails = useCallback(async () => {
+        const sessionVersion = getAuthSessionVersion();
         try {
             // Check if tokens are expired before making the request (JWT users only)
             // OAuth users have session cookies only, skip JWT expiration check
@@ -381,12 +403,16 @@ export function useAuth(): AuthStateProps {
                 await refreshAccessToken();
             }
 
+            if (sessionVersion !== getAuthSessionVersion()) return undefined;
             const userDetails = await authService.getUserProfile();
+            if (sessionVersion !== getAuthSessionVersion()) return undefined;
             setUser(userDetails);
             // Ensure isAuthenticated is true when user details are successfully fetched
             setIsAuthenticated(true);
             return undefined;
         } catch (error) {
+            if (isCancel(error) || sessionVersion !== getAuthSessionVersion())
+                return error;
             logger.error("Error fetching user details", { error });
             setUser(null);
             setIsAuthenticated(false);
@@ -422,7 +448,9 @@ export function useAuth(): AuthStateProps {
                     ? "localStorage"
                     : "sessionStorage";
 
-                // Store tokens in the appropriate storage
+                // A new sign-in owns storage and supersedes any previous renewal.
+                invalidateAuthSession();
+                clearAuthTokens();
                 setAuthTokens(accessToken, refreshToken, storage);
                 setIsAuthenticated(true);
                 await getUserDetails();

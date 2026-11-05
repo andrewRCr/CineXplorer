@@ -364,14 +364,14 @@ def verify_email(
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationInputSchema
 ) -> Status[ResendVerificationResponseSchema | dict[str, str]]:
-    """Resend email verification to the provided email address.
+    """Resend email verification using an opaque token from sign-in.
 
     Args:
         request: Django HTTP request
-        payload: Email address to resend verification to
+        payload: Resend token issued after sign-in requires email verification
 
     Returns:
-        Success message (even if email doesn't exist for security)
+        Generic 200 confirmation, including invalid or expired tokens, or a 503 delivery failure.
     """
     service = get_authentication_service()
     status_code, body = service.resend_verification(request, payload)

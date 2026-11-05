@@ -2,7 +2,8 @@
 
 Tests the apply_buffer_if_needed function to verify:
 - Buffer correctly deduplicates movies by tmdb_id
-- Buffer continues fetching to reach 20 unique movies when duplicates present
+- Buffer continues fetching to reach at least 20 unique movies when duplicates present
+- Buffer returns every unique movie it read, not only the first 20
 - Buffer respects max_buffer_pages safety limit
 - Deduplication preserves first occurrence order
 - Empty results after deduplication handled correctly
@@ -117,7 +118,7 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
     """Test buffer with 1 duplicate fetches additional page to reach 20 unique.
 
     Scenario: Page 1 has 19 movies, page 2 has movie ID 19 (duplicate) + 20 new movies.
-    Expected: Deduplication removes duplicate, continues fetching page 2, returns 20 unique.
+    Expected: Deduplication removes duplicate, fetches page 2, returns all 39 unique.
     """
     # Arrange: Create page 1 with 19 movies (IDs 1-19)
     page1_movies = [
@@ -158,13 +159,13 @@ def test_buffer_with_one_duplicate_fetches_additional_page() -> None:
         fetch_next_page_func=mock_fetch,
     )
 
-    # Assert: Should deduplicate ID 19 and fetch page 2 to reach 20 unique
-    assert len(result_movies) == 20, "Should return 20 unique movies"
+    # Assert: Should deduplicate ID 19 and fetch page 2, keeping every unique movie read
+    assert len(result_movies) == 39, "Should return 39 unique movies"
     assert pages_consumed == 2, "Should consume page 1 + page 2"
 
-    # Verify IDs are unique and in order (1-20)
+    # Verify IDs are unique and in order (1-39)
     result_ids = [movie.tmdb_id for movie in result_movies]
-    assert result_ids == list(range(1, 21)), "Should have movies 1-20 without duplicate"
+    assert result_ids == list(range(1, 40)), "Should have movies 1-39 without duplicate"
     assert result_ids.count(19) == 1, "ID 19 should appear exactly once"
 
     # Verify page 2 was fetched
@@ -241,16 +242,16 @@ def test_buffer_with_multiple_duplicates_continues_until_20_unique() -> None:
         fetch_next_page_func=mock_fetch,
     )
 
-    # Assert: Should fetch pages 2 and 3, deduplicate, return 20 unique
-    assert len(result_movies) == 20, "Should return 20 unique movies"
+    # Assert: Should fetch pages 2 and 3, deduplicate, return all 21 unique
+    assert len(result_movies) == 21, "Should return 21 unique movies"
     assert pages_consumed == 3, "Should consume pages 1, 2, and 3"
 
-    # Verify IDs are unique and in order (1-20)
+    # Verify IDs are unique and in order (1-21)
     result_ids = [movie.tmdb_id for movie in result_movies]
-    assert result_ids == list(range(1, 21)), "Should have movies 1-20 without duplicates"
+    assert result_ids == list(range(1, 22)), "Should have movies 1-21 without duplicates"
 
     # Verify all IDs are unique
-    assert len(set(result_ids)) == 20, "All IDs should be unique"
+    assert len(set(result_ids)) == 21, "All IDs should be unique"
 
     # Verify both pages were fetched
     assert mock_fetch.call_count == 2
@@ -372,15 +373,15 @@ def test_buffer_deduplication_preserves_first_occurrence_order() -> None:
     )
 
     # Assert: Spirited Away should appear at position 19 (from page 1), not moved
-    assert len(result_movies) == 20
+    assert len(result_movies) == 39
     assert result_movies[18].tmdb_id == 129, "Spirited Away should be at position 19 (index 18)"
     assert result_movies[18].title == "Spirited Away"
 
-    # Verify first 18 are IDs 1-18, position 19 is Spirited Away (129), position 20 is ID 20
+    # Verify first 18 are IDs 1-18, position 19 is Spirited Away (129), then IDs 20-39
     result_ids = [movie.tmdb_id for movie in result_movies]
     assert result_ids[:18] == list(range(1, 19)), "First 18 should be movies 1-18"
     assert result_ids[18] == 129, "Position 19 should be Spirited Away (first occurrence)"
-    assert result_ids[19] == 20, "Position 20 should be movie 20 (from page 2 after duplicate)"
+    assert result_ids[19:] == list(range(20, 40)), "Then movies 20-39 (page 2 after duplicate)"
 
     # Verify no duplicate of ID 129
     assert result_ids.count(129) == 1, "Spirited Away should appear exactly once"
@@ -390,7 +391,7 @@ def test_buffer_empty_results_after_deduplication() -> None:
     """Test buffer handles edge case of empty results after deduplication.
 
     Scenario: Page 1 has 10 movies, page 2 returns only duplicates (all 10 seen before).
-    Expected: Return 10 unique movies, continue to page 3 if needed to try reaching 20.
+    Expected: Continue past the all-duplicate page 2 to page 3 and return all 30 unique.
     """
     # Arrange: Page 1 with 10 movies (IDs 1-10)
     page1_movies = [
@@ -435,14 +436,14 @@ def test_buffer_empty_results_after_deduplication() -> None:
         fetch_next_page_func=mock_fetch,
     )
 
-    # Assert: Should continue past empty page 2 to page 3, return 20 unique
-    assert len(result_movies) == 20, "Should return 20 unique movies"
+    # Assert: Should continue past empty page 2 to page 3, return 30 unique
+    assert len(result_movies) == 30, "Should return 30 unique movies"
     assert pages_consumed == 3, "Should consume pages 1, 2 (all dupes), and 3"
 
-    # Verify IDs are 1-20 (10 from page 1, 0 new from page 2, 10 from page 3)
+    # Verify IDs are 1-30 (10 from page 1, 0 new from page 2, 20 from page 3)
     result_ids = [movie.tmdb_id for movie in result_movies]
-    assert result_ids == list(range(1, 21)), "Should have movies 1-20"
-    assert len(set(result_ids)) == 20, "All IDs should be unique"
+    assert result_ids == list(range(1, 31)), "Should have movies 1-30"
+    assert len(set(result_ids)) == 30, "All IDs should be unique"
 
     # Verify both buffer pages were fetched
     assert mock_fetch.call_count == 2
@@ -500,13 +501,13 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
     )
 
     # Assert: Should deduplicate ID 15, filter out 2019/2018 movies,
-    # return 20 unique from 2020-2024
-    assert len(result_movies) == 20, "Should return 20 unique movies"
+    # return all 35 unique from 2020-2024
+    assert len(result_movies) == 35, "Should return 35 unique movies"
     assert pages_consumed == 2, "Should consume pages 1 and 2"
 
-    # Verify IDs are 1-20 (no old movie IDs 100, 101)
+    # Verify IDs are 1-35 (no old movie IDs 100, 101)
     result_ids = [movie.tmdb_id for movie in result_movies]
-    assert result_ids == list(range(1, 21)), "Should have movies 1-20"
+    assert result_ids == list(range(1, 36)), "Should have movies 1-35"
     assert 100 not in result_ids, "Old movie 100 should be filtered out"
     assert 101 not in result_ids, "Old movie 101 should be filtered out"
     assert result_ids.count(15) == 1, "ID 15 should appear exactly once (deduplicated)"
@@ -516,3 +517,38 @@ def test_buffer_deduplication_with_filters_applied_to_buffer_pages() -> None:
         assert movie.release_date is not None, f"Movie {movie.tmdb_id} should have release_date"
         year = movie.release_date.year
         assert 2020 <= year <= 2024, f"Movie {movie.tmdb_id} year {year} should be 2020-2024"
+
+
+def test_buffer_keeps_every_title_from_the_page_it_tops_up_from() -> None:
+    """A top-up returns every unique title it read, not only the first 20.
+
+    The next request starts after the last page read, so a title held back here would never
+    be shown.
+    Scenario: page 1 has 19 qualifying movies and page 2 has 20 more.
+    """
+    page1_movies = [
+        create_tmdb_movie(
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
+        )
+        for i in range(1, 20)
+    ]
+    page2_movies = [
+        create_tmdb_movie(
+            tmdb_id=i, title=f"Movie {i}", release_date="2023-01-01", vote_average=7.0
+        )
+        for i in range(20, 40)
+    ]
+    mock_fetch = create_mock_fetch_func(
+        {2: create_paginated_tmdb_response(page2_movies, page=2, total_pages=5)}
+    )
+
+    result_movies, pages_consumed = apply_buffer_if_needed(
+        filtered_movies=[convert_to_schema(movie) for movie in page1_movies],
+        current_page=1,
+        total_pages=5,
+        params=BrowseServiceParams(),
+        fetch_next_page_func=mock_fetch,
+    )
+
+    assert [movie.tmdb_id for movie in result_movies] == list(range(1, 40))
+    assert pages_consumed == 2

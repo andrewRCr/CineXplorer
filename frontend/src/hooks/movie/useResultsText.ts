@@ -35,11 +35,11 @@ export function useInfiniteResultsText(
 /**
  * Generate results text for sequential pagination mode
  *
- * Shows: "Showing X-Y of Z results" for discrete page ranges
+ * Shows: "Showing X-Y of Z results" for discrete page ranges. Pages vary in size,
+ * so the range starts after the results on the pages before this one.
  */
 export function useSequentialResultsText(
-    pageIndex: number,
-    pageSize: number,
+    resultsBefore: number,
     currentPageCount: number,
     totalResults: number | undefined,
     isLoading: boolean,
@@ -48,10 +48,10 @@ export function useSequentialResultsText(
         if (isLoading && currentPageCount === 0) return "Loading results...";
         if (currentPageCount === 0) return "";
 
-        const startIndex = pageIndex * pageSize + 1;
-        const endIndex = pageIndex * pageSize + currentPageCount;
+        const startIndex = resultsBefore + 1;
+        const endIndex = resultsBefore + currentPageCount;
         const totalText = formatTotalResults(totalResults);
 
         return `Showing ${startIndex.toLocaleString()}-${endIndex.toLocaleString()} of ${totalText} results`;
-    }, [pageIndex, pageSize, currentPageCount, totalResults, isLoading]);
+    }, [resultsBefore, currentPageCount, totalResults, isLoading]);
 }

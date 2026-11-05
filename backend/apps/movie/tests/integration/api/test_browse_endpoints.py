@@ -589,7 +589,7 @@ class TestDataQuality:
         TMDB quirk), duplicates must be filtered out.
 
         Scenario: TMDB page 1 has 18 movies, page 2 has 5 movies including
-        a duplicate (ID 18). Buffer should deduplicate and return 20 unique.
+        a duplicate (ID 18). Buffer should deduplicate and return all 22 unique.
         """
         # Page 1: 18 unique movies (not enough to fill 20-movie target)
         page1_movies = [
@@ -669,9 +669,9 @@ class TestDataQuality:
         # Verify no duplicates
         assert len(result_ids) == len(set(result_ids)), "Duplicate movie IDs found in results"
 
-        # Buffer should return exactly 20 unique movies (target page size)
+        # Buffer returns every unique movie it read
         # Page 1 had 18, page 2 added 4 new (19, 20, 21, 22) with 1 duplicate (18)
-        assert len(data["results"]) == 20
+        assert sorted(result_ids) == list(range(1, 23))
 
         # ID 18 should appear exactly once (first occurrence kept)
         assert result_ids.count(18) == 1

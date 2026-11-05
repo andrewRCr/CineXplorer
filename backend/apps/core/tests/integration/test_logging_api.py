@@ -242,9 +242,11 @@ class TestFrontendLogEndpoint:
         # Should still succeed, message just gets truncated internally
         assert response.status_code == 201
 
-        # Verify truncation occurred in logged message
-        assert len(caplog.records) == 1
-        logged_message = caplog.records[0].message
+        # Verify truncation occurred in logged message. caplog also captures the request
+        # middleware's own logger, so count only the frontend logger's records.
+        frontend_records = [record for record in caplog.records if record.name == "frontend"]
+        assert len(frontend_records) == 1
+        logged_message = frontend_records[0].message
         # Message should be "[FRONTEND] " + 50 chars + "…[truncated]"
         assert "[FRONTEND] " in logged_message
         assert "X" * 50 in logged_message

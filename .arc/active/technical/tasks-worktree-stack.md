@@ -536,3 +536,17 @@ and remove it after its branch merges.
   observation remains recorded; no implementation changes were made to obtain this CI evidence.
 - **Next:** completion preparation starts at `archive-completed.md` § 1b. Code review remains the later, separate
   stage. Local verification documentation changes remain uncommitted.
+
+### 2026-11-04 · Code review · Author check
+
+- **Scope:** the complete 24-file change from `031327a5` through `21b62eef`, including completion documentation.
+  This is the author preflight, separate from the earlier independent criteria verification.
+- **Rubric:** scope, cross-task consistency, cleanup, documentation drift, unresolved markers, correctness and
+  explicit error paths. Inspected the command/refusal boundaries, Compose configuration, tests, guidance and
+  resulting source dependencies together.
+- **Result:** no actionable findings. No implementation changes were made. The completion-document commit's hooks
+  passed; the full local and hosted checks remain recorded against their actual subjects in the verification log.
+- **Review route:** the local fresh-context pass was not launched. After the Owner raised the hosted option,
+  prepared PR-based CodeRabbit review under `archive-completed.md` § 6, with the request held until the final
+  published head passes CI and publication/request approval is given. The author preflight supplies no independent
+  review evidence.

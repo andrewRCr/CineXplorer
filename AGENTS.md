@@ -31,7 +31,8 @@ Adapted from arc-framework's `standard-review/v1` rubric; maintained by hand in 
 - Repository contract coherence — Check the change against `.arc/reference/constitution/DEVELOPMENT-RULES.md` and the
   strategy docs indexed in `.arc/reference/strategies/STRATEGY-INDEX.md`: business logic in the backend service layer,
   not API routes; frontend styling through semantic tokens; no unjustified `typing.Any`; no planning IDs, process
-  names or `.arc/` references in code, tests or durable docs outside `.arc/`; PR text free of process vocabulary.
+  names or `.arc/` references in code, tests or durable docs outside `.arc/`, subject to the explicit exception in
+  DEVELOPMENT-RULES for the worktree script's seeding call, flag and test stand-in; PR text free of process vocabulary.
 
 ### Finding requirements
 

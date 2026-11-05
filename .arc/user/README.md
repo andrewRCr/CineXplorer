@@ -26,7 +26,7 @@ guessed.
 
 ## Who writes what, and when
 
-- **`{name}/SESSION-NOTES.md`**, in the checkout that runs the work unit: created when its worktree is provisioned
+- **`{name}/SESSION-NOTES.md`**, in the checkout that runs the work unit: created by `create --work-unit`
   (`worktree-sessions.md`), at activation for a work unit run in place (`activate-work-unit.md`), or when its
   incidental task list is created (`manage-incidental-work.md`). The agent updates its pointer fields at every task and
   phase stop; the handoff (`session-handoff.md`) replaces its sections. Session start (`session-init.md`) and the

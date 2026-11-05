@@ -9,60 +9,61 @@ Caddy on 8444, the frontend dev server, the backend, `dev-db` and `redis`.
 
 ## When to Use One
 
-A worktree suits work that does not need the browser stack:
+A worktree suits planning, implementation and browser work against its own code and database:
 
 - Planning, review and documentation
 - Errands touching CI, configuration or documentation ([run-errand.md](run-errand.md))
-- Frontend work, checked by host-side tests, lint and type-check
-- Backend work, tested in the worktree's own test stack
+- Frontend work, checked by host-side tests, lint and type-check, and viewed in its browsable stack
+- Backend work, tested in the worktree's own stack in either mode
 
-What stays on the primary: anything viewed in the browser on 8444, OAuth sign-in (its origins name the primary's
-address), and the dev database's data.
+What stays on the primary: OAuth sign-in (its origins name the primary's address) and its development data. A
+worktree's browsable stack serves its own code and fresh database on its own port.
 
 ## Provisioning
 
-From the primary's root, for a branch `{type}/{name}`:
+From the primary's root:
 
 ```bash
-W="${PWD}.{name}"
-git fetch origin
-git worktree add -b {type}/{name} "$W" origin/main
-
-# Gitignored setup a new checkout does not carry
-for f in backend/config/.env frontend/.env frontend/.env.development infrastructure/.env; do
-  cp "$f" "$W/$f"
-done
-printf '\nCOMPOSE_PROJECT_NAME=cinexplorer-{name}\n' >> "$W/infrastructure/.env"
-for d in .venv-backend .claude .codex; do
-  ln -sfT "$PWD/$d" "$W/$d"
-done
-
-cd "$W"
-docker compose -f infrastructure/docker-compose.yml config | grep '^name:'   # name: cinexplorer-{name}
-(cd frontend && npm ci && npm run typegen)
+node scripts/worktree.mjs create technical/{name} --work-unit  # planned work, with starting notes
+node scripts/worktree.mjs create fix/{name}                   # an errand, without notes
+node scripts/worktree.mjs create fix/{name} --existing        # an existing local or origin branch
 ```
 
-- **Branch:** `-b` cuts a new branch from `origin/main`, for an errand or a work unit. A work unit is provisioned
-  before its planning starts: the PRD and task list are written and committed on this branch, and
-  [activate-work-unit.md](activate-work-unit.md) runs here later, skipping its Step 1. For an existing branch, such
-  as one under review, run `git worktree add "$W" {branch}` instead; git refuses while another checkout has that
-  branch.
-- **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`. Without it the worktree's project
-  is `infrastructure` too, and every `docker compose` command there acts on the primary's containers and volumes.
-  Never copy `infrastructure/.env` without adding the name, and check it with `config` before the first Compose
-  command. The `grep` keeps the rest of `config`'s output, which includes values from the `.env` files, off the screen.
-- **Links:** `.venv-backend`, `.claude` and `.codex` point at the primary's, so the worktree shares its Python
-  environment, harness settings and recovery hooks. `ln -sfT` replaces a link left by an earlier run instead of
-  writing a new one inside the primary's folder. `.gitignore` names them without a trailing slash, which matches a
-  link as well as a folder; keep it that way, or the links show as untracked.
+`create` fetches `origin`, creates the sibling `{primary}.{name}` and provisions it. New branches start from
+`origin/main` with no upstream; the printed first-push command sets their own upstream. `--existing` refuses a
+branch checked out elsewhere or lacking the worktree override: merge `main` into an older branch first.
+`--work-unit` cannot be combined with `--existing`.
+
+To prepare a checkout another tool created, or bring an existing worktree up to date, run from that worktree:
+
+```bash
+node scripts/worktree.mjs provision
+```
+
+Provisioning copies missing ignored files matched by `.worktreeinclude` (backend and frontend env files and
+certificates), links installed shared tools, appends missing project, browser-port and signing-key values to
+`infrastructure/.env`, checks the resolved Compose project name, then runs `npm ci` and `npm run typegen` in
+`frontend/`. Docker must be running. Repeating it preserves existing files and keys and repeats the check and
+install. Missing shared-tool folders are skipped; a later run links them once installed in the primary. A failed
+`create` leaves its checkout in place and prints the commands to finish setup there.
+
+- **Branch:** a work unit is provisioned before planning starts: the PRD and task list are written and committed on
+  this branch. [activate-work-unit.md](activate-work-unit.md) runs in the worktree later, skipping its branch step.
+- **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`; provisioning confirms it is
+  `cinexplorer-{name}` and prints only the name, keeping the env values in the rest of `config` off the screen.
+  Without a name, a base-file command would act on the primary's `infrastructure` project; the worktree override
+  refuses to resolve instead.
+- **Links:** `.venv-backend`, `.claude` and `.codex` point at the primary's, sharing its Python environment, harness
+  settings and recovery hooks. Provisioning creates only missing entries. `.gitignore` names them without a
+  trailing slash, which matches a link as well as a folder; keep it that way.
 - **Install warnings:** npm holds back the install scripts of esbuild and msw and says so. Neither is needed: esbuild
   runs from its platform package, and the project configures no msw worker directory.
 - **Codex:** no step of its own. A linked worktree uses the primary's project trust and its approved project hooks,
   so approve those hooks once in a Codex session on the primary (`/hooks`).
-- **Notes:** a work unit's session notes live in the worktree's own `.arc/user/{identity}/{name}/`. Create them
-  here from [session-handoff.md](session-handoff.md)'s skeleton: State `planning`, Task List and Next Task
-  `[none yet]`, and Next Action the PRD. Activation later turns them to execution. The inbox and working memory stay
-  in the main checkout ([user-inbox.md](user-inbox.md)).
+- **Notes:** `create --work-unit` writes a work unit's starting notes in its own
+  `.arc/user/{identity}/{name}/SESSION-NOTES.md`: State `planning`, Task List and Next Task `[none yet]`, and Next
+  Action the PRD. Activation later turns them to execution. The inbox and working memory stay in the main checkout
+  ([user-inbox.md](user-inbox.md)).
 
 ## Same-Session Errands
 
@@ -83,9 +84,9 @@ worktree removal and works while the primary remains on an older branch; it does
 hook source. `.claude` hook configuration is unchanged.
 
 `$errand <concern or inbox title>` follows [run-errand.md](run-errand.md) in the current conversation. The agent
-creates and provisions a sibling checkout, then records its selection with `errand-enter`, run from the session
-home. For documentation and harness work, provisioning needs only the shared tool/harness links; copy environment
-files, install frontend dependencies or start a test stack only when the checks need them.
+creates and provisions a sibling checkout with `node scripts/worktree.mjs create {type}/{name}`, then records its
+selection with `errand-enter`, run from the session home. Creation needs Docker running and installs frontend
+dependencies even for documentation or harness work; start a stack only when the checks need it.
 
 The session-scoped record lives in shared Git metadata and uses the Codex thread/session identifier. The identifiers
 must agree; missing or different identifiers stop entry. Recovery validates the checkout's registration, repository
@@ -105,16 +106,17 @@ to the entire parent directory. Git metadata and the installed harness are share
 - **Pyright and markdown lint**, at CI's pins, from the root:
   `npx --yes pyright@1.1.414 backend/apps/ backend/config/ --project backend` and
   `npx --yes markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"`
-- **Backend tests and API types:** only through the worktree's own test stack (§ Test Stack)
+- **Backend tests and API types:** only through the worktree's own stack, in test or browser mode
 
 ## Test Stack
 
-A worktree runs backend tests in its own test-only stack: `dev-db`, `redis` and an idle backend, with no published
-ports and a memory limit on each container (`infrastructure/docker-compose.test-stack.yml`). Every command names both
-compose files; the second one refuses to resolve until `infrastructure/.env` names the project.
+A worktree runs backend tests with `dev-db`, `redis` and the serving HTTPS backend, with no published ports and a
+memory limit on each container (`infrastructure/docker-compose.worktree.yml`). Every command names both Compose
+files; the override refuses to resolve until `provision` has supplied `COMPOSE_PROJECT_NAME`, `SITE_PORT` and
+`WORKTREE_SECRET_KEY` in `infrastructure/.env`.
 
 ```bash
-S="-f infrastructure/docker-compose.yml -f infrastructure/docker-compose.test-stack.yml"
+S="-f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml"
 docker compose $S up -d dev-db redis backend
 docker compose $S exec -T backend nice -n 15 pytest apps/            # the full suite
 docker compose $S exec -T backend nice -n 15 pytest apps/{app}/      # the apps a task touched
@@ -130,31 +132,63 @@ docker compose $S down                                               # when the 
   compose file and relies on `infrastructure/.env` naming the project, which provisioning confirms with `config`. In
   a worktree whose project is still `infrastructure`, it refuses rather than export the primary's schema.
 
-## Removal
+## Browsable Stack
 
-After the pull request merges, and before the branch is deleted: git refuses to delete a branch a worktree has checked
-out. Run removal commands from the primary. A separate conversation rooted in the worktree hands off and ends
-first. A same-session errand instead runs `errand-return` from its session home and confirms that home is active
-before removing the checkout; the conversation can then continue.
+From a provisioned worktree's root:
 
 ```bash
-W="${PWD}.{name}"
-docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \
-  config | grep '^name:'   # name: cinexplorer-{name}
-docker compose -f "$W/infrastructure/docker-compose.yml" -f "$W/infrastructure/docker-compose.test-stack.yml" \
-  down -v --rmi local
-git worktree remove "$W"
+node scripts/worktree.mjs browse
 ```
 
-Then delete the branch the caller's way, [archive-completed.md § 9](archive-completed.md#9-delete-child-branch) for a
-work unit or [run-errand.md § 6](run-errand.md#6-clean-up)'s `git branch -d` for an errand, and run
-`git fetch --prune`.
+This validates the effective Compose project name, including environment overrides, before starting the stack or
+changing its database. It then starts all five services with the `browser` profile, waits for them to run and for
+health checks to pass, then applies migrations and runs `seed_dev_data`. The printed address is
+`https://localhost:{SITE_PORT}`; sign in
+as `dev` with password `cinexplorer-dev`. The account is verified and the tracked blacklist is loaded. Repeating
+`browse` applies only new migrations, leaves an existing dev account unchanged and syncs the blacklist again.
 
-- **The stack step** applies to a worktree whose `infrastructure/.env` names a project. Naming the worktree's own files
-  by absolute path makes Compose read that worktree's `.env`; `config` must report its name before `down -v`, which
-  deletes that project's volumes (`--rmi local` also removes the backend image built for it). A worktree without the
-  file never had a stack and skips the step.
-- **A refusal** from `git worktree remove` protects uncommitted or untracked work. Inspect it; never `--force`.
-- **What goes:** the checkout's gitignored files, among them the copied `.env` files, `node_modules`, and a work
-  unit's session notes and review records, which [archive-completed.md](archive-completed.md) § 10 deletes anyway;
-  the merged task list's Review Log is the durable record. The links go, not the primary's folders they point to.
+`SITE_PORT` in `infrastructure/.env` drives the published port, frontend API URL and backend origins. Provisioning
+allocates the lowest unclaimed worktree port from 8445 to 8499. If another program holds it, stop the stack, change
+`SITE_PORT` to an unused port in that file and run `browse` again. Each stack has a separate signing key; cookies
+are still shared across ports on `localhost`, so keep one signed-in stack per browser profile. A second browser
+profile or a private window keeps a second stack signed in. Google and GitHub sign-in work only on the primary.
+A browser that has not trusted the development certificate asks again for each new port.
+
+Stop either mode with both files and the browser profile; this keeps all volumes:
+
+```bash
+docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml \
+  --profile browser down
+```
+
+## Removal
+
+After the pull request merges, run from the primary:
+
+```bash
+node scripts/worktree.mjs remove {name}
+```
+
+A separate conversation rooted in the worktree hands off and ends first. A same-session errand instead runs
+`errand-return` from its session home and confirms that home is active before removal; the conversation can then
+continue.
+
+`remove` fetches `origin` and refuses an unmerged branch, a locked worktree, uncommitted or untracked work, or an
+unexpected Compose project name before deleting anything. It stops and removes containers and removes volumes,
+networks and built images carrying the worktree's project label, even if the containers were already stopped or
+removed. It then removes the checkout, deletes the merged local branch and prunes remote-tracking refs. An env file
+that names no project skips Docker teardown. Remote branch deletion and archival remain the caller's steps
+([archive-completed.md § 9](archive-completed.md#9-delete-child-branch), [run-errand.md § 6](run-errand.md#6-clean-up)).
+
+For a review checkout or abandoned work whose branch must stay:
+
+```bash
+node scripts/worktree.mjs remove {name} --keep-branch
+```
+
+This skips only the merged-branch requirement and branch deletion; all other refusals and stack teardown still
+apply. An unmerged branch is never deleted by this script.
+
+Removal deletes the checkout's gitignored files: copied env files, `node_modules`, and a work unit's session notes
+and review records among them. Paused work keeps its worktree. The merged task list's Review Log is the durable
+review record; links are removed without touching the primary's folders they point to.

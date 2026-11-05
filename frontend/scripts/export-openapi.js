@@ -4,7 +4,7 @@
  *
  * Runs the backend's `export_openapi_schema` management command in the backend service
  * of this checkout's Compose project: the full stack in the main checkout, or a
- * worktree's test stack, whose infrastructure/.env names its own project. The output
+ * worktree's stack in test or browser mode, whose infrastructure/.env names its own project. The output
  * must parse as JSON before openapi.json is written, so a failed export leaves the
  * file as it was. CI exports the schema the same way.
  *

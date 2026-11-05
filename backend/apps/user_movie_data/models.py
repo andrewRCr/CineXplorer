@@ -1,8 +1,4 @@
-"""Models for a user's watchlist, ratings, reviews and viewing history.
-
-The companion models.pyi describes runtime attributes for consumers. Keep its
-field types in sync with these model definitions.
-"""
+"""Models for a user's watchlist, ratings, reviews and viewing history."""
 
 from __future__ import annotations
 
@@ -17,12 +13,16 @@ from django.db import models
 
 if TYPE_CHECKING:
     from apps.core.models import Movie
+    from apps.users.models import User
 
 
 class UserMovieData(models.Model):
     """Represents a user's data about a particular movie."""
 
-    user = models.ForeignKey(
+    if TYPE_CHECKING:
+        id: int
+
+    user: models.ForeignKey[User] = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
@@ -44,6 +44,4 @@ class UserMovieData(models.Model):
         unique_together = ("user", "movie")
 
     def __str__(self) -> str:
-        # ForeignKey attribute access - django-types limitation with related field access
-        # Pyright cannot infer .username and .title through the stub file
         return f"{self.user.username} - {self.movie.title}"

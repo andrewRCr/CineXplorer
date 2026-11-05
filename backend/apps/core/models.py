@@ -1,8 +1,4 @@
-"""Core database models.
-
-Keep the companion models.pyi declarations in sync when model fields change.
-The stub describes the runtime field types to consumers.
-"""
+"""Core database models."""
 
 from django.db import models
 

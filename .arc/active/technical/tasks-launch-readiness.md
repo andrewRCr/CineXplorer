@@ -2,9 +2,10 @@
 
 **PRD:** `prd-launch-readiness.md`
 **Created:** 2026-11-03
+**Completed:** 2026-11-05
 **Branch:** `technical/launch-readiness`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -111,7 +112,7 @@ authentication gaps that matter once sign-up is public are closed.
       initialization and send Django's token. Safe requests do not initialize it.
     - Checks: 178 related frontend tests passed (16 files), frontend lint, TypeScript and Prettier passed.
       The coupled cases exercise one CSRF contract across the direct browser request paths. Astra's bounded
-      source check found no material issue; the verification phase remains pending.
+      source check found no material issue.
 
 - [x] **2.3 Every unsafe request is CSRF-checked** (R20; Implemented 2, and Proven live 13 in 5.5)
 
@@ -159,7 +160,7 @@ authentication gaps that matter once sign-up is public are closed.
       profile loading. Updated the authentication reference and kept the effects-based credential-renewal exception.
     - Checks: 200 related frontend tests passed (16 files); type-aware lint, TypeScript, Prettier and markdown lint
       passed. Astra's bounded integration advice supported the shared promise and caller-owned failures; execution
-      and checks stayed here. Live verification of the fix remains in 5.5.
+      and checks stayed here. Live verification is recorded in 5.5.
 
 ### **Phase 3:** A failed email is a handled error, and the deployed host configures sign-in, its Site and health
 
@@ -239,8 +240,7 @@ authentication gaps that matter once sign-up is public are closed.
     - [x] **3.6.b Query the database:** the service runs `SELECT 1` on the default connection and maps database
       failures to a fixed 503 through the domain handler. Declared both responses, rewrote the endpoint description
       and regenerated only the health contract and its response types. Redis remains outside the readiness check.
-    - Checks: 241 core tests passed; Ruff lint/format, scoped Pyright and frontend TypeScript passed. The full
-      backend suite remains for CI/verification; the affected core and authentication apps have passed their checks.
+    - Checks: 241 core tests passed; Ruff lint/format, scoped Pyright and frontend TypeScript passed.
 
 ### **Phase 4:** The server deploys, backs up and cleans up on its own
 
@@ -250,14 +250,14 @@ authentication gaps that matter once sign-up is public are closed.
     - Extracted the existing documentation job into a reusable workflow that also runs on main pushes touching
       `.arc/**`. CI keeps its `markdown` job ID and `ci-ok` dependencies unchanged.
     - Checks: `actionlint` passed for both workflows, all 20 recovery-hook tests passed and markdown lint passed.
-      Hosted trigger/concurrency evidence remains in 5.2 and after merge.
+      Hosted PR evidence is recorded in 5.2; main-push checks remain for 6.2.
 
 - [x] **4.2 CI checks the production Caddyfile and Compose file** (R7; Implemented 7)
     - The images job validates Caddy immediately after the web build with non-secret placeholder inputs and a valid
       bcrypt fixture, then validates production Compose with the backend env example's absolute path.
     - Checks: built the current web production image under an isolated local tag; both validation commands passed.
       Caddy rejected a mounted copy with an invalid directive, and Compose rejected a syntax-error copy.
-      `actionlint` passed. The hosted job's evidence remains in 5.2.
+      `actionlint` passed. The hosted job's evidence is recorded in 5.2.
 
 - [x] **4.3 Write `infrastructure/deploy/deploy.sh`** (R1)
     - Added the six stable step markers, clean-checkout check, target checkout/tag update, configuration/pull/
@@ -268,7 +268,7 @@ authentication gaps that matter once sign-up is public are closed.
     - Checks: Bash syntax, ShellCheck and test-harness Ruff passed. Six disposable Ubuntu-container cases cover
       history priority, stopped-container fallback, no previous version, dirty refusal, migration failure and public
       health failure. All six guards failed under narrow behavioral reconstructions and passed after restoration.
-      Actual deployment/locking evidence remains in 5.2.
+      Actual deployment/locking evidence is recorded in 5.2.
 
 - [x] **4.4 Install the deploy entry point and restrict the CI key** (R2, R3, R5, R12)
     - Bootstrap installs the root-owned 755 entry point, private deploy-owned log/backup directories and the CI
@@ -285,15 +285,15 @@ authentication gaps that matter once sign-up is public are closed.
       Twelve narrow reconstructions failed their guards, then all tests passed after restoration. Corrected the
       test session launcher's missing `setsid --wait`, used deploy-owned history and distinct owner/CI fixture keys.
     - Astra's bounded implementation advice supported the private worker/follower, atomic outcome and post-lock
-      stale check; execution and validation stayed here. Real SSH restrictions remain for 5.3.
+      stale check; execution and validation stayed here. Real SSH restrictions are verified in 5.3.
 
 - [x] **4.5 Add the `deploy` job** (R4)
     - The staging environment job runs only on a main push after `ci-ok`, with read-only contents permission,
       no checkout and uncancelled `deploy-staging` concurrency. `ci-ok` remains independent of deployment.
     - The job writes its key/known-host line into private temporary files, uses only that key with strict host-key
       checking and SSH keepalives, and sends the run's full SHA as `deploy`. Cleanup preserves SSH's result.
-    - Checks: `actionlint` passed for both workflows and the diff is whitespace-clean. Hosted PR exclusion and
-      deployment behavior remain for 5.2 and after merge; no new privileged workflow triggers were added.
+    - Checks: `actionlint` passed for both workflows and the diff is whitespace-clean. Hosted PR exclusion is
+      verified in 5.2; main-push deployment checks remain for 6.2. No privileged workflow triggers were added.
 
 - [x] **4.6 Add the nightly backup and maintenance jobs** (R8, R11, R12)
     - Backup creates a private custom-format dump, checks its archive, uploads through pinned `rclone/rclone:1.75.2`
@@ -308,7 +308,7 @@ authentication gaps that matter once sign-up is public are closed.
       Ruff passed. The official pinned rclone image ran successfully. All 20 deployment-harness tests passed after
       nine behavioral guard reconstructions; both bootstrap key cases remained idempotent. Job tests cover dump,
       validation, upload and heartbeat failures, independent cleanup commands and archive deletion before success.
-      Actual R2/monitor pings, restored data and first-night evidence remain in 5.4.
+      Actual R2/monitor pings, restored data and first-night evidence are recorded in 5.4.
 
 - [x] **4.7 Update the runbook, `infrastructure/deploy/README.md`** (R26, with R9, R10 and R14)
     - Updated staging's supported flows and first-time setup for the separate CI key, restricted GitHub environment,
@@ -322,7 +322,7 @@ authentication gaps that matter once sign-up is public are closed.
       first-night checks and the production hostname move. Preserved SSH recovery and persistent-state guidance.
     - Checks: all 34 shell blocks passed `bash -n`; all 33 Compose calls select the production file and external env
       file; markdown lint and whitespace checks passed. Corrected mechanical wrapping and kept project-process
-      references out of the durable runbook. External setup/live evidence remains in Phase 5.
+      references out of the durable runbook. External setup/live evidence is recorded in Phase 5.
 
 ### **Phase 5:** Staging takes this change and proves it live
 
@@ -358,7 +358,7 @@ authentication gaps that matter once sign-up is public are closed.
     - PR CI `41906416896` and manual CI `41906505768` passed at `7608822a`, publishing its images. The merged backend
       suite passed 990 tests with 94.71% coverage; backend type, lint, format and task markdown checks passed.
     - On staging, bootstrap installed the entry point, restricted CI key and nightly units; its second run reported
-      zero changed and 46 unchanged steps. Timers schedule the next backup/maintenance for 10:00/10:30 UTC.
+      zero changed and 46 unchanged steps. Timers schedule backup/maintenance for 10:00/10:30 UTC.
     - Deployed `7608822a` inside the held operations shell. Public health passed, Site 1 acquired the staging domain,
       and history recorded `manual` with the running `f49b6837` image as the previous version. A backup waited until
       that shell exited, then uploaded and cleaned up successfully.
@@ -410,7 +410,7 @@ authentication gaps that matter once sign-up is public are closed.
       `/api/auth/refresh` returning 200. Two same-profile tabs also stayed signed in with the movie after six minutes.
     - Live mail logs show accepted sends (201), with no raw provider response lines or known account addresses or
       provider secrets found by the private audit. Markdown, criterion-copy and runbook shell checks passed; the
-      deployed-code CI remains the exact `cf0ef11b` run. Formal verification remains in Phase 6.
+      deployed-code CI remains the exact `cf0ef11b` run.
 
 - [x] **5.6 Integrate current main and refresh staging** (Owner-approved compatibility work before verification)
     - [x] **5.6.a Merge and check compatibility:** merged main through `500af329`, preserving the exact
@@ -433,10 +433,15 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
-    - Implemented 7 and 8 cite the draft pull request's latest run (5.2); where `archive-completed.md` opens the pull
-      request, mark that draft ready instead
-    - The Proven after merge criteria and 6.2 stay open at this point by design; the report names them
+- [x] **6.1 Verify the work**
+    - The author criteria walk and a fresh-context independent verification pass covered the complete work unit:
+      25 pre-merge criteria met, four superseded, and three explicitly post-merge criteria left for 6.2.
+      Evidence: `test-evidence/6.1-criteria-report.json` and `adversarial-review/verification-pass1/report.txt`
+      beside the session notes. The independent pass returned no findings.
+    - Full local backend/frontend tests, lint, format, types, markdown, API drift and production configuration
+      checks passed. Implemented 7 and 8 cite PR CI `42059086109` at `5bdf35ac`.
+    - Draft PR #78 remains draft through the separate code-review stage; mark it ready where the completion
+      workflow reaches publication. The post-merge criteria and 6.2 remain open by design.
 
 - [ ] **6.2 Prove the post-merge criteria** (Proven after merge 1–3)
     - From the main checkout, after the pull request merges and before archiving (`archive-completed.md` Phase 3):
@@ -454,37 +459,28 @@ authentication gaps that matter once sign-up is public are closed.
   cookie, and missing-cookie initialization. Related frontend tests: 184 passed; lint, TypeScript and scoped
   backend checks passed.
 
-- **Backend style:** `main`'s `ruff format` and Google-style docstring rules are merged into this branch; backend
-  code passes `ruff format --check` and `ruff check` with them
-- **Frontend standards queue:** before the first frontend commit (2.1), merge `main`, which now formats the frontend
-  with Prettier and checks it in CI (`format:check`), and run `npm run format` on this branch's frontend files. That
-  merge also brings TMDB error changes with a regenerated `openapi.json` and `api.ts`: when a merge conflicts in
-  either, regenerate them rather than resolving by hand. The frontend tests here use `main`'s shared Mock Service
-  Worker server (`tests/mocks/server.ts`, handlers under `tests/mocks/handlers/`, started in `tests/setup.ts` with
-  `onUnhandledRequest: 'error'`), adding each test's handlers with `server.use`. The type, lint and React rule
-  tightenings, the `logger.ts` import fix and frontend coverage in `ci.yml`: whichever of this branch and each lands
-  second merges `main` and passes them
-- **`main`'s development rules** (testing, errors and logging, service layer, frontend data):
-    - Backend tests run against the real database and replace only the named boundaries (TMDB, the OAuth providers,
-      ZeptoMail, time) at their client; a test that would patch the project's own code means the code needs a seam
-    - Frontend tests find elements by role and accessible name and act through `userEvent`
-    - Logs carry no email address, token or key at any level (3.1, 3.2)
-    - Services raise domain exceptions that one API-layer handler maps to responses (3.2.b; Phase 3 note)
-    - Server data is read through TanStack Query; R28's refresh in `useAuth`'s effects is its recorded exception
-- **The profile endpoint's removal** (pull request #59, merged on `main`) rewrites `test_csrf_protection.py` around
-  `PATCH /api/user-movie-data/{id}` and changes `test_user_api.py`; 2.3.a and 2.4 start from those files as `main`
-  leaves them
-- **The backend lint and type job:** if it lands first, its job is in `ci-ok`'s `needs` and runs like every other job;
-  whichever lands second merges `main` and keeps both. The path filter (4.1) needs nothing from it
-- **The browsable stack per worktree** may also change `infrastructure/`: whichever merges second merges `main` first
+- **Backend and frontend standards:** integrated Ruff formatting/docstring rules, backend lint/type checks,
+  frontend Prettier/type-aware lint and coverage jobs from `main`. The reusable docs job retains the hook tests,
+  and `ci-ok` retains the complete job set.
+- **Generated contracts and frontend tests:** regenerated `openapi.json` and `api.ts` after API changes rather
+  than resolving generated conflicts by hand. Frontend tests use the shared Mock Service Worker server
+  (`tests/mocks/server.ts`, handlers under `tests/mocks/handlers/`, started in `tests/setup.ts` with
+  `onUnhandledRequest: 'error'`), adding handlers with `server.use`.
+- **Testing and error boundaries:** backend tests use the real database and replace external services at their
+  clients; frontend tests use accessible queries and `userEvent`. New send-failure paths raise domain exceptions
+  mapped in the API layer, with logs excluding addresses, tokens and keys. R28's credential-renewal effects remain
+  the recorded exception to reading server data through TanStack Query.
+- **Upstream endpoint and worktree changes:** the #59 endpoint changes supplied the CSRF test baseline around
+  `PATCH /api/user-movie-data/{id}` and `test_user_api.py`. Worktree stack tooling and the remaining current-main
+  changes were integrated before the staging refresh in 5.6.
 
 ### Phase 1
 
 - **Django Ninja's throttle state:** `SimpleRateThrottle.allow_request` sets `self.key`, `self.history` and
   `self.now`, and `throttle_success` and `wait()` read them (`ninja/throttling.py`); the scope is part of the cache
   key (`throttle_<scope>_<ident>`). The test-mode bypass in `allow_request` returns before any of the three is set
-- **1.2's hold point:** wrap the throttle object's `cache.get` for the first thread so it waits on a
-  `threading.Event` after reading, released once the second thread's `allow_request` has returned; give every wait a
+- **1.2's hold point:** the concurrency test wraps the throttle object's `cache.get` so the first thread waits on a
+  `threading.Event` after reading, released once the second thread's `allow_request` has returned. Every wait has a
   timeout so a deadlock fails the test instead of hanging it. The wrapper calls through to the real cache, so the test
   still reads and writes Redis. The `wait()` case needs no wrapper: the first thread
   calls `allow_request` (refused, its key filled beforehand), the second runs a whole admitted request, then the
@@ -498,31 +494,31 @@ authentication gaps that matter once sign-up is public are closed.
 ### Phase 2
 
 - **Django's checks:** the test client skips CSRF unless created with `enforce_csrf_checks=True`. Django Ninja marks
-  its views CSRF-exempt; allauth's `browser_view` does not (only `app_view` does), but Django's middleware is not
-  installed today, so allauth's browser endpoints are unchecked until 2.3. Django checks a present `Origin` against
+  its views CSRF-exempt; allauth's `browser_view` does not (only `app_view` does), but Django's middleware was not
+  installed at the baseline; 2.3 added checks to allauth's browser endpoints. Django checks a present `Origin` against
   the host and `CSRF_TRUSTED_ORIGINS`, and the `Referer` only on HTTPS
-- **The token cookie:** `GET /api/csrf/` sets `csrftoken` itself, and after 2.3 Django's `process_response` sets it
+- **The token cookie:** `GET /api/csrf/` sets `csrftoken` itself, and Django's `process_response` sets it
   too, since `get_token` ran; the response holds one cookie per name, so it still sends one `Set-Cookie`. allauth's
-  `browser_view` calls `get_token`, so the session request sets the cookie from 2.3 on
-- **2.2 lands before 2.3 safely:** the cookie the frontend starts reading in 2.2 is already set by `GET /api/csrf/`,
-  and nothing checks the token until 2.3
+  `browser_view` calls `get_token`, so the session request sets the cookie
+- **CSRF rollout order:** 2.2 began reading the cookie already set by `GET /api/csrf/`; 2.3 then enabled server
+  enforcement after the client could send it
 - **The new error bodies** (R20's `403`, R22's and R13's `503`) are `{"detail": message}` with no debug text in any
   environment: build them directly, not with `build_error_response` (`apps/core/utils/http.py`), which makes the
   old `{"error"}` shape and adds debug text under `detail` when `DEBUG` is on. Tests assert the whole body
 - **One refresh in flight:** `ROTATE_REFRESH_TOKENS` and `BLACKLIST_AFTER_ROTATION` are on, so a second refresh
-  presenting the same `refresh_token` cookie fails. The interceptor already queues `401`s behind its `isRefreshing`
-  flag; the shared function keeps that by returning the pending request. The interceptor's failure path (clearing
-  the tokens and a full reload to `/login?session_expired=true`) stays in the interceptor, so a failed refresh the
+  presenting the same `refresh_token` cookie fails. The interceptor previously queued `401`s behind an `isRefreshing`
+  flag; the shared function coordinates all callers by returning one pending request. The interceptor retains
+  its failure path (clearing tokens and a full reload to `/login?session_expired=true`), so a failed refresh the
   hook started only signs the user out
-- **Storage and other tabs:** the interceptor stores today with `setAuthTokens(newAccessToken)`, whose default is
-  `localStorage`, while a sign-in without "remember me" (the login form's default) uses `sessionStorage`;
+- **Storage and other tabs:** before renewal was shared, the interceptor used `setAuthTokens(newAccessToken)`,
+  whose default is `localStorage`, while a sign-in without "remember me" uses `sessionStorage`;
   `getCurrentStorageType` reports which holds the token. Tabs share `localStorage` and the refresh-token cookie, and
   Chrome runs hidden tabs' timers on the same minute boundary, so two idle tabs' 60-second checks refresh at the same
   instant; the one presenting a cookie the other has rotated gets `401`, and `clearAuthTokens` would clear the token
   the other just stored. Under the lock the second refresh starts after the first has finished: it finds the new
   token in `localStorage`, or, for a sign-in in `sessionStorage` or a write it cannot see yet, posts with the rotated
   cookie and succeeds. jsdom has no `navigator.locks` (Vitest's jsdom environment replaces Node's `navigator`): 2.5.b
-  installs a minimal stand-in (a queue per lock name), as `tests/setup.ts` installs `matchMedia`, for every case but
+  installed a minimal stand-in (a queue per lock name), as `tests/setup.ts` installs `matchMedia`, for every case but
   the fallback's. "Expires later" compares the tokens' `exp`
   (`getTokenExpiration`)
 - **jsdom:** `HTMLFormElement.prototype.submit` is not implemented, so the OAuth start tests spy on it, the boundary
@@ -546,8 +542,8 @@ authentication gaps that matter once sign-up is public are closed.
   `_ZeptoMailEmailMessage__email_data`, which has no public accessor: the exact pin and the multipart test guard it.
   Send with `requests.post(..., timeout=(10, 10))`, so the test stand-in on `HTTPAdapter.send` still receives the
   request and its `timeout`
-- **The resend token:** `_validate_resend_token` deletes the key when it checks it (`cache.delete(cache_key)`), and
-  `RESEND_TOKEN_EXPIRY_SECONDS` is `600`; the send is `email_address.send_confirmation(request)`. Django's
+- **The resend token:** validation reads the key; only a successful `email_address.send_confirmation(request)`
+  consumes it. A failed send renews its lifetime to `RESEND_TOKEN_EXPIRY_SECONDS` (`600`). Django's
   `RedisCache` has no `ttl()`: read and shorten the remaining lifetime through Redis's `TTL` and `EXPIRE` on the
   cache's client and the key the cache made
 - **allauth's password request** lets the adapter's `EmailDeliveryError` out of its view, so `process_exception`
@@ -560,10 +556,8 @@ authentication gaps that matter once sign-up is public are closed.
   propagate to the root logger where `caplog` listens, so tests capture them with `assertLogs`, as `test_logging.py`
   does, and count that logger's records only (`django.request` also logs each `5xx`). 3.1's backend logs through
   `logging.getLogger(__name__)`, which propagates, so its tests keep `caplog`
-- **How the resend service reports a failed send:** merge `main` before 3.2. If it then has the domain exceptions
-  and the API-layer handler that maps them, the service raises the "upstream service unavailable" exception and the
-  handler answers R22's `503`; otherwise the service returns the failure the way its other outcomes return today,
-  and moving the whole service is left to that handler's own change
+- **How the resend service reports a failed send:** `main`'s domain exceptions and API-layer handler were merged
+  before 3.2. The service raises `UpstreamError`, and the handler returns R22's fixed `503` body
 - **A real database failure for the health check:** in a test marked `django_db(transaction=True)`, point the
   default connection's `PORT` at a closed port and close the connection, so the next query fails in the driver;
   restore the setting and close the connection again afterwards. Nothing in the project is patched
@@ -573,7 +567,8 @@ authentication gaps that matter once sign-up is public are closed.
   the toast suppression lives in the response interceptor alone
 - **`load_settings`** runs the settings module in a subprocess without re-reading `config/.env`; a `None` value
   removes a variable, so pass `None` for each OAuth variable a case does not set
-- **The health check** is already what both Compose files' backend health checks call; neither file changes
+- **The health check** is what both Compose files' backend health checks call; their probes use its database
+  readiness result
 
 ### Phase 4
 
@@ -590,18 +585,20 @@ authentication gaps that matter once sign-up is public are closed.
   deploy's status. Losing the session ends only the follower
 - **`bootstrap.sh`'s helpers:** `write_file PATH MODE [OWNER GROUP]` reads the content from standard input and reports
   `CHANGED` or `UNCHANGED`; `ensure_dir` likewise; `ensure_service` enables and starts a unit, and starting a timer
-  schedules it without running its job. The `authorized_keys` line today copies root's keys
+  schedules it without running its job. The installed `authorized_keys` preserves root's keys
+  and appends the restricted CI key when supplied
 - **A job before its inputs exist:** `EnvironmentFile=` without the `-` prefix fails the unit naming the missing file,
   and a missing script fails its start naming the path, which is how R12's journal requirement holds; keep both
-- **Workflow checks:** `actionlint` on each workflow change, as the previous change ran it; `ci-ok`'s `needs` names
-  `markdown`, which keeps its job id when it calls the reusable workflow
+- **Workflow checks:** `actionlint` checked both workflows; `ci-ok`'s `needs` names `markdown`, which retains its
+  job id when it calls the reusable workflow
 
 ### Phase 5
 
-- **The restore rehearsal's local stack** runs in Docker Desktop's distro; check `memcap_policy` first, and keep to
-  the production Compose file's memory limits
-- **Order on the server:** `ci-deploy.pub` and `ops.env` (5.1) exist before the bootstrap's first run (5.2), so that
-  run installs the CI key's line and the units find their settings; the credentials (5.5) come last
+- **The restore rehearsal's local stack** ran in Docker Desktop's distro, following the host's memory policy
+  and explicit container memory limits
+- **Order on the server:** `ci-deploy.pub` and `ops.env` (5.1) were installed before the bootstrap's first run
+  (5.2), which installed the restricted key and units with their settings present. OAuth/mail credentials were
+  activated only after the hardened deployment passed its checks (5.5)
 
 ## Success Criteria
 
@@ -615,22 +612,37 @@ what was seen and where.
 
 ### Implemented (checkable locally and in CI)
 
-- [ ] Backend tests show that requests to sign-in do not count against the registration or resend-verification
+- [x] Backend tests show that requests to sign-in do not count against the registration or resend-verification
   throttles, nor the reverse, and that a test which interleaves two requests from different client addresses on one
   throttle object, across two threads, records each under its own key.
-- [ ] Backend tests with `enforce_csrf_checks=True` show that each of these, sent without a token or with a token that
+
+    - Evidence: Tests: test_rate_limiting.py cross-endpoint cases and test_throttles.py real Redis/thread
+      interleavings; included in 6.1-backend-tests.log (1,058 passed). Source scopes and thread-local state
+      inspected.
+
+- [x] Backend tests with `enforce_csrf_checks=True` show that each of these, sent without a token or with a token that
   does not match the cookie, answers `403` with R20's body, and passes the check with a matching cookie and header:
   sign-in, registration, logout, email verification, resend-verification, both refresh endpoints, allauth's
   password-reset request, and a watchlist change by a user authenticated by the session alone. A request with a
   matching token and an `Origin` from another site is refused on HTTPS. `POST /api/logs/` without a token is
   accepted, as is `POST /api/dev-logs/write/` under `development`.
-- [ ] Frontend tests show the API client sends the `csrftoken` cookie's value as `X-CSRFToken` on an unsafe request and
+
+    - Evidence: Tests: enforcing test_csrf_protection.py matrix (missing/mismatched/matching tokens, nine POST paths
+      plus session PATCH/DELETE), HTTPS foreign Origin and both log exemptions; 6.1-backend-tests.log passed.
+      Matching requests reach downstream handlers rather than the fixed CSRF refusal.
+
+- [x] Frontend tests show the API client sends the `csrftoken` cookie's value as `X-CSRFToken` on an unsafe request and
   fetches `/api/csrf/` first when the cookie is missing; that the refresh retry, the OAuth sign-out, the
   password-reset completion and the OAuth start form each send the token; that the forgot-password page shows
   R22's message on a `503` and its generic confirmation on other errors; that the login page's resend action shows
   R22's message on a `503`; and that the API client shows no global "Server error" toast for a `503` from the
   password-reset request or resend-verification, and still shows it for other `500`-range answers.
-- [ ] Backend tests show that when the email backend sends nothing, the password-reset request, for an address with an
+
+    - Evidence: Tests: apiClient.test.ts CSRF/refresh/toast matrix, authService.test.ts reset completion,
+      useAuth.test.tsx OAuth DELETE, useOAuthFlow.test.ts form, ForgotPassword.test.tsx and Login.test.tsx rendered
+      errors; 6.1-frontend-tests.log (883 passed).
+
+- [x] Backend tests show that when the email backend sends nothing, the password-reset request, for an address with an
   account and one without, and resend-verification answer `503` with R22's body; and that after a failed resend the
   token's lifetime starts again and the same token, presented again with the backend working, sends the email, after
   which the token is spent. Tests at the transport layer show that the ZeptoMail backend sends with a timeout,
@@ -639,42 +651,84 @@ what was seen and where.
   key or the recipients. The missing-key test imports the backend's module afresh with the key empty (in a
   subprocess, or with the package's and the backend's modules removed from `sys.modules`), so an import of the
   package's message class at module level fails it.
-- [ ] Backend tests show `GET /api/health-check/` answers `200` when the database query succeeds and `503` with R13's
+
+    - Evidence: Tests: test_failed_email_send.py known/unknown reset addresses and real Redis resend
+      renewal/retry/spent-token flows; test_zeptomail_backend.py bounded transport outcomes and fresh missing-key
+      subprocess. Both included in 6.1-backend-tests.log; source/backend logging inspected.
+
+- [x] Backend tests show `GET /api/health-check/` answers `200` when the database query succeeds and `503` with R13's
   body when it fails; the committed OpenAPI schema and frontend types include that `503` and resend-verification's
   (R22), and CI's type-drift check passes.
-- [ ] Backend tests that load the settings module under each environment show: under `staging`, both Google variables
+
+    - Evidence: Tests: test_health_check.py real database/closed-port cases passed. OpenAPI and generated response
+      declarations inspected; 6.1-api-types.log regenerated with no drift. Current-head PR CI 42059086109 API
+      types/type-drift step passed.
+
+- [x] Backend tests that load the settings module under each environment show: under `staging`, both Google variables
   set yields one settings app for Google, neither yields none, and one alone fails startup with
   `ImproperlyConfigured` naming the other (likewise for GitHub); under `development`, the variables set yields no
   settings apps. Tests show `configure_site` sets the record's domain and name, reports no change on a second run,
   and under `staging` with `SITE_DOMAIN` unset exits non-zero naming it.
-- [ ] The two commands R7 adds pass on this change's files and fail on a copy of the Caddyfile with an invalid directive
+
+    - Evidence: Tests: test_environment_config.py settings subprocess matrix, test_commands.py configure_site
+      changes/idempotence/missing domain; 6.1-backend-tests.log passed; source settings and command inspected.
+
+- [x] The two commands R7 adds pass on this change's files and fail on a copy of the Caddyfile with an invalid directive
   and on a Compose file with a syntax error, run locally the way the `images` job runs them; a pull-request run shows
   both steps passing.
-- [ ] On a pull request, every CI job runs and `ci-ok` passes as before, and the `deploy` job does not run.
-- [ ] Backend tests show that requests under `/_allauth/` outside R24's list, among them `browser/v1/auth/signup`,
+
+    - Evidence: 6.1-config-validation.json and four named logs: valid Caddy and Compose exit 0, invalid site
+      directive and syntax-error copies exit 1. Current-head PR CI 42059086109 Images/Validate production
+      configuration passed. Initial negative Caddy fixture placed a token at top level, which is a legal site
+      address; corrected to an invalid directive inside the site block.
+
+- [x] On a pull request, every CI job runs and `ci-ok` passes as before, and the `deploy` job does not run.
+
+    - Evidence: 6.1-pr-ci.json: exact head 5bdf35ac, pull_request event, all seven checking jobs successful including
+      ci-ok; Deploy staging skipped. Workflow conditions inspected.
+
+- [x] Backend tests show that requests under `/_allauth/` outside R24's list, among them `browser/v1/auth/signup`,
   `browser/v1/auth/login` and an `app/v1/` endpoint, answer `404` and create no account, and that each listed
   endpoint with its listed methods still reaches allauth.
-- [ ] R25's frontend tests pass in the frontend suite, covering each behavior R25 lists for `useAuth` and
+
+    - Evidence: Tests: test_allauth_allowlist.py closed sign-up/sign-in/app client/wrong methods and every allowed
+      path/method; 6.1-backend-tests.log passed. Middleware allowlist inspected.
+
+- [x] R25's frontend tests pass in the frontend suite, covering each behavior R25 lists for `useAuth` and
   `utilities/tokenUtils.ts`.
+
+    - Evidence: Tests: useAuth.test.tsx and tokenUtils.test.ts inspected against every R25 behavior including
+      original storage, pending refresh, Web Lock waiting/newer token, OAuth and fallback; 6.1-frontend-tests.log
+      passed.
+
 - [~] The authentication strategy states R20, R21, R24 and R15 wherever R27 lists; a case-insensitive
   `git grep -E` outside the archive and this PRD for `CsrfHeaderMiddleware|XSRF-TOKEN|csrf[- ]exempt|path-based
   exemption|CSRF token is optional` finds no text describing the old design; no test in `test_csrf_protection.py`
   asserts that sign-in or registration needs no token; and `backend/scripts/test_csrf_protection.sh` no longer
   exists. (Superseded by the 2026-11-04 amendment: criterion 12 adds R28's refresh.)
-- [ ] The authentication strategy states R20, R21, R24, R15 and R28 wherever R27 lists; a case-insensitive
+- [x] The authentication strategy states R20, R21, R24, R15 and R28 wherever R27 lists; a case-insensitive
   `git grep -E` outside the archive and this PRD for `CsrfHeaderMiddleware|XSRF-TOKEN|csrf[- ]exempt|path-based
   exemption|CSRF token is optional` finds no text describing the old design; no test in `test_csrf_protection.py`
   asserts that sign-in or registration needs no token; and `backend/scripts/test_csrf_protection.sh` no longer
   exists.
 
+    - Evidence: Authentication strategy CSRF, provider setup, allowlist and renewal sections inspected against
+      R27/R28 and implementation. Scoped case-insensitive git grep found no old-design text; obsolete shell script
+      absent; enforcing CSRF tests inspected. Markdown lint passed.
+
 ### Proven live (with staging running this change, before merge)
 
-- [ ] With the CI key from a local terminal: the forced command refuses an argument that is not a 40-character SHA, a
+- [x] With the CI key from a local terminal: the forced command refuses an argument that is not a 40-character SHA, a
   commit not reachable from `origin/main`, a `main` commit that the deployed branch commit contains (once criterion
   2 has deployed it), naming the deployed version, and a request for a shell or a command, deploying nothing each
   time; a port-forwarding request is refused. On the server, `deploy`'s `authorized_keys` ends with the CI key's line
   carrying `restrict` and the forced command.
-- [ ] In the shell holding the operations lock in which the server takes this change (R26, criterion 3),
+
+    - Evidence: 5.3-ci-key.json records each actual SSH refusal, exit code and unchanged history at 7608822a.
+      6.1-server-readonly.json confirms installed entry SHA matches current source and exactly one final restricted
+      CI-key line. Entry/bootstrap source unchanged since original probes.
+
+- [x] In the shell holding the operations lock in which the server takes this change (R26, criterion 3),
   `cinexplorer-deploy <this branch's published commit>` starts without waiting and deploys it: the health check
   passes through the public address, `deploy-history.log` gains a `manual` line whose previous version is the one
   that was running (the `main` version deployed before, not the branch commit checked out by hand for the bootstrap)
@@ -683,25 +737,65 @@ what was seen and where.
   the same commit with `cinexplorer-deploy` takes the lock itself: a backup started during it starts only after it
   finishes. `cinexplorer-deploy` given that earlier `main` commit, which has no deploy script, refuses it and names
   the runbook's manual steps.
-- [ ] On the existing staging server, with this branch checked out and `ci-deploy.pub` in place, the bootstrap's first
+
+    - Evidence: 5.2-publication.json records first manual deployment/history/Site/lock inheritance, waiting backups,
+      standalone locked redeploy and scriptless-target refusal. 5.6-staging-deploy.log and 5.6-deployment.json prove
+      current 9b90ef28 deploy, fresh pre-migration backup, blacklist sync, Site and public health. Entry/lock
+      implementation unchanged; deploy backup/sync amendment checked at current deployment.
+
+- [x] On the existing staging server, with this branch checked out and `ci-deploy.pub` in place, the bootstrap's first
   run installs the entry point, the two directories, the units and the CI key's line, and the next run reports every
   step `UNCHANGED`; `systemctl list-timers` then shows both timers with their next runs at 10:00 and 10:30 UTC.
-- [ ] `systemctl start cinexplorer-backup` uploads a new dump to R2 (the object is listed in the bucket), leaves nothing
+
+    - Evidence: 6.1-server-readonly.json inspects retained bootstrap-7608822 first/second logs directly: required
+      additions present, then zero CHANGED and 46 UNCHANGED; installed entry and units match intended source.
+      5.2-publication.json records next timers at 10:00/10:30 UTC; installed unit schedules rechecked.
+
+- [x] `systemctl start cinexplorer-backup` uploads a new dump to R2 (the object is listed in the bucket), leaves nothing
   in `/opt/cinexplorer/backups/`, and the `backup` check shows the ping. With the bucket name in `ops.env` changed to
   one that does not exist, a run fails, the check receives the `/fail` ping, and the maintainer receives Healthchecks'
   alert email; with the name restored, the next run succeeds. After the first night, the `backup` check shows a ping
   from the timer's own run.
-- [ ] A dump downloaded from R2 is restored into a local production stack built from this change's images, following the
+
+    - Evidence: 5.4-nightly-and-monitoring.json records actual success/object listing/empty directory,
+      nonexistent-bucket failure and restored success. Owner confirms Healthchecks Down/email and recovery.
+      5.4-first-night.json records timer/service timestamps, exit 0, R2 object metadata and Owner scheduled ping
+      confirmation. Backup implementation unchanged.
+
+- [x] A dump downloaded from R2 is restored into a local production stack built from this change's images, following the
   runbook's restore procedure (a copy of the live database, an emptied schema, then migrations); the staging account
   then signs in there, and its watchlist shows the movies it holds on staging.
-- [ ] In Cloudflare's dashboard, the backup bucket shows public access off and a lifecycle rule that deletes objects 30
+
+    - Evidence: 5.4-nightly-and-monitoring.json plus restore-rehearsal/rehearse-restore.sh, restore.stage=complete,
+      browser-confirmed, schema-drop log and validated retained archive prove the isolated production-image restore
+      at 7608822a. Owner confirmed password sign-in and same watchlist movie. No database migration files changed
+      between that proof and current HEAD; runbook restore operations preserved. This is the earlier branch-image
+      rehearsal, not a new rehearsal at 9b90ef28.
+
+- [x] In Cloudflare's dashboard, the backup bucket shows public access off and a lifecycle rule that deletes objects 30
   days after upload, and the server's R2 token is limited to that bucket with object read and write; the maintainer
   records what each page showed.
-- [ ] `systemctl start cinexplorer-maintenance` completes both commands, and the `maintenance` check shows the ping; after
+
+    - Evidence: 5.1-provider-setup.json: Owner console observation records private bucket, enabled 30-day deletion
+      rule on upload prefix and Object Read & Write token scoped to that bucket. This is Owner confirmation, not a
+      screenshot/API inspection.
+
+- [x] `systemctl start cinexplorer-maintenance` completes both commands, and the `maintenance` check shows the ping; after
   the first night, it shows a ping from the timer's own run.
-- [ ] With `backend` stopped, UptimeRobot alerts the maintainer by email within 10 minutes, and again on recovery once it
+
+    - Evidence: 5.4-nightly-and-monitoring.json records manual cleanup and Owner ping confirmation;
+      5.4-first-night.json records scheduled trigger/service exit 0/both command journal steps and Owner scheduled
+      ping confirmation. Maintenance implementation unchanged.
+
+- [x] With `backend` stopped, UptimeRobot alerts the maintainer by email within 10 minutes, and again on recovery once it
   is started. With `db` stopped, `curl` of the health check returns `503` and UptimeRobot alerts likewise; once `db`
   is started, the health check returns `200`.
+
+    - Evidence: 5.4-nightly-and-monitoring.json: controlled backend 502 and database 503 outages, measured
+      starts/recoveries, successful public health after recovery, and Owner email observations within ten minutes
+      plus both recovery emails. Health service behavior preserved; 6.1-backend-tests.log current
+      healthy/failed-database tests pass.
+
 - [~] Signing up on staging with a Gmail address delivers the verification email to that Gmail inbox, not its spam
   folder, from `cinexplorer@andrewcreekmore.dev`. Gmail's "Show original" view shows DKIM passing for
   `andrewcreekmore.dev` and a `multipart/alternative` message with a `text/plain` part containing the verification
@@ -716,29 +810,53 @@ what was seen and where.
   Signing in with GitHub succeeds. Each signed-in user then adds a movie to the watchlist, and it is still there after
   a reload. (Superseded by the 2026-11-04 Google Testing amendment: criterion 16 accepts basic identity
   sign-in in Testing; publication moves to the later website work.)
-- [ ] The Google client's authorized redirect URIs list both hosts' callback URLs, and the GitHub OAuth App's homepage
+- [x] The Google client's authorized redirect URIs list both hosts' callback URLs, and the GitHub OAuth App's homepage
   and callback configuration name the production host; the maintainer records what each console showed. The
   production host cannot be exercised before it exists.
-- [ ] `gh api repos/andrewRCr/CineXplorer/environments/staging` shows `custom_branch_policies: true`,
+
+    - Evidence: 5.1-provider-setup.json records Owner console observations of both Google redirect URIs and GitHub
+      production homepage/both callbacks. 5.6-oauth-configuration.json proves current staging redirects/scopes.
+      Production-host callbacks cannot be exercised before that host exists.
+
+- [x] `gh api repos/andrewRCr/CineXplorer/environments/staging` shows `custom_branch_policies: true`,
   `gh api repos/andrewRCr/CineXplorer/environments/staging/deployment-branch-policies` lists `main` as the only
   pattern, and `gh api repos/andrewRCr/CineXplorer/environments/staging/secrets` lists `DEPLOY_SSH_KEY` and
   `DEPLOY_KNOWN_HOSTS`.
-- [ ] A sign-in request to staging with valid credentials, an `Origin` from another site and no token answers `403`, and
+
+    - Evidence: 6.1-github-environment.json refreshes all three GitHub API reads: custom_branch_policies true, sole
+      branch main, and both DEPLOY_SSH_KEY/DEPLOY_KNOWN_HOSTS names present.
+
+- [x] A sign-in request to staging with valid credentials, an `Origin` from another site and no token answers `403`, and
   the same request from the site's own pages signs in.
+
+    - Evidence: 5.5-csrf-valid-credentials.json records foreign Origin without/with token 403, own Origin/token 200
+      and logout 200; Owner password sign-in confirms own-pages case. 5.6-csrf-boundary.json rechecks current
+      missing/matching/foreign-token boundaries without credentials. Backend middleware/service unchanged; later
+      useAuth diff removes TypeScript casts only.
+
 - [~] Signed in with a password on staging, a tab left idle for 6 minutes still shows the user signed in, and so
   does a reload of it; the watchlist then loads. (Superseded by the 2026-11-04 amendment: criterion 15 reopens the
   page with the access token expired.)
-- [ ] Signed in with a password and "remember me" on staging, a tab left idle on the watchlist page for 6 minutes still
+- [x] Signed in with a password and "remember me" on staging, a tab left idle on the watchlist page for 6 minutes still
   shows the user signed in. With every tab of the site then closed for 6 minutes, opening the watchlist page shows
   the user signed in and lists their watchlist, and the browser's network panel shows at least one request to
   `/api/auth/refresh` during that load, each answered `200`.
 
-- [ ] Signing in with Google on staging, using an account absent from the Google Cloud project's test-user list,
+    - Evidence: 5.5-session-live.json: Owner Firefox/Remember Me observations of six-minute idle and all-tabs-closed
+      six-minute reopen, signed-in watchlist and refresh 200. Renewal source unchanged since cf0ef11b; later auth
+      diff removes casts only. These are Owner confirmations, not recordings.
+
+- [x] Signing in with Google on staging, using an account absent from the Google Cloud project's test-user list,
   succeeds with only basic identity scopes (`email`, `profile`, and optionally `openid`). The project may remain in
   Testing. This proves the deployed client, its redirect URI and the environment credentials work together. Signing
   in with GitHub succeeds. Each signed-in user adds a movie to the watchlist and still sees it after a reload.
 
-- [ ] Signing up on staging with an email address whose inbox the maintainer controls delivers the verification email
+    - Evidence: 5.5-google-live.json and 5.5-github-live.json: Owner confirms Google non-test account/empty
+      list/Testing/basic scopes and both provider watchlist reloads. Current 5.6-oauth-configuration.json confirms
+      redirects/basic scopes and 5.6-owner-watchlist.json confirms persistence/add/reload/remove. Provider/session
+      mechanisms unchanged since cf0ef11b; no new provider sign-in claimed.
+
+- [x] Signing up on staging with an email address whose inbox the maintainer controls delivers the verification email
   to that inbox, not its spam folder, from `cinexplorer@andrewcreekmore.dev`. The receiving provider's authentication
   results show DKIM passing for `andrewcreekmore.dev`. ZeptoMail's saved original shows a `multipart/alternative`
   message with a `text/plain` part containing the staging verification link. Following the link verifies the address,
@@ -746,6 +864,13 @@ what was seen and where.
   the inbox; its saved original's text part names `staging.cinexplorer.andrewcreekmore.dev`, and its link sets a new
   password that then signs in. The backend logs show each send's outcome and no raw ZeptoMail response. The evidence
   records the receiving provider and the source of the MIME observation separately.
+
+    - Evidence: 5.5-email-live.json and 5.5-email-log-audit.json: Owner confirms Proton verification
+      Inbox/sender/DKIM, verification/password sign-in/reset, and separately ZeptoMail saved-original
+      multipart/alternative/text/plain/both staging text links; three accepted send outcomes and no raw provider
+      response/signature/account/provider secrets. Mail implementation unchanged since cf0ef11b.
+      6.1-email-confirmation.json records the Owner’s direct 2026-11-05 confirmation that the password-reset email
+      arrived in Proton’s Inbox. All clauses supported by attributed evidence.
 
 ### Proven after merge
 
@@ -1035,3 +1160,37 @@ what was seen and where.
   Gmail-specific delivery remains untested; no application or provider-settings change is implied.
 - **Review:** contained amendment at medium depth; author checks covered reader independence, binding completeness,
   coherence and source grounding across the footprint. The Owner explicitly approved without an independent review.
+
+### 2026-11-05 — Verification, author criteria walk
+
+- Scope: all Success Criteria, `main...HEAD` at merge base `739d0a17` and head `5bdf35ac`, current tree and
+  mechanical workflow whitespace cleanup. Evidence is retained beside the session notes in
+  `test-evidence/6.1-criteria-report.json` and its referenced artifacts.
+- Gates: 1,058 backend tests (94.94% coverage), 883 frontend tests; backend/frontend lint, format and types,
+  markdown lint, regenerated API types without drift, workflow lint, production positive/negative config checks
+  and whitespace check passed. Corrected one extra EOF blank line in the docs workflow.
+- Criteria: 25 met, four superseded, and three intentionally post-merge criteria open for 6.2. The Owner
+  explicitly confirmed reset-email Inbox placement on 2026-11-05; `6.1-email-confirmation.json` records it.
+  No criterion wording changed.
+- Earlier live proof was checked against source changes and current staging configuration. Bootstrap logs were
+  inspected directly; the installed entry matches source. Provider-console, inbox and browser observations remain
+  attributed to the Owner. The local test stack is stopped with volumes preserved.
+- The Owner approved the independent verification pass below. Code review remains a separate stage.
+
+### 2026-11-05 — Verification, Pass 1
+
+- Runner: fresh general-purpose subagent, read-only by prompt; elapsed about 9.3 minutes. The Owner approved
+  this pass after the author criteria walk.
+- Scope and rubric: all 32 Success Criteria against the PRD, unmarked task scope/criteria, complete source diff
+  from `739d0a17` to `5bdf35ac` plus tracked edits, and the reachable tree. Author criterion marks, evidence
+  annotations, completion reports and review history were withheld; raw tool output and attributed observations
+  were supplied separately.
+- Result: no findings; all 25 applicable pre-merge criteria considered, four superseded entries recognized,
+  and three post-merge proofs left for 6.2. The pass assessed retained execution/live evidence and traced source;
+  it did not rerun gates or perform live operations.
+- Primary validation: target identity and deployed/source equivalence checked; source-grounded health/error
+  mapping, shared renewal and thread-interleaving observations spot-checked. No dispositions or fixes needed.
+- Retained prompt, exact subject, neutral input copies and report: `adversarial-review/verification-pass1/`
+  beside the session notes.
+- Stop reason: clean convergence. Task 6.1 complete; code review, draft readiness and post-merge proof remain
+  separate later stages.

@@ -35,4 +35,3 @@ jobs:
       - name: Lint markdown files
         run: |
           npx markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"
-

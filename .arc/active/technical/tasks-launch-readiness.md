@@ -374,7 +374,7 @@ authentication gaps that matter once sign-up is public are closed.
     - Port forwarding was administratively prohibited. The server's final `authorized_keys` line contains the
       dedicated CI key exactly once with `restrict` and the forced deployment command.
 
-- [ ] **5.4 Backups, the restore rehearsal, maintenance and monitoring** (Proven live 4, 5, 7, 8)
+- [x] **5.4 Backups, the restore rehearsal, maintenance and monitoring** (Proven live 4, 5, 7, 8)
     - Manual backup uploaded and cleaned up; deliberate invalid-bucket failure reached Healthchecks Down and its
       email, then a successful run restored the check. Manual maintenance ran both cleanup commands; the Owner
       confirmed its recent Up ping.
@@ -384,8 +384,10 @@ authentication gaps that matter once sign-up is public are closed.
     - Controlled backend and database outages produced public 502 and 503 respectively. The Owner confirmed Down
       emails within ten minutes and both recovery emails at the next five-minute monitor check. Services recovered
       healthy and deployment history stayed unchanged.
-    - Remaining: after the first night, confirm both timers' own successful executions and Healthchecks pings;
-      manual runs do not prove timer-originated execution.
+    - The first scheduled backup and maintenance runs fired at 4:00 am CT and 4:30 am CT, each exiting 0. Their
+      journals contain every expected step; backup uploaded `cinexplorer-20261105T100027Z.dump` (119,152 bytes)
+      and left its local directory empty. The Owner confirmed both Healthchecks were Up with the corresponding
+      scheduled pings. Checkout and running backend/web images remain the tested `cf0ef11b`; public health passes.
 
 - [x] **5.5 Credentials only now, then email and sign-in live** (R17; Proven live 13, 15, 16, 17)
     - Installed OAuth/mail values privately only after deployed hardening checks passed. Verified all six fields,

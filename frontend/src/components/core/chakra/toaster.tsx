@@ -49,9 +49,7 @@ type ToastOptions = {
  *   toaster.success({ title: "Saved" })           // Uses 4s default
  *   toaster.success({ title: "Saved", duration: 6000 })  // Override to 6s
  */
-function wrapWithDurationDefaults(
-  baseToaster: ReturnType<typeof createToaster>,
-) {
+function wrapWithDurationDefaults(baseToaster: typeof rawToaster) {
   const withDefaults = (type: ToastType) => (options: ToastOptions) => {
     const defaultDuration = statusDurations[type];
     return baseToaster[type]({

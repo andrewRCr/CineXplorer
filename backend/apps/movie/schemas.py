@@ -14,6 +14,7 @@ from ninja.orm import ModelSchema
 from pydantic import Field, field_validator
 
 from apps.core.models import Movie
+from apps.movie.constants import TMDB_MAX_PAGE
 
 
 class MovieSearchParamsSchema(Schema):
@@ -24,9 +25,14 @@ class MovieSearchParamsSchema(Schema):
     """
 
     query: str = Field(..., description="Search query string")
-    page: int | None = Field(None, description="Page number for pagination")
+    page: int | None = Field(
+        None, ge=1, le=TMDB_MAX_PAGE, description="Page number for pagination"
+    )
     tmdb_page_start: int | None = Field(
-        None, description="TMDB page to start fetching from (cursor for infinite scroll)"
+        None,
+        ge=1,
+        le=TMDB_MAX_PAGE,
+        description="TMDB page to start fetching from (cursor for infinite scroll)",
     )
 
     @field_validator("page", "tmdb_page_start", mode="before")
@@ -45,7 +51,9 @@ class PaginationParamsSchema(Schema):
     query parameters are sent as empty strings instead of being omitted.
     """
 
-    page: int | None = Field(None, description="Page number for pagination")
+    page: int | None = Field(
+        None, ge=1, le=TMDB_MAX_PAGE, description="Page number for pagination"
+    )
 
     @field_validator("page", mode="before")
     @classmethod
@@ -276,10 +284,16 @@ class MovieDiscoverFilterSchema(Schema):
     """
 
     # Pagination
-    page: Annotated[int | None, Field(description="Page number for pagination")] = None
+    page: Annotated[
+        int | None, Field(ge=1, le=TMDB_MAX_PAGE, description="Page number for pagination")
+    ] = None
     tmdb_page_start: Annotated[
         int | None,
-        Field(description="TMDB page to start fetching from (smart buffer continuation)"),
+        Field(
+            ge=1,
+            le=TMDB_MAX_PAGE,
+            description="TMDB page to start fetching from (smart buffer continuation)",
+        ),
     ] = None
 
     # Genre/Keyword filters

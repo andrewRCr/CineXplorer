@@ -13,10 +13,9 @@ from dataclasses import dataclass
 from typing import Protocol, cast
 
 from apps.core.services.api_response import ApiResponse
+from apps.movie.constants import TMDB_MAX_PAGE
 from apps.movie.services.data_quality.blacklist_file import BlacklistEntry
 
-# TMDB's discover endpoint serves at most 500 pages.
-MAX_PAGES = 500
 # TMDB allows about 40 requests every 10 seconds.
 PAGE_PAUSE_SECONDS = 0.3
 
@@ -105,9 +104,9 @@ def _read_page(rule: BlacklistRule, page: int, response: ApiResponse) -> _Page:
         raise RuleFetchError(
             f"{rule.source}: TMDB page {page} is missing its page count, result count or results"
         )
-    if total_pages > MAX_PAGES:
+    if total_pages > TMDB_MAX_PAGE:
         raise RuleFetchError(
-            f"{rule.source}: TMDB reports {total_pages} pages but serves only {MAX_PAGES}"
+            f"{rule.source}: TMDB reports {total_pages} pages but serves only {TMDB_MAX_PAGE}"
         )
     ids: set[int] = set()
     unflagged: set[int] = set()

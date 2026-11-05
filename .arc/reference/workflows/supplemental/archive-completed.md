@@ -19,7 +19,7 @@ See [Work Organization Strategy](../../strategies/arc/strategy-work-organization
 
 1. **Phase 1: On Child Branch** - Verify the work, clean docs, create completion metadata
 2. **Phase 2: Code Review & Merge** - Code review, PR, PR review, merge to parent
-3. **Phase 3: On Parent Branch** - Delete child branch, archive files, commit
+3. **Phase 3: On Parent Branch** - Prove post-merge criteria, finish the worktree (archive and commit), push
 
 **Key principle:** Documentation cleanup and completion metadata are part of the child branch deliverable,
 not a post-merge activity. This ensures PR reviewers see clean, well-organized docs.
@@ -350,84 +350,70 @@ git push
 
 ## Phase 3: On Parent Branch (After Merge)
 
-**Context:** PR is merged, you're now on the parent branch (e.g., `technical/service-layer-modernization`
-or `main`).
+**Context:** the pull request has merged. A work unit run in a linked worktree closes from the main checkout, once
+the worktree's own session has handed off and ended.
 
-When the parent is `main`, work from the main checkout and update it first, so § 10 counts every archive already
-there:
+### 9) Prove Post-Merge Criteria (If Any)
+
+Some Success Criteria can only be shown after the merge, such as an automatic deploy or CI's handling of a push to
+`main`; the PRD groups them as proven after merge. Check them now, from the main checkout: record each one's
+evidence beside it in the task list, check its box and the task that proves them, and push that `.arc/`-only commit
+to `main` on the Owner's approval (§ 12). The close holds while the task list has an unchecked box; `[x]` is done,
+`[~]` deliberately not done, and `~~[ ]~~` superseded.
+
+### 10) Finish the Worktree
+
+On the Owner's approval, run from the main checkout:
 
 ```bash
-git pull --ff-only origin main
+node scripts/worktree.mjs finish {name}
 ```
 
-### 9) Delete Child Branch
+Before changing anything, it refuses a main checkout that isn't a clean `main`, an unmerged branch, a worktree with
+uncommitted work or an unexpected Compose project, and any process still running inside the worktree, such as a
+session there. Then it:
 
-A work unit run in a linked worktree removes it first, from the main checkout
-([worktree-sessions.md § Removal](worktree-sessions.md#removal)): git refuses to delete a branch a worktree has checked
-out.
+1. Fast-forwards `main` from `origin`
+2. Holds while the task list has an unchecked box (§ 9)
+3. Copies the worktree's personal folder, `.arc/user/{identity}/{name}/` (session notes, review records, proofs), to
+   the main checkout's `.arc/user/{identity}/errand-records/{name}-{date}/`, so the evidence the task list cites
+   survives the checkout
+4. Removes the worktree, its stack and its local branch
+   ([worktree-sessions.md § Removal](worktree-sessions.md#removal)), then deletes the remote branch if it remains and
+   its head is on `main`
+5. Moves the PRD, task list, notes and completion doc with `git mv` into the next numbered archive folder
+   ([§ Archive Structure](#archive-structure)) and commits them as `docs(arc): archive the {name} work`, with
+   `Context: tasks-{name}.md (maintenance)`
+6. Refreshes the installed errand harness when its copies differ from `main`
+   ([worktree-sessions.md § Same-Session Errands](worktree-sessions.md#same-session-errands))
+7. Stops before the push
 
-```bash
-# Delete locally
-git branch -d {child-branch-name}
+The Owner's approval to run `finish` covers its local archive commit; the push to `main` is approved separately
+(§ 12). A refusal says how to resume. Running `finish` again is safe until the worktree is removed; a failure after
+that names the closing step to run again. Those steps live in `.arc/reference/harness-hooks/finish-work.mjs`.
 
-# Delete remotely (if pushed)
-git push origin --delete {child-branch-name}
-```
-
-**Branch deletion is the trigger for archival.** Once the branch is deleted, the task list should immediately
-move from `.arc/active/` to `.arc/reference/archive/`.
-
-### 10) Archive Files
-
-**Create archive directory and move all files using git mv** (preserves history):
-
-**First, determine the sequence number:**
-
-```bash
-# Count existing work unit dirs across ALL categories in the quarter
-# Example: if there are 24 dirs total, next number is 25
-find .arc/reference/archive/{quarter} -mindepth 2 -maxdepth 2 -type d | wc -l
-```
-
-**For planned work (feature/technical):**
+**A work unit run in place** closes the same way by hand: delete its local branch with `git branch -d
+{child-branch-name}` and the remote one with `git push origin --delete {child-branch-name}` if it remains, keep its
+personal folder in `errand-records/{name}-{date}/`, then move and commit its documents:
 
 ```bash
-# Create work package directory with sequence prefix
-# {quarter} = current quarter, e.g., 2025-q4
-# {NN} = next sequence number (zero-padded, e.g., 25)
+# {quarter}: e.g. 2026-q4; {NN}: one more than the quarter's highest number, across all categories
 mkdir -p .arc/reference/archive/{quarter}/{category}/{NN}_{name}
-
-# Move all files with git mv (preserves history)
-git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
+git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists
 git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists
 git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 ```
 
-**For incidental work:**
+Commit with the message `finish` uses ([atomic-commit.md](atomic-commit.md) has the standards). `git mv` keeps each
+file's history, which `git log --follow` reads after the move.
 
-```bash
-# Subdirectory ALWAYS created (tasks + completion = 2 files minimum)
-# {quarter} = current quarter, e.g., 2025-q4
-# {NN} = next sequence number (zero-padded, e.g., 25)
-mkdir -p .arc/reference/archive/{quarter}/incidental/{NN}_{name}
-git mv .arc/active/incidental/tasks-{name}.md .arc/reference/archive/{quarter}/incidental/{NN}_{name}/
-git mv .arc/active/incidental/completion-{name}.md .arc/reference/archive/{quarter}/incidental/{NN}_{name}/
-git mv .arc/active/incidental/notes-{name}.md .arc/reference/archive/{quarter}/incidental/{NN}_{name}/  # if exists
-
-# Note: With unified completion docs (mandatory for ALL work), subdirectory is always required
-```
-
-**Why git mv:** Preserves file history. Future developers can use `git log --follow` to see the file's
-full evolution even after it moved to archive.
-
-**Then delete the work unit's review folder** in the gitignored personal workspace
-(`rm -r .arc/user/{identity}/{name}/`): its kept versions, prompts and reports have served their purpose, and the
-task list's `## Review Log` is the durable record.
+**Branch deletion is the trigger for archival:** the task list leaves `.arc/active/` as soon as its branch is gone.
 
 ### 11) Update ROADMAP (if tracked)
 
-Update `.arc/backlog/ROADMAP.md` if applicable:
+`finish` points out a ROADMAP entry that names the work. Update `.arc/backlog/ROADMAP.md` if applicable, and fold it
+into the archive commit before pushing (`git add .arc/backlog/ROADMAP.md && git commit --amend --no-edit`):
 
 - Mark completed work with ✅ and completion date
 - Update archive path reference
@@ -439,41 +425,9 @@ Update `.arc/backlog/ROADMAP.md` if applicable:
 - ✅ Significant technical work (modernization, infrastructure changes)
 - ❌ Small incidental fixes (usually not necessary)
 
-### 12) Commit Archive Changes
+### 12) Push to `main`
 
-**Stage changes:**
-
-```bash
-git add .arc/reference/archive/{quarter}/{category}/{name}/
-git add .arc/active/{category}/  # captures file deletions
-git add .arc/backlog/ROADMAP.md  # if updated
-```
-
-**Commit message format:** Follow [atomic-commit.md](atomic-commit.md) for full commit message standards.
-
-Archival commits use:
-
-- **Type/scope:** `docs(arc)` or `docs(archive)`
-- **Context footer:** `Context: tasks-{name}.md (maintenance)`
-
-**Why `(maintenance)`:** Archival IS maintenance of that task list. The commit includes all related
-artifacts (cleaned task file, notes file, completion doc, any ADRs discovered during the work) -
-all tied to that specific task list.
-
-**Example:**
-
-```bash
-git commit -m "docs(arc): archive discover-endpoint-consolidation
-
-Archival of completed incidental work:
-- Consolidated endpoints to thin wrapper architecture
-- Fixed now-playing/upcoming date ranges and filter support
-- Regression tests cover both date ranges and each filter
-
-Context: tasks-discover-endpoint-consolidation.md (maintenance)"
-```
-
-**When the parent is `main`, push the archive commit straight to it** from the main checkout, on the Owner's
+Push the archive commit, and any evidence commit from § 9, straight to `main` from the main checkout, on the Owner's
 approval:
 
 ```bash
@@ -521,7 +475,7 @@ checkout lands archives one at a time, so two work units never claim the same se
 - Assigned in **completion order** (when work was archived, not started)
 - Gaps between numbers within a category show where other categories' work completed
 - Reset to 01 at start of each quarter
-- To find next number: count existing work unit dirs across all categories in the quarter
+- To find the next number: one more than the highest in the quarter, across all categories
 
 **Key principles:**
 

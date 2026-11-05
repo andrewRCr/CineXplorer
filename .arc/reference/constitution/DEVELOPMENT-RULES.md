@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.19 | **Updated:** 2026-11-04 | **Hash:** `begswalg`
+**Version:** 2.19 | **Updated:** 2026-11-04 | **Hash:** `vutedqdf`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -435,6 +435,11 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
   the test-first method", "implements the PRD") couples the code to a document with its own schedule: say what the
   code does instead, and put process rationale in the PRD, task list, ADR or the commit's `Context:` footer.
   Substantive references (test names describing behavior, comments on non-obvious invariants) stay.
+
+  Exception: `scripts/worktree.mjs` may name `.arc/reference/harness-hooks/seed-session-notes.mjs` and
+  `.arc/reference/harness-hooks/finish-work.mjs` to run them, including recovery instructions, and expose
+  `--work-unit` to request starting notes for planned work. Its tests may name those paths for stand-in scripts. The
+  notes' content, the closing steps and process rules remain under `.arc/`.
 
 - **References to `.arc/` work documents**: PRDs, task lists, notes and completion docs move between `backlog/`,
   `active/` and `archive/`, so:

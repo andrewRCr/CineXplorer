@@ -16,6 +16,9 @@ export interface AxiosErrorLike {
             detail?: string;
             error?: string;
             message?: string;
+            code?: string;
+            email?: string;
+            resend_token?: string;
         };
     };
     message?: string;

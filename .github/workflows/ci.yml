@@ -260,8 +260,12 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
-      - name: Test recovery hooks
-        run: node --test .arc/reference/harness-hooks/compaction-recovery.test.mjs
+      - name: Test session hooks
+        run: >-
+          node --test .arc/reference/harness-hooks/compaction-recovery.test.mjs
+          .arc/reference/harness-hooks/seed-session-notes.test.mjs
+          .arc/reference/harness-hooks/finish-work.test.mjs
+          scripts/worktree.test.mjs
 
       - name: Lint markdown files
         run: |

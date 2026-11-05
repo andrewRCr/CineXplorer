@@ -224,7 +224,7 @@ const Login = () => {
       let errorMessage =
         "Verification failed. The link may be expired or invalid.";
       if (isAxiosError(error)) {
-        const data = error.response?.data as { error?: string } | undefined;
+        const data = error.response?.data;
         if (data?.error) errorMessage = data.error;
       }
       setVerificationMessage(errorMessage);

@@ -6,7 +6,11 @@ import { Toaster, PriorityToaster } from "@/components/core/chakra/toaster";
 import { QueryDevtoolsToggle } from "@/components/core/QueryDevtoolsToggle";
 import { initConsoleCapture } from "@/services/consoleCapture";
 import { queryClient } from "@/lib/queryClient";
+import { registerPreloadRecovery } from "@/utilities/preloadRecovery";
 import App from "./App.tsx";
+
+// The entry URL includes Vite's content hash in production.
+registerPreloadRecovery(import.meta.url);
 
 // Disable browser's native scroll restoration - we handle this manually
 // for virtualized grids with sessionStorage-based position persistence.

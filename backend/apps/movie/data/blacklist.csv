@@ -3,6 +3,7 @@ tmdb_id,reason,source
 4567,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 4570,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 5625,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
+5879,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 5913,Mislabeled adult content on TMDB - reported while browsing,hand:browse-reports-2025-12
 6658,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 18637,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
@@ -55,15 +56,18 @@ tmdb_id,reason,source
 40971,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 40978,Mislabeled adult content on TMDB - found by an Emmanuelle title search and reviewed by poster,hand:emmanuelle-search-2026-11
 44124,Kokuei (TMDB 9301) - 100% pink film studio,rule:studio-9301
+44741,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 45042,Mislabeled adult content on TMDB - reported while browsing,hand:browse-reports-2025-12
 45233,Mislabeled adult content on TMDB - found by an Emmanuelle title search and reviewed by poster,hand:emmanuelle-search-2026-11
 45749,Shintoho Pictures (TMDB 73435) - 100% adult content studio,rule:studio-73435
 45750,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
 46175,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 46337,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
+46853,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 48483,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 49573,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
 49591,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
+50435,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 50438,Mislabeled adult content on TMDB - found by an Emmanuelle title search and reviewed by poster,hand:emmanuelle-search-2026-11
 50469,Mislabeled adult content on TMDB - found by an Emmanuelle title search and reviewed by poster,hand:emmanuelle-search-2026-11
 50470,Mislabeled adult content on TMDB - found by an Emmanuelle title search and reviewed by poster,hand:emmanuelle-search-2026-11
@@ -111,6 +115,7 @@ tmdb_id,reason,source
 76407,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
 76590,Mislabeled adult content on TMDB - found by an Emmanuelle title search and reviewed by poster,hand:emmanuelle-search-2026-11
 76809,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
+78565,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 80754,Mislabeled adult content on TMDB - found by an Emmanuelle title search and reviewed by poster,hand:emmanuelle-search-2026-11
 81591,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 82074,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
@@ -135,6 +140,7 @@ tmdb_id,reason,source
 90803,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 91880,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 92810,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
+94246,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 94515,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
 94754,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 96566,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
@@ -589,6 +595,7 @@ tmdb_id,reason,source
 278954,Mislabeled adult content on TMDB - reported while browsing,hand:browse-reports-2025-12
 279935,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 280460,Mislabeled adult content on TMDB - reported while browsing,hand:browse-reports-2025-12
+280571,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 281197,Mislabeled adult content on TMDB - reported while browsing,hand:browse-reports-2025-12
 282756,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
 283394,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
@@ -745,6 +752,7 @@ tmdb_id,reason,source
 391391,Pink Pineapple (TMDB 80856) - 100% hentai/adult anime studio,rule:studio-80856
 391707,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
 393249,Mislabeled adult content on TMDB - reported while browsing,hand:browse-reports-2025-12
+393850,Mislabeled adult content on TMDB - found in a 1970s-80s browse pass and reviewed by poster,hand:browse-pass-2026-11
 395979,Nikkatsu Roman Porno era (1971-1988) bulk blacklist,rule:nikkatsu-1971-1988
 396320,Mislabeled adult content on TMDB - heuristic match reviewed by poster,hand:heuristic-review-2025-12
 397298,Mislabeled adult content on TMDB - reported while browsing,hand:browse-reports-2025-12

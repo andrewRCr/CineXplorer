@@ -22,11 +22,11 @@ The errand checkout starts clean and has its own branch. The primary may hold pa
 The **session home** is where the conversation started; the **active checkout** is where its errand runs.
 A conversation can stay at home while directing its tools to an isolated checkout.
 
-- **In place, on the main checkout:** when it is clean and the errand needs the browser stack. The stack then serves
-  the errand's files until you switch back.
-- **In a linked worktree:** otherwise, provisioned by [worktree-sessions.md](worktree-sessions.md) as far as its
-  checks need: for example when the main checkout holds uncommitted work-unit changes, the errand needs no Docker
-  (documentation, CI, configuration), or its backend tests can run in the worktree's own test stack.
+- **In place, on the main checkout:** when it is clean and the errand needs OAuth sign-in or the primary's
+  development data. The stack then serves the errand's files until you switch back.
+- **In a linked worktree:** otherwise, created and provisioned by `node scripts/worktree.mjs create {type}/{name}`
+  ([worktree-sessions.md](worktree-sessions.md)). Creation needs Docker running and installs frontend dependencies;
+  the errand starts its own stack when its checks need one.
 
 For a same-session errand, install the local harness once as described in
 [worktree-sessions.md § Same-Session Errands](worktree-sessions.md#same-session-errands), or invoke `$errand` after
@@ -39,9 +39,12 @@ local harness and the primary inbox are intentional shared destinations.
 ### 1. Branch from `origin/main`
 
 ```bash
+# In place, on the main checkout
 git fetch origin
-git switch -c {type}/{name} origin/main                          # in place
-git worktree add -b {type}/{name} <path> origin/main             # or a linked worktree
+git switch --no-track -c {type}/{name} origin/main
+
+# Or create and provision a linked worktree from the main checkout
+node scripts/worktree.mjs create {type}/{name}
 ```
 
 `{type}` is the change's commit type (`fix`, `chore`, `docs`, `ci`, `refactor`, ...); `{name}` is a short slug.
@@ -114,14 +117,18 @@ Confirm the result names home. This clears only this conversation's active selec
 branch, change files, or remove a worktree. If the errand is unfinished, preserve its checkout and report its path.
 Return can clear a selection whose checkout disappeared; a malformed record requires investigation.
 
-A finished linked worktree is removed first, from the main checkout, by
-[worktree-sessions.md § Removal](worktree-sessions.md#removal). Then:
+Close a merged linked worktree from the main checkout
+([worktree-sessions.md § Removal](worktree-sessions.md#removal)):
 
 ```bash
-git switch -                         # in place: back to the previous branch
-git branch -d {type}/{name}
-git fetch --prune
+node scripts/worktree.mjs finish {name}  # keeps its personal folder, removes it and its branches
 ```
+
+An errand has no task list to archive, so `finish` makes no commit. For an abandoned errand,
+`remove {name} --keep-branch` removes its checkout and stack but keeps its commits. It also deletes gitignored files,
+so preserve the checkout of paused work. In place, switch back and delete the local branch with
+`git branch -d {type}/{name}`, then `git fetch --prune`. GitHub's delete-on-merge setting removes the remote branch
+after the pull request merges; if it remains, delete it with `git push origin --delete {type}/{name}`.
 
 An errand taken from the inbox leaves it once the pull request merges, and stays if the errand is abandoned.
 After cleanup, the conversation can enter the next Owner-approved errand in a fresh checkout from `origin/main`.

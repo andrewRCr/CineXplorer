@@ -412,6 +412,17 @@ authentication gaps that matter once sign-up is public are closed.
       provider secrets found by the private audit. Markdown, criterion-copy and runbook shell checks passed; the
       deployed-code CI remains the exact `cf0ef11b` run. Formal verification remains in Phase 6.
 
+- [ ] **5.6 Integrate current main and refresh staging** (Owner-approved compatibility work before verification)
+    - [x] **5.6.a Merge and check compatibility:** merged main through `500af329`, preserving the exact
+      ZeptoMail 0.0.4 input pin with regenerated hashed locks and all four hook test files in the reusable docs job.
+      Kept this branch's auth/deploy behavior alongside upstream logging, frontend dependencies and worktree tooling.
+      Rebuilt the isolated backend and synced private host tooling without changing the shared venv. Checks passed:
+      1,058 backend tests (94.94% coverage), 883 frontend tests, 111 hook tests, 24 deployment harness tests, lint,
+      format, types, API generation without drift, lock consistency/audit, production build and config validation.
+    - [ ] **5.6.b Publish and take the checked build on staging:** publish exact passing CI images, deploy through
+      the existing locked backup/migrate/sync entry point, and confirm running revisions, public health and the
+      merged image's tracked blacklist contents. Keep formal verification and readiness transition for Phase 6.
+
 ### **Phase 6:** Verification
 
 - [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)

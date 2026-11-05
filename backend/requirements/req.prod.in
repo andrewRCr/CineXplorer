@@ -1,0 +1,7 @@
+# Production image dependencies.
+# Edit this file, then run ./lock.sh to regenerate its hashed lock, req.prod.txt, which is what
+# gets installed.
+
+-c req.txt
+-r req.in
+psycopg[c] >= 3.2.9, < 3.3

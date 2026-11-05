@@ -455,15 +455,7 @@ export function useAuth(): AuthStateProps {
 
             if (isAxiosError(error) && error.response) {
                 const { status, data } = error.response;
-                const responseData = data as
-                    | {
-                          detail?: string;
-                          error?: string;
-                          code?: string;
-                          email?: string;
-                          resend_token?: string;
-                      }
-                    | undefined;
+                const responseData = data;
                 authError.status = status || 500;
                 authError.message =
                     responseData?.detail ||
@@ -497,9 +489,7 @@ export function useAuth(): AuthStateProps {
 
             if (isAxiosError(error) && error.response) {
                 const { status, data } = error.response;
-                const responseData = data as
-                    | { detail?: string; error?: string; code?: string }
-                    | undefined;
+                const responseData = data;
                 authError.status = status || 500;
                 authError.message =
                     responseData?.detail ||

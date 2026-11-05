@@ -108,7 +108,19 @@ jobs:
         run: |
           python -m venv .venv-backend
           .venv-backend/bin/pip install -q --upgrade pip
-          .venv-backend/bin/pip install -q -r backend/requirements/req.txt -r backend/requirements/req.dev.txt
+          .venv-backend/bin/pip install -q -r backend/requirements/req.dev.txt
+
+      - name: Check the dependency locks match their inputs
+        # Hash-only changes are ignored: a package can publish new files for a version it
+        # already released. Installs still check every hash.
+        run: |
+          PATH="$PWD/.venv-backend/bin:$PATH" backend/requirements/lock.sh
+          git diff --exit-code -I '^[[:space:]]*(#|--hash=)' -- backend/requirements/
+
+      - name: Audit the dependency locks
+        run: |
+          .venv-backend/bin/pip-audit --require-hashes --disable-pip \
+            -r backend/requirements/req.prod.txt -r backend/requirements/req.dev.txt
 
       - name: Run backend lint
         run: .venv-backend/bin/ruff check backend/apps/ backend/config/

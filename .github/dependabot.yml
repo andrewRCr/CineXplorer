@@ -51,3 +51,22 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+
+  # The backend's hashed locks: Dependabot edits the .in files and recompiles
+  # the locks with the flags recorded in their headers
+  - package-ecosystem: uv
+    directory: /backend/requirements
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      python-minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+      python-major:
+        patterns: ["*"]
+        update-types: [major]
+    commit-message:
+      prefix: ci
+      include: scope

@@ -1,0 +1,4 @@
+backend/config/.env
+frontend/.env
+frontend/.env.development
+infrastructure/dev-certs/*.pem

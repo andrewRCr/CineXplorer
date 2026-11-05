@@ -22,12 +22,12 @@ WORKDIR /backend
 # Copy requirements files before other source files to leverage caching.
 COPY ./requirements ./requirements
 
-# Install Python dependencies into the virtual environment.
+# Install Python dependencies into the virtual environment from the hashed development lock,
+# which holds the shared runtime dependencies too. pip checks every package's hash.
 # This layer is cached and only re-run if the requirements files change.
 RUN apk add --update --no-cache --virtual .tmp-build-deps \
         build-base musl-dev python3-dev gcc libc-dev linux-headers && \
     /py/bin/pip install --upgrade pip && \
-    /py/bin/pip install -r ./requirements/req.txt && \
     /py/bin/pip install -r ./requirements/req.dev.txt && \
     apk del .tmp-build-deps && \
     rm -rf ./requirements

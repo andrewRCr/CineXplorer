@@ -11,9 +11,10 @@ Use the existing approval boundaries for commits, pull requests, reviews and mer
 From the session home, run `node .codex/hooks/legacy-arc/compaction-recovery.mjs errand-status`.
 An active errand resumes at its exact `checkoutPath`. A failed status stops entry until resolved.
 
-With no active errand, identify the requested concern or inbox entry. Create a fresh branch from `origin/main`
-in a linked sibling `{primary}.{name}` and provision it as far as its checks need, following
-`.arc/reference/workflows/supplemental/worktree-sessions.md`. Use the sibling location even if the paused primary's
+With no active errand, identify the requested concern or inbox entry. From the main checkout, run
+`node scripts/worktree.mjs create {type}/{name}` to create and provision a fresh branch from `origin/main` in a
+linked sibling `{primary}.{name}`, following `.arc/reference/workflows/supplemental/worktree-sessions.md`. Creation
+needs Docker running and installs frontend dependencies. Use the sibling location even if the paused primary's
 older workflow still names a scratch directory. Keep its tracked files, session notes and containers untouched.
 
 From the session home, activate it with

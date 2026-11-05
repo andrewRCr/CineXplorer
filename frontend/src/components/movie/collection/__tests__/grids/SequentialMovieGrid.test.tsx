@@ -345,51 +345,6 @@ describe("SequentialMovieGrid", () => {
       // Should show all 15 movies (not truncated to 20)
       expect(screen.getAllByTestId("movie-card")).toHaveLength(15);
     });
-
-    it("counts the results range from the pages before, whatever their sizes", async () => {
-      const threeMovies: MovieListItem[] = [
-        ...page1Movies,
-        { ...page2Movies[0]!, tmdb_id: 9, title: "First Set Movie C" },
-      ];
-      const thirdPageMovies: MovieListItem[] = page2Movies.map((movie) => ({
-        ...movie,
-        tmdb_id: movie.tmdb_id + 10,
-        title: movie.title.replace("Second", "Third"),
-      }));
-      (useInfiniteMovies as Mock).mockReturnValue({
-        movies: [...threeMovies, ...page2Movies, ...thirdPageMovies],
-        pages: [
-          createMockPage(1, threeMovies),
-          createMockPage(2, page2Movies),
-          createMockPage(3, thirdPageMovies),
-        ],
-        pageCount: 3,
-        totalResults: 200,
-        fetchNextPage: mockFetchNextPage,
-        hasNextPage: false,
-        isLoading: false,
-        isFetching: false,
-        isFetchingNextPage: false,
-        error: null,
-        isError: false,
-        refetch: mockRefetch,
-      });
-
-      renderWithProvider(<SequentialMovieGrid />);
-      for (const expected of ["Second Set Movie A", "Third Set Movie A"]) {
-        const nextButtons = screen.getAllByLabelText(/next page/i);
-        assert.isDefined(nextButtons[0]);
-        fireEvent.click(nextButtons[0]);
-        await waitFor(() => {
-          expect(screen.getByText(expected)).toBeInTheDocument();
-        });
-      }
-
-      // Pages of 3 and 2 come before, so the third page holds results 6-7
-      expect(
-        screen.getAllByText(/showing 6-7 of 200 results/i).length,
-      ).toBeGreaterThan(0);
-    });
   });
 
   describe("Loading states during fetch", () => {

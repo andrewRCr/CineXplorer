@@ -1,9 +1,8 @@
 # PRD: Launch Readiness
 
 **Type:** Technical
-**Status:** Complete
+**Status:** In Progress
 **Created:** 2026-11-03
-**Completed:** 2026-11-05
 
 ---
 
@@ -138,7 +137,8 @@ host, and the authentication gaps above are closed. The site stays at the stagin
     2. check out the target commit (detached) and set `IMAGE_TAG` in `prod.env` to `sha-` plus its first seven
        characters;
     3. `config --quiet`, `pull`, prepare `db` with `up -d --wait --no-recreate db`, then take a fresh R2 backup
-       through `backup.sh` using exported `ops.env` settings in a subshell. Stop before migrations if any backup
+       through `/opt/cinexplorer/operations/backup.sh` using exported `ops.env` settings in a subshell. Stop before
+       migrations if any backup
        step, upload or heartbeat fails. A fresh database is initialized and backed up empty; an existing database
        container is started without recreation before its snapshot. Run migrations as a one-off backend container,
        immediately followed by `python manage.py sync_blacklist` so the table matches the target image's tracked
@@ -175,6 +175,25 @@ host, and the authentication gaps above are closed. The site stays at the stagin
   commit and the source (R1). The deploy logic is therefore the target commit's own, and no running script is a file
   that the checkout replaces. A commit without that file, such as any commit from before this change, is refused with
   a message naming the runbook's manual deploy steps, which stay in the runbook for such commits (R26).
+
+  Under the operations lock, before running the target script or changing the checkout, the entry point also
+  installs the target's versioned `backup.sh` and `maintenance.sh` at
+  `/opt/cinexplorer/operations/backup.sh` and `/opt/cinexplorer/operations/maintenance.sh`. It is the sole updater
+  of these installed files. Both source files are extracted from the target and pass `bash -n` before either
+  installed file changes. Complete mode-700 files are prepared in the operations directory and each is renamed
+  over its destination; no running job overlaps this update because the worker holds the lock. A missing or
+  invalid source file or any installation failure stops the deploy before checkout and execution. If replacing
+  the second file fails, the first may already be updated; both destinations remain complete files, and retry
+  reconciles them from the chosen target before deployment advances. The installed scripts remain after a later
+  deploy failure, and retain the stable Compose `db`/`backend`, PostgreSQL credential and built-in cleanup-command
+  interfaces used by the previous published main version `f49b6837c5a72ad4a823bf7594f2d9cf94fcd46d`.
+
+  A target with neither job source retains an already installed executable pair; a partial source pair is
+  refused. If there is no installed pair to retain, the entry point refuses that target and names the need to
+  deploy a version supplying both scripts first. The explicit manual route for a target without `deploy.sh`
+  likewise retains the installed pair. Returning to a target carrying both sources refreshes the installed files
+  through the same entry point. This does not assert compatibility with arbitrary historical Compose or backend
+  command contracts.
 - **R3. CI key restriction.** The CI deploy key's public half sits at `/opt/cinexplorer/ci-deploy.pub`. When that file
   exists, the bootstrap script writes `deploy`'s `authorized_keys` as root's keys followed by one line for the CI key
   with the options `restrict,command="/usr/local/bin/cinexplorer-deploy --from-ci"`; without it, root's keys only, as
@@ -231,7 +250,8 @@ host, and the authentication gaps above are closed. The site stays at the stagin
 
 ### Backups and restore
 
-- **R8. Nightly backup.** `infrastructure/deploy/backup.sh` runs from the systemd service `cinexplorer-backup.service`
+- **R8. Nightly backup.** The versioned source `infrastructure/deploy/backup.sh` is installed by R2 at
+  `/opt/cinexplorer/operations/backup.sh`, which runs from `cinexplorer-backup.service`
   (as `deploy`), started daily at 10:00 UTC by `cinexplorer-backup.timer` with `Persistent=true`, so a run missed while
   the server was off happens at the next boot. The service starts the script only once it holds the operations lock
   (R5). The script:
@@ -273,18 +293,21 @@ host, and the authentication gaps above are closed. The site stays at the stagin
 
 ### Scheduled maintenance
 
-- **R11. Nightly maintenance.** `infrastructure/deploy/maintenance.sh` runs from `cinexplorer-maintenance.service` (as
+- **R11. Nightly maintenance.** The versioned source `infrastructure/deploy/maintenance.sh` is installed by R2 at
+  `/opt/cinexplorer/operations/maintenance.sh`, which runs from `cinexplorer-maintenance.service` (as
   `deploy`), started daily at 10:30 UTC by `cinexplorer-maintenance.timer` with `Persistent=true`, under the
   operations lock. It runs `python manage.py flushexpiredtokens` and `python manage.py clearsessions` in the running
   `backend` container, then requests the maintenance check's ping URL, or its `/fail` form with the output on failure.
 - **R12. Server setup.** The bootstrap script (`infrastructure/deploy/bootstrap.sh`) also installs
-  `/usr/local/bin/cinexplorer-deploy` (R2), creates `/opt/cinexplorer/deploy-logs/` and `/opt/cinexplorer/backups/`
+  `/usr/local/bin/cinexplorer-deploy` (R2), creates `/opt/cinexplorer/deploy-logs/`, `/opt/cinexplorer/backups/`
+  and `/opt/cinexplorer/operations/`
   (mode `700`, owned by `deploy`), writes the four systemd units (R8, R11), and enables both timers, keeping
   its contract that a second run reports every step `UNCHANGED`. Times are in UTC, clear of the 09:00 UTC window in
   which security updates may reboot the server. The entry point's and the units' content is carried inside the
   bootstrap script, as every file it installs already is, so its first run on a new server, which happens before the
-  repository is cloned, installs them. A job that starts before the checkout or `ops.env` exists fails, naming the
-  missing file in its journal.
+  repository is cloned, installs them. Bootstrap creates the operations directory and stable service paths,
+  without embedding duplicate job bodies. A job before the checkout, `ops.env` or the first installed script exists
+  fails, naming the missing input in its journal.
 
 ### Monitoring
 
@@ -430,11 +453,16 @@ host, and the authentication gaps above are closed. The site stays at the stagin
       uses the newer token that tab stored instead of requesting one; the hook and the API client's interceptor,
       refreshing at the same moment, sending one refresh request; a user signed in with Google or GitHub never
       requesting one; and sign-out for each kind of user clearing the stored state (with R21's token on the OAuth
-      sign-out);
+      sign-out); sign-out while renewal waits for a Web Lock or a successful response must leave both browser
+      storages cleared after the older operation settles, without clearing credentials established by a later sign-in;
     - `utilities/tokenUtils.ts`: reading a token from a cookie, reading a token's expiry, choosing and reporting the
       storage in use, storing and clearing tokens, and `areTokensExpired`.
 
-  They test behavior through each module's exports, with the network replaced at the request boundary.
+  They test behavior through each module's exports, with the network replaced at the request boundary. A separate
+  browser regression loads the real hook and Axios transport against a local HTTP fixture: it holds refresh
+  headers, or sends the headers and holds the body, until a successful logout and optional later sign-in finish.
+  It observes the HTTP-only cookie and the next renewal's account identity, for both browser storages. This is a
+  client/transport regression; no deployed backend or provider sign-in is needed.
 - **R28. A password user stays signed in while the refresh token is valid.** Before `useAuth` treats a user holding
   an access token as signed out because that token has expired (on load, in its 60-second check, and before it
   fetches the profile), it requests a new access token through the API client's refresh (`POST /api/auth/refresh`,
@@ -451,7 +479,16 @@ host, and the authentication gaps above are closed. The site stays at the stagin
   answers on load, the page shows the signed-out state, as it already does while a Google or GitHub user's session is
   checked. The refresh runs in the hook's existing effects, an exception to the rule that server data is read through
   TanStack Query: it renews a token rather than reading data a page shows, and moving the sign-in state onto
-  TanStack Query is a change of its own.
+  TanStack Query is a change of its own. An explicit sign-out invalidates renewal work belonging to the ended
+  session. A renewal waiting for its Web Lock does not begin a request after that invalidation; an already-sent
+  renewal does not publish credentials when its response arrives. Invalidation cancels this tab's active refresh
+  transport synchronously before clearing credentials or sending the logout request. A response whose headers
+  already installed a rotated HTTP-only refresh cookie is ordered before the successful logout response that
+  deletes it; cancellation prevents later headers from replacing that deletion or a subsequent sign-in's cookie.
+  This guarantee covers renewal controlled by the signing-out tab, not cancellation or session revocation in other
+  tabs. Renewal-dependent callers likewise do not publish authenticated state or clear a newer session from an
+  obsolete completion. Ordinary successful and failed renewal, and logout's existing network-failure behavior,
+  retain their existing behavior.
 
 ### Runbook
 
@@ -479,7 +516,9 @@ host, and the authentication gaps above are closed. The site stays at the stagin
       version is read from the `backend` container as R1's first step reads it. A rollback right after another
       rollback picks its target from the log by hand, since the newest line is then the first rollback itself. The
       final switch is made in the same shell with `cinexplorer-deploy <target-sha>` or, for a commit without the deploy
-      script, the manual steps. After a rollback, `main`'s head still holds the version rolled back from, and the next
+      script, the manual steps. The manual route keeps the installed operations scripts and uses their stable
+      backup path before a later legacy operation; neither service depends on files removed by the checkout.
+      After a rollback, `main`'s head still holds the version rolled back from, and the next
       push run deploys it with whatever that push adds: revert or fix it on `main` before anything else merges;
     - the restore procedure (R10);
     - the nightly jobs: their timers, `journalctl` for their output, and starting one by hand with `systemctl start`;
@@ -662,6 +701,17 @@ The pages otherwise look as they do today.
     rotated cookie and succeeds; that also serves sign-ins without "remember me", whose storage other tabs cannot
     read. Current Chrome, Firefox and Safari provide the API.
 
+25. **Installed operations scripts survive legacy checkout.** Versioned source remains with the application,
+    while the entry point installs complete executables outside the checkout under the shared lock. Keeping the
+    installed copies during a legacy rollback preserves backups and cleanup without another checkout or scheduler.
+    One updater prevents bootstrap and deployment from selecting different versions; per-file replacement and a
+    retriable failure stop are sufficient because these two jobs use independent, stable command interfaces.
+26. **Explicit sign-out wins over renewal.** Pending credential renewal belongs to the session that started it.
+    Invalidation at sign-out prevents a late response from undoing the visitor's action, including callers waiting
+    for the Web Lock. Canceling the refresh transport before logout also orders its HTTP-only cookie effects before
+    the successful logout deletion and a later sign-in. The guarantee is local to the signing-out tab; it does not
+    add cross-tab session revocation, a resolving authentication state or a move onto TanStack Query.
+
 ## 8. Success Criteria
 
 The criteria come in three groups. **Implemented** criteria are checked locally and in CI. **Proven live** criteria
@@ -725,6 +775,23 @@ what was seen and where.
     exemption|CSRF token is optional` finds no text describing the old design; no test in `test_csrf_protection.py`
     asserts that sign-in or registration needs no token; and `backend/scripts/test_csrf_protection.sh` no longer
     exists.
+
+13. Frontend tests hold an idle renewal response until explicit sign-out has completed, then release it and show
+    that authentication and both browser storages remain cleared. They also hold the Web Lock until after sign-out
+    and prove no refresh request is started, for both storage choices. A later sign-in remains intact when the old
+    operation settles; ordinary renewal and shared callers still work.
+14. Disposable deployment tests install the target's job sources through the entry point, then switch the checkout
+    to the previous published main tree `f49b6837c5a72ad4a823bf7594f2d9cf94fcd46d`. Both installed service
+    commands and the locked-shell backup still finish
+    their expected operations and heartbeats, the checkout stays clean and legacy, and returning to a supported
+    target updates the installed scripts. Missing/invalid/partial sources and installation failure stop before
+    target deployment; a retry reconciles complete installed files.
+
+15. A real-browser regression loads the actual sign-in hook and Axios client against an HTTP fixture that sets
+    HTTP-only refresh cookies. With refresh headers delayed, or its headers sent and body delayed, a successful
+    logout leaves no refresh cookie; a subsequent sign-in and renewal belong to the new account after the old
+    response settles. Both browser-storage choices pass. The no-cancellation control reproduces the late-cookie
+    overwrite when headers are delayed.
 
 ### Proven live (with staging running this change, before merge)
 
@@ -805,6 +872,10 @@ what was seen and where.
     the inbox; its saved original's text part names `staging.cinexplorer.andrewcreekmore.dev`, and its link sets a new
     password that then signs in. The backend logs show each send's outcome and no raw ZeptoMail response. The evidence
     records the receiving provider and the source of the MIME observation separately.
+
+18. After staging takes the repaired deployment entry point and images, both installed service commands use
+    `/opt/cinexplorer/operations/`, both installed scripts match the published target's sources, and manual backup
+    and maintenance runs complete with their success pings. The bootstrap's repeat run remains unchanged.
 
 ### Proven after merge
 
@@ -894,3 +965,15 @@ authentication hardening (R18–R23) is not deployed.
   and both plain-text links use staging. Sender, Inbox placement, DKIM, verification/reset behavior, staging links
   and quiet logs remain required. Gmail-specific delivery was not tested and is not claimed. Dependencies, task
   references and runbook follow; application behavior and provider settings do not change.
+
+- **2026-11-05, code-review repairs,** on the Owner's approval of F1–F3: R2 installs versioned job scripts at
+  stable paths outside the checkout through one updater, with explicit validation, replacement, retry and legacy
+  retention rules; R1, R8, R11, R12 and R26 follow, and Design Decision 25 records the compatibility reason. R25
+  and R28 preserve explicit sign-out across pending renewal and protect a later sign-in (Decision 26). Implemented
+  13–14 and Proven live 18 add direct checks of those behaviors without rewriting existing criteria. The live
+  repair check requires a separately approved publication/deployment before verification can close again.
+
+- **2026-11-05, cookie-ordering clarification,** on the Owner's approval of amendment-review F1: R28 names
+  transport cancellation before logout and the ordering of HTTP-only cookie effects, limited to this tab's renewal.
+  R25 and appended Implemented 15 require a faithful browser regression over headers/body timing and the later
+  account's renewal identity. Existing criteria remain unchanged.

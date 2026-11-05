@@ -2,10 +2,9 @@
 
 **PRD:** `prd-launch-readiness.md`
 **Created:** 2026-11-03
-**Completed:** 2026-11-05
 **Branch:** `technical/launch-readiness`
 **Base Branch:** `main`
-**Status:** Complete
+**Status:** In Progress
 
 ## Overview
 
@@ -433,7 +432,7 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 6:** Verification
 
-- [x] **6.1 Verify the work**
+- [ ] **6.1 Verify the work**
     - The author criteria walk and a fresh-context independent verification pass covered the complete work unit:
       25 pre-merge criteria met, four superseded, and three explicitly post-merge criteria left for 6.2.
       Evidence: `test-evidence/6.1-criteria-report.json` and `adversarial-review/verification-pass1/report.txt`
@@ -442,6 +441,22 @@ authentication gaps that matter once sign-up is public are closed.
       checks passed. Implemented 7 and 8 cite PR CI `42059086109` at `5bdf35ac`.
     - Draft PR #78 remains draft through the separate code-review stage; mark it ready where the completion
       workflow reaches publication. The post-merge criteria and 6.2 remain open by design.
+
+    - [x] **6.1.a Repair the approved code-review findings** (F1–F3)
+      Amended the installed-script and renewal-lifetime contracts, including cancellation before logout. Shared
+      renewal and caller continuations now reject obsolete work; both browser storages and later sign-in remain
+      intact. The entry point alone installs complete nightly jobs outside the checkout, preserving supported
+      legacy operations and reconciling installation failure on retry. Corrected the resend-token and cookie-name
+      descriptions and regenerated schema/types. Related checks passed: 238 frontend tests, eight Chromium cookie
+      cases, 279 backend authentication tests, 28 deployment-harness tests, affected lint/format/types, shell checks,
+      API sync and markdown. Fail-first and source-bound evidence: `code-review-author/repair-checks.json` beside
+      the session notes. Independent fix check round 1 found no material defect and one minor Returns-description
+      inconsistency; the approved correction now states the generic `200` and delivery-failure `503`, with regenerated
+      schema/types, 279 authentication tests and affected checks passing. The auth and operations repairs are
+      recorded as separate commits; the final operations commit carries these shared completion records.
+    - [ ] **6.1.b Refresh staging and verification evidence**
+      After explicit publication/deployment approval, install the repaired bootstrap/entry point and checked images,
+      verify Proven live 18 and recheck affected live boundaries before completing verification again.
 
 - [ ] **6.2 Prove the post-merge criteria** (Proven after merge 1–3)
     - From the main checkout, after the pull request merges and before archiving (`archive-completed.md` Phase 3):
@@ -716,6 +731,23 @@ what was seen and where.
       R27/R28 and implementation. Scoped case-insensitive git grep found no old-design text; obsolete shell script
       absent; enforcing CSRF tests inspected. Markdown lint passed.
 
+- [ ] Frontend tests hold an idle renewal response until explicit sign-out has completed, then release it and show
+  that authentication and both browser storages remain cleared. They also hold the Web Lock until after sign-out
+  and prove no refresh request is started, for both storage choices. A later sign-in remains intact when the old
+  operation settles; ordinary renewal and shared callers still work.
+- [ ] Disposable deployment tests install the target's job sources through the entry point, then switch the checkout
+  to the previous published main tree `f49b6837c5a72ad4a823bf7594f2d9cf94fcd46d`. Both installed service
+  commands and the locked-shell backup still finish
+  their expected operations and heartbeats, the checkout stays clean and legacy, and returning to a supported
+  target updates the installed scripts. Missing/invalid/partial sources and installation failure stop before
+  target deployment; a retry reconciles complete installed files.
+
+- [ ] A real-browser regression loads the actual sign-in hook and Axios client against an HTTP fixture that sets
+  HTTP-only refresh cookies. With refresh headers delayed, or its headers sent and body delayed, a successful
+  logout leaves no refresh cookie; a subsequent sign-in and renewal belong to the new account after the old
+  response settles. Both browser-storage choices pass. The no-cancellation control reproduces the late-cookie
+  overwrite when headers are delayed.
+
 ### Proven live (with staging running this change, before merge)
 
 - [x] With the CI key from a local terminal: the forced command refuses an argument that is not a 40-character SHA, a
@@ -871,6 +903,10 @@ what was seen and where.
       response/signature/account/provider secrets. Mail implementation unchanged since cf0ef11b.
       6.1-email-confirmation.json records the Owner’s direct 2026-11-05 confirmation that the password-reset email
       arrived in Proton’s Inbox. All clauses supported by attributed evidence.
+
+- [ ] After staging takes the repaired deployment entry point and images, both installed service commands use
+  `/opt/cinexplorer/operations/`, both installed scripts match the published target's sources, and manual backup
+  and maintenance runs complete with their success pings. The bootstrap's repeat run remains unchanged.
 
 ### Proven after merge
 
@@ -1194,3 +1230,85 @@ what was seen and where.
   beside the session notes.
 - Stop reason: clean convergence. Task 6.1 complete; code review, draft readiness and post-merge proof remain
   separate later stages.
+
+### 2026-11-05 — Author code-review dispositions and repair amendment
+
+- Author check at `83d66a27`: two major findings and one minor, all FIX approved by the Owner. F1: idle renewal
+  republishes credentials after sign-out (local correction); F2: legacy checkout removes nightly executables
+  (new design); F3: stale token-strategy and resend-input descriptions (local correction). The original verification
+  pass remains a separate criteria-based record, not code-review clearance.
+- The approved amendment retains installed operations scripts across legacy rollback and invalidates obsolete
+  renewal work at explicit sign-out. New criteria are appended in both documents; prior criterion text stays fixed.
+  Verification is reopened for local repair checks and a separately approved staging refresh.
+- Retained source findings, probes and amendment proposal: `code-review-author/` beside the session notes. No
+  independent code-review or repair-check invocation has been authorized by the disposition approval.
+
+### 2026-11-05 — Repair amendment, Pass 1
+
+- Runner: fresh general-purpose subagent, read-only against the saved amendment and pinned `83d66a27` source;
+  actual legacy compatibility grounded at `f49b6837`. Complete selected amendment and affected test-plan coverage.
+- Result: one major finding, verified at source: renewal also writes an HTTP-only refresh cookie, so browser-storage
+  observations alone cannot prove obsolete renewal leaves a later session intact. The operations-script contract
+  withstood the review.
+- Proposed disposition: FIX, local correction. Specify cancellation of this tab's pending renewal transport before
+  logout, retain stale-caller guards, and prove cookie ordering and subsequent renewal identity in a real browser.
+  A Chromium/Axios loopback control reproduced old-cookie replacement without cancellation and preservation with it.
+  The Owner approved this complete disposition. R25/R28 and appended Implemented 15 now name the transport/cookie
+  boundary; no further independent pass has been authorized.
+- Retained subject, prompt and validated finding: `code-review-author/amendment-review-pass1/` beside the session
+  notes. This is an amendment review, separate from whole-change code review and verification.
+
+### 2026-11-05 — Approved repair checks (author)
+
+- The complete F1–F3 disposition set is implemented and locally checked. The operations amendment's independent
+  pass had no operations findings; its one major cookie-boundary finding was FIX approved by the Owner, clarified
+  in R25/R28 and Decision 26, and covered by appended Implemented 15.
+- Browser regressions use the real hook, Axios and an HTTP fixture with Secure/HTTP-only cookies. All eight fail
+  against `83d66a27`; cancellation omitted in isolation fails all four delayed-header cases; the repaired source
+  passes both storage choices, both header/body timing cases, and sign-out with or without later sign-in. Subsequent
+  renewal is checked against the later account's identity. Earlier MSW regressions cover stale loading/profile/API
+  callers and lock waiters; source reconstructions and restored passes are retained.
+- Actual legacy-tree job continuity, complete-file replacement, refusal and retry checks pass in disposable
+  containers. Old-bootstrap controls fail for the intended behaviors. Focused check results and source hashes are
+  retained beside the session notes; completion documentation reflects the reopened staging verification.
+- Stop reason: primary repair validation complete. A fresh independent fix check is recommended before publication;
+  it has not been invoked. Task 6.1.b and the parent verification task remain open for separately approved staging
+  publication and refreshed evidence. Success Criteria marks are unchanged.
+
+### 2026-11-05 — Repair fix check, round 1
+
+- Runner: fresh general-purpose subagent, read-only against 19 immutable before/after repair-file snapshots at
+  source base `83d66a27`, plus their upstream and actual legacy context. Author evidence, progress marks and
+  completion conclusions were withheld; the approved findings account followed the full artifact read.
+- Rubric: closure, behavioral grounding, propagation/completeness and new failure, plus all five implementation-audit
+  dimensions. Complete static repair coverage; no tests, containers or live operations were run by the reviewer.
+- Result: no critical or major findings; one minor, verified at source. The new resend Returns prose implies a
+  distinct invalid-token outcome, while the service returns the generic `200` confirmation for invalid/expired
+  tokens. Disposition: FIX, local correction approved by the Owner. The docstring now names the generic `200`
+  confirmation, including invalid/expired tokens, and delivery-failure `503`; schema/types were regenerated.
+- Renewal lifecycle and cookie transport, installed-job continuity, replacement/retention/retry and legacy
+  compatibility had no material finding. This incremental check does not attest the whole work unit.
+- Trend: converging. Code-review major repairs: two to zero; amendment cookie repair: one to zero. The remaining
+  minor originates in the description repair. Retained prompt, exact target, report and primary validation:
+  `code-review-author/fix-check-round1/` beside the session notes.
+- Correction checks: 279 backend authentication tests, backend lint/format and types, frontend types, API description
+  agreement and markdown passed. The correction changes only descriptive text; no new runtime behavior or test was
+  introduced. Primary before/after comparison and raw checks are retained under the same fix-check directory.
+- Stop reason: approved minor correction complete; another independent fix-check round is not recommended for this
+  documentation-only fold. Recommend the separate full-branch independent code-review pass before publication.
+
+### 2026-11-05 — Independent implementation code review, Pass 1
+
+- Runner: fresh general-purpose subagent, read-only against the immutable 81-file source/contract manifest from
+  merge base `739d0a17` through `83d66a27` plus all uncommitted source repairs and both new files. Every changed
+  hunk and full new file was read, with caller/producer and actual legacy context. Task-status/completion reports,
+  author findings, review history and verification conclusions were withheld under the independence boundary;
+  those two administrative records were outside the code-review target.
+- Rubric: all five implementation-audit dimensions and repository contracts, including cross-layer and deployment
+  seams. Result: no findings; clean static implementation review. No tests, containers, installations or live
+  operations were run by the reviewer; runtime outcomes and external configuration were not reverified.
+- Primary validation: all 81 current source hashes and the aggregate diff still match the reviewed snapshot.
+  No dispositions or fixes needed. Retained prompt, exact manifest, before/after source, report and validation:
+  `adversarial-review/code-pass1/` beside the session notes.
+- Stop reason: clean convergence for this implementation review. Task 6.1.b remains open for explicitly approved
+  publication/deployment, refreshed CI and affected live verification; the prior results do not attest a new head.

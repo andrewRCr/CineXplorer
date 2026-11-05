@@ -43,6 +43,7 @@ git add initial; git commit -qm initial
 missing=$(git rev-parse HEAD)
 mkdir -p infrastructure/deploy
 cp /opt/cinexplorer/stub-deploy infrastructure/deploy/deploy.sh
+cp /source/backup.sh /source/maintenance.sh infrastructure/deploy/
 git add .; git commit -qm 'add deploy'
 old=$(git rev-parse HEAD)
 printf 'new\n' > version
@@ -118,7 +119,9 @@ printf '%s\n' "$missing" "$old" "$new" "$outside"
             with self.subTest(command=command):
                 result = self.ci(command)
                 self.assertNotEqual(result.returncode, 0)
-                self.assertIn("exactly 40 lowercase hexadecimal", result.stdout + result.stderr)
+                self.assertIn(
+                    "exactly 40 lowercase hexadecimal", result.stdout + result.stderr
+                )
                 self.assertEqual(self.history(), "")
                 self.assertNotIn("==> 1 ", result.stdout)
 
@@ -186,7 +189,9 @@ printf '%s\n' "$missing" "$old" "$new" "$outside"
         self.fixture.shell('kill -TERM -- -"$(cat /opt/cinexplorer/follower.pid)"')
         process.wait(timeout=5)
         locked = self.fixture.run(
-            ["flock", "-n", "/opt/cinexplorer/ops.lock", "true"], user="deploy", check=False
+            ["flock", "-n", "/opt/cinexplorer/ops.lock", "true"],
+            user="deploy",
+            check=False,
         )
         self.assertEqual(locked.returncode, 1)
         self.fixture.shell("rm /opt/cinexplorer/gate")
@@ -195,7 +200,9 @@ printf '%s\n' "$missing" "$old" "$new" "$outside"
         self.assertEqual(self.fixture.read(log + ".status").strip(), "0")
         self.assertEqual(self.history().split()[4], self.new)
         self.assertIn("exit 0", self.fixture.read(log))
-        self.fixture.run(["flock", "-n", "/opt/cinexplorer/ops.lock", "true"], user="deploy")
+        self.fixture.run(
+            ["flock", "-n", "/opt/cinexplorer/ops.lock", "true"], user="deploy"
+        )
 
     def test_ci_rechecks_history_after_waiting_for_lock(self) -> None:
         self.fixture.shell("touch /opt/cinexplorer/lock-gate")

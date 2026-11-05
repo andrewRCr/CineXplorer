@@ -55,7 +55,7 @@ compose up -d --wait --no-recreate db
     # shellcheck source=/dev/null
     . "$operations/ops.env"
     set +a
-    bash "$operations/repo/infrastructure/deploy/backup.sh"
+    bash "$operations/operations/backup.sh"
 )
 compose run --rm backend python manage.py migrate
 compose run --rm backend python manage.py sync_blacklist

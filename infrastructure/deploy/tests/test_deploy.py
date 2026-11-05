@@ -144,7 +144,9 @@ class DeployScriptTests(unittest.TestCase):
             operations = root / "operations"
             deployment = operations / "repo" / "infrastructure" / "deploy"
             deployment.mkdir(parents=True)
-            (deployment / "backup.sh").write_text(BACKUP.read_text())
+            installed = operations / "operations"
+            installed.mkdir(mode=0o700)
+            (installed / "backup.sh").write_text(BACKUP.read_text())
             (operations / "backups").mkdir(mode=0o700)
             (operations / "ops.env").write_text(
                 "RCLONE_CONFIG_R2_TYPE=s3\n"

@@ -118,6 +118,7 @@ visudo -c
 ensure_dir /opt/cinexplorer 755 deploy deploy
 ensure_dir /opt/cinexplorer/deploy-logs 700 deploy deploy
 ensure_dir /opt/cinexplorer/backups 700 deploy deploy
+ensure_dir /opt/cinexplorer/operations 700 deploy deploy
 write_file /usr/local/bin/cinexplorer-deploy 755 <<'DEPLOY_ENTRY'
 #!/usr/bin/env bash
 # Restricted CI entry point and trusted manual deployment interface.
@@ -147,6 +148,7 @@ target=$1
 source=$2
 status_file=$3
 scratch=$4
+operation_files=()
 fail() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 finish() {
     result=$?
@@ -157,6 +159,7 @@ finish() {
     else
         printf 'Deploy failed (exit %s).\n' "$result"
     fi
+    rm -f -- "${operation_files[@]}"
     rm -rf "$scratch"
     if [[ -n $status_file ]]; then
         printf '%s\n' "$result" > "$status_file.tmp"
@@ -196,6 +199,37 @@ fi
 if [[ $source == ci ]]; then check_ci_version; fi
 if ! git show "$target:infrastructure/deploy/deploy.sh" > "$scratch/target.sh"; then
     fail 'Target has no deploy script; use the manual deploy steps in infrastructure/deploy/README.md.'
+fi
+# The checkout can later select a release without these source files. Install only
+# through this entry point, while the operations lock excludes jobs and deploys.
+operations=/opt/cinexplorer/operations
+sources=0
+for job in backup maintenance; do
+    if git cat-file -e "$target:infrastructure/deploy/$job.sh" 2>/dev/null; then
+        git show "$target:infrastructure/deploy/$job.sh" > "$scratch/$job.sh"
+        sources=$((sources + 1))
+    fi
+done
+if ((sources == 2)); then
+    # Validate the complete source pair before preparing or replacing either file.
+    bash -n "$scratch/backup.sh"
+    bash -n "$scratch/maintenance.sh"
+    for job in backup maintenance; do
+        staged=$(mktemp "$operations/.$job.sh.XXXXXX")
+        operation_files+=("$staged")
+        install -m 700 "$scratch/$job.sh" "$staged"
+    done
+    # Each rename publishes a complete file. A failed second rename stops deployment;
+    # a retry reconciles both files before any target code runs.
+    mv -fT "${operation_files[0]}" "$operations/backup.sh"
+    mv -fT "${operation_files[1]}" "$operations/maintenance.sh"
+elif ((sources == 0)); then
+    for job in backup maintenance; do
+        [[ -f $operations/$job.sh && -x $operations/$job.sh ]] ||
+            fail 'No complete installed operations pair; deploy a version supplying both job sources first.'
+    done
+else
+    fail 'Target supplies only one operations job; both sources are required.'
 fi
 bash "$scratch/target.sh" "$target" "$source"
 WORKER
@@ -263,7 +297,7 @@ Group=deploy
 UMask=0077
 EnvironmentFile=/opt/cinexplorer/ops.env
 TimeoutStartSec=infinity
-ExecStart=/usr/bin/flock -w 1800 /opt/cinexplorer/ops.lock /usr/bin/bash /opt/cinexplorer/repo/infrastructure/deploy/backup.sh
+ExecStart=/usr/bin/flock -w 1800 /opt/cinexplorer/ops.lock /usr/bin/bash /opt/cinexplorer/operations/backup.sh
 NIGHTLY_BACKUP_SERVICE
 if $last_file_changed; then units_changed=true; fi
 write_file /etc/systemd/system/cinexplorer-backup.timer 644 <<'NIGHTLY_BACKUP_TIMER'
@@ -291,7 +325,7 @@ Group=deploy
 UMask=0077
 EnvironmentFile=/opt/cinexplorer/ops.env
 TimeoutStartSec=infinity
-ExecStart=/usr/bin/flock -w 1800 /opt/cinexplorer/ops.lock /usr/bin/bash /opt/cinexplorer/repo/infrastructure/deploy/maintenance.sh
+ExecStart=/usr/bin/flock -w 1800 /opt/cinexplorer/ops.lock /usr/bin/bash /opt/cinexplorer/operations/maintenance.sh
 NIGHTLY_MAINTENANCE_SERVICE
 if $last_file_changed; then units_changed=true; fi
 write_file /etc/systemd/system/cinexplorer-maintenance.timer 644 <<'NIGHTLY_MAINTENANCE_TIMER'

@@ -474,7 +474,29 @@ exit
 ```
 
 Append history only after public health succeeds. The legacy version has no `configure_site` command; its existing
-Site configuration remains. Confirm browser sign-in and watchlist persistence after any successful switch.
+Site configuration remains. Keep `/opt/cinexplorer/operations/` and its installed jobs in place throughout the
+switch; checking out legacy code does not uninstall them. Confirm browser sign-in and watchlist persistence after
+any successful switch.
+
+## Installed operations scripts
+
+The versioned sources are `infrastructure/deploy/backup.sh` and `maintenance.sh`. Both services and the locked-shell
+backup use installed copies in `/opt/cinexplorer/operations/`, outside the mutable repository checkout. The directory
+and files are owned by `deploy` with mode `700`. Bootstrap creates the directory and units; it does not embed or
+replace job bodies. On a fresh host, deploy a version supplying both sources before starting the jobs.
+
+`cinexplorer-deploy` is the only updater. Under the operations lock, before executing the target deploy script, it
+extracts and checks both target sources with `bash -n`, prepares both complete installed files, then renames each over
+its destination. Jobs cannot overlap these replacements. Missing/invalid sources or installation failure stop the
+deploy before checkout or target execution. If the second replacement fails, the first may already be updated; no
+partial file is exposed, and a retry reconciles both files before proceeding.
+
+A target supplying neither source retains an existing executable pair; a partial source pair is refused. Without an
+installed pair, deploy a version supplying both first. A target without `deploy.sh` still requires the manual legacy
+procedure above, which preserves the installed pair. The supported previous published version is
+`f49b6837c5a72ad4a823bf7594f2d9cf94fcd46d`: its Compose services, PostgreSQL variables and cleanup commands remain
+compatible with these jobs. This does not promise compatibility with arbitrary historical checkouts. Returning via
+`cinexplorer-deploy` to a version supplying job sources updates the installed copies through the same path.
 
 ## Back up the database
 
@@ -498,7 +520,7 @@ there would wait for your own shell:
     set -a
     . /opt/cinexplorer/ops.env
     set +a
-    bash /opt/cinexplorer/repo/infrastructure/deploy/backup.sh
+    bash /opt/cinexplorer/operations/backup.sh
 )
 ```
 

@@ -1,6 +1,7 @@
 # Completion: Launch Readiness
 
-**Status:** Refreshed verification review pending
+**Status:** Pre-merge verification complete
+**Completed:** 2026-11-05
 **Branch:** `technical/launch-readiness`
 **Category:** Technical
 **Context:** Prepare the deployed staging service for public sign-up and routine operation.
@@ -9,10 +10,9 @@
 
 Implemented automated deployment, off-server database backups, scheduled maintenance and failure monitoring,
 and deployed the checked images to staging. Email registration, password recovery, provider sign-in and password
-session renewal were exercised live alongside the authentication protections. Verification was reopened after the
-author code review found renewal/sign-out and legacy job-lifetime defects. The repairs passed local checks and
-independent implementation review and are deployed on staging. Refreshed criteria-review disposition and the
-main-push deployment proofs remain open.
+session renewal were exercised live alongside the authentication protections. Renewal/sign-out and legacy
+job-lifetime repairs passed local checks, independent implementation review and refreshed criteria/evidence review,
+and are deployed on staging. Pre-merge verification is complete; the main-push deployment proofs remain open.
 
 ## Key Deliverables
 
@@ -68,8 +68,12 @@ main-push deployment proofs remain open.
 - Staging runs both images from `0ca2d5b5`. Bootstrap upgrade/repeat, installed-job source hashes and service paths,
   successful backup/maintenance heartbeats and public health passed. Real browser checks for both storage choices
   canceled a held renewal across sign-out, preserved a later account's cookie and renewed as that account. Temporary
-  accounts were removed. The author criteria walk now records 29 pre-merge met, four superseded and three post-merge
-  proofs open; its refreshed independent companion remains an Owner choice.
+  accounts were removed. The author criteria walk records 29 pre-merge met, four superseded and three post-merge
+  proofs open. The refreshed independent criteria/evidence review covered all 36 unchanged criteria and returned
+  no findings. Final PR CI `42125425864` passed at evidence-only head `8dfe73c4`, including `ci-ok`.
+- The refreshed review used neutral source and evidence inputs, with author conclusions withheld. Primary validation
+  matched all 80 projected source files to pinned Git objects and deployed code. It was static review; older live
+  observations were assessed for applicability, and no tests or live operations were rerun by the reviewer.
 
 - A fresh independent implementation code review covered all 81 source/contract files and returned no findings.
   It considered all five rubric dimensions, repository contracts and cross-layer/deployment seams. This was static
@@ -86,11 +90,6 @@ main-push deployment proofs remain open.
 None.
 
 ## Follow-Up Work
-
-- Task 6.1.a's repairs are locally checked. The independent repair fix check found no material defect and one minor
-  resend-description inconsistency; its approved correction and regenerated API descriptions passed affected checks.
-  The independent implementation review returned no findings; staging refresh is complete. Task 6.1.c holds the
-  separate refreshed verification-review decision before the verification parent closes.
 
 - Task 6.2 in `tasks-launch-readiness.md`: after merge, prove deployment from the merge commit's main-push CI run;
   a docs-only main push running only the docs workflow, publishing no image and adding no deploy-history line;

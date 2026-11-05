@@ -4,7 +4,8 @@
 **Created:** 2026-11-03
 **Branch:** `technical/launch-readiness`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
+**Completed:** 2026-11-05
 
 ## Overview
 
@@ -432,15 +433,17 @@ authentication gaps that matter once sign-up is public are closed.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work**
-    - The author criteria walk and a fresh-context independent verification pass covered the complete work unit:
-      25 pre-merge criteria met, four superseded, and three explicitly post-merge criteria left for 6.2.
-      Evidence: `test-evidence/6.1-criteria-report.json` and `adversarial-review/verification-pass1/report.txt`
-      beside the session notes. The independent pass returned no findings.
+- [x] **6.1 Verify the work**
+    - The refreshed author walk and fresh-context independent verification covered all 36 unchanged criteria:
+      29 pre-merge criteria met, four superseded, and three explicitly post-merge proofs left for 6.2.
+      Evidence: `test-evidence/6.1b-criteria-report.json` and
+      `adversarial-review/verification-pass2/report.yaml` beside the session notes. The independent pass returned
+      no findings; implementation code review separately returned no findings.
     - Full local backend/frontend tests, lint, format, types, markdown, API drift and production configuration
-      checks passed. Implemented 7 and 8 cite PR CI `42059086109` at `5bdf35ac`.
-    - Draft PR #78 remains draft through the separate code-review stage; mark it ready where the completion
-      workflow reaches publication. The post-merge criteria and 6.2 remain open by design.
+      checks passed. Final PR CI `42125425864` passed at `8dfe73c4`, including `ci-ok`; staging runs source-equivalent
+      code `0ca2d5b5`. Earlier unchanged live observations remain applicable and attributed.
+    - Draft PR #78 awaits the approved publication/readiness transition. The post-merge criteria and 6.2 remain
+      open by design.
 
     - [x] **6.1.a Repair the approved code-review findings** (F1–F3)
       Amended the installed-script and renewal-lifetime contracts, including cancellation before logout. Shared
@@ -464,10 +467,13 @@ authentication gaps that matter once sign-up is public are closed.
       generated API agreement and markdown passed. Earlier unchanged live proofs were checked for applicability.
       Author criteria walk: 29 pre-merge criteria met, four superseded and three post-merge proofs open. Evidence:
       `publication-repairs/` and `test-evidence/6.1b-criteria-report.json` beside the session notes.
-    - [ ] **6.1.c Settle the refreshed verification review**
-      Offer the separate fresh-context criteria/evidence review over the repaired work and four appended criteria,
-      under the completion workflow. The earlier 32-criterion review and implementation review remain distinct.
-      Close this step on the Owner's review/decline decision and any resulting dispositions before closing 6.1.
+    - [x] **6.1.c Settle the refreshed verification review**
+      The Owner-approved fresh-context pass covered all 36 unchanged criteria and the complete 80-file implementation
+      projection at `8dfe73c4`, with neutral source/evidence inputs and author verdicts withheld. It returned no
+      findings: 29 pre-merge criteria supported, four superseded, three post-merge proofs deliberately open.
+      Primary validation matched pinned source, snapshots and deployed code; no dispositions or fixes were needed.
+      Retained prompt, subject, report and validation: `adversarial-review/verification-pass2/` beside the session
+      notes. The earlier verification and separate implementation review remain distinct records.
 
 - [ ] **6.2 Prove the post-merge criteria** (Proven after merge 1–3)
     - From the main checkout, after the pull request merges and before archiving (`archive-completed.md` Phase 3):
@@ -1360,3 +1366,22 @@ what was seen and where.
 - Source and retained evidence were walked against all 36 criteria: 29 pre-merge met, four superseded, three
   explicitly post-merge open. The four appended criteria are now marked with direct evidence. A refreshed independent
   criteria/evidence review is recommended as a separate Owner choice; the verification parent remains open for it.
+
+### 2026-11-05 — Refreshed verification, Pass 2
+
+- Runner: fresh general-purpose subagent, read-only with no inherited author context, on the Owner's approval.
+  Scope: all 36 unchanged Success Criteria and the complete 80-file implementation projection from `739d0a17`
+  through `8dfe73c4`, plus criterion-relevant reachable dependencies. Neutral PRD/task projections and raw evidence
+  were supplied; author marks, conclusions, completion reports and earlier verdicts were withheld.
+- Result: no findings. All 29 effective pre-merge criteria have applicable support; four are explicitly superseded.
+  The three post-merge criteria remain unexecuted and open. No dispositions or repairs were needed.
+- Primary validation: snapshot and pinned Git hashes match all 80 source files; deployed `0ca2d5b5` has identical
+  projected source. All 36 neutral criterion texts match the author evidence index. Closure edits change only
+  administrative metadata, preserving the reviewed normative design and criteria.
+- This was static, evidence-only review: no tests or live operations were rerun. Earlier live observations were
+  assessed for applicability. Provider-console, inbox and six-minute browser evidence remains Owner-attributed;
+  browser transport evidence is Chromium-specific. Exact-head CI `42125425864` supplies hosted acceptance evidence.
+- Retained prompt, exact subject, neutral inputs, report and primary validation:
+  `adversarial-review/verification-pass2/` beside the session notes.
+- Stop reason: clean convergence. Task 6.1.c and parent 6.1 are complete; publication/readiness approval and the
+  deliberately post-merge Task 6.2 remain separate steps.

@@ -1,9 +1,13 @@
 import { spawnSync } from "node:child_process";
 import { randomInt } from "node:crypto";
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+    copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, symlinkSync,
+    writeFileSync,
+} from "node:fs";
 import { basename, dirname, join } from "node:path";
 
 const COMPOSE = ["compose", "-f", "infrastructure/docker-compose.yml", "-f", "infrastructure/docker-compose.worktree.yml"];
+const CLOSING = ".arc/reference/harness-hooks/finish-work.mjs";
 const HELP = `Usage: node scripts/worktree.mjs <command>
 
   create <type>/<name> [--existing | --work-unit]
@@ -15,6 +19,9 @@ const HELP = `Usage: node scripts/worktree.mjs <command>
       Start the worktree's app, migrate and seed its development database.
   remove <name> [--keep-branch]
       Remove a clean merged worktree and its stack; optionally keep its branch.
+  finish <name>
+      Close a merged worktree: update main, run the repository's closing steps,
+      remove the worktree, its stack and its branches, and stop before any push.
 `;
 
 function run(cwd, command, args) {
@@ -186,13 +193,37 @@ function browse(root, main) {
     console.log(`https://localhost:${envValue(contents, "SITE_PORT")}\nSign in: dev / cinexplorer-dev`);
 }
 
-function remove(root, main, name, keepBranch) {
-    primary(root, main);
+// Processes whose working directory is inside the worktree, such as a session still running there. /proc is read
+// where it exists; another user's processes, and ones that exit while being read, are skipped.
+function processesIn(path) {
+    if (!existsSync("/proc") || !existsSync(path)) return [];
+    const real = realpathSync(path);
+    const found = [];
+    for (const pid of readdirSync("/proc").filter((entry) => /^\d+$/.test(entry))) {
+        let name;
+        try {
+            const cwd = readlinkSync(`/proc/${pid}/cwd`);
+            if (cwd !== real && !cwd.startsWith(`${real}/`)) continue;
+            name = readFileSync(`/proc/${pid}/comm`, "utf8").trim();
+        } catch (error) {
+            if (["ENOENT", "EACCES", "ESRCH"].includes(error.code)) continue;
+            throw error;
+        }
+        found.push(`${pid} ${name}`);
+    }
+    return found;
+}
+
+function checkRemoval(main, name, keepBranch) {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(name ?? "")) throw new Error("Supply a worktree name using lowercase letters, digits and hyphens.");
     const path = `${main}.${name}`;
     const entry = worktrees(main).find((candidate) => candidate.path === path);
     if (!entry) throw new Error(`Not a registered worktree: ${path}`);
     if (!entry.branch) throw new Error("Worktree must have a branch checked out; detached HEAD cannot be removed here.");
+    const running = processesIn(path);
+    if (running.length) {
+        throw new Error(`Processes are running inside ${path}; end them first, such as a session there:\n  ${running.join("\n  ")}`);
+    }
     git(main, "fetch", "origin");
     if (!keepBranch) {
         const merged = spawnSync("git", ["merge-base", "--is-ancestor", entry.branch, "origin/main"], {
@@ -209,6 +240,10 @@ function remove(root, main, name, keepBranch) {
     const project = envValue(readEnv(path), "COMPOSE_PROJECT_NAME");
     const expected = `cinexplorer-${name}`;
     if (project && project !== expected) throw new Error(`Compose project must be ${expected}; found ${project}.`);
+    return { path, branch: entry.branch, project };
+}
+
+function tearDown(main, { path, branch, project }, keepBranch) {
     if (project) {
         const filter = ["--filter", `label=com.docker.compose.project=${project}`, "-q"];
         for (const kind of ["container", "volume", "network", "image"]) {
@@ -221,23 +256,78 @@ function remove(root, main, name, keepBranch) {
     }
     git(main, "worktree", "remove", path);
     if (!keepBranch) {
-        git(main, "branch", "--set-upstream-to=origin/main", entry.branch);
-        git(main, "branch", "-d", entry.branch);
+        git(main, "branch", "--set-upstream-to=origin/main", branch);
+        git(main, "branch", "-d", branch);
     }
     git(main, "fetch", "--prune");
-    console.log(`Removed ${path}; ${keepBranch ? "kept" : "deleted"} branch ${entry.branch}.`);
+    console.log(`Removed ${path}; ${keepBranch ? "kept" : "deleted"} branch ${branch}.`);
+}
+
+function remove(root, main, name, keepBranch) {
+    primary(root, main);
+    tearDown(main, checkRemoval(main, name, keepBranch), keepBranch);
+}
+
+function deleteRemoteBranch(main, branch) {
+    const listing = spawnSync("git", ["ls-remote", "--exit-code", "--heads", "origin", `refs/heads/${branch}`], {
+        cwd: main, encoding: "utf8",
+    });
+    if (listing.error) throw listing.error;
+    if (listing.status === 2) return console.log(`Remote branch ${branch} is already gone.`);
+    if (listing.status !== 0) throw new Error(listing.stderr || "git ls-remote failed");
+    const head = listing.stdout.split(/\s/)[0];
+    const merged = spawnSync("git", ["merge-base", "--is-ancestor", head, "origin/main"], { cwd: main, encoding: "utf8" });
+    if (merged.error) throw merged.error;
+    if (merged.status !== 0) return console.log(`Kept remote branch ${branch}: its head ${head.slice(0, 8)} is not on origin/main.`);
+    git(main, "push", "--quiet", "origin", "--delete", branch);
+    console.log(`Deleted remote branch ${branch}.`);
+}
+
+function closingStep(main, args, recovery) {
+    try {
+        const output = run(main, process.execPath, [CLOSING, ...args]);
+        if (output) console.log(output);
+    } catch (error) {
+        throw new Error(`${error.message}\n${recovery}`);
+    }
+}
+
+function finish(root, main, name) {
+    primary(root, main);
+    if (git(main, "branch", "--show-current") !== "main") throw new Error("The main checkout must be on main.");
+    if (git(main, "status", "--porcelain", "--untracked-files=no")) {
+        throw new Error("The main checkout has uncommitted changes to tracked files; commit or set them aside first.");
+    }
+    const removal = checkRemoval(main, name, false);
+    git(main, "merge", "--ff-only", "--quiet", "origin/main");
+    closingStep(main, ["before-remove", name], `Nothing was removed; resolve it, then run node scripts/worktree.mjs finish ${name} again.`);
+    try {
+        tearDown(main, removal, false);
+    } catch (error) {
+        throw new Error(`${error.message}\nRemoval stopped partway; resolve it, then run node scripts/worktree.mjs finish ${name} ` +
+            `again while the worktree is still registered, or else node ${CLOSING} after-remove ${name}.`);
+    }
+    // The remote branch is the one step that can wait: report a failure and carry on to the closing steps.
+    try {
+        deleteRemoteBranch(main, removal.branch);
+    } catch (error) {
+        console.log(`Could not delete remote branch ${removal.branch}: ${error.message.split("\n")[0]}\n` +
+            `Delete it later with git push origin --delete ${removal.branch}.`);
+    }
+    closingStep(main, ["after-remove", name], `The worktree is removed; resolve it, then run node ${CLOSING} after-remove ${name}.`);
 }
 
 function main() {
     const [command, ...args] = process.argv.slice(2);
     if (command === "--help" || command === "-h") return console.log(HELP);
-    if (!["create", "provision", "browse", "remove"].includes(command)) throw new Error(`Unknown command: ${command ?? "[none]"}. Use --help.`);
+    if (!["create", "provision", "browse", "remove", "finish"].includes(command)) throw new Error(`Unknown command: ${command ?? "[none]"}. Use --help.`);
     const { root, main } = context();
     if (command === "provision" && args.length === 0) return provision(root, main);
     if (command === "browse" && args.length === 0) return browse(root, main);
     if (command === "remove" && args.length >= 1 && args.length <= 2 && (args.length === 1 || args[1] === "--keep-branch")) {
         return remove(root, main, args[0], args.includes("--keep-branch"));
     }
+    if (command === "finish" && args.length === 1) return finish(root, main, args[0]);
     if (command === "create" && args.length >= 1 && args.slice(1).every((arg) => ["--existing", "--work-unit"].includes(arg))) {
         return create(root, main, args[0], { existing: args.includes("--existing"), workUnit: args.includes("--work-unit") });
     }

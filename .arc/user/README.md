@@ -11,6 +11,7 @@ user/
 └── {identity}/                  # One developer's workspace (gitignored)
     ├── WORKING-MEMORY.md        # Context that spans work units (main checkout only)
     ├── USER-INBOX.md            # Captured work to route later (main checkout only)
+    ├── errand-records/          # Evidence kept from finished work (main checkout only)
     └── {name}/                  # One work unit, named like its task list (`tasks-{name}.md`)
         ├── SESSION-NOTES.md     # Where the work stands, for the next session
         ├── REVIEW-LOG.md        # Review passes before the task list exists
@@ -37,9 +38,12 @@ guessed.
   units moves work-unit entries to tracked homes; an errand's entry stays until that errand merges.
 - **`REVIEW-LOG.md`** and **`adversarial-review/`**: written by each review pass. The durable review record is the
   task list's `## Review Log`; task generation copies `REVIEW-LOG.md` into it.
+- **`errand-records/`**: an errand's evidence, written as it runs; and, when a worktree is finished, a copy of its
+  `{name}/` folder as `{name}-{date}/` (`archive-completed.md` § 10), so the proofs a task list cites outlive the
+  checkout.
 
-A work unit's folder is created with its session notes, or at its first review if that comes first, and deleted when
-the work unit is archived. `WORKING-MEMORY.md` and `USER-INBOX.md` persist across work units; a linked worktree reads
-and writes the main checkout's copies.
+A work unit's folder is created with its session notes, or at its first review if that comes first. When the work unit
+is archived, `finish` copies it into `errand-records/` and removal deletes the worktree's copy. `WORKING-MEMORY.md`
+and `USER-INBOX.md` persist across work units; a linked worktree reads and writes the main checkout's copies.
 
 Nothing here is a source of truth for project decisions: those live in the PRD, the task list and the ADRs.

@@ -163,22 +163,26 @@ docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-com
 
 ## Removal
 
-After the pull request merges, run from the primary:
+After the pull request merges, close the worktree from the primary:
 
 ```bash
-node scripts/worktree.mjs remove {name}
+node scripts/worktree.mjs finish {name}
 ```
 
-A separate conversation rooted in the worktree hands off and ends first. A same-session errand instead runs
-`errand-return` from its session home and confirms that home is active before removal; the conversation can then
-continue.
+A separate conversation rooted in the worktree hands off and ends first: `finish` and `remove` refuse while any
+process runs inside the worktree, and name each one. A same-session errand instead runs `errand-return` from its
+session home and confirms that home is active before removal; the conversation can then continue.
+
+`finish` refuses a main checkout that isn't a clean `main`, fast-forwards it, and runs the closing steps around
+`remove`: before it, the hold on unchecked task-list boxes and a copy of the worktree's personal folder in
+`errand-records/`; after it, the remote branch, the archive commit for planned work and the errand-harness refresh
+([archive-completed.md § 10](archive-completed.md#10-finish-the-worktree)). It stops before any push.
 
 `remove` fetches `origin` and refuses an unmerged branch, a locked worktree, uncommitted or untracked work, or an
 unexpected Compose project name before deleting anything. It stops and removes containers and removes volumes,
 networks and built images carrying the worktree's project label, even if the containers were already stopped or
 removed. It then removes the checkout, deletes the merged local branch and prunes remote-tracking refs. An env file
-that names no project skips Docker teardown. Remote branch deletion and archival remain the caller's steps
-([archive-completed.md § 9](archive-completed.md#9-delete-child-branch), [run-errand.md § 6](run-errand.md#6-clean-up)).
+that names no project skips Docker teardown.
 
 For a review checkout or abandoned work whose branch must stay:
 
@@ -190,5 +194,5 @@ This skips only the merged-branch requirement and branch deletion; all other ref
 apply. An unmerged branch is never deleted by this script.
 
 Removal deletes the checkout's gitignored files: copied env files, `node_modules`, and a work unit's session notes
-and review records among them. Paused work keeps its worktree. The merged task list's Review Log is the durable
-review record; links are removed without touching the primary's folders they point to.
+and review records among them, which `finish` keeps first. Paused work keeps its worktree. The merged task list's
+Review Log is the durable review record; links are removed without touching the primary's folders they point to.

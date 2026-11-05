@@ -1,6 +1,6 @@
 # Completion: Launch Readiness
 
-**Status:** Repair verification in progress
+**Status:** Refreshed verification review pending
 **Branch:** `technical/launch-readiness`
 **Category:** Technical
 **Context:** Prepare the deployed staging service for public sign-up and routine operation.
@@ -10,16 +10,17 @@
 Implemented automated deployment, off-server database backups, scheduled maintenance and failure monitoring,
 and deployed the checked images to staging. Email registration, password recovery, provider sign-in and password
 session renewal were exercised live alongside the authentication protections. Verification was reopened after the
-author code review found renewal/sign-out and legacy job-lifetime defects. Local repairs are being checked; staging
-refresh and the main-push deployment proofs remain open.
+author code review found renewal/sign-out and legacy job-lifetime defects. The repairs passed local checks and
+independent implementation review and are deployed on staging. Refreshed criteria-review disposition and the
+main-push deployment proofs remain open.
 
 ## Key Deliverables
 
 - CI validates production Caddy and Compose configuration, preserves the full pull-request checks, and defines
   main-only deployment after `ci-ok`. Documentation-only pushes under `.arc/` use the separate docs workflow.
 - A restricted SSH deployment entry point selects the target commit's deploy script, serializes operations,
-  records successful version transitions and keeps full CI deployment output in private server logs. The local
-  repair installs versioned nightly scripts outside the checkout so a supported legacy rollback retains them.
+  records successful version transitions and keeps full CI deployment output in private server logs. The entry point
+  installs versioned nightly scripts outside the checkout so a supported legacy rollback retains them.
 - Nightly custom-format database backups upload to private R2 storage with retention configured, with an
   end-to-end restore rehearsed against an isolated local production stack.
 - Scheduled expired-token and session cleanup, database-aware health checks, nightly-job heartbeats and
@@ -40,7 +41,7 @@ refresh and the main-push deployment proofs remain open.
   the token lifetime; only a successful send consumes it. Frontend callers show the retry message without a
   duplicate global server-error toast.
 - Password renewal shares one in-flight promise within a tab and uses Web Locks across tabs. It rereads tokens
-  under the lock and preserves the original browser-storage choice. The local repair invalidates obsolete renewal
+  under the lock and preserves the original browser-storage choice. The repair invalidates obsolete renewal
   work at explicit sign-out and protects subsequent sign-in state, including the HTTP-only refresh-cookie boundary.
 - Restore preparation validates a recovery copy before replacing the schema, uses a transactional archive restore,
   and retains the copy until application checks and sign-in/watchlist confirmation succeed.
@@ -62,7 +63,13 @@ refresh and the main-push deployment proofs remain open.
   affected lint/format/types, API generation and markdown. Eight real Chromium cases use the actual hook and Axios
   against a local HTTP fixture, checking cookie ordering and subsequent renewal identity across both storage choices.
   All eight fail on the pre-repair source; omitting cancellation alone reproduces four late-header cookie failures.
-  Staging refresh and CI on the repaired source remain pending.
+  A refreshed local run passed 1,058 backend tests (94.94% coverage), 900 frontend tests, full lint/format/types and
+  API regeneration without drift. PR CI `42121038168` and publication CI `42121099582` passed at `0ca2d5b5`.
+- Staging runs both images from `0ca2d5b5`. Bootstrap upgrade/repeat, installed-job source hashes and service paths,
+  successful backup/maintenance heartbeats and public health passed. Real browser checks for both storage choices
+  canceled a held renewal across sign-out, preserved a later account's cookie and renewed as that account. Temporary
+  accounts were removed. The author criteria walk now records 29 pre-merge met, four superseded and three post-merge
+  proofs open; its refreshed independent companion remains an Owner choice.
 
 - A fresh independent implementation code review covered all 81 source/contract files and returned no findings.
   It considered all five rubric dimensions, repository contracts and cross-layer/deployment seams. This was static
@@ -82,8 +89,8 @@ None.
 
 - Task 6.1.a's repairs are locally checked. The independent repair fix check found no material defect and one minor
   resend-description inconsistency; its approved correction and regenerated API descriptions passed affected checks.
-  The independent implementation review returned no findings. Refresh staging and affected verification evidence
-  under Task 6.1.b after publication/deployment approval; prior staging/CI results do not prove this repair.
+  The independent implementation review returned no findings; staging refresh is complete. Task 6.1.c holds the
+  separate refreshed verification-review decision before the verification parent closes.
 
 - Task 6.2 in `tasks-launch-readiness.md`: after merge, prove deployment from the merge commit's main-push CI run;
   a docs-only main push running only the docs workflow, publishing no image and adding no deploy-history line;

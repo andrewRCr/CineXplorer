@@ -454,9 +454,20 @@ authentication gaps that matter once sign-up is public are closed.
       inconsistency; the approved correction now states the generic `200` and delivery-failure `503`, with regenerated
       schema/types, 279 authentication tests and affected checks passing. The auth and operations repairs are
       recorded as separate commits; the final operations commit carries these shared completion records.
-    - [ ] **6.1.b Refresh staging and verification evidence**
-      After explicit publication/deployment approval, install the repaired bootstrap/entry point and checked images,
-      verify Proven live 18 and recheck affected live boundaries before completing verification again.
+    - [x] **6.1.b Refresh staging and verification evidence**
+      Pushed auth repair `a0852f9f` and operations repair `0ca2d5b5`. Exact-head PR CI `42121038168` and manual
+      publication CI `42121099582` passed; both images are deployed on staging at `0ca2d5b5`. Bootstrap upgrade/repeat,
+      installed entry/job hashes, service paths, successful backup/maintenance pings and public health passed.
+      Real deployed browser checks held a refresh across logout and later sign-in for both storages; cancellation,
+      cookie preservation, subsequent account identity and final logout passed. Temporary accounts were removed.
+      Refreshed local verification: 1,058 backend tests (94.94% coverage), 900 frontend tests, full lint/format/types,
+      generated API agreement and markdown passed. Earlier unchanged live proofs were checked for applicability.
+      Author criteria walk: 29 pre-merge criteria met, four superseded and three post-merge proofs open. Evidence:
+      `publication-repairs/` and `test-evidence/6.1b-criteria-report.json` beside the session notes.
+    - [ ] **6.1.c Settle the refreshed verification review**
+      Offer the separate fresh-context criteria/evidence review over the repaired work and four appended criteria,
+      under the completion workflow. The earlier 32-criterion review and implementation review remain distinct.
+      Close this step on the Owner's review/decline decision and any resulting dispositions before closing 6.1.
 
 - [ ] **6.2 Prove the post-merge criteria** (Proven after merge 1–3)
     - From the main checkout, after the pull request merges and before archiving (`archive-completed.md` Phase 3):
@@ -676,7 +687,7 @@ what was seen and where.
   (R22), and CI's type-drift check passes.
 
     - Evidence: Tests: test_health_check.py real database/closed-port cases passed. OpenAPI and generated response
-      declarations inspected; 6.1-api-types.log regenerated with no drift. Current-head PR CI 42059086109 API
+      declarations inspected; 6.1-api-types.log regenerated with no drift. PR CI 42059086109 API
       types/type-drift step passed.
 
 - [x] Backend tests that load the settings module under each environment show: under `staging`, both Google variables
@@ -693,7 +704,7 @@ what was seen and where.
   both steps passing.
 
     - Evidence: 6.1-config-validation.json and four named logs: valid Caddy and Compose exit 0, invalid site
-      directive and syntax-error copies exit 1. Current-head PR CI 42059086109 Images/Validate production
+      directive and syntax-error copies exit 1. PR CI 42059086109 Images/Validate production
       configuration passed. Initial negative Caddy fixture placed a token at top level, which is a legal site
       address; corrected to an invalid directive inside the site block.
 
@@ -731,22 +742,36 @@ what was seen and where.
       R27/R28 and implementation. Scoped case-insensitive git grep found no old-design text; obsolete shell script
       absent; enforcing CSRF tests inspected. Markdown lint passed.
 
-- [ ] Frontend tests hold an idle renewal response until explicit sign-out has completed, then release it and show
+- [x] Frontend tests hold an idle renewal response until explicit sign-out has completed, then release it and show
   that authentication and both browser storages remain cleared. They also hold the Web Lock until after sign-out
   and prove no refresh request is started, for both storage choices. A later sign-in remains intact when the old
   operation settles; ordinary renewal and shared callers still work.
-- [ ] Disposable deployment tests install the target's job sources through the entry point, then switch the checkout
+
+    - Evidence: Seventeen lifecycle regressions in useAuth.test.tsx pass within the refreshed 900-test frontend run.
+      Pinned-source and narrow reconstruction failures are retained in code-review-author/; delayed responses,
+      queued locks, both storages, obsolete callers and later sign-in are covered.
+
+- [x] Disposable deployment tests install the target's job sources through the entry point, then switch the checkout
   to the previous published main tree `f49b6837c5a72ad4a823bf7594f2d9cf94fcd46d`. Both installed service
   commands and the locked-shell backup still finish
   their expected operations and heartbeats, the checkout stays clean and legacy, and returning to a supported
   target updates the installed scripts. Missing/invalid/partial sources and installation failure stop before
   target deployment; a retry reconciles complete installed files.
 
-- [ ] A real-browser regression loads the actual sign-in hook and Axios client against an HTTP fixture that sets
+    - Evidence: The 28-test deployment harness and latest four installed-operations cases pass. Actual legacy
+      f49b6837 source is archived into the disposable fixture; entry/job code runs with Docker/curl boundaries
+      replaced. Missing, invalid, partial and failed replacement cases fail before deployment and recover on retry.
+
+- [x] A real-browser regression loads the actual sign-in hook and Axios client against an HTTP fixture that sets
   HTTP-only refresh cookies. With refresh headers delayed, or its headers sent and body delayed, a successful
   logout leaves no refresh cookie; a subsequent sign-in and renewal belong to the new account after the old
   response settles. Both browser-storage choices pass. The no-cancellation control reproduces the late-cookie
   overwrite when headers are delayed.
+
+    - Evidence: Eight real Chromium cases pass through the actual hook and Axios against a Secure/HTTP-only cookie
+      fixture. All eight fail against pre-repair source; omitting cancellation alone fails four delayed-header
+      cases. Subsequent renewal identity is checked. See
+      code-review-author/auth-browser-{baseline-red,no-cancel-red,green}.log.
 
 ### Proven live (with staging running this change, before merge)
 
@@ -904,9 +929,14 @@ what was seen and where.
       6.1-email-confirmation.json records the Owner’s direct 2026-11-05 confirmation that the password-reset email
       arrived in Proton’s Inbox. All clauses supported by attributed evidence.
 
-- [ ] After staging takes the repaired deployment entry point and images, both installed service commands use
+- [x] After staging takes the repaired deployment entry point and images, both installed service commands use
   `/opt/cinexplorer/operations/`, both installed scripts match the published target's sources, and manual backup
   and maintenance runs complete with their success pings. The bootstrap's repeat run remains unchanged.
+
+    - Evidence: Staging 0ca2d5b5: installed entry/jobs match target source; both service paths use
+      /opt/cinexplorer/operations/. Manual services returned success/status 0 after their heartbeat steps; bootstrap
+      changed five items then zero on repeat. Raw proof: publication-repairs/staging-{verified,jobs}.log beside the
+      session notes.
 
 ### Proven after merge
 
@@ -1312,3 +1342,21 @@ what was seen and where.
   `adversarial-review/code-pass1/` beside the session notes.
 - Stop reason: clean convergence for this implementation review. Task 6.1.b remains open for explicitly approved
   publication/deployment, refreshed CI and affected live verification; the prior results do not attest a new head.
+
+### 2026-11-05 — Publication and refreshed verification evidence
+
+- The Owner approved commit, push, checked image publication and staging refresh as one bounded batch. Auth repair
+  `a0852f9f` and operations/shared records `0ca2d5b5` passed hooks and were pushed. All 81 reviewed implementation
+  and contract files still match the independent review snapshot; only administrative reporting changes follow.
+- PR CI `42121038168` and manual publication CI `42121099582` passed on `0ca2d5b5`, including `ci-ok`; deployment
+  was skipped in both runs. Both published images and staging containers identify that exact code commit.
+- Bootstrap changed five items and zero on repeat. Deployment history records the transition from `9b90ef28` to
+  `0ca2d5b5`. Installed executable hashes, private modes, stable service paths, manual job success/heartbeats, public
+  health and CI-key refusal reasons were verified. Backup left no local archive.
+- Both deployed storage cases canceled a held renewal across sign-out, preserved the subsequent account's cookie,
+  renewed as that account and ended signed out. The probe follows the navbar's existing home-after-logout flow;
+  its initial login-form expectation was corrected without application changes. Temporary accounts/credentials
+  were removed. Local full suites and static gates passed; regenerated API files have no drift.
+- Source and retained evidence were walked against all 36 criteria: 29 pre-merge met, four superseded, three
+  explicitly post-merge open. The four appended criteria are now marked with direct evidence. A refreshed independent
+  criteria/evidence review is recommended as a separate Owner choice; the verification parent remains open for it.

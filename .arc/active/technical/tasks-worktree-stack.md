@@ -585,3 +585,24 @@ and remove it after its branch merges.
 - **Outcome:** material repair approved; Task 6.2 records the batch. A local fix check is recommended after the
   repaired head's CI; replies and resolution of four threads wait for that decision. A further hosted request and
   merge remain separate approvals.
+
+### 2026-11-04 · Code review · Fix check, round 1 since hosted pass 1
+
+- **Runner and scope:** fresh independent Codex subagent `/root/code_fixcheck_round1`; complete six-file repair
+  span `3324e453...7e2b3da1`, with full before/after artifacts. Rubric: closure, behavioral grounding, propagation
+  and completeness, and new failure. Exact prompt, snapshots and report are retained in the personal review folder.
+- **Result:** zero findings across the four axes. The reviewer inspected the complete repair, ran 12 focused fixture
+  cases and used read-only Compose configuration probes. The primary checked the returned source claims against
+  the implementation and its own regression/probe evidence.
+- **Checks:** all 83 related Node tests, syntax checks and affected Markdown lint pass. All four new regression cases
+  were seen failing before their fixes. A real-Compose guard probe, with every stateful Docker command blocked by
+  its verification wrapper, refused an overriding project without startup or database calls.
+- **CI:** [the repair run](https://github.com/andrewRCr/CineXplorer/actions/runs/41945958866) passed, including
+  `ci-ok`, on
+  `7e2b3da19c25309d5699b302d57e6df61c626920`.
+- **Response completion:** the Owner-approved F1/F2 fix replies and F3/F4 rejection replies were posted and all four
+  inline threads resolved. The approved F5 advisory response was posted in the PR conversation. The completion-status
+  conflict and disabling the provider's docstring check were captured as separate approved inbox errands.
+- **Outcome:** approved repairs and response work are complete. No further hosted review was requested. A subsequent
+  complete review remains the Owner's choice; this scoped check is not another whole-change pass.
+- **Elapsed:** 5.8 minutes from retained prompt to report, including the CI prerequisite.

@@ -36,6 +36,8 @@ Docker resources and local branch.
 - Live checks covered simultaneous stacks, watchlist and token isolation, visible hot reload, refusal preservation
   and complete teardown beside healthy neighbors. The full local verification run and
   [hosted CI](https://github.com/andrewRCr/CineXplorer/actions/runs/41930723137) passed on `f6f853e0`.
+- The startup and tool-link repairs passed a fresh local fix check and
+  [hosted CI](https://github.com/andrewRCr/CineXplorer/actions/runs/41945958866) on `7e2b3da1`.
 - Independent criteria verification found no implementation defect. The browser reload observation rests on the
   Owner confirmation recorded in Task 5.2; the review's raw-record limitation is preserved in the task list.
 

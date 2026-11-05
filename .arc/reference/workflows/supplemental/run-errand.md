@@ -117,17 +117,18 @@ Confirm the result names home. This clears only this conversation's active selec
 branch, change files, or remove a worktree. If the errand is unfinished, preserve its checkout and report its path.
 Return can clear a selection whose checkout disappeared; a malformed record requires investigation.
 
-Remove a finished linked worktree from the main checkout
+Close a merged linked worktree from the main checkout
 ([worktree-sessions.md § Removal](worktree-sessions.md#removal)):
 
 ```bash
-node scripts/worktree.mjs remove {name}  # also deletes the merged local branch and prunes
+node scripts/worktree.mjs finish {name}  # keeps its personal folder, removes it and its branches
 ```
 
-For an abandoned errand, `remove {name} --keep-branch` removes its checkout and stack but keeps its commits. It
-also deletes gitignored files, so preserve the checkout of paused work. In place, switch back and delete the local
-branch with `git branch -d {type}/{name}`, then `git fetch --prune`. GitHub's delete-on-merge setting removes the
-remote branch after the pull request merges; if it remains, delete it with `git push origin --delete {type}/{name}`.
+An errand has no task list to archive, so `finish` makes no commit. For an abandoned errand,
+`remove {name} --keep-branch` removes its checkout and stack but keeps its commits. It also deletes gitignored files,
+so preserve the checkout of paused work. In place, switch back and delete the local branch with
+`git branch -d {type}/{name}`, then `git fetch --prune`. GitHub's delete-on-merge setting removes the remote branch
+after the pull request merges; if it remains, delete it with `git push origin --delete {type}/{name}`.
 
 An errand taken from the inbox leaves it once the pull request merges, and stays if the errand is abandoned.
 After cleanup, the conversation can enter the next Owner-approved errand in a fresh checkout from `origin/main`.

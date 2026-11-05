@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
     existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, writeFileSync,
 } from "node:fs";
@@ -46,6 +46,14 @@ function fixture(t) {
 import { appendFileSync } from 'node:fs';
 appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({ command: 'seed', args: [], cwd: process.cwd() }) + '\\n');
 if (process.env.CX_SEED_FAIL) { console.error('seed refused'); process.exit(7); }
+`);
+    write(main, ".arc/reference/harness-hooks/finish-work.mjs", `
+import { appendFileSync, existsSync } from 'node:fs';
+const args = process.argv.slice(2);
+const present = existsSync(process.cwd() + '.' + args[1]);
+appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({ command: 'closing', args, cwd: process.cwd(), present }) + '\\n');
+if (process.env.CX_CLOSING_FAIL === args[0]) { console.error('closing step refused'); process.exit(7); }
+console.log('closing ' + args[0]);
 `);
     git(main, "add", ".");
     git(main, "commit", "-q", "-m", "initial");
@@ -108,11 +116,11 @@ function envOf(root) {
     return readFileSync(join(root, "infrastructure/.env"), "utf8");
 }
 
-test("help describes all four commands and unknown commands refuse", (t) => {
+test("help describes all five commands and unknown commands refuse", (t) => {
     const f = fixture(t);
     const help = f.invoke(f.main, ["--help"]);
     success(help);
-    for (const command of ["create", "provision", "browse", "remove"]) assert.match(help.stdout, new RegExp(command));
+    for (const command of ["create", "provision", "browse", "remove", "finish"]) assert.match(help.stdout, new RegExp(command));
     refusal(f.invoke(f.main, ["unknown"]), /unknown command/i);
     assert.deepEqual(f.calls(), []);
 });
@@ -588,4 +596,111 @@ test("remove --keep-branch tears down an unmerged worktree and preserves its bra
     assert.equal(existsSync(path), false);
     assert.equal(git(f.main, "rev-parse", "fix/sample"), head);
     assert.equal(f.calls().filter((call) => call.args[1] === "rm").length, 4);
+});
+
+function runningIn(t, path) {
+    const child = spawn("sleep", ["60"], { cwd: path, stdio: "ignore" });
+    t.after(() => child.kill());
+    return child.pid;
+}
+
+for (const command of ["remove", "finish"]) {
+    test(`${command} refuses while a process runs inside the worktree`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", BROWSE_ENV);
+        const pid = runningIn(t, path);
+        preserved(f, path, [command, "sample"], new RegExp(`running inside[\\s\\S]*${pid} sleep`));
+    });
+}
+
+test("finish refuses a linked checkout before any change", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    refusal(f.invoke(path, ["finish", "sample"]), /main checkout/i);
+    assert.equal(existsSync(path), true);
+    assert.deepEqual(f.calls(), []);
+});
+
+for (const scenario of ["another branch", "changed tracked files"]) {
+    test(`finish refuses a main checkout on ${scenario} before any change`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", BROWSE_ENV);
+        if (scenario === "another branch") git(f.main, "switch", "-q", "-c", "chore/elsewhere");
+        else write(f.main, ".worktreeinclude", "changed\n");
+        preserved(f, path, ["finish", "sample"], scenario === "another branch" ? /must be on main/ : /uncommitted changes/);
+    });
+}
+
+test("finish refuses an unmerged branch before its closing steps", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(path, "commit", "-q", "--allow-empty", "-m", "unmerged work");
+    preserved(f, path, ["finish", "sample"], /not merged/);
+});
+
+test("finish updates main, runs the closing steps around removal and deletes the merged remote branch", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(path, "push", "-q", "origin", "fix/sample");
+    git(f.main, "commit", "-q", "--allow-empty", "-m", "merged on origin");
+    git(f.main, "push", "-q", "origin", "main");
+    git(f.main, "reset", "-q", "--hard", "HEAD~1");
+    const result = f.invoke(f.main, ["finish", "sample"]);
+    success(result);
+    const closing = (phase, present) => ({ command: "closing", args: [phase, "sample"], cwd: f.main, present });
+    assert.deepEqual(f.calls().map((call) => (call.command === "docker" ? call.args[0] : call)), [
+        closing("before-remove", true), "container", "volume", "network", "image", closing("after-remove", false),
+    ]);
+    assert.equal(git(f.main, "rev-parse", "HEAD"), git(f.main, "rev-parse", "origin/main"));
+    assert.equal(git(f.main, "ls-remote", "--heads", "origin", "fix/sample"), "");
+    assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
+    assert.equal(existsSync(path), false);
+    assert.match(result.stdout, /closing before-remove[\s\S]*Deleted remote branch fix\/sample[\s\S]*closing after-remove/);
+});
+
+test("finish reports a remote branch already deleted", (t) => {
+    const f = fixture(t);
+    f.worktree();
+    const result = f.invoke(f.main, ["finish", "sample"]);
+    success(result);
+    assert.match(result.stdout, /fix\/sample is already gone/);
+});
+
+test("finish keeps a remote branch whose head is not on main", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    git(path, "commit", "-q", "--allow-empty", "-m", "pushed but never merged");
+    git(path, "push", "-q", "origin", "fix/sample");
+    const pushed = git(path, "rev-parse", "HEAD");
+    git(path, "reset", "-q", "--hard", "HEAD~1");
+    const result = f.invoke(f.main, ["finish", "sample"]);
+    success(result);
+    assert.match(result.stdout, /Kept remote branch fix\/sample/);
+    assert.match(git(f.main, "ls-remote", "--heads", "origin", "fix/sample"), new RegExp(pushed));
+    assert.equal(existsSync(path), false);
+});
+
+test("a closing-step refusal before removal keeps the worktree and says how to resume", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    const result = f.invoke(f.main, ["finish", "sample"], { CX_CLOSING_FAIL: "before-remove" });
+    refusal(result, /closing step refused/);
+    assert.match(result.stderr, /Nothing was removed.*finish sample again/);
+    assert.equal(existsSync(path), true);
+    assert.equal(git(path, "branch", "--show-current"), "fix/sample");
+    assert.deepEqual(f.calls().map((call) => call.command), ["closing"]);
+});
+
+test("a closing-step failure after removal names the step to run again", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    const result = f.invoke(f.main, ["finish", "sample"], { CX_CLOSING_FAIL: "after-remove" });
+    refusal(result, /closing step refused/);
+    assert.match(result.stderr, /worktree is removed.*finish-work\.mjs after-remove sample/);
+    assert.equal(existsSync(path), false);
 });

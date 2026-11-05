@@ -4,7 +4,7 @@
 //   after-remove {name}   archive the planned work and commit; refresh the installed errand harness
 // Both phases can be run again: a kept folder that matches is skipped, and the hold is checked in each.
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync } from "node:fs";
+import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const CATEGORIES = ["feature", "technical", "incidental"];
@@ -21,6 +21,12 @@ function git(cwd, args, input) {
     return execFileSync("git", args, {
         cwd, encoding: "utf8", input, stdio: [input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     }).trim();
+}
+
+// Git's hooks report a refused commit on stdout, so a failed command shows both of its streams.
+function output(error) {
+    const streams = [error.stdout, error.stderr].map((stream) => stream?.toString().trim()).filter(Boolean).join("\n");
+    return streams || error.message;
 }
 
 function context() {
@@ -134,18 +140,33 @@ function listed(items) {
 
 function archive(main, name, list) {
     if (!list) return console.log(`No active task list for ${name}; nothing to archive.`);
+    if (git(main, ["branch", "--show-current"]) !== "main") throw new Error("The main checkout must be on main to archive.");
+    if (git(main, ["status", "--porcelain", "--untracked-files=no"])) {
+        throw new Error("The main checkout has changes to tracked files; commit or set them aside before archiving.");
+    }
     const quarter = quarterOf(new Date());
     const folder = `.arc/reference/archive/${quarter}/${list.category}/${nextFolder(main, quarter, name)}_${name}`;
-    const moved = ARCHIVED.filter(([prefix]) => existsSync(join(main, ".arc/active", list.category, `${prefix}-${name}.md`)));
+    const moved = ARCHIVED.filter(([prefix]) => existsSync(join(main, ".arc/active", list.category, `${prefix}-${name}.md`)))
+        .map(([prefix, description]) => ({ from: `.arc/active/${list.category}/${prefix}-${name}.md`, description,
+            to: `${folder}/${prefix}-${name}.md` }));
     mkdirSync(join(main, folder), { recursive: true });
-    for (const [prefix] of moved) git(main, ["mv", `.arc/active/${list.category}/${prefix}-${name}.md`, `${folder}/`]);
+    for (const { from, to } of moved) git(main, ["mv", from, to]);
     const subject = `docs(arc): archive the ${name.replaceAll("-", " ")} work`;
     const message = [
         subject.length <= 72 ? subject : `docs(arc): archive ${name}`, "",
-        `Move ${listed(moved.map(([, description]) => description))} into the archive.`, "",
+        `Move ${listed(moved.map(({ description }) => description))} into the archive.`, "",
         `Context: tasks-${name}.md (maintenance)`, "",
     ].join("\n");
-    git(main, ["commit", "--quiet", "-F", "-"], message);
+    try {
+        git(main, ["commit", "--quiet", "-F", "-"], message);
+    } catch (error) {
+        // Put the documents back, so a rerun finds the active task list and archives from the start.
+        mkdirSync(join(main, ".arc/active", list.category), { recursive: true });
+        for (const { from, to } of moved) git(main, ["mv", to, from]);
+        rmdirSync(join(main, folder));
+        throw new Error(`${output(error)}\nThe archive commit failed, so its moves were undone; resolve it, then run ` +
+            `node .arc/reference/harness-hooks/finish-work.mjs after-remove ${name} again.`);
+    }
     console.log(`Archived in ${folder}/ as ${git(main, ["rev-parse", "--short", "HEAD"])}.`);
     console.log("Push it to main on the Owner's approval: git push origin main");
 }
@@ -185,8 +206,6 @@ function main() {
 try {
     main();
 } catch (error) {
-    // Git's hooks report a refused commit on stdout, so show both streams of a failed command.
-    const output = [error.stdout, error.stderr].map((stream) => stream?.toString().trim()).filter(Boolean).join("\n");
-    console.error(output || error.message);
+    console.error(output(error));
     process.exitCode = 1;
 }

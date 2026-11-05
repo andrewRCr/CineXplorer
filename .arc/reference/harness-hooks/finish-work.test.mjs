@@ -217,3 +217,37 @@ test("after-remove points out a ROADMAP entry naming the work", (t) => {
     success(result);
     assert.match(result.stdout, /ROADMAP\.md mentions sample/);
 });
+
+test("a refused archive commit moves the documents back, and a rerun archives them", (t) => {
+    const f = fixture(t);
+    const hooks = join(f.parent, "hooks");
+    write(hooks, "pre-commit", "#!/bin/sh\necho 'hook refused the commit'\nexit 1\n");
+    execFileSync("chmod", ["+x", join(hooks, "pre-commit")]);
+    git(f.main, "config", "core.hooksPath", hooks);
+    const before = tracked(f.main);
+    const refused = f.run("after-remove", "sample");
+    refusal(refused, /hook refused the commit/);
+    assert.match(refused.stderr, /moves were undone/);
+    assert.deepEqual(tracked(f.main), before);
+    assert.equal(git(f.main, "status", "--porcelain"), "");
+    assert.equal(existsSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")), false);
+    git(f.main, "config", "--unset", "core.hooksPath");
+    success(f.run("after-remove", "sample"));
+    assert.deepEqual(readdirSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")).sort(),
+        ["completion-sample.md", "prd-sample.md", "tasks-sample.md"]);
+});
+
+for (const scenario of ["another branch", "a staged change"]) {
+    test(`after-remove refuses ${scenario} before moving anything`, (t) => {
+        const f = fixture(t);
+        if (scenario === "another branch") git(f.main, "switch", "-q", "-c", "chore/elsewhere");
+        else {
+            write(f.main, ".arc/user/README.md", "# Changed\n");
+            git(f.main, "add", ".arc/user/README.md");
+        }
+        const before = tracked(f.main);
+        refusal(f.run("after-remove", "sample"), scenario === "another branch" ? /must be on main/ : /changes to tracked files/);
+        assert.deepEqual(tracked(f.main), before);
+        assert.equal(git(f.main, "rev-list", "--count", "HEAD"), "1");
+    });
+}

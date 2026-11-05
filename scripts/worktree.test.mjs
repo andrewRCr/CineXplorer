@@ -704,3 +704,27 @@ test("a closing-step failure after removal names the step to run again", (t) => 
     assert.match(result.stderr, /worktree is removed.*finish-work\.mjs after-remove sample/);
     assert.equal(existsSync(path), false);
 });
+
+test("finish warns and still archives when the remote branch cannot be deleted", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    git(path, "push", "-q", "origin", "fix/sample");
+    write(f.origin, "hooks/pre-receive", "#!/bin/sh\nwhile read old new ref; do\n  case $new in 0000000000000000000000000000000000000000) echo 'deletes refused'; exit 1;; esac\ndone\n");
+    execFileSync("chmod", ["+x", join(f.origin, "hooks/pre-receive")]);
+    const result = f.invoke(f.main, ["finish", "sample"]);
+    success(result);
+    assert.match(result.stdout, /Could not delete remote branch fix\/sample[\s\S]*git push origin --delete fix\/sample/);
+    assert.deepEqual(f.calls().at(-1).args, ["after-remove", "sample"]);
+    assert.notEqual(git(f.main, "ls-remote", "--heads", "origin", "fix/sample"), "");
+});
+
+test("finish says how to resume when removal stops partway", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    const result = f.invoke(f.main, ["finish", "sample"], { CX_IDS: "first", CX_FAIL: "rm" });
+    refusal(result, /stub command failed: rm/);
+    assert.match(result.stderr, /stopped partway[\s\S]*finish sample again[\s\S]*after-remove sample/);
+    assert.equal(existsSync(path), true);
+    assert.equal(f.calls().some((call) => call.command === "closing" && call.args[0] === "after-remove"), false);
+});

@@ -301,8 +301,19 @@ function finish(root, main, name) {
     const removal = checkRemoval(main, name, false);
     git(main, "merge", "--ff-only", "--quiet", "origin/main");
     closingStep(main, ["before-remove", name], `Nothing was removed; resolve it, then run node scripts/worktree.mjs finish ${name} again.`);
-    tearDown(main, removal, false);
-    deleteRemoteBranch(main, removal.branch);
+    try {
+        tearDown(main, removal, false);
+    } catch (error) {
+        throw new Error(`${error.message}\nRemoval stopped partway; resolve it, then run node scripts/worktree.mjs finish ${name} ` +
+            `again while the worktree is still registered, or else node ${CLOSING} after-remove ${name}.`);
+    }
+    // The remote branch is the one step that can wait: report a failure and carry on to the closing steps.
+    try {
+        deleteRemoteBranch(main, removal.branch);
+    } catch (error) {
+        console.log(`Could not delete remote branch ${removal.branch}: ${error.message.split("\n")[0]}\n` +
+            `Delete it later with git push origin --delete ${removal.branch}.`);
+    }
     closingStep(main, ["after-remove", name], `The worktree is removed; resolve it, then run node ${CLOSING} after-remove ${name}.`);
 }
 

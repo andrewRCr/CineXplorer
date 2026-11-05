@@ -7,15 +7,19 @@ import { isRecord } from "@/utilities/typeGuards";
  *
  * Supports hybrid authentication:
  * - Instant auth detection from localStorage (no network call needed)
- * - OAuth callback handling with access token storage
- * - Automatic token refresh via axios interceptor
+ * - OAuth callbacks authenticated through their allauth session
+ * - Shared token refresh on load, idle checks, profile loading and API refusals
  *
  * Relationship:
  * - Called by AuthContextProvider to get auth state and actions.
  * - State is shared via AuthContext.
  * - Components access state using useAuthContext.
  */
-import { siteOrigin } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
+import {
+    ensureCsrfTokenCookie,
+    getCsrfToken,
+} from "@/utilities/csrfTokenFetcher";
 import { ROUTES } from "@/constants/routes";
 import {
     useState,
@@ -31,6 +35,12 @@ import type {
     AuthError,
     LoginSuccessData,
 } from "@/types/auth-state";
+import {
+    getAuthSessionVersion,
+    invalidateAuthSession,
+    refreshAccessToken,
+} from "@/services/apiClient";
+import { isCancel } from "axios";
 import logger from "@/services/logger";
 import {
     getInitialAuthenticatedValue,
@@ -128,7 +138,6 @@ export function useAuth(): AuthStateProps {
 
     // Refs to hold latest callback versions - breaks circular dependency in effects
     // Effects can call ref.current() without needing the callback in dependency array
-    const logoutRef = useRef<() => Promise<void>>(() => Promise.resolve());
     const getUserDetailsRef = useRef<() => Promise<unknown>>(() =>
         Promise.resolve(),
     );
@@ -137,30 +146,25 @@ export function useAuth(): AuthStateProps {
     // This runs ONCE on mount to detect existing sessions
     useEffect(() => {
         const checkExistingAuth = async () => {
-            // Skip if already authenticated (initial state calculation succeeded)
-            if (isAuthenticated) {
-                const { access_token } = getAuthTokens();
-                // Only call getUserDetails if user has JWT tokens (email/password flow)
-                if (access_token) {
-                    void getUserDetailsRef.current?.();
-                }
-                return;
-            }
-
-            // Check for JWT tokens in cookie/localStorage (email/password flow)
+            const sessionVersion = getAuthSessionVersion();
             const { access_token, storage } = getAuthTokens();
-            if (access_token && !areTokensExpired()) {
-                logger.debug(
-                    `[useAuth] Initial mount: JWT session detected in ${storage}`,
-                );
-
-                // If token came from cookie, store it in localStorage for future use
-                if (storage === "cookie") {
-                    setAuthTokens(access_token);
+            if (access_token) {
+                try {
+                    if (areTokensExpired()) await refreshAccessToken();
+                    else if (storage === "cookie") setAuthTokens(access_token);
+                    // The authentication-state effect owns profile loading.
+                    if (sessionVersion === getAuthSessionVersion())
+                        setIsAuthenticated(true);
+                } catch (error) {
+                    if (
+                        isCancel(error) ||
+                        sessionVersion !== getAuthSessionVersion()
+                    )
+                        return;
+                    clearAuthTokens();
+                    setUser(null);
+                    setIsAuthenticated(false);
                 }
-
-                setIsAuthenticated(true);
-                // getUserDetails will be called on next render when isAuthenticated changes
                 return;
             }
 
@@ -170,6 +174,7 @@ export function useAuth(): AuthStateProps {
                 "[useAuth] No JWT tokens found, checking for OAuth session...",
             );
             const oauthUser = await checkOAuthSession();
+            if (sessionVersion !== getAuthSessionVersion()) return;
             if (oauthUser) {
                 logger.debug(
                     "[useAuth] OAuth session detected, user authenticated",
@@ -182,9 +187,6 @@ export function useAuth(): AuthStateProps {
         };
 
         void checkExistingAuth();
-        // Intentional: must run exactly once on mount to check for existing session.
-        // Adding isAuthenticated would cause infinite loops.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // When authentication state changes, fetch user details (JWT users only)
@@ -199,22 +201,30 @@ export function useAuth(): AuthStateProps {
         }
     }, [isAuthenticated]);
 
-    // Check for token expiration every minute (JWT-only)
-    // Note: Token refresh is handled automatically by axios interceptor (apiClient.ts)
-    // This is just for proactive logout if token expires while idle
-    // OAuth users (session-only) are skipped - their sessions managed by backend
+    // Renew idle password sessions before considering them signed out.
+    // Provider sessions have no access token and are managed by allauth.
     useEffect(() => {
-        const checkTokenExpiration = () => {
+        const checkTokenExpiration = async () => {
+            const sessionVersion = getAuthSessionVersion();
             const { access_token } = getAuthTokens();
-            // Only check expiration for JWT users (email/password flow)
-            // OAuth users have session cookies only, no JWT tokens
             if (isAuthenticated && access_token && areTokensExpired()) {
-                logger.debug("Tokens expired during session, logging out...");
-                void logoutRef.current?.();
+                try {
+                    await refreshAccessToken();
+                } catch (error) {
+                    if (
+                        isCancel(error) ||
+                        sessionVersion !== getAuthSessionVersion()
+                    )
+                        return;
+                    clearAuthTokens();
+                    setUser(null);
+                    setIsAuthenticated(false);
+                }
             }
         };
-
-        const interval = setInterval(checkTokenExpiration, 60000); // Check every minute
+        const interval = setInterval(() => {
+            void checkTokenExpiration();
+        }, 60000);
         return () => clearInterval(interval);
     }, [isAuthenticated]);
 
@@ -337,6 +347,8 @@ export function useAuth(): AuthStateProps {
         const { access_token } = getAuthTokens();
         const isJWTUser = access_token !== null;
 
+        // Invalidate queued and in-flight renewal before clearing the session.
+        invalidateAuthSession();
         // Clear local state and tokens
         setIsAuthenticated(false);
         setUser(null);
@@ -357,11 +369,13 @@ export function useAuth(): AuthStateProps {
                 logger.debug(
                     "[useAuth] Logging out OAuth user via session endpoint",
                 );
+                await ensureCsrfTokenCookie(apiBaseUrl);
                 const response = await fetch(ALLAUTH_SESSION_URL, {
                     method: "DELETE",
                     credentials: "include", // Send session cookie
                     headers: {
                         "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfToken() || "",
                     },
                 });
 
@@ -380,36 +394,38 @@ export function useAuth(): AuthStateProps {
     }, [navigate]);
 
     const getUserDetails = useCallback(async () => {
+        const sessionVersion = getAuthSessionVersion();
         try {
             // Check if tokens are expired before making the request (JWT users only)
             // OAuth users have session cookies only, skip JWT expiration check
             const { access_token } = getAuthTokens();
             if (access_token && areTokensExpired()) {
-                logger.debug("Tokens expired, logging out...");
-                await logout();
-                return;
+                await refreshAccessToken();
             }
 
+            if (sessionVersion !== getAuthSessionVersion()) return undefined;
             const userDetails = await authService.getUserProfile();
+            if (sessionVersion !== getAuthSessionVersion()) return undefined;
             setUser(userDetails);
             // Ensure isAuthenticated is true when user details are successfully fetched
             setIsAuthenticated(true);
             return undefined;
         } catch (error) {
+            if (isCancel(error) || sessionVersion !== getAuthSessionVersion())
+                return error;
             logger.error("Error fetching user details", { error });
             setUser(null);
             setIsAuthenticated(false);
             clearAuthTokens();
             return error;
         }
-    }, [logout]);
+    }, []);
 
     // Update refs to latest callback versions - enables effects to use stable refs
     // while still calling the latest callback implementation
     useLayoutEffect(() => {
-        logoutRef.current = logout;
         getUserDetailsRef.current = getUserDetails;
-    }, [logout, getUserDetails]);
+    }, [getUserDetails]);
 
     const login = async (
         username: string,
@@ -432,7 +448,9 @@ export function useAuth(): AuthStateProps {
                     ? "localStorage"
                     : "sessionStorage";
 
-                // Store tokens in the appropriate storage
+                // A new sign-in owns storage and supersedes any previous renewal.
+                invalidateAuthSession();
+                clearAuthTokens();
                 setAuthTokens(accessToken, refreshToken, storage);
                 setIsAuthenticated(true);
                 await getUserDetails();

@@ -5,6 +5,8 @@ import { AuthFormCard, FormField } from "@/components/auth";
 import { useFormik } from "formik";
 import { useState } from "react";
 import * as authService from "@/services/authService";
+import { getErrorMessage, hasErrorStatus } from "@/utilities/axiosErrorUtils";
+import { priorityToaster } from "@/components/core/chakra/toaster";
 
 const ForgotPassword = () => {
   const [success, setSuccess] = useState(false);
@@ -26,10 +28,16 @@ const ForgotPassword = () => {
       try {
         await authService.requestPasswordReset(values.email);
         setSuccess(true);
-      } catch {
-        // Show generic success message even on error to prevent email enumeration
-        // (Security best practice: don't reveal whether email exists)
-        setSuccess(true);
+      } catch (error) {
+        if (hasErrorStatus(error, 503)) {
+          priorityToaster.error({
+            title: "Failed to send email",
+            description: getErrorMessage(error) || "Please try again later.",
+          });
+        } else {
+          // Keep the confirmation independent of whether an account exists.
+          setSuccess(true);
+        }
       }
     },
   });

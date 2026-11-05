@@ -350,14 +350,14 @@ export interface paths {
         put?: never;
         /**
          * Resend Verification
-         * @description Resend email verification to the provided email address.
+         * @description Resend email verification using an opaque token from sign-in.
          *
          *     Args:
          *         request: Django HTTP request
-         *         payload: Email address to resend verification to
+         *         payload: Resend token issued after sign-in requires email verification
          *
          *     Returns:
-         *         Success message (even if email doesn't exist for security)
+         *         Generic 200 confirmation, including invalid or expired tokens, or a 503 delivery failure.
          */
         post: operations["apps_authentication_api_resend_verification"];
         delete?: never;
@@ -413,17 +413,10 @@ export interface paths {
         };
         /**
          * Health Check
-         * @description General health check endpoint for Docker orchestration.
+         * @description Check application and database readiness with a query on the default connection.
          *
-         *     This lightweight endpoint confirms the Django application is running
-         *     and responsive. Infrastructure dependencies (PostgreSQL, Redis) are
-         *     validated independently by Docker Compose health checks.
-         *
-         *     Args:
-         *         request: HTTP request object
-         *
-         *     Returns:
-         *         Status response indicating the application is healthy
+         *     Return healthy when SELECT 1 succeeds, or a fixed service-unavailable response
+         *     when the database cannot answer. This endpoint does not check Redis.
          */
         get: operations["apps_core_api_health_check"];
         put?: never;
@@ -1242,6 +1235,14 @@ export interface components {
             message: string;
         };
         /**
+         * EmailDeliveryErrorSchema
+         * @description A retryable failure to send a transactional email.
+         */
+        EmailDeliveryErrorSchema: {
+            /** Detail */
+            detail: string;
+        };
+        /**
          * ResendVerificationInputSchema
          * @description Schema for resend verification email input.
          *
@@ -1321,6 +1322,25 @@ export interface components {
             } | null;
             /** Recent Interactions */
             recent_interactions?: unknown[] | null;
+        };
+        /**
+         * HealthCheckResponse
+         * @description A successful readiness response.
+         */
+        HealthCheckResponse: {
+            /**
+             * Status
+             * @constant
+             */
+            status: "healthy";
+        };
+        /**
+         * ServiceUnavailableResponse
+         * @description A readiness failure without internal connection details.
+         */
+        ServiceUnavailableResponse: {
+            /** Detail */
+            detail: string;
         };
         /**
          * ApiErrorSchema
@@ -2287,6 +2307,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailDeliveryErrorSchema"];
+                };
+            };
         };
     };
     apps_core_api_frontend_log: {
@@ -2354,7 +2383,18 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["HealthCheckResponse"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ServiceUnavailableResponse"];
+                };
             };
         };
     };

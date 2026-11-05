@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 from unittest.mock import Mock, patch
 
 import pytest
+from django.test import Client
 
 from apps.core.models import Movie
 from apps.core.services.api_response import ApiResponse
@@ -26,8 +27,6 @@ from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.tests.mock_paths import TMDB_CLIENT_GET_MOVIE_DETAILS
 
 if TYPE_CHECKING:
-    from django.test import Client
-
     from apps.users.models import User
 
 # =========================
@@ -143,27 +142,22 @@ def test_unauthenticated_create_denied(api_client: Client, movie: Movie) -> None
 
 @pytest.mark.django_db
 def test_unauthenticated_update_denied(api_client: Client, user_movie_data: UserMovieData) -> None:
-    """Test that unauthenticated PATCH requests are denied.
-
-    NOTE: Returns 403 (CSRF error) not 401 because CSRF middleware runs
-    before endpoint authentication. This is expected behavior.
-    """
+    """An anonymous client cannot change another user's entry."""
     url = user_movie_data_detail_url(user_movie_data.id)
-    payload = {"user_rating": 10}
-    res = api_client.patch(url, data=payload, content_type="application/json")
-    assert res.status_code == HTTPStatus.FORBIDDEN
+    res = Client().patch(url, data={"user_rating": 10}, content_type="application/json")
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
+    original_rating = user_movie_data.user_rating
+    user_movie_data.refresh_from_db()
+    assert user_movie_data.user_rating == original_rating
 
 
 @pytest.mark.django_db
 def test_unauthenticated_delete_denied(api_client: Client, user_movie_data: UserMovieData) -> None:
-    """Test that unauthenticated DELETE requests are denied.
-
-    NOTE: Returns 403 (CSRF error) not 401 because CSRF middleware runs
-    before endpoint authentication. This is expected behavior.
-    """
+    """An anonymous client cannot delete another user's entry."""
     url = user_movie_data_detail_url(user_movie_data.id)
-    res = api_client.delete(url)
-    assert res.status_code == HTTPStatus.FORBIDDEN
+    res = Client().delete(url)
+    assert res.status_code == HTTPStatus.UNAUTHORIZED
+    assert UserMovieData.objects.filter(pk=user_movie_data.pk).exists()
 
 
 # =========================

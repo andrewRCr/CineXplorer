@@ -4,12 +4,17 @@ import json
 import os
 import subprocess
 import sys
+from io import StringIO
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db.utils import OperationalError
+from django.test import override_settings
 
 from apps.core.tests.mock_paths import WAIT_FOR_DB_CONNECTIONS
 
@@ -91,3 +96,53 @@ def test_export_openapi_schema_writes_only_json_to_stdout(log_level: str) -> Non
     assert schema["openapi"].startswith("3.")
     if log_level == "INVALID_LEVEL":
         assert "Invalid DJANGO_LOG_LEVEL" in result.stderr
+
+
+@pytest.mark.django_db
+@override_settings(SITE_DOMAIN="staging.example.com")
+def test_configure_site_updates_the_deployment_site_and_is_idempotent() -> None:
+    Site.objects.update_or_create(
+        pk=settings.SITE_ID, defaults={"domain": "old.example.com", "name": "Old name"}
+    )
+    first = StringIO()
+    call_command("configure_site", stdout=first)
+    site = Site.objects.get(pk=settings.SITE_ID)
+    assert site.domain == "staging.example.com"
+    assert site.name == "CineXplorer"
+    assert first.getvalue().startswith("CHANGED:")
+    second = StringIO()
+    call_command("configure_site", stdout=second)
+    assert second.getvalue().startswith("UNCHANGED:")
+
+
+@pytest.mark.django_db
+@override_settings(ENVIRONMENT="staging", SITE_DOMAIN=None)
+def test_configure_site_requires_deployed_site_domain() -> None:
+    before = list(Site.objects.values_list("id", "domain", "name"))
+    with pytest.raises(CommandError, match="SITE_DOMAIN"):
+        call_command("configure_site")
+    assert list(Site.objects.values_list("id", "domain", "name")) == before
+
+
+@pytest.mark.parametrize(
+    ("environment", "expected"), [("development", "localhost:8444"), ("staging", None)]
+)
+def test_site_domain_settings_default(environment: str, expected: str | None) -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {
+            "ENVIRONMENT": environment,
+            "DEBUG": "False",
+            "DJANGO_ALLOWED_HOSTS": "testserver",
+            "SITE_DOMAIN": None,
+            "GOOGLE_CLIENT_ID": None,
+            "GOOGLE_CLIENT_SECRET": None,
+            "GITHUB_CLIENT_ID": None,
+            "GITHUB_CLIENT_SECRET": None,
+        },
+        ["SITE_DOMAIN"],
+    )
+    assert "error" not in values
+    assert "SITE_DOMAIN" in values
+    assert values["SITE_DOMAIN"] == expected

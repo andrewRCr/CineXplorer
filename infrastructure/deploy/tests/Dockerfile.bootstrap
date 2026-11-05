@@ -1,0 +1,21 @@
+FROM ubuntu:24.04
+
+# Real package/configuration parsers; host-only operations are replaced in the fixture.
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    ca-certificates curl sudo openssh-server ufw unattended-upgrades git util-linux \
+    && install -d -m 755 /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc \
+    && chmod 644 /etc/apt/keyrings/docker.asc \
+    && printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu noble stable\n' "$(dpkg --print-architecture)" > /etc/apt/sources.list.d/docker-fixture.list \
+    && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+       docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin \
+    && rm /etc/apt/sources.list.d/docker-fixture.list \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /run/sshd /root/.ssh \
+    && ssh-keygen -q -t ed25519 -N '' -f /root/fixture-owner \
+    && cp /root/fixture-owner.pub /root/.ssh/authorized_keys \
+    && chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys \
+    && truncate -s 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile
+
+CMD ["sleep", "infinity"]

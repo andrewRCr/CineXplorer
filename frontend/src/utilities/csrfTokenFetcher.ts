@@ -6,12 +6,13 @@ import logger from "@/services/logger";
  * Intended for use in services and interceptors that require CSRF protection.
  */
 
+import { getTokenFromCookie } from "./tokenUtils";
+
 /**
  * Gets the CSRF token from the browser cookie.
  */
 export function getCsrfToken(): string | null {
-    const match = document.cookie.match(new RegExp("(^| )XSRF-TOKEN=([^;]+)"));
-    return match?.[2] ?? null;
+    return getTokenFromCookie("csrftoken");
 }
 
 /**

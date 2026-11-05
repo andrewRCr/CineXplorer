@@ -266,20 +266,6 @@ class TestResendTokenGeneration:
         assert call_args[0][1] == 42  # user_id stored as value
         assert call_args[1]["timeout"] == 600  # 10 minutes
 
-    def test_validate_token_returns_user_id_and_consumes(
-        self, auth_service_factory: AuthServiceFactory
-    ) -> None:
-        """Valid token returns user_id and is consumed (deleted from cache)."""
-        service, _ = auth_service_factory()
-
-        with patch("apps.authentication.services.authentication_service.cache") as mock_cache:
-            mock_cache.get.return_value = 42
-            result = service._validate_resend_token("valid-token")
-
-        assert result == 42
-        mock_cache.get.assert_called_once()
-        mock_cache.delete.assert_called_once()
-
     def test_validate_invalid_token_returns_none(
         self, auth_service_factory: AuthServiceFactory
     ) -> None:
@@ -292,40 +278,6 @@ class TestResendTokenGeneration:
 
         assert result is None
         mock_cache.delete.assert_not_called()
-
-    def test_token_roundtrip_with_real_cache(
-        self, auth_service_factory: AuthServiceFactory
-    ) -> None:
-        """Token can be generated and validated (integration-like test)."""
-        service, _ = auth_service_factory()
-
-        # Use a dict as a simple cache mock for roundtrip
-        fake_cache: dict[str, int] = {}
-
-        def fake_set(key: str, value: int, timeout: int) -> None:
-            fake_cache[key] = value
-
-        def fake_get(key: str) -> int | None:
-            return fake_cache.get(key)
-
-        def fake_delete(key: str) -> None:
-            fake_cache.pop(key, None)
-
-        with patch("apps.authentication.services.authentication_service.cache") as mock_cache:
-            mock_cache.set.side_effect = fake_set
-            mock_cache.get.side_effect = fake_get
-            mock_cache.delete.side_effect = fake_delete
-
-            # Generate token
-            token = service._generate_resend_token(user_id=99)
-
-            # First validation succeeds
-            result1 = service._validate_resend_token(token)
-            assert result1 == 99
-
-            # Second validation fails (single-use)
-            result2 = service._validate_resend_token(token)
-            assert result2 is None
 
 
 @pytest.mark.parametrize(

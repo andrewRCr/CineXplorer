@@ -98,10 +98,10 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # Custom CSRF middleware with path-based exemptions (workaround for Django Ninja bug #1464)
-    # Must run AFTER AuthenticationMiddleware to check request.user.is_authenticated
-    # Replaces Django's CsrfViewMiddleware to avoid conflict with Django Ninja
-    "apps.authentication.middleware.CsrfHeaderMiddleware",
+    # Close unused allauth endpoints before checking CSRF on the reachable views.
+    "apps.authentication.middleware.AllauthEndpointMiddleware",
+    "apps.authentication.middleware.AllauthEmailDeliveryMiddleware",
+    "apps.authentication.middleware.CsrfProtectionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",  # Required for django-allauth
@@ -236,10 +236,9 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 TMDB_API_KEY = env("TMDB_API_KEY")
 BACKEND_URL = env("BACKEND_URL")
 
-# Email Configuration - ZeptoMail through django-zoho-zeptomail's backend
-# 0.0.4 or later sends a multipart message's text and HTML as separate
-# textbody and htmlbody fields (0.0.3 concatenated them into htmlbody)
-EMAIL_BACKEND = "zoho_zeptomail.backend.zeptomail_backend.ZohoZeptoMailEmailBackend"
+# The project backend bounds ZeptoMail requests and logs sanitized delivery outcomes.
+# Multipart conversion comes from the pinned django-zoho-zeptomail package.
+EMAIL_BACKEND = "apps.core.email_backend.ZeptoMailEmailBackend"
 DEFAULT_FROM_EMAIL = os.environ.get("ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com")
 ZOHO_ZEPTOMAIL_API_KEY_TOKEN = os.environ.get("ZEPTOMAIL_API_KEY", "")
 # Region setting - only define for non-US hosted accounts
@@ -268,6 +267,9 @@ if not ZOHO_ZEPTOMAIL_API_KEY_TOKEN and not DEBUG and "test" not in sys.argv:
 
 # django-allauth Configuration
 SITE_ID = 1  # Required for django.contrib.sites
+SITE_DOMAIN = os.environ.get(
+    "SITE_DOMAIN", "localhost:8444" if ENVIRONMENT == "development" else None
+)
 ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https" if not DEBUG else "http"
 
 # Email verification
@@ -304,7 +306,7 @@ ACCOUNT_ADAPTER = "apps.authentication.adapters.CustomAccountAdapter"
 
 # Headless Mode Configuration (for SPA/React frontend)
 # Provides JSON API endpoints instead of HTML templates
-# Must be True to enable Token Strategy API for OAuth JWT generation
+# Serve frontend-oriented authentication endpoints without account templates
 HEADLESS_ONLY = True
 HEADLESS_FRONTEND_URLS = {
     # Note: account_confirm_email is handled by CustomAccountAdapter.get_email_confirmation_url()
@@ -314,15 +316,25 @@ HEADLESS_FRONTEND_URLS = {
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
 }
 
-# Token Strategy - JWT token generation for headless mode
-# Official django-allauth extension point for custom token generation
-HEADLESS_TOKEN_STRATEGY = "apps.authentication.token_strategy.JWTTokenStrategy"
-
 # Social account settings
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Use email for social account matching
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True  # Auto-link accounts with same email
+
+# Development uses SocialApp rows; deployed environments use complete credential pairs.
+SOCIALACCOUNT_PROVIDERS: dict[str, dict[str, dict[str, str]]] = {}
+if ENVIRONMENT != "development":
+    for _provider, _prefix in (("google", "GOOGLE"), ("github", "GITHUB")):
+        _client_id = str(env(f"{_prefix}_CLIENT_ID", default=""))
+        _client_secret = str(env(f"{_prefix}_CLIENT_SECRET", default=""))
+        if bool(_client_id) != bool(_client_secret):
+            _missing = f"{_prefix}_CLIENT_SECRET" if _client_id else f"{_prefix}_CLIENT_ID"
+            raise ImproperlyConfigured(f"{_missing} is required to configure {_provider}.")
+        if _client_id:
+            SOCIALACCOUNT_PROVIDERS[_provider] = {
+                "APP": {"client_id": _client_id, "secret": _client_secret}
+            }
 
 # Login/Logout redirect URLs
 LOGIN_REDIRECT_URL = FRONTEND_URL  # Redirect to frontend after login
@@ -394,13 +406,10 @@ CSRF_COOKIE_SECURE = ENVIRONMENT in ["production", "staging"]
 # This is safe - CSRF tokens are defense mechanisms, not secrets
 CSRF_COOKIE_HTTPONLY = False
 
-# CsrfHeaderMiddleware deliberately replaces Django's CsrfViewMiddleware:
-# it validates X-CSRFToken on unsafe requests carrying the JWT cookie.
-# Django admin views apply csrf_protect themselves. Token checks do not cover
-# exempt public auth endpoints (registration, sign-in, logout, email verification
-# and resend; refresh stays checked), allauth's headless browser endpoints, or
-# session-only API authentication. Those paths rely on SameSite=Lax; Ninja parses
-# JSON regardless of content type, so cross-site forms can still force sign-in.
+# Our CsrfViewMiddleware subclass checks unsafe requests even on Ninja's exempt views.
+# Only POST /api/logs/ (anonymous reporting), POST /api/dev-logs/write/ (development
+# console capture), and /__debug__/ (the development toolbar's SQL panel) are exempt.
+# Django's system check looks for its own class path rather than subclasses.
 SILENCED_SYSTEM_CHECKS = ["security.W003"]
 
 

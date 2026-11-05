@@ -1,6 +1,5 @@
 import { isRecord } from "@/utilities/typeGuards";
 import { apiBaseUrl as BASE_URL, siteOrigin } from "@/config/baseUrls";
-import axios from "axios";
 import apiClient from "./apiClient";
 import type { components } from "@/types/api";
 import {
@@ -193,6 +192,7 @@ export async function resendVerificationEmail(
         `/resend-verification/`,
         { resend_token: resendToken },
         {
+            handlesEmailDeliveryFailure: true,
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
@@ -218,32 +218,17 @@ export async function requestPasswordReset(email: string): Promise<void> {
         logger.warn("CSRF token not available for password reset request");
     }
 
-    try {
-        await apiClient.post(
-            `${siteOrigin}/_allauth/browser/v1/auth/password/request`,
-            { email },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": csrfToken || "",
-                },
+    await apiClient.post(
+        `${siteOrigin}/_allauth/browser/v1/auth/password/request`,
+        { email },
+        {
+            handlesEmailDeliveryFailure: true,
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken || "",
             },
-        );
-    } catch (error) {
-        // Normalize error message from axios error response
-        if (axios.isAxiosError(error) && error.response?.data) {
-            const errorData = error.response.data as {
-                detail?: string;
-                message?: string;
-            };
-            throw new Error(
-                errorData.detail ||
-                    errorData.message ||
-                    "Failed to send reset email",
-            );
-        }
-        throw new Error("Failed to send reset email");
-    }
+        },
+    );
 }
 
 /**
@@ -262,6 +247,7 @@ export async function resetPassword(
     key: string,
     password: string,
 ): Promise<{ success: boolean; autoLoggedIn: boolean }> {
+    await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
     const response = await fetch(

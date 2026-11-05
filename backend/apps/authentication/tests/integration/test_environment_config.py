@@ -454,3 +454,67 @@ builtins.open = observed_open
     )
     assert values["observed_log_paths"] == []
     assert values["LOG_DIRECTORY"] is None
+
+
+OAUTH_ENVIRONMENT: dict[str, str | None] = {
+    "DEBUG": "False",
+    "DJANGO_ALLOWED_HOSTS": "testserver",
+    "GOOGLE_CLIENT_ID": None,
+    "GOOGLE_CLIENT_SECRET": None,
+    "GITHUB_CLIENT_ID": None,
+    "GITHUB_CLIENT_SECRET": None,
+}
+
+
+@pytest.mark.parametrize("environment", ["staging", "production"])
+@pytest.mark.parametrize("provider", ["google", "github"])
+@pytest.mark.parametrize(
+    "credentials",
+    [("client-id", "client-secret"), (None, None), ("client-id", None), (None, "client-secret")],
+    ids=["complete", "unset", "id-only", "secret-only"],
+)
+def test_deployed_oauth_requires_a_complete_pair(
+    environment: str, provider: str, credentials: tuple[str | None, str | None]
+) -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    client_id, secret = credentials
+    prefix = provider.upper()
+    values = load_settings(
+        {
+            **OAUTH_ENVIRONMENT,
+            "ENVIRONMENT": environment,
+            f"{prefix}_CLIENT_ID": client_id,
+            f"{prefix}_CLIENT_SECRET": secret,
+        },
+        ["SOCIALACCOUNT_PROVIDERS"],
+    )
+    if bool(client_id) != bool(secret):
+        error = values.get("error")
+        assert isinstance(error, str)
+        missing_name = f"{prefix}_CLIENT_SECRET" if client_id else f"{prefix}_CLIENT_ID"
+        assert missing_name in error
+    else:
+        assert "error" not in values
+        providers = cast(dict[str, dict[str, object]], values.get("SOCIALACCOUNT_PROVIDERS", {}))
+        app = providers.get(provider, {}).get("APP")
+        assert app == ({"client_id": client_id, "secret": secret} if client_id else None)
+
+
+def test_development_oauth_ignores_environment_apps() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {
+            **OAUTH_ENVIRONMENT,
+            "ENVIRONMENT": "development",
+            "GOOGLE_CLIENT_ID": "google-client",
+            "GOOGLE_CLIENT_SECRET": "google-secret",
+            "GITHUB_CLIENT_ID": "github-client",
+            "GITHUB_CLIENT_SECRET": "github-secret",
+        },
+        ["SOCIALACCOUNT_PROVIDERS"],
+    )
+    assert "error" not in values
+    providers = cast(dict[str, dict[str, object]], values.get("SOCIALACCOUNT_PROVIDERS", {}))
+    assert all("APP" not in provider for provider in providers.values())

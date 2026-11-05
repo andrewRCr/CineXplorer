@@ -1,10 +1,10 @@
 """Error response format tests for authentication endpoints.
 
-Tests the standardized error response format implemented in Task 6:
+Tests authentication error responses and CSRF refusals:
 - All errors use {"error": "message"} format for user-facing errors
 - DEBUG=True adds {"detail": "..."} field for technical details
 - DEBUG=False excludes {"detail": "..."} field (production mode)
-- CSRF middleware uses consistent error format
+- CSRF refusals use a fixed {"detail": "message"} body in every mode
 
 These tests validate error responses across various HTTP status codes:
 - 401 Unauthorized (invalid credentials)
@@ -16,7 +16,6 @@ These tests validate error responses across various HTTP status codes:
 
 from __future__ import annotations
 
-import json as json_module
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 
@@ -333,93 +332,12 @@ def test_debug_false_excludes_detail_field_for_blacklisted_token(
 
 
 @pytest.mark.django_db
-@override_settings(DEBUG=False)
-def test_csrf_error_uses_error_format_production(
-    api_client: Client,
-    verified_user: User,
-) -> None:
-    """Test that CSRF middleware uses {"error": "message"} format (production mode).
+@pytest.mark.parametrize("debug", [False, True])
+def test_csrf_error_has_fixed_detail_in_every_mode(debug: bool) -> None:
+    from django.test import Client
 
-    Hybrid Authentication Pattern:
-    - Login returns access token in response body
-    - Test must manually set access token cookie for authentication
-    """
-    # Login to get JWT tokens
-    login_data = {
-        "login": verified_user.username,
-        "password": "testpass123",
-    }
-    login_response = api_client.post(
-        "/api/token/",
-        data=login_data,
-        content_type="application/json",
-    )
-    assert login_response.status_code == HTTPStatus.OK
-
-    # Set access token cookie for authentication
-    response_data = json_module.loads(login_response.content.decode())
-    api_client.cookies["access_token"] = response_data["access_token"]
-
-    # Try to refresh token WITHOUT CSRF token (should be rejected by middleware)
-    response = api_client.post(
-        "/api/token/refresh/",
-        content_type="application/json",
-        # No HTTP_X_CSRFTOKEN header
-    )
-
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    data = response.json()
-
-    # Verify CSRF middleware uses standardized error format
-    assert "error" in data, "CSRF error response should contain 'error' field"
-    assert isinstance(data["error"], str), "'error' field should be a string"
-    assert "csrf" in data["error"].lower() or "token" in data["error"].lower()
-
-    # In production mode (DEBUG=False), detail field should NOT be present
-    assert "detail" not in data, "DEBUG=False should exclude 'detail' field"
-
-
-@pytest.mark.django_db
-@override_settings(DEBUG=True)
-def test_csrf_error_includes_detail_in_debug_mode(
-    api_client: Client,
-    verified_user: User,
-) -> None:
-    """Test that CSRF middleware includes {"detail": "..."} in DEBUG mode.
-
-    Hybrid Authentication Pattern:
-    - Login returns access token in response body
-    - Test must manually set access token cookie for authentication
-    """
-    # Login to get JWT tokens
-    login_data = {
-        "login": verified_user.username,
-        "password": "testpass123",
-    }
-    login_response = api_client.post(
-        "/api/token/",
-        data=login_data,
-        content_type="application/json",
-    )
-    assert login_response.status_code == HTTPStatus.OK
-
-    # Set access token cookie for authentication
-    response_data = json_module.loads(login_response.content.decode())
-    api_client.cookies["access_token"] = response_data["access_token"]
-
-    # Try to refresh token WITHOUT CSRF token (should be rejected by middleware)
-    response = api_client.post(
-        "/api/token/refresh/",
-        content_type="application/json",
-        # No HTTP_X_CSRFTOKEN header
-    )
-
-    assert response.status_code == HTTPStatus.FORBIDDEN
-    data = response.json()
-
-    # Verify CSRF middleware uses standardized error format with detail
-    assert "error" in data, "CSRF error response should contain 'error' field"
-    assert "detail" in data, "DEBUG=True should include 'detail' field"
-    assert isinstance(data["error"], str), "'error' field should be a string"
-    assert isinstance(data["detail"], str), "'detail' field should be a string"
-    assert "csrf" in data["error"].lower() or "token" in data["error"].lower()
+    with override_settings(DEBUG=debug):
+        client = Client(enforce_csrf_checks=True)
+        response = client.post("/api/token/refresh/", content_type="application/json")
+    assert response.status_code == 403
+    assert response.json() == {"detail": "CSRF token missing or invalid."}

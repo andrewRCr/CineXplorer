@@ -1,4 +1,3 @@
-import logger from "@/services/logger";
 /**
  * useOAuthFlow
  *
@@ -9,8 +8,13 @@ import logger from "@/services/logger";
  * This hook isolates OAuth-specific concerns that would otherwise clutter
  * login/register components with state management and timing logic.
  */
-import { siteOrigin } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
+import {
+    ensureCsrfTokenCookie,
+    getCsrfToken,
+} from "@/utilities/csrfTokenFetcher";
 import { useState, useEffect, useCallback } from "react";
+import logger from "@/services/logger";
 
 // Constants for OAuth timing UX
 const FAST_OAUTH_THRESHOLD = 3000; // 3 seconds
@@ -142,88 +146,66 @@ export function useOAuthFlow(
     /**
      * Initialize OAuth login using django-allauth headless mode.
      *
-     * Security Model:
-     * - OAuth endpoints (/_allauth/) are CSRF-exempt in backend middleware
-     * - OAuth 2.0 'state' parameter provides CSRF protection at protocol level
-     * - State is random, session-bound, validated on callback (more secure than cookies)
-     * - CSRF token is optional but included for defense-in-depth
-     *
-     * Flow:
-     * 1. Get CSRF token from existing cookie (may not exist, that's OK)
-     * 2. Create form and submit through Caddy proxy
-     * 3. Browser follows OAuth redirect to provider
-     * 4. User authorizes on provider site (Google/GitHub)
-     * 5. Provider redirects to backend callback with OAuth code
-     * 6. Backend validates state, exchanges code, creates session
-     * 7. Backend redirects to frontend, useAuth detects session, logs in
+     * Django requires the csrftoken cookie and matching csrfmiddlewaretoken form field.
+     * If the cookie is missing, initialize it before constructing the form.
+     * The provider callback separately validates the session-bound OAuth state.
+     * Form submission navigates to the provider, whose callback creates the session;
+     * useAuth then detects that session when the browser returns.
      *
      * Note: Uses HTML form submission (not fetch) so browser follows OAuth redirect.
      */
     const initializeOAuth = useCallback(
-        (provider: string): Promise<void> =>
-            // Keep submission synchronous and escaping errors as promise rejections.
-            new Promise<void>((resolve) => {
-                try {
-                    logger.debug(
-                        `[OAuth] Initializing ${provider} OAuth login`,
-                    );
+        async (provider: string): Promise<void> => {
+            try {
+                logger.debug(`[OAuth] Initializing ${provider} OAuth login`);
 
-                    // Get CSRF token from cookie (if available)
-                    const csrfToken = document.cookie
-                        .split("; ")
-                        .find((row) => row.startsWith("csrftoken="))
-                        ?.split("=")[1];
+                if (!getCsrfToken()) await ensureCsrfTokenCookie(apiBaseUrl);
+                const csrfToken = getCsrfToken();
 
-                    // Create form and submit through Caddy proxy
-                    // Use absolute URL with protocol to force full page navigation
-                    const form = document.createElement("form");
-                    form.method = "POST";
-                    form.action = `${siteOrigin}/_allauth/browser/v1/auth/provider/redirect`;
-                    // CRITICAL: Force full page reload, prevent React Router interception
-                    form.target = "_self";
+                // Create form and submit through Caddy proxy
+                // Use absolute URL with protocol to force full page navigation
+                const form = document.createElement("form");
+                form.method = "POST";
+                form.action = `${siteOrigin}/_allauth/browser/v1/auth/provider/redirect`;
+                // CRITICAL: Force full page reload, prevent React Router interception
+                form.target = "_self";
 
-                    // Add form fields
-                    const fields: Record<string, string> = {
-                        provider: provider,
-                        callback_url: `${siteOrigin}/login`,
-                        process: "login",
-                        ...(csrfToken
-                            ? { csrfmiddlewaretoken: csrfToken }
-                            : {}),
-                    };
+                // Add form fields
+                const fields: Record<string, string> = {
+                    provider: provider,
+                    callback_url: `${siteOrigin}/login`,
+                    process: "login",
+                    ...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
+                };
 
-                    Object.entries(fields).forEach(([key, value]) => {
-                        const input = document.createElement("input");
-                        input.type = "hidden";
-                        input.name = key;
-                        input.value = value;
-                        form.appendChild(input);
-                    });
+                Object.entries(fields).forEach(([key, value]) => {
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = key;
+                    input.value = value;
+                    form.appendChild(input);
+                });
 
-                    // Set flag to indicate OAuth flow is in progress
-                    // Store provider name and timestamp for UX timing decisions on return
-                    sessionStorage.setItem("oauth_in_progress", provider);
-                    sessionStorage.setItem(
-                        "oauth_start_time",
-                        Date.now().toString(),
-                    );
+                // Set flag to indicate OAuth flow is in progress
+                // Store provider name and timestamp for UX timing decisions on return
+                sessionStorage.setItem("oauth_in_progress", provider);
+                sessionStorage.setItem(
+                    "oauth_start_time",
+                    Date.now().toString(),
+                );
 
-                    // Submit form immediately - don't show overlay before navigation
-                    // The white flash during navigation is browser behavior we can't control
-                    // The overlay is used on RETURN from OAuth (handled in index.html)
-                    document.body.appendChild(form);
-                    form.submit();
-                } catch (error) {
-                    logger.error("OAuth initialization error:", {
-                        errorType:
-                            error instanceof Error ? error.name : "unknown",
-                    });
-                    setError(
-                        "Failed to initiate OAuth login. Please try again.",
-                    );
-                }
-                resolve();
-            }),
+                // Submit form immediately - don't show overlay before navigation
+                // The white flash during navigation is browser behavior we can't control
+                // The overlay is used on RETURN from OAuth (handled in index.html)
+                document.body.appendChild(form);
+                form.submit();
+            } catch (error) {
+                logger.error("OAuth initialization error:", {
+                    errorType: error instanceof Error ? error.name : "unknown",
+                });
+                setError("Failed to initiate OAuth login. Please try again.");
+            }
+        },
         [setError],
     );
 

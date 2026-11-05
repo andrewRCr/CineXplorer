@@ -147,6 +147,12 @@ class ResendVerificationInputSchema(Schema):
     )
 
 
+class EmailDeliveryErrorSchema(Schema):
+    """A retryable failure to send a transactional email."""
+
+    detail: str
+
+
 class ResendVerificationResponseSchema(Schema):
     """Schema for resend verification response."""
 
@@ -177,6 +183,7 @@ class HybridTokenRefreshResponseSchema(Schema):
 
 __all__ = [
     "CsrfTokenResponseSchema",
+    "EmailDeliveryErrorSchema",
     "EmailVerificationInputSchema",
     "EmailVerificationResponseSchema",
     "HybridTokenRefreshResponseSchema",

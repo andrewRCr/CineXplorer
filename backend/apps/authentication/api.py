@@ -13,6 +13,7 @@ from ninja import Router, Status
 from apps.authentication.auth_ninja import get_current_user, jwt_cookie_auth
 from apps.authentication.schemas import (
     CsrfTokenResponseSchema,
+    EmailDeliveryErrorSchema,
     EmailVerificationInputSchema,
     EmailVerificationResponseSchema,
     HybridTokenRefreshResponseSchema,
@@ -26,7 +27,12 @@ from apps.authentication.schemas import (
     UserProfileSchema,
 )
 from apps.authentication.services.service_factory import get_authentication_service
-from apps.authentication.throttles import TestAwareAnonThrottle, TestAwareUserThrottle
+from apps.authentication.throttles import (
+    LoginThrottle,
+    RegistrationThrottle,
+    ResendVerificationThrottle,
+    TestAwareUserThrottle,
+)
 
 # Create authentication router
 auth_router = Router(tags=["Authentication"])
@@ -41,7 +47,7 @@ auth_router = Router(tags=["Authentication"])
         409: dict[str, object],
         500: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle("3/h")],
+    throttle=[RegistrationThrottle("3/h")],
 )
 def register_user(
     request: HttpRequest, payload: RegisterInputSchema
@@ -87,7 +93,7 @@ def register_user(
         401: dict[str, object],
         403: dict[str, object],
     },
-    throttle=[TestAwareAnonThrottle("5/m")],
+    throttle=[LoginThrottle("5/m")],
 )
 def obtain_token(
     request: HttpRequest, response: HttpResponse, payload: TokenObtainInputSchema
@@ -348,20 +354,24 @@ def verify_email(
 @auth_router.post(
     "/resend-verification/",
     auth=None,
-    response={200: ResendVerificationResponseSchema, 400: dict[str, object]},
-    throttle=[TestAwareAnonThrottle("3/h")],  # Rate limit to prevent email spam abuse
+    response={
+        200: ResendVerificationResponseSchema,
+        400: dict[str, object],
+        503: EmailDeliveryErrorSchema,
+    },
+    throttle=[ResendVerificationThrottle("3/h")],  # Rate limit to prevent email spam abuse
 )
 def resend_verification(
     request: HttpRequest, payload: ResendVerificationInputSchema
 ) -> Status[ResendVerificationResponseSchema | dict[str, str]]:
-    """Resend email verification to the provided email address.
+    """Resend email verification using an opaque token from sign-in.
 
     Args:
         request: Django HTTP request
-        payload: Email address to resend verification to
+        payload: Resend token issued after sign-in requires email verification
 
     Returns:
-        Success message (even if email doesn't exist for security)
+        Generic 200 confirmation, including invalid or expired tokens, or a 503 delivery failure.
     """
     service = get_authentication_service()
     status_code, body = service.resend_verification(request, payload)

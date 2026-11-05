@@ -1,40 +1,76 @@
+import { act, renderHook } from "@testing-library/react";
 import {
     afterEach,
-    assert,
     beforeEach,
+    assert,
     describe,
     expect,
     it,
     vi,
 } from "vitest";
-import { act, renderHook } from "@testing-library/react";
-import { siteOrigin } from "@/config/baseUrls";
-import logger from "@/services/logger";
+import { HttpResponse, http } from "msw";
 import { useOAuthFlow } from "../useOAuthFlow";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
+import { server } from "@tests/mocks/server";
+import { clearBrowserAuth } from "@tests/helpers/auth";
+
+import logger from "@/services/logger";
 
 const originalConfig = logger.getEnvironmentInfo().config;
 let submittedForms: HTMLFormElement[] = [];
 
 beforeEach(() => {
-    localStorage.clear();
-    sessionStorage.clear();
+    clearBrowserAuth();
     submittedForms = [];
     logger.updateConfig({
         enableConsole: false,
         enableBackendReporting: false,
     });
 });
-
 afterEach(() => {
     vi.useRealTimers();
     submittedForms.forEach((form) => form.remove());
-    localStorage.clear();
-    sessionStorage.clear();
+    clearBrowserAuth();
     logger.clearLogs();
     logger.updateConfig(originalConfig);
 });
 
+describe("OAuth form CSRF", () => {
+    it.each([true, false])(
+        "submits the OAuth form with CSRF (cookie present: %s)",
+        async (present) => {
+            if (present) document.cookie = "csrftoken=django-csrf; path=/";
+            let csrfRequests = 0;
+            let submitted: FormData | undefined;
+            server.use(
+                http.get(`${apiBaseUrl}/csrf/`, () => {
+                    csrfRequests++;
+                    document.cookie = "csrftoken=django-csrf; path=/";
+                    return HttpResponse.json({});
+                }),
+            );
+            vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(
+                function (this: HTMLFormElement) {
+                    submitted = new FormData(this);
+                    submittedForms.push(this);
+                },
+            );
+            const { result } = renderHook(() => useOAuthFlow());
+            await act(async () => {
+                await result.current.initializeOAuth("google");
+            });
+            expect(submitted?.get("csrfmiddlewaretoken")).toBe("django-csrf");
+            expect(submitted?.get("provider")).toBe("google");
+            expect(csrfRequests).toBe(present ? 0 : 1);
+        },
+    );
+});
+
 describe("OAuth initialization contract", () => {
+    beforeEach(() => {
+        document.cookie = "csrftoken=django-csrf; path=/";
+    });
+
     it("submits the provider form before returning its completion promise", async () => {
         vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(
             function (this: HTMLFormElement) {

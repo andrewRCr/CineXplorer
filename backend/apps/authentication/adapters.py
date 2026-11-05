@@ -1,8 +1,7 @@
 """Custom django-allauth adapter for CineXplorer.
 
 Customizes email confirmation URLs to point to the frontend application.
-Email sending is handled by Django's email backend (django-zoho-zeptomail).
-JWT token generation is handled by HEADLESS_TOKEN_STRATEGY setting.
+Email sending uses the project's bounded ZeptoMail backend.
 """
 
 from __future__ import annotations
@@ -17,6 +16,9 @@ if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
 
 
+EMAIL_DELIVERY_FAILURE_MESSAGE = "We couldn't send the email. Please try again in a few minutes."
+
+
 class EmailDeliveryError(Exception):
     """Raised when email delivery fails."""
 
@@ -29,7 +31,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     - send_mail(): Verifies email was actually sent, raises on failure
 
     Email delivery is handled by Django's email backend configured in
-    settings.py (ZohoZeptoMailEmailBackend for production, locmem for tests).
+    settings.py (the project ZeptoMailEmailBackend, locmem for tests).
     """
 
     def send_mail(self, template_prefix: str, email: str, context: dict[str, object]) -> None:

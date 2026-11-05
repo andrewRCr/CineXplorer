@@ -155,3 +155,15 @@ __all__ = [
     "FrontendLogSuccessResponse",
     "LogHealthCheckResponse",
 ]
+
+
+class HealthCheckResponse(Schema):
+    """A successful readiness response."""
+
+    status: Literal["healthy"]
+
+
+class ServiceUnavailableResponse(Schema):
+    """A readiness failure without internal connection details."""
+
+    detail: str

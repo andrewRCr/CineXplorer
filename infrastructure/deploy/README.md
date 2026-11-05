@@ -4,8 +4,9 @@ This runbook prepares one Ubuntu 24.04 LTS server and deploys published backend 
 The staging address is `https://staging.cinexplorer.andrewcreekmore.dev`. Run commands on the server as `deploy`
 except where a local terminal or root session is explicitly named. Builds run in GitHub Actions, not on the server.
 
-Staging supports browsing, search, movie details and existing-account sign-in. OAuth and email delivery are not
-configured: do not use email registration, password reset or verification resend there.
+After setup, staging supports browsing, email registration/verification, password reset, Google/GitHub sign-in
+and watchlists. Password sessions renew while their refresh token remains valid. Complete the first deployment
+and its authentication checks before installing live OAuth/mail credentials.
 
 ## First-time setup
 
@@ -36,13 +37,23 @@ version containing this runbook and bootstrap script.
 
 ```sh
 server_ip='YOUR_SERVER_IPV4'
+ci_key="$HOME/.ssh/cinexplorer_staging_ci"
+test ! -e "$ci_key"
+ssh-keygen -t ed25519 -f "$ci_key" -C cinexplorer-staging-ci -N ''
 scp infrastructure/deploy/bootstrap.sh "root@$server_ip:/root/bootstrap.sh"
+scp "$ci_key.pub" "root@$server_ip:/root/ci-deploy.pub"
 ssh "root@$server_ip"
 ```
+
+Create the CI-only key once; if it already exists, reuse it and skip the generation commands. Keep its private
+half locally for the restricted-key checks and in the GitHub environment secret. Verify the server's SSH host-key
+fingerprint through DigitalOcean's console before trusting the first SSH connection.
 
 In that root session:
 
 ```sh
+install -d -m 755 /opt/cinexplorer
+install -m 644 /root/ci-deploy.pub /opt/cinexplorer/ci-deploy.pub
 bash /root/bootstrap.sh
 ```
 
@@ -118,15 +129,16 @@ chmod 600 ~/.docker/config.json
 Paste the token at the password prompt; the registry does not accept your GitHub password, and the prompt shows
 nothing as you paste. The registry login belongs to `deploy`, so use Docker without sudo from here onward.
 
-### Prepare the two env files
+### Prepare deployment and operations settings
 
-Keep both files outside the checkout and readable only by `deploy`:
+Keep all three files outside the checkout and readable only by `deploy`:
 
 ```sh
 cd /opt/cinexplorer/repo/infrastructure
 umask 077
 install -m 600 prod.env.example /opt/cinexplorer/prod.env
 install -m 600 ../backend/config/.env.example /opt/cinexplorer/backend.env
+install -m 600 ops.env.example /opt/cinexplorer/ops.env
 ```
 
 Edit `/opt/cinexplorer/prod.env`:
@@ -152,45 +164,152 @@ Edit the **live assignments** in `/opt/cinexplorer/backend.env`; changing commen
 - Add live `GUNICORN_WORKERS=2` and `GUNICORN_THREADS=4` assignments.
 - Delete the live `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `BACKEND_URL`, `FRONTEND_URL` and `REDIS_URL`
   assignments. Compose supplies them. No manual allowed-host or origin lists are needed for this single origin.
-- Delete the live ZeptoMail, Google and GitHub credential placeholders. Leave `EMAIL_VERIFICATION_EXPIRY_DAYS=3`.
+- Leave `EMAIL_VERIFICATION_EXPIRY_DAYS=3`. Initially leave `ZEPTOMAIL_API_KEY`, `GOOGLE_CLIENT_ID`,
+  `GOOGLE_CLIENT_SECRET`, `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` empty. Set
+  `ZEPTOMAIL_SENDER_EMAIL=cinexplorer@andrewcreekmore.dev` when activating email after deployment.
+- After the hardened version is serving, fill the complete Google and GitHub pairs and the ZeptoMail key from the
+  provider setup below. A partial OAuth pair refuses startup; development uses its database apps instead.
+  Deployed providers must have no duplicate database Social Application.
 
 ```sh
 openssl rand -hex 32
-chmod 600 /opt/cinexplorer/prod.env /opt/cinexplorer/backend.env
+chmod 600 /opt/cinexplorer/prod.env /opt/cinexplorer/backend.env /opt/cinexplorer/ops.env
 ```
 
 Use single quotes around secret env values containing dollar signs so Compose does not interpolate them. Do not
-source either env file into a shell, commit them, or print the resolved Compose configuration with secrets. Check
-configuration without displaying it:
+source `prod.env` or `backend.env` into a shell, commit any env file, or print resolved configuration containing
+secrets. Check configuration without displaying it:
 
 ```sh
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env config --quiet
 ```
 
-### Deploy the first version and create a verified account
+### Create storage, monitors and provider apps
 
-From `/opt/cinexplorer/repo/infrastructure`, pull, migrate and load the movie blacklist as one-off containers, then
-start the stack. Stop if any command fails; do not continue to `up` after a failed migration or sync.
+Prepare these outside the repository. Store credentials in your password manager and the indicated env/secret
+fields. Keep the OAuth/mail values off the running server until the hardened deployment has passed its checks.
+
+- In Cloudflare R2, create a private bucket. Keep public access, `r2.dev` and public custom domains disabled.
+  Create an **Object Read & Write** API token limited to this bucket. Record its access key, secret and account S3
+  endpoint. Add a bucket lifecycle rule that deletes backup objects 30 days after upload; record the enabled rule
+  and its prefix scope in the console. Set the endpoint, access key, secret, bucket and chosen prefix in `ops.env`.
+  Keep its supplied S3/Cloudflare/auto-region values and `NO_CHECK_BUCKET=true` for the scoped token.
+  See [R2 tokens](https://developers.cloudflare.com/r2/api/tokens/) and
+  [object lifecycle rules](https://developers.cloudflare.com/r2/buckets/object-lifecycles/).
+- In Healthchecks.io, create separate `backup` and `maintenance` checks, each with a 24-hour period and two-hour
+  grace. Send failure and missed-ping alerts to the maintainer's verified email. Put their ping URLs in
+  `BACKUP_PING_URL` and `MAINTENANCE_PING_URL` in `ops.env`.
+- In UptimeRobot, create an HTTP monitor for
+  `https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/`, with a five-minute interval and the
+  maintainer's email alerted on failure and recovery.
+- In the existing Google Cloud project, create a separate **Web application** OAuth client for deployed hosts.
+  Authorize both redirect URIs below. Keep only the basic identity scopes (`email`, `profile`, and optionally
+  `openid`). The project can remain in **Testing** while the application homepage, privacy policy and terms pages
+  are pending: Google allows this sign-in without adding accounts to the test-user list. Publish the consent screen
+  to **In production** once those pages are live. Save the client ID/secret for the backend's `GOOGLE_CLIENT_ID` and
+  `GOOGLE_CLIENT_SECRET`. See [Google's audience guidance](https://support.google.com/cloud/answer/15549945?hl=en).
+- Create a separate GitHub **OAuth App** with homepage `https://cinexplorer.andrewcreekmore.dev` and both exact
+  callback URLs below. GitHub supports multiple callback entries; add both, keeping exact matching. Save its client
+  ID/secret for `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`. Keep the providers' default scopes.
+  See [GitHub OAuth app setup](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app).
+- In ZeptoMail, obtain an agent API token with `cinexplorer@andrewcreekmore.dev` verified as a sender. Keep the token
+  for `ZEPTOMAIL_API_KEY`. This setting is the full Authorization value: `Zoho-enczapikey`, one space, then the
+  token. Include the prefix once and keep the value in single quotes in the env file. See
+  [ZeptoMail authentication](https://www.zoho.com/cpaas/help/api/api-authentication.html).
+  Use an address whose inbox you control for activation and record its provider. Confirm Inbox delivery and DKIM
+  at that provider, and inspect MIME/plain-text links in ZeptoMail's saved original. Record the recipient provider
+  and MIME evidence source separately; do not claim delivery at providers you did not test.
+
+| Provider | Authorized callback URLs |
+| --- | --- |
+| Google | `https://staging.cinexplorer.andrewcreekmore.dev/accounts/google/login/callback/` and `https://cinexplorer.andrewcreekmore.dev/accounts/google/login/callback/` |
+| GitHub | `https://staging.cinexplorer.andrewcreekmore.dev/accounts/github/login/callback/` and `https://cinexplorer.andrewcreekmore.dev/accounts/github/login/callback/` |
+
+The bootstrap installs the timers before the checkout and `ops.env` need exist. An early run fails in the journal
+naming its missing input. Finish setup, then start both jobs by hand and confirm their first successful pings.
+
+### Configure GitHub's staging deployment environment
+
+In repository **Settings → Environments**, create `staging`. Its selected deployment branch rule allows only
+`main`. Add secrets `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS`, and variable `DEPLOY_HOST`.
+
+From a local terminal with the maintainer's regular SSH key, obtain the host public key through the trusted server
+connection. Check its fingerprint against the provider console. The known-host line must name the exact host
+string used by `DEPLOY_HOST`; do not populate this secret from an unverified `ssh-keyscan`.
 
 ```sh
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env pull
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate --noinput
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py sync_blacklist
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
+server_ip='YOUR_SERVER_IPV4'
+ci_key="$HOME/.ssh/cinexplorer_staging_ci"
+ssh "deploy@$server_ip" 'sudo cat /etc/ssh/ssh_host_ed25519_key.pub' > "$ci_key.host.pub"
+ssh-keygen -lf "$ci_key.host.pub"
+awk -v host="$server_ip" '{print host " " $0}' "$ci_key.host.pub" > "$ci_key.known_hosts"
+gh secret set DEPLOY_SSH_KEY --repo andrewRCr/CineXplorer --env staging < "$ci_key"
+gh secret set DEPLOY_KNOWN_HOSTS --repo andrewRCr/CineXplorer --env staging < "$ci_key.known_hosts"
+gh variable set DEPLOY_HOST --repo andrewRCr/CineXplorer --env staging --body "$server_ip"
+```
+
+The CI key has a different role from the server's read-only GitHub key. Bootstrap appends its public half to
+`deploy`'s owner keys with `restrict,command="/usr/local/bin/cinexplorer-deploy --from-ci"`. It authorizes only
+full-SHA deployments reachable from `origin/main`, with stale-target refusal; it provides no shell or forwarding.
+The maintainer's regular key retains the server shell.
+
+Inspect the environment configuration without reading secret values:
+
+```sh
+gh api repos/andrewRCr/CineXplorer/environments/staging
+gh api repos/andrewRCr/CineXplorer/environments/staging/deployment-branch-policies
+gh api repos/andrewRCr/CineXplorer/environments/staging/secrets --jq '.secrets[].name'
+gh api repos/andrewRCr/CineXplorer/environments/staging/variables/DEPLOY_HOST
+```
+
+Confirm custom deployment branch policies are enabled, `main` is the only branch policy, both secret names exist,
+and the host variable is correct. Record the provider console settings for both callbacks and Google's actual
+audience status. Test Google sign-in with an account absent from the test-user list, then add a movie and confirm
+it remains after reloading the watchlist; repeat the sign-in and watchlist check with GitHub. A staging sign-in
+alone cannot prove the future production callback.
+
+### Deploy the first version and activate authentication
+
+Use images published by a successful main-push or manual CI run. A pull-request run builds without publishing;
+image publication alone does not prove tests passed. Confirm the run's `ci-ok` passed and use its full SHA.
+
+From the server's regular `deploy` shell:
+
+```sh
+target_commit='FULL_PUBLISHED_COMMIT_SHA'
+cinexplorer-deploy "$target_commit"
+cd /opt/cinexplorer/repo/infrastructure
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env ps
 curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/
 ```
 
-Caddy obtains a public certificate after DNS and ports 80/443 are reachable; inspect web logs if the first HTTPS
-check fails. Retry the health check after correcting DNS or connectivity. Never use `-k` for the acceptance check.
+The entry point fetches and runs the target's own deploy script from a temporary copy under the operations lock.
+It pulls images, prepares the database without recreating an existing container, takes a fresh backup, migrates,
+syncs the tracked movie blacklist, configures the Site, starts services and checks public health. Stop on failure.
+Caddy obtains its certificate once DNS and ports are ready; inspect web logs to resolve a certificate failure,
+then repeat the health check. Acceptance checks use certificate validation.
 
-Create an account from the interactive server shell, bypassing unavailable email delivery:
+Before installing OAuth/mail credentials, confirm the running backend image revision is the intended hardened
+commit. In a fresh browser session, an unsafe request without Django's CSRF token must return 403, while the
+matching-token request passes; unused allauth sign-up remains 404. Then fill the saved ZeptoMail token and both
+complete OAuth pairs in `backend.env`, keep mode 600 and redeploy the same commit. Do not add deployed Social
+Application rows for those providers. The Site domain is derived from `SITE_ADDRESS` on every deploy.
+
+Prove email registration, inbox verification and sign-in, verification resend and password reset in a browser.
+Check the received sender and DKIM, then the verification and reset links in the original's plain-text parts.
+ZeptoMail exposes saved originals under the agent's **Emails → Logs → View Details → Content Preview**, including
+**View Original** and **Download EML**, when content saving was already enabled. If an inbox provider reconstructs
+exports, use this sender-side original for MIME evidence and record that limitation. Keep messages and tokens
+private. See [Zoho's original-message instructions](https://www.zoho.com/cpaas/help/processed-emails.html).
+Sign in with Google and GitHub. Leave a password session idle beyond six minutes and reload it; it must stay
+signed in while refresh remains valid. In two same-profile tabs with Remember Me, leave both idle and confirm both
+remain signed in. Review logs for errors without copying credentials, addresses or verification tokens into notes.
+
+For a staff account, use the interactive shell with password input that does not echo:
 
 ```sh
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py shell
 ```
-
-At its Python prompt, enter:
 
 ```python
 from getpass import getpass
@@ -208,13 +327,9 @@ with transaction.atomic():
     EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
 ```
 
-Enter a blank line to finish the block, then `exit()`. The password prompt does not echo or enter shell history.
-This account can sign in to the site and Django admin; it has no superuser permissions. Use a new username/email
-if one already exists.
-
-In a browser, open home, search, a browse page and a movie detail page; reload the detail URL. Sign in, add a movie
-to the watchlist and reload it. Visit `/admin/`: it must ask for the separate basic-auth pair before Django login.
-From a local terminal, check the public boundary:
+Finish the block with a blank line, then `exit()`. Use a new username/email. The account has staff access without
+superuser permission. Verify sign-in and watchlist persistence, and that `/admin/` asks for the separate basic-auth
+pair before Django login. Check the public boundary from a local terminal:
 
 ```sh
 server_ip='YOUR_SERVER_IPV4'
@@ -223,109 +338,255 @@ curl --head https://staging.cinexplorer.andrewcreekmore.dev/admin/
 for port in 5432 6379 8000; do nc -vz -w 5 "$server_ip" "$port"; done
 ```
 
-HTTP must redirect to HTTPS, admin must return 401 without basic auth, and all three port connections must fail.
+HTTP redirects to HTTPS, admin returns 401 without basic auth, and all three private-port connections fail.
 
-Once the checkout contains the bootstrap, run it again as `deploy`:
+## Automatic and manual deployments
+
+A `main` push admitted by CI's path filter deploys after every required check passes. Filtered documentation
+pushes run the separate documentation workflow and deploy nothing. Pull requests and manual CI runs do not deploy automatically;
+a manual run can publish a branch's `sha-` images for the maintainer to deploy. Main push runs retain their ordered
+concurrency group; manual runs use their own groups, and the staging deploy job never cancels a running deploy.
+
+For a branch deployment or redeploy, publish its images with a manual CI run, confirm `ci-ok`, then use the full SHA:
 
 ```sh
-sudo /opt/cinexplorer/repo/infrastructure/deploy/bootstrap.sh
+cinexplorer-deploy FULL_PUBLISHED_COMMIT_SHA
 ```
 
-Every step must report `UNCHANGED`, with no `CHANGED` lines. This proves the second run on the actual server;
-container checks alone do not establish it.
+Every deploy holds `/opt/cinexplorer/ops.lock`, waiting up to 30 minutes. The trusted manual form reuses a lock held
+by the operations shell below. CI always takes it. There is no automatic rollback or zero-downtime guarantee;
+previous containers serve until startup recreates them, and failed migrations can leave schema changes behind.
+Inspect failure output before retrying or rolling back. The pre-migration backup must succeed before any
+migration runs. `sync_blacklist` makes the movie blacklist table match the image's tracked
+`backend/apps/movie/data/blacklist.csv`, adding, removing and rewording entries. It validates the complete file
+before changing the table; a malformed file stops deployment without changing it.
 
-## Deploy another version
+CI receives only the six exact step markers and the final result, exit status and private log path. Full output
+lives under `/opt/cinexplorer/deploy-logs/`, readable by `deploy`. If SSH disconnects, CI fails while the detached
+worker continues with its lock. Inspect the newest private log and its numeric `.status` sidecar. A successful
+deploy also appends `/opt/cinexplorer/deploy-history.log`; failure leaves history unchanged.
 
-Publish both images first: run the CI workflow manually on the desired branch, or use a main-push run. A
-pull-request CI run does not publish images. Deploy only from a run whose `ci-ok` job passed: the images publish
-without waiting for the tests, so a run can publish images whose tests failed. Use the full commit SHA from that run;
-the image tag is `sha-` plus its first seven characters.
+Each history line is: UTC ISO timestamp, `ci` or `manual`, previous full SHA, previous tag, new full SHA, new tag.
+Fields use single spaces; absent previous fields are `-`. Previous means the last successful deployment, with the
+backend container's image tag/revision label as the initial fallback, including a stopped container. A failed deploy
+or a checkout made by hand can leave the checkout/tag ahead of the recorded success.
 
-In the server shell, take a [backup](#back-up-the-database) first, then record the current commit and tag before
-changing them. Keep these values for rollback in this terminal, and save them in your deployment notes outside the
-checkout:
+## Update the server bootstrap
+
+When a deployed version changes bootstrap, rerun it from that checkout with `sudo bash`; every step must be
+`UNCHANGED` on the next run. A version requiring its new bootstrap before deployment must take it on staging
+before merging, because a main push deploys immediately.
+
+For the first upgrade of an existing host, copy its new inputs using the maintainer's regular SSH key, after
+creating the CI-only key and provider/monitor settings above:
+
+```sh
+server_ip='YOUR_SERVER_IPV4'
+ci_key="$HOME/.ssh/cinexplorer_staging_ci"
+scp "$ci_key.pub" "deploy@$server_ip:/opt/cinexplorer/ci-deploy.pub"
+scp infrastructure/ops.env.example "deploy@$server_ip:/opt/cinexplorer/ops.env.example"
+```
+
+On the server, install the template only when the real operations file is absent, then fill its actual values:
+
+```sh
+test -e /opt/cinexplorer/ops.env || install -m 600 /opt/cinexplorer/ops.env.example /opt/cinexplorer/ops.env
+chmod 600 /opt/cinexplorer/ops.env
+```
+
+For later upgrades, preserve those inputs. Open an operations shell as `deploy` and keep the following commands
+in it until the operation finishes:
+
+```sh
+flock /opt/cinexplorer/ops.lock env CINEXPLORER_OPS_LOCK=held bash
+```
+
+Inside it, confirm the checkout is clean and the current container's revision label is present before the first
+history entry exists. Check out the published target, bootstrap twice, then deploy. This is the procedure for
+upgrading an existing staging host to this automation:
 
 ```sh
 cd /opt/cinexplorer/repo/infrastructure
-previous_commit=$(git rev-parse HEAD)
-previous_tag=$(sed -n 's/^IMAGE_TAG=//p' /opt/cinexplorer/prod.env)
-printf 'Previous commit: %s\nPrevious tag: %s\n' "$previous_commit" "$previous_tag"
+backend_id=$(docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env ps --all --quiet backend)
+docker inspect --format '{{.Config.Image}} {{index .Config.Labels "org.opencontainers.image.revision"}}' "$backend_id"
+cd /opt/cinexplorer/repo
+test -z "$(git status --porcelain)"
 target_commit='FULL_PUBLISHED_COMMIT_SHA'
 git fetch origin
-test -z "$(git status --porcelain)"
 git checkout --detach "$target_commit"
-target_commit=$(git rev-parse HEAD)
-target_tag="sha-$(printf '%s' "$target_commit" | cut -c1-7)"
+sudo bash infrastructure/deploy/bootstrap.sh
+sudo bash infrastructure/deploy/bootstrap.sh
+systemctl list-timers cinexplorer-backup.timer cinexplorer-maintenance.timer
+cinexplorer-deploy "$target_commit"
+exit
+```
+
+The first bootstrap reports new items `CHANGED`; the next reports only `UNCHANGED`. Have `ci-deploy.pub` and
+`ops.env` in place first. Keep OAuth/mail credentials empty until this version serves and passes its auth checks.
+A backup started from another session while the operations shell is held waits for that same lock.
+
+## Deploy a version without the deploy script
+
+The entry point refuses such commits and names these manual steps. Open the operations shell above, run one
+command at a time, and stop on any failure. For a version lacking the new authentication protections, first remove
+live OAuth/mail values from `backend.env`; activate them only with a hardened version.
+
+Take a [fresh backup](#back-up-the-database) in this locked shell before recording the current version or
+changing the checkout. Stop if the backup fails.
+
+Record the last successful version before changing the checkout. If history is empty, inspect the backend container
+instead; the checkout and configured tag may already be from a failed deployment:
+
+```sh
+cd /opt/cinexplorer/repo/infrastructure
+previous_commit=-
+previous_tag=-
+if test -s /opt/cinexplorer/deploy-history.log; then
+    read -r _ _ _ _ previous_commit previous_tag < <(tail -n 1 /opt/cinexplorer/deploy-history.log)
+else
+    backend_id=$(docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env ps --all --quiet backend)
+    if test -n "$backend_id"; then
+        image=$(docker inspect --format '{{.Config.Image}}' "$backend_id")
+        previous_tag=${image##*:}
+        previous_commit=$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' "$backend_id")
+        [[ $previous_commit =~ ^[0-9a-f]{40}$ ]] || previous_commit=-
+    fi
+fi
+test -z "$(git status --porcelain)"
+target_commit='FULL_PUBLISHED_COMMIT_SHA'
+git fetch origin
+git checkout --detach "$target_commit"
+target_tag="sha-${target_commit:0:7}"
 sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$target_tag/" /opt/cinexplorer/prod.env
+export IMAGE_TAG=$target_tag
 chmod 600 /opt/cinexplorer/prod.env
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env config --quiet
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env pull
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate --noinput
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py sync_blacklist
+if git cat-file -e "$target_commit:backend/apps/movie/management/commands/sync_blacklist.py" 2>/dev/null; then
+    docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py sync_blacklist
+fi
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
 curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/
+printf '%s manual %s %s %s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    "$previous_commit" "$previous_tag" "$target_commit" "$target_tag" >> /opt/cinexplorer/deploy-history.log
+exit
 ```
 
-Execute one command at a time and stop on failure. The previous containers keep serving until `up` recreates them; there
-is no zero-downtime guarantee or automatic recovery. A failed migration can leave schema changes behind: inspect its
-output before retrying or considering rollback. `sync_blacklist` makes the movie blacklist table match the version's
-`backend/apps/movie/data/blacklist.csv`, and refuses a malformed file without changing the table. Confirm browser
-sign-in and watchlist persistence after a successful deploy. Caddy's data volume is retained, so the existing
-certificate is reused.
+Append history only after public health succeeds. The legacy version has no `configure_site` command; its existing
+Site configuration remains. Keep `/opt/cinexplorer/operations/` and its installed jobs in place throughout the
+switch; checking out legacy code does not uninstall them. Confirm browser sign-in and watchlist persistence after
+any successful switch.
+
+## Installed operations scripts
+
+The versioned sources are `infrastructure/deploy/backup.sh` and `maintenance.sh`. Both services and the locked-shell
+backup use installed copies in `/opt/cinexplorer/operations/`, outside the mutable repository checkout. The directory
+and files are owned by `deploy` with mode `700`. Bootstrap creates the directory and units; it does not embed or
+replace job bodies. On a fresh host, deploy a version supplying both sources before starting the jobs.
+
+`cinexplorer-deploy` is the only updater. Under the operations lock, before executing the target deploy script, it
+extracts and checks both target sources with `bash -n`, prepares both complete installed files, then renames each over
+its destination. Jobs cannot overlap these replacements. Missing/invalid sources or installation failure stop the
+deploy before checkout or target execution. If the second replacement fails, the first may already be updated; no
+partial file is exposed, and a retry reconciles both files before proceeding.
+
+A target supplying neither source retains an existing executable pair; a partial source pair is refused. Without an
+installed pair, deploy a version supplying both first. A target without `deploy.sh` still requires the manual legacy
+procedure above, which preserves the installed pair. The supported previous published version is
+`f49b6837c5a72ad4a823bf7594f2d9cf94fcd46d`: its Compose services, PostgreSQL variables and cleanup commands remain
+compatible with these jobs. This does not promise compatibility with arbitrary historical checkouts. Returning via
+`cinexplorer-deploy` to a version supplying job sources updates the installed copies through the same path.
 
 ## Back up the database
 
-Take a backup before any step that can lose data: a deploy's `migrate`, a migration reversal, or anything that drops or
-recreates the database or its volume. From `/opt/cinexplorer/repo/infrastructure`:
+Every scripted deployment takes a fresh backup after pulling images and before migrations. It prepares `db`
+with `up -d --wait --no-recreate db`, preserving an existing container; a fresh installation initializes its
+empty database first. Any dump, validation, upload or heartbeat failure stops deployment before migrations.
+Configure `ops.env` before the first scripted deployment.
+
+Outside an operations shell, run the same backup through its locking service:
 
 ```sh
-mkdir -p /opt/cinexplorer/backups
-umask 077
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" -Fc "$POSTGRES_DB"' > "/opt/cinexplorer/backups/cinexplorer-$(date +%F-%H%M).dump"
-ls -l /opt/cinexplorer/backups/
+sudo systemctl start cinexplorer-backup.service
+sudo journalctl -u cinexplorer-backup.service -n 30 --no-pager
 ```
 
-Stop if `pg_dump` fails or the file is empty. To restore, stop the backend, restore into the running database, and
-start it again:
+Inside an operations shell that already holds the lock, call the script directly. Starting the locking service
+there would wait for your own shell:
 
 ```sh
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env stop backend
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists' < /opt/cinexplorer/backups/BACKUP_FILE.dump
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
+(
+    set -a
+    . /opt/cinexplorer/ops.env
+    set +a
+    bash /opt/cinexplorer/operations/backup.sh
+)
 ```
 
-Backups stay on the droplet, so they don't survive losing it; copy one off the server when it must.
+Use `NAME=value` or single-quoted values in `ops.env`, compatible with both systemd's EnvironmentFile and shell
+sourcing. Do not put `export` statements or shell commands in it. Keep deployment and backend env files under
+Compose's parser.
+
+The script writes a private custom-format `pg_dump -Fc` archive in `/opt/cinexplorer/backups/`, validates it with
+`pg_restore --list`, uploads it to R2 and deletes the local archive before its success ping. Failed backups retain
+their local archive for diagnosis. R2's lifecycle rule removes uploaded backups after 30 days. A local recovery
+copy alone cannot protect against loss of the server.
+
+Use [Restore the database from R2](#restore-the-database-from-r2) for the complete restore and recovery procedure,
+and [Capture a recovery copy](#capture-a-recovery-copy) before a destructive schema reversal. The
+[nightly jobs](#nightly-jobs-and-monitoring) use this same script and archive format.
 
 ## Roll back code and compare schema
 
-A rollback restores code, **not automatically the schema**. Reversing migrations can permanently discard the data they
-added; take a [backup](#back-up-the-database) before reversing any. If any required migration cannot be reversed, stop
-and roll forward with a corrected version instead. Never use `--fake` to bypass a failed migration.
-
-Stay at the newer checkout until schema comparison and any reversal are finished. Set the previous full commit and
-tag from your saved deployment notes if the shell variables above are no longer available. Record the newer tag:
+Open the operations shell before choosing or changing versions. Read the running backend's revision/tag from its
+container, including a stopped container, and the last history line:
 
 ```sh
+flock /opt/cinexplorer/ops.lock env CINEXPLORER_OPS_LOCK=held bash
 cd /opt/cinexplorer/repo/infrastructure
-newer_tag=$(sed -n 's/^IMAGE_TAG=//p' /opt/cinexplorer/prod.env)
-previous_commit='PREVIOUS_FULL_PUBLISHED_COMMIT_SHA'
-previous_tag='sha-PREVIOUS_FIRST_SEVEN_CHARACTERS'
+backend_id=$(docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env ps --all --quiet backend)
+docker inspect --format '{{.Config.Image}} {{index .Config.Labels "org.opencontainers.image.revision"}}' "$backend_id"
+tail -n 10 /opt/cinexplorer/deploy-history.log
+```
+
+Choose the target from history:
+
+- If the running revision differs from the newest line's new revision, use that line's new revision: it is the last
+  successful version, before a deployment or rollback failed during startup/health.
+- Otherwise, scan backward for the newest line whose new revision is the running one and whose previous revision
+  differs from it. Use that previous revision/tag, passing over redeploys and same-version rollback records.
+- For a rollback immediately after another rollback, choose the intended earlier target by hand from history;
+  following the latest rollback line would just switch back again. A `-` previous field offers no target.
+
+The blacklist table retains the newer version's contents until it is synced again. A target with `sync_blacklist`
+reloads its tracked file during deployment. For a manual rollback to an image with that command, run it immediately
+after `migrate`; older images have no sync command and retain the current table.
+
+A rollback switches code; schema reversal is a separate operation that can discard data. Take and validate a live
+custom-format recovery copy using only the [recovery-copy block](#capture-a-recovery-copy) inside this already
+locked shell before a destructive reversal. Keep that copy until rollback's browser checks pass. If a required
+migration is irreversible, stop and roll forward with a correction. Never use `--fake` to bypass a failed migration.
+
+Keep the newer checkout while comparing schema. Identify the image that most recently ran migrations from the
+private deployment logs, including failed deploys, and use it as `newer_tag`. Compare its migration list with the
+chosen target against the same live database, including third-party apps:
+
+```sh
+newer_tag='sha-VERSION_THAT_LAST_RAN_MIGRATIONS'
+previous_commit='TARGET_FULL_PUBLISHED_COMMIT_SHA'
+previous_tag="sha-${previous_commit:0:7}"
 umask 077
 IMAGE_TAG="$previous_tag" docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env pull backend web
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py showmigrations --no-color --verbosity 1 > /opt/cinexplorer/migrations-newer.txt
+IMAGE_TAG="$newer_tag" docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py showmigrations --no-color --verbosity 1 > /opt/cinexplorer/migrations-newer.txt
 IMAGE_TAG="$previous_tag" docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py showmigrations --no-color --verbosity 1 > /opt/cinexplorer/migrations-previous.txt
 diff -u /opt/cinexplorer/migrations-previous.txt /opt/cinexplorer/migrations-newer.txt
 ```
 
-`diff` exits 1 when the lists differ; that is the comparison result. Both commands query the same live database,
-but each image lists the migrations it contains, including third-party packages. `[X]` means applied, `[ ]` means
-unapplied. Treat `[-]` replacement markers and squashed migrations as needing manual graph inspection; do not infer
-that they are safe to reverse from their names alone.
-
-For every applied migration in the newer image absent from the previous image, identify that app's latest migration
-in the previous image, or `zero` if the previous image has no migrations for that app. Stop backend writers before
-reversing; the site is temporarily unavailable. Preview each reversal with the **newer image**, checking its plan
-for dependent apps that also need reversing. Replace the app and migration below with the actual comparison result:
+`diff` status 1 means the lists differ. `[X]` means applied and `[ ]` unapplied. Inspect replacement/squash markers
+and dependency graphs directly. For each applied newer migration absent from the target image, find that app's last
+migration in the target, or `zero` if the target has none. Stop backend writers and preview each reversal with the
+newer image; inspect dependent apps and reverse in dependency order:
 
 ```sh
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env stop backend
@@ -333,36 +594,126 @@ IMAGE_TAG="$newer_tag" docker compose -f docker-compose.prod.yml --env-file /opt
 IMAGE_TAG="$newer_tag" docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate APP_LABEL PREVIOUS_MIGRATION_OR_ZERO
 ```
 
-Repeat for each affected app in dependency order, then rerun the newer-image `showmigrations` command to confirm the
-applied set is compatible with the previous image. If there are no extra applied migrations, skip these reversal
-commands entirely.
+Rerun the newer-image migration list and confirm compatibility. When no extra applied migrations exist, skip
+reversals. Make the final switch in this same locked shell with `cinexplorer-deploy "$previous_commit"`, or the
+manual steps above for a target without the script. Check health, sign-in and watchlist persistence before `exit`.
 
-The rollback leaves the movie blacklist table as the newer version loaded it. If the previous version has the
-`sync_blacklist` command, run it after `migrate` below so the table matches that version's file; an older image has no
-such command.
+After rollback, main's head still contains the code rolled back from. Revert or fix it on `main` before another
+change merges; the next code push deploys main plus that push. A rollback never promises automatic schema recovery.
 
-Only after the comparison/reversals succeed, switch checkout and tag, migrate any unapplied migrations belonging to
-the previous version, and start it:
+## Restore the database from R2
+
+A restore discards all changes made after the dump. Establish its source version using its UTC timestamp and the
+deployment history/private logs, including failed migrations. Never restore a dump from a version newer than the
+deployed one; deploy its version first. Keep the current database copy until health, sign-in and watchlists pass.
+
+Reuse an existing operations shell, or open one with the first command below. Export only the dedicated
+operations file for the rclone wrapper; keep deployment env files under Compose's parser. This uses the same
+pinned image and environment remote as the backup job:
 
 ```sh
-test -z "$(git status --porcelain)"
-git checkout --detach "$previous_commit"
-sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$previous_tag/" /opt/cinexplorer/prod.env
-chmod 600 /opt/cinexplorer/prod.env
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env config --quiet
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env pull
+flock /opt/cinexplorer/ops.lock env CINEXPLORER_OPS_LOCK=held bash
+cd /opt/cinexplorer/repo/infrastructure
+set -a
+. /opt/cinexplorer/ops.env
+set +a
+r2() {
+    docker run --rm --user "$(id -u):$(id -g)" \
+        --env RCLONE_CONFIG_R2_TYPE --env RCLONE_CONFIG_R2_PROVIDER \
+        --env RCLONE_CONFIG_R2_ACCESS_KEY_ID --env RCLONE_CONFIG_R2_SECRET_ACCESS_KEY \
+        --env RCLONE_CONFIG_R2_ENDPOINT --env RCLONE_CONFIG_R2_REGION \
+        --env RCLONE_CONFIG_R2_NO_CHECK_BUCKET \
+        --volume /opt/cinexplorer/backups:/data \
+        rclone/rclone:1.75.2 --config /dev/null "$@"
+}
+r2 lsf "r2:$R2_BUCKET/${R2_PREFIX%/}/"
+archive='cinexplorer-UTC_TIMESTAMP.dump'
+r2 copyto "r2:$R2_BUCKET/${R2_PREFIX%/}/$archive" "/data/$archive"
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db pg_restore --list < "/opt/cinexplorer/backups/$archive"
+```
+
+### Capture a recovery copy
+
+Stop on any failed command. Stop backend, copy the live database and verify that copy before emptying anything.
+Do not start the backup service for this copy: it waits for the lock already held by this shell.
+
+```sh
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env stop backend
+safety_copy="/opt/cinexplorer/backups/before-restore-$(date -u +%Y%m%dT%H%M%SZ).dump"
+umask 077
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c \
+    'exec pg_dump --format=custom --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"' > "$safety_copy"
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db pg_restore --list < "$safety_copy"
+```
+
+### Replace the schema and restore
+
+Empty the schema, then restore the chosen archive with a single restore transaction. Apply newer migrations and restart:
+
+```sh
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c \
+    'exec psql --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --set=ON_ERROR_STOP=1 --command="DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c \
+    'exec pg_restore --no-owner --single-transaction --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"' < "/opt/cinexplorer/backups/$archive"
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate --noinput
-docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait backend
 curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/
 ```
 
-Confirm sign-in and watchlist persistence again. Inspect web logs: the retained Caddy volume should supply the
-existing certificate, without a new certificate order. A failure stops the rollback; diagnose it before taking
-another step.
+Schema emptying is outside the restore transaction. If restore or migrations fail, keep backend stopped, empty
+`public` again using the same command, then restore the safety copy and migrate/start/check with the current image:
+
+```sh
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c \
+    'exec psql --username="$POSTGRES_USER" --dbname="$POSTGRES_DB" --set=ON_ERROR_STOP=1 --command="DROP SCHEMA public CASCADE; CREATE SCHEMA public;"'
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env exec -T db sh -c \
+    'exec pg_restore --no-owner --single-transaction --username="$POSTGRES_USER" --dbname="$POSTGRES_DB"' < "$safety_copy"
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env run --rm backend python manage.py migrate --noinput
+docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env up -d --wait backend
+curl --fail --silent --show-error https://staging.cinexplorer.andrewcreekmore.dev/api/health-check/
+```
+
+Verify the intended account and watchlist in the browser. Only after success, remove the safety copy and leave the
+locked shell. Rehearse this procedure against a separate local production stack and an R2 dump before relying on
+it. Keep that stack's project, ports, volumes and env files isolated, preserve the production memory limits, and
+check the host memory policy before starting it.
+
+```sh
+rm "$safety_copy"
+exit
+```
+
+## Nightly jobs and monitoring
+
+`cinexplorer-backup.timer` runs at **10:00 am UTC**, and `cinexplorer-maintenance.timer` at **10:30 am UTC**.
+Both are persistent, so a missed run is scheduled after boot. The oneshot services run as `deploy`, read
+`/opt/cinexplorer/ops.env` and wait up to 30 minutes for the same operations lock as deploys. The scripts and their
+inputs must exist. Keep `ops.env` owned by `deploy` at mode 600.
+
+Run these from an ordinary shell outside the operations lock:
+
+```sh
+systemctl list-timers cinexplorer-backup.timer cinexplorer-maintenance.timer
+sudo systemctl start cinexplorer-backup.service
+sudo systemctl start cinexplorer-maintenance.service
+sudo journalctl -u cinexplorer-backup.service -u cinexplorer-maintenance.service --since '2 days ago'
+```
+
+Backups are custom archives checked before upload, stored as `<prefix>/cinexplorer-<UTC timestamp>.dump` in the
+private bucket. Successful uploads remove the local dump; failures leave it in `/opt/cinexplorer/backups/` for
+inspection. Retention is the bucket's 30-day lifecycle rule. The env-only rclone remote follows the official
+[R2 configuration](https://rclone.org/s3/#cloudflare-r2); the Object Read & Write token needs `no_check_bucket`.
+
+Each job pings its own Healthchecks.io URL after success, or `/fail` with the failed step's last output lines and a
+non-zero exit on failure. A missed ping or failed run alerts the maintainer; UptimeRobot reports health failures
+and recovery separately. Test a backup against a nonexistent bucket, check its failure email, restore the real
+setting and confirm the next success. Record the first night's timer-originated pings for both checks. In an
+operations shell, test public health with backend stopped and then with db stopped, recovering the stack after
+each; confirm outage and recovery emails. Stop/check/start commands always select the production Compose inputs.
 
 ## Logs, restarts and persistent state
 
-Run these from `/opt/cinexplorer/repo/infrastructure`:
+Run Compose commands from `/opt/cinexplorer/repo/infrastructure`:
 
 ```sh
 docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env ps
@@ -373,27 +724,34 @@ docker compose -f docker-compose.prod.yml --env-file /opt/cinexplorer/prod.env l
 docker volume inspect cinexplorer-prod_db-data cinexplorer-prod_caddy-data cinexplorer-prod_caddy-config
 ```
 
-Postgres data lives in `cinexplorer-prod_db-data`; certificates and ACME account data live in
-`cinexplorer-prod_caddy-data`, with Caddy configuration in `cinexplorer-prod_caddy-config`. Redis is disposable cache
-with persistence disabled, so a restart clears throttle histories and cached data. Backend logs go to stdout;
-Docker retains three 10 MB log files per container. Services restart unless explicitly stopped.
+Postgres data lives in `cinexplorer-prod_db-data`; Caddy certificates/account state in `cinexplorer-prod_caddy-data`
+and its configuration in `cinexplorer-prod_caddy-config`. Redis is disposable cache with persistence disabled.
+Docker retains three 10 MB stdout/stderr log files per container. Services restart unless explicitly stopped.
+Database backups are stored in R2 by the [backup script](#back-up-the-database); its temporary archives and
+manual recovery copies use `/opt/cinexplorer/backups/`.
+Keep project/volume names stable. `down -v` deletes database and certificate state and is not a server maintenance
+command. Env files stay outside the checkout; deploy's repository and registry credentials stay in its home.
 
-Keep the project name and volumes stable across deploys. Do not run `down -v` on the server: it deletes database and
-certificate state. Take a [backup](#back-up-the-database) before any step that drops or recreates the database. Env
-files live under `/opt/cinexplorer`, outside the checkout; the repository deploy key and registry credentials live under
-`/home/deploy/.ssh` and `/home/deploy/.docker` respectively.
+Security updates may reboot the server at **9:00 am UTC**. Inspect `/var/log/unattended-upgrades/`,
+`systemctl list-timers apt-daily*` and `swapon --show`. Application images change through deployment. Public CI logs
+contain only deploy markers/outcomes; treat the server's full deployment/job logs and env files as private.
 
-Security updates install automatically. When a required update requests a reboot, unattended-upgrades schedules it
-for 09:00 UTC. Inspect `/var/log/unattended-upgrades/`, `systemctl list-timers apt-daily*` and `swapon --show` when
-checking host maintenance. Application images update only when you pull and recreate them.
+## Move to the production hostname
+
+Create the production `A` record for the same IPv4 address, with DNS-only proxying and no IPv6 record. In the
+operations shell, set `SITE_ADDRESS=cinexplorer.andrewcreekmore.dev` in `prod.env` and `ENVIRONMENT=production` in
+`backend.env`, then redeploy the chosen published commit with `cinexplorer-deploy`. It updates the Site record and
+Caddy's certificate configuration. Update UptimeRobot's URL to the production health endpoint. `DEPLOY_HOST` stays
+the same on this server; the Google/GitHub apps already accept both callbacks and the mail sender remains valid.
+Production sends a one-year Strict-Transport-Security header with `includeSubDomains` and `preload`. Use the
+production hostname in the browser and public curl checks after the move.
 
 ## Recover SSH access through DigitalOcean
 
-The Recovery Console works without the network or `sshd`, but it needs a password. Root has none on a droplet
-created with only an SSH key, and the bootstrap leaves root's local password alone, so start with a reset. On the
-droplet's **Settings** tab, use **Reset root password**: DigitalOcean emails a temporary password. Then, from the same
-tab, open **Recovery console → Launch Console**, sign in as `root` with the temporary password, and choose a new one
-when prompted. Store it in your password manager. SSH root login stays disabled. From the console, inspect:
+The Recovery Console bypasses the network and SSH but needs a local password. A key-only droplet starts without a
+root password, and bootstrap leaves it unchanged. On the droplet's **Settings**, choose **Reset root password**;
+DigitalOcean emails a temporary password. Open **Recovery console → Launch Console**, sign in as root and choose a
+new password when prompted. Store it in your password manager. Root SSH remains disabled. From the console:
 
 ```sh
 sshd -t
@@ -404,8 +762,8 @@ ls -ld /home/deploy/.ssh
 ls -l /home/deploy/.ssh/authorized_keys
 ```
 
-Correct the public key or file permissions there. For an SSH configuration change, run `sshd -t` before
-`systemctl reload ssh`. Keep the console open until a new key-authenticated `deploy` SSH session works.
+Correct keys/permissions there. Check `sshd -t` before reloading SSH and keep the console open until a new
+key-authenticated deploy session works.
 
 ## References
 

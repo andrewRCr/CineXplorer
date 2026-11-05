@@ -28,6 +28,7 @@ from django.http import HttpRequest, HttpResponse
 from ninja_jwt.exceptions import TokenError
 from ninja_jwt.tokens import RefreshToken
 
+from apps.authentication.adapters import EMAIL_DELIVERY_FAILURE_MESSAGE, EmailDeliveryError
 from apps.authentication.schemas import (
     EmailVerificationInputSchema,
     EmailVerificationResponseSchema,
@@ -48,6 +49,7 @@ from apps.authentication.utils import (
     get_jwt_settings,
     set_auth_cookie,
 )
+from apps.core.exceptions import UpstreamError
 from apps.core.services.email_service import UserEmailProtocol, send_welcome_email
 from apps.core.utils import build_error_response, get_client_info
 
@@ -194,14 +196,13 @@ class AuthenticationService:
     def _validate_resend_token(self, token: str) -> int | None:
         """Validate a resend token and return the user_id if valid.
 
-        Token is single-use: deleted from cache after successful validation.
+        Reading does not consume the token; a successful send does.
         Returns None if token is invalid, expired, or already used.
         """
         token_hash = hashlib.sha256(token.encode()).hexdigest()
         cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{token_hash}"
         user_id = cache.get(cache_key)
         if user_id is not None:
-            cache.delete(cache_key)  # Single-use: consume the token
             self._logger.debug(f"Validated resend token for user_id={user_id}")
         return user_id
 
@@ -642,7 +643,7 @@ class AuthenticationService:
         Token-based approach prevents user enumeration while enabling resend
         for all login methods (email or username).
         """
-        # Validate token and get user_id (token is consumed on validation)
+        # Read the token; keep it available until an email has been sent.
         user_id = self._validate_resend_token(payload.resend_token)
 
         # Generic response for invalid/expired token (don't leak validity)
@@ -650,6 +651,8 @@ class AuthenticationService:
             self._logger.debug("Resend verification: invalid or expired token")
             return 200, {"message": "Verification email sent successfully."}
 
+        token_hash = hashlib.sha256(payload.resend_token.encode()).hexdigest()
+        cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{token_hash}"
         try:
             user = self._user_model.objects.get(id=user_id)
 
@@ -681,8 +684,18 @@ class AuthenticationService:
                     f"Created EmailAddress and sent verification for user_id={user_id}"
                 )
 
+            cache.delete(cache_key)
             return 200, {"message": "Verification email sent successfully."}
 
+        except EmailDeliveryError:
+            self._logger.error(
+                "%s | endpoint=%s | user_id=%s",
+                EMAIL_DELIVERY_FAILURE_MESSAGE,
+                request.path,
+                user_id,
+            )
+            cache.set(cache_key, user_id, timeout=RESEND_TOKEN_EXPIRY_SECONDS)
+            raise UpstreamError(EMAIL_DELIVERY_FAILURE_MESSAGE, status_code=503) from None
         except self._user_model.DoesNotExist:
             # User deleted between token generation and resend (rare edge case)
             self._logger.warning(f"Resend verification: user_id={user_id} not found")

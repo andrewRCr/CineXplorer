@@ -94,26 +94,9 @@ class JWTCookieAuth(APIKeyCookie):
 
     def __init__(self) -> None:
         """Initialize the JWT cookie authentication scheme."""
-        # CSRF Architecture (django-ninja 1.5.x):
-        #
-        # - NinjaAPI(): No csrf parameter (removed in 1.5.0)
-        # - THIS AUTH CLASS: csrf=False (disables Ninja's cookie-auth CSRF)
-        # - CSRF protection: Custom CsrfHeaderMiddleware with path-based exemptions
-        #
-        # Why csrf=False here:
-        # Django Ninja auto-enables CSRF for APIKeyCookie subclasses by default.
-        # This conflicts with our custom middleware and causes bug #1464 symptoms
-        # (valid CSRF tokens rejected with "CSRF check Failed").
-        #
-        # By passing csrf=False to the parent APIKeyCookie class, we completely
-        # bypass Django Ninja's CSRF and rely on our custom CsrfHeaderMiddleware
-        # which provides header-based CSRF validation (X-CSRFToken) with
-        # path-based exemptions for public endpoints.
-        #
-        # CSRF protection IS ACTIVE via custom middleware - this just prevents
-        # Django Ninja from interfering with our validation strategy.
-        #
-        # See: https://github.com/vitalik/django-ninja/issues/1464
+        # CsrfProtectionMiddleware checks unsafe requests before authentication,
+        # including views Ninja marks exempt. Keep Ninja's cookie-auth check off
+        # so Django's middleware owns token and Origin/Referer validation.
         super().__init__(csrf=False)
 
         logger.debug(f"Initialized JWT cookie auth with cookie name: {self.param_name}")

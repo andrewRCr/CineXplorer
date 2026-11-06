@@ -55,7 +55,43 @@ afterEach(() => {
 });
 
 describe("resending from an unverified sign-in", () => {
-  it.each([503, 429, 500, 400, "network"] as const)(
+  it("asks to sign in again when the resend link has expired", async () => {
+    const expired =
+      "This resend link has expired. Sign in again to get a new one.";
+    server.use(
+      http.post(`${apiBaseUrl}/resend-verification/`, () =>
+        HttpResponse.json({ detail: expired }, { status: 400 }),
+      ),
+    );
+    const user = userEvent.setup();
+    render(
+      <>
+        <AuthContextProvider>
+          <Login />
+        </AuthContextProvider>
+        <Toaster />
+        <PriorityToaster />
+      </>,
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Username or Email Address" }),
+      "viewer",
+    );
+    await user.type(screen.getByLabelText("Password"), "testpass123");
+    await user.click(screen.getByRole("button", { name: "Login" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Resend verification" }),
+    );
+    expect(await screen.findByText(expired)).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Resend verification" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Verification email sent!"),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([503, 429, 500, "network"] as const)(
     "renders the failure toast for %s",
     async (outcome) => {
       server.use(

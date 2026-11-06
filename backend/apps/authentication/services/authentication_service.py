@@ -49,7 +49,7 @@ from apps.authentication.utils import (
     get_jwt_settings,
     set_auth_cookie,
 )
-from apps.core.exceptions import UpstreamError
+from apps.core.exceptions import InvalidInputError, UpstreamError
 from apps.core.services.email_service import UserEmailProtocol, send_welcome_email
 from apps.core.utils import build_error_response, get_client_info
 
@@ -122,6 +122,7 @@ class EmailConfirmationHMACProtocol(Protocol):
 # Resend token configuration
 RESEND_TOKEN_EXPIRY_SECONDS = 600  # 10 minutes
 RESEND_VERIFICATION_CACHE_PREFIX = "resend_verification_token:"
+RESEND_LINK_EXPIRED_MESSAGE = "This resend link has expired. Sign in again to get a new one."
 
 
 class AuthenticationService:
@@ -642,14 +643,18 @@ class AuthenticationService:
 
         Token-based approach prevents user enumeration while enabling resend
         for all login methods (email or username).
+
+        Raises:
+            InvalidInputError: The token is unknown, expired or already spent. It is random
+                and issued only after a correct password, so refusing it reveals nothing
+                about any account.
         """
         # Read the token; keep it available until an email has been sent.
         user_id = self._validate_resend_token(payload.resend_token)
 
-        # Generic response for invalid/expired token (don't leak validity)
         if user_id is None:
             self._logger.debug("Resend verification: invalid or expired token")
-            return 200, {"message": "Verification email sent successfully."}
+            raise InvalidInputError(RESEND_LINK_EXPIRED_MESSAGE)
 
         token_hash = hashlib.sha256(payload.resend_token.encode()).hexdigest()
         cache_key = f"{RESEND_VERIFICATION_CACHE_PREFIX}{token_hash}"

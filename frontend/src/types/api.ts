@@ -357,7 +357,8 @@ export interface paths {
          *         payload: Resend token issued after sign-in requires email verification
          *
          *     Returns:
-         *         Generic 200 confirmation, including invalid or expired tokens, or a 503 delivery failure.
+         *         Generic 200 confirmation, a 400 asking to sign in again when the token is unknown,
+         *         expired or spent, or a 503 delivery failure.
          */
         post: operations["apps_authentication_api_resend_verification"];
         delete?: never;

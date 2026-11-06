@@ -409,7 +409,7 @@ def test_login_attempts_do_not_consume_other_auth_limits(
         else {"resend_token": "x" * 32}
     )
     response = api_client.post(endpoint, payload, content_type="application/json")
-    assert response.status_code == (201 if endpoint == "/api/register/" else 200)
+    assert response.status_code == (201 if endpoint == "/api/register/" else 400)
 
 
 @pytest.mark.enable_throttling
@@ -434,7 +434,7 @@ def test_other_auth_attempts_do_not_consume_login_limit(
             else {"resend_token": "x" * 32}
         )
         response = api_client.post(endpoint, payload, content_type="application/json")
-        assert response.status_code == (201 if endpoint == "/api/register/" else 200)
+        assert response.status_code == (201 if endpoint == "/api/register/" else 400)
 
     for _ in range(5):
         response = api_client.post(

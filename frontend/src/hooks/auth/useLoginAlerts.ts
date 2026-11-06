@@ -73,6 +73,18 @@ export function useLoginAlerts() {
                     description: "Check your inbox for the verification link.",
                 });
             } catch (error: unknown) {
+                // The resend link has expired or was already used, and only signing in again
+                // issues a new one, so the alert gives up its resend action.
+                if (hasErrorStatus(error, 400)) {
+                    setAlert({
+                        type: "general",
+                        message:
+                            getErrorMessage(error) ||
+                            "This resend link has expired. Sign in again to get a new one.",
+                    });
+                    return;
+                }
+
                 logger.error("Resend verification error:", {
                     errorType: error instanceof Error ? error.name : "unknown",
                 });

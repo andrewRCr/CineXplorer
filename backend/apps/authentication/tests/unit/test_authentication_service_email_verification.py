@@ -10,12 +10,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from apps.authentication.services.authentication_service import RESEND_LINK_EXPIRED_MESSAGE
 from apps.authentication.tests.test_helpers import (
     create_email_verification_input,
     create_resend_verification_input,
     normalize_response_data,
 )
 from apps.authentication.tests.unit.types import AuthServiceDeps, AuthServiceFactory
+from apps.core.exceptions import InvalidInputError
 
 if TYPE_CHECKING:
     from apps.authentication.services.authentication_service import AuthenticationService
@@ -106,8 +108,9 @@ def test_verify_email_invalid_key_returns_error(
 # Resend Verification Tests (Token-Based)
 # =============================================================================
 
-# The resend flow uses opaque tokens instead of email addresses for security.
-# All paths return 200 to prevent user enumeration.
+# The resend flow uses opaque tokens, issued only after a correct password, instead of email
+# addresses. An unknown, expired or spent token is refused, which reveals nothing about any
+# account; every other outcome but a failed send returns the same 200.
 
 
 @contextmanager
@@ -134,20 +137,22 @@ def setup_user_for_resend(
     return mock_user
 
 
-def test_resend_invalid_token_returns_generic_success(
+def test_resend_unknown_token_asks_to_sign_in_again(
     auth_service_factory: AuthServiceFactory,
 ) -> None:
-    """Invalid/expired token returns 200 to prevent enumeration."""
-    service, _ = auth_service_factory()
+    """An unknown, expired or spent token is refused, and nothing is sent."""
+    service, deps = auth_service_factory()
     request = Mock()
     payload = create_resend_verification_input()
 
-    with mock_token_validation(service, return_user_id=None):
-        status, data = service.resend_verification(request, payload)
+    with (
+        mock_token_validation(service, return_user_id=None),
+        pytest.raises(InvalidInputError) as raised,
+    ):
+        service.resend_verification(request, payload)
 
-    assert status == 200
-    data_dict = normalize_response_data(data)
-    assert "Verification email sent" in str(data_dict["message"])
+    assert raised.value.detail == RESEND_LINK_EXPIRED_MESSAGE
+    deps.email_address_model.objects.get.assert_not_called()
 
 
 def test_resend_already_verified_returns_generic_success(
@@ -278,35 +283,3 @@ class TestResendTokenGeneration:
 
         assert result is None
         mock_cache.delete.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    ("token_user_id", "expected_email_sent"),
-    [
-        (None, False),  # Invalid token
-        (1, True),  # Valid token
-    ],
-    ids=["invalid_token", "valid_token"],
-)
-def test_resend_email_sent_only_for_valid_token(
-    auth_service_factory: AuthServiceFactory,
-    token_user_id: int | None,
-    expected_email_sent: bool,
-) -> None:
-    """Parametrized test: email only sent when token is valid."""
-    service, deps = auth_service_factory()
-    request = Mock()
-    payload = create_resend_verification_input()
-
-    if token_user_id is not None:
-        setup_user_for_resend(deps, user_id=token_user_id, is_verified=False)
-        email_address = Mock()
-        deps.email_address_model.objects.get.return_value = email_address
-
-    with mock_token_validation(service, return_user_id=token_user_id):
-        service.resend_verification(request, payload)
-
-    if expected_email_sent:
-        deps.email_address_model.objects.get.return_value.send_confirmation.assert_called_once()
-    else:
-        deps.email_address_model.objects.get.assert_not_called()

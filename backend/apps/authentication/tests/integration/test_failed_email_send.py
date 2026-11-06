@@ -14,7 +14,10 @@ from django.core.cache import cache
 from django.test import Client, override_settings
 from redis import Redis
 
-from apps.authentication.services.authentication_service import RESEND_VERIFICATION_CACHE_PREFIX
+from apps.authentication.services.authentication_service import (
+    RESEND_LINK_EXPIRED_MESSAGE,
+    RESEND_VERIFICATION_CACHE_PREFIX,
+)
 from apps.authentication.services.service_factory import get_authentication_service
 from apps.core.tests.email_transport import ERROR_RESPONSE_BODY, zeptomail_api_stand_in
 from apps.core.tests.test_helpers import create_user, get_csrf_token
@@ -141,8 +144,8 @@ def test_failed_resend_renews_lifetime_and_successful_retry_spends_token(
                 content_type="application/json",
                 HTTP_X_CSRFTOKEN=csrf,
             )
-        assert spent.status_code == 200
-        assert spent.json() == retried.json()
+        assert spent.status_code == 400
+        assert spent.json() == {"detail": RESEND_LINK_EXPIRED_MESSAGE}
         assert len(mailoutbox) == 1
     finally:
         cache.delete(cache_key)

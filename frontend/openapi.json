@@ -396,7 +396,7 @@
             }
           }
         },
-        "description": "Resend email verification using an opaque token from sign-in.\n\nArgs:\n    request: Django HTTP request\n    payload: Resend token issued after sign-in requires email verification\n\nReturns:\n    Generic 200 confirmation, including invalid or expired tokens, or a 503 delivery failure.",
+        "description": "Resend email verification using an opaque token from sign-in.\n\nArgs:\n    request: Django HTTP request\n    payload: Resend token issued after sign-in requires email verification\n\nReturns:\n    Generic 200 confirmation, a 400 asking to sign in again when the token is unknown,\n    expired or spent, or a 503 delivery failure.",
         "tags": [
           "Authentication"
         ],

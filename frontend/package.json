@@ -46,7 +46,7 @@
     "react-router-dom": "^7.6.3"
   },
   "devDependencies": {
-    "@chakra-ui/cli": "3.37.0",
+    "@chakra-ui/cli": "3.38.0",
     "@eslint/js": "^9.29.0",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.3",
@@ -84,5 +84,10 @@
     "@rollup/rollup-linux-x64-musl": "^4.66.0",
     "@rollup/rollup-win32-arm64-msvc": "^4.66.0",
     "@rollup/rollup-win32-x64-msvc": "^4.66.0"
+  },
+  "overrides": {
+    "@chakra-ui/cli": {
+      "zod": "^4.6.6"
+    }
   }
 }

@@ -15,6 +15,7 @@ import {
 } from "@/utilities/csrfTokenFetcher";
 import { useState, useEffect, useCallback } from "react";
 import logger from "@/services/logger";
+import { loginPathFor } from "@/utilities/returnPath";
 
 // Constants for OAuth timing UX
 const FAST_OAUTH_THRESHOLD = 3000; // 3 seconds
@@ -32,8 +33,11 @@ interface UseOAuthFlowReturn {
     provider: string | null;
     /** Whether minimum display time has elapsed (for navigation gating) */
     canNavigate: boolean;
-    /** Initialize OAuth flow with specified provider */
-    initializeOAuth: (provider: string) => Promise<void>;
+    /** Start a provider sign-in; `returnTo` is the page to come back to afterwards. */
+    initializeOAuth: (
+        provider: string,
+        returnTo?: string | null,
+    ) => Promise<void>;
     /** Set error state (for error handling in parent component) */
     setError: (error: string) => void;
     /** Clear loading state (called when auth resolution completes) */
@@ -155,7 +159,10 @@ export function useOAuthFlow(
      * Note: Uses HTML form submission (not fetch) so browser follows OAuth redirect.
      */
     const initializeOAuth = useCallback(
-        async (provider: string): Promise<void> => {
+        async (
+            provider: string,
+            returnTo: string | null = null,
+        ): Promise<void> => {
             try {
                 logger.debug(`[OAuth] Initializing ${provider} OAuth login`);
 
@@ -173,7 +180,8 @@ export function useOAuthFlow(
                 // Add form fields
                 const fields: Record<string, string> = {
                     provider: provider,
-                    callback_url: `${siteOrigin}/login`,
+                    // allauth returns to this URL as given, so `next` survives the provider round trip.
+                    callback_url: `${siteOrigin}${loginPathFor(returnTo)}`,
                     process: "login",
                     ...(csrfToken ? { csrfmiddlewaretoken: csrfToken } : {}),
                 };

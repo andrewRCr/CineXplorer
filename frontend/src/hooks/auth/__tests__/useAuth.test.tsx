@@ -5,7 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpResponse, http } from "msw";
 import { useAuth } from "../useAuth";
@@ -76,6 +76,205 @@ describe("initial authentication", () => {
     const { result } = mountAuth();
     await waitFor(() => expect(result.current.user).toEqual(profile));
     expect(result.current.isAuthenticated).toBe(true);
+  });
+});
+
+describe("sign-in status", () => {
+  const sessionUrl = `${siteOrigin}/_allauth/browser/v1/auth/session`;
+  const signedOutSession = () =>
+    HttpResponse.json({ status: 401 }, { status: 401 });
+  const providerSession = () =>
+    HttpResponse.json({
+      meta: { is_authenticated: true },
+      data: { user: profile },
+    });
+
+  function holdSession(respond: () => Response) {
+    const held = gate();
+    server.use(
+      http.get(sessionUrl, async () => {
+        await held.wait;
+        return respond();
+      }),
+    );
+    return held;
+  }
+
+  function mountRecordingStatus() {
+    const seen: string[] = [];
+    const view = renderHook(
+      () => {
+        const auth = useAuth();
+        seen.push(auth.status);
+        return auth;
+      },
+      { wrapper: MemoryRouter },
+    );
+    return { ...view, seen };
+  }
+
+  async function settle() {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+  }
+
+  it("starts authenticated with a current stored token", () => {
+    setAuthTokens(token());
+    const { result } = mountAuth();
+    expect(result.current.status).toBe("authenticated");
+  });
+
+  it("resolves while the session check is pending, then reads anonymous", async () => {
+    const held = holdSession(signedOutSession);
+    const { result } = mountAuth();
+    expect(result.current.status).toBe("resolving");
+    expect(result.current.isAuthenticated).toBe(false);
+    await settle();
+    expect(result.current.status).toBe("resolving");
+    held.release();
+    await waitFor(() => expect(result.current.status).toBe("anonymous"));
+  });
+
+  it("goes from resolving to authenticated for a provider session", async () => {
+    server.use(http.get(sessionUrl, providerSession));
+    const { result, seen } = mountRecordingStatus();
+    await waitFor(() => expect(result.current.status).toBe("authenticated"));
+    expect(seen[0]).toBe("resolving");
+    expect(seen).not.toContain("anonymous");
+  });
+
+  it("resolves an expired token through its refresh", async () => {
+    installWebLocks();
+    document.cookie = "csrftoken=django-csrf; path=/";
+    setAuthTokens(token(1));
+    server.use(
+      http.post(`${apiBaseUrl}/auth/refresh`, () =>
+        HttpResponse.json({ access_token: token() }),
+      ),
+    );
+    const { result, seen } = mountRecordingStatus();
+    await waitFor(() => expect(result.current.status).toBe("authenticated"));
+    expect(seen[0]).toBe("resolving");
+    expect(seen).not.toContain("anonymous");
+  });
+
+  it("reads anonymous when an expired token cannot be refreshed", async () => {
+    setAuthTokens(token(1));
+    const { result } = mountAuth();
+    expect(result.current.status).toBe("resolving");
+    await waitFor(() => expect(result.current.status).toBe("anonymous"));
+  });
+
+  it("ends anonymous when sign-out interrupts the session check", async () => {
+    const held = holdSession(providerSession);
+    server.use(http.delete(sessionUrl, signedOutSession));
+    const { result } = mountAuth();
+    await act(async () => {
+      await result.current.logout();
+    });
+    held.release();
+    await settle();
+    expect(result.current.status).toBe("anonymous");
+    expect(result.current.user).toBeNull();
+  });
+
+  it("keeps a password sign-in made during the session check", async () => {
+    const held = holdSession(signedOutSession);
+    server.use(
+      http.post(`${apiBaseUrl}/token/`, () =>
+        HttpResponse.json({
+          user_id: profile.id,
+          access_token: token(),
+          refresh_token: "refresh",
+          username: profile.username,
+        }),
+      ),
+    );
+    const { result } = mountAuth();
+    await act(async () => {
+      await result.current.login("viewer", "password");
+    });
+    held.release();
+    await settle();
+    expect(result.current.status).toBe("authenticated");
+  });
+
+  it.each(["profile", "logout"] as const)(
+    "reads anonymous after a signed-in session ends by %s",
+    async (ending) => {
+      setAuthTokens(token());
+      if (ending === "profile")
+        server.use(
+          http.get(`${apiBaseUrl}/profile/`, () =>
+            HttpResponse.json({ detail: "Not signed in" }, { status: 403 }),
+          ),
+        );
+      const { result } = mountAuth();
+      if (ending === "logout")
+        await act(async () => {
+          await result.current.logout();
+        });
+      await waitFor(() => expect(result.current.status).toBe("anonymous"));
+    },
+  );
+});
+
+describe("returning after a provider sign-in", () => {
+  const sessionUrl = `${siteOrigin}/_allauth/browser/v1/auth/session`;
+
+  function mountAt(entry: string) {
+    return renderHook(() => ({ auth: useAuth(), location: useLocation() }), {
+      wrapper: ({ children }) => (
+        <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>
+      ),
+    });
+  }
+
+  beforeEach(() => {
+    sessionStorage.setItem("oauth_in_progress", "google");
+  });
+
+  it("returns to the page the visitor asked for", async () => {
+    server.use(
+      http.get(sessionUrl, () =>
+        HttpResponse.json({
+          meta: { is_authenticated: true },
+          data: { user: profile },
+        }),
+      ),
+    );
+    const { result } = mountAt("/login?next=%2Fwatchlist%3Fsort%3Dadded");
+    await waitFor(() =>
+      expect(
+        `${result.current.location.pathname}${result.current.location.search}`,
+      ).toBe("/watchlist?sort=added"),
+    );
+  });
+
+  it("goes home when the requested page is unsafe", async () => {
+    server.use(
+      http.get(sessionUrl, () =>
+        HttpResponse.json({
+          meta: { is_authenticated: true },
+          data: { user: profile },
+        }),
+      ),
+    );
+    const { result } = mountAt("/login?next=%2F%2Fevil.example");
+    await waitFor(() => expect(result.current.location.pathname).toBe("/"));
+  });
+
+  it("keeps the requested page when the provider reports an error", async () => {
+    const { result } = mountAt("/login?next=%2Fwatchlist&error=oauth");
+    await waitFor(() =>
+      expect(result.current.location.state).toMatchObject({
+        oauthError: true,
+      }),
+    );
+    expect(
+      `${result.current.location.pathname}${result.current.location.search}`,
+    ).toBe("/login?next=%2Fwatchlist");
   });
 });
 
@@ -585,6 +784,7 @@ describe("obsolete renewal callers", () => {
       const { result } = mountAuth();
       let pending: Promise<unknown> | undefined;
       if (caller === "profile") {
+        await waitFor(() => expect(result.current.status).toBe("anonymous"));
         act(() => {
           pending = result.current.login("viewer", "password");
         });

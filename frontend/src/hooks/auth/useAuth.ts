@@ -31,10 +31,16 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import type {
     AuthStateProps,
+    AuthStatus,
     AuthResult,
     AuthError,
     LoginSuccessData,
 } from "@/types/auth-state";
+import {
+    loginPathFor,
+    returnPathFrom,
+    safeReturnPath,
+} from "@/utilities/returnPath";
 import {
     getAuthSessionVersion,
     invalidateAuthSession,
@@ -112,26 +118,28 @@ async function checkOAuthSession(): Promise<UserProfile | null> {
 }
 
 export function useAuth(): AuthStateProps {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const [status, setStatus] = useState<AuthStatus>(() => {
         // Hybrid auth: Instant authentication detection from localStorage/cookie
         // Priority: cookie → localStorage → sessionStorage (handled by getAuthTokens)
         const { access_token } = getAuthTokens();
         const isExpired = areTokensExpired();
         const hasAuthFlag = getInitialAuthenticatedValue();
+        const signedIn = access_token !== null && !isExpired && hasAuthFlag;
 
         logger.debug("[useAuth] Initial state calculation", {
             has_access_token: access_token !== null,
             is_expired: isExpired,
             has_auth_flag: hasAuthFlag,
-            result: access_token !== null && !isExpired && hasAuthFlag,
+            result: signedIn,
         });
 
-        // Three conditions must be met:
-        // 1. Access token exists (in cookie, localStorage, or sessionStorage)
-        // 2. Token is not expired (checked via JWT exp claim or localStorage timestamp)
-        // 3. isAuthenticated flag is set (fast boolean check without JWT parsing)
-        return access_token !== null && !isExpired && hasAuthFlag;
+        // A current stored token signs the user in at once: it exists (in cookie, localStorage, or
+        // sessionStorage), it is not expired, and the stored flag is set. Otherwise the mount check
+        // below decides, through a token refresh or the provider session, and until it does the
+        // status stays resolving rather than reading signed out.
+        return signedIn ? "authenticated" : "resolving";
     });
+    const isAuthenticated = status === "authenticated";
     const [user, setUser] = useState<UserProfile | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
@@ -154,7 +162,7 @@ export function useAuth(): AuthStateProps {
                     else if (storage === "cookie") setAuthTokens(access_token);
                     // The authentication-state effect owns profile loading.
                     if (sessionVersion === getAuthSessionVersion())
-                        setIsAuthenticated(true);
+                        setStatus("authenticated");
                 } catch (error) {
                     if (
                         isCancel(error) ||
@@ -163,7 +171,7 @@ export function useAuth(): AuthStateProps {
                         return;
                     clearAuthTokens();
                     setUser(null);
-                    setIsAuthenticated(false);
+                    setStatus("anonymous");
                 }
                 return;
             }
@@ -180,9 +188,10 @@ export function useAuth(): AuthStateProps {
                     "[useAuth] OAuth session detected, user authenticated",
                 );
                 setUser(oauthUser);
-                setIsAuthenticated(true);
+                setStatus("authenticated");
             } else {
                 logger.debug("[useAuth] No active session found");
+                setStatus("anonymous");
             }
         };
 
@@ -218,7 +227,7 @@ export function useAuth(): AuthStateProps {
                         return;
                     clearAuthTokens();
                     setUser(null);
-                    setIsAuthenticated(false);
+                    setStatus("anonymous");
                 }
             }
         };
@@ -257,13 +266,17 @@ export function useAuth(): AuthStateProps {
                 logger.error("OAuth authentication failed", {
                     error: oauthError,
                 });
-                void navigate(ROUTES.LOGIN, {
-                    state: {
-                        oauthError: true,
-                        message:
-                            "OAuth authentication failed. Please try again.",
+                // Keep the page the visitor asked for, so a retry still returns there.
+                void navigate(
+                    loginPathFor(safeReturnPath(params.get("next"))),
+                    {
+                        state: {
+                            oauthError: true,
+                            message:
+                                "OAuth authentication failed. Please try again.",
+                        },
                     },
-                });
+                );
                 return;
             }
 
@@ -313,7 +326,7 @@ export function useAuth(): AuthStateProps {
                         "[useAuth] OAuth callback - authenticated via session cookie",
                     );
                     setUser(oauthUser);
-                    setIsAuthenticated(true);
+                    setStatus("authenticated");
 
                     // Show welcome toast for OAuth login (priority position)
                     const displayName =
@@ -322,7 +335,7 @@ export function useAuth(): AuthStateProps {
                         title: `Welcome back, ${displayName}!`,
                     });
 
-                    void navigate(ROUTES.HOME);
+                    void navigate(returnPathFrom(location.search));
                     return;
                 } else {
                     logger.debug(
@@ -350,7 +363,7 @@ export function useAuth(): AuthStateProps {
         // Invalidate queued and in-flight renewal before clearing the session.
         invalidateAuthSession();
         // Clear local state and tokens
-        setIsAuthenticated(false);
+        setStatus("anonymous");
         setUser(null);
         clearAuthTokens();
         void navigate(ROUTES.LOGIN);
@@ -408,14 +421,14 @@ export function useAuth(): AuthStateProps {
             if (sessionVersion !== getAuthSessionVersion()) return undefined;
             setUser(userDetails);
             // Ensure isAuthenticated is true when user details are successfully fetched
-            setIsAuthenticated(true);
+            setStatus("authenticated");
             return undefined;
         } catch (error) {
             if (isCancel(error) || sessionVersion !== getAuthSessionVersion())
                 return error;
             logger.error("Error fetching user details", { error });
             setUser(null);
-            setIsAuthenticated(false);
+            setStatus("anonymous");
             clearAuthTokens();
             return error;
         }
@@ -452,7 +465,7 @@ export function useAuth(): AuthStateProps {
                 invalidateAuthSession();
                 clearAuthTokens();
                 setAuthTokens(accessToken, refreshToken, storage);
-                setIsAuthenticated(true);
+                setStatus("authenticated");
                 await getUserDetails();
 
                 // Return display name for component to use in success feedback
@@ -532,5 +545,5 @@ export function useAuth(): AuthStateProps {
         }
     };
 
-    return { login, isAuthenticated, logout, register, user };
+    return { login, status, isAuthenticated, logout, register, user };
 }

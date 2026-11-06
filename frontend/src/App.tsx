@@ -82,9 +82,12 @@ const App: React.FC = () => {
                   path={ROUTES.FEATURED}
                   element={<Navigate to={ROUTES.HOME} replace />}
                 />
-                <Route path={ROUTES.PROFILE} element={<Profile />} />
-                <Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
-                <Route path={ROUTES.SETTINGS} element={<Settings />} />
+                {/* Pages that need a signed-in user */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path={ROUTES.PROFILE} element={<Profile />} />
+                  <Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
+                  <Route path={ROUTES.SETTINGS} element={<Settings />} />
+                </Route>
 
                 {/* Browse routes - main layout (title in GridHeader) */}
                 <Route
@@ -146,14 +149,9 @@ const App: React.FC = () => {
               </Route>
 
               {TestLogin && (
-                <Route
-                  path={ROUTES.TEST_LOGIN}
-                  element={
-                    <ProtectedRoute>
-                      <TestLogin />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route element={<ProtectedRoute />}>
+                  <Route path={ROUTES.TEST_LOGIN} element={<TestLogin />} />
+                </Route>
               )}
             </Routes>
           </Suspense>

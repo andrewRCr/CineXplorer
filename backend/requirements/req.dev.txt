@@ -515,9 +515,9 @@ defusedxml==0.7.1 \
     --hash=sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69 \
     --hash=sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61
     # via py-serializable
-django==5.2.19 \
-    --hash=sha256:5965d974a5218a2b68a11dd1276434707f23886525c23f0598eccedaf4f4ca00 \
-    --hash=sha256:ad03d8abc51dbff95ebf34b27123cf0c26a3b62db7ba0cd520783686362533d1
+django==6.1.2 \
+    --hash=sha256:141efee6ec64d1db6db90683bf734c550102450f444fb099063b0be1bd27d991 \
+    --hash=sha256:a1e92451ccb8b514e91bbb3b6d186d20b4030558f116b5d9de6535455ff210b7
     # via
     #   -c req.txt
     #   -r req.in
@@ -546,9 +546,9 @@ django-coverage-plugin==3.2.2 \
     --hash=sha256:66c9bdb2756762d6bef3510548bb228e1e8465ff1cd2b372775b82624e85e0b4 \
     --hash=sha256:fcc507ee02f3a8f7c1d79b6eba1bafebb4a95b5055801987b715f4f88270c441
     # via -r req.dev.in
-django-debug-toolbar==5.2.0 \
-    --hash=sha256:15627f4c2836a9099d795e271e38e8cf5204ccd79d5dbcd748f8a6c284dcd195 \
-    --hash=sha256:9e7f0145e1a1b7d78fcc3b53798686170a5b472d9cf085d88121ff823e900821
+django-debug-toolbar==8.0.0 \
+    --hash=sha256:329dfd6e1c26d9b4501a5cc69294c8bb734206ccb1bd36e96afc4d14128b630a \
+    --hash=sha256:cae32d3e441e608f39f3f1ca6b3f028c38d5d04d74c98d8ab96d46022dee3163
     # via -r req.dev.in
 django-environ==0.12.1 \
     --hash=sha256:064ba2d5082f833e6d7fe4def4928bde1eedc0248a417575da7db147aeec1c20 \
@@ -556,9 +556,9 @@ django-environ==0.12.1 \
     # via
     #   -c req.txt
     #   -r req.in
-django-extensions==3.2.3 \
-    --hash=sha256:44d27919d04e23b3f40231c4ab7af4e61ce832ef46d610cc650d53e68328410a \
-    --hash=sha256:9600b7562f79a92cbf1fde6403c04fee314608fefbb595502e34383ae8203401
+django-extensions==4.1 \
+    --hash=sha256:0699a7af28f2523bf8db309a80278519362cd4b6e1fd0a8cd4bf063e1e023336 \
+    --hash=sha256:7b70a4d28e9b840f44694e3f7feb54f55d495f8b3fa6c5c0e5e12bcb2aa3cdeb
     # via -r req.dev.in
 django-ninja==1.7.3 \
     --hash=sha256:5e3c2dcead83a2512ea772dbc435ca51632cf46bf3be1523bac41e5bb394891c \
@@ -930,7 +930,9 @@ platformdirs==4.14.5 \
 pluggy==1.7.0 \
     --hash=sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec \
     --hash=sha256:d1eaa46ebb595891b860ab086b4d09c8588af65ebd4361b8e8f4bb8920b90ba8
-    # via pytest
+    # via
+    #   pytest
+    #   pytest-cov
 psycopg==3.2.13 \
     --hash=sha256:309adaeda61d44556046ec9a83a93f42bbe5310120b1995f3af49ab6d9f13c1d \
     --hash=sha256:a481374514f2da627157f767a9336705ebefe93ea7a0522a6cbacba165da179a
@@ -1135,9 +1137,9 @@ pytest==9.2.0 \
     #   pytest-cov
     #   pytest-django
     #   pytest-xdist
-pytest-cov==5.0.0 \
-    --hash=sha256:4f0764a1219df53214206bf1feea4633c3b558a2925c8b59f144f682861ce652 \
-    --hash=sha256:5837b58e9f6ebd335b0f8060eecce69b662415b16dc503883a02f45dfeb14857
+pytest-cov==7.1.0 \
+    --hash=sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2 \
+    --hash=sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678
     # via -r req.dev.in
 pytest-django==4.14.0 \
     --hash=sha256:26787dd3f422cfbab8f55b80a776e2edea7a11092cb74e960bef1312515708ef \
@@ -1163,9 +1165,9 @@ python-json-logger==4.2.0 \
     # via
     #   -c req.txt
     #   -r req.in
-redis==5.2.1 \
-    --hash=sha256:16f2e22dff21d5125e8481515e386711a34cbec50f0e44413dd7d9c060a54e0f \
-    --hash=sha256:ee7e1056b9aea0f04c6c2ed59452947f34c4940ee025f5dd83e6a6418b6989e4
+redis==8.1.0 \
+    --hash=sha256:6e1a19beef9225c83efd689c7e6b7da2d5215b1f42cd13b7fc3714d0a09c7b25 \
+    --hash=sha256:a4fe1aac3d3b3cc791d4b3d5931c5a956045dc951ee74d1c913ee3ac4d2ee9fb
     # via
     #   -c req.txt
     #   -r req.in

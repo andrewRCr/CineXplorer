@@ -109,7 +109,7 @@ const ConnectedDropdowns = ({
       !yearAnalysis.isInPresets &&
       !yearAnalysis.isSameYear;
 
-    let yearDisplayValue = "";
+    let yearDisplayValue: string;
     let isYearSpan = false;
 
     if (isRouteConstrained) {

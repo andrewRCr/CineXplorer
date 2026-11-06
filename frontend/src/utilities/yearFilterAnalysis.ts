@@ -65,9 +65,9 @@ export function analyzeYearFilter(
         minYear.endsWith("0");
 
     // Determine display value, label, and preset status
-    let displayValue = "";
-    let displayLabel = "";
-    let isInPresets = false;
+    let displayValue: string;
+    let displayLabel: string;
+    let isInPresets: boolean;
 
     if (isSingleValue) {
         const singleValue = minYear || maxYear;

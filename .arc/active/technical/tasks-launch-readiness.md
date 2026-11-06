@@ -440,10 +440,10 @@ authentication gaps that matter once sign-up is public are closed.
       `adversarial-review/verification-pass2/report.yaml` beside the session notes. The independent pass returned
       no findings; implementation code review separately returned no findings.
     - Full local backend/frontend tests, lint, format, types, markdown, API drift and production configuration
-      checks passed. Final PR CI `42125425864` passed at `8dfe73c4`, including `ci-ok`; staging runs source-equivalent
-      code `0ca2d5b5`. Earlier unchanged live observations remain applicable and attributed.
-    - Draft PR #78 awaits the approved publication/readiness transition. The post-merge criteria and 6.2 remain
-      open by design.
+      checks passed. Final PR CI `42125425864` passed at `8dfe73c4`, including `ci-ok`; staging then ran
+      source-equivalent code `0ca2d5b5`. Earlier unchanged live observations remain applicable and attributed.
+    - PR #78 merged as `c08b977c`, and its push run deployed that commit to staging (Proven after merge 1). The other
+      post-merge criteria are 6.2's.
 
     - [x] **6.1.a Repair the approved code-review findings** (F1–F3)
       Amended the installed-script and renewal-lifetime contracts, including cancellation before logout. Shared
@@ -946,9 +946,17 @@ what was seen and where.
 
 ### Proven after merge
 
-- [ ] The push of the merge commit to `main` runs the `deploy` job after `ci-ok` passes; the job log shows the deploy's
+- [x] The push of the merge commit to `main` runs the `deploy` job after `ci-ok` passes; the job log shows the deploy's
   steps and its success but not its full output, which is in a new file in `/opt/cinexplorer/deploy-logs/` on the
   server; `deploy-history.log` gains a `ci` line naming the merge commit; and the health check passes.
+
+    - Evidence: Push run 42133409648 at merge commit c08b977c: `Deploy staging` (needs `ci-ok`) ran after `ci-ok`
+      passed. Its log shows all six step markers and "Deploy succeeded (exit 0)" with the server log's path, not the
+      deploy's output. The new private log /opt/cinexplorer/deploy-logs/20261106T000425Z-c08b977.5fNEMZ (mode 600,
+      owner deploy) has the full output and ends with that outcome. `deploy-history.log` gained the `ci` line
+      `0ca2d5b5… sha-0ca2d5b → c08b977c… sha-c08b977` at 2026-11-06T00:05:09Z. Both running images and the checkout
+      identify c08b977c, and health returned healthy. Raw proof: publication-repairs/post-merge-criterion1.json and
+      its inputs beside the session notes.
 - [ ] A push to `main` that changes only `.arc/`, such as the commit recording the first criterion's evidence, starts no
   run of the CI workflow and one run of the `.arc/` lint workflow (R6), which passes; no image tagged with that commit
   is published, and `deploy-history.log` gains no line.

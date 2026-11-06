@@ -1,0 +1,12 @@
+{
+  "name": "cinexplorer-api-types",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "generate": "openapi-typescript ../../openapi.json -o ../../src/types/api.ts"
+  },
+  "dependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -4,9 +4,10 @@ from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from threading import Event, current_thread
 from typing import cast
+from uuid import uuid4
 
 import pytest
-from django.core.cache import caches
+from django.core.cache.backends.locmem import LocMemCache
 from django.http import HttpRequest
 from django.test import RequestFactory
 
@@ -26,8 +27,8 @@ def throttle_requests(
 ) -> Iterator[tuple[AnonThrottle | UserThrottle, HttpRequest, HttpRequest]]:
     throttle_class = cast(type[AnonThrottle] | type[UserThrottle], request.param)
     throttle = throttle_class("2/m")
-    # Use one real Redis backend across threads, including the controlled read boundary.
-    throttle.cache = caches["default"]
+    # Keep the cache private to this case and shared by both request threads.
+    throttle.cache = LocMemCache(f"throttle-{uuid4()}", {})
     first = RequestFactory().get("/", REMOTE_ADDR="192.0.2.1")
     second = RequestFactory().get("/", REMOTE_ADDR="192.0.2.2")
     for index, http_request in enumerate((first, second)):

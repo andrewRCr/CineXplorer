@@ -24,6 +24,10 @@ reviews:
   # No status message (such as "review skipped") on pull requests nobody asked to review
   review_status: false
 
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+
 # Knowledge base - organizational learning and coding standards
 knowledge_base:
   opt_out: false

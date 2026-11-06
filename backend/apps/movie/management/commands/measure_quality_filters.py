@@ -1,11 +1,14 @@
 """Measure how much of TMDB's results each data quality stage removes, as a Markdown table.
 
 Runs a fixed sample of browses against TMDB through the movie service, pausing between calls. The
-blacklist stage counts what the database's blacklist holds, so sync it first.
+blacklist stage counts what the database's blacklist holds, so sync it first. With the vote floor
+off, the browses that send TMDB a vote-count floor run without it, and the table counts what the
+floor keeps out.
 
 Usage:
     python manage.py measure_quality_filters
     python manage.py measure_quality_filters --requests 3 --output quality.md
+    python manage.py measure_quality_filters --query-vote-floor off
 """
 
 from __future__ import annotations
@@ -23,8 +26,10 @@ from apps.movie.models import BlacklistedMovie
 from apps.movie.services.data_quality.measurement import (
     DEFAULT_PAUSE_SECONDS,
     DEFAULT_REQUESTS,
+    SAMPLE,
     MeasurementMismatchError,
     RecordingTMDBClient,
+    browses_with_floor,
     measure_sample,
     render_table,
 )
@@ -50,6 +55,15 @@ class Command(BaseCommand):
             default=DEFAULT_PAUSE_SECONDS,
             help=f"Seconds to wait after each TMDB call (default: {DEFAULT_PAUSE_SECONDS})",
         )
+        parser.add_argument(
+            "--query-vote-floor",
+            choices=("on", "off"),
+            default="on",
+            help=(
+                "on (default) sends TMDB the vote-count floor as the app does; off leaves it to "
+                "the backend's vote stage and measures only the browses that have a floor"
+            ),
+        )
         parser.add_argument("--output", help="Write the table to this file instead of printing it")
 
     def handle(self, *args: object, **options: object) -> None:
@@ -59,9 +73,15 @@ class Command(BaseCommand):
 
         requests = int(str(options["requests"]))
         pause = float(str(options["pause"]))
-        client = RecordingTMDBClient(pause=lambda: time.sleep(pause))
+        query_vote_floor = options["query_vote_floor"] == "on"
+        sample = SAMPLE if query_vote_floor else browses_with_floor(SAMPLE)
+        client = RecordingTMDBClient(
+            pause=lambda: time.sleep(pause), query_vote_floor=query_vote_floor
+        )
         try:
-            tallies = measure_sample(MovieService(tmdb_client=client), client, requests=requests)
+            tallies = measure_sample(
+                MovieService(tmdb_client=client), client, sample, requests=requests
+            )
         except (HttpError, MeasurementMismatchError) as exc:
             raise CommandError(f"Measurement stopped: {exc}") from exc
 
@@ -70,6 +90,8 @@ class Command(BaseCommand):
             measured_on=datetime.now(UTC).date(),
             blacklist_rows=BlacklistedMovie.objects.count(),
             requests_per_browse=requests,
+            sample=sample,
+            query_vote_floor=query_vote_floor,
         )
         output = options["output"]
         if output is None:

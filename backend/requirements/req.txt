@@ -372,13 +372,13 @@ django-allauth==65.21.1 \
     --hash=sha256:128344e260a22b62796747be0a2249ad9488a509c1aa34ab35e3fcf22862dd9e \
     --hash=sha256:7bdf018c9f3f0a32c80677f84e7777272d9c833b180bd6734314c4831c802a9e
     # via -r req.in
-django-cors-headers==4.7.0 \
-    --hash=sha256:6fdf31bf9c6d6448ba09ef57157db2268d515d94fc5c89a0a1028e1fc03ee52b \
-    --hash=sha256:f1c125dcd58479fe7a67fe2499c16ee38b81b397463cf025f0e2c42937421070
+django-cors-headers==4.9.0 \
+    --hash=sha256:15c7f20727f90044dcee2216a9fd7303741a864865f0c3657e28b7056f61b449 \
+    --hash=sha256:fe5d7cb59fdc2c8c646ce84b727ac2bca8912a247e6e68e1fb507372178e59e8
     # via -r req.in
-django-environ==0.12.1 \
-    --hash=sha256:064ba2d5082f833e6d7fe4def4928bde1eedc0248a417575da7db147aeec1c20 \
-    --hash=sha256:22859c6e905ab7637fa3348d1787543bb4492f38d761104a3ce0519b7b752845
+django-environ==0.14.0 \
+    --hash=sha256:8dbe8a57f0a540ab8abd6f54f230de5e99e3a2c9d797cb9caecb037bca3d47d8 \
+    --hash=sha256:b6c48d93b9d2ff8a3ea14099e90c35aa4f101c1b4d5f262dfee0d27b06742ed7
     # via -r req.in
 django-ninja==1.7.3 \
     --hash=sha256:5e3c2dcead83a2512ea772dbc435ca51632cf46bf3be1523bac41e5bb394891c \
@@ -394,9 +394,9 @@ django-ninja-jwt==5.4.5 \
     --hash=sha256:25362551e26001f16f6dc483e92ce211a0764130ee058d397fdb119767e8454b \
     --hash=sha256:8985db1dedca901c2dc87a4406f451853453b9b225ecb779ca7611599f416899
     # via -r req.in
-django-types==0.22.0 \
-    --hash=sha256:4cecc9eee846e7ff2a398bec9dfe6543e76efb922a7a58c5d6064bcb0e6a3dc5 \
-    --hash=sha256:ba15c756c7a732e58afd0737e54489f1c5e6f1bd24132e9199c637b1f88b057c
+django-types==0.24.0 \
+    --hash=sha256:af903de8b9ee963b7594459a7a20cb8eaaab176ae2b3244ecaa089e0c570b0d1 \
+    --hash=sha256:ddb478ca733e0dde5475118dd59ab340156980f9659fd92de2083326ae96100a
     # via -r req.in
 django-zoho-zeptomail==0.0.4 \
     --hash=sha256:144f4eb24e48bea046132bac88ac59a0b472b04a437447079b1e66781424ba2d \

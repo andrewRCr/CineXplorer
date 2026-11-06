@@ -29,12 +29,20 @@ export interface LoginSuccessData {
     displayName: string;
 }
 
+/**
+ * Sign-in status: `resolving` while a sign-in check is in flight, so a signed-in user never
+ * renders as signed out, then `authenticated` or `anonymous`.
+ */
+export type AuthStatus = "resolving" | "authenticated" | "anonymous";
+
 export interface AuthStateProps {
     login: (
         username: string,
         password: string,
         rememberMe?: boolean,
     ) => Promise<AuthResult<LoginSuccessData>>;
+    status: AuthStatus;
+    /** True only when `status` is `authenticated`. */
     isAuthenticated: boolean;
     user: UserProfile | null;
     logout: () => Promise<void>;

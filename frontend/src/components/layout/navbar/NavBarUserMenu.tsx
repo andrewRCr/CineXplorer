@@ -42,7 +42,7 @@ const NavBarUserMenu = () => {
   // State & Context
   // ==========================================================================
 
-  const { isAuthenticated, logout, user } = useAuthContext() ?? {};
+  const { status, isAuthenticated, logout, user } = useAuthContext() ?? {};
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -162,6 +162,15 @@ const NavBarUserMenu = () => {
       position: getPosition(idx, items.length),
     }));
   }, [isMobile]);
+
+  // ==========================================================================
+  // Render: Sign-in Check Pending
+  // ==========================================================================
+
+  // Hold the Login button's space until the check settles, so a signed-in user never sees it.
+  if (status === "resolving") {
+    return <Box h="8" w="16" aria-hidden="true" />;
+  }
 
   // ==========================================================================
   // Render: Unauthenticated State

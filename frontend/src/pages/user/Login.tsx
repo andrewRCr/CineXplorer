@@ -27,6 +27,7 @@ import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { priorityToaster } from "@/components/core/chakra/toaster";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
+import { returnPathFrom, safeReturnPath } from "@/utilities/returnPath";
 import logger from "@/services/logger";
 
 // ============================================================================
@@ -121,7 +122,7 @@ const Login = () => {
         priorityToaster.success({
           title: `Welcome back, ${response.data.displayName}!`,
         });
-        void navigate(ROUTES.HOME);
+        void navigate(returnPathFrom(location.search));
       } else {
         priorityToaster.dismiss(toastId);
         handleLoginError(response.error);
@@ -297,12 +298,15 @@ const Login = () => {
       void navigate(location.pathname, { replace: true, state: {} });
     }
 
-    // OAuth error redirect
+    // OAuth error redirect (keeps `next`, so a retry still returns to the requested page)
     if (state.oauthError === true) {
       showGeneralError(
         message || "OAuth authentication failed. Please try again.",
       );
-      void navigate(location.pathname, { replace: true, state: {} });
+      void navigate(`${location.pathname}${location.search}`, {
+        replace: true,
+        state: {},
+      });
     }
   }, [location, navigate, showGeneralError, showRegistrationSuccess]);
 
@@ -325,17 +329,24 @@ const Login = () => {
     // 2. Not in active login process
     // 3. OAuth timing gate allows navigation (for fast OAuth UX)
     if (authContext?.isAuthenticated && !isLoggingIn && oauthCanNavigate) {
-      logger.debug("User already authenticated, redirecting to home");
-      void navigate(ROUTES.HOME, { replace: true });
+      logger.debug("User already authenticated, redirecting");
+      void navigate(returnPathFrom(location.search), { replace: true });
     }
-  }, [authContext?.isAuthenticated, navigate, isLoggingIn, oauthCanNavigate]);
+  }, [
+    authContext?.isAuthenticated,
+    navigate,
+    isLoggingIn,
+    oauthCanNavigate,
+    location.search,
+  ]);
 
   // ==========================================================================
   // OAuth Handlers
   // ==========================================================================
 
-  const handleGoogleLogin = () => initializeOAuth("google");
-  const handleGithubLogin = () => initializeOAuth("github");
+  const returnTo = safeReturnPath(searchParams.get("next"));
+  const handleGoogleLogin = () => initializeOAuth("google", returnTo);
+  const handleGithubLogin = () => initializeOAuth("github", returnTo);
 
   // ==========================================================================
   // Render: OAuth Loading State

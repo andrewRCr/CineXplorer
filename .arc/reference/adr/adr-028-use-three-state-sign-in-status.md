@@ -4,8 +4,8 @@
 
 Accepted (Owner, 2026-11-03)
 
-Implemented by: a frontend change planned right after the launch-readiness change merges, before the core feature
-screens are built.
+Implemented by: #104, which adds the status, the guarded layout route and the return to the requested page after
+sign-in.
 
 ## Context
 

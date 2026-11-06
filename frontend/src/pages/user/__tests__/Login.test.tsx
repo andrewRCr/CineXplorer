@@ -1,10 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw";
+import { render as renderWithoutRouter } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { act, render, screen } from "@tests/helpers/test-renderer";
-import { authHandlers, clearBrowserAuth } from "@tests/helpers/auth";
+import {
+  authHandlers,
+  clearBrowserAuth,
+  profile,
+  token,
+} from "@tests/helpers/auth";
+import { TestProviders } from "@tests/helpers/test-providers";
 import { server } from "@tests/mocks/server";
-import { apiBaseUrl } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
+import { setAuthTokens } from "@/utilities/tokenUtils";
 import AuthContextProvider from "@/components/auth/AuthContextProvider";
 import {
   PriorityToaster,
@@ -96,4 +105,92 @@ describe("resending from an unverified sign-in", () => {
       else expect(screen.queryByText("Server error")).not.toBeInTheDocument();
     },
   );
+});
+
+describe("returning to the requested page", () => {
+  function CurrentPage() {
+    const location = useLocation();
+    return (
+      <p>
+        Now at {location.pathname}
+        {location.search}
+      </p>
+    );
+  }
+
+  function renderLoginAt(entry: string) {
+    return renderWithoutRouter(
+      <TestProviders>
+        <MemoryRouter initialEntries={[entry]}>
+          <AuthContextProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="*" element={<CurrentPage />} />
+            </Routes>
+          </AuthContextProvider>
+        </MemoryRouter>
+        <Toaster />
+        <PriorityToaster />
+      </TestProviders>,
+    );
+  }
+
+  async function signInWithPassword() {
+    server.use(
+      http.post(`${apiBaseUrl}/token/`, () =>
+        HttpResponse.json({
+          user_id: profile.id,
+          access_token: token(),
+          refresh_token: "refresh",
+          username: profile.username,
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    await user.type(
+      await screen.findByRole("textbox", { name: "Username or Email Address" }),
+      "viewer",
+    );
+    await user.type(screen.getByLabelText("Password"), "testpass123");
+    await user.click(screen.getByRole("button", { name: "Login" }));
+  }
+
+  it("returns there after a password sign-in", async () => {
+    renderLoginAt("/login?next=%2Fwatchlist%3Fsort%3Dadded");
+    await signInWithPassword();
+    expect(
+      await screen.findByText("Now at /watchlist?sort=added"),
+    ).toBeVisible();
+  });
+
+  it("goes home after a password sign-in when the page is unsafe", async () => {
+    renderLoginAt("/login?next=%2F%2Fevil.example");
+    await signInWithPassword();
+    expect(await screen.findByText("Now at /")).toBeVisible();
+  });
+
+  it("sends a visitor who is already signed in straight there", async () => {
+    setAuthTokens(token());
+    renderLoginAt("/login?next=%2Fwatchlist");
+    expect(await screen.findByText("Now at /watchlist")).toBeVisible();
+  });
+
+  it("asks the provider to come back to sign-in with the page", async () => {
+    document.cookie = "csrftoken=django-csrf; path=/";
+    let submitted: FormData | undefined;
+    const submit = vi
+      .spyOn(HTMLFormElement.prototype, "submit")
+      .mockImplementation(function (this: HTMLFormElement) {
+        submitted = new FormData(this);
+        this.remove();
+      });
+    renderLoginAt("/login?next=%2Fwatchlist");
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Google" }));
+    await vi.waitFor(() => expect(submitted).toBeDefined());
+    expect(submitted?.get("callback_url")).toBe(
+      `${siteOrigin}/login?next=%2Fwatchlist`,
+    );
+    submit.mockRestore();
+  });
 });

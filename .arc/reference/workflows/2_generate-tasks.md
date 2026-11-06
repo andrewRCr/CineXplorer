@@ -154,6 +154,10 @@ For each parent task, define specific, actionable sub-tasks that:
   interaction change. No full-suite checkpoint tasks: the final phase is verification. See
   [Quality Gates Strategy](../strategies/arc/strategy-quality-gates.md)
 - **Incremental validation**: Structure tasks so progress can be verified at each step
+- **ADRs**: For each new or amended ADR the PRD's Design Decisions list, add a sub-task to the phase that implements
+  its decision: write it reading `Proposed` (or make the amendment), taking the next free number when it is written.
+  A new ADR's acceptance belongs to the verification phase
+  ([archive-completed.md § 1](supplemental/archive-completed.md#1-verify-the-work))
 - **No time estimates**: Task lists should NOT include time estimates (duration emojis, minute counts, etc.)
   Focus on clear scope and completion criteria instead
 

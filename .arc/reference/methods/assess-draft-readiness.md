@@ -1,7 +1,8 @@
 ---
 name: assess-draft-readiness
 description: Evaluate whether a planning draft is formalization-ready against one shared three-criterion bar.
-override-active: false
+override-active: true
+override-mode: extend
 ---
 
 <!--
@@ -24,7 +25,30 @@ assess-draft-readiness.override.
 
 ## assess-draft-readiness.override
 
-[No override configured]
+CineXplorer adaptation (`override-mode: extend`):
+
+- **Fire point:** the draft is the PRD. Run the method over the saved PRD among [1_create-prd.md][create-prd]'s
+  author checks, and over an amendment that settles a decision. A `needs-detail` gap is closed in the PRD; a
+  `needs-design` gap returns to discovery.
+- **Criterion 3** always clears: a PRD has no inbound buffer.
+- **Criterion 4, added: every settled decision carries an ADR disposition.** Each decision in the PRD's Design
+  Decisions records one, beside the decision or in one list there, against
+  [strategy-adr-methodology][adr-methodology] § When to Write an ADR. Either way, the section names each new or
+  amended ADR among what the work delivers. Where the bar and verdict say "all three", read "all four".
+
+An ADR disposition is one of four:
+
+- **A new ADR** the work unit will deliver.
+- **An amendment** to a named ADR.
+- **Covered by** a named ADR that records the decision: one the work unit delivers or amends, or a Proposed or
+  Accepted ADR already on `main` that records the decision unchanged.
+- **`none`**, naming the strategy's "Don't write an ADR for" category (a tactical choice, one obvious from code, or a
+  temporary one), or stating that the decision meets none of its five criteria.
+
+A missing disposition is a `needs-detail` gap. "Covered by" naming any other ADR is also a `needs-detail` gap: a
+number naming no ADR on `main` and none the work unit delivers, a Superseded or Deprecated ADR (or, for one superseded
+in part, its replaced part), or an ADR that is neither on `main` nor the work unit's own. Close it by citing a
+qualifying ADR or choosing another disposition.
 
 ## assess-draft-readiness.default
 
@@ -68,3 +92,5 @@ Return `{ ready, gaps }`.
 [draft-design]: ../workflows/1_create-prd.md
 [create-spec]: ../workflows/1_create-prd.md
 [resolve-planning-depth]: README.md#not-used-here
+[create-prd]: ../workflows/1_create-prd.md
+[adr-methodology]: ../strategies/arc/strategy-adr-methodology.md

@@ -22,8 +22,9 @@ ADRs serve as:
 3. [ADR Format and Structure](#adr-format-and-structure)
 4. [Naming Conventions](#naming-conventions)
 5. [ADR Lifecycle](#adr-lifecycle)
-6. [Template](#template)
-7. [Relationship to Strategy Documents](#relationship-to-strategy-documents)
+6. [Amending Accepted ADRs](#amending-accepted-adrs)
+7. [Template](#template)
+8. [Relationship to Strategy Documents](#relationship-to-strategy-documents)
 
 ---
 
@@ -36,7 +37,9 @@ along with its context and consequences.
 
 **Key Characteristics:**
 
-- **Immutable:** Once accepted, an ADR is never edited - new ADRs supersede old ones if decisions change
+- **Stable:** Once the change that accepts an ADR merges, its decision is final: corrections and amendments are
+  permitted, but the decision itself changes only through [supersession](#superseded). See
+  [Amending Accepted ADRs](#amending-accepted-adrs)
 - **Sequential:** Numbered sequentially (001, 002, 003...), numbers never reused
 - **Concise:** Typically 1-2 pages, focusing on decision and context, not implementation details
 - **Discoverable:** Stored in version control alongside code, easily searchable
@@ -107,18 +110,22 @@ Every ADR follows this five-section structure:
 
 ### 2. Status
 
-**Format:** Single line indicating current state
+**Format:** The section's first line states the current status. Later paragraphs may record how it was reached.
 
 **Valid States:**
 
-- `Proposed` - Decision under consideration, not yet implemented
-- `Accepted` - Decision approved and implemented (or ready to implement)
+- `Proposed` - Written but not yet accepted: in an unmerged change, or on `main` awaiting acceptance
+- `Accepted (YYYY-MM-DD)` - Set in the delivering change before it merges, dated the day of the flip
 - `Deprecated` - Decision no longer valid but not replaced
 - `Superseded by ADR-XXX` - Decision replaced by a new ADR
 - `Accepted; Superseded in part by ADR-XXX (part)` - Part of the decision, named in parentheses, replaced by a new
   ADR; the rest stands
 
-**Note:** Once status is `Accepted`, the ADR should never be edited except to change status.
+ADRs accepted before this format keep their Status lines as written, such as `Accepted (Owner, 2025-10-22)`. A
+legacy status that is neither accepted nor one of the states above, such as `Draft`, counts as `Proposed`.
+
+**Note:** The record locks when the change that sets `Accepted` merges. Corrections and amendments then follow
+specific rules — see [Amending Accepted ADRs](#amending-accepted-adrs).
 
 ### 3. Context
 
@@ -156,6 +163,23 @@ Document what becomes easier or harder as a result.
 
 **Example ADR** (see adr-001-use-tmdb-discover-endpoint.md for complete structure)
 
+### Reader independence
+
+An ADR's Context, Decision, and Consequences meet [spec-review][spec-review]'s reader-independence check: their
+meaning stands without planning history. Its Reference boundaries supply these three rules:
+
+- "Judge what supplies meaning, not tokens."
+- "ARC terms and artifact names are valid subject matter when their required meaning is established or defined
+  locally."
+- "The substantive thesis stands without tracking fields; they supply no missing design."
+
+These sentences come from spec-review; a change to them carries here. Status is the tracking slot. A new ADR meets
+the rule across its body. An edit to an existing ADR meets it over the changed footprint, including removals and
+affected surrounding obligations and definitions.
+
+Process narration doing the explaining goes, such as "surfaced during Task 5.2" or "ships with work unit X". The
+project's own domain vocabulary stays.
+
 ---
 
 ## Naming Conventions
@@ -178,6 +202,8 @@ Document what becomes easier or harder as a result.
 
 - Numbers are never reused, even if an ADR is deprecated
 - Numbers increment sequentially based on creation order
+- When two ADRs share a number, the one that landed first on `main` keeps it. Renumber the other to the next free
+  number and correct the records that cite it, a [correction](#amending-accepted-adrs) even after acceptance
 - Title should match (or abbreviate) the ADR's title section
 - Keep title portion under 50 characters if possible
 
@@ -187,25 +213,39 @@ Document what becomes easier or harder as a result.
 
 ### Proposed
 
-**When:** ADR drafted but decision not yet finalized
+**When:** Written with the implementation, in the change that completes the work. This timing holds even when
+planning recommends the ADR earlier.
+
+Until then the PRD carries the decision, its rationale, and its ADR disposition as binding design. Its Design
+Decisions record each disposition, beside its decision or in one list there, and list each new or amended ADR among
+what the work delivers ([1_create-prd.md](../../workflows/1_create-prd.md)). No ADR file exists during planning: an
+earlier recommendation is a disposition first. An errand has no PRD; one that writes or amends an ADR follows the
+same lifecycle within its pull request.
 
 **Process:**
 
-1. Create ADR file with Status: Proposed
-2. Commit to git
-3. Discuss and update based on feedback
-4. Update status to Accepted when finalized
+1. Write the ADR file reading `Proposed`.
+2. Edit it freely through implementation, verification, and review.
+3. Set `Accepted (YYYY-MM-DD)` in the delivering change before it merges.
+
+A Proposed ADR already on `main` stays editable until the change that accepts it, and locks when that change merges.
+A change that doesn't accept it may still edit it, or rename it while keeping its number. Nothing that reaches
+`main` may add an ADR reading `Proposed` or return one to `Proposed`.
 
 ### Accepted
 
-**When:** Decision finalized and ready for (or already) implemented
+**When:** The delivering change's work is complete, before it merges
+([archive-completed.md § 1](../../workflows/supplemental/archive-completed.md#1-verify-the-work)).
 
 **Process:**
 
-1. Update Status from Proposed to Accepted
-2. Ensure Context and Decision sections are complete
-3. Commit alongside implementation (or just before starting)
-4. ADR is now immutable - no further edits except status changes
+1. Set Status to `Accepted (YYYY-MM-DD)`, dated the day of the flip.
+2. Ensure Context, Decision, and Consequences are complete.
+3. Deliver the ADR with the implementation; the decision locks when that change merges. Until then it stays freely
+   editable, including after the status flip.
+
+When later work realizes an Accepted decision, note the realization timing in the ADR and append learnings as dated
+amendments. A decision that genuinely unfolds in separable phases may be split into one record per phase.
 
 ### Deprecated
 
@@ -238,6 +278,75 @@ Deprecated - TMDB added filtering support to list endpoints as of API v4 (2026-0
 
 ---
 
+## Amending Accepted ADRs
+
+An accepted ADR's **decision is final once the change that accepts it merges**: the Context, Decision, and original
+Consequences sections then represent the point-in-time record and should not be rewritten. However, strict "never
+touch the file" immutability creates practical friction (typos persist, broken links accumulate, implementation
+learnings have nowhere to go).
+
+This project uses a three-tier model that preserves the spirit of immutability while accommodating real-world needs:
+
+### Tier 1: Corrections — always permitted
+
+Fix without ceremony. No new ADR required.
+
+- Typos, grammar, and spelling errors
+- Broken links and updated file paths
+- Formatting fixes (markdown lint, whitespace)
+- Correcting factual errors in metadata (dates, names)
+- Renumbering an ADR whose number collides with another's, together with the records that cite it by number
+
+**Rule:** The fix must not change the meaning of any section. If you're unsure whether a rewording changes
+meaning, treat it as a Tier 2 amendment.
+
+### Tier 2: Amendments — append-only with annotation
+
+Add new information without altering what's already written. Amendments go in the Consequences section (or a
+dedicated Amendments section if multiple accumulate) using a dated annotation:
+
+```markdown
+**Amendment (YYYY-MM-DD):** In practice, the batch size limit (Consequence #3) has not been
+a concern — upstream API raised its limit to 500 in v4.1.
+```
+
+**What qualifies:**
+
+- Post-implementation learnings that add context to consequences
+- Clarifications prompted by questions from new team members
+- Noting that a predicted risk did or did not materialize
+- Cross-references to later ADRs or strategy documents
+
+**What doesn't qualify** (use supersession instead):
+
+- Changing the Decision section
+- Rewriting Context to present a different framing
+- Removing or contradicting original consequences
+
+**Commit note:** Mention the amendment in the commit message (e.g., "amend ADR-007 with production
+latency observations").
+
+### Tier 3: Supersession — new ADR
+
+When the decision itself changes, write a new ADR and update the original's status. This is the existing
+[Superseded](#superseded) lifecycle process. When only part of the decision changes, the original's status becomes
+`Accepted; Superseded in part by ADR-XXX (part)`, and the rest of its decision stands.
+
+### Choosing the right tier
+
+| Change                                      | Tier                                |
+| ------------------------------------------- | ----------------------------------- |
+| Fix a typo in the Decision section          | Correction                          |
+| Update a broken link to an external API doc | Correction                          |
+| Note that a predicted risk didn't happen    | Amendment                           |
+| Add a cross-reference to a new ADR          | Amendment                           |
+| Reword the Decision for clarity             | Amendment (must not change meaning) |
+| Change one part of the decision             | Supersession in part                |
+| Reverse or significantly alter the decision | Supersession                        |
+| Choose a different technology than decided  | Supersession                        |
+
+---
+
 ## Template
 
 Use this template when creating new ADRs. Copy from `.arc/reference/adr/adr-template.md`.
@@ -247,7 +356,15 @@ Use this template when creating new ADRs. Copy from `.arc/reference/adr/adr-temp
 
 ## Status
 
-[Proposed | Accepted | Deprecated | Superseded by ADR-XXX]
+Proposed
+
+<!-- Valid states:
+- Proposed: while the delivering change is unmerged.
+- Accepted (YYYY-MM-DD): set in that change before it merges, dated the day of the flip; the record locks at merge.
+- Deprecated: the decision is no longer valid and has no replacement.
+- Superseded by ADR-XXX: a new ADR replaces the decision.
+- Accepted; Superseded in part by ADR-XXX (part): a new ADR replaces the named part; the rest stands.
+-->
 
 ## Context
 
@@ -315,7 +432,7 @@ List both positive and negative consequences honestly.
 
 - Specific decisions made at a point in time
 - "What we chose for X situation"
-- Immutable once accepted
+- Final once the change that accepts them merges
 - Raw material that can inform strategies
 
 **Relationship:**
@@ -332,3 +449,5 @@ List both positive and negative consequences honestly.
 4. Strategy references specific ADRs as case studies
 
 ---
+
+[spec-review]: ../../methods/spec-review.md

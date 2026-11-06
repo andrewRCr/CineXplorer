@@ -2,7 +2,15 @@
 
 ## Status
 
-[Proposed | Accepted | Deprecated | Superseded by ADR-XXX]
+Proposed
+
+<!-- Valid states:
+- Proposed: while the delivering change is unmerged.
+- Accepted (YYYY-MM-DD): set in that change before it merges, dated the day of the flip; the record locks at merge.
+- Deprecated: the decision is no longer valid and has no replacement.
+- Superseded by ADR-XXX: a new ADR replaces the decision.
+- Accepted; Superseded in part by ADR-XXX (part): a new ADR replaces the named part; the rest stands.
+-->
 
 ## Context
 

@@ -70,6 +70,11 @@ or the Owner stops it. Record each pass in the task list's `## Review Log`.
 **Then:**
 
 - [ ] Implementation works in the development environment, including any criterion that must be proven live
+- [ ] Each ADR the work adds or amends is in the change, including every one the PRD lists. Each new ADR's body, and
+  each amendment's added text, stands without planning history
+  ([strategy-adr-methodology](../../strategies/arc/strategy-adr-methodology.md#reader-independence)). Each new ADR,
+  and any `Proposed` one the work accepts, is set to `Accepted (YYYY-MM-DD)`, dated the day of the flip; it stays
+  editable until the merge
 - [ ] Task list header `**Status:**` updated to `Complete`, and the PRD's `**Status:**` likewise (if a PRD exists)
 - [ ] The verification task is marked `[x]`, its note pointing to the criteria evidence
 
@@ -333,7 +338,11 @@ If review changes what was delivered, update the completion doc to the final sta
 
 ### 8) Merge Pull Request
 
-Once [monitor-pull-request.md](monitor-pull-request.md) establishes readiness, ask for explicit merge approval.
+Before asking to merge, check the change's ADRs: none it adds reads `Proposed`, none returns to `Proposed` or loses
+its Status section, and each new ADR's number is still free on `main`. If another ADR landed first with the same
+number, renumber this one, with the records that cite it. A fix makes a new head, which
+[monitor-pull-request.md](monitor-pull-request.md) watches again. Once monitoring establishes readiness for the head,
+ask for explicit merge approval.
 After approval, refresh the accepted head's evidence: `ci-ok` must be green and every review thread resolved:
 
 ```bash
@@ -438,7 +447,8 @@ Commits that change only `.arc/` may go to `main` directly, through the merge ga
 reaches `main` through a pull request. The `pre-push` hook (`.githooks/pre-push`) refuses a push to `main` whose new
 commits change any path outside `.arc/`. No CI runs before such a push lands, and a failure on `main` fails every open
 pull request's checks, so first run the checks for what the commit changed: markdown lint on changed `.arc/` markdown
-outside the archive, and the harness-hook tests if `.arc/reference/harness-hooks/` changed. Archiving from the main
+outside the archive, the harness-hook tests if `.arc/reference/harness-hooks/` changed, and § 8's ADR check if the
+commit adds or edits an ADR. Archiving from the main
 checkout lands archives one at a time, so two work units never claim the same sequence number.
 
 ---

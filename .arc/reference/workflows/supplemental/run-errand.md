@@ -98,8 +98,9 @@ After an authorized hosted request, retain its comment URL/time and exact head, 
 
 ### 5. Merge on approval
 
-When monitoring establishes readiness for the exact head, ask to merge. Refresh its evidence after approval;
-`ci-ok` must be green and every review thread resolved. On explicit approval:
+When monitoring establishes readiness for the exact head, ask to merge. An errand that adds or edits an ADR first
+passes [archive-completed.md § 8](archive-completed.md#8-merge-pull-request)'s ADR check. Refresh its evidence after
+approval; `ci-ok` must be green and every review thread resolved. On explicit approval:
 
 ```bash
 gh pr merge <number> --merge --match-head-commit <accepted-full-sha>  # never --admin

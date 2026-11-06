@@ -1,156 +1,172 @@
 # Roadmap: Order of Operations
 
-**Purpose:** Internal planning artifact documenting sequencing strategy for remaining work.
-Subject to change as we learn.
+**Purpose:** The order of the work remaining before launch, and what is in and out of launch scope. Subject to change
+as we learn.
 
-**Last Updated:** 2025-12-26
+**Last Updated:** 2026-11-06
 
 ---
 
-## Current Sequencing Strategy
+## Goal
 
-### Phase A: Technical Foundation
+CineXplorer public, live and finished: the launch scope below deployed at a public URL with a demo login, and the
+README matching what shipped. Scope may be cut, but what ships is finished.
 
-Small, well-scoped infrastructure work that enables better feature development.
+Work resumed on 2026-10-30 in five stages. Stages 0–3 are complete; Stage 4 builds the launch features and the layout
+overhaul.
 
-1. ~~**Toast Notification System**~~ ✅ **Complete** (2025-12-25)
-   - Archive: `reference/archive/2025-q4/technical/26_toast-notification-system/`
-   - Delivered: Chakra UI toaster with semantic tokens, auth/watchlist/error feedback
+---
 
-2. **E2E Testing Foundation**
-   - PRD: `technical/prd-e2e-testing-foundation.md`
-   - Rationale: Creates regression safety net for feature development
-   - Scope: Playwright setup, critical user flows (auth, browse, watchlist), mobile discovery (non-blocking)
+## Completed
 
-3. **Mobile Responsiveness Remediation** (scope TBD by discovery)
-   - Backlog: `technical/BACKLOG-TECHNICAL.md` (Testing & Quality section)
-   - Rationale: Address issues surfaced by E2E mobile discovery tier before they accumulate
-   - Scope: Fix discovered layout/touch/parity issues, promote mobile E2E to blocking
-   - Note: Sequencing flexible - can run immediately after E2E or interleave with Phase B
+### Stage 0: Reset ✅ (2026-10-30)
 
-4. **Celery Infrastructure**
-   - Plan: `technical/plan-backend-modernization.md` (Async section)
-   - Rationale: Async email avoids blocking user registration; demonstrates production patterns
-   - Scope: Celery worker setup, async email sending (ZeptoMail integration)
+The repository brought back to health: the toolchain on Node 26 and Python 3.13, CI reshaped around one required
+`ci-ok` check with SHA-pinned actions and a read-only token, secrets kept out of images and CI, and branch protection
+on `main`. Delivered as pull requests #10–#13 and repository settings; this stage has no archive.
 
-### Phase B: Feature Work
+### Stage 1: Process Port ✅ (2026-10-30 to 2026-10-31)
 
-One PRD per feature (includes both backend and frontend work together).
+The in-repository process brought up to date with the ARC framework's methods, then made safe for parallel sessions.
 
-5. **Movie Detail Page Polish**
-   - Backlog: `feature/BACKLOG-FEATURE.md`
-   - Rationale: Gateway to user actions, currently rough draft
-   - Scope: Layout refinement, user action controls integration
+- **Review and planning methods**
+    - Archive: `reference/archive/2026-q4/technical/01_process-port-review/`
+    - Delivered: planning audits, a size check and an independent review loop; completion split into verification and
+      code review
+- **Session and commit routine**
+    - Archive: `reference/archive/2026-q4/technical/02_process-port-routine/`
+    - Delivered: per-work-unit session notes, a capture inbox, one-concern errands with their own pull requests, and the
+      commit format
+- **Parallel sessions**
+    - Archive: `reference/archive/2026-q4/technical/03_parallel-sessions/`
+    - Delivered: sessions in git worktrees with a test-only backend stack each, and each check placed at the moment its
+      failure must be fixed
 
-6. **UserMovieData Feature UIs** (largest)
-   - Plan: `feature/plan-user-movie-data-features.md`
-   - Rationale: APIs complete, frontend needed; core user engagement features
-   - Scope: Ratings, reviews, library, liked movies, log modal, watchlist enhancements
-   - Note: TanStack Query expansion (optimistic updates) happens naturally here
+### Stage 2: First Change Through the Ported Process ✅ (2026-10-31)
 
-7. **Movie Lists/Collections**
-   - Plan: `feature/plan-user-movie-lists.md`
-   - Rationale: User organization beyond watchlist, curated system collections for discovery
-   - Scope: Backend models, CRUD APIs, list pages, 4 curated system collections, sidebar integration
-   - Note: Enables future recommendations via TMDB keyword overlap
+The salvaged score-badge work: its traffic-light colors (#21), then the low-vote badge.
 
-8. **Person Detail Pages**
-   - Backlog: `feature/BACKLOG-FEATURE.md`
-   - Rationale: Extends discovery, wiki-style interlinking
-   - Scope: Actor/crew profiles, filmography, TMDB integration
+- **Score badge below 10 votes**
+    - Archive: `reference/archive/2026-q4/technical/04_score-badge-low-votes/`
+    - Delivered: a neutral badge where fewer than 10 votes back the TMDB score, in place of a colored score
 
-9. **Featured Page Hero**
-   - Currently: Stub implementation
-   - Rationale: Landing page first impression; showcases featured/trending content
-   - Scope: Hero carousel or spotlight section, dynamic content from TMDB trending
-   - Note: Relatively small scope compared to other Phase B items
+### Stage 3: Deployment ✅ (2026-10-31 to 2026-11-05)
 
-10. **Recommendations System**
-    - Backlog: `feature/BACKLOG-FEATURE.md`
-    - Rationale: Core value proposition; needs user rating data to be effective
-    - Scope: Metadata-based recommendations, "For You" page
-    - Note: May benefit from Celery for computation
+Completes **Deployment Enablement**, item 13 of the previous roadmap, with the staging deploy and launch readiness
+below. The repository went public under the MIT license on 2026-11-03, with the README brought in line with what the
+app does today.
 
-### Phase C: Polish & Deploy
+- **Email library fix, upstream** (2026-10-31)
+    - Archive: `reference/archive/2026-q4/incidental/05_zoho-zeptomail-upstream-fix/`
+    - Delivered: the multipart email fix merged in `django-zoho-zeptomail` 0.0.4, and CineXplorer's workaround removed
+- **Staging deploy** (2026-11-03)
+    - Archive: `reference/archive/2026-q4/technical/06_staging-deploy/`
+    - Delivered: production images built and checked in CI, a Compose stack behind Caddy's automatic TLS on a public
+      staging host, and a runbook with a rehearsed deploy, rollback and roll-forward
+- **Browsable stack per worktree** (2026-11-04)
+    - Archive: `reference/archive/2026-q4/technical/07_worktree-stack/`
+    - Delivered: each worktree serves the full app on its own ports, with its own database and development data
+- **Launch readiness** (2026-11-05)
+    - Archive: `reference/archive/2026-q4/technical/08_launch-readiness/`
+    - Delivered: deploys from `main` after CI passes, nightly off-server database backups with a rehearsed restore,
+      scheduled cleanup, health checks with outage alerts, and sign-in by email, Google and GitHub live on staging,
+      with email verification and password reset
 
-11. **Mobile Responsiveness Pass** (if needed after #3)
-    - When: Feature-complete, before deployment
-    - Rationale: Final polish pass if issues remain after Mobile Remediation (#3)
-    - Scope: Any remaining mobile issues not caught by E2E discovery
-    - Note: May be unnecessary if Mobile Remediation (#3) is thorough; evaluate at that time
+### Earlier
 
-12. **Visual Design / UX Pass**
-    - When: Feature-complete
-    - Scope: Consistency audit, accessibility review, visual polish
-    - Note: Can overlap with Mobile Pass (related concerns)
+- **Toast Notification System** ✅ (2025-12-25)
+    - Archive: `reference/archive/2025-q4/technical/26_toast-notification-system/`
+    - Delivered: Chakra UI toaster with semantic tokens, auth/watchlist/error feedback
 
-13. **Deployment Enablement**
-    - Backlog: `technical/BACKLOG-TECHNICAL.md`
-    - Scope: Hosting strategy, secrets management, migration procedures, runbook
+---
+
+## Stage 4: Launch Features and the Layout Overhaul
+
+Started 2026-11-06.
+
+### 1. First: E2E Smoke Tier
+
+A few Playwright specs on the flows that exist today (sign-up and sign-in, browse, movie detail, watchlist) with an
+accessibility check, run in CI on every pull request and against staging after each deploy. Specs find elements by
+role and accessible name, so the overhaul doesn't break them, and every later work unit keeps them green.
+
+### 2. Then, in Two Tracks
+
+**Design track:**
+
+1. **Palette:** a CineXplorer Dark theme beside the four existing ones, settled before any layout work
+2. **Navigation shell:** one auth-aware navigation with no dead links or development routes, and an error boundary
+   inside the layout
+3. **Landing page,** then the **privacy and terms pages**
+
+**Data track:**
+
+- **User-movie data:** one consolidated layer for watchlist, watched, liked, rating and review, with the frontend's
+  server state on TanStack Query. Every user feature builds on it.
+
+### 3. After Those
+
+- **Movie detail redesign:** backdrop, one action bar, a cast rail and a responsive layout; cast and crew link to
+  their TMDB pages
+- **Core user-movie UIs:** watched, liked, rating and review controls on cards and the detail page, the Library, and
+  the watchlist as a poster grid. **Log** is their rating screen: one form for watched, the date, rating and review,
+  opened from cards, the detail page and the navigation's Log button
+- **Responsive and global finish:** a mobile pass, page titles, Open Graph tags, a favicon, the footer and an
+  accessibility spot-check
+- **Profile and Settings:** Profile made minimal, Settings removed
+- **Demo account,** so visitors can try the app without registering
+- **Launch:** production deployment, and the README and screenshots reconciled with what shipped, including a
+  data-quality section on what the app filters out of TMDB's results
 
 ---
 
 ## Dependency Analysis
 
 ```
-Toast System ─────────► All feature work (user feedback)
-E2E Testing ──────────► Mobile Remediation (discovery data)
-                        All subsequent work (safety net)
-Mobile Remediation ───► Mobile E2E becomes blocking
-Celery ───────────────► Recommendations (computation)
-                        Email (non-blocking registration)
-UserMovieData UIs ────► Recommendations (needs rating data)
-Movie Lists ──────────► Recommendations (TMDB keyword overlap)
+E2E smoke tier ─────────► every later work unit (each keeps it green)
+Palette ────────────────► all layout work
+Navigation shell ───────► landing page
+User-movie data ────────► core user-movie UIs and Log, movie detail redesign
 ```
 
 ---
 
-## Scoping Decisions
+## Scope
 
-### Included
+### In Launch Scope
 
-| Technology               | Rationale                                                   |
-|--------------------------|-------------------------------------------------------------|
-| Playwright E2E           | Regression protection, demonstrates testing expertise       |
-| Celery/Redis             | Real use case (async email), demonstrates async patterns    |
-| TanStack Query expansion | Happens naturally during UserMovieData (optimistic updates) |
+Everything in Stage 4 above.
 
-### Lower Priority (Fit During Relevant Work)
+### Not Committed
 
-| Technology            | Rationale                                                             | When                        |
-|-----------------------|-----------------------------------------------------------------------|-----------------------------|
-| Routing modernization | Portfolio consistency (Next.js App Router patterns), loader functions | Phase B if touching routing |
+Each goes back in, in this order, as progress shows room:
 
-### Skipped
+1. Similar movies on the detail page
+2. Person pages (until then, cast and crew link to TMDB)
+3. Password feedback on the sign-up form
+4. Search-page filters
+5. Error reporting
+6. Two more palettes: Gruvbox and Rouge
 
-| Technology    | Rationale                                              |
-|---------------|--------------------------------------------------------|
-| Redux Toolkit | No genuine use case currently; would be resume-padding |
-| DI Framework  | Evaluate when mock paths exceed 20+ constants          |
+### Cut
 
-### Not Blocking Deployment
-
-| Item                     | Status                                    |
-|--------------------------|-------------------------------------------|
-| Observability/monitoring | Nice-to-have, not required for MVP deploy |
-| Security hygiene docs    | Can document post-deploy                  |
-| Portfolio storytelling   | Post-deploy activity                      |
-
----
-
-## Open Questions
-
-- **Search Results Filtering**: Backend supports it, frontend doesn't expose it. Include in Phase B or defer?
-
-**Resolved:**
-
-- ~~Featured Page Hero~~: Added as Phase B item #8 (relatively small scope).
-- ~~Atomic Tasks~~: Interleave with phases. They bubble up naturally or get bundled when touching related domains.
+- Recommendations
+- Celery (its one use was async email)
+- Movie lists and collections
+- Journal, Favorites, drag-and-drop ordering and Next Up
+- The full E2E testing foundation (replaced by the smoke tier)
+- Routing modernization (already on React Router 7, working)
+- Observability beyond logs, health checks and outage alerts
+- A performance program
+- Backend refactors such as a DI framework
+- Global search expansion
 
 ---
 
 ## Change Log
 
+- **2026-11-06**: Rewritten at Stage 4's start: Stages 0–3 marked complete with their archives, Deployment Enablement
+  (item 13) with them; Stage 4's order and the launch scope replace Phases A–C
 - **2025-12-26**: Added Mobile Responsiveness Remediation (#3) as E2E follow-up; renumbered subsequent items;
   updated Mobile Pass (#11) to be conditional on remediation completeness
 - **2025-12-26**: Updated E2E Testing Foundation (#2) with PRD reference and mobile discovery scope

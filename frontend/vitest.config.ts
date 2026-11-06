@@ -1,12 +1,10 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
-import { resolve } from "path";
 import { createRequire } from "node:module";
 
 export default defineConfig({
-    plugins: [react(), tsconfigPaths()],
+    plugins: [react()],
     test: {
         // Environment configuration
         environment: "jsdom",
@@ -60,6 +58,7 @@ export default defineConfig({
     },
 
     resolve: {
+        tsconfigPaths: true,
         alias: {
             // React and user-event must share DOM's configured event and async wrappers.
             "@testing-library/dom": createRequire(import.meta.url).resolve(
@@ -67,9 +66,6 @@ export default defineConfig({
             ),
             // Only the MSW server entry needs Node exports; app imports keep browser conditions.
             "msw/node": createRequire(import.meta.url).resolve("msw/node"),
-            "@": resolve(__dirname, "./src"),
-            "@shared": resolve(__dirname, "../shared"),
-            "@tests": resolve(__dirname, "./tests"),
         },
         conditions: ["import", "module", "browser", "default"],
         mainFields: ["browser", "module", "main"],

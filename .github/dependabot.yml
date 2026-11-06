@@ -17,7 +17,9 @@ updates:
       include: scope
 
   - package-ecosystem: npm
-    directory: /frontend
+    directories:
+      - /frontend
+      - /frontend/tools/api-types
     schedule:
       interval: monthly
     cooldown:

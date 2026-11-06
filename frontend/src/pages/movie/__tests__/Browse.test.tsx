@@ -9,7 +9,13 @@ import {
   type InitialEntry,
 } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { createMockMovieListItems } from "@tests/mocks/movieData";
 import { server } from "@tests/mocks/server";
@@ -39,12 +45,7 @@ const renderBrowse = (entry: InitialEntry) =>
           <Routes>
             <Route
               path="/browse"
-              element={
-                <MovieCollectionLayout
-                  showBrowseControls
-                  renderPageHeader={false}
-                />
-              }
+              element={<MovieCollectionLayout renderPageHeader={false} />}
             >
               <Route index element={<Browse />} />
             </Route>
@@ -82,7 +83,7 @@ describe("Browse", () => {
     const visit = renderBrowse("/browse");
     expect(await screen.findByText("20 results")).toBeInTheDocument();
     setScrollY(position);
-    window.dispatchEvent(new Event("scroll"));
+    fireEvent.scroll(window);
     await waitFor(() =>
       expect(storedScrollEntries()).toContain(`"position":${position}`),
     );
@@ -140,16 +141,32 @@ describe("Browse", () => {
     await scrollDownResults(1500);
     const finishLoading = holdResults();
 
+    // Hold animation frames so leaving always precedes the delayed restore.
+    const frames = new Map<number, FrameRequestCallback>();
+    let frameId = 0;
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
+      frames.set(++frameId, callback);
+      return frameId;
+    });
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
+      frames.delete(id);
+    });
+
     const backVisit = renderBrowse({
       pathname: "/browse",
       state: { restoreScroll: true },
     });
     finishLoading();
     expect(await screen.findByText("20 results")).toBeInTheDocument();
+    expect(scrollTargets()).toContain(1500);
+    expect(frames.size).toBeGreaterThan(0);
     backVisit.unmount();
     const scrollsBeforeLeaving = scrollTargets().length;
 
-    // The restore's second scroll would come after a frame and 50 ms
+    // Release the queued frames after leaving, then wait past the 50 ms restore.
+    const pendingFrames = [...frames.values()];
+    frames.clear();
+    act(() => pendingFrames.forEach((callback) => callback(performance.now())));
     await new Promise((resolve) => setTimeout(resolve, 150));
     expect(scrollTargets().slice(scrollsBeforeLeaving)).toEqual([]);
   });

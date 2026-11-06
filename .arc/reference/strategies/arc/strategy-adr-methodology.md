@@ -121,7 +121,8 @@ Every ADR follows this five-section structure:
 - `Accepted; Superseded in part by ADR-XXX (part)` - Part of the decision, named in parentheses, replaced by a new
   ADR; the rest stands
 
-ADRs accepted before this format keep their Status lines as written, such as `Accepted (Owner, 2025-10-22)`.
+ADRs accepted before this format keep their Status lines as written, such as `Accepted (Owner, 2025-10-22)`. A
+legacy status that is neither accepted nor one of the states above, such as `Draft`, counts as `Proposed`.
 
 **Note:** The record locks when the change that sets `Accepted` merges. Corrections and amendments then follow
 specific rules — see [Amending Accepted ADRs](#amending-accepted-adrs).

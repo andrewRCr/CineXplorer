@@ -115,7 +115,8 @@ Before deciding to keep notes, check if content is already captured elsewhere:
 
 1. Is this content already in an ADR or strategy doc? → Delete notes file
 2. SHOULD this content be in an ADR or strategy doc? → If yes, it's probably important enough to preserve
-   (consider extraction during archival)
+   (consider extraction during archival). An ADR the work turns out to need goes to the Owner first, joins the PRD's
+   ADR dispositions, and is accepted with the work
 3. Not important enough for ADR/strategy? → Probably not worth preserving unless unique research/investigation value
 
 **If deleting notes file:**

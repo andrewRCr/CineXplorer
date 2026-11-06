@@ -33,8 +33,8 @@ CineXplorer adaptation (`override-mode: extend`):
 - **Criterion 3** always clears: a PRD has no inbound buffer.
 - **Criterion 4, added: every settled decision carries an ADR disposition.** Each decision in the PRD's Design
   Decisions records one, beside the decision or in one list there, against
-  [strategy-adr-methodology][adr-methodology] § When to Write an ADR. That list names each new or amended ADR among
-  what the work delivers. Where the bar and verdict say "all three", read "all four".
+  [strategy-adr-methodology][adr-methodology] § When to Write an ADR. Either way, the section names each new or
+  amended ADR among what the work delivers. Where the bar and verdict say "all three", read "all four".
 
 An ADR disposition is one of four:
 

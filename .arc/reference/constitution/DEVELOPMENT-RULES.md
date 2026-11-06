@@ -433,7 +433,8 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
   tests, or durable documentation outside `.arc/` (READMEs, docs, config comments). This covers comments,
   docstrings, identifiers, test names and prose. A citation that justifies code by appeal to a process artifact ("per
   the test-first method", "implements the PRD") couples the code to a document with its own schedule: say what the
-  code does instead, and put process rationale in the PRD, task list, ADR or the commit's `Context:` footer.
+  code does instead, and put process rationale in the PRD, task list, an ADR's Status section or the commit's
+  `Context:` footer.
   Substantive references (test names describing behavior, comments on non-obvious invariants) stay.
 
   Exception: `scripts/worktree.mjs` may name `.arc/reference/harness-hooks/seed-session-notes.mjs` and
@@ -492,7 +493,7 @@ understanding system constraints.
 A PRD gives each decision it settles an ADR disposition and lists the ADRs its work delivers. An ADR is written
 reading `Proposed` with that work and set to `Accepted (YYYY-MM-DD)` before the work merges. Once that change merges,
 the decision is final: corrections and dated amendments are permitted, and a new decision requires a new ADR that
-supersedes the old one.
+supersedes the old one. ADR bodies stand without planning history; Status carries any tracking.
 
 ## Reference Documentation
 

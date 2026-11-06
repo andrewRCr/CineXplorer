@@ -256,8 +256,8 @@ The generated feature PRD should include the following sections:
    was chosen over, and why. Interfaces, invariants, failure cases and preconditions belong here or in the
    requirements, not left for task generation. Each decision carries its ADR disposition (a new ADR, an amendment, an
    ADR that covers it, or `none` with its reason; [assess-draft-readiness](../methods/assess-draft-readiness.md)'s
-   override defines them), beside it or in one list at the section's end. That list names each new or amended ADR the
-   work delivers. The ADR files themselves are written with the implementation
+   override defines them), beside it or in one list at the section's end. Either way, the section names each new or
+   amended ADR the work delivers. The ADR files themselves are written with the implementation
    ([strategy-adr-methodology](../strategies/arc/strategy-adr-methodology.md#adr-lifecycle)).
 8. **Success Criteria:** Observable conditions that show the goals are met, fixed now and checked independently at
    completion. At least one is a runnable check that fails if the main goal is missed. Separate "implemented" from

@@ -130,8 +130,9 @@ See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md
 Run [planning-review](../methods/planning-review.md) with `artifact: spec`:
 
 1. **Author checks.** [assess-design-proportionality](../methods/assess-design-proportionality.md) over the saved
-   PRD; continue only on `proportionate`. Then [spec-review](../methods/spec-review.md) over the whole PRD, including
-   its reader-independence and binding-completeness checks.
+   PRD; continue only on `proportionate`. Then [assess-draft-readiness](../methods/assess-draft-readiness.md), whose
+   override adds the ADR-disposition criterion, and [spec-review](../methods/spec-review.md) over the whole PRD,
+   including its reader-independence and binding-completeness checks.
 2. **Size.** [assess-boundary-fit](../methods/assess-boundary-fit.md) with its size marks. Past a mark, the boundary
    decision goes to the Owner with the cut the design's own seams suggest.
 3. **Independent review loop.** Recommend it; the Owner decides. Each pass is a fresh
@@ -155,8 +156,9 @@ offering.
 A design question that surfaces during task generation or implementation stops the work. Settle it with the Owner,
 amend the PRD, and add a dated line to an `## Amendments` section saying what changed and why. Review the amendment
 with planning-review's `amendment` artifact: omit the independent pass for a wording-level change, offer it for a
-contained one, recommend it when the design changes. A success criterion is never reworded to match the work: mark
-the old one `[~]` with a note naming the amendment and append its replacement.
+contained one, recommend it when the design changes. A decision the amendment settles gets its ADR disposition, and
+assess-draft-readiness runs over the amendment. A success criterion is never reworded to match the work: mark the old
+one `[~]` with a note naming the amendment and append its replacement.
 
 Then carry the amendment into the task list: update the tasks it affects (adding or `[~]`-marking tasks as needed),
 and apply the same `[~]`-and-append change to the task list's copy of any changed criterion, since that copy is the
@@ -252,7 +254,11 @@ The generated feature PRD should include the following sections:
    relevant components/styles if applicable.
 7. **Design Decisions:** Every settled decision that shapes implementation: the choice, the credible alternative it
    was chosen over, and why. Interfaces, invariants, failure cases and preconditions belong here or in the
-   requirements, not left for task generation.
+   requirements, not left for task generation. Each decision carries its ADR disposition (a new ADR, an amendment, an
+   ADR that covers it, or `none` with its reason; [assess-draft-readiness](../methods/assess-draft-readiness.md)'s
+   override defines them), beside it or in one list at the section's end. That list names each new or amended ADR the
+   work delivers. The ADR files themselves are written with the implementation
+   ([strategy-adr-methodology](../strategies/arc/strategy-adr-methodology.md#adr-lifecycle)).
 8. **Success Criteria:** Observable conditions that show the goals are met, fixed now and checked independently at
    completion. At least one is a runnable check that fails if the main goal is missed. Separate "implemented" from
    "proven live" where deployment matters. Never "all quality gates pass" or a test count: those are gates, not

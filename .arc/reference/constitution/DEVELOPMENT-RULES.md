@@ -1,6 +1,6 @@
 # Development Rules - CineXplorer
 
-**Version:** 2.19 | **Updated:** 2026-11-04 | **Hash:** `vutedqdf`
+**Version:** 2.19 | **Updated:** 2026-11-04 | **Hash:** `mu2mzw1y`
 
 Core development rules and quality standards for CineXplorer. These rules are **non-negotiable** and must be followed
 by all contributors, including AI assistants.
@@ -489,7 +489,10 @@ understanding system constraints.
 **Format and guidance:** See [ADR Methodology Strategy](../strategies/arc/strategy-adr-methodology.md)
 **Template:** See `.arc/reference/adr/adr-template.md`
 
-ADRs are immutable once accepted - new decisions require new ADRs that supersede old ones.
+A PRD gives each decision it settles an ADR disposition and lists the ADRs its work delivers. An ADR is written
+reading `Proposed` with that work and set to `Accepted (YYYY-MM-DD)` before the work merges. Once that change merges,
+the decision is final: corrections and dated amendments are permitted, and a new decision requires a new ADR that
+supersedes the old one.
 
 ## Reference Documentation
 

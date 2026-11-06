@@ -70,6 +70,9 @@ or the Owner stops it. Record each pass in the task list's `## Review Log`.
 **Then:**
 
 - [ ] Implementation works in the development environment, including any criterion that must be proven live
+- [ ] Each new or amended ADR the PRD lists is in the change, its body complete and standing without planning history
+  ([strategy-adr-methodology](../../strategies/arc/strategy-adr-methodology.md#reader-independence)); each ADR the
+  work writes is set to `Accepted (YYYY-MM-DD)`, dated the day of the flip. It stays editable until the merge
 - [ ] Task list header `**Status:**` updated to `Complete`, and the PRD's `**Status:**` likewise (if a PRD exists)
 - [ ] The verification task is marked `[x]`, its note pointing to the criteria evidence
 
@@ -333,7 +336,10 @@ If review changes what was delivered, update the completion doc to the final sta
 
 ### 8) Merge Pull Request
 
-Once [monitor-pull-request.md](monitor-pull-request.md) establishes readiness, ask for explicit merge approval.
+Once [monitor-pull-request.md](monitor-pull-request.md) establishes readiness, check the change's ADRs: none it adds
+reads `Proposed`, none returns to `Proposed` or loses its Status section, and each new ADR's number is still free on
+`main`. If another ADR landed first with the same number, renumber this one, with the records that cite it, before
+the merge. Then ask for explicit merge approval.
 After approval, refresh the accepted head's evidence: `ci-ok` must be green and every review thread resolved:
 
 ```bash

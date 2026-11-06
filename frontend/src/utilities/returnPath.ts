@@ -26,6 +26,9 @@ export function safeReturnPath(
         return null;
     }
     if (url.origin !== window.location.origin) return null;
+    // Dot segments can turn "/.//evil.example" into "//evil.example", which a browser reads as
+    // another site.
+    if (url.pathname.startsWith("//")) return null;
     const path = url.pathname.replace(/\/+$/, "").toLowerCase() || "/";
     if (SIGN_IN_PATHS.has(path)) return null;
     return `${url.pathname}${url.search}${url.hash}`;

@@ -1,5 +1,5 @@
 import "./browser-storage";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { server } from "./mocks/server";
 
 // Global test setup - runs before each test file

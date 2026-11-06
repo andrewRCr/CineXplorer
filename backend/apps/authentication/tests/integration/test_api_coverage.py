@@ -329,29 +329,3 @@ def test_verify_email_with_invalid_key_returns_400(
     data = response.json()
     assert "error" in data, "Response should contain 'error' field"
     assert "invalid" in data["error"].lower() or "expired" in data["error"].lower()
-
-
-@pytest.mark.django_db
-def test_resend_verification_with_invalid_token(
-    api_client: Client,
-) -> None:
-    """Test resending verification with invalid token returns success (security).
-
-    Covers resend_verification endpoint security behavior.
-    Returns success message without revealing if token is valid (security best practice).
-    """
-    resend_data = {
-        "resend_token": "invalid-token-that-does-not-exist",
-    }
-
-    response = api_client.post(
-        "/api/resend-verification/",
-        data=resend_data,
-        content_type="application/json",
-    )
-
-    # Should return 200 without revealing if token is valid
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()
-    assert "message" in data, "Response should contain 'message' field"
-    assert "sent" in data["message"].lower()

@@ -161,7 +161,7 @@ def test_resend_verification_email_contains_verification_link(
 def test_resend_verification_does_not_send_email_for_invalid_token(
     api_client: Client,
 ) -> None:
-    """Verify no email sent for invalid token (but still returns success for security)."""
+    """Verify no email is sent for an invalid token, which is refused."""
     mail.outbox.clear()
 
     resend_data = {"resend_token": "invalid-token-that-does-not-exist"}
@@ -172,10 +172,7 @@ def test_resend_verification_does_not_send_email_for_invalid_token(
         content_type="application/json",
     )
 
-    # Returns success to prevent token enumeration
-    assert response.status_code == HTTPStatus.OK
-
-    # But no email should actually be sent
+    assert response.status_code == HTTPStatus.BAD_REQUEST
     assert len(mail.outbox) == 0
 
 

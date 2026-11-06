@@ -16,6 +16,7 @@ from unittest.mock import Mock, patch
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
 
+from apps.authentication.services.authentication_service import RESEND_LINK_EXPIRED_MESSAGE
 from apps.authentication.tests.fixtures import get_resend_token_from_login
 
 if TYPE_CHECKING:
@@ -243,12 +244,13 @@ def test_resend_verification_with_valid_token_success(
 
 
 @pytest.mark.django_db
-def test_resend_verification_with_invalid_token_returns_success(
+def test_resend_verification_with_unknown_token_asks_to_sign_in_again(
     api_client: Client,
 ) -> None:
-    """Test resending verification with invalid token returns success (security).
+    """An unknown or expired token is refused with a message to sign in again.
 
-    Returns 200 without revealing token validity to prevent enumeration.
+    The token is random and issued only after a correct password, so refusing it reveals
+    nothing about any account.
     """
     resend_data = {"resend_token": "invalid-token-that-does-not-exist"}
 
@@ -258,10 +260,8 @@ def test_resend_verification_with_invalid_token_returns_success(
         content_type="application/json",
     )
 
-    # Should return 200 without revealing token validity (security)
-    assert response.status_code == HTTPStatus.OK
-    data = response.json()
-    assert data["message"] == "Verification email sent successfully."
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {"detail": RESEND_LINK_EXPIRED_MESSAGE}
 
 
 @pytest.mark.django_db
@@ -271,9 +271,8 @@ def test_resend_verification_token_is_consumed_after_use(
 ) -> None:
     """Test that resend token can only be used once.
 
-    After successful use, the token should be consumed and subsequent
-    requests with the same token should still return 200 (security)
-    but not send another email.
+    After a successful send the token is spent, so the same token is refused with a
+    message to sign in again and no second email is sent.
     """
     # Create unverified EmailAddress
     EmailAddress.objects.create(
@@ -299,12 +298,13 @@ def test_resend_verification_token_is_consumed_after_use(
         assert response1.status_code == HTTPStatus.OK
         assert mock_send.call_count == 1
 
-    # Second use - token consumed, no email sent but still returns 200
+    # Second use - token spent, so it is refused and no email is sent
     with patch.object(EmailAddress, "send_confirmation") as mock_send:
         response2 = api_client.post(
             "/api/resend-verification/",
             data=resend_data,
             content_type="application/json",
         )
-        assert response2.status_code == HTTPStatus.OK
-        assert mock_send.call_count == 0  # Token was consumed, no email sent
+        assert response2.status_code == HTTPStatus.BAD_REQUEST
+        assert response2.json() == {"detail": RESEND_LINK_EXPIRED_MESSAGE}
+        assert mock_send.call_count == 0

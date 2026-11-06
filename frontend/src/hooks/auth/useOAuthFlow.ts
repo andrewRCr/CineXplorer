@@ -76,10 +76,12 @@ export function useOAuthFlow(
             start &&
             Date.now() - parseInt(start, 10) < FAST_OAUTH_THRESHOLD,
         );
-        return { provider, fast, ready: !provider || Boolean(start && !fast) };
+        return { provider, fast };
     });
+    // Only a fast return holds navigation for the minimum display time. Any other return,
+    // including one whose start time is missing, can navigate at once.
     const [minDisplayTimeElapsed, setMinDisplayTimeElapsed] = useState(
-        returnFlow.ready,
+        !returnFlow.fast,
     );
 
     // Error callback wrapper

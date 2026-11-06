@@ -135,4 +135,10 @@ describe("OAuth navigation timing", () => {
         const { result } = renderHook(() => useOAuthFlow());
         expect(result.current.canNavigate).toBe(true);
     });
+
+    it("allows navigation immediately when a return has no start time", () => {
+        sessionStorage.setItem("oauth_in_progress", "google");
+        const { result } = renderHook(() => useOAuthFlow());
+        expect(result.current.canNavigate).toBe(true);
+    });
 });

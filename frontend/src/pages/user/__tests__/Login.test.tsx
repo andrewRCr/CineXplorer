@@ -175,6 +175,13 @@ describe("returning to the requested page", () => {
     expect(await screen.findByText("Now at /watchlist")).toBeVisible();
   });
 
+  it("sends a signed-in visitor on when a provider sign-in left no start time", async () => {
+    setAuthTokens(token());
+    sessionStorage.setItem("oauth_in_progress", "google");
+    renderLoginAt("/login?next=%2Fwatchlist");
+    expect(await screen.findByText("Now at /watchlist")).toBeVisible();
+  });
+
   it("asks the provider to come back to sign-in with the page", async () => {
     document.cookie = "csrftoken=django-csrf; path=/";
     let submitted: FormData | undefined;

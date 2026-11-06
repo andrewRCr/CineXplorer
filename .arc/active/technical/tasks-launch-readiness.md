@@ -475,11 +475,14 @@ authentication gaps that matter once sign-up is public are closed.
       Retained prompt, subject, report and validation: `adversarial-review/verification-pass2/` beside the session
       notes. The earlier verification and separate implementation review remain distinct records.
 
-- [ ] **6.2 Prove the post-merge criteria** (Proven after merge 1–3)
-    - From the main checkout, after the pull request merges and before archiving (`archive-completed.md` Phase 3):
-      Proven after merge 1 on the merge commit's push run; its evidence recorded here in an `.arc/`-only commit pushed
-      to `main` with the Owner's approval, whose push is Proven after merge 2's; then Proven after merge 3 with the CI
-      key; the evidence for 2 and 3 in a second `.arc/`-only commit; then the archive
+- [x] **6.2 Prove the post-merge criteria** (Proven after merge 1–3)
+    - From the main checkout, with the Owner's approval: Proven after merge 1 from the merge commit's push run,
+      recorded in `.arc/`-only commit `a0fb7332`, whose push proved Proven after merge 2. Proven after merge 3 ran
+      with the CI key once that push settled; a second `.arc/`-only commit recorded 2 and 3 before the archive.
+    - Main had moved on by then: #98 and #99 merged and CI deployed both, and the CI key's forced command refuses a
+      target older than the deployed version. The Owner chose to redeploy the then-deployed head, `903dfb41`, whose
+      images are published, rather than roll staging back to the merge commit first. Raw proof:
+      `publication-repairs/post-merge-criterion{1,2,3}.json` and their inputs beside the session notes.
 
 ## Implementation Notes
 
@@ -957,13 +960,29 @@ what was seen and where.
       `0ca2d5b5… sha-0ca2d5b → c08b977c… sha-c08b977` at 2026-11-06T00:05:09Z. Both running images and the checkout
       identify c08b977c, and health returned healthy. Raw proof: publication-repairs/post-merge-criterion1.json and
       its inputs beside the session notes.
-- [ ] A push to `main` that changes only `.arc/`, such as the commit recording the first criterion's evidence, starts no
+- [x] A push to `main` that changes only `.arc/`, such as the commit recording the first criterion's evidence, starts no
   run of the CI workflow and one run of the `.arc/` lint workflow (R6), which passes; no image tagged with that commit
   is published, and `deploy-history.log` gains no line.
-- [ ] With the CI key from a local terminal, a redeploy of the merge commit (the first criterion's, whose images are
+
+    - Evidence: Evidence commit a0fb7332 (one `.arc/` file) pushed at 2026-11-06T00:25:34Z started only Docs run
+      42136723363, which passed; no CI run exists for it. Only the CI workflow publishes images, and the registry
+      answers "manifest unknown" for `sha-a0fb733` on both images while `sha-903dfb4` resolves. `deploy-history.log`
+      held nine lines ending at the 903dfb41 deploy before and after the push. Raw proof:
+      publication-repairs/post-merge-criterion2.json and its logs beside the session notes.
+
+- [x] With the CI key from a local terminal, a redeploy of the merge commit (the first criterion's, whose images are
   published) whose local `ssh` is killed after the first step marker still finishes: `deploy-history.log` gains its
   `ci` line, and the newest file in `/opt/cinexplorer/deploy-logs/` ends with the deploy's outcome (R2, R4). Before
   the merge no commit on `main` carries the deploy script, so this cannot run earlier.
+
+    - Evidence: Run against 903dfb41, main's deployed head after #98 and #99, since the forced command refuses the
+      older merge commit (6.2 records the Owner's choice). The dedicated CI key, with user SSH config disabled and
+      the pinned known_hosts, sent the full SHA; local `ssh` was SIGKILLed 2 ms after printing `==> 1`. The deploy
+      still finished 18 s later: `deploy-history.log` gained `2026-11-06T00:29:24Z ci 903dfb41… → 903dfb41…`, and the
+      newest log, /opt/cinexplorer/deploy-logs/20261106T002905Z-903dfb4.NZmJqI, has all six markers and ends with
+      "Deploy succeeded (exit 0)." Its `.status` companion, written last, holds `0`. Checkout and both images
+      identify 903dfb41, and health returned healthy. Raw proof: publication-repairs/post-merge-criterion3.json
+      and its logs beside the session notes.
 
 ## Review Log
 

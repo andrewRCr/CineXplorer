@@ -83,7 +83,7 @@ const vite = await createServer({
     "import.meta.env.VITE_BASE_URL": '""',
     "import.meta.env.VITE_BASE_API_URL": '""',
   },
-  esbuild: { jsx: "automatic" },
+  oxc: { jsx: { runtime: "automatic" } },
   resolve: { alias: { "@": resolve(root, "src") } },
   optimizeDeps: {
     entries: [],

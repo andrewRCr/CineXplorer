@@ -68,7 +68,7 @@ class TokenObtainInputSchema(Schema):
 
 
 class TokenResponseSchema(Schema):
-    """Schema for JWT token response (obtain and refresh).
+    """Schema for password sign-in with an access token and user details.
 
     The response exposes the access token and user details. The refresh
     token is delivered only in its HttpOnly cookie.

@@ -49,10 +49,10 @@ class Recipient:
 
 def test_refresh_failure_preserves_response_without_logging_dependency_text() -> None:
     service = AuthenticationService(refresh_token_cls=FailingRefreshToken)
-    request = RequestFactory().post("/api/token/refresh/")
+    request = RequestFactory().post("/api/auth/refresh")
     request.COOKIES[get_jwt_settings().refresh_token_name] = "test-refresh-value"
     with TestCase().assertLogs("cinexplorer.auth", level="ERROR") as captured:
-        status, payload = service.refresh_token(request, HttpResponse())
+        status, payload = service.hybrid_refresh_token(request, HttpResponse())
 
     assert status == 400
     assert payload == {"error": "An error occurred during token refresh. Please try again."}

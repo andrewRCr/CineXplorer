@@ -17,7 +17,7 @@ from __future__ import annotations
 from django.http import HttpRequest
 from ninja import Router, Status
 
-from apps.authentication.auth_ninja import JWTCookieAuth, get_current_user
+from apps.authentication.auth_ninja import JWTSessionAuth, get_current_user
 from apps.movie.schemas import MovieListResponseSchema
 from apps.user_movie_data.schemas import (
     UserMovieDataCreateSchema,
@@ -27,7 +27,7 @@ from apps.user_movie_data.schemas import (
 from apps.user_movie_data.services.service_factory import get_user_movie_data_service
 
 # Create router with JWT authentication
-user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTCookieAuth())
+user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTSessionAuth())
 
 # Initialize services
 _service = get_user_movie_data_service()

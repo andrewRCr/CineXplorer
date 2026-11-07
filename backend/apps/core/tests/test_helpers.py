@@ -100,7 +100,7 @@ def authenticate_client(client: Client, username: str, password: str) -> None:
     This helper encapsulates the hybrid authentication pattern where:
     - Login endpoint only sets refresh_token as HTTP-only cookie
     - Access token is returned in response body for localStorage
-    - Tests must manually extract and set access_token cookie
+    - Tests send the access token in the Authorization Bearer header
 
     Args:
         client: Django test client instance
@@ -112,19 +112,19 @@ def authenticate_client(client: Client, username: str, password: str) -> None:
 
         user = create_user(username='testuser', password='testpass123')
         authenticate_client(api_client, 'testuser', 'testpass123')
-        # Client now has both refresh_token (auto) and access_token (manual) cookies
+        # Client now sends a Bearer header and the refresh-token cookie
 
     Note:
-        This function modifies the client in-place by setting the access_token cookie.
+        This function installs a default Authorization header on the client.
         If the auth pattern changes in the future, update this ONE function.
     """
     token_url = "/api/token/"
     auth_payload: dict[str, object] = {"login": username, "password": password}
     response = json_post(client, token_url, auth_payload)
 
-    # Extract access_token from response and set as cookie (hybrid auth pattern)
+    # Send the access token as the browser does, retaining the refresh cookie.
     response_data: dict[str, str] = json.loads(response.content.decode())
-    client.cookies["access_token"] = response_data["access_token"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {response_data['access_token']}"
 
 
 def login_and_get_tokens(client: Client, username: str, password: str) -> tuple[str, str]:

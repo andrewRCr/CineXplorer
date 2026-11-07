@@ -5,7 +5,7 @@ can successfully make authenticated API calls to Django Ninja endpoints without
 JWT tokens.
 
 Two-Pattern Authentication:
-    - Email/Password: JWT tokens (Authorization header or cookie)
+    - Email/Password: JWT tokens (Authorization header)
     - OAuth: Django session cookies (no JWT tokens)
 """
 
@@ -29,8 +29,8 @@ def test_session_authentication_works_with_django_ninja_endpoints():
     making an authenticated API call to a protected Django Ninja endpoint.
 
     Expected behavior:
-        - JWTCookieAuth checks for JWT token (not found)
-        - JWTCookieAuth falls back to session authentication
+        - JWTSessionAuth checks for JWT token (not found)
+        - JWTSessionAuth falls back to session authentication
         - request.user.is_authenticated returns True
         - Endpoint executes successfully with authenticated user
     """
@@ -190,7 +190,7 @@ def test_jwt_authentication_still_works():
 def test_jwt_token_refresh_works():
     """Verify that JWT token refresh endpoint generates new tokens.
 
-    This test ensures that the /api/token/refresh/ endpoint correctly:
+    This test ensures that the /api/auth/refresh endpoint correctly:
     - Reads refresh token from HTTP-only cookie
     - Generates new access and refresh tokens
     - Rotates the refresh token (old one blacklisted)
@@ -228,7 +228,7 @@ def test_jwt_token_refresh_works():
 
     # Refresh tokens
     refresh_response = client.post(
-        "/api/token/refresh/", content_type="application/json", HTTP_X_CSRFTOKEN=csrf_token
+        "/api/auth/refresh", content_type="application/json", HTTP_X_CSRFTOKEN=csrf_token
     )
 
     assert refresh_response.status_code == 200, (
@@ -242,7 +242,9 @@ def test_jwt_token_refresh_works():
 
     assert new_access != initial_access, "Access token should be rotated"
     assert new_refresh != initial_refresh, "Refresh token should be rotated"
-    assert new_tokens["user_id"] == user.id, "User ID should match"  # pyright: ignore[reportUnknownMemberType]
+    profile_response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}")
+    assert profile_response.status_code == 200
+    assert profile_response.json()["id"] == user.id  # pyright: ignore[reportUnknownMemberType]
 
 
 @pytest.mark.django_db

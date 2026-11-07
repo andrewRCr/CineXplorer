@@ -63,7 +63,7 @@ def test_first_token_refresh_succeeds(
 
     # Refresh token - should succeed
     refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -80,10 +80,13 @@ def test_first_token_refresh_succeeds(
     assert new_access != initial_access, "Access token should be rotated"
     assert new_refresh != initial_refresh, "Refresh token should be rotated"
 
-    # Response should include user_id and email_verified
-    assert "user_id" in new_tokens
-    assert new_tokens["user_id"] == verified_user.id
-    assert new_tokens["email_verified"] is True
+    # Renewal returns access metadata; the access token authorizes the same user's profile.
+    assert new_tokens["expires_in"] == 300
+    assert isinstance(new_tokens["issued_at"], str)
+    profile = api_client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {new_access}")
+    assert profile.status_code == HTTPStatus.OK
+    assert profile.json()["id"] == verified_user.id
+    assert profile.json()["email_verified"] is True
 
 
 @pytest.mark.django_db
@@ -109,7 +112,7 @@ def test_reusing_old_refresh_token_returns_401(
 
     # First refresh - should succeed and blacklist old token
     first_refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -122,7 +125,7 @@ def test_reusing_old_refresh_token_returns_401(
 
     # Second refresh attempt with old token - should fail
     reuse_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -153,7 +156,7 @@ def test_blacklisted_token_error_includes_revoked_message(
 
     # First refresh - blacklists old token
     first_refresh = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -164,7 +167,7 @@ def test_blacklisted_token_error_includes_revoked_message(
 
     # Attempt reuse - should get revoked error
     reuse_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -201,7 +204,7 @@ def test_new_refresh_token_works_after_old_blacklisted(
 
     # First refresh - should succeed and issue NEW tokens
     first_refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -213,7 +216,7 @@ def test_new_refresh_token_works_after_old_blacklisted(
 
     # Second refresh with NEW token - should also succeed
     second_refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -265,7 +268,7 @@ def test_blacklist_table_contains_revoked_token(
 
     # Refresh token - this should blacklist the old one
     refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -308,7 +311,7 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
 
     # Refresh token - creates new outstanding token
     refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -320,7 +323,7 @@ def test_outstanding_tokens_table_tracks_issued_tokens(
 
     # Refresh again - creates another outstanding token
     second_refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )

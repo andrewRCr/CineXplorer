@@ -202,7 +202,7 @@ def test_400_invalid_token_uses_error_format(
     csrf_token = get_csrf_token(api_client)
 
     response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -245,7 +245,7 @@ def test_debug_true_includes_detail_field_for_blacklisted_token(
 
     # First refresh succeeds and blacklists the old token
     first_refresh = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -259,7 +259,7 @@ def test_debug_true_includes_detail_field_for_blacklisted_token(
 
     # Second refresh with blacklisted token should return 401 with detail
     second_refresh = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -299,7 +299,7 @@ def test_debug_false_excludes_detail_field_for_blacklisted_token(
 
     # First refresh succeeds and blacklists the old token
     first_refresh = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -311,7 +311,7 @@ def test_debug_false_excludes_detail_field_for_blacklisted_token(
 
     # Second refresh with blacklisted token should return 401 WITHOUT detail
     second_refresh = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -338,6 +338,6 @@ def test_csrf_error_has_fixed_detail_in_every_mode(debug: bool) -> None:
 
     with override_settings(DEBUG=debug):
         client = Client(enforce_csrf_checks=True)
-        response = client.post("/api/token/refresh/", content_type="application/json")
+        response = client.post("/api/auth/refresh", content_type="application/json")
     assert response.status_code == 403
     assert response.json() == {"detail": "CSRF token missing or invalid."}

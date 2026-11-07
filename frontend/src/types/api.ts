@@ -98,49 +98,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/token/refresh/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Refresh Token
-         * @description Refresh JWT access token using refresh token from cookie.
-         *
-         *     Reads refresh token from httponly cookie and generates new access token.
-         *     Implements token rotation security: old refresh tokens are automatically
-         *     blacklisted after rotation (via BLACKLIST_AFTER_ROTATION setting).
-         *
-         *     Args:
-         *         request: HTTP request object
-         *         response: HTTP response object (for setting new cookies)
-         *
-         *     Returns:
-         *         Status: the status code and response data
-         *             - 200: Token refreshed successfully, new tokens set as cookies
-         *             - 400: No valid refresh token in cookies or invalid format
-         *             - 401: Token blacklisted (reuse attempt detected)
-         *
-         *     Security:
-         *         - Automatic token rotation: new refresh token issued on each refresh
-         *         - Old tokens blacklisted automatically via BLACKLIST_AFTER_ROTATION
-         *         - Reuse attempts logged as security events with IP and user agent
-         *
-         *     Cookie handling:
-         *         - Reads refresh token from httponly cookie
-         *         - Sets new access and refresh tokens as httponly cookies
-         */
-        post: operations["apps_authentication_api_refresh_token"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/auth/refresh": {
         parameters: {
             query?: never;
@@ -1049,7 +1006,7 @@ export interface components {
         };
         /**
          * TokenResponseSchema
-         * @description Schema for JWT token response (obtain and refresh).
+         * @description Schema for password sign-in with an access token and user details.
          *
          *     The response exposes the access token and user details. The refresh
          *     token is delivered only in its HttpOnly cookie.
@@ -2072,48 +2029,6 @@ export interface operations {
             };
             /** @description Forbidden */
             403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-        };
-    };
-    apps_authentication_api_refresh_token: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TokenResponseSchema"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description Unauthorized */
-            401: {
                 headers: {
                     [name: string]: unknown;
                 };

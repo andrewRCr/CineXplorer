@@ -12,7 +12,7 @@ gracefully without exposing sensitive information or crashing.
 Authentication Pattern:
 - Access token: 5 minutes lifetime, stored in sessionStorage (client)
 - Refresh token: 14 days lifetime, HTTP-only cookie (XSS-proof)
-- Backend accepts: Authorization header OR access_token cookie (hybrid)
+- Backend accepts: Authorization Bearer header
 - Token rotation enabled (new refresh token on each refresh)
 
 Security Requirements:
@@ -209,7 +209,7 @@ def test_malformed_json_in_token_refresh_request() -> None:
 
     # Send malformed JSON
     response = client.post(
-        "/api/token/refresh/", data="{not valid json}", content_type="application/json"
+        "/api/auth/refresh", data="{not valid json}", content_type="application/json"
     )
 
     # Should handle gracefully (either 400 or process without body)
@@ -269,7 +269,7 @@ def test_token_refresh_with_blacklist_unavailable() -> None:
     with patch("ninja_jwt.tokens.RefreshToken.check_blacklist") as mock_check:
         mock_check.side_effect = Exception("Blacklist service unavailable")
 
-        response = client.post("/api/token/refresh/")
+        response = client.post("/api/auth/refresh")
 
         # Backend returns 400 (Bad Request) with proper error logging
         # This is better than 500 - frontend can handle 400 gracefully
@@ -290,13 +290,12 @@ def test_profile_endpoint_with_serialization_error() -> None:
     access_token_str = str(refresh.access_token)
 
     client = create_fresh_client()
-    client.cookies["access_token"] = access_token_str
 
     # Mock serialization error in schema
     with patch(AUTH_SCHEMA_PROFILE_MODEL_VALIDATE) as mock_model_validate:
         mock_model_validate.side_effect = ValueError("Serialization failed")
 
-        response = client.get("/api/profile/")
+        response = client.get("/api/profile/", HTTP_AUTHORIZATION=f"Bearer {access_token_str}")
 
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert response.json() == {"detail": "Internal server error"}
@@ -363,7 +362,7 @@ def test_concurrent_token_refresh_requests() -> None:
         """
         client = create_fresh_client(refresh_token=refresh_token_str)
         try:
-            return client.post("/api/token/refresh/")
+            return client.post("/api/auth/refresh")
         finally:
             # Critical: Close database connection to prevent leaks
             # Each thread creates a new connection that must be explicitly closed

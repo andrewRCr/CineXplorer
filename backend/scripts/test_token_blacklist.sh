@@ -145,7 +145,7 @@ echo ""
 
 echo "Step 4: Task 4.4.2 - Use refresh token to get new access token (should succeed)"
 echo "-------------------------------------------"
-REFRESH_RESPONSE_1=$(curl -s $CURL_OPTS -X POST "${API_BASE}/token/refresh/" \
+REFRESH_RESPONSE_1=$(curl -s $CURL_OPTS -X POST "${API_BASE}/auth/refresh" \
   -b "$COOKIE_FILE" \
   -c "${COOKIE_FILE}.new")
 
@@ -180,7 +180,7 @@ echo "-------------------------------------------"
 echo "Using old refresh token from initial login..."
 
 # Try to refresh with OLD token
-REUSE_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_CODE:%{http_code}" -X POST "${API_BASE}/token/refresh/" \
+REUSE_RESPONSE=$(curl -s $CURL_OPTS -w "\nHTTP_CODE:%{http_code}" -X POST "${API_BASE}/auth/refresh" \
   -b "$COOKIE_FILE")
 
 HTTP_CODE=$(echo "$REUSE_RESPONSE" | grep -oP 'HTTP_CODE:\K[0-9]+')

@@ -83,8 +83,8 @@ def movie3(db: None) -> Movie:
 def authenticated_user(api_client: Client, db: None) -> tuple[Client, User]:
     """Create an authenticated user and return (client, user) tuple.
 
-    Creates a verified user (can login) and authenticates via the JWT token
-    endpoint which sets the necessary cookies for Django Ninja JWTCookieAuth.
+    The shared sign-in helper creates a Bearer header from the returned access token
+    and retains the refresh cookie, matching the browser's authentication transport.
     """
     from apps.core.tests.test_helpers import authenticate_client, create_user
 

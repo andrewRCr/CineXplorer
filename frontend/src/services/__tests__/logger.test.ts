@@ -31,19 +31,20 @@ describe("logger user identity", () => {
     beforeEach(clearTokens);
     afterEach(clearTokens);
 
-    it.each(["localStorage", "sessionStorage", "cookie"] as const)(
+    it.each(["localStorage", "sessionStorage"] as const)(
         "records the signed-in user's ID from %s",
         (storage) => {
             const token = createToken({ user_id: 42 });
-            if (storage === "cookie") {
-                document.cookie = `access_token=${encodeURIComponent(token)}; Path=/`;
-            } else {
-                window[storage].setItem("access_token", token);
-            }
+            window[storage].setItem("access_token", token);
 
             expect(logEntry()).toMatchObject({ user_id: 42 });
         },
     );
+
+    it("ignores identity in an access cookie", () => {
+        document.cookie = `access_token=${createToken({ user_id: 42 })}; Path=/`;
+        expect(logEntry()).toMatchObject({ user_id: undefined });
+    });
 
     it("records a string subject when there is no user_id claim", () => {
         localStorage.setItem("access_token", createToken({ sub: "user-123" }));

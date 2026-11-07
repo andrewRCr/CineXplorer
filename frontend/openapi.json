@@ -144,53 +144,6 @@
         }
       }
     },
-    "/api/token/refresh/": {
-      "post": {
-        "operationId": "apps_authentication_api_refresh_token",
-        "summary": "Refresh Token",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponseSchema"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "description": "Refresh JWT access token using refresh token from cookie.\n\nReads refresh token from httponly cookie and generates new access token.\nImplements token rotation security: old refresh tokens are automatically\nblacklisted after rotation (via BLACKLIST_AFTER_ROTATION setting).\n\nArgs:\n    request: HTTP request object\n    response: HTTP response object (for setting new cookies)\n\nReturns:\n    Status: the status code and response data\n        - 200: Token refreshed successfully, new tokens set as cookies\n        - 400: No valid refresh token in cookies or invalid format\n        - 401: Token blacklisted (reuse attempt detected)\n\nSecurity:\n    - Automatic token rotation: new refresh token issued on each refresh\n    - Old tokens blacklisted automatically via BLACKLIST_AFTER_ROTATION\n    - Reuse attempts logged as security events with IP and user agent\n\nCookie handling:\n    - Reads refresh token from httponly cookie\n    - Sets new access and refresh tokens as httponly cookies",
-        "tags": [
-          "Authentication"
-        ]
-      }
-    },
     "/api/auth/refresh": {
       "post": {
         "operationId": "apps_authentication_api_hybrid_refresh_token",
@@ -307,7 +260,7 @@
         ],
         "security": [
           {
-            "JWTCookieAuth": []
+            "JWTSessionAuth": []
           }
         ]
       }
@@ -3135,7 +3088,7 @@
         ],
         "security": [
           {
-            "JWTCookieAuth": []
+            "JWTSessionAuth": []
           }
         ]
       }
@@ -3173,7 +3126,7 @@
         ],
         "security": [
           {
-            "JWTCookieAuth": []
+            "JWTSessionAuth": []
           }
         ]
       }
@@ -3211,7 +3164,7 @@
         },
         "security": [
           {
-            "JWTCookieAuth": []
+            "JWTSessionAuth": []
           }
         ]
       }
@@ -3259,7 +3212,7 @@
         },
         "security": [
           {
-            "JWTCookieAuth": []
+            "JWTSessionAuth": []
           }
         ]
       },
@@ -3288,7 +3241,7 @@
         ],
         "security": [
           {
-            "JWTCookieAuth": []
+            "JWTSessionAuth": []
           }
         ]
       }
@@ -3387,7 +3340,7 @@
         "type": "object"
       },
       "TokenResponseSchema": {
-        "description": "Schema for JWT token response (obtain and refresh).\n\nThe response exposes the access token and user details. The refresh\ntoken is delivered only in its HttpOnly cookie.",
+        "description": "Schema for password sign-in with an access token and user details.\n\nThe response exposes the access token and user details. The refresh\ntoken is delivered only in its HttpOnly cookie.",
         "properties": {
           "access_token": {
             "description": "JWT access token for API authorization",
@@ -5560,10 +5513,9 @@
       }
     },
     "securitySchemes": {
-      "JWTCookieAuth": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "access_token"
+      "JWTSessionAuth": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   },

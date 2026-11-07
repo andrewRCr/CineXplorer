@@ -27,7 +27,6 @@ CASES = [
     "logout",
     "verification",
     "resend",
-    "refresh",
     "hybrid_refresh",
     "password_request",
     "session_create",
@@ -65,7 +64,6 @@ def request_data(case: str, entry: UserMovieData) -> tuple[str, str, dict[str, o
         ),
         "logout": ("post", "/api/logout/", {}),
         "resend": ("post", "/api/resend-verification/", {"resend_token": "x" * 32}),
-        "refresh": ("post", "/api/token/refresh/", {}),
         "hybrid_refresh": ("post", "/api/auth/refresh", {}),
         "password_request": (
             "post",

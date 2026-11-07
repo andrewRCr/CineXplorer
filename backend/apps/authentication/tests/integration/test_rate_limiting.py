@@ -199,7 +199,7 @@ def test_token_refresh_allows_10_rapid_attempts(
     success_count = 0
     for attempt in range(1, 11):
         response = authenticated_client_with_throttling.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
@@ -234,14 +234,14 @@ def test_token_refresh_throttles_11th_attempt(
     # Make 10 refresh attempts (some may fail due to blacklist, that's OK)
     for _ in range(10):
         authenticated_client_with_throttling.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
 
     # 11th attempt should be throttled (regardless of token state)
     response = authenticated_client_with_throttling.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )

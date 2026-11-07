@@ -119,8 +119,7 @@ async function checkOAuthSession(): Promise<UserProfile | null> {
 
 export function useAuth(): AuthStateProps {
     const [status, setStatus] = useState<AuthStatus>(() => {
-        // Hybrid auth: Instant authentication detection from localStorage/cookie
-        // Priority: cookie → localStorage → sessionStorage (handled by getAuthTokens)
+        // Detect access tokens in localStorage, then sessionStorage.
         const { access_token } = getAuthTokens();
         const isExpired = areTokensExpired();
         const hasAuthFlag = getInitialAuthenticatedValue();
@@ -133,7 +132,7 @@ export function useAuth(): AuthStateProps {
             result: signedIn,
         });
 
-        // A current stored token signs the user in at once: it exists (in cookie, localStorage, or
+        // A current stored token signs the user in at once: it exists (in localStorage or
         // sessionStorage), it is not expired, and the stored flag is set. Otherwise the mount check
         // below decides, through a token refresh or the provider session, and until it does the
         // status stays resolving rather than reading signed out.
@@ -155,11 +154,10 @@ export function useAuth(): AuthStateProps {
     useEffect(() => {
         const checkExistingAuth = async () => {
             const sessionVersion = getAuthSessionVersion();
-            const { access_token, storage } = getAuthTokens();
+            const { access_token } = getAuthTokens();
             if (access_token) {
                 try {
                     if (areTokensExpired()) await refreshAccessToken();
-                    else if (storage === "cookie") setAuthTokens(access_token);
                     // The authentication-state effect owns profile loading.
                     if (sessionVersion === getAuthSessionVersion())
                         setStatus("authenticated");

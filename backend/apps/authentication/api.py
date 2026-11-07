@@ -10,7 +10,7 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from ninja import Router, Status
 
-from apps.authentication.auth_ninja import get_current_user, jwt_cookie_auth
+from apps.authentication.auth_ninja import get_current_user, jwt_session_auth
 from apps.authentication.schemas import (
     CsrfTokenResponseSchema,
     EmailDeliveryErrorSchema,
@@ -131,45 +131,6 @@ def obtain_token(
     """
     service = get_authentication_service()
     status_code, body = service.obtain_token(request, response, payload)
-    return Status(status_code, body)
-
-
-@auth_router.post(
-    "/token/refresh/",
-    auth=None,
-    response={200: TokenResponseSchema, 400: dict[str, object], 401: dict[str, object]},
-    throttle=[TestAwareUserThrottle("10/m")],
-)
-def refresh_token(
-    request: HttpRequest, response: HttpResponse
-) -> Status[TokenResponseSchema | dict[str, object]]:
-    """Refresh JWT access token using refresh token from cookie.
-
-    Reads refresh token from httponly cookie and generates new access token.
-    Implements token rotation security: old refresh tokens are automatically
-    blacklisted after rotation (via BLACKLIST_AFTER_ROTATION setting).
-
-    Args:
-        request: HTTP request object
-        response: HTTP response object (for setting new cookies)
-
-    Returns:
-        Status: the status code and response data
-            - 200: Token refreshed successfully, new tokens set as cookies
-            - 400: No valid refresh token in cookies or invalid format
-            - 401: Token blacklisted (reuse attempt detected)
-
-    Security:
-        - Automatic token rotation: new refresh token issued on each refresh
-        - Old tokens blacklisted automatically via BLACKLIST_AFTER_ROTATION
-        - Reuse attempts logged as security events with IP and user agent
-
-    Cookie handling:
-        - Reads refresh token from httponly cookie
-        - Sets new access and refresh tokens as httponly cookies
-    """
-    service = get_authentication_service()
-    status_code, body = service.refresh_token(request, response)
     return Status(status_code, body)
 
 
@@ -295,7 +256,7 @@ def get_csrf_token(request: HttpRequest, response: HttpResponse) -> Status[dict[
     return Status(200, {"csrf_token": token})
 
 
-@auth_router.get("/profile/", response={200: UserProfileSchema}, auth=jwt_cookie_auth)
+@auth_router.get("/profile/", response={200: UserProfileSchema}, auth=jwt_session_auth)
 def get_user_profile(request: HttpRequest) -> UserProfileSchema:
     """Retrieve authenticated user's profile.
 

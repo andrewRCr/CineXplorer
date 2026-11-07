@@ -154,7 +154,7 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
 
     # First refresh - blacklists old token
     first_refresh = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -168,7 +168,7 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
     # Attempt reuse - should trigger security logging
     with test_case.assertLogs("cinexplorer.auth", level="WARNING") as cm:
         reuse_response = api_client.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
@@ -327,7 +327,7 @@ def test_token_values_never_logged(
         # Get CSRF and refresh
         csrf_token = get_csrf_token(api_client)
         api_client.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )

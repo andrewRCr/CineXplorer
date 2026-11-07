@@ -4,8 +4,9 @@
 **Created:** 2026-11-06
 **Branch:** `technical/e2e-smoke`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 **Completion Record:** `completion-e2e-smoke.md`
+**Completed:** 2026-11-07
 
 ## Overview
 
@@ -247,8 +248,8 @@ and against staging after every deploy.
 
     - The full local run, independent verification and code review are complete. PR #131 at `c0718a12` has green
       E2E and `ci-ok` jobs: all five specs passed in 34.1 seconds, including hosted registration. Criteria 7–8 are
-      met; criterion 9 remains open for deployment after merge. ADR-039 is accepted, and the completion record
-      retains the deliverables and remaining hosted check.
+      met. After merge, deployment and all four staging specs passed, with registration skipped and no browser
+      artifacts uploaded, proving criterion 9. ADR-039 is accepted; the completion record summarizes the deliverables.
 
 ## Implementation Notes
 
@@ -315,12 +316,13 @@ and against staging after every deploy.
   `ci-ok` jobs. Playwright reports all five specs passed in 34.1 seconds. The log and exact-head job snapshot are
   retained as `pr131-e2e-c0718a12.log` and `PR-CI-SNAPSHOT-c0718a12.json` beside the session notes.
 
-- [ ] Proven live: after the merge, the staging job runs after the deploy and passes against staging, signed in as the
+- [x] Proven live: after the merge, the staging job runs after the deploy and passes against staging, signed in as the
   staging account; no account is created on staging, and the run uploads no artifact.
 
-  Pending the first post-merge deployment run under completion § 9. Source confirms the deploy dependency, staging
-  target, registration skip and absence of artifact upload; the earlier manual staging run does not prove this
-  criterion.
+  Met: after merge `10bdc59290bf7731d94a3ca7bec39e2ea6a0f2ff`, push run `42406735388` successfully deployed
+  staging, then its staging job passed four specs in 16.1 seconds, including real sign-in/out. Registration was
+  skipped. The job has no upload step; run artifacts contain no browser report or traces. Complete deployment and
+  staging logs, job identities and the artifact list are retained in the post-merge evidence beside the session notes.
 
 - [x] The testing strategy, the quality-gates strategy, DEVELOPMENT-RULES, QUICK-REFERENCE, TECHNICAL-OVERVIEW and
   `worktree-sessions.md` describe this tier and the mail difference as requirements 23 and 24 say, and the earlier E2E
@@ -670,3 +672,16 @@ and against staging after every deploy.
   smoke were skipped for this PR event as configured. No merge or post-merge outcome is inferred.
 - **Record:** complete job log `pr131-e2e-c0718a12.log`, snapshot `PR-CI-SNAPSHOT-c0718a12.json`, and terminal
   `PR-MONITOR.json` beside the session notes. The earlier failed run and its diagnosis remain preserved separately.
+
+### 2026-11-07 · Verification · Post-merge staging
+
+- **Target:** merge commit `10bdc59290bf7731d94a3ca7bec39e2ea6a0f2ff`, push run `42406735388`.
+  All pre-deploy checks, `ci-ok`, deployment and staging smoke passed; the workflow completed successfully.
+- **Live proof:** deployment job `128506877737` succeeded before staging job `128507062197` began. The staging
+  target passed four specs in 16.1 seconds, including sign-in/out against the real session. Registration was skipped
+  before its page interaction. The staging job has no artifact-upload step; the complete run artifact list contains
+  coverage, generated types/schema and build records, with no browser report, screenshot or trace artifact.
+- **Record:** `post-merge-deploy.log`, `post-merge-staging.log`, `POST-MERGE-EVIDENCE.json`, and terminal
+  `POST-MERGE-MONITOR.json` beside the work unit's session notes retain the exact target and evidence.
+- **Closure:** criterion 9 is now met; all ten criteria and Task 6.1 are complete. Final metadata and this record
+  are prepared on main for the Owner's commit/push decision. Worktree removal and archival remain separate.

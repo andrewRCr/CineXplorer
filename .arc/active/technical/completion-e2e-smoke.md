@@ -1,7 +1,7 @@
 # Completion: End-to-End Smoke Tier
 
-**Prepared:** 2026-11-07
-**Status:** Awaiting post-merge staging verification
+**Completed:** 2026-11-07
+**Status:** Complete
 **Branch:** `technical/e2e-smoke`
 **Category:** Technical
 **Context:** Browser coverage for the application flows being rebuilt.
@@ -11,8 +11,8 @@
 Five Playwright specs exercise registration, sign-in and sign-out, browse pagination, filtered movie detail, and
 scroll restoration after reloading detail in Chromium. Each distinct page they reach receives an axe scan, and CI
 has jobs for the development stack and the deployed staging site. Implementation and local verification are
-complete; the pull request's required CI gate and all five smoke specs pass. The post-merge staging outcome below
-remains open.
+complete. The pull request's required CI gate and all five smoke specs passed; deployment and the four staging
+specs also passed after merge, with registration skipped and no browser artifacts uploaded.
 
 ## Key Deliverables
 
@@ -52,14 +52,12 @@ successful required `ci-ok` gate; all five hosted Chromium specs passed in 34.1 
 reaching the email verification notice. A fresh independent correction review found no actionable issue in the CI
 startup ownership repair. Detailed results, negative controls and review records are indexed by `tasks-e2e-smoke.md`.
 
-## Remaining Verification
+## Post-Merge Verification
 
-| Criterion | Evidence still required | Timing |
-| --- | --- | --- |
-| 9 | Staging smoke succeeds after deployment, creates no account and uploads no artifact | After merge |
-
-Task 6.1 and the pre-merge criteria are complete. The post-merge criterion must be proven before the work is closed
-and the worktree is finished. PR #131 remains open.
+PR #131 merged as `10bdc59290bf7731d94a3ca7bec39e2ea6a0f2ff`. Its push run `42406735388` passed the required
+CI gate, deployed staging, then passed all four staging specs in 16.1 seconds, including real sign-in/out. Registration
+was skipped; no browser artifacts were uploaded. All ten success criteria and Task 6.1 are complete. The task list
+indexes the retained deployment, staging and artifact evidence.
 
 ## Related Documentation
 

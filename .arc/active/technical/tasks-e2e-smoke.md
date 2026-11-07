@@ -215,24 +215,21 @@ and against staging after every deploy.
     - Actionlint and a base-Compose configuration probe with the job's generated environment passed. The first hosted
       run remains for this work's pull request; no manual dispatch was made because it would publish images.
 
-- [ ] **5.2 Staging job after deploy**
+- [x] **5.2 Staging job after deploy**
 
     - [x] **5.2.a Add the job**
         - Added `e2e-staging` after `deploy`, with the same main-push condition and the staging environment. It installs
           dependencies/Chromium and reads the URL variable and credential secrets only in its test step.
         - The staging target disables trace/screenshots and the job uploads no artifacts. Failure turns the workflow
-          red without rollback. Actionlint passed; the live staging check remains for the Owner and post-merge run.
+          red without rollback. Actionlint passed; the Owner's manual run is recorded below. The hosted post-deploy
+          check remains for the first merged run.
 
-    - [ ] **5.2.b Owner: create the staging account and the environment's values**
-        - A verified, non-staff account on staging, made by hand, for example through the staging site's sign-up with
-          an address the Owner controls and its verification email; that needs no commands on the server, so no
-          staging hold
-        - In the `staging` GitHub environment: variable `E2E_BASE_URL`, secrets `E2E_USERNAME` and `E2E_PASSWORD`. No
-          values in chat
-        - Before merge, the Owner runs the `staging` target once from their own terminal (`npm run test:e2e` in
-          `frontend/` with `E2E_TARGET=staging` and the address and account in the environment, kept out of shell
-          history); a violation or failure only staging's live content or production build shows is fixed or
-          baselined before merge, so the post-deploy job starts green
+    - [x] **5.2.b Owner: create the staging account and the environment's values**
+        - Owner reports the verified, non-staff staging account and GitHub environment configuration complete:
+          variable `E2E_BASE_URL`, secrets `E2E_USERNAME` and `E2E_PASSWORD`; no credential values were shared.
+        - Owner ran the staging target from their terminal: four passed, registration skipped, in 21.1 seconds.
+        - The unmatched `/login` `color-contrast` entry is expected: staging skips sign-up, so the registration
+          confirmation notice is absent. The entry remains necessary for the local target.
 
 - [ ] **5.3 Documentation, and retiring the earlier plan**
     - `strategy-testing-methodology.md`, E2E sections (`E2E Test Coordination`, `Structure`, `Best Practices`) and

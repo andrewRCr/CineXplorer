@@ -181,22 +181,14 @@ and against staging after every deploy.
     - Failed when the return link dropped the query; passed after restoration (3.0 seconds).
     - Scoped ESLint, formatting, and TypeScript passed.
 
-- [ ] **3.3 Back to Results after a reload**
-
-    **Note:** The setup comes from the scroll-restore fix's real-browser check: a 39-title first page delayed about
-    400 ms, so results arrive after the grid mounts on its 20-card skeleton.
-
-    - [ ] **3.3.a Write the spec**
-        - The spec answers browse and detail requests itself in both targets (39 synthetic titles on the first page,
-          a detail response per title)
-        - Scroll to 2,600 px; open a movie whose card link is in view, found by role and its `boundingBox()`; reload
-          the detail page; press "Back to Results"; `window.scrollY` lands within 20 px of 2,600
-        - **Check:** `npm run test:e2e -- e2e/back-to-results.spec.ts` against this worktree's browsable stack
-
-    - [ ] **3.3.b Show it fails when the restore is disabled**
-        - Reconstruct the pre-fix behavior in `useScrollPersistence.ts` (the replace navigation that clears the
-          restore signal also resets the pending restore): the spec fails, landing short (about 1,848 px in the
-          original check); restore the hook and it passes (a PRD success criterion)
+- [x] **3.3 Back to Results after a reload**
+    - [x] **3.3.a Write the spec**
+        - Both targets use a delayed 39-title fixture. The spec saves 2,600 px, opens a fully visible card by role and
+          bounding box, reloads detail, and returns within 20 px. Passed in 6.9 seconds.
+        - Scoped ESLint, formatting, and TypeScript passed; all three navigation specs passed together in 16.3 seconds.
+    - [x] **3.3.b Show it fails when the restore is disabled**
+        - Reconstructed the replace navigation resetting the pending restore signal: the spec failed with a 752 px
+          discrepancy (landing at 1,848 px). Restoring the hook made it pass. Reconstruction log retained locally.
 
 ### **Phase 4:** Every page a spec visits is scanned with axe
 

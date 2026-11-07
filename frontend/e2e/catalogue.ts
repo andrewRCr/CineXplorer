@@ -83,3 +83,22 @@ export function catalogueResponse(url: URL): object | undefined {
         } satisfies components["schemas"]["PersonListResponseSchema"];
     }
 }
+
+/** Keep the layout scenario deterministic even when the rest of staging uses live data. */
+export async function useRestoreCatalogue(
+    page: import("@playwright/test").Page,
+): Promise<void> {
+    await page.route("**/api/movies/**", async (route) => {
+        const url = new URL(route.request().url());
+        if (url.pathname === "/api/movies/browse") {
+            // Results must arrive after the shorter loading grid has mounted.
+            await new Promise((resolve) => setTimeout(resolve, 400));
+            await route.fulfill({ json: moviePage(1, 39, null) });
+        } else if (/^\/api\/movies\/\d+$/.test(url.pathname)) {
+            const id = Number(url.pathname.split("/").at(-1));
+            await route.fulfill({ json: movieDetail(id) });
+        } else {
+            await route.fallback();
+        }
+    });
+}

@@ -254,7 +254,7 @@ def test_debug_true_includes_detail_field_for_blacklisted_token(
     # Get the old refresh token that was just blacklisted
     # (The original token is now blacklisted after successful rotation)
     # We need to manually set it back to test blacklist error
-    old_token = login_response.json()["refresh_token"]
+    old_token = login_response.cookies["refresh_token"].value
     api_client.cookies["refresh_token"] = old_token
 
     # Second refresh with blacklisted token should return 401 with detail
@@ -306,7 +306,7 @@ def test_debug_false_excludes_detail_field_for_blacklisted_token(
     assert first_refresh.status_code == HTTPStatus.OK
 
     # Get the old refresh token that was just blacklisted
-    old_token = login_response.json()["refresh_token"]
+    old_token = login_response.cookies["refresh_token"].value
     api_client.cookies["refresh_token"] = old_token
 
     # Second refresh with blacklisted token should return 401 WITHOUT detail

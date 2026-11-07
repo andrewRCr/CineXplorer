@@ -52,29 +52,70 @@ describe("token storage", () => {
         "stores and reads tokens in %s",
         (storage) => {
             const access = token();
-            setAuthTokens(access, "refresh", storage);
+            localStorage.setItem("refresh_token", "legacy-local");
+            sessionStorage.setItem("refresh_token", "legacy-session");
+            setAuthTokens(access, storage);
+            expect(localStorage.getItem("refresh_token")).toBeNull();
+            expect(sessionStorage.getItem("refresh_token")).toBeNull();
             expect(getCurrentStorageType()).toBe(storage);
             expect(getAuthTokens()).toEqual({
                 access_token: access,
-                refresh_token: "refresh",
                 storage,
             });
             expect(window[storage].getItem("isAuthenticated")).toBe("true");
         },
     );
     it("reads access cookies before browser storage", () => {
-        setAuthTokens(token(), "refresh", "localStorage");
+        setAuthTokens(token(), "localStorage");
+        localStorage.setItem("refresh_token", "legacy-local");
+        sessionStorage.setItem("refresh_token", "legacy-session");
         document.cookie = "access_token=cookie-token; path=/";
         expect(getCurrentStorageType()).toBe("cookie");
         expect(getAuthTokens()).toEqual({
             access_token: "cookie-token",
-            refresh_token: null,
             storage: "cookie",
         });
+        expect(localStorage.getItem("refresh_token")).toBeNull();
+        expect(sessionStorage.getItem("refresh_token")).toBeNull();
+    });
+    it.each(["localStorage", "sessionStorage"] as const)(
+        "removes legacy refresh copies while preserving the access session in %s",
+        (storage) => {
+            const expires = Math.floor(Date.now() / 1000) + 300;
+            const access = token(expires);
+            window[storage].setItem("access_token", access);
+            window[storage].setItem("isAuthenticated", "true");
+            window[storage].setItem("token_expiration", String(expires * 1000));
+            localStorage.setItem("refresh_token", "legacy-local");
+            sessionStorage.setItem("refresh_token", "legacy-session");
+
+            expect(getAuthTokens()).toEqual({ access_token: access, storage });
+            expect(localStorage.getItem("refresh_token")).toBeNull();
+            expect(sessionStorage.getItem("refresh_token")).toBeNull();
+            expect(window[storage].getItem("access_token")).toBe(access);
+            expect(window[storage].getItem("isAuthenticated")).toBe("true");
+            expect(window[storage].getItem("token_expiration")).toBe(
+                String(expires * 1000),
+            );
+        },
+    );
+    it("removes legacy refresh copies when no access session exists", () => {
+        localStorage.setItem("refresh_token", "legacy-local");
+        sessionStorage.setItem("refresh_token", "legacy-session");
+        localStorage.setItem("unrelated", "retained");
+        expect(getAuthTokens()).toEqual({
+            access_token: null,
+            storage: "sessionStorage",
+        });
+        expect(localStorage.getItem("refresh_token")).toBeNull();
+        expect(sessionStorage.getItem("refresh_token")).toBeNull();
+        expect(localStorage.getItem("unrelated")).toBe("retained");
     });
     it("clears authentication from both browser storages", () => {
-        setAuthTokens(token(), "refresh", "localStorage");
-        setAuthTokens(token(), "refresh", "sessionStorage");
+        setAuthTokens(token(), "localStorage");
+        setAuthTokens(token(), "sessionStorage");
+        localStorage.setItem("refresh_token", "legacy-local");
+        sessionStorage.setItem("refresh_token", "legacy-session");
         clearAuthTokens();
         for (const storage of [localStorage, sessionStorage]) {
             for (const key of [

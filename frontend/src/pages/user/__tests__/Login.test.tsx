@@ -177,7 +177,6 @@ describe("returning to the requested page", () => {
         HttpResponse.json({
           user_id: profile.id,
           access_token: token(),
-          refresh_token: "refresh",
           username: profile.username,
         }),
       ),

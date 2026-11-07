@@ -70,12 +70,11 @@ class TokenObtainInputSchema(Schema):
 class TokenResponseSchema(Schema):
     """Schema for JWT token response (obtain and refresh).
 
-    Tokens are set as httponly cookies, but also returned in
-    response body for client convenience.
+    The response exposes the access token and user details. The refresh
+    token is delivered only in its HttpOnly cookie.
     """
 
-    access_token: str = Field(..., description="JWT access token (also set as httponly cookie)")
-    refresh_token: str = Field(..., description="JWT refresh token (also set as httponly cookie)")
+    access_token: str = Field(..., description="JWT access token for API authorization")
     user_id: int = Field(..., description="ID of the authenticated user")
     username: str = Field(..., description="Username of the authenticated user")
     first_name: str | None = Field(default=None, description="User's first name (if provided)")
@@ -168,8 +167,7 @@ class HybridTokenRefreshResponseSchema(Schema):
     - Refresh token: NOT in response (remains in HTTP-only cookie)
     - Metadata: Expiration info for frontend token management
 
-    This differs from TokenResponseSchema which returns both tokens for
-    cookie-based authentication.
+    This includes expiration metadata alongside the access token.
     """
 
     access_token: str = Field(

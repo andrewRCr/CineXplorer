@@ -128,7 +128,7 @@
             }
           }
         },
-        "description": "Obtain JWT access and refresh tokens (login) for hybrid authentication.\n\nHybrid Authentication Architecture:\n- Authenticates user with username/email and password\n- Returns access token in response body (frontend stores in localStorage)\n- Sets refresh token as HTTP-only cookie (XSS-proof, secure)\n- Access token has 5-minute lifetime (short-lived, reduces XSS risk)\n- Refresh token has 14-day lifetime (long-lived, stored securely)\n\nArgs:\n    request: HTTP request object\n    response: HTTP response object (for setting refresh token cookie)\n    payload: Login credentials (login, password)\n\nReturns:\n    Status: the status code and response data\n        - 200: Authentication successful, access token in body, refresh token in cookie\n        - 400: Missing credentials\n        - 401: Invalid credentials\n        - 403: Email not verified\n\nResponse body includes:\n    - access: JWT access token for localStorage (frontend manages)\n    - refresh: JWT refresh token value (also in HTTP-only cookie)\n    - user_id: Authenticated user's ID\n    - email_verified: Email verification status\n\nCookie attributes (refresh token only):\n    - httponly: True (prevents JavaScript access)\n    - secure: True (HTTPS only)\n    - samesite: Lax (CSRF protection)",
+        "description": "Obtain JWT access and refresh tokens (login) for hybrid authentication.\n\nHybrid Authentication Architecture:\n- Authenticates user with username/email and password\n- Returns access token in response body (frontend stores in localStorage)\n- Sets refresh token as HTTP-only cookie (XSS-proof, secure)\n- Access token has 5-minute lifetime (short-lived, reduces XSS risk)\n- Refresh token has 14-day lifetime (long-lived, stored securely)\n\nArgs:\n    request: HTTP request object\n    response: HTTP response object (for setting refresh token cookie)\n    payload: Login credentials (login, password)\n\nReturns:\n    Status: the status code and response data\n        - 200: Authentication successful, access token in body, refresh token in cookie\n        - 400: Missing credentials\n        - 401: Invalid credentials\n        - 403: Email not verified\n\nResponse body includes:\n    - access_token: JWT access token for browser storage (frontend manages)\n    - user_id: Authenticated user's ID\n    - email_verified: Email verification status\n\nCookie attributes (refresh token only):\n    - httponly: True (prevents JavaScript access)\n    - secure: True (HTTPS only)\n    - samesite: Lax (CSRF protection)",
         "tags": [
           "Authentication"
         ],
@@ -3387,16 +3387,11 @@
         "type": "object"
       },
       "TokenResponseSchema": {
-        "description": "Schema for JWT token response (obtain and refresh).\n\nTokens are set as httponly cookies, but also returned in\nresponse body for client convenience.",
+        "description": "Schema for JWT token response (obtain and refresh).\n\nThe response exposes the access token and user details. The refresh\ntoken is delivered only in its HttpOnly cookie.",
         "properties": {
           "access_token": {
-            "description": "JWT access token (also set as httponly cookie)",
+            "description": "JWT access token for API authorization",
             "title": "Access Token",
-            "type": "string"
-          },
-          "refresh_token": {
-            "description": "JWT refresh token (also set as httponly cookie)",
-            "title": "Refresh Token",
             "type": "string"
           },
           "user_id": {
@@ -3429,7 +3424,6 @@
         },
         "required": [
           "access_token",
-          "refresh_token",
           "user_id",
           "username",
           "email_verified"
@@ -3459,7 +3453,7 @@
         "type": "object"
       },
       "HybridTokenRefreshResponseSchema": {
-        "description": "Schema for hybrid authentication token refresh response.\n\nHybrid Architecture:\n- Access token: Returned in response body (frontend stores in localStorage)\n- Refresh token: NOT in response (remains in HTTP-only cookie)\n- Metadata: Expiration info for frontend token management\n\nThis differs from TokenResponseSchema which returns both tokens for\ncookie-based authentication.",
+        "description": "Schema for hybrid authentication token refresh response.\n\nHybrid Architecture:\n- Access token: Returned in response body (frontend stores in localStorage)\n- Refresh token: NOT in response (remains in HTTP-only cookie)\n- Metadata: Expiration info for frontend token management\n\nThis includes expiration metadata alongside the access token.",
         "properties": {
           "access_token": {
             "description": "JWT access token for localStorage (5-min lifetime)",

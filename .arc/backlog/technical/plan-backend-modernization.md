@@ -3,8 +3,9 @@
 **Document Purpose:** Track technical debt and improvement opportunities identified during development
 that should be addressed in a comprehensive backend modernization effort.
 
-**Status:** Planning / Future Work
-**Priority:** Medium
+**Status:** Mostly dropped or done (2026-11-06). Asynchronous task processing and the TMDB double-validation refactor
+are dropped; app configuration and the shared module are done. The end-to-end testing section stays until the smoke
+tests' work unit retires it. `ROADMAP.md` lists what launch builds.
 
 **Work Classification:** Technical Infrastructure
 
@@ -26,9 +27,10 @@ This document covers Backend Modernization work AFTER Service Layer Modernizatio
 
 ---
 
-## Asynchronous Task Processing (Celery/Redis) - PLANNED
+## Asynchronous Task Processing (Celery/Redis) - DROPPED
 
-**Status:** Not yet implemented, planned for Backend Modernization
+**Status:** Dropped (2026-11-06): its one use was sending email in the background, and sending it synchronously is
+fine at this size; the server's timers run the nightly jobs.
 
 **Goal:** Implement background task processing for heavy operations and demonstrate scalable backend architecture patterns.
 
@@ -186,7 +188,10 @@ captured as E2E regression tests:
 This section covers Django best practices, refactoring opportunities, and technical debt items
 that should be addressed during Backend Modernization.
 
-### App Configuration - Django Best Practices
+### App Configuration - Django Best Practices ✅ COMPLETE
+
+**Done (2025-12-19, `df96acbc`):** every app's `AppConfig.name` is its full dotted path, such as `apps.authentication`,
+and `INSTALLED_APPS` uses those names.
 
 **Issue:** All Django apps use short names in `AppConfig.name`
 (e.g., `name = 'authentication'`) instead of full dotted module paths
@@ -226,7 +231,9 @@ Django documentation recommends full dotted paths in `AppConfig.name` to:
 
 ---
 
-### Shared Module Deprecation and Migration
+### Shared Module Deprecation and Migration ✅ COMPLETE
+
+**Done (2025-12-17, `2b0c1763`):** the root `shared/` module was removed, with OpenAPI-generated types in its place.
 
 **Issue:** Root-level `shared/` module contains redundant TypedDict definitions that duplicate Django Ninja's
 Pydantic schema functionality.
@@ -301,7 +308,9 @@ Pydantic schema functionality.
 
 ---
 
-### TMDB Model Double Validation Performance
+### TMDB Model Double Validation Performance - DROPPED
+
+**Status:** Dropped (2026-11-06): nothing shows a performance problem, as the deferral below already judged.
 
 **Issue:** Movie service validates TMDB responses twice: first into TMDB* Pydantic models, then
 `model_dump()` and re-validate into application schemas.

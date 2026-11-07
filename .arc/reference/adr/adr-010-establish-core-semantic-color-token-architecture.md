@@ -2,7 +2,12 @@
 
 ## Status
 
-Draft (Implementation in progress)
+Accepted (2025-11-09); Superseded in part by ADR-012 (Decision 5)
+
+Status updated 2026-11-06 from "Draft (Implementation in progress)": the architecture landed through PR #5
+(2025-11-09), and the record was never moved to Accepted.
+
+Implemented by: PR #5 (`ea82a1bd`, 2025-11-09).
 
 ## Context
 
@@ -346,6 +351,16 @@ accent: palette.fg_accent,  // Alias during migration
 - More tokens to understand (brand, brandSecondary, tertiary)
 - Clearer guidance needed on when to use brand vs primary
 - Documentation critical for preventing misuse
+
+**Amendment (2026-11-06):** Two parts were built differently from this record, each by a later decision rather
+than left unfinished:
+
+- The `-foreground` token names in Decision 1 became `on-*` names (`on-primary`, `on-secondary` and so on) under
+  [ADR-011](adr-011-standardize-on-color-foreground-naming.md).
+- GitLab Pajamas was built orange, not with the purple brand and blue primary in Decisions 2 and 3: `brand`,
+  `brandSecondary` and a new `brandTertiary` take the three oranges of GitLab's logo, `primary` uses brand orange
+  (darkened in light mode for contrast), and `tertiary` keeps purple for links. The theme work's GitLab audit made
+  the change (`b33b9eca`, 2025-11-08).
 
 ## Implementation Plan
 

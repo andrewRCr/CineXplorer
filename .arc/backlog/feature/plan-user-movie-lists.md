@@ -3,8 +3,8 @@
 **Document Purpose:** Track planning for custom movie lists/collections feature.
 This captures the concept and key decisions for future reference when work becomes active.
 
-**Status:** Planning / Future Work (Post-Frontend Modernization)
-**Priority:** Medium (after Service Layer + Backend Modernization + Frontend Modernization)
+**Status:** Deferred until after launch (2026-11-06): cut from the launch scope, kept for later. `ROADMAP.md` lists what
+launch builds.
 
 **Work Classification:** Feature
 

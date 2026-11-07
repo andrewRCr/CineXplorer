@@ -68,6 +68,10 @@ are committed, and CI fails when types regenerated from the schema differ from t
 - Django Ninja's CSRF check on cookie authentication rejected valid tokens (its issue #1464), so the API turns that
   check off and relies on a custom CSRF middleware instead (`backend/config/api.py`).
 
+**Amendment (2026-11-06):** On 2026-11-05 the custom CSRF middleware gave way to a subclass of Django's own,
+which checks every unsafe request ([ADR-035](adr-035-check-csrf-on-every-unsafe-request.md)). Django Ninja's check
+stays off, so that Django's middleware owns the validation.
+
 Current state: DRF's views, serializers and routes were gone by 2025-10-21, but the unused `djangorestframework`
 package stayed in `backend/requirements/req.txt` until 2026-10-30; the drift check, first added as its own workflow,
 now runs in `.github/workflows/ci.yml`.

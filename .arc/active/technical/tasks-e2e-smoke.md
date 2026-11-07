@@ -609,3 +609,52 @@ and against staging after every deploy.
   `report-code-pass1.md`, `code-pass1.diff` and `code-pass1-meta.json`.
 - **Stop reason:** converged with zero actionable findings. Elapsed: 9.5 minutes. The earlier author F1 repair
   remains uncommitted with its review records; publication awaits Owner approval. Hosted criteria remain open.
+
+### 2026-11-07 · Verification · First hosted CI run
+
+- **Published target:** PR #131, head `c71993432062d843d787dacf8a2fcf65b3468755`, run `42403518778`.
+  Backend tests/checks, frontend, images, API types and Docs passed; End-to-end smoke and `ci-ok` failed.
+- **Failure:** backend container exited during Start development stack. Migration/seeding and Playwright never ran;
+  hosted criteria 7–8 and Task 6.1 remain open. Staging jobs were skipped on the PR as configured.
+- **Diagnosis:** the job builds the backend with the default UID/GID 1000 while its generated TLS private key is
+  owner-only. A disposable, network-isolated probe ran the unchanged certificate generator: key mode 0600;
+  UID 1000 could not load the TLS context (`PermissionError`), while the matching owner UID succeeded. Logging
+  permission failure was ruled out as fatal because the app falls back to another log directory. The hosted job
+  did not capture backend stdout, so its exact exception remains unavailable; key ownership is the leading cause.
+- **Correction, approved by the Owner:** pass the runner UID/GID through `GITHUB_ENV` to the backend build, and
+  print bounded backend logs when stack startup fails. The applied correction and its local checks are recorded
+  below; the hosted startup result remains unproven until the next run.
+- **Evidence:** `PR-MONITOR.json`, `PR-CI-SNAPSHOT.json`, `pr131-e2e-job.log`, `ci-startup-diagnosis.json` and
+  `ci-startup-probe/` beside the session notes retain the exact target, terminal result and isolated reproductions.
+
+### 2026-11-07 · Verification · CI startup correction
+
+- **Change:** the E2E configuration step exports the runner's UID/GID through `GITHUB_ENV`, which Compose uses for
+  the non-root backend build. Stack startup now prints bounded backend logs on failure and exits nonzero.
+- **Before/after proof:** executed the real configuration step in separate CI-like project folders without the
+  worktree's environment. Before, Compose selected UID/GID 1000 and the generated mode-0600 key failed TLS loading
+  with `PermissionError`; after, Compose selected the runner's UID/GID and TLS loading succeeded with the key's
+  private permissions preserved. Disposable containers were network-isolated.
+- **Diagnostics:** executed the actual startup shell block against a Docker transport stand-in: success exits zero
+  without failure logs; a failed start emits backend logs and exits one. Actionlint passed for the workflow.
+- **Evidence:** `ci-startup-fix-checks/results.json`, its per-case logs, `ci-startup-fix-actionlint.log` and
+  `ci-startup-fix-response.json` beside the session notes. Before/after workflow copies and `ci-startup-fix.patch`
+  retain the exact correction boundary.
+- **Next boundary:** recommend a focused independent review of this CI-only correction, then commit/push on the
+  Owner's approval and monitor the new exact-head run. No hosted rerun, commit or push has occurred for this fix;
+  criteria 7–8 and Task 6.1 remain open.
+
+### 2026-11-07 · Code review · CI correction
+
+- **Target and runner:** fresh non-author read-only subagent `/root/ci_correction_review` reviewed the complete
+  workflow correction from `c7199343` to SHA-256
+  `2f1cd1c2bae4ffc5ecb8730827f1751e73af3277100aee411fcee487e329e578`. The predecessor full review covers
+  the earlier source range; task-file author bookkeeping was excluded from this correction review.
+- **Result:** clean, zero actionable findings; all six standard-review dimensions explicitly considered. Source
+  tracing covered runner IDs, Compose interpolation, image user, generated key and mounts. Independent extracted-shell
+  checks covered startup success and failure, including diagnostic logging failure; failures remained nonzero.
+- **Limits and record:** no real stack, heavy suites or hosted Actions ran in the review. The report and identity
+  metadata are retained as `adversarial-review/report-ci-correction.md` and `ci-correction-meta.json` beside the
+  session notes. Hosted startup and criteria 7–8 remain pending the approved correction push.
+- **Publication:** the Owner approved this focused review and, if clean, one commit/push of the correction and its
+  evidence followed by exact-head CI monitoring. Task 6.1 remains open until hosted evidence is available.

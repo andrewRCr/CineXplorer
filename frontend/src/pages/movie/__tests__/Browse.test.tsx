@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import userEvent from "@testing-library/user-event";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import {
   Link,
   MemoryRouter,

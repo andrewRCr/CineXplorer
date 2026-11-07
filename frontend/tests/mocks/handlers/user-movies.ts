@@ -1,4 +1,4 @@
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse } from "msw/http";
 import { apiBaseUrl } from "@/config/baseUrls";
 import type { MovieListResponseSchema } from "@/services/userMovieService";
 

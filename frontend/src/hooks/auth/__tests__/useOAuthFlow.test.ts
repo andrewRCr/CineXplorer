@@ -8,7 +8,7 @@ import {
     it,
     vi,
 } from "vitest";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import { useOAuthFlow } from "../useOAuthFlow";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { server } from "@tests/mocks/server";

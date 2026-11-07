@@ -1,5 +1,6 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { delay, http, HttpResponse } from "msw";
+import { http, HttpResponse } from "msw/http";
+import { delay } from "msw/utils/delay";
 import { describe, expect, it } from "vitest";
 import { server } from "@tests/mocks/server";
 import { useUserMovieData, type UserMovieData } from "../useUserMovieData";

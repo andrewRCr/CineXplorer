@@ -374,8 +374,8 @@ def verified_user(db: None) -> Any:  # noqa: ANN401 - User type from fixtures mo
 
     Note:
         For multiple users or custom parameters, use create_user() directly:
-        user1 = create_user(email='custom1@example.com')
-        user2 = create_user(email='custom2@example.com', email_verified=False)
+        user1 = create_user(username='first', email='custom1@example.com')
+        user2 = create_user(username='second', email='custom2@example.com', email_verified=False)
     """
     from apps.core.tests.test_helpers import create_user
 

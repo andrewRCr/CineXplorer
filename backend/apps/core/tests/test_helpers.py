@@ -340,51 +340,25 @@ def create_user(email_verified: bool = True, **params: Unpack[UserParams]) -> "U
         "last_name": "User",
     }
 
-    # Generate unique defaults for --keepdb compatibility
-    if "username" not in params:
-        unique_suffix = str(uuid.uuid4())[:8]
-        defaults["username"] = f"testuser_{unique_suffix}"
+    # Distinct users within one test still need distinct default email addresses.
     if "email" not in params:
         unique_suffix = str(uuid.uuid4())[:8]
         defaults["email"] = f"testuser_{unique_suffix}@example.com"
 
     user_data = {**defaults, **params}
 
-    # For --keepdb compatibility: reuse existing user if present, else create new
-    user: UserType
-    try:
-        user = cast("UserType", User.objects.get(username=user_data["username"]))
-        # Update user attributes to match requested params
-        for key, value in user_data.items():
-            if key != "password":
-                setattr(user, key, value)
-        user.save()
-        # Update password if provided
-        if "password" in user_data:
-            password_value = user_data["password"]
-            if isinstance(password_value, str):
-                user.set_password(password_value)
-                user.save()
-    except User.DoesNotExist:
-        # Create new user
-        user = cast(
-            "UserType",
-            User.objects.create_user(**user_data),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
-        )
+    user = cast(
+        "UserType",
+        User.objects.create_user(**user_data),  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+    )
 
-    # Mark email as verified if requested using allauth EmailAddress API
-    # Use get_or_create to support --keepdb flag (reusing test database)
     if email_verified:
-        email_address, created = EmailAddress.objects.get_or_create(
+        EmailAddress.objects.create(
             user=user,
-            email=str(user.email),  # Cast to str for type safety
-            defaults={"verified": True, "primary": True},
+            email=str(user.email),
+            verified=True,
+            primary=True,
         )
-        if not created:
-            # Update existing EmailAddress if it was already there
-            email_address.verified = True
-            email_address.primary = True
-            email_address.save()
 
     return user
 

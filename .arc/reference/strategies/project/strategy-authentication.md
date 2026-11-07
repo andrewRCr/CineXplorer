@@ -451,6 +451,11 @@ Password sign-in chooses local storage for remember-me and session storage other
 provider's existing session and clear their loading flags. Manual sign-out clears local state and then calls the
 password logout endpoint or allauth's CSRF-protected session DELETE.
 
+Password sign-out blacklists a valid refresh token before expiring its HttpOnly cookie, so a copy cannot renew
+credentials afterward. Missing, expired, malformed or already revoked refresh cookies still receive a successful
+sign-out and cookie deletion. The endpoint requires CSRF protection, but no authenticated session. A blacklist write
+failure follows the API's standard server-error response rather than reporting successful sign-out.
+
 **API Client Configuration** (`frontend/src/services/apiClient.ts`):
 
 The client sends credentials for both authentication patterns and attaches an access token when one is stored.
@@ -504,7 +509,7 @@ never enter this branch. CSRF initialization and the refresh POST live inside th
 |---------------------|--------|---------------|----------------------|------------------------------------------------------|--------------------------------------------------------|
 | `/api/token/`       | POST   | No            | Email/password login | `{login, password}`                                  | `{access_token, user_id, email_verified}` + Set-Cookie |
 | `/api/auth/refresh` | POST   | Yes (cookie)  | Refresh access token | (empty)                                              | `{access_token}`                                       |
-| `/api/logout/`      | POST   | Yes (JWT)     | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                            |
+| `/api/logout/`      | POST   | No            | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                            |
 | `/api/register/`    | POST   | No            | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                          |
 | `/api/profile/`     | GET    | Yes (JWT)     | Get user profile     | N/A                                                  | `{id, username, email, ...}`                           |
 
@@ -667,7 +672,7 @@ JavaScript neither reads nor stores them.
    - JWT token refresh generates new tokens
    - Session authentication persists across requests
    - OAuth logout clears session cookie
-   - JWT logout clears refresh_token cookie
+   - JWT logout revokes the refresh token and clears its cookie
    - Hybrid auth supports both patterns on same endpoint
 
 2. **CSRF Protection Tests** (`backend/apps/authentication/tests/test_csrf_protection.py`):

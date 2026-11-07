@@ -197,28 +197,22 @@ export interface paths {
         put?: never;
         /**
          * Logout
-         * @description Logout user by clearing JWT cookies (hybrid authentication).
+         * @description Revoke the refresh token and clear its cookie (hybrid authentication).
          *
-         *     Clears refresh token cookie to end the session. No authentication required
-         *     since logout is idempotent (just deletes browser cookies) and users may
-         *     call it when tokens are already expired.
+         *     No authentication is required, so sign-out remains available when credentials
+         *     are missing, expired or already revoked. CSRF protection still applies.
+         *     A valid refresh token is blacklisted before its cookie is cleared; unexpected
+         *     persistence failures use the API's standard server-error response.
          *
-         *     Hybrid Authentication Note:
-         *     - Only deletes refresh token cookie (access token managed by frontend in localStorage)
-         *     - Frontend should clear localStorage access token separately
-         *     - Uses matching cookie attributes to ensure reliable removal across browsers
+         *     The frontend clears its stored access token separately. Cookie deletion uses
+         *     matching path, domain and SameSite attributes for reliable browser removal.
          *
          *     Args:
-         *         request: HTTP request object (no authentication required)
-         *         response: HTTP response object (for deleting cookies)
+         *         request: HTTP request object containing the optional refresh cookie
+         *         response: HTTP response object for deleting the refresh cookie
          *
          *     Returns:
-         *         Status: the status code and response data
-         *             - 200: Logout successful, cookies cleared
-         *
-         *     Cookie deletion:
-         *         - Deletes refresh token cookie (HTTP-only, secure)
-         *         - Uses same path, domain, samesite as when cookie was set
+         *         Status: 200 and a confirmation message after sign-out succeeds
          */
         post: operations["apps_authentication_api_logout"];
         delete?: never;

@@ -126,7 +126,7 @@ def blacklist_token(token: RefreshToken) -> None:
         >>> blacklist_token(old_refresh)  # Blacklists with error handling
     """
     try:
-        token.blacklist()  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
+        token.blacklist()
     except AttributeError:
         # blacklist() method not available - library might not support it
         logger.warning(

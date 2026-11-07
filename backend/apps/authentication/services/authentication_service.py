@@ -547,9 +547,22 @@ class AuthenticationService:
             )
             return 400, {"error": "An error occurred during token refresh. Please try again."}
 
-    def logout(self, response: HttpResponse) -> tuple[int, dict[str, object]]:
-        """Clear refresh token cookie for logout."""
+    def logout(
+        self, request: HttpRequest, response: HttpResponse
+    ) -> tuple[int, dict[str, object]]:
+        """Revoke the refresh token and clear its browser cookie."""
         jwt_settings = self._jwt_settings_provider()
+        refresh_token_value = request.COOKIES.get(jwt_settings.refresh_token_name)
+        if refresh_token_value:
+            try:
+                refresh = self._refresh_token_cls(refresh_token_value)
+            except TokenError:
+                # Invalid or already revoked credentials cannot renew.
+                pass
+            else:
+                # A successful sign-out must persist revocation.
+                # Storage errors reach the API handler.
+                refresh.blacklist()
         response.set_cookie(
             jwt_settings.refresh_token_name,
             "",

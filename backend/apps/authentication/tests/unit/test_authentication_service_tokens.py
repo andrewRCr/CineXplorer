@@ -188,7 +188,7 @@ def test_logout_clears_refresh_cookie(auth_service_factory: AuthServiceFactory) 
     service, deps = auth_service_factory()
     response = Mock()
 
-    status, data = service.logout(response)
+    status, data = service.logout(Mock(COOKIES={}), response)
 
     assert status == 200
     data_dict = normalize_response_data(data)

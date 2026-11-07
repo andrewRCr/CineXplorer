@@ -1,4 +1,5 @@
-import { within } from "@testing-library/react";
+import { within, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 /**
  * Tests for BackToTopButton component
  *
@@ -67,11 +68,8 @@ beforeEach(() => {
 
   // Mock window.scrollTo
   window.scrollTo = mockScrollTo;
-
-  // Mock requestAnimationFrame to execute immediately in tests
-  vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
-    cb(0);
-    return 0;
+  mockScrollTo.mockImplementation((options: ScrollToOptions) => {
+    if (options.top !== undefined) setMockScrollY(options.top);
   });
 });
 
@@ -197,20 +195,18 @@ describe("BackToTopButton", () => {
       expect(button).not.toHaveAttribute("tabIndex", "-1");
     });
 
-    it("responds to keyboard activation (Enter)", () => {
+    it("responds to keyboard activation (Enter)", async () => {
+      const user = userEvent.setup();
       simulateScrollTo(300);
 
       render(<BackToTopButton />);
 
       const button = screen.getByRole("button", { name: /scroll to top/i });
-      button.focus();
-      fireEvent.keyDown(button, { key: "Enter", code: "Enter" });
-      fireEvent.keyUp(button, { key: "Enter", code: "Enter" });
+      await user.tab();
+      expect(button).toHaveFocus();
+      await user.keyboard("{Enter}");
 
-      // JSDOM limitation: keyDown doesn't trigger native button click behavior
-      // Verify button is focusable and interactive via click
-      fireEvent.click(button);
-      expect(mockScrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+      expect(window.scrollY).toBe(0);
     });
   });
 
@@ -285,34 +281,30 @@ describe("BackToTopButton", () => {
       expect(button).toBeInTheDocument();
     });
 
-    it("handles rapid scroll up/down", () => {
-      const { rerender } = render(<BackToTopButton />);
+    it("handles rapid scroll up/down", async () => {
+      render(<BackToTopButton />);
 
-      // Scroll down - wrap in act() to handle state updates
       act(() => {
         simulateScrollTo(300);
       });
-      rerender(<BackToTopButton />);
       expect(
-        screen.getByRole("button", { name: /scroll to top/i }),
+        await screen.findByRole("button", { name: /scroll to top/i }),
       ).toBeInTheDocument();
 
-      // Scroll back up
       act(() => {
         simulateScrollTo(50);
       });
-      rerender(<BackToTopButton />);
-      expect(
-        screen.queryByRole("button", { name: /scroll to top/i }),
-      ).not.toBeInTheDocument();
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("button", { name: /scroll to top/i }),
+        ).not.toBeInTheDocument();
+      });
 
-      // Scroll down again
       act(() => {
         simulateScrollTo(400);
       });
-      rerender(<BackToTopButton />);
       expect(
-        screen.getByRole("button", { name: /scroll to top/i }),
+        await screen.findByRole("button", { name: /scroll to top/i }),
       ).toBeInTheDocument();
     });
   });

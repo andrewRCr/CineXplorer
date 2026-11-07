@@ -3,8 +3,8 @@
 **Purpose:** Define when each quality check runs during development: at the moment its failure must be resolved, not
 at every milestone. This keeps feedback fast and stops parallel sessions from multiplying full-suite runs.
 
-**Scope:** General ARC methodology. Project-specific test commands, tooling, and component-to-test mappings
-belong in project documentation (QUICK-REFERENCE, testing methodology strategy).
+**Scope:** General ARC methodology, with examples using CineXplorer's commands. QUICK-REFERENCE and the testing
+methodology strategy remain the reference for project tooling and component-to-test mappings.
 
 ---
 
@@ -79,18 +79,15 @@ tests. Ask:
 3. **Cross-cutting changes:** did it modify shared infrastructure (context providers, hooks used by many components,
    global state)? These have a wider blast radius.
 
-Run the specific files, on a single browser configuration; the full browser matrix belongs to CI and verification.
-Example patterns (project-specific commands vary):
+Run the covering specs against the worktree's browsable stack, started with `node scripts/worktree.mjs browse`.
+From `frontend/`, set its site address; the tier uses Chromium only:
 
 ```bash
-# Run tests for a specific area
-npm run test:e2e -- e2e/tests/layout.spec.ts
+# Filter-preserving detail navigation
+E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/movie-detail.spec.ts
 
-# Run tests matching a tag/grep pattern
-npm run test:e2e -- --grep "@navigation"
-
-# Run on a single browser for speed
-npm run test:e2e -- --project="Desktop Chrome" e2e/tests/layout.spec.ts
+# Scroll restoration after reloading detail
+E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/back-to-results.spec.ts
 ```
 
 ---
@@ -103,7 +100,8 @@ specific E2E file, a build, a migration dry run.
 ```markdown
 - [ ] **3.2 Update FooterBar positioning**
     - [implementation details]
-    - Check: `npm run test:e2e -- e2e/tests/layout.spec.ts` (drives the footer)
+    - Check in `frontend/`, with the worktree's browsable stack running:
+      `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/sign-in.spec.ts` (scans the footer)
 ```
 
 **No checkpoint tasks.** No per-parent quality gate, no full-suite checkpoint task, and no final "Testing & Quality
@@ -143,7 +141,7 @@ They take seconds. Skipping them lets type errors and lint violations accumulate
 Not naming the broader checks that have not run. The report says what ran and what did not.
 
 **❌ The full E2E suite for one component:**
-Run the files that drive the change; the matrix belongs to CI and verification.
+Run the files that drive the change against the worktree's browsable stack; CI and verification run all five specs.
 
 **❌ Merging on red:**
 A failing CI check is resolved before merge, never overridden.

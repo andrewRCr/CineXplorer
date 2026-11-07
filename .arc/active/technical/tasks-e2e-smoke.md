@@ -234,33 +234,17 @@ and against staging after every deploy.
         - The unmatched `/login` `color-contrast` entry is expected: staging skips sign-up, so the registration
           confirmation notice is absent. The entry remains necessary for the local target.
 
-- [ ] **5.3 Documentation, and retiring the earlier plan**
-    - `strategy-testing-methodology.md`, E2E sections (`E2E Test Coordination`, `Structure`, `Best Practices`) and
-      "When to Use Each Test Type": what the tier covers, the two targets and the fixture boundary, the selector
-      rule, the card-link naming the specs rely on, the axe baseline, running locally (the primary's stack sends real
-      mail; resetting the registration limit), and agent browser checks as spot and visual verification, never a gate.
-      The outdated example and "future" layout go
-    - `strategy-quality-gates.md`: E2E Checks keeps the per-task rule (a task that changes a page or flow a spec
-      drives runs the specs covering it, against the worktree's browsable stack); E2E Checks, Task List Integration's
-      example and Anti-Patterns name real commands and spec files, and the browser-matrix wording goes; its Scope line
-      notes that its examples use this project's commands, with QUICK-REFERENCE and the testing strategy still the
-      reference for them
-    - `DEVELOPMENT-RULES.md` § Quality Gates: the per-task rule under "Each task", the end-to-end job in the
-      pull-request list, and the end-to-end run in the full run with a worktree's browsable stack as precondition
-    - `QUICK-REFERENCE.md`: the E2E command and the full run's end-to-end step
-    - `TECHNICAL-OVERVIEW.md` § 7 Testing Infrastructure: the end-to-end tier beside backend and frontend testing
-    - `worktree-sessions.md` "What Runs Where": the end-to-end run, against the worktree's browsable stack
-    - Re-read the backlog files as merged from `main`: its backlog cleanup changed several of them
-    - Remove `prd-e2e-testing-foundation.md` and `tasks-e2e-testing-foundation.md`; in
-      `plan-backend-modernization.md`, remove the "End-to-End Testing (Playwright)" section, its organization-list
-      line, "Playwright" in the broader-work line, and the Status sentence "The end-to-end testing section stays until
-      the smoke tests' work unit retires it."
-    - `BACKLOG-TECHNICAL.md` Mobile Responsiveness Remediation: keep its goal (fixing mobile viewport issues); drop the
-      CI mobile discovery tier as its scope source, promoting mobile E2E tests to blocking, its sequencing after the
-      earlier E2E work unit, and the reference to the removed PRD
-    - `.arc/backlog/feature/plan-user-movie-data-features.md`, "Dependencies & Sequencing": drop "Playwright E2E
-      testing" from Phase 1 Backend Modernization; its own E2E Tests section, for future watchlist flows, stays
-    - Search `.arc/` for remaining references to the removed files and section
+- [x] **5.3 Documentation, and retiring the earlier plan**
+    - Updated the testing strategy with the five specs, two targets, catalogue/selector contracts, score variants,
+      route/rule baseline, artifacts, local/staging commands, registration-history reset, and agent browser checks.
+    - Updated the quality-gates strategy, DEVELOPMENT-RULES, QUICK-REFERENCE, TECHNICAL-OVERVIEW, and worktree
+      guidance: covering specs run per task, the full run includes E2E, and CI requires the smoke job. The worktree
+      command lives in What Runs Where, with its browsable-stack precondition.
+    - Removed the two superseded E2E foundation files and their backend-modernization section/list/dependency.
+      Preserved mobile remediation's goal and the user-movie feature plan's future E2E scenarios while removing its
+      dependency on the retired tier. Historical roadmap cut/change-log entries remain.
+    - Markdown lint passed for all nine edited guidance/backlog documents and this task list; whitespace checks
+      passed. Retirement-name searches now find only this work's intentional PRD/task requirements.
 
 ### **Phase 6:** Verification
 

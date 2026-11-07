@@ -179,6 +179,25 @@ docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pyte
 # ❌ Incorrect: --cov=apps/authentication/api.py (file path - will fail)
 ```
 
+### End-to-End Smoke Tests
+
+Use a worktree's browsable stack: it has its own database, seeded account, and discarded mail. The primary stack
+sends real verification mail. From the worktree root:
+
+```bash
+node scripts/worktree.mjs browse
+# Prints https://localhost:{SITE_PORT}; use SITE_PORT from infrastructure/.env below
+cd frontend
+E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e
+# Only the affected flow
+E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/browse.spec.ts
+```
+
+The five Chromium specs scan their pages with axe, use catalogue fixtures locally, and have no retries. CI requires
+them through `ci-ok`; its staging target skips registration and runs after deployment. See the
+[testing strategy](strategies/project/strategy-testing-methodology.md#e2e-best-practices) for staging credentials,
+artifacts, the accessibility baseline, and resetting the local registration limit.
+
 ### Linting (Frontend)
 
 ```bash
@@ -315,6 +334,11 @@ npx pyright backend/apps/ backend/config/ --project backend
 
 # 7. Markdown Linting (with auto-fix)
 npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
+
+# 8. End-to-End Smoke Tests: precondition is this worktree's running browsable stack
+# Start it from the worktree root: node scripts/worktree.mjs browse
+# Use SITE_PORT from infrastructure/.env; run the command from frontend/
+(cd frontend && E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e)
 ```
 
 ---

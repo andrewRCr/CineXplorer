@@ -1,4 +1,4 @@
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { server } from "../mocks/server";
 

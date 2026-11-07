@@ -95,7 +95,7 @@ vi.mock("next-themes", () => ({
 }));
 
 beforeAll(() => {
-    server.listen({ onUnhandledRequest: "error" });
+    server.listen({ onUnhandledFrame: "error" });
 });
 
 // Restore shared defaults after every test; runtime handlers never leak.

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import { siteOrigin } from "@/config/baseUrls";
 import { server } from "@tests/mocks/server";
 import { authHandlers, clearBrowserAuth, profile } from "@tests/helpers/auth";

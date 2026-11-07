@@ -8,6 +8,13 @@ export default defineConfig({
     test: {
         // Environment configuration
         environment: "jsdom",
+        environmentOptions: {
+            jsdom: { url: "http://localhost:3000" },
+        },
+        env: {
+            VITE_BASE_URL: "http://localhost:3000",
+            VITE_BASE_API_URL: "http://localhost:3000/api",
+        },
 
         // Global test setup
         globals: true,

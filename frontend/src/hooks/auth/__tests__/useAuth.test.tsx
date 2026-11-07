@@ -7,7 +7,7 @@ import {
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import { useAuth } from "../useAuth";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";

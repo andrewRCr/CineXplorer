@@ -1,5 +1,5 @@
 import { beforeEach, expect, it } from "vitest";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import { resetPassword } from "../authService";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { server } from "@tests/mocks/server";

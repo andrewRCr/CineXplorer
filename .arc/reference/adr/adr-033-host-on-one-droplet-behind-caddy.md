@@ -83,6 +83,11 @@ then the production host.
 Current state: the droplet serves only `staging.cinexplorer.andrewcreekmore.dev`, deployed by hand from the runbook;
 the production host waits for launch.
 
+**Amendment (2026-11-06):** The first deployment's gaps closed on 2026-11-05. Commits that pass CI on `main` now
+deploy automatically ([ADR-036](adr-036-deploy-from-ci-over-a-restricted-key.md)); branch deploys and rollbacks stay
+manual. The database is backed up nightly to Cloudflare R2, with heartbeat and uptime alerts
+([ADR-037](adr-037-back-up-the-database-nightly-to-r2.md)). Maintenance jobs run on the same server's timers.
+
 ## References
 
 - `.arc/reference/archive/2026-q4/technical/06_staging-deploy/prd-staging-deploy.md`: §§ 1, 2 (goal 3) and 5;

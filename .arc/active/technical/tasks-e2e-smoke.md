@@ -150,24 +150,16 @@ and against staging after every deploy.
           `GET /api/movies/browse`; removed the scratch spec after confirming that exact teardown failure.
         - Lint and type-check passed. Startup probes refused missing URL, username, and password by name.
 
-- [ ] **2.3 Sign-in and sign-out spec**
-    - Sign in at `/login` (labels "Username or Email Address" and "Password", button "Login"): lands on `/`, whose
-      heading is "Welcome to CineXplorer" (that page fetches no movie data)
-    - Signed out, the navbar also shows a "Login" button, which comes before the form's; take the form's with `last()`
-    - Signed in: the user-menu button carries the username (its accessible name also holds the avatar's initial, so
-      match the name non-exactly); open it, choose "Logout", and the navbar shows the "Login" button
-    - Seen failing against a narrow break (for example, the user menu rendering no username), then restored
-    - **Check:** `npm run test:e2e -- e2e/sign-in.spec.ts` against this worktree's browsable stack
+- [x] **2.3 Sign-in and sign-out spec**
+    - Real sign-in reaches the welcome page and the username menu; sign-out restores Login.
+    - The spec failed when the menu lost its username and passed after restoration.
+    - Scoped ESLint, formatting, TypeScript, and the Chromium spec passed.
 
-- [ ] **2.4 Sign-up spec (`local` only)**
-    - Register at `/register` (labels "Email Address", "CineXplorer Username" and "Password", button "Register") with
-      a unique username and an `example.com` address; land on `/login` showing "Account created! Check your email to
-      verify your account before logging in."
-    - Skipped in the `staging` target
-    - Registration allows three sign-ups an hour per client IP; when a local run hits the limit, clear the
-      `auth_register` throttle history from this worktree's Redis and rerun
-    - Seen failing against a narrow break (for example, `register_user` returning an error), then restored
-    - **Check:** `npm run test:e2e -- e2e/sign-up.spec.ts` against this worktree's browsable stack
+- [x] **2.4 Sign-up spec (`local` only)**
+    - Unique synthetic registration reaches the real backend and the check-your-email notice on `/login`.
+    - Staging skips registration. The spec failed with the notice removed and passed after restoration.
+    - Both auth specs passed together in 6.5 seconds; scoped lint, formatting, and TypeScript passed.
+    - Removed the temporary tooling placeholder now that real specs exercise the fixture.
 
 - [ ] **2.5 Write ADR-039 reading `Proposed`**
     - Records the tier's shape: PRD Design Decisions 1–9 (what the specs talk to, one spec set for both targets, mail,

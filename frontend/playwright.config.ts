@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
+import { target } from "./e2e/target";
 
-const staging = process.env.E2E_TARGET === "staging";
+const staging = target.name === "staging";
 
 export default defineConfig({
     testDir: "./e2e",
@@ -10,7 +11,7 @@ export default defineConfig({
     use: {
         browserName: "chromium",
         viewport: { width: 1280, height: 800 },
-        baseURL: process.env.E2E_BASE_URL,
+        baseURL: target.baseURL,
         ignoreHTTPSErrors: !staging,
         trace: staging ? "off" : "retain-on-failure",
         screenshot: staging ? "off" : "only-on-failure",

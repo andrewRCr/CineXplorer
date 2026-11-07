@@ -125,15 +125,15 @@ and against staging after every deploy.
         - **Check:** `npm run lint` and `npm run type-check` pass over a placeholder spec and a placeholder
           `test.extend` fixture in `e2e/`: both passed, and Playwright ran the placeholder successfully.
 
-- [ ] **2.2 Targets and the fixture boundary**
+- [x] **2.2 Targets and the fixture boundary**
 
-    - [ ] **2.2.a Target settings**
+    - [x] **2.2.a Target settings**
         - `E2E_TARGET` (`local` by default, or `staging`); `E2E_BASE_URL` required, with a message naming it when
           missing; `E2E_USERNAME` and `E2E_PASSWORD` default to `dev` / `cinexplorer-dev` (`seed_dev_data`) in `local`
           and are required in `staging`, with a message naming them
         - `ignoreHTTPSErrors` only in `local` (the development stack's self-signed certificate)
 
-    - [ ] **2.2.b Fixture helper in `frontend/e2e/`**
+    - [x] **2.2.b Fixture helper in `frontend/e2e/`**
         - Extend Playwright's `test` with a fixture that, in `local`, routes requests whose path starts with
           `/api/movies`, `/api/genres`, `/api/keywords` or `/api/people` to fixture handlers, and aborts requests to
           any other origin than the site's
@@ -147,7 +147,8 @@ and against staging after every deploy.
           no-votes case has no score or 0 votes, and these cards sit in the grid's first rows, since only the rows in
           view are rendered when a page is scanned
         - Show the failure once: a scratch spec that opens `/browse` with no fixtures fails naming
-          `GET /api/movies/browse`; remove the scratch spec
+          `GET /api/movies/browse`; removed the scratch spec after confirming that exact teardown failure.
+        - Lint and type-check passed. Startup probes refused missing URL, username, and password by name.
 
 - [ ] **2.3 Sign-in and sign-out spec**
     - Sign in at `/login` (labels "Username or Email Address" and "Password", button "Login"): lands on `/`, whose

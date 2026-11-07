@@ -352,3 +352,78 @@ describe("email failures and the global server-error toast", () => {
         },
     );
 });
+
+describe("authorization and pagination responses", () => {
+    it("preserves a forbidden response and the current signed-in session", async () => {
+        document.cookie = "csrftoken=authorization-csrf; path=/";
+        const access = token();
+        setAuthTokens(access);
+        window.location.href = "http://localhost:3000";
+        let refreshes = 0;
+        server.use(
+            http.get(`${apiBaseUrl}/forbidden`, () =>
+                HttpResponse.json({ detail: "Forbidden" }, { status: 403 }),
+            ),
+            http.post(`${apiBaseUrl}/auth/refresh`, () => {
+                refreshes++;
+                return HttpResponse.json(
+                    { detail: "Not refreshed" },
+                    { status: 401 },
+                );
+            }),
+        );
+        await expect(apiClient.get("/forbidden")).rejects.toMatchObject({
+            response: { status: 403, data: { detail: "Forbidden" } },
+        });
+        expect(localStorage.getItem("access_token")).toBe(access);
+        expect(window.location.href).toBe("http://localhost:3000");
+        expect(refreshes).toBe(0);
+    });
+
+    it("uses one pagination context for movie collections and omits it elsewhere", async () => {
+        const endpoints = [
+            "/movies/browse",
+            "/movies/now-playing",
+            "/movies/upcoming",
+            "/movies/search",
+        ];
+        let context: string | null = null;
+        server.use(
+            ...endpoints.map((endpoint) =>
+                http.get(`${apiBaseUrl}${endpoint}`, ({ request }) => {
+                    const received = request.headers.get(
+                        "X-Pagination-Context",
+                    );
+                    if (context === null) context = received;
+                    return received && received === context
+                        ? HttpResponse.json({
+                              page: 1,
+                              total_pages: 0,
+                              total_results: 0,
+                              results: [],
+                          })
+                        : HttpResponse.json(
+                              { detail: "Pagination context required" },
+                              { status: 400 },
+                          );
+                }),
+            ),
+            http.get(`${apiBaseUrl}/profile/`, ({ request }) =>
+                request.headers.has("X-Pagination-Context")
+                    ? HttpResponse.json(
+                          { detail: "Unexpected pagination context" },
+                          { status: 400 },
+                      )
+                    : HttpResponse.json({ id: 7 }),
+            ),
+        );
+        for (const endpoint of endpoints)
+            expect((await apiClient.get(endpoint)).data).toEqual({
+                page: 1,
+                total_pages: 0,
+                total_results: 0,
+                results: [],
+            });
+        expect((await apiClient.get("/profile/")).data).toEqual({ id: 7 });
+    });
+});

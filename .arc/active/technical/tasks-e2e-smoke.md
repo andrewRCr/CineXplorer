@@ -4,7 +4,7 @@
 **Created:** 2026-11-06
 **Branch:** `technical/e2e-smoke`
 **Base Branch:** `main`
-**Status:** Pending
+**Status:** In Progress
 
 ## Overview
 
@@ -317,8 +317,8 @@ and against staging after every deploy.
 
 ## Implementation Notes
 
-- **Merge `main` before Phase 1:** after this list was planned, `main` gained ADRs 034–038, the backlog cleanup that
-  task 5.3 builds on, and a refresh-token change in the auth flow the specs drive.
+- **Keep `main` merged:** activation merged it, bringing ADRs 034–038, the backlog cleanup that task 5.3 builds on,
+  and a refresh-token change in the auth flow the specs drive; merge it again if it moves before Phase 1.
 - **Running specs locally:** bring up this worktree's browsable stack with `node scripts/worktree.mjs browse` (it
   migrates and seeds); its address is `https://localhost:{SITE_PORT}` from `infrastructure/.env`. The primary
   checkout's stack sends real mail, so the sign-up spec never runs against it.

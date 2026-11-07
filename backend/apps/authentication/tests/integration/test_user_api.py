@@ -397,7 +397,7 @@ def test_refresh_token_cookie_updated(registered_user: tuple[Client, dict[str, s
     # Get current refresh token
     old_refresh_cookie = client.cookies.get("refresh_token")
     old_refresh = old_refresh_cookie.value if old_refresh_cookie else None
-    refresh_url = "/api/token/refresh/"
+    refresh_url = "/api/auth/refresh"
 
     # Refresh requests carry Django's csrftoken cookie and X-CSRFToken header.
     csrf_token = "test_csrf_token"

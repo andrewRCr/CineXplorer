@@ -57,20 +57,19 @@ def test_token_refresh_after_page_reload_token_still_valid(
 ) -> None:
     """Verify tokens persist across page reloads when still valid.
 
-    Hybrid Auth Pattern (Backend supports BOTH):
+    Access and refresh token transport:
     - Access token: Returned in response body (frontend stores in sessionStorage)
-    - Backend accepts: Authorization header OR access_token cookie (hybrid)
+    - Backend accepts: Authorization Bearer header
     - Refresh token: Set as HTTP-only cookie (XSS-proof, auto-sent by browser)
 
     Simulates:
     1. User logs in (access token in response, refresh token in cookie)
     2. Page reload (sessionStorage persists, cookie auto-sent)
-    3. API call with access token (works via Authorization header OR cookie)
+    3. API call with access token (works via Authorization header)
 
     Expected: Tokens persist across reload, authenticated requests work.
 
-    Note: Production frontend uses Authorization header. This test validates
-    both authentication paths work correctly (header preferred, cookie fallback).
+    The production frontend sends the stored access token in the Authorization header.
     """
     # Step 1: Login to get initial tokens
     access_token, refresh_token = login_and_get_tokens(
@@ -154,7 +153,7 @@ def test_expired_access_token_refresh_token_still_valid(
         # Refresh token cookie is automatically sent by browser
         csrf_token = get_csrf_token(fresh_client)
         refresh_response = fresh_client.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
@@ -210,14 +209,13 @@ def test_expired_refresh_token_redirect_to_login(
         lifetime=timedelta(seconds=-1)
     )
 
-    # Set cookies with both tokens expired
-    api_client.cookies["access_token"] = str(expired_refresh.access_token)
+    # Send the expired refresh credential in its cookie.
     api_client.cookies["refresh_token"] = str(expired_refresh)
 
     # Step 2: Try refresh endpoint with expired refresh token
     csrf_token = get_csrf_token(api_client)
     refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -290,7 +288,7 @@ def test_token_refresh_under_load_multiple_rapid_calls(
         # Refresh token cookie automatically sent by browser
         csrf_token = get_csrf_token(fresh_client)
         refresh_response = fresh_client.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
@@ -354,7 +352,7 @@ def test_refresh_rotation_new_refresh_token_issued(
     # Step 2: Call refresh endpoint (should issue NEW refresh token)
     csrf_token = get_csrf_token(api_client)
     refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -374,7 +372,7 @@ def test_refresh_rotation_new_refresh_token_issued(
     csrf_token_2 = get_csrf_token(api_client)
 
     old_token_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token_2,
     )
@@ -387,7 +385,7 @@ def test_refresh_rotation_new_refresh_token_issued(
     csrf_token_3 = get_csrf_token(api_client)
 
     new_token_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token_3,
     )
@@ -425,7 +423,7 @@ def test_refresh_without_token_cookie(
     # Attempt to refresh without refresh_token cookie
     csrf_token = get_csrf_token(fresh_client)
     refresh_response = fresh_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -482,7 +480,7 @@ def test_blacklisted_token_reuse_security_logging(
     # Step 2: Call refresh to rotate token (blacklists old one)
     csrf_token = get_csrf_token(api_client)
     refresh_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -495,7 +493,7 @@ def test_blacklisted_token_reuse_security_logging(
     csrf_token_2 = get_csrf_token(api_client)
 
     old_token_response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token_2,
     )

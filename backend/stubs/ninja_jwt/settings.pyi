@@ -51,7 +51,6 @@ class APISettings:
     AUTH_HEADER_NAME: str
 
     # Cookie names (custom settings for our implementation)
-    ACCESS_TOKEN_NAME: str
     REFRESH_TOKEN_NAME: str
     JWT_COOKIE_SAMESITE: str
 

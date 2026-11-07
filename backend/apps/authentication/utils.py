@@ -28,7 +28,6 @@ class JWTSettings:
         """Initialize JWT settings from Django SIMPLE_JWT configuration."""
         jwt_config = settings.SIMPLE_JWT  # Django settings are dynamic
         self.refresh_token_name: str = str(jwt_config["REFRESH_TOKEN_NAME"])
-        self.access_token_name: str = str(jwt_config["ACCESS_TOKEN_NAME"])
         # Django settings dynamic types
         self.refresh_lifetime: timedelta = jwt_config["REFRESH_TOKEN_LIFETIME"]
         self.access_lifetime: timedelta = jwt_config["ACCESS_TOKEN_LIFETIME"]
@@ -62,7 +61,7 @@ def set_auth_cookie(
 
     Args:
         response: HTTP response object to set cookie on
-        token_name: Cookie name (e.g., 'refresh_token', 'access_token')
+        token_name: Cookie name (e.g., 'refresh_token')
         token_value: JWT token string
         lifetime: Token lifetime (timedelta)
         samesite: SameSite cookie attribute ('Lax', 'Strict', or 'None')

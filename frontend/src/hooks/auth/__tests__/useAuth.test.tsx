@@ -50,6 +50,23 @@ describe("initial authentication", () => {
     expect(result.current.isAuthenticated).toBe(true);
     await waitFor(() => expect(result.current.user).toEqual(profile));
   });
+  it("ignores a lone access cookie and detects the provider session", async () => {
+    document.cookie = `access_token=${token()}; Path=/`;
+    const provider = { ...profile, username: "provider-user" };
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, () =>
+        HttpResponse.json({
+          meta: { is_authenticated: true },
+          data: { user: provider },
+        }),
+      ),
+    );
+    const { result } = mountAuth();
+    await waitFor(() => expect(result.current.user).toEqual(provider));
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(sessionStorage.getItem("access_token")).toBeNull();
+  });
   it("starts signed out without tokens or an OAuth session", () => {
     const { result } = mountAuth();
     expect(result.current.isAuthenticated).toBe(false);

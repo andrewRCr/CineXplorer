@@ -92,45 +92,18 @@ def test_obtain_token_rejects_unverified_email(
     deps.logger.warning.assert_called()
 
 
-def test_refresh_token_requires_cookie(auth_service_factory: AuthServiceFactory) -> None:
+def test_hybrid_refresh_requires_cookie(auth_service_factory: AuthServiceFactory) -> None:
     service, _deps = auth_service_factory()
     request = Mock(COOKIES={})
 
-    status, data = service.refresh_token(request, Mock())
+    status, data = service.hybrid_refresh_token(request, Mock())
 
     assert status == 400
     data_dict = normalize_response_data(data)
     assert "No valid refresh token" in str(data_dict["error"])
 
 
-def test_refresh_token_success(auth_service_factory: AuthServiceFactory) -> None:
-    service, deps = auth_service_factory()
-
-    request = Mock(COOKIES={"refresh_token": "old-refresh"})
-    response = Mock()
-
-    old_refresh = create_mock_refresh_token(user_id=7, access_token="old-access")
-    deps.refresh_token_cls.return_value = old_refresh
-    deps.user_model.objects.get.return_value = Mock(id=7)
-    new_refresh = create_mock_refresh_token(
-        user_id=7,
-        access_token="new-access",
-        refresh_token="new-refresh",
-    )
-    deps.refresh_token_cls.for_user.return_value = new_refresh
-
-    status, data = service.refresh_token(request, response)
-
-    assert status == 200
-    data_dict = normalize_response_data(data)
-    assert data_dict["user_id"] == 7
-    assert data_dict["access_token"] == "old-access"
-    assert "refresh_token" not in data_dict
-    assert deps.set_cookie.call_count == 2
-    deps.blacklist_token_fn.assert_called_once_with(old_refresh)
-
-
-def test_refresh_token_blacklisted_error(
+def test_hybrid_refresh_blacklisted_error(
     auth_service_factory: AuthServiceFactory,
 ) -> None:
     service, deps = auth_service_factory()
@@ -142,7 +115,7 @@ def test_refresh_token_blacklisted_error(
         "error": "Token has been revoked. Please login again."
     }
 
-    status, data = service.refresh_token(request, Mock())
+    status, data = service.hybrid_refresh_token(request, Mock())
 
     assert status == 401
     data_dict = normalize_response_data(data)
@@ -182,6 +155,7 @@ def test_hybrid_refresh_sets_only_refresh_cookie(
         deps.jwt_settings_provider.return_value.refresh_lifetime,
         deps.jwt_settings_provider.return_value.samesite,
     )
+    deps.blacklist_token_fn.assert_called_once_with(old_refresh)
 
 
 def test_logout_clears_refresh_cookie(auth_service_factory: AuthServiceFactory) -> None:

@@ -154,7 +154,7 @@ def test_token_blacklist_attribute_error_handling(
     ):
         # Refresh should still succeed despite blacklist failure
         response = api_client.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
@@ -200,7 +200,7 @@ def test_token_blacklist_unexpected_error_logged(
     ):
         # Refresh should still succeed despite blacklist failure
         response = api_client.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )
@@ -241,7 +241,7 @@ def test_blacklisted_token_jwt_decode_failure_handling(
     api_client.cookies["refresh_token"] = "this.is.not.a.valid.jwt.token.at.all"
 
     response = api_client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -294,7 +294,7 @@ def test_unexpected_token_refresh_error_returns_400(
         user_model.objects, "get", side_effect=RuntimeError("Database connection timeout")
     ):
         response = api_client.post(
-            "/api/token/refresh/",
+            "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
         )

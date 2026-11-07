@@ -13,7 +13,7 @@ import { isRecord } from "@/utilities/typeGuards";
 /**
  * Storage type for authentication tokens
  */
-export type TokenStorage = "localStorage" | "sessionStorage" | "cookie";
+export type TokenStorage = "localStorage" | "sessionStorage";
 
 /**
  * Gets a specific cookie value by name
@@ -89,11 +89,6 @@ export function getInitialAuthenticatedValue(): boolean {
  * Returns the storage type currently being used for authentication
  */
 export function getCurrentStorageType(): TokenStorage {
-    // Check cookies first (hybrid auth priority)
-    if (getTokenFromCookie("access_token")) {
-        return "cookie";
-    }
-
     if (localStorage.getItem("isAuthenticated") === "true") {
         return "localStorage";
     }
@@ -130,7 +125,7 @@ export const setAuthTokens = (
     const storageObj =
         storage === "localStorage" ? localStorage : sessionStorage;
 
-    // Store access token with standardized key name (matches backend cookie name)
+    // Store the access token under the shared browser-storage key.
     storageObj.setItem("access_token", accessToken);
     storageObj.setItem("isAuthenticated", "true");
 
@@ -145,9 +140,8 @@ export const setAuthTokens = (
  * Gets the access token and removes obsolete refresh-token storage copies.
  *
  * Priority order (hybrid authentication):
- * 1. Cookies (access_token set by backend during OAuth/login)
- * 2. localStorage (access_token stored by frontend after refresh)
- * 3. sessionStorage (fallback for remember-me=false scenarios)
+ * 1. localStorage (remember-me=true)
+ * 2. sessionStorage (remember-me=false)
  *
  * Note: Refresh token is always in HTTP-only cookie (not accessible here)
  *
@@ -155,16 +149,7 @@ export const setAuthTokens = (
  */
 export const getAuthTokens = () => {
     clearLegacyRefreshTokens();
-    // 1. Check cookies first (hybrid auth - backend may set access_token cookie)
-    const cookieToken = getTokenFromCookie("access_token");
-    if (cookieToken) {
-        return {
-            access_token: cookieToken,
-            storage: "cookie" as TokenStorage,
-        };
-    }
-
-    // 2. Check localStorage (hybrid auth - frontend stores after refresh)
+    // Prefer local storage, then the remember-me=false session storage.
     let accessToken = localStorage.getItem("access_token");
 
     if (accessToken) {
@@ -174,7 +159,7 @@ export const getAuthTokens = () => {
         };
     }
 
-    // 3. Check sessionStorage (fallback for remember-me=false)
+    // Check sessionStorage (fallback for remember-me=false)
     accessToken = sessionStorage.getItem("access_token");
 
     return {

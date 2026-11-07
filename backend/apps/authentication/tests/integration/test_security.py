@@ -185,18 +185,17 @@ def test_token_refresh_maintains_samesite_lax(
     csrf_token = "test_csrf_token"
     client.cookies["csrftoken"] = csrf_token  # Set cookie
     refresh_response = client.post(
-        "/api/token/refresh/",
+        "/api/auth/refresh",
         {},
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,  # Set matching header
     )
     assert refresh_response.status_code == 200
 
-    # Check both cookies maintain SameSite=Lax
+    # Refresh credentials retain SameSite=Lax; access tokens stay out of cookies.
     access_cookie = refresh_response.cookies.get("access_token")
     refresh_cookie = refresh_response.cookies.get("refresh_token")
 
-    assert access_cookie is not None
+    assert access_cookie is None
     assert refresh_cookie is not None
-    assert access_cookie.get("samesite") == "Lax"
     assert refresh_cookie.get("samesite") == "Lax"

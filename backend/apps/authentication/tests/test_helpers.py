@@ -84,7 +84,6 @@ def create_mock_jwt_settings(**overrides: str | timedelta) -> SimpleNamespace:
     """Create a lightweight mock for JWT settings."""
     data: dict[str, str | timedelta] = {
         "refresh_token_name": "refresh_token",
-        "access_token_name": "access_token",
         "refresh_lifetime": timedelta(days=14),
         "access_lifetime": timedelta(minutes=5),
         "samesite": "Lax",

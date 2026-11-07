@@ -177,7 +177,7 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
     This fixture combines authentication setup with the throttling flag,
     useful for testing authenticated endpoints with rate limiting.
 
-    Uses the hybrid JWT authentication pattern (access_token + refresh_token cookies)
+    Uses the hybrid JWT authentication pattern (Bearer access token + refresh-token cookie)
     to authenticate the client with a verified user.
 
     Args:
@@ -185,13 +185,13 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
         verified_user: User fixture with verified email
 
     Returns:
-        Authenticated client with JWT tokens set as cookies
+        Authenticated client with Bearer header and refresh-token cookie
 
     Example:
         @pytest.mark.enable_throttling
         def test_refresh_rate_limit(authenticated_client_with_throttling):
             # Client is authenticated with JWT tokens, throttling enabled
-            response = authenticated_client_with_throttling.post('/api/token/refresh/')
+            response = authenticated_client_with_throttling.post('/api/auth/refresh')
             assert response.status_code in (200, 429)
 
     Note:
@@ -201,7 +201,7 @@ def authenticated_client_with_throttling(client: Client, verified_user: Any) -> 
     """
     from apps.core.tests.test_helpers import authenticate_client
 
-    # Authenticate using hybrid JWT pattern (sets access_token + refresh_token cookies)
+    # Authenticate using hybrid JWT pattern (sets Bearer access token + refresh-token cookie)
     authenticate_client(client, verified_user.username, "testpass123")
 
     # Set throttling flag for test-aware throttle classes

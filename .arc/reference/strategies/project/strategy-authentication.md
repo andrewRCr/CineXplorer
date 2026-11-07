@@ -650,8 +650,8 @@ Fast OAuth feels broken without minimum display time.
 browser storage. Password sign-in uses local storage when “Remember me” is selected and session storage otherwise;
 renewal preserves that choice. The default is local storage.
 
-`getAuthTokens()` returns `{ access_token, storage }`, checking the legacy access cookie, local storage, then session
-storage. Both the getter and setter remove obsolete `refresh_token` keys from local and session storage, including
+`getAuthTokens()` returns `{ access_token, storage }`, checking local storage, then session storage. Both the getter
+and setter remove obsolete `refresh_token` keys from local and session storage, including
 when no access token exists. The getter runs during authentication initialization, so existing browser copies are
 removed on load without signing the user out. Refresh credentials are issued and rotated only in an HttpOnly cookie;
 JavaScript neither reads nor stores them.
@@ -688,31 +688,9 @@ JavaScript neither reads nor stores them.
 
 **Test Helpers** (`backend/apps/core/tests/test_helpers.py`):
 
-```python
-def authenticate_client(client: Client, user: AbstractBaseUser) -> None:
-    """
-    Authenticate test client using hybrid auth pattern.
-
-    Sets both access_token and refresh_token cookies to match
-    production authentication behavior.
-
-    Args:
-        client: Django test client
-        user: User to authenticate as
-    """
-    from authentication.models import CustomUser
-    from ninja_jwt.tokens import RefreshToken
-
-    assert isinstance(user, CustomUser)
-    refresh = RefreshToken.for_user(user)
-
-    # Set both tokens as cookies (matches hybrid auth pattern)
-    client.cookies["access_token"] = str(refresh.access_token)
-    client.cookies["refresh_token"] = str(refresh)
-```
-
-**Rationale for DRY Helper**: Hybrid auth pattern requires both cookies set. Centralizing this logic in a shared
-helper ensures consistency across all test fixtures and reduces duplication.
+`authenticate_client(client, username, password)` signs in through `/api/token/`, retains the HttpOnly refresh cookie,
+and sends the returned access token in the client's default Authorization Bearer header. Shared fixtures use this
+helper so test authentication follows the browser's transport.
 
 ### Manual E2E Validation
 

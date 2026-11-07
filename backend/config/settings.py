@@ -454,7 +454,6 @@ SECURE_BROWSER_XSS_FILTER = True  # Enable legacy XSS filter in older browsers
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=14),  # RFC 8725 recommendation: reduce from 30 days
-    "ACCESS_TOKEN_NAME": "access_token",
     "REFRESH_TOKEN_NAME": "refresh_token",
     # SameSite='Lax' provides CSRF protection for same-origin requests
     # Frontend and backend served via same Caddy proxy (same-origin), so 'Lax' is appropriate

@@ -65,18 +65,25 @@ describe("token storage", () => {
             expect(window[storage].getItem("isAuthenticated")).toBe("true");
         },
     );
-    it("reads access cookies before browser storage", () => {
-        setAuthTokens(token(), "localStorage");
-        localStorage.setItem("refresh_token", "legacy-local");
-        sessionStorage.setItem("refresh_token", "legacy-session");
+    it.each(["localStorage", "sessionStorage"] as const)(
+        "ignores an access cookie beside the token in %s",
+        (storage) => {
+            const access = token();
+            setAuthTokens(access, storage);
+            localStorage.setItem("refresh_token", "legacy-local");
+            sessionStorage.setItem("refresh_token", "legacy-session");
+            document.cookie = "access_token=cookie-token; path=/";
+            expect(getCurrentStorageType()).toBe(storage);
+            expect(getAuthTokens()).toEqual({ access_token: access, storage });
+            expect(localStorage.getItem("refresh_token")).toBeNull();
+            expect(sessionStorage.getItem("refresh_token")).toBeNull();
+        },
+    );
+    it("does not treat an access cookie as a stored session", () => {
         document.cookie = "access_token=cookie-token; path=/";
-        expect(getCurrentStorageType()).toBe("cookie");
-        expect(getAuthTokens()).toEqual({
-            access_token: "cookie-token",
-            storage: "cookie",
-        });
-        expect(localStorage.getItem("refresh_token")).toBeNull();
-        expect(sessionStorage.getItem("refresh_token")).toBeNull();
+        expect(getCurrentStorageType()).toBe("localStorage");
+        expect(getAuthTokens().access_token).toBeNull();
+        expect(areTokensExpired()).toBe(true);
     });
     it.each(["localStorage", "sessionStorage"] as const)(
         "removes legacy refresh copies while preserving the access session in %s",

@@ -412,7 +412,12 @@ class BaseApiClient(ABC):
                 "duration_ms": duration_ms,
                 "error_type": type(error).__name__,
                 "error_category": "request_error",
-                "request_error": redact_api_keys(str(error)),
+                # InvalidHeader quotes its value, which can contain a credential.
+                "request_error": (
+                    "Invalid request header"
+                    if isinstance(error, requests.exceptions.InvalidHeader)
+                    else redact_api_keys(str(error))
+                ),
                 "url": url,
                 "params": sanitized_params,
                 "exception_module": type(error).__module__,

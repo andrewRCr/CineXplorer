@@ -56,7 +56,7 @@ jobs:
             echo "EMAIL_BACKEND=django.core.mail.backends.dummy.EmailBackend"
             # Dummy values: tests replace TMDB; test settings capture discarded mail
             echo "DJANGO_SECRET_KEY=ci-secret-key-not-for-production"
-            echo "TMDB_API_KEY=dummy-key-for-ci"
+            echo "TMDB_READ_ACCESS_TOKEN=dummy-token-for-ci"
             echo "BACKEND_URL=https://localhost:8000"
             echo "ZEPTOMAIL_API_KEY=dummy-key-for-ci"
           } > backend/config/.env
@@ -199,7 +199,7 @@ jobs:
           docker run --rm \
             -e ENVIRONMENT=production \
             -e DJANGO_SECRET_KEY="$secret_key" \
-            -e TMDB_API_KEY=placeholder \
+            -e TMDB_READ_ACCESS_TOKEN=placeholder \
             -e BACKEND_URL=https://placeholder.invalid \
             -e POSTGRES_DB=placeholder \
             -e POSTGRES_USER=placeholder \
@@ -360,7 +360,7 @@ jobs:
             echo "POSTGRES_USER=postgres"
             echo "POSTGRES_PASSWORD=postgres"
             echo "DJANGO_SECRET_KEY=ci-secret-key-for-type-generation"
-            echo "TMDB_API_KEY=dummy-key-for-type-generation"
+            echo "TMDB_READ_ACCESS_TOKEN=dummy-token-for-type-generation"
             echo "ZEPTOMAIL_API_KEY=dummy-key-for-ci"
             echo "BACKEND_URL=https://localhost:8000"
           } > backend/config/.env
@@ -573,7 +573,7 @@ jobs:
           POSTGRES_USER=cinexplorer_user
           POSTGRES_PASSWORD=cinexplorer_dev_pass
           DJANGO_SECRET_KEY=ci-e2e-secret-key-not-for-production
-          TMDB_API_KEY=dummy-key-for-ci
+          TMDB_READ_ACCESS_TOKEN=dummy-token-for-ci
           BACKEND_URL=https://localhost:8000
           FRONTEND_URL=https://localhost:8444
           EMAIL_BACKEND=django.core.mail.backends.dummy.EmailBackend

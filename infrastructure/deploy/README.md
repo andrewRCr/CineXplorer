@@ -159,8 +159,8 @@ docker run --rm -it caddy:2.11-alpine caddy hash-password
 Edit the **live assignments** in `/opt/cinexplorer/backend.env`; changing comments in the checklist has no effect:
 
 - Set `ENVIRONMENT=staging` and `DEBUG=False`.
-- Replace `DJANGO_SECRET_KEY` with a new random value of at least 50 characters and `TMDB_API_KEY` with your TMDB key.
-  A password manager can generate the secret; the command below is another option.
+- Replace `DJANGO_SECRET_KEY` with a new random value of at least 50 characters and `TMDB_READ_ACCESS_TOKEN` with your
+  TMDB API Read Access Token. A password manager can generate the secret; the command below is another option.
 - Add live `GUNICORN_WORKERS=2` and `GUNICORN_THREADS=4` assignments.
 - Delete the live `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `BACKEND_URL`, `FRONTEND_URL` and `REDIS_URL`
   assignments. Compose supplies them. No manual allowed-host or origin lists are needed for this single origin.

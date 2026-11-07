@@ -62,7 +62,7 @@ ENV ENVIRONMENT=production
 
 # Build the static manifest with throwaway inputs scoped to this command.
 RUN DJANGO_SECRET_KEY=build-placeholder-secret-key-only-for-static-assets-not-for-runtime \
-    TMDB_API_KEY=build-placeholder \
+    TMDB_READ_ACCESS_TOKEN=build-placeholder \
     BACKEND_URL=https://build.invalid \
     POSTGRES_DB=build-placeholder \
     POSTGRES_USER=build-placeholder \

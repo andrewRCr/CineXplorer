@@ -143,6 +143,7 @@ and against staging after every deploy.
 
 - [x] **2.3 Sign-in and sign-out spec**
     - Real sign-in reaches the welcome page and the username menu; sign-out restores Login.
+    - Sign-out requires a successful POST `/api/logout/` response before the signed-out UI assertions.
     - The spec failed when the menu lost its username and passed after restoration.
     - Scoped ESLint, formatting, TypeScript, and the Chromium spec passed.
 
@@ -534,3 +535,77 @@ and against staging after every deploy.
   runner and timing metadata are retained beside this work unit's session notes.
 - **Stop reason:** converged with zero source findings; no successor pass requested. Elapsed: 5.3 minutes.
   Criteria 7–9 and Task 6.1 retain their pending hosted-evidence state. The separate code-review stage remains ahead.
+
+### 2026-11-07 · Code review · Author preflight
+
+- **Scope and rubric:** complete `51ae6e0b...804c66b3` diff and terminal tree; code-review-author's scope,
+  consistency, cleanup, documentation drift, unresolved markers, correctness and error paths, with repository
+  contracts and the implementation-audit dimensions considered. This author check is not independent evidence.
+- **Finding:** F1, major, verification quality. The sign-in/out spec can finish successfully after a failed logout
+  request because it observes local state cleared before that request completes. An isolated-stack browser probe
+  repeated its UI assertions and axe scans, received HTTP 503 for the logout POST, and still passed with a refresh
+  cookie present. Other smoke flows were checked for the same cause; no other instance was identified.
+- **Disposition, approved by the Owner (2026-11-07):** FIX (local correction). Wait for and require a successful
+  real logout response while retaining the UI assertions; demonstrate rejection of the 503 counterexample and rerun
+  the covering spec. The approved repair changes the spec and its evidence, not application logout behavior.
+- **Evidence:** `code-review-author.json`, `CODE-REVIEW-AUTHOR.md` and `code-review-logout-probe.log` beside the
+  session notes retain the exact target, complete checklist, locus and probe result.
+- **Response:** the approved repair and its focused checks are recorded below. The author finding remains the
+  signal from this preflight; completing its fix does not turn it into an independent or clean code review.
+
+### 2026-11-07 · Code review · Approved response to author F1
+
+- **Repair:** the sign-in/out spec starts waiting for the same-origin logout POST before clicking Logout, requires
+  a successful response, and retains the anonymous UI checks. Application logout behavior is unchanged.
+- **Fail-first evidence:** a temporary copy of the real spec forced HTTP 503 and expected the spec to reject it.
+  Before the guard, all assertions passed unexpectedly and the harness failed; after the guard, the spec fails at
+  `Logout returned HTTP 503` and the negative control passes. The temporary spec was removed.
+- **Checks:** the covering spec passed against the real backend (5.2 seconds); scoped ESLint, Prettier and frontend
+  TypeScript passed. Prettier's required wrapping of the new assertion was applied and rechecked. Broader suites
+  were not repeated for this spec-only repair.
+- **Evidence:** `logout-guard-red.json`, `logout-guard-green.json`, `logout-guard-proof.json` and
+  `logout-guard-real-backend.log`, with the check logs and `code-review-f1-response.json`, are beside the session
+  notes. Before/after source copies and `code-review-f1.patch` retain the repair boundary for a fix check.
+- **Next boundary:** recommend a fresh-context focused fix check before the separate full independent code review.
+  No independent fix check, commit or push was authorized or performed with this repair; hosted criteria remain open.
+
+### 2026-11-07 · Code review · Fix check, round 1 since author preflight
+
+- **Rubric and target:** closure, behavioral grounding, propagation/completeness and new failure for author F1's
+  repair. Target: `804c66b3` plus the exact uncommitted sign-in spec, SHA-256
+  `5a845cf4f464780336bc862381c4e867f0d90824122eed8acb1fa0521ba2dda8`; both kept versions were supplied.
+- **Runner:** independent fresh read-only general-purpose subagent `/root/code_f1_fixcheck`.
+- **Findings:** none. F1 closes for this repair. The reviewer confirmed the response waiter precedes the click,
+  matches the real same-origin POST in both targets, requires success and retains the UI assertions. No concrete
+  introduced defect or incomplete propagation was identified.
+- **Grounding:** the reviewer inspected the raw red/green probe reports and the real-backend run log; primary
+  spot-checks confirmed the exact source snapshots, expected/actual probe statuses and HTTP-503 failure locus.
+  No test was rerun by the reviewer, and the removed temporary probe source was not directly inspected.
+- **Record:** exact prompt, invocation, report and timing metadata are under `adversarial-review/` beside the
+  session notes, named `prompt-code-f1-round1.md`, `invocation-code-f1-round1.txt`, `report-code-f1-round1.md`
+  and `code-f1-fixcheck-round1-meta.json`.
+- **Stop reason:** focused fix check converged with no findings. Elapsed: 4.1 minutes. The prior author
+  preflight's major finding is repaired and checked; a full independent code review remains a separate decision.
+  Source changes are uncommitted; hosted criteria remain open.
+
+### 2026-11-07 · Code review · Independent pass 1
+
+- **Rubric:** standard-review/v1, all implementation-audit dimensions plus repository contract coherence: coherence
+  and maintainability, correctness/failure behavior, intent/scope, trust/compatibility, verification quality and
+  repository contracts. The reviewer explicitly considered all six.
+- **Exact target:** complete `51ae6e0b` to `804c66b3` working-tree change set, including the uncommitted sign-in
+  repair with SHA-256 `5a845cf4f464780336bc862381c4e867f0d90824122eed8acb1fa0521ba2dda8`.
+  The supplied diff covered 63 files and 4,181 lines. All executable/reference/configuration changes were exact;
+  author-result regions in the task/completion documents were withheld through neutral copies.
+- **Runner:** independent fresh non-author read-only general-purpose subagent `/root/code_review_pass1`; no prior
+  author findings, conclusions, preferred fixes or self-verification results were supplied.
+- **Findings:** none. Complete permitted source coverage returned clean. The reviewer checked all 61 permitted
+  raw file hashes and deleted-file absence; primary verification confirmed all 63 original target entries and the
+  diff digest before these record-only updates, and spot-checked source-backed boundary claims.
+- **Limits:** withheld author-result prose was not independently assessed. No suite, browser session, staging request
+  or hosted workflow ran. Source review does not prove runtime observations or pending hosted criteria.
+- **Record:** exact prompt, invocation, report, neutral artifacts, diff and hash/timing manifest are beside the
+  session notes under `adversarial-review/`, named `prompt-code-pass1.md`, `invocation-code-pass1.txt`,
+  `report-code-pass1.md`, `code-pass1.diff` and `code-pass1-meta.json`.
+- **Stop reason:** converged with zero actionable findings. Elapsed: 9.5 minutes. The earlier author F1 repair
+  remains uncommitted with its review records; publication awaits Owner approval. Hosted criteria remain open.

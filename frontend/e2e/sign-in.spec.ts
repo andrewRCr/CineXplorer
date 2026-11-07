@@ -29,7 +29,16 @@ test("sign in and sign out through the real session", async ({
     const menu = page.getByRole("button", { name: target.username });
     await expect(menu).toBeVisible();
     await menu.click();
+    const logoutResponse = page.waitForResponse(
+        (response) =>
+            response.url() === new URL("/api/logout/", target.baseURL).href &&
+            response.request().method() === "POST",
+    );
     await page.getByRole("button", { name: "Logout", exact: true }).click();
+    const response = await logoutResponse;
+    expect(response.ok(), `Logout returned HTTP ${response.status()}`).toBe(
+        true,
+    );
     await expect(
         page.getByRole("button", { name: "Login", exact: true }),
     ).toBeVisible();

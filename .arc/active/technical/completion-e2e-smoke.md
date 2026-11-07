@@ -43,7 +43,8 @@ complete; the hosted outcomes below remain open.
 The full required local run passed: backend and frontend suites, backend lint/format, frontend lint and TypeScript,
 Python type checking, Markdown lint, and the Chromium smoke specs. The added frontend tooling and specs passed
 formatting checks. One fresh-context independent source pass found no implementation defect against the success
-criteria; that source pass supplements the separately recorded local test runs.
+criteria; that source pass supplements the separately recorded local test runs. A separate full independent code
+review found no actionable source findings; its exact scope and limits are recorded with the tasks.
 
 API schema/type regeneration during completion preparation produced no tracked drift. Detailed command results,
 negative-control evidence and the independent pass record are indexed by `tasks-e2e-smoke.md`.
@@ -57,7 +58,7 @@ negative-control evidence and the independent pass record are indexed by `tasks-
 | 9 | Staging smoke succeeds after deployment, creates no account and uploads no artifact | After merge |
 
 Task 6.1 and the work's completion status stay open through the first green PR run. The post-merge criterion must be
-proven before the worktree is finished. The separate code review and publication steps remain ahead.
+proven before the worktree is finished. Publication and hosted execution remain ahead.
 
 ## Related Documentation
 

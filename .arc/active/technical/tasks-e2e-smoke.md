@@ -5,6 +5,7 @@
 **Branch:** `technical/e2e-smoke`
 **Base Branch:** `main`
 **Status:** In Progress
+**Completion Record:** `completion-e2e-smoke.md`
 
 ## Overview
 
@@ -46,15 +47,10 @@ and against staging after every deploy.
         - Test: `ENVIRONMENT=development` with `django.core.mail.backends.dummy.EmailBackend` loads the dummy backend
         - Test: `staging` and `production` with the dummy backend stop with an error naming `EMAIL_BACKEND`
         - Test: `staging` with the ZeptoMail backend named explicitly loads it (only another value is refused)
-        - Expect the development-override and refusal tests to FAIL initially. The default cases and the explicit
-          ZeptoMail case pass against today's fixed setting, so each is seen failing against a narrow reconstruction,
-          then restored: a check that refuses any `EMAIL_BACKEND` value fails the explicit-ZeptoMail test, and reading
-          the setting with no default fails the default tests
 
     - [x] **1.1.b Read the setting in `backend/config/settings.py`**
-        - Replace the fixed `EMAIL_BACKEND` (line 241) with `env("EMAIL_BACKEND", default=...)`; raise
-          `ImproperlyConfigured` naming `EMAIL_BACKEND` when `ENVIRONMENT != "development"` and the value differs from
-          the default, as the `DEBUG` check above it does
+        - Read `EMAIL_BACKEND` from the environment with the ZeptoMail default; raise `ImproperlyConfigured`
+          naming `EMAIL_BACKEND` when a non-development environment selects another backend
         - `backend/config/.env.example`: document `EMAIL_BACKEND` as development-only, commented out, beside the
           ZeptoMail lines
         - All 55 environment settings tests passed; development and refusal cases failed before implementation.
@@ -62,23 +58,21 @@ and against staging after every deploy.
 
 - [x] **1.2 Backend tests stay independent of the override**
 
-    **Goal:** A worktree's backend container will carry the dummy backend; tests that load production settings or
-    exercise ZeptoMail must not inherit it.
+    **Goal:** Settings and ZeptoMail transport tests stay independent of the worktree's dummy mail override.
 
     - [x] **1.2.a Reproduce the leak before changing anything**
         - Run the settings and ZeptoMail tests in this worktree's stack with the override passed in:
           `docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml exec -T
           -e EMAIL_BACKEND=django.core.mail.backends.dummy.EmailBackend backend nice -n 15 pytest apps/core/tests
           apps/authentication/tests/integration/test_environment_config.py`
-        - Expect failures: `load_settings` children under `staging`/`production` stop on the refusal, and
-          `test_zeptomail_backend.py` sends through the dummy backend (no request reaches the stand-in)
+        - The inherited override made `load_settings` children refuse staging/production startup and diverted
+          ZeptoMail tests to the dummy backend, so no request reached their stand-in
 
     - [x] **1.2.b Isolate the tests**
         - `load_settings`: add `EMAIL_BACKEND` to the variables it removes from the child's environment
         - `test_zeptomail_backend.py`: name `"apps.core.email_backend.ZeptoMailEmailBackend"` at lines 35, 80, 120
           and in the child code at 151, instead of reading `EMAIL_BACKEND` from settings; drop the unused
           `base_settings` import
-        - Rerun 1.2.a's command: tests should now PASS
         - **Checks:** inherited override reproduced 54 failures; after isolation all 1,096 backend tests passed
           with the dummy backend passed in. Scoped ruff lint/format and pyright passed (zero errors or warnings).
 
@@ -93,9 +87,6 @@ and against staging after every deploy.
           primary checkout's stack sends it; a worktree's stack discards it)
 
     - [x] **1.3.b Show it in this worktree**
-        - Recreate the backend container, then bring up the browsable stack (`node scripts/worktree.mjs browse`)
-        - Register once through `https://localhost:{SITE_PORT}/register` with an `example.com` address: it lands on
-          the sign-in page showing "Account created! Check your email…", and the backend log shows no ZeptoMail send
         - Verified registration in Chromium at the worktree origin: redirected to `/login` with the check-your-email
           message, dummy backend selected, and no ZeptoMail delivery logged. All 1,096 backend tests passed with the
           override inherited from Compose; actionlint and the updated guidance's markdown lint passed.
@@ -109,8 +100,8 @@ and against staging after every deploy.
           (1.64.1 when planned) and `@axe-core/playwright` at an exact version; `"test:e2e": "playwright test"`
         - `frontend/playwright.config.ts`: `testDir: "e2e"`, Chromium only at 1280×800, `retries: 0`
         - By target: `local` keeps trace `retain-on-failure` and screenshot `only-on-failure`, and reports with `list`
-          plus `html` (`open: "never"`); `staging` turns trace and screenshot `off` and reports with `list` only. Task
-          4.1 adds its baseline reporter to both sets; task 5.1 uploads the `html` report
+          plus `html` (`open: "never"`); `staging` turns trace and screenshot `off` and reports with `list`.
+          Both targets include the baseline reporter; CI uploads the local target's `html` report on failure
         - Ignore `test-results/`, `playwright-report/` and `blob-report/` in `frontend/.gitignore`
         - Installed Chromium; pinned `@playwright/test` 1.64.1 and `@axe-core/playwright` 4.14.0.
 
@@ -165,7 +156,7 @@ and against staging after every deploy.
     - `adr-039-run-a-browser-smoke-tier.md` records the nine approved architectural decisions, alternatives,
       baseline limitations, staging artifact policy, and the relationship to agent browser checks.
     - Fetched `origin`; main had no new commits and 039 remained the next free number. Markdown lint passed.
-    - Acceptance remains for verification before merge.
+    - Accepted during verification after the local checks and independent criteria pass.
 
 ### **Phase 3:** Browse, movie detail and Back to Results
 
@@ -253,10 +244,13 @@ and against staging after every deploy.
   marked from the pull request's first green run before merge (§ 8), and this task is checked then; the staging
   criterion is proven after merge, § 9)
 
+    - The full local run and independent verification pass are complete; their evidence is in Success Criteria and
+      Review Log below. ADR-039 is accepted, and `completion-e2e-smoke.md` records the deliverables and remaining
+      hosted checks. This task stays open until the first green PR run proves criteria 7–8; criterion 9 follows
+      deployment after merge.
+
 ## Implementation Notes
 
-- **Keep `main` merged:** activation merged it, bringing ADRs 034–038, the backlog cleanup that task 5.3 builds on,
-  and a refresh-token change in the auth flow the specs drive; merge it again if it moves before Phase 1.
 - **Running specs locally:** bring up this worktree's browsable stack with `node scripts/worktree.mjs browse` (it
   migrates and seeds); its address is `https://localhost:{SITE_PORT}` from `infrastructure/.env`. The primary
   checkout's stack sends real mail, so the sign-up spec never runs against it.
@@ -269,27 +263,69 @@ and against staging after every deploy.
 
 ## Success Criteria
 
-- [ ] With a worktree's browsable stack up, `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e` runs the
+- [x] With a worktree's browsable stack up, `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e` runs the
   five specs in Chromium and passes, scanning every page they reach with axe.
-- [ ] The Back to Results spec fails when the restore after a reload is disabled and passes with it.
-- [ ] The movie-detail spec fails when Back to Results drops the browse URL's filter parameters and passes with them.
-- [ ] A violation of a rule the baseline doesn't excuse on that route fails the run with a message naming the axe rule
+
+  Met locally: `verification-e2e.log` records all five Chromium specs passing in 24.9 seconds; source inspection
+  confirms ready checks and axe scans on every distinct page reached.
+
+- [x] The Back to Results spec fails when the restore after a reload is disabled and passes with it.
+
+  Met: `back-to-results.spec-red.log` records a 752 px error against the 20 px tolerance; `verification-e2e.log`
+  records the restored implementation passing.
+
+- [x] The movie-detail spec fails when Back to Results drops the browse URL's filter parameters and passes with them.
+
+  Met: `verification-filter-red.log` fails the URL assertion with `/browse` after removing the return link's query
+  string; `verification-filter-green.log` passes after byte-for-byte restoration, recorded in
+  `verification-filter-proof.json`.
+
+- [x] A violation of a rule the baseline doesn't excuse on that route fails the run with a message naming the axe rule
   and the route: the footer's TMDB logo with its `alt` removed, an `image-alt` violation on an element no spec
   locates. A baseline entry whose violation is gone is listed in the run's output.
-- [ ] In the `local` target, a spec whose page requests a catalogue endpoint with no fixture fails, naming the
+
+  Met: `movie-detail.spec-red.log` records the footer-logo `image-alt` failure on `/browse` and `/movie/:id`;
+  `axe-unmatched-green.log` reports the scratch unmatched entry without failing. The full current run passes.
+
+- [x] In the `local` target, a spec whose page requests a catalogue endpoint with no fixture fails, naming the
   request's method and path.
-- [ ] Outside fixture and axe helpers, every element lookup in the specs starts from `getByRole`, `getByLabel` or
+
+  Met: `missing-fixture-red.log` names `GET /api/movies/browse`; `restore-boundary-green.json` also confirms the
+  off-origin guard and missing-POST diagnostic survive the restore fixture override.
+
+- [x] Outside fixture and axe helpers, every element lookup in the specs starts from `getByRole`, `getByLabel` or
   `getByText`, and no CSS or XPath selector string, `getByTestId` or DOM query inside `evaluate()` appears in them.
+
+  Met by inspecting all five spec files: lookups start with the allowed accessible queries; `evaluate()` reads window
+  geometry and session storage without querying DOM elements.
+
 - [ ] Startup refuses a non-default `EMAIL_BACKEND` outside development (backend test); the sign-up spec reaches the
   check-your-email message in CI and in a worktree with no mail sent; and the backend suite passes in a worktree's
   stack with the dummy backend set.
+
+  Local evidence complete: `verification-runtime-mail.log` confirms the dummy backend,
+  `verification-backend-tests.log` records 1,096 passing tests including settings refusal, and `verification-e2e.log`
+  records real sign-up reaching the notice. Remains open for the hosted sign-up result alongside criterion 8.
+
 - [ ] The pull request for this work shows the end-to-end job green, `ci-ok` needs it, and the specs' run in CI takes
   under five minutes by Playwright's report.
+
+  Pending the pull request's first green run, as Task 6.1 specifies. Source confirms `ci-ok` needs `e2e`; local
+  Playwright duration is 24.9 seconds, which does not prove hosted duration.
+
 - [ ] Proven live: after the merge, the staging job runs after the deploy and passes against staging, signed in as the
   staging account; no account is created on staging, and the run uploads no artifact.
-- [ ] The testing strategy, the quality-gates strategy, DEVELOPMENT-RULES, QUICK-REFERENCE, TECHNICAL-OVERVIEW and
+
+  Pending the first post-merge deployment run under completion § 9. Source confirms the deploy dependency, staging
+  target, registration skip and absence of artifact upload; the earlier manual staging run does not prove this
+  criterion.
+
+- [x] The testing strategy, the quality-gates strategy, DEVELOPMENT-RULES, QUICK-REFERENCE, TECHNICAL-OVERVIEW and
   `worktree-sessions.md` describe this tier and the mail difference as requirements 23 and 24 say, and the earlier E2E
   plan's files, its section and the references requirement 25 lists are gone.
+
+  Met by inspecting all named documentation diffs against requirements 23–25, checking both old plan files are absent
+  and checking the three named backlog documents contain no retired-plan references.
 
 ## Review Log
 
@@ -439,7 +475,8 @@ and against staging after every deploy.
 
 - **Artifact:** `tasks-e2e-smoke.md` (and the PRD's ADR renumbering). Kept versions: `adversarial-review/tasks-pass1.md`
   and `adversarial-review/tasks-pass1-round1.md`, diffed with the PRD's `prd-settled.md` and
-  `prd-tasks-pass1-round1.md`; settled after the folds and the suite-coherence pass, `adversarial-review/tasks-settled.md`.
+  `prd-tasks-pass1-round1.md`; settled after the folds and the suite-coherence pass,
+  `adversarial-review/tasks-settled.md`.
 - **Rubric:** closure, behavioral grounding, propagation and completeness, new failure (fold scope).
 - **Runner:** independent, a fresh read-only general-purpose subagent. Prompt
   `adversarial-review/prompt-tasks-pass1-round1.md`, report `adversarial-review/report-tasks-pass1-round1.md`.
@@ -456,3 +493,44 @@ and against staging after every deploy.
   the specs drive; 2.5 and 5.3 refer to that merge.
 - **Stop reason:** converged (minor-only repairs); stopped as recommended, with no round 2 or pass 2.
   Stage total: 1 pass, 1 fix check; 11 findings (1 major and 10 minor fixed).
+
+### 2026-11-07 · Verification · Author criteria walk
+
+- **Scope:** `tasks-e2e-smoke.md` Success Criteria 1–10, the complete `main...f15f1943` diff and the resulting
+  worktree. Local `main` is `51ae6e0b`; the broader diff includes the already-merged cookie-only refresh change.
+  The recorded `origin/main` is `073d3bae`, whose merge base with this head is `f6f76b52`; its narrower work-unit
+  diff was also inspected. Newer upstream sign-out and cache-isolation changes are not in this tested tree.
+- **Preconditions:** all implementation tasks are checked; the PRD has no open questions.
+- **Full local run:** 1,096 backend tests, 962 frontend tests, all five Chromium specs (24.9 seconds), backend
+  lint/format, frontend lint, Chakra generation and TypeScript, Pyright, and Markdown lint passed. Formatting of the
+  added frontend tooling/specs passed separately. Commands, exits and elapsed times are in `verification-checks.json`
+  beside this work unit's session notes, with `verification-*.log` beside it. Frontend tests still emit the existing
+  BackToTopButton `act()` warnings already captured in the inbox. New evidence notes were wrapped after scoped
+  Markdown lint caught long lines; the corrected record passes.
+- **Behavior evidence:** retained restore, axe and request-boundary probes were checked against source. The retained
+  filter-red log had been overwritten by the later axe probe, so verification reconstructed query-string removal:
+  the movie-detail spec failed at its URL assertion, then passed after the source was restored byte-for-byte.
+  The dedicated new logs and source hashes retain that proof without replacing the accessibility evidence.
+- **Criteria:** 1–6 and 10 met. Criterion 7 has complete local evidence and remains open for its hosted registration
+  clause; 8 awaits the pull request's first green run and reported duration; 9 awaits the post-merge deployment.
+  These hosted outcomes are not inferred from configuration or local results. Task 6.1 remains open.
+- **Next boundary:** recommend one fresh-context independent verification pass over the same work-unit scope,
+  withholding this walk and all criterion marks. No independent pass or separate code review has run in this session;
+  acceptance of ADR-039 and completion metadata remain ahead. No commits were made.
+
+### 2026-11-07 · Verification · Independent pass 1
+
+- **Rubric and scope:** Success Criteria 1–10, complete diff `51ae6e0b...f15f1943`, and relevant terminal-tree
+  dependencies. The reviewer read the full supplied diff. The task-file portion used its planning requirements,
+  with all criterion text preserved and completion marks, result claims, and review records withheld. The author's
+  criteria walk and personal session context were not supplied.
+- **Runner:** fresh read-only general-purpose subagent `/root/verification_pass1`; no delegation or source edits.
+- **Findings:** none. Primary spot-checks confirmed the cited scan/locator, mail-override, CI dependency and
+  staging-artifact source claims. No finding dispositions or fixes are needed.
+- **Evidence boundary:** the reviewer did not rerun the suites, registration or negative-control mutations; an
+  optional anonymous browser probe produced no usable evidence and is not counted. This source pass supplements
+  the author's retained execution evidence; it does not replace that evidence or prove hosted outcomes.
+- **Record:** `adversarial-review/report-verification-pass1.md`, the neutral PRD/task copies, diff, exact coordinates,
+  runner and timing metadata are retained beside this work unit's session notes.
+- **Stop reason:** converged with zero source findings; no successor pass requested. Elapsed: 5.3 minutes.
+  Criteria 7–9 and Task 6.1 retain their pending hosted-evidence state. The separate code-review stage remains ahead.

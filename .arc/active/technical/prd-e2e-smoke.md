@@ -1,7 +1,7 @@
 # PRD: End-to-End Smoke Tier
 
 **Type:** Technical
-**Status:** Ready for Implementation
+**Status:** In Progress
 **Created:** 2026-11-06
 
 ---

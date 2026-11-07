@@ -6,14 +6,12 @@ real.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from datetime import date
 from io import StringIO
 from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
-from django.core.cache import cache
 from django.core.management import CommandError, call_command
 from django.test import override_settings
 
@@ -22,10 +20,7 @@ from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase
 from apps.movie.constants import TMDB_MAX_PAGE
 from apps.movie.models import BlacklistedMovie
 from apps.movie.services.api_boundary import BrowseServiceParams
-from apps.movie.services.data_quality.filters import (
-    BLACKLIST_CACHE_KEY,
-    apply_data_quality_filters,
-)
+from apps.movie.services.data_quality.filters import apply_data_quality_filters
 from apps.movie.services.data_quality.measurement import (
     SORT_ORDERS,
     STAGES,
@@ -47,13 +42,6 @@ from apps.movie.tests.tmdb_test_builders import create_tmdb_movie
 pytestmark = pytest.mark.django_db
 
 LANGUAGE, BLACKLIST, COMPLETENESS, RELEASE_DATE, VOTES = STAGES
-
-
-@pytest.fixture(autouse=True)
-def fresh_blacklist_cache() -> Iterator[None]:
-    cache.delete(BLACKLIST_CACHE_KEY)
-    yield
-    cache.delete(BLACKLIST_CACHE_KEY)
 
 
 def movie(tmdb_id: int, **overrides: object) -> TMDBMovieBase:

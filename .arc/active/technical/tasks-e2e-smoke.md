@@ -240,15 +240,15 @@ and against staging after every deploy.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; ADR-039
+- [x] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; ADR-039
   set `Accepted` before merge; the end-to-end CI criterion stays open with a note through § 1's criteria walk, is
   marked from the pull request's first green run before merge (§ 8), and this task is checked then; the staging
   criterion is proven after merge, § 9)
 
-    - The full local run and independent verification pass are complete; their evidence is in Success Criteria and
-      Review Log below. ADR-039 is accepted, and `completion-e2e-smoke.md` records the deliverables and remaining
-      hosted checks. This task stays open until the first green PR run proves criteria 7–8; criterion 9 follows
-      deployment after merge.
+    - The full local run, independent verification and code review are complete. PR #131 at `c0718a12` has green
+      E2E and `ci-ok` jobs: all five specs passed in 34.1 seconds, including hosted registration. Criteria 7–8 are
+      met; criterion 9 remains open for deployment after merge. ADR-039 is accepted, and the completion record
+      retains the deliverables and remaining hosted check.
 
 ## Implementation Notes
 
@@ -300,19 +300,20 @@ and against staging after every deploy.
   Met by inspecting all five spec files: lookups start with the allowed accessible queries; `evaluate()` reads window
   geometry and session storage without querying DOM elements.
 
-- [ ] Startup refuses a non-default `EMAIL_BACKEND` outside development (backend test); the sign-up spec reaches the
+- [x] Startup refuses a non-default `EMAIL_BACKEND` outside development (backend test); the sign-up spec reaches the
   check-your-email message in CI and in a worktree with no mail sent; and the backend suite passes in a worktree's
   stack with the dummy backend set.
 
-  Local evidence complete: `verification-runtime-mail.log` confirms the dummy backend,
-  `verification-backend-tests.log` records 1,096 passing tests including settings refusal, and `verification-e2e.log`
-  records real sign-up reaching the notice. Remains open for the hosted sign-up result alongside criterion 8.
+  Met: local runtime and backend logs prove discarded mail, settings refusal and all 1,096 tests passing with the
+  override inherited. PR #131 run `42405526110` at `c0718a12` also passed the registration spec, reaching the email
+  verification notice with the dummy backend configured. Its retained log is `pr131-e2e-c0718a12.log`.
 
-- [ ] The pull request for this work shows the end-to-end job green, `ci-ok` needs it, and the specs' run in CI takes
+- [x] The pull request for this work shows the end-to-end job green, `ci-ok` needs it, and the specs' run in CI takes
   under five minutes by Playwright's report.
 
-  Pending the pull request's first green run, as Task 6.1 specifies. Source confirms `ci-ok` needs `e2e`; local
-  Playwright duration is 24.9 seconds, which does not prove hosted duration.
+  Met: PR #131 run `42405526110`, head `c0718a124ccac3e99dc2ac4f1f732723cc599120`, has green E2E and required
+  `ci-ok` jobs. Playwright reports all five specs passed in 34.1 seconds. The log and exact-head job snapshot are
+  retained as `pr131-e2e-c0718a12.log` and `PR-CI-SNAPSHOT-c0718a12.json` beside the session notes.
 
 - [ ] Proven live: after the merge, the staging job runs after the deploy and passes against staging, signed in as the
   staging account; no account is created on staging, and the run uploads no artifact.
@@ -658,3 +659,14 @@ and against staging after every deploy.
   session notes. Hosted startup and criteria 7–8 remain pending the approved correction push.
 - **Publication:** the Owner approved this focused review and, if clean, one commit/push of the correction and its
   evidence followed by exact-head CI monitoring. Task 6.1 remains open until hosted evidence is available.
+
+### 2026-11-07 · Verification · Corrected hosted CI run
+
+- **Target:** PR #131, head `c0718a124ccac3e99dc2ac4f1f732723cc599120`, workflow run `42405526110`.
+  All seven pre-deploy checks and required `ci-ok` passed. The head was re-read before accepting the result.
+- **E2E evidence:** stack startup, migration/seeding and Playwright passed; all five specs passed in 34.1 seconds,
+  including registration reaching the verification notice. The configured dummy mail backend discards mail.
+- **Criteria:** 7–8 and Task 6.1 are now checked from hosted evidence. Criterion 9 remains open; deploy and staging
+  smoke were skipped for this PR event as configured. No merge or post-merge outcome is inferred.
+- **Record:** complete job log `pr131-e2e-c0718a12.log`, snapshot `PR-CI-SNAPSHOT-c0718a12.json`, and terminal
+  `PR-MONITOR.json` beside the session notes. The earlier failed run and its diagnosis remain preserved separately.

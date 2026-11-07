@@ -1,7 +1,7 @@
 # Completion: End-to-End Smoke Tier
 
 **Prepared:** 2026-11-07
-**Status:** Awaiting hosted verification
+**Status:** Awaiting post-merge staging verification
 **Branch:** `technical/e2e-smoke`
 **Category:** Technical
 **Context:** Browser coverage for the application flows being rebuilt.
@@ -11,7 +11,8 @@
 Five Playwright specs exercise registration, sign-in and sign-out, browse pagination, filtered movie detail, and
 scroll restoration after reloading detail in Chromium. Each distinct page they reach receives an axe scan, and CI
 has jobs for the development stack and the deployed staging site. Implementation and local verification are
-complete; the hosted outcomes below remain open.
+complete; the pull request's required CI gate and all five smoke specs pass. The post-merge staging outcome below
+remains open.
 
 ## Key Deliverables
 
@@ -46,19 +47,19 @@ formatting checks. One fresh-context independent source pass found no implementa
 criteria; that source pass supplements the separately recorded local test runs. A separate full independent code
 review found no actionable source findings; its exact scope and limits are recorded with the tasks.
 
-API schema/type regeneration during completion preparation produced no tracked drift. Detailed command results,
-negative-control evidence and the independent pass record are indexed by `tasks-e2e-smoke.md`.
+API schema/type regeneration during completion preparation produced no tracked drift. PR #131 at `c0718a12` has a
+successful required `ci-ok` gate; all five hosted Chromium specs passed in 34.1 seconds, including registration
+reaching the email verification notice. A fresh independent correction review found no actionable issue in the CI
+startup ownership repair. Detailed results, negative controls and review records are indexed by `tasks-e2e-smoke.md`.
 
 ## Remaining Verification
 
 | Criterion | Evidence still required | Timing |
 | --- | --- | --- |
-| 7 | The hosted sign-up spec reaches the notice with discarded mail | First green PR run |
-| 8 | The required E2E job is green and Playwright reports under five minutes | Before merge |
 | 9 | Staging smoke succeeds after deployment, creates no account and uploads no artifact | After merge |
 
-Task 6.1 and the work's completion status stay open through the first green PR run. The post-merge criterion must be
-proven before the worktree is finished. Publication and hosted execution remain ahead.
+Task 6.1 and the pre-merge criteria are complete. The post-merge criterion must be proven before the work is closed
+and the worktree is finished. PR #131 remains open.
 
 ## Related Documentation
 

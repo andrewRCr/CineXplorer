@@ -207,26 +207,13 @@ and against staging after every deploy.
 
 ### **Phase 5:** The tier gates pull requests, checks staging after deploy, and is documented
 
-- [ ] **5.1 Pull-request job**
-    - New job in `.github/workflows/ci.yml` on the workflow's existing events; pin actions by commit SHA as the file
-      does
-    - Start the development stack (backend server, database, Redis, frontend dev server, Caddy) from the base compose
-      file, not the CI overlay, which replaces the backend's server command; generate the self-signed certificate with
-      `infrastructure/dev-certs/generate-cert.sh`
-    - The backend `.env` carries the base compose database's credentials (`POSTGRES_DB=cinexplorer_dev`,
-      `POSTGRES_USER=cinexplorer_user`, `POSTGRES_PASSWORD=cinexplorer_dev_pass`; the existing CI recipes write the
-      CI overlay's `postgres` values, which this stack doesn't use), `DJANGO_SECRET_KEY`, a dummy `TMDB_API_KEY`,
-      `BACKEND_URL` (no default), the dummy mail backend and `FRONTEND_URL=https://localhost:8444` (its default is
-      `http://localhost:5173`)
-    - The site is `https://localhost:8444`, which the development CORS and CSRF defaults already allow; the frontend
-      falls back to the page's origin when `VITE_BASE_URL` is unset (`src/config/baseUrls.ts`)
-    - Migrate, run `seed_dev_data`, install the frontend's dependencies and Playwright's Chromium (cached by the
-      `@playwright/test` version), and run the specs with `E2E_BASE_URL=https://localhost:8444`
-    - On failure, upload the `html` Playwright report (task 2.1.a) with its traces as an artifact
-    - Add the job to `ci-ok`'s `needs`
-    - The job's first real run is on this work's pull request, and the end-to-end CI criterion is marked from that
-      run. Don't dispatch the workflow by hand from the branch to try it earlier: a manual run publishes production
-      images to GHCR (the images job's publish steps)
+- [x] **5.1 Pull-request job**
+    - Added the required `e2e` job on existing workflow events, using base development Compose, dummy mail, explicit
+      development DB credentials, certificates, migration/seeding, and a frontend readiness check.
+    - Chromium is cached by the installed Playwright version. Failures upload the HTML report with traces; cleanup
+      always tears down the isolated stack. `ci-ok` now needs `e2e`.
+    - Actionlint and a base-Compose configuration probe with the job's generated environment passed. The first hosted
+      run remains for this work's pull request; no manual dispatch was made because it would publish images.
 
 - [ ] **5.2 Staging job after deploy**
 

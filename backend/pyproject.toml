@@ -78,6 +78,9 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 # Test assertions and deliberately fake credentials are not runtime security boundaries.
 "tests/**/*.py" = ["S101", "S105", "S106"]
 "*/tests/**/*.py" = ["S101", "S105", "S106"]
+# Developer CLIs print reports and launch repository-owned argument lists.
+# Subprocess arguments use shell=False and never come from application requests.
+"scripts/**/*.py" = ["T201", "S603"]
 
 # Typing.Any exceptions for justified external API boundaries
 # Document why Any is needed at each external API boundary.

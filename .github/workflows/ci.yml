@@ -124,7 +124,9 @@ jobs:
             -r backend/requirements/req.prod.txt -r backend/requirements/req.dev.txt
 
       - name: Run backend lint
-        run: .venv-backend/bin/ruff check backend/apps/ backend/config/
+        run: >
+          .venv-backend/bin/ruff check
+          backend/apps/ backend/config/ backend/middleware/ backend/scripts/
 
       - name: Check backend formatting
         run: .venv-backend/bin/ruff format --check backend/

@@ -24,6 +24,7 @@ Options:
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -33,27 +34,16 @@ def run_command(cmd: list[str], description: str) -> tuple[int, str]:
     """Run a command and return (returncode, combined stdout/stderr)."""
     print(f"\n> {description}...")
     try:
-        # Determine if we need shell mode (for npx on Windows)
-        use_shell = sys.platform == "win32" and cmd[0] in ("npx", "npm")
-
-        # Convert list to string for shell=True on Windows
-        if use_shell:
-            cmd_str = " ".join(cmd)
-            result = subprocess.run(
-                cmd_str,
-                capture_output=True,
-                text=True,
-                cwd=Path(__file__).parent.parent,
-                shell=True,
-            )
-        else:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, cwd=Path(__file__).parent.parent, shell=False
-            )
+        # Resolve npm's Windows wrappers while keeping every argument separate.
+        if sys.platform == "win32" and cmd[0] in ("npx", "npm"):
+            cmd = [shutil.which(cmd[0]) or cmd[0], *cmd[1:]]
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=Path(__file__).parent.parent, shell=False
+        )
 
         output = result.stdout + result.stderr
         return result.returncode, output
-    except Exception as e:
+    except (OSError, UnicodeDecodeError) as e:
         return 1, str(e)
 
 
@@ -69,8 +59,7 @@ def count_errors(output: str) -> int:
             for part in parts:
                 if "error" in part.lower():
                     try:
-                        count = int(part.strip().split()[0])
-                        return count
+                        return int(part.strip().split()[0])
                     except (ValueError, IndexError):
                         pass
     return 0
@@ -111,7 +100,6 @@ def main() -> None:
     print("=" * 70)
 
     # Define all available checks - ENTIRE apps for comprehensive coverage
-    # Format: (check_id, description, pyright_command)
     all_checks = [
         ("core", "Core App", ["npx", "pyright", "apps/core/", "--project", "."]),
         (

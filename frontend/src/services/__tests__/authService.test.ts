@@ -1,8 +1,9 @@
-import { beforeEach, expect, it } from "vitest";
+import { beforeEach, expect, expectTypeOf, it } from "vitest";
 import { HttpResponse, http } from "msw/http";
-import { resetPassword } from "../authService";
+import { register, resetPassword } from "../authService";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { server } from "@tests/mocks/server";
+import type { components } from "@/types/api";
 import { clearBrowserAuth } from "@tests/helpers/auth";
 
 beforeEach(clearBrowserAuth);
@@ -32,3 +33,40 @@ it.each([true, false])(
         });
     },
 );
+
+it("returns the registration confirmation from a created account", async () => {
+    const confirmation = {
+        message:
+            "Registration successful. Please check your email to verify your account.",
+        user_id: 42,
+        email: "new-viewer@example.com",
+        email_sent: true,
+    } satisfies components["schemas"]["RegisterResponseSchema"];
+    document.cookie = "csrftoken=django-csrf; path=/";
+    server.use(
+        http.post(`${apiBaseUrl}/register/`, async ({ request }) => {
+            expect(request.headers.get("X-CSRFToken")).toBe("django-csrf");
+            expect(await request.json()).toEqual({
+                username: "new-viewer",
+                email: confirmation.email,
+                password: "new-account-password",
+                first_name: "New",
+                last_name: "Viewer",
+            });
+            return HttpResponse.json(confirmation, { status: 201 });
+        }),
+    );
+
+    const response = await register(
+        "new-viewer",
+        confirmation.email,
+        "new-account-password",
+        "New",
+        "Viewer",
+    );
+
+    expectTypeOf(response).toEqualTypeOf<
+        components["schemas"]["RegisterResponseSchema"]
+    >();
+    expect(response).toEqual(confirmation);
+});

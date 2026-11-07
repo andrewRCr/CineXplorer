@@ -23,7 +23,7 @@ Fixture Architecture:
 Available Fixtures:
 
     Throttling Infrastructure:
-        - use_dummy_cache: Autouse fixture that configures DummyCache by default
+        - use_dummy_cache: Autouse settings lifetime; default cache is unchanged
         - enable_throttling_for_test: Switches to LocMemCache for marked tests
         - clear_throttle_cache: Clears throttle cache between tests
         - authenticated_client_with_throttling: Authenticated client with throttling
@@ -95,20 +95,14 @@ from apps.authentication.tests.oauth_mocks import (
 
 @pytest.fixture(autouse=True)  # pytest decorator type
 def use_dummy_cache(settings: object) -> None:
-    """Configure DummyCache by default for all tests (autouse).
+    """Keep the default cache while test-aware throttles bypass limits.
 
-    DummyCache is a no-op cache backend that doesn't store anything,
-    which allows throttle classes to bypass throttling in normal tests.
-    This makes the test suite fast while still testing business logic.
-
-    Tests marked with @pytest.mark.enable_throttling will override this
-    and use LocMemCache for real throttling behavior.
+    Marked tests request enable_throttling_for_test to configure LocMemCache
+    for real throttling. This fixture does not replace the default cache.
 
     Args:
-        settings: Django settings fixture from pytest-django
+        settings: Keep Django's settings fixture active for the test.
     """
-    # DummyCache configured by default - no action needed
-    # Tests will automatically use DummyCache unless overridden
 
 
 @pytest.fixture  # pytest decorator type
@@ -118,9 +112,9 @@ def enable_throttling_for_test(
 ) -> Iterator[None]:
     """Switch to LocMemCache for tests marked with @pytest.mark.enable_throttling.
 
-    This fixture is automatically applied to tests with the enable_throttling
-    marker. It temporarily switches from DummyCache to LocMemCache to enable
-    real throttling behavior for specific tests.
+    clear_throttle_cache depends on this fixture, so marked tests install
+    LocMemCache before any cache clearing. Both fixtures finish their cleanup
+    before the settings fixture restores the original cache configuration.
 
     Args:
         request: Pytest fixture request object (provides marker info)
@@ -148,7 +142,7 @@ def enable_throttling_for_test(
 
 
 @pytest.fixture  # pytest decorator type
-def clear_throttle_cache() -> Iterator[None]:
+def clear_throttle_cache(enable_throttling_for_test: None) -> Iterator[None]:
     """Clear throttle cache before and after test execution.
 
     Use this fixture in tests that need a clean throttle state,
@@ -160,6 +154,9 @@ def clear_throttle_cache() -> Iterator[None]:
         def test_rate_limit(client, clear_throttle_cache):
             # Cache is guaranteed clean here
             ...
+
+    Args:
+        enable_throttling_for_test: Configure the marked test's cache before clearing.
 
     Yields:
         None: Context manager for test execution

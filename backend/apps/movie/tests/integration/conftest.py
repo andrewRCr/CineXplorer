@@ -10,13 +10,38 @@ Note:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 import pytest
+from django.conf import settings
+from django.core.cache import cache
+from django.test import override_settings
+
+from apps.movie.services.data_quality.filters import BLACKLIST_CACHE_KEY
 
 if TYPE_CHECKING:
     from datetime import date
+
+
+@pytest.fixture(autouse=True)
+def isolated_movie_cache() -> Iterator[None]:
+    """Give Django cache entries a per-test namespace while retaining Redis session tracking."""
+    prefix = settings.CACHES["default"].get("KEY_PREFIX", "")
+    cache_settings = {
+        **settings.CACHES,
+        "default": {
+            **settings.CACHES["default"],
+            "KEY_PREFIX": f"{prefix}:movie-test-{uuid4()}",
+        },
+    }
+    with override_settings(CACHES=cache_settings):
+        try:
+            yield
+        finally:
+            cache.delete(BLACKLIST_CACHE_KEY)
 
 
 @pytest.fixture

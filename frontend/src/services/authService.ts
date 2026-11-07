@@ -12,6 +12,7 @@ import logger from "./logger";
 type TokenObtainInput = components["schemas"]["TokenObtainInputSchema"];
 type TokenResponse = components["schemas"]["TokenResponseSchema"];
 type RegisterInput = components["schemas"]["RegisterInputSchema"];
+type RegisterResponse = components["schemas"]["RegisterResponseSchema"];
 type UserProfile = components["schemas"]["UserProfileSchema"];
 type LogoutResponse = components["schemas"]["LogoutResponseSchema"];
 
@@ -63,7 +64,8 @@ export async function login(
  * @param password - Account password
  * @param firstName - User's first name
  * @param lastName - User's last name
- * @returns Token response with access token, refresh token, user_id, and email_verified status
+ * @returns Registration confirmation with user_id, email, email_sent
+ * and verification instructions
  */
 export async function register(
     username: string,
@@ -71,7 +73,7 @@ export async function register(
     password: string,
     firstName: string = "",
     lastName: string = "",
-): Promise<TokenResponse> {
+): Promise<RegisterResponse> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
 
@@ -87,7 +89,7 @@ export async function register(
         last_name: lastName,
     };
 
-    const response = await apiClient.post<TokenResponse>(
+    const response = await apiClient.post<RegisterResponse>(
         `/register/`,
         payload,
         {

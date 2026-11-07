@@ -175,14 +175,11 @@ and against staging after every deploy.
     - Failed when infinite fetching was disabled; passed after restoration (5.7 seconds).
     - Scoped ESLint, formatting, and TypeScript passed.
 
-- [ ] **3.2 Movie-detail spec**
-    - Fixtures: the filtered browse response and `/api/movies/{tmdb_id}` for its titles
-    - Open `/browse?minYear=1980&maxYear=1983`, open the card for a title from the first browse response, see the
-      detail heading equal that title, press "Back to Results", and see `/browse` with `minYear=1980` and
-      `maxYear=1983` still in the URL
-    - Seen failing when `BackToCollectionLink` drops the filter parameters, and passing with them restored (a PRD
-      success criterion)
-    - **Check:** `npm run test:e2e -- e2e/movie-detail.spec.ts` against this worktree's browsable stack
+- [x] **3.2 Movie-detail spec**
+    - Opens a response-named card in a year-filtered browse, checks the matching detail heading, and returns with
+      both year parameters preserved.
+    - Failed when the return link dropped the query; passed after restoration (3.0 seconds).
+    - Scoped ESLint, formatting, and TypeScript passed.
 
 - [ ] **3.3 Back to Results after a reload**
 

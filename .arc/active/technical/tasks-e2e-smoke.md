@@ -217,11 +217,11 @@ and against staging after every deploy.
 
 - [ ] **5.2 Staging job after deploy**
 
-    - [ ] **5.2.a Add the job**
-        - `needs: [deploy]`, the deploy job's `if`, `environment: staging`
-        - Check out, install the frontend's dependencies and Chromium, run the specs with `E2E_TARGET=staging`,
-          `E2E_BASE_URL` from `vars`, `E2E_USERNAME` and `E2E_PASSWORD` from `secrets`
-        - No trace, screenshot or artifact upload; a failure turns the run red and rolls nothing back
+    - [x] **5.2.a Add the job**
+        - Added `e2e-staging` after `deploy`, with the same main-push condition and the staging environment. It installs
+          dependencies/Chromium and reads the URL variable and credential secrets only in its test step.
+        - The staging target disables trace/screenshots and the job uploads no artifacts. Failure turns the workflow
+          red without rollback. Actionlint passed; the live staging check remains for the Owner and post-merge run.
 
     - [ ] **5.2.b Owner: create the staging account and the environment's values**
         - A verified, non-staff account on staging, made by hand, for example through the staging site's sign-up with

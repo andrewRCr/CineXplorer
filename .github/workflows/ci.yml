@@ -635,7 +635,43 @@ jobs:
             -o ServerAliveInterval=30 \
             "deploy@$DEPLOY_HOST" "$GITHUB_SHA"
 
-  # The one required check: passes only when every job above succeeded
+  e2e-staging:
+    name: Staging smoke
+    needs: [deploy]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Chromium and system dependencies
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Check deployed user journeys
+        working-directory: frontend
+        env:
+          E2E_TARGET: staging
+          E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
+          E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: npm run test:e2e
+
+  # The one required check: passes only when every required pre-deploy job succeeded
   ci-ok:
     name: ci-ok
     needs: [backend, backend-checks, images, markdown, frontend, type-generation, e2e]

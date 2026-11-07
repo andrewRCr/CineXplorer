@@ -339,10 +339,17 @@ If review changes what was delivered, update the completion doc to the final sta
 ### 8) Merge Pull Request
 
 Before asking to merge, check the change's ADRs: none it adds reads `Proposed`, none returns to `Proposed` or loses
-its Status section, and each new ADR's number is still free on `main`. If another ADR landed first with the same
-number, renumber this one, with the records that cite it. A fix makes a new head, which
-[monitor-pull-request.md](monitor-pull-request.md) watches again. Once monitoring establishes readiness for the head,
-ask for explicit merge approval.
+its Status section, and each new ADR's number is still free on `main`. CI's Docs job runs this check against the pull
+request's base when the head is pushed; since `main` can move after that, run it again from the checkout after
+`git fetch origin`:
+
+```bash
+node .arc/reference/scripts/check-adr-records.mjs origin/main
+```
+
+If another ADR landed first with the same number, renumber this one, with the records that cite it. A fix makes a new
+head, which [monitor-pull-request.md](monitor-pull-request.md) watches again. Once monitoring establishes readiness for
+the head, ask for explicit merge approval.
 After approval, refresh the accepted head's evidence: `ci-ok` must be green and every review thread resolved:
 
 ```bash
@@ -447,9 +454,11 @@ Commits that change only `.arc/` may go to `main` directly, through the merge ga
 reaches `main` through a pull request. The `pre-push` hook (`.githooks/pre-push`) refuses a push to `main` whose new
 commits change any path outside `.arc/`. No CI runs before such a push lands, and a failure on `main` fails every open
 pull request's checks, so first run the checks for what the commit changed: markdown lint on changed `.arc/` markdown
-outside the archive, the harness-hook tests if `.arc/reference/harness-hooks/` changed, and § 8's ADR check if the
-commit adds or edits an ADR. Archiving from the main
-checkout lands archives one at a time, so two work units never claim the same sequence number.
+outside the archive, the harness-hook tests if `.arc/reference/harness-hooks/` changed, the ADR check's tests
+(`node --test .arc/reference/scripts/check-adr-records.test.mjs`) if `.arc/reference/scripts/` changed, and § 8's ADR
+check (`node .arc/reference/scripts/check-adr-records.mjs origin/main`, after `git fetch origin`) if the commit adds or
+edits an ADR. The Docs workflow runs both again after the push. Archiving from the main checkout lands archives one at
+a time, so two work units never claim the same sequence number.
 
 ---
 

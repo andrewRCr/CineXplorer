@@ -19,6 +19,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The ADR check reads history back to where the change starts
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -31,6 +33,15 @@ jobs:
           .arc/reference/harness-hooks/seed-session-notes.test.mjs
           .arc/reference/harness-hooks/finish-work.test.mjs
           scripts/worktree.test.mjs
+
+      - name: Test the ADR record check
+        run: node --test .arc/reference/scripts/check-adr-records.test.mjs
+
+      - name: Check ADR records
+        env:
+          # The pull request's base, or the commit before the push; origin/main when run by hand
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+        run: node .arc/reference/scripts/check-adr-records.mjs "$BASE"
 
       - name: Lint markdown files
         run: |

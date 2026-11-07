@@ -1,8 +1,15 @@
+import { scanPage } from "./axe";
 import { test, expect } from "./fixtures";
 import { target } from "./target";
 
-test("sign in and sign out through the real session", async ({ page }) => {
+test("sign in and sign out through the real session", async ({
+    page,
+}, info) => {
     await page.goto("/login");
+    await expect(
+        page.getByLabel("Username or Email Address", { exact: true }),
+    ).toBeVisible();
+    await scanPage(page, info);
     await page
         .getByLabel("Username or Email Address", { exact: true })
         .fill(target.username);
@@ -18,6 +25,7 @@ test("sign in and sign out through the real session", async ({ page }) => {
             exact: true,
         }),
     ).toBeVisible();
+    await scanPage(page, info);
     const menu = page.getByRole("button", { name: target.username });
     await expect(menu).toBeVisible();
     await menu.click();

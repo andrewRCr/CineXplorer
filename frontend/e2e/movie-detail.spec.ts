@@ -1,7 +1,10 @@
+import { scanPage } from "./axe";
 import { test, expect } from "./fixtures";
 import type { MoviePage } from "./catalogue";
 
-test("movie detail returns to the same browse filters", async ({ page }) => {
+test("movie detail returns to the same browse filters", async ({
+    page,
+}, info) => {
     const response = page.waitForResponse(
         (response) => new URL(response.url()).pathname === "/api/movies/browse",
     );
@@ -10,6 +13,7 @@ test("movie detail returns to the same browse filters", async ({ page }) => {
     const movie = movies.results?.[0];
     if (!movie) throw new Error("Filtered browse returned no movies");
     await expect(page.getByText(/^\d[\d,]*\+? results$/)).toBeVisible();
+    await scanPage(page, info);
     await page
         .getByRole("link", { name: movie.title, exact: true })
         .first()
@@ -17,6 +21,7 @@ test("movie detail returns to the same browse filters", async ({ page }) => {
     await expect(
         page.getByRole("heading", { name: movie.title, exact: true }),
     ).toBeVisible();
+    await scanPage(page, info);
     await page
         .getByRole("link", { name: "Back to Results", exact: true })
         .click();

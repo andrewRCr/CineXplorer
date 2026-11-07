@@ -1,7 +1,10 @@
+import { scanPage } from "./axe";
 import { test, expect } from "./fixtures";
 import type { MoviePage } from "./catalogue";
 
-test("browse loads another page as the user scrolls", async ({ page }) => {
+test("browse loads another page as the user scrolls", async ({
+    page,
+}, info) => {
     const firstResponse = page.waitForResponse((response) => {
         const url = new URL(response.url());
         return (
@@ -28,6 +31,7 @@ test("browse loads another page as the user scrolls", async ({ page }) => {
     const movie = initial[0];
     if (!movie) throw new Error("Browse returned no movies");
     await expect(page.getByText(/^\d[\d,]*\+? results$/)).toBeVisible();
+    await scanPage(page, info);
     await expect(
         page.getByRole("link", { name: movie.title, exact: true }).first(),
     ).toBeVisible();

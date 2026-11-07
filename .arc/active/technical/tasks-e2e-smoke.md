@@ -192,25 +192,18 @@ and against staging after every deploy.
 
 ### **Phase 4:** Every page a spec visits is scanned with axe
 
-- [ ] **4.1 The axe helper and its baseline**
-    - A helper scans the current page with `@axe-core/playwright`, tags `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`
-    - `frontend/e2e/axe-baseline.ts`: entries of route pattern (`/`, `/login`, `/register`, `/browse`,
-      `/movie/:id`), axe rule ID and a one-line reason; the page's path picks its pattern
-    - A violation no entry excuses fails the spec, naming the rule, the route and the elements axe reports
-    - Each scan records the entries it matched as test annotations; a small reporter lists, at the end of the run, the
-      entries no scan matched, without failing (runs of one spec file and staging-only entries stay green). Add it to
-      both targets' reporter sets from task 2.1.a, beside `list` (and `html` locally), not in place of them
+- [x] **4.1 The axe helper and its baseline**
+    - WCAG 2.0/2.1 A/AA scans match explicit route/rule entries and annotate every match. Unexpected violations fail
+      with the route, rule, and affected elements; soft assertions let the run report every reached page.
+    - Both target reporter sets retain their usual reporters and list unmatched baseline entries without failing.
 
-- [ ] **4.2 Scan every page the specs reach**
-    - Each spec scans each distinct page it reaches (sign-up, sign-in, `/`, browse, movie detail), after its own
-      ready check: the page's heading or result count visible, or on `/login` and `/register`, which have no heading
-      of their own, the form's first labelled field
-    - Seed the baseline with exactly the violations the first full local run finds on today's pages, one reason each
-    - Seen failing: remove the `alt` from the footer's TMDB logo (`Footer.tsx`): the run fails naming `image-alt` and
-      the route; restore it. Add a scratch entry no page violates: the run lists it; remove it (a PRD success
-      criterion)
-    - **Check:** the full run, `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e`, against this worktree's
-      browsable stack
+- [x] **4.2 Scan every page the specs reach**
+    - Scans follow each distinct page's ready check in each spec. The initial run found exactly nine route/rule pairs:
+      sidebar name/children on home, browse, and detail; browse hidden-focus and button names; login notice contrast.
+    - Removing the footer logo's alt failed on `image-alt` for browse and detail; restoring it passed. A scratch
+      `/register` entry was listed as unmatched while the focused spec passed, then removed.
+    - All five specs with axe passed in 25.8 seconds. Scoped ESLint, formatting, and TypeScript passed; evidence logs
+      are retained in the worktree's personal workspace.
 
 ### **Phase 5:** The tier gates pull requests, checks staging after deploy, and is documented
 

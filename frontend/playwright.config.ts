@@ -7,7 +7,9 @@ export default defineConfig({
     testDir: "./e2e",
     retries: 0,
     workers: 1,
-    reporter: staging ? [["list"]] : [["list"], ["html", { open: "never" }]],
+    reporter: staging
+        ? [["list"], ["./e2e/axe-reporter.ts"]]
+        : [["list"], ["html", { open: "never" }], ["./e2e/axe-reporter.ts"]],
     use: {
         browserName: "chromium",
         viewport: { width: 1280, height: 800 },

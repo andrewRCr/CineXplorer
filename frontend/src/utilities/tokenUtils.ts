@@ -4,10 +4,10 @@ import { isRecord } from "@/utilities/typeGuards";
  *
  * Supports hybrid authentication architecture:
  * - Access tokens: localStorage (5-min lifetime, readable by JavaScript)
- * - Refresh tokens: HTTP-only cookies (14-day lifetime, XSS-proof)
+ * - Refresh tokens: HTTP-only cookies (14-day lifetime, unavailable to JavaScript)
  *
  * This balances security with UX - access tokens allow instant auth checks
- * and session warnings, while refresh tokens remain protected from XSS.
+ * and session warnings, while refresh tokens stay outside browser storage.
  */
 
 /**
@@ -105,6 +105,12 @@ export function getCurrentStorageType(): TokenStorage {
     return "localStorage"; // default
 }
 
+/** Remove refresh-token copies left in browser storage by earlier clients. */
+const clearLegacyRefreshTokens = () => {
+    localStorage.removeItem("refresh_token");
+    sessionStorage.removeItem("refresh_token");
+};
+
 /**
  * Sets authentication tokens in the specified storage.
  *
@@ -114,25 +120,19 @@ export function getCurrentStorageType(): TokenStorage {
  * - isAuthenticated flag for quick boolean checks
  *
  * @param accessToken - JWT access token
- * @param refreshToken - Optional refresh token (used by credential login flow)
  * @param storage - Storage type (default: localStorage for hybrid auth)
  */
 export const setAuthTokens = (
     accessToken: string,
-    refreshToken?: string,
     storage: TokenStorage = "localStorage",
 ) => {
+    clearLegacyRefreshTokens();
     const storageObj =
         storage === "localStorage" ? localStorage : sessionStorage;
 
     // Store access token with standardized key name (matches backend cookie name)
     storageObj.setItem("access_token", accessToken);
     storageObj.setItem("isAuthenticated", "true");
-
-    // Store refresh token if provided (hybrid auth stores in HTTP-only cookie)
-    if (refreshToken) {
-        storageObj.setItem("refresh_token", refreshToken);
-    }
 
     // Store actual JWT expiration time for quick checks
     const expiration = getTokenExpiration(accessToken);
@@ -142,7 +142,7 @@ export const setAuthTokens = (
 };
 
 /**
- * Gets authentication tokens from storage.
+ * Gets the access token and removes obsolete refresh-token storage copies.
  *
  * Priority order (hybrid authentication):
  * 1. Cookies (access_token set by backend during OAuth/login)
@@ -151,38 +151,34 @@ export const setAuthTokens = (
  *
  * Note: Refresh token is always in HTTP-only cookie (not accessible here)
  *
- * @returns Object with access_token, refresh_token, and storage source
+ * @returns Object with access_token and storage source
  */
 export const getAuthTokens = () => {
+    clearLegacyRefreshTokens();
     // 1. Check cookies first (hybrid auth - backend may set access_token cookie)
     const cookieToken = getTokenFromCookie("access_token");
     if (cookieToken) {
         return {
             access_token: cookieToken,
-            refresh_token: null, // Refresh token in HTTP-only cookie (not accessible)
             storage: "cookie" as TokenStorage,
         };
     }
 
     // 2. Check localStorage (hybrid auth - frontend stores after refresh)
     let accessToken = localStorage.getItem("access_token");
-    let refreshToken = localStorage.getItem("refresh_token");
 
     if (accessToken) {
         return {
             access_token: accessToken,
-            refresh_token: refreshToken, // May be null (refresh token in HTTP-only cookie)
             storage: "localStorage" as TokenStorage,
         };
     }
 
     // 3. Check sessionStorage (fallback for remember-me=false)
     accessToken = sessionStorage.getItem("access_token");
-    refreshToken = sessionStorage.getItem("refresh_token");
 
     return {
         access_token: accessToken,
-        refresh_token: refreshToken,
         storage: "sessionStorage" as TokenStorage,
     };
 };

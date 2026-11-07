@@ -175,7 +175,6 @@ const server = http.createServer((req, res) => {
           first_name: null,
           user_id: 8,
           access_token: token(8),
-          refresh_token: "new",
           email_verified: true,
         },
         { "Set-Cookie": cookie("new") },

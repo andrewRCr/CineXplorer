@@ -334,32 +334,34 @@ def test_unauthenticated_profile_access(api_client: Client) -> None:
 
 @pytest.mark.django_db
 def test_token_obtain_sets_jwt_cookies(registered_user: tuple[Client, dict[str, str]]) -> None:
-    """Login sets refresh_token cookie and returns access_token in body (hybrid auth).
-
-    Hybrid Authentication Pattern:
-    - Login endpoint returns access_token in response body (for localStorage)
-    - Login endpoint only sets refresh_token cookie (HTTP-only)
-    - Access token cookie NOT set during login (frontend manages in localStorage)
-    - Refresh endpoint sets BOTH tokens as cookies (see test_refresh_token_cookie_updated)
-    """
-    import json as json_module
-
+    """Sign-in exposes only access credentials and renewal uses the refresh cookie."""
     client, _user_data = registered_user
-
-    login_data = {"login": "testuser", "password": "testpass123"}
-    response = json_post(client, TOKEN_URL, cast(dict[str, object], login_data))
-    assert response.status_code == 200
-
-    # Verify refresh_token is set as cookie
-    assert "refresh_token" in client.cookies
-
-    # Verify access_token is in response body (NOT cookie)
-    response_data = json_module.loads(response.content.decode())
-    assert "access_token" in response_data
-    assert response_data["access_token"] is not None
-
-    # Verify access_token is NOT set as cookie (hybrid auth pattern)
+    response = json_post(client, TOKEN_URL, {"login": "testuser", "password": "testpass123"})
+    assert response.status_code == HTTPStatus.OK
+    response_data: dict[str, object] = json.loads(response.content.decode())
+    assert "refresh_token" not in response_data
+    assert response_data["access_token"]
     assert "access_token" not in client.cookies
+    refresh_cookie = response.cookies["refresh_token"]
+    assert refresh_cookie.value
+    assert refresh_cookie["httponly"] is True
+
+    renewed = json_post(client, "/api/auth/refresh", {})
+    assert renewed.status_code == HTTPStatus.OK
+    renewed_data: dict[str, object] = json.loads(renewed.content.decode())
+    assert "refresh_token" not in renewed_data
+    access_token = renewed_data["access_token"]
+    assert isinstance(access_token, str)
+    assert access_token
+    rotated_cookie = renewed.cookies["refresh_token"]
+    assert rotated_cookie.value
+    assert rotated_cookie.value != refresh_cookie.value
+    assert rotated_cookie["httponly"] is True
+    assert "access_token" not in renewed.cookies
+
+    profile = client.get(ME_URL, HTTP_AUTHORIZATION=f"Bearer {access_token}")
+    assert profile.status_code == HTTPStatus.OK
+    assert json.loads(profile.content.decode())["username"] == "testuser"
 
 
 @pytest.mark.django_db

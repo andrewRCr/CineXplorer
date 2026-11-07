@@ -147,7 +147,7 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
         content_type="application/json",
     )
     assert login_response.status_code == HTTPStatus.OK
-    initial_refresh = login_response.json()["refresh_token"]
+    initial_refresh = login_response.cookies["refresh_token"].value
 
     # Get CSRF token
     csrf_token = get_csrf_token(api_client)
@@ -335,7 +335,7 @@ def test_token_values_never_logged(
     # Extract actual tokens from response
     data = response.json()
     access_token = data["access_token"]
-    refresh_token = data["refresh_token"]
+    refresh_token = response.cookies["refresh_token"].value
 
     # Verify tokens are real JWT strings (not empty)
     assert len(access_token) > 50, "Access token should be a real JWT"

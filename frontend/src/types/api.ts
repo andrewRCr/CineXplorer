@@ -82,8 +82,7 @@ export interface paths {
          *             - 403: Email not verified
          *
          *     Response body includes:
-         *         - access: JWT access token for localStorage (frontend manages)
-         *         - refresh: JWT refresh token value (also in HTTP-only cookie)
+         *         - access_token: JWT access token for browser storage (frontend manages)
          *         - user_id: Authenticated user's ID
          *         - email_verified: Email verification status
          *
@@ -1058,20 +1057,15 @@ export interface components {
          * TokenResponseSchema
          * @description Schema for JWT token response (obtain and refresh).
          *
-         *     Tokens are set as httponly cookies, but also returned in
-         *     response body for client convenience.
+         *     The response exposes the access token and user details. The refresh
+         *     token is delivered only in its HttpOnly cookie.
          */
         TokenResponseSchema: {
             /**
              * Access Token
-             * @description JWT access token (also set as httponly cookie)
+             * @description JWT access token for API authorization
              */
             access_token: string;
-            /**
-             * Refresh Token
-             * @description JWT refresh token (also set as httponly cookie)
-             */
-            refresh_token: string;
             /**
              * User Id
              * @description ID of the authenticated user
@@ -1121,8 +1115,7 @@ export interface components {
          *     - Refresh token: NOT in response (remains in HTTP-only cookie)
          *     - Metadata: Expiration info for frontend token management
          *
-         *     This differs from TokenResponseSchema which returns both tokens for
-         *     cookie-based authentication.
+         *     This includes expiration metadata alongside the access token.
          */
         HybridTokenRefreshResponseSchema: {
             /**

@@ -220,7 +220,7 @@ def test_jwt_token_refresh_works():
     assert login_response.status_code == 200
     initial_tokens = login_response.json()
     initial_access = initial_tokens["access_token"]
-    initial_refresh = initial_tokens["refresh_token"]
+    initial_refresh = login_response.cookies["refresh_token"].value
 
     # Get CSRF token for refresh request
     csrf_response = client.get("/api/csrf/")
@@ -238,7 +238,7 @@ def test_jwt_token_refresh_works():
     # Verify new tokens are different (rotation occurred)
     new_tokens = refresh_response.json()
     new_access = new_tokens["access_token"]
-    new_refresh = new_tokens["refresh_token"]
+    new_refresh = refresh_response.cookies["refresh_token"].value
 
     assert new_access != initial_access, "Access token should be rotated"
     assert new_refresh != initial_refresh, "Refresh token should be rotated"

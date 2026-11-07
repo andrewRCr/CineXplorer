@@ -57,7 +57,8 @@ def test_login_allows_5_rapid_attempts(
         )
         data = response.json()
         assert "access_token" in data
-        assert "refresh_token" in data
+        assert "refresh_token" not in data
+        assert response.cookies["refresh_token"].value
 
 
 @pytest.mark.enable_throttling

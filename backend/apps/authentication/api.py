@@ -120,8 +120,7 @@ def obtain_token(
             - 403: Email not verified
 
     Response body includes:
-        - access: JWT access token for localStorage (frontend manages)
-        - refresh: JWT refresh token value (also in HTTP-only cookie)
+        - access_token: JWT access token for browser storage (frontend manages)
         - user_id: Authenticated user's ID
         - email_verified: Email verification status
 

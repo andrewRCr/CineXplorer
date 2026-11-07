@@ -34,7 +34,7 @@ def test_obtain_token_success(auth_service_factory: AuthServiceFactory) -> None:
     data_dict = normalize_response_data(data)
     assert data_dict["user_id"] == 42
     assert data_dict["access_token"] == "access-token"
-    assert data_dict["refresh_token"] == "refresh-token"
+    assert "refresh_token" not in data_dict
     deps.set_cookie.assert_called_once_with(
         response,
         deps.jwt_settings_provider.return_value.refresh_token_name,
@@ -125,7 +125,7 @@ def test_refresh_token_success(auth_service_factory: AuthServiceFactory) -> None
     data_dict = normalize_response_data(data)
     assert data_dict["user_id"] == 7
     assert data_dict["access_token"] == "old-access"
-    assert data_dict["refresh_token"] == "new-refresh"
+    assert "refresh_token" not in data_dict
     assert deps.set_cookie.call_count == 2
     deps.blacklist_token_fn.assert_called_once_with(old_refresh)
 

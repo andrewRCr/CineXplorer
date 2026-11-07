@@ -453,9 +453,8 @@ export function useAuth(): AuthStateProps {
 
             const user_id = response.user_id;
             const accessToken = response.access_token;
-            const refreshToken = response.refresh_token;
 
-            if (user_id && accessToken && refreshToken) {
+            if (user_id && accessToken) {
                 // Choose storage based on remember me setting
                 const storage: TokenStorage = rememberMe
                     ? "localStorage"
@@ -464,7 +463,7 @@ export function useAuth(): AuthStateProps {
                 // A new sign-in owns storage and supersedes any previous renewal.
                 invalidateAuthSession();
                 clearAuthTokens();
-                setAuthTokens(accessToken, refreshToken, storage);
+                setAuthTokens(accessToken, storage);
                 setStatus("authenticated");
                 await getUserDetails();
 
@@ -473,11 +472,10 @@ export function useAuth(): AuthStateProps {
                 return { success: true, data: { displayName } };
             }
 
-            // Login response missing required tokens
+            // Login response missing required credentials
             logger.error("[useAuth] login() response missing tokens", {
                 hasUserId: !!user_id,
                 hasAccessToken: !!accessToken,
-                hasRefreshToken: !!refreshToken,
             });
 
             return {

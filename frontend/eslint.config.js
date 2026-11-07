@@ -58,7 +58,12 @@ export default tseslint.config([
         rules: { "no-console": "error" },
     },
     {
-        files: ["src/services/logger.ts", "src/services/consoleCapture.ts"],
+        files: [
+            "src/services/logger.ts",
+            "src/services/consoleCapture.ts",
+            // The capture tests exercise and observe the browser console boundary.
+            "src/services/__tests__/consoleCapture.test.ts",
+        ],
         rules: { "no-console": "off" },
     },
     {

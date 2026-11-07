@@ -168,7 +168,7 @@ no DOM query inside `evaluate()`.
     `BACKLOG-TECHNICAL.md`'s Mobile Responsiveness Remediation item keeps its goal, fixing mobile viewport issues, and
     drops what depended on the removed plan: the CI mobile discovery tier as its source of scope, promoting mobile E2E
     tests to blocking, its sequencing after the earlier E2E work unit, and its reference to the removed PRD.
-26. ADR-034 records the tier's shape (Design Decisions 1–9), written `Proposed` with the work and set `Accepted` before
+26. ADR-039 records the tier's shape (Design Decisions 1–9), written `Proposed` with the work and set `Accepted` before
     it merges.
 
 ## 5. Non-Goals (Out of Scope)
@@ -202,26 +202,26 @@ no DOM query inside `evaluate()`.
    real; the browser answers the TMDB-backed catalogue endpoints from fixtures in the `local` target. Chosen over
    pointing the backend at a fixture TMDB server through a new base-URL setting, which would add a backend seam for
    movie endpoints the backend suite already covers, and over calling the real TMDB from CI, which makes a merge gate
-   depend on an outside service and on data that changes. _ADR: new, ADR-034._
+   depend on an outside service and on data that changes. _ADR: new, ADR-039._
 2. **One set of specs for both targets.** Specs assert behavior and structure, not data, and the target decides
    whether movie data comes from fixtures. Chosen over separate staging specs, which would drift from the pull-request
-   ones. _ADR: covered by ADR-034._
+   ones. _ADR: covered by ADR-039._
 3. **Sign-up stops at "check your email"; sign-in uses a seeded account; mail is discarded.** A development-only
    `EMAIL_BACKEND` override lets CI and worktrees reach the message without sending. Chosen over a mail-sink container
    with an SMTP backend so the spec could follow the link (more infrastructure for a path backend tests cover), and
    over answering the register request from a fixture (sign-up would never reach the backend). Without the override,
    sign-up fails in CI, which has no mail key, and sends real mail from a worktree, which copies the main checkout's
-   key. _ADR: covered by ADR-034._
+   key. _ADR: covered by ADR-039._
 4. **The pull-request job runs the development stack.** Chosen over the production images: the seeding command and the
    mail override are development-only, so production images would need production-safe paths for both. The images job
    already builds the production images and validates their configuration, and the staging run covers what is
-   deployed. _ADR: covered by ADR-034._
+   deployed. _ADR: covered by ADR-039._
 5. **The staging run signs in as a dedicated account, doesn't sign up, and keeps no artifacts.** Credentials live in
    the `staging` environment's secrets, and a trace would carry them out of it. A failure turns the run red without
-   rolling back, since rollback would be new deploy mechanism. _ADR: covered by ADR-034._
+   rolling back, since rollback would be new deploy mechanism. _ADR: covered by ADR-039._
 6. **Back to Results is a Playwright spec, not a Vitest Browser Mode test.** The scenario reloads the whole page and
    navigates between routes, which Browser Mode's component frame handles poorly, and it would add a second Vitest
-   project and a dependency for one test. _ADR: covered by ADR-034._
+   project and a dependency for one test. _ADR: covered by ADR-039._
 7. **axe fails on any violation outside a baseline keyed by route and rule.** Chosen over fixing every violation now
    (the pages carrying them are being rebuilt, so the fixes would be thrown away) and over reporting without failing
    (new violations would pass). Entries name a route and a rule rather than an element: axe identifies elements by
@@ -231,16 +231,16 @@ no DOM query inside `evaluate()`.
    are reported rather than failed, so a run of one spec file, or a violation only staging's live content shows, can
    still be baselined without failing other runs. Because axe runs on staging too, live content can turn the
    post-deploy run red for an accessibility violation the pull-request run, on fixture data, never saw; that is a real
-   finding, not a deployment break, and is fixed or baselined like any other. _ADR: covered by ADR-034._
+   finding, not a deployment break, and is fixed or baselined like any other. _ADR: covered by ADR-039._
 8. **The smoke tier is the deterministic merge gate; agent browser checks are not.** An agent driving a browser
    while a UI change is developed is spot and visual verification, recorded with that change; it never gates a merge
-   and never stands in for a spec. _ADR: covered by ADR-034._
+   and never stands in for a spec. _ADR: covered by ADR-039._
 9. **No retries.** A retry turns an intermittent failure green and hides it. In the `local` target a failure keeps its
-   trace instead; on staging the job log carries the failure. _ADR: covered by ADR-034._
+   trace instead; on staging the job log carries the failure. _ADR: covered by ADR-039._
 10. **Exact pins, `@playwright/test` matching `playwright-core`.** The two share a browser build; a mismatch would
     install two. _ADR: none (tactical)._
 
-**ADRs this work delivers:** ADR-034, new.
+**ADRs this work delivers:** ADR-039, new.
 
 ## 8. Success Criteria
 

@@ -1,11 +1,12 @@
 import { scanPage } from "./axe";
 import { test, expect } from "./fixtures";
 import { useRestoreCatalogue } from "./catalogue";
+import { target } from "./target";
 
 test("Back to Results restores the position after reloading detail", async ({
     page,
 }, info) => {
-    await useRestoreCatalogue(page);
+    await useRestoreCatalogue(page, target.baseURL);
     await page.goto("/browse");
     await expect(page.getByText(/^\d[\d,]*\+? results$/)).toBeVisible();
     await scanPage(page, info);

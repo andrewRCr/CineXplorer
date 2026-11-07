@@ -189,6 +189,9 @@ and against staging after every deploy.
     - [x] **3.3.b Show it fails when the restore is disabled**
         - Reconstructed the replace navigation resetting the pending restore signal: the spec failed with a 752 px
           discrepancy (landing at 1,848 px). Restoring the hook made it pass. Reconstruction log retained locally.
+        - Approved follow-up constrains restore fixtures to same-origin GETs, falling back to the shared guard for
+          other requests. Browser probes failed before the guard and now prove external requests abort and unsupported
+          POSTs report their method/path. All five corrected smoke specs passed in 26.4 seconds; lint and types passed.
 
 ### **Phase 4:** Every page a spec visits is scanned with axe
 

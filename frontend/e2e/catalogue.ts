@@ -87,9 +87,16 @@ export function catalogueResponse(url: URL): object | undefined {
 /** Keep the layout scenario deterministic even when the rest of staging uses live data. */
 export async function useRestoreCatalogue(
     page: import("@playwright/test").Page,
+    baseURL: string,
 ): Promise<void> {
+    const siteOrigin = new URL(baseURL).origin;
     await page.route("**/api/movies/**", async (route) => {
-        const url = new URL(route.request().url());
+        const request = route.request();
+        const url = new URL(request.url());
+        if (url.origin !== siteOrigin || request.method() !== "GET") {
+            await route.fallback();
+            return;
+        }
         if (url.pathname === "/api/movies/browse") {
             // Results must arrive after the shorter loading grid has mounted.
             await new Promise((resolve) => setTimeout(resolve, 400));

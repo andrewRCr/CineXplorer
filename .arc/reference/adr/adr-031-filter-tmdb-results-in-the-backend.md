@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Owner, 2025-10-22)
+Accepted (Owner, 2025-10-22); Superseded in part by ADR-038 (page size)
 
 Recorded 2026-11-04 from sources of the time.
 

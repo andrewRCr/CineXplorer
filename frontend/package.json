@@ -22,12 +22,13 @@
     "typegen": "chakra typegen ./src/theme/index.ts",
     "generate-types:local": "npm ci --prefix tools/api-types && npm run generate --prefix tools/api-types",
     "generate-types": "node scripts/export-openapi.js && npm run generate-types:local",
-    "generate-types:ci": "test -f openapi.json || (echo '❌ ERROR: openapi.json not found. Run generate-types first.' && exit 1); npm run generate-types:local",
+    "generate-types:ci": "test -f openapi.json || (echo '\u274c ERROR: openapi.json not found. Run generate-types first.' && exit 1); npm run generate-types:local",
     "update-types": "npm run generate-types",
     "validate-generated-types": "npm run type-check",
     "verify-contrast": "tsx scripts/verify-theme-contrast.ts",
     "verify-contrast:ci": "tsx scripts/verify-theme-contrast.ts",
-    "test:auth-browser": "node scripts/check-auth-renewal-browser.mjs"
+    "test:auth-browser": "node scripts/check-auth-renewal-browser.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@chakra-ui/react": "^3.37.0",
@@ -46,8 +47,10 @@
     "react-router-dom": "^7.6.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@chakra-ui/cli": "3.38.0",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.64.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",

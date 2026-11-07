@@ -102,9 +102,9 @@ and against staging after every deploy.
 
 ### **Phase 2:** The specs run against a worktree's stack
 
-- [ ] **2.1 Add Playwright tooling**
+- [x] **2.1 Add Playwright tooling**
 
-    - [ ] **2.1.a Dependencies and configuration**
+    - [x] **2.1.a Dependencies and configuration**
         - `frontend/package.json`: `@playwright/test` at exactly the `playwright-core` version in the lockfile
           (1.64.1 when planned) and `@axe-core/playwright` at an exact version; `"test:e2e": "playwright test"`
         - `frontend/playwright.config.ts`: `testDir: "e2e"`, Chromium only at 1280×800, `retries: 0`
@@ -112,9 +112,9 @@ and against staging after every deploy.
           plus `html` (`open: "never"`); `staging` turns trace and screenshot `off` and reports with `list` only. Task
           4.1 adds its baseline reporter to both sets; task 5.1 uploads the `html` report
         - Ignore `test-results/`, `playwright-report/` and `blob-report/` in `frontend/.gitignore`
-        - Install the browser once: `npx playwright install chromium`
+        - Installed Chromium; pinned `@playwright/test` 1.64.1 and `@axe-core/playwright` 4.14.0.
 
-    - [ ] **2.1.b Lint and type-check cover the new files**
+    - [x] **2.1.b Lint and type-check cover the new files**
         - Add `frontend/tsconfig.e2e.json` (`lib` `["ES2023", "DOM"]`, since specs read `window` inside `evaluate()`;
           types `node`; `include` `e2e/**/*.ts` and `playwright.config.ts`; the `@/*` path to `src/*` so fixtures
           import API types absolutely) and reference it from `frontend/tsconfig.json`, so `npm run type-check`
@@ -123,7 +123,7 @@ and against staging after every deploy.
           callback trips `react-hooks/rules-of-hooks`; keep `e2e/**` out of the `testing-library` block, whose rules
           target Testing Library rather than Playwright
         - **Check:** `npm run lint` and `npm run type-check` pass over a placeholder spec and a placeholder
-          `test.extend` fixture in `e2e/`
+          `test.extend` fixture in `e2e/`: both passed, and Playwright ran the placeholder successfully.
 
 - [ ] **2.2 Targets and the fixture boundary**
 

@@ -32,6 +32,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from django.contrib.auth.base_user import AbstractBaseUser
+from ninja_jwt.token_blacklist.models import BlacklistedToken
 
 class _TokenProtocol(Protocol):
     """Protocol for JWT token objects that can be converted to strings.
@@ -92,6 +93,9 @@ class RefreshToken(Token):
         Returns:
             RefreshToken instance with user claims
         """
+
+    def blacklist(self) -> tuple[BlacklistedToken, bool]:
+        """Persist revocation when the configured blacklist app is installed."""
 
     @property
     def access_token(self) -> AccessToken:

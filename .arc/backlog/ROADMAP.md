@@ -86,9 +86,10 @@ Started 2026-11-06.
 
 ### 1. First: E2E Smoke Tier
 
-A few Playwright specs on the flows that exist today (sign-up and sign-in, browse, movie detail, watchlist) with an
-accessibility check, run in CI on every pull request and against staging after each deploy. Specs find elements by
-role and accessible name, so the overhaul doesn't break them, and every later work unit keeps them green.
+A few Playwright specs on the flows that exist today (sign-up and sign-in, browse, movie detail) with an accessibility
+check, run in CI on every pull request and against staging after each deploy; the watchlist's spec follows the
+user-movie data work. Specs find elements by role and accessible name, so the overhaul doesn't break them, and every
+later work unit keeps them green.
 
 ### 2. Then, in Two Tracks
 
@@ -126,7 +127,7 @@ role and accessible name, so the overhaul doesn't break them, and every later wo
 E2E smoke tier ─────────► every later work unit (each keeps it green)
 Palette ────────────────► all layout work
 Navigation shell ───────► landing page
-User-movie data ────────► core user-movie UIs and Log, movie detail redesign
+User-movie data ────────► core user-movie UIs and Log, movie detail redesign, the watchlist's smoke spec
 ```
 
 ---
@@ -165,6 +166,7 @@ Each goes back in, in this order, as progress shows room:
 
 ## Change Log
 
+- **2026-11-06**: The smoke tier's watchlist spec follows the user-movie data work
 - **2026-11-06**: Rewritten at Stage 4's start: Stages 0–3 marked complete with their archives, Deployment Enablement
   (item 13) with them; Stage 4's order and the launch scope replace Phases A–C
 - **2025-12-26**: Added Mobile Responsiveness Remediation (#3) as E2E follow-up; renumbered subsequent items;

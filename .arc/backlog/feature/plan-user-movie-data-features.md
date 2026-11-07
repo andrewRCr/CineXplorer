@@ -3,8 +3,12 @@
 **Document Purpose:** Track user-facing feature work for the UserMovieData domain. These features have complete backend
 APIs but need frontend implementation or enhancement.
 
-**Status:** Planning / Future Work
-**Priority:** High (after Backend Modernization + Frontend Modernization)
+**Status:** Partly in the launch scope (2026-11-06). Launch builds watched, liked, rating and review controls on cards
+and the detail page, the Library, the watchlist as a poster grid, Log (§ 8) as the rating screen and the movie detail
+redesign (§ 9), on consolidated user-movie data. Deferred: the watchlist's drag-and-drop and Next Up (§ 2), the first
+to come back if time opens up before launch, since managing the watchlist is the app's main use; and until after
+launch, Favorites (§§ 3 and 10), lists and collections (§ 11) and the Journal (§ 12). `ROADMAP.md` lists the launch
+order.
 
 ---
 
@@ -106,8 +110,10 @@ those patterns, preventing ad-hoc implementations that would need refactoring la
 **What Needs Building:**
 
 - **Movie Grid Display**: Replace text list with visual movie cards (posters, titles, user data)
-- **Drag-and-Drop Reordering**: Allow users to reorder watchlist priority
-- **"Next Up" Queue**: Feature top N watchlist items as prioritized viewing queue
+- **Drag-and-Drop Reordering** (deferred; the first to come back if time opens up before launch): Allow users to
+  reorder watchlist priority
+- **"Next Up" Queue** (deferred; the first to come back if time opens up before launch): Feature top N watchlist items
+  as prioritized viewing queue
 - **Integration with Pagination**: Use pagination from Feature #1
 
 **Technical Considerations:**
@@ -125,7 +131,7 @@ those patterns, preventing ad-hoc implementations that would need refactoring la
 
 ---
 
-### 3. Favorites System
+### 3. Favorites System - DEFERRED UNTIL AFTER LAUNCH
 
 **Status:** Not yet started (backend field doesn't exist)
 
@@ -351,7 +357,7 @@ Modal provides fastest path from "I heard about a movie" to "it's tracked in my 
 
 ---
 
-### 10. Favorites Subset (Backend + Frontend)
+### 10. Favorites Subset (Backend + Frontend) - DEFERRED UNTIL AFTER LAUNCH
 
 **Status:** Not yet started
 
@@ -360,7 +366,7 @@ in the status summary.
 
 ---
 
-### 11. Movie Lists/Collections
+### 11. Movie Lists/Collections - DEFERRED UNTIL AFTER LAUNCH
 
 **Status:** Not yet started (backend models + API + frontend all needed)
 
@@ -484,7 +490,7 @@ because it's more complex and benefits from having established patterns for:
 
 ---
 
-### 12. Journal Timeline View (Decision Pending)
+### 12. Journal Timeline View (Decision Pending) - DEFERRED UNTIL AFTER LAUNCH
 
 **Status:** Decision pending on whether to implement
 

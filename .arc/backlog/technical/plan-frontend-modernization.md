@@ -5,6 +5,10 @@ Corrective architectural improvements - "things that should have been there from
 This document tracks technical debt and architectural decisions that need to be revisited.
 When planning frontend modernization work, this serves as the starting point for PRD creation.
 
+**Launch scope (2026-11-06):** the user-movie data work moves the frontend's server state onto TanStack Query
+(ADR-027), so that section feeds it. Routing modernization, bundle-size optimization and performance monitoring are
+dropped. `ROADMAP.md` lists what launch builds.
+
 ---
 
 ## State Management Modernization
@@ -99,10 +103,9 @@ effort needed - patterns evolve with features.
 
 ---
 
-## Routing Architecture Modernization
+## Routing Architecture Modernization - DROPPED
 
-**Status:** Lower Priority (2025-12-19)
-**Priority:** Fit during Phase B if touching routing-adjacent code
+**Status:** Dropped (2026-11-06): React Router 7 works as it is.
 **Rationale:** Portfolio consistency with Next.js App Router patterns; current routing works fine
 
 **Current Pattern:** Traditional Pages Router (React Router v6, centralized routes in App.tsx)
@@ -141,13 +144,13 @@ effort needed - patterns evolve with features.
 
 ## Future Considerations
 
-### Bundle Size Optimization
+### Bundle Size Optimization - DROPPED
 
 - Code splitting strategies
 - Lazy loading improvements
 - Tree shaking verification
 
-### Performance Monitoring
+### Performance Monitoring - DROPPED
 
 - React DevTools Profiler integration
 - Performance budgets

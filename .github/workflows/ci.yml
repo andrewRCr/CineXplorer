@@ -53,7 +53,8 @@ jobs:
             echo "POSTGRES_DB=cinexplorer"
             echo "POSTGRES_USER=postgres"
             echo "POSTGRES_PASSWORD=postgres"
-            # Dummy values: tests mock TMDB and use the locmem email backend
+            echo "EMAIL_BACKEND=django.core.mail.backends.dummy.EmailBackend"
+            # Dummy values: tests replace TMDB; test settings capture discarded mail
             echo "DJANGO_SECRET_KEY=ci-secret-key-not-for-production"
             echo "TMDB_API_KEY=dummy-key-for-ci"
             echo "BACKEND_URL=https://localhost:8000"

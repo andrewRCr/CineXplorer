@@ -16,8 +16,9 @@ A worktree suits planning, implementation and browser work against its own code 
 - Frontend work, checked by host-side tests, lint and type-check, and viewed in its browsable stack
 - Backend work, tested in the worktree's own stack in either mode
 
-What stays on the primary: OAuth sign-in (its origins name the primary's address) and its development data. A
-worktree's browsable stack serves its own code and fresh database on its own port.
+What stays on the primary: OAuth sign-in (its origins name the primary's address) and its development data. Only the
+primary checkout's stack sends mail; a worktree's stack discards it. A worktree's browsable stack serves its own
+code and fresh database on its own port.
 
 ## Provisioning
 

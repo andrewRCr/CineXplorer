@@ -82,9 +82,9 @@ and against staging after every deploy.
         - **Checks:** inherited override reproduced 54 failures; after isolation all 1,096 backend tests passed
           with the dummy backend passed in. Scoped ruff lint/format and pyright passed (zero errors or warnings).
 
-- [ ] **1.3 Worktree stacks and CI's backend job set the dummy backend**
+- [x] **1.3 Worktree stacks and CI's backend job set the dummy backend**
 
-    - [ ] **1.3.a Set the override**
+    - [x] **1.3.a Set the override**
         - `infrastructure/docker-compose.worktree.yml`: `EMAIL_BACKEND: django.core.mail.backends.dummy.EmailBackend`
           under the backend's `environment`
         - `.github/workflows/ci.yml`, backend job's "Create .env file": add the same line; update its comment, which
@@ -92,11 +92,13 @@ and against staging after every deploy.
         - `.arc/reference/workflows/supplemental/worktree-sessions.md`, "What stays on the primary": add mail (only the
           primary checkout's stack sends it; a worktree's stack discards it)
 
-    - [ ] **1.3.b Show it in this worktree**
+    - [x] **1.3.b Show it in this worktree**
         - Recreate the backend container, then bring up the browsable stack (`node scripts/worktree.mjs browse`)
         - Register once through `https://localhost:{SITE_PORT}/register` with an `example.com` address: it lands on
           the sign-in page showing "Account created! Check your email…", and the backend log shows no ZeptoMail send
-        - Run the full backend suite in this worktree's stack with the override now set by compose: it passes
+        - Verified registration in Chromium at the worktree origin: redirected to `/login` with the check-your-email
+          message, dummy backend selected, and no ZeptoMail delivery logged. All 1,096 backend tests passed with the
+          override inherited from Compose; actionlint and the updated guidance's markdown lint passed.
 
 ### **Phase 2:** The specs run against a worktree's stack
 

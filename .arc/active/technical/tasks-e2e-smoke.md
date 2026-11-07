@@ -36,9 +36,9 @@ and against staging after every deploy.
 
 ### **Phase 1:** Development stacks discard mail
 
-- [ ] **1.1 Settings read `EMAIL_BACKEND` and refuse an override outside development**
+- [x] **1.1 Settings read `EMAIL_BACKEND` and refuse an override outside development**
 
-    - [ ] **1.1.a Write settings tests in `apps/authentication/tests/integration/test_environment_config.py`**
+    - [x] **1.1.a Write settings tests in `apps/authentication/tests/integration/test_environment_config.py`**
         - Use `load_settings` from `apps/core/tests/test_helpers.py`, as the file's refusal tests do (a refused
           configuration comes back under `error`)
         - Test: with `EMAIL_BACKEND` removed (`None`), development and staging both load
@@ -51,20 +51,21 @@ and against staging after every deploy.
           then restored: a check that refuses any `EMAIL_BACKEND` value fails the explicit-ZeptoMail test, and reading
           the setting with no default fails the default tests
 
-    - [ ] **1.1.b Read the setting in `backend/config/settings.py`**
+    - [x] **1.1.b Read the setting in `backend/config/settings.py`**
         - Replace the fixed `EMAIL_BACKEND` (line 241) with `env("EMAIL_BACKEND", default=...)`; raise
           `ImproperlyConfigured` naming `EMAIL_BACKEND` when `ENVIRONMENT != "development"` and the value differs from
           the default, as the `DEBUG` check above it does
         - `backend/config/.env.example`: document `EMAIL_BACKEND` as development-only, commented out, beside the
           ZeptoMail lines
-        - Tests should now PASS
+        - All 55 environment settings tests passed; development and refusal cases failed before implementation.
+          Default and explicit-ZeptoMail assertions failed under narrow reconstructions and passed after restoration.
 
-- [ ] **1.2 Backend tests stay independent of the override**
+- [x] **1.2 Backend tests stay independent of the override**
 
     **Goal:** A worktree's backend container will carry the dummy backend; tests that load production settings or
     exercise ZeptoMail must not inherit it.
 
-    - [ ] **1.2.a Reproduce the leak before changing anything**
+    - [x] **1.2.a Reproduce the leak before changing anything**
         - Run the settings and ZeptoMail tests in this worktree's stack with the override passed in:
           `docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml exec -T
           -e EMAIL_BACKEND=django.core.mail.backends.dummy.EmailBackend backend nice -n 15 pytest apps/core/tests
@@ -72,14 +73,14 @@ and against staging after every deploy.
         - Expect failures: `load_settings` children under `staging`/`production` stop on the refusal, and
           `test_zeptomail_backend.py` sends through the dummy backend (no request reaches the stand-in)
 
-    - [ ] **1.2.b Isolate the tests**
+    - [x] **1.2.b Isolate the tests**
         - `load_settings`: add `EMAIL_BACKEND` to the variables it removes from the child's environment
         - `test_zeptomail_backend.py`: name `"apps.core.email_backend.ZeptoMailEmailBackend"` at lines 35, 80, 120
           and in the child code at 151, instead of reading `EMAIL_BACKEND` from settings; drop the unused
           `base_settings` import
         - Rerun 1.2.a's command: tests should now PASS
-        - **Check:** the full backend suite once, with the override passed in, since `load_settings` serves settings
-          tests in several apps
+        - **Checks:** inherited override reproduced 54 failures; after isolation all 1,096 backend tests passed
+          with the dummy backend passed in. Scoped ruff lint/format and pyright passed (zero errors or warnings).
 
 - [ ] **1.3 Worktree stacks and CI's backend job set the dummy backend**
 

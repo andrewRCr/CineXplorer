@@ -501,6 +501,7 @@ def load_settings(
     """
     child_env = os.environ.copy()
     for name in (
+        "EMAIL_BACKEND",
         "DJANGO_CONSOLE_LOG_LEVEL",
         "DJANGO_LOG_LEVEL",
         "TESTING",

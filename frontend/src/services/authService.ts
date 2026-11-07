@@ -22,11 +22,11 @@ type LogoutResponse = components["schemas"]["LogoutResponseSchema"];
 
 /**
  * Authenticate user and obtain JWT tokens.
- * Tokens are set as httponly cookies by the backend.
+ * The backend returns the access token and sets the HttpOnly refresh cookie.
  *
  * @param username - Username or email (backend accepts both via 'login' field)
  * @param password - User's password
- * @returns Token response with access token, refresh token, user_id, and email_verified status
+ * @returns Access token and user details; the refresh token is delivered in its HttpOnly cookie
  */
 export async function login(
     username: string,

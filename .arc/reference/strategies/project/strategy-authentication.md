@@ -79,14 +79,13 @@ going against its design and making upgrades difficult.
        │ 4. Response:                                     │
        │    {                                             │
        │      access_token: "...",  (5-min)               │
-       │      refresh_token: "...", (14-day)              │
        │      user_id: 123                                │
        │    }                                             │
        │ 5. Set-Cookie: refresh_token (HttpOnly)          │
        │<─────────────────────────────────────────────────┤
        │                                                  │
        │ 6. Store access_token in sessionStorage          │
-       │ 7. Store refresh_token in memory (duplicate)     │
+       │ 7. Remove old refresh copies from browser storage │
        │ 8. Refresh token cookie auto-sent by browser     │
        │                                                  │
        │ 9. API Request:                                  │
@@ -103,12 +102,11 @@ going against its design and making upgrades difficult.
 
 **Token Storage Strategy**:
 
-| Token Type                 | Storage Location  | Lifetime  | Access                 | Purpose                                |
-|----------------------------|-------------------|-----------|------------------------|----------------------------------------|
-| **Access Token**           | sessionStorage    | 5 minutes | JavaScript can read    | API authorization, instant auth checks |
-| **Refresh Token** (copy)   | sessionStorage    | 14 days   | JavaScript can read    | Reference only (duplicate of cookie)   |
-| **Refresh Token** (actual) | HTTP-only cookie  | 14 days   | JavaScript CANNOT read | Automatic token refresh, XSS-proof     |
-| **CSRF Token**             | Cookie (readable) | Session   | JavaScript can read    | CSRF protection for unsafe methods     |
+| Token Type        | Storage Location  | Lifetime  | Access                 | Purpose                                |
+|-------------------|-------------------|-----------|------------------------|----------------------------------------|
+| **Access Token**  | sessionStorage    | 5 minutes | JavaScript can read    | API authorization, instant auth checks |
+| **Refresh Token** | HTTP-only cookie  | 14 days   | JavaScript CANNOT read | Automatic token refresh, XSS-proof     |
+| **CSRF Token**    | Cookie (readable) | Session   | JavaScript can read    | CSRF protection for unsafe methods     |
 
 **Why Hybrid Storage?**
 
@@ -502,13 +500,13 @@ never enter this branch. CSRF initialization and the refresh POST live inside th
 
 ### JWT Authentication Endpoints (Django Ninja)
 
-| Endpoint            | Method | Auth Required | Purpose              | Request Body                                         | Response                                              |
-|---------------------|--------|---------------|----------------------|------------------------------------------------------|-------------------------------------------------------|
-| `/api/token/`       | POST   | No            | Email/password login | `{login, password}`                                  | `{access_token, refresh_token, user_id}` + Set-Cookie |
-| `/api/auth/refresh` | POST   | Yes (cookie)  | Refresh access token | (empty)                                              | `{access_token}`                                      |
-| `/api/logout/`      | POST   | Yes (JWT)     | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                           |
-| `/api/register/`    | POST   | No            | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                         |
-| `/api/profile/`     | GET    | Yes (JWT)     | Get user profile     | N/A                                                  | `{id, username, email, ...}`                          |
+| Endpoint            | Method | Auth Required | Purpose              | Request Body                                         | Response                                               |
+|---------------------|--------|---------------|----------------------|------------------------------------------------------|--------------------------------------------------------|
+| `/api/token/`       | POST   | No            | Email/password login | `{login, password}`                                  | `{access_token, user_id, email_verified}` + Set-Cookie |
+| `/api/auth/refresh` | POST   | Yes (cookie)  | Refresh access token | (empty)                                              | `{access_token}`                                       |
+| `/api/logout/`      | POST   | Yes (JWT)     | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                            |
+| `/api/register/`    | POST   | No            | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                          |
+| `/api/profile/`     | GET    | Yes (JWT)     | Get user profile     | N/A                                                  | `{id, username, email, ...}`                           |
 
 **Example: Login**:
 
@@ -524,7 +522,6 @@ curl -k -b cookies.txt -c cookies.txt -X POST https://localhost:8444/api/token/ 
 # Response:
 # {
 #   "access_token": "eyJ...",
-#   "refresh_token": "eyJ...",
 #   "user_id": 123
 # }
 # Set-Cookie: refresh_token=eyJ...; HttpOnly; Secure; SameSite=Lax
@@ -642,84 +639,20 @@ Fast OAuth feels broken without minimum display time.
 
 ### Token Utilities
 
-**Token Storage** (`frontend/src/utilities/token.ts`):
+**Token Storage** (`frontend/src/utilities/tokenUtils.ts`):
 
-```typescript
-export function setAuthTokens(
-  accessToken: string,
-  refreshToken?: string,
-  storage: TokenStorage = "sessionStorage"
-): void {
-  const storageObj = storage === "localStorage" ? localStorage : sessionStorage;
+`setAuthTokens(accessToken, storage)` stores only the access token, authentication flag and expiration in the chosen
+browser storage. Password sign-in uses local storage when “Remember me” is selected and session storage otherwise;
+renewal preserves that choice. The default is local storage.
 
-  storageObj.setItem("access_token", accessToken);
-  storageObj.setItem("isAuthenticated", "true");
+`getAuthTokens()` returns `{ access_token, storage }`, checking the legacy access cookie, local storage, then session
+storage. Both the getter and setter remove obsolete `refresh_token` keys from local and session storage, including
+when no access token exists. The getter runs during authentication initialization, so existing browser copies are
+removed on load without signing the user out. Refresh credentials are issued and rotated only in an HttpOnly cookie;
+JavaScript neither reads nor stores them.
 
-  if (refreshToken) {
-    storageObj.setItem("refresh_token", refreshToken);
-  }
-
-  // Store token expiration for validation
-  const decoded = jwtDecode<{ exp: number }>(accessToken);
-  storageObj.setItem("token_expiration", decoded.exp.toString());
-}
-
-export function getAuthTokens(): {
-  access_token: string | null;
-  refresh_token: string | null;
-  storage: TokenStorage | null;
-} {
-  // Priority: cookie → localStorage → sessionStorage
-  // (cookie check for backward compatibility, not used in current implementation)
-
-  // Check localStorage
-  const localAccessToken = localStorage.getItem("access_token");
-  if (localAccessToken) {
-    return {
-      access_token: localAccessToken,
-      refresh_token: localStorage.getItem("refresh_token"),
-      storage: "localStorage",
-    };
-  }
-
-  // Check sessionStorage
-  const sessionAccessToken = sessionStorage.getItem("access_token");
-  if (sessionAccessToken) {
-    return {
-      access_token: sessionAccessToken,
-      refresh_token: sessionStorage.getItem("refresh_token"),
-      storage: "sessionStorage",
-    };
-  }
-
-  return { access_token: null, refresh_token: null, storage: null };
-}
-
-export function clearAuthTokens(): void {
-  // Clear from all storage locations
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  localStorage.removeItem("isAuthenticated");
-  localStorage.removeItem("token_expiration");
-
-  sessionStorage.removeItem("access_token");
-  sessionStorage.removeItem("refresh_token");
-  sessionStorage.removeItem("isAuthenticated");
-  sessionStorage.removeItem("token_expiration");
-}
-
-export function areTokensExpired(): boolean {
-  const expirationStr = localStorage.getItem("token_expiration") ||
-                        sessionStorage.getItem("token_expiration");
-
-  if (!expirationStr) return true;
-
-  const expiration = parseInt(expirationStr, 10);
-  const now = Math.floor(Date.now() / 1000);
-
-  return now >= expiration;
-}
-```
+`clearAuthTokens()` clears the access credentials and obsolete refresh copies from both storage locations.
+`areTokensExpired()` checks the stored access-token expiration.
 
 ---
 

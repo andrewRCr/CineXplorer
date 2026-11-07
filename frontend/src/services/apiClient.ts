@@ -128,7 +128,7 @@ export function refreshAccessToken(): Promise<string> {
                 "Token refresh did not return a valid access token",
             );
         }
-        setAuthTokens(data.access_token, undefined, storage);
+        setAuthTokens(data.access_token, storage);
         return data.access_token;
     };
 

@@ -186,7 +186,6 @@ describe("sign-in status", () => {
         HttpResponse.json({
           user_id: profile.id,
           access_token: token(),
-          refresh_token: "refresh",
           username: profile.username,
         }),
       ),
@@ -288,11 +287,12 @@ describe("sign-in and sign-out", () => {
           HttpResponse.json({
             user_id: profile.id,
             access_token: access,
-            refresh_token: "refresh",
             username: profile.username,
           }),
         ),
       );
+      localStorage.setItem("refresh_token", "legacy-local");
+      sessionStorage.setItem("refresh_token", "legacy-session");
       const { result } = mountAuth();
       await act(async () => {
         expect(
@@ -300,6 +300,8 @@ describe("sign-in and sign-out", () => {
         ).toEqual({ success: true, data: { displayName: profile.username } });
       });
       expect(result.current.isAuthenticated).toBe(true);
+      expect(localStorage.getItem("refresh_token")).toBeNull();
+      expect(sessionStorage.getItem("refresh_token")).toBeNull();
       expect(result.current.user).toEqual(profile);
       expect(
         (rememberMe ? localStorage : sessionStorage).getItem("access_token"),
@@ -406,7 +408,7 @@ describe("password session renewal", () => {
     "refreshes expired tokens on load in %s",
     async (storage) => {
       const refreshed = token();
-      setAuthTokens(token(1), undefined, storage);
+      setAuthTokens(token(1), storage);
       let refreshes = 0;
       server.use(
         http.post(`${apiBaseUrl}/auth/refresh`, () => {
@@ -492,7 +494,6 @@ describe("password session renewal", () => {
           HttpResponse.json({
             user_id: profile.id,
             access_token: expired,
-            refresh_token: "refresh",
             username: profile.username,
           }),
         ),
@@ -626,7 +627,7 @@ describe("password session renewal", () => {
       configurable: true,
       value: undefined,
     });
-    setAuthTokens(token(1), undefined, "sessionStorage");
+    setAuthTokens(token(1), "sessionStorage");
     const refreshed = token();
     let refreshes = 0;
     server.use(
@@ -656,7 +657,7 @@ describe("sign-out during idle renewal", () => {
     "keeps sign-out authoritative ($storage, held at $heldAt, sign in again: $signInAgain)",
     async ({ storage, heldAt, signInAgain }) => {
       vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
-      setAuthTokens(token(), undefined, storage);
+      setAuthTokens(token(), storage);
       const { result } = mountAuth();
       await vi.waitFor(async () => {
         await act(async () => {
@@ -681,7 +682,6 @@ describe("sign-out during idle renewal", () => {
             user_id: profile.id,
             username: profile.username,
             access_token: newToken,
-            refresh_token: "new-refresh",
           }),
         ),
       );
@@ -693,7 +693,7 @@ describe("sign-out during idle renewal", () => {
             })
           : Promise.resolve();
       if (heldAt === "lock") await entered.wait;
-      setAuthTokens(token(1), undefined, storage);
+      setAuthTokens(token(1), storage);
       await act(async () => {
         await vi.advanceTimersByTimeAsync(60000);
       });
@@ -772,7 +772,6 @@ describe("obsolete renewal callers", () => {
             username: profile.username,
             access_token:
               caller === "profile" && logins === 1 ? token(1) : newToken,
-            refresh_token: "refresh",
           });
         }),
         http.get(`${apiBaseUrl}/renewal-overlap`, () =>

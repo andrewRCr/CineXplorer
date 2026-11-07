@@ -161,7 +161,7 @@ def login_and_get_tokens(client: Client, username: str, password: str) -> tuple[
     response = json_post(client, token_url, auth_payload)
 
     response_data: dict[str, str] = json.loads(response.content.decode())
-    return response_data["access_token"], response_data["refresh_token"]
+    return response_data["access_token"], response.cookies["refresh_token"].value
 
 
 def create_fresh_client(refresh_token: str | None = None) -> Client:

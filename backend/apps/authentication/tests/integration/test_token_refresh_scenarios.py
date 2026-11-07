@@ -163,7 +163,8 @@ def test_expired_access_token_refresh_token_still_valid(
         assert refresh_response.status_code == HTTPStatus.OK
         new_tokens: dict[str, str] = refresh_response.json()
         assert "access_token" in new_tokens
-        assert "refresh_token" in new_tokens
+        assert "refresh_token" not in new_tokens
+        assert refresh_response.cookies["refresh_token"].value
         assert new_tokens["access_token"] != access_token_str  # New token issued
 
         # Step 6: Retry original request with new access token
@@ -348,8 +349,7 @@ def test_refresh_rotation_new_refresh_token_issued(
     )
     assert login_response.status_code == HTTPStatus.OK
 
-    initial_tokens: dict[str, str] = login_response.json()
-    initial_refresh = initial_tokens["refresh_token"]
+    initial_refresh = login_response.cookies["refresh_token"].value
 
     # Step 2: Call refresh endpoint (should issue NEW refresh token)
     csrf_token = get_csrf_token(api_client)
@@ -360,8 +360,8 @@ def test_refresh_rotation_new_refresh_token_issued(
     )
 
     assert refresh_response.status_code == HTTPStatus.OK
-    new_tokens: dict[str, str] = refresh_response.json()
-    new_refresh = new_tokens["refresh_token"]
+    assert "refresh_token" not in refresh_response.json()
+    new_refresh = refresh_response.cookies["refresh_token"].value
 
     # Step 3: Verify new refresh token is DIFFERENT from initial
     assert new_refresh != initial_refresh, "Refresh token should rotate on refresh"
@@ -394,9 +394,9 @@ def test_refresh_rotation_new_refresh_token_issued(
 
     assert new_token_response.status_code == HTTPStatus.OK
     # Each refresh issues yet another new refresh token (rotation continues)
-    rotated_tokens: dict[str, str] = new_token_response.json()
-    assert rotated_tokens["refresh_token"] != new_refresh
-    assert rotated_tokens["refresh_token"] != initial_refresh
+    rotated_refresh = new_token_response.cookies["refresh_token"].value
+    assert rotated_refresh != new_refresh
+    assert rotated_refresh != initial_refresh
 
 
 # ============================================================================
@@ -477,8 +477,7 @@ def test_blacklisted_token_reuse_security_logging(
     )
     assert login_response.status_code == HTTPStatus.OK
 
-    initial_tokens: dict[str, str] = login_response.json()
-    initial_refresh = initial_tokens["refresh_token"]
+    initial_refresh = login_response.cookies["refresh_token"].value
 
     # Step 2: Call refresh to rotate token (blacklists old one)
     csrf_token = get_csrf_token(api_client)

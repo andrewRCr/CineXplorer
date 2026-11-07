@@ -161,15 +161,11 @@ and against staging after every deploy.
     - Both auth specs passed together in 6.5 seconds; scoped lint, formatting, and TypeScript passed.
     - Removed the temporary tooling placeholder now that real specs exercise the fixture.
 
-- [ ] **2.5 Write ADR-039 reading `Proposed`**
-    - Records the tier's shape: PRD Design Decisions 1–9 (what the specs talk to, one spec set for both targets, mail,
-      the development stack in CI, the staging run, Back to Results in Playwright, the axe baseline, agent browser
-      checks, no retries)
-    - Use `.arc/reference/adr/adr-template.md`. Fetch, merge `main` if it has moved, and confirm 039 is still the
-      next free number on `origin/main`; if it isn't, take the next free one and update the references in the PRD and
-      in this task list
-    - CI's Docs job refuses a new ADR that reads `Proposed`, so it stays red on a pull request until verification
-      sets the ADR `Accepted` (`archive-completed.md` § 8)
+- [x] **2.5 Write ADR-039 reading `Proposed`**
+    - `adr-039-run-a-browser-smoke-tier.md` records the nine approved architectural decisions, alternatives,
+      baseline limitations, staging artifact policy, and the relationship to agent browser checks.
+    - Fetched `origin`; main had no new commits and 039 remained the next free number. Markdown lint passed.
+    - Acceptance remains for verification before merge.
 
 ### **Phase 3:** Browse, movie detail and Back to Results
 

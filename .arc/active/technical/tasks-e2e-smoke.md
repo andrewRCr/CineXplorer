@@ -169,18 +169,11 @@ and against staging after every deploy.
 
 ### **Phase 3:** Browse, movie detail and Back to Results
 
-- [ ] **3.1 Browse spec**
-    - Fixtures: a first `/api/movies/browse` page and a second one; the first request carries no `tmdb_page_start`,
-      later pages carry the previous response's `next_tmdb_page_start`. The second page's fixture sets
-      `next_tmdb_page_start` to `null`, or a third fixture exists, since scrolling it into view can request more
-    - Open `/browse`; read titles from the first browse response the page receives; see the result count and the card
-      link named with one of them (two links per card share the name, so take the first; match the name exactly, since
-      "Movie 1" is a substring of "Movie 10")
-    - Scroll until the browse request with `tmdb_page_start` returns; see the card for a title that page added and the
-      first page didn't hold come into view
-    - Set the response wait before navigating, since a short first page can fetch the next one at mount
-    - Seen failing against a narrow break (for example, the grid never requesting a further page), then restored
-    - **Check:** `npm run test:e2e -- e2e/browse.spec.ts` against this worktree's browsable stack
+- [x] **3.1 Browse spec**
+    - Reads titles from real page responses, verifies the result count, scrolls to the cursor request, and brings a
+      newly added movie card into view. No assertion depends on fixture titles or counts.
+    - Failed when infinite fetching was disabled; passed after restoration (5.7 seconds).
+    - Scoped ESLint, formatting, and TypeScript passed.
 
 - [ ] **3.2 Movie-detail spec**
     - Fixtures: the filtered browse response and `/api/movies/{tmdb_id}` for its titles

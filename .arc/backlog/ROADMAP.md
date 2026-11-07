@@ -142,19 +142,20 @@ Everything in Stage 4 above.
 
 Each goes back in, in this order, as progress shows room:
 
-1. Similar movies on the detail page
-2. Person pages (until then, cast and crew link to TMDB)
-3. Password feedback on the sign-up form
-4. Search-page filters
-5. Error reporting
-6. Two more palettes: Gruvbox and Rouge
+1. Watchlist drag-and-drop ordering and a Next Up queue
+2. Similar movies on the detail page
+3. Person pages (until then, cast and crew link to TMDB)
+4. Password feedback on the sign-up form
+5. Search-page filters
+6. Error reporting
+7. Two more palettes: Gruvbox and Rouge
 
 ### Cut
 
 - Recommendations
 - Celery (its one use was async email)
 - Movie lists and collections
-- Journal, Favorites, drag-and-drop ordering and Next Up
+- Journal and Favorites
 - The full E2E testing foundation (replaced by the smoke tier)
 - Routing modernization (already on React Router 7, working)
 - Observability beyond logs, health checks and outage alerts
@@ -166,6 +167,7 @@ Each goes back in, in this order, as progress shows room:
 
 ## Change Log
 
+- **2026-11-06**: Watchlist drag-and-drop ordering and Next Up move from Cut to the top of Not Committed
 - **2026-11-06**: The smoke tier's watchlist spec follows the user-movie data work
 - **2026-11-06**: Rewritten at Stage 4's start: Stages 0–3 marked complete with their archives, Deployment Enablement
   (item 13) with them; Stage 4's order and the launch scope replace Phases A–C

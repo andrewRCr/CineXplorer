@@ -128,12 +128,10 @@ backend/apps/{app}/
     │   ├── test_models.py
     │   ├── test_services.py
     │   └── test_validators.py
-    ├── integration/
-    │   ├── conftest.py          # Integration-specific fixtures (if needed)
-    │   ├── test_api_endpoints.py
-    │   └── test_database_queries.py
-    └── e2e/                     # Placeholder for future E2E tests
-        └── test_workflows.py
+    └── integration/
+        ├── conftest.py          # Integration-specific fixtures (if needed)
+        ├── test_api_endpoints.py
+        └── test_database_queries.py
 ```
 
 **Frontend (Vitest):** Co-locate tests with components, use suffixes for test types.
@@ -154,13 +152,25 @@ frontend/src/
 └── __tests__/                           # Optional: cross-feature integration
     └── integration/
         └── checkout-flow.integration.test.tsx
+```
 
-# Future E2E structure (Playwright)
-e2e/
+**Browser smoke tests (Playwright):**
+
+```
+frontend/
 ├── playwright.config.ts
-└── specs/
-    ├── auth.spec.ts
-    └── movie-discovery.spec.ts
+└── e2e/
+    ├── sign-up.spec.ts
+    ├── sign-in.spec.ts
+    ├── browse.spec.ts
+    ├── movie-detail.spec.ts
+    ├── back-to-results.spec.ts
+    ├── fixtures.ts
+    ├── catalogue.ts
+    ├── target.ts
+    ├── axe.ts
+    ├── axe-baseline.ts
+    └── axe-reporter.ts
 ```
 
 ### When to Use Each Test Type
@@ -180,13 +190,12 @@ e2e/
 - Component interactions with mocked backend
 - Slower execution (100ms-1s per test)
 
-**E2E Tests** (`tests/e2e/` or `e2e/specs/*.spec.ts`):
+**E2E Tests** (`frontend/e2e/*.spec.ts`):
 
-- Critical user workflows (registration → login → feature use)
-- Cross-layer interactions (frontend → API → database)
-- Payment/transaction flows
-- OAuth authentication flows
-- Slowest execution (1s+ per test)
+- Real sign-up to the check-your-email notice, and sign-in/sign-out through session cookies
+- Browse pagination, movie detail with preserved filters, and Back to Results after a reload
+- Browser layout and scroll restoration across the frontend, API, and database
+- axe scans on every distinct page each spec reaches; Chromium only, with no retries
 
 ### File Splitting Guidelines
 
@@ -823,33 +832,84 @@ import { createMockUser } from '@/test/helpers/mocks';
 
 ### E2E Test Coordination
 
-**When to use E2E tests:**
+The five specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail, and
+Back to Results after reloading detail. They run in Chromium at 1280×800 with no retries. Sign-up stops at the
+check-your-email notice; email-link verification, OAuth, watchlists, other browsers, and mobile viewports are outside
+this tier.
 
-- Critical user flows (registration → verification → login)
-- Cross-layer interactions (frontend → API → database)
-- Payment/transaction flows
-- OAuth authentication flows
+- **`local`** (default): the real development backend, PostgreSQL, Redis, registration, and session cookies. Browser
+  fixtures answer catalogue paths beginning `/api/movies`, `/api/genres`, `/api/keywords`, and `/api/people`. An
+  unhandled catalogue method/path aborts and fails the spec with its method and path; requests to another origin are
+  aborted. Synthetic fixtures use generated API types and cover all score badge variants. Worktrees and CI discard
+  mail through Django's dummy backend; the primary checkout's stack sends real verification mail.
+- **`staging`**: live catalogue data and an existing verified, non-staff account. Registration is skipped. The Back to
+  Results reload scenario supplies its own browse/detail fixtures in both targets to control page height; those
+  overrides serve only same-origin GETs. The specs change none of the staging account's saved data.
+
+`/api/user-movie-data` also reaches TMDB, but these specs never call it. A future spec that does supplies its own
+fixtures. Assertions read titles from the browse responses the page received rather than assuming synthetic data;
+each movie card's link must be named by its title. Since two card links share that name, use an exact name and
+`first()`.
+
+The pull-request job runs the development stack and is required by `ci-ok`. The staging job runs after deployment
+and its health check; a failure makes the workflow red without rollback. Local failures retain a trace and screenshot
+in the HTML report. Staging keeps neither and uploads no artifact, since browser artifacts can carry credentials and
+cookies.
+
+Agent-driven browser checks provide visual and development feedback, recorded with the change. They never gate a
+merge or substitute for these deterministic specs.
 
 ### E2E Test Structure
 
-```typescript path=null start=null
-test('user can register and verify email', async ({ page }) => {
-  await page.goto('/register');
-  await page.fill('[name="username"]', 'newuser');
-  await page.fill('[name="email"]', 'new@example.com');
-  await page.fill('[name="password"]', 'password123');
-  await page.click('button[type="submit"]');
+Specs use the shared `test` and `expect` from `./fixtures`; the target selects catalogue interception and credentials.
+Outside fixture and axe helpers, every element lookup starts with `getByRole`, `getByLabel`, or `getByText`, narrowed
+only by `filter`, `first`, `last`, or `nth`. CSS and XPath selector strings, `getByTestId`, and DOM queries inside
+`evaluate()` are prohibited. Reading a found element's state or `boundingBox()` is allowed.
 
-  await expect(page.locator('text=Check your email')).toBeVisible();
-});
-```
+Each spec scans each distinct reached page with axe after its ready check: a heading or result count, or the first
+labelled field on the auth forms. Scans use WCAG 2.0 and 2.1 A/AA rules. `axe-baseline.ts` excuses only explicit route
+patterns and rule IDs, each with a reason; a new violation of that same rule on that route is also excused until the
+entry is removed. Other violations fail with the route, rule, and affected elements. The reporter lists unmatched
+entries without failing, so focused runs and staging can omit a baselined page. Remove an entry when its violation
+is fixed; staging can reveal live-content violations that local fixture data does not show.
 
 ### E2E Best Practices
 
-- Happy paths and critical flows only
-- Unit/integration tests for edge cases
-- Mock external services (TMDB, email)
-- Keep suite small and fast (<5 minutes)
+Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
+its address. From `frontend/`, one command runs the five specs:
+
+```bash
+# Worktree root
+node scripts/worktree.mjs browse
+
+# frontend/; substitute SITE_PORT from infrastructure/.env
+E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e
+
+# Run only the flow changed by a task
+E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/movie-detail.spec.ts
+```
+
+`E2E_BASE_URL` is required. Local credentials default to the seeded account, with `E2E_USERNAME` and `E2E_PASSWORD`
+overrides available. The local target accepts the development certificate. Running sign-up against the primary
+checkout sends real mail: use the worktree's browsable stack for the supported local run.
+
+Registration permits three attempts per client IP per hour, including requests rejected for an existing account.
+Repeated local sign-up runs can hit this limit. From the worktree root, clear only that stack's registration history,
+then rerun:
+
+```bash
+docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml exec -T redis \
+  sh -c 'redis-cli --scan --pattern "*:throttle_auth_register_*" | xargs -r redis-cli del'
+```
+
+For staging, export `E2E_BASE_URL`, `E2E_USERNAME`, and `E2E_PASSWORD` in your own terminal without putting credential
+values in shell history, then run `E2E_TARGET=staging npm run test:e2e` from `frontend/`. All three settings are
+required. Staging validates its HTTPS certificate. CI reads the URL variable and credential secrets from the
+`staging` GitHub environment. Confirm a manual staging run before merge; registration is skipped, and its local
+confirmation-notice baseline can therefore be listed as unmatched.
+
+Keep the tier small and its run under five minutes. Backend and frontend integration tests cover detailed error and
+boundary cases; a failure is diagnosed and corrected rather than retried.
 
 ---
 

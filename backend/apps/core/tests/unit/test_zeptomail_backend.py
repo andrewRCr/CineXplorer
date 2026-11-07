@@ -1,7 +1,7 @@
 """Unit tests for the configured ZeptoMail email backend.
 
-Test settings swap in Django's locmem backend, so these tests load the backend the
-base settings configure. A stand-in for the ZeptoMail API at requests' transport
+Tests name the ZeptoMail backend explicitly so development mail overrides cannot
+replace the transport under test. A stand-in for the ZeptoMail API at requests' transport
 layer receives each prepared request and answers as the real API does, so the
 tests check the HTTP request that would go on the wire.
 """
@@ -16,7 +16,6 @@ from django.test import override_settings
 
 from apps.core.tests.email_transport import ERROR_RESPONSE_BODY, zeptomail_api_stand_in
 from apps.core.tests.test_helpers import load_settings
-from config import settings as base_settings
 
 ZEPTOMAIL_SEND_URL = "https://api.zeptomail.com/v1.1/email"
 
@@ -32,7 +31,9 @@ def test_multipart_email_sends_text_and_html_as_separate_fields() -> None:
     message.attach_alternative("<p>HTML body</p>", "text/html")
 
     with zeptomail_api_stand_in() as transport:
-        sent = get_connection(base_settings.EMAIL_BACKEND).send_messages([message])
+        sent = get_connection("apps.core.email_backend.ZeptoMailEmailBackend").send_messages(
+            [message]
+        )
 
     assert sent == 1
     assert [(request.method, request.url) for request in transport.requests] == [
@@ -77,7 +78,9 @@ def test_send_outcomes_are_bounded_quiet_and_sanitized(
         body = ACCEPTED_RESPONSE_BODY
     caplog.set_level(logging.INFO)
     with zeptomail_api_stand_in(status=status, body=body, error=error) as transport:
-        sent = get_connection(base_settings.EMAIL_BACKEND).send_messages([message])
+        sent = get_connection("apps.core.email_backend.ZeptoMailEmailBackend").send_messages(
+            [message]
+        )
     assert sent == (1 if outcome == "accepted" else 0)
     assert transport.timeouts == [(10, 10)]
     assert capsys.readouterr().out == ""
@@ -117,7 +120,12 @@ def test_send_outcomes_are_bounded_quiet_and_sanitized(
 def test_send_uses_the_current_key_and_hosted_region() -> None:
     message = EmailMessage("Subject", "Body", "sender@example.com", ["recipient@example.com"])
     with zeptomail_api_stand_in() as transport:
-        assert get_connection(base_settings.EMAIL_BACKEND).send_messages([message]) == 1
+        assert (
+            get_connection("apps.core.email_backend.ZeptoMailEmailBackend").send_messages(
+                [message]
+            )
+            == 1
+        )
     assert transport.requests[0].url == "https://api.zeptomail.eu/v1.1/email"
     assert transport.requests[0].headers["Authorization"] == "updated-key"
 
@@ -134,7 +142,6 @@ def test_missing_key_imports_and_sends_nothing_without_transport() -> None:
         before_import="""
 import logging
 from unittest.mock import patch
-from django.conf import settings as active_settings
 from django.core.mail import EmailMessage, get_connection
 
 records = []
@@ -148,7 +155,7 @@ def refuse_network(*args, **kwargs):
     request_count += 1
     raise AssertionError("No request should be made without a key")
 with patch("requests.adapters.HTTPAdapter.send", side_effect=refuse_network):
-    backend = get_connection(active_settings.EMAIL_BACKEND)
+    backend = get_connection("apps.core.email_backend.ZeptoMailEmailBackend")
     message = EmailMessage("Subject", "Body", "sender@example.com", ["recipient@example.com"])
     sent_count = backend.send_messages([message])
 warning_count = sum(record.levelno == logging.WARNING for record in records)

@@ -37,14 +37,15 @@ decides *what* runs; zero tolerance decides that it must *pass*. See
 - **Each task:** the task's checks. Lint, format and type-check for what it touched: ruff and pyright on the touched
   backend apps, ESLint and `npm run type-check` for frontend changes, markdown lint for documentation. Then its
   related tests: for the backend, `pytest apps/{app}/` for the touched apps, in this checkout's own stack; for the
-  frontend, `npx vitest related --run <files>`.
+  frontend, `npx vitest related --run <files>`. When a task changes a page or flow a smoke spec drives, run its
+  covering `frontend/e2e/*.spec.ts` files against the worktree's browsable stack as part of those checks.
 - **Commit:** the pre-commit and commit-message hooks. The task's checks have already run.
 - **Parent task, phase and session end:** nothing extra. The report names the broader checks not yet run. Run wider
   when the affected surface has grown past what related tests reach;
   [Quality Gates Strategy § When to Run Wider](../strategies/arc/strategy-quality-gates.md#when-to-run-wider) lists
   the cases.
 - **Pull request:** CI is the broad check: the backend suite with coverage, frontend tests, lint and type-check,
-  the contrast check and the production build, pyright, API type drift and markdown lint.
+  the contrast check and the production build, pyright, API type drift, markdown lint, and the end-to-end smoke job.
 - **Verification:** one local full run (below), then CI on the pull request.
 - **Merge:** `ci-ok` green.
 
@@ -87,6 +88,11 @@ commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
    - Config: `.markdownlint-cli2.jsonc` (MD034 bare URLs disabled only for temporal docs)
    - Excluded by the config's `ignores` list: the archive, the personal workspace (`.arc/user/*/`) and the root
      README
+
+8. **End-to-End Smoke Tests**: 100% pass rate in Chromium
+   - Start the worktree's browsable stack with `node scripts/worktree.mjs browse`
+   - From `frontend/`: `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e`
+   - Use its `SITE_PORT` from `infrastructure/.env`; the primary stack sends real verification mail
 
 ### Quality Gate Failure Protocol
 

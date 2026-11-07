@@ -39,10 +39,8 @@ shared instrumentation patterns so frontend ties into same pipeline.
 
 ## Testing & Quality
 
-- **Mobile Responsiveness Remediation** - Address mobile viewport issues discovered by E2E testing. Scope determined by
-issues surfaced from non-blocking mobile discovery tier in CI. Deliverables: Fix all discovered layout/touch/functional
-parity issues, then promote mobile E2E tests to blocking. Sequencing: Likely immediate follow-up to E2E Testing
-Foundation work unit. See `prd-e2e-testing-foundation.md` Section 3.4 for mobile test scenarios.
+- **Mobile Responsiveness Remediation** - Address mobile viewport layout, touch interaction, and functional parity
+issues.
 
 - **Python Protocol Classes for Type Abstraction** - Consider using Python Protocol classes for structural typing when
 pattern appears across 3+ places. Current verdict: 4 documented type ignores in test infrastructure cheaper than

@@ -72,9 +72,13 @@ assert the semantic token rather than a raw color.
 ## Network Responses with MSW
 
 Keep the component, hooks, services, and HTTP client real. Replace API responses
-at the HTTP boundary with MSW 2's `http` and `HttpResponse` APIs.
+at the HTTP boundary with MSW 3's `http` and `HttpResponse` APIs.
 
-The global setup starts the Node server with `onUnhandledRequest: "error"`.
+Vitest fixes the document and application URLs to `http://localhost:3000`,
+independent of the local frontend environment, so these application tests use
+the same-origin API relationship.
+
+The global setup starts the Node server with `onUnhandledFrame: "error"`.
 Unexpected requests are blocked rather than sent to a live backend. Each test's
 runtime handlers are reset afterward, and the server closes after the file.
 Vitest resolves only MSW's server entry through Node; application dependencies
@@ -84,7 +88,7 @@ Shared happy-path handlers live in `tests/mocks/handlers/`. Add a test-local
 handler for empty, delayed, or error responses:
 
 ```tsx
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse } from "msw/http";
 import { render, screen } from "@tests/helpers/test-renderer";
 import { server } from "@tests/mocks/server";
 import { apiBaseUrl } from "@/config/baseUrls";

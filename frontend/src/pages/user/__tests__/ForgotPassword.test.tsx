@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import { act, render, screen } from "@tests/helpers/test-renderer";
 import { authHandlers, clearBrowserAuth } from "@tests/helpers/auth";
 import { server } from "@tests/mocks/server";

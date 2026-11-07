@@ -12,7 +12,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { waitFor } from "@testing-library/react";
 import type { AxiosInstance } from "axios";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, http } from "msw/http";
 import apiClient, { refreshAccessToken } from "../apiClient";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";

@@ -53,6 +53,8 @@ class BrowseServiceParams(BaseModel):
     certification_country: str | None = None
     region: str | None = None
     with_release_type: str | None = None
+
+    # Backend pagination state (not sent to TMDB API)
     tmdb_page_start: int | None = None
 
     # Backend filtering params (not sent to TMDB API)
@@ -74,7 +76,14 @@ class BrowseServiceParams(BaseModel):
             Dictionary ready for build_tmdb_params() with dot notation keys
         """
         # Backend-only fields that shouldn't go to TMDB API
-        backend_only = {"year_min", "year_max", "rating_min", "rating_max", "min_vote_count"}
+        backend_only = {
+            "year_min",
+            "year_max",
+            "rating_min",
+            "rating_max",
+            "min_vote_count",
+            "tmdb_page_start",
+        }
 
         # Map underscore to dot notation for TMDB API
         underscore_to_dot = {

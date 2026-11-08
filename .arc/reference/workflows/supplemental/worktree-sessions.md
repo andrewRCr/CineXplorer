@@ -27,6 +27,7 @@ From the primary's root:
 ```bash
 node scripts/worktree.mjs create technical/{name} --work-unit  # planned work, with starting notes
 node scripts/worktree.mjs create fix/{name}                   # an errand, without notes
+node scripts/worktree.mjs create docs/{name} --no-install    # environment setup without dependencies
 node scripts/worktree.mjs create fix/{name} --existing        # an existing local or origin branch
 ```
 
@@ -45,7 +46,10 @@ Provisioning copies missing ignored files matched by `.worktreeinclude` (backend
 certificates), links installed shared tools, appends missing project, browser-port and signing-key values to
 `infrastructure/.env`, checks the resolved Compose project name, then runs `npm ci` and `npm run typegen` in
 `frontend/`. Docker must be running. Repeating it preserves existing files and keys and repeats the check and
-install. Missing shared-tool folders are skipped; a later run links them once installed in the primary. A failed
+install. `create --no-install` keeps the file copies, shared-tool links, environment values and project check, but
+skips `npm ci` and `npm run typegen`; its final message names `node scripts/worktree.mjs provision` to install later.
+It can be combined with either `--existing` or `--work-unit`. Missing shared-tool folders are skipped; a later run
+links them once installed in the primary. A failed
 `create` leaves its checkout in place and prints the commands to finish setup there.
 
 - **Branch:** a work unit is provisioned before planning starts: the PRD and task list are written and committed on
@@ -86,8 +90,9 @@ hook source. `.claude` hook configuration is unchanged.
 
 `$errand <concern or inbox title>` follows [run-errand.md](run-errand.md) in the current conversation. The agent
 creates and provisions a sibling checkout with `node scripts/worktree.mjs create {type}/{name}`, then records its
-selection with `errand-enter`, run from the session home. Creation needs Docker running and installs frontend
-dependencies even for documentation or harness work; start a stack only when the checks need it.
+selection with `errand-enter`, run from the session home. Creation needs Docker running. For documentation or
+harness work that needs no frontend dependencies, add `--no-install`; run `provision` in that worktree when they are
+needed. Start a stack only when the checks need it.
 
 The session-scoped record lives in shared Git metadata and uses the Codex thread/session identifier. The identifiers
 must agree; missing or different identifiers stop entry. Recovery validates the checkout's registration, repository

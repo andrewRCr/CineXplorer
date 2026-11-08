@@ -5,7 +5,7 @@
 -c req.txt
 -r req.in
 
-ruff >= 0.13.0, < 0.14
+ruff >= 0.17.0, < 0.18
 django-debug-toolbar >= 5.2.0, < 5.3
 django-extensions >= 3.2.3, < 4.0
 werkzeug >= 3.1.3, < 4.0

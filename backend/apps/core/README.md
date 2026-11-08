@@ -32,6 +32,7 @@ Extract client IP and user agent from request for security logging.
 ```python
 from apps.core.utils import get_client_info
 
+
 @auth_router.post("/login/")
 def login(request: HttpRequest):
     client_ip, user_agent = get_client_info(request)
@@ -59,7 +60,7 @@ from apps.core.utils import build_error_response
 
 return 401, build_error_response(
     "Token has been revoked. Please login again.",
-    debug_detail="This refresh token has already been used and is no longer valid."
+    debug_detail="This refresh token has already been used and is no longer valid.",
 )
 ```
 
@@ -83,11 +84,12 @@ Convert empty strings to None for optional string fields.
 from apps.core.utils import empty_str_to_none
 from pydantic import field_validator
 
+
 class MovieSearchParamsSchema(Schema):
     query: str
     year: str | None = None
 
-    @field_validator('year', mode='before')
+    @field_validator("year", mode="before")
     @classmethod
     def validate_year(cls, v: object) -> str | None:
         return empty_str_to_none(v)
@@ -113,9 +115,12 @@ Generic paginated response schema for list endpoints.
 from apps.core.utils import PaginatedResponse
 from apps.movie.schemas import MovieListItemSchema
 
+
 class MovieListResponseSchema(PaginatedResponse[MovieListItemSchema]):
     """Movie list response with TMDB pagination metadata."""
+
     pass
+
 
 @movies_router.get("/now-playing", response=MovieListResponseSchema)
 def get_now_playing(request: HttpRequest) -> MovieListResponseSchema:
@@ -146,6 +151,7 @@ Create user and authentication payload in one call (reduces 3-line pattern to 1-
 
 ```python
 from apps.core.tests.test_helpers import create_user_and_auth_payload
+
 
 def test_login_success(api_client):
     # Old way (3 lines):

@@ -16,7 +16,7 @@ from apps.core.services.api_response import ApiResponse
 from apps.movie.constants import TMDB_MAX_PAGE
 from apps.movie.services.data_quality.blacklist_file import BlacklistEntry
 
-# TMDB allows about 40 requests every 10 seconds.
+# Conservative pacing between sequential TMDB page requests.
 PAGE_PAUSE_SECONDS = 0.3
 
 

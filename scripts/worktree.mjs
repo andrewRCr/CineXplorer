@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { randomInt } from "node:crypto";
 import {
-    copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, symlinkSync,
+    accessSync, constants, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, symlinkSync,
     writeFileSync,
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
@@ -214,6 +214,64 @@ function processesIn(path) {
     return found;
 }
 
+function shellQuote(value) {
+    return `'${value.replaceAll("'", "'\\''")}'`;
+}
+
+function checkDeletionPermissions(path) {
+    const blockers = [];
+    const uid = process.getuid?.();
+    const gid = process.getgid?.();
+    function block(target, reason, { sharedParent = false, sticky = false } = {}) {
+        const quoted = shellQuote(target);
+        const owner = lstatSync(target).uid === uid;
+        let repair;
+        if (sharedParent) {
+            repair = owner ? [`chmod u+wx -- ${quoted}`] : ["Ask this parent directory's owner to grant write/search access."];
+        } else if (uid === undefined || gid === undefined) {
+            repair = ["Repair this path's deletion permissions manually."];
+        } else {
+            repair = owner ? [] : [`sudo chown -h ${uid}:${gid} -- ${quoted}`];
+            if (!sticky) repair.push(`${owner ? "" : "sudo "}chmod u+rwx -- ${quoted}`);
+        }
+        blockers.push(`${target}: ${reason}\n  ${repair.join("\n  ")}`);
+    }
+    function accessible(directory, mode, sharedParent = false) {
+        try {
+            accessSync(directory, mode);
+            return true;
+        } catch (error) {
+            if (!["EACCES", "EPERM"].includes(error.code)) throw error;
+            block(directory, "missing directory access for deletion", { sharedParent });
+            return false;
+        }
+    }
+    function inspect(target, parent) {
+        const stat = lstatSync(target);
+        if (uid !== undefined && uid !== 0 && (parent.mode & 0o1000) && parent.uid !== uid && stat.uid !== uid) {
+            block(target, "sticky parent directory prevents deletion", { sticky: true });
+            return;
+        }
+        if (!stat.isDirectory()) return;
+        let names;
+        try {
+            names = readdirSync(target);
+        } catch (error) {
+            if (!["EACCES", "EPERM"].includes(error.code)) throw error;
+            block(target, "cannot list directory before deletion");
+            return;
+        }
+        if (names.length && !accessible(target, constants.W_OK | constants.X_OK)) return;
+        for (const name of names) inspect(join(target, name), stat);
+    }
+    const parent = dirname(path);
+    if (accessible(parent, constants.W_OK | constants.X_OK, true)) inspect(path, lstatSync(parent));
+    if (blockers.length) {
+        throw new Error(`Deletion permission blockers; nothing was torn down or unregistered:\n${blockers.join("\n")}\n` +
+            "Repair the listed paths manually, then retry; further blockers may become visible.");
+    }
+}
+
 function checkRemoval(main, name, keepBranch) {
     if (!/^[a-z0-9][a-z0-9-]*$/.test(name ?? "")) throw new Error("Supply a worktree name using lowercase letters, digits and hyphens.");
     const path = `${main}.${name}`;
@@ -224,6 +282,7 @@ function checkRemoval(main, name, keepBranch) {
     if (running.length) {
         throw new Error(`Processes are running inside ${path}; end them first, such as a session there:\n  ${running.join("\n  ")}`);
     }
+    checkDeletionPermissions(path);
     git(main, "fetch", "origin");
     if (!keepBranch) {
         const merged = spawnSync("git", ["merge-base", "--is-ancestor", entry.branch, "origin/main"], {

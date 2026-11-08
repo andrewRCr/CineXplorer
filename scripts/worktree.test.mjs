@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import {
-    existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, writeFileSync,
+    chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, realpathSync, rmSync, symlinkSync, writeFileSync,
 } from "node:fs";
 import { devNull, tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -478,6 +478,113 @@ function preserved(f, path, args, reason) {
     assert.equal(envOf(path), env);
     assert.deepEqual(f.calls(), []);
 }
+
+for (const command of ["remove", "finish"]) {
+    for (const mode of [0o555, 0o000]) {
+        test(`${command} refuses deletion blockers with mode ${mode.toString(8)} before changing the worktree or stack`, {
+            skip: process.getuid?.() === 0 ? "root bypasses directory permission checks" : false,
+        }, (t) => {
+            const f = fixture(t);
+            const path = f.worktree();
+            write(path, "infrastructure/.env", BROWSE_ENV);
+            const relative = ".claude/blocked directory's";
+            const blocker = join(path, relative);
+            write(path, `${relative}/sentinel`, "keep this file");
+            git(f.main, "commit", "-q", "--allow-empty", "-m", "newer remote main");
+            git(f.main, "push", "-q", "origin", "main");
+            git(f.main, "reset", "-q", "--hard", "HEAD~1");
+            const registration = git(f.main, "worktree", "list", "--porcelain");
+            const mainHead = git(f.main, "rev-parse", "HEAD");
+            const branchHead = git(path, "rev-parse", "HEAD");
+            const environment = envOf(path);
+            chmodSync(blocker, mode);
+            try {
+                const result = f.invoke(f.main, [command, "sample"], { CX_IDS: "live-resource" });
+                assert.deepEqual({
+                    registration: git(f.main, "worktree", "list", "--porcelain"),
+                    mainHead: git(f.main, "rev-parse", "HEAD"),
+                    checkoutExists: existsSync(path),
+                }, { registration, mainHead, checkoutExists: true });
+                refusal(result, /deletion.*permission|permission.*delet/i);
+                assert.ok(result.stderr.includes(blocker), result.stderr);
+                const repair = result.stderr.split("\n").map((line) => line.trim())
+                    .find((line) => line.startsWith("chmod u+rwx -- "));
+                assert.ok(repair, result.stderr);
+                assert.equal(lstatSync(blocker).mode & 0o777, mode);
+                assert.equal(git(f.main, "worktree", "list", "--porcelain"), registration);
+                assert.equal(git(f.main, "rev-parse", "HEAD"), mainHead);
+                assert.equal(git(path, "rev-parse", "HEAD"), branchHead);
+                assert.equal(git(f.main, "rev-parse", "fix/sample"), branchHead);
+                assert.equal(envOf(path), environment);
+                assert.deepEqual(f.calls(), []);
+                execFileSync("sh", ["-c", repair], { cwd: f.main, env: GIT_ENV });
+                assert.equal(lstatSync(blocker).mode & 0o700, 0o700);
+                assert.equal(readFileSync(join(blocker, "sentinel"), "utf8"), "keep this file");
+            } finally {
+                if (existsSync(blocker)) chmodSync(blocker, 0o755);
+            }
+            success(f.invoke(f.main, [command, "sample"], { CX_IDS: "live-resource" }));
+            assert.equal(existsSync(path), false);
+            assert.doesNotMatch(git(f.main, "worktree", "list", "--porcelain"), /primary\.sample/);
+            assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
+        });
+    }
+}
+
+for (const scenario of ["read-only file", "read-only empty directory", "non-searchable empty directory", "shared symlink", "dangling symlink"]) {
+    test(`remove permits a ${scenario} without changing shared targets`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", BROWSE_ENV);
+        const shared = join(f.parent, "shared-tools");
+        const ignored = join(path, ".claude");
+        if (scenario.endsWith("symlink")) {
+            if (scenario === "shared symlink") {
+                write(f.parent, "shared-tools/sentinel", "keep shared tools");
+                chmodSync(shared, 0o000);
+            }
+            symlinkSync(shared, ignored, "dir");
+        } else if (scenario === "read-only file") {
+            write(path, ".claude/sentinel", "read only");
+            chmodSync(join(ignored, "sentinel"), 0o444);
+        } else {
+            mkdirSync(ignored);
+            chmodSync(ignored, scenario === "read-only empty directory" ? 0o555 : 0o444);
+        }
+        try {
+            success(f.invoke(f.main, ["remove", "sample"]));
+            assert.equal(existsSync(path), false);
+            assert.doesNotMatch(git(f.main, "worktree", "list", "--porcelain"), /primary\.sample/);
+            assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
+        } finally {
+            if (existsSync(shared)) chmodSync(shared, 0o755);
+            if (!scenario.endsWith("symlink") && existsSync(ignored)) chmodSync(ignored, 0o755);
+        }
+        if (scenario === "shared symlink") assert.equal(readFileSync(join(shared, "sentinel"), "utf8"), "keep shared tools");
+        if (scenario === "dangling symlink") assert.equal(existsSync(shared), false);
+    });
+}
+
+test("remove refuses a parent directory that prevents deleting the checkout", {
+    skip: process.getuid?.() === 0 ? "root bypasses directory permission checks" : false,
+}, (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    const registration = git(f.main, "worktree", "list", "--porcelain");
+    chmodSync(f.parent, 0o555);
+    try {
+        const result = f.invoke(f.main, ["remove", "sample"], { CX_IDS: "live-resource" });
+        assert.equal(git(f.main, "worktree", "list", "--porcelain"), registration);
+        refusal(result, /deletion permission blockers/i);
+        assert.ok(result.stderr.includes(f.parent), result.stderr);
+        assert.match(result.stderr, /chmod u\+wx/);
+        assert.equal(envOf(path), BROWSE_ENV);
+        assert.deepEqual(f.calls(), []);
+    } finally {
+        chmodSync(f.parent, 0o755);
+    }
+});
 
 test("remove refuses a linked checkout before any Docker call", (t) => {
     const f = fixture(t);

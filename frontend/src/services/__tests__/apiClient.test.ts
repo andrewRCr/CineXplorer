@@ -344,7 +344,9 @@ describe("email failures and the global server-error toast", () => {
                 await expect(request).rejects.toThrow();
             });
             if (showsToast)
-                expect(await screen.findByText("Server error")).toBeVisible();
+                await waitFor(() => {
+                    expect(screen.getByText("Server error")).toBeVisible();
+                });
             else
                 expect(
                     screen.queryByText("Server error"),

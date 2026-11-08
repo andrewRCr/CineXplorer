@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
-import { act, render, screen } from "@tests/helpers/test-renderer";
+import { act, render, screen, waitFor } from "@tests/helpers/test-renderer";
 import { authHandlers, clearBrowserAuth } from "@tests/helpers/auth";
 import { server } from "@tests/mocks/server";
 import { siteOrigin } from "@/config/baseUrls";
@@ -57,7 +57,9 @@ describe("password-reset request outcomes", () => {
       );
       await user.click(screen.getByRole("button", { name: "Send reset link" }));
       if (outcome === 503) {
-        expect(await screen.findByText(failureMessage)).toBeVisible();
+        await waitFor(() => {
+          expect(screen.getByText(failureMessage)).toBeVisible();
+        });
         expect(screen.queryByText("Check your email")).not.toBeInTheDocument();
         expect(screen.queryByText("Server error")).not.toBeInTheDocument();
       } else {

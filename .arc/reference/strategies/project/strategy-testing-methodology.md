@@ -765,12 +765,8 @@ beforeEach(() => {
 
 ### Asserting Chakra Recipe Styles
 
-The shared renderers provide the project's default system, including its recipes. Recipe styles sit in CSS
-`@layer` blocks, which jsdom's `getComputedStyle` skips. A style assertion under the shared renderer can therefore
-pass without checking the recipe's computed style.
-
-To test that a recipe variant applies a token, render under the project theme with layers disabled, then assert the
-computed style:
+The shared renderers provide the project's default system, including its recipes. jsdom 31 resolves CSS variables
+and supports cascade layers. Existing badge variant checks keep their layer-free fixture:
 
 ```tsx
 import { ChakraProvider, createSystem } from "@chakra-ui/react";
@@ -784,8 +780,16 @@ render(
     <Button variant="secondary">Cancel</Button>
   </ChakraProvider>,
 );
-// Assert the token's resolved value on `background` (not `backgroundColor`)
+// Compare computed backgroundColor with the expected semantic token's resolved color.
 ```
+
+Compare the rendered background with the independently expected semantic token's resolved color, rather than a
+literal `var(...)` string. A class-free reference element beside the badge can resolve the expected token in the
+same ancestor theme; set its background color inline with `!important` and remove it before reading the badge's
+computed `backgroundColor`, so it cannot affect structural selectors. Reject empty, transparent or unresolved
+reference colors. Keep the expected variant-to-token mapping independent of the recipe and component, and prove
+that wrong variants, missing backgrounds and cascade overrides fail. Declaration-only checks do not establish
+computed color or cascade behavior; a layer-free fixture does not verify production cascade layers.
 
 ### Current State
 

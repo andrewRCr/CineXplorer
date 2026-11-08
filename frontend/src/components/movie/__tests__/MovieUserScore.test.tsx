@@ -10,7 +10,7 @@ import { render, screen } from "@tests/helpers/test-renderer";
 import { defaultSystem as projectSystem } from "@/theme";
 import MovieUserScore from "../MovieUserScore";
 
-// jsdom skips styles inside CSS @layer blocks. Variant checks render under a layer-free project system.
+// Variant checks use a layer-free project system and compare resolved semantic colors.
 const badgeStyleSystem = createSystem(projectSystem._config, {
   disableLayers: true,
 });
@@ -31,7 +31,27 @@ const expectBadgeVariant = (
   badge: HTMLElement,
   variant: keyof typeof variantBackgrounds,
 ) => {
-  expect(badge).toHaveStyle({ background: variantBackgrounds[variant] });
+  expect(badge).toBeInTheDocument();
+  const reference = document.createElement("span");
+  reference.style.setProperty(
+    "background-color",
+    variantBackgrounds[variant],
+    "important",
+  );
+  badge.after(reference);
+  let expectedBackground: string;
+  try {
+    expectedBackground = window.getComputedStyle(reference).backgroundColor;
+  } finally {
+    reference.remove();
+  }
+  expect(expectedBackground).not.toBe("");
+  expect(expectedBackground).not.toBe("transparent");
+  expect(expectedBackground).not.toBe("rgba(0, 0, 0, 0)");
+  expect(expectedBackground).not.toContain("var(");
+  expect(window.getComputedStyle(badge).backgroundColor).toBe(
+    expectedBackground,
+  );
 };
 
 describe("MovieUserScore Component", () => {

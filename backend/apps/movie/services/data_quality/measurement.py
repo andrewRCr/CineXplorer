@@ -25,7 +25,7 @@ from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase, TMDBPaginatedMov
 from apps.movie.schemas import MovieDiscoverFilterSchema, MovieListItemSchema
 
 from ..api_boundary import BrowseServiceParams, transform_to_service_params
-from ..deduplication_tracker import DeduplicationTracker
+from ..deduplication_tracker import DeduplicationTracker, HashableParams
 from .filters import (
     LATIN_SCRIPT_LANGUAGES,
     filter_movies_by_blacklist,
@@ -302,6 +302,24 @@ def _request(
     return fetch(page=1, params=params, dedup_tracker=tracker)
 
 
+class _MeasurementTracker(DeduplicationTracker):
+    """Remove a temporary browse's state using the service's effective filters."""
+
+    def __init__(self) -> None:
+        super().__init__(session_id=f"quality-measurement-{uuid.uuid4().hex}")
+        self._recorded_params: list[HashableParams] = []
+
+    def add_returned_ids(self, params: HashableParams, ids: list[int]) -> None:
+        if ids:
+            self._recorded_params.append(params)
+        super().add_returned_ids(params, ids)
+
+    def clear_recorded_sessions(self) -> None:
+        """Clear each filter combination used, including across a date-window change."""
+        for params in self._recorded_params:
+            self.clear_session(params)
+
+
 def measure_browse(
     service: MovieService,
     client: RecordingTMDBClient,
@@ -313,38 +331,40 @@ def measure_browse(
     `service` must make its TMDB calls through `client`.
     """
     tally = Tally()
-    tracker = DeduplicationTracker(session_id=f"quality-measurement-{uuid.uuid4().hex}")
+    tracker = _MeasurementTracker()
     params = stage_params(browse)
     shown: set[int] = set()
     cursor = browse.start_page
-    for _ in range(requests):
-        first = len(client.discover_responses)
-        response = _request(service, browse, cursor, tracker)
-        pages = [
-            validate_tmdb_paginated_response(raw, TMDBPaginatedMovieResponse)
-            for raw in client.discover_responses[first:]
-        ]
-        survivors: list[int] = []
-        for page in pages:
-            page_survivors, removed = count_stage_removals(page.results, params)
-            survivors.extend(page_survivors)
-            tally.read += len(page.results)
-            tally.under_floor += count_under_floor(page.results, params.min_vote_count)
-            for stage in STAGES:
-                tally.removed[stage] += removed[stage]
-        returned = [movie.tmdb_id for movie in response.results]
-        tally.repeated += reconcile(returned, survivors, shown)
-        shown.update(returned)
-        tally.shown += len(returned)
-        tally.requests += 1
-        if len(pages) > 1:
-            tally.topped_up += 1
-            tally.extra_pages += len(pages) - 1
-        cursor = response.next_tmdb_page_start
-        if cursor is None:
-            break
-    tracker.clear_session(params)
-    return tally
+    try:
+        for _ in range(requests):
+            first = len(client.discover_responses)
+            response = _request(service, browse, cursor, tracker)
+            pages = [
+                validate_tmdb_paginated_response(raw, TMDBPaginatedMovieResponse)
+                for raw in client.discover_responses[first:]
+            ]
+            survivors: list[int] = []
+            for page in pages:
+                page_survivors, removed = count_stage_removals(page.results, params)
+                survivors.extend(page_survivors)
+                tally.read += len(page.results)
+                tally.under_floor += count_under_floor(page.results, params.min_vote_count)
+                for stage in STAGES:
+                    tally.removed[stage] += removed[stage]
+            returned = [movie.tmdb_id for movie in response.results]
+            tally.repeated += reconcile(returned, survivors, shown)
+            shown.update(returned)
+            tally.shown += len(returned)
+            tally.requests += 1
+            if len(pages) > 1:
+                tally.topped_up += 1
+                tally.extra_pages += len(pages) - 1
+            cursor = response.next_tmdb_page_start
+            if cursor is None:
+                break
+        return tally
+    finally:
+        tracker.clear_recorded_sessions()
 
 
 def measure_sample(

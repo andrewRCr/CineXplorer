@@ -6,15 +6,21 @@ real.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import date
 from io import StringIO
 from pathlib import Path
+from typing import cast
 from unittest.mock import Mock, patch
+from uuid import uuid4
 
 import pytest
+from django.conf import settings
 from django.core.management import CommandError, call_command
 from django.test import override_settings
+from redis import Redis
 
+from apps.core.exceptions import UpstreamError
 from apps.core.services.api_response import ApiResponse
 from apps.core.tmdb_models.tmdb_responses import TMDBMovieBase
 from apps.movie.constants import TMDB_MAX_PAGE
@@ -24,6 +30,7 @@ from apps.movie.services.data_quality.filters import apply_data_quality_filters
 from apps.movie.services.data_quality.measurement import (
     SORT_ORDERS,
     STAGES,
+    Endpoint,
     MeasurementMismatchError,
     RecordingTMDBClient,
     SampleBrowse,
@@ -34,6 +41,7 @@ from apps.movie.services.data_quality.measurement import (
     reconcile,
     render_table,
 )
+from apps.movie.services.deduplication_tracker import DeduplicationTracker
 from apps.movie.services.movie_service import MovieService
 from apps.movie.tests.mock_paths import TMDB_CLIENT_GET
 from apps.movie.tests.test_helpers import create_mock_paginated_response
@@ -229,6 +237,80 @@ def test_without_the_query_floor_the_backend_vote_stage_removes_what_tmdb_sends(
     default_client = RecordingTMDBClient()
     measure_browse(MovieService(tmdb_client=default_client), default_client, browse, requests=5)
     assert sent_params(mock_get)[0]["vote_count.gte"] == 3
+
+
+@pytest.mark.parametrize("endpoint", ["now_playing", "upcoming"])
+@pytest.mark.parametrize("upstream_fails", [False, True], ids=["complete", "upstream-error"])
+@patch(TMDB_CLIENT_GET)
+def test_measurement_removes_its_sessions_and_preserves_another_browse(
+    mock_get: Mock, endpoint: Endpoint, upstream_fails: bool
+) -> None:
+    # A unique title identifies this test's raw Redis sets across parallel workers.
+    first_id = uuid4().int % 100_000_000 + 1
+    sentinel = DeduplicationTracker(session_id=f"quality-measurement-unrelated-{uuid4().hex}")
+    sentinel_params = BrowseServiceParams()
+    sentinel.add_returned_ids(sentinel_params, [first_id])
+    # redis-py leaves from_url's optional **kwargs untyped.
+    redis_client = Redis.from_url(  # pyright: ignore[reportUnknownMemberType]
+        settings.CACHES["default"]["LOCATION"], decode_responses=True
+    )
+
+    def matching_keys() -> set[str]:
+        keys: set[str] = set()
+        # Redis leaves scan_iter's key type unspecified; validate each value below.
+        scanned = cast(
+            "Iterator[object]",
+            redis_client.scan_iter(  # pyright: ignore[reportUnknownMemberType]
+                match="pagination_session:quality-measurement-*"
+            ),
+        )
+        for key in scanned:
+            assert isinstance(key, str)
+            if redis_client.sismember(key, str(first_id)):
+                keys.add(key)
+        return keys
+
+    sentinel_keys = matching_keys()
+    assert len(sentinel_keys) == 1
+    observed: set[str] = set()
+
+    def observe_session() -> None:
+        observed.update(matching_keys() - sentinel_keys)
+
+    def answer(
+        resource: str, params: dict[str, object] | None = None, *args: object, **kwargs: object
+    ) -> ApiResponse:
+        assert resource == "discover/movie"
+        assert params is not None
+        page = params["page"]
+        assert isinstance(page, int)
+        if upstream_fails and page == 2:
+            return ApiResponse(status_code=503, data={"status_message": "Service unavailable"})
+        release_date = str(params["primary_release_date.gte"])
+        titles = [
+            movie(first_id + (page - 1) * 20 + i, release_date=release_date) for i in range(20)
+        ]
+        return create_mock_paginated_response(titles, page=page, total_pages=2, total_results=40)
+
+    mock_get.side_effect = answer
+    client = RecordingTMDBClient(pause=observe_session)
+    browse = SampleBrowse(endpoint, endpoint, {"sort_by": "popularity.desc"})
+    try:
+        if upstream_fails:
+            with pytest.raises(UpstreamError, match=r"^External API error$") as error:
+                measure_browse(MovieService(tmdb_client=client), client, browse, requests=2)
+            assert error.value.status_code == 502
+        else:
+            tally = measure_browse(MovieService(tmdb_client=client), client, browse, requests=2)
+            assert tally == Tally(read=40, shown=40, requests=2)
+        assert observed, "The first request must persist a real session before cleanup"
+        assert matching_keys() == sentinel_keys
+        assert sentinel.get_returned_ids(sentinel_params) == {first_id}
+    finally:
+        # Remove only this test's uniquely identified sets, including after a failing assertion.
+        for key in matching_keys():
+            redis_client.delete(key)
+        redis_client.close()
 
 
 def test_the_floor_off_run_measures_only_browses_with_a_vote_floor() -> None:

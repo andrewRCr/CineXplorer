@@ -146,7 +146,7 @@ The backend uses a layered architecture with class-based services for all busine
 
 ## 7. Testing Infrastructure
 
-The project uses modern testing frameworks for both backend and frontend:
+The project checks backend behavior, frontend components, and complete browser journeys:
 
 ### Backend Testing
 
@@ -163,6 +163,19 @@ The project uses modern testing frameworks for both backend and frontend:
 - **Structure**: Co-located tests in `__tests__/` directories
 - **Command**: `npm test` in `frontend/` on host Node, or
   `docker compose -f infrastructure/docker-compose.yml exec frontend npm test` in the primary's frontend container
+
+### End-to-End Testing
+
+- **Framework**: Playwright in Chromium, with axe scans on every distinct page each spec reaches; no retries
+- **Structure**: `frontend/e2e/`, configured by `frontend/playwright.config.ts`
+- **Coverage**: Sign-up to the verification notice, sign-in/sign-out, browse pagination, filtered movie detail, and
+  Back to Results scroll restoration after reloading detail
+- **Targets**: `local` uses real authentication with synthetic catalogue fixtures and discarded mail in a worktree's
+  browsable stack; `staging` uses live data and a verified test account, skips sign-up, disables traces/screenshots,
+  and uploads no artifacts. The reload scenario supplies its own catalogue fixtures in both targets
+- **Command**: With the worktree's browsable stack running (`node scripts/worktree.mjs browse`), run
+  `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e` from `frontend/`
+- **CI**: Required on pull requests through `ci-ok`; the staging target runs after deployment
 
 **For testing methodology, quality gates, and test-first protocols**, see:
 

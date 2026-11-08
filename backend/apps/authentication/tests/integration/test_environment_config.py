@@ -518,3 +518,59 @@ def test_development_oauth_ignores_environment_apps() -> None:
     assert "error" not in values
     providers = cast(dict[str, dict[str, object]], values.get("SOCIALACCOUNT_PROVIDERS", {}))
     assert all("APP" not in provider for provider in providers.values())
+
+
+@pytest.mark.parametrize("environment", ["development", "staging"])
+def test_email_backend_defaults_to_zeptomail(environment: str) -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    assert load_settings(
+        {
+            "ENVIRONMENT": environment,
+            "DEBUG": "False",
+            "DJANGO_ALLOWED_HOSTS": "testserver",
+            "EMAIL_BACKEND": None,
+        },
+        ["EMAIL_BACKEND"],
+    ) == {"EMAIL_BACKEND": "apps.core.email_backend.ZeptoMailEmailBackend"}
+
+
+def test_development_accepts_dummy_email_backend() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    backend = "django.core.mail.backends.dummy.EmailBackend"
+    assert load_settings(
+        {"ENVIRONMENT": "development", "DEBUG": "False", "EMAIL_BACKEND": backend},
+        ["EMAIL_BACKEND"],
+    ) == {"EMAIL_BACKEND": backend}
+
+
+@pytest.mark.parametrize("environment", ["staging", "production"])
+def test_deployed_settings_refuse_email_backend_override(environment: str) -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    values = load_settings(
+        {
+            "ENVIRONMENT": environment,
+            "DEBUG": "False",
+            "DJANGO_ALLOWED_HOSTS": "testserver",
+            "EMAIL_BACKEND": "django.core.mail.backends.dummy.EmailBackend",
+        },
+        [],
+    )
+    assert "EMAIL_BACKEND" in str(values.get("error", ""))
+
+
+def test_staging_accepts_explicit_zeptomail_backend() -> None:
+    from apps.core.tests.test_helpers import load_settings
+
+    backend = "apps.core.email_backend.ZeptoMailEmailBackend"
+    assert load_settings(
+        {
+            "ENVIRONMENT": "staging",
+            "DEBUG": "False",
+            "DJANGO_ALLOWED_HOSTS": "testserver",
+            "EMAIL_BACKEND": backend,
+        },
+        ["EMAIL_BACKEND"],
+    ) == {"EMAIL_BACKEND": backend}

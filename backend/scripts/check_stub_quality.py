@@ -68,6 +68,32 @@ def _iter_code_lines(lines: list[str]) -> Generator[tuple[int, str]]:
         yield i, line
 
 
+def _has_header_any_justification(lines: list[str], justified_patterns: list[str]) -> bool:
+    """Check the first thirty lines for a global Any justification."""
+    for line in lines[:30]:
+        if "typing.Any" in line or "Any" in line:
+            header_context = "\n".join(lines[:30]).lower()
+            keywords = ["external library", "third-party", "allauth"]
+            if any(keyword in header_context for keyword in keywords):
+                return True
+        if any(re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns):
+            return True
+    return False
+
+
+def _has_inline_any_justification(lines: list[str], justified_patterns: list[str]) -> bool:
+    """Check code lines for an Any use with a recognized inline justification."""
+    for _, line in _iter_code_lines(lines):
+        if re.search(r"\bAny\b", line):
+            code_part = line.split("#")[0] if "#" in line else line
+            has_pattern = any(
+                re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns
+            )
+            if "Any" in code_part and has_pattern:
+                return True
+    return False
+
+
 def check_any_usage(file_path: Path) -> list[StubIssue]:
     """Check for typing.Any usage that isn't justified."""
     issues: list[StubIssue] = []
@@ -82,37 +108,10 @@ def check_any_usage(file_path: Path) -> list[StubIssue]:
         r"#.*External library contract",
     ]
 
-    # First pass: check if file has global justification in header
-    # Check first 30 lines for justification (covers typical file headers)
-    # This includes docstrings and comments
-    file_has_global_justification = False
-    for line in lines[:30]:
-        # Check for typing.Any mention with justification in file header
-        # Look for patterns like "Uses typing.Any" + "external library" / "third-party"
-        if "typing.Any" in line or "Any" in line:
-            # Check if any justification keywords appear in this line or nearby lines
-            header_context = "\n".join(lines[:30]).lower()
-            keywords = ["external library", "third-party", "allauth"]
-            if any(keyword in header_context for keyword in keywords):
-                file_has_global_justification = True
-                break
-        # Also check standard justification patterns
-        if any(re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns):
-            file_has_global_justification = True
-            break
-
-    # Also check if file has ANY justified Any usage (for import acceptance)
-    has_justified_any = file_has_global_justification
-    if not has_justified_any:
-        for _, line in _iter_code_lines(lines):
-            if re.search(r"\bAny\b", line):
-                code_part = line.split("#")[0] if "#" in line else line
-                has_pattern = any(
-                    re.search(pattern, line, re.IGNORECASE) for pattern in justified_patterns
-                )
-                if "Any" in code_part and has_pattern:
-                    has_justified_any = True
-                    break
+    file_has_global_justification = _has_header_any_justification(lines, justified_patterns)
+    has_justified_any = file_has_global_justification or _has_inline_any_justification(
+        lines, justified_patterns
+    )
 
     # Second pass: check individual Any usages
     for i, line in _iter_code_lines(lines):
@@ -184,6 +183,16 @@ def check_maintenance_header(file_path: Path) -> list[StubIssue]:
     return issues
 
 
+def _import_is_used(import_name: str, lines: list[str]) -> bool:
+    """Look for import-name text in non-comment lines after its declaration."""
+    for line in lines:
+        if line.strip().startswith("#"):
+            continue
+        if import_name in line and f"import {import_name}" not in line:
+            return True
+    return False
+
+
 def check_unused_imports(file_path: Path) -> list[StubIssue]:
     """Check for imports that aren't used in the file."""
     issues: list[StubIssue] = []
@@ -209,18 +218,7 @@ def check_unused_imports(file_path: Path) -> list[StubIssue]:
         if import_name == "annotations":
             continue
 
-        # Look for usage after the import line
-        usage_found = False
-        for line in lines[line_num:]:  # Check lines after import
-            # Skip the import line itself and comments
-            if line.strip().startswith("#"):
-                continue
-            # Check if import_name appears (not perfect, but good enough)
-            if import_name in line and f"import {import_name}" not in line:
-                usage_found = True
-                break
-
-        if not usage_found:
+        if not _import_is_used(import_name, lines[line_num:]):
             issues.append(
                 {
                     "file": str(file_path),

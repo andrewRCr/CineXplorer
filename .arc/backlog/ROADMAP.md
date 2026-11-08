@@ -3,7 +3,7 @@
 **Purpose:** The order of the work remaining before launch, and what is in and out of launch scope. Subject to change
 as we learn.
 
-**Last Updated:** 2026-11-06
+**Last Updated:** 2026-11-07
 
 ---
 
@@ -84,12 +84,15 @@ app does today.
 
 Started 2026-11-06.
 
-### 1. First: E2E Smoke Tier
+### 1. First: E2E Smoke Tier ✅ (2026-11-07)
 
-A few Playwright specs on the flows that exist today (sign-up and sign-in, browse, movie detail) with an accessibility
-check, run in CI on every pull request and against staging after each deploy; the watchlist's spec follows the
+Five Playwright specs in Chromium cover sign-up, sign-in and sign-out, browse, movie detail, and the scroll position
+restored after a reload, with an axe accessibility scan on each page they reach. CI runs them against the development
+stack on every pull request, and against staging after each deploy, without sign-up. The watchlist's spec follows the
 user-movie data work. Specs find elements by role and accessible name, so the overhaul doesn't break them, and every
 later work unit keeps them green.
+
+- Archive: `reference/archive/2026-q4/technical/09_e2e-smoke/`
 
 ### 2. Then, in Two Tracks
 
@@ -167,6 +170,7 @@ Each goes back in, in this order, as progress shows room:
 
 ## Change Log
 
+- **2026-11-07**: E2E smoke tier marked complete with its archive
 - **2026-11-06**: Watchlist drag-and-drop ordering and Next Up move from Cut to the top of Not Committed
 - **2026-11-06**: The smoke tier's watchlist spec follows the user-movie data work
 - **2026-11-06**: Rewritten at Stage 4's start: Stages 0–3 marked complete with their archives, Deployment Enablement

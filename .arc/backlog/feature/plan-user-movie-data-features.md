@@ -529,7 +529,6 @@ Chronological timeline of all user actions:
 
 - Service layer patterns (pagination helpers, batch operations)
 - Celery/Redis (if async features needed)
-- Playwright E2E testing (validates feature flows)
 
 **Phase 2: Frontend Modernization** (establishes patterns)
 

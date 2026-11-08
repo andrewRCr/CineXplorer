@@ -58,7 +58,12 @@ export default tseslint.config([
         rules: { "no-console": "error" },
     },
     {
-        files: ["src/services/logger.ts", "src/services/consoleCapture.ts"],
+        files: [
+            "src/services/logger.ts",
+            "src/services/consoleCapture.ts",
+            // The capture tests exercise and observe the browser console boundary.
+            "src/services/__tests__/consoleCapture.test.ts",
+        ],
         rules: { "no-console": "off" },
     },
     {
@@ -66,10 +71,19 @@ export default tseslint.config([
             "**/__tests__/**/*.{js,jsx,ts,tsx}",
             "**/*.{test,spec}.{js,jsx,ts,tsx}",
         ],
+        ignores: ["e2e/**"],
         extends: [testingLibrary.configs["flat/react"]],
         settings: {
             "testing-library/utils-module": "test-renderer",
         },
+    },
+    {
+        files: ["e2e/**"],
+        rules: Object.fromEntries(
+            Object.keys(reactHooks.configs.flat.recommended.rules).map(
+                (rule) => [rule, "off"],
+            ),
+        ),
     },
     eslintConfigPrettier,
 ]);

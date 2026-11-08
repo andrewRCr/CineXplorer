@@ -11,6 +11,7 @@ from typing import Any
 import requests
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
+from requests.structures import CaseInsensitiveDict
 
 from .api_response import RATE_LIMIT_HEADER_MAPPING, ApiResponse
 from .base_api_client import BaseApiClient
@@ -20,7 +21,7 @@ class TMDBApiClient(BaseApiClient):
     """Specialized API client for TMDB (The Movie Database) interactions.
 
     Extends BaseApiClient with TMDB-specific functionality:
-    - Automatic API key injection
+    - Bearer authentication with the configured read access token
     - TMDB rate limit header processing
     - TMDB-specific error code interpretation
     - Enhanced logging for movie-related operations
@@ -49,19 +50,26 @@ class TMDBApiClient(BaseApiClient):
         Returns:
             Complete headers dictionary with standard TMDB headers
         """
-        prepared_headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "User-Agent": "CineXplorer/1.0",
-        }
+        token = getattr(settings, "TMDB_READ_ACCESS_TOKEN", None)
+        if not token:
+            raise ImproperlyConfigured(
+                "TMDB_READ_ACCESS_TOKEN is not configured in Django settings."
+            )
 
+        prepared_headers = CaseInsensitiveDict(
+            {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "User-Agent": "CineXplorer/1.0",
+            }
+        )
         if headers:
             prepared_headers.update(headers)
-
-        return prepared_headers
+        prepared_headers["Authorization"] = f"Bearer {token}"
+        return dict(prepared_headers)
 
     def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
-        """Get sanitized parameters for logging (removes API key for security).
+        """Remove credential parameters before requests or logging.
 
         Args:
             params: Original parameters dictionary
@@ -72,8 +80,7 @@ class TMDBApiClient(BaseApiClient):
         if not params:
             return {}
 
-        # Remove API key from logging for security
-        return {k: v for k, v in params.items() if k != "api_key"}
+        return {k: v for k, v in params.items() if k not in {"api_key", "access_token"}}
 
     def get_error_details(self, status_code: int) -> str:
         """Get TMDB-specific error details for status codes.
@@ -86,7 +93,7 @@ class TMDBApiClient(BaseApiClient):
         """
         tmdb_error_details = {
             400: "Bad Request - The request was invalid or malformed",
-            401: "Unauthorized - Invalid or missing TMDB API key",
+            401: "Unauthorized - Invalid or missing TMDB read access token",
             403: "Forbidden - Access denied to the requested TMDB resource",
             404: "Not Found - The requested movie/resource does not exist in TMDB",
             422: "Unprocessable Entity - TMDB request data validation failed",
@@ -394,7 +401,7 @@ class TMDBApiClient(BaseApiClient):
         headers: dict[str, str] | None = None,
         **kwargs: object,
     ) -> ApiResponse:
-        """Make a GET request to TMDB API with automatic API key injection.
+        """Make a GET request to TMDB without credential query parameters.
 
         Args:
             endpoint: TMDB API endpoint (relative to base URL)
@@ -405,18 +412,7 @@ class TMDBApiClient(BaseApiClient):
         Returns:
             ApiResponse object with TMDB response data or error information
         """
-        # Guard against missing TMDB API key
-        api_key = getattr(settings, "TMDB_API_KEY", None)
-        if not api_key:
-            raise ImproperlyConfigured(
-                "TMDB_API_KEY is not configured in Django settings. "
-                "Please set TMDB_API_KEY in your environment or settings file."
-            )
-
-        # Add the key to a copy, so the caller's params never hold it
-        request_params: dict[str, object] = {**(params or {}), "api_key": api_key}
-
-        return super().get(endpoint, request_params, headers, **kwargs)
+        return super().get(endpoint, self.get_sanitized_params(params), headers, **kwargs)
 
     # Convenience methods for common TMDB operations
     def search_movies(self, query: str, page: int = 1, **kwargs: object) -> ApiResponse:

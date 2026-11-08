@@ -9,12 +9,8 @@ error processing, and metadata extraction.
 
 from unittest.mock import Mock, patch
 
-import pytest
-from django.core.exceptions import ImproperlyConfigured
-
 from apps.core.services.api_response import ApiResponse
 from apps.core.services.tmdb_api_client import TMDBApiClient
-from apps.core.tests.mock_paths import TMDB_SETTINGS
 
 
 class TestTMDBApiClientInit:
@@ -84,7 +80,7 @@ class TestTMDBApiClientErrorDetails:
     def test_get_error_details_for_401(self) -> None:
         client = TMDBApiClient()
         details = client.get_error_details(401)
-        assert "TMDB API key" in details
+        assert "TMDB read access token" in details
 
     def test_get_error_details_for_404(self) -> None:
         client = TMDBApiClient()
@@ -201,57 +197,10 @@ class TestTMDBApiClientRateLimitExtraction:
         assert info is None
 
 
-class TestTMDBApiClientGetMethod:
-    """Tests for the TMDB-specific get method."""
-
-    @patch(TMDB_SETTINGS)
-    def test_get_injects_api_key(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = "test-api-key"
-        client = TMDBApiClient()
-
-        with patch.object(client.session, "get") as mock_get:
-            mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = {"results": []}
-            mock_response.headers = {}
-            mock_response.content = b"{}"
-            mock_get.return_value = mock_response
-
-            client.get("discover/movie", params={"page": 1})
-
-            call_args = mock_get.call_args
-            assert call_args[1]["params"]["api_key"] == "test-api-key"
-            assert call_args[1]["params"]["page"] == 1
-
-    @patch(TMDB_SETTINGS)
-    def test_get_raises_when_api_key_missing(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = None
-        client = TMDBApiClient()
-
-        with pytest.raises(ImproperlyConfigured) as exc_info:
-            client.get("movie/550")
-
-        assert "TMDB_API_KEY" in str(exc_info.value)
-
-    @patch(TMDB_SETTINGS)
-    def test_get_raises_when_api_key_empty(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = ""
-        # Mock getattr to return empty string
-        del mock_settings.TMDB_API_KEY
-        mock_settings.configure_mock(TMDB_API_KEY="")
-
-        client = TMDBApiClient()
-
-        with patch.object(client.session, "get"), pytest.raises(ImproperlyConfigured):
-            client.get("movie/550")
-
-
 class TestTMDBApiClientConvenienceMethods:
     """Tests for convenience wrapper methods."""
 
-    @patch(TMDB_SETTINGS)
-    def test_search_movies_calls_correct_endpoint(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = "test-key"
+    def test_search_movies_calls_correct_endpoint(self) -> None:
         client = TMDBApiClient()
 
         with patch.object(client, "get") as mock_get:
@@ -261,9 +210,7 @@ class TestTMDBApiClientConvenienceMethods:
 
             mock_get.assert_called_once_with("search/movie", {"query": "The Matrix", "page": 2})
 
-    @patch(TMDB_SETTINGS)
-    def test_get_movie_details_calls_correct_endpoint(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = "test-key"
+    def test_get_movie_details_calls_correct_endpoint(self) -> None:
         client = TMDBApiClient()
 
         with patch.object(client, "get") as mock_get:
@@ -273,9 +220,7 @@ class TestTMDBApiClientConvenienceMethods:
 
             mock_get.assert_called_once_with("movie/550", params={})
 
-    @patch(TMDB_SETTINGS)
-    def test_discover_movies_calls_correct_endpoint(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = "test-key"
+    def test_discover_movies_calls_correct_endpoint(self) -> None:
         client = TMDBApiClient()
 
         with patch.object(client, "get") as mock_get:
@@ -287,9 +232,7 @@ class TestTMDBApiClientConvenienceMethods:
                 "discover/movie", params={"year": 2023, "with_genres": "28"}
             )
 
-    @patch(TMDB_SETTINGS)
-    def test_get_popular_movies_calls_correct_endpoint(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = "test-key"
+    def test_get_popular_movies_calls_correct_endpoint(self) -> None:
         client = TMDBApiClient()
 
         with patch.object(client, "get") as mock_get:
@@ -299,9 +242,7 @@ class TestTMDBApiClientConvenienceMethods:
 
             mock_get.assert_called_once_with("movie/popular", {"page": 3})
 
-    @patch(TMDB_SETTINGS)
-    def test_get_top_rated_movies_calls_correct_endpoint(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = "test-key"
+    def test_get_top_rated_movies_calls_correct_endpoint(self) -> None:
         client = TMDBApiClient()
 
         with patch.object(client, "get") as mock_get:
@@ -311,9 +252,7 @@ class TestTMDBApiClientConvenienceMethods:
 
             mock_get.assert_called_once_with("movie/top_rated", {"page": 1})
 
-    @patch(TMDB_SETTINGS)
-    def test_get_now_playing_movies_calls_correct_endpoint(self, mock_settings: Mock) -> None:
-        mock_settings.TMDB_API_KEY = "test-key"
+    def test_get_now_playing_movies_calls_correct_endpoint(self) -> None:
         client = TMDBApiClient()
 
         with patch.object(client, "get") as mock_get:

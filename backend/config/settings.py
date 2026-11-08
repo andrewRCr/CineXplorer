@@ -139,7 +139,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "apps.core.context_processors.global_settings",
             ],
         },
     },
@@ -233,12 +232,15 @@ AUTHENTICATION_BACKENDS = [
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # custom environment variables
-TMDB_API_KEY = env("TMDB_API_KEY")
+TMDB_READ_ACCESS_TOKEN = env("TMDB_READ_ACCESS_TOKEN")
 BACKEND_URL = env("BACKEND_URL")
 
 # The project backend bounds ZeptoMail requests and logs sanitized delivery outcomes.
 # Multipart conversion comes from the pinned django-zoho-zeptomail package.
-EMAIL_BACKEND = "apps.core.email_backend.ZeptoMailEmailBackend"
+_DEFAULT_EMAIL_BACKEND = "apps.core.email_backend.ZeptoMailEmailBackend"
+EMAIL_BACKEND = env("EMAIL_BACKEND", default=_DEFAULT_EMAIL_BACKEND)
+if ENVIRONMENT != "development" and EMAIL_BACKEND != _DEFAULT_EMAIL_BACKEND:
+    raise ImproperlyConfigured("EMAIL_BACKEND can only be overridden in development.")
 DEFAULT_FROM_EMAIL = os.environ.get("ZEPTOMAIL_SENDER_EMAIL", "CineXplorer@andrewcreekmore.com")
 ZOHO_ZEPTOMAIL_API_KEY_TOKEN = os.environ.get("ZEPTOMAIL_API_KEY", "")
 # Region setting - only define for non-US hosted accounts

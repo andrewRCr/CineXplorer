@@ -16,8 +16,9 @@ A worktree suits planning, implementation and browser work against its own code 
 - Frontend work, checked by host-side tests, lint and type-check, and viewed in its browsable stack
 - Backend work, tested in the worktree's own stack in either mode
 
-What stays on the primary: OAuth sign-in (its origins name the primary's address) and its development data. A
-worktree's browsable stack serves its own code and fresh database on its own port.
+What stays on the primary: OAuth sign-in (its origins name the primary's address) and its development data. Only the
+primary checkout's stack sends mail; a worktree's stack discards it. A worktree's browsable stack serves its own
+code and fresh database on its own port.
 
 ## Provisioning
 
@@ -107,6 +108,9 @@ to the entire parent directory. Git metadata and the installed harness are share
   `npx --yes pyright@1.1.414 backend/apps/ backend/config/ --project backend` and
   `npx --yes markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"`
 - **Backend tests and API types:** only through the worktree's own stack, in test or browser mode
+- **End-to-end smoke specs:** on host Node in `frontend/`, against the running worktree browsable stack. Start it
+  with `node scripts/worktree.mjs browse` from the root, then run
+  `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e` from `frontend/`
 
 ## Test Stack
 

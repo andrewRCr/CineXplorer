@@ -158,7 +158,10 @@ from django.test import override_settings
 from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.core.tests.test_helpers import closed_local_port
 
-with override_settings(TMDB_API_KEY="json-log-private-key-marker"):
+with override_settings(
+    TMDB_API_KEY="json-log-private-key-marker",
+    TMDB_READ_ACCESS_TOKEN="json-log-private-token-marker",
+):
     client = TMDBApiClient(timeout=1)
     client.base_url = f"http://127.0.0.1:{closed_local_port()}/3"
     result = client.get("genre/movie/list")
@@ -171,9 +174,11 @@ with override_settings(TMDB_API_KEY="json-log-private-key-marker"):
     assert record["error_type"] == "connection_error"
     diagnostic = record["connection_error"]
     assert isinstance(diagnostic, str)
-    assert "/3/genre/movie/list?api_key=[REDACTED]" in diagnostic
+    assert "/3/genre/movie/list" in diagnostic
+    assert "api_key=" not in diagnostic
     assert record["params"] == {}
     assert "json-log-private-key-marker" not in output
+    assert "json-log-private-token-marker" not in output
 
 
 def _render_frontend(payload: dict[str, object], environment: str) -> str:

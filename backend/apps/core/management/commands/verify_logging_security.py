@@ -1,6 +1,6 @@
 """Django management command to verify sensitive data is excluded from log output.
 
-This command tests that API keys and other sensitive information are properly
+This command tests that read access tokens and other sensitive information are properly
 sanitized from log files and console output for security compliance.
 """
 
@@ -18,29 +18,21 @@ from apps.core.services.tmdb_api_client import TMDBApiClient
 
 
 class Command(BaseCommand):
-    help = "Verify sensitive data (API keys) are excluded from log output"
+    help = "Verify sensitive data (read access tokens) are excluded from log output"
 
     def handle(self, *args: object, **options: object) -> None:
         self.stdout.write("🔐 Starting sensitive data exclusion verification...")
 
-        # Get the actual API key to search for
-        api_key = settings.TMDB_API_KEY
-        if not api_key:
-            self.stdout.write("❌ No TMDB_API_KEY found in settings")
+        # Get the configured read access token to search for
+        access_token = settings.TMDB_READ_ACCESS_TOKEN
+        if not access_token:
+            self.stdout.write("❌ No TMDB_READ_ACCESS_TOKEN found in settings")
             return
 
-        partial_key = self._get_partial_key(api_key)
-        self.stdout.write(f"🔍 Testing exclusion of API key: {partial_key}")
+        self.stdout.write("🔍 Testing exclusion of the configured TMDB read access token")
+        self._run_security_test(access_token)
 
-        self._run_security_test(api_key, partial_key)
-
-    def _get_partial_key(self, api_key: str) -> str:
-        """Create partial key pattern for safe display."""
-        if len(api_key) >= 8:
-            return f"{api_key[:4]}...{api_key[-4:]}"
-        return "***REDACTED***"
-
-    def _run_security_test(self, api_key: str, partial_key: str) -> None:
+    def _run_security_test(self, access_token: str) -> None:
         """Capture API diagnostics and report sensitive-data violations."""
         # Capture log records
         log_records: list[logging.LogRecord] = []
@@ -100,14 +92,15 @@ class Command(BaseCommand):
 
             for i, record in enumerate(log_records):
                 message = record.getMessage()
-                violations = self._find_record_violations(record, i + 1, api_key, message)
+                violations = self._find_record_violations(record, i + 1, access_token, message)
                 security_violations.extend(violations)
                 violation_found = bool(violations)
 
                 # Show progress for detailed records
                 if i < 5 or violation_found:
                     self.stdout.write(f"\n  📋 Record {i + 1}: {record.levelname} - {record.name}")
-                    self.stdout.write(f"       Message: {message[:100]}...")
+                    safe_message = message.replace(access_token, "[REDACTED]")
+                    self.stdout.write(f"       Message: {safe_message[:100]}...")
                     if violation_found:
                         self.stdout.write("       ❌ SECURITY VIOLATION DETECTED!")
                     else:
@@ -126,9 +119,9 @@ class Command(BaseCommand):
             for endpoint, api_response in api_results:
                 self._report_api_result(endpoint, api_response)
 
-            # Check log files for API key presence
+            # Check log files for read access token presence
             self.stdout.write("\n📁 Log File Security Check:")
-            self._check_log_files_security(api_key, partial_key)
+            self._check_log_files_security(access_token)
 
         except Exception as e:
             self.stdout.write(f"\n❌ Security test failed: {type(e).__name__}")
@@ -145,22 +138,22 @@ class Command(BaseCommand):
         self,
         record: logging.LogRecord,
         record_number: int,
-        api_key: str,
+        access_token: str,
         message: str,
     ) -> list[dict[str, object]]:
         """Collect message and attribute violations without discarding duplicates."""
         # Check all attributes of the record
         violations: list[dict[str, object]] = []
 
-        # Check main message for API key
-        if api_key in message:
+        # Check main message for read access token
+        if access_token in message:
             violations.append(
                 {
                     "type": "message",
                     "record": record_number,
                     "logger": record.name,
                     "function": record.funcName,
-                    "violation": "API key found in log message",
+                    "violation": "read access token found in log message",
                 }
             )
 
@@ -180,8 +173,8 @@ class Command(BaseCommand):
                 else:
                     attr_str = str(attr_value)
 
-                # Search for API key in attribute
-                if api_key in attr_str:
+                # Search for read access token in attribute
+                if access_token in attr_str:
                     violations.append(
                         {
                             "type": "attribute",
@@ -189,7 +182,7 @@ class Command(BaseCommand):
                             "logger": record.name,
                             "function": record.funcName,
                             "attribute": attr_name,
-                            "violation": f"API key found in attribute '{attr_name}'",
+                            "violation": f"read access token found in attribute '{attr_name}'",
                         }
                     )
 
@@ -218,9 +211,13 @@ class Command(BaseCommand):
                 self.stdout.write(f"    Function: {violation['function']}")
                 if "attribute" in violation:
                     self.stdout.write(f"    Attribute: {violation['attribute']}")
-            self.stdout.write("\n🚨 CRITICAL: API key found in logs! Security issue detected.")
+            self.stdout.write(
+                "\n🚨 CRITICAL: read access token found in logs! Security issue detected."
+            )
         else:
-            self.stdout.write("\n✅ SECURITY PASSED: No API keys found in any log output")
+            self.stdout.write(
+                "\n✅ SECURITY PASSED: No read access tokens found in any log output"
+            )
             self.stdout.write("✅ Sensitive data properly excluded from logging")
 
     def _report_api_result(self, endpoint: str, api_response: ApiResponse) -> None:
@@ -244,8 +241,8 @@ class Command(BaseCommand):
             status = api_response.status_code
             self.stdout.write(f"  ⚠️ {endpoint}: No data returned (status {status})")
 
-    def _check_log_files_security(self, api_key: str, partial_key: str) -> None:
-        """Check actual log files for API key presence."""
+    def _check_log_files_security(self, access_token: str) -> None:
+        """Check actual log files for read access token presence."""
         # Get log directory from settings, with fallback to BASE_DIR / "logs"
         log_dir = getattr(settings, "LOG_DIR", None)
         log_dir = Path(settings.BASE_DIR) / "logs" if log_dir is None else Path(log_dir)
@@ -261,10 +258,10 @@ class Command(BaseCommand):
                         lines = f.readlines()[-100:]
                         content = "".join(lines)
 
-                    if api_key in content:
-                        self.stdout.write(f"  ❌ {log_file}: API key found in file!")
+                    if access_token in content:
+                        self.stdout.write(f"  ❌ {log_file}: read access token found in file!")
                     else:
-                        self.stdout.write(f"  ✅ {log_file}: No API key found")
+                        self.stdout.write(f"  ✅ {log_file}: No read access token found")
                 else:
                     self.stdout.write(f"  ⚠️ {log_file}: File not found")
 

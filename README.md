@@ -68,7 +68,7 @@ launch.
 
 ## Quick Start
 
-**Prerequisites:** Docker, Docker Compose, and a [TMDB API key](https://www.themoviedb.org/settings/api)
+**Prerequisites:** Docker, Docker Compose, and a [TMDB API Read Access Token](https://www.themoviedb.org/settings/api)
 
 ```bash
 git clone https://github.com/andrewRCr/CineXplorer.git
@@ -76,7 +76,7 @@ cd CineXplorer
 
 # Configure environment
 cp backend/config/.env.example backend/config/.env
-# Edit .env with your TMDB_API_KEY and DJANGO_SECRET_KEY
+# Edit .env with your TMDB_READ_ACCESS_TOKEN and DJANGO_SECRET_KEY
 
 # Run with Docker
 docker-compose -f infrastructure/docker-compose.yml up --build

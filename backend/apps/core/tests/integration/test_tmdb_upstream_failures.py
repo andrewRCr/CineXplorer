@@ -1,9 +1,4 @@
-"""Failures reaching TMDB stay out of API responses, and the API key out of the logs.
-
-These tests raise real requests exceptions against local sockets, so the exception
-text carries the request URL, query string and API key included, as it would when
-TMDB is unreachable in production.
-"""
+"""Real TMDB connection failures expose neither credential nor upstream text."""
 
 from __future__ import annotations
 
@@ -18,6 +13,7 @@ from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.core.tests.test_helpers import closed_local_port
 
 SECRET_KEY = "tmdb-key-that-must-not-leak"
+READ_TOKEN = "tmdb-read-token-that-must-not-leak"
 
 
 @pytest.fixture
@@ -60,7 +56,7 @@ def logged_field(records: list[logging.LogRecord], message: str, field: str) -> 
     return str(record.__dict__[field])
 
 
-@override_settings(TMDB_API_KEY=SECRET_KEY)
+@override_settings(TMDB_API_KEY=SECRET_KEY, TMDB_READ_ACCESS_TOKEN=READ_TOKEN)
 def test_connection_error_keeps_key_and_upstream_text_out_of_the_response(
     tmdb_log_records: list[logging.LogRecord],
 ) -> None:
@@ -69,22 +65,28 @@ def test_connection_error_keeps_key_and_upstream_text_out_of_the_response(
     assert response.status_code == 502
     exposed = f"{response.error_message} {response.error_details}"
     assert SECRET_KEY not in exposed
+    assert READ_TOKEN not in exposed
+    for record in tmdb_log_records:
+        assert SECRET_KEY not in repr(record.__dict__)
+        assert READ_TOKEN not in repr(record.__dict__)
     assert "Max retries" not in exposed
     assert "127.0.0.1" not in exposed
 
 
-@override_settings(TMDB_API_KEY=SECRET_KEY)
-def test_connection_error_log_keeps_the_url_with_the_key_redacted(
+@override_settings(TMDB_API_KEY=SECRET_KEY, TMDB_READ_ACCESS_TOKEN=READ_TOKEN)
+def test_connection_error_log_keeps_a_credential_free_url(
     tmdb_log_records: list[logging.LogRecord],
 ) -> None:
     client_for(closed_local_port()).get("genre/movie/list")
 
     logged = logged_field(tmdb_log_records, "API connection error", "connection_error")
-    assert "/3/genre/movie/list?api_key=[REDACTED]" in logged
+    assert "/3/genre/movie/list" in logged
+    assert "api_key=" not in logged
+    assert READ_TOKEN not in logged
     assert SECRET_KEY not in logged
 
 
-@override_settings(TMDB_API_KEY=SECRET_KEY)
+@override_settings(TMDB_API_KEY=SECRET_KEY, TMDB_READ_ACCESS_TOKEN=READ_TOKEN)
 def test_timeout_maps_to_gateway_timeout_without_upstream_text(
     silent_port: int, tmdb_log_records: list[logging.LogRecord]
 ) -> None:
@@ -93,12 +95,16 @@ def test_timeout_maps_to_gateway_timeout_without_upstream_text(
     assert response.status_code == 504
     exposed = f"{response.error_message} {response.error_details}"
     assert SECRET_KEY not in exposed
+    assert READ_TOKEN not in exposed
+    for record in tmdb_log_records:
+        assert SECRET_KEY not in repr(record.__dict__)
+        assert READ_TOKEN not in repr(record.__dict__)
     assert "read timeout=" not in exposed
     logged = logged_field(tmdb_log_records, "API request timeout", "timeout_error")
     assert SECRET_KEY not in logged
 
 
-@override_settings(TMDB_API_KEY=SECRET_KEY)
+@override_settings(TMDB_API_KEY=SECRET_KEY, TMDB_READ_ACCESS_TOKEN=READ_TOKEN)
 def test_request_leaves_the_callers_params_without_the_key() -> None:
     params: dict[str, object] = {"page": 1}
 

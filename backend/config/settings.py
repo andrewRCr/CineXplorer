@@ -139,7 +139,6 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "apps.core.context_processors.global_settings",
             ],
         },
     },
@@ -233,7 +232,7 @@ AUTHENTICATION_BACKENDS = [
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 
 # custom environment variables
-TMDB_API_KEY = env("TMDB_API_KEY")
+TMDB_READ_ACCESS_TOKEN = env("TMDB_READ_ACCESS_TOKEN")
 BACKEND_URL = env("BACKEND_URL")
 
 # The project backend bounds ZeptoMail requests and logs sanitized delivery outcomes.

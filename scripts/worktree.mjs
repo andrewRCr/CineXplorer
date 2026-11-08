@@ -10,9 +10,10 @@ const COMPOSE = ["compose", "-f", "infrastructure/docker-compose.yml", "-f", "in
 const CLOSING = ".arc/reference/harness-hooks/finish-work.mjs";
 const HELP = `Usage: node scripts/worktree.mjs <command>
 
-  create <type>/<name> [--existing | --work-unit]
+  create <type>/<name> [--existing | --work-unit] [--no-install]
       Create and provision a worktree. --existing checks out an existing branch.
       --work-unit writes the starting notes for planned work.
+      --no-install provisions files and project settings without npm installs or typegen.
   provision
       Copy development files, allocate a port and key, and install dependencies.
   browse
@@ -108,7 +109,7 @@ function checkedProject(root, main) {
     return project;
 }
 
-function provision(root, main) {
+function provision(root, main, { install = true } = {}) {
     linked(root, main);
     nameOf(root, main);
     const included = git(main, "ls-files", "--others", "--ignored", `--exclude-from=${join(root, ".worktreeinclude")}`, "-z");
@@ -130,14 +131,16 @@ function provision(root, main) {
     provisionEnv(root, main);
     const project = checkedProject(root, main);
     console.log(`name: ${project}`);
-    for (const args of [["ci"], ["run", "typegen"]]) console.log(run(join(root, "frontend"), "npm", args));
+    if (install) {
+        for (const args of [["ci"], ["run", "typegen"]]) console.log(run(join(root, "frontend"), "npm", args));
+    }
 }
 
 function primary(root, main) {
     if (root !== main) throw new Error("Run this command from the main checkout.");
 }
 
-function create(root, main, branch, { existing, workUnit }) {
+function create(root, main, branch, { existing, workUnit, noInstall }) {
     primary(root, main);
     if (existing && workUnit) throw new Error("--work-unit cannot be combined with --existing.");
     const match = /^[a-z]+\/([a-z0-9][a-z0-9-]*)$/.exec(branch ?? "");
@@ -163,7 +166,7 @@ function create(root, main, branch, { existing, workUnit }) {
         git(main, "worktree", "add", "--no-track", "-b", branch, path, "origin/main");
     }
     try {
-        provision(path, main);
+        provision(path, main, { install: !noInstall });
     } catch (error) {
         throw new Error(`${error.message}\nRecover in ${path}: node scripts/worktree.mjs provision` +
             (workUnit ? "; then node .arc/reference/harness-hooks/seed-session-notes.mjs" : ""));
@@ -175,7 +178,9 @@ function create(root, main, branch, { existing, workUnit }) {
             throw new Error(`${error.message}\nIn ${path}, run node .arc/reference/harness-hooks/seed-session-notes.mjs again.`);
         }
     }
-    console.log(`Worktree: ${path}\nFirst push: git push -u origin ${branch}\nIn the worktree: node scripts/worktree.mjs browse`);
+    const next = noInstall ? "Install later in the worktree: node scripts/worktree.mjs provision"
+        : "In the worktree: node scripts/worktree.mjs browse";
+    console.log(`Worktree: ${path}\nFirst push: git push -u origin ${branch}\n${next}`);
 }
 
 function browse(root, main) {
@@ -387,8 +392,10 @@ function main() {
         return remove(root, main, args[0], args.includes("--keep-branch"));
     }
     if (command === "finish" && args.length === 1) return finish(root, main, args[0]);
-    if (command === "create" && args.length >= 1 && args.slice(1).every((arg) => ["--existing", "--work-unit"].includes(arg))) {
-        return create(root, main, args[0], { existing: args.includes("--existing"), workUnit: args.includes("--work-unit") });
+    if (command === "create" && args.length >= 1 && args.slice(1).every((arg) => ["--existing", "--work-unit", "--no-install"].includes(arg))) {
+        return create(root, main, args[0], {
+            existing: args.includes("--existing"), workUnit: args.includes("--work-unit"), noInstall: args.includes("--no-install"),
+        });
     }
     throw new Error(`Unsupported arguments for ${command}. Use --help.`);
 }

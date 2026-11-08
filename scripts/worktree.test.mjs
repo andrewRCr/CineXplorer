@@ -337,6 +337,50 @@ test("create cuts a branch from origin/main without an upstream and provisions i
     assert.deepEqual(f.calls().map((call) => call.command), ["docker", "npm", "npm"]);
 });
 
+for (const option of [null, "--existing", "--work-unit"]) {
+    test(`create --no-install provisions for later installation${option ? ` with ${option}` : ""}`, (t) => {
+        const f = fixture(t);
+        if (option === "--existing") git(f.main, "branch", "fix/new");
+        const result = f.invoke(f.main, ["create", "fix/new", "--no-install", ...(option ? [option] : [])]);
+        success(result);
+        const path = join(f.parent, "primary.new");
+        assert.equal(git(path, "branch", "--show-current"), "fix/new");
+        assert.equal(git(path, "rev-parse", "HEAD"), git(f.main, "rev-parse", "origin/main"));
+        assert.match(envOf(path), /^COMPOSE_PROJECT_NAME=cinexplorer-new$/m);
+        assert.match(envOf(path), /^SITE_PORT=8445$/m);
+        assert.match(envOf(path), /^WORKTREE_SECRET_KEY=[a-z0-9]{50}$/m);
+        for (const file of ["backend/config/.env", "frontend/.env", "frontend/.env.development",
+            "infrastructure/dev-certs/cert.pem", "infrastructure/dev-certs/key.pem"]) {
+            assert.equal(readFileSync(join(path, file), "utf8"), `stand-in ${file}\n`);
+        }
+        for (const folder of [".venv-backend", ".claude", ".codex"]) {
+            assert.equal(readlinkSync(join(path, folder)), join(f.main, folder));
+        }
+        assert.match(result.stdout, /node scripts\/worktree.mjs provision/);
+        assert.deepEqual(f.calls(), [
+            { command: "docker", args: [...COMPOSE, "config"], cwd: path },
+            ...(option === "--work-unit" ? [{ command: "seed", args: [], cwd: path }] : []),
+        ]);
+        success(f.invoke(path, ["provision"]));
+        assert.deepEqual(f.calls().slice(-3), [
+            { command: "docker", args: [...COMPOSE, "config"], cwd: path },
+            { command: "npm", args: ["ci"], cwd: join(path, "frontend") },
+            { command: "npm", args: ["run", "typegen"], cwd: join(path, "frontend") },
+        ]);
+    });
+}
+
+test("create --no-install still refuses a mismatched Compose project", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(f.main, ["create", "fix/new", "--no-install"], { CX_PROJECT: "infrastructure" });
+    refusal(result, /project.*cinexplorer-new.*infrastructure/i);
+    assert.doesNotMatch(result.stdout + result.stderr, /hidden-marker/);
+    const path = join(f.parent, "primary.new");
+    assert.equal(existsSync(path), true);
+    assert.match(envOf(path), /^COMPOSE_PROJECT_NAME=cinexplorer-new$/m);
+    assert.deepEqual(f.calls(), [{ command: "docker", args: [...COMPOSE, "config"], cwd: path }]);
+});
+
 for (const remote of [false, true]) {
     test(`create --existing provisions a ${remote ? "remote-only" : "local"} branch`, (t) => {
         const f = fixture(t);

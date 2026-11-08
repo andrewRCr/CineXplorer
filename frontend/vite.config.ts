@@ -1,18 +1,11 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
     base: "/", // Ensure all paths are root-relative
     plugins: [react()],
     resolve: {
         tsconfigPaths: true,
-        alias: {
-            shared: resolve(__dirname, "../shared"),
-        },
         conditions: ["import", "module", "browser", "default"],
         mainFields: ["browser", "module", "main"],
         extensions: [

@@ -13,8 +13,6 @@
     "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"],
-      "@shared": ["../shared"],
-      "@shared/*": ["../shared/*"],
       "@tests/*": ["./tests/*"]
     },
     "allowImportingTsExtensions": true,

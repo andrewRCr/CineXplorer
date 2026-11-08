@@ -32,10 +32,12 @@ React + Vitest frontend. This replaces arc-framework's own project override.
   per QUICK-REFERENCE), never from the host venv.
 - **Boundaries** are TMDB, the OAuth providers, ZeptoMail and time. Mock them at the client with responses shaped like
   the real service's, including its error shapes; let the database be real.
-- **Chakra recipe variants.** Shared renderers provide the project's default system. Recipe styles sit in `@layer`
-  blocks that jsdom's `getComputedStyle` skips, so variant style checks need a layer-free system. Render under
-  `createSystem(defaultSystem._config, { disableLayers: true })` with `defaultSystem` from `@/theme`, then assert the
-  token on `background`.
+- **Chakra recipe variants.** Shared renderers provide the project's default system. Existing badge variant checks
+  keep their layer-free project system, `createSystem(defaultSystem._config, { disableLayers: true })`. jsdom 31
+  resolves CSS variables: compare the badge's computed `backgroundColor` with the independently expected semantic
+  token's resolved color in the same theme. A class-free sibling probe can resolve that token; remove it before
+  reading the badge so structural selectors stay unchanged. Reject empty, transparent or unresolved reference
+  values. A raw `var(...)` string or declaration-only matcher does not check the computed color.
 - **Layout, fixtures and commands** are in `.arc/reference/strategies/project/strategy-testing-methodology.md`.
 
 ## testing-standards.default

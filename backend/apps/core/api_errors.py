@@ -41,9 +41,7 @@ def register_error_handlers(api: NinjaAPI) -> None:
     def unhandled_error(request: HttpRequest, exc: Exception) -> HttpResponse:
         # The client gets a fixed message whatever the setting of DEBUG; the log keeps the
         # traceback, since an unexpected error can't be diagnosed without it.
-        logger.exception(
-            "Unhandled error answering %s %s", request.method, request.path, exc_info=exc
-        )
+        logger.error("Unhandled error answering %s %s", request.method, request.path, exc_info=exc)
         return api.create_response(request, error_body("Internal server error"), status=500)
 
 

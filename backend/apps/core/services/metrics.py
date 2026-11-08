@@ -93,7 +93,7 @@ class MetricsService:
         }
 
         if exception:
-            logger.exception(
+            logger.error(
                 f"ERROR_EVENT: {error_type} - {error_message}", extra=log_extra, exc_info=exception
             )
         else:

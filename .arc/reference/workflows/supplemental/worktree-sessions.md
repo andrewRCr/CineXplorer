@@ -152,7 +152,10 @@ node scripts/worktree.mjs browse
 ```
 
 This validates the effective Compose project name, including environment overrides, before starting the stack or
-changing its database. It then starts all five services with the `browser` profile, waits for them to run and for
+changing its database. It creates `frontend/logs` as the host user before Docker mounts it, so a fresh checkout
+gets writable logs rather than a root-owned bind source. Both development images take `USER_UID` and `USER_GID`
+from `infrastructure/.env` (default 1000); set them to the checkout owner's IDs before building. It then starts all
+five services with the `browser` profile, waits for them to run and for
 health checks to pass, then applies migrations and runs `seed_dev_data`. The printed address is
 `https://localhost:{SITE_PORT}`; sign in
 as `dev` with password `cinexplorer-dev`. The account is verified and the tracked blacklist is loaded. Repeating

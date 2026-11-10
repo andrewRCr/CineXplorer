@@ -192,6 +192,8 @@ function browse(root, main) {
         if (!envValue(contents, key)) throw new Error(`Missing ${key}; run node scripts/worktree.mjs provision first.`);
     }
     checkedProject(root, main);
+    // Create the bind source as the host user before Docker can create it as root.
+    mkdirSync(join(root, "frontend/logs"), { recursive: true });
     const compose = [...COMPOSE, "--profile", "browser"];
     console.log(run(root, "docker", [...compose, "up", "-d", "--wait"]));
     for (const args of [["migrate", "--noinput"], ["seed_dev_data"]]) {

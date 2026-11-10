@@ -3,7 +3,7 @@
   "info": {
     "title": "CineXplorer API",
     "version": "1.0.0",
-    "description": "A modern, type-safe API for the CineXplorer movie discovery application. Authentication is handled via JWT tokens in HTTP-only cookies."
+    "description": "A modern, type-safe API for the CineXplorer movie discovery application. Authentication uses Bearer access tokens in the Authorization header, with refresh tokens stored only in HTTP-only cookies, and falls back to Django sessions for Google and GitHub sign-in."
   },
   "paths": {
     "/api/register/": {

@@ -1,7 +1,7 @@
 """Main Django Ninja API configuration for CineXplorer.
 
 This module creates the central NinjaAPI instance with:
-- Native JWT cookie authentication integration
+- Bearer JWT and provider-session authentication integration
 - OpenAPI security schema documentation
 - JSON error responses for domain, validation and unhandled errors
 - Type-safe endpoint registration
@@ -29,7 +29,9 @@ api = NinjaAPI(
     version="1.0.0",
     description=(
         "A modern, type-safe API for the CineXplorer movie discovery application. "
-        "Authentication is handled via JWT tokens in HTTP-only cookies."
+        "Authentication uses Bearer access tokens in the Authorization header, "
+        "with refresh tokens stored only in HTTP-only cookies, and falls back "
+        "to Django sessions for Google and GitHub sign-in."
     ),
     docs_url="/docs",
     openapi_url="/openapi.json",

@@ -272,28 +272,15 @@ session-bound `state` parameter.
 
 ### CORS Configuration
 
-**Backend** (`backend/config/settings.py`):
+Configure `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS` in the backend environment as comma-separated lists.
+The [backend settings module](../../../../backend/config/settings.py) reads both lists from the environment, with
+local-origin defaults only when `ENVIRONMENT` is `development`; both default to empty lists otherwise. Set the
+deployed frontend origins explicitly for staging and production.
 
-```python
-# CORS settings
-CORS_ALLOW_CREDENTIALS = True  # REQUIRED for cookies
-CORS_ALLOWED_ORIGINS = [
-    "https://localhost:8444",  # Caddy proxy
-    "http://localhost:5173",   # Vite dev server
-]
-
-# Session cookie settings
-SESSION_COOKIE_HTTPONLY = True    # Prevents JavaScript access
-SESSION_COOKIE_SAMESITE = "Lax"   # NOT "Strict" (breaks OAuth redirects)
-SESSION_COOKIE_SECURE = True      # HTTPS only (production)
-
-# CSRF settings
-CSRF_COOKIE_HTTPONLY = False      # JavaScript needs to read for X-CSRFToken header
-CSRF_TRUSTED_ORIGINS = [
-    "https://localhost:8444",
-    "http://localhost:5173",
-]
-```
+`CORS_ALLOW_CREDENTIALS` is enabled. Session cookies are HTTP-only and use `SameSite=Lax` for OAuth redirects.
+`SESSION_COOKIE_SECURE` and `CSRF_COOKIE_SECURE` are enabled in production and staging, while development allows
+HTTP. `CSRF_COOKIE_HTTPONLY` is disabled so JavaScript can read the token for the `X-CSRFToken` header.
+Use `settings.py` as the source of truth for the defaults and environment conditions.
 
 **Frontend** - All requests must include `credentials: 'include'`:
 
@@ -415,19 +402,9 @@ HEADLESS_FRONTEND_URLS = {
     "account_signup": f"{FRONTEND_URL}/auth/signup",
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
 }
-
-# Session configuration
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Lax"  # Lax allows OAuth redirects
-SESSION_COOKIE_SECURE = True     # HTTPS only in production
-
-# CORS configuration
-CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "https://localhost:8444",  # Production-like (Caddy)
-    "http://localhost:5173",   # Development (Vite)
-]
 ```
+
+Session-cookie security and origin configuration follow the [CORS configuration](#cors-configuration) above.
 
 **URL Configuration** (`backend/config/urls.py`):
 

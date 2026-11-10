@@ -131,7 +131,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
     <Badge
       variant={tmdbBadge.variant}
       fontSize="12px"
-      fontFamily="sourcesans"
+      fontFamily="body"
       paddingX={1}
       title={tmdbBadge.title}
     >

@@ -22,7 +22,7 @@ import type { ReactNode } from "react";
 /** Shared text styles for result count display */
 const resultTextStyles = {
   fontSize: "sm",
-  fontFamily: "inter",
+  fontFamily: "body",
   color: "fg-muted",
   fontWeight: "medium",
   lineHeight: "1",

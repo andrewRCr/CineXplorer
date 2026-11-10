@@ -127,13 +127,13 @@ gate:
 
 At loop exit, run [assess-draft-readiness](../methods/assess-draft-readiness.md) over the draft. On **ready**, the draft
 crosses to the PRD stage; on **not-ready**, re-synthesize against the returned gaps and keep iterating. Inbox entries
-that name this work and aren't in the draft yet (criterion 3) are routed now: show the Owner each one and where it goes
-(into the draft, an errand, another work unit's plan, or nowhere), and on confirmation fold or route each. Entries
-folded into the draft, or dropped, leave the inbox at once (re-read, then write once). One routed to an errand moves to
-`## Errand`, and one routed to another work unit's plan has its `_Target:_` rewritten to that plan; either waits for the
-next drain and leaves as [user-inbox.md § Drain](supplemental/user-inbox.md#drain)'s Finish step says. This is the pass
-that makes the draft ready; nothing stays held. The readiness states describe a draft's maturity between sessions; a
-draft is formalization-ready when the method returns `ready`.
+that name this work, aren't in the draft yet and aren't already routed elsewhere (criterion 3) are routed now: show the
+Owner each one and where it goes (into the draft, an errand, another work unit's plan, or nowhere), and on confirmation
+fold or route each. Entries folded into the draft, or dropped, leave the inbox at once (re-read, then write once). One
+routed to an errand moves to `## Errand`, and one routed to another work unit's plan has its `_Target:_` rewritten to
+that plan; either waits for the next drain and leaves as [user-inbox.md § Drain](supplemental/user-inbox.md#drain)'s
+Finish step says. This is the pass that makes the draft ready; nothing stays held. The readiness states describe a
+draft's maturity between sessions; a draft is formalization-ready when the method returns `ready`.
 
 **Coherence consolidation** (`high` only; suggested, not enforced). A draft that iterates across many sessions
 accretes superseded sketch beside current design: the design can be settled while the document is not yet one

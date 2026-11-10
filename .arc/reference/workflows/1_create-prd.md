@@ -50,8 +50,8 @@ input. A PRD always follows the draft stage; for determinate work its `low` path
    [classify-work-unit](../methods/classify-work-unit.md) off it: it confirms the draft's `Class` or raises it. The
    PRD's form is always detailed.
 3. **Boundary.** Run [assess-boundary-fit](../methods/assess-boundary-fit.md) off the same read. A `cut-map` returns to
-   the Owner before a monolithic PRD is written; otherwise keep the draft's recorded outcome unless the evidence has
-   materially changed.
+   the Owner before a monolithic PRD is written; otherwise keep the draft's or confirmation's recorded outcome unless
+   the evidence has materially changed.
 
 ### Step 3: Complete the Design for the PRD
 

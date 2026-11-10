@@ -219,7 +219,8 @@ planning recommends the ADR earlier.
 Until then the design draft, then the PRD, carries the decision, its rationale, and its ADR disposition as binding
 design ([1a_draft-design.md](../../workflows/1a_draft-design.md)). The PRD's Design Decisions record each disposition,
 beside its decision or in one list there, and list each new or amended ADR among what the work delivers
-([1_create-prd.md](../../workflows/1_create-prd.md)). No ADR file exists during planning: an
+([1_create-prd.md](../../workflows/1_create-prd.md)); a brief, the lightest PRD form, has no Design Decisions and
+carries only dispositions that deliver nothing. No ADR file exists during planning: an
 earlier recommendation is a disposition first. An errand has no PRD; one that writes or amends an ADR follows the
 same lifecycle within its pull request.
 

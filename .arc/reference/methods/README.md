@@ -31,16 +31,16 @@ override wins. An override changes how the method is done here, never what its c
 | --- | --- |
 | Work unit | A design draft, PRD and task list on one branch (`.arc/active/{feature,technical,incidental}/`) |
 | Draft | The design draft, `draft-{name}.md` beside the PRD ([1a_draft-design.md](../workflows/1a_draft-design.md)); at the `low` level, a determinacy confirmation instead |
-| Spec | The PRD; a spec's `form` is always `detailed` |
+| Spec | The PRD, at the form its `**Form:**` line names: `brief`, `outline`, or `detailed` as a PRD or an RFC ([1_create-prd.md § Forms](../workflows/1_create-prd.md#forms)) |
 | Stub, backlog draft | A plan, draft or PRD in `.arc/backlog/` |
 | Errand | One bounded concern outside the current work unit, run on its own branch and pull request (`../workflows/supplemental/run-errand.md`); an atomic task (`.arc/active/ATOMIC-TASKS.md`) is one source |
 | `Class` (`Light`, `Heavy`, `Novel`) | A `**Class:**` header line in the draft and the PRD; it sets each planning and verification review's pass cap |
-| Planning depth level | Used at the draft and PRD stages, never recorded ([resolve-planning-depth](resolve-planning-depth.md)) |
+| Planning depth level | Used at the draft, PRD and task-generation stages, never recorded; it selects the PRD's form and task generation's path ([resolve-planning-depth](resolve-planning-depth.md)) |
 | `AGENT-BRIEF.ARC`, `DEV-RULES.ARC` | `../constitution/DEVELOPMENT-RULES.md` |
 | `AGENT-BRIEF.PROJECT` | `../agent/AGENTS.md` and `../constitution/TECHNICAL-OVERVIEW.md` |
 | Personal workspace | `.arc/user/{identity}/` (gitignored); a work unit's review files live in its `{name}/` folder |
 | `SESSION-NOTES` | The work unit's `SESSION-NOTES.md` in the personal workspace |
-| Meta file | The document headers: `Class` in the draft and the PRD, status in the task list |
+| Meta file | The document headers: `Class` in the draft and the PRD, the form in the PRD, status in the task list |
 | Lane | One review loop over one artifact or change, from its first pass to its stop |
 | Spec review, standard code review | PRD review, code review; [disposition-report](disposition-report.md)'s override lists every review kind |
 | Candidate, attest, receipt, store | Not used. Reviews are advisory; the Owner's approval is the gate |

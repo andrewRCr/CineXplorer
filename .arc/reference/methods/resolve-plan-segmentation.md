@@ -28,9 +28,11 @@ resolve-plan-segmentation.override.
 
 CineXplorer adaptation (`override-mode: extend`):
 
-- **Inputs until task generation's depth read is wired.** [2_generate-tasks.md][generate-tasks] Step 2's codebase
-  assessment stands in for the scale-axis read ([resolve-planning-depth][resolve-planning-depth]'s override). The
-  PRD carries no lifecycle statements yet, so its requirements stand in for them.
+- **Inputs.** [2_generate-tasks.md][generate-tasks] Step 2's scale-axis read, and the PRD's units with any lifecycle
+  statements it makes (a migration, a rollout).
+- **Recording.** Step 3 records each segment's mode and exit criterion in its phases' preambles, and ends a `slice` or
+  `replication` segment of a plan with more than one segment with a task that runs the check proving its exit
+  criterion ([strategy-task-list-formatting](../strategies/arc/strategy-task-list-formatting.md#segments)).
 
 ## resolve-plan-segmentation.default
 

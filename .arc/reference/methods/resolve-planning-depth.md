@@ -32,13 +32,14 @@ CineXplorer adaptation (`override-mode: extend`):
 - **Stages here:** `draft-design` is [1a_draft-design.md][draft-design], `create-spec` is the PRD stage
   ([1_create-prd.md][create-spec]), and `generate-tasks` is [2_generate-tasks.md][generate-tasks].
 - **`Class` is a header line.** The `**Class:**` line in the draft and the PRD stands in for the meta. A stage's read
-  is decision-live at once; its line is written in that stage's commit (the draft's capture, the PRD's commit). Once
-  task generation's read is wired, a ratchet there updates the PRD's line in the task list's commit. The level
+  is decision-live at once; its line is written in that stage's commit (the draft's capture, the PRD's commit). A
+  ratchet at task generation updates the PRD's line in the task list's commit. The level
   itself is never recorded.
-- **The PRD's form is always `detailed`** until lighter forms exist, so the PRD stage's read confirms or ratchets
-  `Class` and opens the re-entry valve, without choosing a form. Task generation's scale read and its levels are not
-  wired yet ([resolve-plan-segmentation](resolve-plan-segmentation.md)'s override says what stands in for it).
-- **Routes.** A derivation signal at task generation returns to the PRD through
+- **The PRD stage's level selects the PRD's form:** `low` a brief, `medium` an outline, `high` a detailed PRD or RFC
+  ([1_create-prd.md][create-spec] Step 2). The PRD's `**Form:**` line records the form; the level stays unrecorded.
+  Task generation's scale read selects its path ([2_generate-tasks.md][generate-tasks] Step 2.5).
+- **Routes.** A scale signal at task generation re-enters it a level higher ([2_generate-tasks.md][generate-tasks]
+  Step 4.5). A derivation signal there returns to the PRD through
   [1_create-prd.md § Amending a PRD][create-spec]; one at the PRD stage whose direction is unshaped returns to the
   draft stage. Capture the signal in the session notes or the draft before re-entering.
 

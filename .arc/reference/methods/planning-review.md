@@ -40,7 +40,7 @@ CineXplorer adaptation (`override-mode: extend`):
 
 - **Artifacts:** `draft` (the design draft, or a determinacy confirmation, at [1a_draft-design.md][draft-design]'s
   capture), `spec` (the PRD), `task-list`, or `amendment` (a PRD change during implementation). A spec's `form` is
-  always `detailed`.
+  the PRD's `**Form:**` line (`brief`, `outline` or `detailed`).
 - **Independent offer at every `Class`** (Owner, 2026-11-10). Recommend the independent pass for every draft, PRD and
   task list, not only at `Heavy` and `Novel`; for small, well-understood work the recommendation may be to skip it,
   with the reason. For an amendment, judge its size: omit for a wording-level change, offer neutrally for a contained
@@ -48,7 +48,7 @@ CineXplorer adaptation (`override-mode: extend`):
   the Owner may lift ([adversarial-review][adversarial-review]'s override).
 - **Pass record:** the Review Log and workspace folder from adversarial-review's override replace
   `ADVERSARIAL-PASSES.md`.
-- **Size:** before the PRD's review loop, and again when the task list is finished, run
+- **Size:** before the PRD's review loop, on the task list's skeleton, and again when the task list is finished, run
   [assess-boundary-fit][assess-boundary-fit]; past its size marks the boundary decision returns to the Owner.
 - **Readiness:** besides the `draft` gate, an `amendment` that settles a decision also runs
   [assess-draft-readiness][draft-readiness], whose criterion 4 requires an ADR disposition for each decision. The PRD

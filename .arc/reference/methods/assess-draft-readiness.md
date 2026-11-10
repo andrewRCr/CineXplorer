@@ -33,9 +33,10 @@ CineXplorer adaptation (`override-mode: extend`):
 - **Criterion 3's inbound buffer** is the inbox: the entries naming this work that the draft hasn't integrated, leaving
   out those already routed to an errand (`## Errand`) or to another work unit's plan (its `_Target:_`). The draft stage
   routes them ([user-inbox.md](../workflows/supplemental/user-inbox.md)).
-- **Criterion 4's locus:** the draft records each disposition in its decision prose (its Decisions section); the PRD's
-  design substrate is its Design Decisions section, where each decision records its disposition beside it or in one
-  list there, and the section names each new or amended ADR among what the work delivers.
+- **Criterion 4's locus:** the draft records each disposition in its decision prose (its Decisions section). The PRD
+  records them in its Design Decisions section at every form that has one (an outline, a detailed PRD, an RFC),
+  beside each decision or in one list there, and the section names each new or amended ADR among what the work
+  delivers. A brief has no such section: it carries only the dispositions the default lets it leave unrecorded.
 - **The base branch** is `main`.
 - **"Covered by"** the replaced part of an ADR superseded in part is also a `needs-detail` gap.
 

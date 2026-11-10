@@ -31,11 +31,15 @@ documentation throughout the project lifecycle.
 Before finalizing any task list, verify:
 
 - [ ] Phase headers use `### **Phase X:** Description` format
+- [ ] Each segment's first phase carries `_Mode:_` and its last `_Exit criterion:_`; with more than one segment, each
+  `slice` or `replication` segment ends with its check task
+- [ ] Parent titles end with the PRD units they serve (not on a brief's tasks)
 - [ ] Parent tasks have checkboxes and bold: `- [ ] **X.Y Description**`
 - [ ] Subtasks use letter numbering: `- [ ] **X.Y.a Description**` (bold when detail bullets follow)
 - [ ] Third level uses letters (`X.Y.a`, `X.Y.b`), not numbers (`X.Y.1`, `X.Y.2`) - letters signal depth
 - [ ] Blank lines between subtasks when they have detail bullets beneath
 - [ ] Unnumbered bullets for implementation details (no checkboxes, no numbers)
+- [ ] Every parent task, except the verification pointer, has a `**Goal:**` line naming its outcome, not its change
 - [ ] Goal/Note lines indented 4 spaces from margin (same level as subtasks)
 - [ ] Test subtasks come BEFORE implementation subtasks
 - [ ] 4-space indentation per hierarchy level
@@ -311,6 +315,53 @@ discovered during browser testing
 ### **Phase 1:** Backend Tests (2 hours)  # Time estimate (prohibited)
 ```
 
+### Segments
+
+The phases group into ordered segments ([resolve-plan-segmentation](../../methods/resolve-plan-segmentation.md)),
+recorded in the phase preambles, right after each phase heading:
+
+- `_Mode:_` on a segment's first phase: the backticked mode (`slice`, `layer` or `replication`), an em dash, and what
+  the segment closes on
+- `_Exit criterion:_` on its last phase: the specific scenario that proves the segment's progress
+- A one-phase segment carries both, `_Mode:_` first, separated by a blank line
+- The Verification phase carries neither
+
+In a plan with more than one segment, a `slice` or `replication` segment ends with a parent task that runs the check
+proving its exit criterion: a named E2E spec or a scripted scenario, never the full suite. Its completion records what
+ran and the result. It never holds a fix. A failure stops the work under the Quality Gate Failure Protocol and the
+check task stays open: on the Owner's direction, the fix goes in a revision task on the task whose work it corrects
+([§ Revision Numbering](#revision-numbering-r-scheme)), and the check task completes when its rerun passes. A `layer`
+segment needs no check task. A one-segment plan needs none when its exit criterion matches one of the Success
+Criteria, which verification checks; otherwise it ends with one too. Exit criteria are not Success Criteria entries:
+verification checks the Success Criteria, and an exit criterion's evidence counts there only where a criterion relies
+on it.
+
+**Example:**
+
+```markdown
+### **Phase 1:** Ratings are stored
+
+_Mode:_ `layer` — closes on the rating model and its constraints in place.
+
+_Exit criterion:_ the migration applies cleanly and the model rejects an out-of-range rating.
+
+- [ ] **1.1 Add the rating model and its constraints — R1**
+
+### **Phase 2:** Users can rate a movie
+
+_Mode:_ `slice` — closes on a rating saved from the movie page.
+
+_Exit criterion:_ a rating submitted on the movie page is shown after a reload.
+
+- [ ] **2.1 Submitting a rating is saved — R2**
+- [ ] **2.2 The rating control submits a rating — R3**
+- [ ] **2.3 Check a rating round-trips from the movie page** (run the rating E2E spec)
+
+### **Phase 3:** Verification
+
+- [ ] **3.1 Verify the work** (load `archive-completed.md` § 1)
+```
+
 ### Parent Tasks
 
 **Format:** `- [ ] **X.Y Description**`
@@ -322,6 +373,8 @@ discovered during browser testing
 - Task number AND description both bold: `**X.Y Description**`
 - Numbers follow pattern: `1.1`, `1.2`, `2.1`, etc. (not `1.1.0`)
 - Description is concise but complete (what, not how)
+- Ends, inside the bold, with the PRD units the task serves: requirement numbers on a detailed PRD (`— R2, R3`),
+  design elements on an RFC or decisions on an outline (`— D2`). A brief's tasks carry none
 - Indented 0 spaces from margin (top level within phase)
 
 **Examples:**
@@ -329,9 +382,9 @@ discovered during browser testing
 ✅ **Correct:**
 
 ```markdown
-- [ ] **1.1 Write tests for data models**
-- [ ] **1.2 Implement data models**
-- [ ] **2.1 Write API integration tests**
+- [ ] **1.1 Write tests for data models — R1, R2**
+- [ ] **1.2 Implement data models — R1, R2**
+- [ ] **2.1 Write API integration tests — R3**
 ```
 
 ❌ **Wrong:**
@@ -436,7 +489,7 @@ Fourth level (rare): X.Y.a.1, X.Y.a.2
 ```markdown
 - [ ] **7.1 Systematic component audit**
 
-    **Goal:** Review all components for token usage consistency.
+    **Goal:** Every component uses semantic tokens, with no raw values left.
 
     - [ ] **7.1.a Catalog all components**
         - Generate list of all `.tsx` files
@@ -537,16 +590,24 @@ steps that warrant tracking separately.
 
 ### Goal/Note Lines
 
-**Format:** `**Goal:** One-line clarification` or `**Note:** Important context`
+**Format:** `**Goal:** One-line outcome` or `**Note:** Important context`
 
-**When to use:** Parent task title is technical/terse and needs purpose/rationale clarification
+**A Goal on every parent task**, except the verification phase's pointer task. The title names the change ("Wire
+validation into the save handler"); the Goal names the outcome the task targets ("The save handler rejects malformed
+input before it writes"). It opens the task body. Test each one: would removing it make the work harder to verify? If
+not, rewrite it: a Goal that restates the title is noise. A subtask takes a Goal only when it carries intent of its own,
+beyond its slice of the parent's. A completed task keeps its Goal as written: it is what the task is checked against.
+
+The other lines (`**Note:**`, `**Rationale:**`, `**Purpose:**`, `**Approach:**`) are optional, for context a task
+needs. Format examples elsewhere in this strategy leave Goal lines out to keep the element they show in focus; the
+[Complete Annotated Example](#complete-annotated-example) shows them in place.
 
 **Rules:**
 
 - Indented 4 spaces from margin (same level as subtasks)
 - First word bold (`**Goal:**`, `**Note:**`, `**Rationale:**`, `**Purpose:**`, `**Approach:**`)
 - Single line only (not a paragraph)
-- Must illuminate purpose/impact, NOT repeat title
+- A Goal names an outcome; it never repeats the title
 - Blank line after (before first subtask)
 
 **Examples:**
@@ -556,7 +617,7 @@ steps that warrant tracking separately.
 ```markdown
 - [ ] **1.1 Write tests for data models**
 
-    **Goal:** Validate field constraints and relationships before implementation.
+    **Goal:** Field constraints and relationships are pinned by failing tests before the models exist.
 
     - [ ] **1.1.a Create test for `User` model validation**
         - Test: Email format validation
@@ -566,22 +627,13 @@ steps that warrant tracking separately.
         - Test: Foreign key to `User`
 ```
 
-✅ **Also correct (without Goal line):**
+❌ **Wrong:**
 
 ```markdown
 - [ ] **1.1 Write tests for User and Profile model validation**
 
-    - [ ] **1.1.a Create test for `User` model field constraints**
-        - Test: Email validation
-        - Test: Username uniqueness
+    - [ ] **1.1.a Create test for `User` model field constraints**  # Parent task without a Goal
 
-    - [ ] **1.1.b Create test for `Profile` foreign key relationship**
-        - Test: Foreign key constraint
-```
-
-❌ **Wrong:**
-
-```markdown
 - [ ] **1.1 Write tests for data models**
 **Goal:** Validate field constraints  # Not indented to subtask level
 
@@ -709,7 +761,7 @@ Phase-level notes (0 spaces) **Purpose:** Optional context
 ↓
 Parent Task (0 spaces) - [ ] **X.Y Description**
     ↓
-    Goal/Note Line (4 spaces) **Goal:** Clarification
+    Goal/Note Line (4 spaces) **Goal:** Outcome
     ↓
     Numbered Subtask (4 spaces) - [ ] **X.Y.Z Description** (bold if details follow)
         ↓
@@ -727,7 +779,7 @@ Parent Task (0 spaces) - [ ] **X.Y Description**
 
 - [ ] **1.1 Write tests for core functionality**
 
-    **Goal:** Establish test coverage before implementation.
+    **Goal:** The core behavior is pinned by failing tests before the implementation exists.
 
     - [ ] **1.1.a Create test for `User` model**
         - Test: Email validation
@@ -930,9 +982,13 @@ This example demonstrates all formatting elements in proper context:
 
 ### **Phase 1:** Backend Test Infrastructure
 
+_Mode:_ `layer` — closes on fixtures that can set up any saved search or navigation state.
+
+_Exit criterion:_ the fixtures build each state the later tests need, and the backend suite passes with them.
+
 - [ ] **1.1 Create test fixtures for state scenarios**
 
-    **Goal:** Reusable fixtures to test state persistence across components.
+    **Goal:** Tests can set up any saved search or navigation state in one line.
 
     **Check:** the full backend suite once, since `test_helpers.py` is shared by every app's tests and related tests
     would not reach them all.
@@ -948,7 +1004,11 @@ This example demonstrates all formatting elements in proper context:
 
 ### **Phase 2:** Filters survive navigation to a detail page and back
 
+_Mode:_ `slice` — closes on search state surviving a round trip to a detail page.
+
 - [ ] **2.1 Write tests for URL parameter preservation**
+
+    **Goal:** Each filter parameter's survival across navigation is pinned by a failing test before the fix.
 
     - [ ] **2.1.a Create test in `test_navigation.ts`**
         - Test: All filter params survive navigation
@@ -963,6 +1023,8 @@ This example demonstrates all formatting elements in proper context:
         - Expect tests to FAIL initially
 
 - [ ] **2.2 Update URL parameter handling**
+
+    **Goal:** Coming back from a detail page restores the exact search the user left, unknown parameters included.
 
     - [ ] **2.2.a Modify `MovieCard.tsx` query string construction**
         - Capture all URL params from `useSearchParams()`
@@ -979,9 +1041,11 @@ This example demonstrates all formatting elements in proper context:
 
 ### **Phase 3:** Panels keep their expanded state
 
+_Exit criterion:_ after opening a movie and coming back, the search shows the same filters, page and expanded panels.
+
 - [ ] **3.1 Write tests for UI state preservation**
 
-    **Goal:** Ensure expanded panels stay expanded across navigation.
+    **Goal:** Expanded panels staying open across navigation is pinned by failing tests.
 
     - [ ] **3.1.a Create test for advanced panel state**
         - Test: Panel expanded with rating filters → detail → back → still expanded
@@ -995,12 +1059,18 @@ This example demonstrates all formatting elements in proper context:
 
 - [ ] **3.2 Update UI state preservation**
 
+    **Goal:** Panels and filters reopen as the user left them.
+
     - [ ] **3.2.a Verify `useEffect` auto-expand logic**
         - Effect detects advanced filters from URL
         - Sets `showAdvanced` to true when filters present
         - File location: `useMovieCollectionState.tsx:119-125`
 
     - [ ] **3.2.b Run UI state tests - should now PASS**
+
+- [ ] **3.3 Check the search survives a detail-page round trip** (run the navigation E2E spec)
+
+    **Goal:** Coming back from a movie is shown to keep its filters, page and panels, with what ran recorded.
 
 ### **Phase 4:** Verification
 
@@ -1146,7 +1216,7 @@ _(one entry per review pass and fix check)_
 ```markdown
 - [ ] **1.1 Refactor service layer**
 
-    **Goal:** Improve testability by extracting pure functions.
+    **Goal:** The service's rules are pure functions, testable without a database.
 
     - [ ] **1.1.1 Extract helper functions**
         - Move validation logic to separate module
@@ -1337,35 +1407,30 @@ If you find this pattern, you have two options:
     - [ ] **2.3.b Run integration tests - should PASS**
 ```
 
-### When to Add Goal/Note Lines
+### Writing Goal and Note Lines
 
-**Add Goal/Note line when:**
+**Every parent task gets a Goal** ([§ Goal/Note Lines](#goalnote-lines)). Write it as the outcome the task leaves
+behind, observable where possible. Rewrite one that restates the title or describes the change. Add a Note line only
+when context would help a future reader.
 
-- Parent task title is technical/terse
-- Purpose or rationale needs clarification
-- Context would help future readers
-
-**Skip Goal/Note line when:**
-
-- Parent task title is already clear and descriptive
-- Purpose is obvious from context
-- Would just repeat the title
-
-**Example needing Goal line:**
+**A Goal naming the outcome:**
 
 ```markdown
 - [ ] **3.2 Refactor buffer logic**
 
-    **Goal:** Separate pagination metadata tracking from result filtering for clarity.
+    **Goal:** Pagination metadata is tracked apart from result filtering, so either can change alone.
 
     - [ ] **3.2.a Extract metadata handling to separate function**
         - Move tracking logic to `pagination_helpers.py`
 ```
 
-**Example NOT needing Goal line:**
+**A Goal to rewrite, and its rewrite:**
 
 ```markdown
 - [ ] **3.2 Write tests for buffer pagination metadata tracking**
+
+    **Goal:** Write tests for the metadata tracking.  # Restates the title
+    **Goal:** The response's `next_tmdb_page_start` is pinned by a failing test.  # The outcome
 
     - [ ] **3.2.a Create test for metadata in API response**
         - Test: `next_tmdb_page_start` field present

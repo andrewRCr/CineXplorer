@@ -8,7 +8,8 @@
 
 Authoritative guidance for authentication and authorization in CineXplorer. Documents the dual-pattern
 authentication architecture (JWT for email/password, session cookies for OAuth), security model,
-implementation patterns, and testing approach.
+implementation patterns, and testing approach. The decision and the alternatives weighed are recorded in
+[ADR-040](../../adr/adr-040-sign-in-with-a-header-token-and-a-refresh-cookie.md).
 
 ## Table of Contents
 
@@ -39,7 +40,7 @@ implementation patterns, and testing approach.
 **Email/Password (JWT Tokens)**:
 
 - ✅ Custom Django Ninja endpoint (full control over response format)
-- ✅ Hybrid authentication (localStorage for instant checks + HTTP-only cookie for security)
+- ✅ Hybrid authentication (browser storage for instant checks + HTTP-only cookie for security)
 - ✅ Explicit token lifecycle management
 - ✅ Suitable for programmatic access (future API clients)
 
@@ -70,7 +71,7 @@ going against its design and making upgrades difficult.
 └──────┬───────┘                                 └────────┬───────┘
        │                                                  │
        │ 1. POST /api/token/                              │
-       │    {username, password}                          │
+       │    {login, password}                             │
        ├─────────────────────────────────────────────────>│
        │                                                  │
        │                              2. Validate credentials
@@ -84,7 +85,7 @@ going against its design and making upgrades difficult.
        │ 5. Set-Cookie: refresh_token (HttpOnly)          │
        │<─────────────────────────────────────────────────┤
        │                                                  │
-       │ 6. Store access_token in sessionStorage          │
+       │ 6. Store access_token (local/session storage)    │
        │ 7. Remove old refresh copies from browser storage │
        │ 8. Refresh token cookie auto-sent by browser     │
        │                                                  │
@@ -94,7 +95,8 @@ going against its design and making upgrades difficult.
        ├─────────────────────────────────────────────────>│
        │                                                  │
        │                              10. Validate access_token
-       │                              11. If expired → refresh
+       │                              11. If expired → 401;
+       │                                  client refreshes, retries
        │                                                  │
        │ 12. 200 OK + Response Data                       │
        │<─────────────────────────────────────────────────┤
@@ -104,9 +106,11 @@ going against its design and making upgrades difficult.
 
 | Token Type        | Storage Location  | Lifetime  | Access                 | Purpose                                |
 |-------------------|-------------------|-----------|------------------------|----------------------------------------|
-| **Access Token**  | sessionStorage    | 5 minutes | JavaScript can read    | API authorization, instant auth checks |
+| **Access Token**  | Browser storage   | 5 minutes | JavaScript can read    | API authorization, instant auth checks |
 | **Refresh Token** | HTTP-only cookie  | 14 days   | JavaScript CANNOT read | Automatic token refresh, XSS-proof     |
-| **CSRF Token**    | Cookie (readable) | Session   | JavaScript can read    | CSRF protection for unsafe methods     |
+| **CSRF Token**    | Cookie (readable) | 52 weeks  | JavaScript can read    | CSRF protection for unsafe methods     |
+
+The access token goes to local storage when the user asks to be remembered, and to session storage otherwise.
 
 **Why Hybrid Storage?**
 
@@ -119,9 +123,10 @@ going against its design and making upgrades difficult.
 
 `useAuth` renews an expired access token on load, at its 60-second idle check, and before fetching the profile.
 Password users remain signed in when renewal succeeds. A current session's failure clears stored tokens and the
-signed-in state; provider sessions have no access token and never request a refresh. On load the existing signed-out
-display remains until renewal answers. These effects renew credentials; moving authentication state onto TanStack
-Query is separate.
+signed-in state; provider sessions have no access token and never request a refresh. No timer renews a token ahead
+of its expiry. On load the sign-in status reads as resolving until renewal answers
+([ADR-028](../../adr/adr-028-use-three-state-sign-in-status.md)). These effects renew credentials; moving
+authentication state onto TanStack Query is separate.
 
 The hook and the API client's `401` interceptor call the same exported `refreshAccessToken()` function. It returns
 one pending promise per tab, so every caller receives the same token or failure. On browsers with Web Locks it holds
@@ -304,7 +309,7 @@ const apiClient = axios.create({
 
 **JWT Pattern**:
 
-- Access token in sessionStorage (vulnerable to XSS but short-lived: 5 minutes)
+- Access token in browser storage (vulnerable to XSS but short-lived: 5 minutes)
 - Refresh token in HTTP-only cookie (XSS-proof, 14-day lifetime)
 - **Trade-off**: Convenience (instant auth checks) vs absolute security
 
@@ -324,24 +329,28 @@ const apiClient = axios.create({
 
 **Database level**:
 
-- All user-specific data queries filtered by `request.user`
+- All user-specific data queries filtered by the user `get_current_user(request)` returns, which the route hands to
+  the service layer
 - Django ORM enforces foreign key relationships
-- Backend tests validate isolation (see Task 8.4 - cross-pattern user isolation test)
+- Backend tests validate isolation from another user's data; the cross-pattern case is a manual check
+  ([Manual E2E Validation](#manual-e2e-validation), item 4)
 
 **API level**:
 
 - Django Ninja authentication required on protected endpoints
-- `auth=JWTAuth` or `auth=SessionAuth` decorators
+- `JWTSessionAuth` is the API-wide default (`NinjaAPI(auth=jwt_session_auth)` in `backend/config/api.py`); public
+  operations opt out with `auth=None`
 - Automatic 401 response if unauthenticated
 
 **Example**:
 
 ```python
-@router.get("/", response=list[UserMovieDataModelSchema])
-def get_user_movies(request: HttpRequest) -> list[UserMovieData]:
-    # request.user is ALWAYS the authenticated user
-    # Cannot access other users' data
-    return UserMovieData.objects.filter(user=request.user)
+@user_movie_data_router.get("/movies", response=MovieListResponseSchema)
+def get_user_movies(request: HttpRequest, watchlist: bool = False) -> MovieListResponseSchema:
+    # The Bearer token's user or the session's user; request.user comes
+    # only from the session, never from the token
+    user = get_current_user(request)
+    return _service.get_all_user_movies(user=user, watchlist_only=watchlist if watchlist else None)
 ```
 
 ---
@@ -350,41 +359,48 @@ def get_user_movies(request: HttpRequest) -> list[UserMovieData]:
 
 ### Backend: Django Ninja + django-allauth
 
-**Authentication Classes** (`backend/apps/authentication/auth_ninja.py`):
+**Authentication Class** (`backend/apps/authentication/auth_ninja.py`):
 
 ```python
-from ninja.security import HttpBearer, HttpBasicAuth
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest
+from ninja.security.http import HttpAuthBase
 
-class JWTAuth(HttpBearer):
-    """JWT authentication (email/password login)."""
+class JWTSessionAuth(HttpAuthBase):
+    """Authenticate a Bearer access token, falling back to the Django session."""
 
-    def authenticate(self, request: HttpRequest, token: str) -> AbstractBaseUser | None:
-        # Validate JWT access token
-        # Return user if valid, None if invalid
+    openapi_scheme = "bearer"
+
+    def __call__(self, request: HttpRequest) -> AbstractUser | None:
+        # Unlike HttpBearer, the session path also runs without an Authorization header.
+        return self.authenticate(request)
+
+    def authenticate(self, request: HttpRequest) -> AbstractUser | None:
+        # 1. A valid access token in the Authorization header (password users)
+        # 2. Otherwise an authenticated request.user from the session (Google and GitHub users)
         ...
 
-class SessionAuth:
-    """Session authentication (OAuth login)."""
-
-    def __call__(self, request: HttpRequest) -> AbstractBaseUser | None:
-        # Check request.user.is_authenticated
-        # Return user if authenticated, None otherwise
-        ...
+jwt_session_auth = JWTSessionAuth()
 ```
 
-**Hybrid Authentication** (supports both patterns on same endpoint):
+The access token is read only from the `Authorization` header. A missing or invalid token falls through to the
+session; with neither, the operation answers `401`.
+
+**Hybrid Authentication** (one class serves both patterns):
 
 ```python
-from authentication.auth_ninja import JWTAuth, SessionAuth
+from apps.authentication.auth_ninja import JWTSessionAuth, get_current_user
 
-# Priority: JWT first, then session
-@router.get("/profile", auth=[JWTAuth(), SessionAuth()])
-def get_profile(request: HttpRequest):
-    # Works for both JWT and OAuth users
-    return request.user
+user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTSessionAuth())
+
+@user_movie_data_router.get("/movies")
+def get_user_movies(request: HttpRequest):
+    user = get_current_user(request)  # Works for both JWT and OAuth users
+    ...
 ```
+
+`get_current_user` and `get_current_user_optional` run the same check, raising `401` or returning `None` when
+neither credential is present.
 
 **Django-allauth Configuration** (`backend/config/settings.py`):
 
@@ -394,8 +410,9 @@ HEADLESS_ONLY = True
 
 # Frontend URLs for redirects
 HEADLESS_FRONTEND_URLS = {
-    "account_confirm_email": f"{FRONTEND_URL}/auth/verify-email",
-    "account_reset_password_from_key": f"{FRONTEND_URL}/auth/reset-password",
+    # Email confirmation links come from CustomAccountAdapter.get_email_confirmation_url()
+    "account_reset_password_from_key": f"{FRONTEND_URL}/login?reset={{key}}",
+    "account_signup": f"{FRONTEND_URL}/auth/signup",
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
 }
 
@@ -505,13 +522,13 @@ never enter this branch. CSRF initialization and the refresh POST live inside th
 
 ### JWT Authentication Endpoints (Django Ninja)
 
-| Endpoint            | Method | Auth Required | Purpose              | Request Body                                         | Response                                               |
-|---------------------|--------|---------------|----------------------|------------------------------------------------------|--------------------------------------------------------|
-| `/api/token/`       | POST   | No            | Email/password login | `{login, password}`                                  | `{access_token, user_id, email_verified}` + Set-Cookie |
-| `/api/auth/refresh` | POST   | Yes (cookie)  | Refresh access token | (empty)                                              | `{access_token}`                                       |
-| `/api/logout/`      | POST   | No            | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                            |
-| `/api/register/`    | POST   | No            | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                          |
-| `/api/profile/`     | GET    | Yes (JWT)     | Get user profile     | N/A                                                  | `{id, username, email, ...}`                           |
+| Endpoint            | Method | Auth Required        | Purpose              | Request Body                                         | Response                                                                     |
+|---------------------|--------|----------------------|----------------------|------------------------------------------------------|------------------------------------------------------------------------------|
+| `/api/token/`       | POST   | No                   | Email/password login | `{login, password}`                                  | `{access_token, user_id, username, first_name, email_verified}` + Set-Cookie |
+| `/api/auth/refresh` | POST   | Yes (cookie)         | Refresh access token | (empty)                                              | `{access_token, expires_in, issued_at}` + Set-Cookie                         |
+| `/api/logout/`      | POST   | No                   | Logout JWT user      | (empty)                                              | `{message}` + Clear cookies                                                  |
+| `/api/register/`    | POST   | No                   | User registration    | `{username, email, password, first_name, last_name}` | `201 Created`                                                                |
+| `/api/profile/`     | GET    | Yes (JWT or session) | Get user profile     | N/A                                                  | `{id, username, email, ...}`                                                 |
 
 **Example: Login**:
 
@@ -605,15 +622,18 @@ curl -X GET https://localhost:8444/_allauth/browser/v1/auth/session \
 
 ### Protected Endpoints (Both Patterns Supported)
 
-All endpoints with `auth=[JWTAuth(), SessionAuth()]` support both authentication patterns:
+All endpoints authenticated by `JWTSessionAuth` support both authentication patterns:
 
-| Endpoint                      | Auth Pattern   | How It Works                                                                    |
-|-------------------------------|----------------|---------------------------------------------------------------------------------|
-| `/api/user-movie-data/`       | JWT or Session | JWT: `Authorization: Bearer {token}` header<br>Session: `Cookie: sessionid=...` |
-| `/api/user-movie-data/{id}`   | JWT or Session | Same as above                                                                   |
-| `/api/user-movie-data/movies` | JWT or Session | Same as above                                                                   |
+| Endpoint                                    | Auth Pattern   | How It Works                                                                    |
+|---------------------------------------------|----------------|---------------------------------------------------------------------------------|
+| `GET /api/profile/`                         | JWT or Session | JWT: `Authorization: Bearer {token}` header<br>Session: `Cookie: sessionid=...` |
+| `GET /api/user-movie-data/movies`           | JWT or Session | Same as above                                                                   |
+| `GET /api/user-movie-data/by-tmdb-id`       | JWT or Session | Same as above                                                                   |
+| `POST /api/user-movie-data`                 | JWT or Session | Same as above                                                                   |
+| `PATCH`, `DELETE /api/user-movie-data/{id}` | JWT or Session | Same as above                                                                   |
 
-Django Ninja tries JWTAuth first, then SessionAuth if JWT fails. Whichever succeeds sets `request.user`.
+`JWTSessionAuth` checks the Bearer header first, then the session. Handlers read the user from
+`get_current_user(request)`, since `request.user` comes only from the session, never from the token.
 
 ---
 
@@ -667,15 +687,15 @@ JavaScript neither reads nor stores them.
 
 **Test Coverage**:
 
-1. **Session Authentication Tests** (`backend/apps/authentication/tests/test_session_auth.py`):
+1. **Session Authentication Tests** (`backend/apps/authentication/tests/integration/test_session_auth.py`):
    - JWT authentication still works after OAuth migration
    - JWT token refresh generates new tokens
    - Session authentication persists across requests
    - OAuth logout clears session cookie
-   - JWT logout revokes the refresh token and clears its cookie
+   - JWT logout clears the refresh cookie
    - Hybrid auth supports both patterns on same endpoint
 
-2. **CSRF Protection Tests** (`backend/apps/authentication/tests/test_csrf_protection.py`):
+2. **CSRF Protection Tests** (`backend/apps/authentication/tests/integration/test_csrf_protection.py`):
    - CSRF token required for unsafe methods
    - Missing CSRF token returns 403
    - Invalid CSRF token returns 403
@@ -684,7 +704,19 @@ JavaScript neither reads nor stores them.
 3. **User Isolation Tests** (various):
    - UserMovieData filtered by authenticated user
    - Cannot access other users' data
-   - Cross-pattern isolation (JWT user cannot see OAuth user's data)
+
+   The cross-pattern case (a password user cannot see a Google or GitHub user's data) is a manual check.
+
+4. **Sign-Out Tests** (`backend/apps/authentication/tests/integration/test_logout.py`):
+   - A signed-out refresh token cannot renew (it is blacklisted)
+   - Sign-out reports failure when revocation cannot be stored
+   - The cookie is cleared when no usable refresh token remains
+
+5. **Access Token Transport Tests**
+   (`backend/apps/authentication/tests/integration/test_access_token_transport.py`):
+   - An access cookie does not authenticate; the Bearer header does
+   - The removed refresh route issues and rotates nothing
+   - A provider session authenticates without a valid Bearer token
 
 **Test Helpers** (`backend/apps/core/tests/test_helpers.py`):
 
@@ -732,15 +764,11 @@ helper so test authentication follows the browser's transport.
 **Deferred to API Layer P2**:
 
 - Comprehensive edge case testing
-- Multi-tab coordination
 - Full error recovery scenarios
 - Production certification
 
 ### Future Testing Improvements
 
-**Documented in** `.arc/backlog/notes/notes-frontend-enhancements.md`:
-
-- Toast notification system (user feedback for auth errors)
 - Error logging/monitoring integration
 - Multi-tab session synchronization
 
@@ -874,7 +902,7 @@ With `HEADLESS_ONLY = True`, traditional URLs only register OAuth callbacks (log
 
 ### JWT Token Configuration
 
-**Token Lifetimes** (`backend/apps/authentication/models.py`):
+**Token Lifetimes** (`backend/config/settings.py`):
 
 ```python
 SIMPLE_JWT = {
@@ -899,7 +927,7 @@ Run before production deployment:
 - [ ] CSRF protection enabled and tested
 - [ ] CORS configured with explicit origins (no wildcards)
 - [ ] Session cookies are HTTP-only, Secure, SameSite=Lax
-- [ ] Refresh token cookies are HTTP-only, Secure
+- [ ] Refresh token cookies are HTTP-only, Secure, SameSite=Lax
 - [ ] OAuth providers configured with correct callback URLs
 - [ ] ALLOWED_HOSTS includes only trusted domains
 - [ ] CSRF_TRUSTED_ORIGINS includes only trusted domains
@@ -950,6 +978,8 @@ Run before production deployment:
 
 - [DEVELOPMENT-RULES](../../constitution/DEVELOPMENT-RULES.md) - Development standards and quality gates
 - [TECHNICAL-OVERVIEW](../../constitution/TECHNICAL-OVERVIEW.md) - System architecture overview
+- [ADR-040](../../adr/adr-040-sign-in-with-a-header-token-and-a-refresh-cookie.md) - Header token, refresh cookie
+  and provider sessions
 - `research-django-allauth-headless-oauth.md` - Comprehensive OAuth research (archived)
 - `tasks-oauth-headless-migration.md` - Implementation history (archived)
 - [django-allauth Headless Documentation](https://docs.allauth.org/en/latest/headless/) - Official docs

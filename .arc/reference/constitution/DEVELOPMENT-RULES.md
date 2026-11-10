@@ -450,8 +450,9 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
 
 - **References to `.arc/` work documents**: PRDs, task lists, notes and completion docs move between `backlog/`,
   `active/` and `archive/`, so:
-    - **To one:** backticked filename only, no links or paths, from anywhere. For tasks, include the task ID and the
-      task-list filename: "Task 8.3 - `tasks-oauth-headless-migration.md`"
+    - **To one:** backticked filename only, no links or paths, from anywhere. An ADR may cite an archived work
+      document by its path under `.arc/reference/archive/`, since the archive is its final home. For tasks, include
+      the task ID and the task-list filename: "Task 8.3 - `tasks-oauth-headless-migration.md`"
     - **From one:** no relative-path links, even to stable docs; its own path changes when it moves
 
   Code and PR text never reference them, except one commit-pinned link to the PRD from a PR whose diff contains it;

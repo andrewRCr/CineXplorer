@@ -68,10 +68,10 @@ verified counts, as `Code review — pass 1, CodeRabbit (hosted)` or
 End with one approval question naming what approval releases, for example
 `Approve: 3 fixes → commit → push → reply to and resolve 5 threads?`.
 
-Whatever the dispositions, once the set is approved, record the look where
-[adversarial-review](../../methods/adversarial-review.md)'s override says, with the fields it names, its shared causes
-among them: the task list's `## Review Log`, or the work unit's `REVIEW-LOG.md` before the task list exists. An
-errand, which has no Review Log, names each shared cause and the looks it appeared in within its reports.
+Whatever the dispositions, once the set is approved, record the look in the task list's `## Review Log`, or in the
+work unit's `REVIEW-LOG.md` before the task list exists, as [adversarial-review](../../methods/adversarial-review.md)'s
+override says, with the fields it names, the look's shared causes among them. An errand, which has no Review Log,
+names each shared cause and the looks it appeared in within its reports.
 
 ## Fix Batch
 

@@ -1,12 +1,12 @@
 ---
 name: assess-draft-readiness
-description: Evaluate whether a planning draft is formalization-ready against one shared three-criterion bar.
+description: Evaluate whether a planning draft is formalization-ready against one shared four-criterion bar.
 override-active: true
 override-mode: extend
 ---
 
 <!--
-Vendored from arc-framework .arc/system/methods/assess-draft-readiness.md at a49ebba40. The default text is
+Vendored from arc-framework .arc/system/methods/assess-draft-readiness.md at 2538476f8. The default text is
 verbatim; out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
 assess-draft-readiness.override.
 -->
@@ -31,28 +31,15 @@ CineXplorer adaptation (`override-mode: extend`):
   author checks, and over an amendment that settles a decision. A `needs-detail` gap is closed in the PRD; a
   `needs-design` gap returns to discovery.
 - **Criterion 3** always clears: a PRD has no inbound buffer.
-- **Criterion 4, added: every settled decision carries an ADR disposition.** Each decision in the PRD's Design
-  Decisions records one, beside the decision or in one list there, against
-  [strategy-adr-methodology][adr-methodology] § When to Write an ADR. Either way, the section names each new or
-  amended ADR among what the work delivers. Where the bar and verdict say "all three", read "all four".
-
-An ADR disposition is one of four:
-
-- **A new ADR** the work unit will deliver.
-- **An amendment** to a named ADR.
-- **Covered by** a named ADR that records the decision: one the work unit delivers or amends, or a Proposed or
-  Accepted ADR already on `main` that records the decision unchanged.
-- **`none`**, naming the strategy's "Don't write an ADR for" category (a tactical choice, one obvious from code, or a
-  temporary one), or stating that the decision meets none of its five criteria.
-
-A missing disposition is a `needs-detail` gap. "Covered by" naming any other ADR is also a `needs-detail` gap: a
-number naming no ADR on `main` and none the work unit delivers, a Superseded or Deprecated ADR (or, for one superseded
-in part, its replaced part), or an ADR that is neither on `main` nor the work unit's own. Close it by citing a
-qualifying ADR or choosing another disposition.
+- **Criterion 4's locus** is the PRD's Design Decisions section, its design substrate: each decision there records its
+  disposition beside it or in one list there, and the section names each new or amended ADR among what the work
+  delivers.
+- **The base branch** is `main`.
+- **"Covered by"** the replaced part of an ADR superseded in part is also a `needs-detail` gap.
 
 ## assess-draft-readiness.default
 
-A draft is **formalization-ready** when all three criteria below clear. Otherwise return **not-ready** with the
+A draft is **formalization-ready** when all four criteria below clear. Otherwise return **not-ready** with the
 gaps that block it — each tagged by kind, so the caller can route without re-judging.
 
 ### The bar
@@ -68,6 +55,28 @@ gaps that block it — each tagged by kind, so the caller can route without re-j
    Read for the section; do not drain it — draining is the caller's act, prompted by the not-ready verdict this
    check produces.
 
+4. **Every settled decision carries an ADR disposition.** Each decision the draft settles records one, in its
+   decision prose, against [strategy-adr-methodology][adr-methodology] § When to Write an ADR. With no draft, the
+   determinacy confirmation states each disposition. The spec carries every disposition in its design substrate
+   (an `outline`'s Decision(s), an RFC's Proposed Design, a PRD's Requirements), beside its decision or in one list
+   there, and lists each new or amended ADR there among what the work delivers. A `new ADR` or `amendment`
+   disposition makes its spec at least an `outline`; a `brief` carries only dispositions that deliver nothing,
+   `none` or covered by an ADR already on the base branch, and need not record them.
+
+An ADR disposition is one of four:
+
+- **A new ADR** the work unit will deliver.
+- **An amendment** to a named ADR.
+- **Covered by** a named ADR that records the decision: one the work unit delivers or amends, or a Proposed or
+  Accepted ADR already on the base branch that records the decision unchanged.
+- **`none`**, naming the strategy's "Don't write an ADR for" category (a tactical choice, one obvious from code,
+  or a temporary one), or stating that the decision meets none of its five criteria.
+
+A missing disposition is a `needs-detail` gap. "Covered by" naming any other ADR is also a `needs-detail` gap: a
+number naming no ADR on the base branch and none the work unit delivers, a Superseded or Deprecated ADR, or an ADR
+that is neither on the base branch nor the work unit's own. Close it by citing a qualifying ADR or choosing another
+disposition.
+
 **The bar is identical at every planning depth** · `[invariant]`. Depth (via
 [resolve-planning-depth][resolve-planning-depth]) sets how far a draft travels to clear it — fewer passes at `low` /
 `medium`, more at `high` — never how high it sits.
@@ -76,7 +85,7 @@ gaps that block it — each tagged by kind, so the caller can route without re-j
 
 Return `{ ready, gaps }`.
 
-- **ready** — all three clear; `gaps` empty.
+- **ready** — all four clear; `gaps` empty.
 - **not-ready** — each gap names its shortfall and a kind:
     - **needs-design** — an unmade decision or unshaped direction; the draft must be shaped further before a spec
       can crystallize it.
@@ -92,5 +101,5 @@ Return `{ ready, gaps }`.
 [draft-design]: ../workflows/1_create-prd.md
 [create-spec]: ../workflows/1_create-prd.md
 [resolve-planning-depth]: README.md#not-used-here
-[create-prd]: ../workflows/1_create-prd.md
 [adr-methodology]: ../strategies/arc/strategy-adr-methodology.md
+[create-prd]: ../workflows/1_create-prd.md

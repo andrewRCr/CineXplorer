@@ -4,11 +4,12 @@ description: Scannable presentation of a verified finding set, ending on what it
 related:
   - review-triage
   - adversarial-review
-override-active: false
+override-active: true
+override-mode: extend
 ---
 
 <!--
-Vendored from arc-framework .arc/system/methods/disposition-report.md at a49ebba40. The default text is verbatim;
+Vendored from arc-framework .arc/system/methods/disposition-report.md at 2538476f8. The default text is verbatim;
 out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
 disposition-report.override.
 -->
@@ -26,7 +27,28 @@ disposition-report.override.
 
 ## disposition-report.override
 
-[No override configured]
+CineXplorer adaptation (`override-mode: extend`):
+
+- **Review kinds.** Headers and Trend lines name one of these:
+
+  | Kind | What it reviews | Trend line |
+  | --- | --- | --- |
+  | PRD review | The PRD (the default's spec review; the PRD is also the draft here) | `PRD pass 1: 3 → 1` |
+  | Task-list review | The task list | `Task-list pass 1: 2` |
+  | Amendment review | An amendment to a PRD | `Amendment pass 1: 1` |
+  | Criteria verification | The Success Criteria at completion | `Criteria pass 1: 1` |
+  | Code review | The change, before or on its pull request (the default's standard code review) | `Code pass 2: 2 → 1` |
+
+  Design review and frontline code review are not used.
+- **Sources.** A code review's position names `delegated agent (local)` for a fresh subagent or session, or
+  `Codex (hosted)` or `CodeRabbit (hosted)` for a review requested on the pull request, as
+  `Code review — pass 2, Codex (hosted)` or `Code review — fix check, round 1 since pass 2, delegated agent (local)`.
+  Fix checks always run locally. Reviews requested together on one head are one pass whose position names each
+  source, as `Code review — pass 2, Codex and CodeRabbit (hosted)`.
+- **Written by hand.** No tool composes the header: the agent presenting the set writes the kind, position, source
+  and counts.
+- **No pass limit.** There is no fixed pass cap ([adversarial-review](adversarial-review.md)'s override), so a
+  position never adds `(limit reached)` or `(over limit)`.
 
 ## disposition-report.default
 
@@ -55,7 +77,7 @@ condition does not hold, and never render an element only to say it does not app
 **Trend:** <reading> — <where the review stands>            [two or more looks]
 
 Critical and major findings, each full pass then its fix checks:   [one found]
-- <pass>: <its looks' counts>
+- <review kind> pass <N>: <its looks' counts>
 No critical or major findings at any look.                  [none found]
 
 **Decisions**                                               [something left to decide]
@@ -66,10 +88,15 @@ No critical or major findings at any look.                  [none found]
 Approve: <what approval releases>?
 ```
 
-**Header.** Bold the review position — `Pass 2 of 3`, `Fix check, round 1 since pass 2`, or the lane's own form —
-then give each verified grade's finding count, most severe first, and the unsupported count, leaving out a zero count:
-`**Pass 2 of 3** · 🟠 2 major · 🟡 1 minor · 1 not supported`. A reached limit or other stop reason joins the position.
-Do not mark the result provisional or converged: every proposal is provisional, and its fixes show whether the look
+**Header.** Bold the review position: the review kind in full, then the pass or fix-check round, then, for a code
+review, the source that ran it. The kinds are design, spec, task-list, and amendment review, criteria verification,
+frontline code review, and standard code review: `Spec review — pass 1`, or
+`Standard code review — fix check, round 1 since pass 2, delegated agent (local)`. A hosted source names its provider,
+as `Codex (hosted)`. Leave the configured pass limit unsaid until it binds: a position at the limit adds
+`(limit reached)` and one past it `(over limit)`, since another pass then needs an override. Another stop reason joins
+the position. Then give each verified grade's finding count, most severe first, and the unsupported count, leaving out
+a zero count: `**Standard code review — pass 2, CodeRabbit (hosted)** · 🟠 2 major · 🟡 1 minor · 1 not supported`. Do
+not mark the result provisional or converged: every proposal is provisional, and its fixes show whether the look
 converged.
 
 **Labels and order.** Assign labels `F1`, `F2`, and onward in canonical decision order before sorting for display:
@@ -98,9 +125,11 @@ line, `---`, and another blank line. Set the last section off the same way from 
 **Trend.** Render it only when the lane has two or more looks; a first look has no trend. Lead with the
 [review-model][review-model-trend] reading and, in a sentence or two, where the review stands: what the counts show and
 where what remains comes from. Then list the critical and major findings at each look, one bullet per complete pass
-followed by its fix checks, and mark the current look: `Pass 2 of 3: 2 → 1 (this look)`. When no look found a
-critical or major finding, the list is the single line `No critical or major findings at any look.` Leave out minor
-findings, which the header counts for this look, and the origins, tags, and change signals behind the reading.
+followed by its fix checks. Name the review kind briefly at the start of each bullet, since a line may be quoted
+alone, and mark the current look: `Standard pass 2: 2 → 1 (this look)`, or `Criteria pass 3: 1 (this look)`. When no
+look found a critical or major finding, the list is the single line `No critical or major findings at any look.` Leave
+out minor findings, which the header counts for this look, the pass limit, and the origins, tags, and change signals
+behind the reading.
 
 **Decisions.** Render the block only when something is left to decide: the decision a fix creates about the next
 pass, an offer, or a finding's open question. Give each its recommendation. A fix's decision names every look the lane
@@ -134,7 +163,7 @@ extend a status or evidence line with fields its source supplies.
 **Examples.** A first look with one finding has no table and no Trend:
 
 ```text
-**Frontline pass 1 of 2** · 🟠 1 major
+**Frontline code review — pass 1, coderabbit-cli (local)** · 🟠 1 major
 
 ### F1 — Keep left and right delimiter alignment distinct
 
@@ -149,7 +178,7 @@ extend a status or evidence line with fields its source supplies.
 ---
 
 **Decisions**
-- After the fix: frontline pass 2 of 2. Recommended: the fix changes merge semantics, so check it before standard review.
+- After the fix: frontline pass 2. Recommended: the fix changes merge semantics, so check it before standard review.
 
 Approve: 1 fix → focused verification → commit → push?
 ```
@@ -157,7 +186,7 @@ Approve: 1 fix → focused verification → commit → push?
 A later round of a hosted review with two findings adds the table and the Trend, and its approval settles both threads:
 
 ```text
-**Fix check, round 1 since pass 2** · 🟠 1 major · 🟡 1 minor
+**Standard code review — fix check, round 1 since pass 2, Codex (hosted)** · 🟠 1 major · 🟡 1 minor
 
 | # | Grade | Finding | Action |
 |---|---|---|---|
@@ -191,8 +220,8 @@ A later round of a hosted review with two findings adds the table and the Trend,
 **Trend:** converging — one major finding is left, in the round-one repair, and no new defect class appeared.
 
 Critical and major findings, each full pass then its fix checks:
-- Pass 1 of 3: 4
-- Pass 2 of 3: 2 → 1 (this look)
+- Standard pass 1: 4
+- Standard pass 2: 2 → 1 (this look)
 
 **Decisions**
 - After the fix: fix check, round 2 since pass 2, where its chain is proven. Recommended: the repair is local, and a fix check costs little.

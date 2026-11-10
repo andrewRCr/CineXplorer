@@ -23,7 +23,7 @@ override-mode: extend
 ---
 
 <!--
-Vendored from arc-framework .arc/system/methods/adversarial-review.md at a49ebba40. The default text is verbatim;
+Vendored from arc-framework .arc/system/methods/adversarial-review.md at 2538476f8. The default text is verbatim;
 out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
 adversarial-review.override.
 -->
@@ -46,10 +46,12 @@ adversarial-review.override.
 
 CineXplorer adaptation (`override-mode: extend`); the identity contract is unchanged.
 
-- **No `Class`, no fixed pass cap** (Owner, 2026-10-30). Present each complete pass as `Pass N`; the `cap-exhausted`
-  stop reason does not occur. Every successor pass and every fix-check round still needs the Owner's explicit approval
-  (§ Exit gate, § Fold verification), so the Owner bounds the loop. Runaway loops come from oversized work, which
-  [assess-boundary-fit][assess-boundary-fit]'s size triggers catch at planning.
+- **No `Class`, no fixed pass cap** (Owner, 2026-10-30). A position never adds `(limit reached)` or `(over limit)`,
+  and the `cap-exhausted` stop reason does not occur. Every successor pass and every fix-check round still needs the
+  Owner's explicit approval (§ Exit gate, § Fold verification), so the Owner bounds the loop. Runaway loops come from
+  oversized work, which [assess-boundary-fit][assess-boundary-fit]'s size triggers catch at planning.
+- **Review kinds** are those [disposition-report][disposition-report]'s override lists: a PRD's position reads
+  `PRD review — pass 2`, and a task list's `Task-list review — fix check, round 1 since pass 2`.
 - **Fold verification is on at planning stages**, as the default says, with its storage replaced: kept reviewed
   versions, prompts and reports go in the work unit's folder of the gitignored personal workspace,
   `.arc/user/{identity}/{name}/adversarial-review/`, named by artifact, pass and round (`prd-pass1.md`,
@@ -57,11 +59,13 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
   the work unit's name, so one location serves every stage from the first PRD review on; delete it when the work
   unit is archived. Without the copies, scope a fix check from the account alone and say so in its report.
 - **Pass record → Review Log.** Instead of `ADVERSARIAL-PASSES.md`, append one entry per pass and fix-check round:
-  date, stage, `Pass N` or `Fix check, round R since pass N`, rubric, finding counts by verified grade, the approved
-  dispositions with their fold tags, the stop reason, and elapsed time. Entries go to the task list's `## Review Log`;
-  before the task list exists they go to `REVIEW-LOG.md` in the work unit's workspace folder, and task generation
-  copies them into the task list. A PRD never carries them. The commit that lands a reviewed artifact summarizes each
-  pass in one body line, in plain terms ("Independent review: 2 rounds, 6 findings fixed").
+  date, stage, the position as the report's header names it, rubric, finding counts by verified grade, the approved
+  dispositions with their fold tags, each shared cause named with its material findings in that look (so
+  [review-model § Trend][review-model-trend]'s three-look stop can be counted), the stop reason, and elapsed time.
+  Entries go to the task list's `## Review Log`; before the task list exists they go to `REVIEW-LOG.md` in the work
+  unit's workspace folder, and task generation copies them into the task list. A PRD never carries them. The commit
+  that lands a reviewed artifact summarizes each pass in one body line, in plain terms ("Independent review: 2
+  rounds, 6 findings fixed").
 - **Orientation** is `.arc/reference/constitution/DEVELOPMENT-RULES.md`, `.arc/reference/agent/AGENTS.md` and
   `.arc/reference/constitution/TECHNICAL-OVERVIEW.md`.
 - **Runner.** A Claude session spawns a fresh general-purpose subagent per pass and fix check, and its prompt tells
@@ -310,35 +314,41 @@ following its conditions for the table, Trend, and Decisions block. A fix in pla
 `DEFER`, a drop `REJECT`, and a refuted finding `Not supported`. Assign canonical labels before displaying new-design
 folds first within their grade.
 
-Bold a `Pass N of M` position for a complete pass, or `Fix check, round R since pass N` for a round, followed by the
-finding counts by verified grade; add a stop reason when the look has one. Keep unsupported findings ungraded. Each
-finding's status line ends with the supplied rubric item it fails, in the rubric's own terms, or `none` with the
-source-verified reason; the primary verifies it with the finding. Write each Finding as what is wrong and why it
-matters, and each Detail as how the primary verified it.
+Bold the position under the review's kind — design review for a `draft`, spec, task-list, or amendment review for
+the planning artifact of that name, or criteria verification — as `Spec review — pass N` for a complete pass or
+`Spec review — fix check, round R since pass N` for a round, followed by the finding counts by verified grade; add a
+stop reason when the look has one. Keep unsupported findings ungraded. Each finding's status line ends with the
+supplied rubric item it fails, in the rubric's own terms, or `none` with the source-verified reason; the primary
+verifies it with the finding. Write each Finding as what is wrong and why it matters, and each Detail as how the
+primary verified it.
 
 Once the loop has two or more looks, render the Trend after the finding sections: one
-[trend reading][review-model-trend] saying where the review stands, then the critical and major findings at each look.
-Planning counts come from the pass record, including each fix-check round.
+[trend reading][review-model-trend] saying where the review stands, then the critical and major findings at each look,
+each line naming the kind briefly, as `Spec pass 1: 3 → 1`. Planning counts come from the pass record, including
+each fix-check round.
 
 Put each decision in the Decisions block — the decision a fix creates about the next round or pass, and open questions,
 each with its recommendation — then end with the one question asking for complete-set approval, as `Approve: 2 fixes,
 1 defer?`. It names what approval releases and never the next pass, which approval does not authorize.
 
 **`Class`-scaled pass cap.** Use `Light` 1, `Heavy` 2, and `Novel` 3 as the default pass caps. Present every
-completed result as `Pass N of M`. Every ended loop names one stop reason: converged, `cap-exhausted`, suspended,
-re-entered, or Owner-accepted. Owner acceptance is an accepted-risk terminus, not a converged result. Re-entered
-records an accepted re-entry offer, at any pass: the loop ends there, and the caller's re-entry owns what follows.
+completed result under its review kind as `pass N`, adding `(limit reached)` at the cap and `(over limit)` for an
+additional pass past it. Every ended loop names one stop reason: converged, `cap-exhausted`, suspended, re-entered,
+or Owner-accepted. Owner acceptance is an accepted-risk terminus, not a converged result. Re-entered records an
+accepted re-entry offer, at any pass: the loop ends there, and the caller's re-entry owns what follows.
 
 At `N == M`, a non-converged pass reports `cap-exhausted`; stop before another evaluator invocation. A converged
 pass completes normally and reports that its allowance is exhausted. Neither outcome bypasses completeness for the
 current pass, and cap exhaustion resolves no material finding.
 
-**Re-inspection test.** After fix-check rounds converge, recommend another complete pass when the folds changed the
-artifact so much that the last complete assessment no longer holds, or a fold repaired a rule that sections it did
-not touch also state. Otherwise, the caller's response check verifies rework where it stands. The test decides
-whether a complete pass follows the fix checks, never whether it replaces them. This is a recommendation input, never
-a trigger or authorization; the share of majors landing in earlier fixes may inform its cost-and-signal rationale,
-except under sustained non-convergence (below): there the re-entry offer comes before another pass.
+**Successor pass.** After fix-check rounds converge, recommend the next look by [review-model § Successor
+passes][review-model-successor-passes]: until a complete pass finds no confirmed critical or major finding, another
+complete pass is the default, and the rounds' own convergence never decides it. The re-inspection test holds when the
+folds changed the artifact so much that the last complete assessment no longer holds, or a fold repaired a rule that
+sections it did not touch also state; then no reason to stop early stands. A complete pass never replaces the rounds.
+This is a recommendation input, never a trigger or authorization; the share of majors landing in earlier fixes may
+inform its cost-and-signal rationale, except under sustained non-convergence (below): there the re-entry offer comes
+before another pass.
 
 **Severity beside fold tags.** With fold verification on, severity and the fold tags answer different questions.
 Severity decides whether a fix needs a successor look: an approved fix of a confirmed `critical` or `major` withholds
@@ -359,8 +369,10 @@ rather than reviewing it: each look reviews design the previous one wrote, so an
 instead of closing it. That is a floor-raising derivation signal at any pass count: offer the re-entry valve with a
 recommendation, and offer [assess-boundary-fit][assess-boundary-fit] as well when the design written in folds spans
 concerns that could stand apart. Material findings whose fixes are local corrections do not raise it, whatever their
-origin. Name the signal in the primary-facing report apart from the stop reason, so a stop at the cap never reads as
-the cap running out. A declined offer that lets the stage advance is an Owner-accepted risk with the signal named,
+origin, unless they are instances of one cause that [review-model § Trend][review-model-trend] reads as recurring
+across three looks: per-site repairs have not closed it, so the design question it raises goes to the Owner before
+another round. Name the signal in the primary-facing report apart from the stop reason, so a stop at the cap never reads
+as the cap running out. A declined offer that lets the stage advance is an Owner-accepted risk with the signal named,
 never the design holding. The re-entry and boundary offers in this gate belong to planning stages: in an amendment,
 [amend-design][amend-design] routes the same signals through its own depth read and its ceiling, never a
 planning-workflow re-entry.
@@ -522,8 +534,8 @@ there is no round cap. The primary recommends, and the Owner decides:
   recommend stopping only on those same merits. Tags inform the recommendation without changing materiality.
 
 A following pass, approved or under the cap, is never a reason to decline. Fix-check rounds converge before the
-successor pass launches. The re-inspection test decides whether a complete pass follows them, never whether one
-replaces them; no recommendation authorizes either activity.
+successor pass launches. Whether a complete pass follows them is the successor-pass recommendation above, never their
+own convergence, and a complete pass never replaces them; no recommendation authorizes either activity.
 
 Every round's findings and repairs join the next pass's `prior-findings` as context, not its search frontier or evidence
 that the repairs were checked. A complete pass searches the whole artifact for undiscovered defects; it does not
@@ -564,7 +576,7 @@ A planning pass entry carries:
 
 - the artifact reviewed and, with fold verification on, the filename and content hash of each kept version for the
   pass and each fix-check round;
-- `Pass N of M` and the rubric;
+- the review kind, the pass number and its cap, and the rubric;
 - the complete source-verified finding/account/action set, each fixing fold's tag and each finding's origin: the
   original artifact, a previous pass's fix, a fix-check repair, or another change the Owner approved between reviews.
   A finding in a gap takes the origin of the text that left that gap in what it changed;
@@ -740,4 +752,5 @@ the same source verification, disposition, and exit-gate rules as a standard pas
 [review-model]: review-model.md
 [review-model-trend]: review-model.md#trend
 [review-model-shared-causes]: review-model.md#shared-causes
+[review-model-successor-passes]: review-model.md#successor-passes
 [create-spec]: ../workflows/1_create-prd.md

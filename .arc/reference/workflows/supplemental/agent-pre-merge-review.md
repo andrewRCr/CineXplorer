@@ -21,7 +21,10 @@ For each valid finding, search the reviewed change for other instances of the sa
 wrong assumption or misused interface elsewhere. A reviewer reports the instance it saw; the rest would otherwise
 surface one per pass. Name every instance in the recommendation, so the fix covers the defect rather than one site.
 An instance outside the reviewed change is not this round's fix: name it and route it as discovered work. Then look
-across the set for findings that share one cause ([review-model § Shared causes](../../methods/review-model.md)).
+for findings that share one cause, across every finding this review has dispositioned, not only this look's
+([review-model § Shared causes](../../methods/review-model.md)). A contract the design never states counts as a
+shared cause: its fix is a design question for the Owner, not another per-site repair. One cause behind material
+findings in three looks stops the review for the Owner's decision ([review-model § Trend](../../methods/review-model.md)).
 
 ### 2. Grade and dispose
 
@@ -31,6 +34,13 @@ Grade each verified finding by materiality, independently of the tool's label:
 - `major`: a substantive correctness, coherence, compatibility or verification gap that must settle before merge
   unless a deferral is approved
 - `minor`: a low-materiality defect or improvement
+
+_Calibration under discussion, a note and not a rule:_ an undecided arc-framework proposal grades by the consequence
+if the path is taken (silent loss, corruption or an authority breach is `critical`; a blocked operation with no safe
+way out, or a silent but recoverable divergence, `major`; a cosmetic or wording issue `minor`), lets detection and
+recoverability move the grade (silent and irreversible, up; a loud refusal that writes nothing, down), and keeps
+reachability and likelihood apart: they decide whether to fix now or capture, not the grade. A path that goes live at
+a planned change counts as reachable, and a critical consequence is never discounted for low likelihood.
 
 Then propose a disposition:
 
@@ -50,8 +60,18 @@ hosted finding the draft reply). Show it as text, not a file path: replies post 
 Owner approves their words along with the dispositions. Edit nothing until the Owner approves the complete set; a
 changed finding or disposition needs a fresh approval, and no fix is applied early.
 
+Write the header yourself: the review kind, the position and, for a code review, the source that ran it, then the
+verified counts, as `Code review — pass 1, CodeRabbit (hosted)` or
+`Code review — fix check, round 1 since pass 1, delegated agent (local)`.
+[disposition-report](../../methods/disposition-report.md)'s override lists the kinds and sources.
+
 End with one approval question naming what approval releases, for example
 `Approve: 3 fixes → commit → push → reply to and resolve 5 threads?`.
+
+Whatever the dispositions, once the set is approved, record the look in the task list's `## Review Log`, or in the
+work unit's `REVIEW-LOG.md` before the task list exists, as [adversarial-review](../../methods/adversarial-review.md)'s
+override says, with the fields it names, the look's shared causes among them. An errand, which has no Review Log,
+names each shared cause and the looks it appeared in within its reports.
 
 ## Fix Batch
 
@@ -63,8 +83,14 @@ End with one approval question naming what approval releases, for example
   review or treat the earlier receipt as a review of the repaired head
 - Offer a fix check: a fresh local subagent, scoped to the approved repairs, checks whether they hold
   ([review-model § Passes and fix checks](../../methods/review-model.md)). Fix checks always run locally, since a
-  hosted review can't be scoped to the repairs. Recommend one when the fixes were material; the Owner decides. A
-  further complete pass, local or hosted, is a separate decision, also the Owner's
+  hosted review can't be scoped to the repairs. Recommend one when the fixes were material. When none was material
+  and the fixes change what the code does, not only wording or comments, recommend one where no complete pass will
+  follow, and otherwise offer it without recommending either way; offer one after wording-only fixes with declining
+  recommended (review-model's override). The Owner decides
+- Once the fixes land and any fix checks converge, recommend another complete pass, local or hosted, until one finds
+  no critical or major finding ([review-model § Successor passes](../../methods/review-model.md)); give the last
+  complete pass's critical and major count beside the recommendation. The Owner decides, and may stop the review or
+  set its stop ahead
 - If review changed what was delivered, update the completion doc
 
 ## Replies and Resolution

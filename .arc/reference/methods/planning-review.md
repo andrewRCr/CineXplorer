@@ -19,7 +19,7 @@ override-mode: extend
 ---
 
 <!--
-Vendored from arc-framework .arc/system/methods/planning-review.md at a49ebba40. The default text is verbatim;
+Vendored from arc-framework .arc/system/methods/planning-review.md at 2538476f8. The default text is verbatim;
 out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
 planning-review.override.
 -->
@@ -49,7 +49,7 @@ CineXplorer adaptation (`override-mode: extend`):
 - **Size:** before the PRD's review loop, and again when the task list is finished, run
   [assess-boundary-fit][assess-boundary-fit]; past its size marks the boundary decision returns to the Owner.
 - **Readiness:** at `spec`, and at an `amendment` that settles a decision, the author checks also run
-  [assess-draft-readiness][draft-readiness], whose override adds the ADR-disposition criterion.
+  [assess-draft-readiness][draft-readiness], whose criterion 4 requires an ADR disposition for each decision.
 
 ## planning-review.default
 

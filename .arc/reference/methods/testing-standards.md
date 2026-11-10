@@ -8,7 +8,7 @@ override-mode: extend
 ---
 
 <!--
-Vendored from arc-framework .arc/system/methods/testing-standards.md at a49ebba40. The default text is verbatim;
+Vendored from arc-framework .arc/system/methods/testing-standards.md at 2538476f8. The default text is verbatim;
 out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
 testing-standards.override.
 -->

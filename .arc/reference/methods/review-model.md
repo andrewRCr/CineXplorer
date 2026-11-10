@@ -8,11 +8,12 @@ related:
   - adversarial-review
   - review-triage
   - review-response
-override-active: false
+override-active: true
+override-mode: extend
 ---
 
 <!--
-Vendored from arc-framework .arc/system/methods/review-model.md at a49ebba40. The default text is verbatim;
+Vendored from arc-framework .arc/system/methods/review-model.md at 2538476f8. The default text is verbatim;
 out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
 review-model.override.
 -->
@@ -29,7 +30,26 @@ review-model.override.
 
 ## review-model.override
 
-[No override configured]
+CineXplorer adaptation (`override-mode: extend`):
+
+- **A lane** is one review loop over one artifact or change: its complete passes and fix checks, from the first pass
+  to its stop. A work unit's code review before its pull request and on it is one lane, its passes numbered in one
+  sequence whichever source runs them; reviews requested together on one head are one pass, its header naming each
+  source. § Shared causes reads every finding the loop has dispositioned from its Review
+  Log entries and kept reports ([adversarial-review][adversarial-review]'s override); an errand, which has no Review
+  Log, names each shared cause and the looks it appeared in within its reports.
+- **A fix check after a converged look** (Owner, 2026-11-08). A fix check is offered after every fix batch here
+  ([adversarial-review][adversarial-review] § Fold verification and the workflows' review loops); this rule sets the
+  recommendation after a look that converged, complete pass or fix-check round. When the fixes performed for it change
+  behavior (what the code does, or what a planning document requires, not only wording or comments), recommend the
+  fix check where no complete pass will follow, as when the last complete pass found no critical or major finding and
+  no re-inspection is due, when you recommend stopping, or when a stop the Owner has set leaves no further pass.
+  Otherwise offer it without recommending either way. Wording-only
+  fixes stay as they are: offered, with declining recommended. This reconciles § Convergence and permission's "Decline
+  only on the fixes' own merits: minor-only repairs" with "Converged rounds end fix checking": a converged look needs
+  no further check, except where its repairs change behavior.
+- **Not used:** the `incremental` policy, `logicalPass` and `arc review lane read`, which belong to arc-framework's
+  CLI-recorded code-review lanes.
 
 ## review-model.default
 
@@ -81,6 +101,19 @@ fix at the cause: every implementation of the rule, or one implementation in pla
 outside the reviewed change is named for the approver and routed as discovered work. Where no cause is shared, this
 adds nothing.
 
+A shared cause can also be a contract the design never states: findings whose repairs each patch a different
+participant of one property no rule defines, such as which records a prepared write guards against changing before it
+lands. Repairs one participant at a time cannot close that set, since nothing says where it ends. The fix at the cause
+is stating the contract and enforcing it where it is decided, which is new design: propose that as those findings'
+disposition and put it to the Owner as a design question, not another per-site repair. Code review asks whether the spec
+needs `amend-design`, and its findings stay open until the code enforces the contract the Owner approves; planning
+review folds the contract into the design.
+
+Run this look over every verified finding the lane has dispositioned, not only the latest look's. One or two findings
+a look rarely form a set on their own, and an earlier conclusion that nothing was shared holds only for the findings
+it saw. For each candidate cause, ask whether fixing it would have prevented the earlier findings; those it would have
+prevented are its instances, whichever look found them.
+
 ### Convergence and permission
 
 **Completeness** means every finding has an approved disposition, including unsupported findings. **Convergence**
@@ -97,8 +130,31 @@ by its named complete-pass admission. A fix check neither spends nor inherits it
 Recommend a fix check, and another round, whenever the last look's approved fixes include a material one. Decline only
 on the fixes' own merits: minor-only repairs, or an accepted re-entry or pending rewrite that will supersede them.
 A following pass, approved or under the cap, is never a reason to decline. Where the subject requires a successor after
-any fix, run the look that its policy names. Converge the rounds before launching the successor pass; the re-inspection
-test decides whether a complete pass follows, never whether it replaces them.
+any fix, run the look that its policy names. Converge the rounds before launching the successor pass. Converged rounds
+end fix checking; § Successor passes decides whether a complete pass follows, and a complete pass never replaces them.
+
+### Successor passes
+
+A review's bar is a complete pass that finds no critical or major finding. Until one does, the engineering
+recommendation once the rounds converge is another complete pass. A fix check reads only its repairs, so its convergence
+speaks to them alone, and a material finding it deferred can still mark a repair incomplete. It says nothing about what
+the complete pass missed elsewhere. The last complete pass's own critical and major count is the best evidence of that,
+as in inspection re-review criteria and capture-recapture estimates: a pass that found many likely missed more. Read the
+complete passes' counts in sequence for what the next may find. A falling series expects little; a high or flat one says
+the defects come from the change itself, so apply § Shared causes and say whether splitting the change or reworking its
+design would serve better than another pass. Complete coverage shows that a pass read the whole subject, not that the
+subject holds; only what the pass found speaks to that.
+
+Recommend on engineering grounds first, beside the last complete pass's critical and major count, then name any cost,
+time, or ceiling constraint separately for the Owner to weigh. Use your own judgment within this default: you may
+recommend stopping before a complete pass converges, with a reason specific to the change, such as a single local
+correction at the end of a series that has fallen to it. Say what the reason is. No such reason stands where the
+re-inspection test holds. The Owner may stop for any reason, and may set the stop ahead, such as one more complete pass
+and then stop. That decision ends this default: follow it, report the count beside it, and do not recommend or re-ask
+for a pass it rules out. The stop accepts the residual risk and is never convergence.
+
+Under `incremental`, a proved converged fix-check chain closes the lane by policy, so no successor is decided; a further
+complete pass runs only as an additional one the Owner directs.
 
 ### Tags and the re-inspection test
 
@@ -107,10 +163,10 @@ A fix's tag describes what it implies: **local correction** corrects an existing
 display order, and recommendations; severity still decides materiality. In code review tags are advisory notes outside
 the approved set's identity. Planning review retains its tagged folds in its own pass record.
 
-Recommend another complete pass when the changes make the last complete assessment cease to hold, especially when
-new design reaches beyond a repair's locus, or a repair changed a rule that sites outside its fix range also
-implement. Otherwise the response check verifies the rework where it stands. State a cost-and-signal rationale,
-including at the cap, and obtain the separate approval before invoking a pass.
+The re-inspection test holds when the changes make the last complete assessment cease to hold, especially when new
+design reaches beyond a repair's locus, or a repair changed a rule that sites outside its fix range also implement.
+Then another complete pass is due however little the last one found. State a cost-and-signal rationale, including at
+the cap, and obtain the separate approval before invoking a pass.
 
 ### Cadence and records
 
@@ -126,22 +182,29 @@ approval authority.
 ### Trend
 
 Once a lane has two or more looks, report its material trend: the critical and major findings at each look, each
-complete pass followed by its fix checks (for example `Pass 1 of 3: 6 → 2`), or one line when no look found a critical
-or major finding. Give one reading, and say in a sentence or two where the review stands and where what remains comes
-from. Origins, tags, and change signals inform the reading and stay out of the report. Each reading points to a
-decision:
+complete pass followed by its fix checks and named with its review kind (for example `Standard pass 1: 6 → 2`),
+or one line when no look found a critical or major finding. Give one reading, and say in a sentence or two where the
+review stands and where what remains comes from. The reading compares complete passes; fix checks show only whether
+repairs hold. Origins, tags, and change signals inform the reading and stay out of the report. Each reading points to
+a decision:
 
 - **`baseline`** — the first look has no trend yet; decide the fixes and their check from that look's own signal. A
   report shows no Trend for it.
-- **`converging`** — material findings come from earlier folds, adjacent repair code, or siblings of a known defect
-  class; counts fall or stay flat, and fixes are mostly local corrections. This supports stopping once fix checks
-  converge.
-- **`discovering`** — new material defect classes keep appearing in code or text earlier looks already read, rather
-  than coming from folds. This supports another complete pass after fix checks. It takes precedence over `converging`
-  wherever both readings fit.
+- **`converging`** — across complete passes, material counts fall, findings come from earlier folds, adjacent repair
+  code, or siblings of a known defect class, and fixes are mostly local corrections; or a first complete pass found few,
+  and its fix checks converged. This expects the next complete pass to find little, and supports stopping once one finds
+  no critical or major finding.
+- **`discovering`** — a complete pass finds new material defect classes in code or text earlier looks already read,
+  rather than in folds, or a first complete pass finds many. A new instance of a cause § Shared causes has already named
+  is not a new class. This supports another complete pass after fix checks, however they converge. It takes precedence
+  over `converging` wherever both readings fit.
 - **`sustained non-convergence`** — most material findings originate in earlier new-design folds and need new design
-  again. Stop for the Owner's decision: planning review offers the stage's re-entry or shaping route; code review asks
-  whether the spec needs `amend-design`. Another round must not silently become design authoring.
+  again, or one cause § Shared causes names has produced material findings in three looks. Stop for the Owner's
+  decision: planning review offers the stage's re-entry or shaping route; code review asks whether the spec needs
+  `amend-design`. Another round must not silently become design authoring, nor another per-site repair stand in for
+  that decision. The three looks must share a named cause, not merely a count of findings, and the stop composes with
+  any review stop the Owner has set: whichever is reached first applies. Once the Owner decides on a cause, count its
+  looks afresh from that decision. It takes precedence over `discovering`.
 
 A fix check reads its repairs, so a clean round shows those repairs hold, not that a rule repaired at one site holds at
 its others. Material findings that are siblings an earlier repair missed show the repair fixed a site rather than its

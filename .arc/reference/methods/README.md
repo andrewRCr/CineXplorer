@@ -1,6 +1,6 @@
 # Methods
 
-Review, planning and pull-request methods vendored from arc-framework (`.arc/system/methods/`, snapshot `a49ebba40`, 2026-10-30).
+Review, planning and pull-request methods vendored from arc-framework (`.arc/system/methods/`, snapshot `2538476f8`, 2026-11-08).
 They carry new ARC's backstops into this repository's process until it migrates: adversarial review loops at each
 planning stage, verification separate from code review, and the rubrics behind them. Workflows under
 `../workflows/` say where each method fires.
@@ -40,7 +40,9 @@ override wins. An override changes how the method is done here, never what its c
 | Personal workspace | `.arc/user/{identity}/` (gitignored); a work unit's review files live in its `{name}/` folder |
 | `SESSION-NOTES` | The work unit's `SESSION-NOTES.md` in the personal workspace |
 | Meta file | The task list header |
-| Candidate, attest, lane, receipt, store | Not used. Reviews are advisory; the Owner's approval is the gate |
+| Lane | One review loop over one artifact or change, from its first pass to its stop |
+| Spec review, standard code review | PRD review, code review; [disposition-report](disposition-report.md)'s override lists every review kind |
+| Candidate, attest, receipt, store | Not used. Reviews are advisory; the Owner's approval is the gate |
 | Hosted review | `@codex review` or `@coderabbitai review` on the pull request |
 | Primary | The main session agent |
 
@@ -58,6 +60,7 @@ override wins. An override changes how the method is done here, never what its c
 | `commit-format` method | `../workflows/supplemental/atomic-commit.md` |
 | `DEV-RULES.ARC`, `route-discovered-work` method | `../constitution/DEVELOPMENT-RULES.md` |
 | `strategy-work-organization` | `../strategies/arc/strategy-work-organization.md` |
+| `strategy-adr-methodology` | `../strategies/arc/strategy-adr-methodology.md` |
 | `arc-design-audit`, `arc-task-audit` skills | [§ Run on request](#run-on-request) |
 | Everything in the next section | [§ Not used here](#not-used-here) |
 

@@ -8,8 +8,8 @@ import { cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, re
 import { dirname, join } from "node:path";
 
 const CATEGORIES = ["feature", "technical", "incidental"];
-const ARCHIVED = [["prd", "the PRD"], ["tasks", "the finished task list"], ["notes", "its notes"],
-    ["completion", "its completion summary"]];
+const ARCHIVED = [["draft", "the design draft"], ["prd", "the PRD"], ["tasks", "the finished task list"],
+    ["notes", "its notes"], ["completion", "its completion summary"]];
 // The files install-errand-harness.mjs copies into the main checkout's .codex/, as [installed, source].
 const HARNESS = [
     [".codex/hooks/legacy-arc/compaction-recovery.mjs", ".arc/reference/harness-hooks/compaction-recovery.mjs"],

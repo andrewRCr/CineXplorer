@@ -172,6 +172,17 @@ test("after-remove starts a quarter at 01 and moves only the documents present",
     assert.match(git(f.main, "log", "-1", "--format=%B"), /Move the finished task list, its notes and its completion summary/);
 });
 
+test("after-remove archives the design draft with the PRD", (t) => {
+    const f = fixture(t, { documents: ["draft", "prd", "tasks", "completion"] });
+    success(f.run("after-remove", "sample"));
+    const folder = join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample");
+    assert.deepEqual(readdirSync(folder).sort(),
+        ["completion-sample.md", "draft-sample.md", "prd-sample.md", "tasks-sample.md"]);
+    assert.equal(git(f.main, "ls-files", ".arc/active"), "");
+    assert.match(git(f.main, "log", "-1", "--format=%B"),
+        /Move the design draft, the PRD, the finished task list and its completion summary into the archive\./);
+});
+
 test("after-remove refuses a name already archived this quarter without moving anything", (t) => {
     const f = fixture(t);
     write(f.main, `.arc/reference/archive/${QUARTER}/technical/02_sample/tasks-sample.md`, "archived\n");

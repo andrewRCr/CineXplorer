@@ -104,7 +104,7 @@ test("writes the planning skeleton in the worktree and prints its path", (t) => 
         "**Next Task:** [none yet]",
         "**Last Completed:** [none]",
         "**Blockers:** [none]",
-        "**Next Action:** write the PRD (`1_create-prd.md`)",
+        "**Next Action:** draft the design (`1a_draft-design.md`)",
         "**Commit at Handoff:** [none yet]", "",
         "## Uncommitted Work", "", "[none]", "",
         "## Remaining Work Before Returning to Task List", "", "[none]", "",

@@ -35,7 +35,7 @@ override wins. An override changes how the method is done here, never what its c
 | Stub, backlog draft | A plan, draft or PRD in `.arc/backlog/` |
 | Errand | One bounded concern outside the current work unit, run on its own branch and pull request (`../workflows/supplemental/run-errand.md`); an atomic task (`.arc/active/ATOMIC-TASKS.md`) is one source |
 | `Class` (`Light`, `Heavy`, `Novel`) | A `**Class:**` header line in the draft and the PRD; it sets each planning and verification review's pass cap |
-| Planning depth level | Used at the draft and PRD stages, never recorded; at the PRD stage it selects the form ([resolve-planning-depth](resolve-planning-depth.md)) |
+| Planning depth level | Used at the draft, PRD and task-generation stages, never recorded; it selects the PRD's form and task generation's path ([resolve-planning-depth](resolve-planning-depth.md)) |
 | `AGENT-BRIEF.ARC`, `DEV-RULES.ARC` | `../constitution/DEVELOPMENT-RULES.md` |
 | `AGENT-BRIEF.PROJECT` | `../agent/AGENTS.md` and `../constitution/TECHNICAL-OVERVIEW.md` |
 | Personal workspace | `.arc/user/{identity}/` (gitignored); a work unit's review files live in its `{name}/` folder |

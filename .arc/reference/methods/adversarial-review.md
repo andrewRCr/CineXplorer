@@ -76,9 +76,8 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
   A Codex session without subagents runs the pass in a fresh Codex session given the same prompt. Either way the
   report names its runner, and a self-review is never presented as independent
   ([DEVELOPMENT-RULES § Sub-agent scope][sub-agent-scope]).
-- **Re-entry.** [resolve-planning-depth][resolve-planning-depth]'s re-entry valve routes as its override says: to
-  the draft stage for an unshaped direction, to [1_create-prd.md § Amending a PRD][create-spec] from task generation;
-  the `Class` ratchet applies.
+- **Re-entry.** [resolve-planning-depth][resolve-planning-depth]'s re-entry valve routes as its override's Routes
+  bullet says; the `Class` ratchet applies.
 - **Not used:** the authored-partition, bounded chunk-series and Novel partitioned fan-out modes, and attestation.
   Results are advisory evidence for the Owner's decision.
 
@@ -757,4 +756,3 @@ the same source verification, disposition, and exit-gate rules as a standard pas
 [review-model-trend]: review-model.md#trend
 [review-model-shared-causes]: review-model.md#shared-causes
 [review-model-successor-passes]: review-model.md#successor-passes
-[create-spec]: ../workflows/1_create-prd.md

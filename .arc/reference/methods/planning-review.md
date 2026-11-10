@@ -48,7 +48,7 @@ CineXplorer adaptation (`override-mode: extend`):
   the Owner may lift ([adversarial-review][adversarial-review]'s override).
 - **Pass record:** the Review Log and workspace folder from adversarial-review's override replace
   `ADVERSARIAL-PASSES.md`.
-- **Size:** before the PRD's review loop, and again when the task list is finished, run
+- **Size:** before the PRD's review loop, on the task list's skeleton, and again when the task list is finished, run
   [assess-boundary-fit][assess-boundary-fit]; past its size marks the boundary decision returns to the Owner.
 - **Readiness:** besides the `draft` gate, an `amendment` that settles a decision also runs
   [assess-draft-readiness][draft-readiness], whose criterion 4 requires an ADR disposition for each decision. The PRD

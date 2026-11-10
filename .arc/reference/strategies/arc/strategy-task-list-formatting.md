@@ -31,6 +31,9 @@ documentation throughout the project lifecycle.
 Before finalizing any task list, verify:
 
 - [ ] Phase headers use `### **Phase X:** Description` format
+- [ ] Each segment's first phase carries `_Mode:_` and its last `_Exit criterion:_`; with more than one segment, each
+  `slice` or `replication` segment ends with its check task
+- [ ] Parent titles end with the PRD units they serve (not on a brief's tasks)
 - [ ] Parent tasks have checkboxes and bold: `- [ ] **X.Y Description**`
 - [ ] Subtasks use letter numbering: `- [ ] **X.Y.a Description**` (bold when detail bullets follow)
 - [ ] Third level uses letters (`X.Y.a`, `X.Y.b`), not numbers (`X.Y.1`, `X.Y.2`) - letters signal depth
@@ -311,6 +314,51 @@ discovered during browser testing
 ### **Phase 1:** Backend Tests (2 hours)  # Time estimate (prohibited)
 ```
 
+### Segments
+
+The phases group into ordered segments ([resolve-plan-segmentation](../../methods/resolve-plan-segmentation.md)),
+recorded in the phase preambles, right after each phase heading:
+
+- `_Mode:_` on a segment's first phase: the backticked mode (`slice`, `layer` or `replication`), an em dash, and what
+  the segment closes on
+- `_Exit criterion:_` on its last phase: the specific scenario that proves the segment's progress
+- A one-phase segment carries both, `_Mode:_` first, separated by a blank line
+- The Verification phase carries neither
+
+In a plan with more than one segment, a `slice` or `replication` segment ends with a parent task that runs the check
+proving its exit criterion: a named E2E spec or a scripted scenario, never the full suite. Its completion records what
+ran and the result. It never holds a fix: a failed exit criterion gets a new parent task after it, with the next free
+number in the phase, which makes the fix and ends by rerunning the check. A `layer` segment needs no such task, and a
+one-segment plan
+leaves it to the Verification phase. Exit criteria are not Success Criteria: verification checks the Success Criteria,
+and an exit criterion's evidence counts there only where a criterion relies on it.
+
+**Example:**
+
+```markdown
+### **Phase 1:** Ratings are stored
+
+_Mode:_ `layer` — closes on the rating model and its constraints in place.
+
+_Exit criterion:_ the migration applies cleanly and the model rejects an out-of-range rating.
+
+- [ ] **1.1 Add the rating model and its constraints — R1**
+
+### **Phase 2:** Users can rate a movie
+
+_Mode:_ `slice` — closes on a rating saved from the movie page.
+
+_Exit criterion:_ a rating submitted on the movie page is shown after a reload.
+
+- [ ] **2.1 Submitting a rating is saved — R2**
+- [ ] **2.2 The rating control submits a rating — R3**
+- [ ] **2.3 Check a rating round-trips from the movie page** (run the rating E2E spec)
+
+### **Phase 3:** Verification
+
+- [ ] **3.1 Verify the work** (load `archive-completed.md` § 1)
+```
+
 ### Parent Tasks
 
 **Format:** `- [ ] **X.Y Description**`
@@ -322,6 +370,8 @@ discovered during browser testing
 - Task number AND description both bold: `**X.Y Description**`
 - Numbers follow pattern: `1.1`, `1.2`, `2.1`, etc. (not `1.1.0`)
 - Description is concise but complete (what, not how)
+- Ends, inside the bold, with the PRD units the task serves: requirement numbers on a detailed PRD (`— R2, R3`),
+  design elements on an RFC or decisions on an outline (`— D2`). A brief's tasks carry none
 - Indented 0 spaces from margin (top level within phase)
 
 **Examples:**
@@ -329,9 +379,9 @@ discovered during browser testing
 ✅ **Correct:**
 
 ```markdown
-- [ ] **1.1 Write tests for data models**
-- [ ] **1.2 Implement data models**
-- [ ] **2.1 Write API integration tests**
+- [ ] **1.1 Write tests for data models — R1, R2**
+- [ ] **1.2 Implement data models — R1, R2**
+- [ ] **2.1 Write API integration tests — R3**
 ```
 
 ❌ **Wrong:**
@@ -930,6 +980,10 @@ This example demonstrates all formatting elements in proper context:
 
 ### **Phase 1:** Backend Test Infrastructure
 
+_Mode:_ `layer` — closes on fixtures that can set up any saved search or navigation state.
+
+_Exit criterion:_ the fixtures build each state the later tests need, and the backend suite passes with them.
+
 - [ ] **1.1 Create test fixtures for state scenarios**
 
     **Goal:** Reusable fixtures to test state persistence across components.
@@ -947,6 +1001,8 @@ This example demonstrates all formatting elements in proper context:
         - Support detail→back→detail flows
 
 ### **Phase 2:** Filters survive navigation to a detail page and back
+
+_Mode:_ `slice` — closes on search state surviving a round trip to a detail page.
 
 - [ ] **2.1 Write tests for URL parameter preservation**
 
@@ -979,6 +1035,8 @@ This example demonstrates all formatting elements in proper context:
 
 ### **Phase 3:** Panels keep their expanded state
 
+_Exit criterion:_ after opening a movie and coming back, the search shows the same filters, page and expanded panels.
+
 - [ ] **3.1 Write tests for UI state preservation**
 
     **Goal:** Ensure expanded panels stay expanded across navigation.
@@ -1001,6 +1059,8 @@ This example demonstrates all formatting elements in proper context:
         - File location: `useMovieCollectionState.tsx:119-125`
 
     - [ ] **3.2.b Run UI state tests - should now PASS**
+
+- [ ] **3.3 Check the search survives a detail-page round trip** (run the navigation E2E spec)
 
 ### **Phase 4:** Verification
 

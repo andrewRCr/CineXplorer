@@ -10,9 +10,10 @@ incrementally, with clear checkpoints and quality gates.
 
 ## Goal
 
-Create a comprehensive task list in Markdown format that transforms PRD requirements into actionable development
-steps. The task list should provide clear implementation guidance while respecting existing codebase patterns and
-architectural decisions.
+Create a comprehensive task list in Markdown format that turns the PRD's units (a detailed PRD's requirements, an
+RFC's design elements, an outline's decisions, or a brief's one signal) into actionable development steps. The task
+list should provide clear implementation guidance while respecting existing codebase patterns and architectural
+decisions.
 
 ## Output
 
@@ -92,28 +93,73 @@ once task generation begins. Simplify the header to the standard format.
 **Rationale:** Dependency tracking is useful while waiting for prerequisites. Once task generation
 begins, that context is historical and adds noise to the active document.
 
-### Step 2: Assess Current Codebase State
+### Step 2: Resolve Depth, `Class` and Segments
 
 Review the existing codebase to identify:
 
 - Existing infrastructure and architectural patterns that can be leveraged
-- Components or features that already exist and relate to PRD requirements
+- Components or features that already exist and relate to the PRD
 - Files, components, and utilities that may need modification
-- Testing patterns and quality standards to follow
+- Testing patterns and quality standards to follow, and the strategies that apply
+  ([STRATEGY-INDEX](../strategies/STRATEGY-INDEX.md))
 
-### Step 3: Generate Parent Tasks
+From that review, make one scale-axis read: the implementation surface, and how much of the codebase a correct task
+plan has to ground in. Run [resolve-planning-depth](../methods/resolve-planning-depth.md),
+[classify-work-unit](../methods/classify-work-unit.md) and
+[resolve-plan-segmentation](../methods/resolve-plan-segmentation.md) off that one read:
 
-Based on the PRD analysis and codebase assessment, identify the major phases of work required to implement
-the feature or technical improvement. Create 3-6 high-level parent tasks that represent logical implementation
-phases.
+- **Level** (`low`, `medium`, `high`): selects the path in Step 2.5 and is never recorded. No earlier document
+  carries scale, so read the work surface directly and cross-check it against the PRD's `Class`.
+- **`Class`:** confirm the PRD's `Class` or raise it; scale alone raises it at most to `Heavy`. A raised `Class`
+  updates the PRD's `**Class:**` line in the task list's commit. There is no `Novel` overlay at this stage: it reaches
+  novelty only through scale.
+- **Segments:** divide the phases into ordered segments, each closing on one kind of progress chosen by the risk that
+  remains after planning, from the read and the PRD's lifecycle statements (a migration, a rollout). A `slice`
+  segment proves composition with a thin end-to-end behavior; a `layer` segment settles a shared substrate, such as a
+  data model or a migration, before what builds on it; a `replication` segment applies one proven transformation
+  across an enumerated surface, often after a `slice` pilot. Order the segments to retire the largest risk first, with
+  the first `slice` as early as its substrate allows. Every plan resolves to at least one segment; a light work unit
+  still yields one with an evident mode.
 
-**Segment the plan.** Run [resolve-plan-segmentation](../methods/resolve-plan-segmentation.md) off Step 2's codebase
-read and the PRD's requirements: divide the phases into ordered segments, each closing on one kind of progress chosen by
-the risk that remains after planning. A `slice` segment proves composition with a thin end-to-end behavior; a `layer`
-segment settles a shared substrate, such as a data model or a migration, before what builds on it; a `replication`
-segment applies one proven transformation across an enumerated surface, often after a `slice` pilot. Order the segments
-to retire the largest risk first, with the first `slice` as early as its substrate allows. Every plan resolves to at
-least one segment; a light work unit still yields one with an evident mode.
+### Step 2.5: Follow the Path for the Level
+
+The level selects one path, and the path drives the steps: it names which steps run in which pass and where a stop can
+fall. Every path runs the same steps, checks and review; a lower depth separates less for review, it does not do less
+work.
+
+- **`low`: one combined pass.** One substantive phase plus verification. Run Steps 3, 3.5, 4 and 4.5 straight through
+  with no stop between them; Step 4.5 audits at `grounding-only` depth.
+- **`medium`: a merged draft, then grounding.** A few substantive phases plus verification. Pass 1 runs Steps 3, 3.5
+  and 4 as one draft; Pass 2 runs Step 4.5 at `full` depth.
+- **`high`: skeleton, fill, grounding.** Three to seven substantive phases plus verification. Pass 1 runs Steps 3 and
+  3.5; Pass 2 runs Step 4; Pass 3 runs Step 4.5 at `full` depth.
+
+**Stops.** A pass stops only when it leaves a decision the PRD does not settle: a real choice of phase breakdown, task
+decomposition or sequencing, or a masked design decision. Bring that decision first, with the pass's work and a
+recommendation, and wait for direction. Otherwise post a short summary, leading with anything that needs a look, and
+continue. Step 3.5's proportionality stop and Step 4.5's decision stop hold on every path. After the last pass,
+continue at Step 5.
+
+### Step 3: Design Phases and Parent Tasks
+
+Based on the PRD and the scale read, design the phases the level calls for and draft each phase's parent tasks as
+titles only, before any sub-tasks:
+
+- Order phases from the resolved segments: keep the sequence that retires the largest risk first, then minimize
+  dependencies within each segment
+- End each parent title with the PRD units it serves: requirement numbers on a detailed PRD (`— R3, R5`), design
+  elements on an RFC or decisions on an outline (`— D2`). A brief's single phase needs none. Every unit is covered by
+  some parent
+- Note a rough sub-task count for each parent (one, two or three, many) to flag a parent that overcommits
+
+**Record the segments.** A segment's first phase carries a `_Mode:_` line: the backticked mode, then an em dash and
+what the segment closes on. Its last phase carries an `_Exit criterion:_` line: the specific scenario that proves the
+segment's progress. A one-phase segment carries both, `_Mode:_` first. In a plan of more than one segment, a `slice` or
+`replication` segment ends with a parent task that runs the check proving its exit criterion, such as a named E2E spec
+or a scripted scenario, never the full suite. That task records what ran and the result. A failure gets a new parent
+task after it, which makes the fix and ends by rerunning the check; the check task never holds the fix. A `layer`
+segment needs no such task, and in a one-segment plan the verification phase covers it. The verification phase
+carries neither line.
 
 **Considerations:**
 
@@ -131,20 +177,37 @@ least one segment; a light work unit still yields one with an evident mode.
 
 ### **Phase 1:** Users can rate a movie
 
-- [ ] **1.1 Submitting a rating is saved** (endpoint and service: tests first, then implementation)
-- [ ] **1.2 The rating control submits a rating** (component: tests first, then implementation)
+_Mode:_ `slice` — closes on a rating saved from the movie page.
+
+- [ ] **1.1 Submitting a rating is saved — R1, R2** (endpoint and service: tests first, then implementation)
+- [ ] **1.2 The rating control submits a rating — R3** (component: tests first, then implementation)
 
 ### **Phase 2:** Ratings appear on the movie page
 
-- [ ] **2.1 The movie page shows the average rating** (tests first, then implementation)
+_Exit criterion:_ a rating submitted on the movie page shows in its average after a reload.
+
+- [ ] **2.1 The movie page shows the average rating — R4** (tests first, then implementation)
 
 ### **Phase 3:** Verification
 
 - [ ] **3.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review)
 ```
 
-Present parent tasks and confirm the high-level plan aligns with expectations before proceeding to detailed
-sub-tasks.
+### Step 3.5: Check the Skeleton
+
+Before any sub-tasks are written, on every path:
+
+1. **Proportionality.** Run [assess-design-proportionality](../methods/assess-design-proportionality.md) with the PRD's
+   problem and a candidate that combines its settled design with the skeleton: the phase count, the parent titles and
+   their units, and the rough sub-task counts. On `proportionate`, continue: a justified large skeleton is valid. On
+   `revise`, stop and bring every finding with the proposed PRD correction; change neither document until it is
+   approved. On approval, amend the PRD ([1_create-prd.md § Amending a PRD](1_create-prd.md#amending-a-prd)), discard
+   the skeleton and restart at Step 2 with a fresh scale read; the `Class` ratchet still prevents demotion. On
+   decline, leave both unchanged and return control without treating the result as `proportionate`.
+2. **Boundary.** Run [assess-boundary-fit](../methods/assess-boundary-fit.md) against the skeleton, the first concrete
+   evidence of the work's size. A derivation gap returns to the PRD; separable concerns go to the Owner as a cut. Its
+   phase-count mark reads here: past it, the boundary decision goes to the Owner. A changed outcome is recorded in the
+   PRD through § Amending a PRD; an unchanged one stays silent.
 
 ### Step 4: Break Down into Sub-Tasks
 
@@ -178,12 +241,21 @@ For each parent task, define specific, actionable sub-tasks that:
 
 ### Step 4.5: Ground Each Phase
 
-After drafting each phase's sub-tasks, before moving to the next, audit that phase top-down with
+In the grounding pass the level's path sets (Step 2.5), audit each phase in turn, top-down, with
 [task-audit](../methods/task-audit.md) and [source-grounding](../methods/source-grounding.md): confirm every named
-file, symbol and behavior exists and acts as the task says (existence alone does not pass), then check assumptions,
-hidden design decisions, codebase drift, ordering, scope ambiguity, cross-task interfaces, test gaps and missing
-definitions of done. Tag each finding "fix before starting" (fix the task now) or "carry as context" (record it in
-the task). Stop for the Owner only when a finding needs a decision.
+file, symbol and behavior exists and acts as the task says (existence alone does not pass). At `full` depth, then check
+assumptions, hidden design decisions, codebase drift, ordering, scope ambiguity, cross-task interfaces, test gaps and
+missing definitions of done; on the `low` path the audit is `grounding-only`. Tag each finding "fix before starting"
+(fix the task now) or "carry as context" (record it in the task). Stop for the Owner only when a finding needs a
+decision.
+
+**Re-entry.** A finding that shows the work is larger than the level assumed, rather than a local fix, is a scale
+signal. Capture it in the session notes, then offer re-entry with a recommendation
+([resolve-planning-depth](../methods/resolve-planning-depth.md) § Mid-stage re-entry): below `high`, rerun Step 2 a
+level higher; at `high`, return to grounding the named surface, or assess the boundary when the concerns can stand
+apart. An accepted re-entry restarts from the step it names. A masked design decision, or a design that must be
+invented, is not a scale signal: it goes to the PRD through
+[1_create-prd.md § Amending a PRD](1_create-prd.md#amending-a-prd), which can raise `Class`.
 
 ### Step 5: Add Implementation Notes Section (Optional)
 
@@ -231,6 +303,10 @@ Combine parent tasks, sub-tasks, and optional implementation notes into the stan
 ## Tasks
 
 ### **Phase 1:** Core Tests and Implementation
+
+_Mode:_ `slice` — closes on the core behavior working end to end.
+
+_Exit criterion:_ the core flow passes its tests end to end.
 
 - [ ] **1.1 Write tests for core functionality**
 
@@ -281,15 +357,17 @@ to verify the generated task list follows all formatting standards before saving
 
 ### Step 9: Final Suite-Coherence Pass
 
-Once, after all phases: read the whole task list against the PRD. Every requirement and success criterion is covered
-by some task; tasks are ordered so each one's inputs exist before it starts; cross-task interfaces agree; no two tasks
-claim the same change. Then check size with [assess-boundary-fit](../methods/assess-boundary-fit.md): past its marks
-(about 1,000 task-list lines or more than six phases), the boundary decision goes to the Owner.
+Once, after all phases: read the whole task list against the PRD. Every unit and success criterion is covered by some
+task; tasks are ordered so each one's inputs exist before it starts; cross-task interfaces agree; no two tasks claim the
+same change; each segment's exit criterion is something its phases can show. Then check size again with
+[assess-boundary-fit](../methods/assess-boundary-fit.md): past its marks (about 1,000 task-list lines or more than six
+phases), the boundary decision goes to the Owner.
 
 ### Step 10: Review the Task List
 
-Run [planning-review](../methods/planning-review.md) with `artifact: task-list` and the PRD's `Class`. Recommend the
-independent loop at every `Class`; the Owner decides. Each pass is a fresh
+Run [planning-review](../methods/planning-review.md) with `artifact: task-list` and the current `Class`: Step 2's, or
+the PRD's line if an amendment raised it since. Recommend the independent loop at every `Class`; the Owner decides.
+Each pass is a fresh
 [adversarial-review](../methods/adversarial-review.md) with [task-audit](../methods/task-audit.md) at full depth,
 grounding and executability, over the PRD and the finished task list. Findings follow the same flow as the PRD's review:
 verify against source, present the complete disposition table, edit nothing until it is approved, offer a fix check
@@ -300,7 +378,24 @@ adversarial-review's stop reasons: it converges, reaches the cap, or the Owner s
 Nothing is deferred past this stage: there is no later planning stage to absorb a correction, so pin each one before
 committing. Start the task list's `## Review Log` with the entries already in the work unit's `REVIEW-LOG.md`
 (`.arc/user/{identity}/{name}/`), record each pass of this stage after them, rerun the suite-coherence pass over the
-settled list, and summarize each pass in one plain-language line of the commit body.
+settled list, and lint it with the repository's markdown lint.
+
+> [!IMPORTANT]
+> Stop when the task list is ready: everything that changes its text has run. Bring the Owner the task list, its level,
+> any `Class` change and the review summary, and ask for the task list and its commit in one question, with your
+> recommendation: "approve the task list and commit it as `docs(arc): write the task list for {name}`?". Approving the
+> list while holding the commit is a valid answer. Feedback is edited, rechecked with task-audit over the change and
+> lint, and brought back to this stop. After approval, only a mechanical fix a commit hook requires rides the commit,
+> named in the report; any other change returns here.
+
+**Commit.** On approval, commit the task list, with the PRD's `**Class:**` line when it changed, on the work unit's
+branch. The body summarizes each review pass in one plain-language line.
+
+```text
+docs(arc): write the task list for {name}
+
+Context: tasks-{name}.md (planning)
+```
 
 ## Target Audience
 

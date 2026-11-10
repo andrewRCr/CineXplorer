@@ -34,8 +34,8 @@ CineXplorer adaptation (`override-mode: extend`):
 - Apply the boundary tests. An Errand here is one bounded concern run on its own branch and pull request (an atomic
   task from `.arc/active/ATOMIC-TASKS.md` is one source); a work unit gets a draft stage, a PRD and a task list.
 - **`Class` is assigned** at the draft stage's entry read and confirmed or raised at the PRD stage, with the
-  estimate-vs-realized ratchet. Task generation's confirm-or-raise waits until its scale read is wired. It is recorded
-  as a `**Class:**` header line in the draft and the PRD, written in each stage's commit
+  estimate-vs-realized ratchet. Task generation's scale read confirms it or raises it, at most to `Heavy`. It is
+  recorded as a `**Class:**` header line in the draft and the PRD, written in each stage's commit
   ([resolve-planning-depth](resolve-planning-depth.md)'s override); there is no meta file and no start guard.
 - **`[TBD]`** is legal only for a work unit still described in a backlog `plan-*.md`, this repository's provisional
   backlog. A draft or PRD carries a real value.

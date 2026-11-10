@@ -475,8 +475,9 @@ pull request's checks, so first run the checks for what the commit changed: mark
 outside the archive, the harness-hook tests if `.arc/reference/harness-hooks/` changed, the ADR check's tests
 (`node --test .arc/reference/scripts/check-adr-records.test.mjs`) if `.arc/reference/scripts/` changed, and § 8's ADR
 check (`node .arc/reference/scripts/check-adr-records.mjs origin/main`, after `git fetch origin`) if the commit adds or
-edits an ADR. The Docs workflow runs both again after the push. Archiving from the main checkout lands archives one at
-a time, so two work units never claim the same sequence number.
+edits an ADR. The Docs workflow runs both again after the push. When the archive commit added a review log, read
+`review-log-{name}.md` for any path on the local machine or secret before asking to push, since the archive is public.
+Archiving from the main checkout lands archives one at a time, so two work units never claim the same sequence number.
 
 ---
 

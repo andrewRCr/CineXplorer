@@ -52,20 +52,22 @@ names it (Step 9).
 ### Step 1b: Re-check Alignment
 
 The PRD's alignment checks ([1_create-prd.md § Step 3.5](../1_create-prd.md#step-35-check-alignment)) read META-PRD
-and TECHNICAL-OVERVIEW as they stood when the PRD was written. List what has changed on `main` since:
+and TECHNICAL-OVERVIEW as they stood when the PRD was written. List what has changed since, using the PRD's
+`**Created:**` date:
 
 ```bash
 git fetch origin
-git log --oneline HEAD..origin/main -- .arc/reference/constitution/META-PRD.md \
-  .arc/reference/constitution/TECHNICAL-OVERVIEW.md
+docs=".arc/reference/constitution/META-PRD.md .arc/reference/constitution/TECHNICAL-OVERVIEW.md"
+git log --oneline HEAD..origin/main -- $docs
+git log --oneline --first-parent --since="{Created} 00:00" origin/main -- $docs
 ```
 
-In place, where Step 1 just branched from `origin/main`, list the changes since the PRD was written instead, from its
-`**Created:**` date (`git log --oneline --since={date} origin/main -- ...`). When nothing is listed, skip the rest.
-Otherwise rerun the PRD stage's check against each changed document as it stands on `origin/main`: META-PRD whenever
-it changed, TECHNICAL-OVERVIEW when it changed and the PRD touches technical surfaces. These are soft checks and
-rarely block: surface any conflict with the PRD, and halt for the Owner's direction on a material disagreement, which
-an amendment then settles ([1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)). Name what was
+The first lists changes this branch doesn't have yet; the second lists changes merged to `main` since the PRD was first
+written, including any the branch has since taken in or that predate the branch. When neither lists anything, skip the
+rest. Otherwise rerun the PRD stage's check against each changed document as it stands on `origin/main`: META-PRD
+whenever it changed, TECHNICAL-OVERVIEW when it changed and the PRD touches technical surfaces. These are soft checks
+and rarely block: surface any conflict with the PRD, and halt for the Owner's direction on a material disagreement,
+which an amendment then settles ([1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)). Name what was
 checked in the report, as the PRD stage does.
 
 ### Step 2: Commit Planning Artifacts (if uncommitted)

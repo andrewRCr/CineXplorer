@@ -4,8 +4,8 @@
 //   after-remove {name}   archive the planned work, with its kept review log, and commit; refresh the errand harness
 // Both phases can be run again: a kept folder that matches is skipped, and the hold is checked in each.
 import { execFileSync } from "node:child_process";
-import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmdirSync }
-    from "node:fs";
+import { copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, rmdirSync,
+    rmSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const CATEGORIES = ["feature", "technical", "incidental"];
@@ -116,14 +116,14 @@ function keepPersonalFolder(main, name) {
     console.log(`Kept the worktree's personal folder in ${shown}`);
 }
 
-// The newest review log kept for this name: REVIEW-LOG.md in the latest errand-records/{name}-{date}/ folder that has one.
+// The review log in the latest copy of this work unit's personal folder (errand-records/{name}-{date}/), if it has one.
 function keptReviewLog(main, name) {
     const records = join(main, ".arc/user", identity(main), "errand-records");
     if (!existsSync(records)) return null;
     const pattern = new RegExp(`^${name}-\\d{4}-\\d{2}-\\d{2}$`);
-    const latest = readdirSync(records).filter((entry) => pattern.test(entry)).sort().reverse()
-        .find((entry) => existsSync(join(records, entry, "REVIEW-LOG.md")));
-    return latest ? join(records, latest, "REVIEW-LOG.md") : null;
+    const latest = readdirSync(records).filter((entry) => pattern.test(entry)).sort().at(-1);
+    const log = latest && join(records, latest, "REVIEW-LOG.md");
+    return log && existsSync(log) ? log : null;
 }
 
 function quarterOf(date) {
@@ -164,10 +164,6 @@ function archive(main, name, list) {
     const logTo = `${folder}/review-log-${name}.md`;
     mkdirSync(join(main, folder), { recursive: true });
     for (const { from, to } of moved) git(main, ["mv", from, to]);
-    if (log) {
-        copyFileSync(log, join(main, logTo));
-        git(main, ["add", logTo]);
-    }
     const subject = `docs(arc): archive the ${name.replaceAll("-", " ")} work`;
     const message = [
         subject.length <= 72 ? subject : `docs(arc): archive ${name}`, "",
@@ -175,17 +171,25 @@ function archive(main, name, list) {
         `Context: tasks-${name}.md (maintenance)`, "",
     ].join("\n");
     try {
+        if (log) {
+            copyFileSync(log, join(main, logTo));
+            git(main, ["add", logTo]);
+        }
         git(main, ["commit", "--quiet", "-F", "-"], message);
     } catch (error) {
         // Drop the copied log and put the documents back, so a rerun finds the active task list and starts over.
-        if (log) git(main, ["rm", "--quiet", "--force", logTo]);
+        if (log) {
+            git(main, ["rm", "--quiet", "--cached", "--ignore-unmatch", logTo]);
+            rmSync(join(main, logTo), { force: true });
+        }
         mkdirSync(join(main, ".arc/active", list.category), { recursive: true });
         for (const { from, to } of moved) git(main, ["mv", to, from]);
         rmdirSync(join(main, folder));
-        throw new Error(`${output(error)}\nThe archive commit failed, so its moves were undone; resolve it, then run ` +
+        throw new Error(`${output(error)}\nThe archive did not commit, so its moves were undone; resolve it, then run ` +
             `node .arc/reference/harness-hooks/finish-work.mjs after-remove ${name} again.`);
     }
     console.log(`Archived in ${folder}/ as ${git(main, ["rev-parse", "--short", "HEAD"])}.`);
+    if (log) console.log(`The archive is public: read review-log-${name}.md for local paths and secrets before pushing.`);
     console.log("Push it to main on the Owner's approval: git push origin main");
 }
 

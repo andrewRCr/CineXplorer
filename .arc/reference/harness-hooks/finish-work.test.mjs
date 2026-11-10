@@ -188,6 +188,7 @@ test("after-remove adds the kept review log to the archive and commits it", (t) 
     success(f.run("before-remove", "sample"));
     const result = f.run("after-remove", "sample");
     success(result);
+    assert.match(result.stdout, /read review-log-sample\.md for local paths and secrets/);
     const folder = `.arc/reference/archive/${QUARTER}/technical/01_sample`;
     assert.deepEqual(readdirSync(join(f.main, folder)).sort(),
         ["completion-sample.md", "prd-sample.md", "review-log-sample.md", "tasks-sample.md"]);
@@ -204,11 +205,23 @@ test("after-remove takes the review log from the latest kept folder for this nam
     const records = ".arc/user/andrew/errand-records";
     write(f.main, `${records}/sample-2000-01-01/REVIEW-LOG.md`, "older\n");
     write(f.main, `${records}/sample-2000-01-02/REVIEW-LOG.md`, "newer\n");
-    write(f.main, `${records}/sample-2000-01-03/notes.txt`, "no review log here\n");
     write(f.main, `${records}/sample-two-2000-01-04/REVIEW-LOG.md`, "another unit\n");
     success(f.run("after-remove", "sample"));
     const log = join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample/review-log-sample.md");
     assert.equal(readFileSync(log, "utf8"), "newer\n");
+});
+
+test("after-remove adds no review log when the latest kept folder has none", (t) => {
+    const f = fixture(t);
+    const records = ".arc/user/andrew/errand-records";
+    write(f.main, `${records}/sample-2000-01-01/REVIEW-LOG.md`, "an earlier unit's log\n");
+    write(f.main, `${records}/sample-2000-01-02/notes.txt`, "no review log here\n");
+    const result = f.run("after-remove", "sample");
+    success(result);
+    assert.deepEqual(readdirSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")).sort(),
+        ["completion-sample.md", "prd-sample.md", "tasks-sample.md"]);
+    assert.doesNotMatch(git(f.main, "log", "-1", "--format=%B"), /review log/);
+    assert.doesNotMatch(result.stdout, /review-log-sample\.md/);
 });
 
 test("after-remove refuses a name already archived this quarter without moving anything", (t) => {
@@ -272,6 +285,23 @@ test("a refused archive commit moves the documents back, and a rerun archives th
     assert.equal(git(f.main, "status", "--porcelain"), "");
     assert.equal(existsSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")), false);
     git(f.main, "config", "--unset", "core.hooksPath");
+    success(f.run("after-remove", "sample"));
+    assert.deepEqual(readdirSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")).sort(),
+        ["completion-sample.md", "prd-sample.md", "review-log-sample.md", "tasks-sample.md"]);
+});
+
+test("a refused review-log add moves the documents back, and a rerun archives them", (t) => {
+    const f = fixture(t);
+    success(f.run("before-remove", "sample"));
+    write(f.main, ".git/info/exclude", "review-log-*.md\n");
+    const before = tracked(f.main);
+    const refused = f.run("after-remove", "sample");
+    refusal(refused, /ignored/);
+    assert.match(refused.stderr, /moves were undone/);
+    assert.deepEqual(tracked(f.main), before);
+    assert.equal(git(f.main, "status", "--porcelain"), "");
+    assert.equal(existsSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")), false);
+    write(f.main, ".git/info/exclude", "");
     success(f.run("after-remove", "sample"));
     assert.deepEqual(readdirSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")).sort(),
         ["completion-sample.md", "prd-sample.md", "review-log-sample.md", "tasks-sample.md"]);

@@ -14,7 +14,7 @@ user/
     ├── errand-records/          # Evidence kept from finished work (main checkout only)
     └── {name}/                  # One work unit, named like its task list (`tasks-{name}.md`)
         ├── SESSION-NOTES.md     # Where the work stands, for the next session
-        ├── REVIEW-LOG.md        # Review passes before the task list exists
+        ├── REVIEW-LOG.md        # Every review pass, design to code review
         └── adversarial-review/  # Kept versions, prompts and reports for each review pass
 ```
 
@@ -36,8 +36,8 @@ guessed.
   `_Remove when:_` trigger. Read at every session start; pruned at each handoff.
 - **`USER-INBOX.md`**: written at capture (`user-inbox.md`), from any branch or checkout. The drain between work
   units moves work-unit entries to tracked homes; an errand's entry stays until that errand merges.
-- **`REVIEW-LOG.md`** and **`adversarial-review/`**: written by each review pass. The durable review record is the
-  task list's `## Review Log`; task generation copies `REVIEW-LOG.md` into it.
+- **`REVIEW-LOG.md`** and **`adversarial-review/`**: written by each review pass, at every stage. When the work unit
+  is archived, `finish` adds `REVIEW-LOG.md` to its archive folder as `review-log-{name}.md`, the durable record.
 - **`errand-records/`**: an errand's evidence, written as it runs; and, when a worktree is finished, a copy of its
   `{name}/` folder as `{name}-{date}/` (`archive-completed.md` § 10), so the proofs a task list cites outlive the
   checkout.

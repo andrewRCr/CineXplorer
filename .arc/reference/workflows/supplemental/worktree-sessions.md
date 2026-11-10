@@ -223,5 +223,6 @@ and volumes later; the flag leaves its Docker resources behind when removing the
 a named project's cleanup still requires Docker.
 
 Removal deletes the checkout's gitignored files: copied env files, `node_modules`, and a work unit's session notes
-and review records among them, which `finish` keeps first. Paused work keeps its worktree. The merged task list's
-Review Log is the durable review record; links are removed without touching the primary's folders they point to.
+and review records among them, which `finish` keeps first. Paused work keeps its worktree. The review log `finish`
+adds to the archive is the durable review record; links are removed without touching the primary's folders they point
+to.

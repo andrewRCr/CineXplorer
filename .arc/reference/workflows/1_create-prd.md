@@ -155,8 +155,8 @@ Run [planning-review](../methods/planning-review.md) with `artifact: spec`, the 
    converges, reaches the cap, or the Owner stops it or accepts a re-entry.
 5. **Review record.** Record each pass and fix check in `REVIEW-LOG.md` in the work unit's folder of the gitignored
    personal workspace, `.arc/user/{identity}/{name}/` (adversarial-review's override gives the fields); kept
-   versions, prompts and reports go in its `adversarial-review/` subfolder. Task generation copies the log into the
-   task list. The PRD itself carries no review record.
+   versions, prompts and reports go in its `adversarial-review/` subfolder. The PRD itself carries no review
+   record.
 6. **Post-settle reread.** Rerun spec-review's coherence slice over the settled PRD, write its `**Class:**` header
    line, and lint it with the repository's markdown lint.
 

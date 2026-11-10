@@ -67,7 +67,7 @@ it fails. Check every finding against source, present the complete set as a
 approved fixes land, offer a fix check; take any further pass only with approval. The `Class` sets the pass cap (`Light`
 1, `Heavy` 2, `Novel` 3); a pass past it runs only on the Owner's approval, shown `(over limit)`. The loop ends at one
 of adversarial-review's stop reasons: it converges, reaches the cap, or the Owner stops it or accepts a re-entry. Record
-each pass in the task list's `## Review Log`.
+each pass in the work unit's `REVIEW-LOG.md`.
 
 **Then:**
 
@@ -293,7 +293,7 @@ the complete set as a [disposition-report](../../methods/disposition-report.md),
 approves it. Land the approved fixes as one batch, then offer a fix check; take any further pass only with approval.
 The loop ends when a complete pass finds no critical or major finding
 ([review-model § Successor passes](../../methods/review-model.md)) or the Owner stops it. Record each pass in the
-task list's `## Review Log`.
+work unit's `REVIEW-LOG.md`.
 
 ### 6) Push and Create PR
 
@@ -403,8 +403,9 @@ session there. Then it:
    ([worktree-sessions.md § Removal](worktree-sessions.md#removal)), then deletes the remote branch if it remains and
    its head is on `main`
 5. Moves the design draft, PRD, task list, notes and completion doc with `git mv` into the next numbered archive
-   folder ([§ Archive Structure](#archive-structure)) and commits them as `docs(arc): archive the {name} work`,
-   with `Context: tasks-{name}.md (maintenance)`
+   folder ([§ Archive Structure](#archive-structure)), adds the review log from the folder step 3 kept as
+   `review-log-{name}.md`, and commits them as `docs(arc): archive the {name} work`, with
+   `Context: tasks-{name}.md (maintenance)`
 6. Refreshes the installed errand harness when its copies differ from `main`
    ([worktree-sessions.md § Same-Session Errands](worktree-sessions.md#same-session-errands))
 7. Stops before the push
@@ -425,6 +426,9 @@ git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{ca
 git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists
 git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
+cp .arc/user/{identity}/errand-records/{name}-{date}/REVIEW-LOG.md \
+  .arc/reference/archive/{quarter}/{category}/{NN}_{name}/review-log-{name}.md  # if one was kept
+git add .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 ```
 
 Commit with the message `finish` uses ([atomic-commit.md](atomic-commit.md) has the standards). `git mv` keeps each

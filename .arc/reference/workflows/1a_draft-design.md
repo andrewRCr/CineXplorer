@@ -180,9 +180,10 @@ Run [planning-review](../methods/planning-review.md) with `artifact: draft` and 
 > Stop when the draft, or the determinacy confirmation, is ready: everything that changes its text has run. Bring it
 > to the Owner and ask for the draft and its commit in one question, with your recommendation: "approve the draft and
 > commit it as `docs(arc): capture the design draft for {name}`?". A confirmation has no file, so its approval stands
-> alone. Approving the draft while holding the commit is a valid answer. Feedback is edited, rechecked (readiness over
-> the change, then the reread and lint), and brought back to this stop. After approval, only a mechanical fix a commit
-> hook requires rides the commit, named in the report; any other change returns here.
+> alone. Approving the draft while holding the commit is a valid answer. Feedback is edited, rechecked (the author
+> checks over the change: readiness, and source-grounding on a draft; then the reread and lint), and brought back to
+> this stop. After approval, only a mechanical fix a commit hook requires rides the commit, named in the report; any
+> other change returns here.
 
 **Re-entry valve.** When the design runs deeper than the resolved level authored, follow
 [resolve-planning-depth](../methods/resolve-planning-depth.md)'s mid-stage route. Below `high`, re-enter this stage a

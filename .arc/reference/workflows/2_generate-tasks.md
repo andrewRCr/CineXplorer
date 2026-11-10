@@ -111,8 +111,8 @@ plan has to ground in. Run [resolve-planning-depth](../methods/resolve-planning-
 - **Level** (`low`, `medium`, `high`): selects the path in Step 2.5 and is never recorded. No earlier document
   carries scale, so read the work surface directly and cross-check it against the PRD's `Class`.
 - **`Class`:** confirm the PRD's `Class` or raise it; scale alone raises it at most to `Heavy`. A raised `Class`
-  updates the PRD's `**Class:**` line in the task list's commit. There is no `Novel` overlay at this stage: it reaches
-  novelty only through scale.
+  updates the PRD's `**Class:**` line in the task list's commit. There is no `Novel` overlay at this stage: `Novel`
+  comes only from a design that must be invented, which goes to the PRD as an amendment (Step 4.5).
 - **Segments:** divide the phases into ordered segments, each closing on one kind of progress chosen by the risk that
   remains after planning, from the read and the PRD's lifecycle statements (a migration, a rollout). A `slice`
   segment proves composition with a thin end-to-end behavior; a `layer` segment settles a shared substrate, such as a
@@ -156,10 +156,13 @@ titles only, before any sub-tasks:
 what the segment closes on. Its last phase carries an `_Exit criterion:_` line: the specific scenario that proves the
 segment's progress. A one-phase segment carries both, `_Mode:_` first. In a plan of more than one segment, a `slice` or
 `replication` segment ends with a parent task that runs the check proving its exit criterion, such as a named E2E spec
-or a scripted scenario, never the full suite. That task records what ran and the result. A failure gets a new parent
-task after it, which makes the fix and ends by rerunning the check; the check task never holds the fix. A `layer`
-segment needs no such task, and in a one-segment plan the verification phase covers it. The verification phase
-carries neither line.
+or a scripted scenario, never the full suite. That task records what ran and the result. A failure stops the work
+under the [Quality Gate Failure Protocol](../constitution/DEVELOPMENT-RULES.md#quality-gate-failure-protocol) and the
+check task stays open: on the Owner's direction, the fix goes in a revision task on the task whose work it corrects
+(`3.2.R`; [strategy-task-list-formatting § Revision Numbering](../strategies/arc/strategy-task-list-formatting.md#revision-numbering-r-scheme)),
+never inside the check task, and the check task completes when its rerun passes. A `layer` segment needs no check
+task. A one-segment plan needs none when its exit criterion matches one of the Success Criteria, which verification
+checks; otherwise it ends with one too. The verification phase carries neither line.
 
 **Considerations:**
 
@@ -393,9 +396,9 @@ settled list, and lint it with the repository's markdown lint.
 > Stop when the task list is ready: everything that changes its text has run. Bring the Owner the task list, its level,
 > any `Class` change and the review summary, and ask for the task list and its commit in one question, with your
 > recommendation: "approve the task list and commit it as `docs(arc): write the task list for {name}`?". Approving the
-> list while holding the commit is a valid answer. Feedback is edited, rechecked with task-audit over the change and
-> lint, and brought back to this stop. After approval, only a mechanical fix a commit hook requires rides the commit,
-> named in the report; any other change returns here.
+> list while holding the commit is a valid answer. Feedback is edited, rechecked with task-audit over the change, the
+> suite-coherence pass (Step 9) and lint, and brought back to this stop. After approval, only a mechanical fix a
+> commit hook requires rides the commit, named in the report; any other change returns here.
 
 **Commit.** On approval, commit the task list, with the PRD's `**Class:**` line when it changed, on the work unit's
 branch. The body summarizes each review pass in one plain-language line.

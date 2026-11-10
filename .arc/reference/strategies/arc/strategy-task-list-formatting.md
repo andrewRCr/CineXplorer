@@ -328,11 +328,13 @@ recorded in the phase preambles, right after each phase heading:
 
 In a plan with more than one segment, a `slice` or `replication` segment ends with a parent task that runs the check
 proving its exit criterion: a named E2E spec or a scripted scenario, never the full suite. Its completion records what
-ran and the result. It never holds a fix: a failed exit criterion gets a new parent task after it, with the next free
-number in the phase, which makes the fix and ends by rerunning the check. A `layer` segment needs no such task, and a
-one-segment plan
-leaves it to the Verification phase. Exit criteria are not Success Criteria: verification checks the Success Criteria,
-and an exit criterion's evidence counts there only where a criterion relies on it.
+ran and the result. It never holds a fix. A failure stops the work under the Quality Gate Failure Protocol and the
+check task stays open: on the Owner's direction, the fix goes in a revision task on the task whose work it corrects
+([§ Revision Numbering](#revision-numbering-r-scheme)), and the check task completes when its rerun passes. A `layer`
+segment needs no check task. A one-segment plan needs none when its exit criterion matches one of the Success
+Criteria, which verification checks; otherwise it ends with one too. Exit criteria are not Success Criteria entries:
+verification checks the Success Criteria, and an exit criterion's evidence counts there only where a criterion relies
+on it.
 
 **Example:**
 

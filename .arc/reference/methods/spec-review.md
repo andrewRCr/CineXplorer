@@ -33,11 +33,13 @@ spec-review.override.
 
 CineXplorer adaptation (`override-mode: extend`):
 
-- The spec is the PRD, always at `detailed` form.
+- The spec is the PRD, at the form its `**Form:**` line names: `brief`, `outline`, or `detailed` as a PRD or an RFC.
 - **The ADR question, at every `Class`.** In place of the Novel overlay's ADR-companion nudge, ask at every `Class`
   whether each decision the PRD settles beyond the draft carries an ADR disposition
   ([assess-draft-readiness](assess-draft-readiness.md)'s criterion 4). A missing one is closed in the PRD's Design
-  Decisions. The rest of the Novel overlay applies at `Class: Novel`: was the invented model's rationale captured?
+  Decisions; a brief has none, so a decision whose disposition delivers an ADR raises it to an outline. The rest of
+  the Novel overlay applies at `Class: Novel` on a `detailed` PRD or RFC: was the invented model's rationale captured?
+  The answer is an ADR disposition in Design Decisions, not an ADR file during planning.
 
 ## spec-review.default
 

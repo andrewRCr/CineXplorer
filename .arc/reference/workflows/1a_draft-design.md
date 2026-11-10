@@ -75,8 +75,8 @@ as a private note.
 The design is determinate; there is nothing to derive. Confirm that directly: state the intent, the scope boundary,
 the one falsifiable signal that says it worked, and each decision's ADR disposition
 ([assess-draft-readiness](../methods/assess-draft-readiness.md)). No draft file is written: the confirmation goes to
-the Owner for approval and carries into the PRD, and into the session notes if planning spans sessions. If the confirm
-surfaces unexpected open design, step up.
+the Owner for approval and carries into the PRD, usually as a brief, and into the session notes if planning spans
+sessions. If the confirm surfaces unexpected open design, step up.
 
 ### `medium`: a bounded draft
 
@@ -172,11 +172,17 @@ Run [planning-review](../methods/planning-review.md) with `artifact: draft` and 
 3. **Review record.** Record each pass and fix check in `REVIEW-LOG.md` in the work unit's folder of the gitignored
    personal workspace, `.arc/user/{identity}/{name}/` (adversarial-review's override gives the fields); kept versions,
    prompts and reports go in its `adversarial-review/` subfolder. The draft itself carries no review record.
-4. **Lint** the draft with the repository's markdown lint before asking for approval, and again if it changes after.
+4. **Post-settle reread.** Run planning-review's post-settle reread over the draft, write the `**Class:**` line in its
+   header, and lint it with the repository's markdown lint. A determinacy confirmation has no file: its `Class` goes in
+   the PRD's header.
 
 > [!IMPORTANT]
-> Stop when the draft, or the determinacy confirmation, is ready. Bring it to the Owner and wait for approval before
-> writing its `Class` line and committing.
+> Stop when the draft, or the determinacy confirmation, is ready: everything that changes its text has run. Bring it
+> to the Owner and ask for the draft and its commit in one question, with your recommendation: "approve the draft and
+> commit it as `docs(arc): capture the design draft for {name}`?". A confirmation has no file, so its approval stands
+> alone. Approving the draft while holding the commit is a valid answer. Feedback is edited, rechecked (readiness over
+> the change, then the reread and lint), and brought back to this stop. After approval, only a mechanical fix a commit
+> hook requires rides the commit, named in the report; any other change returns here.
 
 **Re-entry valve.** When the design runs deeper than the resolved level authored, follow
 [resolve-planning-depth](../methods/resolve-planning-depth.md)'s mid-stage route. Below `high`, re-enter this stage a
@@ -185,9 +191,8 @@ the `Novel` ratchet when the design must be invented; or [assess-boundary-fit](.
 when the concerns can stand apart. Accepting a return ends the review loop as `re-entered`: re-run readiness after
 shaping, then offer a fresh loop with a fresh cap and the ended loop's findings as context.
 
-**Commit.** On approval, run planning-review's post-settle reread over the draft as the last review, then write the
-`**Class:**` line in the draft's header and commit the draft on the work unit's branch. The commit body summarizes
-each review pass in one plain-language line ("Independent review: 2 passes, 5 findings fixed"):
+**Commit.** On approval, commit the draft on the work unit's branch. The commit body summarizes each review pass in
+one plain-language line ("Independent review: 2 passes, 5 findings fixed"):
 
 ```text
 docs(arc): capture the design draft for {name}

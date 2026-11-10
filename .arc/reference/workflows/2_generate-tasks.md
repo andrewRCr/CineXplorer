@@ -51,6 +51,7 @@ once task generation begins. Simplify the header to the standard format.
 **Keep these fields:**
 
 - `Type:` (Feature or Technical)
+- `Form:` (brief, outline, or detailed as a PRD or an RFC)
 - `Class:` (Light, Heavy or Novel)
 - `Status:` (update to "In Progress" or leave as "Ready for Implementation")
 - `Created:` (original creation date)
@@ -61,6 +62,7 @@ once task generation begins. Simplify the header to the standard format.
 # PRD: Feature Name
 
 **Type:** Feature
+**Form:** detailed · PRD
 **Class:** Heavy
 **Status:** Ready for Implementation
 **Created:** 2025-10-25
@@ -79,6 +81,7 @@ once task generation begins. Simplify the header to the standard format.
 # PRD: Feature Name
 
 **Type:** Feature
+**Form:** detailed · PRD
 **Class:** Heavy
 **Status:** Ready for Implementation
 **Created:** 2025-10-25

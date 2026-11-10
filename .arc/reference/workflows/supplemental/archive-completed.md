@@ -40,7 +40,7 @@ for the other.
 
 - [ ] Every task before the verification phase is `[x]`, or `[~]` with its reason (the verification task itself
   stays open until this section's checks are done)
-- [ ] PRD Open Questions are empty, and any design change went through
+- [ ] PRD Open Questions are empty (a brief has none), and any design change went through
   [1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)
 
 **Run the gates.** Run the verification run: the full command set once locally

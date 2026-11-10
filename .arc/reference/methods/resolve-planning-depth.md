@@ -35,8 +35,9 @@ CineXplorer adaptation (`override-mode: extend`):
   is decision-live at once; its line is written in that stage's commit (the draft's capture, the PRD's commit). Once
   task generation's read is wired, a ratchet there updates the PRD's line in the task list's commit. The level
   itself is never recorded.
-- **The PRD's form is always `detailed`** until lighter forms exist, so the PRD stage's read confirms or ratchets
-  `Class` and opens the re-entry valve, without choosing a form. Task generation's scale read and its levels are not
+- **The PRD stage's level selects the PRD's form:** `low` a brief, `medium` an outline, `high` a detailed PRD or RFC
+  ([1_create-prd.md][create-spec] Step 2). The PRD's `**Form:**` line records the form; the level stays unrecorded.
+  Task generation's scale read and its levels are not
   wired yet ([resolve-plan-segmentation](resolve-plan-segmentation.md)'s override says what stands in for it).
 - **Routes.** A derivation signal at task generation returns to the PRD through
   [1_create-prd.md § Amending a PRD][create-spec]; one at the PRD stage whose direction is unshaped returns to the

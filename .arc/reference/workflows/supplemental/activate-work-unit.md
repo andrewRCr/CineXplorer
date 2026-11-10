@@ -49,6 +49,18 @@ Branch name should match the work unit name (e.g., `feature/content-polish-p2`).
 come along to the new branch. Without an upstream, a bare `git push` can't reach `main`; the branch's first push
 names it (Step 9).
 
+### Step 1b: Re-check Alignment
+
+The PRD's alignment checks ([1_create-prd.md § Step 3.5](../1_create-prd.md#step-35-check-alignment)) read META-PRD
+and TECHNICAL-OVERVIEW as they stood when the PRD was written, and either may have changed since. Run
+`git fetch origin`; if it fails, stop and resolve it, since `origin/main` would be stale. Then rerun the PRD stage's
+check against each document as it stands on `origin/main`
+(`git show origin/main:.arc/reference/constitution/META-PRD.md`): META-PRD always, and TECHNICAL-OVERVIEW when the
+PRD touches technical surfaces. These are soft checks and rarely block: surface any conflict with the PRD, and halt
+for the Owner's direction on a material disagreement, which an amendment then settles
+([1_create-prd.md § Amending a PRD](../1_create-prd.md#amending-a-prd)). Name what was checked in the report, as the
+PRD stage does.
+
 ### Step 2: Commit Planning Artifacts (if uncommitted)
 
 On the work unit's branch, never on `main`:
@@ -141,6 +153,7 @@ Before proceeding to task execution, verify:
 
 - [ ] Activation ran on the work unit's branch: in its worktree, or in place by the Owner's choice
 - [ ] Nothing committed or pushed to `main`
+- [ ] PRD re-checked against META-PRD, and TECHNICAL-OVERVIEW where it applies, as they stand on `origin/main`
 - [ ] Inbox entries targeting the work unit decided; any that joined are in the task list and the commit body
 - [ ] PRD and task list moved to `.arc/active/{category}/`
 - [ ] Task list `Status` changed to `In Progress`

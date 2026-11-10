@@ -46,7 +46,7 @@ CineXplorer adaptation (`override-mode: extend`):
   with the reason. For an amendment, judge its size: omit for a wording-level change, offer neutrally for a contained
   one, recommend when it changes design. The Owner still decides at the fire-point. `Class` sets the pass cap, which
   the Owner may lift ([adversarial-review][adversarial-review]'s override).
-- **Pass record:** the Review Log and workspace folder from adversarial-review's override replace
+- **Pass record:** the review log and workspace folder from adversarial-review's override replace
   `ADVERSARIAL-PASSES.md`.
 - **Size:** before the PRD's review loop, on the task list's skeleton, and again when the task list is finished, run
   [assess-boundary-fit][assess-boundary-fit]; past its size marks the boundary decision returns to the Owner.

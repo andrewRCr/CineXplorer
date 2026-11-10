@@ -33,8 +33,8 @@ CineXplorer adaptation (`override-mode: extend`):
 - **No criterion digest.** A criterion is identified by its text and position in the Success Criteria section.
   Criteria are never reworded to match the work: an amendment that changes one marks it `[~]` with a note naming the
   amendment and appends the replacement.
-- **Report.** Present the criteria report to the Owner at completion; the durable record is the criteria marks plus a
-  Review Log entry in the task list.
+- **Report.** Present the criteria report to the Owner at completion; the durable record is the criteria marks plus an
+  entry in the work unit's review log ([adversarial-review](adversarial-review.md)'s override).
 
 ## validate-criteria.default
 

@@ -18,7 +18,7 @@ See [Work Organization Strategy](../../strategies/arc/strategy-work-organization
 **All work follows the same archival workflow**, regardless of category (feature/technical/incidental):
 
 1. **Phase 1: On Child Branch** - Verify the work, clean docs, create completion metadata
-2. **Phase 2: Code Review & Merge** - Code review, PR, PR review, merge to parent
+2. **Phase 2: Code Review & Merge** - Code review, alignment re-check, PR, PR review, merge to parent
 3. **Phase 3: On Parent Branch** - Prove post-merge criteria, finish the worktree (archive and commit), push
 
 **Key principle:** Documentation cleanup and completion metadata are part of the child branch deliverable,
@@ -67,7 +67,7 @@ it fails. Check every finding against source, present the complete set as a
 approved fixes land, offer a fix check; take any further pass only with approval. The `Class` sets the pass cap (`Light`
 1, `Heavy` 2, `Novel` 3); a pass past it runs only on the Owner's approval, shown `(over limit)`. The loop ends at one
 of adversarial-review's stop reasons: it converges, reaches the cap, or the Owner stops it or accepts a re-entry. Record
-each pass in the task list's `## Review Log`.
+each pass in the work unit's `REVIEW-LOG.md`.
 
 **Then:**
 
@@ -293,7 +293,15 @@ the complete set as a [disposition-report](../../methods/disposition-report.md),
 approves it. Land the approved fixes as one batch, then offer a fix check; take any further pass only with approval.
 The loop ends when a complete pass finds no critical or major finding
 ([review-model § Successor passes](../../methods/review-model.md)) or the Owner stops it. Record each pass in the
-task list's `## Review Log`.
+work unit's `REVIEW-LOG.md`.
+
+### 5b) Re-check Alignment
+
+Once code review settles, compare the final change with the documents the PRD was checked against
+([1_create-prd.md § Step 3.5](../1_create-prd.md#step-35-check-alignment)), as they stand on `origin/main`: META-PRD's
+vision and out-of-scope list always, and TECHNICAL-OVERVIEW when the PRD touches technical surfaces. These checks are
+soft and rarely block once the PRD's own passed. Stop on a material disagreement with the final scope and, with the
+Owner, correct its source of truth before pushing. Name what was checked in the report.
 
 ### 6) Push and Create PR
 
@@ -403,8 +411,9 @@ session there. Then it:
    ([worktree-sessions.md § Removal](worktree-sessions.md#removal)), then deletes the remote branch if it remains and
    its head is on `main`
 5. Moves the design draft, PRD, task list, notes and completion doc with `git mv` into the next numbered archive
-   folder ([§ Archive Structure](#archive-structure)) and commits them as `docs(arc): archive the {name} work`,
-   with `Context: tasks-{name}.md (maintenance)`
+   folder ([§ Archive Structure](#archive-structure)), adds the review log from the folder step 3 kept as
+   `review-log-{name}.md`, and commits them as `docs(arc): archive the {name} work`, with
+   `Context: tasks-{name}.md (maintenance)`
 6. Refreshes the installed errand harness when its copies differ from `main`
    ([worktree-sessions.md § Same-Session Errands](worktree-sessions.md#same-session-errands))
 7. Stops before the push
@@ -425,6 +434,9 @@ git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{ca
 git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists
 git mv .arc/active/{category}/completion-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
+cp .arc/user/{identity}/errand-records/{name}-{date}/REVIEW-LOG.md \
+  .arc/reference/archive/{quarter}/{category}/{NN}_{name}/review-log-{name}.md  # if one was kept
+git add .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 ```
 
 Commit with the message `finish` uses ([atomic-commit.md](atomic-commit.md) has the standards). `git mv` keeps each
@@ -463,8 +475,9 @@ pull request's checks, so first run the checks for what the commit changed: mark
 outside the archive, the harness-hook tests if `.arc/reference/harness-hooks/` changed, the ADR check's tests
 (`node --test .arc/reference/scripts/check-adr-records.test.mjs`) if `.arc/reference/scripts/` changed, and § 8's ADR
 check (`node .arc/reference/scripts/check-adr-records.mjs origin/main`, after `git fetch origin`) if the commit adds or
-edits an ADR. The Docs workflow runs both again after the push. Archiving from the main checkout lands archives one at
-a time, so two work units never claim the same sequence number.
+edits an ADR. The Docs workflow runs both again after the push. When the archive commit added a review log, read
+`review-log-{name}.md` for any path on the local machine or secret before asking to push, since the archive is public.
+Archiving from the main checkout lands archives one at a time, so two work units never claim the same sequence number.
 
 ---
 

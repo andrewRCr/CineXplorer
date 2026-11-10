@@ -68,7 +68,7 @@ console.log('closing ' + args[0]);
     const log = join(parent, "calls.jsonl");
     mkdirSync(bin);
     const stub = `#!${process.execPath}
-import { appendFileSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync, statSync } from 'node:fs';
 import { basename, join } from 'node:path';
 const command = basename(process.argv[1]);
 const args = process.argv.slice(2);
@@ -76,6 +76,13 @@ appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({ command, args, cwd: pro
 if (process.env.CX_FAIL && [command, ...args].includes(process.env.CX_FAIL)) {
     console.error('stub command failed: ' + process.env.CX_FAIL);
     process.exit(9);
+}
+if (command === 'docker' && args.includes('up') && process.env.CX_REQUIRE_FRONTEND_LOGS) {
+    const logs = statSync(join(process.cwd(), 'frontend/logs'));
+    if (!logs.isDirectory() || logs.uid !== process.getuid()) {
+        console.error('frontend logs must be owned by the host user before Docker starts');
+        process.exit(9);
+    }
 }
 if (command === 'docker' && args.includes('config')) {
     const env = readFileSync(join(process.cwd(), 'infrastructure/.env'), 'utf8');
@@ -499,6 +506,16 @@ test("browse waits for the stack then migrates and seeds in order", (t) => {
     ]);
     assert.match(result.stdout, /https:\/\/localhost:8445/);
     assert.match(result.stdout, /dev.*cinexplorer-dev/);
+});
+
+test("browse prepares frontend logs as the host user before starting Docker", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    success(f.invoke(path, ["browse"], { CX_REQUIRE_FRONTEND_LOGS: "1" }));
+    write(path, "frontend/logs/sentinel", "keep existing logs");
+    success(f.invoke(path, ["browse"], { CX_REQUIRE_FRONTEND_LOGS: "1" }));
+    assert.equal(readFileSync(join(path, "frontend/logs/sentinel"), "utf8"), "keep existing logs");
 });
 
 test("a failed stack start prints its output and never migrates or seeds", (t) => {

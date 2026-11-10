@@ -18,7 +18,7 @@ See [Work Organization Strategy](../../strategies/arc/strategy-work-organization
 **All work follows the same archival workflow**, regardless of category (feature/technical/incidental):
 
 1. **Phase 1: On Child Branch** - Verify the work, clean docs, create completion metadata
-2. **Phase 2: Code Review & Merge** - Code review, PR, PR review, merge to parent
+2. **Phase 2: Code Review & Merge** - Code review, alignment re-check, PR, PR review, merge to parent
 3. **Phase 3: On Parent Branch** - Prove post-merge criteria, finish the worktree (archive and commit), push
 
 **Key principle:** Documentation cleanup and completion metadata are part of the child branch deliverable,
@@ -294,6 +294,14 @@ approves it. Land the approved fixes as one batch, then offer a fix check; take 
 The loop ends when a complete pass finds no critical or major finding
 ([review-model § Successor passes](../../methods/review-model.md)) or the Owner stops it. Record each pass in the
 work unit's `REVIEW-LOG.md`.
+
+### 5b) Re-check Alignment
+
+Once code review settles, compare the final change with the documents the PRD was checked against
+([1_create-prd.md § Step 3.5](../1_create-prd.md#step-35-check-alignment)), as they stand on `origin/main`: META-PRD's
+vision and out-of-scope list always, and TECHNICAL-OVERVIEW when the PRD touches technical surfaces. These checks are
+soft and rarely block once the PRD's own passed. Stop on a material disagreement with the final scope and, with the
+Owner, correct its source of truth before pushing. Name what was checked in the report.
 
 ### 6) Push and Create PR
 

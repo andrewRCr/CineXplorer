@@ -30,8 +30,9 @@ CineXplorer adaptation (`override-mode: extend`):
 - **Fire points:** the draft stage's loop exit ([1a_draft-design.md][draft-design]), over the draft or the
   determinacy confirmation; the PRD stage's entry ([1_create-prd.md][create-prd] Step 2), where a `needs-detail` gap
   is closed and a `needs-design` gap returns to the draft stage; and an amendment that settles a decision.
-- **Criterion 3's inbound buffer** is the inbox: the entries naming this work that the draft hasn't integrated. The
-  draft stage routes them ([user-inbox.md](../workflows/supplemental/user-inbox.md)).
+- **Criterion 3's inbound buffer** is the inbox: the entries naming this work that the draft hasn't integrated, leaving
+  out those already routed to an errand (`## Errand`) or to another work unit's plan (its `_Target:_`). The draft stage
+  routes them ([user-inbox.md](../workflows/supplemental/user-inbox.md)).
 - **Criterion 4's locus:** the draft records each disposition in its decision prose (its Decisions section); the PRD's
   design substrate is its Design Decisions section, where each decision records its disposition beside it or in one
   list there, and the section names each new or amended ADR among what the work delivers.

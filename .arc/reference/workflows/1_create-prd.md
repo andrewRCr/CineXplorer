@@ -43,7 +43,8 @@ input. A PRD always follows the draft stage; for determinate work its `low` path
 
 1. **Readiness.** Run [assess-draft-readiness](../methods/assess-draft-readiness.md) over the draft or confirmation. On
    **not-ready**, close a `needs-detail` gap here, and return a `needs-design` gap to the draft stage before writing
-   anything. Inbox entries that name this work and aren't in the draft yet are routed as the draft stage routes them.
+   anything. Inbox entries that name this work, aren't in the draft yet and aren't already routed elsewhere are routed
+   as the draft stage routes them.
 2. **Depth and `Class`.** Make one derivation-axis read of the draft and the problem, and run
    [resolve-planning-depth](../methods/resolve-planning-depth.md) and
    [classify-work-unit](../methods/classify-work-unit.md) off it: it confirms the draft's `Class` or raises it. The
@@ -105,13 +106,13 @@ Run [planning-review](../methods/planning-review.md) with `artifact: spec` and t
 2. **Size.** [assess-boundary-fit](../methods/assess-boundary-fit.md) with its size marks. Past a mark, the boundary
    decision goes to the Owner with the cut the design's own seams suggest.
 3. **Independent review loop.** Recommend it at every `Class`; the Owner decides. Each pass is a fresh
-   [adversarial-review](../methods/adversarial-review.md) over the PRD, with the draft as its upstream chain when there
-   is one, against proportionality, [design-audit](../methods/design-audit.md) and spec-review. Verify every finding
-   against source, present the complete disposition table ([disposition-report](../methods/disposition-report.md)), and
-   edit nothing until it is approved. After the approved fixes land, offer a fix check. The `Class` sets the pass cap
-   (`Light` 1, `Heavy` 2, `Novel` 3); a pass past it runs only on the Owner's approval, shown `(over limit)`. The loop
-   ends at one of adversarial-review's stop reasons: it converges, reaches the cap, or the Owner stops it or accepts a
-   re-entry.
+   [adversarial-review](../methods/adversarial-review.md) over the PRD, with the draft (on the `low` path, the approved
+   determinacy confirmation) as its upstream chain, against proportionality, [design-audit](../methods/design-audit.md)
+   and spec-review. Verify every finding against source, present the complete disposition table
+   ([disposition-report](../methods/disposition-report.md)), and edit nothing until it is approved. After the approved
+   fixes land, offer a fix check. The `Class` sets the pass cap (`Light` 1, `Heavy` 2, `Novel` 3); a pass past it runs
+   only on the Owner's approval, shown `(over limit)`. The loop ends at one of adversarial-review's stop reasons: it
+   converges, reaches the cap, or the Owner stops it or accepts a re-entry.
 4. **Review record.** Record each pass and fix check in `REVIEW-LOG.md` in the work unit's folder of the gitignored
    personal workspace, `.arc/user/{identity}/{name}/` (adversarial-review's override gives the fields); kept
    versions, prompts and reports go in its `adversarial-review/` subfolder. Task generation copies the log into the

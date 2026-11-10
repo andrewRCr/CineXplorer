@@ -57,9 +57,9 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
 - **Fold verification is on at planning stages**, as the default says, with its storage replaced: kept reviewed
   versions, prompts and reports go in the work unit's folder of the gitignored personal workspace,
   `.arc/user/{identity}/{name}/adversarial-review/`, named by artifact, pass and round (`draft-pass1.md`,
-  `prd-pass1.md`, `tasks-pass2-round1.md`, `prompt-pass1.md`, `report-pass1.md`) instead of content hashes. The
-  folder is keyed by the work unit's name, so one location serves every stage from the first design review on;
-  delete it when the work unit is archived. Without the copies, scope a fix check from the account alone and say so
+  `prd-pass1.md`, `tasks-pass2-round1.md`, `prompt-draft-pass1.md`, `report-prd-pass2-round1.md`) instead of content
+  hashes. The folder is keyed by the work unit's name, so one location serves every stage from the first design review
+  on; delete it when the work unit is archived. Without the copies, scope a fix check from the account alone and say so
   in its report.
 - **Pass record → Review Log.** Instead of `ADVERSARIAL-PASSES.md`, append one entry per pass and fix-check round:
   date, stage, the position as the report's header names it, rubric, finding counts by verified grade, the approved

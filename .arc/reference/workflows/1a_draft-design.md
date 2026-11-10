@@ -41,8 +41,9 @@ how the read maps to a level, and the re-entry valve.
 
 Off the same read, run [assess-boundary-fit](../methods/assess-boundary-fit.md) and act on its one outcome:
 
-- **`stays one WU`:** record the outcome and its evidence in the draft's decision prose and continue. Raise it again
-  only on materially new evidence, never because the check ran again or time passed.
+- **`stays one WU`:** record the outcome and its evidence in the draft's decision prose (on the `low` path, in the
+  determinacy confirmation) and continue. Raise it again only on materially new evidence, never because the check ran
+  again or time passed.
 - **`cut-map`:** the concerns stand apart. Bring the Owner the complete cut; each part becomes its own work unit, with
   its own draft, task list and branch.
 - **`stays one WU + delivery-plan candidate`:** delivery plans are not used here; proceed as `stays one WU`.

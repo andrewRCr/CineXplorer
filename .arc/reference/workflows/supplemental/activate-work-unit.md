@@ -54,7 +54,8 @@ names it (Step 9).
 On the work unit's branch, never on `main`:
 
 ```bash
-git add .arc/backlog/{category}/prd-{name}.md .arc/backlog/{category}/tasks-{name}.md  # and draft-{name}.md
+git add .arc/backlog/{category}/prd-{name}.md .arc/backlog/{category}/tasks-{name}.md
+git add .arc/backlog/{category}/draft-{name}.md  # when the draft stage wrote one
 git commit -m "docs(arc): create PRD and task list for {Work Name}
 
 Context: planning (atomic / no associated task list)"

@@ -216,9 +216,10 @@ project's own domain vocabulary stays.
 **When:** Written with the implementation, in the change that completes the work. This timing holds even when
 planning recommends the ADR earlier.
 
-Until then the PRD carries the decision, its rationale, and its ADR disposition as binding design. Its Design
-Decisions record each disposition, beside its decision or in one list there, and list each new or amended ADR among
-what the work delivers ([1_create-prd.md](../../workflows/1_create-prd.md)). No ADR file exists during planning: an
+Until then the design draft, then the PRD, carries the decision, its rationale, and its ADR disposition as binding
+design ([1a_draft-design.md](../../workflows/1a_draft-design.md)). The PRD's Design Decisions record each disposition,
+beside its decision or in one list there, and list each new or amended ADR among what the work delivers
+([1_create-prd.md](../../workflows/1_create-prd.md)). No ADR file exists during planning: an
 earlier recommendation is a disposition first. An errand has no PRD; one that writes or amends an ADR follows the
 same lifecycle within its pull request.
 

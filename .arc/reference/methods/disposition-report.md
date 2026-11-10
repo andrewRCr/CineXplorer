@@ -33,13 +33,14 @@ CineXplorer adaptation (`override-mode: extend`):
 
   | Kind | What it reviews | Trend line |
   | --- | --- | --- |
-  | PRD review | The PRD (the default's spec review; the PRD is also the draft here) | `PRD pass 1: 3 → 1` |
+  | Design review | The design draft, or a determinacy confirmation | `Design pass 1: 2 → 0` |
+  | PRD review | The PRD (the default's spec review) | `PRD pass 1: 3 → 1` |
   | Task-list review | The task list | `Task-list pass 1: 2` |
   | Amendment review | An amendment to a PRD | `Amendment pass 1: 1` |
   | Criteria verification | The Success Criteria at completion | `Criteria pass 1: 1` |
   | Code review | The change, before or on its pull request (the default's standard code review) | `Code pass 2: 2 → 1` |
 
-  Design review and frontline code review are not used.
+  Frontline code review is not used.
 - **Sources.** A code review's position names `delegated agent (local)` for a fresh subagent or session, or
   `Codex (hosted)` or `CodeRabbit (hosted)` for a review requested on the pull request, as
   `Code review — pass 2, Codex (hosted)` or `Code review — fix check, round 1 since pass 2, delegated agent (local)`.
@@ -47,8 +48,9 @@ CineXplorer adaptation (`override-mode: extend`):
   source, as `Code review — pass 2, Codex and CodeRabbit (hosted)`.
 - **Written by hand.** No tool composes the header: the agent presenting the set writes the kind, position, source
   and counts.
-- **No pass limit.** There is no fixed pass cap ([adversarial-review](adversarial-review.md)'s override), so a
-  position never adds `(limit reached)` or `(over limit)`.
+- **Pass limit.** A planning or verification review's limit is its `Class` cap
+  ([adversarial-review](adversarial-review.md)'s override); a code review has none here, so its position never adds
+  `(limit reached)` or `(over limit)`.
 
 ## disposition-report.default
 

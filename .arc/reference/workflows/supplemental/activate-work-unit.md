@@ -20,10 +20,11 @@ execution.
 
 ## Prerequisites
 
-- PRD exists in `.arc/backlog/{feature|technical}/prd-{name}.md`
+- PRD exists in `.arc/backlog/{feature|technical}/prd-{name}.md`, with its design draft `draft-{name}.md` beside it
+  when the draft stage wrote one
 - Task list exists in `.arc/backlog/{feature|technical}/tasks-{name}.md`
 - Task list has `Status: Pending`
-- No uncommitted changes besides the PRD and task list
+- No uncommitted changes besides the draft, PRD and task list
 
 In the worktree, also:
 
@@ -53,7 +54,7 @@ names it (Step 9).
 On the work unit's branch, never on `main`:
 
 ```bash
-git add .arc/backlog/{category}/prd-{name}.md .arc/backlog/{category}/tasks-{name}.md
+git add .arc/backlog/{category}/prd-{name}.md .arc/backlog/{category}/tasks-{name}.md  # and draft-{name}.md
 git commit -m "docs(arc): create PRD and task list for {Work Name}
 
 Context: planning (atomic / no associated task list)"
@@ -73,6 +74,7 @@ list ([user-inbox.md](user-inbox.md)). The Owner decides each:
 Use `git mv` to preserve history:
 
 ```bash
+git mv .arc/backlog/{category}/draft-{name}.md .arc/active/{category}/  # when the draft stage wrote one
 git mv .arc/backlog/{category}/prd-{name}.md .arc/active/{category}/
 git mv .arc/backlog/{category}/tasks-{name}.md .arc/active/{category}/
 ```

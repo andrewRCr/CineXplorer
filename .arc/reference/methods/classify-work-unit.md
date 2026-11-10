@@ -32,10 +32,13 @@ classify-work-unit.override.
 CineXplorer adaptation (`override-mode: extend`):
 
 - Apply the boundary tests. An Errand here is one bounded concern run on its own branch and pull request (an atomic
-  task from `.arc/active/ATOMIC-TASKS.md` is one source); a work unit gets a PRD and task list, or a task list alone
-  for incidental work.
-- `Class` is not used: skip its assignment, `[TBD]` resolution and the estimate-vs-realized ratchet. The workflows set
-  each stage's review posture.
+  task from `.arc/active/ATOMIC-TASKS.md` is one source); a work unit gets a draft stage, a PRD and a task list.
+- **`Class` is assigned** at the draft stage's entry read and confirmed or raised at the PRD stage, with the
+  estimate-vs-realized ratchet. Task generation's confirm-or-raise waits until its scale read is wired. It is recorded
+  as a `**Class:**` header line in the draft and the PRD, written in each stage's commit
+  ([resolve-planning-depth](resolve-planning-depth.md)'s override); there is no meta file and no start guard.
+- **`[TBD]`** is legal only for a work unit still described in a backlog `plan-*.md`, this repository's provisional
+  backlog. A draft or PRD carries a real value.
 
 ## classify-work-unit.default
 
@@ -136,7 +139,7 @@ holds, ratchet _up_ to a newly realized floor, or correct an unsubstantiated est
 
 [init-work-unit]: ../workflows/1_create-prd.md
 [activate-work-unit]: ../workflows/supplemental/activate-work-unit.md
-[draft-design]: ../workflows/1_create-prd.md
+[draft-design]: ../workflows/1a_draft-design.md
 [create-spec]: ../workflows/1_create-prd.md
 [generate-tasks]: ../workflows/2_generate-tasks.md
 [work-org]: ../strategies/arc/strategy-work-organization.md

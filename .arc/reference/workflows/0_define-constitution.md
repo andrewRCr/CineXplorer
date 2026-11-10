@@ -124,7 +124,8 @@ Use this section to evolve constitutional documents as the project matures.
 
 ### Constitutional Context in PRDs
 
-When creating feature-level PRDs using [1_create-prd.md](1_create-prd.md):
+When shaping a design with [1a_draft-design.md](1a_draft-design.md) and writing its PRD with
+[1_create-prd.md](1_create-prd.md):
 
 - **Reference META-PRD**: Ensure feature aligns with project vision
 - **Check Technical Architecture**: Verify implementation approach fits established patterns

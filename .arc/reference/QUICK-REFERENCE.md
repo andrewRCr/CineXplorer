@@ -15,7 +15,8 @@
 
 - `constitution/` - Project principles (META-PRD, TECHNICAL-OVERVIEW, DEVELOPMENT-RULES)
 - `adr/` - Architecture decision records (significant design decisions with context)
-- `workflows/` - Core process guides (0_define-constitution.md, 1_create-prd.md, 2_generate-tasks.md, 3_process-task-loop.md)
+- `workflows/` - Core process guides (0_define-constitution.md, 1a_draft-design.md, 1_create-prd.md,
+  2_generate-tasks.md, 3_process-task-loop.md)
 - `workflows/supplemental/` - Supporting workflows (atomic-commit.md, session-handoff.md, manage-incidental-work.md)
 - `strategies/` - Technical approaches (testing methodology, type safety, ADR methodology)
 - `agent/` - AI-specific guidance (AGENTS.md, CLAUDE.md)

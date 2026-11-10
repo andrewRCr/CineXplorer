@@ -150,7 +150,7 @@ counts, and the Owner may still require a rerun. Where subagents are unavailable
 
 ---
 
-[draft-design]: ../workflows/1_create-prd.md
+[draft-design]: ../workflows/1a_draft-design.md
 [create-spec]: ../workflows/1_create-prd.md
 [generate-tasks]: ../workflows/2_generate-tasks.md
 [amend-design]: ../workflows/1_create-prd.md

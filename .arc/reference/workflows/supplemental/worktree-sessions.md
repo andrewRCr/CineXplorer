@@ -53,8 +53,9 @@ It can be combined with either `--existing` or `--work-unit`. Missing shared-too
 links them once installed in the primary. A failed
 `create` leaves its checkout in place and prints the commands to finish setup there.
 
-- **Branch:** a work unit is provisioned before planning starts: the PRD and task list are written and committed on
-  this branch. [activate-work-unit.md](activate-work-unit.md) runs in the worktree later, skipping its branch step.
+- **Branch:** a work unit is provisioned before planning starts: the design draft, PRD and task list are written and
+  committed on this branch. [activate-work-unit.md](activate-work-unit.md) runs in the worktree later, skipping its
+  branch step.
 - **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`; full provisioning confirms it is
   `cinexplorer-{name}` and prints only the name, keeping the env values in the rest of `config` off the screen.
   `create --no-install` prints the configured name; `provision` or `browse` validates the resolved project later.
@@ -69,8 +70,8 @@ links them once installed in the primary. A failed
   so approve those hooks once in a Codex session on the primary (`/hooks`).
 - **Notes:** `create --work-unit` writes a work unit's starting notes in its own
   `.arc/user/{identity}/{name}/SESSION-NOTES.md`: State `planning`, Task List and Next Task `[none yet]`, and Next
-  Action the PRD. Activation later turns them to execution. The inbox and working memory stay in the main checkout
-  ([user-inbox.md](user-inbox.md)).
+  Action drafting the design (`1a_draft-design.md`). Activation later turns them to execution. The inbox and working
+  memory stay in the main checkout ([user-inbox.md](user-inbox.md)).
 
 ## Same-Session Errands
 

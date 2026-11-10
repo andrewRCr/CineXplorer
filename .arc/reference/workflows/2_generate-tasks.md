@@ -51,6 +51,7 @@ once task generation begins. Simplify the header to the standard format.
 **Keep these fields:**
 
 - `Type:` (Feature or Technical)
+- `Class:` (Light, Heavy or Novel)
 - `Status:` (update to "In Progress" or leave as "Ready for Implementation")
 - `Created:` (original creation date)
 
@@ -60,6 +61,7 @@ once task generation begins. Simplify the header to the standard format.
 # PRD: Feature Name
 
 **Type:** Feature
+**Class:** Heavy
 **Status:** Ready for Implementation
 **Created:** 2025-10-25
 **Updated:** 2025-12-31
@@ -77,6 +79,7 @@ once task generation begins. Simplify the header to the standard format.
 # PRD: Feature Name
 
 **Type:** Feature
+**Class:** Heavy
 **Status:** Ready for Implementation
 **Created:** 2025-10-25
 
@@ -101,9 +104,18 @@ Based on the PRD analysis and codebase assessment, identify the major phases of 
 the feature or technical improvement. Create 3-6 high-level parent tasks that represent logical implementation
 phases.
 
+**Segment the plan.** Run [resolve-plan-segmentation](../methods/resolve-plan-segmentation.md) off Step 2's codebase
+read and the PRD's requirements: divide the phases into ordered segments, each closing on one kind of progress chosen by
+the risk that remains after planning. A `slice` segment proves composition with a thin end-to-end behavior; a `layer`
+segment settles a shared substrate, such as a data model or a migration, before what builds on it; a `replication`
+segment applies one proven transformation across an enumerated surface, often after a `slice` pilot. Order the segments
+to retire the largest risk first, with the first `slice` as early as its substrate allows. Every plan resolves to at
+least one segment; a light work unit still yields one with an evident mode.
+
 **Considerations:**
 
-- Phase by behavior slice, not by layer: each phase delivers one observable behavior end to end, with its tests
+- Within a `slice` segment, phase by behavior, not by layer: each phase delivers one observable behavior end to end,
+  with its tests
 - Order tasks to minimize dependencies and enable incremental progress
 - Each test sits with the implementation it proves ([testing-standards](../methods/testing-standards.md),
   [test-first](../methods/test-first.md)), and is seen to fail before the implementation lands
@@ -273,15 +285,17 @@ claim the same change. Then check size with [assess-boundary-fit](../methods/ass
 
 ### Step 10: Review the Task List
 
-Run [planning-review](../methods/planning-review.md) with `artifact: task-list`. Recommend the independent loop; the
-Owner decides. Each pass is a fresh [adversarial-review](../methods/adversarial-review.md) with
-[task-audit](../methods/task-audit.md) at full depth, grounding and executability, over the PRD and the finished task
-list. Findings follow the same flow as the PRD's review: verify against source, present the complete disposition
-table, edit nothing until it is approved, offer a fix check after fixes land, and take each further pass only with
-approval. There is no fixed pass cap: the loop ends when a pass converges or the Owner stops it.
+Run [planning-review](../methods/planning-review.md) with `artifact: task-list` and the PRD's `Class`. Recommend the
+independent loop at every `Class`; the Owner decides. Each pass is a fresh
+[adversarial-review](../methods/adversarial-review.md) with [task-audit](../methods/task-audit.md) at full depth,
+grounding and executability, over the PRD and the finished task list. Findings follow the same flow as the PRD's review:
+verify against source, present the complete disposition table, edit nothing until it is approved, offer a fix check
+after fixes land, and take each further pass only with approval. The `Class` sets the pass cap (`Light` 1, `Heavy` 2,
+`Novel` 3); a pass past it runs only on the Owner's approval, shown `(over limit)`. The loop ends at one of
+adversarial-review's stop reasons: it converges, reaches the cap, or the Owner stops it or accepts a re-entry.
 
 Nothing is deferred past this stage: there is no later planning stage to absorb a correction, so pin each one before
-committing. Start the task list's `## Review Log` with the PRD stage's entries from the work unit's `REVIEW-LOG.md`
+committing. Start the task list's `## Review Log` with the entries already in the work unit's `REVIEW-LOG.md`
 (`.arc/user/{identity}/{name}/`), record each pass of this stage after them, rerun the suite-coherence pass over the
 settled list, and summarize each pass in one plain-language line of the commit body.
 

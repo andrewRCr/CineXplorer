@@ -42,8 +42,9 @@ To prepare a checkout another tool created, or bring an existing worktree up to 
 node scripts/worktree.mjs provision
 ```
 
-Provisioning copies missing ignored files matched by `.worktreeinclude` (backend and frontend env files and
-certificates), links installed shared tools, appends missing project, browser-port and signing-key values to
+Provisioning copies missing ignored files matched by `.worktreeinclude` (backend and frontend env files,
+certificates and Zed editor settings), links installed shared tools, appends missing project, browser-port and
+signing-key values to
 `infrastructure/.env`, checks the resolved Compose project name, then runs `npm ci` and `npm run typegen` in
 `frontend/`. Full provisioning requires Docker. Repeating it preserves existing files and keys and repeats the
 check and install. `create --no-install` keeps the file copies, shared-tool links and environment values, but skips

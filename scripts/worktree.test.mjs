@@ -341,7 +341,7 @@ for (const option of [null, "--existing", "--work-unit"]) {
     test(`create --no-install provisions for later installation${option ? ` with ${option}` : ""}`, (t) => {
         const f = fixture(t);
         if (option === "--existing") git(f.main, "branch", "fix/new");
-        const result = f.invoke(f.main, ["create", "fix/new", "--no-install", ...(option ? [option] : [])]);
+        const result = f.invoke(f.main, ["create", "fix/new", "--no-install", ...(option ? [option] : [])], { CX_FAIL: "docker" });
         success(result);
         const path = join(f.parent, "primary.new");
         assert.equal(git(path, "branch", "--show-current"), "fix/new");
@@ -357,10 +357,8 @@ for (const option of [null, "--existing", "--work-unit"]) {
             assert.equal(readlinkSync(join(path, folder)), join(f.main, folder));
         }
         assert.match(result.stdout, /node scripts\/worktree.mjs provision/);
-        assert.deepEqual(f.calls(), [
-            { command: "docker", args: [...COMPOSE, "config"], cwd: path },
-            ...(option === "--work-unit" ? [{ command: "seed", args: [], cwd: path }] : []),
-        ]);
+        assert.deepEqual(f.calls(), option === "--work-unit"
+            ? [{ command: "seed", args: [], cwd: path }] : []);
         success(f.invoke(path, ["provision"]));
         assert.deepEqual(f.calls().slice(-3), [
             { command: "docker", args: [...COMPOSE, "config"], cwd: path },
@@ -370,14 +368,15 @@ for (const option of [null, "--existing", "--work-unit"]) {
     });
 }
 
-test("create --no-install still refuses a mismatched Compose project", (t) => {
+test("create --no-install makes no Docker call and browse still refuses a mismatched project", (t) => {
     const f = fixture(t);
-    const result = f.invoke(f.main, ["create", "fix/new", "--no-install"], { CX_PROJECT: "infrastructure" });
+    success(f.invoke(f.main, ["create", "fix/new", "--no-install"], { CX_FAIL: "docker" }));
+    const path = join(f.parent, "primary.new");
+    assert.match(envOf(path), /^COMPOSE_PROJECT_NAME=cinexplorer-new$/m);
+    assert.deepEqual(f.calls(), []);
+    const result = f.invoke(path, ["browse"], { CX_PROJECT: "infrastructure" });
     refusal(result, /project.*cinexplorer-new.*infrastructure/i);
     assert.doesNotMatch(result.stdout + result.stderr, /hidden-marker/);
-    const path = join(f.parent, "primary.new");
-    assert.equal(existsSync(path), true);
-    assert.match(envOf(path), /^COMPOSE_PROJECT_NAME=cinexplorer-new$/m);
     assert.deepEqual(f.calls(), [{ command: "docker", args: [...COMPOSE, "config"], cwd: path }]);
 });
 
@@ -714,6 +713,34 @@ test("remove tears down all labelled resource kinds before removing a merged wor
     assert.match(readFileSync(trace, "utf8"), /git fetch --prune/);
 });
 
+for (const flags of [["--no-stack"], ["--keep-branch", "--no-stack"], ["--no-stack", "--keep-branch"]]) {
+    test(`remove ${flags.join(" ")} removes the checkout without Docker`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", BROWSE_ENV);
+        const keepBranch = flags.includes("--keep-branch");
+        if (keepBranch) git(path, "commit", "-q", "--allow-empty", "-m", "unmerged work");
+        const head = git(path, "rev-parse", "HEAD");
+        const result = f.invoke(f.main, ["remove", "sample", ...flags], { CX_FAIL: "docker" });
+        success(result);
+        assert.deepEqual(f.calls(), []);
+        assert.equal(existsSync(path), false);
+        assert.doesNotMatch(git(f.main, "worktree", "list", "--porcelain"), /primary\.sample/);
+        assert.equal(git(f.main, "branch", "--list", "fix/sample"), keepBranch ? "fix/sample" : "");
+        if (keepBranch) assert.equal(git(f.main, "rev-parse", "fix/sample"), head);
+        assert.match(result.stdout, /cinexplorer-sample.*containers and volumes later/);
+    });
+}
+
+for (const command of ["remove", "finish"]) {
+    test(`${command} --no-stack still refuses an unexpected project`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        write(path, "infrastructure/.env", "COMPOSE_PROJECT_NAME=infrastructure\n");
+        preserved(f, path, [command, "sample", "--no-stack"], /project.*cinexplorer-sample.*infrastructure/i);
+    });
+}
+
 for (const contents of ["DATABASE_NAME=example\n", null]) {
     test(`remove skips Docker when ${contents === null ? "the env file is absent" : "no project is named"}`, (t) => {
         const f = fixture(t);
@@ -811,6 +838,27 @@ test("finish updates main, runs the closing steps around removal and deletes the
     assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
     assert.equal(existsSync(path), false);
     assert.match(result.stdout, /closing before-remove[\s\S]*Deleted remote branch fix\/sample[\s\S]*closing after-remove/);
+});
+
+test("finish --no-stack runs all closing steps without Docker", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    git(path, "push", "-q", "origin", "fix/sample");
+    git(f.main, "commit", "-q", "--allow-empty", "-m", "merged on origin");
+    git(f.main, "push", "-q", "origin", "main");
+    git(f.main, "reset", "-q", "--hard", "HEAD~1");
+    const result = f.invoke(f.main, ["finish", "sample", "--no-stack"], { CX_FAIL: "docker" });
+    success(result);
+    assert.deepEqual(f.calls(), [
+        { command: "closing", args: ["before-remove", "sample"], cwd: f.main, present: true },
+        { command: "closing", args: ["after-remove", "sample"], cwd: f.main, present: false },
+    ]);
+    assert.equal(git(f.main, "rev-parse", "HEAD"), git(f.main, "rev-parse", "origin/main"));
+    assert.equal(git(f.main, "ls-remote", "--heads", "origin", "fix/sample"), "");
+    assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
+    assert.equal(existsSync(path), false);
+    assert.match(result.stdout, /cinexplorer-sample.*containers and volumes later/);
 });
 
 test("finish reports a remote branch already deleted", (t) => {

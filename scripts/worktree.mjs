@@ -13,16 +13,18 @@ const HELP = `Usage: node scripts/worktree.mjs <command>
   create <type>/<name> [--existing | --work-unit] [--no-install]
       Create and provision a worktree. --existing checks out an existing branch.
       --work-unit writes the starting notes for planned work.
-      --no-install provisions files and project settings without npm installs or typegen.
+      --no-install provisions files and project settings without Docker, npm installs or typegen.
   provision
       Copy development files, allocate a port and key, and install dependencies.
   browse
       Start the worktree's app, migrate and seed its development database.
-  remove <name> [--keep-branch]
+  remove <name> [--keep-branch] [--no-stack]
       Remove a clean merged worktree and its stack; optionally keep its branch.
-  finish <name>
+      --no-stack skips Docker cleanup; remove any leftover project containers and volumes later.
+  finish <name> [--no-stack]
       Close a merged worktree: update main, run the repository's closing steps,
       remove the worktree, its stack and its branches, and stop before any push.
+      --no-stack skips Docker cleanup; remove any leftover project containers and volumes later.
 `;
 
 function run(cwd, command, args) {
@@ -129,7 +131,7 @@ function provision(root, main, { install = true } = {}) {
         if (existsSync(source) && !lstatSync(target, { throwIfNoEntry: false })) symlinkSync(source, target, "dir");
     }
     provisionEnv(root, main);
-    const project = checkedProject(root, main);
+    const project = install ? checkedProject(root, main) : envValue(readEnv(root), "COMPOSE_PROJECT_NAME");
     console.log(`name: ${project}`);
     if (install) {
         for (const args of [["ci"], ["run", "typegen"]]) console.log(run(join(root, "frontend"), "npm", args));
@@ -307,8 +309,12 @@ function checkRemoval(main, name, keepBranch) {
     return { path, branch: entry.branch, project };
 }
 
-function tearDown(main, { path, branch, project }, keepBranch) {
-    if (project) {
+function tearDown(main, { path, branch, project }, keepBranch, noStack) {
+    if (noStack) {
+        console.log(`Skipped Docker teardown for ${project ?? `cinexplorer-${nameOf(path, main)}`} (--no-stack). ` +
+            "If a stack ran, remove its containers and volumes later.");
+    }
+    if (project && !noStack) {
         const filter = ["--filter", `label=com.docker.compose.project=${project}`, "-q"];
         for (const kind of ["container", "volume", "network", "image"]) {
             const listing = run(main, "docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), ...filter]);
@@ -327,9 +333,9 @@ function tearDown(main, { path, branch, project }, keepBranch) {
     console.log(`Removed ${path}; ${keepBranch ? "kept" : "deleted"} branch ${branch}.`);
 }
 
-function remove(root, main, name, keepBranch) {
+function remove(root, main, name, keepBranch, noStack) {
     primary(root, main);
-    tearDown(main, checkRemoval(main, name, keepBranch), keepBranch);
+    tearDown(main, checkRemoval(main, name, keepBranch), keepBranch, noStack);
 }
 
 function deleteRemoteBranch(main, branch) {
@@ -356,7 +362,7 @@ function closingStep(main, args, recovery) {
     }
 }
 
-function finish(root, main, name) {
+function finish(root, main, name, noStack) {
     primary(root, main);
     if (git(main, "branch", "--show-current") !== "main") throw new Error("The main checkout must be on main.");
     if (git(main, "status", "--porcelain", "--untracked-files=no")) {
@@ -366,7 +372,7 @@ function finish(root, main, name) {
     git(main, "merge", "--ff-only", "--quiet", "origin/main");
     closingStep(main, ["before-remove", name], `Nothing was removed; resolve it, then run node scripts/worktree.mjs finish ${name} again.`);
     try {
-        tearDown(main, removal, false);
+        tearDown(main, removal, false, noStack);
     } catch (error) {
         throw new Error(`${error.message}\nRemoval stopped partway; resolve it, then run node scripts/worktree.mjs finish ${name} ` +
             `again while the worktree is still registered, or else node ${CLOSING} after-remove ${name}.`);
@@ -388,10 +394,14 @@ function main() {
     const { root, main } = context();
     if (command === "provision" && args.length === 0) return provision(root, main);
     if (command === "browse" && args.length === 0) return browse(root, main);
-    if (command === "remove" && args.length >= 1 && args.length <= 2 && (args.length === 1 || args[1] === "--keep-branch")) {
-        return remove(root, main, args[0], args.includes("--keep-branch"));
+    if (command === "remove" && args.length >= 1 && args.length <= 3 &&
+        args.slice(1).every((arg) => ["--keep-branch", "--no-stack"].includes(arg)) &&
+        new Set(args.slice(1)).size === args.length - 1) {
+        return remove(root, main, args[0], args.includes("--keep-branch"), args.includes("--no-stack"));
     }
-    if (command === "finish" && args.length === 1) return finish(root, main, args[0]);
+    if (command === "finish" && (args.length === 1 || (args.length === 2 && args[1] === "--no-stack"))) {
+        return finish(root, main, args[0], args.includes("--no-stack"));
+    }
     if (command === "create" && args.length >= 1 && args.slice(1).every((arg) => ["--existing", "--work-unit", "--no-install"].includes(arg))) {
         return create(root, main, args[0], {
             existing: args.includes("--existing"), workUnit: args.includes("--work-unit"), noInstall: args.includes("--no-install"),

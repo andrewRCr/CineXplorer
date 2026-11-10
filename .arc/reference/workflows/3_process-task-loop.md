@@ -55,8 +55,9 @@ It ensures consistent execution, quality control, and documentation of work.
          During planning, verbose details help guide execution. After completion, they become historical records.
          When marking a task complete, retain information useful for understanding what was done and why,
          but remove excessive planning scaffolding (detailed step-by-step instructions, pre-implementation
-         considerations, etc.) that no longer serves a purpose. Keep: actual changes made, key decisions,
-         architectural impact, anything needed to understand the implementation later.
+         considerations, etc.) that no longer serves a purpose. Keep: the parent task's `**Goal:**` line as
+         written, actual changes made, key decisions, architectural impact, anything needed to understand the
+         implementation later.
      - **Third**: Verify completion before reporting (use pre-report checklist below)
      - **Fourth**: **REPORT** completed work to the Owner with a summary of changes
      - **Fifth**: ⛔ **MANDATORY STOP**, ending the report with the structured prompt

@@ -219,6 +219,11 @@ For each parent task, define specific, actionable sub-tasks that:
 - Reference specific files, components, or patterns where appropriate
 - Are small enough to review in one sitting
 
+**A Goal on every parent task.** Open each parent task, except the verification pointer, with a `**Goal:**` line: the
+outcome the task targets, not the change it makes, which the title already names. Test it: would removing it make the
+work harder to verify? If not, rewrite it. A sub-task takes a Goal only when it carries intent of its own
+([strategy-task-list-formatting § Goal/Note Lines](../strategies/arc/strategy-task-list-formatting.md#goalnote-lines)).
+
 **Sub-task guidelines:**
 
 - **Test-first protocol (CRITICAL)**: Write test sub-tasks BEFORE implementation sub-tasks for:
@@ -310,12 +315,16 @@ _Exit criterion:_ the core flow passes its tests end to end.
 
 - [ ] **1.1 Write tests for core functionality**
 
+    **Goal:** The core rules are pinned by failing tests before the implementation exists.
+
     - [ ] **1.1.a Create test for validation**
         - Test cases listed here
         - Expect tests to FAIL initially
     - [ ] **1.1.b Run tests and verify failures**
 
 - [ ] **1.2 Implement core functionality**
+
+    **Goal:** The core flow works end to end and its tests pass.
 
     - [ ] **1.2.a Create implementation**
         - Implementation details here

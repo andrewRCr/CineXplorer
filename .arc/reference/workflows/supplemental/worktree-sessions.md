@@ -27,7 +27,7 @@ From the primary's root:
 ```bash
 node scripts/worktree.mjs create technical/{name} --work-unit  # planned work, with starting notes
 node scripts/worktree.mjs create fix/{name}                   # an errand, without notes
-node scripts/worktree.mjs create docs/{name} --no-install    # environment setup without dependencies
+node scripts/worktree.mjs create docs/{name} --no-install    # setup without Docker or dependencies
 node scripts/worktree.mjs create fix/{name} --existing        # an existing local or origin branch
 ```
 
@@ -45,17 +45,19 @@ node scripts/worktree.mjs provision
 Provisioning copies missing ignored files matched by `.worktreeinclude` (backend and frontend env files and
 certificates), links installed shared tools, appends missing project, browser-port and signing-key values to
 `infrastructure/.env`, checks the resolved Compose project name, then runs `npm ci` and `npm run typegen` in
-`frontend/`. Docker must be running. Repeating it preserves existing files and keys and repeats the check and
-install. `create --no-install` keeps the file copies, shared-tool links, environment values and project check, but
-skips `npm ci` and `npm run typegen`; its final message names `node scripts/worktree.mjs provision` to install later.
+`frontend/`. Full provisioning requires Docker. Repeating it preserves existing files and keys and repeats the
+check and install. `create --no-install` keeps the file copies, shared-tool links and environment values, but skips
+Compose validation, `npm ci` and `npm run typegen`, so it needs no Docker. Its final message names
+`node scripts/worktree.mjs provision` to validate the project and install later.
 It can be combined with either `--existing` or `--work-unit`. Missing shared-tool folders are skipped; a later run
 links them once installed in the primary. A failed
 `create` leaves its checkout in place and prints the commands to finish setup there.
 
 - **Branch:** a work unit is provisioned before planning starts: the PRD and task list are written and committed on
   this branch. [activate-work-unit.md](activate-work-unit.md) runs in the worktree later, skipping its branch step.
-- **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`; provisioning confirms it is
+- **Project name:** Compose reads `COMPOSE_PROJECT_NAME` from `infrastructure/.env`; full provisioning confirms it is
   `cinexplorer-{name}` and prints only the name, keeping the env values in the rest of `config` off the screen.
+  `create --no-install` prints the configured name; `provision` or `browse` validates the resolved project later.
   Without a name, a base-file command would act on the primary's `infrastructure` project; the worktree override
   refuses to resolve instead.
 - **Links:** `.venv-backend`, `.claude` and `.codex` point at the primary's, sharing its Python environment, harness
@@ -90,9 +92,9 @@ hook source. `.claude` hook configuration is unchanged.
 
 `$errand <concern or inbox title>` follows [run-errand.md](run-errand.md) in the current conversation. The agent
 creates and provisions a sibling checkout with `node scripts/worktree.mjs create {type}/{name}`, then records its
-selection with `errand-enter`, run from the session home. Creation needs Docker running. For documentation or
-harness work that needs no frontend dependencies, add `--no-install`; run `provision` in that worktree when they are
-needed. Start a stack only when the checks need it.
+selection with `errand-enter`, run from the session home. Default creation needs Docker running. For documentation
+or harness work, add `--no-install` to skip Docker validation and frontend dependencies; run `provision` in that
+worktree when they are needed. Start a stack only when the checks need it.
 
 The session-scoped record lives in shared Git metadata and uses the Codex thread/session identifier. The identifiers
 must agree; missing or different identifiers stop entry. Recovery validates the checkout's registration, repository
@@ -199,8 +201,21 @@ For a review checkout or abandoned work whose branch must stay:
 node scripts/worktree.mjs remove {name} --keep-branch
 ```
 
-This skips only the merged-branch requirement and branch deletion; all other refusals and stack teardown still
-apply. An unmerged branch is never deleted by this script.
+`--keep-branch` skips only the merged-branch requirement and branch deletion; all other refusals still apply.
+Stack teardown runs unless `--no-stack` is also supplied. An unmerged branch is never deleted by this script.
+
+For work that needs no stack, or while Docker is unavailable:
+
+```bash
+node scripts/worktree.mjs finish {name} --no-stack
+node scripts/worktree.mjs remove {name} --no-stack
+node scripts/worktree.mjs remove {name} --keep-branch --no-stack
+```
+
+`--no-stack` skips only Docker cleanup and prints a reminder. All process, permission, project-name, Git and
+closing-step checks remain. If a stack ever ran, remove the `cinexplorer-{name}` project's remaining containers
+and volumes later; the flag leaves its Docker resources behind when removing the checkout. Without the flag,
+a named project's cleanup still requires Docker.
 
 Removal deletes the checkout's gitignored files: copied env files, `node_modules`, and a work unit's session notes
 and review records among them, which `finish` keeps first. Paused work keeps its worktree. The merged task list's

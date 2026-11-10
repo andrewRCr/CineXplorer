@@ -25,8 +25,9 @@ A conversation can stay at home while directing its tools to an isolated checkou
 - **In place, on the main checkout:** when it is clean and the errand needs OAuth sign-in or the primary's
   development data. The stack then serves the errand's files until you switch back.
 - **In a linked worktree:** otherwise, created and provisioned by `node scripts/worktree.mjs create {type}/{name}`
-  ([worktree-sessions.md](worktree-sessions.md)). Creation needs Docker running and installs frontend dependencies;
-  the errand starts its own stack when its checks need one.
+  ([worktree-sessions.md](worktree-sessions.md)). Default creation needs Docker and installs frontend dependencies.
+  For documentation or harness work, `create --no-install` skips Docker validation and dependencies; the errand
+  starts its own stack only when its checks need one.
 
 For a same-session errand, install the local harness once as described in
 [worktree-sessions.md § Same-Session Errands](worktree-sessions.md#same-session-errands), or invoke `$errand` after
@@ -125,8 +126,11 @@ Close a merged linked worktree from the main checkout
 node scripts/worktree.mjs finish {name}  # keeps its personal folder, removes it and its branches
 ```
 
-An errand has no task list to archive, so `finish` makes no commit. For an abandoned errand,
-`remove {name} --keep-branch` removes its checkout and stack but keeps its commits. It also deletes gitignored files,
+An errand has no task list to archive, so `finish` makes no commit. `finish {name} --no-stack` and
+`remove {name} --no-stack` skip only Docker cleanup, retaining the other guards and closing behavior. If a stack
+ran, remove its `cinexplorer-{name}` containers and volumes later, as the printed reminder says.
+For an abandoned errand, `remove {name} --keep-branch` removes its checkout and stack but keeps its commits;
+add `--no-stack` to leave Docker resources for later cleanup. It also deletes gitignored files,
 so preserve the checkout of paused work. In place, switch back and delete the local branch with
 `git branch -d {type}/{name}`, then `git fetch --prune`. GitHub's delete-on-merge setting removes the remote branch
 after the pull request merges; if it remains, delete it with `git push origin --delete {type}/{name}`.

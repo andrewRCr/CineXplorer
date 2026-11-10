@@ -2,3 +2,4 @@ backend/config/.env
 frontend/.env
 frontend/.env.development
 infrastructure/dev-certs/*.pem
+.zed/settings.json

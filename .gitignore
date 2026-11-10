@@ -4,6 +4,9 @@
 # vscode settings
 .vscode/
 
+# zed settings
+.zed/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

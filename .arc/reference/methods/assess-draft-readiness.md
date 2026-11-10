@@ -27,13 +27,15 @@ assess-draft-readiness.override.
 
 CineXplorer adaptation (`override-mode: extend`):
 
-- **Fire point:** the draft is the PRD. Run the method over the saved PRD among [1_create-prd.md][create-prd]'s
-  author checks, and over an amendment that settles a decision. A `needs-detail` gap is closed in the PRD; a
-  `needs-design` gap returns to discovery.
-- **Criterion 3** always clears: a PRD has no inbound buffer.
-- **Criterion 4's locus** is the PRD's Design Decisions section, its design substrate: each decision there records its
-  disposition beside it or in one list there, and the section names each new or amended ADR among what the work
-  delivers.
+- **Fire points:** the draft stage's loop exit ([1a_draft-design.md][draft-design]), over the draft or the
+  determinacy confirmation; the PRD stage's entry ([1_create-prd.md][create-prd] Step 2), where a `needs-detail` gap
+  is closed and a `needs-design` gap returns to the draft stage; and an amendment that settles a decision.
+- **Criterion 3's inbound buffer** is the inbox: the entries naming this work that the draft hasn't integrated, leaving
+  out those already routed to an errand (`## Errand`) or to another work unit's plan (its `_Target:_`). The draft stage
+  routes them ([user-inbox.md](../workflows/supplemental/user-inbox.md)).
+- **Criterion 4's locus:** the draft records each disposition in its decision prose (its Decisions section); the PRD's
+  design substrate is its Design Decisions section, where each decision records its disposition beside it or in one
+  list there, and the section names each new or amended ADR among what the work delivers.
 - **The base branch** is `main`.
 - **"Covered by"** the replaced part of an ADR superseded in part is also a `needs-detail` gap.
 
@@ -98,8 +100,8 @@ Return `{ ready, gaps }`.
 
 ---
 
-[draft-design]: ../workflows/1_create-prd.md
+[draft-design]: ../workflows/1a_draft-design.md
 [create-spec]: ../workflows/1_create-prd.md
-[resolve-planning-depth]: README.md#not-used-here
+[resolve-planning-depth]: resolve-planning-depth.md
 [adr-methodology]: ../strategies/arc/strategy-adr-methodology.md
 [create-prd]: ../workflows/1_create-prd.md

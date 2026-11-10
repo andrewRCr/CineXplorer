@@ -46,18 +46,21 @@ adversarial-review.override.
 
 CineXplorer adaptation (`override-mode: extend`); the identity contract is unchanged.
 
-- **No `Class`, no fixed pass cap** (Owner, 2026-10-30). A position never adds `(limit reached)` or `(over limit)`,
-  and the `cap-exhausted` stop reason does not occur. Every successor pass and every fix-check round still needs the
-  Owner's explicit approval (§ Exit gate, § Fold verification), so the Owner bounds the loop. Runaway loops come from
-  oversized work, which [assess-boundary-fit][assess-boundary-fit]'s size triggers catch at planning.
-- **Review kinds** are those [disposition-report][disposition-report]'s override lists: a PRD's position reads
-  `PRD review — pass 2`, and a task list's `Task-list review — fix check, round 1 since pass 2`.
+- **`Class` sets the pass cap** of a planning or verification review (Owner, 2026-11-10, replacing "no fixed pass cap"
+  of 2026-10-30): `Light` 1, `Heavy` 2, `Novel` 3, as § Exit gate sets them; a code review has no cap here
+  ([disposition-report][disposition-report]'s override). The Owner may lift the cap for a review by approving a pass
+  past it, whose position shows `(over limit)`. Every successor pass and every fix-check round still needs the Owner's
+  explicit approval (§ Exit gate, § Fold verification).
+- **Review kinds** are those [disposition-report][disposition-report]'s override lists: a draft's position reads
+  `Design review — pass 1 (limit reached)` at `Light`, a PRD's `PRD review — pass 2`, and a task list's
+  `Task-list review — fix check, round 1 since pass 2`.
 - **Fold verification is on at planning stages**, as the default says, with its storage replaced: kept reviewed
   versions, prompts and reports go in the work unit's folder of the gitignored personal workspace,
-  `.arc/user/{identity}/{name}/adversarial-review/`, named by artifact, pass and round (`prd-pass1.md`,
-  `tasks-pass2-round1.md`, `prompt-pass1.md`, `report-pass1.md`) instead of content hashes. The folder is keyed by
-  the work unit's name, so one location serves every stage from the first PRD review on; delete it when the work
-  unit is archived. Without the copies, scope a fix check from the account alone and say so in its report.
+  `.arc/user/{identity}/{name}/adversarial-review/`, named by artifact, pass and round (`draft-pass1.md`,
+  `prd-pass1.md`, `tasks-pass2-round1.md`, `prompt-draft-pass1.md`, `report-prd-pass2-round1.md`) instead of content
+  hashes. The folder is keyed by the work unit's name, so one location serves every stage from the first design review
+  on; delete it when the work unit is archived. Without the copies, scope a fix check from the account alone and say so
+  in its report.
 - **Pass record → Review Log.** Instead of `ADVERSARIAL-PASSES.md`, append one entry per pass and fix-check round:
   date, stage, the position as the report's header names it, rubric, finding counts by verified grade, the approved
   dispositions with their fold tags, each shared cause named with its material findings in that look (so
@@ -73,8 +76,9 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
   A Codex session without subagents runs the pass in a fresh Codex session given the same prompt. Either way the
   report names its runner, and a self-review is never presented as independent
   ([DEVELOPMENT-RULES § Sub-agent scope][sub-agent-scope]).
-- **Re-entry.** `resolve-planning-depth`'s re-entry valve becomes a return to the PRD's design decisions
-  ([1_create-prd.md][create-spec]); the `Class` ratchet is not used.
+- **Re-entry.** [resolve-planning-depth][resolve-planning-depth]'s re-entry valve routes as its override says: to
+  the draft stage for an unshaped direction, to [1_create-prd.md § Amending a PRD][create-spec] from task generation;
+  the `Class` ratchet applies.
 - **Not used:** the authored-partition, bounded chunk-series and Novel partitioned fan-out modes, and attestation.
   Results are advisory evidence for the Owner's decision.
 
@@ -745,7 +749,7 @@ the same source verification, disposition, and exit-gate rules as a standard pas
 [source-grounding]: source-grounding.md
 [assess-design-proportionality]: assess-design-proportionality.md
 [disposition-report]: disposition-report.md
-[resolve-planning-depth]: README.md#not-used-here
+[resolve-planning-depth]: resolve-planning-depth.md
 [assess-boundary-fit]: assess-boundary-fit.md
 [mutation-guard]: ../constitution/DEVELOPMENT-RULES.md
 

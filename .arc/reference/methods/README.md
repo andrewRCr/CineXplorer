@@ -1,9 +1,9 @@
 # Methods
 
-Review, planning and pull-request methods vendored from arc-framework (`.arc/system/methods/`, snapshot `2538476f8`, 2026-11-08).
-They carry new ARC's backstops into this repository's process until it migrates: adversarial review loops at each
-planning stage, verification separate from code review, and the rubrics behind them. Workflows under
-`../workflows/` say where each method fires.
+Review, planning and pull-request methods vendored from arc-framework (`.arc/system/methods/`, snapshot `2538476f8`,
+2026-11-08; review-model's fix-check paragraph at `6a8ba934`, 2026-11-10). They carry new ARC's backstops into this
+repository's process until it migrates: adversarial review loops at each planning stage, verification separate from code
+review, and the rubrics behind them. Workflows under `../workflows/` say where each method fires.
 
 ## Vendoring rules
 
@@ -29,17 +29,18 @@ override wins. An override changes how the method is done here, never what its c
 
 | New ARC term | Here |
 | --- | --- |
-| Work unit | A PRD plus its task list and branch (`.arc/active/{feature,technical,incidental}/`) |
-| Draft, spec | The PRD. There is no separate draft stage; a spec's `form` is always `detailed` |
-| Stub, backlog draft | A plan or PRD in `.arc/backlog/` |
+| Work unit | A design draft, PRD and task list on one branch (`.arc/active/{feature,technical,incidental}/`) |
+| Draft | The design draft, `draft-{name}.md` beside the PRD ([1a_draft-design.md](../workflows/1a_draft-design.md)); at the `low` level, a determinacy confirmation instead |
+| Spec | The PRD; a spec's `form` is always `detailed` |
+| Stub, backlog draft | A plan, draft or PRD in `.arc/backlog/` |
 | Errand | One bounded concern outside the current work unit, run on its own branch and pull request (`../workflows/supplemental/run-errand.md`); an atomic task (`.arc/active/ATOMIC-TASKS.md`) is one source |
-| `Class` (`Light`, `Heavy`, `Novel`) | Not used; overrides say what replaces it |
-| Planning depth level | Not used: one level |
+| `Class` (`Light`, `Heavy`, `Novel`) | A `**Class:**` header line in the draft and the PRD; it sets each planning and verification review's pass cap |
+| Planning depth level | Used at the draft and PRD stages, never recorded ([resolve-planning-depth](resolve-planning-depth.md)) |
 | `AGENT-BRIEF.ARC`, `DEV-RULES.ARC` | `../constitution/DEVELOPMENT-RULES.md` |
 | `AGENT-BRIEF.PROJECT` | `../agent/AGENTS.md` and `../constitution/TECHNICAL-OVERVIEW.md` |
 | Personal workspace | `.arc/user/{identity}/` (gitignored); a work unit's review files live in its `{name}/` folder |
 | `SESSION-NOTES` | The work unit's `SESSION-NOTES.md` in the personal workspace |
-| Meta file | The task list header |
+| Meta file | The document headers: `Class` in the draft and the PRD, status in the task list |
 | Lane | One review loop over one artifact or change, from its first pass to its stop |
 | Spec review, standard code review | PRD review, code review; [disposition-report](disposition-report.md)'s override lists every review kind |
 | Candidate, attest, receipt, store | Not used. Reviews are advisory; the Owner's approval is the gate |
@@ -50,7 +51,8 @@ override wins. An override changes how the method is done here, never what its c
 
 | Source target | Here |
 | --- | --- |
-| `draft-design`, `create-spec`, `init-work-unit`, `amend-design` workflows | `../workflows/1_create-prd.md` |
+| `draft-design` workflow | `../workflows/1a_draft-design.md` |
+| `create-spec`, `init-work-unit`, `amend-design` workflows | `../workflows/1_create-prd.md` |
 | `generate-tasks` workflow | `../workflows/2_generate-tasks.md` |
 | `process-task-loop` workflow | `../workflows/3_process-task-loop.md` |
 | `run-errand` workflow | `../workflows/supplemental/run-errand.md` |
@@ -72,7 +74,6 @@ Anchors into retargeted files are dropped, since the legacy files don't share th
 | --- | --- |
 | `code-review-frontline` | Advisory pre-PR review lane (off by default in arc-framework). The completion stage's code review covers it |
 | `review-chunking`, partitioned and chunk-series modes | Large-target machinery; work-unit sizing keeps targets reviewable whole |
-| `resolve-planning-depth` | One planning level here. Its re-entry valve becomes "return to the PRD's design decisions" |
 | `classify-review-risk`, `assess-evidence-applicability` | Hosted review-gate routing and evidence reuse |
 | `decompose-work-unit`, `deliver-stack` | Cohort and stack delivery. A boundary cut here becomes separate task lists and branches (`strategy-work-organization.md`) |
 | `strategy-work-planning` | Reasons and ordering for review at planning boundaries; the workflows state what applies |

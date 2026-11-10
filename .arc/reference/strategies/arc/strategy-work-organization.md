@@ -204,6 +204,7 @@ determine category.
 
 **Documentation:**
 
+- Design draft: `.arc/active/feature/draft-<name>.md` (when the draft stage wrote one)
 - PRD: `.arc/active/feature/prd-<name>.md`
 - Tasks: `.arc/active/feature/tasks-<name>.md`
 - Notes: `.arc/active/feature/notes-<name>.md`
@@ -231,6 +232,7 @@ determine category.
 
 **Documentation:**
 
+- Design draft: `.arc/active/technical/draft-<name>.md` (when the draft stage wrote one)
 - PRD: `.arc/active/technical/prd-<name>.md`
 - Tasks: `.arc/active/technical/tasks-<name>.md`
 - Notes: `.arc/active/technical/notes-<name>.md`

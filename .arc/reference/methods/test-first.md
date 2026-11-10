@@ -27,8 +27,9 @@ test-first.override.
 
 CineXplorer adaptation (`override-mode: extend`):
 
-- **Shape.** Phases are behaviour slices; the `slice` / `layer` / `replication` segment modes and the
-  ``Build `test-first` `` marker line are not used. A test-first behaviour is one parent task: its test subtasks
+- **Shape.** Phases follow the segments task generation resolves ([resolve-plan-segmentation][rps]); inside a
+  `slice` segment they are behaviour slices, and the default's grouping by mode applies in every segment. The
+  ``Build `test-first` `` marker line is not used. A test-first behaviour is one parent task: its test subtasks
   come first ("Expect tests to FAIL initially"), then the implementation, then the passing run. A `Write tests` task
   followed directly by its `Implement` task in the same phase is acceptable when the tests should be reviewed before
   implementation starts.
@@ -72,3 +73,4 @@ passed before writing the fix; correct the case or revise the diagnosis from tha
 
 [generate-tasks]: ../workflows/2_generate-tasks.md
 [process-task-loop]: ../workflows/3_process-task-loop.md
+[rps]: resolve-plan-segmentation.md

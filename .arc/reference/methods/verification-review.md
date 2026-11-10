@@ -35,8 +35,9 @@ verification-review.override.
 CineXplorer adaptation (`override-mode: extend`):
 
 - `kind` is always `work-unit`; there are no delivery members.
-- **No `Class`.** Recommend the independent pass at every work-unit completion; the Owner decides. There is no fixed
-  pass cap ([adversarial-review][adversarial-review]'s override), and the pass record is that override's Review Log.
+- **Independent pass at every `Class`** (Owner, 2026-11-10). Recommend it at every work-unit completion, not only at
+  `Novel`; the Owner decides. `Class` sets the pass cap ([adversarial-review][adversarial-review]'s override), and the
+  pass record is that override's Review Log.
 
 ## verification-review.default
 

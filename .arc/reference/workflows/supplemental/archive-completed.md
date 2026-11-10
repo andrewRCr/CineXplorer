@@ -60,12 +60,14 @@ Check each criterion against evidence, running its check where it has one, and m
 Never reword a criterion so the work meets it, and never mark one from task checkboxes.
 
 **Independent pass.** Then recommend one fresh-context [adversarial-review](../../methods/adversarial-review.md) over
-the same scope, as verification-review's independent companion describes; the Owner decides. The reviewer gets the
-PRD, the task list with its criterion marks removed, and the diff, never the author's walk. Each finding names the
-criterion it fails. Check every finding against source, present the complete set as a
+the same scope, as verification-review's independent companion describes; the Owner decides. The reviewer gets the PRD,
+the task list with its criterion marks removed, and the diff, never the author's walk. Each finding names the criterion
+it fails. Check every finding against source, present the complete set as a
 [disposition-report](../../methods/disposition-report.md), and edit nothing until the Owner approves it. After the
-approved fixes land, offer a fix check; take any further pass only with approval. The loop ends when a pass converges
-or the Owner stops it. Record each pass in the task list's `## Review Log`.
+approved fixes land, offer a fix check; take any further pass only with approval. The `Class` sets the pass cap (`Light`
+1, `Heavy` 2, `Novel` 3); a pass past it runs only on the Owner's approval, shown `(over limit)`. The loop ends at one
+of adversarial-review's stop reasons: it converges, reaches the cap, or the Owner stops it or accepts a re-entry. Record
+each pass in the task list's `## Review Log`.
 
 **Then:**
 
@@ -178,6 +180,7 @@ Create `completion-{name}.md` in the same directory as the task list:
 
 ## Related Documentation
 
+- {For planned work: Draft: `draft-{name}.md` (if exists)}
 - {For planned work: PRD: `prd-{name}.md`}
 - Tasks: `tasks-{name}.md`
 - Notes: `notes-{name}.md` (if exists)
@@ -288,7 +291,9 @@ runs.
 Either way, findings follow the same flow: verify each against source, look for the same defect elsewhere, present
 the complete set as a [disposition-report](../../methods/disposition-report.md), and edit nothing until the Owner
 approves it. Land the approved fixes as one batch, then offer a fix check; take any further pass only with approval.
-The loop ends when a pass converges or the Owner stops it. Record each pass in the task list's `## Review Log`.
+The loop ends when a complete pass finds no critical or major finding
+([review-model § Successor passes](../../methods/review-model.md)) or the Owner stops it. Record each pass in the
+task list's `## Review Log`.
 
 ### 6) Push and Create PR
 
@@ -397,9 +402,9 @@ session there. Then it:
 4. Removes the worktree, its stack and its local branch
    ([worktree-sessions.md § Removal](worktree-sessions.md#removal)), then deletes the remote branch if it remains and
    its head is on `main`
-5. Moves the PRD, task list, notes and completion doc with `git mv` into the next numbered archive folder
-   ([§ Archive Structure](#archive-structure)) and commits them as `docs(arc): archive the {name} work`, with
-   `Context: tasks-{name}.md (maintenance)`
+5. Moves the design draft, PRD, task list, notes and completion doc with `git mv` into the next numbered archive
+   folder ([§ Archive Structure](#archive-structure)) and commits them as `docs(arc): archive the {name} work`,
+   with `Context: tasks-{name}.md (maintenance)`
 6. Refreshes the installed errand harness when its copies differ from `main`
    ([worktree-sessions.md § Same-Session Errands](worktree-sessions.md#same-session-errands))
 7. Stops before the push
@@ -415,6 +420,7 @@ personal folder in `errand-records/{name}-{date}/`, then move and commit its doc
 ```bash
 # {quarter}: e.g. 2026-q4; {NN}: one more than the quarter's highest number, across all categories
 mkdir -p .arc/reference/archive/{quarter}/{category}/{NN}_{name}
+git mv .arc/active/{category}/draft-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists
 git mv .arc/active/{category}/prd-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists
 git mv .arc/active/{category}/tasks-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/
 git mv .arc/active/{category}/notes-{name}.md .arc/reference/archive/{quarter}/{category}/{NN}_{name}/  # if exists

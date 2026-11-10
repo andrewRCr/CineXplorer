@@ -19,146 +19,117 @@ use [0_define-constitution.md](0_define-constitution.md) instead.
 
 ## Goal
 
-Create a detailed PRD in Markdown format based on an initial concept. The PRD should be
-clear, actionable, and provide sufficient context for implementation while maintaining alignment with the
-overall product direction.
+Create a detailed PRD in Markdown format from the settled design. The PRD should be clear, actionable, and provide
+sufficient context for implementation while maintaining alignment with the overall product direction.
+
+The design is shaped first, in [1a_draft-design.md](1a_draft-design.md): its draft, or its determinacy confirmation
+when the design needed no draft, is this stage's primary input. Discovery here makes the design complete enough to
+write and to validate against; it does not reopen it.
 
 ## Process
 
 ### Step 1: Review Project Context
 
-After examining the feature description or request, but before asking questions, review the foundational project
-documents to understand the complete context:
+Review the foundational project documents to understand the complete context:
 
 - **`.arc/reference/constitution/META-PRD.md`** - Product vision, core features, and user flows
 - **`.arc/reference/constitution/TECHNICAL-OVERVIEW.md`** - Technical constraints, patterns, and architectural decisions
 - **`.arc/reference/constitution/DEVELOPMENT-RULES.md`** - Code standards, quality gates, and development protocols
 
-Ensure the requested feature aligns with the overall product direction, technical approach, and the Owner's current
-priorities.
+### Step 2: Read the Draft
 
-### Step 1.5: Check for Existing Notes Document (Notes-First Pattern)
+Read `draft-{name}.md` in the work unit's backlog folder, or the approved determinacy confirmation, as the primary
+input. A PRD always follows the draft stage; for determinate work its `low` path is quick.
 
-Before conducting discovery, check if a corresponding `notes-*.md` file exists for this work. The "notes-first"
-pattern captures evolving understanding during planning, with PRDs created only when work becomes active.
+1. **Readiness.** Run [assess-draft-readiness](../methods/assess-draft-readiness.md) over the draft or confirmation. On
+   **not-ready**, close a `needs-detail` gap here, and return a `needs-design` gap to the draft stage before writing
+   anything. Inbox entries that name this work, aren't in the draft yet and aren't already routed elsewhere are routed
+   as the draft stage routes them.
+2. **Depth and `Class`.** Make one derivation-axis read of the draft and the problem, and run
+   [resolve-planning-depth](../methods/resolve-planning-depth.md) and
+   [classify-work-unit](../methods/classify-work-unit.md) off it: it confirms the draft's `Class` or raises it. The
+   PRD's form is always detailed.
+3. **Boundary.** Run [assess-boundary-fit](../methods/assess-boundary-fit.md) off the same read. A `cut-map` returns to
+   the Owner before a monolithic PRD is written; otherwise keep the draft's or confirmation's recorded outcome unless
+   the evidence has materially changed.
 
-**Locations to check:**
+### Step 3: Complete the Design for the PRD
 
-- `.arc/active/feature/notes-{{FEATURE_NAME}}.md` (active feature work)
-- `.arc/active/technical/notes-{{FEATURE_NAME}}.md` (active technical work)
-- `.arc/backlog/feature/notes-{{FEATURE_NAME}}.md` (planned features)
-- `.arc/backlog/technical/notes-{{FEATURE_NAME}}.md` (planned technical work)
+Confirm the design is complete and concrete enough to write and to validate against, then close the remaining gaps:
+every decision that can be settled now belongs in the PRD, not in task generation or implementation. With a draft
+this is targeted gap-filling, not open exploration. A real open decision, not merely unwritten detail, means the
+design is not settled: return to the draft stage through the re-entry valve
+([resolve-planning-depth](../methods/resolve-planning-depth.md) § Mid-stage re-entry) rather than shaping it here. A
+design question that surfaces during implementation stops the work and amends the PRD
+([§ Amending a PRD](#amending-a-prd)). When offering options, recommend one.
 
-**If notes document exists:**
+- Ask **targeted clarifying questions** about ambiguities or missing detail in the draft
+- Confirm scope boundaries, priorities and sequencing against the scope the draft or confirmation recorded. The PRD's
+  boundary inherits the draft's or confirmation's and sharpens it; never silently drop a commitment either recorded
+- Settle anything the draft left as detail rather than design, such as acceptance criteria and edge cases
 
-1. **Read the entire notes document** - This becomes your primary context source
-2. **Extract key information:**
-   - Work scope, rationale, and priority
-   - Technical approach, patterns, and architecture decisions
-   - Effort estimates and time constraints
-   - Known dependencies, constraints, or blockers
-   - References to related work or completed foundation
-3. **Use notes as basis for PRD** - The notes document informs your clarifying questions
-4. **Focus discovery on gaps** - Ask targeted questions about ambiguities, missing details, or areas needing clarification
+Run [assess-design-proportionality](../methods/assess-design-proportionality.md) whenever discovery adds a material
+mechanism the draft didn't carry. **For interactive sessions:** provide options in numbered lists, with a
+recommendation, to enable quick responses and maintain momentum.
 
-**If no notes document exists:**
+### Step 3.5: Check Alignment
 
-- Proceed with standard discovery process (Step 2 onwards)
-- The PRD will be created from the initial request and discovery session
+Two checks run before the PRD is saved. Each names what it checked in the stage's report, never just "passes": "checked
+against META-PRD § 3 Out-of-Scope Features: passes".
 
-**Rationale:** Notes documents prevent "PRD drift" (requirements becoming outdated before work starts) by
-capturing planning insights without committing to formal requirements until work is ready to begin.
-
-### Step 2: Determine Work Category
-
-Before detailed discovery, determine whether this is **feature** or **technical** work:
-
-**Decision criteria:**
-
-1. **Does it add user-visible capability from the product vision?** → Feature work
-2. **Is it infrastructure/architecture improvement?** → Technical work
-
-See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for complete decision tree and examples.
-
-### Step 2.5: Confirm It Needs a PRD
-
-Run [classify-work-unit](../methods/classify-work-unit.md)'s boundary tests. Work that sorts below a work unit is an
-errand: run it now ([run-errand](supplemental/run-errand.md)) or capture it in the inbox
-([user-inbox](supplemental/user-inbox.md)), as the Owner chooses, and stop here. When the concern already looks like
-several separately deliverable parts, read [assess-boundary-fit](../methods/assess-boundary-fit.md) now rather than
-after the PRD is written.
-
-### Step 3: Conduct Discovery Session
-
-Ask clarifying questions to gather the "what" and "why", and settle the design: every decision that can be settled
-now belongs in the PRD, not in task generation or implementation. A design question that surfaces during
-implementation stops the work and amends the PRD ([§ Amending a PRD](#amending-a-prd)). When offering options,
-recommend one.
-
-**If working from notes document:**
-
-- Ask **targeted clarifying questions** to fill gaps or resolve ambiguities in the notes
-- Validate key assumptions made in the notes document
-- Confirm scope boundaries, priorities, and sequencing
-- Address any "Open Questions" or "TBD" items from notes
-- Verify effort estimates and time constraints are still valid
-
-**If working from initial request only:**
-
-- Ask **broader clarifying questions** to establish the "what" and "why"
-- Focus on problem definition, user impact, and goals
-- Explore user stories, acceptance criteria, and scope boundaries
-- Gather context about constraints, dependencies, and technical considerations
-
-**For interactive sessions:** Provide options in numbered lists, with a recommendation, to enable quick responses
-and maintain momentum.
+- **META-PRD, always.** Evaluate the PRD's scope against META-PRD's vision (§ 1 Purpose, § 2 Core Features) and its
+  § 3 Out-of-Scope Features. Halt and bring the Owner the specific conflict when the scope conflicts with that vision
+  or adds something the META-PRD lists as out of scope.
+- **TECHNICAL-OVERVIEW, when the PRD touches technical surfaces** (stack, architecture, runtime, dependencies or
+  infrastructure). Halt when the PRD introduces a component, framework, dependency or infrastructure choice genuinely
+  new to the project. Absence from TECHNICAL-OVERVIEW is the reason to look, not the finding: the usual hit is a stale
+  document describing tech the project already uses. Confirm presence in the manifests, lockfiles, configuration and
+  code; on confirmation, note the staleness and continue. Anything not confirmed halts for the Owner's direction.
 
 ### Step 4: Generate and Save PRD
 
-Using the project context, initial request, and discovery session responses, create a PRD following
-the structure outlined below.
-
-**Save location:**
+Using the project context, the draft and the discovery responses, create a PRD following the structure outlined
+below. Save it beside the draft, in the category the draft stage chose
+([Work Organization Strategy](../strategies/arc/strategy-work-organization.md)):
 
 - **Feature work** (user-facing): `.arc/backlog/feature/prd-{{FEATURE_NAME}}.md`
 - **Technical work** (infrastructure): `.arc/backlog/technical/prd-{{FEATURE_NAME}}.md`
 
-See [Work Organization Strategy](../strategies/arc/strategy-work-organization.md) for guidance on feature vs. technical.
-
 ### Step 5: Review the PRD
 
-Run [planning-review](../methods/planning-review.md) with `artifact: spec`:
+Run [planning-review](../methods/planning-review.md) with `artifact: spec` and the resolved `Class`:
 
 1. **Author checks.** [assess-design-proportionality](../methods/assess-design-proportionality.md) over the saved
-   PRD; continue only on `proportionate`. Then [assess-draft-readiness](../methods/assess-draft-readiness.md), whose
-   criterion 4 requires an ADR disposition for each decision, and [spec-review](../methods/spec-review.md) over the
-   whole PRD, including its reader-independence and binding-completeness checks.
+   PRD; continue only on `proportionate`. Then [spec-review](../methods/spec-review.md) over the whole PRD, including
+   its reader-independence and binding-completeness checks, and its question whether each decision the PRD settles
+   beyond the draft carries an ADR disposition.
 2. **Size.** [assess-boundary-fit](../methods/assess-boundary-fit.md) with its size marks. Past a mark, the boundary
    decision goes to the Owner with the cut the design's own seams suggest.
-3. **Independent review loop.** Recommend it; the Owner decides. Each pass is a fresh
-   [adversarial-review](../methods/adversarial-review.md) over the PRD against proportionality,
-   [design-audit](../methods/design-audit.md) and spec-review. Verify every finding against source, present the
-   complete disposition table ([disposition-report](../methods/disposition-report.md)), and edit nothing until it is
-   approved. After the approved fixes land, offer a fix check; a further pass needs its own approval. There is no
-   fixed pass cap: the loop ends when a pass converges or the Owner stops it.
+3. **Independent review loop.** Recommend it at every `Class`; the Owner decides. Each pass is a fresh
+   [adversarial-review](../methods/adversarial-review.md) over the PRD, with the draft (on the `low` path, the approved
+   determinacy confirmation) as its upstream chain, against proportionality, [design-audit](../methods/design-audit.md)
+   and spec-review. Verify every finding against source, present the complete disposition table
+   ([disposition-report](../methods/disposition-report.md)), and edit nothing until it is approved. After the approved
+   fixes land, offer a fix check. The `Class` sets the pass cap (`Light` 1, `Heavy` 2, `Novel` 3); a pass past it runs
+   only on the Owner's approval, shown `(over limit)`. The loop ends at one of adversarial-review's stop reasons: it
+   converges, reaches the cap, or the Owner stops it or accepts a re-entry.
 4. **Review record.** Record each pass and fix check in `REVIEW-LOG.md` in the work unit's folder of the gitignored
    personal workspace, `.arc/user/{identity}/{name}/` (adversarial-review's override gives the fields); kept
    versions, prompts and reports go in its `adversarial-review/` subfolder. Task generation copies the log into the
    task list. The PRD itself carries no review record.
-5. **Post-settle reread.** Rerun spec-review's coherence slice over the settled PRD before committing it. The commit
-   summarizes each pass in one plain-language body line ("Independent review: 2 rounds, 6 findings fixed").
-
-For small, well-understood work the recommendation may be to skip the independent loop; give the reason when
-offering.
+5. **Post-settle reread.** Rerun spec-review's coherence slice over the settled PRD before committing it, with its
+   `**Class:**` header line. The commit summarizes each pass in one plain-language body line ("Independent review: 2
+   rounds, 6 findings fixed"). Then set the session notes' Next Action to task generation (`2_generate-tasks.md`).
 
 ### Amending a PRD
 
-A design question that surfaces during task generation or implementation stops the work. Settle it with the Owner,
-amend the PRD, and add a dated line to an `## Amendments` section saying what changed and why. Review the amendment
-with planning-review's `amendment` artifact: omit the independent pass for a wording-level change, offer it for a
-contained one, recommend it when the design changes. A decision the amendment settles gets its ADR disposition, and
-assess-draft-readiness runs over the amendment. A success criterion is never reworded to match the work: mark the old
-one `[~]` with a note naming the amendment and append its replacement.
+A design question that surfaces during task generation or implementation stops the work. Settle it with the Owner, amend
+the PRD, and add a dated line to an `## Amendments` section saying what changed and why. Review the amendment with
+planning-review's `amendment` artifact: omit the independent pass for a wording-level change, offer it for a contained
+one, recommend it when the design changes. A decision the amendment settles gets its ADR disposition, and
+assess-draft-readiness runs over the amendment. An amendment that raises `Class` updates the PRD's `**Class:**` line in
+the same commit. A success criterion is never reworded to match the work: mark the old one `[~]` with a note naming the
+amendment and append its replacement.
 
 Then carry the amendment into the task list: update the tasks it affects (adding or `[~]`-marking tasks as needed),
 and apply the same `[~]`-and-append change to the task list's copy of any changed criterion, since that copy is the
@@ -172,7 +143,7 @@ landed or changed since it was written.
 
 ## Clarifying Questions (Examples)
 
-Tailor questions based on the specific feature request, but consider these common areas to explore:
+Ask only about what the draft or confirmation leaves open; these are the areas where gaps most often sit:
 
 - **Problem/Goal:** "What problem does this feature solve for the user?" or "What is the main goal we want to
   achieve with this feature?"
@@ -200,6 +171,7 @@ that delay task generation.
 # PRD: [Feature/Technical Name]
 
 **Type:** Feature | Technical
+**Class:** Light | Heavy | Novel
 **Status:** Ready for Implementation
 **Created:** YYYY-MM-DD
 
@@ -212,6 +184,7 @@ that delay task generation.
 # PRD: [Feature/Technical Name]
 
 **Type:** Feature | Technical
+**Class:** Light | Heavy | Novel
 **Status:** Pending Dependencies | Ready for Implementation
 **Created:** YYYY-MM-DD
 **Updated:** YYYY-MM-DD
@@ -227,6 +200,8 @@ that delay task generation.
 **Field definitions:**
 
 - **Type:** `Feature` (user-facing) or `Technical` (infrastructure) per work organization
+- **Class:** the work unit's `Class` ([classify-work-unit](../methods/classify-work-unit.md)), from the draft or raised
+  at this stage; a later stage that raises it updates this line in its own commit
 - **Status:** `Ready for Implementation` when task generation can proceed; `Pending Dependencies` if blocked
 - **Created:** Date PRD was first written
 - **Updated:** Date of last revision (only include when dependencies exist and PRD evolves while waiting)
@@ -254,7 +229,8 @@ The generated feature PRD should include the following sections:
    relevant components/styles if applicable.
 7. **Design Decisions:** Every settled decision that shapes implementation: the choice, the credible alternative it
    was chosen over, and why. Interfaces, invariants, failure cases and preconditions belong here or in the
-   requirements, not left for task generation. Each decision carries its ADR disposition (a new ADR, an amendment, an
+   requirements, not left for task generation. Each decision carries its ADR disposition, from the draft or settled
+   here (a new ADR, an amendment, an
    ADR that covers it, or `none` with its reason; [assess-draft-readiness](../methods/assess-draft-readiness.md)
    defines them), beside it or in one list at the section's end. Either way, the section names each new or
    amended ADR the work delivers. The ADR files themselves are written with the implementation
@@ -288,6 +264,7 @@ code, not how the work is organized.
 ## Workflow Completion
 
 1. **Focus on requirements and design** - Do not proceed to implementation or task generation
-2. **Prioritize discovery** - Ensure thorough understanding through clarifying questions
+2. **Fill the draft's gaps** - Ask targeted questions about what it leaves open; a real open decision returns to the
+   draft stage
 3. **Review before handing on** - The PRD's review loop (Step 5) settles before task generation starts
 4. **Reference next steps** - Upon completion, the PRD is ready for task generation via `2_generate-tasks.md`

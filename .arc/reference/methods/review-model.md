@@ -13,9 +13,9 @@ override-mode: extend
 ---
 
 <!--
-Vendored from arc-framework .arc/system/methods/review-model.md at 2538476f8. The default text is verbatim;
-out-of-set link targets are retargeted per README.md § Link map; CineXplorer changes live only in §
-review-model.override.
+Vendored from arc-framework .arc/system/methods/review-model.md at 2538476f8, with § Convergence and permission's
+fix-check paragraph at 6a8ba934. The default text is verbatim; out-of-set link targets are retargeted per README.md §
+Link map; CineXplorer changes live only in § review-model.override.
 -->
 
 # Method: review-model
@@ -38,16 +38,13 @@ CineXplorer adaptation (`override-mode: extend`):
   source. § Shared causes reads every finding the loop has dispositioned from its Review
   Log entries and kept reports ([adversarial-review][adversarial-review]'s override); an errand, which has no Review
   Log, names each shared cause and the looks it appeared in within its reports.
-- **A fix check after a converged look** (Owner, 2026-11-08). A fix check is offered after every fix batch here
-  ([adversarial-review][adversarial-review] § Fold verification and the workflows' review loops); this rule sets the
-  recommendation after a look that converged, complete pass or fix-check round. When the fixes performed for it change
-  behavior (what the code does, or what a planning document requires, not only wording or comments), recommend the
-  fix check where no complete pass will follow, as when the last complete pass found no critical or major finding and
-  no re-inspection is due, when you recommend stopping, or when a stop the Owner has set leaves no further pass.
-  Otherwise offer it without recommending either way. Wording-only
-  fixes stay as they are: offered, with declining recommended. This reconciles § Convergence and permission's "Decline
-  only on the fixes' own merits: minor-only repairs" with "Converged rounds end fix checking": a converged look needs
-  no further check, except where its repairs change behavior.
+- **A fix check after minor fixes** (Owner, 2026-11-08 and 2026-11-10). § Convergence and permission decides when
+  minor-only fixes still get a fix check and when it is recommended; for a planning or verification review, its
+  ceiling is the `Class` pass cap ([adversarial-review][adversarial-review]'s override). Two parts are local. No tool
+  records a fix's verification scope, so the agent presenting the fixes marks which minor fixes are at the `full`
+  scope in its disposition report. And a fix check is still offered after every fix batch here
+  ([adversarial-review][adversarial-review] § Fold verification and the workflows' review loops): after minor fixes
+  below that scope, such as wording-only ones, it is offered with declining recommended.
 - **Not used:** the `incremental` policy, `logicalPass` and `arc review lane read`, which belong to arc-framework's
   CLI-recorded code-review lanes.
 
@@ -127,11 +124,15 @@ caller's disposition approvals and ceiling rules. Every fix-check round runs onl
 permission waits for complete response performance, including the offered fix check's resolution, and is consumed only
 by its named complete-pass admission. A fix check neither spends nor inherits it.
 
-Recommend a fix check, and another round, whenever the last look's approved fixes include a material one. Decline only
-on the fixes' own merits: minor-only repairs, or an accepted re-entry or pending rewrite that will supersede them.
-A following pass, approved or under the cap, is never a reason to decline. Where the subject requires a successor after
-any fix, run the look that its policy names. Converge the rounds before launching the successor pass. Converged rounds
-end fix checking; § Successor passes decides whether a complete pass follows, and a complete pass never replaces them.
+Recommend a fix check, and another round, whenever the last look's approved fixes include a material one. Decline it
+only on the fixes' own merits, such as an accepted re-entry or pending rewrite that will supersede them; a following
+pass, approved or under the cap, is never a reason to decline. Minor-only fixes converge the look and end fix checking,
+unless they were approved at the `full` verification scope, which marks behavioral, authority, contract, materially
+interacting, or uncertain changes. A finding's grade need not match its repair's risk, so such a look offers a fix check
+of its repairs. Recommend that check where no complete pass will follow, because the ceiling is reached or the Owner has
+set a stop; otherwise weigh it beside the coming complete pass. Where the subject requires a successor after any fix,
+run the look that its policy names. Converge the rounds before launching the successor pass. § Successor passes decides
+whether a complete pass follows, and a complete pass never replaces a fix check that material fixes require.
 
 ### Successor passes
 

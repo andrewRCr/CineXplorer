@@ -83,10 +83,11 @@ names each shared cause and the looks it appeared in within its reports.
   review or treat the earlier receipt as a review of the repaired head
 - Offer a fix check: a fresh local subagent, scoped to the approved repairs, checks whether they hold
   ([review-model § Passes and fix checks](../../methods/review-model.md)). Fix checks always run locally, since a
-  hosted review can't be scoped to the repairs. Recommend one when the fixes were material. When none was material
-  and the fixes change what the code does, not only wording or comments, recommend one where no complete pass will
-  follow, and otherwise offer it without recommending either way; offer one after wording-only fixes with declining
-  recommended (review-model's override). The Owner decides
+  hosted review can't be scoped to the repairs. Recommend one when the fixes were material. When none was material,
+  mark which minor fixes are at the `full` verification scope (behavioral, authority, contract, materially
+  interacting or uncertain changes): after those, recommend one where no complete pass will follow and otherwise weigh
+  it beside the coming complete pass; after the rest, such as wording-only fixes, offer one with declining recommended
+  ([review-model § Convergence and permission](../../methods/review-model.md) and its override). The Owner decides
 - Once the fixes land and any fix checks converge, recommend another complete pass, local or hosted, until one finds
   no critical or major finding ([review-model § Successor passes](../../methods/review-model.md)); give the last
   complete pass's critical and major count beside the recommendation. The Owner decides, and may stop the review or

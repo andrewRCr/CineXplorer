@@ -33,7 +33,7 @@ assess-boundary-fit.override.
 
 CineXplorer adaptation (`override-mode: extend`): arc-framework's project override below is adopted unchanged
 (`64d989642`, Owner 2026-10-30). A spec is the PRD, and a boundary cut becomes separate task lists and branches
-([strategy-work-organization][work-org]).
+([strategy-work-organization][work-org]). The delivery-plan outcome is not used here.
 
 **Size is a trigger in this project.** A work unit here lands as one pull request, and its verification and code
 review read the whole change set, so the per-task review grain does not carry a large unit's quality. After the default
@@ -175,6 +175,6 @@ consumes the cut-map and runs the transform.
 ---
 
 [classify-work-unit]: classify-work-unit.md
-[draft-design]: ../workflows/1_create-prd.md
+[draft-design]: ../workflows/1a_draft-design.md
 [create-spec]: ../workflows/1_create-prd.md
 [work-org]: ../strategies/arc/strategy-work-organization.md

@@ -1,8 +1,10 @@
-import { Badge, HStack, VisuallyHidden } from "@chakra-ui/react";
+import { Badge, Box, HStack, VisuallyHidden } from "@chakra-ui/react";
 import React from "react";
 
-/** Fewer TMDB votes than this and the average is not shown as a traffic-light score. */
+/** Fewer TMDB votes than this and the chip stays neutral, without a score dot. */
 const SCORE_DISPLAY_MIN_VOTES = 10;
+
+type ScoreTier = "success" | "foreground" | "destructive";
 
 interface MovieUserScoreProps {
   /** TMDB vote_average (0-10 scale) */
@@ -17,10 +19,49 @@ interface MovieUserScoreProps {
   userRatingOnly?: boolean;
 }
 
-interface TmdbBadge {
-  variant: "success" | "warning" | "error" | "neutral";
+interface ScoreChipProps {
+  tier?: ScoreTier;
   label: string;
   title: string;
+}
+
+/** Color marks the score through a decorative dot; the number stays neutral. */
+function ScoreChip({ tier, label, title }: ScoreChipProps) {
+  return (
+    <Badge
+      variant="neutral"
+      bg={tier ? "transparent" : "badge"}
+      color={tier ? "foreground" : "on-badge"}
+      borderWidth={tier ? "1px" : "0"}
+      borderStyle="solid"
+      borderColor={tier ? "border-subtle-01" : undefined}
+      boxShadow="none"
+      gap={1}
+      fontSize="12px"
+      fontFamily="body"
+      paddingX={1}
+      title={title}
+    >
+      {tier && (
+        <Box
+          as="span"
+          aria-hidden="true"
+          bg={tier}
+          boxSize="8px"
+          borderRadius="full"
+          flexShrink={0}
+        />
+      )}
+      <VisuallyHidden>{title}: </VisuallyHidden>
+      {label}
+    </Badge>
+  );
+}
+
+function scoreTier(value: number, goodThreshold: number): ScoreTier {
+  if (value >= goodThreshold) return "success";
+  if (value < 5) return "destructive";
+  return "foreground";
 }
 
 const MovieUserScore: React.FC<MovieUserScoreProps> = ({
@@ -30,115 +71,53 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   userRating,
   userRatingOnly = false,
 }) => {
-  // Helper to get TMDB badge variant (0-10 scale)
-  // Traffic-light mapping: High (success) → Medium (warning) → Low (error)
-  // Badge recipe provides solid backgrounds with on-* color pairs
-  const getTmdbBadgeVariant = (
-    tmdbScore: number,
-  ): "success" | "warning" | "error" => {
-    if (tmdbScore >= 7.5) return "success"; // High: Green
-    if (tmdbScore < 5.0) return "error"; // Low: Red
-    return "warning"; // Medium: Yellow
-  };
-
-  // Helper to get the TMDB badge for the selected presentation
-  // Traffic-light score from SCORE_DISPLAY_MIN_VOTES votes up; neutral placeholder or vote-counted average below
-  const getTmdbBadge = (): TmdbBadge => {
+  const getTmdbChip = (): ScoreChipProps => {
     const isDetailed = presentation === "detailed";
-
-    // A missing average or a missing or zero count means TMDB has no votes to show
     if (score == null || !voteCount) {
       return {
-        variant: "neutral",
         label: isDetailed ? "Not yet rated" : "—",
         title: "No TMDB votes yet",
       };
     }
-
-    // Too few votes: cards hold a placeholder, the detail page shows the average with its count
     if (voteCount < SCORE_DISPLAY_MIN_VOTES) {
       return isDetailed
         ? {
-            variant: "neutral",
             label: `${score.toFixed(1)} · ${voteCount} ${voteCount === 1 ? "vote" : "votes"}`,
             title: "TMDB Rating",
           }
         : {
-            variant: "neutral",
             label: "—",
             title: `Fewer than ${SCORE_DISPLAY_MIN_VOTES} TMDB votes`,
           };
     }
-
-    return {
-      variant: getTmdbBadgeVariant(score),
-      label: score.toFixed(1),
-      title: "TMDB Rating",
-    };
+    const label = score.toFixed(1);
+    return { tier: scoreTier(Number(label), 7.5), label, title: "TMDB Rating" };
   };
 
-  // Helper to get user rating badge variant (1-10 scale)
-  // Uses same traffic-light variants as TMDB scores
-  // Traffic-light mapping: High (success) → Medium (warning) → Low (error)
-  const getUserRatingBadgeVariant = (
-    rating: number,
-  ): "success" | "warning" | "error" => {
-    if (rating >= 8) return "success";
-    if (rating < 5) return "error";
-    return "warning";
-  };
-
-  // Show only user rating
   if (userRatingOnly && userRating) {
-    const variant = getUserRatingBadgeVariant(userRating);
     return (
-      <Badge variant={variant} fontSize="12px" paddingX={1} title="Your Rating">
-        <VisuallyHidden>Your Rating: </VisuallyHidden>★ {userRating}/10
-      </Badge>
+      <ScoreChip
+        tier={scoreTier(userRating, 8)}
+        label={`★ ${userRating}/10`}
+        title="Your Rating"
+      />
     );
   }
 
-  const tmdbBadge = getTmdbBadge();
-
-  // Show both TMDB and user rating
+  const tmdbChip = getTmdbChip();
   if (userRating) {
-    const userVariant = getUserRatingBadgeVariant(userRating);
     return (
       <HStack gap={1}>
-        <Badge
-          variant={tmdbBadge.variant}
-          fontSize="12px"
-          paddingX={1}
-          title={tmdbBadge.title}
-        >
-          <VisuallyHidden>{tmdbBadge.title}: </VisuallyHidden>
-          {tmdbBadge.label}
-        </Badge>
-        <Badge
-          variant={userVariant}
-          fontSize="12px"
-          paddingX={1}
+        <ScoreChip {...tmdbChip} />
+        <ScoreChip
+          tier={scoreTier(userRating, 8)}
+          label={`★ ${userRating}`}
           title="Your Rating"
-        >
-          <VisuallyHidden>Your Rating: </VisuallyHidden>★ {userRating}
-        </Badge>
+        />
       </HStack>
     );
   }
-
-  // Show only TMDB rating
-  return (
-    <Badge
-      variant={tmdbBadge.variant}
-      fontSize="12px"
-      fontFamily="body"
-      paddingX={1}
-      title={tmdbBadge.title}
-    >
-      <VisuallyHidden>{tmdbBadge.title}: </VisuallyHidden>
-      {tmdbBadge.label}
-    </Badge>
-  );
+  return <ScoreChip {...tmdbChip} />;
 };
 
 export default MovieUserScore;

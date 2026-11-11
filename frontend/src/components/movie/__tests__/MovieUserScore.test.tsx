@@ -18,18 +18,43 @@ const renderWithBadgeStyles = (ui: ReactElement) =>
     <ChakraProvider value={badgeStyleSystem}>{ui}</ChakraProvider>,
   );
 
-const variantBackgrounds = {
-  neutral: "var(--chakra-colors-badge)",
-  success: "var(--chakra-colors-success)",
-  warning: "var(--chakra-colors-warning)",
-  error: "var(--chakra-colors-destructive)",
-} as const;
-
-const expectBadgeVariant = (
-  badge: HTMLElement,
-  variant: keyof typeof variantBackgrounds,
+const expectScoreStyle = (
+  chip: HTMLElement,
+  tier: "neutral" | "success" | "foreground" | "destructive",
 ) => {
-  expectResolvedColor(badge, "background-color", variantBackgrounds[variant]);
+  const styles = getComputedStyle(chip);
+  // The decorative dot intentionally has no accessible role.
+  // eslint-disable-next-line testing-library/no-node-access
+  const dots = chip.querySelectorAll<HTMLElement>('[aria-hidden="true"]');
+  if (tier === "neutral") {
+    expectResolvedColor(chip, "background-color", "var(--chakra-colors-badge)");
+    expectResolvedColor(chip, "color", "var(--chakra-colors-on-badge)");
+    expect(dots).toHaveLength(0);
+    expect(styles.borderWidth).toMatch(/^(0px)?$/);
+  } else {
+    expect(styles.backgroundColor).toMatch(
+      /^(transparent|rgba\(0, 0, 0, 0\))$/,
+    );
+    expect(styles.borderWidth).toBe("1px");
+    expect(styles.borderStyle).toBe("solid");
+    expectResolvedColor(
+      chip,
+      "border-color",
+      "var(--chakra-colors-border-subtle-01)",
+    );
+    expectResolvedColor(chip, "color", "var(--chakra-colors-foreground)");
+    expect(styles.boxShadow).toBe("none");
+    expect(dots).toHaveLength(1);
+    const dot = dots.item(0);
+    expectResolvedColor(
+      dot,
+      "background-color",
+      `var(--chakra-colors-${tier})`,
+    );
+    expect(getComputedStyle(dot).width).toBe("8px");
+    expect(getComputedStyle(dot).height).toBe("8px");
+    expect(isInaccessible(dot)).toBe(true);
+  }
 };
 
 describe("MovieUserScore Component", () => {
@@ -59,9 +84,36 @@ describe("MovieUserScore Component", () => {
     const thresholdCases = (["compact", "detailed"] as const).flatMap(
       (presentation) => [
         { presentation, score: 7.5, label: "7.5", variant: "success" as const },
-        { presentation, score: 7.4, label: "7.4", variant: "warning" as const },
-        { presentation, score: 5.0, label: "5.0", variant: "warning" as const },
-        { presentation, score: 4.9, label: "4.9", variant: "error" as const },
+        {
+          presentation,
+          score: 7.47,
+          label: "7.5",
+          variant: "success" as const,
+        },
+        {
+          presentation,
+          score: 4.97,
+          label: "5.0",
+          variant: "foreground" as const,
+        },
+        {
+          presentation,
+          score: 7.4,
+          label: "7.4",
+          variant: "foreground" as const,
+        },
+        {
+          presentation,
+          score: 5.0,
+          label: "5.0",
+          variant: "foreground" as const,
+        },
+        {
+          presentation,
+          score: 4.9,
+          label: "4.9",
+          variant: "destructive" as const,
+        },
       ],
     );
 
@@ -76,8 +128,9 @@ describe("MovieUserScore Component", () => {
           />,
         );
 
-        const badge = screen.getByText(label);
-        expectBadgeVariant(badge, variant);
+        const badge = screen.getByTitle("TMDB Rating");
+        expect(badge).toHaveTextContent(`TMDB Rating: ${label}`);
+        expectScoreStyle(badge, variant);
         expect(badge).toHaveAttribute("title", "TMDB Rating");
       },
     );
@@ -93,7 +146,7 @@ describe("MovieUserScore Component", () => {
           />,
         );
 
-        expectBadgeVariant(screen.getByText("8.1"), "success");
+        expectScoreStyle(screen.getByText("8.1"), "success");
       },
     );
   });
@@ -115,7 +168,7 @@ describe("MovieUserScore Component", () => {
         );
 
         const badge = screen.getByText("—");
-        expectBadgeVariant(badge, "neutral");
+        expectScoreStyle(badge, "neutral");
         expect(badge).toHaveAttribute("title", "No TMDB votes yet");
       },
     );
@@ -132,7 +185,7 @@ describe("MovieUserScore Component", () => {
         );
 
         const badge = screen.getByText("Not yet rated");
-        expectBadgeVariant(badge, "neutral");
+        expectScoreStyle(badge, "neutral");
         expect(badge).toHaveAttribute("title", "No TMDB votes yet");
       },
     );
@@ -154,21 +207,21 @@ describe("MovieUserScore Component", () => {
 
   describe("TMDB score with 1–9 votes", () => {
     it('shows a neutral "—" in the compact presentation', () => {
-      renderWithBadgeStyles(<MovieUserScore score={6.8} voteCount={4} />);
+      renderWithBadgeStyles(<MovieUserScore score={6.2} voteCount={4} />);
 
       const badge = screen.getByText("—");
-      expectBadgeVariant(badge, "neutral");
+      expectScoreStyle(badge, "neutral");
       expect(badge).toHaveAttribute("title", "Fewer than 10 TMDB votes");
-      expect(screen.queryByText("6.8")).not.toBeInTheDocument();
+      expect(screen.queryByText("6.2")).not.toBeInTheDocument();
     });
 
     it("shows the average with its vote count in the detailed presentation", () => {
       renderWithBadgeStyles(
-        <MovieUserScore score={6.8} voteCount={4} presentation="detailed" />,
+        <MovieUserScore score={6.2} voteCount={4} presentation="detailed" />,
       );
 
-      const badge = screen.getByText("6.8 · 4 votes");
-      expectBadgeVariant(badge, "neutral");
+      const badge = screen.getByText("6.2 · 4 votes");
+      expectScoreStyle(badge, "neutral");
       expect(badge).toHaveAttribute("title", "TMDB Rating");
     });
 
@@ -177,35 +230,35 @@ describe("MovieUserScore Component", () => {
         <MovieUserScore score={9} voteCount={1} presentation="detailed" />,
       );
 
-      expectBadgeVariant(screen.getByText("9.0 · 1 vote"), "neutral");
+      expectScoreStyle(screen.getByText("9.0 · 1 vote"), "neutral");
     });
 
     it("keeps 9 votes below the threshold in both presentations", () => {
       const { unmount } = renderWithBadgeStyles(
         <MovieUserScore score={8.1} voteCount={9} />,
       );
-      expectBadgeVariant(screen.getByText("—"), "neutral");
+      expectScoreStyle(screen.getByText("—"), "neutral");
       unmount();
 
       renderWithBadgeStyles(
         <MovieUserScore score={8.1} voteCount={9} presentation="detailed" />,
       );
-      expectBadgeVariant(screen.getByText("8.1 · 9 votes"), "neutral");
+      expectScoreStyle(screen.getByText("8.1 · 9 votes"), "neutral");
     });
   });
 
   describe("User rating beside a below-threshold TMDB score", () => {
-    it("keeps the user badge unchanged while the TMDB badge shows the placeholder", () => {
+    it("shows a user dot chip beside the TMDB placeholder", () => {
       renderWithBadgeStyles(
-        <MovieUserScore score={6.8} voteCount={4} userRating={9} />,
+        <MovieUserScore score={6.2} voteCount={4} userRating={9} />,
       );
 
       const tmdbBadge = screen.getByText("—");
-      expectBadgeVariant(tmdbBadge, "neutral");
+      expectScoreStyle(tmdbBadge, "neutral");
       expect(tmdbBadge).toHaveAttribute("title", "Fewer than 10 TMDB votes");
 
       const userBadge = screen.getByText("★ 9");
-      expectBadgeVariant(userBadge, "success");
+      expectScoreStyle(userBadge, "success");
       expect(userBadge).toHaveAttribute("title", "Your Rating");
     });
 
@@ -219,14 +272,14 @@ describe("MovieUserScore Component", () => {
         />,
       );
 
-      expectBadgeVariant(screen.getByText("Not yet rated"), "neutral");
-      expectBadgeVariant(screen.getByText("★ 4"), "error");
+      expectScoreStyle(screen.getByText("Not yet rated"), "neutral");
+      expectScoreStyle(screen.getByText("★ 4"), "destructive");
     });
 
     it("still hides the TMDB badge in user-rating-only mode", () => {
       renderWithBadgeStyles(
         <MovieUserScore
-          score={6.8}
+          score={6.2}
           voteCount={4}
           userRating={7}
           userRatingOnly={true}
@@ -234,11 +287,53 @@ describe("MovieUserScore Component", () => {
       );
 
       const userBadge = screen.getByText("★ 7/10");
-      expectBadgeVariant(userBadge, "warning");
+      expectScoreStyle(userBadge, "foreground");
       expect(userBadge).toHaveAttribute("title", "Your Rating");
       expect(screen.queryByText("—")).not.toBeInTheDocument();
     });
   });
+
+  describe.each(["compact", "detailed"] as const)(
+    "user chips in %s presentation",
+    (presentation) => {
+      it.each([8, 7, 5, 4])(
+        "colors user rating %s in combined and user-only layouts",
+        (rating) => {
+          const tier =
+            rating >= 8
+              ? "success"
+              : rating >= 5
+                ? "foreground"
+                : "destructive";
+          const { unmount } = renderWithBadgeStyles(
+            <MovieUserScore
+              score={7.5}
+              voteCount={10}
+              userRating={rating}
+              presentation={presentation}
+            />,
+          );
+          const chip = screen.getByTitle("Your Rating");
+          expect(chip).toHaveTextContent(`Your Rating: ★ ${rating}`);
+          expectScoreStyle(chip, tier);
+          unmount();
+          renderWithBadgeStyles(
+            <MovieUserScore
+              score={7.5}
+              voteCount={10}
+              userRating={rating}
+              presentation={presentation}
+              userRatingOnly
+            />,
+          );
+          expect(screen.getByTitle("Your Rating")).toHaveTextContent(
+            `Your Rating: ★ ${rating}/10`,
+          );
+          expectScoreStyle(screen.getByTitle("Your Rating"), tier);
+        },
+      );
+    },
+  );
 
   describe("User rating only mode", () => {
     it("shows only user rating when userRatingOnly is true", () => {
@@ -333,16 +428,16 @@ describe("MovieUserScore Component", () => {
       },
       {
         presentation: "compact" as const,
-        score: 6.8,
+        score: 6.2,
         voteCount: 4,
         label: "—",
         explanation: "Fewer than 10 TMDB votes",
       },
       {
         presentation: "detailed" as const,
-        score: 6.8,
+        score: 6.2,
         voteCount: 4,
-        label: "6.8 · 4 votes",
+        label: "6.2 · 4 votes",
         explanation: "TMDB Rating",
       },
     ];

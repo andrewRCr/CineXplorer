@@ -146,7 +146,7 @@ under Marquee's `defaultSystem`.
 
 _Mode:_ `slice` — closes on dot chips and neutral certifications on the browse grid and a movie's detail page.
 
-- [ ] **3.1 Pin the score chip with failing tests — R10, R11, R12, R13, R14**
+- [x] **3.1 Pin the score chip with failing tests — R10, R11, R12, R13, R14**
 
     **Goal:** Each tier's dot, the few-votes chip and the unchanged accessible text are pinned by failing tests in both
     presentations.
@@ -156,43 +156,24 @@ _Mode:_ `slice` — closes on dot chips and neutral certifications on the browse
           Both renderers and their providers accept an optional Chakra system; documented examples include routes.
           All 53 existing score cases passed unchanged after extraction, as did type-check, lint and formatting.
 
-    - [ ] **3.1.b Rewrite `MovieUserScore.test.tsx`'s style cases for the chip**
-        - Test (both presentations): a scored TMDB score has a transparent background, a `border-subtle-01` border, no
-          box shadow (Chakra's `outline` badge draws an inset ring in a palette gray), and a dot whose background is
-          `success` at 7.5 and at 7.47 (shown "7.5"), `foreground` at 7.4, 5.0 and 4.97 (shown "5.0"), and
-          `destructive` at 4.9; the number is in `foreground`
-        - Find a chip by its `title` and its dot as the chip's `aria-hidden` child (task 3.2's contract). Assert a
-          transparent background directly on the element; the shared assertion's reference rejects transparent values
-        - Test: no votes and fewer than 10 votes keep the `badge` fill with `on-badge` text, no dot and no border,
-          with today's labels ("—", "Not yet rated", "6.2 · 4 votes", "9.0 · 1 vote")
-        - Test: a user rating takes the chip with its own tiers (8 good; 7 and 5 middle; 4 low), labeled "★ 8"
-          beside a TMDB score and "★ 8/10" alone, the star in the number's color
-        - Test: the dot is hidden from assistive technology; the accessible text stays "TMDB Rating: 7.5" and "Your
-          Rating: ★ 8"; each chip keeps its `title`
-        - Test: no score or user rating has a `success`, `warning` or `destructive` background
-        - Keep the existing label, vote-count and title cases
-        - Expect the style cases to FAIL initially. Cases today's code already satisfies (the few-votes and no-votes
-          chips' fill, labels and absent dot; the accessible text and titles) pass at once: show each failing against
-          a narrow reconstruction (for example a few-votes chip given a dot) and passing once restored, and record
-          that (`testing-standards`)
+    - [x] **3.1.b Pin the dot chip**
+        - Reworked style cases for both presentations, rounded thresholds, neutral chips, user tiers, chip borders,
+          text, dot size/visibility and the existing labels/titles. Initial result: 27 failures, 38 passes.
+        - Narrow reconstructions of neutral fills and added neutral dots each failed 14 assertions; changed labels,
+          titles and prefixes failed 31 assertions. Restoring and implementing the chip made all 65 cases pass.
 
-- [ ] **3.2 Scores render as dot chips — R10, R11, R12, R13, R14**
+- [x] **3.2 Scores render as dot chips — R10, R11, R12, R13, R14**
 
     **Goal:** A score reads at a glance from a small dot beside a neutral number, and its color always agrees with the
     number shown.
 
-    - `frontend/src/components/movie/MovieUserScore.tsx`: take the tier from the displayed value (the average rounded
-      to one decimal), not the raw average; user-rating tiers 8 to 10, 5 to 7, 1 to 4
-    - The scored chip: no fill, a 1px `border-subtle-01` outline, an 8px dot in the tier's role (`success`,
-      `foreground`, `destructive`) hidden from assistive technology, then the label in `foreground` after its visually
-      hidden prefix; the few-votes chip stays the `neutral` badge, with no dot or outline
-    - The user rating's star stays in the label text, in `foreground`; the user-rating-only and combined presentations
-      keep their layout
-    - The test contract: each chip's root carries its `title`, and the dot is the chip's only `aria-hidden` child
-    - The component's comments describe the dot tiers instead of traffic-light badges, including
-      `SCORE_DISPLAY_MIN_VOTES`'s
-    - Tests should now PASS
-    - **Check:** `browse.spec.ts`, `movie-detail.spec.ts` and `back-to-results.spec.ts` against the browsable stack
+    - Shared chip rendering uses a transparent fill, subtle outline, neutral number and an 8px decorative dot;
+      neutral few/no-vote chips retain their fill, labels and absent dot. TMDB tiers use the rounded display value;
+      user tiers keep 8/5 thresholds, the neutral star and existing combined/standalone layouts.
+    - All 65 score cases and 126 related tests across five files passed, plus type-check, touched-file lint and
+      formatting. Browse, detail and back-to-results smoke specs passed (three specs).
+    - Corrected the related-test invocation to run from `frontend/`, and documented the deliberate inaccessible-dot
+      DOM query for ESLint.
 
 - [ ] **3.3 The score guidance and the score-display ADR describe the chip — R18**
 

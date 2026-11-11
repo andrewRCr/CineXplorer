@@ -44,45 +44,29 @@ reshaped.
 _Exit criterion:_ both migrations apply and reverse, the constraint tests pass writing through the ORM, and the
 rewritten service tests pass with `repositories.py` deleted.
 
-- [ ] **1.1 The service's tests run against the test database — D1**
+- [x] **1.1 The service's tests run against the test database — D1**
 
     **Goal:** Today's service behaviour is pinned by tests that read and write the test database, replacing only TMDB,
     so the fold and the model changes that follow can't change it unnoticed.
 
     **Note:** Commit this task alone, before 1.2 starts, so Success Criterion 2 holds at its commit.
 
-    - [ ] **1.1.a Add the factory functions and a TMDB stub**
-        - In `apps/user_movie_data/tests/test_helpers.py`: plain functions that save a `Movie` row and a
-          `UserMovieData` record with keyword overrides (no factory_boy)
-        - In a new module beside `apps/movie/tests/tmdb_test_builders.py`, so the movie app's tests (4.1, 4.2) use it
-          too: a `TMDBApiClient` stand-in whose `get_movie_details` and `get` answer `ApiResponse`s, records the IDs
-          requested (so a test can show no request was made), and can be told to answer per movie with details built
-          by `create_tmdb_movie_detail`, a credits response, the error responses `TMDBApiClient` returns
-          (`create_mock_error_response` in `apps/movie/tests/test_helpers.py`: TMDB's 404, 400, 422, 429 and a 5xx, and
-          the client's own 504 `network_error` for a timeout) or data that fails validation
-        - The mock-building helpers (`create_mock_user_movie_data`, `create_mock_movie`, `create_movie_schema`,
-          `create_movie_detail_schema`, `create_pagination_metadata`) go once 1.1.b and 1.1.c leave them unused; only
-          those two files import them
-
-    - [ ] **1.1.b Rewrite `tests/unit/test_user_movie_data_service.py` against the database**
-        - It moves to `tests/integration/`, where the testing strategy puts service tests with real dependencies
-        - Build the service as `UserMovieDataService(movie_service=MovieService(tmdb_client=stub))` with its default
-          repository; nothing mocks the repository or `MovieService`
-        - The Library tests replace `fetch_movies_batch`'s own module-level client
-          (`apps.movie.services.pipelines.batch.tmdb_client`) with the stub, since that function takes no client; this
-          lasts until 3.1.c removes the Library's last call to it
-        - Keep each test's behaviour. The two wiring tests (`test_service_initialization_with_injected_dependencies`,
-          `test_all_operations_pass_user_to_repository`) become the behaviour they stand for: another user's record is
-          not found by any operation
-
-    - [ ] **1.1.c Rewrite `tests/unit/test_movie_enrichment_service.py` against the database**
-        - It moves to `tests/integration/` too; records saved through the factory functions; assertions on the returned
-          schemas, not on calls
-
-    - [ ] **1.1.d See each rewritten test fail, then pass**
-        - The tests pass on arrival against the current code, so for each one break the behaviour it covers narrowly
-          (in the service, enrichment or repository), run it to a behavioural failure, and restore
-        - Record the reconstruct-and-revert evidence in this task's completion notes
+    - [x] **1.1.a Add the factory functions and a TMDB stub**
+        - Plain saved-row factories accept keyword overrides; `TMDBStub` serves configured details, credits, error
+          responses or invalid payloads and records requests without accessing the network.
+    - [x] **1.1.b Rewrite the user-movie service tests against the database**
+        - Moved to `tests/integration/`, using the default repository and a real `MovieService` with the injected
+          TMDB stub. Library tests replace only the batch client's TMDB boundary. Wiring assertions became user
+          isolation checks across reads, updates, deletes, creates and lists; each existing behavior is retained.
+    - [x] **1.1.c Rewrite the enrichment tests against the database**
+        - Moved to `tests/integration/`; assertions cover returned schemas, preserved fields, non-mutation, user
+          isolation and query counts. Removed the five unused mock/schema/pagination builders.
+    - [x] **1.1.d See each rewritten test fail, then pass**
+        - All 44 rewritten cases (the original 39 plus parameterized filter/ownership cases) failed under temporary
+          behavior mutations, restored after each run: wrong identifiers/statuses, omitted filters/user scoping,
+          changed persisted fields, skipped deletion, wrong card title/list metadata/results, omitted enrichment
+          fields, unnecessary queries, copied early returns, input mutation, altered cards and invented user data.
+        - Every case passed against restored production code. No production behavior changed in this task.
 
 - [ ] **1.2 The repository folds into the service over one QuerySet — D2, D3**
 

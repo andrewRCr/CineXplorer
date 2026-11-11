@@ -324,7 +324,13 @@ _Exit criterion:_ the search Success Criterion 9 names finds nothing in producti
         - Removing the focus-ring override temporarily made all six focus cases fail on Chakra's gray; restoring
           it made the 27 certification filter/badge cases pass. Types and changed-test lint/format passed.
 
-- [ ] **6.2 Prove the post-merge criteria** (Success Criterion 11's staging half; load `archive-completed.md` § 9)
+- [x] **6.2 Prove the post-merge criteria** (Success Criterion 11's staging half; load `archive-completed.md` § 9)
+
+    - PR #170's end-to-end smoke and axe checks passed in CI run 43026012637. Merge `3206071f` passed main CI,
+      deployed to staging and passed staging smoke in CI run 43027791715.
+    - Live browse and movie 687163's detail page rendered in both Marquee modes with the expected page colors,
+      neutral score text, outlined chips with decorative 8px dots and a neutral PG-13 badge. Dark/light page colors
+      were `#110E0A`/`#F2E8CE`; badge fills were `#433C34`/`#DFD2B4`.
 
 ## Implementation Notes
 
@@ -427,10 +433,10 @@ _Exit criterion:_ the search Success Criterion 9 names finds nothing in producti
   examples explicitly say they are removed. The adapter list, brand table, overview and README name Marquee, and
   rendered selector tests pass.
 
-- [ ] 11. Proven live: the pull request's end-to-end smoke job passes with its axe scans under Marquee, with no new axe
+- [x] 11. Proven live: the pull request's end-to-end smoke job passes with its axe scans under Marquee, with no new axe
   baseline entry and without the `/login` `color-contrast` entry, and after merge the staging site renders the browse
   grid and a movie's detail page in Marquee in both modes, with dot chips for scores and neutral certifications.
 
-  Pending the planned delivery stages: this verification run passed all five local smoke specs and axe scans,
-  including the registration notice without the removed login baseline. Pull-request CI is not yet available; Task 6.2
-  owns the staging half after merge.
+  Met: PR #170's smoke/axe job passed in CI run 43026012637 without a new baseline or the login contrast entry.
+  Merge `3206071f` deployed and passed staging smoke in CI run 43027791715. Live browse/detail checks in both modes
+  confirmed Marquee page colors, outlined score dots with neutral numbers, and the neutral certification badge.

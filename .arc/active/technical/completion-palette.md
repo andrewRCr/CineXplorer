@@ -44,9 +44,10 @@ The full local backend and frontend suites, lint, formatting, type checks, contr
 browser smoke specifications passed. Local axe scans include the registration notice without the former login
 contrast baseline entry. The focused certification tests also passed after extending keyboard-focus coverage.
 
-A fresh independent criteria pass found no implementation gaps and supported Success Criteria 1–10. The separate
-code review, pull-request CI and post-merge staging proof remain delivery steps; Success Criterion 11 and Task 6.2
-stay open until their required evidence is recorded.
+Independent criteria and code reviews found no implementation gaps. PR CI passed in run 43026012637; merge
+`3206071f` passed main CI, deployed to staging and passed staging smoke in run 43027791715. Live browse and movie
+detail checks in both Marquee modes confirmed the page colors, outlined score dots with neutral numbers and a
+neutral certification badge. Every Success Criterion is now met.
 
 ## Related Documentation
 
@@ -57,7 +58,5 @@ stay open until their required evidence is recorded.
 
 ## Follow-Up Work
 
-- Record the pull request's smoke/axe result, then prove the browse grid and a movie's detail page on staging in
-  both Marquee modes, with score dots and neutral certifications.
 - After the new layouts are in place, compare the current deep-page/pale-card light order with the reversed order.
   The current Marquee values remain the approved palette for this delivery.

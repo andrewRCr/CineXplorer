@@ -284,12 +284,15 @@ one item at `page_size=1` carrying the `Movie` row's card fields, with `total_pa
           list's always-null cursor. Updated the auth example and technical service inventory.
         - All 623 tests in both touched apps pass, as do Ruff, formatting, strict Pyright and changed-document lint.
 
-- [ ] **3.3 Check a Library page end to end**
+- [x] **3.3 Check a Library page end to end**
 
     **Goal:** The Library composes through the real stack: query validation, the read and the response.
 
-    - Run Phase 3's exit criterion as a scripted scenario against the browsable stack, with the backend's TMDB log
-      showing no request for the Library call, and record what ran and the result
+    - The scripted browsable-stack scenario signed in as dev, saved two movies, then read watchlist pages sorted by
+      title ascending at page_size 1. Both pages answered 200 with total_pages/total_results 2, distinct TMDB IDs
+      550 and 278, and null TMDB cursors. Every returned card field matched its stored Movie row.
+    - The application log contains TMDB messages from the setup lookup and none during the two Library requests.
+      Script/output and the request log excerpt are retained with the run evidence. Phase 3's exit criterion is met.
 
 ### **Phase 4:** Stored card data stays fresh
 

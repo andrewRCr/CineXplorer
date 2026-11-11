@@ -52,7 +52,7 @@ const QuickBrowseBar = ({
       <Text
         fontSize="sm"
         fontWeight="400"
-        fontFamily="inter"
+        fontFamily="body"
         color="on-muted"
         mr={2}
         flexShrink={0}

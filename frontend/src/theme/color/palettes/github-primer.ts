@@ -146,3 +146,19 @@ export type GitHubPaletteColorLight = keyof typeof githubPaletteLight;
  * Type-safe palette color names for dark mode.
  */
 export type GitHubPaletteColorDark = keyof typeof githubPaletteDark;
+
+/** Official scale steps used by status text. Source: https://unpkg.com/@primer/primitives@8.0.0/src/tokens/base/color/light/light.json5 (light) and dark/dark.json5 (dark) */
+export const githubStatusColorSteps = {
+    light: {
+        green6: "#116329",
+        red6: "#a40e26",
+        yellow6: "#7d4e00",
+        blue6: "#0550ae",
+    },
+    dark: {
+        green2: "#56d364",
+        red2: "#ffa198",
+        yellow2: "#e3b341",
+        blue2: "#79c0ff",
+    },
+} as const;

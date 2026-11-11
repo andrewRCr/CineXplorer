@@ -33,6 +33,7 @@
 
 import type { UnifiedTheme } from "../types";
 import {
+    pajamasStatusColorSteps,
     gitlabPajamasPaletteLight,
     gitlabPajamasPaletteDark,
 } from "../palettes/gitlab-pajamas";
@@ -160,13 +161,29 @@ export function createPajamasAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive, success, warning, info (official GitLab tokens)
-    const destructive = palette.bg_danger;
+    // Previous light/dark minimum text contrast: 4.07:1 / 2.46:1.
+    const destructive =
+        mode === "light"
+            ? pajamasStatusColorSteps.red700
+            : pajamasStatusColorSteps.red200;
     const onDestructive = palette.fg_onEmphasis;
-    const success = palette.bg_success;
+    // Previous light/dark minimum text contrast: 3.53:1 / 3.38:1.
+    const success =
+        mode === "light"
+            ? pajamasStatusColorSteps.green700
+            : pajamasStatusColorSteps.green200;
     const onSuccess = palette.fg_onEmphasis;
-    const warning = palette.fg_warning;
+    // Previous light/dark minimum text contrast: 4.20:1 / 3.31:1.
+    const warning =
+        mode === "light"
+            ? pajamasStatusColorSteps.orange700
+            : pajamasStatusColorSteps.orange200;
     const onWarning = palette.fg_onEmphasis;
-    const info = palette.fg_info;
+    // Previous light/dark minimum text contrast: 3.53:1 / 3.26:1.
+    const info =
+        mode === "light"
+            ? pajamasStatusColorSteps.blue700
+            : pajamasStatusColorSteps.blue100;
     const onInfo = palette.fg_onEmphasis;
 
     // Shadows (official Pajamas gl-shadow values)

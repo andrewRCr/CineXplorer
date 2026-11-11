@@ -52,7 +52,7 @@ const SortDropdown = ({
       <Text
         fontSize="sm"
         fontWeight="400"
-        fontFamily="inter"
+        fontFamily="body"
         color="on-muted"
         alignSelf="center"
         flexShrink={0}

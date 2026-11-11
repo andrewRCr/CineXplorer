@@ -49,7 +49,7 @@ Before finalizing any task list, verify:
 - [ ] "Tests should now PASS" noted after implementation subtasks
 - [ ] Last phase is Verification: one task that loads `archive-completed.md` § 1
 - [ ] Success Criteria at the bottom: observable outcomes, at least one with a runnable check, no gates or
-  counts; then `## Review Log`
+  counts
 
 ---
 
@@ -1090,10 +1090,6 @@ _Exit criterion:_ after opening a movie and coming back, the search shows the sa
 - [ ] Filters applied on a list page are still applied after opening a movie and pressing Back (URL tests)
 - [ ] An expanded advanced-filter panel is still expanded after the same round trip
 - [ ] Browser Back and Forward buttons restore the same filter state (checked in the browser)
-
-## Review Log
-
-_(one entry per review pass and fix check)_
 ```
 
 **Key elements demonstrated:**
@@ -1472,9 +1468,10 @@ when context would help a future reader.
 
 ## Success Criteria Section
 
-**Required for all task lists.** Placed at the bottom after all phases, followed only by the `## Review Log`. The
-criteria say what the finished work must achieve, observably; they are checked at verification
-([archive-completed.md § 1](../../workflows/supplemental/archive-completed.md)), not inferred from task checkboxes.
+**Required for all task lists.** Placed at the bottom, after all phases; review passes are recorded in the work unit's
+review log, not in the task list. The criteria say what the finished work must achieve, observably; they are checked
+at verification ([archive-completed.md § 1](../../workflows/supplemental/archive-completed.md)), not inferred from task
+checkboxes.
 
 ### Writing Criteria
 
@@ -1510,10 +1507,6 @@ criteria say what the finished work must achieve, observably; they are checked a
 - [ ] [Observable outcome derived from Scope "Will Do"]
 - [ ] [Outcome with a runnable check, e.g. "GET /api/movies?genre=27 returns only horror titles"]
 - [ ] [Outcome proven live: e.g. "Password reset email arrives from the production sender"]
-
-## Review Log
-
-_(one entry per review pass and fix check)_
 ```
 
 ### Examples

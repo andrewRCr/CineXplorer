@@ -244,7 +244,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                 ref={titleRef}
                 fontSize="lg"
                 fontWeight="semibold"
-                fontFamily="inter"
+                fontFamily="heading"
                 lineHeight="1.2"
                 cursor="pointer"
                 overflow="hidden"
@@ -304,7 +304,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                     <Text
                       fontSize="sm"
                       fontWeight="medium"
-                      fontFamily="sourcesans"
+                      fontFamily="body"
                       color="on-popover"
                       lineHeight="1.2"
                     >
@@ -322,7 +322,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Text fontSize="sm" fontFamily="sourcesans" color="on-muted">
+                <Text fontSize="sm" fontFamily="body" color="on-muted">
                   {formattedDate}
                 </Text>
                 <MovieUserScore

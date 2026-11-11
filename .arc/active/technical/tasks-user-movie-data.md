@@ -357,12 +357,13 @@ _Exit criterion:_ on the browsable stack, viewing a stored movie's detail moves 
     - Dated append-only amendments record the removed-movie risk, bounded freshness and the two-query Library read.
       Status records realization; the Decision and original consequences remain intact. Markdown lint passes.
 
-- [ ] **4.5 Check the refresh end to end**
+- [x] **4.5 Check the refresh end to end**
 
     **Goal:** The refresh composes through the real stack: the command, TMDB and the rows it keeps.
 
-    - Run Phase 4's exit criterion as a scripted scenario against the browsable stack, with a stored row's
-      `refreshed_at` cleared first, and record what ran and the result
+    - On the isolated browsable stack, cleared both stored rows' refresh times. GET movie 550 returned 200 and
+      refreshed its card; the real command then refreshed both rows, printed `Refreshed: 2; failed: 0` and exited 0.
+      Both timestamps advanced together. Script and output retained with the work unit's run evidence.
 
 ### **Phase 5:** The frontend saves through the one PATCH
 

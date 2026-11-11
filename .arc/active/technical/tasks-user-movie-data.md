@@ -171,67 +171,34 @@ clock minute answers 429.
         - Legacy record-ID deletion is temporarily named `delete_by_record_id`; its existing route/tests follow it.
           All 120 user-data tests, Ruff, formatting and strict Pyright pass after source restoration.
 
-- [ ] **2.3 The routes address records by TMDB ID and declare their responses — D3, D5, D6**
+- [x] **2.3 The routes address records by TMDB ID and declare their responses — D3, D5, D6**
 
     **Goal:** GET, PATCH and DELETE `/user-movie-data/{tmdb_id}` answer exactly D6's Responses table, every error body
     has the shared schema, and nothing addresses a record by its database ID.
 
-    - [ ] **2.3.a Add `ErrorResponseSchema` to `apps/core/schemas.py`**
-        - Fields as D3's table; a test shows `error_body`'s bodies, with and without a `code`, validate against it
-        - Expect the test to FAIL initially
-
-    - [ ] **2.3.b Write the schema tests, then the schemas**
-        - `UserMovieDataSchema` and `UserMovieDataPatchSchema` as D5's tables give them: every response field
-          required; in the body, `null` for a flag, a rating outside 1–10, a review over 10,000 characters or holding a
-          NUL character each refused; an empty or whitespace-only review becomes `null`, and any other review is kept as
-          sent, surrounding whitespace included; unknown fields ignored
-        - `apps.movie.schemas.UserMovieDataSchema` goes here, since OpenAPI names a component by its class name: define
-          the new schema once, in `apps/user_movie_data/schemas.py`, with `apps/movie/schemas.py` importing it.
-          `MovieListItemSchema.user_movie_data` and `MovieEnrichmentService` use it, and 1.1.c's enrichment tests follow
-          its shape. `UserMovieDataModelSchema`, which nothing uses, goes too
-        - `UserMovieDataDetailSchema`, `UserMovieDataCreateSchema` and `UserMovieDataUpdateSchema` stay until 2.3.d
-          removes the routes that import them
-        - The payload tests in `apps/movie/tests/integration/test_endpoint_enrichment_integration.py` assert the new
-          schema's exact fields for list and detail items (`watched_at` present, no `id` or `title`); their `null`
-          cases, for an anonymous request or a movie with no record, stand as they are
-        - Tests FAIL first, then PASS
-
-    - [ ] **2.3.c Write the API tests for the new routes**
-        - Rewrite `tests/integration/test_user_movie_data_api.py`: Success Criterion 6's cases, except that the Library
-          leaves out a record with no state (3.1.b, once the Library can), and Criterion 1's PATCH cases (each field set
-          from a record holding no state and from one holding every field; a rating, a review and a date cleared with
-          `null`)
-        - A `tmdb_id` that isn't a positive integer is 422; `/movies` is never read as a TMDB ID
-        - Each route answers 401 with no user and never reads or writes another user's record
-        - A PATCH of an unstored movie whose TMDB ID TMDB doesn't know answers 404, and one TMDB answers with a 5xx
-          answers 502 with the shared body; each writes nothing (TMDB patched at the class)
-        - The OpenAPI schema (`api.get_openapi_schema()`) lists exactly D6's statuses for each of the three routes,
-          every error with `ErrorResponseSchema`
-        - `apps/authentication/tests/integration/test_csrf_protection.py` and `test_session_auth.py` move to the new
-          routes: with CSRF checks enforced, a session-signed-in PATCH and DELETE by TMDB ID are refused without a token
-          and accepted with a matching one
-        - Expect tests to FAIL initially. Today's `/{id}` routes share the new paths' shape, so some pass against them:
-          PATCH and DELETE answering 401, a non-integer path answering 422, a PATCH with no body (422), a body that
-          isn't JSON (400) or a rating of 11 (422), a DELETE with no record (404), the unknown TMDB ID's 404 (no record
-          has that ID), the CSRF refusal, `/movies` reaching the Library, and any other case they already meet. Show
-          each fails against a narrow break and passes once restored
-
-    - [ ] **2.3.d Implement the routes**
-        - GET, PATCH and DELETE `/{tmdb_id}`, with `/movies` registered first; PATCH answers 201 when it created the
-          record and 200 otherwise; each declares its responses
-        - Remove `POST /user-movie-data`, `PATCH` and `DELETE /user-movie-data/{id}` and `GET /by-tmdb-id`, the three
-          schemas only they used, and the service methods only they called (`create`, `update`, `get_by_id`,
-          `delete_by_record_id`), with those methods' tests from 1.1
-        - Run the related tests in `apps/user_movie_data/`, `apps/authentication/` and `apps/movie/`: they should now
-          PASS
-
-    - [ ] **2.3.e Update the references to the removed routes and schemas**
-        - `apps/core/tests/test_helpers.py`'s docstring examples (`get_csrf_token`, `json_patch`) name the new routes
-        - `strategy-type-safety.md`'s schema and route examples and `strategy-authentication.md`'s route table stop
-          naming the removed routes and schemas
-        - `strategy-testing-methodology.md`: its rating-validation example posts to a `/api/user-movie-data/create/`
-          route and becomes a PATCH by TMDB ID; its note that "`/api/user-movie-data` also reaches TMDB" names the
-          PATCH of an unstored movie
+    - [x] **2.3.a Add `ErrorResponseSchema`**
+        - Both shared-handler body variants validate as a string detail and optional error code; both tests failed
+          against the initial wrong detail type before the schema was implemented.
+    - [x] **2.3.b Write the schema tests, then the schemas**
+        - One required-field response schema now serves saved state and movie enrichment. PATCH distinguishes
+          omissions/nulls, refuses null flags and invalid ratings/reviews, and normalizes only blank reviews.
+          Twenty-one schema cases failed before implementation; movie list/detail cases failed on their old exact
+          field sets and now include watched_at without database ID/title.
+    - [x] **2.3.c Write the API tests for the new routes**
+        - Forty-six cases cover saves from empty/full state, null clearing, malformed/missing/empty bodies, watched
+          rules, ownership, authentication, positive TMDB IDs, upstream errors and exact OpenAPI status/schema sets.
+        - The old routes failed 37 cases; the nine passing cases were seen failing under temporary narrow breaks of
+          authentication, path validation, missing/malformed body handling, validation status, lookup errors and the
+          movies route. Removing CSRF checks failed all four missing/mismatched-token PATCH/DELETE cases.
+    - [x] **2.3.d Implement the routes**
+        - GET/PATCH/DELETE use TMDB IDs, declare their success/error responses and keep business logic in the service.
+          Removed the POST/query routes, obsolete schemas and record-ID methods/tests. Session/Bearer and enforced
+          CSRF tests use the new paths.
+        - All 1,190 tests in the four touched apps pass after restoring every mutation. Ruff, formatting, strict
+          Pyright and documentation lint pass. The OpenAPI test uses Django's encoder for lazy translated text.
+    - [x] **2.3.e Update references to removed routes and schemas**
+        - Updated core HTTP helper examples and the authentication, testing and type-safety strategies to the shared
+          schemas and TMDB-ID PATCH contract.
 
 - [ ] **2.4 Saves are limited per user per minute and per day — D6**
 

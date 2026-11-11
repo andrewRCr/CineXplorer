@@ -75,18 +75,7 @@ class MovieEnrichmentService:
                 # Create new instance with user data populated
                 # Use model_copy() to preserve all fields from original
                 enriched_movie = movie.model_copy(
-                    update={
-                        "user_movie_data": UserMovieDataSchema(
-                            id=user_movie_data.id,
-                            tmdb_id=movie.tmdb_id,  # From MovieListItemSchema parameter
-                            title=movie.title,  # From MovieListItemSchema parameter
-                            user_watched=user_movie_data.user_watched,
-                            user_on_watchlist=user_movie_data.user_on_watchlist,
-                            user_liked=user_movie_data.user_liked,
-                            user_rating=user_movie_data.user_rating,
-                            user_review=user_movie_data.user_review,
-                        )
-                    }
+                    update={"user_movie_data": UserMovieDataSchema.from_record(user_movie_data)}
                 )
                 enriched_movies.append(enriched_movie)
             else:

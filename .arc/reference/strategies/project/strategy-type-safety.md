@@ -112,64 +112,46 @@ class Movie(models.Model):
 ```python path=null start=null
 from ninja.orm import ModelSchema
 
-class UserMovieDataModelSchema(ModelSchema):
+class MovieSummarySchema(ModelSchema):
     class Meta:
-        model = UserMovieData
-        fields = ["id", "user_watched", "user_rating"]
+        model = Movie
+        fields = ["tmdb_id", "title"]
 ```
 
 **Benefits:** Automatic field inference, zero `pyright: ignore`, minimal boilerplate.
 
-### Pattern 2: from_orm_with_<relation>() for Computed Fields
+### Pattern 2: Explicit Schemas for Shared Response Fields
 
-**Use when:** ModelSchema needs computed fields from ForeignKey relationships.
+**Use when:** Several endpoints share a required response shape with related model fields.
 
-```python path=null start=null
-class UserMovieDataDetailSchema(ModelSchema):
-    tmdb_id: int | None = None  # From obj.movie.tmdb_id
-    title: str | None = None    # From obj.movie.title
+`UserMovieDataSchema` declares every response field without defaults, including nullable fields. Its
+`from_record` class method maps the stored record and its related movie. Load that movie with `select_related`
+when reading the record, so serialization makes no extra query.
 
-    class Meta:
-        model = UserMovieData
-        fields = ["id", "user_watched", "user_rating"]
-
-    @classmethod
-    def from_orm_with_movie(cls, obj: UserMovieData) -> "UserMovieDataDetailSchema":
-        """Populate computed fields from related model."""
-        instance = cls.from_orm(obj)
-        if obj.movie is not None:
-            instance.tmdb_id = obj.movie.tmdb_id
-            instance.title = obj.movie.title
-        return instance
-```
-
-**API Usage:**
+**API usage:**
 
 ```python path=null start=null
-@router.get("/by-tmdb-id", response=UserMovieDataDetailSchema)
-def get_data(request: HttpRequest, tmdb_id: int) -> UserMovieDataDetailSchema:
-    obj = UserMovieData.objects.select_related('movie').get(movie__tmdb_id=tmdb_id)
-    return UserMovieDataDetailSchema.from_orm_with_movie(obj)
+@router.get("/{tmdb_id}", response=UserMovieDataSchema)
+def get_data(request: HttpRequest, tmdb_id: int) -> UserMovieDataSchema:
+    record = service.get_by_tmdb_id(get_current_user(request), tmdb_id)
+    return UserMovieDataSchema.from_record(record)
 ```
-
-**Benefits:** Encapsulates type handling in schema, zero `cast()` calls, single-line returns.
 
 ### Pattern 3: Manual Schema for Input DTOs
 
-**Use when:** Input needs fields not on model, or all-optional PATCH operations.
+**Use when:** Input needs fields not on a model, or optional PATCH fields.
 
 ```python path=null start=null
 from ninja import Schema
+from pydantic import Field
 
-class UserMovieDataCreateSchema(Schema):
-    movie_id: int  # Not on model - used for lookup
-    user_watched: bool = False
-    user_rating: int | None = None
-
-class UserMovieDataUpdateSchema(Schema):
-    user_watched: bool | None = None  # All optional for PATCH
-    user_rating: int | None = None
+class UserMovieDataPatchSchema(Schema):
+    user_watched: bool = False  # Optional on input; explicit null is refused
+    user_rating: int | None = Field(default=None, ge=1, le=10)
 ```
+
+Use `payload.model_dump(exclude_unset=True)` when calling the service: omission keeps a field unchanged while an
+explicit null clears a nullable field.
 
 ### Pattern 4: Pydantic List Defaults (Type-Safe)
 
@@ -309,21 +291,14 @@ user_id: int = user.id  # ✅ Custom stub provides explicit id field
 
 ### ForeignKey and Related Field Typing
 
-**Pattern:** Use `select_related()` with explicit null checks.
+**Pattern:** Load related rows before serializing their fields. A required foreign key is non-null.
 
 ```python path=null start=null
-def get_user_movie_details(request: HttpRequest, tmdb_id: int) -> UserMovieDataDetailSchema:
-    # select_related ensures movie is loaded (no N+1)
-    obj = UserMovieData.objects.select_related('movie').get(
-        user=request.user, movie__tmdb_id=tmdb_id
+def read_movie_state(user: AbstractBaseUser, tmdb_id: int) -> UserMovieDataSchema:
+    record = UserMovieData.objects.get_queryset().for_user(user).select_related("movie").get(
+        movie_id=tmdb_id
     )
-
-    # Explicit null check (Pyright sees Movie | None)
-    if obj.movie is not None:
-        tmdb_id = obj.movie.tmdb_id
-        title = obj.movie.title
-
-    return UserMovieDataDetailSchema.from_orm_with_movie(obj)
+    return UserMovieDataSchema.from_record(record)
 ```
 
 ### Acceptable Information-Level Warnings
@@ -484,13 +459,13 @@ class EmailAddress(models.Model):
 **Refactoring Example:**
 
 ```python path=null start=null
-from authentication.auth_ninja import get_current_user
+from apps.authentication.auth_ninja import get_current_user
 
-@router.post("/")
-def create_entry(request: HttpRequest) -> UserMovieDataModelSchema:
-    user = get_current_user(request)  # Returns AbstractBaseUser, no ignores needed
-    obj = UserMovieData.objects.create(user=user, ...)
-    return UserMovieDataModelSchema.from_orm(obj)
+@router.patch("/{tmdb_id}")
+def save_entry(request: HttpRequest, tmdb_id: int, payload: UserMovieDataPatchSchema):
+    user = get_current_user(request)
+    record, created = service.save(user, tmdb_id, payload.model_dump(exclude_unset=True))
+    return Status(201 if created else 200, UserMovieDataSchema.from_record(record))
 ```
 
 **Benefits:** Zero ignores, explicit error handling, better testability.

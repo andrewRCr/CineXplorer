@@ -59,21 +59,20 @@ def test_service_reads_only_the_requested_users_records(
 def test_enrich_with_authenticated_user_populates_user_movie_data(
     service: MovieEnrichmentService, user: User
 ) -> None:
-    record = create_user_movie_data(
+    create_user_movie_data(
         user, user_watched=True, user_liked=True, user_rating=9, user_review="Excellent!"
     )
     result = service.enrich_movies_with_user_movie_data([movie_schema()], user)
     data = result[0].user_movie_data
     assert data is not None
     assert data.model_dump() == {
-        "id": record.pk,
         "tmdb_id": 550,
-        "title": "Movie 550",
         "user_watched": True,
         "user_on_watchlist": False,
         "user_liked": True,
         "user_rating": 9,
         "user_review": "Excellent!",
+        "watched_at": None,
     }
 
 

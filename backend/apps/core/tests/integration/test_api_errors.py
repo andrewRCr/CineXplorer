@@ -156,3 +156,14 @@ def test_oversized_body_answers_with_json_and_warns_without_a_traceback(
     assert record.levelno == logging.WARNING
     assert record.exc_info is None
     assert PRIVATE_TEXT not in record.getMessage()
+
+
+@pytest.mark.parametrize("code", [None, ErrorCode.VALIDATION_ERROR])
+def test_declared_error_schema_validates_the_handler_body(code: ErrorCode | None) -> None:
+    from apps.core.api_errors import error_body
+    from apps.core.schemas import ErrorResponseSchema
+
+    body = error_body("Invalid request", code)
+    assert (
+        ErrorResponseSchema.model_validate(body).model_dump(mode="json", exclude_none=True) == body
+    )

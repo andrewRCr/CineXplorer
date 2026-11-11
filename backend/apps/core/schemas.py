@@ -167,3 +167,10 @@ class ServiceUnavailableResponse(Schema):
     """A readiness failure without internal connection details."""
 
     detail: str
+
+
+class ErrorResponseSchema(Schema):
+    """The error response sent by shared handlers."""
+
+    detail: str
+    code: ErrorCode | None = None

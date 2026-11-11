@@ -601,13 +601,11 @@ curl -X GET https://localhost:8444/_allauth/browser/v1/auth/session \
 
 All endpoints authenticated by `JWTSessionAuth` support both authentication patterns:
 
-| Endpoint                                    | Auth Pattern   | How It Works                                                                    |
-|---------------------------------------------|----------------|---------------------------------------------------------------------------------|
-| `GET /api/profile/`                         | JWT or Session | JWT: `Authorization: Bearer {token}` header<br>Session: `Cookie: sessionid=...` |
-| `GET /api/user-movie-data/movies`           | JWT or Session | Same as above                                                                   |
-| `GET /api/user-movie-data/by-tmdb-id`       | JWT or Session | Same as above                                                                   |
-| `POST /api/user-movie-data`                 | JWT or Session | Same as above                                                                   |
-| `PATCH`, `DELETE /api/user-movie-data/{id}` | JWT or Session | Same as above                                                                   |
+| Endpoint                                                | Auth Pattern   | How It Works                                                                    |
+| ------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------- |
+| `GET /api/profile/`                                     | JWT or Session | JWT: `Authorization: Bearer {token}` header<br>Session: `Cookie: sessionid=...` |
+| `GET /api/user-movie-data/movies`                       | JWT or Session | Same as above                                                                   |
+| `GET`, `PATCH`, `DELETE /api/user-movie-data/{tmdb_id}` | JWT or Session | Same as above                                                                   |
 
 `JWTSessionAuth` checks the Bearer header first, then the session. Handlers read the user from
 `get_current_user(request)`, since `request.user` comes only from the session, never from the token.

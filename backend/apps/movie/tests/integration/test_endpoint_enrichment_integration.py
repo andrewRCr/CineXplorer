@@ -122,6 +122,16 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     assert "user_movie_data" in movie_data
     user_data = movie_data["user_movie_data"]
     assert user_data is not None
+    assert set(user_data) == {
+        "tmdb_id",
+        "user_watched",
+        "user_on_watchlist",
+        "user_liked",
+        "user_rating",
+        "user_review",
+        "watched_at",
+    }
+    assert user_data["watched_at"] is None
     assert user_data["user_watched"] is True
     assert user_data["user_on_watchlist"] is True
     assert user_data["user_liked"] is True
@@ -288,6 +298,16 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     # Verify user_movie_data is populated
     user_data = data["user_movie_data"]
     assert user_data is not None
+    assert set(user_data) == {
+        "tmdb_id",
+        "user_watched",
+        "user_on_watchlist",
+        "user_liked",
+        "user_rating",
+        "user_review",
+        "watched_at",
+    }
+    assert user_data["watched_at"] is None
     assert user_data["user_watched"] is True
     assert user_data["user_on_watchlist"] is False
     assert user_data["user_liked"] is True

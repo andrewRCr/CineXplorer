@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from django.contrib.auth.models import AbstractBaseUser
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import InvalidInputError, NotFoundError
@@ -11,7 +11,6 @@ from apps.core.models import Movie
 from apps.core.pagination import paginate_queryset
 from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.movie.schemas import MovieListItemSchema, MovieListResponseSchema
-from apps.movie.services.movie_service import MovieService
 from apps.movie.services.pipelines.batch import fetch_movies_batch
 from apps.movie.services.tmdb_api_boundary.response_factories import (
     handle_tmdb_api_error,
@@ -72,52 +71,6 @@ class UserMovieDataService:
         """Delete the requesting user's state while keeping its movie card."""
         self.get_by_tmdb_id(user, tmdb_id).delete()
 
-    def create(
-        self,
-        user: AbstractBaseUser,
-        tmdb_id: int,
-        *,
-        user_watched: bool = False,
-        user_on_watchlist: bool = False,
-        user_liked: bool = False,
-        user_rating: int | None = None,
-        user_review: str | None = None,
-    ) -> UserMovieData:
-        movie = Movie.objects.filter(tmdb_id=tmdb_id).first()
-        if movie is None:
-            detail = MovieService(tmdb_client=self._tmdb_client).get_movie_by_id(tmdb_id)
-            movie = Movie.objects.create(
-                tmdb_id=detail.tmdb_id,
-                title=detail.title,
-                poster_path=detail.poster_path,
-                release_date=detail.release_date,
-            )
-        try:
-            with transaction.atomic():
-                return UserMovieData.objects.create(
-                    user=user,
-                    movie=movie,
-                    user_watched=user_watched,
-                    user_on_watchlist=user_on_watchlist,
-                    user_liked=user_liked,
-                    user_rating=user_rating,
-                    user_review=user_review,
-                )
-        except IntegrityError as error:
-            raise InvalidInputError("Already exists") from error
-
-    def get_by_id(self, user: AbstractBaseUser, record_id: int) -> UserMovieData:
-        record = (
-            UserMovieData.objects.get_queryset()
-            .for_user(user)
-            .select_related("movie")
-            .filter(pk=record_id)
-            .first()
-        )
-        if record is None:
-            raise NotFoundError("User movie data not found")
-        return record
-
     def get_by_tmdb_id(self, user: AbstractBaseUser, tmdb_id: int) -> UserMovieData:
         record = (
             UserMovieData.objects.get_queryset()
@@ -129,34 +82,6 @@ class UserMovieDataService:
         if record is None:
             raise NotFoundError("User movie data not found for this TMDB ID")
         return record
-
-    def update(
-        self,
-        user: AbstractBaseUser,
-        record_id: int,
-        *,
-        user_watched: bool | None = None,
-        user_on_watchlist: bool | None = None,
-        user_liked: bool | None = None,
-        user_rating: int | None = None,
-        user_review: str | None = None,
-    ) -> UserMovieData:
-        record = self.get_by_id(user, record_id)
-        fields = {
-            "user_watched": user_watched,
-            "user_on_watchlist": user_on_watchlist,
-            "user_liked": user_liked,
-            "user_rating": user_rating,
-            "user_review": user_review,
-        }
-        for field, value in fields.items():
-            if value is not None:
-                setattr(record, field, value)
-        record.save()
-        return record
-
-    def delete_by_record_id(self, user: AbstractBaseUser, record_id: int) -> None:
-        self.get_by_id(user, record_id).delete()
 
     def _filtered_records(
         self,

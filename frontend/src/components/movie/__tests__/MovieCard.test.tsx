@@ -5,9 +5,14 @@ import {
   screen,
   isInaccessible,
   within,
+  waitFor,
 } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 import { createMockMovieListItem } from "@tests/mocks/movieData";
+import { http, HttpResponse } from "msw/http";
+import { server } from "@tests/mocks/server";
+import { createMockUserMovieData } from "@tests/mocks/movieData";
+import { Toaster, toaster } from "@/components/core/chakra/toaster";
 import MovieCard from "../MovieCard";
 import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
 
@@ -597,4 +602,99 @@ describe("MovieCard Component", () => {
       expect(href).toContain("query=action%20%26%20adventure");
     });
   });
+});
+
+describe("MovieCard watchlist saves", () => {
+  beforeEach(() => {
+    toaster.remove();
+    document.cookie = "csrftoken=movie-save-csrf; path=/";
+  });
+
+  it("sends true then false from a card initially drawn without user data", async () => {
+    const requests: { method: string; path: string; body: unknown }[] = [];
+    server.use(
+      http.all(/\/api\/user-movie-data(?:\/\d+)?$/, async ({ request }) => {
+        const body = await request.json();
+        requests.push({
+          method: request.method,
+          path: new URL(request.url).pathname,
+          body,
+        });
+        const desired = requests.length === 1;
+        return HttpResponse.json(
+          createMockUserMovieData({ tmdb_id: 550, user_on_watchlist: desired }),
+        );
+      }),
+    );
+    render(
+      <>
+        <MovieCard
+          movie={createMockMovieListItem({
+            tmdb_id: 550,
+            user_movie_data: null,
+          })}
+        />
+        <Toaster />
+      </>,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await screen.findByText("Added to watchlist");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Remove from watchlist" }),
+      ).toBeEnabled(),
+    );
+    expect(
+      screen.getByRole("button", { name: "Remove from watchlist" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await user.click(
+      screen.getByRole("button", { name: "Remove from watchlist" }),
+    );
+    await screen.findByText("Removed from watchlist");
+    expect(
+      screen.getByRole("button", { name: "Add to watchlist" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(requests).toEqual(
+      [true, false].map((desired) => ({
+        method: "PATCH",
+        path: "/api/user-movie-data/550",
+        body: { user_on_watchlist: desired },
+      })),
+    );
+  });
+
+  it.each([500, 429])(
+    "rolls back a failed save (%s) and shows the failure toast",
+    async (status) => {
+      server.use(
+        http.all(/\/api\/user-movie-data(?:\/\d+)?$/, () =>
+          HttpResponse.json({ detail: "Save unavailable" }, { status }),
+        ),
+      );
+      render(
+        <>
+          <MovieCard
+            movie={createMockMovieListItem({ user_movie_data: null })}
+          />
+          <Toaster />
+        </>,
+      );
+      await userEvent
+        .setup()
+        .click(screen.getByRole("button", { name: "Add to watchlist" }));
+      expect(
+        await screen.findByText("Failed to update watchlist"),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Please try again.")).toBeInTheDocument();
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Add to watchlist" }),
+        ).toBeEnabled(),
+      );
+      expect(
+        screen.getByRole("button", { name: "Add to watchlist" }),
+      ).toHaveAttribute("aria-pressed", "false");
+    },
+  );
 });

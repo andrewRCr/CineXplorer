@@ -15,6 +15,7 @@ from pydantic import Field, field_validator
 
 from apps.core.models import Movie
 from apps.movie.constants import TMDB_MAX_PAGE
+from apps.user_movie_data.schemas import UserMovieDataSchema
 
 
 class MovieSearchParamsSchema(Schema):
@@ -112,19 +113,6 @@ class MovieModelSchema(ModelSchema):
         fields = ["tmdb_id", "title", "poster_path", "release_date"]
 
 
-class UserMovieDataSchema(Schema):
-    """Shape of the user-specific movie metadata attached to TMDB responses."""
-
-    id: int | None = None
-    tmdb_id: int | None = None
-    title: str | None = None
-    user_watched: bool = False
-    user_on_watchlist: bool = False
-    user_liked: bool = False
-    user_rating: int | None = None
-    user_review: str | None = None
-
-
 class MovieListItemSchema(Schema):
     """Compact movie representation for list/grid endpoints.
 
@@ -211,8 +199,9 @@ class MovieListResponseSchema(Schema):
     user collections, etc. Supports optional pagination via page/total_pages fields.
 
     The next_tmdb_page_start field enables cursor-based pagination for TMDB-backed
-    endpoints with smart buffer mechanism. For non-paginated responses (e.g., user
-    movie collections), this field is None and page=1, total_pages=1.
+    endpoints with the smart buffer mechanism; null signals their exhaustion.
+    Database-served collections always leave it null and use page < total_pages
+    to indicate another page.
     """
 
     page: int = 1

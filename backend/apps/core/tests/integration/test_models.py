@@ -166,3 +166,96 @@ def test_create_nondefault_user_movie_data() -> None:
     assert user_movie_data.user_liked is True
     assert user_movie_data.user_rating == 10
     assert user_movie_data.user_review == movie_review_str
+
+
+@pytest.mark.django_db
+def test_movie_card_defaults_and_independent_genres() -> None:
+    from apps.user_movie_data.tests.test_helpers import create_movie
+
+    movie = create_movie()
+    for field in ("vote_average", "vote_count", "runtime", "overview", "refreshed_at"):
+        assert hasattr(movie, field)
+        assert getattr(movie, field) is None
+    assert movie.genre_ids == []
+    another = create_movie(551)
+    movie.genre_ids.append(18)
+    movie.save()
+    assert another.genre_ids == []
+    movie.refresh_from_db()
+    assert movie.genre_ids == [18]
+
+
+@pytest.mark.django_db
+def test_movie_timestamps_cover_ordinary_and_admin_saves() -> None:
+    from django.contrib.admin import AdminSite, ModelAdmin
+    from django.forms import modelform_factory
+    from django.test import RequestFactory
+    from django.utils import timezone
+    from freezegun import freeze_time
+
+    from apps.user_movie_data.tests.test_helpers import create_movie
+
+    with freeze_time("2026-01-01 10:00:00"):
+        movie = create_movie()
+        created = timezone.now()
+        assert getattr(movie, "created_at", None) == created
+        assert getattr(movie, "updated_at", None) == created
+    with freeze_time("2026-01-02 10:00:00"):
+        movie.title = "Updated title"
+        movie.refreshed_at = created
+        movie.save()
+        movie.refresh_from_db()
+        assert movie.created_at == created
+        assert movie.updated_at == timezone.now()
+        assert movie.refreshed_at == created
+    with freeze_time("2026-01-03 10:00:00"):
+        form_class = modelform_factory(models.Movie, fields=["title"])
+        form = form_class(data={"title": "Admin title"}, instance=movie)
+        assert form.is_valid()
+        ModelAdmin(models.Movie, AdminSite()).save_model(
+            RequestFactory().post("/admin/"), form.save(commit=False), form, change=True
+        )
+        movie.refresh_from_db()
+        assert movie.title == "Admin title"
+        assert movie.updated_at == timezone.now()
+        assert movie.created_at == created
+        assert movie.refreshed_at == created
+
+
+@pytest.mark.django_db(transaction=True)
+def test_movie_card_migration_applies_to_existing_rows_and_reverses() -> None:
+    from datetime import UTC, datetime
+
+    from django.db import connection
+    from django.db.migrations.executor import MigrationExecutor
+    from freezegun import freeze_time
+
+    previous = (("core", "0009_change_tmdb_id_to_positive"), ("user_movie_data", "0001_initial"))
+    executor = MigrationExecutor(connection)
+    latest = executor.loader.graph.leaf_nodes()
+    try:
+        executor.migrate(list(previous))
+        before_apps = executor.loader.project_state(previous).apps
+        before_apps.get_model("core", "Movie").objects.create(tmdb_id=550, title="Existing movie")
+        with freeze_time("2026-01-01 10:00:00"):
+            executor = MigrationExecutor(connection)
+            executor.migrate(latest)
+        # The leaf migration state has the same fields as the current Movie model.
+        movie = cast(
+            models.Movie,
+            executor.loader.project_state(latest)
+            .apps.get_model("core", "Movie")
+            .objects.get(pk=550),
+        )
+        assert movie.title == "Existing movie"
+        assert movie.created_at == datetime(2026, 1, 1, 10, tzinfo=UTC)
+        assert movie.genre_ids == []
+        for field in ("vote_average", "vote_count", "runtime", "overview", "refreshed_at"):
+            assert getattr(movie, field) is None
+        executor = MigrationExecutor(connection)
+        executor.migrate(list(previous))
+        restored = executor.loader.project_state(previous).apps.get_model("core", "Movie")
+        assert restored.objects.values_list("title", flat=True).get(pk=550) == "Existing movie"
+        assert "refreshed_at" not in {field.name for field in restored._meta.fields}
+    finally:
+        MigrationExecutor(connection).migrate(latest)

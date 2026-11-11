@@ -29,7 +29,6 @@ CASES = [
     "resend",
     "hybrid_refresh",
     "password_request",
-    "session_create",
     "session_patch",
     "session_delete",
 ]
@@ -70,9 +69,12 @@ def request_data(case: str, entry: UserMovieData) -> tuple[str, str, dict[str, o
             "/_allauth/browser/v1/auth/password/request",
             {"email": entry.user.email},
         ),
-        "session_create": ("post", "/api/user-movie-data", {"movie_id": entry.movie.tmdb_id}),
-        "session_patch": ("patch", f"/api/user-movie-data/{entry.pk}", {"user_rating": 8}),
-        "session_delete": ("delete", f"/api/user-movie-data/{entry.pk}", {}),
+        "session_patch": (
+            "patch",
+            f"/api/user-movie-data/{entry.movie.tmdb_id}",
+            {"user_rating": 8},
+        ),
+        "session_delete": ("delete", f"/api/user-movie-data/{entry.movie.tmdb_id}", {}),
     }
     return cases[case]
 
@@ -163,7 +165,7 @@ def test_unauthenticated_patch_with_csrf_reaches_authentication(entry: UserMovie
     client = Client(enforce_csrf_checks=True)
     token = get_csrf_token(client)
     response = client.patch(
-        f"/api/user-movie-data/{entry.pk}",
+        f"/api/user-movie-data/{entry.movie.tmdb_id}",
         {"user_rating": 8},
         content_type="application/json",
         HTTP_X_CSRFTOKEN=token,
@@ -188,7 +190,7 @@ def test_csrf_endpoint_sets_a_usable_token(entry: UserMovieData) -> None:
     assert "csrftoken" in response.cookies
     for rating in (6, 7):
         response = client.patch(
-            f"/api/user-movie-data/{entry.pk}",
+            f"/api/user-movie-data/{entry.movie.tmdb_id}",
             {"user_rating": rating},
             content_type="application/json",
             HTTP_X_CSRFTOKEN=token,

@@ -16,7 +16,7 @@ work in these domains.
 **Engineering:**
 
 - `project/strategy-service-layer.md` - Class-based services, dependency injection, domain exceptions,
-  optional repositories, batch operations
+  optional repositories, shared QuerySets
 - `project/strategy-authentication.md` - Authentication patterns, session management, OAuth flows
 - `project/strategy-type-safety.md` - Type checking approach, Any usage policy, stub maintenance
 - `project/strategy-testing-methodology.md` - Testing philosophy, real-database tests, replacing boundaries,

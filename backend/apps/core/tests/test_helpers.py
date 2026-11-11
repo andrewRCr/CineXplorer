@@ -217,9 +217,9 @@ def get_csrf_token(client: Client) -> str:
 
     Example:
         csrf_token = get_csrf_token(client)
-        response = client.post(
-            '/api/user-movie-data',
-            data={'movie_id': 123},
+        response = client.patch(
+            '/api/user-movie-data/550',
+            data={'user_on_watchlist': True},
             content_type='application/json',
             HTTP_X_CSRFTOKEN=csrf_token
         )
@@ -272,7 +272,7 @@ def json_patch(
         HTTP response from the endpoint
 
     Example:
-        response = json_patch(self.client, '/api/user-movie-data/1', {
+        response = json_patch(self.client, '/api/user-movie-data/550', {
             'user_rating': 8
         }, HTTP_X_CSRFTOKEN='token123')
     """

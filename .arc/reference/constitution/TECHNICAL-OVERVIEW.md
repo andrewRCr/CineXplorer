@@ -134,14 +134,14 @@ The backend uses a layered architecture with class-based services for all busine
 
 - **Principle**: Business logic belongs in the service layer, NOT in API endpoints
 - **Pattern**: Dependency injection via constructor - enables testability and service composition
-- **Repository pattern**: ORM abstraction for data access (e.g., `UserMovieDataRepository`)
-- **Service composition**: Services can depend on other services/repositories
+- **Data access**: Services use the Django ORM, with shared filters on custom QuerySets
+- **Service composition**: Services can call another service using their injected external client
 - **Factory functions**: Convenient production instantiation while preserving test injection
 
 **Key services** (see `strategy-service-layer.md` for complete inventory):
 
 - `MovieService` - TMDB integration (discovery, search, details)
-- `UserMovieDataService` - User movie data CRUD with TMDB enrichment
+- `UserMovieDataService` - Partial movie-state saves and database-served Library pages
 - `AuthenticationService` - Security-critical auth operations
 - `MovieEnrichmentService` - Enriches movie lists with user-specific data
 

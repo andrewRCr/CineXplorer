@@ -1,124 +1,17 @@
-/**
- * Movie Interaction Service
- *
- * Pure service functions for managing user interactions with movies
- * (watchlist, watched, liked, rating, review).
- *
- * Architecture:
- * - Layer 1 (this file): Pure functions with business logic
- * - Layer 2 (hooks): State management and UI integration
- * - Layer 3 (components): UI rendering
- *
- * These functions are designed to survive state management migrations
- * (e.g., TanStack Query in Frontend Modernization) and serve as the
- * stable API between the backend and UI layers.
- *
- * Backend Integration Notes:
- * - CREATE: POST /api/user-movie-data with movie_id (expects TMDB ID, not database ID)
- * - UPDATE: PATCH /api/user-movie-data/{id} with partial fields
- * - Backend uses get_or_create pattern (returns 400 if entry already exists)
- *
- * Related Services:
- * - userMovieDataService.ts: Low-level CRUD operations (isolation pattern)
- * - userMovieService.ts: Movie-first queries with enrichment
- */
-
+/** Movie interactions save the requested state with one PATCH by TMDB ID. */
 import type { MovieListItem } from "@/types/movie";
-import type { components } from "@/types/api";
 import {
-    createUserMovieData,
-    updateUserMovieData,
-    getUserMovieDataByTmdbId,
+    saveUserMovieData,
+    type UserMovieDataSchema,
 } from "./userMovieDataService";
-import { getErrorStatus, getErrorMessage } from "@/utilities/axiosErrorUtils";
 
-type UserMovieDataDetailSchema =
-    components["schemas"]["UserMovieDataDetailSchema"];
-type UserMovieDataCreateSchema =
-    components["schemas"]["UserMovieDataCreateSchema"];
-type UserMovieDataUpdateSchema =
-    components["schemas"]["UserMovieDataUpdateSchema"];
-
-/**
- * Toggle a movie's watchlist status
- *
- * Logic:
- * - If movie.user_movie_data is null → CREATE new entry with watchlist=true
- * - If movie.user_movie_data exists → UPDATE (toggle current watchlist value)
- *
- * Edge Case Handling:
- * - 400 "already exists" error (race condition): Fetch current data and retry with UPDATE
- *
- * @param movie - Movie object with optional user_movie_data
- * @returns Promise with updated UserMovieData
- * @throws Error if API call fails (network, validation, etc.)
- *
- * @example
- * // Add to watchlist (movie without user data)
- * const result = await toggleMovieWatchlist(movie);
- *
- * @example
- * // Remove from watchlist (movie already on watchlist)
- * const result = await toggleMovieWatchlist(movieWithData);
- */
 export async function toggleMovieWatchlist(
     movie: MovieListItem,
-): Promise<UserMovieDataDetailSchema> {
-    // Case 1: No existing user data → CREATE
-    if (!movie.user_movie_data) {
-        const createPayload: UserMovieDataCreateSchema = {
-            movie_id: movie.tmdb_id, // Backend expects TMDB ID as movie_id
-            user_on_watchlist: true,
-            user_watched: false,
-            user_liked: false,
-            user_rating: null,
-            user_review: null,
-        };
-
-        try {
-            const response = await createUserMovieData(createPayload);
-            return response.data;
-        } catch (error: unknown) {
-            // Handle race condition: Entry already exists (stale movie prop or concurrent request)
-            // Backend returns 400 when entry already exists for this user/movie
-            if (getErrorStatus(error) === 400) {
-                const errorMsg = getErrorMessage(error).toLowerCase();
-                if (
-                    errorMsg.includes("already exists") ||
-                    errorMsg.includes("unique constraint")
-                ) {
-                    // Fetch the current data and TOGGLE (not always set to true)
-                    // This handles the case where movie.user_movie_data is stale
-                    const { request } = getUserMovieDataByTmdbId({
-                        tmdb_id: movie.tmdb_id,
-                    });
-                    const existingDataResponse = await request;
-                    const currentStatus =
-                        existingDataResponse.data.user_on_watchlist ?? false;
-                    const updateResponse = await updateUserMovieData(
-                        existingDataResponse.data.id!,
-                        {
-                            user_on_watchlist: !currentStatus,
-                        },
-                    );
-                    return updateResponse.data;
-                }
-            }
-            // Re-throw other errors
-            throw error;
-        }
-    }
-
-    // Case 2: Existing user data → UPDATE (toggle)
-    const currentWatchlistStatus = movie.user_movie_data.user_on_watchlist;
-    const updatePayload: UserMovieDataUpdateSchema = {
-        user_on_watchlist: !currentWatchlistStatus,
-    };
-
-    const response = await updateUserMovieData(
-        movie.user_movie_data.id!,
-        updatePayload,
-    );
+    desiredValue: boolean,
+): Promise<UserMovieDataSchema> {
+    const response = await saveUserMovieData(movie.tmdb_id, {
+        user_on_watchlist: desiredValue,
+    });
     return response.data;
 }
 
@@ -134,7 +27,7 @@ export async function toggleMovieWatchlist(
 
 export function toggleMovieWatched(
     _movie: MovieListItem,
-): Promise<UserMovieDataDetailSchema> {
+): Promise<UserMovieDataSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
     return Promise.reject(new Error("toggleMovieWatched not yet implemented"));
 }
@@ -151,7 +44,7 @@ export function toggleMovieWatched(
 
 export function toggleMovieLiked(
     _movie: MovieListItem,
-): Promise<UserMovieDataDetailSchema> {
+): Promise<UserMovieDataSchema> {
     // TODO: Implement (same pattern as toggleMovieWatchlist)
     return Promise.reject(new Error("toggleMovieLiked not yet implemented"));
 }
@@ -170,7 +63,7 @@ export function toggleMovieLiked(
 export function setMovieRating(
     _movie: MovieListItem,
     _rating: number,
-): Promise<UserMovieDataDetailSchema> {
+): Promise<UserMovieDataSchema> {
     // TODO: Implement (may need UI modal integration)
     return Promise.reject(new Error("setMovieRating not yet implemented"));
 }
@@ -189,7 +82,7 @@ export function setMovieRating(
 export function setMovieReview(
     _movie: MovieListItem,
     _review: string,
-): Promise<UserMovieDataDetailSchema> {
+): Promise<UserMovieDataSchema> {
     // TODO: Implement (may need UI modal integration)
     return Promise.reject(new Error("setMovieReview not yet implemented"));
 }

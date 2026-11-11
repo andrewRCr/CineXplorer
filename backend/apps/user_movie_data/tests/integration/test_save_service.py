@@ -263,3 +263,17 @@ def test_concurrent_first_saves_merge_fields() -> None:
     record = UserMovieData.objects.get()
     assert record.user_liked is True
     assert record.user_on_watchlist is True
+
+
+@pytest.mark.parametrize("field", ["title", "poster_path"])
+def test_first_save_of_unstorable_card_writes_nothing(
+    service: UserMovieDataService, user: User, tmdb: TMDBStub, field: str
+) -> None:
+    payload = create_tmdb_movie_detail(550, "Title", "2020-01-01", 8.0).model_dump()
+    payload[field] = "x" * 256
+    tmdb.details[550] = ApiResponse(status_code=200, data=payload)
+    with pytest.raises(UpstreamError) as error:
+        service.save(user, 550, {"user_on_watchlist": True})
+    assert error.value.status_code == 502
+    assert not Movie.objects.exists()
+    assert not UserMovieData.objects.exists()

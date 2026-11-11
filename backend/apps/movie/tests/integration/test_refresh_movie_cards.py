@@ -131,3 +131,29 @@ def test_empty_catalogue_reports_zero_counts_without_request() -> None:
     call_command(Command(tmdb_client=stub), stdout=output)
     assert "Refreshed: 0; failed: 0" in output.getvalue()
     assert stub.requested_ids == []
+
+
+@pytest.mark.parametrize("field", ["title", "poster_path"])
+@pytest.mark.parametrize("age", [2, 8])
+def test_unstorable_card_keeps_its_row_and_refreshes_later_movies(field: str, age: int) -> None:
+    with freeze_time("2026-11-10 12:00:00"):
+        create_movie(550, title="Keep card", refreshed_at=timezone.now() - timedelta(days=age))
+        create_movie(551, refreshed_at=timezone.now() - timedelta(days=1))
+        before = Movie.objects.values().get(pk=550)
+        stub = configured_stub(550, 551)
+        payload = create_tmdb_movie_detail(550, "Title", "2020-01-01", 8.0).model_dump()
+        payload[field] = "x" * 256
+        stub.details[550] = ApiResponse(status_code=200, data=payload)
+        output = StringIO()
+        if age > 7:
+            with pytest.raises(CommandError, match="Stale TMDB IDs: 550"):
+                call_command(Command(tmdb_client=stub), stdout=output)
+        else:
+            call_command(Command(tmdb_client=stub), stdout=output)
+        assert Movie.objects.values().get(pk=550) == before
+        refreshed = Movie.objects.get(pk=551)
+        assert refreshed.title == "Refreshed 551"
+        assert refreshed.refreshed_at == timezone.now()
+        assert stub.requested_ids == [550, 551]
+        assert Movie.objects.count() == 2
+        assert "Refreshed: 1; failed: 1" in output.getvalue()

@@ -404,9 +404,11 @@ class MovieService(BaseTMDBService):
             detail = create_movie_detail_from_tmdb(info_result, credits_result)
         except ValidationError as error:
             raise UpstreamError("Invalid movie data from external API") from error
-        card = movie_card_fields(info_result)
-        now = timezone.now()
-        Movie.objects.filter(tmdb_id=tmdb_id).update(**card, refreshed_at=now, updated_at=now)
+        stored_movie = Movie.objects.filter(tmdb_id=tmdb_id)
+        if stored_movie.exists():
+            card = movie_card_fields(info_result)
+            now = timezone.now()
+            stored_movie.update(**card, refreshed_at=now, updated_at=now)
         return detail
 
     # ========================================================================

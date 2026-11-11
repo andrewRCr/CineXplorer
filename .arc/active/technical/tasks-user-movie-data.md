@@ -421,6 +421,23 @@ page, sees it on the watchlist page, and takes it off again from its card.
   ADR set `Accepted` before merge; before the merge deploys, staging holds at least one stored movie, which the Owner
   saves through the app with the staging test account if none is; the staging criterion is proven after merge, § 9)
 
+- [x] **6.2 Bound card text before storage and retain unstored detail reads**
+
+    **Goal:** Storage-incompatible title or poster text is an upstream error for a card writer, while an unstored
+    detail response remains displayable and a failed refresh row does not stop later movies.
+
+    - Shared card mapping runs the existing Movie field validators for title and poster_path, translating their
+      failures to UpstreamError. Accepted values and a nullable poster remain unchanged. Detail reads map and update
+      card fields only when the stored row exists; ordinary detail validation still runs for every response.
+    - Added 17 regression cases for 255/256 boundaries, no first-save writes on rejection, unchanged stored rows and
+      timestamps, unstored detail responses, and refresh continuation with fresh/stale failed rows. The coupled
+      storage-boundary cases were written together: 12 failed before the fix; five already-supported boundary/null
+      cases failed under a temporary over-restrictive guard, restored before the passing run.
+    - All 63 tests in the four focused files pass; both affected backend apps pass 657 tests. Ruff, formatting,
+      strict Pyright and the movie-detail and Back to Results browser smokes pass. The broader verification run
+      preceded this correction; CI remains the next full check.
+    - Removed the two orphaned batch-policy comment lines from the Ruff configuration.
+
 ## Implementation Notes
 
 - **The TMDB boundary in tests:** service and command tests inject the stub from 1.1.a. API tests can't, since each

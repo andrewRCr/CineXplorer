@@ -56,3 +56,26 @@ def test_invalid_card_details_raise_upstream_error(payload: dict[str, object]) -
     with pytest.raises(UpstreamError) as error:
         movie_card_fields(payload)
     assert error.value.status_code == 502
+
+
+@pytest.mark.parametrize("field", ["title", "poster_path"])
+def test_card_text_accepts_storage_length_boundary(field: str) -> None:
+    payload = create_tmdb_movie_detail(550, "Title", "2020-01-01", 8.0).model_dump()
+    payload[field] = "x" * 255
+    assert movie_card_fields(payload)[field] == "x" * 255
+
+
+@pytest.mark.parametrize("field", ["title", "poster_path"])
+def test_card_text_over_storage_length_raises_upstream_error(field: str) -> None:
+    payload = create_tmdb_movie_detail(550, "Title", "2020-01-01", 8.0).model_dump()
+    payload[field] = "x" * 256
+    with pytest.raises(UpstreamError) as error:
+        movie_card_fields(payload)
+    assert error.value.status_code == 502
+    assert error.value.detail == "Invalid movie data from external API"
+
+
+def test_card_poster_can_remain_unknown() -> None:
+    payload = create_tmdb_movie_detail(550, "Title", "2020-01-01", 8.0).model_dump()
+    payload["poster_path"] = None
+    assert movie_card_fields(payload)["poster_path"] is None

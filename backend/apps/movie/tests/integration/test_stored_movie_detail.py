@@ -90,3 +90,38 @@ def test_invalid_detail_payload_is_502_and_keeps_stored_card(
     assert movie.title == "Keep card"
     assert movie.runtime == 80
     assert movie.refreshed_at is None
+
+
+@pytest.mark.parametrize("field", ["title", "poster_path"])
+@pytest.mark.parametrize("stored", [True, False])
+def test_detail_storage_limits_apply_only_to_stored_movies(
+    tmdb: TMDBStub, field: str, stored: bool
+) -> None:
+    if stored:
+        create_movie(title="Keep card", runtime=80, refreshed_at=timezone.now())
+    before = list(Movie.objects.values())
+    payload = create_tmdb_movie_detail(550, "Title", "2020-01-01", 8.0).model_dump()
+    payload[field] = "x" * 256
+    tmdb.details[550] = ApiResponse(status_code=200, data=payload)
+    with (
+        patch(TMDB_CLIENT_GET_MOVIE_DETAILS, side_effect=tmdb.get_movie_details),
+        patch(TMDB_CLIENT_GET, side_effect=tmdb.get),
+    ):
+        response = Client().get("/api/movies/550")
+    assert response.status_code == (502 if stored else 200)
+    if stored:
+        assert response.json() == {"detail": "Invalid movie data from external API"}
+    else:
+        assert response.json()[field] == "x" * 256
+    assert list(Movie.objects.values()) == before
+
+
+@pytest.mark.parametrize("field", ["title", "poster_path"])
+def test_detail_persists_text_at_storage_length_boundary(tmdb: TMDBStub, field: str) -> None:
+    create_movie(title="Old card")
+    payload = create_tmdb_movie_detail(550, "Title", "2020-01-01", 8.0).model_dump()
+    payload[field] = "x" * 255
+    tmdb.details[550] = ApiResponse(status_code=200, data=payload)
+    result = MovieService(tmdb_client=tmdb).get_movie_by_id(550)
+    assert getattr(result, field) == "x" * 255
+    assert getattr(Movie.objects.get(pk=550), field) == "x" * 255

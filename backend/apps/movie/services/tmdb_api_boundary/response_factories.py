@@ -35,9 +35,11 @@ from collections.abc import Mapping
 from datetime import date
 from typing import NoReturn
 
+from django.core.exceptions import ValidationError as DjangoValidationError
 from pydantic import ValidationError
 
 from apps.core.exceptions import UpstreamError
+from apps.core.models import Movie
 from apps.core.services.api_response import ApiResponse
 from apps.core.services.validators import raise_upstream_error
 from apps.core.tmdb_models.tmdb_responses import (
@@ -571,8 +573,10 @@ def movie_card_fields(data: Mapping[str, object]) -> dict[str, object]:
     """Map a TMDB details payload to stored card fields."""
     try:
         detail = TMDBMovieDetail.model_validate(data)
+        for field, value in (("title", detail.title), ("poster_path", detail.poster_path)):
+            Movie._meta.get_field(field).run_validators(value)
         release_date = date.fromisoformat(detail.release_date) if detail.release_date else None
-    except (ValidationError, ValueError) as error:
+    except (ValidationError, DjangoValidationError, ValueError) as error:
         raise UpstreamError("Invalid movie data from external API") from error
     return {
         "title": detail.title,

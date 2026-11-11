@@ -1,7 +1,7 @@
 # Completion: User-Movie Data Layer
 
 **Prepared:** 2026-11-11
-**Status:** Draft — hosted CI and post-merge staging evidence remain open
+**Status:** Draft — post-merge staging evidence remains open
 **Branch:** `technical/user-movie-data`
 **Category:** Technical
 **Context:** Establish the stored data and save contract used by the planned movie controls and Library.
@@ -48,11 +48,12 @@ After integrating the current palette and dependency updates, the full backend a
 browser smoke pass again. Lint, formatting, types, contrast, production build and regenerated API artifacts also
 pass on that integrated tree.
 
+PR #173 at `0c3be00a` passes every required CI job, including `ci-ok`, in run `43107100580`.
+The API type-drift job proves Implemented criterion 12. CI’s locked Django stubs exposed eight obsolete constraint
+suppressions; their removal passes the pinned checker and leaves the production AST unchanged.
+
 ## Remaining Evidence
 
-- Hosted CI must pass on the corrected head. PR #173’s API type-drift job passes in run `43055091005`,
-  proving Implemented criterion 12. Its backend checks reject eight obsolete type suppressions; the comment-only
-  correction passes locally with the pinned checker and locked dependencies and awaits commit and CI.
 - Before the merge deploys, staging must contain at least one saved movie, added through the app with the staging
   test account if necessary. After deployment, its nightly refresh must report success, refresh at least one row
   without stale IDs, and leave the stored movie's vote fields populated in that account's Library response.

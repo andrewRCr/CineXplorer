@@ -4,7 +4,7 @@
 **Created:** 2026-11-10
 **Branch:** `technical/user-movie-data`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -417,7 +417,7 @@ page, sees it on the watchlist page, and takes it off again from its card.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; the new
+- [x] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; the new
   ADR set `Accepted` before merge; before the merge deploys, staging holds at least one stored movie, which the Owner
   saves through the app with the staging test account if none is; the staging criterion is proven after merge, § 9)
 
@@ -434,7 +434,9 @@ page, sees it on the watchlist page, and takes it off again from its card.
       removed them and their stale comment. With CI’s pinned Pyright 1.1.414 and locked Python 3.13 dependencies,
       the full check changes from eight errors to zero errors/warnings; Ruff and format pass. The production AST
       is identical. Browser smoke was still pending at the failed-gate stop.
-    - Task and status remain open for CI on the corrected head; the staging criterion is due after merge.
+    - Corrected head `0c3be00a` passes every required job, including `ci-ok`, in CI run `43107100580`.
+      The complete local run, independent verification and code reviews, accepted ADRs and hosted CI close
+      verification. The staging criterion remains due after merge.
       Criteria evidence is recorded below and in the work unit's review log.
 
 - [x] **6.2 Bound card text before storage and retain unstored detail reads**

@@ -276,23 +276,16 @@ _Exit criterion:_ the search Success Criterion 9 names finds nothing in producti
           inset shadow. All 39 card/style cases and 64 related cases passed, plus type-check and touched-file
           lint/format. Browse/detail smoke specs passed (two specs).
 
-- [ ] **5.3 Production components name only roles the themes define — R17**
+- [x] **5.3 Production components name only roles the themes define — R17**
 
     **Goal:** Every color role named in `frontend/src`, outside the debug pages and tests, resolves to a theme role.
 
-    - `frontend/src/pages/core/Forbidden.tsx` and `NotFound.tsx`: remove `colorPalette="accent"`; the button recipe's
-      solid variant already colors the button from `primary`
-    - `fg-muted` to `on-muted`: `GridHeader.tsx` (its style object), `GridEmptyState.tsx` (two texts) and
-      `VirtualizedMovieGrid.tsx` (the spinner and two texts); `fg-error` to `destructive` in `GridErrorState.tsx`
-    - `frontend/src/components/core/chakra/toaster.tsx`: `borderColor="border"` to `border-subtle-01`
-    - `frontend/src/components/core/chakra/color-mode.tsx`: remove `LightMode` and `DarkMode`, which nothing imports,
-      and any import only they used
-    - `frontend/src/pages/user/Login.tsx` and `frontend/src/components/layout/LoadingLayout.tsx`: the GitHub logo's
-      wrapper takes `color="foreground"` instead of `"black"`; remove `LoadingLayout`'s comment calling black a brand
-      exception
-    - **Check:** a search of `frontend/src`, outside `frontend/src/pages/dev/` and test files, finds none of
-      `fg-muted`, `fg-error`, `colorPalette="accent"`, `colorPalette="gray"`, `borderColor="border"`, `color="fg"` or
-      `color="black"`; `sign-in.spec.ts` and `browse.spec.ts`
+    - Removed the error pages' undefined accent palette, replaced grid text/error and toaster border references,
+      removed unimported LightMode/DarkMode wrappers, and themed both GitHub logo wrappers with foreground.
+    - The required production-source search is empty. All 266 related tests across 27 files passed, plus frontend
+      type-check, formatting and the configured full lint gate. Sign-in/browse smoke specs passed (two specs).
+    - An exploratory forced lint of the Chakra snippets hit their documented mixed-export/Fast Refresh exception;
+      restored the configured invocation without overriding that deliberate exclusion.
 
 - [ ] **5.4 Removed role names are described as removed — R18**
 

@@ -361,7 +361,7 @@ const Login = () => {
           oauthProvider === "google" ? (
             <GoogleLogo size={64} />
           ) : (
-            <Box color="black">
+            <Box color="foreground">
               <GitHubLogo size={64} />
             </Box>
           )

@@ -42,11 +42,7 @@ const Forbidden = () => {
         </Text>
 
         <VStack gap={4}>
-          <Button
-            onClick={() => void navigate(ROUTES.HOME)}
-            colorPalette="accent"
-            size="lg"
-          >
+          <Button onClick={() => void navigate(ROUTES.HOME)} size="lg">
             Go to Home
           </Button>
 

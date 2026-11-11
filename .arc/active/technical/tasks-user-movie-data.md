@@ -317,27 +317,21 @@ _Exit criterion:_ on the browsable stack, viewing a stored movie's detail moves 
           service unit test now has database access. Documented the conversion-error boundary.
         - All 458 movie-app tests, Ruff, formatting and strict Pyright pass; the six new cases pass after mutations.
 
-- [ ] **4.2 `refresh_movie_cards` keeps every stored card within seven days — D9**
+- [x] **4.2 `refresh_movie_cards` keeps every stored card within seven days — D9**
 
     **Goal:** Each run refreshes the stalest rows one request at a time for at most 20 minutes, never deletes or
     blanks a row, and exits non-zero exactly when a row is more than seven days old afterwards.
 
-    - [ ] **4.2.a Write the command's tests**
-        - Its TMDB client injected as a stub; time replaced with `freezegun` for the budget and the age, so the
-          command reads a clock it controls (`timezone.now()` or `time.monotonic()`)
-        - Success Criterion 11's command cases, each failure kind D9 names (timeout, 5xx, 429, a response failing
-          validation, 404) separately
-        - A refreshed row's `updated_at` moves with its `refreshed_at`
-        - Expect tests to FAIL initially
-
-    - [ ] **4.2.b Implement the command**
-        - Beside the movie app's other commands; it takes its client through its constructor, so tests pass
-          `call_command` a command instance built with the stub
-        - It writes rows through 2.1's mapping, one details request at a time, setting `updated_at` as 4.1.b does
-        - It prints its counts; when rows more than seven days old remain, it raises `CommandError` whose message is the
-          line of stale TMDB IDs, so that line comes last in the output and the exit is non-zero. Tests catch the error
-          through `call_command` and read the counts from its captured output
-        - Tests should now PASS
+    - [x] **4.2.a Write the command's tests**
+        - Eleven cases cover null-first/oldest-first ordering, the 20-minute budget, each upstream failure type,
+          unchanged failed cards, timestamps, counts, never-refreshed rows, exact seven-day age and an empty catalogue.
+          Ten cases failed against a no-op command; omitting null refresh ages demonstrated the added never-refreshed
+          failure before restoration.
+    - [x] **4.2.b Implement the command**
+        - Inject the TMDB client, stream IDs in age order, fetch/map one card at a time and update both timestamps.
+          Domain failures leave rows untouched. The command prints counts, then raises CommandError with stale IDs
+          exactly when any row lacks a refresh time or is more than seven days old; it deletes no row.
+        - All 469 movie-app tests, Ruff, formatting and strict Pyright pass.
 
 - [ ] **4.3 The nightly maintenance job runs the refresh — D9**
 

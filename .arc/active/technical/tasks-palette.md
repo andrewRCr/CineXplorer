@@ -58,46 +58,22 @@ _Mode:_ `layer` — closes on Marquee as the default theme, with every pair R5 l
         - Added Marquee first to the script: 121 pairs × 10 variants, all 1,210 passed. Palette tests, frontend
           type-check, touched-file ESLint and formatting passed.
 
-- [ ] **1.2 `verify-contrast` checks every pair R5 lists, in the themes R5 names — R5**
+- [x] **1.2 `verify-contrast` checks every pair R5 lists, in the themes R5 names — R5**
 
     **Goal:** Any color in an R5 pair moved below that pair's threshold fails `verify-contrast`, in each theme R5
     names for the pair and in no other.
 
-    - [ ] **1.2.a Move the checks into an importable module**
-        - The script runs `runValidation()` and exits when imported, and Vitest does not collect `scripts/`; move the
-          pair categories, `THRESHOLDS`, `NATIVE_ALERT_SURFACES` and the pair validator into
-          `frontend/src/theme/color/contrast-checks.ts`, beside `contrast.ts`, which the script already imports
-        - Export the pair list and one function that validates a theme variant (`UnifiedTheme`, theme id, mode) and
-          returns a result per pair; the script keeps the theme list, the report and the exit code
-        - A pure move: `npm run verify-contrast` reports the same totals before and after; record both
-
-    - [ ] **1.2.b Write `frontend/src/theme/color/__tests__/contrast-checks.test.ts`**
-        - Test: a pair limited to named themes is checked for those themes and skipped for the others, counted as
-          neither passed nor failed
-        - Test: R5's table, encoded as test data (pair, surfaces, backdrop, threshold, themes), is checked entry by
-          entry: each listed pair on each listed surface has an entry at its threshold or a stricter one, applying in
-          every theme R5 names for it (an entry limited to Marquee satisfies only Marquee-only rows)
-        - Test: for each R5 pair and each theme R5 names for it, in both modes, a copy of the theme variant with the
-          pair's foreground set to the color of the surface it sits on fails that pair
-        - Expect tests to FAIL initially (no theme limit; several R5 pairs unchecked). The rows whose pairs are
-          already checked (1.2.c lists them) pass the presence and mutation tests at once: remove one such pair from
-          the list (the narrow reconstruction), show both tests failing on its rows and passing once it is restored,
-          and record that (`testing-standards`)
-
-    - [ ] **1.2.c Add the theme limit and the R5 pairs not yet checked**
-        - A pair may name the themes it is limited to; the validator skips it for other themes, and the report shows
-          scoped skips apart from the optional-token skips
-        - Most R5 pairs are already checked at their threshold or a stricter one: the status colors as text on the
-          four surfaces and on their tints, `foreground` on every surface the chip and card use, the selected pill's
-          `tertiary`, `on-tertiary` and `ring` pairs, `on-badge`, `on-primary` and `on-muted`. Add the rest as one
-          category named for the restyled elements:
-            - Score dot at `ui`: `success` on `layer-hover-01` and `layer-hover-02`; `destructive` on `layer-hover-01`
-              (all five)
-            - `border-subtle-01` at `decorative` on `background` (all five), on `layer-01` and on `layer-03` (Marquee)
-            - On each status's tint (`{status}/10`) over `background` and `layer-01` to `layer-03`:
-              `on-button-outline` at `text` (all five); `border-strong-02` and `tertiary` at `ui` (Marquee)
-        - Tests should now PASS, and `npm run verify-contrast` passes. An all-five pair failing in one of the four
-          existing palettes contradicts R5's "already meet": stop for a PRD amendment rather than narrowing the pair
+    - [x] **1.2.a Extract the importable checks**
+        - Moved pairs, thresholds and variant validation into `contrast-checks.ts`; the CLI keeps reporting and
+          exit behavior. Pure-move totals before and after: 1,210 passed, none failed or skipped.
+    - [x] **1.2.b Pin matrix coverage and mutation behavior**
+        - Encoded the R5 rows independently as pair, surface, backdrop, threshold and theme data. The initial run
+          had 403 failures and 1,140 passes. Temporarily removing the existing `on-badge`/`badge` entry produced
+          15 presence/mutation failures; restoring it and implementing coverage made all 1,543 tests pass.
+    - [x] **1.2.c Add scope and missing rendered pairs**
+        - Added missing score-dot, edge and tinted-alert control pairs. Scoped skips are reported separately from
+          optional tokens: 175 declared pairs × 10 variants, 1,478 passed, 272 scoped out, zero failures.
+        - Frontend type-check, touched-file ESLint and formatting passed.
 
 - [ ] **1.3 The light-layer guidance and the Marquee ADR describe Marquee — R18**
 

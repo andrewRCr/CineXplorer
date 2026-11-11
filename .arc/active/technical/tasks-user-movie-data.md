@@ -219,16 +219,16 @@ clock minute answers 429.
           stays thread-local. Ordinary tests bypass counting.
         - All 161 user-data tests, Ruff, formatting and strict Pyright pass after source restoration.
 
-- [ ] **2.5 A new ADR records the save — D6**
+- [x] **2.5 A new ADR records the save — D6**
 
     **Goal:** The save's design and the reasons for it (the upsert by TMDB ID, an omitted field against an explicit
     `null`, concurrent saves without a 409, and the save limits) are recorded where a later reader looks for them.
 
-    - Write "Save a user's movie data with one PATCH by TMDB ID" from `adr-template.md`, per
-      `strategy-adr-methodology.md`, reading `Proposed`, numbered with the next free ADR number when it is written
-    - ADR-026's Status becomes `Accepted; Superseded in part by ADR-NNN (the PUT save)` and ADR-025's
-      `Accepted; Superseded in part by ADR-NNN (the duplicate-save 409)`
-    - Acceptance happens in verification
+    - Added proposed ADR-041, "Save a User's Movie Data with One PATCH by TMDB ID", recording partial saves,
+      explicit clearing, concurrent insertion/locking, exact per-user fixed-window limits and cache fault behavior,
+      with alternatives, reasons and operational limits.
+    - ADR-025/026 Status lines name only the superseded duplicate-save 409 and PUT save. Their remaining decisions
+      stand; acceptance of ADR-041 remains in verification. All three changed ADRs pass markdown lint.
 
 - [ ] **2.6 Check a save end to end**
 

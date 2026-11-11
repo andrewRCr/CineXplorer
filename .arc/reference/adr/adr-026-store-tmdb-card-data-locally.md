@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Owner, 2026-11-03)
+Accepted; Superseded in part by ADR-041 (the PUT save)
 
 Implemented by: the planned UserMovieData consolidation.
 

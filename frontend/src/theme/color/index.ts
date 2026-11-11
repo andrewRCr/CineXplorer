@@ -27,12 +27,14 @@ export type { UnifiedTheme } from "./types";
 import type { UnifiedTheme } from "./types";
 
 // Adapter function exports
+export { createMarqueeAdapter } from "./adapters/marquee";
 export { createGithubAdapter } from "./adapters/github-primer";
 export { createCarbonAdapter } from "./adapters/ibm-carbon";
 export { createPajamasAdapter } from "./adapters/gitlab-pajamas";
 export { createMaterialAdapter } from "./adapters/material-design-3";
 
 // Import for use within this module
+import { createMarqueeAdapter } from "./adapters/marquee";
 import { createGithubAdapter } from "./adapters/github-primer";
 import { createCarbonAdapter } from "./adapters/ibm-carbon";
 import { createPajamasAdapter } from "./adapters/gitlab-pajamas";
@@ -57,12 +59,16 @@ export { createExtensions } from "./extensions";
  * Supported design system theme names.
  */
 export type ThemeName =
-    "github-primer" | "ibm-carbon" | "gitlab-pajamas" | "material-design-3";
+    | "marquee"
+    | "github-primer"
+    | "ibm-carbon"
+    | "gitlab-pajamas"
+    | "material-design-3";
 
 /**
  * Factory function to create a UnifiedTheme from design system identifier.
  *
- * @param themeName - Design system identifier (github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
+ * @param themeName - Design system identifier (marquee, github-primer, ibm-carbon, gitlab-pajamas, material-design-3)
  * @param mode - Color mode (light or dark)
  * @returns UnifiedTheme with ~47 tokens adapted to design system
  *
@@ -82,6 +88,8 @@ export function createUnifiedTheme(
     mode: "light" | "dark",
 ): UnifiedTheme {
     switch (themeName) {
+        case "marquee":
+            return createMarqueeAdapter(mode);
         case "github-primer":
             return createGithubAdapter(mode);
         case "ibm-carbon":

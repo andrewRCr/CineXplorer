@@ -42,54 +42,21 @@ active theme.
 
 _Mode:_ `layer` — closes on Marquee as the default theme, with every pair R5 lists checked in the themes it names.
 
-- [ ] **1.1 Marquee's adapter returns its palette in both modes — R1, R2, R3, R4, R8**
+- [x] **1.1 Marquee's adapter returns its palette in both modes — R1, R2, R3, R4, R8**
 
     **Goal:** `createUnifiedTheme("marquee", mode)` returns R2's and R3's values and R4's mapping, and every existing
     contrast pair passes on it.
 
-    - [ ] **1.1.a Write `frontend/src/theme/color/__tests__/marquee.test.ts`**
-        - Test: each role R2 lists (dark) and R3 lists (light) equals its table value, through
-          `createUnifiedTheme("marquee", mode)`
-        - Test: R4's direct mapping: `popover` is `layer-02` with `on-popover` `foreground`; `muted` is `layer-01`;
-          `brand` is `primary` and `on-brand` is `on-primary`; `on-tertiary` is `on-primary`; `on-secondary`,
-          `on-badge`, `on-button-subtle` and `on-button-subtle-selected` are `foreground`; `button-outline` is
-          `border-strong-01`; `button-outline-primary` and `on-button-outline-primary` are `primary`; `button-subtle`
-          is `secondary`; `button-subtle-selected` is `layer-selected-02`
-        - Test: the border roles equal `deriveBorderHierarchy("#413B33", "#736A5F", "progressive")` in dark mode and
-          `deriveBorderHierarchy("#D3C5AA", "#7C705B", "alternating")` in light; the `layer-01` and `layer-02` states
-          equal `deriveInteractionStates(layer, foreground)`; `primary-*` from `deriveInteractionStates(primary,
-          on-primary)`; `secondary-*` from `deriveInteractionStates(secondary, foreground)`
-        - Test: `tertiary-hover` and `tertiary-active` are lighter than `tertiary` in dark mode and darker in light,
-          with the active step the larger (compare relative luminance)
-        - Test: shadows are `carbonShadows[mode]`; `backdrop` is `rgba(0, 0, 0, 0.7)`; `drag-active` is
-          `secondary-hover`; `drop-zone` is `muted`; `badge` and `imdb-gold` take the table values
-        - Test: the theme has the same roles as `createCarbonAdapter(mode)`, none added or missing
-        - Expect tests to FAIL initially (`marquee` is not a theme name)
-
-    - [ ] **1.1.b Add the adapter and its name**
-        - `frontend/src/theme/color/adapters/marquee.ts`: `createMarqueeAdapter(mode)`, with R2's and R3's values
-          held in the adapter by mode (Marquee has no published palette to mirror in `palettes/`), following
-          `createCarbonAdapter`'s sections and assembly order, except that `badge` and `imdb-gold` take the table
-          values and `on-badge` is `foreground`, instead of `createExtensions`' (Carbon passes its muted text as
-          `on-badge`); a header comment on the character (brass on warm black, deep cream light mode, Carbon's
-          mapping)
-        - `tertiary-hover` and `tertiary-active`: `adjustColor(tertiary, …)` by 5 and 10, lighter in dark mode and
-          darker in light; the contrast script's `tertiary-hover` and `tertiary-active` pairs bound the choice
-        - `frontend/src/theme/color/index.ts`: `"marquee"` in `ThemeName`, `case "marquee"` in
-          `createUnifiedTheme`, `createMarqueeAdapter` exported beside the other adapters, and the `@param
-          themeName` list
-        - `frontend/src/theme/color/definitions.ts`: `marqueeTheme` (`name: "marquee"`, `label: "Marquee"`), first in
-          the file, with a docblock in the others' style
-        - `frontend/src/theme/color/shadows.ts`: `"marquee"` in `getShadowValues`'s union, returning
-          `carbonShadows[mode]` (its exhaustiveness check requires the case)
-        - Tests should now PASS
-
-    - [ ] **1.1.c The contrast script checks Marquee**
-        - `frontend/scripts/verify-theme-contrast.ts`: `{ name: "Marquee", def: marqueeTheme }` first in the theme
-          list; the header comment reads 5 themes × 2 modes = 10 variants
-        - **Check:** `npm run verify-contrast` passes every existing pair on Marquee in both modes. R2 and R3 were
-          measured against these pairs: a failure means a table value is wrong, which stops the task for a PRD
-          amendment rather than a tuned value
+    - [x] **1.1.a Pin the adapter contract**
+        - Ten tests cover both palette tables, direct role mappings, derived states and borders, link-state
+          luminance, shadows, backdrop and Carbon's role vocabulary. All ten failed with `Unknown theme: marquee`
+          before the adapter existed, and passed afterward.
+    - [x] **1.1.b Add the adapter and its name**
+        - Marquee owns its mode palettes, composes the existing border, state and extension helpers, and overrides
+          the badge, its text and star colors. Registered the factory, definition and Carbon shadow mapping.
+    - [x] **1.1.c Check Marquee's contrast**
+        - Added Marquee first to the script: 121 pairs × 10 variants, all 1,210 passed. Palette tests, frontend
+          type-check, touched-file ESLint and formatting passed.
 
 - [ ] **1.2 `verify-contrast` checks every pair R5 lists, in the themes R5 names — R5**
 

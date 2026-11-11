@@ -17,6 +17,19 @@ import type { Theme } from "../types";
 import { createUnifiedTheme } from "./index";
 
 /**
+ * Marquee Theme
+ *
+ * CineXplorer's antique brass on warm black, with pale cards on a deep-cream
+ * light page. Uses Carbon's surface mapping and conservative shadows.
+ */
+export const marqueeTheme: Theme = {
+    name: "marquee",
+    label: "Marquee",
+    lightUnified: createUnifiedTheme("marquee", "light"),
+    darkUnified: createUnifiedTheme("marquee", "dark"),
+} as const;
+
+/**
  * GitHub Primer Theme
  *
  * Provides neutral, professional aesthetic proven at massive scale.

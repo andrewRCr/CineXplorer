@@ -1,7 +1,7 @@
 /**
  * Semantic Token Contrast Validation
  *
- * Validates color contrast across all theme variants (4 themes × 2 modes = 8 variants) for:
+ * Validates color contrast across all theme variants (5 themes × 2 modes = 10 variants) for:
  * - **WCAG AA compliance** (text: 4.5:1, UI components: 3:1)
  * - **Minimum visibility** for decorative elements (1.3:1)
  *
@@ -23,6 +23,7 @@ import { rgb as getContrast } from "wcag-contrast";
 import { tokens as chakraTokens } from "@chakra-ui/react/theme";
 import { resolveColorStack } from "../src/theme/color/contrast";
 import {
+    marqueeTheme,
     githubTheme,
     ibmCarbonTheme,
     gitlabPajamasTheme,
@@ -389,6 +390,7 @@ function validatePair(
 
 function runValidation() {
     const themes = [
+        { name: "Marquee", def: marqueeTheme },
         { name: "GitHub Primer", def: githubTheme },
         { name: "IBM Carbon", def: ibmCarbonTheme },
         { name: "GitLab Pajamas", def: gitlabPajamasTheme },

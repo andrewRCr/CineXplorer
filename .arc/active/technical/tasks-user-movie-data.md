@@ -49,7 +49,7 @@ rewritten service tests pass with `repositories.py` deleted.
     **Goal:** Today's service behaviour is pinned by tests that read and write the test database, replacing only TMDB,
     so the fold and the model changes that follow can't change it unnoticed.
 
-    **Note:** Commit this task alone, before 1.2 starts, so Success Criterion 2 holds at its commit.
+    **Checkpoint:** Committed as `8e3d1376` before the repository fold at `a75fa1cb`.
 
     - [x] **1.1.a Add the factory functions and a TMDB stub**
         - Plain saved-row factories accept keyword overrides; `TMDBStub` serves configured details, credits, error
@@ -224,11 +224,11 @@ clock minute answers 429.
     **Goal:** The save's design and the reasons for it (the upsert by TMDB ID, an omitted field against an explicit
     `null`, concurrent saves without a 409, and the save limits) are recorded where a later reader looks for them.
 
-    - Added proposed ADR-041, "Save a User's Movie Data with One PATCH by TMDB ID", recording partial saves,
+    - Added proposed ADR-043, "Save a User's Movie Data with One PATCH by TMDB ID", recording partial saves,
       explicit clearing, concurrent insertion/locking, exact per-user fixed-window limits and cache fault behavior,
       with alternatives, reasons and operational limits.
     - ADR-025/026 Status lines name only the superseded duplicate-save 409 and PUT save. Their remaining decisions
-      stand; acceptance of ADR-041 remains in verification. All three changed ADRs pass markdown lint.
+      stand; ADR-043 is Accepted following verification. All three changed ADRs pass markdown lint.
 
 - [x] **2.6 Check a save end to end**
 
@@ -421,6 +421,13 @@ page, sees it on the watchlist page, and takes it off again from its card.
   ADR set `Accepted` before merge; before the merge deploys, staging holds at least one stored movie, which the Owner
   saves through the app with the staging test account if none is; the staging criterion is proven after merge, § 9)
 
+    - Author criteria walk: Implemented 1–11 and 13 proven; 12 has local evidence and awaits the hosted CI drift job.
+      The complete local verification run passes: 1,220 backend tests (96.31% coverage), 999 frontend tests, five
+      Chromium smokes, lint/format/types and markdown. Eight deploy-script tests, contrast and production build pass.
+      Historical pre-fold service checkpoint: 44 tests pass at `8e3d1376`.
+    - Task and status remain open for the hosted CI evidence; the staging criterion is due after merge.
+      Criteria evidence is recorded below and in the work unit's review log.
+
 - [x] **6.2 Bound card text before storage and retain unstored detail reads**
 
     **Goal:** Storage-incompatible title or poster text is an upstream error for a card writer, while an unstored
@@ -448,8 +455,8 @@ page, sees it on the watchlist page, and takes it off again from its card.
 - **Deploy-script tests:** CI doesn't run `infrastructure/deploy/tests/`. From that folder,
   `python3 -m unittest test_nightly test_installed_operations` runs them; they need the
   `cinexplorer-bootstrap:launch-readiness-test` image, built from `Dockerfile.bootstrap` there if it's missing.
-- **Migration tests:** no existing test exercises a migration; drive one with Django's `MigrationExecutor` from the
-  previous migration's state, writing rows through the historical models. Run them with `django_db(transaction=True)`:
+- **Migration tests:** use Django's `MigrationExecutor` from the previous migration's state, writing rows through
+  historical models, with `django_db(transaction=True)`:
   foreign keys here are deferred, so rows inserted in one transaction leave pending trigger events and Postgres refuses
   the next `ALTER TABLE`. Migrate back to the latest state in teardown, so a database kept by `--reuse-db` keeps the
   current schema.
@@ -468,30 +475,53 @@ page, sees it on the watchlist page, and takes it off again from its card.
 
 ### Implemented
 
-- [ ] 1. **The success signal.** With 200 records for one user, a test shows the service's Library read runs exactly two
+- [x] 1. **The success signal.** With 200 records for one user, a test shows the service's Library read runs exactly two
   queries (the count, and the page with its movies) and the TMDB stub receives no request, and another shows the
   endpoint runs the same number of queries for 1 record as for 200; and API tests show one
   `PATCH /user-movie-data/{tmdb_id}` sets each field from a record holding no state and from one holding every field,
   and clears a rating, a review and a watched date with an explicit `null`. (D6, D7)
-- [ ] 2. **Service tests on the database.** The rewritten service tests pass at the commit that adds them, before the
+
+  _Evidence (2026-11-11):_ Full backend verification passes `test_library_of_two_hundred_movies_uses_two_queries`,
+  the endpoint 1-versus-200 query-count test, and the parameterized empty/full-state and explicit-null API tests.
+
+- [x] 2. **Service tests on the database.** The rewritten service tests pass at the commit that adds them, before the
   repository is removed; they replace only TMDB, and no test in `apps/user_movie_data` mocks the repository, the
   QuerySet or `MovieService`. (D1)
-- [ ] 3. **The fold is complete.** `repositories.py` and `pipelines/batch.py` with its tests are gone, and a search of the
+
+  _Evidence (2026-11-11):_ The 44 rewritten database service tests were rerun successfully from an archived backend
+  at commit `8e3d1376`, before the repository fold at `a75fa1cb`. Current service tests substitute TMDB, with no
+  repository, QuerySet or MovieService mocks.
+
+- [x] 3. **The fold is complete.** `repositories.py` and `pipelines/batch.py` with its tests are gone, and a search of the
   repository outside ADRs and the planning records in `.arc/backlog/`, `.arc/active/` and `.arc/reference/archive/`
   finds no `UserMovieDataRepository`, `fetch_movies_batch`, `get_all_user_movies`, `UserMovieDataDetailSchema`,
   `UserMovieDataCreateSchema`, `UserMovieDataUpdateSchema`, `UserMovieDataModelSchema` or `by-tmdb-id`, and no test,
   test helper or docstring sends or shows a request to a removed route or to a user-movie-data route addressed by a
   record's database ID. `UserMovieDataService` takes no repository or `MovieService`. (D2)
-- [ ] 4. **Errors.** No `HttpError` remains in `apps/user_movie_data` or in `MovieService.get_movie_by_id`. The committed
+
+  _Evidence (2026-11-11):_ Tracked-source search outside the specified ADR/planning/archive exclusions finds none of
+  the removed names. Route-reference inspection finds TMDB IDs throughout tests/helpers/docstrings; the service
+  constructor injects only TMDB. The repository, batch module and batch tests are deleted.
+
+- [x] 4. **Errors.** No `HttpError` remains in `apps/user_movie_data` or in `MovieService.get_movie_by_id`. The committed
   OpenAPI schema lists, for each user-movie-data route, exactly the success and error statuses in D6's Responses
   table, each error with `ErrorResponseSchema`. A test shows the movie detail endpoint answers 502 with the shared
   body when TMDB's details or credits response fails validation. (D3)
-- [ ] 5. **Database constraints.** Tests writing through the ORM directly show the database rejects a rating of 0 and of
+
+  _Evidence (2026-11-11):_ Committed OpenAPI statuses match D6 exactly and every declared error references
+  `ErrorResponseSchema`. Full backend verification passes schema-contract and invalid-details/credits 502 tests; the
+  changed services contain no HttpError.
+
+- [x] 5. **Database constraints.** Tests writing through the ORM directly show the database rejects a rating of 0 and of
   11, an empty and a whitespace-only review, a review of 10,001 characters, a `watched_at` on an unwatched record and a
   second record for one user and movie, and accepts a watched record with no date. A migration test shows an existing
   empty review becomes `null`, one of 10,001 characters is truncated to 10,000, and one of 10,001 characters whose
   first 10,000 are spaces becomes `null`. Both migrations apply and reverse. (D4, D8)
-- [ ] 6. **The save's contract.** API tests show: a first save answers 201 and a second 200, both with
+
+  _Evidence (2026-11-11):_ Full backend verification passes direct-ORM constraint tests and both migration
+  apply/reverse tests, including legacy review normalization and truncation.
+
+- [x] 6. **The save's contract.** API tests show: a first save answers 201 and a second 200, both with
   `UserMovieDataSchema`; a field left out keeps its value; `null` for a flag, a rating of 11, a review of 10,001
   characters and a review containing a NUL character each answer 422, as does a request with no body; a body of
   `{}`, a body that isn't valid JSON and a `watched_at` date on an unwatched result each answer 400; marking a movie
@@ -500,39 +530,78 @@ page, sees it on the watchlist page, and takes it off again from its card.
   and DELETE answer 404 with no record; DELETE answers 204 and keeps the `Movie` row; each route answers 401 with no
   user and never reads or writes another user's record; and, with CSRF checks enforced, a session-signed-in PATCH and
   DELETE answer 403 without a token and succeed with a matching one. (D2, D5, D6)
-- [ ] 7. **Concurrent first saves.** Two first saves of one unstored movie, sent at once on two threads with real
+
+  _Evidence (2026-11-11):_ Full backend verification passes the save lifecycle, field/null/body validation,
+  watched-date, empty-state retention, ownership and enforced-CSRF cases in the API and authentication integration
+  suites.
+
+- [x] 7. **Concurrent first saves.** Two first saves of one unstored movie, sent at once on two threads with real
   transactions, both succeed, leaving one `Movie` row and one record holding both saves' fields. (D6)
-- [ ] 8. **Save limits.** With throttling enabled against the Redis cache, for a user signed in by bearer token and for
+
+  _Evidence (2026-11-11):_ Full backend verification passes the two-thread first-save test using real transactions,
+  leaving one Movie and one user record with both fields.
+
+- [x] 8. **Save limits.** With throttling enabled against the Redis cache, for a user signed in by bearer token and for
   one signed in by session, the 31st save within one clock minute and the 1,001st within one UTC day answer 429 with a
   `Retry-After` header and change nothing; 40 saves from one user sent at the same moment on parallel threads, within
   one minute, leave exactly 30 succeeding; a save half a second before either window ends succeeds and is counted; a
   save whose counter is deleted between its creation and its increment succeeds and counts as one; with `CACHES`
   pointed at an address that refuses connections, a save still succeeds; and another user's saves from the same
   address, and the first user's reads and deletes, still succeed. (D6)
-- [ ] 9. **The Library.** API tests show each filter alone and combined, each sort in both directions with nulls last and
+
+  _Evidence (2026-11-11):_ Full backend verification passes bearer/session minute/day limits, forty concurrent
+  saves, half-second boundaries, deleted counters, unreachable cache and user/read/delete isolation. The configured
+  test cache uses Redis.
+
+- [x] 9. **The Library.** API tests show each filter alone and combined, each sort in both directions with nulls last and
   ties ordered by TMDB ID, records with no state left out of the unfiltered list, a 422 for an unknown `sort`, a `page`
   of 0 or 1,000,001 and a `page_size` of 101, an empty page past the end with valid counts, and `next_tmdb_page_start`
   null on every page. Each item carries the `Movie` row's card fields and the user's data. (D7)
-- [ ] 10. **Card data.** Tests show a save of an unstored movie creates its `Movie` row with the mapped card fields and
+
+  _Evidence (2026-11-11):_ Full backend verification passes all filters, combined filters, both directions of every
+  sort, nulls/ties, invalid bounds, stored payloads, empty-state omission and past-end pagination, with null TMDB
+  cursors.
+
+- [x] 10. **Card data.** Tests show a save of an unstored movie creates its `Movie` row with the mapped card fields and
   `refreshed_at` set, turning an empty release date, a runtime of 0 and an empty overview into `null` and deriving
   `genre_ids` from `genres`; a save of a stored movie makes no TMDB request; an unknown TMDB ID answers 404 and a
   TMDB failure an upstream error, writing nothing; and the detail view updates a stored row's card fields and
   `refreshed_at` and creates no row for an unstored movie. (D8)
-- [ ] 11. **The nightly refresh.** Command tests show it refreshes rows stalest first with rows lacking `refreshed_at`
+
+  _Evidence (2026-11-11):_ Full backend verification passes card mapping/normalization, missing-versus-stored saves,
+  upstream failures without writes, stored detail refresh and no creation for an unstored detail view. Retained live
+  save/detail scenarios agree with those paths.
+
+- [x] 11. **The nightly refresh.** Command tests show it refreshes rows stalest first with rows lacking `refreshed_at`
   ahead, stops at 20 minutes, leaves a failing row unchanged for each failure kind D9 names, deletes no row, prints its
   counts and then the stale IDs last, and exits non-zero exactly when a row is more than seven days old after the
   run. `test_nightly.py` shows the maintenance job runs the step after the clean-ups and before the success ping and
   keeps its output in the journal on a clean night; `test_installed_operations.py` and the deploy README state the
   previous release's failing step, and the README's "Nightly jobs and monitoring" section gives the procedure for
   settling a removed movie. (D9)
+
+  _Evidence (2026-11-11):_ Full backend verification passes command order/budget/failure/freshness tests; all eight
+  nightly and installed-operations tests pass. The README records rollback compatibility and removed-movie handling.
+  Retained live refresh evidence reports two refreshed rows and exit zero.
+
 - [ ] 12. **The frontend.** Frontend tests show the watchlist toggle sends one PATCH carrying the value the card shows it
   moving to, so a second click on a card first drawn with no user data sends `false`; the detail page treats a 404
   as no record and adds an untouched movie to the watchlist; and the watchlist page requests `watchlist=true` with
   a `page_size` of 100. The API types are regenerated and CI's type-drift check passes. (D10)
-- [ ] 13. **Reference documents.** `strategy-pagination.md` states the rule for database-served lists, and its
+
+  _Evidence (2026-11-11):_ Frontend verification passes all 999 tests, including the true-then-false card save,
+  detail-hook 404/first save and bounded Watchlist request. All five browser smokes pass. Regenerating OpenAPI and
+  TypeScript produces no diff, and the local equivalent of the CI drift check passes. The hosted CI type-drift job
+  has not run; this criterion remains open for that evidence.
+
+- [x] 13. **Reference documents.** `strategy-pagination.md` states the rule for database-served lists, and its
   End-of-Results Signal section and `MovieListResponseSchema`'s docstring say a null `next_tmdb_page_start` ends only
   a TMDB-backed list; the service-layer strategy and the technical overview no longer present the removed repository.
   (D2, D7)
+
+  _Evidence (2026-11-11):_ Source inspection confirms the database-list pagination rule, TMDB-only null-cursor
+  exhaustion semantics, matching response docstring, and updated service/technical references. Full markdown lint
+  passes.
 
 ### Proven after merge
 

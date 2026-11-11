@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted; Superseded in part by ADR-041 (the PUT save)
+Accepted; Superseded in part by ADR-043 (the PUT save)
 
 Realized (2026-11-10): `tasks-user-movie-data.md`.
 

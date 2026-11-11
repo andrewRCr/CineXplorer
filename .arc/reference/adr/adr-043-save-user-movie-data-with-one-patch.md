@@ -1,8 +1,8 @@
-# ADR-041: Save a User's Movie Data with One PATCH by TMDB ID
+# ADR-043: Save a User's Movie Data with One PATCH by TMDB ID
 
 ## Status
 
-Proposed
+Accepted (2026-11-11)
 
 ## Context
 

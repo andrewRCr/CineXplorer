@@ -2,7 +2,7 @@
 
 The domain-error and unhandled-error cases run on a separate API with the same handlers
 registered and a route that raises each error, since no project route fails that way on
-request. The validation case runs on a real route.
+request. The validation and body-limit cases run on real routes.
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from collections.abc import Callable
 from http import HTTPStatus
 
 import pytest
+from django.conf import settings
 from django.http import HttpRequest
 from django.test import Client, override_settings
 from ninja import NinjaAPI
@@ -134,3 +135,24 @@ def test_validation_error_names_every_invalid_field(api_client: Client) -> None:
     detail = response.json()["detail"]
     assert detail.startswith("level: Input should be")
     assert "; message: Field required" in detail
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("debug", [False, True])
+def test_oversized_body_answers_with_json_and_warns_without_a_traceback(
+    debug: bool, api_client: Client, caplog: pytest.LogCaptureFixture
+) -> None:
+    limit = settings.DATA_UPLOAD_MAX_MEMORY_SIZE
+    assert limit is not None
+    payload: dict[str, object] = {"email": PRIVATE_TEXT, "padding": "x" * (limit + 1)}
+
+    with override_settings(DEBUG=debug), caplog.at_level(logging.WARNING, "apps.core.api_errors"):
+        response = json_post(api_client, "/api/register/", payload)
+
+    assert response.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+    assert response.json() == {"detail": "Request body too large"}
+    assert PRIVATE_TEXT not in response.content.decode()
+    [record] = [r for r in caplog.records if r.name == "apps.core.api_errors"]
+    assert record.levelno == logging.WARNING
+    assert record.exc_info is None
+    assert PRIVATE_TEXT not in record.getMessage()

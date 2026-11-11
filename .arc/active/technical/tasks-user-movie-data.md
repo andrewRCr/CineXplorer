@@ -403,12 +403,17 @@ page, sees it on the watchlist page, and takes it off again from its card.
           records. Reviewed remaining user-movie-data route references; generic HTTP tests use an independent sample
           resource rather than invented user-movie routes. Current GET/PATCH/DELETE paths use TMDB IDs.
 
-- [ ] **5.2 Check the frontend end to end**
+- [x] **5.2 Check the frontend end to end**
 
     **Goal:** The adapted call sites compose with the real API in a browser.
 
-    - Walk Phase 5's exit criterion in a browser against the browsable stack (with the Playwright MCP if the Owner
-      enables it, or by the Owner), and record what ran and the result
+    - Walked the real isolated stack in headless Chromium through Playwright, with no catalogue mocks. Alien (348)
+      was absent from stored movies and its user-data GET returned 404. The signed-in dev account added it from
+      detail with one PATCH (201), saw it on the watchlist (watchlist=true, page_size=100), then removed it from its
+      search card with one PATCH carrying false (200). Revisiting the watchlist showed it absent.
+    - Script, sanitized request/result log and three screenshots retained with the work unit's run evidence; visually
+      checked the watchlist and removed card. The initial script's exact username selector missed the avatar's added
+      accessible initial; correcting that selector completed the journey. No application fix was needed.
 
 ### **Phase 6:** Verification
 

@@ -75,25 +75,17 @@ _Mode:_ `layer` — closes on Marquee as the default theme, with every pair R5 l
           optional tokens: 175 declared pairs × 10 variants, 1,478 passed, 272 scoped out, zero failures.
         - Frontend type-check, touched-file ESLint and formatting passed.
 
-- [ ] **1.3 The light-layer guidance and the Marquee ADR describe Marquee — R18**
+- [x] **1.3 The light-layer guidance and the Marquee ADR describe Marquee — R18**
 
     **Goal:** A reader of the layer guidance learns Marquee's light order, and the ADRs record why Marquee was chosen
     and what it supersedes.
 
-    - [ ] **1.3.a Light-layer order**
-        - `.arc/reference/strategies/project/style/strategy-component-styling.md` § "Light Mode Alternating Pattern":
-          add Marquee's order (deep-cream page and panel, pale-cream cards and raised surfaces) beside the four
-          palettes' white, gray, white
-        - `frontend/src/pages/dev/theme-debug/sections/LayerSystemSection.tsx`: the three statements of the expected
-          light order (the light-mode paragraph, the light-mode caption and the "Expected" note) add Marquee's
-
-    - [ ] **1.3.b Write the ADR "Adopt Marquee as the default palette", reading `Proposed`**
-        - Next free number when written; decisions 1 to 5 and 20 with their rejected alternatives (the
-          portfolio-based coral, Velvet, Nitrate, Screening Room; dropping light mode; the lighter cream; the white
-          accent; the rose-mauve `destructive`); cites ADR-006; supersedes ADR-008 in part: for Marquee, light layers
-          alternate with the lighter tone on cards and raised surfaces
-        - ADR-008's Status becomes `Accepted; Superseded in part by` the new ADR
-        - Follow `strategy-adr-methodology.md` and `adr-template.md`; the body carries no planning history
+    - [x] **1.3.a Light-layer order**
+        - Styling guidance and all three debug-page descriptions distinguish Marquee's deep/pale/deep/pale cream
+          from the adapted palettes' lighter-page order. Type-check, JSX lint, formatting and markdown lint passed.
+    - [x] **1.3.b Record the palette decision**
+        - Added Proposed ADR-041 with the palette and mode choices, Carbon composition, rejected alternatives and
+          contrast tradeoffs; it cites ADR-006. ADR-008's status names the partial supersession for Marquee.
 
 ### **Phase 2:** Marquee is the default theme
 

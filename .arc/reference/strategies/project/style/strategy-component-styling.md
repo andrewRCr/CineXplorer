@@ -160,6 +160,10 @@ layer-02:    #393939 (progressively lighter)
 layer-03:    #525252 (progressively lighter)
 ```
 
+Marquee reverses the light tones: its deep-cream page and panel (`background` and `layer-02`, `#F2E8CE`)
+alternate with pale-cream cards and raised surfaces (`layer-01` and `layer-03`, `#FBF6E9`). The four adapted
+palettes keep the lighter page and darker cards shown above. Dark layers progressively lighten in every theme.
+
 **Why alternating in light mode:** Progressive darkening on white becomes indistinguishable. Alternating creates clear
 visual "nesting" - you can see when elements are inside others.
 

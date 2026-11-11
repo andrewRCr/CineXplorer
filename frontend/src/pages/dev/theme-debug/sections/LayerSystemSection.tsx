@@ -95,8 +95,10 @@ export function LayerSystemSection() {
           <VStack align="start" gap={2}>
             <Text fontSize="sm" color="on-muted">
               <strong>Light mode:</strong> Layers alternate (white → gray →
-              white → gray) to create clear visual nesting. Progressive
-              darkening on white becomes indistinguishable.
+              white → gray) in the adapted palettes; Marquee alternates deep
+              cream → pale cream → deep cream → pale cream. Both create clear
+              visual nesting. Progressive darkening on white becomes
+              indistinguishable.
             </Text>
             <Text fontSize="sm" color="on-muted">
               <strong>Dark mode:</strong> Layers progressively lighten (darkest
@@ -116,7 +118,7 @@ export function LayerSystemSection() {
           </Text>
           <Text fontSize="sm" color="on-muted" mb={3}>
             {colorMode === "light"
-              ? "Light mode: Notice how layers alternate (white→gray→white) creating visual 'popup' effect"
+              ? "Light mode: Alternating layers create nesting: deep→pale→deep cream in Marquee; white→gray→white in the adapted palettes"
               : "Dark mode: Notice progressive lightening for depth perception"}
           </Text>
           <Box
@@ -359,7 +361,7 @@ export function LayerSystemSection() {
             Expected: Each layer should be visually distinct. Layer-03 should
             NOT match background.
             {colorMode === "light" &&
-              " Light mode should alternate (white→gray→white)."}
+              " Light mode alternates deep→pale→deep cream in Marquee, white→gray→white in the adapted palettes."}
             {colorMode === "dark" && " Dark mode should progressively lighten."}
           </Text>
         </Box>

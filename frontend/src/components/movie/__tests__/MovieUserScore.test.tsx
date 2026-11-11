@@ -5,15 +5,13 @@ import {
   render as renderWithoutProviders,
   within,
 } from "@testing-library/react";
-import { ChakraProvider, createSystem } from "@chakra-ui/react";
+import { ChakraProvider } from "@chakra-ui/react";
 import { render, screen } from "@tests/helpers/test-renderer";
-import { defaultSystem as projectSystem } from "@/theme";
+import {
+  styleSystem as badgeStyleSystem,
+  expectResolvedColor,
+} from "@tests/helpers/theme-styles";
 import MovieUserScore from "../MovieUserScore";
-
-// Variant checks use a layer-free project system and compare resolved semantic colors.
-const badgeStyleSystem = createSystem(projectSystem._config, {
-  disableLayers: true,
-});
 
 const renderWithBadgeStyles = (ui: ReactElement) =>
   renderWithoutProviders(
@@ -31,27 +29,7 @@ const expectBadgeVariant = (
   badge: HTMLElement,
   variant: keyof typeof variantBackgrounds,
 ) => {
-  expect(badge).toBeInTheDocument();
-  const reference = document.createElement("span");
-  reference.style.setProperty(
-    "background-color",
-    variantBackgrounds[variant],
-    "important",
-  );
-  badge.after(reference);
-  let expectedBackground: string;
-  try {
-    expectedBackground = window.getComputedStyle(reference).backgroundColor;
-  } finally {
-    reference.remove();
-  }
-  expect(expectedBackground).not.toBe("");
-  expect(expectedBackground).not.toBe("transparent");
-  expect(expectedBackground).not.toBe("rgba(0, 0, 0, 0)");
-  expect(expectedBackground).not.toContain("var(");
-  expect(window.getComputedStyle(badge).backgroundColor).toBe(
-    expectedBackground,
-  );
+  expectResolvedColor(badge, "background-color", variantBackgrounds[variant]);
 };
 
 describe("MovieUserScore Component", () => {

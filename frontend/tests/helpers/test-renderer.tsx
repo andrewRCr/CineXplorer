@@ -4,20 +4,23 @@ import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { TestProviders } from "./test-providers";
 
-// Custom render function that includes common providers
-const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <TestProviders>
+import type { SystemContext } from "@chakra-ui/react";
+
+interface TestRenderOptions extends Omit<RenderOptions, "wrapper"> {
+  system?: SystemContext;
+}
+
+const customRender = (
+  ui: ReactElement,
+  { system, ...options }: TestRenderOptions = {},
+) => {
+  const AllTheProviders = ({ children }: { children: React.ReactNode }) => (
+    <TestProviders system={system}>
       <MemoryRouter>{children}</MemoryRouter>
     </TestProviders>
   );
+  return render(ui, { wrapper: AllTheProviders, ...options });
 };
-
-// Custom render function
-const customRender = (
-  ui: ReactElement,
-  options?: Omit<RenderOptions, "wrapper">,
-) => render(ui, { wrapper: AllTheProviders, ...options });
 
 // Re-export everything
 export * from "@testing-library/react";

@@ -151,15 +151,10 @@ _Mode:_ `slice` — closes on dot chips and neutral certifications on the browse
     **Goal:** Each tier's dot, the few-votes chip and the unchanged accessible text are pinned by failing tests in both
     presentations.
 
-    - [ ] **3.1.a Share the resolved-color assertion**
-        - Move `MovieUserScore.test.tsx`'s layer-free system and its resolved-color comparison into
-          `frontend/tests/helpers/` as one assertion for any CSS color property of an element against a token
-          expression (for example `background-color` against `var(--chakra-colors-success)`, or `border-color`
-          against `var(--chakra-colors-border-subtle-01)`)
-        - `TestProviders` and the shared renderers (`test-renderer.tsx`, `test-renderer-with-routes.tsx`) take an
-          optional Chakra system, so a page rendered with routes can use the layer-free one; document the option in
-          `frontend/tests/README.md`. Tasks 4.1, 5.1 and 5.2 use this assertion and option
-        - The existing `MovieUserScore` tests pass unchanged on the moved helper
+    - [x] **3.1.a Share the resolved-color assertion**
+        - Extracted `styleSystem`, token resolution and a computed CSS-color assertion into the shared test helpers.
+          Both renderers and their providers accept an optional Chakra system; documented examples include routes.
+          All 53 existing score cases passed unchanged after extraction, as did type-check, lint and formatting.
 
     - [ ] **3.1.b Rewrite `MovieUserScore.test.tsx`'s style cases for the chip**
         - Test (both presentations): a scored TMDB score has a transparent background, a `border-subtle-01` border, no

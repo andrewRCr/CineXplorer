@@ -3,6 +3,7 @@ import { type ReactElement } from "react";
 import { render, type RenderOptions } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { TestProviders } from "./test-providers";
+import type { SystemContext } from "@chakra-ui/react";
 
 /**
  * Route configuration for integration tests
@@ -23,6 +24,8 @@ export interface RenderWithRoutesOptions extends Omit<
    * Initial route to start on (e.g., '/popular?page=2&minYear=1990')
    */
   initialRoute?: string;
+  /** Override the project system, for example with layer-free recipe styles. */
+  system?: SystemContext;
   /**
    * Additional initial entries for history stack
    * Useful for testing back button behavior
@@ -55,14 +58,19 @@ export const renderWithRoutes = (
   routes: TestRoute[],
   options: RenderWithRoutesOptions = {},
 ) => {
-  const { initialRoute = "/", initialEntries, ...renderOptions } = options;
+  const {
+    initialRoute = "/",
+    initialEntries,
+    system,
+    ...renderOptions
+  } = options;
 
   // Build initial entries array
   const entries = initialEntries || [initialRoute];
 
   const AllProviders = ({ children }: { children: React.ReactNode }) => {
     return (
-      <TestProviders>
+      <TestProviders system={system}>
         <MemoryRouter initialEntries={entries}>{children}</MemoryRouter>
       </TestProviders>
     );

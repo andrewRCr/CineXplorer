@@ -301,28 +301,21 @@ _Mode:_ `slice` — closes on stored rows refreshed by the movie's detail view a
 _Exit criterion:_ on the browsable stack, viewing a stored movie's detail moves its `refreshed_at`, and
 `refresh_movie_cards` run in the backend container refreshes the stalest rows, prints its counts and exits zero.
 
-- [ ] **4.1 The detail view refreshes a stored movie's card and answers bad TMDB data with 502 — D3, D8**
+- [x] **4.1 The detail view refreshes a stored movie's card and answers bad TMDB data with 502 — D3, D8**
 
     **Goal:** Viewing a stored movie's detail updates its card fields and `refreshed_at` and never creates a row, and
     TMDB data that fails validation answers 502 with the shared body instead of 500.
 
-    - [ ] **4.1.a Write the detail tests**
-        - A stored movie's row takes the fetched card fields and a new `refreshed_at`, and its `updated_at` moves; an
-          unstored movie gets no row
-        - Details, credits or detail-schema data that fails validation answers 502 with `{"detail": ...}`; so does a
-          response with no data, where `get_movie_by_id` raises `HttpError(502)` today
-        - Expect tests to FAIL initially, except two that hold today (an unstored movie gets no row; the response with
-          no data answers 502): show those fail against a narrow break and pass once restored
-
-    - [ ] **4.1.b Implement in `MovieService.get_movie_by_id`**
-        - Validation failures and the empty-data case raise `UpstreamError`; the stored row is updated through 2.1's
-          mapping from the details already fetched; `get_movie_detail` stays HTTP-only
-        - A `QuerySet.update()` skips `auto_now`, so set `updated_at` with `refreshed_at`, or save the instance
-        - The method now touches the database: `apps/movie/tests/unit/services/test_movie_service.py`, which calls it
-          with no database access, gains it or moves those cases to `tests/integration/`
-        - `response_factories.py`'s module docstring says only these paths answer a conversion failure 502, and other
-          endpoints keep their handling
-        - Tests should now PASS
+    - [x] **4.1.a Write the detail tests**
+        - Six cases cover stored card/timestamp refresh, no insertion for an unstored movie, and 502 responses for
+          invalid details, credits, detail-schema dates and empty data, leaving stored cards unchanged on failure.
+        - Refresh/validation cases failed first. Accidental insertion and a wrong empty-data status demonstrated
+          the two behaviors that already held, then all six passed after restoration.
+    - [x] **4.1.b Implement in `MovieService.get_movie_by_id`**
+        - Validate conversion before updating existing rows through the shared card mapping; set updated_at and
+          refreshed_at together. Empty/invalid data raises UpstreamError. The route remains HTTP-only and the successful
+          service unit test now has database access. Documented the conversion-error boundary.
+        - All 458 movie-app tests, Ruff, formatting and strict Pyright pass; the six new cases pass after mutations.
 
 - [ ] **4.2 `refresh_movie_cards` keeps every stored card within seven days — D9**
 

@@ -4,8 +4,11 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
-from ninja.errors import HttpError
+from django.utils import timezone
+from pydantic import ValidationError
 
+from apps.core.exceptions import UpstreamError
+from apps.core.models import Movie
 from apps.core.services.validators import (
     validate_tmdb_paginated_response,
     validate_tmdb_response,
@@ -37,6 +40,7 @@ from .tmdb_api_boundary.response_factories import (
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
     handle_tmdb_api_error,
+    movie_card_fields,
 )
 
 # Use TMDB-specific logger for better log organization
@@ -352,7 +356,7 @@ class MovieService(BaseTMDBService):
             MovieDetailSchema instance with validated movie data
 
         Raises:
-            HttpError: If movie not found, API error, or data processing fails
+            NotFoundError, InvalidInputError or UpstreamError: Lookup or external data failed
         """
         # Use injected TMDB client for movie details
         # Include release_dates for US certification extraction
@@ -394,10 +398,16 @@ class MovieService(BaseTMDBService):
                     "credits_data_valid": bool(credits_result),
                 },
             )
-            raise HttpError(502, "Failed to get valid response data from TMDB")
+            raise UpstreamError("Failed to get valid response data from TMDB")
 
-        # Use factory function to create properly typed MovieDetailSchema
-        return create_movie_detail_from_tmdb(info_result, credits_result)
+        try:
+            detail = create_movie_detail_from_tmdb(info_result, credits_result)
+        except ValidationError as error:
+            raise UpstreamError("Invalid movie data from external API") from error
+        card = movie_card_fields(info_result)
+        now = timezone.now()
+        Movie.objects.filter(tmdb_id=tmdb_id).update(**card, refreshed_at=now, updated_at=now)
+        return detail
 
     # ========================================================================
     # Resource Methods

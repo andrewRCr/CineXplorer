@@ -22,8 +22,9 @@ Architecture Notes:
     - These factories are pure functions with no side effects
     - They use the TMDB models from apps.core.tmdb_models for input validation
     - They create schemas from apps.movie.schemas for application use
-    - A failed TMDB response raises a domain exception from apps.core.exceptions; data that
-      fails to convert is logged and its error re-raised, so the API answers it as a 500
+    - Failed TMDB responses raise domain exceptions from apps.core.exceptions. Card mapping
+      answers invalid data with an upstream error; MovieService's detail path translates
+      conversion validation failures to 502. Other endpoint conversion paths keep their handling.
 """
 
 from __future__ import annotations

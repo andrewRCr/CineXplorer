@@ -333,30 +333,21 @@ _Exit criterion:_ on the browsable stack, viewing a stored movie's detail moves 
           exactly when any row lacks a refresh time or is more than seven days old; it deletes no row.
         - All 469 movie-app tests, Ruff, formatting and strict Pyright pass.
 
-- [ ] **4.3 The nightly maintenance job runs the refresh — D9**
+- [x] **4.3 The nightly maintenance job runs the refresh — D9**
 
     **Goal:** The maintenance job runs the refresh after the clean-ups and before the success ping, journals its output
     every night, and the deploy README covers its alert and the previous release.
 
-    **Note:** CI doesn't run `infrastructure/deploy/tests/`, so each subtask runs them (see Implementation Notes).
-
-    - [ ] **4.3.a Write the job's tests**
-        - `infrastructure/deploy/tests/test_nightly.py`: the step runs after the clean-ups and before the success
-          ping, its output reaches the journal on a clean night, and a failing refresh sends the failure ping with the
-          output's last 20 lines
-        - `test_installed_operations.py`: on the previous release (`f49b683`), the installed job keeps the step and it
-          fails. The fake Docker it shares with `test_nightly.py` answers the refresh by the checked-out tree, failing
-          when the command's file is absent as the real backend would, so `test_nightly.py`'s job fixture puts that
-          file in its checkout. The installed maintenance job's run passes `check=False`, and its assertions change
-          from a zero exit and the success ping to a non-zero exit and the failure ping
-        - Expect tests to FAIL initially
-
-    - [ ] **4.3.b Add the step to `infrastructure/deploy/maintenance.sh`**
-        - Tests should now PASS
-
-    - [ ] **4.3.c Update `infrastructure/deploy/README.md`**
-        - "Nightly jobs and monitoring" gains the procedure for settling a movie TMDB has removed (D9)
-        - The compatibility statement for the previous release says its refresh step fails, and why that is correct
+    - [x] **4.3.a Write the job's tests**
+        - Three behavioral failures proved the clean output/order, failed-refresh tail and previous-release failure.
+          Fake Docker checks the command file in the checked-out tree, matching the older release's missing command.
+    - [x] **4.3.b Add the maintenance step**
+        - Refresh runs after both clean-ups. Clean output reaches the journal; failures retain the last 20 lines and
+          send the failure heartbeat. All eight deployment tests pass in disposable containers.
+    - [x] **4.3.c Document nightly operations**
+        - Explain freshness alerts, manual resolution of removed movies and the previous release's expected failure.
+          All eight deployment tests pass again; Ruff, formatting, shell syntax and README markdown lint pass.
+          These deployment tests run locally and are outside CI.
 
 - [ ] **4.4 ADR-026 records this change as its realization — D7, D9**
 

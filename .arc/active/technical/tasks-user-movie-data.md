@@ -247,40 +247,27 @@ _Mode:_ `slice` — closes on a filtered, sorted page of a user's movies read fr
 _Exit criterion:_ on the browsable stack, a filtered and sorted Library page for a user with two saved movies returns
 one item at `page_size=1` carrying the `Movie` row's card fields, with `total_pages` 2 and no TMDB request.
 
-- [ ] **3.1 The Library serves a filtered, sorted page from the database in two queries — D6, D7**
+- [x] **3.1 The Library serves a filtered, sorted page from the database in two queries — D6, D7**
 
     **Goal:** `GET /user-movie-data/movies` answers every case of Success Criterion 9 from the database, with the
     service's read at two queries and the endpoint's count the same for 1 record as for 200, and no TMDB request.
 
-    - [ ] **3.1.a Write the service's query test**
-        - With 200 records for one user, the service's Library read runs exactly two queries
-          (`django_assert_num_queries`: the count, and the page with its movies) and the TMDB stub receives no request
-        - Until 3.1.c removes the call, today's read fetches through `fetch_movies_batch`'s module client, so the test
-          replaces that client with the stub too, as 1.1.b does; the red run then makes no network request
-        - Expect the test to FAIL initially
-
-    - [ ] **3.1.b Write the Library's API tests**
-        - Rewrite `tests/integration/test_watchlist_endpoint.py` for the new contract; its records come from the
-          factory functions, and its TMDB patches become one patch at the class that each test asserts is never
-          called, so the red run makes no network request and the green shows the Library makes none
-        - Every clause of Success Criterion 9 through the endpoint: each filter alone and combined; each sort in both
-          directions, with nulls last and ties ordered by TMDB ID in the same direction; records with no state left out
-          of the unfiltered list, one of them left so by a PATCH that cleared its last state (Criterion 6's "the
-          Library leaves out"); the 422 cases; an empty page past the end with valid counts; `next_tmdb_page_start`
-          `null` on every page; each item carrying the `Movie` row's card fields and the user's `UserMovieDataSchema`
-        - The defaults; the endpoint's query count the same for 1 record as for 200; 401 with no user; the OpenAPI
-          schema lists 200, 401 and 422, the errors with `ErrorResponseSchema`
-        - Expect tests to FAIL initially, except the 401, which today's route already answers, and any other case it
-          already meets: show those fail against a narrow break and pass once restored
-
-    - [ ] **3.1.c Implement the read and the route**
-        - The QuerySet gains the liked and "holds any state" filters and the orderings; the page comes from
-          `paginate_queryset` with its movies in the same query (`select_related`)
-        - A query schema bounds `page` (1–1,000,000) and `page_size` (1–100) and enumerates `sort` and `direction`,
-          so `paginate_queryset`'s own clamping never applies; the route declares its responses
-        - `get_user_movies`, `get_all_user_movies`, `_build_enriched_movies` and the `fetch_movies_batch` import go,
-          with their tests from 1.1 and 3.1.a's replacement of the batch module's client
-        - Tests should now PASS
+    - [x] **3.1.a Write the service's query test**
+        - A 200-record Library reads its page in exactly two queries and receives stored card values with no TMDB
+          request. The old batch/enrichment path failed the cost assertion before the database read replaced it.
+    - [x] **3.1.b Write the Library's API tests**
+        - Twenty-eight cases cover independent/combined filters, all five sorts in both directions, nulls last,
+          TMDB-ID ties, defaults, page bounds/counts, stored payloads, cleared records, fixed endpoint cost and OpenAPI.
+          Each test guards the TMDB boundary against requests.
+        - The old route failed the new behavior cases. Temporary public-list and missing-state-filter mutations
+          demonstrated the authentication/cleared-record regressions; using row IDs as the tie key failed all ten sort
+          cases after insertion order was made different from TMDB-ID order.
+    - [x] **3.1.c Implement the read and the route**
+        - QuerySet filters and stable orderings feed paginate_queryset with select_related movies. A bounded query
+          schema validates the route; its declared errors use the shared schema. The old list/enrichment methods
+          and their tests/imports are removed.
+        - All 171 user-data tests pass; the 29 Library cases pass after every mutation is restored. Ruff, formatting
+          and strict Pyright pass.
 
 - [ ] **3.2 The batch fetch is gone, and the pagination strategy states the database-list rule — D2, D7**
 

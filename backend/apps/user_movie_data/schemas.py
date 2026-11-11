@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
 from ninja import Schema
 from pydantic import Field, field_validator
@@ -50,3 +51,16 @@ class UserMovieDataPatchSchema(Schema):
         if review is not None and "\x00" in review:
             raise ValueError("Review must not contain NUL characters")
         return review if review is not None and review.strip() else None
+
+
+class LibraryQuerySchema(Schema):
+    """Validated bounds and stable ordering for database-served collections."""
+
+    watchlist: bool = False
+    watched: bool = False
+    liked: bool = False
+    rated: bool = False
+    sort: Literal["added", "watched", "rating", "title", "release"] = "added"
+    direction: Literal["asc", "desc"] = "desc"
+    page: int = Field(default=1, ge=1, le=1000000)
+    page_size: int = Field(default=20, ge=1, le=100)

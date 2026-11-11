@@ -5,13 +5,17 @@ from __future__ import annotations
 from typing import Annotated
 
 from django.http import HttpRequest
-from ninja import Router, Status
+from ninja import Query, Router, Status
 from pydantic import Field
 
 from apps.authentication.auth_ninja import JWTSessionAuth, get_current_user
 from apps.core.schemas import ErrorResponseSchema
 from apps.movie.schemas import MovieListResponseSchema
-from apps.user_movie_data.schemas import UserMovieDataPatchSchema, UserMovieDataSchema
+from apps.user_movie_data.schemas import (
+    LibraryQuerySchema,
+    UserMovieDataPatchSchema,
+    UserMovieDataSchema,
+)
 from apps.user_movie_data.services.service_factory import get_user_movie_data_service
 from apps.user_movie_data.throttles import SaveThrottle
 
@@ -20,12 +24,15 @@ _service = get_user_movie_data_service()
 PositiveTMDBId = Annotated[int, Field(gt=0)]
 
 
-@user_movie_data_router.get("/movies", response=MovieListResponseSchema)
-def get_user_movies(request: HttpRequest, watchlist: bool = False) -> MovieListResponseSchema:
-    """Read the user's movies, optionally restricted to the watchlist."""
-    return _service.get_all_user_movies(
-        user=get_current_user(request), watchlist_only=watchlist if watchlist else None
-    )
+@user_movie_data_router.get(
+    "/movies",
+    response={200: MovieListResponseSchema, 401: ErrorResponseSchema, 422: ErrorResponseSchema},
+)
+def get_user_movies(
+    request: HttpRequest, query: Query[LibraryQuerySchema]
+) -> MovieListResponseSchema:
+    """Read a filtered and sorted page of the authenticated user's stored cards."""
+    return _service.get_library(get_current_user(request), query)
 
 
 @user_movie_data_router.get(

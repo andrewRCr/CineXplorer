@@ -11,13 +11,12 @@ from apps.core.models import Movie
 from apps.core.pagination import paginate_queryset
 from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.movie.schemas import MovieListItemSchema, MovieListResponseSchema
-from apps.movie.services.pipelines.batch import fetch_movies_batch
 from apps.movie.services.tmdb_api_boundary.response_factories import (
     handle_tmdb_api_error,
     movie_card_fields,
 )
-from apps.user_movie_data.models import UserMovieData, UserMovieDataQuerySet
-from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
+from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.schemas import LibraryQuerySchema, UserMovieDataSchema
 
 
 class UserMovieDataService:
@@ -83,66 +82,39 @@ class UserMovieDataService:
             raise NotFoundError("User movie data not found for this TMDB ID")
         return record
 
-    def _filtered_records(
-        self,
-        user: AbstractBaseUser,
-        *,
-        watchlist_only: bool | None = None,
-        watched_only: bool | None = None,
-        rated_only: bool | None = None,
-    ) -> UserMovieDataQuerySet:
+    def get_library(
+        self, user: AbstractBaseUser, query: LibraryQuerySchema | None = None
+    ) -> MovieListResponseSchema:
+        """Read a bounded page from stored cards with one count and one row query."""
+        query = query if query is not None else LibraryQuerySchema()
         records = UserMovieData.objects.get_queryset().for_user(user).select_related("movie")
-        if watchlist_only:
+        if query.watchlist:
             records = records.on_watchlist()
-        if watched_only:
+        if query.watched:
             records = records.watched()
-        if rated_only:
+        if query.liked:
+            records = records.liked()
+        if query.rated:
             records = records.rated()
-        return records.order_by("-id")
-
-    def _build_enriched_movies(
-        self,
-        umd_list: list[UserMovieData],
-        user: AbstractBaseUser,
-    ) -> list[MovieListItemSchema]:
-        tmdb_ids = [record.movie.tmdb_id for record in umd_list]
-        if not tmdb_ids:
-            return []
-        movies = fetch_movies_batch(tmdb_ids)
-        lookup = {movie.tmdb_id: movie for movie in movies}
-        ordered_movies = [lookup[tmdb_id] for tmdb_id in tmdb_ids if tmdb_id in lookup]
-        return MovieEnrichmentService().enrich_movies_with_user_movie_data(ordered_movies, user)
-
-    def get_user_movies(
-        self,
-        user: AbstractBaseUser,
-        page: int = 1,
-        page_size: int = 20,
-        *,
-        watchlist_only: bool | None = None,
-        watched_only: bool | None = None,
-        rated_only: bool | None = None,
-    ) -> MovieListResponseSchema:
-        records = self._filtered_records(
-            user, watchlist_only=watchlist_only, watched_only=watched_only, rated_only=rated_only
-        )
-        rows, metadata = paginate_queryset(records, page, page_size)
-        return MovieListResponseSchema(
-            **metadata, results=self._build_enriched_movies(list(rows), user)
-        )
-
-    def get_all_user_movies(
-        self,
-        user: AbstractBaseUser,
-        *,
-        watchlist_only: bool | None = None,
-        watched_only: bool | None = None,
-        rated_only: bool | None = None,
-    ) -> MovieListResponseSchema:
-        records = self._filtered_records(
-            user, watchlist_only=watchlist_only, watched_only=watched_only, rated_only=rated_only
-        )
-        movies = self._build_enriched_movies(list(records), user)
-        return MovieListResponseSchema(
-            page=1, total_pages=1 if movies else 0, total_results=len(movies), results=movies
-        )
+        if not any((query.watchlist, query.watched, query.liked, query.rated)):
+            records = records.with_state()
+        records = records.ordered_for_library(query.sort, query.direction)
+        rows, metadata = paginate_queryset(records, query.page, query.page_size)
+        movies: list[MovieListItemSchema] = []
+        for record in rows:
+            movie = record.movie
+            movies.append(
+                MovieListItemSchema(
+                    tmdb_id=movie.tmdb_id,
+                    title=movie.title,
+                    poster_path=movie.poster_path,
+                    release_date=movie.release_date,
+                    vote_average=movie.vote_average,
+                    vote_count=movie.vote_count,
+                    runtime=movie.runtime,
+                    genre_ids=movie.genre_ids,
+                    overview=movie.overview,
+                    user_movie_data=UserMovieDataSchema.from_record(record),
+                )
+            )
+        return MovieListResponseSchema(**metadata, results=movies, next_tmdb_page_start=None)

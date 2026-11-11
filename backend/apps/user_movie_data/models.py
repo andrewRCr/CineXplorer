@@ -45,6 +45,34 @@ class UserMovieDataQuerySet(models.QuerySet["UserMovieData"]):
     def for_movies(self, tmdb_ids: list[int]) -> Self:
         return self.filter(movie_id__in=tmdb_ids)
 
+    def liked(self) -> Self:
+        return self.filter(user_liked=True)
+
+    def with_state(self) -> Self:
+        return self.filter(
+            models.Q(user_on_watchlist=True)
+            | models.Q(user_watched=True)
+            | models.Q(user_liked=True)
+            | models.Q(user_rating__isnull=False)
+            | models.Q(user_review__isnull=False)
+        )
+
+    def ordered_for_library(self, sort: str, direction: str) -> Self:
+        field = {
+            "added": "created_at",
+            "watched": "watched_at",
+            "rating": "user_rating",
+            "title": "movie__title",
+            "release": "movie__release_date",
+        }[sort]
+        ascending = direction == "asc"
+        primary = (
+            models.F(field).asc(nulls_last=True)
+            if ascending
+            else models.F(field).desc(nulls_last=True)
+        )
+        return self.order_by(primary, "movie_id" if ascending else "-movie_id")
+
 
 class UserMovieDataManager(models.Manager["UserMovieData"]):
     """Expose the custom QuerySet with its concrete type to callers."""

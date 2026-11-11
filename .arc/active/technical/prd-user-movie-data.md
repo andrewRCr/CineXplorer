@@ -265,8 +265,9 @@ for no user.
 
 The PATCH's 404, 502, 503 and 504, and its 400 for TMDB rejecting the request, arise only when the movie isn't stored
 yet: a save of a stored movie makes no TMDB request (D8). Any route can also answer an undeclared 500 for an
-unexpected error. Two cases are known: the admin-delete window above, and a PATCH body past Django's 2.5 MB upload
-limit, which every endpoint that reads a body answers with a 500 today.
+unexpected error; one case is known, the admin-delete window above. A PATCH body past Django's 2.5 MB upload limit
+answers an undeclared 413 with the shared body, as every endpoint that reads a body does through the API-wide
+handler.
 
 ### D7. The Library is paginated and served from the database
 
@@ -657,3 +658,10 @@ archived. Each criterion is marked with its evidence beside it.
 ## 8. Open Questions
 
 None.
+
+## Amendments
+
+- **2026-11-10,** at activation, on the Owner's decision: D6's note on undeclared responses now gives a PATCH body
+  past Django's 2.5 MB upload limit an undeclared 413, since an API-wide handler merged to `main` answers every
+  oversized body that way; it previously listed that body as a known 500. Wording only: no decision, task or success
+  criterion changes.

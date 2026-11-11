@@ -175,7 +175,12 @@ const MovieDetail = () => {
           {/* Header: Genres */}
           <Flex gap={2} wrap="wrap" justify="center" align="center">
             {movie.genres?.map((genre: Genre) => (
-              <Tag.Root key={genre.id} bg="badge" color="on-badge">
+              <Tag.Root
+                key={genre.id}
+                bg="badge"
+                color="on-badge"
+                boxShadow="none"
+              >
                 <Tag.Label>{genre.name}</Tag.Label>
               </Tag.Root>
             ))}
@@ -274,7 +279,7 @@ const MovieDetail = () => {
           </Button>
         </Flex>
       </Box>
-      <Separator mb={6} />
+      <Separator mb={6} borderColor="border-subtle-01" />
 
       {/* Overview Section */}
       {movie.overview && (
@@ -285,7 +290,7 @@ const MovieDetail = () => {
           <Text>{movie.overview}</Text>
         </Box>
       )}
-      <Separator mb={6} />
+      <Separator mb={6} borderColor="border-subtle-01" />
 
       {/* Cast Section */}
       <Box mb={6}>
@@ -308,7 +313,7 @@ const MovieDetail = () => {
           ))}
         </Flex>
       </Box>
-      <Separator mb={6} />
+      <Separator mb={6} borderColor="border-subtle-01" />
 
       {/* Crew Section */}
       <Box mb={6}>
@@ -344,7 +349,7 @@ const MovieDetail = () => {
             ))}
         </Flex>
       </Box>
-      <Separator mb={6} />
+      <Separator mb={6} borderColor="border-subtle-01" />
 
       {/* Production Companies Section */}
       <Box mb={6}>
@@ -354,7 +359,12 @@ const MovieDetail = () => {
         <Flex gap={2} wrap="wrap" justify="center">
           {movie.production_companies?.map(
             (company: ProductionCompany, idx: number) => (
-              <Tag.Root key={company.id || idx} bg="badge" color="on-badge">
+              <Tag.Root
+                key={company.id || idx}
+                bg="badge"
+                color="on-badge"
+                boxShadow="none"
+              >
                 <Tag.Label>{company.name}</Tag.Label>
               </Tag.Root>
             ),

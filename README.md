@@ -55,8 +55,9 @@ launch.
   images
 - Constructor-based dependency injection across 7 services with repository pattern, enabling
   isolated unit testing without mock patching
-- Unified semantic token system spanning four design systems (GitHub Primer, IBM Carbon,
-  GitLab Pajamas, Material Design 3) with runtime theme switching at ~19ms per switch
+- Unified semantic token system with CineXplorer's own default palette, Marquee, beside four
+  adapted design systems (GitHub Primer, IBM Carbon, GitLab Pajamas, Material Design 3), with
+  runtime theme switching at ~19ms per switch
 
 ## Technology
 

@@ -22,7 +22,7 @@ interface GridErrorStateProps {
 export const GridErrorState = ({ error, onRetry }: GridErrorStateProps) => {
   return (
     <Box textAlign="center" mb={4} p={4} bg="layer-01" borderRadius="md">
-      <Text color="fg-error" mb={2}>
+      <Text color="destructive" mb={2}>
         {error?.message || "An error occurred while fetching movies."}
       </Text>
       {onRetry && (

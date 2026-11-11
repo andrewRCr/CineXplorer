@@ -10,7 +10,6 @@ import { themeRegistry, type ThemeName } from "@/theme";
 interface ThemeOption {
   value: ThemeName;
   label: string;
-  description: string;
 }
 
 /**
@@ -20,8 +19,7 @@ interface ThemeOption {
 const THEME_OPTIONS: ThemeOption[] = Object.entries(themeRegistry).map(
   ([value, theme]) => ({
     value: value as ThemeName,
-    label: theme.name,
-    description: theme.label,
+    label: theme.label,
   }),
 );
 
@@ -46,7 +44,7 @@ export function ThemeSelector() {
   const { theme, setTheme } = useThemeSelect();
   // Find current theme option for display
   const currentTheme = THEME_OPTIONS.find((option) => option.value === theme);
-  const displayLabel = currentTheme?.label || "IBM Carbon"; // Fallback to default
+  const displayLabel = currentTheme?.label || "Marquee"; // Fallback to default
 
   return (
     <ClientOnly fallback={<Skeleton height="10" width="32" />}>

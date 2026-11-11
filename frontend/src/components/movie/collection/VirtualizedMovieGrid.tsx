@@ -289,15 +289,15 @@ const VirtualizedMovieGrid = () => {
             gap={2}
             data-testid="loading-more"
           >
-            <Spinner size="sm" color="fg-muted" />
-            <Text fontSize="sm" color="fg-muted">
+            <Spinner size="sm" color="on-muted" />
+            <Text fontSize="sm" color="on-muted">
               Loading more...
             </Text>
           </Box>
         )}
 
         {!hasNextPage && !isLoading && !isEmpty && (
-          <Text fontSize="sm" color="fg-muted">
+          <Text fontSize="sm" color="on-muted">
             No more results
           </Text>
         )}

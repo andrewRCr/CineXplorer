@@ -23,7 +23,7 @@ import type { ReactNode } from "react";
 const resultTextStyles = {
   fontSize: "sm",
   fontFamily: "body",
-  color: "fg-muted",
+  color: "on-muted",
   fontWeight: "medium",
   lineHeight: "1",
   mb: -1, // Nudge toward border separator

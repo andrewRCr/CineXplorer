@@ -6,6 +6,7 @@
  *
  * **Design System Strategies:**
  * - **GitHub Primer:** Heavy shadow usage for elevation (official shadow tokens)
+ * - **Marquee:** Carbon's conservative shadows
  * - **IBM Carbon:** Minimal shadow usage, prefers layer color changes (light shadows optional)
  * - **GitLab Pajamas:** Shadow-based elevation (official gl-shadow utilities)
  *
@@ -127,12 +128,17 @@ export const pajamasShadows = {
  */
 export function getShadowValues(
     designSystem:
-        "github-primer" | "ibm-carbon" | "gitlab-pajamas" | "material-design-3",
+        | "marquee"
+        | "github-primer"
+        | "ibm-carbon"
+        | "gitlab-pajamas"
+        | "material-design-3",
     mode: "light" | "dark",
 ): ShadowValues {
     switch (designSystem) {
         case "github-primer":
             return primerShadows[mode];
+        case "marquee":
         case "ibm-carbon":
             return carbonShadows[mode];
         case "gitlab-pajamas":

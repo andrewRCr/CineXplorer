@@ -15,10 +15,10 @@ import { Text, Box } from "@chakra-ui/react";
 export const GridEmptyState = () => {
   return (
     <Box textAlign="center" py={12}>
-      <Text fontSize="lg" color="fg-muted" mb={0}>
+      <Text fontSize="lg" color="on-muted" mb={0}>
         No movies found matching your filters.
       </Text>
-      <Text fontSize="sm" color="fg-muted">
+      <Text fontSize="sm" color="on-muted">
         Try adjusting your search criteria or filters.
       </Text>
     </Box>

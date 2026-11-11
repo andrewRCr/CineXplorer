@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; Superseded in part by ADR-041 (Marquee light-layer tone order)
 
 Partially supersedes ADR-006 (specific to light mode layer derivation strategy).
 

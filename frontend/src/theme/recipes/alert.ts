@@ -16,6 +16,8 @@ import { defineSlotRecipe } from "@chakra-ui/react";
  * - info: Informational messages, neutral status (blue)
  *
  * Pattern: 10% opacity backgrounds with semantic borders
+ * Status/subtle compound styles keep the themed tint and foreground root text
+ * after Chakra's merged subtle variant.
  * - Title uses semantic color for emphasis
  * - Description uses foreground for maximum readability on subtle backgrounds
  * - Icon uses semantic color for visual emphasis
@@ -55,6 +57,8 @@ export const alertRecipe = defineSlotRecipe({
     },
 
     variants: {
+        // Declare the inherited variant so compound styles are type-checked.
+        variant: { subtle: {} },
         status: {
             /**
              * Success variant: Positive outcomes, confirmations
@@ -148,6 +152,29 @@ export const alertRecipe = defineSlotRecipe({
             },
         },
     },
+
+    compoundVariants: [
+        {
+            status: "success",
+            variant: "subtle",
+            css: { root: { bg: "success/10", color: "foreground" } },
+        },
+        {
+            status: "warning",
+            variant: "subtle",
+            css: { root: { bg: "warning/10", color: "foreground" } },
+        },
+        {
+            status: "error",
+            variant: "subtle",
+            css: { root: { bg: "destructive/10", color: "foreground" } },
+        },
+        {
+            status: "info",
+            variant: "subtle",
+            css: { root: { bg: "info/10", color: "foreground" } },
+        },
+    ],
 
     defaultVariants: {
         status: "info",

@@ -1,6 +1,5 @@
 /** Color pairs and validation shared by the CLI and theme contract tests. */
 import { rgb as getContrast } from "wcag-contrast";
-import { tokens as chakraTokens } from "@chakra-ui/react/theme";
 import { resolveColorStack } from "./contrast";
 import type { UnifiedTheme } from "./types";
 import type { ThemeName } from "./index";
@@ -47,23 +46,6 @@ export const THRESHOLDS = {
 
 const STATUS_COLORS = ["success", "destructive", "warning", "info"] as const;
 const SURFACES = ["background", "layer-01", "layer-02", "layer-03"] as const;
-
-// Chakra's merged default subtle variant paints these opaque alert backgrounds,
-// overriding the status recipe's tint. Keep both rendered and intended pairs checked.
-const NATIVE_ALERT_SURFACES = {
-    light: {
-        "native-alert-success": chakraTokens.colors.green[100].value,
-        "native-alert-destructive": chakraTokens.colors.red[100].value,
-        "native-alert-warning": chakraTokens.colors.orange[100].value,
-        "native-alert-info": chakraTokens.colors.blue[100].value,
-    },
-    dark: {
-        "native-alert-success": chakraTokens.colors.green[900].value,
-        "native-alert-destructive": chakraTokens.colors.red[900].value,
-        "native-alert-warning": chakraTokens.colors.orange[900].value,
-        "native-alert-info": chakraTokens.colors.blue[900].value,
-    },
-};
 
 /**
  * Category 1: Semantic Pairs (on-* Convention)
@@ -262,23 +244,6 @@ const statusInteractions: TokenPair[] = [
     { fg: "destructive", bg: "layer-hover-02" },
 ];
 
-const nativeAlertText: TokenPair[] = STATUS_COLORS.flatMap((status) => [
-    { fg: status, bg: `native-alert-${status}` },
-    { fg: "foreground", bg: `native-alert-${status}` },
-]);
-const nativeAlertInteractions: TokenPair[] = [
-    {
-        fg: "destructive",
-        bg: "destructive/8",
-        backdrop: ["native-alert-destructive"],
-    },
-    {
-        fg: "on-destructive",
-        bg: "destructive/92",
-        backdrop: ["native-alert-destructive"],
-    },
-];
-
 /** Score dots, chip/toast edges, and controls on status-tinted alerts. */
 const restyledElements: TokenPair[] = [
     { fg: "success", bg: "layer-hover-01", threshold: "ui" },
@@ -328,8 +293,6 @@ export const ALL_TOKEN_PAIRS: TokenPair[] = [
     ...textOnSurfaces,
     ...statusTextOnSurfaces,
     ...statusInteractions,
-    ...nativeAlertText,
-    ...nativeAlertInteractions,
     ...interactiveOnSurfaces,
     ...bordersOnSurfaces,
     ...interactionStates,
@@ -365,7 +328,7 @@ function validatePair(
             skipped: "theme",
         };
     }
-    const colors = { ...theme, ...NATIVE_ALERT_SURFACES[mode] };
+    const colors = theme;
     const fg = resolveColorStack([pair.fg], colors);
     const bg = resolveColorStack(
         [...(pair.backdrop ?? ["background"]), pair.bg],

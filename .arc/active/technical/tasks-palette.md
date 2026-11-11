@@ -220,18 +220,18 @@ certification badges are neutral, and a selected certification pill is brass wit
     - Passed 47 related tests across five files, type-check, touched-file lint/format, and both browse/detail
       smoke specs. Corrected unsupported `exact` options on Testing Library role queries during type-check.
 
-- [ ] **4.3 Check scores and certifications together in Marquee** (run `browse.spec.ts` and `movie-detail.spec.ts`,
-  then a scripted screenshot scenario in both modes)
+- [x] **4.3 Check scores and certifications together in Marquee**
 
     **Goal:** Scores, certifications and the selected pill are shown working together on the browse grid and a detail
     page, with what ran and what was seen recorded.
 
-    - Run both specs against this worktree's browsable stack and record the result
-    - The specs scan in light mode only and do not look at colors. A throwaway Playwright script, kept outside the
-      repository, signs in to the browsable stack and screenshots, in dark and light: the browse grid (good, middle,
-      low and few-votes scores; two certification pills selected, one focused from the keyboard) and a movie's detail
-      page. Read the screenshots against the Phase 4 exit criterion, record what was seen, and show them to the Owner
-      with the report
+    - Browse/detail smoke specs passed (two specs on the implementation in `58b588d5`). A throwaway Playwright
+      driver signed in through the real local session and captured browse/detail in both modes using catalogue
+      fixtures (unavailable poster placeholders; scores 8.0, 6.0, 4.0 and a four-vote placeholder).
+    - Inspected all four screenshots: scores have colored dots beside neutral numbers, few-vote chips have no dot,
+      detail certification is neutral, G and PG selections are brass, and G's keyboard focus outline uses `ring`.
+      Selected pills have no inset shadow. The driver waits for the focus transition to settle and asserts its
+      final color before capture. Driver, screenshots and measured colors are retained outside the checkout.
 
 ### **Phase 5:** Every color comes from the active theme
 
@@ -240,46 +240,28 @@ _Mode:_ `slice` — closes on alerts, the movie card and the detail page drawing
 _Exit criterion:_ the search Success Criterion 9 names finds nothing in production code, and `sign-up.spec.ts` scans
 `/login` with the registration notice showing and passes without the `color-contrast` baseline entry.
 
-- [ ] **5.1 Alerts take their themed tint — R19, R5**
+- [x] **5.1 Alerts take their themed tint — R19, R5**
 
     **Goal:** No alert color comes from a Chakra palette, and the floating alert's action outline holds 3:1 on its
     tint.
 
-    - [ ] **5.1.a Remove the `/login` baseline entry, if 2.2.d kept it**
-        - Only when 2.2.d found the registration notice violating: remove the `/login` `color-contrast` entry from
-          `frontend/e2e/axe-baseline.ts` and run `sign-up.spec.ts`, which fails on the notice until 5.1.c
-        - Otherwise mark this subtask `[~]`, citing 2.2.d's result
+    - [~] **5.1.a Remove the `/login` baseline entry, if 2.2.d kept it**
+        - Not needed: 2.2.d removed it and registration passed without violations; it remains absent.
 
-    - [ ] **5.1.b Write the alert tests**
-        - Test: an `Alert.Root` for each status (`success`, `warning`, `error`, `info`), with no variant and with
-          `variant="subtle"`: its background resolves to the status color at 10% (`error` to `destructive/10`) and its
-          root text to `foreground`
-        - Test: a `FloatingAlert` with an action: the action button's border resolves to `border-strong-02`. Render it
-          under a `.dark` ancestor (Chakra's dark condition): in Marquee light `border-strong-02` and the outline
-          button's `button-outline` are the same color (`#7C705B`), so a light-mode test passes before the fix; in
-          dark mode they differ (`#908980` and `#736A5F`). Assert first that the two roles resolve differently there
-        - Files: `frontend/src/theme/recipes/__tests__/alert.test.tsx` and
-          `frontend/src/components/common/__tests__/FloatingAlert.test.tsx`, using the shared assertion from 3.1.a
-        - Expect tests to FAIL initially
-
-    - [ ] **5.1.c The recipe's tint and text take precedence**
-        - `frontend/src/theme/recipes/alert.ts`: Chakra's default alert recipe, merged in by `createSystem`, applies
-          its `variant` styles after `status`, and `variant` defaults to `subtle` (`colorPalette.subtle` background,
-          `colorPalette.fg` text). Make each status's tint and a `foreground` root text win for the `subtle` variant,
-          for example with `compoundVariants` per status; keep the icon, title and description colors; update the
-          header comment
-        - `frontend/src/components/common/FloatingAlert.tsx`: the action button sets `borderColor="border-strong-02"`
-          in place of `button-outline`, its rest border, and restates the outline variant's `primary` hover and active
-          border (`_hover`, `_active`), which a base `borderColor` prop otherwise overrides in the app, as
-          `ErrorBoundary.tsx`'s "Report Issue" restates its own; the alert recipe gains no button rule
-        - `ErrorBoundary.tsx`'s "Report Issue" keeps its own `destructive` border and text
-        - Tests should now PASS, with `ErrorBoundary.integration.test.tsx`
-
-    - [ ] **5.1.d Retire the checks on Chakra's fills**
-        - `frontend/src/theme/color/contrast-checks.ts`: remove `NATIVE_ALERT_SURFACES`, the native alert text and
-          interaction pairs and the `@chakra-ui/react/theme` import; the tint checks stay
-        - **Check:** `npm run verify-contrast` passes; `sign-up.spec.ts` and `sign-in.spec.ts` pass without the
-          `/login` `color-contrast` entry
+    - [x] **5.1.b Pin alert tint and action border**
+        - All four statuses with omitted and explicit subtle variants compare rendered tint and root text to theme
+          expressions. A dark-ancestor action test first proves raised and neutral border roles differ. All nine
+          assertions failed on the prior recipe/button.
+    - [x] **5.1.c The recipe's tint and text take precedence**
+        - Status/subtle compound styles restore themed tints and foreground root text. Declared the inherited subtle
+          variant for compound-style typing. Floating actions use the raised strong border and retain primary
+          hover/active borders. ErrorBoundary's own destructive border stays.
+        - All 17 alert/ErrorBoundary cases passed; 1,560 alert/contrast cases passed after type generation, plus
+          frontend type-check and touched-file lint/format.
+    - [x] **5.1.d Retire checks on unused Chakra fills**
+        - Removed native alert surfaces/pairs and the Chakra theme import. Tints remain checked: 165 declared pairs,
+          1,378 passing evaluations, 272 scoped skips, no failures. Sign-up and sign-in smoke specs passed without
+          the `/login` contrast entry.
 
 - [ ] **5.2 The movie card and the detail page draw no recipe-default color — R17**
 

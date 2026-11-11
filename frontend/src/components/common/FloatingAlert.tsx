@@ -148,7 +148,14 @@ export const FloatingAlert = ({
         <Alert.Description>{children}</Alert.Description>
         {action && (
           <Box mt={2}>
-            <Button size="sm" variant="outline" onClick={action.onClick}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={action.onClick}
+              borderColor="border-strong-02"
+              _hover={{ borderColor: "primary" }}
+              _active={{ borderColor: "primary" }}
+            >
               {action.label}
             </Button>
           </Box>

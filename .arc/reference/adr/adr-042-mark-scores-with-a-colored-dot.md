@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-11)
 
 Supersedes ADR-003 in part: its assignment of gold to numeric TMDB and user score displays. Star icons keep gold.
 

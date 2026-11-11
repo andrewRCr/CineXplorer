@@ -2,9 +2,10 @@
 
 **PRD:** `prd-palette.md`
 **Created:** 2026-11-10
+**Completed:** 2026-11-11
 **Branch:** `technical/palette`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -306,79 +307,130 @@ _Exit criterion:_ the search Success Criterion 9 names finds nothing in producti
     - The first final registration run returned HTTP 429 after repeated tests exhausted the documented three/hour
       limit. Its trace confirmed 429 and "Too many requests"; clearing only this worktree's registration-history
       key by the documented testing procedure restored the required run. No application throttle changed.
-    - A bounded Astra consultation found no material gap in scoped contrast gating or translucent-alert composition;
-      this does not replace Phase 6 verification/review.
+    - A bounded Astra consultation found no material gap in scoped contrast gating or translucent-alert composition.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1)
+- [x] **6.1 Verify the work** (load `archive-completed.md` § 1)
+
+    - Author walk, full verification gates and the independent verification companion completed on `1768cda9`
+      plus the coverage repair in Task 6.1.a. Criteria 1–10 are met; criterion 11 awaits its planned PR CI
+      and post-merge staging evidence. The work unit's review log retains the criteria evidence and independent report.
+    - ADR-041 and ADR-042 are Accepted, dated 2026-11-11; both decision bodies stand independently of planning.
+    - Corrected the formatter-reported indentation/wrapping in the new test-helper README example.
+    - [x] **6.1.a Cover every certification's keyboard focus**
+        - Parameterized the existing focus test across all six ratings, reaching each selected checkbox with Tab
+          and checking focus, a solid outline and its resolved `ring` color.
+        - Removing the focus-ring override temporarily made all six focus cases fail on Chakra's gray; restoring
+          it made the 27 certification filter/badge cases pass. Types and changed-test lint/format passed.
+
 - [ ] **6.2 Prove the post-merge criteria** (Success Criterion 11's staging half; load `archive-completed.md` § 9)
 
 ## Implementation Notes
 
-- **Two `ThemeName` types.** The union in `frontend/src/theme/color/index.ts` must gain `marquee` before
-  `definitions.ts` can call `createUnifiedTheme("marquee", …)`; a missing switch case still type-checks but throws
-  when `definitions.ts` loads. `ThemeName` in `frontend/src/theme/index.ts` is the registry's keys, so adding Marquee
-  to `themeRegistry` breaks `ThemeDebug.tsx`'s two maps until they gain it, in the same subtask (2.2.a).
-- **The palette values are measured.** R2 and R3 were measured against every R5 pair and the script's existing pairs.
-  A failing pair is a PRD amendment, never a quietly tuned value; only the `tertiary` hover and active steps are open,
-  bounded by their pairs.
-- **Computed styles in jsdom.** Resolve them with the layer-free system (`createSystem(config, { disableLayers: true
-  })`), as the existing badge checks do (`testing-standards`). A throwaway test during planning showed jsdom
-  resolving `var()` colors, a `color-mix()` tint (as `color(srgb … / 0.1)`), inset box shadows, and a checkbox card's
-  `data-focus-visible` outline after `userEvent.tab()`; the separator's and tag's recipe colors resolve the same way.
-- **The two cascades differ at recipe state styles.** In the app, recipe styles sit in a cascade layer, so any style
-  prop beats any recipe style. The layer-free system leaves them unlayered, so a recipe's state rule (`_checked`,
-  `_hover`) outranks a base prop by specificity. Set a state's styles under the same condition the recipe uses (the
-  selected pill's border and ring under `_checked`), and the tests and the app agree. The focus ring is outside this
-  seam: the recipe sets `--focus-ring-color` on the root itself, so a base `focusRingColor` prop wins in both
-  cascades (a planning probe showed it in each).
-- **Chakra's recipe defaults.** `createSystem(defaultConfig, …)` merges the project's recipes into Chakra's, keeping
-  Chakra's variant order. The alert applies `variant` after `status`; the checkbox card's `outline` variant draws a
-  checked inset ring in `colorPalette.solid` and its root's `focusVisibleRing` uses `colorPalette.focusRing`; the
-  separator draws in `border`; the tag's default variant draws an inset ring in `colorPalette.muted`.
-- **The `/login` baseline entry.** The baseline matches by route and rule alone, so while the entry stands it absorbs
-  any `color-contrast` violation on `/login`, and matched violations are logged without their elements. Its recorded
-  reason, white text on blue, matches no text in the registration notice. Task 2.2.d removes it once, when Marquee
-  becomes the default, to find the element; the branch it takes decides whether the entry goes then or in task 5.1.
-- **End-to-end runs.** Start this worktree's browsable stack with `node scripts/worktree.mjs browse` and run specs
-  from `frontend/` with `E2E_BASE_URL` set to its address. The scans run in light mode only; dark-mode contrast rests
-  on `verify-contrast`.
-- **ADR numbers** are taken when each ADR is written; another work unit may take a number first.
-- **Code comments** say what the code does; no requirement numbers, PRD sections or process names.
+- **Two `ThemeName` types.** Marquee is included in the adapter factory's union and the theme registry's key union.
+  A missing factory switch case can type-check but throw when `definitions.ts` loads. The registry's union also
+  types the debug page's name maps, keeping those maps aligned with the selectable themes.
+- **Measured palette values.** The exact R2 and R3 tables are pinned by adapter tests; the contrast matrix checks
+  R5's pairs. Interaction helpers derive hover and active states from the palette. Decorative-border shortfalls
+  explicitly accepted by the PRD remain outside the applicable checks.
+- **Computed styles in jsdom.** The shared style helper uses the project system with cascade layers disabled and
+  compares computed colors against independently resolved semantic expressions. Planning probes established that
+  jsdom resolves CSS variables, translucent tints, inset shadows and keyboard-focus outlines with this system.
+- **The two cascades differ at recipe state styles.** In the app, recipe styles sit in a cascade layer, so a style
+  prop beats a recipe style. The layer-free test system leaves them unlayered, so a recipe's state rule (`_checked`,
+  `_hover`) outranks a base prop by specificity. Matching the recipe's condition makes the selected pill's border
+  and absent inset ring agree in both systems. The recipe sets `--focus-ring-color` on the root itself, so a base
+  `focusRingColor` prop wins in both cascades.
+- **Chakra's recipe defaults.** `createSystem(defaultConfig, …)` merges project recipes into Chakra's while keeping
+  Chakra's variant order. Alert compound styles restore the themed tint after the subtle variant. The checkbox
+  card's checked inset ring, focus ring, separator border and tag inset shadow require separate overrides.
+- **The `/login` baseline entry.** Baseline matching uses route and rule alone, so a login contrast entry can absorb
+  unrelated contrast violations on that route. The entry was removed, and the local scans passed with and without
+  the registration notice under Marquee.
+- **End-to-end runs.** Start the worktree's browsable stack with `node scripts/worktree.mjs browse` and run specs from
+  `frontend/` with `E2E_BASE_URL` set to its address. The scans run in light mode only; dark-mode contrast is checked
+  by `verify-contrast`. Task 6.2 records the separate staging proof in both modes after merge.
 
 ## Success Criteria
 
-- [ ] 1. `npm run verify-contrast` (from `frontend/`) reports five themes × two modes and passes, with Marquee among
+- [x] 1. `npm run verify-contrast` (from `frontend/`) reports five themes × two modes and passes, with Marquee among
   them, and Marquee's adapter returns the values in R2 and R3 for the roles they list (checked against the tables).
   The script no longer checks Chakra's alert fills.
-- [ ] 2. `verify-contrast` checks every pair R5 lists, on its surfaces and in the themes R5 names for it, and fails
+
+  Met: the verification CLI run reports five themes × two modes, 1,378 passes, 272 theme-scope skips and no failures.
+  `marquee.test.ts` checks both exact palette tables and mappings; the CLI checks only themed alert tints.
+
+- [x] 2. `verify-contrast` checks every pair R5 lists, on its surfaces and in the themes R5 names for it, and fails
   when any color in such a pair is changed to a value below that pair's threshold.
-- [ ] 3. With nothing stored, `getInitialTheme()` returns `marquee` and Marquee is first in `themeRegistry`; with
+
+  Met: `contrast-checks.test.ts` independently lists the required pairs, surfaces, thresholds and theme scopes, checks
+  their presence, and mutates their foreground colors in both modes. Its cases passed in the full frontend run; the
+  CLI imports the same validator.
+
+- [x] 3. With nothing stored, `getInitialTheme()` returns `marquee` and Marquee is first in `themeRegistry`; with
   `cinexplorer-theme` set to `ibm-carbon`, it returns `ibm-carbon`.
-- [ ] 4. `frontend/index.html` has `theme-color` values `#110E0A` and `#F2E8CE`, and contains no `#161616`.
-- [ ] 5. Unit tests show, in both presentations: a scored TMDB score as an outlined chip whose dot resolves to
+
+  Met: all four initial-selection tests and both rendered selector tests passed, covering empty/unknown storage,
+  stored Carbon, registry order and displayed labels.
+
+- [x] 4. `frontend/index.html` has `theme-color` values `#110E0A` and `#F2E8CE`, and contains no `#161616`.
+
+  Met: inspected both meta tags and all pre-paint defaults/fallbacks; the required values are present and `#161616` is
+  absent. Stored-background validation and precedence are unchanged.
+
+- [x] 5. Unit tests show, in both presentations: a scored TMDB score as an outlined chip whose dot resolves to
   `success`, `foreground` or `destructive` by the displayed value (7.47 → "7.5", good; 4.97 → "5.0", middle; 7.4 →
   middle; 4.9 → low); a score below 10 votes as the filled neutral chip with no dot and its existing labels; the dot
   hidden from assistive technology and the accessible text unchanged ("TMDB Rating: 7.5").
-- [ ] 6. Unit tests show a user rating as the same chip with its thresholds (8 good, 7 and 5 middle, 4 low) and its
+
+  Met: the passing score suite covers both presentations, rounding and vote-count boundaries, transparent outlines,
+  semantic dot/number colors, neutral placeholders, titles and inaccessible decorative dots.
+
+- [x] 6. Unit tests show a user rating as the same chip with its thresholds (8 good, 7 and 5 middle, 4 low) and its
   labels "★ 8" beside a TMDB score and "★ 8/10" alone.
-- [ ] 7. Unit tests show every certification badge with the `badge` background, and a selected certification-filter
+
+  Met: the passing score suite checks 8/7/5/4 in both presentations and both combined/user-only layouts, including the
+  neutral star and both label forms.
+
+- [x] 7. Unit tests show every certification badge with the `badge` background, and a selected certification-filter
   pill, for every rating, with the `tertiary` background, no inset ring, and a focus ring in `ring`;
   `CERTIFICATION_VARIANT_MAP` no longer exists.
-- [ ] 8. Tests show a rendered alert, for each status, with no variant and with `variant="subtle"`, whose background
+
+  Met: all six badge and selected-style cases pass, and each rating now has a keyboard-focus/ring-color unit case.
+  All six focus cases failed without the semantic ring override and passed after restoration; all 27 certification
+  filter/badge cases passed. The removed variant map remains absent.
+
+- [x] 8. Tests show a rendered alert, for each status, with no variant and with `variant="subtle"`, whose background
   resolves to its status color at 10% and whose root text resolves to `foreground`, not a Chakra palette color; and a
   rendered `FloatingAlert` with an action, whose action button's border resolves to `border-strong-02`.
-- [ ] 9. A search of `frontend/src` outside `frontend/src/pages/dev/` and test files finds no `fg-muted`, `fg-error`,
+
+  Met: all eight status/variant tint and foreground cases and the dark-mode floating-action border test passed. The
+  action test distinguishes the raised strong border from the former outline role.
+
+- [x] 9. A search of `frontend/src` outside `frontend/src/pages/dev/` and test files finds no `fg-muted`, `fg-error`,
   `colorPalette="accent"`, `colorPalette="gray"`, `borderColor="border"`, `color="fg"` or `color="black"`; a rendered
   movie card's title resolves to `foreground`; and a rendered movie detail page's separators resolve to
   `border-subtle-01`, and its genre and company tags draw no inset ring.
-- [ ] 10. A search of `frontend/index.html`, `frontend/src`, `frontend/tests`, `frontend/scripts`, the style
+
+  Met: the exact production-source search returned no matches. Passing rendered tests check the card title, all four
+  detail dividers and both tag types through resolved styles.
+
+- [x] 10. A search of `frontend/index.html`, `frontend/src`, `frontend/tests`, `frontend/scripts`, the style
   strategies and TECHNICAL-OVERVIEW finds no description of IBM Carbon as the default, of traffic-light or
   status-colored scores, of status-colored certifications, of the four design-system palettes as the only ones, of
   gold as the color of score displays or of one gold across all themes, or of `accent` or a `-foreground` name as a
   working role; the color-token strategy's adapter list and brand table, TECHNICAL-OVERVIEW § 3 and the root README
   name Marquee; the theme selector shows "Marquee".
+
+  Met: the complete wording/alias searches and contextual inspection found no obsolete live guidance; removed-name
+  examples explicitly say they are removed. The adapter list, brand table, overview and README name Marquee, and
+  rendered selector tests pass.
+
 - [ ] 11. Proven live: the pull request's end-to-end smoke job passes with its axe scans under Marquee, with no new axe
   baseline entry and without the `/login` `color-contrast` entry, and after merge the staging site renders the browse
   grid and a movie's detail page in Marquee in both modes, with dot chips for scores and neutral certifications.
+
+  Pending the planned delivery stages: this verification run passed all five local smoke specs and axe scans,
+  including the registration notice without the removed login baseline. Pull-request CI is not yet available; Task 6.2
+  owns the staging half after merge.

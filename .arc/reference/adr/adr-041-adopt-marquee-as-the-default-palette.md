@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-11)
 
 Supersedes ADR-008 in part: Marquee's light layers put the lighter tone on cards and raised surfaces.
 

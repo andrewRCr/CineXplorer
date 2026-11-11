@@ -39,18 +39,27 @@ it.each(CERTIFICATION_OPTIONS)(
   },
 );
 
-it("draws the selected keyboard focus outline in the theme ring color", async () => {
-  const user = userEvent.setup();
-  render(
-    <CertificationFilter selectedCertifications={["NR"]} onChange={() => {}} />,
-    { system: styleSystem },
-  );
-  await user.tab();
-  expect(screen.getByRole("checkbox", { name: "NR" })).toHaveFocus();
-  const pill = pillFor("NR");
-  expect(getComputedStyle(pill).outlineStyle).toBe("solid");
-  expectResolvedColor(pill, "outline-color", "var(--chakra-colors-ring)");
-});
+it.each(CERTIFICATION_OPTIONS)(
+  "draws selected %s's keyboard focus outline in the theme ring color",
+  async (certification) => {
+    const user = userEvent.setup();
+    render(
+      <CertificationFilter
+        selectedCertifications={[certification]}
+        onChange={() => {}}
+      />,
+      { system: styleSystem },
+    );
+    for (const option of CERTIFICATION_OPTIONS) {
+      await user.tab();
+      if (option === certification) break;
+    }
+    expect(screen.getByRole("checkbox", { name: certification })).toHaveFocus();
+    const pill = pillFor(certification);
+    expect(getComputedStyle(pill).outlineStyle).toBe("solid");
+    expectResolvedColor(pill, "outline-color", "var(--chakra-colors-ring)");
+  },
+);
 
 it.each(CERTIFICATION_OPTIONS)(
   "keeps unselected %s transparent with a strong neutral border",

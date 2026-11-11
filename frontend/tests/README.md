@@ -72,10 +72,14 @@ Both shared renderers accept an optional `system`, including when rendering rout
 ```tsx
 render(<Component />, { system: styleSystem });
 renderWithRoute("/movie/:id", <MovieDetail />, {
-  initialRoute: "/movie/123",
-  system: styleSystem,
+    initialRoute: "/movie/123",
+    system: styleSystem,
 });
-expectResolvedColor(element, "border-color", "var(--chakra-colors-border-subtle-01)");
+expectResolvedColor(
+    element,
+    "border-color",
+    "var(--chakra-colors-border-subtle-01)",
+);
 ```
 
 The assertion resolves an independent sibling probe and compares computed colors;

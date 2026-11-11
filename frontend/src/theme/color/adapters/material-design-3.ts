@@ -26,6 +26,7 @@
 
 import type { UnifiedTheme } from "../types";
 import {
+    materialStatusColorSteps,
     materialPaletteLight,
     materialPaletteDark,
 } from "../palettes/material-design-3";
@@ -136,7 +137,9 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Status colors
     // NOTE: Material baseline only provides error (destructive). Success/warning/info are derived.
-    const destructive = palette.error; // Material baseline error color
+    // Previous light/dark minimum text contrast: 4.43:1 / 5.76:1.
+    const destructive =
+        mode === "light" ? materialStatusColorSteps.error30 : palette.error;
     const onDestructive = palette.onError; // Material native on-* token
 
     // ===================================================================
@@ -212,11 +215,21 @@ export function createMaterialAdapter(mode: "light" | "dark"): UnifiedTheme {
 
     // Additional status colors (derived - Material baseline lacks official tokens)
     // Derived from Material color roles for consistency
-    const success = mode === "light" ? "#2E7D32" : "#66BB6A"; // Material green 700/400
+    // Previous light/dark minimum text contrast: 3.71:1 / 4.38:1.
+    const success =
+        mode === "light"
+            ? materialStatusColorSteps.green900
+            : materialStatusColorSteps.green300;
     const onSuccess = mode === "light" ? "#FFFFFF" : "#000000"; // Derived
-    const warning = mode === "light" ? "#F57C00" : "#FFA726"; // Material orange 700/400
-    const onWarning = "#000000"; // Derived - dark text on orange in both modes
-    const info = mode === "light" ? "#1976D2" : "#42A5F5"; // Material blue 700/400
+    // Previous light/dark minimum text contrast: 2.03:1 / 5.21:1.
+    // Derived darker orange: no canonical orange step passes all text surfaces.
+    const warning = mode === "light" ? "#954b00" : "#FFA726";
+    const onWarning = mode === "light" ? "#FFFFFF" : "#000000";
+    // Previous light/dark minimum text contrast: 3.34:1 / 3.99:1.
+    const info =
+        mode === "light"
+            ? materialStatusColorSteps.blue900
+            : materialStatusColorSteps.blue300;
     const onInfo = mode === "light" ? "#FFFFFF" : "#000000"; // Derived
 
     // ===================================================================

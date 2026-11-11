@@ -40,6 +40,7 @@
 
 import type { UnifiedTheme } from "../types";
 import {
+    carbonStatusColorSteps,
     ibmCarbonPaletteLight,
     ibmCarbonPaletteDark,
 } from "../palettes/ibm-carbon";
@@ -156,17 +157,27 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive, success, warning, info (all official Carbon tokens)
-    const destructive = palette.bg_danger;
+    // Previous light/dark minimum text contrast: 3.77:1 / 2.20:1.
+    const destructive =
+        mode === "light"
+            ? carbonStatusColorSteps.red70
+            : carbonStatusColorSteps.red20;
     const onDestructive = palette.fg_onEmphasis;
+    // Previous light/dark minimum text contrast: 3.95:1 / 2.90:1.
     const success =
         mode === "light"
-            ? palette.bg_success_hover // Tweaked for WCAG: use darker hover value (official #24a148 had 3.35:1 contrast)
-            : palette.bg_success;
+            ? carbonStatusColorSteps.green70
+            : carbonStatusColorSteps.green20;
     const onSuccess = palette.fg_onEmphasis;
-    const warning = palette.fg_warning;
-    const onWarning =
-        mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
-    const info = palette.fg_info;
+    // Previous light/dark minimum text contrast: 1.46:1 / 3.90:1.
+    const warning =
+        mode === "light"
+            ? carbonStatusColorSteps.yellow70
+            : carbonStatusColorSteps.yellow20;
+    const onWarning = palette.fg_onEmphasis;
+    // Previous light/dark minimum text contrast: 6.01:1 / 2.16:1.
+    const info =
+        mode === "light" ? palette.fg_info : carbonStatusColorSteps.blue20;
     const onInfo = palette.fg_onEmphasis;
 
     // Shadows (minimal for Carbon - layer colors indicate elevation)

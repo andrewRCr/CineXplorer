@@ -1037,19 +1037,14 @@ export interface UnifiedTheme {
     /**
      * IMDb gold color for rating star icons.
      *
-     * **Standard:** IMDb gold (#F5C518) in light mode, adjusted for dark mode
-     * **Usage:** Star icons (★) for user personal ratings (5-star system)
+     * **Standard:** Each theme sets its own accessible gold in both modes.
+     * **Usage:** Star icons, such as a row of rating stars.
+     * Numeric TMDB and user ratings use an outlined dot chip with neutral text;
+     * fewer than 10 TMDB votes use the filled `badge` / `on-badge` pair.
      *
-     * **Pattern:**
      * ```tsx
      * <Text color="imdb-gold" fontSize="xl">★★★★☆</Text>
      * ```
-     *
-     * **NOT for badge backgrounds:**
-     * - TMDB community scores with 10 or more votes use traffic-light status colors (success/warning/error)
-     * - See CineXplorerExtensionsSection for reference implementation
-     * - ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
-     * - Fewer than 10 votes: neutral badge (`badge` / `on-badge`)
      */
     "imdb-gold": string;
 

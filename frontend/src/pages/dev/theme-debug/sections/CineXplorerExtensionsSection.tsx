@@ -1,4 +1,5 @@
 import { Box, Text, VStack, HStack } from "@chakra-ui/react";
+import MovieUserScore from "@/components/movie/MovieUserScore";
 
 /**
  * CineXplorer Extensions Section - App-Specific Tokens
@@ -26,56 +27,21 @@ export function CineXplorerExtensionsSection() {
         borderColor="border-subtle-00"
       >
         <VStack align="stretch" gap={4}>
-          {/* TMDB Community Scores - status colors from 10 votes, neutral below */}
+          {/* TMDB community score chips */}
           <Box>
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">
               TMDB Community Scores (0-10)
             </Text>
             <HStack gap={2} wrap="wrap" justify="center">
-              <Box
-                bg="success"
-                color="on-success"
-                px={3}
-                py={1}
-                borderRadius="md"
-                fontWeight="bold"
-              >
-                8.2
-              </Box>
-              <Box
-                bg="warning"
-                color="on-warning"
-                px={3}
-                py={1}
-                borderRadius="md"
-                fontWeight="bold"
-              >
-                6.5
-              </Box>
-              <Box
-                bg="destructive"
-                color="on-destructive"
-                px={3}
-                py={1}
-                borderRadius="md"
-                fontWeight="bold"
-              >
-                4.1
-              </Box>
-              <Box
-                bg="badge"
-                color="on-badge"
-                px={3}
-                py={1}
-                borderRadius="md"
-                fontWeight="bold"
-              >
-                —
-              </Box>
+              <MovieUserScore score={8.2} voteCount={1500} />
+              <MovieUserScore score={6.5} voteCount={1500} />
+              <MovieUserScore score={4.1} voteCount={1500} />
+              <MovieUserScore score={6.2} voteCount={4} />
             </HStack>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              10+ votes: ≥7.5 success (green), 5.0-7.4 warning (yellow), &lt;5.0
-              error (red) | fewer than 10 votes: neutral (badge)
+              10+ votes: outlined chip, neutral number; dot is success at ≥7.5,
+              foreground at 5.0–7.4, destructive below 5.0, using the displayed
+              value. Fewer votes: filled neutral chip, no dot.
             </Text>
           </Box>
 
@@ -98,8 +64,8 @@ export function CineXplorerExtensionsSection() {
               </Box>
             </Box>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              Stars use imdb-gold token: #785F05 (light mode, WCAG AA) / #F5C518
-              (dark mode, authentic IMDb)
+              Star icons use the active theme's imdb-gold. Numeric user ratings
+              use the dot chip with a neutral star.
             </Text>
           </Box>
 
@@ -185,9 +151,9 @@ export function CineXplorerExtensionsSection() {
         mt={3}
         textAlign="center"
       >
-        Note: TMDB community scores use status color tokens
-        (success/warning/destructive) per MovieUserScore component thresholds
-        from 10 votes, and the neutral badge / on-badge pair below 10 votes.
+        Scores use outlined dot chips with neutral numbers; only the dot carries
+        tier color. Few-vote scores and certifications use the filled neutral
+        badge pair. Star icons use the theme's gold.
       </Text>
     </Box>
   );

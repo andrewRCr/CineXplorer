@@ -79,8 +79,8 @@ What am I styling?
 │  └─ Switch: Chakra Switch with recipe
 │
 └─ Movie rating/badge? → [Movie UI](#building-movie-specific-ui)
-   ├─ TMDB scores: Badge variants (success/warning/error); neutral below 10 votes
-   ├─ User rating stars: imdb-gold token
+   ├─ TMDB scores: Outlined dot chips; filled neutral below 10 votes
+   ├─ User ratings: Dot chips for numbers; imdb-gold for star icons
    └─ Genre tags: Badge variant="neutral"
 ```
 
@@ -1107,44 +1107,35 @@ CineXplorer extends the base semantic token system with movie app-specific token
 
 ### Movie Ratings
 
-**TMDB Community Scores (threshold-based traffic-light colors from 10 votes, neutral below):**
+**TMDB Community Scores:**
+
+`MovieUserScore` renders an outlined chip with a neutral number and an 8px decorative dot. From 10 votes,
+the displayed value (rounded to one decimal) determines the tier: 7.5 and up `success`, 5.0–7.4 `foreground`,
+below 5.0 `destructive`. Fewer votes keep the filled `badge` / `on-badge` chip without a dot or outline.
+Cards show "—"; the detailed presentation shows the average and vote count, or "Not yet rated" without votes.
 
 ```tsx
-// TMDB scores backed by 10 or more votes use status colors based on thresholds (0-10 scale)
-// ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
-// User-rating badges (1-10) use the same variants: ≥8 success, 5-7 warning, <5 error
-
-// High rating (≥7.5)
-<Badge variant="success">8.2</Badge>
-
-// Medium rating (5.0-7.4)
-<Badge variant="warning">6.5</Badge>
-
-// Low rating (<5.0)
-<Badge variant="error">4.1</Badge>
-
-// Fewer than 10 votes: neutral, never a traffic-light color
-// Cards show a placeholder; the detail page shows the average with its vote count
-<Badge variant="neutral" title="Fewer than 10 TMDB votes">—</Badge>
-<Badge variant="neutral">6.8 · 4 votes</Badge>
+<MovieUserScore score={8.2} voteCount={1500} />
+<MovieUserScore score={6.5} voteCount={1500} />
+<MovieUserScore score={4.1} voteCount={1500} />
+<MovieUserScore score={6.2} voteCount={4} presentation="detailed" />
 ```
 
-**Tokens:** Uses Badge recipe with status variants (`success`, `warning`, `error`) from 10 votes and `neutral` below
+The outline uses `border-subtle-01`; the number uses `foreground`. The dot is hidden from assistive technology;
+the chip retains its title and visually hidden explanation.
 
-**Implementation:** `MovieUserScore` applies the rule; the threshold is `SCORE_DISPLAY_MIN_VOTES`
+**User Personal Ratings:**
 
-**Use cases:** TMDB community scores, aggregated ratings from external sources
+A numeric rating uses the same dot chip: 8–10 `success`, 5–7 `foreground`, 1–4 `destructive`.
+Its label keeps a neutral star: "★ 8" beside TMDB, "★ 8/10" alone.
 
-**User Personal Ratings (5-star system with IMDb gold):**
+Star icons, such as a row of rating stars, use the active theme's `imdb-gold`:
 
 ```tsx
-// User ratings use star icons (★) colored with imdb-gold token
 <Text color="imdb-gold" fontSize="xl">★★★★☆</Text>
 ```
 
-**Tokens:** `imdb-gold` (icon color only, not a background token)
-
-**Use cases:** User's personal 5-star ratings on movie cards
+`imdb-gold` is an icon color, never a chip fill or numeric score color.
 
 ### Genre Tags and Badges
 

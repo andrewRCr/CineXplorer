@@ -16,10 +16,8 @@ import { defineRecipe } from "@chakra-ui/react";
  * - Status badges use semantic colors (success, warning, destructive, info)
  * - Neutral badges use badge token for genre tags, content ratings, etc.
  *
- * Note: TMDB community scores with 10 or more votes use traffic-light status colors:
- * - ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
- * - Fewer than 10 votes: neutral - a "—" placeholder, or the average with its vote count
- * - See CineXplorerExtensionsSection for reference implementation
+ * Scores use MovieUserScore's outlined dot chip; only fewer than 10 TMDB votes
+ * use the filled neutral badge, with a placeholder or vote-counted average.
  */
 export const badgeRecipe = defineRecipe({
     className: "badge",

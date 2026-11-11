@@ -175,42 +175,21 @@ _Mode:_ `slice` — closes on dot chips and neutral certifications on the browse
     - Corrected the related-test invocation to run from `frontend/`, and documented the deliberate inaccessible-dot
       DOM query for ESLint.
 
-- [ ] **3.3 The score guidance and the score-display ADR describe the chip — R18**
+- [x] **3.3 The score guidance and the score-display ADR describe the chip — R18**
 
     **Goal:** The guidance, comments and debug page describe dot chips for scores and `imdb-gold` for star icons only,
     and the score decisions are recorded.
 
-    - [ ] **3.3.a Strategies**
-        - `strategy-color-tokens.md`: the TMDB score rows (high, medium, low, fewer than 10 votes) and the "User rating
-          stars" row of the token table, the ✅ examples, and the decision list's score and user-rating items
-        - `strategy-component-styling.md`: the decision tree's TMDB score and user-rating-star lines; the "TMDB
-          Community Scores" section; the "User Personal Ratings" section, narrowed to star icons such as a row of
-          rating stars, with a user rating shown as a number taking the score chip
-
-    - [ ] **3.3.b Code comments and the debug page**
-        - `frontend/src/theme/recipes/badge.ts`: the header's note on TMDB scores, and the `neutral` variant's use
-          cases, describe the dot chip; the status variants stay as general labels
-        - `frontend/src/theme/color/types.ts`, the `imdb-gold` doc comment: its "Standard" line (one fixed gold) says
-          each theme sets its gold; its "NOT for badge backgrounds" note (traffic-light scores) says scores take the
-          dot chip; its usage reads star icons, such as a row of rating stars, with a user rating shown as a number
-          taking the score chip
-        - `frontend/src/theme/color/extensions.ts`: the header's "Movie score displays" category; the
-          `standardRatingColors` doc block, with its stale `#876B06` and its case for one gold across all themes; and
-          `createExtensions`' "Use standard IMDb gold (consistent across themes)" and its inline "across all themes"
-          comment. They say instead that `imdb-gold` colors star icons, and that `standardRatingColors` is the gold
-          of the four adapted palettes while Marquee sets its own
-        - `frontend/src/pages/dev/theme-debug/sections/CineXplorerExtensionsSection.tsx`: the score examples render
-          `MovieUserScore` (good, middle, low, and fewer than 10 votes) with a caption on the dot tiers, replacing the
-          filled boxes; the user-rating example describes the theme's `imdb-gold` instead of "#785F05 / #F5C518"; the
-          section's closing note
-        - `frontend/src/pages/dev/theme-debug/sections/FeedbackStatusSection.tsx`: the note on TMDB scores
-
-    - [ ] **3.3.c Write the ADR "Mark scores with a colored dot", reading `Proposed`**
-        - Next free number when written; decisions 6 to 13: on movie surfaces color marks scores only; the dot, its
-          tiers and colors, the chip, the user rating, the decorative dot, neutral certifications; supersedes ADR-003
-          in part, its assignment of the gold rating token to score displays (TMDB scores, and user ratings shown as
-          a number), while star icons keep `imdb-gold`
-        - ADR-003's Status becomes `Accepted; Superseded in part by` the new ADR
+    - [x] **3.3.a Strategies**
+        - Both style strategies show dot chips, displayed-value thresholds and neutral low-vote states; numeric
+          user ratings use the chip, and gold is for star icons.
+    - [x] **3.3.b Code comments and the debug page**
+        - Updated badge/type/extension comments and standard-gold scope. The debug page renders real MovieUserScore
+          examples for all tiers and few votes; star examples describe the active theme's gold.
+        - Type-check, touched-file lint/format, markdown lint and 1,553 palette/contrast tests passed.
+    - [x] **3.3.c Record the score decision**
+        - Proposed ADR-042 records the dot, tiers, shared roles, chip, user star, accessibility and neutral
+          certifications, with alternatives and costs. ADR-003 names the partial numeric-score supersession.
 
 ### **Phase 4:** Certifications are neutral
 

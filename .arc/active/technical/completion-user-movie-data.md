@@ -50,7 +50,9 @@ pass on that integrated tree.
 
 ## Remaining Evidence
 
-- Hosted CI must pass, including the API type-drift job required by Implemented criterion 12.
+- Hosted CI must pass on the corrected head. PR #173’s API type-drift job passes in run `43055091005`,
+  proving Implemented criterion 12. Its backend checks reject eight obsolete type suppressions; the comment-only
+  correction passes locally with the pinned checker and locked dependencies and awaits commit and CI.
 - Before the merge deploys, staging must contain at least one saved movie, added through the app with the staging
   test account if necessary. After deployment, its nightly refresh must report success, refresh at least one row
   without stale IDs, and leave the stored movie's vote fields populated in that account's Library response.

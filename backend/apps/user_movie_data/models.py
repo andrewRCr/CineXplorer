@@ -115,26 +115,25 @@ class UserMovieData(models.Model):
     objects: ClassVar[UserMovieDataManager] = UserMovieDataManager()  # pyright: ignore[reportIncompatibleVariableOverride]
 
     class Meta:
-        # django-types still names CheckConstraint's deprecated `check` argument.
         constraints = [
             models.UniqueConstraint(fields=["user", "movie"], name="user_movie_unique"),
-            models.CheckConstraint(  # pyright: ignore[reportCallIssue]
-                condition=models.Q(user_rating__isnull=True)  # pyright: ignore[reportCallIssue]
+            models.CheckConstraint(
+                condition=models.Q(user_rating__isnull=True)
                 | models.Q(user_rating__range=(1, 10)),
                 name="user_movie_rating_range",
             ),
-            models.CheckConstraint(  # pyright: ignore[reportCallIssue]
-                condition=models.Q(user_review__isnull=True)  # pyright: ignore[reportCallIssue]
+            models.CheckConstraint(
+                condition=models.Q(user_review__isnull=True)
                 | models.Q(user_review__regex=REVIEW_HAS_TEXT_PATTERN),
                 name="user_movie_review_has_text",
             ),
-            models.CheckConstraint(  # pyright: ignore[reportCallIssue]
-                condition=models.Q(user_review__isnull=True)  # pyright: ignore[reportCallIssue]
+            models.CheckConstraint(
+                condition=models.Q(user_review__isnull=True)
                 | models.Q(LessThanOrEqual(Length("user_review"), models.Value(10000))),
                 name="user_movie_review_length",
             ),
-            models.CheckConstraint(  # pyright: ignore[reportCallIssue]
-                condition=models.Q(watched_at__isnull=True) | models.Q(user_watched=True),  # pyright: ignore[reportCallIssue]
+            models.CheckConstraint(
+                condition=models.Q(watched_at__isnull=True) | models.Q(user_watched=True),
                 name="user_movie_watched_date",
             ),
         ]

@@ -421,7 +421,7 @@ page, sees it on the watchlist page, and takes it off again from its card.
   ADR set `Accepted` before merge; before the merge deploys, staging holds at least one stored movie, which the Owner
   saves through the app with the staging test account if none is; the staging criterion is proven after merge, § 9)
 
-    - Author criteria walk: Implemented 1–11 and 13 proven; 12 has local evidence and awaits the hosted CI drift job.
+    - Author criteria walk: Implemented 1–13 proven, including the hosted API type-drift job on PR #173.
       The complete local verification run passes: 1,220 backend tests (96.31% coverage), 999 frontend tests, five
       Chromium smokes, lint/format/types and markdown. Eight deploy-script tests, contrast and production build pass.
       Historical pre-fold service checkpoint: 44 tests pass at `8e3d1376`.
@@ -429,7 +429,12 @@ page, sees it on the watchlist page, and takes it off again from its card.
       frontend dependencies and the backend image from the merged lockfiles. The integrated full run passes
       1,237 backend tests (96.16% coverage), 2,609 frontend tests and all five Chromium smokes. Ruff, format,
       Pyright, ESLint, TypeScript, markdown, contrast and production build pass; API regeneration produces no diff.
-    - Task and status remain open for the hosted CI evidence; the staging criterion is due after merge.
+    - PR #173 at `b6783c10`: CI run `43055091005` passes API types, backend tests, frontend, images and docs.
+      Backend checks reject eight obsolete CheckConstraint call suppressions against locked django-types 0.24.0;
+      removed them and their stale comment. With CI’s pinned Pyright 1.1.414 and locked Python 3.13 dependencies,
+      the full check changes from eight errors to zero errors/warnings; Ruff and format pass. The production AST
+      is identical. Browser smoke was still pending at the failed-gate stop.
+    - Task and status remain open for CI on the corrected head; the staging criterion is due after merge.
       Criteria evidence is recorded below and in the work unit's review log.
 
 - [x] **6.2 Bound card text before storage and retain unstored detail reads**
@@ -588,15 +593,15 @@ page, sees it on the watchlist page, and takes it off again from its card.
   nightly and installed-operations tests pass. The README records rollback compatibility and removed-movie handling.
   Retained live refresh evidence reports two refreshed rows and exit zero.
 
-- [ ] 12. **The frontend.** Frontend tests show the watchlist toggle sends one PATCH carrying the value the card shows it
+- [x] 12. **The frontend.** Frontend tests show the watchlist toggle sends one PATCH carrying the value the card shows it
   moving to, so a second click on a card first drawn with no user data sends `false`; the detail page treats a 404
   as no record and adds an untouched movie to the watchlist; and the watchlist page requests `watchlist=true` with
   a `page_size` of 100. The API types are regenerated and CI's type-drift check passes. (D10)
 
   _Evidence (2026-11-11):_ Frontend verification passes all 999 tests, including the true-then-false card save,
   detail-hook 404/first save and bounded Watchlist request. All five browser smokes pass. Regenerating OpenAPI and
-  TypeScript produces no diff, and the local equivalent of the CI drift check passes. The hosted CI type-drift job
-  has not run; this criterion remains open for that evidence.
+  TypeScript produces no diff, and the local equivalent of the CI drift check passes. PR #173’s API types job
+  passes on `b6783c10` in CI run `43055091005` (job `130642288032`).
 
 - [x] 13. **Reference documents.** `strategy-pagination.md` states the rule for database-served lists, and its
   End-of-Results Signal section and `MovieListResponseSchema`'s docstring say a null `next_tmdb_page_start` ends only

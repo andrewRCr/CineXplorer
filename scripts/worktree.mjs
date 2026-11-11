@@ -197,7 +197,11 @@ function browse(root, main) {
     const compose = [...COMPOSE, "--profile", "browser"];
     console.log(run(root, "docker", [...compose, "up", "-d", "--wait"]));
     for (const args of [["migrate", "--noinput"], ["seed_dev_data"]]) {
-        console.log(run(root, "docker", [...compose, "exec", "-T", "backend", "python", "manage.py", ...args]));
+        // Keep setup status and errors visible while suppressing DEBUG SQL on the console.
+        console.log(run(root, "docker", [
+            ...compose, "exec", "-T", "-e", "DJANGO_CONSOLE_LOG_LEVEL=INFO",
+            "backend", "python", "manage.py", ...args,
+        ]));
     }
     console.log(`https://localhost:${envValue(contents, "SITE_PORT")}\nSign in: dev / cinexplorer-dev`);
 }

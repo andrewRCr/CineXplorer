@@ -1,10 +1,14 @@
 # CodeRabbit Configuration for CineXplorer
 # https://docs.coderabbit.ai/reference/configuration
 #
-# Minimal repo-specific config - organizational settings take precedence for most options.
+# Repository settings; organization or workspace global overrides take precedence.
 
 # Review configuration
 reviews:
+  # Keep authored descriptions and walkthroughs free of generated PR summaries.
+  high_level_summary: false
+  high_level_summary_in_walkthrough: false
+
   # Code quality focus areas - ignore build artifacts and dependencies
   path_filters:
     - "!**/node_modules/**"

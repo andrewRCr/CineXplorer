@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 
+from django.core.exceptions import RequestDataTooBig
 from django.http import HttpRequest, HttpResponse
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def register_error_handlers(api: NinjaAPI) -> None:
-    """Register the handlers for domain errors, validation errors and unhandled errors."""
+    """Register handlers for domain errors, oversized bodies, validation and unhandled errors."""
 
     @api.exception_handler(DomainError)
     def domain_error(request: HttpRequest, exc: DomainError) -> HttpResponse:
@@ -36,6 +37,11 @@ def register_error_handlers(api: NinjaAPI) -> None:
             error_body(describe_validation_errors(exc), ErrorCode.VALIDATION_ERROR),
             status=422,
         )
+
+    @api.exception_handler(RequestDataTooBig)
+    def request_too_large(request: HttpRequest, exc: RequestDataTooBig) -> HttpResponse:
+        logger.warning("Request body exceeded upload memory limit")
+        return api.create_response(request, error_body("Request body too large"), status=413)
 
     @api.exception_handler(Exception)
     def unhandled_error(request: HttpRequest, exc: Exception) -> HttpResponse:

@@ -11,8 +11,8 @@
 declare module "wcag-contrast" {
     /**
      * Calculate WCAG contrast ratio between two hex colors
-     * @param fg - Foreground color (hex format: #RRGGBB)
-     * @param bg - Background color (hex format: #RRGGBB)
+     * @param fg - Foreground hex color, with an optional # prefix
+     * @param bg - Background hex color, with an optional # prefix
      * @returns Contrast ratio (e.g., 4.52 for 4.52:1)
      */
     export function hex(fg: string, bg: string): number;
@@ -26,13 +26,16 @@ declare module "wcag-contrast" {
     ): number;
 
     /**
-     * Calculate relative luminance of an RGB color
+     * Calculate WCAG contrast ratio between two relative luminance values
+     * @param a - First relative luminance value (0 to 1)
+     * @param b - Second relative luminance value (0 to 1)
+     * @returns Contrast ratio (e.g., 4.52 for 4.52:1)
      */
-    export function luminance(rgb: [number, number, number]): number;
+    export function luminance(a: number, b: number): number;
 
     /**
      * Get WCAG score level for a contrast ratio
-     * @returns "AAA", "AA", "AA18", "DNP" (Does Not Pass)
+     * @returns "AAA", "AA", "AA Large", or "Fail"
      */
-    export function score(ratio: number): string;
+    export function score(ratio: number): "AAA" | "AA" | "AA Large" | "Fail";
 }

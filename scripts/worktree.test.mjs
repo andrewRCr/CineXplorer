@@ -501,8 +501,8 @@ test("browse waits for the stack then migrates and seeds in order", (t) => {
     assert.doesNotMatch(result.stdout + result.stderr, /hidden-marker/);
     assert.deepEqual(f.calls().filter((call) => !call.args.includes("config")), [
         { command: "docker", args: [...BROWSER, "up", "-d", "--wait"], cwd: path },
-        { command: "docker", args: [...BROWSER, "exec", "-T", "backend", "python", "manage.py", "migrate", "--noinput"], cwd: path },
-        { command: "docker", args: [...BROWSER, "exec", "-T", "backend", "python", "manage.py", "seed_dev_data"], cwd: path },
+        { command: "docker", args: [...BROWSER, "exec", "-T", "-e", "DJANGO_CONSOLE_LOG_LEVEL=INFO", "backend", "python", "manage.py", "migrate", "--noinput"], cwd: path },
+        { command: "docker", args: [...BROWSER, "exec", "-T", "-e", "DJANGO_CONSOLE_LOG_LEVEL=INFO", "backend", "python", "manage.py", "seed_dev_data"], cwd: path },
     ]);
     assert.match(result.stdout, /https:\/\/localhost:8445/);
     assert.match(result.stdout, /dev.*cinexplorer-dev/);

@@ -1,3 +1,4 @@
+import type { components } from "@/types/api";
 import { type MovieListItem, type MovieDetail } from "@/types/movie";
 
 /**
@@ -91,3 +92,17 @@ export const mockGenres = [
     { id: 99, name: "Documentary" },
     { id: 18, name: "Drama" },
 ];
+
+/** Complete user state returned by a movie save or read. */
+export const createMockUserMovieData = (
+    overrides: Partial<components["schemas"]["UserMovieDataSchema"]> = {},
+): components["schemas"]["UserMovieDataSchema"] => ({
+    tmdb_id: 1,
+    user_watched: false,
+    user_on_watchlist: false,
+    user_liked: false,
+    user_rating: null,
+    user_review: null,
+    watched_at: null,
+    ...overrides,
+});

@@ -1,21 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import {
     getUserMovieDataByTmdbId,
-    updateUserMovieData,
+    saveUserMovieData,
 } from "@/services/userMovieDataService";
+import { getErrorStatus } from "@/utilities/axiosErrorUtils";
 import logger from "@/services/logger";
 import type { components } from "@/types/api";
 
 // Use backend schema types directly (snake_case convention)
-export type UserMovieData = components["schemas"]["UserMovieDataDetailSchema"];
-type UserMovieDataUpdate = components["schemas"]["UserMovieDataUpdateSchema"];
+export type UserMovieData = components["schemas"]["UserMovieDataSchema"];
+type UserMovieDataUpdate = components["schemas"]["UserMovieDataPatchSchema"];
 
 /** Runtime type guard for UserMovieData - validates required fields from API response */
 function isUserMovieData(obj: unknown): obj is UserMovieData {
     if (typeof obj !== "object" || obj === null) return false;
     const data = obj as Record<string, unknown>;
     return (
-        typeof data.id === "number" &&
         typeof data.tmdb_id === "number" &&
         typeof data.user_on_watchlist === "boolean" &&
         typeof data.user_watched === "boolean" &&
@@ -97,9 +97,11 @@ export function useUserMovieData(tmdbId: string): {
                     tmdbId,
                     data: null,
                     error:
-                        err instanceof Error
-                            ? err.message
-                            : "Failed to fetch user movie data",
+                        getErrorStatus(err) === 404
+                            ? null
+                            : err instanceof Error
+                              ? err.message
+                              : "Failed to fetch user movie data",
                     loading: false,
                 });
             });
@@ -111,13 +113,13 @@ export function useUserMovieData(tmdbId: string): {
 
     const update = async (changes: Partial<UserMovieDataUpdate>) => {
         const scope = activeRequest.current;
-        if (!data || !data.id || !scope?.active) {
-            logger.warn("Cannot update: no user movie data loaded");
+        if (id === null || !scope?.active) {
+            logger.warn("Cannot save: no active movie");
             return;
         }
         setState((previous) => ({ ...previous, loading: true }));
         try {
-            const response = await updateUserMovieData(data.id, changes);
+            const response = await saveUserMovieData(id, changes);
             if (!scope.active) return;
             if (isUserMovieData(response.data)) {
                 setState({

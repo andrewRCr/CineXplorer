@@ -372,56 +372,36 @@ _Mode:_ `slice` — closes on the watchlist toggle, the detail page and the watc
 _Exit criterion:_ on the browsable stack, a signed-in user adds a never-touched movie to the watchlist from its detail
 page, sees it on the watchlist page, and takes it off again from its card.
 
-- [ ] **5.1 The frontend saves and reads through the new routes — D5, D6, D10**
+- [x] **5.1 The frontend saves and reads through the new routes — D5, D6, D10**
 
     **Goal:** The watchlist toggle, the detail page and the watchlist page work against the new routes, and the
     frontend type-checks against the regenerated types.
 
-    **Note:** One implementation: the regenerated types drop the old schemas every call site uses, so 5.1.d lands them all.
-
-    - [ ] **5.1.a Write the watchlist toggle's tests**
-        - `useMovieActions.test.ts` and `MovieCard.test.tsx`, through MSW: one click sends one
-          `PATCH /user-movie-data/{tmdb_id}` whose body carries the state the card shows it moving to; a second click on
-          a card first drawn with no user data sends `false`; a failed save, a 429 included, shows today's failure toast
-        - `useMovieActions.test.ts` mocks `@/services/userMovieDataService` with `vi.mock` today; it moves onto MSW
-        - Expect tests to FAIL initially
-
-    - [ ] **5.1.b Write the detail page's tests in `useUserMovieData.test.ts`**
-        - GET with the TMDB ID in the path; a 404 gives no record and no error; an update with no record saves through
-          the PATCH and takes the returned record, so a movie never touched before can be added to the watchlist
-        - Expect tests to FAIL initially
-
-    - [ ] **5.1.c Write the watchlist page's test in `Watchlist.test.tsx`**
-        - The request carries `watchlist=true` and `page_size=100`
-        - Expect the test to FAIL initially
-
-    - [ ] **5.1.d Regenerate the types and adapt the services and call sites**
-        - `npm run generate-types --prefix frontend` with this worktree's stack up; `frontend/openapi.json` and
-          `frontend/src/types/api.ts` change together
-        - `userMovieDataService.ts`: the read by TMDB ID takes the ID in the path; create and update-by-ID become one
-          PATCH by TMDB ID; `deleteUserMovieData` goes; the types are `UserMovieDataSchema` and
-          `UserMovieDataPatchSchema`
-        - `userMovieService.ts`: the Library query gains `page_size`, `page` takes effect, and the docstrings stop
-          promising TMDB enrichment
-        - `toggleMovieWatchlist` sends the one PATCH and loses its create-then-retry path, and the header of
-          `movieInteractionService.ts` stops describing the POST create, the PATCH by record ID and the 400 on a
-          duplicate; `useMovieActions`' `toggleWatchlist` takes the value as an argument; `MovieCard` passes it from its
-          displayed state
-        - `useUserMovieData.ts` reads and saves through the new routes, and its type guard stops requiring `id`;
-          `Watchlist.tsx` keeps its text list
-        - `frontend/tests/mocks/handlers/user-movies.ts`, whose items give `user_movie_data` three flags, takes the full
-          schema
-        - Tests should now PASS, and type-check with them; the smoke specs that render the changed pages
-          (`browse.spec.ts` and `back-to-results.spec.ts` for `MovieCard`, `movie-detail.spec.ts` for the detail page)
-          run against the browsable stack
-
-    - [ ] **5.1.e Search for what's left**
-        - Success Criterion 3's search over the whole repository; anything it still finds outside the excluded records
-          changes here
-        - Its terms are symbol names, so also search for `user-movie-data` and judge each hit that names a route in
-          prose: a removed route, or one addressed by a record's database ID, changes here
-        - `frontend/src/services/__tests__/httpService.test.ts` uses `/user-movie-data/movies` and a made-up
-          `/movies/550` path as sample routes for the generic service; judge them against the criterion too
+    - [x] **5.1.a Test watchlist saves through MSW**
+        - Replace internal service mocks with real network-backed services. Assert one PATCH with the requested
+          state, a second click sending false despite an initially empty prop, pending state, retry recovery,
+          failure toasts and rollback for 500 and 429. The existing card toggle gains an accessible name and state.
+        - Restoring the old save services produced three body/method failures; narrow feedback/loading mutations
+          produced five behavioral failures. Restored implementation passes.
+    - [x] **5.1.b Test detail reads and first saves**
+        - Test the TMDB path read, 404 as no record/no error, and a first PATCH taking its complete returned record.
+          The updated transition test failed on the old response guard; the 404 case failed on old error handling.
+          Restoring the loaded-record prerequisite separately proved the first-save failure.
+    - [x] **5.1.c Test the watchlist request bounds**
+        - The request test failed without page_size and passes with watchlist=true and page_size=100.
+    - [x] **5.1.d Adapt callers and regenerate the API contract**
+        - Export this worktree's actual OpenAPI and regenerate TypeScript together. Replace create/retry and
+          record-ID saves with one PATCH by TMDB ID; pass the card's displayed destination state explicitly.
+          The detail hook accepts untouched movies and the complete shared schema; fixtures carry all seven fields.
+        - Library queries accept page_size and retain real cancellation; the watchlist keeps its text list.
+          The PATCH input alias permits omission because the generator treats defaulted flags as required.
+        - All 51 focused tests and all 999 related frontend tests pass (62 files), with ESLint, formatting and
+          TypeScript. The three required Chromium smokes pass: browse, Back to Results and movie detail.
+          This is task validation; full-work verification and CI remain ahead.
+    - [x] **5.1.e Search live symbols and route prose**
+        - The whole-repository search finds none of the removed symbols outside ADRs and the excluded planning
+          records. Reviewed remaining user-movie-data route references; generic HTTP tests use an independent sample
+          resource rather than invented user-movie routes. Current GET/PATCH/DELETE paths use TMDB IDs.
 
 - [ ] **5.2 Check the frontend end to end**
 

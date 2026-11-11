@@ -2,10 +2,10 @@
  * Watchlist Page Component
  *
  * Displays the user's watchlist movies using the userMovieService
- * (movie-first pattern with enrichment).
+ * from stored movie cards.
  *
  * Architecture:
- * - Uses userMovieService.getUserMovies({ watchlist: true })
+ * - Uses userMovieService.getUserMovies({ watchlist: true, page_size: 100 })
  * - Displays simple text list of movie titles
  * - Shows empty state when no movies
  * - Shows loading state while fetching
@@ -13,7 +13,7 @@
 
 import { useState, useEffect } from "react";
 import { Box, Text, VStack } from "@chakra-ui/react";
-import { getUserMovies } from "../../services/userMovieService";
+import { getUserMovies } from "@/services/userMovieService";
 import type { MovieListItem } from "@/types/movie";
 
 const Watchlist = () => {
@@ -28,7 +28,7 @@ const Watchlist = () => {
         setIsLoading(true);
         setError(null);
 
-        const { request } = getUserMovies({ watchlist: true });
+        const { request } = getUserMovies({ watchlist: true, page_size: 100 });
         const response = await request;
 
         setMovies(response.data.results || []);

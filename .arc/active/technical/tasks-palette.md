@@ -263,24 +263,18 @@ _Exit criterion:_ the search Success Criterion 9 names finds nothing in producti
           1,378 passing evaluations, 272 scoped skips, no failures. Sign-up and sign-in smoke specs passed without
           the `/login` contrast entry.
 
-- [ ] **5.2 The movie card and the detail page draw no recipe-default color — R17**
+- [x] **5.2 The movie card and the detail page draw no recipe-default color — R17**
 
     **Goal:** The card's text, the detail page's dividers and its tags take theme roles instead of Chakra's grays.
 
-    - [ ] **5.2.a Write failing tests**
-        - `frontend/src/components/movie/__tests__/MovieCard.test.tsx`: the card's title text resolves to
-          `foreground`
-        - `frontend/src/pages/movie/__tests__/MovieDetail.test.tsx`, with the layer-free system: each of the four
-          separators has its border in `border-subtle-01`; the genre and company tags have no box shadow
-        - Expect tests to FAIL initially
-
-    - [ ] **5.2.b Fix them**
-        - `frontend/src/components/movie/MovieCard.tsx`: `Card.Root` sets `color="foreground"`
-        - `frontend/src/pages/movie/MovieDetail.tsx`: the four `Separator`s take `borderColor="border-subtle-01"`, as
-          the sub-navigation's and sidebar's do; the genre and company `Tag.Root`s draw no inset ring (the tag recipe
-          draws one in `colorPalette.muted`)
-        - Tests should now PASS
-        - **Check:** `browse.spec.ts` and `movie-detail.spec.ts`
+    - [x] **5.2.a Pin movie surface colors**
+        - Card title foreground, all four detail separator borders, and genre/company tag shadows failed on the
+          prior styles. New detail style cases live in `MovieDetail.styles.test.tsx`, using MSW and the real fetch
+          path; keeping them separate avoids inheriting the original suite's hoisted hook/service mocks.
+    - [x] **5.2.b Apply theme roles**
+        - Card root text uses `foreground`; detail separators use `border-subtle-01`; genre/company tags have no
+          inset shadow. All 39 card/style cases and 64 related cases passed, plus type-check and touched-file
+          lint/format. Browse/detail smoke specs passed (two specs).
 
 - [ ] **5.3 Production components name only roles the themes define — R17**
 

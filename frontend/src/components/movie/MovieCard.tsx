@@ -200,6 +200,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
       onMouseLeave={() => setIsCardHovered(false)}
     >
       <Card.Root
+        color="foreground"
         bg="layer-01"
         height="100%"
         display="flex"

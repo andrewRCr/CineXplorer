@@ -616,8 +616,16 @@ page, sees it on the watchlist page, and takes it off again from its card.
 
 ### Proven after merge
 
-- [ ] 1. **The refresh runs on staging.** With at least one movie stored on staging before the merge deploys (saved
+- [x] 1. **The refresh runs on staging.** With at least one movie stored on staging before the merge deploys (saved
   through the app with the staging test account if none is), a nightly maintenance run after the deploy succeeds:
   the heartbeat reports success, and the journal shows the refresh step exiting zero with a refreshed count of at
   least one and no stale ID. Afterwards `GET /user-movie-data/movies` for that account returns the movie stored before
   the deploy with its `vote_average` and `vote_count` filled. (D8, D9)
+
+  _Evidence (2026-11-11):_ After merge `1cd9f8a0` deployed in CI run `43111144670`, manually started the
+  documented nightly maintenance service at 4:36 pm CT. Invocation `c5eac3be609f4500a3926750dbe10ec6`
+  reports `Refreshed: 6; failed: 0`, no stale IDs, `Result=success` and `ExecMainStatus=0` after the
+  success-heartbeat step. The real HTTPS Library GET for the active account owning saved movie 10234 returns
+  HTTP 200 with `vote_average=7.312`, `vote_count=2224` and watchlist state retained. Authentication used a
+  nonpersisted 90-second access token. The timer remains active; this proves the service outcome rather than
+  timer scheduling, which was already verified at launch-readiness.

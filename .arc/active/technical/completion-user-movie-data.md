@@ -1,7 +1,8 @@
 # Completion: User-Movie Data Layer
 
 **Prepared:** 2026-11-11
-**Status:** Draft — post-merge staging evidence remains open
+**Status:** Complete
+**Completed:** 2026-11-11
 **Branch:** `technical/user-movie-data`
 **Category:** Technical
 **Context:** Establish the stored data and save contract used by the planned movie controls and Library.
@@ -52,12 +53,12 @@ PR #173 at `0c3be00a` passes every required CI job, including `ci-ok`, in run `4
 The API type-drift job proves Implemented criterion 12. CI’s locked Django stubs exposed eight obsolete constraint
 suppressions; their removal passes the pinned checker and leaves the production AST unchanged.
 
-## Remaining Evidence
-
-- Before the merge deploys, staging must contain at least one saved movie, added through the app with the staging
-  test account if necessary. After deployment, its nightly refresh must report success, refresh at least one row
-  without stale IDs, and leave the stored movie's vote fields populated in that account's Library response.
-- The completion date and final status will be recorded when the required evidence is available.
+The merged release `1cd9f8a0` passes main CI, automatic staging deployment and live staging smokes in run
+`43111144670`. The documented maintenance service was then started manually at 4:36 pm CT. Invocation
+`c5eac3be609f4500a3926750dbe10ec6` refreshes six movies with zero failures and no stale IDs; the service
+reports success and exit zero after its success heartbeat. A real HTTPS Library GET for the account that saved
+Funny Games (10234) before deployment returns its vote average (7.312), vote count (2,224) and retained watchlist
+state. No persistent login/session or token record was created for this verification. The normal timer remains active.
 
 ## Related Documentation
 

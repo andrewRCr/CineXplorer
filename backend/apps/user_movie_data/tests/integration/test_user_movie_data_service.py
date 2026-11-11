@@ -147,14 +147,14 @@ def test_update_with_no_changes_succeeds(service: UserMovieDataService, user: Us
 
 def test_delete_succeeds(service: UserMovieDataService, user: User) -> None:
     record = create_user_movie_data(user)
-    service.delete(user, record.pk)
+    service.delete_by_record_id(user, record.pk)
     assert not UserMovieData.objects.filter(pk=record.pk).exists()
     assert Movie.objects.filter(pk=record.movie.tmdb_id).exists()
 
 
 def test_delete_raises_when_not_found(service: UserMovieDataService, user: User) -> None:
     with pytest.raises(NotFoundError) as error:
-        service.delete(user, 999)
+        service.delete_by_record_id(user, 999)
     assert error.value.status_code == 404
 
 
@@ -242,7 +242,7 @@ def test_user_cannot_access_other_users_data(
     operations = {
         "get_by_tmdb_id": lambda: service.get_by_tmdb_id(user, record.movie.tmdb_id),
         "update": lambda: service.update(user, record.pk, user_rating=9),
-        "delete": lambda: service.delete(user, record.pk),
+        "delete": lambda: service.delete_by_record_id(user, record.pk),
         "get_by_id": lambda: service.get_by_id(user, record.pk),
     }
     with pytest.raises(NotFoundError) as error:
@@ -261,7 +261,7 @@ def test_all_operations_scope_to_user(service: UserMovieDataService, user: User)
     assert service.get_all_user_movies(user).results == []
     own_record = service.create(user, movie.pk, user_rating=9)
     service.update(user, own_record.pk, user_liked=True)
-    service.delete(user, own_record.pk)
+    service.delete_by_record_id(user, own_record.pk)
     other_record.refresh_from_db()
     assert other_record.user_rating is None
     assert other_record.user_on_watchlist is True

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 
 from apps.core.exceptions import InvalidInputError, NotFoundError
 from apps.core.models import Movie
@@ -12,6 +13,10 @@ from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.movie.schemas import MovieListItemSchema, MovieListResponseSchema
 from apps.movie.services.movie_service import MovieService
 from apps.movie.services.pipelines.batch import fetch_movies_batch
+from apps.movie.services.tmdb_api_boundary.response_factories import (
+    handle_tmdb_api_error,
+    movie_card_fields,
+)
 from apps.user_movie_data.models import UserMovieData, UserMovieDataQuerySet
 from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 
@@ -21,6 +26,51 @@ class UserMovieDataService:
 
     def __init__(self, tmdb_client: TMDBApiClient | None = None) -> None:
         self._tmdb_client = tmdb_client if tmdb_client is not None else TMDBApiClient()
+
+    def save(
+        self, user: AbstractBaseUser, tmdb_id: int, fields: dict[str, object]
+    ) -> tuple[UserMovieData, bool]:
+        """Apply only supplied fields, serializing concurrent saves of one user's movie."""
+        allowed = {
+            "user_watched",
+            "user_on_watchlist",
+            "user_liked",
+            "user_rating",
+            "user_review",
+            "watched_at",
+        }
+        changes = {key: value for key, value in fields.items() if key in allowed}
+        if not changes:
+            raise InvalidInputError("Provide at least one movie data field")
+        if changes.get("user_watched") is False and changes.get("watched_at") is not None:
+            raise InvalidInputError("A watched date requires a watched movie")
+
+        movie = Movie.objects.filter(pk=tmdb_id).first()
+        if movie is None:
+            response = self._tmdb_client.get_movie_details(tmdb_id)
+            if not response.is_success():
+                handle_tmdb_api_error(response, "save_movie", lookup=True, tmdb_id=tmdb_id)
+            card = movie_card_fields(response.get_json_data() or {})
+            movie, _ = Movie.objects.get_or_create(
+                tmdb_id=tmdb_id, defaults={**card, "refreshed_at": timezone.now()}
+            )
+
+        with transaction.atomic():
+            record, created = UserMovieData.objects.select_for_update().get_or_create(
+                user=user, movie=movie
+            )
+            for field, value in changes.items():
+                setattr(record, field, value)
+            if changes.get("user_watched") is False:
+                record.watched_at = None
+            if not record.user_watched and record.watched_at is not None:
+                raise InvalidInputError("A watched date requires a watched movie")
+            record.save()
+        return record, created
+
+    def delete(self, user: AbstractBaseUser, tmdb_id: int) -> None:
+        """Delete the requesting user's state while keeping its movie card."""
+        self.get_by_tmdb_id(user, tmdb_id).delete()
 
     def create(
         self,
@@ -105,7 +155,7 @@ class UserMovieDataService:
         record.save()
         return record
 
-    def delete(self, user: AbstractBaseUser, record_id: int) -> None:
+    def delete_by_record_id(self, user: AbstractBaseUser, record_id: int) -> None:
         self.get_by_id(user, record_id).delete()
 
     def _filtered_records(

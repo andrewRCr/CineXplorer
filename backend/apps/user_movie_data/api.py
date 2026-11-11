@@ -195,6 +195,6 @@ def delete_user_movie_data(request: HttpRequest, id: int) -> Status[None]:
     user = get_current_user(request)
 
     # Service handles authorization and raises HttpError(404) if not found
-    _service.delete(user=user, record_id=id)
+    _service.delete_by_record_id(user=user, record_id=id)
 
     return Status(204, None)

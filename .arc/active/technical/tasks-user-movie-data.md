@@ -149,48 +149,27 @@ clock minute answers 429.
           to null and deriving genre IDs from genres. Invalid input raises a fixed-message 502 domain error.
         - All 465 movie-app tests, Ruff, formatting and strict Pyright pass.
 
-- [ ] **2.2 The service saves, reads and deletes a user's record by TMDB ID — D2, D3, D6**
+- [x] **2.2 The service saves, reads and deletes a user's record by TMDB ID — D2, D3, D6**
 
     **Goal:** One service call sets or clears any field from any prior state, the first save included, and two
     concurrent first saves of one movie both succeed.
 
-    - [ ] **2.2.a Write the save's service tests**
-        - The service takes only the fields the request carried (the route passes the body's set fields), so a field
-          left out is unchanged and an explicit `null` clears `user_rating`, `user_review` or `watched_at`
-        - A first save creates the record with defaults (flags false, the rest `null`) and reports that it created it
-        - A first save of an unstored movie makes one `get_movie_details` request and creates its `Movie` row with the
-          mapped card fields and `refreshed_at` set; a save of a stored movie makes no TMDB request
-        - When the movie isn't stored, TMDB's 404 is `NotFoundError`, its 400 or 422 `InvalidInputError`, its 5xx,
-          429 and timeout `UpstreamError` (502, 503, 504), and data failing validation `UpstreamError` (502); each
-          writes no `Movie` row and no record
-        - The checks the body alone decides come first, before any TMDB request: no known field, or a `watched_at`
-          date sent with `user_watched: false`, is `InvalidInputError`
-        - A result that is unwatched but carries a date is `InvalidInputError` and writes nothing; marking a movie
-          unwatched clears its date; `watched_at: null` with `user_watched: false` is accepted
-        - A save that leaves no flag, rating or review keeps the record
-        - Read and delete by TMDB ID: `NotFoundError` with no record, and no TMDB request; delete keeps the `Movie` row
-        - No operation reads or writes another user's record
-        - Expect tests to FAIL initially
-
-    - [ ] **2.2.b Write the concurrency test**
-        - Two first saves of one unstored movie on two threads with real transactions
-          (`django_db(transaction=True)`) both succeed, leaving one `Movie` row and one record holding both saves'
-          fields
-        - Force the overlap: the injected stub's `get_movie_details` waits on a `threading.Barrier(2)`, so both saves
-          pass the lookup before either inserts
-        - A failure from the missing method doesn't count as its red: once 2.2.c lands, see it fail against a
-          reconstructed read-then-create save (look up, then `create`) and pass once restored
-
-    - [ ] **2.2.c Implement the save, the read and the delete**
-        - The order of a save as D6 sets it: the body checks, then the `Movie` row outside any transaction (the details
-          fetched through the injected client and mapped by 2.1, the row created with `get_or_create`), then in one
-          `transaction.atomic` block `select_for_update().get_or_create(...)`, the fields, the watched rule and the
-          save
-        - `create`, `update` and `get_by_id` stay until 2.3.d removes the routes that call them; so does the record-ID
-          delete, renamed `delete_by_record_id` (its route and 1.1's tests follow) so the delete by TMDB ID takes
-          `delete`
-        - Logs name the user's ID and the TMDB ID, never review text
-        - Tests should now PASS
+    - [x] **2.2.a Write the save's service tests**
+        - Twenty-three cases exercise defaults/card writes, omission/null semantics, watched rules and rollback,
+          early body checks, each upstream failure, retained empty state, ownership and TMDB-ID read/delete.
+        - Cases fail against create-only behavior; existing upstream/missing-record cases were seen failing under
+          temporary incorrect error mapping. A duplicate error could initially satisfy a watched-rule assertion;
+          checking its message exposed that false positive before implementation.
+    - [x] **2.2.b Write the concurrency test**
+        - Two real transactions overlap at a barrier in the injected TMDB client. Both saves succeed, leaving one
+          movie and one user record with both fields. Reconstructing lookup-then-create after implementation produces
+          a duplicate movie primary-key failure; restoring `get_or_create` passes.
+    - [x] **2.2.c Implement the save, the read and the delete**
+        - Validate body-only conditions first, fetch/create missing Movie cards outside the user-state transaction,
+          then lock/get-or-create the user's record, apply supplied fields and enforce the watched rule atomically.
+          Stored movies make no TMDB request. Deletes use TMDB IDs and keep the Movie row.
+        - Legacy record-ID deletion is temporarily named `delete_by_record_id`; its existing route/tests follow it.
+          All 120 user-data tests, Ruff, formatting and strict Pyright pass after source restoration.
 
 - [ ] **2.3 The routes address records by TMDB ID and declare their responses — D3, D5, D6**
 

@@ -7,6 +7,9 @@ It allows users to browse movie information, get personalized recommendations, m
 rate and review movies, and keep a log of movies they have watched. The application leverages The Movie Database
 (TMDB) for its movie data.
 
+**Product principle:** CineXplorer is not a TMDB wrapper. TMDB is the data, not the design: the app chooses, frames and
+orders what it shows, so it feels warm and curated, like a cinema's program, never like flipping through records.
+
 ## 2. Core Features
 
 ### User Authentication & Profiles
@@ -18,7 +21,7 @@ rate and review movies, and keep a log of movies they have watched. The applicat
 
 ### Movie Discovery & Browsing
 
-- Browse movies by category (Popular, Top Rated, Now Playing, Upcoming)
+- Browse one catalog of movies by release window (All films, In theaters, Coming soon), with filters and sorting
 - Advanced search functionality with multiple filters
 - Movie detail pages with comprehensive information
 - Actor and key crew profile pages

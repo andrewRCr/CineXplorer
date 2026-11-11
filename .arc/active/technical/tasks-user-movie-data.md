@@ -136,23 +136,18 @@ _Exit criterion:_ on the worktree's browsable stack, a signed-in user's first PA
 stores its card fields, a second answers 200, GET returns the record, DELETE answers 204, and the 31st save within one
 clock minute answers 429.
 
-- [ ] **2.1 One mapping turns TMDB's details into a movie's card fields — D3, D8**
+- [x] **2.1 One mapping turns TMDB's details into a movie's card fields — D3, D8**
 
     **Goal:** Every writer of card data (a first save, the detail view, the nightly refresh) gets the same `Movie` field
     values from one TMDB details response, with TMDB's unknowns stored as `null`.
 
-    - [ ] **2.1.a Write the mapping's tests**
-        - It validates TMDB's details response as `TMDBMovieDetail` and returns the `Movie` card fields: an empty
-          release date, a runtime of 0 or `null` and an empty or `null` overview become `null`; `genre_ids` come from
-          `genres`
-        - A response that fails validation raises `UpstreamError` (502)
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.b Implement the mapping**
-        - It sits beside the TMDB response factories in
-          `apps/movie/services/tmdb_api_boundary/response_factories.py`; `create_movie_detail_from_tmdb` stays the
-          detail page's
-        - Tests should now PASS
+    - [x] **2.1.a Write the mapping's tests**
+        - Six cases cover card values, genre derivation, empty/null unknowns and malformed details/date values.
+          Every case failed against an unprocessed payload before validation and normalization were added.
+    - [x] **2.1.b Implement the mapping**
+        - `movie_card_fields` validates details once and returns stored fields, mapping unknown dates/runtime/overview
+          to null and deriving genre IDs from genres. Invalid input raises a fixed-message 502 domain error.
+        - All 465 movie-app tests, Ruff, formatting and strict Pyright pass.
 
 - [ ] **2.2 The service saves, reads and deletes a user's record by TMDB ID — D2, D3, D6**
 

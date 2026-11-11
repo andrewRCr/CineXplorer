@@ -31,7 +31,10 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Mapping
+from datetime import date
 from typing import NoReturn
+
+from pydantic import ValidationError
 
 from apps.core.exceptions import UpstreamError
 from apps.core.services.api_response import ApiResponse
@@ -561,3 +564,22 @@ def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[Gen
             extra={"operation": "create_genre_list_from_tmdb", "error_type": type(e).__name__},
         )
         raise
+
+
+def movie_card_fields(data: Mapping[str, object]) -> dict[str, object]:
+    """Map a TMDB details payload to stored card fields."""
+    try:
+        detail = TMDBMovieDetail.model_validate(data)
+        release_date = date.fromisoformat(detail.release_date) if detail.release_date else None
+    except (ValidationError, ValueError) as error:
+        raise UpstreamError("Invalid movie data from external API") from error
+    return {
+        "title": detail.title,
+        "poster_path": detail.poster_path,
+        "release_date": release_date,
+        "vote_average": detail.vote_average,
+        "vote_count": detail.vote_count,
+        "runtime": detail.runtime or None,
+        "overview": detail.overview or None,
+        "genre_ids": [genre.id for genre in detail.genres],
+    }

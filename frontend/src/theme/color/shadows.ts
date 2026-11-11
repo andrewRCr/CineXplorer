@@ -6,6 +6,7 @@
  *
  * **Design System Strategies:**
  * - **GitHub Primer:** Heavy shadow usage for elevation (official shadow tokens)
+ * - **Marquee:** Carbon's conservative shadows
  * - **IBM Carbon:** Minimal shadow usage, prefers layer color changes (light shadows optional)
  * - **GitLab Pajamas:** Shadow-based elevation (official gl-shadow utilities)
  *

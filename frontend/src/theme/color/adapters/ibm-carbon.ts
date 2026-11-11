@@ -3,7 +3,7 @@
  *
  * Maps official IBM Carbon design system tokens to CineXplorer's unified
  * theme vocabulary. Carbon provides the most complete token vocabulary of the
- * three systems, requiring minimal derivation.
+ * adapted design systems, requiring minimal derivation.
  *
  * **Design System Source:**
  * - Package: @carbon/themes v11.0.0
@@ -20,8 +20,8 @@
  * this approach, prioritizing component simplicity and cross-theme consistency.
  *
  * **Key Advantage:**
- * Carbon's rich official vocabulary requires the LEAST derivation of all three
- * themes. Both dark and light modes use 100% official layer tokens (ADR-008).
+ * Carbon's rich official vocabulary requires the LEAST derivation of the other adapted
+ * design systems. Both dark and light modes use 100% official layer tokens (ADR-008).
  * Light mode: Adopts Carbon's official alternating pattern (white/gray/white/gray).
  * Dark mode: Uses Carbon's official progressive pattern (#161616 → #262626 → #393939 → #525252).
  *

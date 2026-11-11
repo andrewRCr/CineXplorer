@@ -61,7 +61,7 @@ export const githubTheme: Theme = {
  * - Accessibility-first design
  *
  * **Source:** https://carbondesignsystem.com
- * **Default Theme:** Carbon's layer philosophy guides CineXplorer's unified adapter architecture
+ * **Architecture:** Carbon's layer philosophy guides CineXplorer's unified adapter architecture
  */
 export const ibmCarbonTheme: Theme = {
     name: "ibm-carbon",

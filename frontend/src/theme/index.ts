@@ -19,6 +19,7 @@ import { createSystem, defaultConfig, defineConfig } from "@chakra-ui/react";
 
 // Import all theme definitions
 import {
+    marqueeTheme,
     githubTheme,
     ibmCarbonTheme,
     gitlabPajamasTheme,
@@ -48,19 +49,20 @@ import {
  * Theme Registry
  *
  * Production themes optimized for accessibility and visual consistency.
- * IBM Carbon is the default - its layer-based elevation philosophy guides
+ * Marquee is the default. Carbon's layer-based elevation philosophy guides
  * CineXplorer's unified theme system architecture.
  *
  * Material Design 3 added to validate unified adapter pattern across multiple design systems.
  */
 export const themeRegistry = {
+    marquee: marqueeTheme,
     "ibm-carbon": ibmCarbonTheme,
     "github-primer": githubTheme,
     "gitlab-pajamas": gitlabPajamasTheme,
     "material-design-3": materialDesign3Theme,
 } as const;
 
-export const defaultThemeName = "ibm-carbon";
+export const defaultThemeName = "marquee";
 export type ThemeName = keyof typeof themeRegistry;
 
 export function getTheme(name: string): Theme {
@@ -236,6 +238,7 @@ const baseConfig = defineConfig({
  * Shadows are registered as a separate token category (not colors) following Chakra UI v3
  * conventions. This enables proper token lookup for boxShadow properties (e.g., boxShadow="shadow-sm").
  * Each design system provides its own shadow values:
+ * - Marquee: Carbon's conservative shadows
  * - IBM Carbon: Minimal shadows (prefers layer color changes)
  * - GitHub Primer: Heavy shadows (primary elevation indicator)
  * - GitLab Pajamas: Moderate shadows (balanced approach)
@@ -264,7 +267,7 @@ export function createThemeSystem(theme: Theme) {
 }
 
 /**
- * Default system using the default theme (IBM Carbon).
+ * Default system using the default theme (Marquee).
  */
 export const defaultSystem = createThemeSystem(themeRegistry[defaultThemeName]);
 

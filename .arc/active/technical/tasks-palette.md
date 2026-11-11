@@ -93,81 +93,37 @@ _Exit criterion:_ with nothing stored the app opens in Marquee and the selector 
 `npm run verify-contrast` reports five themes × two modes and passes every R5 pair, and the frontend unit suite passes
 under Marquee's `defaultSystem`.
 
-- [ ] **2.1 Pin the default theme and the selector's labels with failing tests — R6, R8**
+- [x] **2.1 Pin the default theme and the selector's labels with failing tests — R6, R8**
 
     **Goal:** Marquee as the default, a stored choice kept, and the selector's displayed labels are pinned by failing
     tests.
 
-    - [ ] **2.1.a Write `frontend/src/hooks/__tests__/useThemeSelect.test.ts`**
-        - Test: with nothing stored, `getInitialTheme()` returns `marquee`
-        - Test: with `cinexplorer-theme` set to `ibm-carbon` it returns `ibm-carbon`; set to an unknown name, it
-          returns `marquee`
-        - Test: `marquee` is the first key of `themeRegistry`
-        - Clear `localStorage` between tests (jsdom's storage, installed by `tests/browser-storage.ts`)
-        - Expect tests to FAIL initially, except the stored-`ibm-carbon` case, which today's code already satisfies;
-          its reconstruct-and-revert evidence comes in 2.2.a, once the default is no longer `ibm-carbon`
+    - [x] **2.1.a Pin initial selection**
+        - Empty and unknown storage select Marquee, stored Carbon is kept, and Marquee is first. Three assertions
+          failed initially; the stored-Carbon behavior already passed and was reconstructed in 2.2.a.
+    - [x] **2.1.b Pin displayed labels**
+        - Real provider/menu tests cover the Marquee trigger and all five display labels in registry order. Both
+          failed before the registry/label changes. All six selection tests now pass.
 
-    - [ ] **2.1.b Write `frontend/src/components/common/__tests__/ThemeSelector.test.tsx`**
-        - Render inside `ThemeSelectProvider` (`frontend/src/components/core/chakra/theme-provider.tsx`) with nothing
-          stored
-        - Test: the trigger reads "Marquee"
-        - Test: the open menu lists the themes by label in registry order, "Marquee" first, then "IBM Carbon",
-          "GitHub Primer", "GitLab Pajamas", "Material Design 3"; no item shows a theme id
-        - Expect tests to FAIL initially
-
-- [ ] **2.2 Marquee is registered first and is the default — R6, R8**
+- [x] **2.2 Marquee is registered first and is the default — R6, R8**
 
     **Goal:** A visitor with no stored choice gets Marquee, a stored choice still wins, and every list of themes names
     Marquee.
 
-    - [ ] **2.2.a Registry and selector**
-        - `frontend/src/theme/index.ts`: `marquee: marqueeTheme` first in `themeRegistry`; `defaultThemeName =
-          "marquee"`; the registry comment and the `defaultSystem` comment name Marquee the default (Carbon's layer
-          philosophy still guides the adapter architecture)
-        - `frontend/src/theme/color/definitions.ts`: Carbon's docblock no longer calls it the default
-        - `frontend/src/components/common/ThemeSelector.tsx`: `THEME_OPTIONS` takes its displayed `label` from
-          `theme.label` (today it takes `theme.name`); drop the `description` field, which nothing reads; the fallback
-          label becomes "Marquee"
-        - `frontend/src/pages/dev/theme-debug/ThemeDebug.tsx`: `marquee` in `THEME_DISPLAY_NAMES` ("Marquee") and
-          `THEME_SHORT_NAMES` ("Marquee"), and first in the switcher list; the two `Record<ThemeName, …>` maps fail
-          type-checking without it once the registry has Marquee, so they change in this subtask
-        - Tests should now PASS. With `marquee` the default, show the stored-`ibm-carbon` case failing against a
-          narrow reconstruction (`getInitialTheme` ignoring storage) and passing once restored, and record that
-          (`testing-standards`)
-
-    - [ ] **2.2.b The other theme lists**
-        - `frontend/src/pages/dev/theme-debug/sections/SemanticColorsSection.tsx`: a brand label for `marquee` naming
-          its brass `primary`, so it no longer falls through to "Material Purple"
-        - Prose lists of the themes by display name add Marquee: the `frontend/src/theme/color/types.ts` header (the
-          design systems the adapter layer sits between), `SemanticColorsSection.tsx`'s comment on which themes have
-          brand colors, and the shadow lists in `createThemeSystem`'s doc comment (`frontend/src/theme/index.ts`) and
-          the `frontend/src/theme/color/shadows.ts` header (Marquee uses Carbon's shadows)
-        - The `frontend/src/theme/color/adapters/ibm-carbon.ts` header compares Carbon with "the three systems" and
-          "all three themes", a count from before Material and Marquee: compare it with the other adapted design
-          systems instead
-        - Search `frontend/src`, `frontend/scripts` and `frontend/tests` for other lists or maps of theme names, by id
-          and by display name (`material-design-3` and `Pajamas` find them), and add Marquee the same way.
-          `optional-tokens.test.ts` picks two themes with absent roles as cases, not a list of every theme, and stays
-          as it is; the per-role notes in `types.ts` ("GitLab Pajamas: …") document each adapted system's source
-          tokens and stay too
-
-    - [ ] **2.2.c The test renderers' description**
-        - `frontend/tests/README.md`: the shared renderers provide the application's default Marquee system
-
-    - [ ] **2.2.d Run wider**
-        - **Check:** the full frontend unit suite once (`npm test` from `frontend/`, under `nicecap`), since every
-          component test renders with `defaultSystem` through `tests/helpers/test-providers.tsx`
-        - **Check:** all five smoke specs against this worktree's browsable stack, since every page now renders in
-          Marquee. A new axe violation is fixed, not baselined; if its fix belongs to a later task's change, stop and
-          raise the order
-        - Find the violation the `/login` `color-contrast` baseline entry absorbs: remove the entry from
-          `frontend/e2e/axe-baseline.ts`, run `sign-up.spec.ts` once, and record each failing element. The entry's
-          recorded reason ("white text on blue") matches no text in the registration notice, whose only text is its
-          description in `foreground`. Then:
-            - No violation: leave the entry removed
-            - The registration notice (its Chakra fill, which task 5.1 replaces): restore the entry; 5.1.a removes it
-            - Anything else: restore the entry and stop; its fix is outside the planned tasks and goes to the Owner
-              before Phase 3
+    - [x] **2.2.a Registry and selector**
+        - Registered Marquee first and default; the selector uses display labels and drops unused descriptions.
+          Debug maps and switcher include Marquee. Ignoring storage temporarily made the stored-Carbon assertion
+          fail; restoring the code made all four initial-selection tests pass.
+    - [x] **2.2.b The other theme lists**
+        - Updated brand labels, palette/interface and shadow comments, and Carbon's stale count. Searched theme ids
+          and display names across source, scripts and tests; role-specific notes and optional-role cases stay.
+    - [x] **2.2.c The test renderers' description**
+        - The test README names the application's default Marquee system.
+    - [x] **2.2.d Run wider**
+        - All 66 frontend test files passed (2,556 tests; four workers under host CPU policy).
+        - Removed `/login`'s contrast baseline and ran registration alone: passed, with no violating element.
+          Kept the entry removed. All five smoke specs then passed against the worktree's browsable stack; the
+          full run reported no unmatched baseline entries. Touched-file ESLint, formatting and type-check passed.
 
 - [ ] **2.3 The page paints Marquee before the app loads — R7, R18**
 

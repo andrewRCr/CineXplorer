@@ -3,7 +3,8 @@
  *
  * Defines the UnifiedTheme interface that provides consistent cross-theme vocabulary
  * for CineXplorer's component layer. This adapter layer sits between official design
- * system tokens (GitHub Primer, IBM Carbon, GitLab Pajamas) and application components.
+ * system tokens (GitHub Primer, IBM Carbon, GitLab Pajamas, Material Design 3),
+ * CineXplorer's own Marquee palette, and application components.
  *
  * **ARCHITECTURAL DECISION (ADR-005):**
  * This interface uses CANONICAL token names only. Semantic aliases like "card",

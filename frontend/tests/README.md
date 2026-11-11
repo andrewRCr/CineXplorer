@@ -50,7 +50,7 @@ expect(await screen.findByText("Fight Club")).toBeInTheDocument();
 
 Both shared renderers provide:
 
-- The application's default IBM Carbon Chakra system, including its semantic
+- The application's default Marquee Chakra system, including its semantic
   tokens and recipes.
 - A fresh TanStack Query client for each render call, with query and mutation
   retries disabled. Its cache survives `rerender` and is separate from other

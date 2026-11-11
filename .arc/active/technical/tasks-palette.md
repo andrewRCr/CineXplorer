@@ -196,46 +196,29 @@ _Mode:_ `slice` — closes on dot chips and neutral certifications on the browse
 _Exit criterion:_ on the browse grid and a movie's detail page, in both modes under Marquee, scores show dot chips,
 certification badges are neutral, and a selected certification pill is brass with no other ring.
 
-- [ ] **4.1 Pin neutral certifications with failing tests — R15, R16**
+- [x] **4.1 Pin neutral certifications with failing tests — R15, R16**
 
     **Goal:** Neutral badges for every rating and the brass selected pill, with its ring and focus ring, are pinned by
     failing tests.
 
-    - [ ] **4.1.a Write `frontend/src/components/movie/__tests__/CertificationBadge.test.tsx`**
-        - Test: each of G, PG, PG-13, R, NC-17 and NR has a `badge` background and `on-badge` text, titled "Rated
-          {certification}"
-        - Test: a missing certification renders nothing
-        - Expect tests to FAIL initially for G, PG, PG-13, R and NC-17. NR and the missing certification already pass:
-          show each failing against a narrow reconstruction and passing once restored, and record that
+    - [x] **4.1.a Pin certification badges**
+        - Every rating's fill/text/title and missing-value omission are covered. Five colored ratings failed
+          initially; reconstructing NR's fill and missing-value behavior made those four previously passing cases
+          fail too. The full badge/filter reconstruction run failed 15 cases.
+    - [x] **4.1.b Pin selected and unselected pills**
+        - All six selected fills, labels, borders and absent inset rings, keyboard focus color, and all six
+          unselected styles are covered. Seven selected/focus cases failed initially; reconstructing unselected
+          fills made all six previously passing unselected cases fail. All 22 cases now pass.
 
-    - [ ] **4.1.b Write `frontend/src/components/movie/browse/__tests__/CertificationFilter.test.tsx`**
-        - Test: for every rating, a selected pill has a `tertiary` background, `on-tertiary` text, a `tertiary` border
-          and no box shadow
-        - Test: a selected pill focused from the keyboard (`userEvent.tab()`) has its outline in `ring`
-        - Test: an unselected pill has a transparent background (asserted directly), a `border-strong-01` border and
-          `on-muted` text
-        - Expect the selected-pill cases to FAIL initially. The unselected pill already passes: show it failing against
-          a narrow reconstruction and passing once restored, and record that
-
-- [ ] **4.2 Certifications render neutral, and a selected pill brass — R15, R16, R18**
+- [x] **4.2 Certifications render neutral, and a selected pill brass — R15, R16, R18**
 
     **Goal:** Color on the detail page marks scores only, and a selected filter pill reads as the app's selected
     control in every theme.
 
-    - `frontend/src/components/movie/utils/certificationUtils.ts`: remove `CERTIFICATION_VARIANT_MAP`,
-      `getCertificationVariant` and `CertificationVariant`; `Certification` and `CERTIFICATION_OPTIONS` stay; the
-      header comment no longer mentions color
-    - `frontend/src/components/movie/CertificationBadge.tsx`: the `neutral` variant for every certification; its doc
-      comment and example describe a neutral badge
-    - `frontend/src/components/movie/browse/CertificationFilter.tsx`: remove `VARIANT_TO_TOKENS`; a selected pill is
-      a `tertiary` fill with `on-tertiary` text and a `tertiary` border, its hover keeping those; the checked state
-      draws no inset ring; the keyboard focus ring is in `ring` instead of `colorPalette.focusRing`; the unselected
-      pill and hover styles stay; the doc comment describes the brass selection
-    - Set the selected border and the absent ring under `_checked`: the checkbox card's `outline` variant sets a
-      `colorPalette.solid` border and inset ring there, and in the tests' layer-free system its `_checked` rule beats
-      a base prop (see Implementation Notes)
-    - Tests should now PASS
-    - **Check:** `browse.spec.ts` and `movie-detail.spec.ts`
+    - Removed certification status variants/maps and lookup. Every badge uses the neutral recipe. Selected pills
+      use tertiary fill/text/border roles, keep that fill on hover, clear the checked inset ring and focus in `ring`.
+    - Passed 47 related tests across five files, type-check, touched-file lint/format, and both browse/detail
+      smoke specs. Corrected unsupported `exact` options on Testing Library role queries during type-check.
 
 - [ ] **4.3 Check scores and certifications together in Marquee** (run `browse.spec.ts` and `movie-detail.spec.ts`,
   then a scripted screenshot scenario in both modes)

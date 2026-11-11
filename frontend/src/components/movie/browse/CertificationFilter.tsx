@@ -1,9 +1,5 @@
 import { Box, CheckboxCard, CheckboxGroup, Flex, Text } from "@chakra-ui/react";
-import {
-  CERTIFICATION_OPTIONS,
-  getCertificationVariant,
-  type CertificationVariant,
-} from "../utils/certificationUtils";
+import { CERTIFICATION_OPTIONS } from "@/components/movie/utils/certificationUtils";
 
 interface CertificationFilterProps {
   selectedCertifications: string[];
@@ -11,26 +7,11 @@ interface CertificationFilterProps {
 }
 
 /**
- * Maps certification variant to background/text token pairs for selected state
- * Uses status tokens from the semantic color system
- */
-const VARIANT_TO_TOKENS: Record<
-  CertificationVariant,
-  { bg: string; color: string }
-> = {
-  success: { bg: "success", color: "on-success" },
-  info: { bg: "info", color: "on-info" },
-  warning: { bg: "warning", color: "on-warning" },
-  error: { bg: "destructive", color: "on-destructive" },
-  neutral: { bg: "badge", color: "on-badge" },
-};
-
-/**
  * Certification filter using CheckboxCard pills
  *
  * Visual treatment:
  * - Unselected: Outline style with muted text
- * - Selected: Solid fill with status color matching CertificationBadge
+ * - Selected: Theme selection fill (brass in Marquee) with no inset ring
  *
  * No indicator (checkbox mark) - selection state shown via background color
  *
@@ -58,26 +39,26 @@ const CertificationFilter = ({
           <Flex gap={2} wrap="wrap">
             {CERTIFICATION_OPTIONS.map((cert) => {
               const isSelected = selectedCertifications.includes(cert);
-              const variant = getCertificationVariant(cert);
-              const tokens = VARIANT_TO_TOKENS[variant];
 
               return (
                 <CheckboxCard.Root
                   key={cert}
                   value={cert}
                   cursor="pointer"
-                  bg={isSelected ? tokens.bg : "transparent"}
-                  color={isSelected ? tokens.color : "on-muted"}
+                  bg={isSelected ? "tertiary" : "transparent"}
+                  color={isSelected ? "on-tertiary" : "on-muted"}
                   borderWidth="1px"
-                  borderColor={isSelected ? tokens.bg : "border-strong-01"}
+                  borderColor={isSelected ? "tertiary" : "border-strong-01"}
+                  focusRingColor="ring"
+                  _checked={{ borderColor: "tertiary", boxShadow: "none" }}
                   borderRadius="md"
                   px={2}
                   py={1.5}
                   w="auto"
                   flex="0 0 auto"
                   _hover={{
-                    borderColor: isSelected ? tokens.bg : "tertiary",
-                    bg: isSelected ? tokens.bg : "tertiary/8",
+                    borderColor: isSelected ? "tertiary" : "tertiary",
+                    bg: isSelected ? "tertiary" : "tertiary/8",
                   }}
                   transition="all 0.15s ease-out"
                 >

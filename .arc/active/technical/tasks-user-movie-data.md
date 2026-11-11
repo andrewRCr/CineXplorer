@@ -86,41 +86,32 @@ rewritten service tests pass with `repositories.py` deleted.
         - Both touched apps pass 540 tests; Ruff, format, strict Pyright and changed-document lint pass. Django detects
           no migration from the manager change.
 
-- [ ] **1.3 `UserMovieData` holds its invariants in the database — D4**
+- [x] **1.3 `UserMovieData` holds its invariants in the database — D4**
 
     **Goal:** The database itself refuses an out-of-range rating, an empty, whitespace-only or overlong review, a date
     on an unwatched record and a second record for one user and movie, and the migration runs both ways.
 
-    - [ ] **1.3.a Write the constraint tests in `tests/integration/test_models.py`**
-        - Writing through the ORM, past the service: a rating of 0 and of 11, an empty and a whitespace-only review, a
-          review of 10,001 characters, a `watched_at` on an unwatched record and a second record for one user and movie
-          are refused (`IntegrityError`); a watched record with no date is accepted
-        - `created_at` is set on create and `updated_at` moves on save
-        - Expect tests to FAIL initially, except the duplicate record (`unique_together` refuses it today) and the
-          undated watched record (saved today): show those fail against a narrow break and pass once restored
-
-    - [ ] **1.3.b Write the migration tests**
-        - From the previous migration state: an existing empty review becomes `null`, one of 10,001 characters is
-          truncated to 10,000, and one of 10,001 characters whose first 10,000 are spaces becomes `null`; existing rows
-          take the migration time as `created_at`
-        - The migration applies and reverses
-        - Expect tests to FAIL initially
-
-    - [ ] **1.3.c Reshape the model and write the migration**
-        - Fields, constraints and index as D4 lists them: `created_at`, `updated_at`, `watched_at`; `CheckConstraint`s
-          for the rating, the empty review, the review's length and the unwatched date; `UniqueConstraint(user, movie)`
-          for `unique_together`; one index on `(user, -created_at)` for the three `db_index` flags; the validators stay
-        - In the migration, the review truncation, then the conversion of empty and whitespace-only reviews to `null`,
-          run before the review constraints are added; reversing drops the new columns and leaves the converted reviews
-        - Tests should now PASS, and so should 1.1's
-
-    - [ ] **1.3.d The admin form cleans and bounds the review**
-        - Test first: the `UserMovieData` admin form turns an empty or whitespace-only review into `null`, stores any
-          other review as sent, surrounding whitespace included (Django's form field strips by default), and refuses
-          one longer than 10,000 characters or containing a NUL character
-        - The two refusals pass on arrival after 1.3.c (the form's model validation checks the length constraint, and
-          Django's form field refuses NUL): show those fail against a narrow break and pass once restored
-        - `admin.py` gains the form
+    - [x] **1.3.a Write the constraint tests in `tests/integration/test_models.py`**
+        - Direct ORM writes cover rating bounds, empty/ASCII/Unicode whitespace-only and overlong reviews, an
+          unwatched date, uniqueness and undated watched records, plus creation/update timestamps.
+        - Missing constraints, cleanup and timestamps failed before implementation. Removing the watched-date
+          constraint demonstrated its behavioral red after the field existed. Removing uniqueness and rejecting
+          undated watched records demonstrated the two cases that passed on arrival.
+    - [x] **1.3.b Write the migration tests**
+        - Historical rows prove truncation before blank normalization (including a review whose first 10,000
+          characters are spaces), migration-time creation dates, reversal and retained cleaned reviews. The test
+          restores the latest schema in teardown.
+    - [x] **1.3.c Reshape the model and write the migration**
+        - Added timestamps, watched date, named uniqueness, four database checks and the user/creation index; removed
+          single-flag indexes. The reversible migration cleans reviews before adding constraints.
+        - The text check uses Python's whitespace set: PostgreSQL's Unicode classification admitted some whitespace
+          that normalization removes; a failing regression case proved the gap before its correction.
+    - [x] **1.3.d The admin form cleans and bounds the review**
+        - The form normalizes blank reviews to null, preserves other text verbatim and refuses overlong/NUL reviews.
+          Normalization/whitespace cases failed first; removing length and NUL safeguards demonstrated those existing
+          refusals fail, then pass after restoration.
+        - All 97 user-data tests pass on freshly migrated databases; Ruff, formatting, strict Pyright and migration
+          drift checks pass. Installed django-types' old CheckConstraint signature has narrow documented ignores.
 
 - [ ] **1.4 `Movie` stores card fields and timestamps — D8**
 

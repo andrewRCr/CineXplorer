@@ -6,7 +6,8 @@ permission to request a review, change code, rerun jobs, post replies, resolve t
 
 ## Bind the Wait
 
-Record these in the active errand's private review file, or the work unit's private review record:
+Record these in the active errand's private review file, or for a work unit in a file in its workspace
+`adversarial-review/` folder; they stay out of `REVIEW-LOG.md`, which is published when the work unit is archived:
 
 - Repository, PR number/URL and full head SHA, read from GitHub after the approved push
 - Caller (publication, hosted request or fix push), chosen review route, and what is awaited: CI and each hosted

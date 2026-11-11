@@ -1,7 +1,7 @@
 /**
  * Material Design 3 Color Palette (Baseline Static)
  *
- * Contains ONLY official Material Design 3 baseline tokens for light and dark modes.
+ * Contains official Material Design 3 baseline tokens and named Material color-scale steps.
  * All CineXplorer-specific extensions (rating, badges, etc.) are handled in the adapter layer.
  *
  * Source: https://m3.material.io/styles/color/static/baseline
@@ -130,3 +130,13 @@ export const materialPaletteDark = {
 } as const;
 
 export type MaterialPalette = typeof materialPaletteLight;
+
+/** Official scale steps used by status text. Source: https://github.com/material-components/material-components-web/blob/master/packages/mdc-theme/_color-palette.scss */
+// Baseline error steps: https://github.com/material-components/material-components-web/blob/master/packages/mdc-tokens/v0_161/_md-ref-palette.scss
+export const materialStatusColorSteps = {
+    green900: "#1b5e20",
+    error30: "#8c1d18",
+    blue900: "#0d47a1",
+    green300: "#81c784",
+    blue300: "#64b5f6",
+} as const;

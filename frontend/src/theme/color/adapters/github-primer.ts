@@ -24,6 +24,7 @@
 
 import type { UnifiedTheme } from "../types";
 import {
+    githubStatusColorSteps,
     githubPaletteLight,
     githubPaletteDark,
 } from "../palettes/github-primer";
@@ -133,11 +134,17 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive + success
+    // Previous light/dark minimum text contrast: 3.90:1 / 2.70:1.
     const destructive =
-        mode === "light" ? palette.bg_danger : palette.bg_danger_hover; // Tweaked for WCAG: lighter background in dark mode (official #da3633 had 4.11:1 contrast)
+        mode === "light"
+            ? githubStatusColorSteps.light.red6
+            : githubStatusColorSteps.dark.red2;
     const onDestructive = palette.fg_onEmphasis;
+    // Previous light/dark minimum text contrast: 3.75:1 / 3.03:1.
     const success =
-        mode === "light" ? palette.bg_success : palette.bg_success_hover; // Tweaked for WCAG: lighter background in dark mode (official #238636 had 4.09:1 contrast)
+        mode === "light"
+            ? githubStatusColorSteps.light.green6
+            : githubStatusColorSteps.dark.green2;
     const onSuccess = palette.fg_onEmphasis;
 
     // Shadows (official Primer shadow tokens)
@@ -193,10 +200,17 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const ring = palette.fg_accent;
 
     // Additional status colors (derived - Primer lacks official tokens)
-    const warning = mode === "light" ? "#bf8700" : "#d29922";
-    const onWarning =
-        mode === "light" ? palette.fg_default : palette.fg_onEmphasis;
-    const info = palette.fg_accent; // Primer intentionally uses accent for info
+    // Previous light/dark minimum text contrast: 2.68:1 / 3.90:1.
+    const warning =
+        mode === "light"
+            ? githubStatusColorSteps.light.yellow6
+            : githubStatusColorSteps.dark.yellow2;
+    const onWarning = palette.fg_onEmphasis;
+    // Previous light/dark minimum text contrast: 4.25:1 / 3.89:1.
+    const info =
+        mode === "light"
+            ? githubStatusColorSteps.light.blue6
+            : githubStatusColorSteps.dark.blue2;
     const onInfo = palette.fg_onEmphasis;
 
     // ===================================================================

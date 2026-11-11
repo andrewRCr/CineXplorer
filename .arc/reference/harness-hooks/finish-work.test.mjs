@@ -183,6 +183,47 @@ test("after-remove archives the design draft with the PRD", (t) => {
         /Move the design draft, the PRD, the finished task list and its completion summary into the archive\./);
 });
 
+test("after-remove adds the kept review log to the archive and commits it", (t) => {
+    const f = fixture(t);
+    success(f.run("before-remove", "sample"));
+    const result = f.run("after-remove", "sample");
+    success(result);
+    assert.match(result.stdout, /read review-log-sample\.md for local paths and secrets/);
+    const folder = `.arc/reference/archive/${QUARTER}/technical/01_sample`;
+    assert.deepEqual(readdirSync(join(f.main, folder)).sort(),
+        ["completion-sample.md", "prd-sample.md", "review-log-sample.md", "tasks-sample.md"]);
+    assert.equal(readFileSync(join(f.main, folder, "review-log-sample.md"), "utf8"), "review log\n");
+    assert.equal(git(f.main, "ls-files", `${folder}/review-log-sample.md`), `${folder}/review-log-sample.md`);
+    assert.equal(git(f.main, "status", "--porcelain"), "");
+    assert.match(git(f.main, "log", "-1", "--format=%B"),
+        /Move the PRD, the finished task list and its completion summary into the archive, and add its review log\./);
+    assert.equal(readFileSync(join(kept(f.main), "REVIEW-LOG.md"), "utf8"), "review log\n", "the kept copy stays");
+});
+
+test("after-remove takes the review log from the latest kept folder for this name", (t) => {
+    const f = fixture(t);
+    const records = ".arc/user/andrew/errand-records";
+    write(f.main, `${records}/sample-2000-01-01/REVIEW-LOG.md`, "older\n");
+    write(f.main, `${records}/sample-2000-01-02/REVIEW-LOG.md`, "newer\n");
+    write(f.main, `${records}/sample-two-2000-01-04/REVIEW-LOG.md`, "another unit\n");
+    success(f.run("after-remove", "sample"));
+    const log = join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample/review-log-sample.md");
+    assert.equal(readFileSync(log, "utf8"), "newer\n");
+});
+
+test("after-remove adds no review log when the latest kept folder has none", (t) => {
+    const f = fixture(t);
+    const records = ".arc/user/andrew/errand-records";
+    write(f.main, `${records}/sample-2000-01-01/REVIEW-LOG.md`, "an earlier unit's log\n");
+    write(f.main, `${records}/sample-2000-01-02/notes.txt`, "no review log here\n");
+    const result = f.run("after-remove", "sample");
+    success(result);
+    assert.deepEqual(readdirSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")).sort(),
+        ["completion-sample.md", "prd-sample.md", "tasks-sample.md"]);
+    assert.doesNotMatch(git(f.main, "log", "-1", "--format=%B"), /review log/);
+    assert.doesNotMatch(result.stdout, /review-log-sample\.md/);
+});
+
 test("after-remove refuses a name already archived this quarter without moving anything", (t) => {
     const f = fixture(t);
     write(f.main, `.arc/reference/archive/${QUARTER}/technical/02_sample/tasks-sample.md`, "archived\n");
@@ -231,6 +272,7 @@ test("after-remove points out a ROADMAP entry naming the work", (t) => {
 
 test("a refused archive commit moves the documents back, and a rerun archives them", (t) => {
     const f = fixture(t);
+    success(f.run("before-remove", "sample"));
     const hooks = join(f.parent, "hooks");
     write(hooks, "pre-commit", "#!/bin/sh\necho 'hook refused the commit'\nexit 1\n");
     execFileSync("chmod", ["+x", join(hooks, "pre-commit")]);
@@ -245,7 +287,24 @@ test("a refused archive commit moves the documents back, and a rerun archives th
     git(f.main, "config", "--unset", "core.hooksPath");
     success(f.run("after-remove", "sample"));
     assert.deepEqual(readdirSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")).sort(),
-        ["completion-sample.md", "prd-sample.md", "tasks-sample.md"]);
+        ["completion-sample.md", "prd-sample.md", "review-log-sample.md", "tasks-sample.md"]);
+});
+
+test("a refused review-log add moves the documents back, and a rerun archives them", (t) => {
+    const f = fixture(t);
+    success(f.run("before-remove", "sample"));
+    write(f.main, ".git/info/exclude", "review-log-*.md\n");
+    const before = tracked(f.main);
+    const refused = f.run("after-remove", "sample");
+    refusal(refused, /ignored/);
+    assert.match(refused.stderr, /moves were undone/);
+    assert.deepEqual(tracked(f.main), before);
+    assert.equal(git(f.main, "status", "--porcelain"), "");
+    assert.equal(existsSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")), false);
+    write(f.main, ".git/info/exclude", "");
+    success(f.run("after-remove", "sample"));
+    assert.deepEqual(readdirSync(join(f.main, ".arc/reference/archive", QUARTER, "technical/01_sample")).sort(),
+        ["completion-sample.md", "prd-sample.md", "review-log-sample.md", "tasks-sample.md"]);
 });
 
 for (const scenario of ["another branch", "a staged change"]) {

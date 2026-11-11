@@ -228,3 +228,15 @@ export type GitLabPajamasPaletteColorLight =
  */
 export type GitLabPajamasPaletteColorDark =
     keyof typeof gitlabPajamasPaletteDark;
+
+/** Official scale steps used by status text. Source: https://gitlab.com/gitlab-org/gitlab-ui/-/blob/b6a73d15/src/tokens/build/css/tokens.css */
+export const pajamasStatusColorSteps = {
+    green700: "#306440",
+    red700: "#a32c12",
+    orange700: "#894b16",
+    blue700: "#2f5ca0",
+    green200: "#91d4a8",
+    red200: "#fcb5aa",
+    orange200: "#e9be74",
+    blue100: "#cbe2f9",
+} as const;

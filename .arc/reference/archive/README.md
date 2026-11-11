@@ -18,10 +18,12 @@ Each quarter directory uses **work-package subdirectories** where all documents 
 
 Each completed work unit gets its own subdirectory containing:
 
+- `draft-{name}.md` - Design draft (when the work had one)
 - `prd-{name}.md` - Product Requirements Document (only exists for feature/technical work)
 - `tasks-{name}.md` - Task implementation documentation
 - `notes-{name}.md` - Development notes (optional)
 - `completion-{name}.md` - Completion metadata and summary
+- `review-log-{name}.md` - Review passes from design to code review (when any were recorded)
 
 **Example:**
 
@@ -65,8 +67,10 @@ This archive serves multiple purposes:
 
 ## File Naming Conventions
 
+- **Design drafts**: `draft-{name}.md`
 - **PRDs**: `prd-{name}.md`
 - **Tasks**: `tasks-{name}.md`
+- **Review logs**: `review-log-{name}.md`
 - **Notes**: `notes-{name}.md` (optional)
 - **Completion**: `completion-{name}.md`
 - **Incidental Tasks**: `tasks-{name}.md`

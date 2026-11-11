@@ -96,17 +96,19 @@ function createBaseTokens(theme: Theme) {
     >;
 
     for (const tokenKey of unifiedKeys) {
-        // Extract shadow tokens separately
-        if (shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])) {
-            lightShadows[tokenKey] = {
-                value: theme.lightUnified[tokenKey],
-            };
-            darkShadows[tokenKey] = { value: theme.darkUnified[tokenKey] };
-        } else {
-            // All other tokens go to colors
-            lightColors[tokenKey] = { value: theme.lightUnified[tokenKey] };
-            darkColors[tokenKey] = { value: theme.darkUnified[tokenKey] };
-        }
+        const isShadow = shadowTokens.includes(
+            tokenKey as (typeof shadowTokens)[number],
+        );
+        const lightTokens = isShadow ? lightShadows : lightColors;
+        const darkTokens = isShadow ? darkShadows : darkColors;
+        const lightValue = theme.lightUnified[tokenKey];
+        const darkValue = theme.darkUnified[tokenKey];
+
+        // Optional roles without a color must not become undefined Chakra tokens.
+        if (lightValue !== undefined)
+            lightTokens[tokenKey] = { value: lightValue };
+        if (darkValue !== undefined)
+            darkTokens[tokenKey] = { value: darkValue };
     }
 
     return {
@@ -141,23 +143,23 @@ function createSemanticTokens(theme: Theme) {
     >;
 
     for (const tokenKey of unifiedKeys) {
-        // Create semantic shadow tokens
-        if (shadowTokens.includes(tokenKey as (typeof shadowTokens)[number])) {
-            shadows[tokenKey] = {
-                value: {
-                    base: `{shadows.light.${tokenKey}}`,
-                    _dark: `{shadows.dark.${tokenKey}}`,
-                },
-            };
-        } else {
-            // Create semantic color tokens
-            colors[tokenKey] = {
-                value: {
-                    base: `{colors.light.${tokenKey}}`,
-                    _dark: `{colors.dark.${tokenKey}}`,
-                },
-            };
-        }
+        const hasLight = theme.lightUnified[tokenKey] !== undefined;
+        const hasDark = theme.darkUnified[tokenKey] !== undefined;
+        if (!hasLight && !hasDark) continue;
+
+        const isShadow = shadowTokens.includes(
+            tokenKey as (typeof shadowTokens)[number],
+        );
+        const category = isShadow ? "shadows" : "colors";
+        const tokens = isShadow ? shadows : colors;
+        tokens[tokenKey] = {
+            value: {
+                ...(hasLight
+                    ? { base: `{${category}.light.${tokenKey}}` }
+                    : {}),
+                ...(hasDark ? { _dark: `{${category}.dark.${tokenKey}}` } : {}),
+            },
+        };
     }
 
     return { colors, shadows };
@@ -178,12 +180,6 @@ const baseConfig = defineConfig({
                 },
                 system: {
                     value: `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif`,
-                },
-                inter: {
-                    value: `'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
-                },
-                sourcesans: {
-                    value: `'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`,
                 },
             },
             // Layout foundation tokens (base sizes)

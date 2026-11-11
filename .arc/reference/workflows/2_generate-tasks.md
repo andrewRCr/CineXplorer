@@ -344,10 +344,6 @@ _(Optional: execution context from planning — patterns, pitfalls, pointers)_
 ## Success Criteria
 
 - [ ] _(copied unchanged from the PRD)_
-
-## Review Log
-
-_(one entry per review pass and fix check)_
 ```
 
 See [strategy-task-list-formatting.md](../strategies/arc/strategy-task-list-formatting.md) for complete formatting rules
@@ -388,9 +384,9 @@ after fixes land, and take each further pass only with approval. The `Class` set
 adversarial-review's stop reasons: it converges, reaches the cap, or the Owner stops it or accepts a re-entry.
 
 Nothing is deferred past this stage: there is no later planning stage to absorb a correction, so pin each one before
-committing. Start the task list's `## Review Log` with the entries already in the work unit's `REVIEW-LOG.md`
-(`.arc/user/{identity}/{name}/`), record each pass of this stage after them, rerun the suite-coherence pass over the
-settled list, and lint it with the repository's markdown lint.
+committing. Record each pass of this stage in the work unit's `REVIEW-LOG.md` (`.arc/user/{identity}/{name}/`), as
+the earlier stages did; the task list carries no review record. Rerun the suite-coherence pass over the settled list,
+and lint it with the repository's markdown lint.
 
 > [!IMPORTANT]
 > Stop when the task list is ready: everything that changes its text has run. Bring the Owner the task list, its level,

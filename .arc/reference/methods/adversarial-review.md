@@ -59,16 +59,18 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
   `.arc/user/{identity}/{name}/adversarial-review/`, named by artifact, pass and round (`draft-pass1.md`,
   `prd-pass1.md`, `tasks-pass2-round1.md`, `prompt-draft-pass1.md`, `report-prd-pass2-round1.md`) instead of content
   hashes. The folder is keyed by the work unit's name, so one location serves every stage from the first design review
-  on; delete it when the work unit is archived. Without the copies, scope a fix check from the account alone and say so
-  in its report.
-- **Pass record → Review Log.** Instead of `ADVERSARIAL-PASSES.md`, append one entry per pass and fix-check round:
+  on; `finish` keeps it in `errand-records/` when the work unit is archived. Without the copies, scope a fix check
+  from the account alone and say so in its report.
+- **Pass record → review log.** Instead of `ADVERSARIAL-PASSES.md`, append one entry per pass and fix-check round:
   date, stage, the position as the report's header names it, rubric, finding counts by verified grade, the approved
   dispositions with their fold tags, each shared cause named with its material findings in that look (so
   [review-model § Trend][review-model-trend]'s three-look stop can be counted), the stop reason, and elapsed time.
-  Entries go to the task list's `## Review Log`; before the task list exists they go to `REVIEW-LOG.md` in the work
-  unit's workspace folder, and task generation copies them into the task list. A PRD never carries them. The commit
-  that lands a reviewed artifact summarizes each pass in one body line, in plain terms ("Independent review: 2
-  rounds, 6 findings fixed").
+  Entries go to `REVIEW-LOG.md` in the work unit's workspace folder at every stage, from the design review to code
+  review; later passes read their history there. No PRD or task list carries them. When the work unit is archived,
+  `finish` adds the log to its archive folder as `review-log-{name}.md`, the durable record, published with this
+  public repository: write it for that, with no path on the local machine and no secret. The commit that lands a
+  reviewed artifact summarizes each pass in one body line, in plain terms ("Independent review: 2 rounds, 6 findings
+  fixed").
 - **Orientation** is `.arc/reference/constitution/DEVELOPMENT-RULES.md`, `.arc/reference/agent/AGENTS.md` and
   `.arc/reference/constitution/TECHNICAL-OVERVIEW.md`.
 - **Runner.** A Claude session spawns a fresh general-purpose subagent per pass and fix check, and its prompt tells

@@ -133,23 +133,14 @@ under Marquee's `defaultSystem`.
     - Updated both browser theme colors and every default/CSS fallback to Marquee's page values; stored-background
       validation and precedence are unchanged. `#161616` occurs zero times. HTML formatting passed.
 
-- [ ] **2.4 The theme documentation names Marquee the default — R9, R18**
+- [x] **2.4 The theme documentation names Marquee the default — R9, R18**
 
     **Goal:** The documentation describes Marquee as CineXplorer's own default palette beside the four adapted design
     systems.
 
-    - `.arc/reference/strategies/project/style/strategy-color-tokens.md` "Theme-Specific Availability": a Marquee row
-      (`brand` is the brass `primary`; `brandSecondary` and `brandTertiary` undefined)
-    - The same strategy's "Adapter implementation" paragraph, which lists the adapters as `githubAdapter`,
-      `carbonAdapter`, `gitlabAdapter` and `materialAdapter`: name the five by their real factories
-      (`createMarqueeAdapter`, `createGithubAdapter`, `createCarbonAdapter`, `createPajamasAdapter`,
-      `createMaterialAdapter`)
-    - `.arc/reference/constitution/TECHNICAL-OVERVIEW.md` § 3, the Theme System paragraph, and the root `README.md`
-      feature line ("spanning four design systems"): CineXplorer's own palette, Marquee, is the default beside the four
-      adapted design systems; the overview's "integrates 4 major design systems" and "Extensible for future
-      CineXplorer-specific theming" describe that
-    - `frontend/src/theme/color/palettes/cinexplorer-original.ts`: the header, which lists the four design-system
-      palettes as what the application uses, names Marquee
+    - Added Marquee's brass brand row and named all five real adapter factories in the color-token strategy.
+      TECHNICAL-OVERVIEW, the root README and the original-palette reference header name the own default beside
+      four adapted systems. Markdown lint and touched-file TypeScript formatting/lint passed.
 
 ### **Phase 3:** Scores show a dot beside a neutral number
 

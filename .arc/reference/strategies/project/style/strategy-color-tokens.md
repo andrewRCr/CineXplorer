@@ -199,8 +199,9 @@ as the contract between themes and components.
 
 **Adapter implementation:**
 
-Each theme adapter (`githubAdapter`, `carbonAdapter`, `gitlabAdapter`, `materialAdapter`) implements this interface by
-mapping design system tokens to CineXplorer's semantic structure. See `frontend/src/theme/color/adapters/*.ts` for
+The five factories (`createMarqueeAdapter`, `createGithubAdapter`, `createCarbonAdapter`,
+`createPajamasAdapter`, `createMaterialAdapter`) map their palettes to CineXplorer's semantic structure.
+See `frontend/src/theme/color/adapters/*.ts` for
 examples.
 
 **Adding new tokens:**
@@ -327,12 +328,13 @@ All three tokens have the same visual appearance but different semantic purposes
 
 ### Theme-Specific Availability
 
-| Theme                 | brand     | brandSecondary | brandTertiary   |
-|-----------------------|-----------|----------------|-----------------|
-| **GitHub Primer**     | undefined | undefined      | undefined       |
-| **IBM Carbon**        | Blue      | undefined      | undefined       |
-| **GitLab Pajamas**    | Purple    | Orange         | Orange (darker) |
-| **Material Design 3** | Purple    | undefined      | undefined       |
+| Theme                   | brand             | brandSecondary   | brandTertiary     |
+| ----------------------- | ----------------- | ---------------- | ----------------- |
+| **Marquee**             | Brass (`primary`) | undefined        | undefined         |
+| **GitHub Primer**       | undefined         | undefined        | undefined         |
+| **IBM Carbon**          | Blue              | undefined        | undefined         |
+| **GitLab Pajamas**      | Purple            | Orange           | Orange (darker)   |
+| **Material Design 3**   | Purple            | undefined        | undefined         |
 
 **Note:** Brand tokens are optional - not all themes have brand identity colors separate from UI colors.
 

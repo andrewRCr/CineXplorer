@@ -296,13 +296,18 @@ _Exit criterion:_ the search Success Criterion 9 names finds nothing in producti
     - The required case-insensitive search finds old suffix names only in explicitly removed-name examples/table
       entries. Markdown lint, touched-file lint/format and frontend type-check passed.
 
-- [ ] **5.5 Check `/login` passes without its baseline entry** (run `sign-up.spec.ts` and `sign-in.spec.ts`, and the
-  Success Criterion 9 search)
+- [x] **5.5 Check `/login` passes without its baseline entry**
 
     **Goal:** The sign-in page, with and without the registration notice, is shown passing its axe scans under
     Marquee with no `color-contrast` entry, and the search shown empty, with what ran recorded.
 
-    - Run both specs against this worktree's browsable stack; run the search 5.3 names; record both results
+    - Final sign-up/sign-in smoke run passed (two specs) with the registration notice scanned and no `/login`
+      contrast baseline entry. The required production-source search returned no matches.
+    - The first final registration run returned HTTP 429 after repeated tests exhausted the documented three/hour
+      limit. Its trace confirmed 429 and "Too many requests"; clearing only this worktree's registration-history
+      key by the documented testing procedure restored the required run. No application throttle changed.
+    - A bounded Astra consultation found no material gap in scoped contrast gating or translucent-alert composition;
+      this does not replace Phase 6 verification/review.
 
 ### **Phase 6:** Verification
 

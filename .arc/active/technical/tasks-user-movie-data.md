@@ -200,32 +200,24 @@ clock minute answers 429.
         - Updated core HTTP helper examples and the authentication, testing and type-safety strategies to the shared
           schemas and TMDB-ID PATCH contract.
 
-- [ ] **2.4 Saves are limited per user per minute and per day — D6**
+- [x] **2.4 Saves are limited per user per minute and per day — D6**
 
     **Goal:** One account's 31st save in a clock minute and 1,001st in a UTC day answer 429 with `Retry-After` and change
     nothing, counts stay exact under concurrent saves, and a cache fault lets saves through.
 
-    - [ ] **2.4.a Write the save-limit tests**
-        - Throttling enabled against the Redis cache the tests use, not through the `enable_throttling` marker, which
-          swaps in `LocMemCache`; time replaced with `freezegun` for the window edges
-        - Success Criterion 8's cases, for a user signed in by bearer token and one signed in by session
-        - A refused save still counts; when both windows refuse, `Retry-After` gives the later end
-        - Isolate each test's counters with its own cache `KEY_PREFIX`: pytest-xdist's workers share that Redis
-          database and their user IDs can coincide, so never `cache.clear()` it, as `clear_throttle_cache` does
-        - Expect tests to FAIL initially, except the cases no limit touches until 2.4.b (a save with the cache
-          unreachable, another user's saves from the same address, the first user's reads and deletes): show those
-          fail against a narrow break and pass once restored
-
-    - [ ] **2.4.b Implement the throttle**
-        - One class, two instances (the minute and the UTC day) on the PATCH route only, as D6's Save limits paragraph
-          sets out: a key naming the window, its start and the `request.auth` user; expiry rounded up to whole seconds,
-          at least one; a counter missing at its increment starts again at one; a cache error allows the save; it never
-          raises
-        - It stands aside in tests unless a test enables throttling
-        - Django Ninja calls `allow_request` and then `wait()` on one instance shared by every request, so per-request
-          state (the key, the window's end) stays off the instance: thread-local, as `_RequestStateMixin` in
-          `apps/authentication/throttles.py` does
-        - Tests should now PASS
+    - [x] **2.4.a Write the save-limit tests**
+        - Thirteen Redis-backed cases isolate counters by cache prefix and cover both authentication paths, minute/day
+          limits, unchanged refused writes, 40 concurrent saves, sub-second window ends, an evicted counter,
+          unreachable cache and independent reads/deletes/users.
+        - Eleven cases failed under pass-through counting; both cache-unreachable cases failed when cache errors
+          escaped. Further mutations proved user-key isolation, unthrottled reads and lost increments: synchronized
+          non-atomic counters let all 40 requests through instead of 30.
+        - Schemas initialize before time freezes; long-lived signed credentials keep daily-window tests about limits.
+    - [x] **2.4.b Implement the throttle**
+        - One class, two instances on PATCH only. Atomic cache increments use authenticated user IDs and fixed UTC
+          windows; expiry rounds up, a missing counter retries from one, cache errors never escape, and wait state
+          stays thread-local. Ordinary tests bypass counting.
+        - All 161 user-data tests, Ruff, formatting and strict Pyright pass after source restoration.
 
 - [ ] **2.5 A new ADR records the save — D6**
 

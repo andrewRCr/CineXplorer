@@ -13,6 +13,7 @@ from apps.core.schemas import ErrorResponseSchema
 from apps.movie.schemas import MovieListResponseSchema
 from apps.user_movie_data.schemas import UserMovieDataPatchSchema, UserMovieDataSchema
 from apps.user_movie_data.services.service_factory import get_user_movie_data_service
+from apps.user_movie_data.throttles import SaveThrottle
 
 user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTSessionAuth())
 _service = get_user_movie_data_service()
@@ -44,6 +45,10 @@ def get_user_movie_data(request: HttpRequest, tmdb_id: PositiveTMDBId) -> UserMo
 
 @user_movie_data_router.patch(
     "/{tmdb_id}",
+    throttle=[
+        SaveThrottle(limit=30, window_seconds=60),
+        SaveThrottle(limit=1000, window_seconds=86400),
+    ],
     response={
         200: UserMovieDataSchema,
         201: UserMovieDataSchema,

@@ -157,7 +157,7 @@ export function createCarbonAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive, success, warning, info (all official Carbon tokens)
-    // Previous light/dark minimum text contrast: 3.77:1 / 2.20:1.
+    // Previous light/dark minimum text contrast: 3.64:1 / 2.20:1.
     const destructive =
         mode === "light"
             ? carbonStatusColorSteps.red70

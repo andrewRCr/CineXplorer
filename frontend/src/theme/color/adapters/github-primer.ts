@@ -134,7 +134,7 @@ export function createGithubAdapter(mode: "light" | "dark"): UnifiedTheme {
     const onTertiary = palette.fg_onEmphasis; // Rarely used
 
     // Status colors: destructive + success
-    // Previous light/dark minimum text contrast: 4.05:1 / 2.70:1.
+    // Previous light/dark minimum text contrast: 3.90:1 / 2.70:1.
     const destructive =
         mode === "light"
             ? githubStatusColorSteps.light.red6

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted; Superseded in part by ADR-042 (gold assigned to numeric score displays)
 
 ## Context
 

@@ -45,11 +45,6 @@ export const axeBaseline: BaselineEntry[] = [
         rule: "button-name",
         reason: "Browse filter and movie controls include buttons without accessible names.",
     },
-    {
-        route: "/login",
-        rule: "color-contrast",
-        reason: "The registration confirmation notice has white text on blue below the AA contrast threshold.",
-    },
 ];
 
 export function baselineKey(

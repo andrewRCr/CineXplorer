@@ -44,6 +44,10 @@ The card-storage correction is covered by regression cases for existing text lim
 unstored detail display and refresh continuation. Both affected backend app suites and the covering browser smokes
 pass after that correction, together with lint, formatting and Python type checks.
 
+After integrating the current palette and dependency updates, the full backend and frontend suites and every
+browser smoke pass again. Lint, formatting, types, contrast, production build and regenerated API artifacts also
+pass on that integrated tree.
+
 ## Remaining Evidence
 
 - Hosted CI must pass, including the API type-drift job required by Implemented criterion 12.

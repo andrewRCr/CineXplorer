@@ -425,6 +425,10 @@ page, sees it on the watchlist page, and takes it off again from its card.
       The complete local verification run passes: 1,220 backend tests (96.31% coverage), 999 frontend tests, five
       Chromium smokes, lint/format/types and markdown. Eight deploy-script tests, contrast and production build pass.
       Historical pre-fold service checkpoint: 44 tests pass at `8e3d1376`.
+    - Integrated main at `9dd9d400`, retaining both service-testing and Marquee README descriptions. Refreshed
+      frontend dependencies and the backend image from the merged lockfiles. The integrated full run passes
+      1,237 backend tests (96.16% coverage), 2,609 frontend tests and all five Chromium smokes. Ruff, format,
+      Pyright, ESLint, TypeScript, markdown, contrast and production build pass; API regeneration produces no diff.
     - Task and status remain open for the hosted CI evidence; the staging criterion is due after merge.
       Criteria evidence is recorded below and in the work unit's review log.
 

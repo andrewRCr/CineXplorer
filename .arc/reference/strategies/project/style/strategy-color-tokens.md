@@ -57,7 +57,7 @@ CineXplorer uses Material Design 3's `on-*` naming convention for foreground tok
 <Button bg="primary" color="on-primary">Save</Button>
 <Box bg="destructive" color="on-destructive">Error</Box>
 
-// ❌ Deprecated: -foreground suffix (old naming)
+// ❌ Removed: -foreground suffix; use on-success instead
 <Badge bg="success" color="success-foreground">Active</Badge>
 ```
 
@@ -75,23 +75,22 @@ CineXplorer uses Material Design 3's `on-*` naming convention for foreground tok
 - `on-popover` - Text on popover/tooltip backgrounds
 - `on-brand` / `on-brandSecondary` / `on-brandTertiary` - Text on brand backgrounds
 
-### Deprecated Aliases (Backward Compatibility)
+### Removed Aliases
 
-During ADR-011 migration (2025-11), old naming conventions were replaced but aliases maintained for compatibility:
+The old names below were removed. They define no runtime tokens; use the canonical role in the second column:
 
-| Deprecated (Old)     | Canonical (Current)                      | Notes                                               |
-|----------------------|------------------------------------------|-----------------------------------------------------|
-| `accent`             | `tertiary`                               | Hierarchy naming preferred                          |
-| `accent-foreground`  | `on-tertiary`                            | on-* prefix pattern                                 |
-| `primary-foreground` | `on-primary`                             | on-* prefix pattern                                 |
-| `success-foreground` | `on-success`                             | on-* prefix pattern                                 |
-| `text.secondary`     | `on-muted`                               | Semantic clarity                                    |
-| `border.subtle`      | `border-strong-01` or `border-subtle-01` | Layer-aware (strong for forms, subtle for dividers) |
-| `background.subItem` | `layer-hover-01`                         | Explicit interaction state naming                   |
-| `tertiary.primary`   | `tertiary` or `ring`                     | Simplified naming                                   |
+| Removed (Old)          | Canonical (Current)                        | Notes                                                 |
+| ---------------------- | ------------------------------------------ | ----------------------------------------------------- |
+| `accent`               | `tertiary`                                 | Hierarchy naming preferred                            |
+| `accent-foreground`    | `on-tertiary`                              | on-* prefix pattern                                   |
+| `primary-foreground`   | `on-primary`                               | on-* prefix pattern                                   |
+| `success-foreground`   | `on-success`                               | on-* prefix pattern                                   |
+| `text.secondary`       | `on-muted`                                 | Semantic clarity                                      |
+| `border.subtle`        | `border-strong-01` or `border-subtle-01`   | Layer-aware (strong for forms, subtle for dividers)   |
+| `background.subItem`   | `layer-hover-01`                           | Explicit interaction state naming                     |
+| `tertiary.primary`     | `tertiary` or `ring`                       | Simplified naming                                     |
 
-**Guidance:** Use canonical tokens in all new code. Deprecated aliases will be maintained but may be removed in future
-major versions.
+**Guidance:** Use the canonical roles. Removed aliases do not resolve to theme colors.
 
 ### Semantic Hierarchy
 
@@ -192,15 +191,16 @@ as the contract between themes and components.
 11. **UI Elements** (~1 token)
     - `ring`
 
-12. **Deprecated Aliases** (~8 tokens)
-    - Maintained for backward compatibility
+12. **Removed Aliases** (no runtime tokens)
+    - Use `tertiary` and the canonical `on-*` roles instead
 
 **Total:** ~67 tokens (including optional brand tokens)
 
 **Adapter implementation:**
 
-Each theme adapter (`githubAdapter`, `carbonAdapter`, `gitlabAdapter`, `materialAdapter`) implements this interface by
-mapping design system tokens to CineXplorer's semantic structure. See `frontend/src/theme/color/adapters/*.ts` for
+The five factories (`createMarqueeAdapter`, `createGithubAdapter`, `createCarbonAdapter`,
+`createPajamasAdapter`, `createMaterialAdapter`) map their palettes to CineXplorer's semantic structure.
+See `frontend/src/theme/color/adapters/*.ts` for
 examples.
 
 **Adding new tokens:**
@@ -239,14 +239,13 @@ examples.
 
 ### Tertiary vs Accent Naming
 
-**Canonical:** Use `tertiary` for new code (Material Design 3-aligned)
-**Deprecated:** `accent` is an alias maintained for backward compatibility
+**Canonical:** Use `tertiary` (Material Design 3-aligned). The `accent` alias was removed.
 
 ```tsx
 // ✅ Preferred (canonical naming)
 <Link color="tertiary">Learn more</Link>
 
-// ⚠️ Works but deprecated (old naming)
+// ❌ Removed alias; this does not resolve to a theme color
 <Link color="accent">Learn more</Link>
 ```
 
@@ -327,12 +326,13 @@ All three tokens have the same visual appearance but different semantic purposes
 
 ### Theme-Specific Availability
 
-| Theme                 | brand     | brandSecondary | brandTertiary   |
-|-----------------------|-----------|----------------|-----------------|
-| **GitHub Primer**     | undefined | undefined      | undefined       |
-| **IBM Carbon**        | Blue      | undefined      | undefined       |
-| **GitLab Pajamas**    | Purple    | Orange         | Orange (darker) |
-| **Material Design 3** | Purple    | undefined      | undefined       |
+| Theme                   | brand             | brandSecondary   | brandTertiary     |
+| ----------------------- | ----------------- | ---------------- | ----------------- |
+| **Marquee**             | Brass (`primary`) | undefined        | undefined         |
+| **GitHub Primer**       | undefined         | undefined        | undefined         |
+| **IBM Carbon**          | Blue              | undefined        | undefined         |
+| **GitLab Pajamas**      | Purple            | Orange           | Orange (darker)   |
+| **Material Design 3**   | Purple            | undefined        | undefined         |
 
 **Note:** Brand tokens are optional - not all themes have brand identity colors separate from UI colors.
 
@@ -463,33 +463,33 @@ Fast lookup cheat sheet for common token choices.
 
 ### By Use Case
 
-| What are you building? | Token(s)                                               | Example                                                        |
-|------------------------|--------------------------------------------------------|----------------------------------------------------------------|
-| Page background        | `background` / `foreground`                            | `<Box bg="background">`                                        |
-| Card/panel             | `layer-01` + `foreground`                              | `<Card bg="layer-01">`                                         |
-| Modal                  | `layer-02` + `foreground`                              | `<Modal.Content bg="layer-02">`                                |
-| Dropdown over modal    | `layer-03` + `foreground`                              | `<Menu.Content bg="layer-03">`                                 |
-| Primary button         | `primary` / `on-primary`                               | `<Button variant="solid">`                                     |
-| Neutral outline button | `button-outline` / `on-button-outline`                 | `<Button variant="outline">`                                   |
-| Branded outline button | `button-outline-primary` / `on-button-outline-primary` | `<Button borderColor="button-outline-primary">`                |
-| Subtle button          | `button-subtle` / `on-button-subtle`                   | `<Button variant="subtle">`                                    |
-| Ghost button           | `tertiary`                                             | `<Button variant="ghost">`                                     |
-| Link/interactive text  | `tertiary` / `tertiary-hover`                          | `<Link color="tertiary" _hover={{ color: "tertiary-hover" }}>` |
-| Success alert          | `success` / `on-success`                               | `<Alert.Root status="success">`                                |
-| Warning alert          | `warning` / `on-warning`                               | `<Alert.Root status="warning">`                                |
-| Error alert            | `destructive` / `on-destructive`                       | `<Alert.Root status="error">`                                  |
-| Info alert             | `info` / `on-info`                                     | `<Alert.Root status="info">`                                   |
-| TMDB score (high)      | `success` / `on-success`                               | `<Badge variant="success">8.2</Badge>` (≥7.5)                  |
-| TMDB score (medium)    | `warning` / `on-warning`                               | `<Badge variant="warning">6.5</Badge>` (5.0-7.4)               |
-| TMDB score (low)       | `destructive` / `on-destructive`                       | `<Badge variant="error">4.1</Badge>` (<5.0)                    |
-| TMDB score (<10 votes) | `badge` / `on-badge`                                   | `<Badge variant="neutral">—</Badge>` (fewer than 10 votes)     |
-| User rating stars      | `imdb-gold`                                            | `<Text color="imdb-gold">★★★★☆</Text>`                         |
-| Genre tag              | `badge` / `on-badge`                                   | `<Badge variant="neutral">Action</Badge>`                      |
-| Secondary text         | `on-muted`                                             | `<Text color="on-muted">`                                      |
-| Border                 | `border-strong-01`                                     | `<Card borderColor="border-strong-01">`                        |
-| Input field (layer-01) | `border-strong-01`                                     | `<Input borderColor="border-strong-01">`                       |
-| Input field (layer-02) | `border-strong-02`                                     | `<Input borderColor="border-strong-02">`                       |
-| Focus ring             | `ring`                                                 | `outlineColor="ring"`                                          |
+| What are you building?   | Token(s)                                                 | Example                                                                  |
+| ------------------------ | -------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Page background          | `background` / `foreground`                              | `<Box bg="background">`                                                  |
+| Card/panel               | `layer-01` + `foreground`                                | `<Card bg="layer-01">`                                                   |
+| Modal                    | `layer-02` + `foreground`                                | `<Modal.Content bg="layer-02">`                                          |
+| Dropdown over modal      | `layer-03` + `foreground`                                | `<Menu.Content bg="layer-03">`                                           |
+| Primary button           | `primary` / `on-primary`                                 | `<Button variant="solid">`                                               |
+| Neutral outline button   | `button-outline` / `on-button-outline`                   | `<Button variant="outline">`                                             |
+| Branded outline button   | `button-outline-primary` / `on-button-outline-primary`   | `<Button borderColor="button-outline-primary">`                          |
+| Subtle button            | `button-subtle` / `on-button-subtle`                     | `<Button variant="subtle">`                                              |
+| Ghost button             | `tertiary`                                               | `<Button variant="ghost">`                                               |
+| Link/interactive text    | `tertiary` / `tertiary-hover`                            | `<Link color="tertiary" _hover={{ color: "tertiary-hover" }}>`           |
+| Success alert            | `success` / `on-success`                                 | `<Alert.Root status="success">`                                          |
+| Warning alert            | `warning` / `on-warning`                                 | `<Alert.Root status="warning">`                                          |
+| Error alert              | `destructive` / `on-destructive`                         | `<Alert.Root status="error">`                                            |
+| Info alert               | `info` / `on-info`                                       | `<Alert.Root status="info">`                                             |
+| TMDB score (high)        | `success` dot, `foreground` number                       | `<MovieUserScore score={8.2} voteCount={10} />` (displayed ≥7.5)         |
+| TMDB score (medium)      | `foreground` dot and number                              | `<MovieUserScore score={6.5} voteCount={10} />` (displayed 5.0–7.4)      |
+| TMDB score (low)         | `destructive` dot, `foreground` number                   | `<MovieUserScore score={4.1} voteCount={10} />` (displayed <5.0)         |
+| TMDB score (<10 votes)   | `badge` / `on-badge`                                     | `<Badge variant="neutral">—</Badge>` (fewer than 10 votes)               |
+| User rating star icons   | `imdb-gold`                                              | `<Text color="imdb-gold">★★★★☆</Text>`; numeric ratings use the dot chip |
+| Genre tag                | `badge` / `on-badge`                                     | `<Badge variant="neutral">Action</Badge>`                                |
+| Secondary text           | `on-muted`                                               | `<Text color="on-muted">`                                                |
+| Border                   | `border-strong-01`                                       | `<Card borderColor="border-strong-01">`                                  |
+| Input field (layer-01)   | `border-strong-01`                                       | `<Input borderColor="border-strong-01">`                                 |
+| Input field (layer-02)   | `border-strong-02`                                       | `<Input borderColor="border-strong-02">`                                 |
+| Focus ring               | `ring`                                                   | `outlineColor="ring"`                                                    |
 
 ### Token Count by Category
 
@@ -508,7 +508,7 @@ Fast lookup cheat sheet for common token choices.
 - **Color interactions:** 6 (primary/secondary/tertiary hover/active)
 - **Movie-specific:** 6 (rating, badge, drag-active, drop-zone pairs)
 - **UI elements:** 2 (border, ring)
-- **Deprecated aliases:** 9 (during ADR-011 migration, including legacy `input` token)
+- **Removed aliases:** No runtime tokens, including the removed legacy `input` name
 
 **Note:** Recipes centralize many tokens - consult recipe files for implementation details.
 
@@ -544,8 +544,8 @@ Fast lookup cheat sheet for common token choices.
 ✅ <Text color="on-destructive">Error</Text>
 ✅ <Box bg="muted">Container</Box>
 ✅ <Badge variant="info">New</Badge>
-✅ <Badge variant="success">8.2</Badge> {/* TMDB high score */}
-✅ <Text color="imdb-gold">★★★★☆</Text> {/* User rating stars */}
+✅ <MovieUserScore score={8.2} voteCount={10} /> {/* Outlined score chip with success dot */}
+✅ <Text color="imdb-gold">★★★★☆</Text> {/* Star icons; numeric ratings use the chip */}
 ```
 
 ### Quick Decision Flowchart
@@ -555,8 +555,8 @@ Fast lookup cheat sheet for common token choices.
 2. Button? → Check Component Styling Strategy for variant selection
 3. Surface? → background/layer-01/layer-02/layer-03
 4. Interactive text? → tertiary + tertiary-hover
-5. TMDB score? → 10+ votes: Badge variant by threshold (success/warning/error); fewer: neutral
-6. User rating stars? → imdb-gold (icon color)
+5. TMDB score? → 10+ votes: Outlined chip with success/foreground/destructive dot by displayed value; fewer: neutral
+6. User rating? → Numeric dot chip (8/5 thresholds); star icons alone use imdb-gold
 7. Neutral badge? → badge + on-badge
 8. Border? → border-strong-01 (or see Border Strategy)
 9. Focus? → ring

@@ -1,6 +1,5 @@
 import { Badge } from "@chakra-ui/react";
 import React from "react";
-import { getCertificationVariant } from "./utils/certificationUtils";
 
 interface CertificationBadgeProps {
   /** US MPAA certification string from API */
@@ -8,14 +7,14 @@ interface CertificationBadgeProps {
 }
 
 /**
- * Displays a color-coded badge for US MPAA movie certification
+ * Displays a neutral badge for US MPAA movie certification
  *
- * Uses Badge recipe status variants for WCAG-compliant contrast across themes.
+ * Uses the neutral badge/on-badge pair for every certification.
  * Returns null if certification is not provided (graceful omission).
  *
  * @example
  * <CertificationBadge certification="PG-13" />
- * // Renders: amber/warning badge with "PG-13" text
+ * // Renders: neutral badge with "PG-13" text
  *
  * @example
  * <CertificationBadge certification={null} />
@@ -29,10 +28,8 @@ const CertificationBadge: React.FC<CertificationBadgeProps> = ({
     return null;
   }
 
-  const variant = getCertificationVariant(certification);
-
   return (
-    <Badge variant={variant} title={`Rated ${certification}`}>
+    <Badge variant="neutral" title={`Rated ${certification}`}>
       {certification}
     </Badge>
   );

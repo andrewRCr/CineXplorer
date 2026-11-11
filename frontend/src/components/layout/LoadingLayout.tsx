@@ -50,8 +50,7 @@ const LoadingLayout = () => {
               oauthProvider === "google" ? (
                 <GoogleLogo size={64} />
               ) : (
-                // EXCEPTION: GitHub logo requires black for brand consistency
-                <Box color="black">
+                <Box color="foreground">
                   <GitHubLogo size={64} />
                 </Box>
               )

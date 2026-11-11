@@ -25,6 +25,7 @@ import { InteractiveListsSection } from "./sections/InteractiveListsSection";
  * Theme display name mappings
  */
 const THEME_DISPLAY_NAMES: Record<ThemeName, string> = {
+  marquee: "Marquee",
   "ibm-carbon": "IBM Carbon",
   "github-primer": "GitHub Primer",
   "gitlab-pajamas": "GitLab Pajamas",
@@ -32,6 +33,7 @@ const THEME_DISPLAY_NAMES: Record<ThemeName, string> = {
 } as const;
 
 const THEME_SHORT_NAMES: Record<ThemeName, string> = {
+  marquee: "Marquee",
   "ibm-carbon": "IBM",
   "github-primer": "GitHub",
   "gitlab-pajamas": "GitLab",
@@ -92,6 +94,7 @@ export default function ThemeDebug() {
             <HStack gap={2} flexShrink={0}>
               {(
                 [
+                  "marquee",
                   "ibm-carbon",
                   "github-primer",
                   "gitlab-pajamas",

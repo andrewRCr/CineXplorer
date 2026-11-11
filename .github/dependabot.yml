@@ -29,6 +29,8 @@ updates:
     ignore:
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+      # Temporarily hold Chakra React updates until UI compatibility is validated.
+      - dependency-name: "@chakra-ui/react"
     groups:
       npm-minor-and-patch:
         patterns: ["*"]
@@ -75,6 +77,9 @@ updates:
         update-types: ["version-update:semver-major"]
       # Werkzeug 3.1.9 uses patterns that watchdog 7's full-path matching rejects.
       - dependency-name: watchdog
+        update-types: ["version-update:semver-major"]
+      # Debug Toolbar 8 replaces oversized-body JSON responses with HTML errors.
+      - dependency-name: django-debug-toolbar
         update-types: ["version-update:semver-major"]
     groups:
       python-minor-and-patch:

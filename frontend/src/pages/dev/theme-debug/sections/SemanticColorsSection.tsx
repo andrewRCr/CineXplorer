@@ -60,7 +60,7 @@ export function SemanticColorsSection() {
                 </Text>
               </VStack>
             ) : (
-              // IBM Carbon, GitLab Pajamas, and Material Design 3 have brand colors
+              // Marquee, IBM Carbon, GitLab Pajamas, and Material Design 3 have brand colors
               <VStack gap={4}>
                 {/* Color swatches (circles) */}
                 <HStack gap={6} wrap="wrap" justify="center">
@@ -79,11 +79,13 @@ export function SemanticColorsSection() {
                         brand
                       </Text>
                       <Text fontSize="2xs" color="foreground/60">
-                        {theme === "ibm-carbon"
-                          ? "IBM Blue"
-                          : theme === "gitlab-pajamas"
-                            ? "Orange 01p"
-                            : "Material Purple"}
+                        {theme === "marquee"
+                          ? "Marquee Brass (primary)"
+                          : theme === "ibm-carbon"
+                            ? "IBM Blue"
+                            : theme === "gitlab-pajamas"
+                              ? "Orange 01p"
+                              : "Material Purple"}
                       </Text>
                     </VStack>
                   </VStack>

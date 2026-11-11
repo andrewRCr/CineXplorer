@@ -7,12 +7,12 @@
     <!-- Theme color for browser UI (address bar, etc.) - helps with visual continuity -->
     <meta
       name="theme-color"
-      content="#161616"
+      content="#110E0A"
       media="(prefers-color-scheme: dark)"
     />
     <meta
       name="theme-color"
-      content="#ffffff"
+      content="#F2E8CE"
       media="(prefers-color-scheme: light)"
     />
     <title>CineXplorer</title>
@@ -23,7 +23,7 @@
       #root {
         margin: 0;
         min-height: 100vh;
-        background-color: var(--app-bg, #161616) !important;
+        background-color: var(--app-bg, #110e0a) !important;
       }
 
       /* Preload overlay: covers screen, independent of React */
@@ -34,7 +34,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: var(--app-bg, #161616);
+        background-color: var(--app-bg, #110e0a);
         /* Start invisible but in DOM (faster than display:none toggle) */
         opacity: 0;
         pointer-events: none;
@@ -68,7 +68,7 @@
       // Prevent flash of wrong background before React/Chakra loads
       // Sets CSS variable used by html/body/#root/#preload-overlay styles
       (function () {
-        var bg = "#161616"; // Default: IBM Carbon dark
+        var bg = "#110E0A"; // Default: Marquee dark
         try {
           var stored = localStorage.getItem("cinexplorer-bg");
           // Validate 6-char hex format (#XXXXXX) with valid hex digits
@@ -97,7 +97,7 @@
         var overlay = document.getElementById("preload-overlay");
         if (!overlay) return; // Defensive: bail if overlay missing
 
-        var bg = window.__PRELOAD_BG__ || "#161616";
+        var bg = window.__PRELOAD_BG__ || "#110E0A";
 
         // Calculate spinner color based on background luminance
         var hex = bg.replace("#", "");

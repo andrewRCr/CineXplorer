@@ -4,8 +4,8 @@
  * @deprecated REFERENCE ONLY - DO NOT IMPORT OR USE IN APPLICATION CODE.
  *
  * This palette is preserved for historical reference during future custom theme development.
- * The application now uses design system palettes (GitHub Primer, IBM Carbon, GitLab Pajamas,
- * Material Design 3) mapped to semantic tokens.
+ * The application uses its own default Marquee palette beside four adapted design systems
+ * (GitHub Primer, IBM Carbon, GitLab Pajamas, Material Design 3), mapped to semantic tokens.
  *
  * This palette documents the colors that were actually in use in the original
  * theme system before migration to semantic tokens. Unused colors (gradients,

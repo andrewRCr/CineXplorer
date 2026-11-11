@@ -3,7 +3,8 @@
  *
  * Defines the UnifiedTheme interface that provides consistent cross-theme vocabulary
  * for CineXplorer's component layer. This adapter layer sits between official design
- * system tokens (GitHub Primer, IBM Carbon, GitLab Pajamas) and application components.
+ * system tokens (GitHub Primer, IBM Carbon, GitLab Pajamas, Material Design 3),
+ * CineXplorer's own Marquee palette, and application components.
  *
  * **ARCHITECTURAL DECISION (ADR-005):**
  * This interface uses CANONICAL token names only. Semantic aliases like "card",
@@ -325,7 +326,7 @@ export interface UnifiedTheme {
     // Per ADR-010: Primary/Secondary/Tertiary hierarchy with optional brand separation.
     // Per ADR-011: Standardized on `on-*` prefix for ALL foreground tokens.
     // Token types match usage: background tokens for fills, foreground tokens for text.
-    // All `-foreground` suffix tokens are deprecated in favor of `on-*` prefix.
+    // The old `-foreground` suffix tokens were removed; use the `on-*` prefix.
 
     /**
      * Primary action button background color.
@@ -336,7 +337,7 @@ export interface UnifiedTheme {
      *
      * **Usage:**
      * - Submit buttons, "Save" buttons, primary CTAs
-     * - Always use with `primary-foreground` for text
+     * - Always use with `on-primary` for text
      * - Mandatory for all filled primary buttons
      *
      * **Design System Mappings (ADR-010):**
@@ -388,7 +389,7 @@ export interface UnifiedTheme {
      * ```tsx
      * <Button
      *   bg="secondary"
-     *   color="secondary-foreground"
+     *   color="on-secondary"
      *   borderWidth="1px"
      *   borderColor="border-strong-01"
      * >
@@ -483,7 +484,7 @@ export interface UnifiedTheme {
      * - Tertiary: Foreground token for links/text
      * - Primary: Background token for button fills
      *
-     * **Replaces:** `accent` (deprecated - use `tertiary` for new code)
+     * **Replaces:** the removed `accent` name; use `tertiary`
      *
      * @see ADR-010 for Primary/Secondary/Tertiary hierarchy rationale
      */
@@ -918,7 +919,7 @@ export interface UnifiedTheme {
     // STATUS COLORS (Semantic Feedback)
     // ===================================================================
     // Per ADR-011: All foreground tokens use `on-*` prefix for consistency.
-    // The `-foreground` suffix variants are deprecated.
+    // The `-foreground` suffix variants were removed; use `on-*` roles.
 
     /**
      * Danger, error, and delete action background color.
@@ -1036,19 +1037,14 @@ export interface UnifiedTheme {
     /**
      * IMDb gold color for rating star icons.
      *
-     * **Standard:** IMDb gold (#F5C518) in light mode, adjusted for dark mode
-     * **Usage:** Star icons (★) for user personal ratings (5-star system)
+     * **Standard:** Each theme sets its own accessible gold in both modes.
+     * **Usage:** Star icons, such as a row of rating stars.
+     * Numeric TMDB and user ratings use an outlined dot chip with neutral text;
+     * fewer than 10 TMDB votes use the filled `badge` / `on-badge` pair.
      *
-     * **Pattern:**
      * ```tsx
      * <Text color="imdb-gold" fontSize="xl">★★★★☆</Text>
      * ```
-     *
-     * **NOT for badge backgrounds:**
-     * - TMDB community scores with 10 or more votes use traffic-light status colors (success/warning/error)
-     * - See CineXplorerExtensionsSection for reference implementation
-     * - ≥7.5: success (green), 5.0-7.4: warning (yellow), <5.0: error (red)
-     * - Fewer than 10 votes: neutral badge (`badge` / `on-badge`)
      */
     "imdb-gold": string;
 

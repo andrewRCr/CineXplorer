@@ -298,10 +298,10 @@ export function FeedbackStatusSection() {
                 lineHeight="1.5"
                 mt={2}
               >
-                Note: TMDB community scores are CineXplorer extensions that use
-                status badge variants based on thresholds, or the neutral
-                variant below 10 votes (see Extensions section). User rating
-                stars use <Code fontSize="xs">imdb-gold</Code> token color.
+                Note: TMDB and numeric user ratings use outlined chips with a
+                colored dot and neutral text. TMDB scores below 10 votes keep
+                the filled neutral badge. Star icons use{" "}
+                <Code fontSize="xs">imdb-gold</Code> token color.
               </Text>
             </VStack>
           </Box>

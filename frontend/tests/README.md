@@ -50,7 +50,7 @@ expect(await screen.findByText("Fight Club")).toBeInTheDocument();
 
 Both shared renderers provide:
 
-- The application's default IBM Carbon Chakra system, including its semantic
+- The application's default Marquee Chakra system, including its semantic
   tokens and recipes.
 - A fresh TanStack Query client for each render call, with query and mutation
   retries disabled. Its cache survives `rerender` and is separate from other
@@ -66,8 +66,24 @@ document state. The global `next-themes` mock also limits color-mode integration
 coverage.
 
 For computed recipe-style assertions, jsdom skips CSS `@layer` blocks. Use a
-layer-free copy of the project system, as `MovieUserScore.test.tsx` does, and
-assert the semantic token rather than a raw color.
+layer-free `styleSystem` and `expectResolvedColor` from `@tests/helpers/theme-styles`.
+Both shared renderers accept an optional `system`, including when rendering routes:
+
+```tsx
+render(<Component />, { system: styleSystem });
+renderWithRoute("/movie/:id", <MovieDetail />, {
+    initialRoute: "/movie/123",
+    system: styleSystem,
+});
+expectResolvedColor(
+    element,
+    "border-color",
+    "var(--chakra-colors-border-subtle-01)",
+);
+```
+
+The assertion resolves an independent sibling probe and compares computed colors;
+assert transparent backgrounds directly because the probe rejects transparent values.
 
 ## Network Responses with MSW
 

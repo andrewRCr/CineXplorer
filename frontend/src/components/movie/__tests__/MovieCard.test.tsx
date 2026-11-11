@@ -14,6 +14,7 @@ import { server } from "@tests/mocks/server";
 import { createMockUserMovieData } from "@tests/mocks/movieData";
 import { Toaster, toaster } from "@/components/core/chakra/toaster";
 import MovieCard from "../MovieCard";
+import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
 
 // Mock the COLORS constant since it's used in the component
 
@@ -26,6 +27,20 @@ describe("MovieCard Component", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("draws its title in the theme foreground", () => {
+    render(
+      <MovieCard
+        movie={createMockMovieListItem({ title: "A themed movie" })}
+      />,
+      { system: styleSystem },
+    );
+    expectResolvedColor(
+      screen.getByText("A themed movie"),
+      "color",
+      "var(--chakra-colors-foreground)",
+    );
   });
 
   describe("Basic Rendering", () => {

@@ -546,9 +546,9 @@ django-coverage-plugin==3.2.2 \
     --hash=sha256:66c9bdb2756762d6bef3510548bb228e1e8465ff1cd2b372775b82624e85e0b4 \
     --hash=sha256:fcc507ee02f3a8f7c1d79b6eba1bafebb4a95b5055801987b715f4f88270c441
     # via -r req.dev.in
-django-debug-toolbar==5.2.0 \
-    --hash=sha256:15627f4c2836a9099d795e271e38e8cf5204ccd79d5dbcd748f8a6c284dcd195 \
-    --hash=sha256:9e7f0145e1a1b7d78fcc3b53798686170a5b472d9cf085d88121ff823e900821
+django-debug-toolbar==8.0.0 \
+    --hash=sha256:329dfd6e1c26d9b4501a5cc69294c8bb734206ccb1bd36e96afc4d14128b630a \
+    --hash=sha256:cae32d3e441e608f39f3f1ca6b3f028c38d5d04d74c98d8ab96d46022dee3163
     # via -r req.dev.in
 django-environ==0.14.0 \
     --hash=sha256:8dbe8a57f0a540ab8abd6f54f230de5e99e3a2c9d797cb9caecb037bca3d47d8 \
@@ -556,9 +556,9 @@ django-environ==0.14.0 \
     # via
     #   -c req.txt
     #   -r req.in
-django-extensions==3.2.3 \
-    --hash=sha256:44d27919d04e23b3f40231c4ab7af4e61ce832ef46d610cc650d53e68328410a \
-    --hash=sha256:9600b7562f79a92cbf1fde6403c04fee314608fefbb595502e34383ae8203401
+django-extensions==4.1 \
+    --hash=sha256:0699a7af28f2523bf8db309a80278519362cd4b6e1fd0a8cd4bf063e1e023336 \
+    --hash=sha256:7b70a4d28e9b840f44694e3f7feb54f55d495f8b3fa6c5c0e5e12bcb2aa3cdeb
     # via -r req.dev.in
 django-ninja==1.7.3 \
     --hash=sha256:5e3c2dcead83a2512ea772dbc435ca51632cf46bf3be1523bac41e5bb394891c \
@@ -930,7 +930,9 @@ platformdirs==4.14.5 \
 pluggy==1.7.0 \
     --hash=sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec \
     --hash=sha256:d1eaa46ebb595891b860ab086b4d09c8588af65ebd4361b8e8f4bb8920b90ba8
-    # via pytest
+    # via
+    #   pytest
+    #   pytest-cov
 psycopg==3.2.13 \
     --hash=sha256:309adaeda61d44556046ec9a83a93f42bbe5310120b1995f3af49ab6d9f13c1d \
     --hash=sha256:a481374514f2da627157f767a9336705ebefe93ea7a0522a6cbacba165da179a
@@ -1136,9 +1138,9 @@ pytest==9.2.0 \
     #   pytest-cov
     #   pytest-django
     #   pytest-xdist
-pytest-cov==5.0.0 \
-    --hash=sha256:4f0764a1219df53214206bf1feea4633c3b558a2925c8b59f144f682861ce652 \
-    --hash=sha256:5837b58e9f6ebd335b0f8060eecce69b662415b16dc503883a02f45dfeb14857
+pytest-cov==7.1.0 \
+    --hash=sha256:30674f2b5f6351aa09702a9c8c364f6a01c27aae0c1366ae8016160d1efc56b2 \
+    --hash=sha256:a0461110b7865f9a271aa1b51e516c9a95de9d696734a2f71e3e78f46e1d4678
     # via -r req.dev.in
 pytest-django==4.14.0 \
     --hash=sha256:26787dd3f422cfbab8f55b80a776e2edea7a11092cb74e960bef1312515708ef \

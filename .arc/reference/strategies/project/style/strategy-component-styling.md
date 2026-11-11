@@ -1364,9 +1364,9 @@ import { StyledInput } from "@/components/common";
 **Why it matters:** StyledInput encapsulates ADR-015 border-only focus pattern and ensures consistent focus behavior
 across all form inputs. Inline focus styling bypasses centralized implementation and risks inconsistency.
 
-### Deprecated Token Aliases
+### Removed Token Aliases
 
-**❌ Wrong: Old dotted aliases**
+**❌ Wrong: Removed dotted aliases**
 
 ```tsx
 <Text color="text.secondary">Secondary text</Text>
@@ -1382,11 +1382,10 @@ across all form inputs. Inline focus styling bypasses centralized implementation
 <Box bg="layer-hover-01">Hover state</Box>  {/* or tertiary/8 for hover */}
 ```
 
-**Why it matters:** Deprecated aliases were part of ADR-011 migration (2025-11). They're maintained for backward
-compatibility but represent old naming conventions. Using canonical tokens ensures code clarity and aligns with current
-documentation.
+**Why it matters:** The dotted aliases were removed and define no runtime colors. Use the canonical roles
+so every reference resolves to the active theme.
 
-**Deprecated → Canonical mappings:**
+**Removed → Canonical mappings:**
 
 - `text.secondary` → `on-muted`
 - `border.subtle` → `border-strong-01` (for form controls on layer-01) or `border-subtle-01` (for decorative dividers)

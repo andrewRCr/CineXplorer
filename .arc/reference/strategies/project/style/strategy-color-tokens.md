@@ -57,7 +57,7 @@ CineXplorer uses Material Design 3's `on-*` naming convention for foreground tok
 <Button bg="primary" color="on-primary">Save</Button>
 <Box bg="destructive" color="on-destructive">Error</Box>
 
-// ❌ Deprecated: -foreground suffix (old naming)
+// ❌ Removed: -foreground suffix; use on-success instead
 <Badge bg="success" color="success-foreground">Active</Badge>
 ```
 
@@ -75,23 +75,22 @@ CineXplorer uses Material Design 3's `on-*` naming convention for foreground tok
 - `on-popover` - Text on popover/tooltip backgrounds
 - `on-brand` / `on-brandSecondary` / `on-brandTertiary` - Text on brand backgrounds
 
-### Deprecated Aliases (Backward Compatibility)
+### Removed Aliases
 
-During ADR-011 migration (2025-11), old naming conventions were replaced but aliases maintained for compatibility:
+The old names below were removed. They define no runtime tokens; use the canonical role in the second column:
 
-| Deprecated (Old)     | Canonical (Current)                      | Notes                                               |
-|----------------------|------------------------------------------|-----------------------------------------------------|
-| `accent`             | `tertiary`                               | Hierarchy naming preferred                          |
-| `accent-foreground`  | `on-tertiary`                            | on-* prefix pattern                                 |
-| `primary-foreground` | `on-primary`                             | on-* prefix pattern                                 |
-| `success-foreground` | `on-success`                             | on-* prefix pattern                                 |
-| `text.secondary`     | `on-muted`                               | Semantic clarity                                    |
-| `border.subtle`      | `border-strong-01` or `border-subtle-01` | Layer-aware (strong for forms, subtle for dividers) |
-| `background.subItem` | `layer-hover-01`                         | Explicit interaction state naming                   |
-| `tertiary.primary`   | `tertiary` or `ring`                     | Simplified naming                                   |
+| Removed (Old)          | Canonical (Current)                        | Notes                                                 |
+| ---------------------- | ------------------------------------------ | ----------------------------------------------------- |
+| `accent`               | `tertiary`                                 | Hierarchy naming preferred                            |
+| `accent-foreground`    | `on-tertiary`                              | on-* prefix pattern                                   |
+| `primary-foreground`   | `on-primary`                               | on-* prefix pattern                                   |
+| `success-foreground`   | `on-success`                               | on-* prefix pattern                                   |
+| `text.secondary`       | `on-muted`                                 | Semantic clarity                                      |
+| `border.subtle`        | `border-strong-01` or `border-subtle-01`   | Layer-aware (strong for forms, subtle for dividers)   |
+| `background.subItem`   | `layer-hover-01`                           | Explicit interaction state naming                     |
+| `tertiary.primary`     | `tertiary` or `ring`                       | Simplified naming                                     |
 
-**Guidance:** Use canonical tokens in all new code. Deprecated aliases will be maintained but may be removed in future
-major versions.
+**Guidance:** Use the canonical roles. Removed aliases do not resolve to theme colors.
 
 ### Semantic Hierarchy
 
@@ -192,8 +191,8 @@ as the contract between themes and components.
 11. **UI Elements** (~1 token)
     - `ring`
 
-12. **Deprecated Aliases** (~8 tokens)
-    - Maintained for backward compatibility
+12. **Removed Aliases** (no runtime tokens)
+    - Use `tertiary` and the canonical `on-*` roles instead
 
 **Total:** ~67 tokens (including optional brand tokens)
 
@@ -240,14 +239,13 @@ examples.
 
 ### Tertiary vs Accent Naming
 
-**Canonical:** Use `tertiary` for new code (Material Design 3-aligned)
-**Deprecated:** `accent` is an alias maintained for backward compatibility
+**Canonical:** Use `tertiary` (Material Design 3-aligned). The `accent` alias was removed.
 
 ```tsx
 // ✅ Preferred (canonical naming)
 <Link color="tertiary">Learn more</Link>
 
-// ⚠️ Works but deprecated (old naming)
+// ❌ Removed alias; this does not resolve to a theme color
 <Link color="accent">Learn more</Link>
 ```
 
@@ -510,7 +508,7 @@ Fast lookup cheat sheet for common token choices.
 - **Color interactions:** 6 (primary/secondary/tertiary hover/active)
 - **Movie-specific:** 6 (rating, badge, drag-active, drop-zone pairs)
 - **UI elements:** 2 (border, ring)
-- **Deprecated aliases:** 9 (during ADR-011 migration, including legacy `input` token)
+- **Removed aliases:** No runtime tokens, including the removed legacy `input` name
 
 **Note:** Recipes centralize many tokens - consult recipe files for implementation details.
 

@@ -287,24 +287,14 @@ _Exit criterion:_ the search Success Criterion 9 names finds nothing in producti
     - An exploratory forced lint of the Chakra snippets hit their documented mixed-export/Fast Refresh exception;
       restored the configured invocation without overriding that deliberate exclusion.
 
-- [ ] **5.4 Removed role names are described as removed — R18**
+- [x] **5.4 Removed role names are described as removed — R18**
 
     **Goal:** No guidance tells a reader that `accent`, a `-foreground` name or any other removed alias still works.
 
-    - No alias role is defined anywhere under `frontend/src/theme`, so every statement that one is kept, deprecated or
-      still usable says instead that it was removed, pointing to `tertiary` and the `on-*` roles
-    - `frontend/src/theme/color/types.ts`: the comments calling the `-foreground` names deprecated (the section
-      comments before the action colors and before the status colors); the `primary` doc's "use with
-      `primary-foreground`"; the `secondary` example's `color="secondary-foreground"`; the `tertiary` doc's
-      "Replaces: `accent` (deprecated …)"
-    - `strategy-color-tokens.md`: the "Deprecated: -foreground suffix" example; the "Deprecated Aliases (Backward
-      Compatibility)" table and its guidance; item 12 of the token categories ("Deprecated Aliases … Maintained for
-      backward compatibility"); "Tertiary vs Accent Naming"; the token count's "Deprecated aliases: 9"
-    - `strategy-component-styling.md` "Deprecated Token Aliases": the dotted aliases it says are "maintained for
-      backward compatibility" were removed too; correct that sentence (the same stale claim, for the dotted names)
-    - **Check:** a case-insensitive search of `types.ts` and the two style strategies for `deprecated`, `backward
-      compat`, `accent-foreground`, `primary-foreground`, `secondary-foreground` and `success-foreground` finds only
-      statements that the names were removed
+    - Corrected the type comments/examples and both style strategies: old aliases define no runtime colors; use
+      `tertiary` and canonical `on-*` roles. Removed the compatibility claims and counts of aliases as live tokens.
+    - The required case-insensitive search finds old suffix names only in explicitly removed-name examples/table
+      entries. Markdown lint, touched-file lint/format and frontend type-check passed.
 
 - [ ] **5.5 Check `/login` passes without its baseline entry** (run `sign-up.spec.ts` and `sign-in.spec.ts`, and the
   Success Criterion 9 search)

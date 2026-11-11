@@ -125,16 +125,13 @@ under Marquee's `defaultSystem`.
           Kept the entry removed. All five smoke specs then passed against the worktree's browsable stack; the
           full run reported no unmatched baseline entries. Touched-file ESLint, formatting and type-check passed.
 
-- [ ] **2.3 The page paints Marquee before the app loads — R7, R18**
+- [x] **2.3 The page paints Marquee before the app loads — R7, R18**
 
     **Goal:** Before React mounts, the page paints Marquee's dark background, and a valid stored `cinexplorer-bg`
     still takes precedence.
 
-    - `frontend/index.html`: the `theme-color` tags become `#110E0A` (dark) and `#F2E8CE` (light); every `#161616`
-      (the two CSS fallbacks, the first script's default and the second script's fallback) becomes `#110E0A`; the
-      comment "Default: IBM Carbon dark" names Marquee's dark page
-    - The stored-background precedence and the dark first paint for light-mode systems stay as they are
-    - **Check:** `grep -c "#161616" frontend/index.html` prints 0
+    - Updated both browser theme colors and every default/CSS fallback to Marquee's page values; stored-background
+      validation and precedence are unchanged. `#161616` occurs zero times. HTML formatting passed.
 
 - [ ] **2.4 The theme documentation names Marquee the default — R9, R18**
 

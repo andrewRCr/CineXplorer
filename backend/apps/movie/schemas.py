@@ -199,8 +199,9 @@ class MovieListResponseSchema(Schema):
     user collections, etc. Supports optional pagination via page/total_pages fields.
 
     The next_tmdb_page_start field enables cursor-based pagination for TMDB-backed
-    endpoints with smart buffer mechanism. For non-paginated responses (e.g., user
-    movie collections), this field is None and page=1, total_pages=1.
+    endpoints with the smart buffer mechanism; null signals their exhaustion.
+    Database-served collections always leave it null and use page < total_pages
+    to indicate another page.
     """
 
     page: int = 1

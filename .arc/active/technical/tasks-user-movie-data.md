@@ -269,27 +269,20 @@ one item at `page_size=1` carrying the `Movie` row's card fields, with `total_pa
         - All 171 user-data tests pass; the 29 Library cases pass after every mutation is restored. Ruff, formatting
           and strict Pyright pass.
 
-- [ ] **3.2 The batch fetch is gone, and the pagination strategy states the database-list rule — D2, D7**
+- [x] **3.2 The batch fetch is gone, and the pagination strategy states the database-list rule — D2, D7**
 
     **Goal:** Nothing fetches a list's movies from TMDB one at a time, and the pagination strategy and
     `MovieListResponseSchema` describe lists served from the database.
 
-    - [ ] **3.2.a Remove `apps/movie/services/pipelines/batch.py` and its tests**
-        - With it go `test_batch_operations.py`, the `batch` mock paths in `apps/movie/tests/mock_paths.py` and
-          `apps/user_movie_data/tests/mock_paths.py`, the mention in `pipelines/__init__.py` and the per-file ignore in
-          `backend/pyproject.toml`
-        - `strategy-service-layer.md` loses its Batch Operations section, its contents entry, "batch operations" in its
-          Purpose line, the inventory row for `fetch_movies_batch`, the Key Files row for `batch.py`, and the
-          composition row for `UserMovieDataService._build_enriched_movies`, which 3.1.c removed; `STRATEGY-INDEX.md`
-          stops listing "batch operations" for it
-        - Search the living documents for "batch", `_build_enriched_movies` and `get_all_user_movies`: what still names
-          a removed thing changes here, or in 3.2.b for `strategy-authentication.md`'s example
-
-    - [ ] **3.2.b State the rule for database-served lists**
-        - `strategy-pagination.md` gains the rule as D7's last paragraph lists it; its End-of-Results Signal section
-          and `MovieListResponseSchema`'s docstring say a `null` `next_tmdb_page_start` ends only a TMDB-backed list
-        - `strategy-authentication.md`'s Library route example stops calling `get_all_user_movies`, and
-          `TECHNICAL-OVERVIEW.md` § 6 stops describing `UserMovieDataService` as TMDB enrichment
+    - [x] **3.2.a Remove the batch pipeline and its tests**
+        - Deleted the unused fetch module and 13 tests, removed batch mock paths/package mentions/lint exceptions,
+          and updated service-layer guidance and its index. Living-source/document searches find no removed batch or
+          list-helper symbols outside historical decisions/records.
+    - [x] **3.2.b State the rule for database-served lists**
+        - The pagination strategy now states bounds, validation, empty-page/count semantics, unique-key ordering and
+          refetch after writes. It and the response schema distinguish a TMDB exhaustion cursor from the database
+          list's always-null cursor. Updated the auth example and technical service inventory.
+        - All 623 tests in both touched apps pass, as do Ruff, formatting, strict Pyright and changed-document lint.
 
 - [ ] **3.3 Check a Library page end to end**
 

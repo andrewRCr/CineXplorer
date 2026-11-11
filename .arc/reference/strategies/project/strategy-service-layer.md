@@ -5,7 +5,7 @@
 ## Purpose
 
 Authoritative reference for CineXplorer's service layer architecture. Covers backend class-based services,
-dependency injection patterns, ORM access, batch operations, and frontend service organization.
+dependency injection patterns, ORM access and frontend service organization.
 Use when implementing new services, understanding existing patterns, or onboarding to the codebase.
 
 ## Table of Contents
@@ -16,7 +16,6 @@ Use when implementing new services, understanding existing patterns, or onboardi
    - [Decision Guide: Class vs Function](#decision-guide-class-vs-function)
    - [Repository Pattern](#repository-pattern)
    - [Service Composition](#service-composition)
-   - [Batch Operations](#batch-operations)
    - [Factory Functions](#factory-functions)
    - [Reference Implementations](#reference-implementations-backend)
 3. [Frontend Services](#frontend-services)
@@ -165,63 +164,16 @@ against the test database, replacing only external clients.
 
 Services can depend on other services or repositories for complex operations.
 
-A service can build another service with the same injected external client. For example, `UserMovieDataService`
-uses `MovieService(tmdb_client=self._tmdb_client)` to look up an unstored movie and uses the model's custom QuerySet
-for persisted user data.
+A service can call another service when it needs that service's behavior, sharing the injected external client.
+`UserMovieDataService` calls TMDB directly for a missing card and uses the model's QuerySet for stored state;
+`MovieEnrichmentService` reads the same QuerySet when attaching user state to movie responses.
 
-**Composition examples in codebase:**
+**Current service dependencies:**
 
 | Service                                     | Depends On                  | Purpose                          |
 | ------------------------------------------- | --------------------------- | -------------------------------- |
-| UserMovieDataService                        | TMDBApiClient, MovieService | CRUD + TMDB fetching             |
+| UserMovieDataService                        | TMDBApiClient               | CRUD + TMDB fetching             |
 | MovieEnrichmentService                      | UserMovieDataQuerySet       | Enriches movies with user data   |
-| UserMovieDataService._build_enriched_movies | MovieEnrichmentService      | Composes enrichment into queries |
-
-### Batch Operations
-
-For operations on multiple items (fetching, processing), use batch patterns with graceful degradation.
-
-**Pattern:**
-
-```python
-def fetch_movies_batch(movie_ids: list[int]) -> list[MovieListItemSchema]:
-    """
-    Fetch multiple movies with graceful degradation.
-
-    - Successfully fetched movies are returned
-    - Failed fetches are logged but don't fail the entire batch
-    - Duplicate IDs are deduplicated
-    - Empty input returns empty list
-    """
-    if not movie_ids:
-        return []
-
-    unique_ids = list(set(movie_ids))
-    successfully_fetched: list[MovieListItemSchema] = []
-    failed_count = 0
-
-    for movie_id in unique_ids:
-        try:
-            response = tmdb_client.get_movie_details(movie_id)
-            if response.is_success():
-                successfully_fetched.append(transform(response))
-            else:
-                failed_count += 1
-                logger.warning("Failed to fetch movie", extra={...})
-        except Exception as e:
-            failed_count += 1
-            logger.error("Unexpected error", extra={...}, exc_info=True)
-
-    logger.info(f"Batch complete: {len(successfully_fetched)} succeeded, {failed_count} failed")
-    return successfully_fetched
-```
-
-**Key characteristics:**
-
-- Graceful degradation (partial failures don't fail entire operation)
-- Deduplication of input IDs
-- Structured logging with success/failure counts
-- Empty input handling (no-op, no API calls)
 
 ### Factory Functions
 
@@ -263,11 +215,10 @@ def get_movie_service() -> MovieService:
 | MovieService           | `movie/services/movie_service.py`                      | Class + DI, inherits BaseTMDBService | TMDB integration for discovery, search, details |
 | KeywordService         | `movie/services/keyword_service.py`                    | Class + DI, inherits BaseTMDBService | TMDB keyword operations                         |
 | PeopleService          | `movie/services/people_service.py`                     | Class + DI, inherits BaseTMDBService | TMDB people/cast operations                     |
-| UserMovieDataService   | `user_movie_data/services/user_movie_data_service.py`  | Class + DI + composition             | CRUD with TMDB integration                      |
+| UserMovieDataService   | `user_movie_data/services/user_movie_data_service.py`  | Class + DI + ORM                     | CRUD with TMDB integration                      |
 | MovieEnrichmentService | `user_movie_data/services/movie_enrichment_service.py` | Class + ORM                          | Enriches movies with user data                  |
 | AuthenticationService  | `authentication/services/authentication_service.py`    | Class + DI (extensive)               | Security-critical auth operations               |
 | BaseTMDBService        | `movie/services/base_service.py`                       | Base class                           | Shared DI pattern for TMDB services             |
-| fetch_movies_batch     | `movie/services/pipelines/batch.py`                    | Function                             | Batch TMDB fetching with graceful degradation   |
 
 ---
 
@@ -447,7 +398,6 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 | `user_movie_data_service.py`  | `backend/apps/user_movie_data/services/` | User movie data CRUD               |
 | `movie_enrichment_service.py` | `backend/apps/user_movie_data/services/` | Enrichment with user data          |
 | `authentication_service.py`   | `backend/apps/authentication/services/`  | Auth operations                    |
-| `batch.py`                    | `backend/apps/movie/services/pipelines/` | Batch TMDB fetching                |
 
 ### Frontend
 

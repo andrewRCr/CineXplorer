@@ -5,20 +5,21 @@
 ## Purpose
 
 Authoritative reference for CineXplorer's pagination architecture. Covers the buffer mechanism,
-deduplication tracking, cursor-based pagination, and frontend integration. Use when debugging
+deduplication tracking, TMDB cursors, database page numbers, and frontend integration. Use when debugging
 pagination issues, extending pagination features, or onboarding to the codebase.
 
 ## Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
-2. [Buffer Mechanism](#buffer-mechanism)
-3. [Deduplication Tracker](#deduplication-tracker)
-4. [Cursor-Based Pagination](#cursor-based-pagination)
-5. [Frontend Integration](#frontend-integration)
-6. [Virtualization](#virtualization)
-7. [Scroll Restoration](#scroll-restoration)
-8. [Content Pool Depletion](#content-pool-depletion)
-9. [Key Files Reference](#key-files-reference)
+2. [Database-Served Lists](#database-served-lists)
+3. [Buffer Mechanism](#buffer-mechanism)
+4. [Deduplication Tracker](#deduplication-tracker)
+5. [Cursor-Based Pagination](#cursor-based-pagination)
+6. [Frontend Integration](#frontend-integration)
+7. [Virtualization](#virtualization)
+8. [Scroll Restoration](#scroll-restoration)
+9. [Content Pool Depletion](#content-pool-depletion)
+10. [Key Files Reference](#key-files-reference)
 
 ---
 
@@ -53,6 +54,23 @@ Frontend Request: /browse?certification=R&tmdb_page_start=7
                             ▼
 Frontend: Store next cursor, display the 22 movies
 ```
+
+---
+
+## Database-Served Lists
+
+Use page numbers through `paginate_queryset` for lists read from the database. Validate page between 1 and
+1,000,000 and page_size between 1 and 100 (default 20) in the query schema; invalid values answer 422 rather than
+being clamped. A page past the end returns an empty result list with valid counts.
+
+Use the `MovieListResponseSchema` envelope: page, total_pages and total_results describe the page and collection.
+A further page exists while page is below total_pages. Set next_tmdb_page_start to null because the list has no
+TMDB cursor; that null does not mean the database list has ended.
+
+Every ordering ends on a unique key in the requested direction, with nulls last in both directions, so unchanged
+lists have deterministic, non-overlapping pages. After a save or DELETE, clients refetch their loaded pages because
+writes can shift page boundaries. Fetch related card rows with the page in one query; the count is a second query,
+independent of collection size. The Library never calls TMDB to read a page.
 
 ---
 
@@ -217,7 +235,8 @@ else:
 
 ### End-of-Results Signal
 
-`next_tmdb_page_start = null` signals to frontend that no more results exist.
+`next_tmdb_page_start = null` signals exhaustion only for a TMDB-backed list. Database-served lists always leave
+that field null and use page against total_pages to signal whether another page exists.
 This triggers `hasNextPage = false` in TanStack Query.
 
 Conditions for end-of-results:

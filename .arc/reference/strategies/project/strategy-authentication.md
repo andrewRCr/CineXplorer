@@ -333,11 +333,11 @@ const apiClient = axios.create({
 
 ```python
 @user_movie_data_router.get("/movies", response=MovieListResponseSchema)
-def get_user_movies(request: HttpRequest, watchlist: bool = False) -> MovieListResponseSchema:
+def get_user_movies(request: HttpRequest, query: Query[LibraryQuerySchema]) -> MovieListResponseSchema:
     # The Bearer token's user or the session's user; request.user comes
     # only from the session, never from the token
     user = get_current_user(request)
-    return _service.get_all_user_movies(user=user, watchlist_only=watchlist if watchlist else None)
+    return _service.get_library(user, query)
 ```
 
 ---

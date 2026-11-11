@@ -131,7 +131,6 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 "apps/movie/services/data_quality/filters.py" = ["BLE001", "TRY400"]
 # One unexpected dependency failure must not abort the whole movie batch; HTTP errors may
 # contain request URLs and credentials, so error logs exclude exception text and tracebacks.
-"apps/movie/services/pipelines/batch.py" = ["BLE001", "TRY400"]
 # Error-code literals are identifiers, not credentials.
 "apps/core/schemas.py" = ["S105"]
 # Bootstrap/fallback diagnostics must work before logging is reliable and go to stderr.

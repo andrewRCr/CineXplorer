@@ -113,22 +113,20 @@ rewritten service tests pass with `repositories.py` deleted.
         - All 97 user-data tests pass on freshly migrated databases; Ruff, formatting, strict Pyright and migration
           drift checks pass. Installed django-types' old CheckConstraint signature has narrow documented ignores.
 
-- [ ] **1.4 `Movie` stores card fields and timestamps — D8**
+- [x] **1.4 `Movie` stores card fields and timestamps — D8**
 
     **Goal:** A `Movie` row can hold everything a Library card shows and when it was last refreshed, with rows stored
     before the change migrated and the migration reversible.
 
-    - [ ] **1.4.a Write the model and migration tests in `apps/core/tests/integration/test_models.py`**
-        - New rows: `vote_average`, `vote_count`, `runtime`, `overview` and `refreshed_at` default to `null`,
-          `genre_ids` to `[]`; `created_at` is set; `updated_at` moves on any save, the admin's included; a plain save
-          leaves `refreshed_at` unchanged
-        - The migration applies to existing rows (migration time as `created_at`, card fields empty) and reverses
-        - Expect tests to FAIL initially
-
-    - [ ] **1.4.b Add the fields and the `core` migration**
-        - `genre_ids` is an integer array defaulting to empty (`django.contrib.postgres.fields.ArrayField`, its first
-          use here, so check pyright accepts it); the model docstring stops calling the row a minimal stub
-        - Tests should now PASS
+    - [x] **1.4.a Write the model and migration tests**
+        - Three tests failed before implementation: missing card defaults, absent timestamps and the historical
+          row's missing creation time. They now cover independent genre arrays, ordinary/admin save timestamps,
+          unchanged refresh time on plain saves, existing-row migration defaults and reversal.
+    - [x] **1.4.b Add the fields and the `core` migration**
+        - Added nullable card fields and refresh time, an integer genre array and creation/update timestamps.
+          The reversible migration sets existing rows' creation time without fetching TMDB.
+        - All 386 tests in core/user-data pass, with Ruff, formatting, strict Pyright (including ArrayField) and
+          migration drift checks passing. Phase 1's exit criterion is met.
 
 ### **Phase 2:** One save by TMDB ID, bounded per user
 

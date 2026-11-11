@@ -349,13 +349,13 @@ _Exit criterion:_ on the browsable stack, viewing a stored movie's detail moves 
           All eight deployment tests pass again; Ruff, formatting, shell syntax and README markdown lint pass.
           These deployment tests run locally and are outside CI.
 
-- [ ] **4.4 ADR-026 records this change as its realization — D7, D9**
+- [x] **4.4 ADR-026 records this change as its realization — D7, D9**
 
     **Goal:** ADR-026 tells a later reader how a removed movie is handled and what freshness and Library cost the
     realization delivered, without changing its Decision.
 
-    - A dated amendment, as the PRD's "ADRs this work delivers" describes: the removed-movie risk in Risks, and the two
-      learnings in Consequences
+    - Dated append-only amendments record the removed-movie risk, bounded freshness and the two-query Library read.
+      Status records realization; the Decision and original consequences remain intact. Markdown lint passes.
 
 - [ ] **4.5 Check the refresh end to end**
 

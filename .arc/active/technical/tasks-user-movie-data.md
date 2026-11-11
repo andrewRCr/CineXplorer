@@ -230,14 +230,15 @@ clock minute answers 429.
     - ADR-025/026 Status lines name only the superseded duplicate-save 409 and PUT save. Their remaining decisions
       stand; acceptance of ADR-041 remains in verification. All three changed ADRs pass markdown lint.
 
-- [ ] **2.6 Check a save end to end**
+- [x] **2.6 Check a save end to end**
 
     **Goal:** The save composes through the real stack: routing, sign-in, CSRF, TMDB and the Redis counters.
 
-    - Run Phase 2's exit criterion as a scripted scenario against the browsable stack
-      (`node scripts/worktree.mjs browse`), signed in as the `dev` account `seed_dev_data` creates, and record what ran
-      and the result
-    - Every PATCH and DELETE carries a CSRF token from `/api/csrf/`, whichever way the scenario signs in
+    - A scripted scenario through the worktree's browsable stack signed in as dev with bearer credentials and
+      matching CSRF/Origin headers. The previously unstored TMDB movie 550 saved with 201, updated with 200, read
+      with 200, deleted with 204 and then read as 404. Its Movie row retained mapped vote data, runtime and refresh time.
+    - All 31 PATCH attempts ran in one fixed minute: 30 succeeded and the last answered 429 with Retry-After 58.
+      The script and output are retained with the work unit's run evidence. Phase 2's exit criterion is met.
 
 ### **Phase 3:** The Library is served from the database
 

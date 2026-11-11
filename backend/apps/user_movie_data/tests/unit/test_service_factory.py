@@ -19,16 +19,6 @@ def test_get_movie_enrichment_service_returns_service_instance() -> None:
     assert isinstance(service, MovieEnrichmentService)
 
 
-def test_get_movie_enrichment_service_injects_repository() -> None:
-    """Test that factory injects a repository into the service."""
-    # Act
-    service = get_movie_enrichment_service()
-
-    # Assert: Service should have a repository injected
-    # We can verify this by checking the private attribute
-    assert service._repository is not None  # pyright: ignore[reportPrivateUsage]
-
-
 def test_factory_creates_new_instance_each_call() -> None:
     """Test that factory creates a new service instance on each call."""
     # Act

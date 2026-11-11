@@ -1,82 +1,15 @@
-"""Movie enrichment service for populating user-specific movie data.
-
-This service follows the class-based architecture with dependency injection
-pattern, enabling testability and separation of concerns.
-
-Architecture:
-- Class-based service (not function-based)
-- Dependency injection for testability
-- Professional type annotations (no Any usage)
-- Single responsibility: enrich movie data with user context
-- Repository pattern for data access abstraction
-"""
+"""Attach a user's stored movie state through one bulk query."""
 
 from __future__ import annotations
-
-from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractBaseUser
 
 from apps.movie.schemas import MovieListItemSchema, UserMovieDataSchema
 from apps.user_movie_data.models import UserMovieData
 
-if TYPE_CHECKING:
-    from apps.user_movie_data.repositories import UserMovieDataRepository
-
 
 class MovieEnrichmentService:
-    """Service for enriching movie data with user-specific information.
-
-    This service takes movie data (typically from TMDB) and enriches it with
-    user-specific data like watchlist status, ratings, and reviews. It uses
-    dependency injection with the repository pattern to abstract data access,
-    enabling testability and maintaining separation of concerns.
-
-    The service performs efficient bulk queries through the repository layer
-    to avoid N+1 query problems, ensuring optimal performance regardless of
-    the number of movies being enriched.
-
-    Architecture Pattern:
-        - Dependency injection with repository pattern
-        - Functional programming principles (returns new instances, no mutation)
-        - Type-safe with full annotations
-        - Single responsibility (enrichment logic only)
-
-    Usage:
-        # Production usage (default repository)
-        service = MovieEnrichmentService()
-        enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
-
-        # Testing with mock repository
-        mock_repo = MockUserMovieDataRepository()
-        service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-        enriched_movies = service.enrich_movies_with_user_movie_data(movies, user)
-    """
-
-    def __init__(self, user_movie_data_repository: UserMovieDataRepository | None = None) -> None:
-        """Initialize the movie enrichment service.
-
-        Args:
-            user_movie_data_repository: Optional repository for UserMovieData
-                access. If None, creates default repository using Django ORM.
-                Inject mock repositories for testing.
-
-        Example:
-            # Production usage (default repository)
-            service = MovieEnrichmentService()
-
-            # Testing with mock repository
-            mock_repo = MockUserMovieDataRepository()
-            service = MovieEnrichmentService(user_movie_data_repository=mock_repo)
-        """
-        # Use injected repository or create default
-        if user_movie_data_repository is not None:
-            self._repository = user_movie_data_repository
-        else:
-            # Import here to avoid circular dependency
-            from apps.user_movie_data.repositories import UserMovieDataRepository
-
-            self._repository = UserMovieDataRepository()
+    """Return new movie schemas enriched from the requesting user's rows."""
 
     def enrich_movies_with_user_movie_data(
         self, movies: list[MovieListItemSchema], user: AbstractBaseUser | None
@@ -128,10 +61,10 @@ class MovieEnrichmentService:
         # Extract all tmdb_ids from the movie list
         tmdb_ids = [movie.tmdb_id for movie in movies]
 
-        # Use repository to fetch UserMovieData (dependency injection)
-        user_data_map: dict[int, UserMovieData] = self._repository.get_for_user_and_movies(
-            user, tmdb_ids
-        )
+        records = UserMovieData.objects.get_queryset().for_user(user).for_movies(tmdb_ids)
+        user_data_map = {
+            record.movie.tmdb_id: record for record in records.select_related("movie")
+        }
 
         # Create new enriched movie instances (non-mutating approach)
         enriched_movies: list[MovieListItemSchema] = []

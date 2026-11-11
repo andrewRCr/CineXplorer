@@ -68,44 +68,23 @@ rewritten service tests pass with `repositories.py` deleted.
           fields, unnecessary queries, copied early returns, input mutation, altered cards and invented user data.
         - Every case passed against restored production code. No production behavior changed in this task.
 
-- [ ] **1.2 The repository folds into the service over one QuerySet — D2, D3**
+- [x] **1.2 The repository folds into the service over one QuerySet — D2, D3**
 
     **Goal:** The service reads and writes the ORM through one QuerySet with no class between them, and 1.1's tests
     pass, changed only in how they build the service and in the exception classes they expect.
 
-    - [ ] **1.2.a Add `UserMovieDataQuerySet` as `UserMovieData`'s manager**
-        - The filters today's callers share: scoping to a user, the watchlist, watched and rated filters, and the
-          lookup of a user's rows for a set of TMDB IDs that enrichment uses
-        - The liked and "holds any state" filters arrive with their first caller, the Library (3.1)
-
-    - [ ] **1.2.b Move both services and their factories onto it**
-        - `UserMovieDataService`'s constructor takes `tmdb_client` (as `MovieService` does) and no repository or
-          `MovieService`; `MovieEnrichmentService` takes no repository
-        - In the same step, since `api.py` builds its service from the factory when it is imported:
-          `services/service_factory.py` builds both services without a repository, and the three tests in
-          `tests/unit/test_service_factory.py` that build services around one are rewritten for the new constructors
-          or removed
-        - Interim homes, each replaced later: `create`, with its stub creation as `Movie.objects.create` and its TMDB
-          lookup through a `MovieService` built from the injected client, and the record-ID methods (`get_by_id`,
-          `update`, `delete`, which 2.2.c renames) stay on the service until 2.3.d; the Library keeps
-          `fetch_movies_batch` until 3.1.c
-        - `HttpError` gives way to `NotFoundError` for the 404s and `InvalidInputError` for the duplicate create's 400,
-          with the same status and body
-        - 1.1's tests change only in how they build the service (`tmdb_client=stub`) and in the exception classes they
-          expect
-
-    - [ ] **1.2.c Delete `repositories.py` and everything that presents it**
-        - Docstrings and comments in both services, `service_factory.py`, `tests/test_helpers.py` and `api.py`'s module
-          docstring
-        - `strategy-service-layer.md`: the Repository Pattern section keeps its heading, contents entry and general
-          rule (repositories are optional; ADR-025 cites the section) without `UserMovieDataRepository` as its example,
-          and the Purpose line stops presenting a repository as in use; the service composition example, its table's
-          repository dependencies, the inventory rows for `UserMovieDataService`, `MovieEnrichmentService` and
-          `UserMovieDataRepository`, and the Key Files row for `repositories.py` stop presenting it
-        - `TECHNICAL-OVERVIEW.md` § 6 (the repository and composition bullets) and the root `README.md` (its two
-          "repository pattern" claims, lines 14 and 56) stop presenting it
-        - Search the living documents for "repositor" and keep only general statements of the rule
-        - Run 1.1's tests: they should PASS
+    - [x] **1.2.a Add `UserMovieDataQuerySet` as `UserMovieData`'s manager**
+        - Shared filters scope to a user, watchlist, watched/rated state and TMDB IDs. A typed manager returns that
+          QuerySet and preserves database routing hints; one documented ignore covers django-types' invariant manager.
+    - [x] **1.2.b Move both services and their factories onto it**
+        - User-data services use the ORM directly; only the TMDB client is injected. Factories construct the new
+          services; the obsolete factory wiring assertion is removed. Existing service tests changed only their
+          constructor and expected domain exception classes. Interim record-ID methods and TMDB list fetching remain.
+    - [x] **1.2.c Delete `repositories.py` and everything that presents it**
+        - Removed the repository and its live references from API/service docs, the service-layer strategy,
+          technical overview and README. General guidance on optional repositories remains.
+        - Both touched apps pass 540 tests; Ruff, format, strict Pyright and changed-document lint pass. Django detects
+          no migration from the manager change.
 
 - [ ] **1.3 `UserMovieData` holds its invariants in the database — D4**
 

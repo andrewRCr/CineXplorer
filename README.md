@@ -11,7 +11,7 @@ TMDB API for browsing, filtering, and keeping a personal watchlist. The core eng
 challenge is data quality: TMDB's catalog contains millions of entries with inconsistent
 metadata, mislabeled content, and unreliable ratings. A multi-stage backend pipeline filters
 and validates API responses before they reach the frontend. The backend follows a layered
-service architecture with dependency injection and repository patterns, running in Docker
+service architecture with dependency injection and shared ORM queries, running in Docker
 with a Caddy reverse proxy and Redis caching. Type safety spans the full stack, from Pydantic
 schemas and Pyright strict mode to auto-generated TypeScript types.
 
@@ -53,8 +53,8 @@ launch.
 - Docker Compose stacks for development and production behind a Caddy reverse proxy, with
   Redis caching; CI runs the test, lint and type-check suites and publishes the production
   images
-- Constructor-based dependency injection across 7 services with repository pattern, enabling
-  isolated unit testing without mock patching
+- Constructor-based dependency injection for external clients, with service tests exercising
+  real database queries
 - Unified semantic token system spanning four design systems (GitHub Primer, IBM Carbon,
   GitLab Pajamas, Material Design 3) with runtime theme switching at ~19ms per switch
 

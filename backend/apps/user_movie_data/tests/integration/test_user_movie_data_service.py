@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import pytest
 from django.db import transaction
-from ninja.errors import HttpError
 
-from apps.core.exceptions import NotFoundError
+from apps.core.exceptions import InvalidInputError, NotFoundError
 from apps.core.models import Movie
 from apps.core.tests.test_helpers import create_user
-from apps.movie.services.movie_service import MovieService
 from apps.movie.tests.tmdb_stub import TMDBStub
 from apps.movie.tests.tmdb_test_builders import create_tmdb_movie_detail
 from apps.user_movie_data.models import UserMovieData
@@ -36,7 +34,7 @@ def tmdb(monkeypatch: pytest.MonkeyPatch) -> TMDBStub:
 
 @pytest.fixture
 def service(tmdb: TMDBStub) -> UserMovieDataService:
-    return UserMovieDataService(movie_service=MovieService(tmdb_client=tmdb))
+    return UserMovieDataService(tmdb_client=tmdb)
 
 
 def test_service_initialization_with_defaults(user: User) -> None:
@@ -48,7 +46,7 @@ def test_injected_service_does_not_read_another_users_record(
     service: UserMovieDataService, user: User
 ) -> None:
     record = create_user_movie_data(create_user(username="other"))
-    with pytest.raises(HttpError, match="not found"):
+    with pytest.raises(NotFoundError, match="not found"):
         service.get_by_tmdb_id(user, record.movie.tmdb_id)
 
 
@@ -85,7 +83,7 @@ def test_create_raises_when_tmdb_movie_not_found(
 
 def test_create_raises_when_already_exists(service: UserMovieDataService, user: User) -> None:
     record = create_user_movie_data(user)
-    with pytest.raises(HttpError) as error, transaction.atomic():
+    with pytest.raises(InvalidInputError) as error, transaction.atomic():
         service.create(user, record.movie.tmdb_id)
     assert error.value.status_code == 400
     assert UserMovieData.objects.count() == 1
@@ -103,7 +101,7 @@ def test_get_by_id_returns_user_movie_data(service: UserMovieDataService, user: 
 
 
 def test_get_by_id_raises_when_not_found(service: UserMovieDataService, user: User) -> None:
-    with pytest.raises(HttpError) as error:
+    with pytest.raises(NotFoundError) as error:
         service.get_by_id(user, 999)
     assert error.value.status_code == 404
 
@@ -116,7 +114,7 @@ def test_get_by_tmdb_id_returns_user_movie_data(service: UserMovieDataService, u
 
 
 def test_get_by_tmdb_id_raises_when_not_found(service: UserMovieDataService, user: User) -> None:
-    with pytest.raises(HttpError) as error:
+    with pytest.raises(NotFoundError) as error:
         service.get_by_tmdb_id(user, 99999)
     assert error.value.status_code == 404
 
@@ -133,7 +131,7 @@ def test_update_partial_fields_succeeds(service: UserMovieDataService, user: Use
 
 
 def test_update_raises_when_not_found(service: UserMovieDataService, user: User) -> None:
-    with pytest.raises(HttpError) as error:
+    with pytest.raises(NotFoundError) as error:
         service.update(user, 999, user_watched=True)
     assert error.value.status_code == 404
 
@@ -155,7 +153,7 @@ def test_delete_succeeds(service: UserMovieDataService, user: User) -> None:
 
 
 def test_delete_raises_when_not_found(service: UserMovieDataService, user: User) -> None:
-    with pytest.raises(HttpError) as error:
+    with pytest.raises(NotFoundError) as error:
         service.delete(user, 999)
     assert error.value.status_code == 404
 
@@ -247,7 +245,7 @@ def test_user_cannot_access_other_users_data(
         "delete": lambda: service.delete(user, record.pk),
         "get_by_id": lambda: service.get_by_id(user, record.pk),
     }
-    with pytest.raises(HttpError) as error:
+    with pytest.raises(NotFoundError) as error:
         operations[operation]()
     assert error.value.status_code == 404
     record.refresh_from_db()

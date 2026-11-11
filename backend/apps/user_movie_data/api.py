@@ -9,7 +9,7 @@ UserMovieDataService, keeping API layer focused on HTTP concerns only.
 Architecture:
 - API layer: Request/response handling, authentication, validation
 - Service layer: Business logic (CRUD, TMDB integration, filtering)
-- Repository layer: Data access abstraction
+- Data access: Django ORM through the services
 """
 
 from __future__ import annotations

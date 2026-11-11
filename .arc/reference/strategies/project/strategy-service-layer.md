@@ -5,7 +5,7 @@
 ## Purpose
 
 Authoritative reference for CineXplorer's service layer architecture. Covers backend class-based services,
-dependency injection patterns, repository pattern, batch operations, and frontend service organization.
+dependency injection patterns, ORM access, batch operations, and frontend service organization.
 Use when implementing new services, understanding existing patterns, or onboarding to the codebase.
 
 ## Table of Contents
@@ -158,77 +158,24 @@ share one home.
 - Multiple services share data access patterns
 - Complex queries that should be encapsulated
 
-**Structure:**
-
-```python
-class UserMovieDataRepository:
-    """
-    Repository for UserMovieData model access.
-
-    Encapsulates data access logic, providing clean interface
-    for services while isolating ORM implementation details.
-    """
-
-    def get_for_user_and_movies(
-        self,
-        user: AbstractBaseUser,
-        tmdb_ids: list[int]
-    ) -> dict[int, UserMovieData]:
-        """Bulk fetch with select_related to avoid N+1."""
-        return UserMovieData.objects.filter(
-            user=user,
-            movie__tmdb_id__in=tmdb_ids
-        ).select_related('movie')
-
-    def create(self, user, movie, **fields) -> UserMovieData:
-        """Create new record with validation."""
-        ...
-
-    def get_filtered(self, user, page, page_size, **filters):
-        """Paginated query with optional filters."""
-        ...
-```
-
-**Benefits:**
-
-- One home for a query several services share, with its `select_related`/`prefetch_related`
-- Tests of a service that uses a repository use the real repository and the test database; a mock repository
-  asserts against a fiction
+Shared queries can live on a model's custom QuerySet. Services that use a repository exercise its real queries
+against the test database, replacing only external clients.
 
 ### Service Composition
 
 Services can depend on other services or repositories for complex operations.
 
-**Pattern:**
-
-```python
-class UserMovieDataService:
-    def __init__(
-        self,
-        repository: UserMovieDataRepository | None = None,
-        movie_service: MovieService | None = None,
-    ) -> None:
-        # Inject repository or create default
-        if repository is not None:
-            self._repository = repository
-        else:
-            self._repository = UserMovieDataRepository()
-
-        # Inject movie service or create via factory
-        if movie_service is not None:
-            self._movie_service = movie_service
-        else:
-            from apps.movie.services.service_factory import get_movie_service
-            self._movie_service = get_movie_service()
-```
+A service can build another service with the same injected external client. For example, `UserMovieDataService`
+uses `MovieService(tmdb_client=self._tmdb_client)` to look up an unstored movie and uses the model's custom QuerySet
+for persisted user data.
 
 **Composition examples in codebase:**
 
-| Service                                     | Depends On                            | Purpose                          |
-|---------------------------------------------|---------------------------------------|----------------------------------|
-| UserMovieDataService                        | UserMovieDataRepository, MovieService | CRUD + TMDB fetching             |
-| MovieEnrichmentService                      | UserMovieDataRepository               | Enriches movies with user data   |
-| UserMovieDataService._build_enriched_movies | MovieEnrichmentService                | Composes enrichment into queries |
+| Service                                     | Depends On                  | Purpose                          |
+| ------------------------------------------- | --------------------------- | -------------------------------- |
+| UserMovieDataService                        | TMDBApiClient, MovieService | CRUD + TMDB fetching             |
+| MovieEnrichmentService                      | UserMovieDataQuerySet       | Enriches movies with user data   |
+| UserMovieDataService._build_enriched_movies | MovieEnrichmentService      | Composes enrichment into queries |
 
 ### Batch Operations
 
@@ -311,17 +258,16 @@ def get_movie_service() -> MovieService:
 
 ### Reference Implementations (Backend)
 
-| Service                 | File                                                   | Pattern                              | Purpose                                         |
-|-------------------------|--------------------------------------------------------|--------------------------------------|-------------------------------------------------|
-| MovieService            | `movie/services/movie_service.py`                      | Class + DI, inherits BaseTMDBService | TMDB integration for discovery, search, details |
-| KeywordService          | `movie/services/keyword_service.py`                    | Class + DI, inherits BaseTMDBService | TMDB keyword operations                         |
-| PeopleService           | `movie/services/people_service.py`                     | Class + DI, inherits BaseTMDBService | TMDB people/cast operations                     |
-| UserMovieDataService    | `user_movie_data/services/user_movie_data_service.py`  | Class + DI + composition             | CRUD with TMDB integration                      |
-| MovieEnrichmentService  | `user_movie_data/services/movie_enrichment_service.py` | Class + DI (repository)              | Enriches movies with user data                  |
-| AuthenticationService   | `authentication/services/authentication_service.py`    | Class + DI (extensive)               | Security-critical auth operations               |
-| BaseTMDBService         | `movie/services/base_service.py`                       | Base class                           | Shared DI pattern for TMDB services             |
-| UserMovieDataRepository | `user_movie_data/repositories.py`                      | Repository                           | ORM abstraction for user movie data             |
-| fetch_movies_batch      | `movie/services/pipelines/batch.py`                    | Function                             | Batch TMDB fetching with graceful degradation   |
+| Service                | File                                                   | Pattern                              | Purpose                                         |
+| ---------------------- | ------------------------------------------------------ | ------------------------------------ | ----------------------------------------------- |
+| MovieService           | `movie/services/movie_service.py`                      | Class + DI, inherits BaseTMDBService | TMDB integration for discovery, search, details |
+| KeywordService         | `movie/services/keyword_service.py`                    | Class + DI, inherits BaseTMDBService | TMDB keyword operations                         |
+| PeopleService          | `movie/services/people_service.py`                     | Class + DI, inherits BaseTMDBService | TMDB people/cast operations                     |
+| UserMovieDataService   | `user_movie_data/services/user_movie_data_service.py`  | Class + DI + composition             | CRUD with TMDB integration                      |
+| MovieEnrichmentService | `user_movie_data/services/movie_enrichment_service.py` | Class + ORM                          | Enriches movies with user data                  |
+| AuthenticationService  | `authentication/services/authentication_service.py`    | Class + DI (extensive)               | Security-critical auth operations               |
+| BaseTMDBService        | `movie/services/base_service.py`                       | Base class                           | Shared DI pattern for TMDB services             |
+| fetch_movies_batch     | `movie/services/pipelines/batch.py`                    | Function                             | Batch TMDB fetching with graceful degradation   |
 
 ---
 
@@ -494,13 +440,12 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 ### Backend
 
 | File                          | Location                                 | Purpose                            |
-|-------------------------------|------------------------------------------|------------------------------------|
+| ----------------------------- | ---------------------------------------- | ---------------------------------- |
 | `movie_service.py`            | `backend/apps/movie/services/`           | Main movie operations (TMDB)       |
 | `base_service.py`             | `backend/apps/movie/services/`           | Base class for TMDB services       |
 | `service_factory.py`          | `backend/apps/movie/services/`           | Factory functions for movie domain |
 | `user_movie_data_service.py`  | `backend/apps/user_movie_data/services/` | User movie data CRUD               |
 | `movie_enrichment_service.py` | `backend/apps/user_movie_data/services/` | Enrichment with user data          |
-| `repositories.py`             | `backend/apps/user_movie_data/`          | Repository for ORM abstraction     |
 | `authentication_service.py`   | `backend/apps/authentication/services/`  | Auth operations                    |
 | `batch.py`                    | `backend/apps/movie/services/pipelines/` | Batch TMDB fetching                |
 

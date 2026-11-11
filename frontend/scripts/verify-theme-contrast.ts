@@ -8,7 +8,7 @@
  * Ensures accessible interactive elements while catching decorative tokens that become
  * too subtle to serve their visual hierarchy purpose.
  *
- * **Scope:** ~80 token pairs across 8 categories
+ * **Scope:** semantic pairs, structural surfaces, status text and translucent feedback
  *
  * **Usage:**
  * - Development: `npm run verify-contrast`
@@ -19,7 +19,9 @@
  * - 1: One or more contrast violations detected
  */
 
-import { hex as getContrast } from "wcag-contrast";
+import { rgb as getContrast } from "wcag-contrast";
+import { tokens as chakraTokens } from "@chakra-ui/react/theme";
+import { resolveColorStack } from "../src/theme/color/contrast";
 import {
     githubTheme,
     ibmCarbonTheme,
@@ -35,6 +37,7 @@ import type { UnifiedTheme } from "../src/theme/color/types";
 interface TokenPair {
     fg: string;
     bg: string;
+    backdrop?: readonly string[]; // Bottom-to-top layers below bg
     optional?: boolean; // Skip if token undefined
     threshold?: "text" | "ui" | "decorative"; // Default: 'text'
 }
@@ -63,6 +66,26 @@ const THRESHOLDS = {
 // ============================================================================
 // WHITELIST: Valid Token Combinations
 // ============================================================================
+
+const STATUS_COLORS = ["success", "destructive", "warning", "info"] as const;
+const SURFACES = ["background", "layer-01", "layer-02", "layer-03"] as const;
+
+// Chakra's merged default subtle variant paints these opaque alert backgrounds,
+// overriding the status recipe's tint. Keep both rendered and intended pairs checked.
+const NATIVE_ALERT_SURFACES = {
+    light: {
+        "native-alert-success": chakraTokens.colors.green[100].value,
+        "native-alert-destructive": chakraTokens.colors.red[100].value,
+        "native-alert-warning": chakraTokens.colors.orange[100].value,
+        "native-alert-info": chakraTokens.colors.blue[100].value,
+    },
+    dark: {
+        "native-alert-success": chakraTokens.colors.green[900].value,
+        "native-alert-destructive": chakraTokens.colors.red[900].value,
+        "native-alert-warning": chakraTokens.colors.orange[900].value,
+        "native-alert-info": chakraTokens.colors.blue[900].value,
+    },
+};
 
 /**
  * Category 1: Semantic Pairs (on-* Convention)
@@ -205,20 +228,20 @@ const focusIndicators: TokenPair[] = [
 ];
 
 /**
- * Category 7: Alert/Status Descriptions
+ * Category 7: Alert/Status Titles and Descriptions
  *
- * Pattern: Alert description text on subtle status backgrounds
+ * Pattern: Alert title and description text on translucent status backgrounds
  * Source: Alert recipe implementation, Component Styling Strategy
  *
  * NOTE: These use 10% opacity backgrounds that need special handling.
  * The validation script resolves opacity tokens before checking contrast.
  */
-const alertDescriptions: TokenPair[] = [
-    { fg: "foreground", bg: "success/10" },
-    { fg: "foreground", bg: "warning/10" },
-    { fg: "foreground", bg: "destructive/10" },
-    { fg: "foreground", bg: "info/10" },
-];
+const alertDescriptions: TokenPair[] = STATUS_COLORS.flatMap((status) =>
+    SURFACES.flatMap((surface) => [
+        { fg: "foreground", bg: `${status}/10`, backdrop: [surface] },
+        { fg: status, bg: `${status}/10`, backdrop: [surface] },
+    ]),
+);
 
 /**
  * Category 8: Movie-Specific UI Elements
@@ -237,10 +260,54 @@ const movieSpecific: TokenPair[] = [
     { fg: "foreground", bg: "drop-zone" },
 ];
 
+/** Status text on supported surfaces, including layer-03 toast titles. */
+const statusTextOnSurfaces: TokenPair[] = STATUS_COLORS.flatMap((status) =>
+    SURFACES.map((surface) => ({ fg: status, bg: surface })),
+);
+
+/** Status-colored controls and technical details with their actual backing layers. */
+const statusInteractions: TokenPair[] = [
+    { fg: "destructive", bg: "destructive/12", backdrop: ["layer-01"] },
+    {
+        fg: "destructive",
+        bg: "destructive/8",
+        backdrop: ["background", "destructive/10"],
+    },
+    {
+        fg: "on-destructive",
+        bg: "destructive/92",
+        backdrop: ["background", "destructive/10"],
+    },
+    { fg: "foreground", bg: "destructive/8" },
+    { fg: "destructive", bg: "popover" },
+    { fg: "destructive", bg: "layer-hover-02" },
+];
+
+const nativeAlertText: TokenPair[] = STATUS_COLORS.flatMap((status) => [
+    { fg: status, bg: `native-alert-${status}` },
+    { fg: "foreground", bg: `native-alert-${status}` },
+]);
+const nativeAlertInteractions: TokenPair[] = [
+    {
+        fg: "destructive",
+        bg: "destructive/8",
+        backdrop: ["native-alert-destructive"],
+    },
+    {
+        fg: "on-destructive",
+        bg: "destructive/92",
+        backdrop: ["native-alert-destructive"],
+    },
+];
+
 // Combine all categories
 const ALL_TOKEN_PAIRS: TokenPair[] = [
     ...semanticPairs,
     ...textOnSurfaces,
+    ...statusTextOnSurfaces,
+    ...statusInteractions,
+    ...nativeAlertText,
+    ...nativeAlertInteractions,
     ...interactiveOnSurfaces,
     ...bordersOnSurfaces,
     ...interactionStates,
@@ -254,79 +321,6 @@ const ALL_TOKEN_PAIRS: TokenPair[] = [
 // ============================================================================
 
 /**
- * Resolve token value from theme, handling special cases
- *
- * NOTE: Uses unknown intermediate cast per TypeScript best practices for
- * dynamic property access. All UnifiedTheme properties are string colors.
- */
-function resolveToken(
-    tokenName: string,
-    theme: UnifiedTheme,
-): string | undefined {
-    // Type-safe dynamic token access pattern (TypeScript recommended approach)
-    // UnifiedTheme has no index signature, so we use unknown intermediate
-    const themeRecord = theme as unknown as Record<string, string | undefined>;
-
-    // Handle opacity tokens (e.g., "success/10")
-    if (tokenName.includes("/")) {
-        const [baseToken, opacityStr] = tokenName.split("/");
-        const opacity = parseInt(opacityStr, 10) / 100;
-
-        const baseColor = themeRecord[baseToken];
-        const layerColor = theme.background; // Blend with base layer
-
-        if (!baseColor) return undefined;
-
-        return blendColors(baseColor, layerColor, opacity);
-    }
-
-    // Standard token lookup
-    return themeRecord[tokenName];
-}
-
-/**
- * Blend foreground color with background at given opacity
- *
- * @param fg - Foreground color (hex)
- * @param bg - Background color (hex)
- * @param opacity - Alpha value (0-1)
- * @returns Blended color (hex)
- */
-function blendColors(fg: string, bg: string, opacity: number): string {
-    const fgRgb = hexToRgb(fg);
-    const bgRgb = hexToRgb(bg);
-
-    if (!fgRgb || !bgRgb) return fg;
-
-    const r = Math.round(fgRgb.r * opacity + bgRgb.r * (1 - opacity));
-    const g = Math.round(fgRgb.g * opacity + bgRgb.g * (1 - opacity));
-    const b = Math.round(fgRgb.b * opacity + bgRgb.b * (1 - opacity));
-
-    return rgbToHex(r, g, b);
-}
-
-/**
- * Convert hex color to RGB
- */
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-        ? {
-              r: parseInt(result[1], 16),
-              g: parseInt(result[2], 16),
-              b: parseInt(result[3], 16),
-          }
-        : null;
-}
-
-/**
- * Convert RGB to hex color
- */
-function rgbToHex(r: number, g: number, b: number): string {
-    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}
-
-/**
  * Validate a single token pair
  */
 function validatePair(
@@ -335,11 +329,17 @@ function validatePair(
     themeName: string,
     mode: "light" | "dark",
 ): ValidationResult {
-    const fgValue = resolveToken(pair.fg, theme);
-    const bgValue = resolveToken(pair.bg, theme);
+    const colors = { ...theme, ...NATIVE_ALERT_SURFACES[mode] };
+    const fg = resolveColorStack([pair.fg], colors);
+    const bg = resolveColorStack(
+        [...(pair.backdrop ?? ["background"]), pair.bg],
+        colors,
+    );
+    const fgValue = fg ? `rgb(${fg.join(", ")})` : undefined;
+    const bgValue = bg ? `rgb(${bg.join(", ")})` : undefined;
 
     // Handle optional tokens
-    if (pair.optional && (!fgValue || !bgValue)) {
+    if (pair.optional && (!fg || !bg)) {
         return {
             themeName,
             mode,
@@ -353,7 +353,7 @@ function validatePair(
     }
 
     // Handle missing required tokens
-    if (!fgValue || !bgValue) {
+    if (!fg || !bg) {
         return {
             themeName,
             mode,
@@ -367,7 +367,7 @@ function validatePair(
     }
 
     // Calculate contrast ratio
-    const ratio = getContrast(fgValue, bgValue);
+    const ratio = getContrast(fg, bg);
     const thresholdType = pair.threshold || "text";
     const threshold = THRESHOLDS[thresholdType];
     const passed = ratio >= threshold;
@@ -475,6 +475,10 @@ function runValidation() {
                           : "TEXT (WCAG AA)";
 
                 console.log(`  ${failure.pair.fg} on ${failure.pair.bg}`);
+                if (failure.pair.backdrop)
+                    console.log(
+                        `    Backdrop: ${failure.pair.backdrop.join(" → ")}`,
+                    );
                 console.log(`    FG: ${failure.fgValue}`);
                 console.log(`    BG: ${failure.bgValue}`);
                 console.log(

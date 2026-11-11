@@ -207,3 +207,14 @@ export type IBMCarbonPaletteColorLight = keyof typeof ibmCarbonPaletteLight;
  * Type-safe palette color names for dark mode.
  */
 export type IBMCarbonPaletteColorDark = keyof typeof ibmCarbonPaletteDark;
+
+/** Official scale steps used by status text. Source: https://unpkg.com/@carbon/colors@11.0.0/index.scss */
+export const carbonStatusColorSteps = {
+    green70: "#0e6027",
+    red70: "#a2191f",
+    yellow70: "#684e00",
+    green20: "#a7f0ba",
+    red20: "#ffd7d9",
+    yellow20: "#fddc69",
+    blue20: "#d0e2ff",
+} as const;

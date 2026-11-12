@@ -132,40 +132,23 @@ through the shared save hook.
         - The unrelated login visibility failure was repaired separately in #180 and merged from main. Main also
           brought TanStack Query 5.106.0; ordered saves, cache clearing and retention pass against that version.
 
-- [ ] **2.4 Cards show and save their state through the save hook — D5, D8**
+- [x] **2.4 Cards show and save their state through the save hook — D5, D8**
 
     **Goal:** A card shows its movie's shared state, stays enabled while saving, and still shows a save after it
     remounts or its list's next page lands, with no movie list refetched.
 
-    - [ ] **2.4.a Test the card in `MovieCard.test.tsx`'s watchlist saves**
-        - Two quick clicks send `true` then `false` and end on "Add to watchlist" with `aria-pressed="false"`, the
-          control enabled throughout (rewrites the existing double-toggle case)
-        - A failed save (500, 429) shows the server's value and the error toast (the existing case, kept)
-        - A card remounted mid-save shows the save; a card remounted after a save shows it over its cached payload
-        - Cards drawn from a cached list, with the list's next page held: save from a card, release the page, and the
-          card still shows the save, as it does when only the cards remount afterwards (the harness's
-          `useInfiniteMovies` stays mounted); no request for the list's first page follows the save. Render a harness
-          of cards over `useInfiniteMovies` with the factory's key and a load-more control, which keeps page one's
-          cards mounted (`SequentialMovieGrid` shows one page at a time, so it can't)
-        - A save settling after its card unmounted still shows its toast and invalidates the Library; Undo works from a
-          toast whose card has unmounted
-        - Expect the remount, Undo and Library cases to FAIL initially (the card's private copy resets on remount, and
-          nothing invalidates the Library). Known to pass today: the mounted next-page case, through that
-          private copy, seen failing against a save written into the cached page; no request for the list's first page
-          after the save, since nothing writes to or invalidates the cache today, seen failing against a save that
-          invalidates the movie lists; and the toast after unmount, since `useMovieActions` toasts after its await
-          unguarded, seen failing against toasts moved into `mutate` callbacks, which TanStack skips once the card has
-          unmounted
-
-    - [ ] **2.4.b Move `MovieCard` onto `useUserMovieState`**
-        - Remove `localWatchlistState`, `useMovieActions` and `disabled={isUpdating}`; the control shows
-          `state.user_on_watchlist` and saves its opposite, computed from the shown state
-        - The memo comparison can stay: the hook's subscription to the saves re-renders the card
-        - Delete `useMovieActions.ts` with its test, and `movieInteractionService.ts` with its four rejecting
-          placeholders
-        - Tests should now PASS
-        - Check in `frontend/`, with the browsable stack running:
-          `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/browse.spec.ts e2e/movie-detail.spec.ts e2e/back-to-results.spec.ts`
+    - [x] **2.4.a Test the card in `MovieCard.test.tsx`'s watchlist saves**
+        - Coupled card cases cover queued double toggles, enabled controls, pending and settled remounts, held
+          next-page loads, no first-page refetch, Library invalidation after unmount and Undo from a card's toast.
+        - New behaviors failed with the private state. Reconstructing cache-only saves failed after page arrival;
+          invalidating lists failed the first-page request count; component-bound callbacks lost the unmounted toast.
+        - Existing 500/429 rollback cases remain. A mechanically invalid empty BrowseParams fixture was corrected to
+          the factory's supported undefined value.
+    - [x] **2.4.b Move `MovieCard` onto `useUserMovieState`**
+        - The card displays the shared state and saves its opposite without disabling the control. Removed the
+          private watchlist copy, legacy action hook and tests, and interaction service with its placeholders.
+        - Formatting, file lint, frontend type-check and all 50 related tests pass. The browse, movie-detail and
+          Back to Results Chromium specs pass (three tests) on the stack using TanStack Query 5.106.0.
 
 ### **Phase 3:** The detail and watchlist pages read through queries
 

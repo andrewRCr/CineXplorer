@@ -357,6 +357,53 @@ describe("catalog headers and release tabs", () => {
     );
   });
 
+  it("normalizes Coming soon on a tab switch and returns to the original selection", async () => {
+    const requests: URLSearchParams[] = [];
+    server.use(
+      http.get(browseUrl, () => HttpResponse.json(browsePage)),
+      http.get(`${apiBaseUrl}/movies/upcoming`, ({ request }) => {
+        requests.push(new URL(request.url).searchParams);
+        return HttpResponse.json(browsePage);
+      }),
+    );
+    const original =
+      "/browse?genres=27&minRating=7&maxRating=9&certifications=R&language=fr&sortBy=vote_average.desc&minYear=1990&maxYear=1999";
+    const user = userEvent.setup();
+    renderCatalog(original);
+    await screen.findByText("20 results");
+    await user.click(screen.getByRole("link", { name: "Coming soon" }));
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0));
+    expect(requests[0]?.get("sort_by")).toBe("popularity.desc");
+    expect(requests[0]?.has("release_date_gte")).toBe(false);
+    expect(requests[0]?.has("release_date_lte")).toBe(false);
+    expect(requests[0]?.get("genres")).toBe("27");
+    expect(requests[0]?.get("language")).toBe("fr");
+    expect(requests[0]?.get("vote_average_gte")).toBe("7");
+    expect(requests[0]?.get("vote_average_lte")).toBe("9");
+    expect(requests[0]?.get("certification")).toBe("R");
+    const targetQuery = new URL(
+      screen.getByLabelText("Catalog location").textContent || "",
+      "https://example.test",
+    ).searchParams;
+    expect(Object.fromEntries(targetQuery)).toEqual({
+      genres: "27",
+      minRating: "7",
+      maxRating: "9",
+      certifications: "R",
+      language: "fr",
+    });
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Most anticipated French-language horror films",
+    );
+    await user.click(screen.getByRole("button", { name: "Back in history" }));
+    expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+      original,
+    );
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Highest-rated French-language horror films, 1990s",
+    );
+  });
+
   it.each(["loading", "loaded", "empty", "failed"])(
     "keeps the catalog title and tabs while %s",
     async (state) => {

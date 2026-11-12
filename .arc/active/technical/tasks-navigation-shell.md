@@ -315,6 +315,9 @@ window tabs, and the phone-width spec follows Films there.
         - Added public-props `GridHeader` tests and routed sequential cases rather than extending the older grid
           tests' internal mocks. Narrow temporary breaks proved the existing sequential title and hidden controls.
         - Related tests: 61 passed across six files, including both existing grid suites; lint, format and types pass.
+        - A further mounted-layout case checks Coming soon's first HTTP request, simultaneous year/sort resets,
+          retained filters and Back to the original All films URL. It failed with a temporary push replacing the
+          URL writer's replace, then passed after restoration; all 20 routed Browse cases, lint, format and types pass.
 
     - [x] **5.3.b Implement the tabs and the header**
         - The layout composes window titles from normalized selection; search retains its object title and the

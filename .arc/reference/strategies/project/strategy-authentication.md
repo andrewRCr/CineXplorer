@@ -245,6 +245,11 @@ endpoints and their throttles. Provider callbacks remain under `/accounts/`.
 
 Browser OAuth uses HTTP-only session cookies. The app client's session-token mechanism is unreachable.
 
+GitHub email intake keeps only addresses marked both primary and verified by GitHub, before account matching or
+storage. The public profile email is normalized to that address, or null when none qualifies; provider trust
+settings cannot promote an unverified GitHub address. Other providers retain allauth's verification behavior.
+Existing email rows are not removed, and connecting GitHub does not replace the account's existing email.
+
 **Attempting to force JWT tokens for browser OAuth would require**:
 
 - Overriding django-allauth's callback view completely

@@ -32,6 +32,8 @@ from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
 
 if TYPE_CHECKING:
+    from allauth.account.models import EmailAddress
+    from django.contrib.auth.models import AbstractUser
     from django.contrib.sites.models import Site
     from django.db.models.manager import Manager, ManyToManyRelatedManager
 
@@ -45,6 +47,7 @@ class SocialApp(models.Model):
     """
 
     # Fields
+    settings: dict[str, object]
     provider: str  # e.g., 'google', 'github', 'facebook'
     name: str  # Human-readable provider name
     client_id: str  # OAuth client ID
@@ -74,3 +77,14 @@ class SocialAccount(models.Model):
 
     # Manager (override acceptable in stub files)
     objects: ClassVar[Manager[SocialAccount]]  # pyright: ignore[reportIncompatibleVariableOverride]
+
+class SocialLogin:
+    """Intake attributes verified against django-allauth 65.21.1 on 2026-11-12.
+
+    These attributes are populated by Provider.sociallogin_from_response before
+    the social adapter's populate_user hook.
+    """
+
+    account: SocialAccount
+    email_addresses: list[EmailAddress]
+    user: AbstractUser | None

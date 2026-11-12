@@ -331,16 +331,19 @@ its request settles; on the browsable stack, signing out and in again shows no p
           replacement rationale, and every change of user. Both Status sections name Frontend Server State;
           ADR-027 records the deferred watchlist E2E test. The PR number joins them when it opens. Markdown lint passes.
 
-- [ ] **5.4 Check a change of user end to end**
+- [x] **5.4 Check a change of user end to end**
 
     **Goal:** Sign-out, sign-in and the saves are shown to compose against the real session, with what ran and the
     result recorded.
 
-    - Run the cases from 5.1.a and 5.2.a by name, and `e2e/sign-in.spec.ts` on the browsable stack
-    - On the browsable stack, signed in as its seeded account: add a movie to the watchlist and sign out while its toast
-      shows; the sign-in page loads with the signed-out notice and no save toast; browse signed out (no card shows the
-      watchlist state); sign in again (the lists show the saved state)
-    - Keep the script and its log in the work unit's runs folder
+    - All 20 named ownership-change, held sign-out, Login-notice and menu cases pass, as does the real sign-in
+      Chromium spec. Type-check and lint passed with the implementation tasks.
+    - On the seeded browsable stack, saved Resident Evil, signed out while its save toast showed, and observed the
+      document load of `/login?signed_out=true`, the signed-out notice and no save toast or Undo. Anonymous Browse
+      showed no saved flags; a new sign-in restored the selected card's saved state. Test saves were removed afterward.
+    - `check-user-change-composition.mjs` and `user-change-composition.log` are retained in the work unit's runs folder.
+      The script uses actual UI navigation and real API/session requests. Initial script selector errors were corrected
+      before the complete successful run.
 
 ### **Phase 6:** Verification
 

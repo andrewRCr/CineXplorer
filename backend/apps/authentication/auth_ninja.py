@@ -173,7 +173,7 @@ def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
         user = jwt_session_auth.authenticate(request)
     except Exception as error:
         # Authentication failures may quote credentials; log only the exception type.
-        logger.warning(
+        logger.error(
             "Optional authentication failed | error_type=%s",
             type(error).__name__,
             extra={"error_type": type(error).__name__},

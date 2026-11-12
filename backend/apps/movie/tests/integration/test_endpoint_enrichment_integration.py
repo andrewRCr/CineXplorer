@@ -473,7 +473,7 @@ def test_public_movie_reads_do_not_silently_discard_bearer_authentication(
             return_value=(
                 ApiResponse(status_code=200, data={"crew": [], "cast": []}) if detail else page
             ),
-        ),
+        ) as tmdb_get,
         patch(
             TMDB_CLIENT_GET_MOVIE_DETAILS,
             return_value=create_mock_movie_detail_response(
@@ -482,15 +482,66 @@ def test_public_movie_reads_do_not_silently_discard_bearer_authentication(
                 release_date="1982-06-25",
                 vote_average=8.1,
             ),
-        ),
+        ) as tmdb_details,
     ):
         response = api_client.get(endpoint, HTTP_AUTHORIZATION=header)
     if auth_state in {"expired", "malformed", "empty"}:
         assert response.status_code == 401
         assert response.json() == {"detail": "Invalid authentication credentials"}
         assert response["WWW-Authenticate"] == 'Bearer error="invalid_token"'
+        tmdb_get.assert_not_called()
+        tmdb_details.assert_not_called()
     else:
         assert response.status_code == 200
         body = response.json()
         enriched = body if detail else body["results"][0]
         assert enriched["user_movie_data"]["user_on_watchlist"] is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("endpoint", ["now-playing", "upcoming", "search", "browse"])
+def test_expired_continuation_preserves_movies_for_authenticated_retry(
+    api_client: Client, user: User, endpoint: str
+) -> None:
+    """Refusing a credential must not consume movies the browser has not received."""
+    url = f"/api/movies/{endpoint}"
+    initial_params: dict[str, str | int] = {"query": "test"} if endpoint == "search" else {}
+    headers = {"X-Pagination-Context": "expiry-retry"}
+    valid = str(AccessToken.for_user(cast(AbstractBaseUser, user)))
+    expired = AccessToken.for_user(cast(AbstractBaseUser, user))
+    expired.payload["exp"] = int((timezone.now() - timedelta(seconds=5)).timestamp())
+    first_movies = [
+        create_tmdb_movie(movie_id, f"Movie {movie_id}", "2023-01-01", 8.1)
+        for movie_id in range(1, 21)
+    ]
+    next_ids = list(range(21, 41))
+    # A repeated movie proves that real cross-request deduplication is active.
+    next_movies = [
+        create_tmdb_movie(movie_id, f"Movie {movie_id}", "2023-01-01", 8.1)
+        for movie_id in [1, *next_ids]
+    ]
+    with patch(
+        TMDB_CLIENT_GET,
+        return_value=create_mock_paginated_response(first_movies, page=1, total_pages=2),
+    ):
+        first = api_client.get(
+            url, initial_params, HTTP_AUTHORIZATION=f"Bearer {valid}", headers=headers
+        )
+    assert first.status_code == 200
+    assert [movie["tmdb_id"] for movie in first.json()["results"]] == list(range(1, 21))
+    assert first.json()["next_tmdb_page_start"] == 2
+    continuation = {**initial_params, "page": 1, "tmdb_page_start": 2}
+    with patch(
+        TMDB_CLIENT_GET,
+        return_value=create_mock_paginated_response(next_movies, page=2, total_pages=2),
+    ):
+        refused = api_client.get(
+            url, continuation, HTTP_AUTHORIZATION=f"Bearer {expired}", headers=headers
+        )
+        assert refused.status_code == 401
+        assert refused["WWW-Authenticate"] == 'Bearer error="invalid_token"'
+        retried = api_client.get(
+            url, continuation, HTTP_AUTHORIZATION=f"Bearer {valid}", headers=headers
+        )
+    assert retried.status_code == 200
+    assert [movie["tmdb_id"] for movie in retried.json()["results"]] == next_ids

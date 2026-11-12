@@ -135,8 +135,10 @@ renewed session. Explicit password sign-in bypasses both interceptor renewal pat
 block a new sign-in or replace an invalid-credentials response. CSRF handling still applies.
 
 For personalized public movie reads, a supplied Bearer credential that cannot authenticate through JWT or the
-provider session receives `401` with a Bearer `invalid_token` challenge. Requests without a Bearer credential can
-still browse anonymously, and valid provider sessions still personalize responses. This server-side check is the
+provider session receives `401` with a Bearer `invalid_token` challenge. Authentication resolves once at endpoint
+entry, before pagination state or movie fetching, and enrichment reuses that result. A refused request therefore
+cannot consume unseen movies before a renewed retry. Requests without a Bearer credential can still browse
+anonymously, and valid provider sessions still personalize responses. This server-side check is the
 fallback when a device clock runs behind or an access token expires in transit; the client's expiry check avoids
 that extra refused request when its clock agrees. Token lifetime and validation leeway are unchanged.
 

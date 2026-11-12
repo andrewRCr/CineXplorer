@@ -7,20 +7,18 @@ import { clearAuthTokens, setAuthTokens } from "@/utilities/tokenUtils";
 import { server } from "@tests/mocks/server";
 import { clearBrowserAuth, token } from "@tests/helpers/auth";
 import { gate } from "@tests/helpers/web-locks";
-import { createMockMovieDetail } from "@tests/mocks/movieData";
+import {
+    createMockMovieDetail,
+    createMockUserMovieData,
+} from "@tests/mocks/movieData";
 import type { MovieDetail } from "@/types/movie";
 
 const watched = createMockMovieDetail({
     tmdb_id: 550,
-    user_movie_data: {
-        id: 1,
+    user_movie_data: createMockUserMovieData({
         tmdb_id: 550,
-        user_watched: false,
         user_on_watchlist: true,
-        user_liked: false,
-        user_rating: null,
-        user_review: null,
-    },
+    }),
 });
 
 beforeEach(() => {

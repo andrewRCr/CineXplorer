@@ -4,7 +4,8 @@
 
 Accepted (Owner, 2026-11-03)
 
-Implemented by: the planned UserMovieData consolidation. The movie detail page moves with its planned redesign.
+Implemented by: Frontend Server State (`prd-frontend-server-state.md`), including the movie detail query. The
+end-to-end watchlist test remains deferred.
 
 ## Context
 
@@ -53,6 +54,18 @@ rework ([ADR-028](adr-028-use-three-state-sign-in-status.md)).
 
 - The rework grows: this move and its test rewrites are its largest part.
 - Until it lands, the codebase holds both patterns, and the rule is enforced on new code only.
+
+## Amendment (2026-11-12)
+
+- The movie detail query moves with Frontend Server State, alongside the list, Library and session reads.
+- A movie's user state is its payload overlaid by this tab's pending and confirmed saves, retained in the mutation
+  cache. A failed save drops out of that overlay, revealing the preceding state. Patching an infinite list in place
+  would be undone by its next-page load, which returns earlier pages' original user data; the overlay survives that
+  replacement and is shared by cards and detail views.
+- Every change of signed-in user, including sign-in, clears kept saves and resets every query except the session.
+  Sign-in clears saves when it stores its token, then resets queries after the fresh session read lands. Sign-out
+  also loads the sign-in page afresh after its request settles, dropping data fetched while a provider cookie was
+  still live.
 
 ## References
 

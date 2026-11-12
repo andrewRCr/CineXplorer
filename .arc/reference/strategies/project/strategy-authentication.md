@@ -121,12 +121,13 @@ The access token goes to local storage when the user asks to be remembered, and 
 
 **Token Refresh Flow**:
 
-`useAuth` renews an expired access token on load, at its 60-second idle check, and before fetching the profile.
-Password users remain signed in when renewal succeeds. A current session's failure clears stored tokens and the
-signed-in state; provider sessions have no access token and never request a refresh. No timer renews a token ahead
-of its expiry. On load the sign-in status reads as resolving until renewal answers
-([ADR-028](../../adr/adr-028-use-three-state-sign-in-status.md)). These effects renew credentials; moving
-authentication state onto TanStack Query is separate.
+The session query renews an expired stored access token through `refreshAccessToken` before reading the profile.
+`useAuth` also calls that shared renewal at its 60-second idle check. Password users remain signed in when renewal
+succeeds; a current session's failure clears stored tokens and lands an anonymous session. Provider sessions have no
+access token and never request a refresh. No timer renews a token ahead of its expiry. Before the first session read
+lands, a current stored token and sign-in flag give an immediate authenticated status; otherwise the status is
+resolving ([ADR-028](../../adr/adr-028-use-three-state-sign-in-status.md)). The idle effect renews a credential;
+profile and provider-session data are read by the query.
 
 The API client's request interceptor also waits for renewal when the stored access token is expired, before
 attaching its Bearer header. This avoids an initial `401` when expiry can be determined locally. A request uses
@@ -144,7 +145,8 @@ anonymously, and valid provider sessions still personalize responses. This serve
 fallback when a device clock runs behind or an access token expires in transit; the client's expiry check avoids
 that extra refused request when its clock agrees. Token lifetime and validation leeway are unchanged.
 
-The hook and both API client interceptors call the same exported `refreshAccessToken()` function. It returns
+The session read, idle check and both API client interceptors call the same exported `refreshAccessToken()` function.
+It returns
 one pending promise per tab, so every caller receives the same token or failure. On browsers with Web Locks it holds
 `cinexplorer-auth-refresh` across the storage reread, request, validation and storage update. A token another tab
 stored while it waited is reused only when it is unexpired and expires strictly later than the starting token.
@@ -154,7 +156,8 @@ sign-in stays in session storage. Without Web Locks, the pending promise still c
 
 Only this function posts a refresh. On current-session renewal failure, the interceptors redirect to sign-in
 with `session_expired=true` and the safe current path, query and fragment in `next`, using `loginPathFor`.
-Sign-in pages are excluded from the return path. The hook only clears its authentication state. A failed retry
+Sign-in pages are excluded from the return path. The session read and idle check instead land anonymous and run
+the change-of-user step described below. A failed retry
 of the original API request does not invalidate a successful refresh.
 
 Explicit sign-out invalidates this tab's pending renewal before clearing credentials. Queued work checks the session
@@ -448,21 +451,37 @@ URLs only register OAuth callback views (login/signup HTML views are disabled).
 
 **Authentication Hook** (`frontend/src/hooks/auth/useAuth.ts`):
 
-Initial state reads the stored access token, expiry and authentication flag. Mount renews an expired password token
-before marking the user authenticated, or checks allauth's session when there is no access token. A failed password
-renewal does not fall through into provider-session discovery. The authentication-state effect owns profile loading;
-`getUserDetails` checks expiry again before its request. The idle interval also renews before signing out.
+`useAuth` reads the shared `['session']` query built by `lib/queries.ts`. It holds a profile or `null`, never goes
+stale, does not retry, and does not refetch on mount, focus or reconnect. Its first read receives the initial route's
+provider-return context. On a provider return it asks allauth first and clears stored password tokens if it finds
+the provider's user. Otherwise it renews an expired stored token and reads the password profile, or asks allauth
+when no token exists. A failed password read clears stored tokens and returns `null`; it does not fall through to
+provider discovery. Cancellation or an obsolete authentication-session version cannot land or clear credentials.
 
-```typescript
-if (access_token && areTokensExpired()) {
-  await refreshAccessToken();
-}
-const userDetails = await authService.getUserProfile();
-```
+The status derives from the query: a profile is `authenticated`, `null` is `anonymous`. While its data is still
+undefined, it is `authenticated` only with a current stored token and sign-in flag, and `resolving` otherwise.
+`isAuthenticated` and the hook's public commands retain their shapes for context consumers. The OAuth callback
+effect reacts to this first result, clears provider-flow flags and handles feedback and navigation; it fetches
+nothing. Only the 60-second credential-renewal effect makes a network request.
 
-Password sign-in chooses local storage for remember-me and session storage otherwise. OAuth callbacks read the
-provider's existing session and clear their loading flags. Manual sign-out clears local state and then calls the
-password logout endpoint or allauth's CSRF-protected session DELETE.
+Session writers cancel any in-flight session read before replacing it:
+
+- Password sign-in invalidates prior renewal, clears both storages and stores the token in local storage for
+  remember-me or session storage otherwise. It immediately retires old saves, then reads the session afresh and
+  resolves after that result lands. Other queries reset after the read, including when it rejects the new token.
+- Sign-out invalidates renewal, clears tokens, writes `null`, runs the change-of-user step and navigates to Login
+  immediately. It sends the password logout request or allauth's CSRF-protected session DELETE, then loads
+  `/login?signed_out=true` afresh after success or failure. This drops data fetched with a provider cookie while
+  the request was pending. A newer password sign-in's token survives that reload. Login shows the signed-out notice
+  only after the fresh session reads `anonymous`, then clears the parameter.
+- Failed idle renewal writes `null` and runs the change-of-user step.
+
+The change-of-user step advances this tab's save ownership count, clears its mutation cache, dismisses its save
+toasts and resets every query except the session. This refetches visible lists while late saves can neither show
+feedback nor invalidate Library. Password sign-in splits that step as above; the initial session read also runs it
+when a provider return lands a user, or when it clears rejected stored credentials. An initial profile landing for
+a user already shown as signed in, and an anonymous landing without a stored token, leave the caches intact.
+Unrelated feedback, including the global server-error toast, remains visible.
 
 Password sign-out blacklists a valid refresh token before expiring its HttpOnly cookie, so a copy cannot renew
 credentials afterward. Missing, expired, malformed or already revoked refresh cookies still receive a successful

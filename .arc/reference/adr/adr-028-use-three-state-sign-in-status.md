@@ -5,7 +5,8 @@
 Accepted (Owner, 2026-11-03)
 
 Implemented by: #104, which adds the status, the guarded layout route and the return to the requested page after
-sign-in.
+sign-in. Frontend Server State (`prd-frontend-server-state.md`) moves the session onto TanStack Query while
+preserving that status and return-path behavior.
 
 ## Context
 

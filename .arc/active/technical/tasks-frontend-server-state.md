@@ -317,22 +317,19 @@ its request settles; on the browsable stack, signing out and in again shows no p
           Login shows the priority notice only once its status is anonymous and clears the parameter.
         - Type-check, touched-file lint/format, 137 related tests and the real sign-in Chromium spec pass.
 
-- [ ] **5.3 The reference documents describe the session query and the change of user — D9, D3, D4, D7**
+- [x] **5.3 The reference documents describe the session query and the change of user — D9, D3, D4, D7**
 
     **Goal:** The authentication strategy, ADR-027 and ADR-028 describe what shipped, so a later reader finds the
     session query, the change of user and the save overlay recorded with their reasons.
 
-    - [ ] **5.3.a Rewrite the authentication strategy's Token Refresh Flow and Authentication Hook sections**
-        - `strategy-authentication.md` describes the session query (its read, its writers, the status) and the change of
-          user, without the profile-loading effect or `getUserDetails`; its version header stays as it is
-    - [ ] **5.3.b Amend ADR-027, and update the Status lines of ADR-027 and ADR-028**
-        - One dated amendment records three things: the detail query moved with this change (D3); a movie's user state
-          shows over the payloads with this tab's saves, kept in the mutation cache and rolled back by dropping a failed
-          save, because an infinite list's next-page load undoes a patch in place (D4); and every change of signed-in
-          user, sign-in included, clears the cache (D7)
-        - ADR-027's Status names this change as the move it planned and says the end-to-end watchlist test is still to
-          come; ADR-028's names it as the session's move onto TanStack Query. The pull request's number joins them once
-          it opens
+    - [x] **5.3.a Rewrite the authentication strategy's Token Refresh Flow and Authentication Hook sections**
+        - Documented the session query, first read, status and writers; the idle credential renewal is the only
+          remaining fetching effect. Described save ownership, precise reset points and the sign-out reload/notice.
+          The strategy's version header is unchanged. Markdown lint passes.
+    - [x] **5.3.b Amend ADR-027, and update the Status lines of ADR-027 and ADR-028**
+        - Added one locally dated ADR-027 amendment for the detail query, mutation-cache overlay and next-page
+          replacement rationale, and every change of user. Both Status sections name Frontend Server State;
+          ADR-027 records the deferred watchlist E2E test. The PR number joins them when it opens. Markdown lint passes.
 
 - [ ] **5.4 Check a change of user end to end**
 

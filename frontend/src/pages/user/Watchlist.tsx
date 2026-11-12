@@ -1,48 +1,16 @@
-/**
- * Watchlist Page Component
- *
- * Displays the user's watchlist movies using the userMovieService
- * from stored movie cards.
- *
- * Architecture:
- * - Uses userMovieService.getUserMovies({ watchlist: true, page_size: 100 })
- * - Displays simple text list of movie titles
- * - Shows empty state when no movies
- * - Shows loading state while fetching
- */
-
-import { useState, useEffect } from "react";
+/** The first watchlist page, refreshed by successful movie saves. */
+import { useQuery } from "@tanstack/react-query";
 import { Box, Text, VStack } from "@chakra-ui/react";
-import { getUserMovies } from "@/services/userMovieService";
-import type { MovieListItem } from "@/types/movie";
+import { libraryQuery } from "@/lib/queries";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 
 const Watchlist = () => {
-  const [movies, setMovies] = useState<MovieListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Fetch watchlist data on mount
-    const fetchWatchlist = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const { request } = getUserMovies({ watchlist: true, page_size: 100 });
-        const response = await request;
-
-        setMovies(response.data.results || []);
-      } catch (err: unknown) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load watchlist";
-        setError(errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void fetchWatchlist();
-  }, []);
+  const { status } = useAuthContext() ?? {};
+  const { data, error, isLoading } = useQuery({
+    ...libraryQuery({ watchlist: true, page_size: 100 }),
+    enabled: status === "authenticated",
+  });
+  const movies = data?.results ?? [];
 
   if (isLoading) {
     return (
@@ -55,7 +23,7 @@ const Watchlist = () => {
   if (error) {
     return (
       <Box p={8}>
-        <Text color="on-destructive">Error: {error}</Text>
+        <Text color="on-destructive">Error: {error.message}</Text>
       </Box>
     );
   }

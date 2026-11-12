@@ -43,8 +43,14 @@ Import `render`, queries, and async utilities from the shared renderer:
 ```tsx
 import { render, screen } from "@tests/helpers/test-renderer";
 import Watchlist from "@/pages/user/Watchlist";
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { setAuthTokens } from "@/utilities/tokenUtils";
 
-render(<Watchlist />);
+clearBrowserAuth();
+authHandlers();
+setAuthTokens(token());
+render(<AuthContextProvider><Watchlist /></AuthContextProvider>);
 expect(await screen.findByText("Fight Club")).toBeInTheDocument();
 ```
 
@@ -109,6 +115,9 @@ import { render, screen } from "@tests/helpers/test-renderer";
 import { server } from "@tests/mocks/server";
 import { apiBaseUrl } from "@/config/baseUrls";
 import Watchlist from "@/pages/user/Watchlist";
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { setAuthTokens } from "@/utilities/tokenUtils";
 
 it("shows an empty watchlist", async () => {
     server.use(
@@ -122,7 +131,10 @@ it("shows an empty watchlist", async () => {
         ),
     );
 
-    render(<Watchlist />);
+    clearBrowserAuth();
+    authHandlers();
+    setAuthTokens(token());
+    render(<AuthContextProvider><Watchlist /></AuthContextProvider>);
     expect(
         await screen.findByText("No movies on watchlist"),
     ).toBeInTheDocument();

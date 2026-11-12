@@ -180,24 +180,21 @@ page; on the browsable stack the same journey works against the real API, with U
         - Formatting, file lint, frontend type-check and 134 related tests pass, including unchanged detail styles;
           the movie-detail and Back to Results Chromium specs pass (two tests).
 
-- [ ] **3.2 The watchlist page reads the Library through a query — D6, D2, D1, D8**
+- [x] **3.2 The watchlist page reads the Library through a query — D6, D2, D1, D8**
 
     **Goal:** The watchlist page requests `watchlist=true` with a `page_size` of 100 only while someone is signed in,
     and refetches after a save.
 
-    - [ ] **3.2.a Test the page in `Watchlist.test.tsx`**
-        - Render under `AuthContextProvider`, signed in with a current stored token and `authHandlers()`; the request,
-          list, empty, loading and error cases keep their assertions
-        - A save made while the page is mounted refetches the Library
-        - No Library request while nobody is signed in
-        - Expect the new cases to FAIL initially
-    - [ ] **3.2.b Read the Library through the factory's Library query**
-        - `lib/queries.ts` adds `libraryQuery(params)` on `['library', params]` over `getUserMovies`, signal linked
-        - `Watchlist` reads it with `useQuery`, enabled while the status is `authenticated`, and keeps its text list and
-          its loading, error and empty states
-        - `frontend/tests/README.md`'s two `Watchlist` examples render it signed in (`AuthContextProvider`, a current
-          stored token, `authHandlers()`), as `Watchlist.test.tsx` does
-        - Tests should now PASS
+    - [x] **3.2.a Test the page in `Watchlist.test.tsx`**
+        - The real auth provider, current stored token and auth handlers wrap the kept request, list, empty, loading
+          and error cases. A save removes the displayed movie through a Library refetch; signed-out visitors make
+          no Library request. Both new cases failed against the effect reader.
+        - Narrow breaks separately failed the watchlist filter, page size and four display states.
+    - [x] **3.2.b Read the Library through the factory's Library query**
+        - The factory keys every parameter and links cancellation. Watchlist queries its first hundred watchlisted
+          cards only while authenticated, preserving its text display. Both test-guide examples now provide auth.
+        - Formatting, file lint, documentation lint, frontend type-check and 141 related tests pass, as does the
+          real-session sign-in Chromium spec (one test).
 
 - [ ] **3.3 The technical overview describes the query factory and the save hook — D9**
 

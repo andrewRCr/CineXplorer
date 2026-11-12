@@ -1,3 +1,7 @@
+import {
+    getUserMovies,
+    type UserMoviesQueryParams,
+} from "@/services/userMovieService";
 import { queryOptions } from "@tanstack/react-query";
 import { fetchMovieDetail } from "@/services/movieService";
 import type { MovieDetail } from "@/types/movie";
@@ -35,4 +39,10 @@ export const movieDetailQuery = (tmdbId: number) =>
         queryKey: ["movies", "detail", tmdbId] as const,
         queryFn: ({ signal }) =>
             readWithSignal(signal, fetchMovieDetail().get<MovieDetail>(tmdbId)),
+    });
+
+export const libraryQuery = (params: UserMoviesQueryParams) =>
+    queryOptions({
+        queryKey: [...libraryKey, params] as const,
+        queryFn: ({ signal }) => readWithSignal(signal, getUserMovies(params)),
     });

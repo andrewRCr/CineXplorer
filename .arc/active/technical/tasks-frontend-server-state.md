@@ -102,27 +102,20 @@ through the shared save hook.
         - Frontend type-check, formatting, file lint and all 51 related tests pass. A mechanical prefer-const lint
           error in the initial session counter was corrected.
 
-- [ ] **2.2 A change of user stops every kept save — D4, D7, D8**
+- [x] **2.2 A change of user stops every kept save — D4, D7, D8**
 
     **Goal:** One session-module step advances the change count, clears the kept saves, dismisses the save toasts still
     showing and resets every query but the session, so no save made before it acts after it.
 
-    - [ ] **2.2.a Test the step in `frontend/src/lib/__tests__/session.test.tsx`**
-        - Run the step against the test's query client (from `TestProviders`), with saves made through
-          `useUserMovieState` and a mounted query under the `['library']` prefix, whose requests are counted from a
-          save's release (the step's reset refetches it before)
-        - A save running when the step runs settles with no toast and no Library refetch, and its value drops out
-        - A save still queued then never reaches the server
-        - A save's toast showing then is dismissed, while a "Server error" toast stays
-        - A mounted movie query refetches; a `['session']` entry keeps its data
-        - Expect tests to FAIL initially. What the step leaves alone (the "Server error" toast, the session entry) is
-          seen failing against a step that dismisses every toast and one that resets every query
-    - [ ] **2.2.b Add the step to `lib/session.ts`**
-        - Exports `beginUserChange(client)` (advance the count, clear the mutation cache, dismiss the visible toasts
-          whose id marks a save), `resetUserQueries(client)` (reset every query whose key isn't the session's) and
-          `changeOfUser(client)`, which runs both; a password sign-in runs the two apart (5.1)
-        - The session key is defined in `lib/session.ts`; `lib/queries.ts` imports it, never the reverse
-        - Tests should now PASS
+    - [x] **2.2.a Test the step in `frontend/src/lib/__tests__/session.test.tsx`**
+        - Network tests prove running saves settle without toast or Library refetch, queued saves never dispatch,
+          movie queries reset and the session stays. Save toasts disappear while server errors stay visible.
+        - Tests failed against the inert step; resetting the session and removing every toast each failed a narrow
+          reconstruction. All 15 related tests pass.
+    - [x] **2.2.b Add the step to `lib/session.ts`**
+        - `beginUserChange` advances ownership, clears saves and removes visible save toasts. `resetUserQueries`
+          excludes the session key; `changeOfUser` composes both. The session key is owned here.
+        - Frontend type-check, file lint and formatting pass after guarding the toast API's optional ID.
 
 - [ ] **2.3 A watchlist toast offers Undo, one save per click — D4, D8**
 

@@ -1,5 +1,5 @@
 import { ROUTES } from "@/constants/routes";
-import { Box, Button, VStack, Text } from "@chakra-ui/react";
+import { Box, Button, VStack, Text, VisuallyHidden } from "@chakra-ui/react";
 import {
   TextLink,
   FloatingAlert,
@@ -77,6 +77,9 @@ const Register = () => {
       justifyContent="center"
       paddingY="32px"
     >
+      <VisuallyHidden asChild>
+        <h1>Create an account</h1>
+      </VisuallyHidden>
       <AuthFormCard>
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">

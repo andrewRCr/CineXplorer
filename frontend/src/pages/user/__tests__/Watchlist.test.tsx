@@ -14,6 +14,13 @@ const emptyWatchlist: MovieListResponseSchema = {
   results: [],
 };
 
+function expectPageTitle() {
+  expect(
+    screen.getByRole("heading", { level: 1, name: "My Watchlist" }),
+  ).toBeVisible();
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+}
+
 describe("Watchlist Page", () => {
   it("requests the watchlist with a hundred stored cards per page", async () => {
     let query: URLSearchParams | undefined;
@@ -33,6 +40,7 @@ describe("Watchlist Page", () => {
     render(<Watchlist />);
 
     expect(await screen.findByText("Fight Club")).toBeInTheDocument();
+    expectPageTitle();
     expect(screen.getByText("Forrest Gump")).toBeInTheDocument();
     expect(screen.queryByText("Already watched")).not.toBeInTheDocument();
   });
@@ -46,6 +54,7 @@ describe("Watchlist Page", () => {
     expect(
       await screen.findByText("No movies on watchlist"),
     ).toBeInTheDocument();
+    expectPageTitle();
   });
 
   it("keeps the loading state until the request finishes", async () => {
@@ -62,10 +71,12 @@ describe("Watchlist Page", () => {
     render(<Watchlist />);
 
     expect(screen.getByText("Loading watchlist...")).toBeInTheDocument();
+    expectPageTitle();
     finishRequest?.();
     expect(
       await screen.findByText("No movies on watchlist"),
     ).toBeInTheDocument();
+    expectPageTitle();
   });
 
   it("shows an error when the request fails", async () => {
@@ -79,5 +90,6 @@ describe("Watchlist Page", () => {
     expect(
       await screen.findByText("Error: Request failed with status code 503"),
     ).toBeInTheDocument();
+    expectPageTitle();
   });
 });

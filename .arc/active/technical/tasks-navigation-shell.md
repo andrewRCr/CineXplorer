@@ -240,36 +240,31 @@ passing without the sidebar's entries, and one `h1` on each page they reach.
         - Eight related test files, 56 cases passed; desktop/phone smoke: three cases passed. Lint, formatting and
           TypeScript checks passed.
 
-- [ ] **4.2 Each page in the shell has one `h1` — R12, R30**
+- [x] **4.2 Each page in the shell has one `h1` — R12, R30**
 
     **Goal:** Every page state R12 lists shows exactly one `h1`, its own title, and the loading states that show no
     title show none.
 
-    - [ ] **4.2.a Write the heading tests**
-        - `MovieDetail.test.tsx`: the title as `h1` when loaded, "Movie Not Found" and "Error Loading Movie" as
-          `h1`; no `h1` while the film loads
-        - `Watchlist.test.tsx`: "My Watchlist" as the one `h1` while loading, failed, empty and listed
-        - `ForgotPassword.test.tsx`: "Reset your password", then "Check your email", each the one `h1`
-        - `Login.test.tsx` and a new `Register.test.tsx`: a visually hidden `h1` "Sign in" and "Create an account";
-          none while Login completes a Google or GitHub sign-in
-        - `ProtectedRoute.test.tsx`: none while the sign-in check runs
-        - Expect tests to FAIL initially
+    - [x] **4.2.a Write the heading tests**
+        - HTTP-based `MovieDetail.headings.test.tsx` covers loaded, 404, 503 and held loading states, leaving the
+          legacy mocked back-link tests untouched. Extended watchlist/reset/login/guard tests and added registration
+          coverage. All missing headings failed first; temporary loading headings proved the no-heading cases fail.
+    - [x] **4.2.b Give each page its `h1`**
+        - Movie detail's title and both failures use `h1`. Watchlist keeps its title above all four states; password
+          reset titles use `h1`; sign-in and registration have visually hidden titles outside OAuth loading.
+    - [x] **4.2.c Assert one `h1` on each page the smoke specs scan**
+        - `scanPage` requires exactly one `h1`, including visually hidden titles and the page behind an open drawer.
+          The assertion failed on the old sign-in form, then passed with the heading.
+        - Related pages: eight files, 54 tests passed; the protected-route and page checks also passed. All six
+          smoke specs (seven cases), lint, formatting and TypeScript passed.
 
-    - [ ] **4.2.b Give each page its `h1`**
-        - `MovieDetail`: the title and both failure headings as `h1`. `Watchlist`: "My Watchlist" as an `h1` above
-          all four states. `ForgotPassword`: both titles as `h1`. `Login` and `Register`: a `VisuallyHidden` `h1`
-        - Tests should now PASS
-
-    - [ ] **4.2.c Assert one `h1` on each page the smoke specs scan**
-        - `scanPage` checks that the page holds exactly one `h1`, visually hidden or not
-        - Run all six specs against the browsable stack, since every spec scans through `scanPage`
-
-- [ ] **4.3 Check the shell at both widths — R30**
+- [x] **4.3 Check the shell at both widths — R30**
 
     **Goal:** The exit criterion holds in a real browser: the bar, its drawer, search and menu at 1280×800 and
     360×800, with axe and one `h1` on each page.
 
-    - Run `sign-in.spec.ts` and `phone-width.spec.ts` against the browsable stack; record what ran and the result
+    - The same six-spec run passed the two 1280×800 sign-in cases and the 360×800 phone case, including bar heights,
+      whole-control bounds, drawer/search/account interaction, axe and exactly one `h1` per scanned page.
 
 ### **Phase 5:** Films: one catalog that names what it shows
 

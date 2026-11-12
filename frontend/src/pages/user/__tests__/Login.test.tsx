@@ -10,6 +10,7 @@ import {
   profile,
   token,
 } from "@tests/helpers/auth";
+import { gate } from "@tests/helpers/web-locks";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { server } from "@tests/mocks/server";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
@@ -235,4 +236,47 @@ describe("returning to the requested page", () => {
     );
     submit.mockRestore();
   });
+});
+
+describe("the sign-in page heading", () => {
+  it("gives the form one visually hidden heading", async () => {
+    render(
+      <AuthContextProvider>
+        <Login />
+      </AuthContextProvider>,
+    );
+    await screen.findByRole("textbox", { name: "Username or Email Address" });
+    const heading = screen.getByRole("heading", { level: 1, name: "Sign in" });
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(getComputedStyle(heading).position).toBe("absolute");
+    expect(getComputedStyle(heading).width).toBe("1px");
+  });
+
+  it.each(["google", "github"])(
+    "shows no heading while completing %s sign-in",
+    async (provider) => {
+      const held = gate();
+      server.use(
+        http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+          await held.wait;
+          return HttpResponse.json({ status: 401 }, { status: 401 });
+        }),
+      );
+      sessionStorage.setItem("oauth_in_progress", provider);
+      render(
+        <AuthContextProvider>
+          <Login />
+        </AuthContextProvider>,
+      );
+      expect(
+        screen.getByText(
+          `Logging in with ${provider === "google" ? "Google" : "GitHub"}...`,
+        ),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("heading", { level: 1 }),
+      ).not.toBeInTheDocument();
+      held.release();
+    },
+  );
 });

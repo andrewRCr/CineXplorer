@@ -1,6 +1,14 @@
 import { isRecord } from "@/utilities/typeGuards";
 import { ROUTES } from "@/constants/routes";
-import { Box, VStack, Text, HStack, Checkbox, Button } from "@chakra-ui/react";
+import {
+  Box,
+  VStack,
+  Text,
+  HStack,
+  Checkbox,
+  Button,
+  VisuallyHidden,
+} from "@chakra-ui/react";
 import {
   TextLink,
   FloatingAlert,
@@ -383,6 +391,9 @@ const Login = () => {
       justifyContent="center"
       paddingY="32px"
     >
+      <VisuallyHidden asChild>
+        <h1>Sign in</h1>
+      </VisuallyHidden>
       <AuthFormCard>
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">

@@ -523,4 +523,77 @@ describe("persisted critical reports", () => {
             expect.objectContaining({ message: "Unacknowledged later" }),
         ]);
     });
+
+    it("bounds stalled CSRF setup and prevents a late logging submission", async () => {
+        const received: unknown[] = [];
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+                const payload: unknown = await request.json();
+                received.push(payload);
+                return succeeded();
+            }),
+        );
+        const logger = reportingLogger();
+        vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+        let release = () => {};
+        let pending: Promise<boolean> | undefined;
+        let csrfFinished = Promise.resolve();
+        try {
+            await expect(
+                logger.reportCriticalError("Healthy deadline"),
+            ).resolves.toBe(true);
+            document.cookie = "csrftoken=; Max-Age=0; Path=/";
+            let started = () => {};
+            const csrfStarted = new Promise<void>((resolve) => {
+                started = resolve;
+            });
+            const held = new Promise<void>((resolve) => {
+                release = resolve;
+            });
+            csrfFinished = new Promise<void>((resolve) => {
+                server.events.on(
+                    "response:mocked",
+                    function csrfResponse({ request }) {
+                        if (new URL(request.url).pathname === "/api/csrf/") {
+                            server.events.removeListener(
+                                "response:mocked",
+                                csrfResponse,
+                            );
+                            resolve();
+                        }
+                    },
+                );
+            });
+            server.use(
+                http.get(`${apiBaseUrl}/csrf/`, async () => {
+                    started();
+                    await held;
+                    document.cookie = "csrftoken=synthetic-csrf; Path=/";
+                    return HttpResponse.json({});
+                }),
+            );
+            let outcome: boolean | undefined;
+            pending = logger
+                .reportCriticalError("Stalled CSRF incident")
+                .then((result) => {
+                    outcome = result;
+                    return result;
+                });
+            await csrfStarted;
+            await vi.advanceTimersByTimeAsync(5000);
+            expect(outcome).toBe(false);
+            expect(logger.getCriticalLogsFromStorage()).toEqual([
+                expect.objectContaining({ message: "Stalled CSRF incident" }),
+            ]);
+        } finally {
+            release();
+            if (pending) {
+                await csrfFinished;
+                await vi.advanceTimersByTimeAsync(100);
+                await pending;
+            }
+            vi.useRealTimers();
+        }
+        expect(received.map(messageOf)).toEqual(["Healthy deadline"]);
+    });
 });

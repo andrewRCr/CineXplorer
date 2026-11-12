@@ -464,6 +464,27 @@ class Logger {
 
     /** Send one report without enqueueing failures or starting another recovery. */
     private async sendReport(entry: LogEntry): Promise<void> {
+        const controller = new AbortController();
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+            await Promise.race([
+                this.postReport(entry, controller.signal),
+                new Promise<never>((_, reject) => {
+                    timer = setTimeout(() => {
+                        controller.abort();
+                        reject(new Error("Backend logging timeout"));
+                    }, 5000);
+                }),
+            ]);
+        } finally {
+            if (timer !== undefined) clearTimeout(timer);
+        }
+    }
+
+    private async postReport(
+        entry: LogEntry,
+        signal: AbortSignal,
+    ): Promise<void> {
         const { default: apiClient } = await import("./apiClient");
         const payload = {
             level: LogLevel[entry.level],
@@ -481,6 +502,7 @@ class Logger {
         };
         await apiClient.post("/logs/", payload, {
             skipAuthRefresh: true,
+            signal,
             timeout: 5000,
         });
     }

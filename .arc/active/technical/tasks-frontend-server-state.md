@@ -42,28 +42,20 @@ _Mode:_ `layer` — closes on the client's defaults and the query factory in pla
 _Exit criterion:_ the retry test passes against `lib/queryClient`'s defaults, two failing reads leave one "Server error"
 toast, and the grid tests and the browse smoke specs pass with the grids' keys taken from the factory.
 
-- [ ] **1.1 A query retries only a network error or a 5xx — D2**
+- [x] **1.1 A query retries only a network error or a 5xx — D2**
 
     **Goal:** A read that got no response or a 5xx is retried twice with the existing backoff, while a 4xx, a
     cancellation or any other error fails at once, and a save is never retried.
 
-    - [ ] **1.1.a Test the retry rule in `frontend/src/lib/__tests__/queryClient.test.ts`**
-        - Use the `queryClient` that `lib/queryClient.ts` exports (cleared after each test), not `TestProviders`, which
-          turns retries off; count the requests MSW receives for one read through `apiClient`
-        - Cases: a network error (`HttpResponse.error()`) and a 500 are each sent three times; a 404, a 401 with no
-          stored token and a cancellation (an error `axios.isCancel` accepts) are sent once; a failed mutation is sent
-          once
-        - Fake timers keep the backoff from slowing the test; the backoff itself stays as it is
-        - Expect the 4xx and cancellation cases to FAIL initially (today every failure retries twice); the retried
-          cases and the mutation case pass today, and are seen failing against a narrow break
+    - [x] **1.1.a Test the retry rule in `frontend/src/lib/__tests__/queryClient.test.ts`**
+        - MSW counts reads through the production client's defaults for network, 500, 404, 401, cancellation and
+          unexpected errors; a failed mutation is sent once. Fake timers advance the existing backoff.
+        - The refusal, cancellation and unexpected-error cases failed against the previous defaults. Narrow breaks
+          disabling query retries and enabling mutation retries failed the other cases by request count.
 
-    - [ ] **1.1.b Give `queryClient` the retry rule**
-        - `retry` becomes a function of the failure count and the error: retry while under two failures when the error
-          is an axios error with no response that `axios.isCancel` doesn't accept, or one with a status of 500 or more;
-          never otherwise. Mutations set `retry: false` (TanStack's default, stated)
-        - Keep the stale time, gc time and no refetch on focus or reconnect; set no `placeholderData`, so a new key
-          shows its loading state. Update the file's header comment
-        - Tests should now PASS
+    - [x] **1.1.b Give `queryClient` the retry rule**
+        - Retry twice only for uncancelled axios network errors or 5xx; mutations explicitly never retry.
+        - Existing backoff, cache times and refetch settings stay. All seven retry tests pass.
 
 - [ ] **1.2 Retried reads share one "Server error" toast — D2**
 

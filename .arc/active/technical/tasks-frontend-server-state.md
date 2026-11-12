@@ -249,42 +249,19 @@ user's.
     **Goal:** On a provider's return the session's first read asks allauth first and lands the provider's user over any
     stored token, and the callback's effect reacts to that read without sending a request.
 
-    - [ ] **4.2.a Test the provider's return in `useAuth.test.tsx`**
-        - A token stored by an earlier password session (expired, its renewal answering 200), on a return to `/login`
-          with the in-progress flag: the provider's user lands, both storages' tokens are cleared, and allauth's session
-          endpoint is read once (today the renewed token survives, and its user's profile loads beside the callback's)
-        - allauth finding nobody: the read goes on by the stored-token path, and allauth's session endpoint is read
-          once; with a stored token (expired, its renewal answering 200) its user lands and the flags clear with no
-          welcome toast, and with no token the status reads `anonymous`
-        - Landing the provider's user clears `oauth_in_progress` and `oauth_start_time`, shows the welcome toast and
-          returns to the requested page; finding nobody clears the flags. The kept "returning after a provider sign-in"
-          cases assert only the route and the error redirect, so the flags and the toast are new assertions
-        - With no token stored and allauth's answer held while the route moves on, the provider's user still returns to
-          the page requested at the return; and after a page load that wasn't a provider's return, a later arrival at
-          `/login` with the flag still set clears both flags
-        - Expect the stale-token case to FAIL initially (the renewed token survives), and the no-token case on allauth's
-          endpoint read twice (by the first read and the callback). Much of the rest passes before 4.2.b through 4.1.c's
-          callback; known at planning, each seen failing against a narrow break: the provider's user landing, against a
-          read that takes the stored-token path first; the welcome toast and cleared flags on the provider's user,
-          against an effect that keeps today's early return for a signed-in user; allauth read once with a token stored,
-          against a callback that still sends its request; the stored-token path's user landing after allauth finds
-          nobody, against a provider branch that lands nobody; the flags cleared after any other landing, against an
-          effect that keeps them; no welcome toast for the stored-token path's user, against a toast for any user
-          landing on a provider's return; `anonymous` with no token, against a read that never lands after finding
-          nobody; the requested page kept while the route moves on, against an effect that reads the location at the
-          landing; and the leftover flag cleared, against an effect that acts only on a provider's return
-
-    - [ ] **4.2.b Read allauth first on a provider's return**
-        - `sessionQuery` takes its optional first-read context here (4.1.b; Implementation Notes): `useAuth` decides the
-          return at its first render, with the page it requests, and passes it; on the provider's user the read clears
-          stored tokens before landing it, as a password sign-in clears both storages
-        - The callback's effect keeps the error redirect and otherwise reacts to the first read's landing on a
-          provider's return, so its early return for a signed-in user goes. A user landing with no stored token is the
-          provider's (the provider branch clears stored tokens, the stored-token path keeps them): it clears the flags,
-          shows the welcome toast and returns to the page requested at the first render. Nobody, or the stored-token
-          path's user, only clears the flags. On any later arrival at `/login`, the effect clears a flag still set, as
-          today's callback does after finding nobody. It calls no service and no `fetch`
-        - Tests should now PASS
+    - [x] **4.2.a Test the provider's return in `useAuth.test.tsx`**
+        - Six cases cover expired/current password credentials replaced by the provider, token/no-token fallback
+          after allauth finds nobody, original destinations across held reads, welcome/flag handling and later
+          sign-in arrivals. Five failed before the move; the token fallback was already a passing behavior.
+        - Nine narrow reconstructions failed the protected boundaries: authenticated callback skips, wrong welcome,
+          late destinations, retained flags, token-first reads, missing fallback/landing and duplicate allauth reads.
+    - [x] **4.2.b Read allauth first on a provider's return**
+        - The observer passes a first-render return context to the session query; writer reads omit it. Provider
+          discovery precedes stored-token handling and clears both token stores on success. A failed discovery
+          falls through without a second allauth read.
+        - The callback effect reacts to the landed query and captured destination, with no fetch. Later sign-in
+          arrivals clear leftover flags without clearing a newly started provider flow on its original page.
+        - Formatting, lint, type-check, 221 related tests and the real-session sign-in Chromium spec pass.
 
     - [ ] **4.2.c Search for effects that fetch**
         - No `useEffect` in `frontend/src` calls `apiClient`, `fetch` or a service that reads or changes server data

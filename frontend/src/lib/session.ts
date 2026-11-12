@@ -65,11 +65,9 @@ const isUserProfile = (value: unknown): value is UserProfile => {
 };
 
 /**
- * Check OAuth session status via allauth session endpoint.
- * Used for both initial mount detection and OAuth callback handling.
- * @returns User profile if authenticated, null otherwise
+ * Read a valid provider profile or treat the response as anonymous.
  */
-export async function checkOAuthSession(): Promise<UserProfile | null> {
+async function checkOAuthSession(): Promise<UserProfile | null> {
     try {
         const response = await fetch(ALLAUTH_SESSION_URL, {
             method: "GET",
@@ -94,14 +92,29 @@ export async function checkOAuthSession(): Promise<UserProfile | null> {
     }
 }
 
-export async function readSession(): Promise<UserProfile | null> {
+export interface FirstReadContext {
+    providerReturn: boolean;
+}
+
+export async function readSession(
+    firstRead?: FirstReadContext,
+): Promise<UserProfile | null> {
     const version = getAuthSessionVersion();
     const assertCurrent = () => {
         if (version !== getAuthSessionVersion())
             throw new CanceledError("Authentication session changed");
     };
+    if (firstRead?.providerReturn) {
+        const provider = await checkOAuthSession();
+        assertCurrent();
+        if (provider) {
+            clearAuthTokens();
+            return provider;
+        }
+    }
     const { access_token } = getAuthTokens();
     if (!access_token) {
+        if (firstRead?.providerReturn) return null;
         const user = await checkOAuthSession();
         assertCurrent();
         return user;

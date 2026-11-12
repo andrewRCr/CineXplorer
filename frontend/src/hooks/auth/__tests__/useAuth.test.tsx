@@ -21,7 +21,13 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { MemoryRouter, useLocation, Routes, Route } from "react-router-dom";
+import {
+  MemoryRouter,
+  useLocation,
+  useNavigate,
+  Routes,
+  Route,
+} from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpResponse, http } from "msw/http";
 import { useAuth } from "../useAuth";
@@ -1006,5 +1012,154 @@ describe("password sign-in completion", () => {
     await act(async () => release.release());
     await screen.findByRole("heading", { name: "Protected film list" });
     expect(locations).toEqual(["/login?next=%2Fprivate", "/private"]);
+  });
+});
+
+describe("the first session read on a provider return", () => {
+  const sessionUrl = `${siteOrigin}/_allauth/browser/v1/auth/session`;
+  const provider = {
+    ...profile,
+    id: 88,
+    username: "provider",
+    first_name: "Provider",
+  };
+  function mountReturn(entry = "/login?next=%2Fwatchlist%3Fsort%3Dadded") {
+    return renderHook(
+      () => ({
+        auth: useAuth(),
+        location: useLocation(),
+        navigate: useNavigate(),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <TestProviders>
+            <MemoryRouter initialEntries={[entry]}>
+              {children}
+              <PriorityToaster />
+            </MemoryRouter>
+          </TestProviders>
+        ),
+      },
+    );
+  }
+  beforeEach(() => {
+    sessionStorage.setItem("oauth_in_progress", "google");
+    sessionStorage.setItem("oauth_start_time", String(Date.now()));
+  });
+  it.each(["expired", "current"])(
+    "lands the provider over a %s password token, once",
+    async (age) => {
+      setAuthTokens(
+        token(age === "expired" ? 1 : Math.floor(Date.now() / 1000) + 300),
+      );
+      sessionStorage.setItem("access_token", token(1));
+      let reads = 0;
+      server.use(
+        http.get(sessionUrl, () => {
+          reads++;
+          return HttpResponse.json({
+            meta: { is_authenticated: true },
+            data: { user: provider },
+          });
+        }),
+        http.post(`${apiBaseUrl}/auth/refresh`, () =>
+          HttpResponse.json({ access_token: token() }),
+        ),
+      );
+      const { result } = mountReturn();
+      await waitFor(() => expect(result.current.auth.user).toEqual(provider));
+      expect(localStorage.getItem("access_token")).toBeNull();
+      expect(sessionStorage.getItem("access_token")).toBeNull();
+      await waitFor(() =>
+        expect(
+          result.current.location.pathname + result.current.location.search,
+        ).toBe("/watchlist?sort=added"),
+      );
+      expect(sessionStorage.getItem("oauth_in_progress")).toBeNull();
+      expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
+      await waitFor(() =>
+        expect(screen.getByText("Welcome back, Provider!")).toBeVisible(),
+      );
+      expect(reads).toBe(1);
+    },
+  );
+  it.each([false, true])(
+    "falls through after no provider user, with stored token: %s",
+    async (stored) => {
+      const renewed = token();
+      if (stored) setAuthTokens(token(1));
+      let reads = 0;
+      server.use(
+        http.get(sessionUrl, () => {
+          reads++;
+          return HttpResponse.json({ status: 401 }, { status: 401 });
+        }),
+        http.post(`${apiBaseUrl}/auth/refresh`, () =>
+          HttpResponse.json({ access_token: renewed }),
+        ),
+      );
+      const { result } = mountReturn();
+      await waitFor(() =>
+        expect(result.current.auth.status).toBe(
+          stored ? "authenticated" : "anonymous",
+        ),
+      );
+      expect(result.current.auth.user).toEqual(stored ? profile : null);
+      await waitFor(() =>
+        expect(sessionStorage.getItem("oauth_in_progress")).toBeNull(),
+      );
+      expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
+      expect(reads).toBe(1);
+      expect(screen.queryByText(/Welcome back/)).not.toBeInTheDocument();
+      if (stored) expect(localStorage.getItem("access_token")).toBe(renewed);
+    },
+  );
+  it("keeps the original destination while a provider read is held across navigation", async () => {
+    const release = gate();
+    const entered = gate();
+    let reads = 0;
+    server.use(
+      http.get(sessionUrl, async () => {
+        reads++;
+        entered.release();
+        await release.wait;
+        return HttpResponse.json({
+          meta: { is_authenticated: true },
+          data: { user: provider },
+        });
+      }),
+    );
+    const { result } = mountReturn();
+    await entered.wait;
+    await act(async () => result.current.navigate("/browse?next=%2Fwrong"));
+    release.release();
+    await waitFor(() =>
+      expect(
+        result.current.location.pathname + result.current.location.search,
+      ).toBe("/watchlist?sort=added"),
+    );
+    await waitFor(() =>
+      expect(screen.getByText("Welcome back, Provider!")).toBeVisible(),
+    );
+    expect(sessionStorage.getItem("oauth_in_progress")).toBeNull();
+    expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
+    expect(reads).toBe(1);
+  });
+  it("clears leftover provider flags on a later sign-in page arrival", async () => {
+    let reads = 0;
+    server.use(
+      http.get(sessionUrl, () => {
+        reads++;
+        return HttpResponse.json({ status: 401 }, { status: 401 });
+      }),
+    );
+    const { result } = mountReturn("/browse");
+    await waitFor(() => expect(result.current.auth.status).toBe("anonymous"));
+    await act(async () => result.current.navigate("/login"));
+    await waitFor(() =>
+      expect(sessionStorage.getItem("oauth_in_progress")).toBeNull(),
+    );
+    expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
+    expect(reads).toBe(1);
   });
 });

@@ -1,10 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { sessionQuery } from "@/lib/queries";
-import {
-    sessionKey,
-    ALLAUTH_SESSION_URL,
-    checkOAuthSession,
-} from "@/lib/session";
+import { sessionKey, ALLAUTH_SESSION_URL } from "@/lib/session";
 /**
  * useAuth
  *
@@ -61,6 +57,17 @@ import * as authService from "@/services/authService";
 import { priorityToaster } from "@/components/core/chakra/toaster";
 
 export function useAuth(): AuthStateProps {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [firstRead] = useState(() => ({
+        providerReturn:
+            location.pathname === ROUTES.LOGIN &&
+            (document.referrer.includes("google.com") ||
+                document.referrer.includes("github.com") ||
+                sessionStorage.getItem("oauth_in_progress") !== null),
+        returnPath: returnPathFrom(location.search),
+        locationKey: location.key,
+    }));
     const [initialStatus] = useState<AuthStatus>(() => {
         // Detect access tokens in localStorage, then sessionStorage.
         const { access_token } = getAuthTokens();
@@ -80,7 +87,7 @@ export function useAuth(): AuthStateProps {
         return signedIn ? "authenticated" : "resolving";
     });
     const client = useQueryClient();
-    const session = useQuery(sessionQuery());
+    const session = useQuery(sessionQuery(firstRead));
     const user = session.data ?? null;
     const status: AuthStatus =
         session.data === undefined
@@ -89,8 +96,6 @@ export function useAuth(): AuthStateProps {
               ? "authenticated"
               : "anonymous";
     const isAuthenticated = status === "authenticated";
-    const navigate = useNavigate();
-    const location = useLocation();
 
     // Renew idle password sessions before considering them signed out.
     // Provider sessions have no access token and are managed by allauth.
@@ -120,123 +125,50 @@ export function useAuth(): AuthStateProps {
         return () => clearInterval(interval);
     }, [client, isAuthenticated]);
 
-    // Ref to prevent duplicate OAuth callback handling (StrictMode double-invokes effects)
     const hasHandledOAuthRef = useRef(false);
-
-    // Handle OAuth callback (when redirected back from Google/GitHub)
-    // Supports two authentication patterns:
-    // 1. OAuth: Session cookies only (HTTP-only, managed by django-allauth)
-    // 2. Email/Password: JWT tokens (checked via localStorage/sessionStorage)
     useEffect(() => {
-        // Skip if already authenticated to prevent loops
-        if (isAuthenticated) {
+        const params = new URLSearchParams(location.search);
+        const oauthError = params.get("error");
+        if (oauthError) {
+            logger.error("OAuth authentication failed", { error: oauthError });
+            void navigate(loginPathFor(safeReturnPath(params.get("next"))), {
+                state: {
+                    oauthError: true,
+                    message: "OAuth authentication failed. Please try again.",
+                },
+            });
             return;
         }
-
-        const handleOAuthCallback = async () => {
-            // Guard against double-invocation (StrictMode, fast re-renders)
-            if (hasHandledOAuthRef.current) {
-                logger.debug(
-                    "[useAuth] OAuth callback already handled, skipping",
-                );
-                return;
-            }
-            const params = new URLSearchParams(location.search);
-            const oauthError = params.get("error");
-
-            // OAuth error handling (check first)
-            if (oauthError) {
-                logger.error("OAuth authentication failed", {
-                    error: oauthError,
-                });
-                // Keep the page the visitor asked for, so a retry still returns there.
-                void navigate(
-                    loginPathFor(safeReturnPath(params.get("next"))),
-                    {
-                        state: {
-                            oauthError: true,
-                            message:
-                                "OAuth authentication failed. Please try again.",
-                        },
-                    },
-                );
-                return;
-            }
-
-            // Check if we just came from an OAuth redirect
-            // Only check session if we have a referrer or state indicating OAuth flow
-            // This prevents auto-login on every /login page visit
-            const oauthInProgress = sessionStorage.getItem("oauth_in_progress");
-            const isFromOAuthRedirect =
-                document.referrer.includes("google.com") ||
-                document.referrer.includes("github.com") ||
-                oauthInProgress !== null; // Check for existence, not 'true' (value is provider name)
-
-            // ONLY run callback handling for:
-            // 1. OAuth redirects (from Google/GitHub with oauth_in_progress flag)
-            // 2. OAuth error callbacks (handled above)
-            // Do NOT run on every navigation when not authenticated
-            if (!isFromOAuthRedirect && !oauthError) {
-                return; // Skip callback handling for normal navigation
-            }
-
-            logger.debug("[useAuth] Callback handler running", {
-                pathname: location.pathname,
-                search: location.search,
-                isFromOAuthRedirect,
-                oauthError,
-            });
-
-            // Check if we're on the OAuth callback path (e.g., /login after OAuth redirect)
-            // OAuth authentication uses session cookies (NO tokens in URL)
-            if (location.pathname === ROUTES.LOGIN && isFromOAuthRedirect) {
-                logger.debug(
-                    "[useAuth] OAuth redirect detected, checking session...",
-                );
-
-                // Mark as handled BEFORE async operation to prevent race conditions
-                hasHandledOAuthRef.current = true;
-
-                const oauthUser = await checkOAuthSession();
-
-                // Clear OAuth flags AFTER session check completes
-                // useOAuthFlow monitors this and will clear its loading state
-                sessionStorage.removeItem("oauth_in_progress");
-                sessionStorage.removeItem("oauth_start_time");
-
-                if (oauthUser) {
-                    logger.debug(
-                        "[useAuth] OAuth callback - authenticated via session cookie",
-                    );
-                    await client.cancelQueries({ queryKey: sessionKey });
-                    client.setQueryData(sessionQuery().queryKey, oauthUser);
-
-                    // Show welcome toast for OAuth login (priority position)
-                    const displayName =
-                        oauthUser.first_name || oauthUser.username;
-                    priorityToaster.success({
-                        title: `Welcome back, ${displayName}!`,
-                    });
-
-                    void navigate(returnPathFrom(location.search));
-                    return;
-                } else {
-                    logger.debug(
-                        "[useAuth] Session response shows not authenticated",
-                    );
-                    // OAuth failed - flags already cleared above
-                    // useOAuthFlow will detect this and show login form
-                    // Reset ref so user can retry OAuth
-                    hasHandledOAuthRef.current = false;
-                }
-            }
+        const clearProviderFlags = () => {
+            sessionStorage.removeItem("oauth_in_progress");
+            sessionStorage.removeItem("oauth_start_time");
         };
-
-        void handleOAuthCallback();
-        // Intentional: only re-run when URL changes, not when auth state changes.
-        // Adding isAuthenticated/navigate would cause loops during OAuth redirect handling.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [location.pathname, location.search]);
+        if (firstRead.providerReturn && !hasHandledOAuthRef.current) {
+            if (session.data === undefined) return;
+            hasHandledOAuthRef.current = true;
+            clearProviderFlags();
+            if (session.data && !getAuthTokens().access_token) {
+                const displayName =
+                    session.data.first_name || session.data.username;
+                priorityToaster.success({
+                    title: `Welcome back, ${displayName}!`,
+                });
+                void navigate(firstRead.returnPath);
+            }
+        } else if (
+            location.pathname === ROUTES.LOGIN &&
+            location.key !== firstRead.locationKey
+        ) {
+            clearProviderFlags();
+        }
+    }, [
+        firstRead,
+        location.key,
+        location.pathname,
+        location.search,
+        navigate,
+        session.data,
+    ]);
 
     const logout = useCallback(async () => {
         // Check authentication pattern BEFORE clearing tokens

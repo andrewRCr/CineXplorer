@@ -204,16 +204,16 @@ page; on the browsable stack the same journey works against the real API, with U
     - The Data Fetching bullet now describes the query factory, grids' own fetchers, save overlays and ordering,
       retained confirmed records and Library-only invalidation. Documentation lint passes.
 
-- [ ] **3.4 Check a save shows everywhere at once**
+- [x] **3.4 Check a save shows everywhere at once**
 
     **Goal:** The save, the card, the detail page and the watchlist page are shown to compose, in tests and against the
     real API, with what ran and the result recorded.
 
-    - Run the composition cases from 2.4.a and 3.1.b and the refetch case from 3.2.a by name
-    - On the browsable stack, signed in as its seeded account: add a movie to the watchlist from its card (the toast
-      offers Undo); open its detail page (it reads "Remove from Watchlist" with no user-data request); Undo from the
-      toast there; go back to the list (the card shows the Undo); open the watchlist page (it shows the change)
-    - Keep the script and its log in the work unit's runs folder
+    - The eight named card, cached-detail and Library-refetch composition cases pass.
+    - Against the browsable stack's real API, the seeded account added a movie from its card, opened its detail,
+      used the toast's Undo, returned to the card and opened the settled watchlist. The card and detail agreed;
+      the server received watchlist `true` then `false`, no separate user-state GET occurred, and the watchlist
+      excluded the movie. The scenario script and log are retained with the work unit's run artifacts.
 
 ### **Phase 4:** The session is read through one query
 

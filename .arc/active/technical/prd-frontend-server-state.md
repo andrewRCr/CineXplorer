@@ -250,7 +250,9 @@ new read to the one in flight rather than starting another, and a read landing a
   has landed.
 - **Sign-out** invalidates the session version (`invalidateAuthSession`), clears stored tokens and writes `null`, then
   sends its sign-out request, and once that has settled loads the sign-in page afresh (below).
-- **A failed renewal at the 60-second check** writes `null`, as it signs the user out today.
+- **A failed renewal at the 60-second check** writes `null` only while the authentication version and change count
+  captured at its start remain current, checking both before and after canceling a session read. It cannot clear a
+  newer provider session; a current user's failed renewal still signs them out.
 
 **A change of user** is one step in the session module: it advances the change count (D4), clears the saves,
 dismisses the save toasts still showing (D4), and resets every query except the session, so what is on screen

@@ -474,7 +474,9 @@ Session writers cancel any in-flight session read before replacing it:
   `/login?signed_out=true` afresh after success or failure. This drops data fetched with a provider cookie while
   the request was pending. A newer password sign-in's token survives that reload. Login shows the signed-out notice
   only after the fresh session reads `anonymous`, then clears the parameter.
-- Failed idle renewal writes `null` and runs the change-of-user step.
+- Failed idle renewal writes `null` and runs the change-of-user step only while its original authentication version
+  and user ownership remain current, checked before and after canceling the session read. An older renewal cannot
+  clear a provider session that landed while it was pending.
 
 The change-of-user step advances this tab's save ownership count, clears its mutation cache, removes its visible and
 queued save toasts and resets every query except the session. This refetches visible lists while late saves can

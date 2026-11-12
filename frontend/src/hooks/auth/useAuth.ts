@@ -6,6 +6,7 @@ import {
     beginUserChange,
     resetUserQueries,
     changeOfUser,
+    getChangeCount,
 } from "@/lib/session";
 /**
  * useAuth
@@ -108,6 +109,7 @@ export function useAuth(): AuthStateProps {
     useEffect(() => {
         const checkTokenExpiration = async () => {
             const sessionVersion = getAuthSessionVersion();
+            const change = getChangeCount();
             const { access_token } = getAuthTokens();
             if (isAuthenticated && access_token && areTokensExpired()) {
                 try {
@@ -115,11 +117,16 @@ export function useAuth(): AuthStateProps {
                 } catch (error) {
                     if (
                         isCancel(error) ||
-                        sessionVersion !== getAuthSessionVersion()
+                        sessionVersion !== getAuthSessionVersion() ||
+                        change !== getChangeCount()
                     )
                         return;
                     await client.cancelQueries({ queryKey: sessionKey });
-                    if (sessionVersion !== getAuthSessionVersion()) return;
+                    if (
+                        sessionVersion !== getAuthSessionVersion() ||
+                        change !== getChangeCount()
+                    )
+                        return;
                     clearAuthTokens();
                     client.setQueryData(sessionQuery().queryKey, null);
                     void changeOfUser(client);

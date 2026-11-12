@@ -368,6 +368,18 @@ its request settles; on the browsable stack, signing out and in again shows no p
         - The Owner authorized the independent fix check; it found no incomplete repair or introduced failure.
           Both pass-1 findings are fixed, all criteria are met and verification is complete.
 
+- [x] **6.2 Preserve a newer session when an older idle renewal fails**
+
+    **Goal:** A failed idle renewal may write anonymous only while its original user ownership remains current,
+    including across the cancellation boundary; a landed provider session must survive an earlier renewal failure.
+
+    - Capture the original user-change count alongside the authentication version; check both before and after
+      cancellation so an obsolete idle-renewal failure cannot write anonymous over a newer provider session.
+    - The held-provider cases failed with renewal responses 401 and 500 before the guard, then passed. All 88 auth
+      tests and the full 2,714-test frontend suite passed, including current-user renewal-failure behavior; lint,
+      type-check, reference Markdown lint and the real-session sign-in smoke passed. Updated the reference explanations.
+    - The material correction is ready for its independent fix check; no new architectural decision was required.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation
@@ -447,6 +459,9 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   retires saves before dispatch when setup yields. Narrow reconstructions failed, then restored guards passed. The
   complete frontend suite (2,712 tests) and real-session sign-in smoke passed after both fixes. The independent fix check
   found no incomplete repair or introduced failure.
+
+  _Additional evidence:_ The provider session survives an older idle renewal’s held 401/500 failure; all 88 auth
+  cases and the full frontend suite passed after the ownership guard.
 
 - [x] 4. **Client defaults.** A test against `lib/queryClient`'s defaults shows a query retries twice on a network error
   and on a 5xx, and not on a 4xx or a cancellation; and a test shows two failing reads leave one "Server error" toast.

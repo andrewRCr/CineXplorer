@@ -252,7 +252,7 @@ describe("CollapsibleSubNav", () => {
 
       const nav = screen.getByRole("navigation");
 
-      expect(nav).toHaveAttribute("aria-label");
+      expect(nav).toHaveAccessibleName("Film filters");
     });
   });
 

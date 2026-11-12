@@ -326,27 +326,21 @@ window tabs, and the phone-width spec follows Films there.
         - The spec checks Popular films, the three window links and the current link; a temporary wrong title
           demonstrated its failure. Browse, Back to Results, movie detail and phone specs all pass (four cases).
 
-- [ ] **5.4 The filter bar and the home page use the catalog's names — R22, R27, R29, R30**
+- [x] **5.4 The filter bar and the home page use the catalog's names — R22, R27, R29, R30**
 
     **Goal:** The filter bar and the home page name the windows as the tabs do, and the advanced-filters toggle is
     named, reports its state and takes the button ring.
 
-    - [ ] **5.4.a Write the tests**
-        - `YearSelector.test.tsx`: the disabled field reads "Release Year (In theaters)" and "Release Year (Coming
-          soon)"
-        - `CollapsibleSubNav.test.tsx`: the region is labelled "Film filters"
-        - A new `ConnectedDropdowns.test.tsx`: the advanced-filters toggle named "Advanced filters", `aria-expanded`
-          following its panel, and focused from the keyboard drawing a `ring` outline and no `tertiary` border
-        - `Featured.test.tsx`: the section's heading "Films", and buttons "All films", "In theaters" and "Coming
-          soon" opening `/browse`, `/browse/now-playing` and `/browse/upcoming`
-        - Expect tests to FAIL initially
+    - [x] **5.4.a Write the tests**
+        - Fail-first cases cover the two disabled year labels, the Film filters landmark, the named advanced toggle
+          with changing expansion state and resolved keyboard ring/border colors, and all three home-page targets.
+        - Related tests: 95 passed across eight files; lint, format and types pass after removing an unsupported
+          option from a new role query. All six smoke specs pass (seven cases), including the four required by 5.6.
 
-    - [ ] **5.4.b Rename and fix them**
-        - `YearSelector`'s window labels; `CollapsibleSubNav`'s `aria-label`; the toggle in `ConnectedDropdowns`
-          takes its `aria-label` and `aria-expanded` and drops its `_focusVisible` border; `Featured`'s heading and
-          button labels
-        - `e2e/axe-baseline.ts`: the `/browse` `button-name` reason names only the movie cards' unnamed icon buttons
-        - Tests should now PASS
+    - [x] **5.4.b Rename and fix them**
+        - Year labels and home buttons use the catalog's window names; the home section is Films. The filter bar is
+          Film filters, and Advanced filters exposes its panel state and inherits the shared button focus recipe.
+        - The browse button-name baseline now describes only the cards' unnamed icon buttons.
 
 - [ ] **5.5 The decision record and the README describe the shell — R31**
 

@@ -203,9 +203,9 @@ const YearSelector = ({
 
   const routeLabel =
     pageSource === "now-playing"
-      ? "Now Playing"
+      ? "In theaters"
       : pageSource === "upcoming"
-        ? "Upcoming"
+        ? "Coming soon"
         : "";
 
   return (

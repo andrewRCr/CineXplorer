@@ -18,7 +18,7 @@ export const axeBaseline: BaselineEntry[] = [
     {
         route: "/browse",
         rule: "button-name",
-        reason: "Browse filter and movie controls include buttons without accessible names.",
+        reason: "Movie cards' icon buttons lack accessible names.",
     },
 ];
 

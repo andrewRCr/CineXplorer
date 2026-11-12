@@ -57,7 +57,7 @@ rework ([ADR-028](adr-028-use-three-state-sign-in-status.md)).
 
 ## Amendment (2026-11-12)
 
-- The movie detail query moves with Frontend Server State, alongside the list, Library and session reads.
+- The movie detail page reads its movie and user state from one cached payload.
 - A movie's user state is its payload overlaid by this tab's pending and confirmed saves, retained in the mutation
   cache. A failed save drops out of that overlay, revealing the preceding state. Patching an infinite list in place
   would be undone by its next-page load, which returns earlier pages' original user data; the overlay survives that

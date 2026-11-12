@@ -235,6 +235,10 @@ describe("shared movie saves", () => {
     await waitFor(() => expect(screen.getByText(title)).toBeVisible());
     expect(shown()).toEqual(payload);
     expect(screen.getByText("Please try again.")).toBeVisible();
+    if (status === 500)
+      await waitFor(() =>
+        expect(screen.getByText("Server error")).toBeVisible(),
+      );
   });
   it.each([true, false])(
     "invalidates only the Library on success, including after unmount; success: %s",

@@ -7,6 +7,7 @@
  */
 
 import apiClient from "./apiClient";
+import type { AxiosRequestConfig } from "axios";
 
 /**
  * A generic HTTP service for RESTful API resources.
@@ -65,8 +66,13 @@ class HttpService {
     update<TRequest, TResponse = unknown>(
         id: string | number,
         entity: TRequest,
+        config?: AxiosRequestConfig,
     ) {
-        return apiClient.patch<TResponse>(`${this.endpoint}/${id}`, entity);
+        return apiClient.patch<TResponse>(
+            `${this.endpoint}/${id}`,
+            entity,
+            config,
+        );
     }
 
     /**

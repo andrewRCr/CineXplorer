@@ -19,18 +19,22 @@ import { toaster } from "@/components/core/chakra/toaster";
 let changeCount = 0;
 let toastSequence = 0;
 const saveToastPrefix = "movie-save:";
+const saveToastIds = new Set<string>();
 
 export const getChangeCount = () => changeCount;
-export const createSaveToastId = () =>
-    `${saveToastPrefix}${changeCount}:${++toastSequence}`;
+export const createSaveToastId = () => {
+    const id = `${saveToastPrefix}${changeCount}:${++toastSequence}`;
+    saveToastIds.add(id);
+    return id;
+};
 export const sessionKey = ["session"] as const;
 
 export function beginUserChange(client: QueryClient) {
     changeCount++;
     client.getMutationCache().clear();
-    for (const toast of toaster.getVisibleToasts()) {
-        if (toast.id?.startsWith(saveToastPrefix)) toaster.remove(toast.id);
-    }
+    // remove(id) also removes a toast queued behind the visible limit.
+    for (const id of saveToastIds) toaster.remove(id);
+    saveToastIds.clear();
 }
 export const resetUserQueries = (client: QueryClient) =>
     client.resetQueries({

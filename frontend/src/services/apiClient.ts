@@ -21,6 +21,8 @@ declare module "axios" {
     interface AxiosRequestConfig {
         /** The caller renders email-delivery 503s; other failures still use the global toast. */
         handlesEmailDeliveryFailure?: boolean;
+        /** A caller may retire its feedback while an already-dispatched request settles. */
+        shouldReportServerError?: () => boolean;
         /** Session-independent operations must not renew a previous session. */
         skipAuthRefresh?: boolean;
     }
@@ -253,7 +255,8 @@ apiClient.interceptors.response.use(
         if (
             error.response &&
             error.response.status >= 500 &&
-            !handledEmailFailure
+            !handledEmailFailure &&
+            (error.config?.shouldReportServerError?.() ?? true)
         ) {
             toaster.error({
                 id: "server-error",

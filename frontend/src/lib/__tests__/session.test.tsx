@@ -1,5 +1,9 @@
 import { beforeEach, expect, it } from "vitest";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  useMutationState,
+} from "@tanstack/react-query";
 import { act, render, screen, waitFor } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw/http";
@@ -154,4 +158,99 @@ it("dismisses save toasts and preserves the server-error toast and session", asy
   await waitFor(() =>
     expect(screen.getByLabelText("reads")).toHaveTextContent("[2,3,1]"),
   );
+});
+
+function ManySaveToasts() {
+  const client = useQueryClient();
+  const { save } = useUserMovieState(1, null);
+  const completed = useMutationState({ filters: { status: "success" } });
+  return (
+    <>
+      <output aria-label="Completed saves">{completed.length}</output>
+      <button
+        onClick={() => {
+          for (let i = 0; i < 25; i++) save({ user_on_watchlist: true });
+        }}
+      >
+        Save many times
+      </button>
+      <button onClick={() => void changeOfUser(client)}>Change user</button>
+    </>
+  );
+}
+it("removes queued save confirmations and Undo while retaining unrelated errors", async () => {
+  server.use(
+    http.patch(`${apiBaseUrl}/user-movie-data/1`, () =>
+      HttpResponse.json(createMockUserMovieData({ user_on_watchlist: true })),
+    ),
+  );
+  const user = userEvent.setup();
+  render(
+    <>
+      <ManySaveToasts />
+      <Toaster />
+    </>,
+  );
+  act(() => toaster.error({ id: "server-error", title: "Server error" }));
+  await user.click(screen.getByRole("button", { name: "Save many times" }));
+  await waitFor(() =>
+    expect(screen.getByLabelText("Completed saves")).toHaveTextContent("25"),
+  );
+  // The unrelated error leaves 23 visible slots, so two completed saves are queued.
+  expect(screen.getAllByText("Added to watchlist")).toHaveLength(23);
+  await user.click(screen.getByRole("button", { name: "Change user" }));
+  await waitFor(() =>
+    expect(screen.queryAllByText("Added to watchlist")).toHaveLength(0),
+  );
+  expect(
+    screen.queryByRole("button", { name: "Undo" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText("Server error")).toBeVisible();
+  act(() => toaster.remove("server-error"));
+  expect(screen.queryAllByText("Added to watchlist")).toHaveLength(0);
+  expect(
+    screen.queryByRole("button", { name: "Undo" }),
+  ).not.toBeInTheDocument();
+});
+
+it("does not dispatch a save retired while mutation setup yields", async () => {
+  let requests = 0;
+  let running: { state: { status: string } } | undefined;
+  server.use(
+    http.patch(`${apiBaseUrl}/user-movie-data/1`, () => {
+      requests++;
+      return HttpResponse.json({ detail: "Save failed" }, { status: 500 });
+    }),
+  );
+  function SaveAndChange() {
+    const client = useQueryClient();
+    const { save } = useUserMovieState(1, null);
+    return (
+      <button
+        onClick={() => {
+          save({ user_on_watchlist: true });
+          running = client.getMutationCache().getAll()[0];
+          void changeOfUser(client);
+        }}
+      >
+        Save and change user
+      </button>
+    );
+  }
+  const user = userEvent.setup();
+  render(
+    <>
+      <SaveAndChange />
+      <Toaster />
+    </>,
+  );
+  await user.click(
+    screen.getByRole("button", { name: "Save and change user" }),
+  );
+  await waitFor(() => expect(running?.state.status).toBe("error"));
+  expect(requests).toBe(0);
+  expect(screen.queryByText("Server error")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("Failed to update watchlist"),
+  ).not.toBeInTheDocument();
 });

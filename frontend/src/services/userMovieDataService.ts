@@ -1,5 +1,6 @@
 /** Partially save the signed-in user's movie state by TMDB ID. */
 import create from "./httpService";
+import type { AxiosRequestConfig } from "axios";
 import type { components } from "@/types/api";
 
 export type UserMovieDataSchema = components["schemas"]["UserMovieDataSchema"];
@@ -14,8 +15,10 @@ const userMovieDataService = create("/user-movie-data");
 export const saveUserMovieData = (
     tmdbId: number,
     data: UserMovieDataPatchSchema,
+    config?: AxiosRequestConfig,
 ) =>
     userMovieDataService.update<UserMovieDataPatchSchema, UserMovieDataSchema>(
         tmdbId,
         data,
+        config,
     );

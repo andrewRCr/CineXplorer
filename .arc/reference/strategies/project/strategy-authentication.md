@@ -476,12 +476,13 @@ Session writers cancel any in-flight session read before replacing it:
   only after the fresh session reads `anonymous`, then clears the parameter.
 - Failed idle renewal writes `null` and runs the change-of-user step.
 
-The change-of-user step advances this tab's save ownership count, clears its mutation cache, dismisses its save
-toasts and resets every query except the session. This refetches visible lists while late saves can neither show
-feedback nor invalidate Library. Password sign-in splits that step as above; the initial session read also runs it
-when a provider return lands a user, or when it clears rejected stored credentials. An initial profile landing for
-a user already shown as signed in, and an anonymous landing without a stored token, leave the caches intact.
-Unrelated feedback, including the global server-error toast, remains visible.
+The change-of-user step advances this tab's save ownership count, clears its mutation cache, removes its visible and
+queued save toasts and resets every query except the session. This refetches visible lists while late saves can
+neither show feedback nor invalidate Library. Each save carries its original ownership count from invocation, before
+mutation setup can yield; the request's global error toast checks it too. Password sign-in splits that step as above;
+the initial session read also runs it when a provider return lands a user, or when it clears rejected stored
+credentials. An initial profile landing for a user already shown as signed in, and an anonymous landing without a
+stored token, leave the caches intact. Unrelated feedback, including the global server-error toast, remains visible.
 
 Password sign-out blacklists a valid refresh token before expiring its HttpOnly cookie, so a copy cannot renew
 credentials afterward. Missing, expired, malformed or already revoked refresh cookies still receive a successful

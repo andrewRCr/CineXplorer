@@ -4,7 +4,8 @@
 **Created:** 2026-11-11
 **Branch:** `technical/frontend-server-state`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
+**Completed:** 2026-11-12
 
 ## Overview
 
@@ -329,7 +330,7 @@ its request settles; on the browsable stack, signing out and in again shows no p
     - [x] **5.3.b Amend ADR-027, and update the Status lines of ADR-027 and ADR-028**
         - Added one locally dated ADR-027 amendment for the detail query, mutation-cache overlay and next-page
           replacement rationale, and every change of user. Both Status sections name Frontend Server State;
-          ADR-027 records the deferred watchlist E2E test. The PR number joins them when it opens. Markdown lint passes.
+          ADR-027 records the deferred watchlist E2E test. Markdown lint passes.
 
 - [x] **5.4 Check a change of user end to end**
 
@@ -347,8 +348,25 @@ its request settles; on the browsable stack, signing out and in again shows no p
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; the work
-  adds no new ADR, so no acceptance is due)
+- [x] **6.1 Verify the work**
+
+    - All eight Success Criteria met with evidence below. The full local check set passed; after the approved feedback
+      repairs, all 2,712 frontend tests, lint, type-check and the real-session sign-in smoke passed again. The author
+      walk, one complete independent criteria pass and its clean fix check are retained in the review log.
+    - ADR-027’s amendment and both ADR Status sections match the delivered behavior; no new ADR required acceptance.
+
+    - [x] **6.1.a Retire save feedback before global server-error notification**
+        - Saves and Undo carry their invocation ownership through asynchronous setup. Retired saves do not dispatch;
+          an optional request predicate suppresses late global error feedback without changing current-session errors.
+        - Six new late-500 cases failed before the fix, then passed. Narrow reconstructions also proved the pre-dispatch
+          guard and current-save error feedback. Full frontend tests, lint, type-check and sign-in smoke passed.
+    - [x] **6.1.b Remove queued save toasts on a change of user**
+        - Retain generated save-toast IDs until the user changes, then remove queued and visible entries by ID while
+          preserving unrelated feedback. The real-toaster overflow regression failed with two confirmations left
+          behind, then passed. Reference explanations describe invocation ownership and queued-toast cleanup.
+    - [x] **6.1.c Settle independent verification and close the criteria**
+        - The Owner authorized the independent fix check; it found no incomplete repair or introduced failure.
+          Both pass-1 findings are fixed, all criteria are met and verification is complete.
 
 ## Implementation Notes
 
@@ -370,6 +388,9 @@ its request settles; on the browsable stack, signing out and in again shows no p
   `window.location`, which `tests/setup.ts` replaces. Decide it before any child's cleanup runs, since `useOAuthFlow`
   removes the flag when the sign-in page unmounts. Keep the page it requests (`next`) from that same location, since the
   sign-in page may redirect a signed-in visitor before the read lands.
+- **Save feedback ownership.** Save variables carry the ownership count from invocation, including Undo, before
+  asynchronous mutation setup. Both save callbacks and global error feedback compare it; retired saves do not dispatch.
+  Save-toast IDs are retained until the user changes so cleanup reaches queued notifications as well as visible ones.
 - **Toasts in tests.** The toasters are module-level: render `<Toaster />` (and `<PriorityToaster />` for the auth
   toasts) where a test reads them, and remove leftover toasts before each test, as `MovieCard.test.tsx` does with
   `toaster.remove()`.
@@ -392,16 +413,24 @@ its request settles; on the browsable stack, signing out and in again shows no p
 
 All criteria are implemented criteria, checked locally and in CI; each is marked with its evidence beside it.
 
-- [ ] 1. **The success signal.** In a frontend test with the network mocked: toggling a card's watchlist control twice
+- [x] 1. **The success signal.** In a frontend test with the network mocked: toggling a card's watchlist control twice
   sends `true` then `false`; the card and the movie's detail page show the same state without any movie list being
   refetched, and still do after the list's next page lands; a failed save, or two queued saves that both fail, leave
   the server's value showing; and a sign-out clears the kept saves at once and, once its request has settled, loads the
   sign-in page afresh, so no cached query or kept save of the previous user's outlives it. (D4, D5, D7)
-- [ ] 2. **Saves.** Tests show: with two queued saves of one movie where the first succeeds and the second fails, the
+
+  _Evidence:_ Full frontend run at `45fb1bee`: MovieCard held double-toggle and next-page/remount cases; MovieDetail
+  cached-detail composition; shared-save failures; session clearing and held sign-out cases passed.
+
+- [x] 2. **Saves.** Tests show: with two queued saves of one movie where the first succeeds and the second fails, the
   first save's record shows; a save that settles after its card unmounted still shows its toast and invalidates the
   Library; a card remounted mid-save shows the save; Undo sends one save per click, its own toast offers no Undo, and
   it works from a toast whose card is gone. (D4, D5)
-- [ ] 3. **A change of user.** Tests show: during a sign-out whose request is held, a save settling meanwhile shows no
+
+  _Evidence:_ Shared-save and MovieCard tests passed ordered success/failure combinations, pending/settled remounts,
+  unmounted feedback and Library invalidation, and mounted/unmounted Undo with exact PATCH counts and no further Undo.
+
+- [x] 3. **A change of user.** Tests show: during a sign-out whose request is held, a save settling meanwhile shows no
   toast, and the sign-in page loads afresh only once the request settles, whether it succeeded or failed; the sign-in
   page shows the signed-out notice from `signed_out=true` only when nobody is signed in; after stored credentials the
   first session read rejects, a save settling later shows no toast and refetches no Library; after an expired stored
@@ -412,21 +441,49 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   finds the provider's user clears a stale stored token and refetches the lists fetched while resolving, with allauth's
   session endpoint read once; a save's toast is gone after a change of user; and a 5xx on the first session read after
   stored credentials signed the user in at once signs them out and leaves its "Server error" toast showing. (D4, D7)
-- [ ] 4. **Client defaults.** A test against `lib/queryClient`'s defaults shows a query retries twice on a network error
+
+  _Evidence:_ The named ownership-change and sign-out cases passed, including six added late-save-500 cases. The
+  overflow regression clears queued save confirmations and Undo while retaining unrelated errors; a separate case
+  retires saves before dispatch when setup yields. Narrow reconstructions failed, then restored guards passed. The
+  complete frontend suite (2,712 tests) and real-session sign-in smoke passed after both fixes. The independent fix check
+  found no incomplete repair or introduced failure.
+
+- [x] 4. **Client defaults.** A test against `lib/queryClient`'s defaults shows a query retries twice on a network error
   and on a 5xx, and not on a 4xx or a cancellation; and a test shows two failing reads leave one "Server error" toast.
   (D2)
-- [ ] 5. **The detail page.** Tests show a 404 shows "Movie Not Found", the page makes one request for the movie and
+
+  _Evidence:_ Production-default retry tests passed: three network/500 reads; one refusal/cancellation/other read; one
+  failed mutation. The two-read, one-visible-server-error-toast case passed.
+
+- [x] 5. **The detail page.** Tests show a 404 shows "Movie Not Found", the page makes one request for the movie and
   none to `GET /user-movie-data/{tmdb_id}`, and its watchlist button shows the save toasts. (D3)
-- [ ] 6. **The watchlist page.** A test shows it requests `watchlist=true` with a `page_size` of 100 through its query,
+
+  _Evidence:_ MovieDetail tests passed status-specific 404/500, one movie read and zero separate user-state reads,
+  payload state, enabled pending save with toasts/Undo, and request cancellation on unmount.
+
+- [x] 6. **The watchlist page.** A test shows it requests `watchlist=true` with a `page_size` of 100 through its query,
   and refetches after a save. (D6)
-- [ ] 7. **The old paths are gone.** A search of `frontend/src` and `frontend/tests` finds no `useApiRequest`,
+
+  _Evidence:_ Watchlist tests passed the query parameters, successful-save refetch, signed-out request suppression,
+  and loading/error/empty/list states.
+
+- [x] 7. **The old paths are gone.** A search of `frontend/src` and `frontend/tests` finds no `useApiRequest`,
   `useMovieDetail`, `useUserMovieData`, `useMovieActions`, `movieInteractionService`, `getUserMovieDataByTmdbId` or
   `localWatchlistState`; `useAuth` defines no `getUserDetails`; no `useEffect` in `frontend/src` calls `apiClient`,
   `fetch` or a service that reads or changes server data (today `authService`, `httpService`, `movieService`,
   `userMovieDataService` and `userMovieService`), apart from the 60-second renewal in `useAuth.ts`;
   `NavBarUserMenu.tsx`'s sign-out doesn't navigate; `MovieDetail.test.tsx` has no `vi.mock`; and `MovieCard.tsx` passes
   no `disabled` to its watchlist control. (D3–D8)
-- [ ] 8. **Documents.** The technical overview's Data Fetching section describes the query factory and the save hook,
+
+  _Evidence:_ Fresh searches found none of the removed paths or forbidden getUserDetails/vi.mock uses. An AST-assisted
+  audit of 202 source files and 34 effects, with helper-call inspection, found only the allowed idle renewal. Menu
+  sign-out has no navigation; the card watchlist control has no disabled prop.
+
+- [x] 8. **Documents.** The technical overview's Data Fetching section describes the query factory and the save hook,
   not `useApiRequest`; the authentication strategy's Token Refresh Flow and Authentication Hook sections describe the
   session query and the change of user; ADR-027 carries the dated amendment D4's disposition describes, and the Status
   lines of ADR-027 and ADR-028 name this change. (D9)
+
+  _Evidence:_ The overview, authentication sections, dated ADR-027 amendment and both Status attributions match the
+  implementation. F1’s approved wording correction makes the amendment independent of delivery history; the
+  attribution remains in Status. Markdown lint passes.

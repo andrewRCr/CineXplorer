@@ -1,3 +1,4 @@
+import { CanceledError } from "axios";
 import {
     mutationOptions,
     MutationObserver,
@@ -15,7 +16,11 @@ import { createSaveToastId, getChangeCount } from "@/lib/session";
 import { libraryKey } from "@/lib/queries";
 import { toaster } from "@/components/core/chakra/toaster";
 
-type SaveVariables = { changes: UserMovieDataPatchSchema; undo?: boolean };
+type SaveVariables = {
+    changes: UserMovieDataPatchSchema;
+    undo?: boolean;
+    change: number;
+};
 const saveKey = (tmdbId: number | undefined) => ["movie-save", tmdbId] as const;
 
 export const saveMutationOptions = (
@@ -25,11 +30,14 @@ export const saveMutationOptions = (
         mutationKey: saveKey(tmdbId),
         scope: { id: `movie-save:${tmdbId}` },
         gcTime: Infinity,
-        mutationFn: ({ changes }: SaveVariables) =>
-            saveUserMovieData(tmdbId, changes).then(
-                (response) => response.data,
-            ),
-        onMutate: () => getChangeCount(),
+        mutationFn: ({ changes, change }: SaveVariables) => {
+            if (change !== getChangeCount())
+                throw new CanceledError("Save belongs to an earlier user");
+            return saveUserMovieData(tmdbId, changes, {
+                shouldReportServerError: () => change === getChangeCount(),
+            }).then((response) => response.data);
+        },
+        onMutate: ({ change }) => change,
         onSuccess: (record, variables, change, { client }) => {
             if (change !== getChangeCount()) return;
             void client.invalidateQueries({ queryKey: libraryKey });
@@ -53,6 +61,7 @@ export const saveMutationOptions = (
                                                   !record.user_on_watchlist,
                                           },
                                           undo: true,
+                                          change,
                                       })
                                       .catch(() => {});
                               },
@@ -112,7 +121,8 @@ export function useUserMovieState(
     return {
         state,
         save: (changes: UserMovieDataPatchSchema) => {
-            if (tmdbId !== undefined) mutation.mutate({ changes });
+            if (tmdbId !== undefined)
+                mutation.mutate({ changes, change: getChangeCount() });
         },
     };
 }

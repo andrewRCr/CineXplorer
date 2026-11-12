@@ -3,7 +3,8 @@
 **Type:** Technical
 **Form:** detailed · RFC
 **Class:** Heavy
-**Status:** Ready for Implementation
+**Status:** Complete
+**Completed:** 2026-11-12
 **Created:** 2026-11-11
 
 ---
@@ -177,7 +178,9 @@ still queued never runs: clearing the mutation cache removes it from its scope, 
 work first checks that the signed-in user hasn't changed since the save was made, and does nothing if it has: no
 toast, no Undo and no Library invalidation. The check reads the **change count**, a number the session module keeps
 and advances in the same step that clears the saves (D7). A save records the count when it is made, a queued save
-included, since TanStack Query runs a mutation's `onMutate` before it waits its turn, and compares it when it settles.
+included, by carrying it with the mutation's variables before asynchronous setup begins, and compares it when it
+settles. The request's global error feedback uses that same count; an obsolete save does not dispatch if ownership
+changes while its mutation setup yields.
 The session version (`getAuthSessionVersion`) can't serve: only sign-out and a password sign-in advance it
 (`invalidateAuthSession`), not a provider sign-in, stored credentials the session's first read rejects, or a failed
 renewal at the 60-second check.
@@ -190,7 +193,8 @@ work lives in the mutation's own options.
 **Toasts and Undo.** A save of the watchlist flag that succeeds shows "Added to watchlist" or "Removed from
 watchlist", from the server's record, with an Undo action that saves the opposite value through the same mutation
 options. Undo's own save shows the same toast without a further Undo. Each toast a save shows takes an id of its own,
-marking it as a save's toast, so a change of user can dismiss the save toasts still showing (D7) while other toasts,
+marking it as a save's toast and retaining its id, so a change of user removes both visible and queued save toasts
+(D7) while other toasts,
 such as the server-error toast, stay. One click runs Undo once: the toast renderer (`renderToast` in `toaster.tsx`)
 stops passing the action's `onClick` to `Toast.ActionTrigger`, whose own trigger props already call it, so the two
 handlers no longer both run.

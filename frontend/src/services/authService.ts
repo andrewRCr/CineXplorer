@@ -46,6 +46,7 @@ export async function login(
     };
 
     const response = await apiClient.post<TokenResponse>(`/token/`, payload, {
+        skipAuthRefresh: true,
         headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": csrfToken || "",

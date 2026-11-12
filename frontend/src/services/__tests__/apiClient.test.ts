@@ -97,7 +97,8 @@ it("sends CSRF on the refresh request after a 401", async () => {
 
 const queueToken = (exp: number) =>
     `e30.${btoa(JSON.stringify({ user_id: 42, exp }))}.signature`;
-const oldToken = queueToken(1);
+// Keep this token current so these requests exercise server-driven 401 recovery.
+const oldToken = queueToken(Math.floor(Date.now() / 1000) + 300);
 const newToken = queueToken(4102444800);
 
 const createGate = () => {
@@ -201,7 +202,9 @@ describe("concurrent token refresh", () => {
             expect(refreshes).toBe(1);
             expect(requests.sort()).toEqual(["first", "second"]);
             expect(localStorage.getItem("access_token")).toBeNull();
-            expect(window.location.href).toBe("/login?session_expired=true");
+            expect(window.location.href).toBe(
+                "/login?next=%2F&session_expired=true",
+            );
         },
     );
 
@@ -228,8 +231,8 @@ describe("concurrent token refresh", () => {
 it("keeps renewed authentication when the retried request is still refused", async () => {
     document.cookie = "csrftoken=django-csrf; path=/";
     window.location.href = "http://localhost:3000";
-    setAuthTokens(token(1));
-    const refreshed = token();
+    setAuthTokens(token());
+    const refreshed = token(Math.floor(Date.now() / 1000) + 600);
     let refreshes = 0;
     let requests = 0;
     server.use(

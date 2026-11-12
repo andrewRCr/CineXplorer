@@ -128,7 +128,19 @@ of its expiry. On load the sign-in status reads as resolving until renewal answe
 ([ADR-028](../../adr/adr-028-use-three-state-sign-in-status.md)). These effects renew credentials; moving
 authentication state onto TanStack Query is separate.
 
-The hook and the API client's `401` interceptor call the same exported `refreshAccessToken()` function. It returns
+The API client's request interceptor also waits for renewal when the stored access token is expired, before
+attaching its Bearer header. This avoids an initial `401` when expiry can be determined locally. A request uses
+at most one renewal; a later refusal does not renew again or clear the successfully
+renewed session. Explicit password sign-in bypasses both interceptor renewal paths, so the previous session cannot
+block a new sign-in or replace an invalid-credentials response. CSRF handling still applies.
+
+For personalized public movie reads, a supplied Bearer credential that cannot authenticate through JWT or the
+provider session receives `401` with a Bearer `invalid_token` challenge. Requests without a Bearer credential can
+still browse anonymously, and valid provider sessions still personalize responses. This server-side check is the
+fallback when a device clock runs behind or an access token expires in transit; the client's expiry check avoids
+that extra refused request when its clock agrees. Token lifetime and validation leeway are unchanged.
+
+The hook and both API client interceptors call the same exported `refreshAccessToken()` function. It returns
 one pending promise per tab, so every caller receives the same token or failure. On browsers with Web Locks it holds
 `cinexplorer-auth-refresh` across the storage reread, request, validation and storage update. A token another tab
 stored while it waited is reused only when it is unexpired and expires strictly later than the starting token.
@@ -136,17 +148,20 @@ Otherwise the function sends `POST /api/auth/refresh` with credentials and CSRF,
 refresh cookie. A valid response replaces the access token in the original browser storage; a session-storage
 sign-in stays in session storage. Without Web Locks, the pending promise still coordinates callers in one tab.
 
-Only this function posts a refresh. The interceptor retains its redirect on refresh failure; the hook only clears
-its authentication state. A failed retry of the original API request does not invalidate a successful refresh.
+Only this function posts a refresh. On current-session renewal failure, the interceptors redirect to sign-in
+with `session_expired=true` and the safe current path, query and fragment in `next`, using `loginPathFor`.
+Sign-in pages are excluded from the return path. The hook only clears its authentication state. A failed retry
+of the original API request does not invalidate a successful refresh.
 
 Explicit sign-out invalidates this tab's pending renewal before clearing credentials. Queued work checks the session
 version before starting a request; sent work is canceled before the logout request, and completion checks precede
 storage writes. The successful logout response deletes any refresh cookie applied before cancellation; later headers
 from that canceled request cannot replace the deletion or a subsequent sign-in's cookie. This concerns renewal
 controlled by the signing-out tab. Hook and interceptor continuations ignore cancellation or a changed session version
-rather than restoring authentication or clearing a later sign-in. A successful new password sign-in retires prior work
-and clears both storages before storing its chosen credentials. An older promise's finalizer cannot release a newer
-session's shared promise.
+rather than restoring authentication or clearing a later sign-in. API requests retain their originating session
+version through preparation and retries, so a late `401` cannot renew or clear a newer sign-in. A successful new
+password sign-in retires prior work and clears both storages before storing its chosen credentials. An older
+promise's finalizer cannot release a newer session's shared promise.
 
 ---
 

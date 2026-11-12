@@ -1,4 +1,5 @@
 import { isRecord } from "@/utilities/typeGuards";
+import { loginPathFor } from "@/utilities/returnPath";
 import { apiBaseUrl as BASE_URL } from "@/config/baseUrls";
 import axios, { CanceledError, type InternalAxiosRequestConfig } from "axios";
 import {
@@ -20,6 +21,8 @@ declare module "axios" {
     interface AxiosRequestConfig {
         /** The caller renders email-delivery 503s; other failures still use the global toast. */
         handlesEmailDeliveryFailure?: boolean;
+        /** Explicit sign-in must not depend on renewal of the previous session. */
+        skipAuthRefresh?: boolean;
     }
 }
 
@@ -32,7 +35,7 @@ logger.debug("[apiClient] BASE_URL configured", { BASE_URL });
  * Pattern 1 - Email/Password (JWT):
  * - Access tokens sent in Authorization header (from localStorage/sessionStorage)
  * - Refresh tokens sent as HTTP-only cookie (withCredentials: true)
- * - Automatic token refresh on 401 responses
+ * - Expired tokens renewed before requests, with 401 recovery as a fallback
  *
  * Pattern 2 - OAuth (Session):
  * - Session cookies sent automatically (withCredentials: true)
@@ -146,11 +149,58 @@ export function refreshAccessToken(): Promise<string> {
     return pending;
 }
 
+type AuthRequestConfig = InternalAxiosRequestConfig & {
+    _retry?: boolean;
+    _authSessionVersion?: number;
+};
+
+function assertAuthSessionVersion(sessionVersion: number): void {
+    if (sessionVersion !== getAuthSessionVersion())
+        throw new CanceledError("Authentication session changed");
+}
+
+/** Apply the same current-session failure handling to both interceptor renewal paths. */
+async function refreshRequestToken(sessionVersion: number): Promise<string> {
+    try {
+        const renewedToken = await refreshAccessToken();
+        assertAuthSessionVersion(sessionVersion);
+        return renewedToken;
+    } catch (error) {
+        if (axios.isCancel(error) || sessionVersion !== getAuthSessionVersion())
+            throw error;
+        clearAuthTokens();
+        const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        const loginUrl = new URL(
+            loginPathFor(returnTo),
+            window.location.origin,
+        );
+        loginUrl.searchParams.set("session_expired", "true");
+        window.location.href = `${loginUrl.pathname}${loginUrl.search}`;
+        throw error;
+    }
+}
+
 // Request interceptor: Attach JWT access token (email/password), CSRF token, and pagination context
-apiClient.interceptors.request.use(async (config) => {
+apiClient.interceptors.request.use(async (config: AuthRequestConfig) => {
+    const sessionVersion =
+        config._authSessionVersion ?? getAuthSessionVersion();
+    config._authSessionVersion = sessionVersion;
+    assertAuthSessionVersion(sessionVersion);
     // Attach JWT access token from storage (email/password authentication only)
     // OAuth users authenticate via session cookie automatically (no Authorization header needed)
-    const { access_token } = getAuthTokens();
+    let { access_token } = getAuthTokens();
+    const expiration = access_token ? getTokenExpiration(access_token) : null;
+    if (
+        access_token &&
+        expiration &&
+        expiration.getTime() <= Date.now() &&
+        !config._retry &&
+        !config.skipAuthRefresh
+    ) {
+        // This request has used its one renewal, even if the server later refuses it.
+        config._retry = true;
+        access_token = await refreshRequestToken(sessionVersion);
+    }
     if (access_token) {
         config.headers.Authorization = `Bearer ${access_token}`;
     }
@@ -179,6 +229,8 @@ apiClient.interceptors.request.use(async (config) => {
         config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
 
+    // CSRF initialization also yields; do not dispatch work from an older sign-in.
+    assertAuthSessionVersion(sessionVersion);
     return config;
 });
 
@@ -212,9 +264,7 @@ apiClient.interceptors.response.use(
         }
 
         if (!error.config) throw error;
-        const originalRequest: InternalAxiosRequestConfig & {
-            _retry?: boolean;
-        } = error.config;
+        const originalRequest: AuthRequestConfig = error.config;
 
         // Check for authentication error (401 only - 403 is authorization, not authentication)
         // Note: This refresh flow only applies to email/password (JWT) authentication
@@ -222,8 +272,12 @@ apiClient.interceptors.response.use(
         if (
             error.response &&
             error.response.status === 401 &&
-            !originalRequest._retry
+            !originalRequest._retry &&
+            !originalRequest.skipAuthRefresh
         ) {
+            const sessionVersion =
+                originalRequest._authSessionVersion ?? getAuthSessionVersion();
+            assertAuthSessionVersion(sessionVersion);
             // Check if user has JWT tokens (email/password authentication)
             const { access_token } = getAuthTokens();
 
@@ -233,22 +287,7 @@ apiClient.interceptors.response.use(
             }
 
             originalRequest._retry = true;
-            const sessionVersion = getAuthSessionVersion();
-            let renewedToken: string;
-            try {
-                renewedToken = await refreshAccessToken();
-            } catch (refreshError) {
-                if (
-                    axios.isCancel(refreshError) ||
-                    sessionVersion !== getAuthSessionVersion()
-                )
-                    throw refreshError;
-                clearAuthTokens();
-                window.location.href = "/login?session_expired=true";
-                throw refreshError;
-            }
-            if (sessionVersion !== getAuthSessionVersion())
-                throw new CanceledError("Authentication session changed");
+            const renewedToken = await refreshRequestToken(sessionVersion);
             // Retry failures must not clear a successfully renewed session.
             originalRequest.headers.Authorization = `Bearer ${renewedToken}`;
             return apiClient(originalRequest);

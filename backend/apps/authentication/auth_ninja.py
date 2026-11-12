@@ -18,14 +18,21 @@ from ninja_jwt.tokens import AccessToken
 logger = logging.getLogger("cinexplorer.auth")
 
 
+class InvalidBearerTokenError(HttpError):
+    """A supplied Bearer credential could not authenticate the request."""
+
+    def __init__(self) -> None:
+        super().__init__(401, "Invalid authentication credentials")
+
+
 def get_token_from_request(request: HttpRequest) -> tuple[str | None, str]:
-    """Extract a Bearer access token from the Authorization header."""
+    """Extract a Bearer token and retain whether the scheme was supplied."""
     auth_header = request.META.get("HTTP_AUTHORIZATION", "")
-    if auth_header.startswith("Bearer "):
-        token = auth_header[7:].strip()  # Remove 'Bearer ' prefix
-        if token:
-            logger.debug("Token found in Authorization header")
-            return token, "header"
+    scheme, _, value = auth_header.partition(" ")
+    if scheme.lower() == "bearer":
+        token = value.strip()
+        logger.debug("Bearer authentication header supplied")
+        return token or None, "header"
 
     logger.debug("No Bearer token found in Authorization header")
     return None, "none"
@@ -158,32 +165,30 @@ def get_current_user_optional(request: HttpRequest) -> AbstractUser | None:
 
     Checks the Bearer header first, then the Django session.
 
-    This function allows endpoints to work with both authenticated and
-    unauthenticated users. It provides proper error handling and logging
-    without raising exceptions for unauthenticated requests.
-
-    Args:
-        request: The HTTP request object
-
-    Returns:
-        The authenticated user or None if not authenticated
+    Anonymous reads remain public when no Bearer credential was supplied.
+    A supplied credential must authenticate through JWT or the provider session,
+    otherwise a 401 lets the client renew rather than silently lose user data.
     """
     try:
-        # Authenticate the Bearer token or provider session
-        # Note: jwt_session_auth.authenticate() internally calls get_token_from_request()
         user = jwt_session_auth.authenticate(request)
+    except Exception as error:
+        # Authentication failures may quote credentials; log only the exception type.
+        logger.warning(
+            "Optional authentication failed | error_type=%s",
+            type(error).__name__,
+            extra={"error_type": type(error).__name__},
+        )
+        user = None
 
-        if user:
-            username = getattr(cast(object, user), "username", "unknown")
-            logger.debug(f"Optional auth: User {username} authenticated")
-        else:
-            logger.debug("Optional auth: No authenticated user (this is okay)")
-
-        return user
-    except Exception as e:
-        # For optional auth, log the error but don't raise - return None instead
-        logger.warning(f"Error in optional authentication: {e}")
-        return None
+    if user:
+        username = getattr(cast(object, user), "username", "unknown")
+        logger.debug(f"Optional auth: User {username} authenticated")
+    else:
+        _, source = get_token_from_request(request)
+        if source == "header":
+            raise InvalidBearerTokenError
+        logger.debug("Optional auth: No authenticated user (this is okay)")
+    return user
 
 
 # Native Django Ninja integration utilities

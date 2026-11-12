@@ -15,12 +15,15 @@ Tests verify:
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock, patch
 
 import pytest
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
+from django.utils import timezone
+from ninja_jwt.tokens import AccessToken
 
 from apps.core.models import Movie
 from apps.core.services.api_response import ApiResponse
@@ -398,3 +401,76 @@ def test_enrichment_handles_multiple_movies_efficiently(
 
     # Movie 3: No user data
     assert data["results"][2]["user_movie_data"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "/api/movies/now-playing",
+        "/api/movies/upcoming",
+        "/api/movies/search?query=test",
+        "/api/movies/browse",
+        "/api/movies/101",
+    ],
+)
+@pytest.mark.parametrize(
+    "auth_state",
+    [
+        "expired",
+        "malformed",
+        "empty",
+        "valid",
+        "valid_lowercase",
+        "provider",
+    ],
+)
+def test_public_movie_reads_do_not_silently_discard_bearer_authentication(
+    api_client: Client,
+    user: User,
+    endpoint: str,
+    auth_state: str,
+) -> None:
+    movie = create_movie_stub(101)
+    UserMovieData.objects.create(user=user, movie=movie, user_on_watchlist=True)
+    access = AccessToken.for_user(cast(AbstractBaseUser, user))
+    if auth_state in {"expired", "provider"}:
+        access.payload["exp"] = int((timezone.now() - timedelta(seconds=5)).timestamp())
+    credential = "not-a-token" if auth_state == "malformed" else str(access)
+    scheme = "bearer" if auth_state == "valid_lowercase" else "Bearer"
+    header = "Bearer " if auth_state == "empty" else f"{scheme} {credential}"
+    if auth_state == "provider":
+        api_client.force_login(cast(AbstractBaseUser, user))
+    detail = endpoint.endswith("/101")
+    page = create_mock_paginated_response(
+        movies=[
+            create_tmdb_movie(101, "Test Movie", "1982-06-25", 8.1, poster_path="/test.jpg"),
+        ]
+    )
+    with (
+        patch(
+            TMDB_CLIENT_GET,
+            return_value=(
+                ApiResponse(status_code=200, data={"crew": [], "cast": []}) if detail else page
+            ),
+        ),
+        patch(
+            TMDB_CLIENT_GET_MOVIE_DETAILS,
+            return_value=create_mock_movie_detail_response(
+                tmdb_id=101,
+                title="Test Movie",
+                release_date="1982-06-25",
+                vote_average=8.1,
+            ),
+        ),
+    ):
+        response = api_client.get(endpoint, HTTP_AUTHORIZATION=header)
+    if auth_state in {"expired", "malformed", "empty"}:
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Invalid authentication credentials"}
+        assert response["WWW-Authenticate"] == 'Bearer error="invalid_token"'
+    else:
+        assert response.status_code == 200
+        body = response.json()
+        enriched = body if detail else body["results"][0]
+        assert enriched["user_movie_data"]["user_on_watchlist"] is True

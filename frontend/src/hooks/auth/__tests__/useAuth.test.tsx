@@ -1,3 +1,17 @@
+import { useEffect } from "react";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { sessionQuery } from "@/lib/queries";
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import useAuthContext from "@/hooks/auth/useAuthContext";
+import Login from "@/pages/user/Login";
+import userEvent from "@testing-library/user-event";
+import {
+  Toaster,
+  PriorityToaster,
+  toaster,
+  priorityToaster,
+} from "@/components/core/chakra/toaster";
 import type { ReactNode } from "react";
 import { TestProviders } from "@tests/helpers/test-providers";
 import {
@@ -7,7 +21,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { MemoryRouter, useLocation, Routes, Route } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpResponse, http } from "msw/http";
 import { useAuth } from "../useAuth";
@@ -48,9 +62,17 @@ function mountAuth() {
 beforeEach(() => {
   clearBrowserAuth();
   authHandlers();
+  act(() => {
+    toaster.remove();
+    priorityToaster.remove();
+  });
 });
 afterEach(() => {
   vi.useRealTimers();
+  act(() => {
+    toaster.remove();
+    priorityToaster.remove();
+  });
 });
 
 describe("initial authentication", () => {
@@ -328,7 +350,7 @@ describe("sign-in and sign-out", () => {
           await result.current.login("viewer", "password", rememberMe),
         ).toEqual({ success: true, data: { displayName: profile.username } });
       });
-      expect(result.current.isAuthenticated).toBe(true);
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
       expect(localStorage.getItem("refresh_token")).toBeNull();
       expect(sessionStorage.getItem("refresh_token")).toBeNull();
       expect(result.current.user).toEqual(profile);
@@ -544,7 +566,7 @@ describe("password session renewal", () => {
         await result.current.login("viewer", "password");
       });
       await waitFor(() => expect(refreshes).toBe(1));
-      expect(result.current.isAuthenticated).toBe(success);
+      await waitFor(() => expect(result.current.isAuthenticated).toBe(success));
       expect(result.current.user).toEqual(success ? profile : null);
       if (success) expect(profiles).toBeGreaterThan(0);
       else expect(profiles).toBe(0);
@@ -752,7 +774,12 @@ describe("sign-out during idle renewal", () => {
           await renewal;
         });
       }
-      expect(result.current.isAuthenticated).toBe(signInAgain);
+      await vi.waitFor(async () => {
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(10);
+        });
+        expect(result.current.isAuthenticated).toBe(signInAgain);
+      });
       expect(result.current.user).toEqual(signInAgain ? profile : null);
       expect(window[storage].getItem("access_token")).toBe(
         signInAgain ? newToken : null,
@@ -850,7 +877,9 @@ describe("obsolete renewal callers", () => {
         });
       }
       if (caller === "request") expect(publicRequests).toBe(0);
-      expect(result.current.isAuthenticated).toBe(signInAgain);
+      await waitFor(() =>
+        expect(result.current.isAuthenticated).toBe(signInAgain),
+      );
       expect(result.current.user).toEqual(signInAgain ? profile : null);
       expect(sessionStorage.getItem("access_token")).toBe(
         signInAgain ? newToken : null,
@@ -858,4 +887,124 @@ describe("obsolete renewal callers", () => {
       expect(localStorage.getItem("access_token")).toBeNull();
     },
   );
+});
+
+describe("password sign-in completion", () => {
+  it("waits for the fresh profile and commits it to the session cache", async () => {
+    const entered = gate();
+    const release = gate();
+    server.use(
+      http.post(`${apiBaseUrl}/token/`, () =>
+        HttpResponse.json({
+          user_id: profile.id,
+          username: profile.username,
+          access_token: token(),
+        }),
+      ),
+      http.get(`${apiBaseUrl}/profile/`, async () => {
+        entered.release();
+        await release.wait;
+        return HttpResponse.json(profile);
+      }),
+    );
+    const { result } = renderHook(
+      () => ({ auth: useAuth(), client: useQueryClient() }),
+      { wrapper: AuthTestProviders },
+    );
+    await waitFor(() => expect(result.current.auth.status).toBe("anonymous"));
+    let settled = false;
+    let pending: ReturnType<typeof result.current.auth.login> | undefined;
+    act(() => {
+      pending = result.current.auth
+        .login("viewer", "password")
+        .then((response) => {
+          settled = true;
+          return response;
+        });
+    });
+    await entered.wait;
+    expect(settled).toBe(false);
+    await act(async () => {
+      release.release();
+      await pending;
+    });
+    expect(result.current.client.getQueryData(sessionQuery().queryKey)).toEqual(
+      profile,
+    );
+    await waitFor(() => expect(result.current.auth.user).toEqual(profile));
+  });
+
+  it("opens the protected destination without bouncing back to sign-in", async () => {
+    const entered = gate();
+    const release = gate();
+    const locations: string[] = [];
+    function LocationAndStatus() {
+      const location = useLocation();
+      const status = useAuthContext()?.status;
+      useEffect(() => {
+        locations.push(location.pathname + location.search);
+      }, [location.pathname, location.search]);
+      const reads = useIsFetching({ queryKey: sessionQuery().queryKey });
+      return (
+        <>
+          <output aria-label="Session status">{status}</output>
+          <output aria-label="Session reads">{reads}</output>
+        </>
+      );
+    }
+    server.use(
+      http.post(`${apiBaseUrl}/token/`, () =>
+        HttpResponse.json({
+          user_id: profile.id,
+          username: profile.username,
+          access_token: token(),
+        }),
+      ),
+      http.get(`${apiBaseUrl}/profile/`, async () => {
+        entered.release();
+        await release.wait;
+        return HttpResponse.json(profile);
+      }),
+    );
+    const user = userEvent.setup();
+    render(
+      <TestProviders>
+        <MemoryRouter initialEntries={["/login?next=%2Fprivate"]}>
+          <AuthContextProvider>
+            <LocationAndStatus />
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route element={<ProtectedRoute />}>
+                <Route path="/private" element={<h1>Protected film list</h1>} />
+              </Route>
+            </Routes>
+            <Toaster />
+            <PriorityToaster />
+          </AuthContextProvider>
+        </MemoryRouter>
+      </TestProviders>,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("Session status")).toHaveTextContent(
+        "anonymous",
+      ),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Username or Email Address" }),
+      "viewer",
+    );
+    await user.type(
+      screen.getByLabelText("Password", { exact: true }),
+      "password",
+    );
+    await user.click(screen.getByRole("button", { name: "Login" }));
+    await entered.wait;
+    await waitFor(() =>
+      expect(screen.getByLabelText("Session reads")).toHaveTextContent("1"),
+    );
+    expect(locations).toEqual(["/login?next=%2Fprivate"]);
+    await act(async () => release.release());
+    await screen.findByRole("heading", { name: "Protected film list" });
+    expect(locations).toEqual(["/login?next=%2Fprivate", "/private"]);
+  });
 });

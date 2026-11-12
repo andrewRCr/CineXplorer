@@ -1,3 +1,4 @@
+import { readSession, sessionKey } from "@/lib/session";
 import {
     getUserMovies,
     type UserMoviesQueryParams,
@@ -45,4 +46,15 @@ export const libraryQuery = (params: UserMoviesQueryParams) =>
     queryOptions({
         queryKey: [...libraryKey, params] as const,
         queryFn: ({ signal }) => readWithSignal(signal, getUserMovies(params)),
+    });
+
+export const sessionQuery = () =>
+    queryOptions({
+        queryKey: sessionKey,
+        queryFn: () => readSession(),
+        retry: false,
+        staleTime: Infinity,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
     });

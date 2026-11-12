@@ -220,7 +220,7 @@ page; on the browsable stack the same journey works against the real API, with U
 _Mode:_ `slice` — closes on a change of signed-in user leaving no cached query, kept save or save toast of the previous
 user's.
 
-- [ ] **4.1 The session query replaces `useAuth`'s sign-in state — D7, D1, D8**
+- [x] **4.1 The session query replaces `useAuth`'s sign-in state — D7, D1, D8**
 
     **Goal:** `useAuth`'s `status`, `isAuthenticated`, `user`, `login`, `logout` and `register` keep their shapes and
     behavior over a `['session']` query, whose first read replaces the mount check and the profile effect.
@@ -229,35 +229,20 @@ user's.
         - Every hook and component mount now wraps its MemoryRouter in TestProviders. All 56 kept cases pass
           against the existing hook; file lint, formatting and frontend type-check pass.
 
-    - [ ] **4.1.b Add the session query**
-        - `lib/session.ts` adds the read; `lib/queries.ts` adds `sessionQuery()` on the session key, with
-          `retry: false`, `staleTime: Infinity` and no refetch on mount, focus or reconnect
-        - 4.2.b gives `sessionQuery` an optional first-read context (whether the page loaded on a provider's return),
-          and only `useAuth`'s observer passes it. A writer's fresh read calls `sessionQuery()` and takes only the
-          stored-token or allauth path, never the provider branch (4.2) or the step (5.1). Each read runs with the
-          options its caller passes, since `Query.fetch` adopts them
-        - The read: with a stored access token, renew an expired one through `refreshAccessToken`, then read the profile
-          (`authService.getUserProfile`); without one, read allauth's session endpoint (`checkOAuthSession`'s request,
-          moved into `lib/session.ts`; the callback's effect keeps calling it until 4.2.b). Any failure but a
-          cancellation or a changed session version gives `null` and, on the password path, clears stored tokens; a read
-          started under an earlier session version neither lands nor clears stored tokens. It doesn't abort its
-          requests
-
-    - [ ] **4.1.c Derive `useAuth`'s state from the query, and write it from each writer**
-        - The status: a profile is `authenticated` and `null` is `anonymous`; before the first read lands, a current
-          stored token with the stored flag reads `authenticated` (today's initial state), and anything else
-          `resolving`
-        - Each writer cancels a session read in flight first. Password sign-in, after `authService.login`, runs
-          `invalidateAuthSession`, clears both storages and stores the token, then reads the session afresh, and `login`
-          resolves once that read has landed. Sign-out runs `invalidateAuthSession`, clears stored tokens and writes
-          `null`, then keeps today's navigation, toast and request until 5.2. A failed renewal at the 60-second check
-          writes `null`. Until 4.2.b the OAuth callback keeps its request and writes the user it finds, in place of its
-          `setUser` and `setStatus`
-        - Remove the mount check, the profile effect, `getUserDetails` and its ref; once 4.2.b removes the callback's
-          request, the 60-second renewal is the one effect that fetches
-        - Kept tests should PASS, with the `NavBarUserMenu`, `ProtectedRoute` and `Login` tests
-        - Check in `frontend/`, with the browsable stack running, all five smoke specs, since every page reads the
-          status: `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e`
+    - [x] **4.1.b Add the session query**
+        - The session module reads a renewed password profile or allauth's session, guards session versions and
+          clears rejected current credentials. Its query never retries or goes stale and does not refetch on mount,
+          focus or reconnect. The read leaves requests running when the query itself is canceled.
+    - [x] **4.1.c Derive `useAuth`'s state from the query, and write it from each writer**
+        - Removed mount/profile effect reads and `getUserDetails`; status derives from the session with the current
+          stored-token fallback. Writers cancel obsolete reads; password sign-in awaits a fresh plain query read.
+          The provider callback retains its request until 4.2.
+        - A held-profile test proves completion commits the fresh cache value. A real Login/ProtectedRoute journey
+          proves navigation waits for that read; missing cache writes and premature completion each failed.
+        - Observer assertions now await rendering; partial-fake-interval cases advance their existing clock. A
+          diagnostic proved the frozen polling interval checked once although the hook had become authenticated.
+        - Kept sign-out's initial write/navigation synchronous after cancellation, correcting an await that changed
+          navigation ordering. Formatting, lint, type-check, all 215 related tests and all five Chromium specs pass.
 
 - [ ] **4.2 A provider's return is read once, by the session query — D7, D8**
 

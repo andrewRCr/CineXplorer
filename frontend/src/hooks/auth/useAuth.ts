@@ -1,8 +1,14 @@
-import { isRecord } from "@/utilities/typeGuards";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { sessionQuery } from "@/lib/queries";
+import {
+    sessionKey,
+    ALLAUTH_SESSION_URL,
+    checkOAuthSession,
+} from "@/lib/session";
 /**
  * useAuth
  *
- * This custom React hook manages authentication state and actions (login, logout, register, user info).
+ * Session state comes from the shared query; authentication commands write it after cancelling reads.
  * It is used by AuthContextProvider to provide state to the context.
  *
  * Supports hybrid authentication:
@@ -15,19 +21,13 @@ import { isRecord } from "@/utilities/typeGuards";
  * - State is shared via AuthContext.
  * - Components access state using useAuthContext.
  */
-import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
+import { apiBaseUrl } from "@/config/baseUrls";
 import {
     ensureCsrfTokenCookie,
     getCsrfToken,
 } from "@/utilities/csrfTokenFetcher";
 import { ROUTES } from "@/constants/routes";
-import {
-    useState,
-    useEffect,
-    useLayoutEffect,
-    useCallback,
-    useRef,
-} from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import type {
     AuthStateProps,
@@ -57,68 +57,11 @@ import {
     type TokenStorage,
 } from "@/utilities/tokenUtils";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
-import type { components } from "@/types/api";
 import * as authService from "@/services/authService";
 import { priorityToaster } from "@/components/core/chakra/toaster";
 
-// Type alias for user profile from generated API types
-type UserProfile = components["schemas"]["UserProfileSchema"];
-
-// Derive base URL for allauth endpoints (not under /api/)
-const ALLAUTH_SESSION_URL = `${siteOrigin}/_allauth/browser/v1/auth/session`;
-
-const isUserProfile = (value: unknown): value is UserProfile => {
-    if (!isRecord(value) || typeof value.username !== "string") return false;
-
-    const nullableStrings = ["email", "first_name", "last_name", "full_name"];
-    return (
-        nullableStrings.every(
-            (key) =>
-                value[key] === undefined ||
-                value[key] === null ||
-                typeof value[key] === "string",
-        ) &&
-        (value.id === undefined ||
-            value.id === null ||
-            typeof value.id === "number") &&
-        (value.email_verified === undefined ||
-            value.email_verified === null ||
-            typeof value.email_verified === "boolean")
-    );
-};
-
-/**
- * Check OAuth session status via allauth session endpoint.
- * Used for both initial mount detection and OAuth callback handling.
- * @returns User profile if authenticated, null otherwise
- */
-async function checkOAuthSession(): Promise<UserProfile | null> {
-    try {
-        const response = await fetch(ALLAUTH_SESSION_URL, {
-            method: "GET",
-            credentials: "include",
-        });
-
-        if (response.ok) {
-            const data: unknown = await response.json();
-            if (
-                isRecord(data) &&
-                isRecord(data.meta) &&
-                data.meta.is_authenticated === true &&
-                isRecord(data.data) &&
-                isUserProfile(data.data.user)
-            ) {
-                return data.data.user;
-            }
-        }
-        return null;
-    } catch {
-        return null;
-    }
-}
-
 export function useAuth(): AuthStateProps {
-    const [status, setStatus] = useState<AuthStatus>(() => {
+    const [initialStatus] = useState<AuthStatus>(() => {
         // Detect access tokens in localStorage, then sessionStorage.
         const { access_token } = getAuthTokens();
         const isExpired = areTokensExpired();
@@ -132,81 +75,22 @@ export function useAuth(): AuthStateProps {
             result: signedIn,
         });
 
-        // A current stored token signs the user in at once: it exists (in localStorage or
-        // sessionStorage), it is not expired, and the stored flag is set. Otherwise the mount check
-        // below decides, through a token refresh or the provider session, and until it does the
-        // status stays resolving rather than reading signed out.
+        // Preserve immediate sign-in for a current stored token and flag until the
+        // session query lands. Other visitors stay resolving during its first read.
         return signedIn ? "authenticated" : "resolving";
     });
+    const client = useQueryClient();
+    const session = useQuery(sessionQuery());
+    const user = session.data ?? null;
+    const status: AuthStatus =
+        session.data === undefined
+            ? initialStatus
+            : session.data
+              ? "authenticated"
+              : "anonymous";
     const isAuthenticated = status === "authenticated";
-    const [user, setUser] = useState<UserProfile | null>(null);
     const navigate = useNavigate();
     const location = useLocation();
-
-    // Refs to hold latest callback versions - breaks circular dependency in effects
-    // Effects can call ref.current() without needing the callback in dependency array
-    const getUserDetailsRef = useRef<() => Promise<unknown>>(() =>
-        Promise.resolve(),
-    );
-
-    // On initial mount, check for existing authentication (JWT or session)
-    // This runs ONCE on mount to detect existing sessions
-    useEffect(() => {
-        const checkExistingAuth = async () => {
-            const sessionVersion = getAuthSessionVersion();
-            const { access_token } = getAuthTokens();
-            if (access_token) {
-                try {
-                    if (areTokensExpired()) await refreshAccessToken();
-                    // The authentication-state effect owns profile loading.
-                    if (sessionVersion === getAuthSessionVersion())
-                        setStatus("authenticated");
-                } catch (error) {
-                    if (
-                        isCancel(error) ||
-                        sessionVersion !== getAuthSessionVersion()
-                    )
-                        return;
-                    clearAuthTokens();
-                    setUser(null);
-                    setStatus("anonymous");
-                }
-                return;
-            }
-
-            // No JWT tokens found - check for OAuth session cookie
-            // This handles page refreshes for OAuth users (Google/GitHub login)
-            logger.debug(
-                "[useAuth] No JWT tokens found, checking for OAuth session...",
-            );
-            const oauthUser = await checkOAuthSession();
-            if (sessionVersion !== getAuthSessionVersion()) return;
-            if (oauthUser) {
-                logger.debug(
-                    "[useAuth] OAuth session detected, user authenticated",
-                );
-                setUser(oauthUser);
-                setStatus("authenticated");
-            } else {
-                logger.debug("[useAuth] No active session found");
-                setStatus("anonymous");
-            }
-        };
-
-        void checkExistingAuth();
-    }, []);
-
-    // When authentication state changes, fetch user details (JWT users only)
-    useEffect(() => {
-        if (isAuthenticated) {
-            const { access_token } = getAuthTokens();
-            // Only call getUserDetails if user has JWT tokens (email/password flow)
-            // OAuth users have session cookies only, user data already set from session endpoint
-            if (access_token) {
-                void getUserDetailsRef.current?.();
-            }
-        }
-    }, [isAuthenticated]);
 
     // Renew idle password sessions before considering them signed out.
     // Provider sessions have no access token and are managed by allauth.
@@ -223,9 +107,10 @@ export function useAuth(): AuthStateProps {
                         sessionVersion !== getAuthSessionVersion()
                     )
                         return;
+                    await client.cancelQueries({ queryKey: sessionKey });
+                    if (sessionVersion !== getAuthSessionVersion()) return;
                     clearAuthTokens();
-                    setUser(null);
-                    setStatus("anonymous");
+                    client.setQueryData(sessionQuery().queryKey, null);
                 }
             }
         };
@@ -233,7 +118,7 @@ export function useAuth(): AuthStateProps {
             void checkTokenExpiration();
         }, 60000);
         return () => clearInterval(interval);
-    }, [isAuthenticated]);
+    }, [client, isAuthenticated]);
 
     // Ref to prevent duplicate OAuth callback handling (StrictMode double-invokes effects)
     const hasHandledOAuthRef = useRef(false);
@@ -323,8 +208,8 @@ export function useAuth(): AuthStateProps {
                     logger.debug(
                         "[useAuth] OAuth callback - authenticated via session cookie",
                     );
-                    setUser(oauthUser);
-                    setStatus("authenticated");
+                    await client.cancelQueries({ queryKey: sessionKey });
+                    client.setQueryData(sessionQuery().queryKey, oauthUser);
 
                     // Show welcome toast for OAuth login (priority position)
                     const displayName =
@@ -361,9 +246,10 @@ export function useAuth(): AuthStateProps {
         // Invalidate queued and in-flight renewal before clearing the session.
         invalidateAuthSession();
         // Clear local state and tokens
-        setStatus("anonymous");
-        setUser(null);
         clearAuthTokens();
+        // Cancellation retires the read synchronously before this write and navigation.
+        void client.cancelQueries({ queryKey: sessionKey });
+        client.setQueryData(sessionQuery().queryKey, null);
         void navigate(ROUTES.LOGIN);
 
         // Show logout success toast (appears on login page after redirect)
@@ -402,41 +288,7 @@ export function useAuth(): AuthStateProps {
             logger.error("Logout failed", { error });
             // Don't reject - we've already cleared local state, user is logged out from UX perspective
         }
-    }, [navigate]);
-
-    const getUserDetails = useCallback(async () => {
-        const sessionVersion = getAuthSessionVersion();
-        try {
-            // Check if tokens are expired before making the request (JWT users only)
-            // OAuth users have session cookies only, skip JWT expiration check
-            const { access_token } = getAuthTokens();
-            if (access_token && areTokensExpired()) {
-                await refreshAccessToken();
-            }
-
-            if (sessionVersion !== getAuthSessionVersion()) return undefined;
-            const userDetails = await authService.getUserProfile();
-            if (sessionVersion !== getAuthSessionVersion()) return undefined;
-            setUser(userDetails);
-            // Ensure isAuthenticated is true when user details are successfully fetched
-            setStatus("authenticated");
-            return undefined;
-        } catch (error) {
-            if (isCancel(error) || sessionVersion !== getAuthSessionVersion())
-                return error;
-            logger.error("Error fetching user details", { error });
-            setUser(null);
-            setStatus("anonymous");
-            clearAuthTokens();
-            return error;
-        }
-    }, []);
-
-    // Update refs to latest callback versions - enables effects to use stable refs
-    // while still calling the latest callback implementation
-    useLayoutEffect(() => {
-        getUserDetailsRef.current = getUserDetails;
-    }, [getUserDetails]);
+    }, [client, navigate]);
 
     const login = async (
         username: string,
@@ -462,8 +314,8 @@ export function useAuth(): AuthStateProps {
                 invalidateAuthSession();
                 clearAuthTokens();
                 setAuthTokens(accessToken, storage);
-                setStatus("authenticated");
-                await getUserDetails();
+                await client.cancelQueries({ queryKey: sessionKey });
+                await client.fetchQuery({ ...sessionQuery(), staleTime: 0 });
 
                 // Return display name for component to use in success feedback
                 const displayName = response.first_name || response.username;

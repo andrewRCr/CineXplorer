@@ -225,11 +225,9 @@ user's.
     **Goal:** `useAuth`'s `status`, `isAuthenticated`, `user`, `login`, `logout` and `register` keep their shapes and
     behavior over a `['session']` query, whose first read replaces the mount check and the profile effect.
 
-    - [ ] **4.1.a Give `useAuth`'s tests a query client**
-        - `useAuth.test.tsx` mounts inside `TestProviders` around its `MemoryRouter`; the `NavBarUserMenu`,
-          `ProtectedRoute` and `Login` tests already render inside `TestProviders`
-        - A behavior-preserving move: the kept cases change only their wrapper and pass before it, as its regression
-          net
+    - [x] **4.1.a Give `useAuth`'s tests a query client**
+        - Every hook and component mount now wraps its MemoryRouter in TestProviders. All 56 kept cases pass
+          against the existing hook; file lint, formatting and frontend type-check pass.
 
     - [ ] **4.1.b Add the session query**
         - `lib/session.ts` adds the read; `lib/queries.ts` adds `sessionQuery()` on the session key, with

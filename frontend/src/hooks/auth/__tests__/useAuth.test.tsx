@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+import { TestProviders } from "@tests/helpers/test-providers";
 import {
   act,
   render,
@@ -22,6 +24,14 @@ import {
 import apiClient, { refreshAccessToken } from "@/services/apiClient";
 import { gate, installWebLocks } from "@tests/helpers/web-locks";
 
+function AuthTestProviders({ children }: { children: ReactNode }) {
+  return (
+    <TestProviders>
+      <MemoryRouter>{children}</MemoryRouter>
+    </TestProviders>
+  );
+}
+
 function AuthStatusProbe() {
   const { isAuthenticated, user } = useAuth();
   return (
@@ -32,7 +42,7 @@ function AuthStatusProbe() {
 }
 
 function mountAuth() {
-  return renderHook(() => useAuth(), { wrapper: MemoryRouter });
+  return renderHook(() => useAuth(), { wrapper: AuthTestProviders });
 }
 
 beforeEach(() => {
@@ -125,7 +135,7 @@ describe("sign-in status", () => {
         seen.push(auth.status);
         return auth;
       },
-      { wrapper: MemoryRouter },
+      { wrapper: AuthTestProviders },
     );
     return { ...view, seen };
   }
@@ -242,7 +252,9 @@ describe("returning after a provider sign-in", () => {
   function mountAt(entry: string) {
     return renderHook(() => ({ auth: useAuth(), location: useLocation() }), {
       wrapper: ({ children }) => (
-        <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>
+        <TestProviders>
+          <MemoryRouter initialEntries={[entry]}>{children}</MemoryRouter>
+        </TestProviders>
       ),
     });
   }
@@ -358,9 +370,11 @@ describe("sign-in and sign-out", () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     setAuthTokens(token());
     render(
-      <MemoryRouter>
-        <AuthStatusProbe />
-      </MemoryRouter>,
+      <TestProviders>
+        <MemoryRouter>
+          <AuthStatusProbe />
+        </MemoryRouter>
+      </TestProviders>,
     );
     await waitFor(() =>
       expect(screen.getByRole("status")).toHaveTextContent(profile.username),

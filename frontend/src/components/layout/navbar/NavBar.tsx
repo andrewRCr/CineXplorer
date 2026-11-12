@@ -1,8 +1,6 @@
-import { Box, HStack, Container } from "@chakra-ui/react";
-import AccountControl from "./AccountControl";
-import MobileMenuButton from "./MobileMenuButton";
+import { Box, Container } from "@chakra-ui/react";
+import PhoneNavBar from "./PhoneNavBar";
 import WideNavBar from "./WideNavBar";
-import Wordmark from "./Wordmark";
 
 export default function NavBar() {
   return (
@@ -24,16 +22,9 @@ export default function NavBar() {
         w="100%"
         h="100%"
       >
-        <HStack
-          justifyContent="space-between"
-          w="100%"
-          h="100%"
-          display={{ base: "flex", lg: "none" }}
-        >
-          <MobileMenuButton size="sm" />
-          <Wordmark />
-          <AccountControl />
-        </HStack>
+        <Box display={{ base: "block", lg: "none" }} h="100%">
+          <PhoneNavBar />
+        </Box>
         <Box display={{ base: "none", lg: "block" }} h="100%">
           <WideNavBar />
         </Box>

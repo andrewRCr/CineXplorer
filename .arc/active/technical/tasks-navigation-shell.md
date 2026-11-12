@@ -148,49 +148,30 @@ each carry one `h1`.
 
 ### **Phase 3:** The phone bar replaces the sidebar
 
-- [ ] **3.1 The drawer holds the bar's links — R2, R8, R29**
+- [x] **3.1 The drawer holds the bar's links — R2, R8, R29**
 
     **Goal:** Below 1024px a "Menu" drawer opened by "Open menu" lists Films and, signed in, the Library link, and
     closes on Escape, its close button or a chosen link, with focus back on the menu button.
 
-    - [ ] **3.1.a Write `NavDrawer` tests in `src/components/layout/navbar/__tests__/NavDrawer.test.tsx`**
-        - Test: "Open menu" opens a dialog titled "Menu" holding the `nav` "Main": Films alone signed out and while
-          the sign-in check is held, Films and Watchlist signed in, marked as R2 says
-        - Test: Escape and the close button each close it with focus back on "Open menu"; choosing Films closes it
-          and opens `/browse`
-        - Test (`styleSystem`): panel `background`, header `layer-01`, `border-strong-01` borders, links
-          `foreground`, backdrop `backdrop`; links focused from the keyboard draw a `ring` outline
-        - Expect tests to FAIL initially
+    - [x] **3.1.a Write `NavDrawer` tests in `src/components/layout/navbar/__tests__/NavDrawer.test.tsx`**
+        - Seven fail-first cases cover all auth states, current Films, Escape/close focus return, link navigation,
+          and panel/header/backdrop/link theme roles. The keyboard style test supplies rectangles for the rendered
+          controls, since jsdom has no layout, and waits for Chakra's asynchronous initial focus.
+    - [x] **3.1.b Implement `NavDrawer` on Chakra's `Drawer`**
+        - Its trigger owns focus return; column `MainNavLinks` closes it on navigation. Replaced the phone row's old
+          menu trigger. All seven cases passed with lint, formatting and TypeScript checks.
 
-    - [ ] **3.1.b Implement `NavDrawer` on Chakra's `Drawer`**
-        - `Drawer.Trigger` as the "Open menu" button, so Chakra returns focus to it; `MainNavLinks` (2.4) in the
-          body as a column, its `onNavigate` closing the drawer
-        - Replaces `MobileMenuButton` and the `sidebarDrawer` overlay manager in the phone row
-        - Tests should now PASS
-
-- [ ] **3.2 The phone row and its search — R7, R9**
+- [x] **3.2 The phone row and its search — R7, R9**
 
     **Goal:** Below 1024px the row holds the menu button, the wordmark, a search button and the account control, and
     an open search takes the row's place until Escape, Close search or a submitted query.
 
-    - [ ] **3.2.a Write the phone row's tests**
-        - `lg` matches in jsdom (Implementation Notes), so render the phone row's component on its own, apart from the
-          wide row
-        - Test: the row holds "Open menu", the wordmark, "Search films" (a button) and the account control
-        - Test: "Search films" opens the field with focus in its input and a "Close search" button; while open, the
-          menu button, wordmark, search button and account control are absent by role, and Tab, cycling the bar,
-          never reaches them
-        - Test: Escape in the field, and Close search, bring the row back with focus on "Search films"; submitting
-          a query opens `/search?query=` and brings the row back
-        - Expect tests to FAIL initially
-
-    - [ ] **3.2.b Implement the phone row**
-        - `NavDrawer`'s trigger, `Wordmark` (2.4), the "Search films" icon button, and `AccountControl`
-        - The open search renders `SearchField` (with `autoFocus`) and "Close search" in place of the row's
-          controls, which are not rendered, so they leave the tab order and the accessibility tree; `SearchField`'s
-          `onSubmit` and `onEscape` close it
-        - `NavBar` switches the two rows at `lg`
-        - Tests should now PASS
+    - [x] **3.2.a Write the phone row's tests**
+        - Five fail-first cases cover its named controls, input autofocus, hidden/unmounted row controls and Tab
+          order, both close actions with focus return, and query submission.
+    - [x] **3.2.b Implement the phone row**
+        - `PhoneNavBar` composes the shared controls; its search replaces the row and restores focus on close.
+          `NavBar` switches rows through CSS at `lg`. All 38 navbar tests, lint, formatting and TypeScript passed.
 
 - [ ] **3.3 The sidebar, its drawer and the links that lead nowhere go — R10, R11, R28, R31**
 

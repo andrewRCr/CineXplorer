@@ -2,9 +2,9 @@
 
 ## Status
 
-Accepted (Owner, 2026-11-03)
+Accepted; Superseded in part by ADR-043 (the PUT save)
 
-Implemented by: the planned UserMovieData consolidation.
+Realized (2026-11-10): `tasks-user-movie-data.md`.
 
 ## Context
 
@@ -46,6 +46,10 @@ We will store the fields a movie card needs on the local `Movie` row and serve t
 
 ## Consequences
 
+**Amendment (2026-11-10):** Card fields are at most a day old while one night's run covers every stored row;
+the nightly check fails once any row is more than seven days old or has never refreshed. Reading a Library page
+also needs a count query: the service runs two database queries in all.
+
 ### Positive
 
 - The Library loads from one database query per page, whatever the size of the collection.
@@ -62,6 +66,11 @@ We will store the fields a movie card needs on the local `Movie` row and serve t
 
 - If the nightly job stops running, rows can age past the six-month limit unnoticed. The job needs a heartbeat
   check, so a missed run raises an alert.
+
+**Amendment (2026-11-10):** A movie TMDB has removed fails each nightly refresh and eventually raises the
+seven-day alert. The row and its user records remain until a person settles them in the admin; the job never
+automatically deletes a movie. The deployment README describes confirming removal and preserving or deleting the
+associated user data.
 
 This doesn't change [ADR-018](adr-018-remove-runtime-filtering-parameter.md): storing a saved movie's runtime for
 its card doesn't make runtime filterable across TMDB's catalogue.

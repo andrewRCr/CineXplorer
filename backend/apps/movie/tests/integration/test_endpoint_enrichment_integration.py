@@ -15,12 +15,15 @@ Tests verify:
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING, cast
 from unittest.mock import Mock, patch
 
 import pytest
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.test import Client
+from django.utils import timezone
+from ninja_jwt.tokens import AccessToken
 
 from apps.core.models import Movie
 from apps.core.services.api_response import ApiResponse
@@ -122,6 +125,16 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     assert "user_movie_data" in movie_data
     user_data = movie_data["user_movie_data"]
     assert user_data is not None
+    assert set(user_data) == {
+        "tmdb_id",
+        "user_watched",
+        "user_on_watchlist",
+        "user_liked",
+        "user_rating",
+        "user_review",
+        "watched_at",
+    }
+    assert user_data["watched_at"] is None
     assert user_data["user_watched"] is True
     assert user_data["user_on_watchlist"] is True
     assert user_data["user_liked"] is True
@@ -288,6 +301,16 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     # Verify user_movie_data is populated
     user_data = data["user_movie_data"]
     assert user_data is not None
+    assert set(user_data) == {
+        "tmdb_id",
+        "user_watched",
+        "user_on_watchlist",
+        "user_liked",
+        "user_rating",
+        "user_review",
+        "watched_at",
+    }
+    assert user_data["watched_at"] is None
     assert user_data["user_watched"] is True
     assert user_data["user_on_watchlist"] is False
     assert user_data["user_liked"] is True
@@ -398,3 +421,127 @@ def test_enrichment_handles_multiple_movies_efficiently(
 
     # Movie 3: No user data
     assert data["results"][2]["user_movie_data"] is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "/api/movies/now-playing",
+        "/api/movies/upcoming",
+        "/api/movies/search?query=test",
+        "/api/movies/browse",
+        "/api/movies/101",
+    ],
+)
+@pytest.mark.parametrize(
+    "auth_state",
+    [
+        "expired",
+        "malformed",
+        "empty",
+        "valid",
+        "valid_lowercase",
+        "provider",
+    ],
+)
+def test_public_movie_reads_do_not_silently_discard_bearer_authentication(
+    api_client: Client,
+    user: User,
+    endpoint: str,
+    auth_state: str,
+) -> None:
+    movie = create_movie_stub(101)
+    UserMovieData.objects.create(user=user, movie=movie, user_on_watchlist=True)
+    access = AccessToken.for_user(cast(AbstractBaseUser, user))
+    if auth_state in {"expired", "provider"}:
+        access.payload["exp"] = int((timezone.now() - timedelta(seconds=5)).timestamp())
+    credential = "not-a-token" if auth_state == "malformed" else str(access)
+    scheme = "bearer" if auth_state == "valid_lowercase" else "Bearer"
+    header = "Bearer " if auth_state == "empty" else f"{scheme} {credential}"
+    if auth_state == "provider":
+        api_client.force_login(cast(AbstractBaseUser, user))
+    detail = endpoint.endswith("/101")
+    page = create_mock_paginated_response(
+        movies=[
+            create_tmdb_movie(101, "Test Movie", "1982-06-25", 8.1, poster_path="/test.jpg"),
+        ]
+    )
+    with (
+        patch(
+            TMDB_CLIENT_GET,
+            return_value=(
+                ApiResponse(status_code=200, data={"crew": [], "cast": []}) if detail else page
+            ),
+        ) as tmdb_get,
+        patch(
+            TMDB_CLIENT_GET_MOVIE_DETAILS,
+            return_value=create_mock_movie_detail_response(
+                tmdb_id=101,
+                title="Test Movie",
+                release_date="1982-06-25",
+                vote_average=8.1,
+            ),
+        ) as tmdb_details,
+    ):
+        response = api_client.get(endpoint, HTTP_AUTHORIZATION=header)
+    if auth_state in {"expired", "malformed", "empty"}:
+        assert response.status_code == 401
+        assert response.json() == {"detail": "Invalid authentication credentials"}
+        assert response["WWW-Authenticate"] == 'Bearer error="invalid_token"'
+        tmdb_get.assert_not_called()
+        tmdb_details.assert_not_called()
+    else:
+        assert response.status_code == 200
+        body = response.json()
+        enriched = body if detail else body["results"][0]
+        assert enriched["user_movie_data"]["user_on_watchlist"] is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("endpoint", ["now-playing", "upcoming", "search", "browse"])
+def test_expired_continuation_preserves_movies_for_authenticated_retry(
+    api_client: Client, user: User, endpoint: str
+) -> None:
+    """Refusing a credential must not consume movies the browser has not received."""
+    url = f"/api/movies/{endpoint}"
+    initial_params: dict[str, str | int] = {"query": "test"} if endpoint == "search" else {}
+    headers = {"X-Pagination-Context": "expiry-retry"}
+    valid = str(AccessToken.for_user(cast(AbstractBaseUser, user)))
+    expired = AccessToken.for_user(cast(AbstractBaseUser, user))
+    expired.payload["exp"] = int((timezone.now() - timedelta(seconds=5)).timestamp())
+    first_movies = [
+        create_tmdb_movie(movie_id, f"Movie {movie_id}", "2023-01-01", 8.1)
+        for movie_id in range(1, 21)
+    ]
+    next_ids = list(range(21, 41))
+    # A repeated movie proves that real cross-request deduplication is active.
+    next_movies = [
+        create_tmdb_movie(movie_id, f"Movie {movie_id}", "2023-01-01", 8.1)
+        for movie_id in [1, *next_ids]
+    ]
+    with patch(
+        TMDB_CLIENT_GET,
+        return_value=create_mock_paginated_response(first_movies, page=1, total_pages=2),
+    ):
+        first = api_client.get(
+            url, initial_params, HTTP_AUTHORIZATION=f"Bearer {valid}", headers=headers
+        )
+    assert first.status_code == 200
+    assert [movie["tmdb_id"] for movie in first.json()["results"]] == list(range(1, 21))
+    assert first.json()["next_tmdb_page_start"] == 2
+    continuation = {**initial_params, "page": 1, "tmdb_page_start": 2}
+    with patch(
+        TMDB_CLIENT_GET,
+        return_value=create_mock_paginated_response(next_movies, page=2, total_pages=2),
+    ):
+        refused = api_client.get(
+            url, continuation, HTTP_AUTHORIZATION=f"Bearer {expired}", headers=headers
+        )
+        assert refused.status_code == 401
+        assert refused["WWW-Authenticate"] == 'Bearer error="invalid_token"'
+        retried = api_client.get(
+            url, continuation, HTTP_AUTHORIZATION=f"Bearer {valid}", headers=headers
+        )
+    assert retried.status_code == 200
+    assert [movie["tmdb_id"] for movie in retried.json()["results"]] == next_ids

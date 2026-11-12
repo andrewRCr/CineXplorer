@@ -7,4 +7,5 @@ worker_class = "gthread"
 workers = int(os.environ.get("GUNICORN_WORKERS", "2"))
 threads = int(os.environ.get("GUNICORN_THREADS", "4"))
 timeout = 60
-accesslog = "-"
+# Django request middleware logs sanitized requests with correlation IDs.
+accesslog = None

@@ -495,8 +495,10 @@ A target supplying neither source retains an existing executable pair; a partial
 installed pair, deploy a version supplying both first. A target without `deploy.sh` still requires the manual legacy
 procedure above, which preserves the installed pair. The supported previous published version is
 `f49b6837c5a72ad4a823bf7594f2d9cf94fcd46d`: its Compose services, PostgreSQL variables and cleanup commands remain
-compatible with these jobs. This does not promise compatibility with arbitrary historical checkouts. Returning via
-`cinexplorer-deploy` to a version supplying job sources updates the installed copies through the same path.
+compatible with backups and cleanup. Its backend has no `refresh_movie_cards` command, so the retained maintenance
+job fails at that step and sends the failure heartbeat. This is intentional: that backend cannot keep stored cards
+fresh. This does not promise compatibility with arbitrary historical checkouts. Returning via `cinexplorer-deploy`
+to a version supplying job sources updates the installed copies through the same path.
 
 ## Back up the database
 
@@ -710,6 +712,25 @@ and recovery separately. Test a backup against a nonexistent bucket, check its f
 setting and confirm the next success. Record the first night's timer-originated pings for both checks. In an
 operations shell, test public health with backend stopped and then with db stopped, recovering the stack after
 each; confirm outage and recovery emails. Stop/check/start commands always select the production Compose inputs.
+
+Maintenance cleans expired refresh tokens and sessions, then runs `refresh_movie_cards` before its success ping.
+The refresh's output is retained in the maintenance journal on every run. It visits never-refreshed cards first,
+then the oldest, one TMDB details request at a time, for up to 20 minutes. Successful rows get new card fields and
+refresh timestamps; failed rows remain unchanged. It prints refreshed/failed counts and fails with stale TMDB IDs
+last when any card has no refresh time or is more than seven days old. Recent transient failures can be retried the
+next night without failing the freshness check. The failure heartbeat includes the step's last 20 output lines.
+
+A movie removed from TMDB is not deleted or blanked automatically. Its unchanged card eventually makes the freshness
+check fail, and its ID remains in the alert until a person settles it in the Django admin:
+
+1. Confirm TMDB removed the movie or changed its ID, rather than responding incorrectly to many lookups.
+2. To discard the movie and its users' records, delete its Movie row in the admin. That deletion cascades to all
+   associated user-movie records.
+3. To preserve user records, add the replacement movie's row if necessary. For each user who already has a record
+   on the replacement movie, merge the two records' state deliberately, resolving rating/review/date differences.
+   Move the remaining records to the replacement movie, then delete the obsolete Movie row.
+4. Run maintenance again and confirm its success heartbeat and journal. An existing freshness failure can mask a
+   later failed step or missed night, so settle it promptly.
 
 ## Logs, restarts and persistent state
 

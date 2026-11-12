@@ -1,140 +1,66 @@
-"""Pydantic schemas for the user movie data API.
-
-This module defines schemas for UserMovieData CRUD operations following
-the ModelSchema pattern established in the movie domain.
-
-Pattern Guidelines:
-- Use ModelSchema for Django model CRUD (automatic type inference with django-stubs)
-- Use manual Schema for input DTOs with non-model fields (create/update operations)
-"""
+"""Shared user movie state and partial-save validation."""
 
 from __future__ import annotations
 
+from datetime import date
+from typing import Literal
+
 from ninja import Schema
-from ninja.orm import ModelSchema
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from apps.user_movie_data.models import UserMovieData
 
 
-class UserMovieDataModelSchema(ModelSchema):
-    """Base ModelSchema for UserMovieData model.
+class UserMovieDataSchema(Schema):
+    """The same complete user state on saved-data and movie responses."""
 
-    Uses ninja.orm.ModelSchema for automatic type inference with django-stubs.
-    This eliminates the need for type: ignore comments on model attributes.
-    """
-
-    class Meta:
-        model = UserMovieData
-        fields = [
-            "id",
-            "user_watched",
-            "user_on_watchlist",
-            "user_liked",
-            "user_rating",
-            "user_review",
-        ]
-
-
-class UserMovieDataDetailSchema(ModelSchema):
-    """Extended ModelSchema with computed movie context fields.
-
-    Includes tmdb_id and title computed from the related Movie object.
-    These fields are populated at runtime in the API layer.
-    """
-
-    tmdb_id: int | None = Field(
-        None, description="TMDB ID of the associated movie (computed from obj.movie.tmdb_id)"
-    )
-    title: str | None = Field(
-        None, description="Title of the associated movie (computed from obj.movie.title)"
-    )
-
-    class Meta:
-        model = UserMovieData
-        fields = [
-            "id",
-            "user_watched",
-            "user_on_watchlist",
-            "user_liked",
-            "user_rating",
-            "user_review",
-        ]
+    tmdb_id: int
+    user_watched: bool
+    user_on_watchlist: bool
+    user_liked: bool
+    user_rating: int | None = Field(..., ge=1, le=10)
+    user_review: str | None
+    watched_at: date | None
 
     @classmethod
-    def from_orm_with_movie(cls, obj: UserMovieData) -> UserMovieDataDetailSchema:
-        """Create schema from ORM object with movie fields populated.
-
-        This method provides type-safe conversion from Django ORM to Pydantic schema
-        including computed fields from the related Movie object.
-
-        Companion model stubs provide the field and relation types that Pyright
-        needs to check access to the related movie's attributes.
-
-        Args:
-            obj: UserMovieData instance (should have movie prefetched via select_related)
-
-        Returns:
-            UserMovieDataDetailSchema with all fields including tmdb_id and title
-        """
-        # Use ModelSchema's from_orm for base fields
-        instance = cls.from_orm(obj)
-
-        # Populate computed fields from related Movie (ForeignKey)
-        # With .pyi stub files, Pyright correctly infers obj.movie is never None
-        # (ForeignKey has no null=True, so it's required)
-        instance.tmdb_id = obj.movie.tmdb_id
-        instance.title = obj.movie.title
-
-        return instance
+    def from_record(cls, record: UserMovieData) -> UserMovieDataSchema:
+        return cls(
+            tmdb_id=record.movie.tmdb_id,
+            user_watched=record.user_watched,
+            user_on_watchlist=record.user_on_watchlist,
+            user_liked=record.user_liked,
+            user_rating=record.user_rating,
+            user_review=record.user_review,
+            watched_at=record.watched_at,
+        )
 
 
-class UserMovieDataCreateSchema(Schema):
-    """Schema for creating new user movie data entries.
+class UserMovieDataPatchSchema(Schema):
+    """Omitted fields stay unchanged; nullable fields can be explicitly cleared."""
 
-    Uses manual Schema (not ModelSchema) because it includes movie_id field
-    which is not directly on the UserMovieData model (requires FK lookup).
-    """
+    user_watched: bool = False
+    user_on_watchlist: bool = False
+    user_liked: bool = False
+    user_rating: int | None = Field(default=None, ge=1, le=10)
+    user_review: str | None = Field(default=None, max_length=10000)
+    watched_at: date | None = None
 
-    movie_id: int = Field(..., description="ID of the Movie object (database ID, not TMDB ID)")
-    user_watched: bool = Field(
-        default=False, description="Whether the user has marked this movie as watched"
-    )
-    user_on_watchlist: bool = Field(
-        default=False, description="Whether the movie is on the user's watchlist"
-    )
-    user_liked: bool = Field(default=False, description="Whether the user has liked this movie")
-    user_rating: int | None = Field(
-        default=None, ge=1, le=10, description="User's rating of the movie (1-10)"
-    )
-    user_review: str | None = Field(default=None, description="User's text review of the movie")
+    @field_validator("user_review")
+    @classmethod
+    def normalize_review(cls, review: str | None) -> str | None:
+        if review is not None and "\x00" in review:
+            raise ValueError("Review must not contain NUL characters")
+        return review if review is not None and review.strip() else None
 
 
-class UserMovieDataUpdateSchema(Schema):
-    """Schema for updating existing user movie data entries.
+class LibraryQuerySchema(Schema):
+    """Validated bounds and stable ordering for database-served collections."""
 
-    Uses manual Schema (not ModelSchema) with all optional fields
-    to support partial updates (PATCH operations).
-    """
-
-    user_watched: bool | None = Field(
-        default=None, description="Whether the user has marked this movie as watched"
-    )
-    user_on_watchlist: bool | None = Field(
-        default=None, description="Whether the movie is on the user's watchlist"
-    )
-    user_liked: bool | None = Field(
-        default=None, description="Whether the user has liked this movie"
-    )
-    user_rating: int | None = Field(
-        default=None, ge=1, le=10, description="User's rating of the movie (1-10)"
-    )
-    user_review: str | None = Field(default=None, description="User's text review of the movie")
-
-
-__all__ = [
-    "UserMovieDataCreateSchema",
-    "UserMovieDataDetailSchema",
-    "UserMovieDataModelSchema",
-    "UserMovieDataUpdateSchema",
-]
+    watchlist: bool = False
+    watched: bool = False
+    liked: bool = False
+    rated: bool = False
+    sort: Literal["added", "watched", "rating", "title", "release"] = "added"
+    direction: Literal["asc", "desc"] = "desc"
+    page: int = Field(default=1, ge=1, le=1000000)
+    page_size: int = Field(default=20, ge=1, le=100)

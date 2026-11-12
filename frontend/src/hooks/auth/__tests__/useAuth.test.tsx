@@ -581,12 +581,12 @@ describe("password session renewal", () => {
     expect(refreshes).toBe(0);
   });
 
-  it("shares a refresh between the loading hook and an API 401", async () => {
+  it("shares a refresh between the loading hook and an expired-token API request", async () => {
     const releaseRefresh = gate();
-    const responseSeen = gate();
     const refreshed = token();
     setAuthTokens(token(1));
     let refreshes = 0;
+    let requests = 0;
     server.use(
       http.post(`${apiBaseUrl}/auth/refresh`, async () => {
         refreshes++;
@@ -594,21 +594,17 @@ describe("password session renewal", () => {
         return HttpResponse.json({ access_token: refreshed });
       }),
       http.get(`${apiBaseUrl}/shared-refresh`, ({ request }) => {
-        if (request.headers.get("Authorization") === `Bearer ${refreshed}`)
-          return HttpResponse.json({ ok: true });
-        responseSeen.release();
-        return HttpResponse.json({}, { status: 401 });
+        requests++;
+        return request.headers.get("Authorization") === `Bearer ${refreshed}`
+          ? HttpResponse.json({ ok: true })
+          : HttpResponse.json({}, { status: 401 });
       }),
     );
     mountAuth();
     const pending = apiClient.get("/shared-refresh");
     try {
-      await responseSeen.wait;
       await waitFor(() => expect(refreshes).toBe(1));
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 20));
-      });
-      expect(refreshes).toBe(1);
+      expect(requests).toBe(0);
     } finally {
       await act(async () => {
         releaseRefresh.release();
@@ -617,6 +613,7 @@ describe("password session renewal", () => {
     }
     expect((await pending).data).toEqual({ ok: true });
     expect(refreshes).toBe(1);
+    expect(requests).toBe(1);
   });
 
   it.each(["google", "github"])("never refreshes a %s session", async () => {
@@ -759,7 +756,7 @@ describe("sign-out during idle renewal", () => {
 describe("obsolete renewal callers", () => {
   beforeEach(() => installWebLocks());
   it.each(
-    (["load", "profile", "interceptor"] as const).flatMap((caller) =>
+    (["load", "profile", "interceptor", "request"] as const).flatMap((caller) =>
       [
         { refreshSucceeds: true, signInAgain: false },
         { refreshSucceeds: true, signInAgain: true },
@@ -773,9 +770,12 @@ describe("obsolete renewal callers", () => {
       const release = gate();
       const entered = gate();
       let logins = 0;
+      let refreshes = 0;
+      let publicRequests = 0;
       const newToken = token(Math.floor(Date.now() / 1000) + 900);
       server.use(
         http.post(`${apiBaseUrl}/auth/refresh`, async () => {
+          refreshes++;
           entered.release();
           await release.wait;
           return refreshSucceeds
@@ -791,12 +791,16 @@ describe("obsolete renewal callers", () => {
               caller === "profile" && logins === 1 ? token(1) : newToken,
           });
         }),
-        http.get(`${apiBaseUrl}/renewal-overlap`, () =>
-          HttpResponse.json({}, { status: 401 }),
-        ),
+        http.get(`${apiBaseUrl}/renewal-overlap`, () => {
+          publicRequests++;
+          return caller === "request"
+            ? HttpResponse.json({ accepted: true })
+            : HttpResponse.json({}, { status: 401 });
+        }),
       );
       if (caller === "load") setAuthTokens(token(1));
-      if (caller === "interceptor") setAuthTokens(token());
+      if (caller === "interceptor" || caller === "request")
+        setAuthTokens(token());
       const { result } = mountAuth();
       let pending: Promise<unknown> | undefined;
       if (caller === "profile") {
@@ -804,11 +808,16 @@ describe("obsolete renewal callers", () => {
         act(() => {
           pending = result.current.login("viewer", "password");
         });
-      } else if (caller === "interceptor") {
+      } else if (caller === "interceptor" || caller === "request") {
         await waitFor(() => expect(result.current.user).toEqual(profile));
+        if (caller === "request") setAuthTokens(token(1));
         pending = apiClient.get("/renewal-overlap").catch(() => undefined);
       }
-      await entered.wait;
+      if (caller === "request") {
+        await waitFor(() => expect(refreshes).toBe(1));
+      } else {
+        await entered.wait;
+      }
       const renewal = refreshAccessToken().catch(() => undefined);
       try {
         await act(async () => {
@@ -826,6 +835,7 @@ describe("obsolete renewal callers", () => {
           await pending;
         });
       }
+      if (caller === "request") expect(publicRequests).toBe(0);
       expect(result.current.isAuthenticated).toBe(signInAgain);
       expect(result.current.user).toEqual(signInAgain ? profile : null);
       expect(sessionStorage.getItem("access_token")).toBe(

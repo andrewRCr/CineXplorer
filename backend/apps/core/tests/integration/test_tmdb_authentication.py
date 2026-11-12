@@ -23,13 +23,17 @@ READ_TOKEN = "tmdb-read-token-must-stay-in-header"
 
 
 @contextmanager
-def tmdb_transport() -> Generator[list[requests.PreparedRequest]]:
+def tmdb_transport(
+    error_type: type[requests.exceptions.RequestException] | None = None,
+) -> Generator[list[requests.PreparedRequest]]:
     received: list[requests.PreparedRequest] = []
 
     def respond(
         _adapter: HTTPAdapter, request: requests.PreparedRequest, *_args: object, **_kwargs: object
     ) -> requests.Response:
         received.append(request)
+        if error_type is not None:
+            raise error_type(f"Request failed at {request.url}", request=request)
         response = requests.Response()
         response.status_code = 200
         response.headers["Content-Type"] = "application/json"

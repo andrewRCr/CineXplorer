@@ -68,19 +68,17 @@ class TMDBApiClient(BaseApiClient):
         prepared_headers["Authorization"] = f"Bearer {token}"
         return dict(prepared_headers)
 
+    @staticmethod
+    def _without_credential_params(params: dict[str, object] | None) -> dict[str, object]:
+        """Keep search/filter parameters while excluding URL credentials."""
+        return {k: v for k, v in (params or {}).items() if k not in {"api_key", "access_token"}}
+
     def get_sanitized_params(self, params: dict[str, object] | None = None) -> dict[str, object]:
-        """Remove credential parameters before requests or logging.
-
-        Args:
-            params: Original parameters dictionary
-
-        Returns:
-            Sanitized parameters safe for logging
-        """
-        if not params:
-            return {}
-
-        return {k: v for k, v in params.items() if k not in {"api_key", "access_token"}}
+        """Return logging metadata without credentials or search text."""
+        return {
+            k: "[REDACTED]" if k.lower() == "query" else v
+            for k, v in self._without_credential_params(params).items()
+        }
 
     def get_error_details(self, status_code: int) -> str:
         """Get TMDB-specific error details for status codes.
@@ -412,7 +410,7 @@ class TMDBApiClient(BaseApiClient):
         Returns:
             ApiResponse object with TMDB response data or error information
         """
-        return super().get(endpoint, self.get_sanitized_params(params), headers, **kwargs)
+        return super().get(endpoint, self._without_credential_params(params), headers, **kwargs)
 
     # Convenience methods for common TMDB operations
     def search_movies(self, query: str, page: int = 1, **kwargs: object) -> ApiResponse:

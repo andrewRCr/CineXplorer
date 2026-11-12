@@ -11,12 +11,12 @@ beforeEach(() => {
     clearBrowserAuth();
     document.cookie = "csrftoken=service-csrf; path=/";
 });
-const service = createHttpService("/user-movie-data/movies");
+const service = createHttpService("/service-test-items");
 
 describe("HTTP service responses", () => {
     it("returns the detail response as data", async () => {
         server.use(
-            http.get(`${apiBaseUrl}/user-movie-data/movies/550`, () =>
+            http.get(`${apiBaseUrl}/service-test-items/550`, () =>
                 HttpResponse.json({ tmdb_id: 550, rating: 8 }),
             ),
         );
@@ -33,7 +33,7 @@ describe("HTTP service responses", () => {
             results: [{ tmdb_id: 550 }],
         };
         server.use(
-            http.get(`${apiBaseUrl}/user-movie-data/movies`, ({ request }) => {
+            http.get(`${apiBaseUrl}/service-test-items`, ({ request }) => {
                 const query = new URL(request.url).searchParams;
                 return query.get("page") === "2" &&
                     query.get("collection") === "watchlist"
@@ -57,7 +57,7 @@ describe("HTTP service responses", () => {
             const release = gate();
             server.use(
                 http.get(
-                    `${apiBaseUrl}/user-movie-data/movies${kind === "detail" ? "/550" : ""}`,
+                    `${apiBaseUrl}/service-test-items${kind === "detail" ? "/550" : ""}`,
                     async () => {
                         started.release();
                         await release.wait;
@@ -87,8 +87,8 @@ describe("HTTP service responses", () => {
         async (operation) => {
             const endpoint =
                 operation === "create"
-                    ? `${apiBaseUrl}/user-movie-data/movies`
-                    : `${apiBaseUrl}/user-movie-data/movies/550`;
+                    ? `${apiBaseUrl}/service-test-items`
+                    : `${apiBaseUrl}/service-test-items/550`;
             const status = operation === "create" ? 201 : 200;
             const resolver = async ({ request }: { request: Request }) => {
                 const body: unknown = await request.json();
@@ -123,7 +123,7 @@ describe("HTTP service responses", () => {
     it("accepts a successful empty removal response", async () => {
         server.use(
             http.delete(
-                `${apiBaseUrl}/user-movie-data/movies/550`,
+                `${apiBaseUrl}/service-test-items/550`,
                 () => new HttpResponse(null, { status: 204 }),
             ),
         );

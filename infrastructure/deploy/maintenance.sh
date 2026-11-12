@@ -30,6 +30,11 @@ printf 'Cleaning expired sessions.\n'
 printf 'Expired-session cleanup:\n' > "$output"
 compose exec -T backend python manage.py clearsessions >> "$output" 2>&1
 
+printf 'Refreshing stored movie cards.\n'
+printf 'Movie-card refresh:\n' > "$output"
+compose exec -T backend python manage.py refresh_movie_cards >> "$output" 2>&1
+cat "$output"
+
 printf 'Reporting maintenance success.\n'
 printf 'Maintenance heartbeat:\n' > "$output"
 curl --fail --silent --show-error --connect-timeout 10 --max-time 30 \

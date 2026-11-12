@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (Owner, 2026-11-03)
+Accepted; Superseded in part by ADR-043 (the duplicate-save 409)
 
 Implemented by: the first step of the planned UserMovieData consolidation.
 

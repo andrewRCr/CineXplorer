@@ -82,7 +82,6 @@ export default function AccountControl() {
             borderWidth="1px"
             borderStyle="solid"
             borderColor="border-subtle-02"
-            boxShadow="shadow-md"
           >
             <Menu.Item
               value="profile"

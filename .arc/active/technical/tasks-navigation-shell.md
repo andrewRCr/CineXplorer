@@ -160,6 +160,7 @@ each carry one `h1`.
     - [x] **3.1.b Implement `NavDrawer` on Chakra's `Drawer`**
         - Its trigger owns focus return; column `MainNavLinks` closes it on navigation. Replaced the phone row's old
           menu trigger. All seven cases passed with lint, formatting and TypeScript checks.
+        - Shell shadows retain the bar's existing `base` and the menu/drawer recipe defaults, as the Non-Goals require.
 
 - [x] **3.2 The phone row and its search — R7, R9**
 

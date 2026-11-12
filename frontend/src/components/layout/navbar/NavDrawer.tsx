@@ -33,7 +33,6 @@ export default function NavDrawer() {
             borderColor="border-strong-01"
             w="80"
             maxW="calc(100vw - 2rem)"
-            boxShadow="shadow-md"
           >
             <Drawer.Header
               bg="layer-01"

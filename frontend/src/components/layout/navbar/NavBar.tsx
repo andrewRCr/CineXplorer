@@ -11,6 +11,7 @@ export default function NavBar() {
       bg="layer-01"
       position="sticky"
       top="0"
+      boxShadow="base"
       zIndex="navbar"
       borderBottomWidth="1px"
       borderBottomStyle="solid"

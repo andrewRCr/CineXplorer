@@ -172,8 +172,9 @@ The project checks backend behavior, frontend components, and complete browser j
 
 - **Framework**: Playwright in Chromium, with axe scans on every distinct page each spec reaches; no retries
 - **Structure**: `frontend/e2e/`, configured by `frontend/playwright.config.ts`
-- **Coverage**: Sign-up to the verification notice, sign-in/sign-out, browse pagination, filtered movie detail, and
-  Back to Results scroll restoration after reloading detail
+- **Coverage**: Six specs: sign-up to the verification notice, sign-in/sign-out, browse pagination, filtered movie
+  detail, Back to Results scroll restoration after reloading detail, and the phone shell's drawer, search and account
+  menu. Five specs use 1280×800; `phone-width.spec.ts` uses 360×800, signed out and signed in
 - **Targets**: `local` uses real authentication with synthetic catalogue fixtures and discarded mail in a worktree's
   browsable stack; `staging` uses live data and a verified test account, skips sign-up, disables traces/screenshots,
   and uploads no artifacts. The reload scenario supplies its own catalogue fixtures in both targets

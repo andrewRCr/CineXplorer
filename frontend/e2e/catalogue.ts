@@ -50,6 +50,7 @@ export function movieDetail(id: number): Detail {
 }
 
 export function catalogueResponse(url: URL): object | undefined {
+    if (url.pathname === "/api/movies/search") return moviePage(1, 39, null);
     if (url.pathname === "/api/movies/browse") {
         const cursor = url.searchParams.get("tmdb_page_start");
         if (!cursor) return moviePage(1, 39, 2, 78);

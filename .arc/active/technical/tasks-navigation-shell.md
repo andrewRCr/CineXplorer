@@ -192,32 +192,24 @@ each carry one `h1`.
         - Full frontend run: 83 files, 2,744 tests passed. All five smoke specs (six cases), touched-source lint,
           formatting, type generation, TypeScript, build and documentation lint passed.
 
-- [ ] **3.4 A phone-width spec drives the bar at 360×800 — R30, R31**
+- [x] **3.4 A phone-width spec drives the bar at 360×800 — R30, R31**
 
     **Goal:** The smoke tier shows, in both targets, every bar control fitting a 360px phone, signed out and in, and
     the drawer, search and account menu working there.
 
-    - [ ] **3.4.a Write `e2e/phone-width.spec.ts`**
-        - At 360×800, signed out and then signed in: each of the banner's controls has a `boundingBox()` wholly
-          inside the viewport, and the banner's height equals `--chakra-sizes-layout-navbar`
-        - Signed in: the account trigger shows no username text (read with `useInnerText`, since hidden text stays
-          in `textContent`); the drawer holds Films and Watchlist; Films opens `/browse`; the search field, found by
-          role, submits a query to the results page; the account menu holds Profile and Sign out
-        - `scanPage` on each distinct page it reaches; sign in through the form as `sign-in.spec.ts` does
-        - Local target: `catalogueResponse` answers `/api/movies/search` with a page shaped as the browse fixture's
-        - Run the spec against the browsable stack
-
-    - [ ] **3.4.b Clear the sidebar's axe baseline entries**
-        - Remove the six `aria-input-field-name` and `aria-required-children` entries on `/`, `/browse` and
-          `/movie/:id`; fix any violation the scans find in the bar or the drawer
-        - A violation elsewhere on `/search` (such as the results grid's cards) takes an entry with its reason, and
-          `/search` joins `BaselineEntry`'s routes
-        - Run all six specs
-
-    - [ ] **3.4.c Describe a six-spec tier**
-        - `strategy-testing-methodology.md`: six specs, 360×800 beside 1280×800, phone viewports inside the tier
-        - `strategy-quality-gates.md` ("all six specs"), TECHNICAL-OVERVIEW § 7's coverage, QUICK-REFERENCE's
-          "six Chromium specs", each naming the phone-width spec
+    - [x] **3.4.a Write `e2e/phone-width.spec.ts`**
+        - Measures every whole bar control and token height signed out/in, checks the hidden username, drawer
+          links/Escape/focus return, Films navigation, search submission and the two account items. Scans all reached
+          pages and the open drawer. Local search uses a generated-type catalogue fixture; the spec also runs in
+          staging's existing target. Its missing-phone-row assertion failed against a narrow visibility break.
+        - The search ready check waits for the result count's loading-opacity transition to finish before axe.
+          A local image inspection confirmed the decorative avatar initial remains visible at phone width.
+    - [x] **3.4.b Clear the sidebar's axe baseline entries**
+        - Removed all six sidebar entries. Added only `/search`'s observed unnamed movie-card buttons, which are
+          outside the shell scope. All six specs (seven cases) passed locally, including every axe scan.
+    - [x] **3.4.c Describe a six-spec tier**
+        - Updated the testing and quality-gate strategies, technical overview and quick reference with six specs and
+          the 360×800 phone shell beside the 1280×800 flows. Lint, formatting, TypeScript and documentation lint passed.
 
 ### **Phase 4:** Pages load, fail and title themselves inside the shell
 

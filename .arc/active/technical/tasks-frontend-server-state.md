@@ -378,7 +378,21 @@ its request settles; on the browsable stack, signing out and in again shows no p
     - The held-provider cases failed with renewal responses 401 and 500 before the guard, then passed. All 88 auth
       tests and the full 2,714-test frontend suite passed, including current-user renewal-failure behavior; lint,
       type-check, reference Markdown lint and the real-session sign-in smoke passed. Updated the reference explanations.
-    - The material correction is ready for its independent fix check; no new architectural decision was required.
+    - Committed the correction; its independent fix check found no incomplete repair or introduced failure.
+      No new architectural decision was required.
+
+- [x] **6.3 Retire older API authentication work on provider sign-in**
+
+    **Goal:** Accepting a provider session retires older password renewal work, so its failure cannot redirect the
+    newly signed-in provider user to Login.
+
+    - Invalidate the authentication session before clearing stored password tokens and landing the provider user.
+      This applies the existing replacement rule at provider acceptance, covering both API interceptor renewal paths.
+    - Four network regressions failed on the unwanted Login redirect before the fix, then passed: expiry before
+      dispatch and response-401 recovery, each with a held renewal returning 401 or 500 after provider sign-in.
+      They preserve the provider profile and location and confirm subsequent session-authenticated reads work.
+    - All 2,718 frontend tests, frontend lint and type-check, sign-in smoke and reference Markdown lint passed.
+      Updated authentication references and the completion summary; a mechanical line-wrap lint error was corrected.
 
 ## Implementation Notes
 
@@ -461,7 +475,8 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   found no incomplete repair or introduced failure.
 
   _Additional evidence:_ The provider session survives an older idle renewal’s held 401/500 failure; all 88 auth
-  cases and the full frontend suite passed after the ownership guard.
+  cases and the full frontend suite passed after the ownership guard. Four additional API-renewal cases preserve
+  provider sign-in and location after old failures; the full 2,718-test suite passed after provider invalidation.
 
 - [x] 4. **Client defaults.** A test against `lib/queryClient`'s defaults shows a query retries twice on a network error
   and on a 5xx, and not on a 4xx or a cancellation; and a test shows two failing reads leave one "Server error" toast.

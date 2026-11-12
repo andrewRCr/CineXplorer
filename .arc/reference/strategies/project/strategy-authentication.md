@@ -167,8 +167,9 @@ from that canceled request cannot replace the deletion or a subsequent sign-in's
 controlled by the signing-out tab. Hook and interceptor continuations ignore cancellation or a changed session version
 rather than restoring authentication or clearing a later sign-in. API requests retain their originating session
 version through preparation and retries, so a late `401` cannot renew or clear a newer sign-in. A successful new
-password sign-in retires prior work and clears both storages before storing its chosen credentials. An older
-promise's finalizer cannot release a newer session's shared promise.
+password sign-in retires prior work and clears both storages before storing its chosen credentials. Accepting a
+provider session also invalidates prior work before clearing password tokens, so older interceptor renewal failures
+cannot redirect it. An older promise's finalizer cannot release a newer session's shared promise.
 
 ---
 
@@ -453,10 +454,11 @@ URLs only register OAuth callback views (login/signup HTML views are disabled).
 
 `useAuth` reads the shared `['session']` query built by `lib/queries.ts`. It holds a profile or `null`, never goes
 stale, does not retry, and does not refetch on mount, focus or reconnect. Its first read receives the initial route's
-provider-return context. On a provider return it asks allauth first and clears stored password tokens if it finds
-the provider's user. Otherwise it renews an expired stored token and reads the password profile, or asks allauth
-when no token exists. A failed password read clears stored tokens and returns `null`; it does not fall through to
-provider discovery. Cancellation or an obsolete authentication-session version cannot land or clear credentials.
+provider-return context. On a provider return it asks allauth first and invalidates prior authentication work before
+clearing stored password tokens if it finds the provider's user. Otherwise it renews an expired stored token and
+reads the password profile, or asks allauth when no token exists. A failed password read clears stored tokens and
+returns `null`; it does not fall through to provider discovery. Cancellation or an obsolete authentication-session
+version cannot land or clear credentials.
 
 The status derives from the query: a profile is `authenticated`, `null` is `anonymous`. While its data is still
 undefined, it is `authenticated` only with a current stored token and sign-in flag, and `resolving` otherwise.

@@ -181,9 +181,9 @@ and advances in the same step that clears the saves (D7). A save records the cou
 included, by carrying it with the mutation's variables before asynchronous setup begins, and compares it when it
 settles. The request's global error feedback uses that same count; an obsolete save does not dispatch if ownership
 changes while its mutation setup yields.
-The session version (`getAuthSessionVersion`) can't serve: only sign-out and a password sign-in advance it
-(`invalidateAuthSession`), not a provider sign-in, stored credentials the session's first read rejects, or a failed
-renewal at the 60-second check.
+The session version (`getAuthSessionVersion`) can't serve: sign-out and password or provider sign-in advance it
+(`invalidateAuthSession`), but stored credentials the session's first read rejects and a failed renewal at the
+60-second check do not.
 
 **The work belongs to the save,** not to the control that started it, so a save finishes the same way after its card
 has scrolled out of the virtualized grid or unmounted, and Undo works from a toast whose card is gone. TanStack Query
@@ -224,9 +224,9 @@ error and empty states. The query runs only while someone is signed in, and ever
 - **Its read:**
     - **On a provider's return** (the page loads on the sign-in page arriving from the provider, or with
       `useOAuthFlow`'s in-progress flag set, as the OAuth callback detects it today), it asks allauth's session
-      endpoint first. When that finds the provider's user, it clears stored tokens, since a provider sign-in replaces
-      any password session as a password sign-in clears both storages, and lands the user; otherwise it goes on as
-      below, without asking allauth again.
+      endpoint first. When that finds the provider's user, it invalidates earlier authentication work and clears stored
+      tokens, since a provider sign-in replaces any password session, and lands the user. Earlier renewal failures
+      cannot redirect the new session. Without a provider user it continues below, without asking allauth again.
     - **With a stored access token,** it renews an expired token through the shared `refreshAccessToken`, then reads
       the profile (`getUserProfile`).
     - **Without one,** it reads allauth's session endpoint, as `checkOAuthSession` does.
@@ -374,9 +374,9 @@ navigation bar's Login button, since the sign-in page also has the form's.
   save's "before" value is the optimistic value of the save ahead of it, so two queued saves that both fail would
   leave a value the server never held. **Saves of one movie run one at a time, in order,** over disabling a control
   while its own save is pending (what `MovieCard` does today), which doesn't cover Undo, a save from a toast. **The
-  change count** marks a change of user, over the session version, which a provider sign-in, a rejected stored
-  credential and a failed renewal at the 60-second check don't advance, and over checking whether the save is still
-  in the mutation cache, which would need an id of each save's own to find it. **Undo is added now (Owner,
+  change count** marks a change of user, over the session version, which a rejected stored credential and a failed
+  renewal at the 60-second check don't advance, and over checking whether the save is still in the mutation cache,
+  which would need an id of each save's own to find it. **Undo is added now (Owner,
   2026-11-11),** over leaving it to the core user-movie screens, as the opposite save through the same mutation options.
 
   _ADR:_ the overlay is covered by ADR-027 as amended. ADR-027's Decision names one mutation hook "with an optimistic

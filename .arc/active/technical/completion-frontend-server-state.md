@@ -28,6 +28,8 @@ clears the previous user’s cached data, retained saves and save feedback.
   create late feedback; user changes remove visible and queued save toasts while preserving unrelated errors.
 - Password sign-in clears retained saves before reading its fresh session and resetting other queries. Sign-out
   writes anonymous immediately, then loads Login afresh after its request settles, with an anonymous-only notice.
+- Accepting a provider session retires earlier password authentication work, including API renewal failures that
+  would otherwise redirect to Login.
 - An idle credential-renewal failure clears the session only for its original user ownership, so it cannot erase a
   provider sign-in that landed while the renewal was pending.
 

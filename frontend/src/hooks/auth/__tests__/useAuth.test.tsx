@@ -1670,3 +1670,77 @@ it.each([401, 500])(
     }
   },
 );
+
+it.each([
+  ["expired request", 401],
+  ["expired request", 500],
+  ["401 response", 401],
+  ["401 response", 500],
+] as const)(
+  "keeps provider sign-in and location after an older API renewal fails (%s, %s)",
+  async (renewalPath, renewalStatus) => {
+    installWebLocks();
+    setAuthTokens(token());
+    sessionStorage.setItem("oauth_in_progress", "true");
+    window.location.href = "http://localhost:3000/browse";
+    const provider = gate();
+    const providerEntered = gate();
+    const renewal = gate();
+    const renewalEntered = gate();
+    const providerProfile = { ...profile, id: 8, username: "provider" };
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+        providerEntered.release();
+        await provider.wait;
+        return HttpResponse.json({
+          meta: { is_authenticated: true },
+          data: { user: providerProfile },
+        });
+      }),
+      http.get(`${apiBaseUrl}/profile/`, ({ request }) =>
+        request.headers.has("Authorization")
+          ? HttpResponse.json({ detail: "Unauthorized" }, { status: 401 })
+          : HttpResponse.json(providerProfile),
+      ),
+      http.post(`${apiBaseUrl}/auth/refresh`, async () => {
+        renewalEntered.release();
+        await renewal.wait;
+        return HttpResponse.json(
+          { detail: "Renewal refused" },
+          { status: renewalStatus },
+        );
+      }),
+    );
+    const view = renderHook(() => useAuth(), {
+      wrapper: ({ children }) => (
+        <TestProviders>
+          <MemoryRouter initialEntries={["/login"]}>{children}</MemoryRouter>
+        </TestProviders>
+      ),
+    });
+    try {
+      await providerEntered.wait;
+      if (renewalPath === "expired request") setAuthTokens(token(1));
+      const request = Promise.allSettled([apiClient.get("/profile/")]);
+      await renewalEntered.wait;
+      await act(async () => {
+        provider.release();
+      });
+      await waitFor(() =>
+        expect(view.result.current.user).toEqual(providerProfile),
+      );
+      await act(async () => {
+        renewal.release();
+        expect((await request)[0].status).toBe("rejected");
+      });
+      expect(window.location.href).toBe("http://localhost:3000/browse");
+      expect(view.result.current.status).toBe("authenticated");
+      expect(view.result.current.user).toEqual(providerProfile);
+      expect((await apiClient.get("/profile/")).data).toEqual(providerProfile);
+    } finally {
+      provider.release();
+      renewal.release();
+      view.unmount();
+    }
+  },
+);

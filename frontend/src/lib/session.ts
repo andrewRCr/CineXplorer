@@ -8,6 +8,7 @@ import {
 } from "@/utilities/tokenUtils";
 import {
     getAuthSessionVersion,
+    invalidateAuthSession,
     refreshAccessToken,
 } from "@/services/apiClient";
 import * as authService from "@/services/authService";
@@ -113,6 +114,7 @@ export async function readSession(
         const provider = await checkOAuthSession();
         assertCurrent();
         if (provider) {
+            invalidateAuthSession();
             clearAuthTokens();
             void changeOfUser(client);
             return provider;

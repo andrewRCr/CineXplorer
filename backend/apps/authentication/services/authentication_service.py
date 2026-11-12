@@ -140,7 +140,7 @@ class AuthenticationService:
         refresh_token_cls: type[RefreshToken] | None = None,
         jwt_settings_provider: Callable[[], JWTSettings] | None = None,
         set_cookie: Callable[
-            [HttpResponse, str, str, timedelta, str],
+            [HttpResponse, str, str, timedelta | None, str],
             None,
         ]
         | None = None,
@@ -372,6 +372,7 @@ class AuthenticationService:
             }
 
         refresh = self._refresh_token_cls.for_user(cast(AbstractBaseUser, authenticated_user))
+        refresh.payload["remember_me"] = payload.remember_me
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         jwt_settings = self._jwt_settings_provider()
@@ -380,7 +381,7 @@ class AuthenticationService:
             response,
             jwt_settings.refresh_token_name,
             refresh_token,
-            jwt_settings.refresh_lifetime,
+            jwt_settings.refresh_lifetime if payload.remember_me else None,
             jwt_settings.samesite,
         )
 
@@ -428,7 +429,10 @@ class AuthenticationService:
             access_token = str(old_refresh.access_token)
             user_id = old_refresh.payload.get("user_id")
             user = self._user_model.objects.get(id=user_id)
+            # Older refresh tokens were issued with persistent cookies.
+            remember_me = old_refresh.payload.get("remember_me", True) is True
             new_refresh = self._refresh_token_cls.for_user(cast(AbstractBaseUser, user))
+            new_refresh.payload["remember_me"] = remember_me
             new_refresh_token = str(new_refresh)
 
             self._blacklist_token_fn(old_refresh)
@@ -437,7 +441,7 @@ class AuthenticationService:
                 response,
                 jwt_settings.refresh_token_name,
                 new_refresh_token,
-                jwt_settings.refresh_lifetime,
+                jwt_settings.refresh_lifetime if remember_me else None,
                 jwt_settings.samesite,
             )
 

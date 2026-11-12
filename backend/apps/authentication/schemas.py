@@ -65,6 +65,9 @@ class TokenObtainInputSchema(Schema):
 
     login: str = Field(..., description="Username or email for authentication")
     password: str = Field(..., description="User's password")
+    remember_me: bool = Field(
+        default=False, description="Keep the refresh cookie between browser sessions"
+    )
 
 
 class TokenResponseSchema(Schema):

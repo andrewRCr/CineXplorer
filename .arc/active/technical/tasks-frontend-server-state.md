@@ -161,12 +161,11 @@ page; on the browsable stack the same journey works against the real API, with U
     **Goal:** The detail page makes one request for its movie, shows its user state from the payload under this tab's
     saves, tells "not found" by status, and saves through the shared hook with its toasts and Undo.
 
-    - [ ] **3.1.a Move `MovieDetail.test.tsx` onto MSW**
-        - Drop its four `vi.mock`s (`useMovieDetail`, `useUserMovieData`, `useAuth`, `movieService`) and serve
-          `GET /movies/{id}` with `createMockMovieDetail`; its back-link, loading, error and score cases keep their
-          assertions
-        - Each migrated case is seen failing under a temporary narrow break of the behavior it covers, then passing
-          (Implementation Notes)
+    - [x] **3.1.a Move `MovieDetail.test.tsx` onto MSW**
+        - Removed all four internal mocks. Movie and auth reads now use MSW with the real provider; back-link,
+          loading, error and score assertions remain, awaiting network-dependent content where needed.
+        - All 21 migrated cases failed under temporary broken back links and score props, then passed restored.
+          File formatting, lint and frontend type-check pass.
 
     - [ ] **3.1.b Test the query-backed page**
         - A 404 shows "Movie Not Found", and a 500 shows "Error Loading Movie"

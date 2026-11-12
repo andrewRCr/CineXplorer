@@ -1,34 +1,24 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen } from "@tests/helpers/test-renderer";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { act, screen } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 import MovieDetail from "../MovieDetail";
 import { createMockMovieDetail } from "@tests/mocks/movieData";
 import type { MovieDetail as MovieDetailType } from "@/types/movie";
 
-// Mock the hooks and services
-vi.mock("@/hooks/movie/useMovieDetail", () => ({
-  default: vi.fn(),
-}));
+import { http, HttpResponse } from "msw/http";
+import { server } from "@tests/mocks/server";
+import { apiBaseUrl } from "@/config/baseUrls";
+import { authHandlers, clearBrowserAuth } from "@tests/helpers/auth";
+import { gate } from "@tests/helpers/web-locks";
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { toaster } from "@/components/core/chakra/toaster";
 
-vi.mock("@/hooks/movie/useUserMovieData", () => ({
-  useUserMovieData: vi.fn(() => ({
-    data: null,
-    loading: false,
-    update: vi.fn(),
-  })),
-}));
-
-vi.mock("@/hooks/auth/useAuth", () => ({
-  useAuth: vi.fn(() => ({
-    isAuthenticated: false,
-  })),
-}));
-
-vi.mock("@/services/movieService", () => ({
-  fetchMovieDetail: vi.fn(),
-}));
-
-import useMovieDetail from "@/hooks/movie/useMovieDetail";
+beforeEach(() => {
+  clearBrowserAuth();
+  authHandlers();
+  act(() => toaster.remove());
+});
+afterEach(() => act(() => toaster.remove()));
 
 // Helper to render MovieDetail with router and URL params
 const renderMovieDetailWithRoute = (
@@ -37,7 +27,13 @@ const renderMovieDetailWithRoute = (
 ) => {
   const initialRoute = `/movie/${movieId}${searchParams}`;
 
-  return renderWithRoute("/movie/:id", <MovieDetail />, { initialRoute });
+  return renderWithRoute(
+    "/movie/:id",
+    <AuthContextProvider>
+      <MovieDetail />
+    </AuthContextProvider>,
+    { initialRoute },
+  );
 };
 
 describe("MovieDetail - Back Button URL Construction", () => {
@@ -49,15 +45,9 @@ describe("MovieDetail - Back Button URL Construction", () => {
   });
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Default mock: successful movie load
-    vi.mocked(useMovieDetail).mockReturnValue({
-      movie: mockMovie,
-      error: "",
-      setMovie: vi.fn(),
-      setError: vi.fn(),
-      isLoading: false,
-    });
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, () => HttpResponse.json(mockMovie)),
+    );
   });
 
   describe("Basic Back URL Construction", () => {
@@ -391,31 +381,31 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
   describe("Loading and Error States", () => {
     it("shows back button even while loading", () => {
-      vi.mocked(useMovieDetail).mockReturnValue({
-        movie: undefined,
-        error: "",
-        setMovie: vi.fn(),
-        setError: vi.fn(),
-        isLoading: true,
-      });
+      const release = gate();
+      server.use(
+        http.get(`${apiBaseUrl}/movies/550`, async () => {
+          await release.wait;
+          return HttpResponse.json(mockMovie);
+        }),
+      );
 
       renderMovieDetailWithRoute("550", "?page=2&from=browse");
 
       // Back button should be visible immediately
       expect(screen.getByText("Back to Results")).toBeInTheDocument();
+      act(() => release.release());
     });
 
-    it("shows back button on error", () => {
-      vi.mocked(useMovieDetail).mockReturnValue({
-        movie: undefined,
-        error: "Failed to load",
-        setMovie: vi.fn(),
-        setError: vi.fn(),
-        isLoading: false,
-      });
+    it("shows back button on error", async () => {
+      server.use(
+        http.get(`${apiBaseUrl}/movies/550`, () =>
+          HttpResponse.json({}, { status: 500 }),
+        ),
+      );
 
       renderMovieDetailWithRoute("550", "?page=2&from=browse");
 
+      await screen.findByRole("heading", { name: "Error Loading Movie" });
       // Back button should still work on error
       expect(screen.getByText("Back to Results")).toBeInTheDocument();
     });
@@ -424,40 +414,34 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
 describe("MovieDetail - TMDB Score", () => {
   const mockMovieDetail = (overrides: Partial<MovieDetailType>) => {
-    vi.mocked(useMovieDetail).mockReturnValue({
-      movie: createMockMovieDetail(overrides),
-      error: "",
-      setMovie: vi.fn(),
-      setError: vi.fn(),
-      isLoading: false,
-    });
+    server.use(
+      http.get(`${apiBaseUrl}/movies/1`, () =>
+        HttpResponse.json(createMockMovieDetail(overrides)),
+      ),
+    );
   };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('shows "Not yet rated" for a movie with no votes', () => {
+  it('shows "Not yet rated" for a movie with no votes', async () => {
     mockMovieDetail({ vote_average: 0, vote_count: 0 });
 
     renderMovieDetailWithRoute("1");
 
-    expect(screen.getByText("Not yet rated")).toBeInTheDocument();
+    expect(await screen.findByText("Not yet rated")).toBeInTheDocument();
   });
 
-  it("shows the average with its vote count below 10 votes", () => {
+  it("shows the average with its vote count below 10 votes", async () => {
     mockMovieDetail({ vote_average: 6.8, vote_count: 4 });
 
     renderMovieDetailWithRoute("1");
 
-    expect(screen.getByText("6.8 · 4 votes")).toBeInTheDocument();
+    expect(await screen.findByText("6.8 · 4 votes")).toBeInTheDocument();
   });
 
-  it("shows the score for a movie with 10 or more votes", () => {
+  it("shows the score for a movie with 10 or more votes", async () => {
     mockMovieDetail({});
 
     renderMovieDetailWithRoute("1");
 
-    expect(screen.getByText("8.2")).toBeInTheDocument();
+    expect(await screen.findByText("8.2")).toBeInTheDocument();
   });
 });

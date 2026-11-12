@@ -15,6 +15,7 @@ import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
 import { useMovieActions } from "@/hooks/movie/useMovieActions";
+import posterPlaceholder from "@/assets/poster-placeholder.svg";
 
 // ============================================================================
 // MovieCard Component
@@ -127,7 +128,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   const posterUrl = useMemo(() => {
     return movie.poster_path
       ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
-      : "https://placehold.co/500x750?text=No\nImage";
+      : posterPlaceholder;
   }, [movie.poster_path]);
 
   // ==========================================================================

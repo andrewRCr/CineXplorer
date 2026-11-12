@@ -77,21 +77,27 @@ describe("MovieCard Component", () => {
       );
     });
 
-    it("shows placeholder when poster_path is null", () => {
-      const movieWithoutPoster = createMockMovieListItem({
-        poster_path: null,
-        title: "No Poster Movie",
-      });
+    it.each([null, ""])(
+      "uses a local placeholder when poster_path is %j",
+      (posterPath) => {
+        const movieWithoutPoster = createMockMovieListItem({
+          poster_path: posterPath,
+          title: "No Poster Movie",
+        });
 
-      render(<MovieCard {...defaultProps} movie={movieWithoutPoster} />);
+        render(<MovieCard {...defaultProps} movie={movieWithoutPoster} />);
 
-      const posterImage = screen.getByAltText(
-        "No Poster Movie",
-      ) as HTMLImageElement;
-      // Test that placeholder is used - exact URL may vary
-      expect(posterImage.src).toContain("placehold.co");
-      expect(posterImage.src).toContain("text=");
-    });
+        const posterImage = screen.getByRole<HTMLImageElement>("img", {
+          name: "No Poster Movie",
+        });
+        expect(posterImage.src).not.toBe("");
+        const imageUrl = new URL(posterImage.src);
+        expect(
+          imageUrl.protocol === "data:" ||
+            imageUrl.origin === window.location.origin,
+        ).toBe(true);
+      },
+    );
   });
 
   describe("Navigation Links", () => {

@@ -21,7 +21,7 @@ declare module "axios" {
     interface AxiosRequestConfig {
         /** The caller renders email-delivery 503s; other failures still use the global toast. */
         handlesEmailDeliveryFailure?: boolean;
-        /** Explicit sign-in must not depend on renewal of the previous session. */
+        /** Session-independent operations must not renew a previous session. */
         skipAuthRefresh?: boolean;
     }
 }

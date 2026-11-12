@@ -131,8 +131,10 @@ authentication state onto TanStack Query is separate.
 The API client's request interceptor also waits for renewal when the stored access token is expired, before
 attaching its Bearer header. This avoids an initial `401` when expiry can be determined locally. A request uses
 at most one renewal; a later refusal does not renew again or clear the successfully
-renewed session. Explicit password sign-in bypasses both interceptor renewal paths, so the previous session cannot
-block a new sign-in or replace an invalid-credentials response. CSRF handling still applies.
+renewed session. Password sign-in, registration, email verification and resending, password-reset requests and
+anonymous log reporting bypass both interceptor renewal paths. A previous session therefore cannot block account
+recovery or registration, replace an authentication response, or make background reporting redirect to sign-in.
+These calls retain their normal response handling and CSRF protection.
 
 For personalized public movie reads, a supplied Bearer credential that cannot authenticate through JWT or the
 provider session receives `401` with a Bearer `invalid_token` challenge. Authentication resolves once at endpoint

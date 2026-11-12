@@ -94,6 +94,7 @@ export async function register(
         `/register/`,
         payload,
         {
+            skipAuthRefresh: true,
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
@@ -164,6 +165,7 @@ export async function verifyEmail(
         `/verify-email/`,
         { key: token },
         {
+            skipAuthRefresh: true,
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRFToken": csrfToken || "",
@@ -195,6 +197,7 @@ export async function resendVerificationEmail(
         `/resend-verification/`,
         { resend_token: resendToken },
         {
+            skipAuthRefresh: true,
             handlesEmailDeliveryFailure: true,
             headers: {
                 "Content-Type": "application/json",
@@ -225,6 +228,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
         `${siteOrigin}/_allauth/browser/v1/auth/password/request`,
         { email },
         {
+            skipAuthRefresh: true,
             handlesEmailDeliveryFailure: true,
             headers: {
                 "Content-Type": "application/json",

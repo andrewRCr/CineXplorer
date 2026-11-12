@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import { useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { useQueryClient, useIsFetching, useQuery } from "@tanstack/react-query";
+import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
+import { createMockUserMovieData } from "@tests/mocks/movieData";
 import { sessionQuery } from "@/lib/queries";
 import AuthContextProvider from "@/components/auth/AuthContextProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -1162,4 +1164,317 @@ describe("the first session read on a provider return", () => {
     expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
     expect(reads).toBe(1);
   });
+});
+
+// Observe lists and saves beside the real session hook, with only HTTP held.
+function mountUserChange(path = "/browse") {
+  const headers: (string | null)[] = [];
+  let libraries = 0;
+  const saved = gate();
+  let patches = 0;
+  server.use(
+    http.get(`${apiBaseUrl}/ownership-movies`, ({ request }) => {
+      headers.push(request.headers.get("Authorization"));
+      return HttpResponse.json(headers.length);
+    }),
+    http.get(`${apiBaseUrl}/ownership-library`, () =>
+      HttpResponse.json(++libraries),
+    ),
+    http.patch(`${apiBaseUrl}/user-movie-data/1`, async () => {
+      patches++;
+      await saved.wait;
+      return HttpResponse.json(
+        createMockUserMovieData({ user_on_watchlist: true }),
+      );
+    }),
+  );
+  const view = renderHook(
+    () => {
+      const auth = useAuth();
+      const client = useQueryClient();
+      const movie = useQuery({
+        queryKey: ["movies", "ownership"],
+        queryFn: ({ signal }) =>
+          apiClient.get("/ownership-movies", { signal }).then((r) => r.data),
+      });
+      const library = useQuery({
+        queryKey: ["library", "ownership"],
+        queryFn: ({ signal }) =>
+          apiClient.get("/ownership-library", { signal }).then((r) => r.data),
+      });
+      const save = useUserMovieState(1, null);
+      return { auth, client, movie, library, ...save, location: useLocation() };
+    },
+    {
+      wrapper: ({ children }) => (
+        <TestProviders>
+          <MemoryRouter initialEntries={[path]}>
+            {children}
+            <Toaster />
+            <PriorityToaster />
+          </MemoryRouter>
+        </TestProviders>
+      ),
+    },
+  );
+  return {
+    ...view,
+    headers,
+    saved,
+    get libraries() {
+      return libraries;
+    },
+    get patches() {
+      return patches;
+    },
+  };
+}
+type ChangeView = ReturnType<typeof mountUserChange>;
+async function startHeldSave(view: ChangeView) {
+  await vi.waitFor(() => expect(view.result.current.library.data).toBe(1));
+  act(() => view.result.current.save({ user_on_watchlist: true }));
+  await vi.waitFor(() => expect(view.patches).toBe(1));
+  expect(view.result.current.state.user_on_watchlist).toBe(true);
+  const running = view.result.current.client.getMutationCache().getAll()[0];
+  if (!running) throw new Error("The save did not start");
+  return running;
+}
+async function expectRetiredSave(
+  view: ChangeView,
+  running: Awaited<ReturnType<typeof startHeldSave>>,
+) {
+  await waitFor(() =>
+    expect(view.result.current.state.user_on_watchlist).toBe(false),
+  );
+  await waitFor(() =>
+    expect(view.result.current.library.data).toBeGreaterThan(1),
+  );
+  const before = view.libraries;
+  view.saved.release();
+  await waitFor(() => expect(running.state.status).toBe("success"));
+  expect(view.libraries).toBe(before);
+  expect(screen.queryByText("Added to watchlist")).not.toBeInTheDocument();
+  expect(view.result.current.state.user_on_watchlist).toBe(false);
+}
+
+describe("user ownership changes", () => {
+  it.each([false, true])(
+    "retires saves when the initial profile rejects credentials (renewed: %s)",
+    async (renewed) => {
+      installWebLocks();
+      const held = gate();
+      const current = token();
+      setAuthTokens(renewed ? token(1) : current);
+      server.use(
+        http.post(`${apiBaseUrl}/auth/refresh`, () =>
+          HttpResponse.json({ access_token: current }),
+        ),
+        http.get(`${apiBaseUrl}/profile/`, async () => {
+          await held.wait;
+          return HttpResponse.json({}, { status: 403 });
+        }),
+      );
+      const view = mountUserChange();
+      const running = await startHeldSave(view);
+      held.release();
+      await waitFor(() =>
+        expect(view.result.current.auth.status).toBe("anonymous"),
+      );
+      await expectRetiredSave(view, running);
+      expect(view.headers).toEqual([`Bearer ${current}`, null]);
+    },
+  );
+});
+
+describe("user ownership changes", () => {
+  it("retires saves and refetches with the password token after an overlapping first read", async () => {
+    const initial = gate();
+    const entered = gate();
+    const fresh = token();
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+        entered.release();
+        await initial.wait;
+        return HttpResponse.json({}, { status: 401 });
+      }),
+      http.post(`${apiBaseUrl}/token/`, () =>
+        HttpResponse.json({
+          user_id: profile.id,
+          username: profile.username,
+          access_token: fresh,
+        }),
+      ),
+    );
+    const view = mountUserChange();
+    const running = await startHeldSave(view);
+    await entered.wait;
+    await act(async () => {
+      await view.result.current.auth.login("viewer", "password");
+    });
+    await expectRetiredSave(view, running);
+    expect(view.headers).toEqual([null, `Bearer ${fresh}`]);
+    initial.release();
+    await waitFor(() => expect(view.result.current.auth.user).toEqual(profile));
+  });
+
+  it("clears saves at password token storage but waits for a failed profile before resetting lists", async () => {
+    const held = gate();
+    const entered = gate();
+    server.use(
+      http.post(`${apiBaseUrl}/token/`, () =>
+        HttpResponse.json({
+          user_id: profile.id,
+          username: profile.username,
+          access_token: token(),
+        }),
+      ),
+      http.get(`${apiBaseUrl}/profile/`, async () => {
+        entered.release();
+        await held.wait;
+        return HttpResponse.json({}, { status: 403 });
+      }),
+    );
+    const view = mountUserChange();
+    const running = await startHeldSave(view);
+    let login: ReturnType<typeof view.result.current.auth.login>;
+    act(() => {
+      login = view.result.current.auth.login("viewer", "password");
+    });
+    await entered.wait;
+    await waitFor(() =>
+      expect(view.result.current.state.user_on_watchlist).toBe(false),
+    );
+    expect(view.headers).toEqual([null]);
+    expect(view.libraries).toBe(1);
+    await act(async () => {
+      held.release();
+      await login;
+    });
+    await expectRetiredSave(view, running);
+    expect(view.headers).toEqual([null, null]);
+  });
+
+  it("retires saves when the idle renewal fails", async () => {
+    installWebLocks();
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
+    setAuthTokens(token());
+    const view = mountUserChange();
+    const running = await startHeldSave(view);
+    await vi.waitFor(async () => {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10);
+      });
+      expect(view.result.current.auth.user).toEqual(profile);
+    });
+    setAuthTokens(token(1));
+    view.rerender();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60000);
+    });
+    // Restore interval polling before checking the settled network and React notifications.
+    vi.useRealTimers();
+    await waitFor(() =>
+      expect(view.result.current.auth.status).toBe("anonymous"),
+    );
+    await expectRetiredSave(view, running);
+    expect(view.headers).toEqual([expect.stringContaining("Bearer "), null]);
+  });
+
+  it("retires saves and stale bearer lists on a provider return with one session read", async () => {
+    const held = gate();
+    let sessions = 0;
+    const old = token();
+    setAuthTokens(old);
+    sessionStorage.setItem("oauth_in_progress", "true");
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+        sessions++;
+        await held.wait;
+        return HttpResponse.json({
+          meta: { is_authenticated: true },
+          data: { user: profile },
+        });
+      }),
+    );
+    const view = mountUserChange("/login");
+    const running = await startHeldSave(view);
+    held.release();
+    await waitFor(() => expect(view.result.current.auth.user).toEqual(profile));
+    await expectRetiredSave(view, running);
+    expect(view.headers).toEqual([`Bearer ${old}`, null]);
+    expect(localStorage.getItem("access_token")).toBeNull();
+    expect(sessions).toBe(1);
+  });
+
+  it.each(["existing user", "anonymous"])(
+    "keeps saves and lists when the initial read lands the same %s",
+    async (kind) => {
+      const held = gate();
+      if (kind === "existing user") setAuthTokens(token());
+      server.use(
+        http.get(`${apiBaseUrl}/profile/`, async () => {
+          await held.wait;
+          return HttpResponse.json(profile);
+        }),
+        http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+          await held.wait;
+          return HttpResponse.json({}, { status: 401 });
+        }),
+      );
+      const view = mountUserChange();
+      const running = await startHeldSave(view);
+      held.release();
+      await waitFor(() =>
+        expect(view.result.current.auth.status).toBe(
+          kind === "existing user" ? "authenticated" : "anonymous",
+        ),
+      );
+      expect(view.headers).toHaveLength(1);
+      expect(view.libraries).toBe(1);
+      expect(view.result.current.state.user_on_watchlist).toBe(true);
+      view.saved.release();
+      await waitFor(() => expect(running.state.status).toBe("success"));
+      await waitFor(() =>
+        expect(screen.getByText("Added to watchlist")).toBeVisible(),
+      );
+      expect(view.result.current.state.user_on_watchlist).toBe(true);
+      await waitFor(() => expect(view.libraries).toBe(2));
+    },
+  );
+
+  it.each([403, 500])(
+    "dismisses an existing save toast on rejected credentials and preserves server errors (%s)",
+    async (status) => {
+      const held = gate();
+      setAuthTokens(token());
+      server.use(
+        http.get(`${apiBaseUrl}/profile/`, async () => {
+          await held.wait;
+          return HttpResponse.json({}, { status });
+        }),
+      );
+      const view = mountUserChange();
+      const running = await startHeldSave(view);
+      view.saved.release();
+      await waitFor(() => expect(running.state.status).toBe("success"));
+      await waitFor(() =>
+        expect(screen.getByText("Added to watchlist")).toBeVisible(),
+      );
+      held.release();
+      await waitFor(() =>
+        expect(view.result.current.auth.status).toBe("anonymous"),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByText("Added to watchlist"),
+        ).not.toBeInTheDocument(),
+      );
+      expect(view.result.current.state.user_on_watchlist).toBe(false);
+      expect(view.headers).toEqual([expect.stringContaining("Bearer "), null]);
+      if (status === 500)
+        await waitFor(() =>
+          expect(screen.getByText("Server error")).toBeVisible(),
+        );
+    },
+  );
 });

@@ -1,6 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { sessionQuery } from "@/lib/queries";
-import { sessionKey, ALLAUTH_SESSION_URL } from "@/lib/session";
+import {
+    sessionKey,
+    ALLAUTH_SESSION_URL,
+    beginUserChange,
+    resetUserQueries,
+    changeOfUser,
+} from "@/lib/session";
 /**
  * useAuth
  *
@@ -116,6 +122,7 @@ export function useAuth(): AuthStateProps {
                     if (sessionVersion !== getAuthSessionVersion()) return;
                     clearAuthTokens();
                     client.setQueryData(sessionQuery().queryKey, null);
+                    void changeOfUser(client);
                 }
             }
         };
@@ -246,8 +253,10 @@ export function useAuth(): AuthStateProps {
                 invalidateAuthSession();
                 clearAuthTokens();
                 setAuthTokens(accessToken, storage);
+                beginUserChange(client);
                 await client.cancelQueries({ queryKey: sessionKey });
                 await client.fetchQuery({ ...sessionQuery(), staleTime: 0 });
+                void resetUserQueries(client);
 
                 // Return display name for component to use in success feedback
                 const displayName = response.first_name || response.username;

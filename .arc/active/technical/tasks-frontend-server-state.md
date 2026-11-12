@@ -276,45 +276,24 @@ screen, and a held sign-out shows no toast for a save settling meanwhile and loa
 its request settles; on the browsable stack, signing out and in again shows no previous session's state, and
 `sign-in.spec.ts` passes.
 
-- [ ] **5.1 Every change of user clears the saves and refetches the lists — D7, D8**
+- [x] **5.1 Every change of user clears the saves and refetches the lists — D7, D8**
 
     **Goal:** The step runs at exactly the points D7's table names, so no save, Undo or list of the previous user's acts
     or shows after a change, and leaving `resolving` otherwise clears nothing.
 
-    - [ ] **5.1.a Test each change in `useAuth.test.tsx`**
-        - Each case shows a movie list query and a query under the `['library']` prefix and makes a save beside
-          `useAuth`, counting list requests and their `Authorization` header, and Library requests from the save's
-          release (the step's reset refetches it before)
-        - Stored credentials the first read rejects (a 403 on the profile): a save settling after shows no toast and
-          refetches no Library, and the lists refetch without the token
-        - An expired stored token whose renewal succeeds while the profile read fails: the lists refetch without the
-          user, and the saves are cleared
-        - A failed renewal at the 60-second check refetches the lists and clears the saves
-        - A password sign-in completed during the first session read refetches the lists with its token
-        - A password sign-in whose fresh read fails clears the saves when its token is stored, and refetches the lists
-          after the read, without the token
-        - A provider's return whose first read finds the provider's user clears a stale stored token and refetches the
-          lists fetched while resolving, with allauth's session endpoint read once
-        - A save's toast is gone after a change of user
-        - A 5xx on the first session read after stored credentials signed the user in at once signs them out and leaves
-          its "Server error" toast showing
-        - Not changes: the first read landing the user already shown signed in, and leaving `resolving` for `anonymous`
-          with no stored token, refetch nothing and keep the saves
-        - Expect the change cases to FAIL initially; the two cases that aren't changes pass today, and are seen failing
-          against a step run at every landing. The 5xx case passes before 5.1.b too, since no step runs to dismiss its
-          toast, and is seen failing against a step that dismisses every toast. The provider's return's cleared token
-          and single allauth read are 4.2's, already seen failing there
+    - [x] **5.1.a Test each change in `useAuth.test.tsx`**
+        - Added eleven HTTP-level cases with real list queries, kept saves, held profile/session reads and recorded
+          bearer headers. Covered initial credential rejection (current and renewed), idle renewal failure,
+          overlapping password sign-in, failed fresh profile, provider return, save-toast removal, server-error
+          preservation and the two initial landings that are not changes.
+        - Change cases failed before their wiring. Narrow reconstructions also failed for provider reset omission,
+          resetting at either unchanged landing, retaining save toasts and dismissing the server-error toast.
 
-    - [ ] **5.1.b Run the step at each writer and at the first read's landing**
-        - A password sign-in runs `beginUserChange` when its token is stored, and `resetUserQueries` once its fresh read
-          has landed, whatever it found
-        - The first read, the one given the first-read context, runs `changeOfUser` when it lands the provider's user
-          on a provider's return, or finds nobody while a token is stored and so clears it; a writer's fresh read never
-          runs it
-        - A failed renewal at the 60-second check runs `changeOfUser` with its `null` write
-        - Tests should now PASS
-        - Check in `frontend/`, with the browsable stack running:
-          `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/sign-in.spec.ts`
+    - [x] **5.1.b Run the step at each writer and at the first read's landing**
+        - Sign-in clears saves at token storage and resets other queries after its fresh read lands. Initial reads
+          reset on rejected stored credentials or a provider return; writer reads carry no first-read context.
+          Idle renewal failure resets with its anonymous write. The query supplies its own client to the read.
+        - Type-check, touched-file lint/format, related tests and the real sign-in Chromium spec pass.
 
 - [ ] **5.2 Sign-out ends on a freshly loaded sign-in page — D7, D8**
 

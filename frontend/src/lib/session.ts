@@ -97,6 +97,7 @@ export interface FirstReadContext {
 }
 
 export async function readSession(
+    client: QueryClient,
     firstRead?: FirstReadContext,
 ): Promise<UserProfile | null> {
     const version = getAuthSessionVersion();
@@ -109,6 +110,7 @@ export async function readSession(
         assertCurrent();
         if (provider) {
             clearAuthTokens();
+            void changeOfUser(client);
             return provider;
         }
     }
@@ -128,6 +130,7 @@ export async function readSession(
     } catch (error) {
         if (isCancel(error) || version !== getAuthSessionVersion()) throw error;
         clearAuthTokens();
+        if (firstRead) void changeOfUser(client);
         return null;
     }
 }

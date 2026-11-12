@@ -85,52 +85,22 @@ toast, and the grid tests and the browse smoke specs pass with the grids' keys t
 _Mode:_ `slice` — closes on a save showing at once on its card, its detail page and the watchlist page, each reading
 through the shared save hook.
 
-- [ ] **2.1 The save hook shows a movie's payload under this tab's saves — D4, D8**
+- [x] **2.1 The save hook shows a movie's payload under this tab's saves — D4, D8**
 
     **Goal:** A movie shows its payload replaced by its latest successful save and overlaid by its pending saves; saves
     of one movie reach the server in the order made, and a failed save leaves the last value the server confirmed.
 
-    - [ ] **2.1.a Test the hook in `frontend/src/hooks/movie/__tests__/useUserMovieState.test.tsx`**
-        - Real query client from `TestProviders`; MSW answers `PATCH /user-movie-data/{tmdb_id}` with the whole record
-          (`createMockUserMovieData`); `<Toaster />` rendered; a small probe component shows the state and saves
-        - A `null` payload shows a record with no state: every flag false, and `user_rating`, `user_review` and
-          `watched_at` null
-        - A save shows at once while pending; on success the returned record shows whole, including a field the server
-          derives (unwatching clears `watched_at`) and fields the save didn't send
-        - Two saves made back to back reach the server one after the other, in order: the second isn't sent while the
-          first is held
-        - A failed save drops out and shows its error toast: "Failed to update watchlist" for a watchlist save,
-          "Failed to save changes" for any other, each with "Please try again."; a 429 fails the same way
-        - Two queued saves that both fail leave the payload; when the first succeeds and the second fails, the first's
-          record shows
-        - Success invalidates the Library: a mounted query under the `['library']` prefix refetches, while a mounted
-          movie list and detail entry are neither refetched nor written; a failed save leaves the Library query alone
-        - A save that settles after its component unmounted still shows its toast and invalidates the Library
-        - A watchlist save's success toast reads "Added to watchlist" or "Removed from watchlist" from the server's
-          record
-        - A settled save still shows after more than five minutes with nothing observing it (fake timers)
-        - Expect tests to FAIL initially. The cases that something stays untouched (the lists and detail entry, and the
-          Library after a failure) are seen failing against a save that invalidates the `['movies']` prefix and a
-          failed save that invalidates the Library
-
-    - [ ] **2.1.b Write `useUserMovieState` and the save's mutation options**
-        - `frontend/src/hooks/movie/useUserMovieState.ts` exports `useUserMovieState(tmdbId, payload)`, returning
-          `{ state, save }`, and `saveMutationOptions(tmdbId)`, built with `mutationOptions` for Undo to reuse (2.3).
-          The hook is callable before its movie has loaded (no TMDB ID or payload yet), since the detail page calls it
-          above its loading return
-        - The options: a mutation key and a `scope` keyed by the TMDB ID, `gcTime: Infinity`, and a `mutationFn`
-          through `saveUserMovieData`; a save's variables carry its changed fields and whether it is an Undo
-        - `frontend/src/lib/session.ts` starts here with the change count (`getChangeCount()`); 2.2 adds the step that
-          advances it. `onMutate` records the count; `onSuccess` and `onError` do nothing once it has changed. Otherwise
-          `onSuccess` invalidates the Library's key prefix (added to `lib/queries.ts` here; 3.2 adds its options)
-          through the callback's `client` and shows the success toast, and `onError` shows the error toast only. All of
-          this lives in the options, never in `mutate` callbacks, so it runs after the caller unmounts
-        - The hook reads its movie's saves through `useMutationState` filtered by the mutation key and builds the shown
-          state in D4's order: the payload or the empty record, the latest successful save's record, then the pending
-          saves' fields in the order made
-        - Each toast a save shows takes an id from a maker `lib/session.ts` exports, marking it as a save's toast, for
-          2.2's step to dismiss
-        - Tests should now PASS
+    - [x] **2.1.a Test the hook in `frontend/src/hooks/movie/__tests__/useUserMovieState.test.tsx`**
+        - Twelve network tests cover empty state, pending overlays, full server records, ordered queued saves,
+          failures, server-derived toast titles, Library-only invalidation after unmount and six-minute retention.
+        - Tests failed against the inert hook. Narrow breaks proved the movie-query and failed-save invalidation
+          guards, server-derived toast title and retention. The retention test installs fake time before unmount.
+    - [x] **2.1.b Write `useUserMovieState` and the save's mutation options**
+        - Shared options scope saves by movie and retain them indefinitely. Callbacks guard the user-change count,
+          invalidate only Library on success and issue individually identified save toasts after caller unmount.
+        - The hook replaces the payload with the last successful record and overlays pending patches in cache order.
+        - Frontend type-check, formatting, file lint and all 51 related tests pass. A mechanical prefer-const lint
+          error in the initial session counter was corrected.
 
 - [ ] **2.2 A change of user stops every kept save — D4, D7, D8**
 

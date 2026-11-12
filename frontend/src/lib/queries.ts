@@ -11,3 +11,5 @@ export const infiniteMoviesKey = (
     query: string | undefined,
     browseParams: BrowseParams | undefined,
 ) => ["movies", "infinite", source, query, browseParams] as const;
+
+export const libraryKey = ["library"] as const;

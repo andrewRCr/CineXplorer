@@ -83,13 +83,15 @@ for (const rememberMe of [false, true]) {
                     new URL("/api/logout/", target.baseURL).href &&
                 response.request().method() === "POST",
         );
-        await page.getByRole("button", { name: "Logout", exact: true }).click();
+        await page
+            .getByRole("menuitem", { name: "Sign out", exact: true })
+            .click();
         const response = await logoutResponse;
         expect(response.ok(), `Logout returned HTTP ${response.status()}`).toBe(
             true,
         );
         await expect(
-            page.getByRole("button", { name: "Login", exact: true }),
+            page.getByRole("link", { name: "Sign in", exact: true }),
         ).toBeVisible();
         await expect(menu).toHaveCount(0);
     });

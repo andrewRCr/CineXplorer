@@ -106,42 +106,21 @@ each carry one `h1`.
         - A labelled form uses `:has(input:focus-visible)` for its border. The bar and temporary sidebar use it.
           All five tests, lint, formatting and TypeScript passed. Both real-session sign-in smoke cases passed.
 
-- [ ] **2.3 The account control shows Sign in, holds its space, or opens the account menu — R3, R5, R29, R30**
+- [x] **2.3 The account control shows Sign in, holds its space, or opens the account menu — R3, R5, R29, R30**
 
     **Goal:** Signed out shows a Sign in link that returns to the page; resolving holds the space; signed in opens a
     two-item menu with menu roles, keyboard highlighting, and Escape back to its trigger.
 
-    - [ ] **2.3.a Write `AccountControl` tests, replacing `NavBarUserMenu.test.tsx`**
-        - Test: while the session check is held, neither "Sign in" nor the trigger shows (keep today's `gate()`
-          case); signed out, a link "Sign in" whose `href` is `signInPathFor` of the current location (render at
-          `/browse?genres=27`)
-        - Test: signed in, a button named by the full username with `aria-haspopup="menu"` and `aria-expanded`
-          `false`, then `true` once open; the `menu` holds exactly the `menuitem`s "Profile" and "Sign out";
-          ArrowDown sets `data-highlighted` on an item while focus stays on the menu; Escape closes it and focus
-          returns to the trigger; Profile closes the menu and opens `/profile`; Sign out posts the logout and
-          opens `/`
-        - Test: the username text has a 12rem maximum width, no wrapping, hidden overflow and an ellipsis
-        - Test (`styleSystem`): trigger text `foreground`; avatar `layer-02` with a `foreground` initial; panel
-          `popover` with a 1px `border-subtle-02` border; items `on-popover`; after ArrowDown, the highlighted item
-          `tertiary` under `on-tertiary` text
-        - Expect tests to FAIL initially
-
-    - [ ] **2.3.b Implement `AccountControl` and its menu on Chakra's `Menu`**
-        - By `status` from `useAuthContext`: `resolving` keeps today's held `Box`; `anonymous` renders Sign in, a
-          router link in the bar's link style (`foreground` text, a 2px `ring` outline on keyboard focus set on
-          itself); `authenticated` renders the menu
-        - The trigger is named by the username (`aria-label`); its username text shows from `lg` up and is hidden
-          below, leaving the initial (R7)
-        - Profile is a `Menu.Item` rendered as a router link; Sign out calls `logout` and opens `/`, as
-          `handleLogout` does today
-        - Set the colors on this menu itself, not in a menu recipe, so the theme picker's menu stays as it is
-        - Repoint both of `NavBar`'s rows at `AccountControl`, then delete `NavBarUserMenu.tsx`,
-          `NavBarUserMenuItem.tsx` and their test
-        - In the same increment, bring `e2e/sign-in.spec.ts`'s account steps to the control: signed in, open the
-          account menu by its trigger, named by the username; sign out through the `menuitem` "Sign out", keeping
-          the logout-response check; then find the "Sign in" link where the "Login" button was
-        - Tests should now PASS, and all five specs against the browsable stack, since the control is on every page
-          they scan
+    - [x] **2.3.a Write `AccountControl` tests, replacing `NavBarUserMenu.test.tsx`**
+        - Five fail-first cases cover held session state, the sign-in return link, menu roles and keyboard focus,
+          username truncation and theme colors, Profile navigation, and the real logout HTTP boundary.
+    - [x] **2.3.b Implement `AccountControl` and its menu on Chakra's `Menu`**
+        - Both bar rows use the new control; removed the hand-built menu and its item component. The two items are
+          Profile and Sign out. The full username labels the trigger, with its text hidden below `lg`.
+        - A browser axe failure exposed the decorative initial entering the visible label despite `aria-hidden`.
+          Rendering it as generated decorative content preserves the full-username name and passes that check.
+        - Five component tests, lint, formatting and TypeScript passed. All five smoke specs passed (six cases),
+          including the updated menu sign-out steps and axe scans.
 
 - [ ] **2.4 The wide bar names its places and marks the current one — R1, R2, R4, R21, R28, R29, R30, R31**
 

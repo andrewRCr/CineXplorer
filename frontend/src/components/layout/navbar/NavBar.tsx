@@ -13,7 +13,7 @@ import logo from "../../../assets/icons8-movie-64.webp";
 
 import { ROUTES } from "@/constants/routes";
 import { USER_NAVIGATION_ITEMS } from "@/constants/navigation";
-import NavBarUserMenu from "./NavBarUserMenu";
+import AccountControl from "./AccountControl";
 import SearchField from "./SearchField";
 import MobileMenuButton from "./MobileMenuButton";
 
@@ -113,7 +113,7 @@ const NavBar = () => {
 
             {/* Right side - User controls */}
             <HStack gap={4} alignItems="center">
-              <NavBarUserMenu />
+              <AccountControl />
             </HStack>
           </HStack>
 
@@ -129,7 +129,7 @@ const NavBar = () => {
             {/* Right side - Search and User controls */}
             <HStack gap={4} alignItems="center">
               <SearchField />
-              <NavBarUserMenu />
+              <AccountControl />
             </HStack>
           </HStack>
         </HStack>

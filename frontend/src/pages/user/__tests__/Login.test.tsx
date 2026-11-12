@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
 import { render as renderWithoutRouter } from "@testing-library/react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { act, render, screen } from "@tests/helpers/test-renderer";
+import { act, render, screen, waitFor } from "@tests/helpers/test-renderer";
 import {
   authHandlers,
   clearBrowserAuth,
@@ -134,7 +134,7 @@ describe("resending from an unverified sign-in", () => {
           0,
         );
       } else {
-        expect(await screen.findByText(expected)).toBeVisible();
+        await waitFor(() => expect(screen.getByText(expected)).toBeVisible());
       }
       if (outcome !== 503)
         expect(screen.queryByText(failureMessage)).not.toBeInTheDocument();

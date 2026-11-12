@@ -189,11 +189,8 @@ export function useAuth(): AuthStateProps {
         // Cancellation retires the read synchronously before this write and navigation.
         void client.cancelQueries({ queryKey: sessionKey });
         client.setQueryData(sessionQuery().queryKey, null);
+        void changeOfUser(client);
         void navigate(ROUTES.LOGIN);
-
-        // Show logout success toast (appears on login page after redirect)
-        // Uses priorityToaster for auth flow consistency (top-right, same as login)
-        priorityToaster.success({ title: "You've been logged out" });
 
         try {
             if (isJWTUser) {
@@ -225,7 +222,9 @@ export function useAuth(): AuthStateProps {
             }
         } catch (error) {
             logger.error("Logout failed", { error });
-            // Don't reject - we've already cleared local state, user is logged out from UX perspective
+            // The local session is already anonymous; always finish with a fresh read.
+        } finally {
+            window.location.href = `${ROUTES.LOGIN}?signed_out=true`;
         }
     }, [client, navigate]);
 

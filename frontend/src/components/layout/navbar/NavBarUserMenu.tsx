@@ -8,7 +8,7 @@ import {
   Portal,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { ROUTES } from "@/constants/routes";
@@ -43,7 +43,6 @@ const NavBarUserMenu = () => {
   // ==========================================================================
 
   const { status, isAuthenticated, logout, user } = useAuthContext() ?? {};
-  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -68,7 +67,6 @@ const NavBarUserMenu = () => {
   const handleLogout = () => {
     setIsOpen(false);
     void logout?.();
-    void navigate(ROUTES.HOME);
   };
 
   // ==========================================================================

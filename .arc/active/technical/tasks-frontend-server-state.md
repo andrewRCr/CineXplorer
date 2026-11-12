@@ -282,7 +282,7 @@ its request settles; on the browsable stack, signing out and in again shows no p
     or shows after a change, and leaving `resolving` otherwise clears nothing.
 
     - [x] **5.1.a Test each change in `useAuth.test.tsx`**
-        - Added eleven HTTP-level cases with real list queries, kept saves, held profile/session reads and recorded
+        - Added ten HTTP-level cases with real list queries, kept saves, held profile/session reads and recorded
           bearer headers. Covered initial credential rejection (current and renewed), idle renewal failure,
           overlapping password sign-in, failed fresh profile, provider return, save-toast removal, server-error
           preservation and the two initial landings that are not changes.
@@ -295,43 +295,27 @@ its request settles; on the browsable stack, signing out and in again shows no p
           Idle renewal failure resets with its anonymous write. The query supplies its own client to the read.
         - Type-check, touched-file lint/format, related tests and the real sign-in Chromium spec pass.
 
-- [ ] **5.2 Sign-out ends on a freshly loaded sign-in page — D7, D8**
+- [x] **5.2 Sign-out ends on a freshly loaded sign-in page — D7, D8**
 
     **Goal:** Sign-out reads `anonymous`, clears the saves and moves to the sign-in page at once, then loads
     `/login?signed_out=true` afresh once its request settles, whether it succeeded or failed, and the sign-in page shows
     the signed-out notice only to someone not signed in.
 
-    - [ ] **5.2.a Test sign-out**
-        - `useAuth.test.tsx`, with the sign-out request held (`POST /logout/` for a password user, allauth's session
-          DELETE for a provider user): the status reads `anonymous`, the saves clear and the route moves to `/login` at
-          once, with no toast from `logout`; a save settling meanwhile shows no toast; `window.location.href` becomes
-          `/login?signed_out=true` only once the request settles, for a success and for a failure
-        - `NavBarUserMenu.test.tsx`: choosing Logout ends on the sign-in route, not home
-        - `Login.test.tsx`: `/login?signed_out=true` shows "You've been logged out" when nobody is signed in, and not
-          when someone is: a current stored token, or no token with allauth's session answering signed in (the case
-          that catches a notice shown while the status is still `resolving`)
-        - Expect tests to FAIL initially. Some assertions pass before 5.2.b, each seen failing against a narrow break:
-          the status reading `anonymous` and the route moving to `/login` at once (`logout` does both before its
-          request), against a `logout` that does them once the request settles; and no notice for a signed-in visitor
-          (the sign-in page reads no `signed_out` today), against a notice shown whatever the status (the stored-token
-          case) and one shown unless the status reads `authenticated` (the allauth case)
-        - `e2e/sign-in.spec.ts`: after Logout, expect the sign-in page, and look for the navigation bar's Login button,
-          since the form has its own; the nav bar has no landmark to scope by, and comes before the form (the spec's
-          sign-in click takes the form's with `.last()`). Run it on the browsable stack and see it fail: today's
-          sign-out ends on the home page
+    - [x] **5.2.a Test sign-out**
+        - Held password and provider sign-out success/failure while a save settled; checked immediate anonymous state,
+          route and save clearing, no late-save feedback, no immediate sign-out notice and reload only after settling.
+          New sign-ins retain their token through an older sign-out's success or failure.
+        - Covered the menu's sign-in destination and the reloaded page's anonymous-only notice, including a pending
+          allauth read. The browser spec now checks the sign-in destination and navigation bar's Login control.
+        - Tests failed before implementation. Seven narrow reconstructions failed for delayed state/navigation,
+          premature notice/reload, clearing newer credentials and notices shown to signed-in or resolving visitors.
+          The browser assertion failed against the previous home destination.
 
-    - [ ] **5.2.b Rewrite `logout`, `handleLogout` and the sign-in page's notice**
-        - `logout` notes whether a token is stored, runs `invalidateAuthSession`, clears stored tokens, cancels a
-          session read in flight, writes `null`, runs `changeOfUser` and navigates to the sign-in route as today,
-          without today's toast; it then sends its request (`authService.logout`, or allauth's session DELETE) and,
-          once that settles either way, sets `window.location.href` to `/login?signed_out=true`, as `apiClient` loads
-          the sign-in page
-        - `NavBarUserMenu`'s `handleLogout` stops navigating home, so `logout` alone decides where sign-out ends
-        - `Login` shows the "You've been logged out" toast on the priority toaster from `signed_out=true` once the
-          status is `anonymous`, and clears the parameter as it does `session_expired`
-        - Tests should now PASS
-        - Check in `frontend/`, with the browsable stack running:
-          `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/sign-in.spec.ts`
+    - [x] **5.2.b Rewrite `logout`, `handleLogout` and the sign-in page's notice**
+        - Sign-out cancels the session read, writes anonymous, clears saves and other queries, then navigates to Login.
+          After either request outcome it loads `/login?signed_out=true` afresh. The menu delegates navigation to it.
+          Login shows the priority notice only once its status is anonymous and clears the parameter.
+        - Type-check, touched-file lint/format, 137 related tests and the real sign-in Chromium spec pass.
 
 - [ ] **5.3 The reference documents describe the session query and the change of user — D9, D3, D4, D7**
 

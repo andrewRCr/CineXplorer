@@ -319,6 +319,16 @@ const Login = () => {
     }
   }, [searchParams, showSessionExpired]);
 
+  useEffect(() => {
+    if (
+      searchParams.get("signed_out") === "true" &&
+      authContext?.status === "anonymous"
+    ) {
+      priorityToaster.success({ title: "You've been logged out" });
+      window.history.replaceState({}, "", ROUTES.LOGIN);
+    }
+  }, [authContext?.status, searchParams]);
+
   // ==========================================================================
   // Auth Redirect (already authenticated users)
   // ==========================================================================

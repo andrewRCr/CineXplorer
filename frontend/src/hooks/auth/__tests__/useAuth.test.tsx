@@ -1478,3 +1478,110 @@ describe("user ownership changes", () => {
     },
   );
 });
+
+describe("settled sign-out reload", () => {
+  it.each(
+    (["password", "provider"] as const).flatMap((kind) =>
+      [200, 503].map((status) => ({ kind, status })),
+    ),
+  )(
+    "clears ownership immediately and reloads only after $kind sign-out settles ($status)",
+    async ({ kind, status }) => {
+      window.location.href = "http://localhost:3000/browse";
+      const held = gate();
+      const entered = gate();
+      const sessionUrl = `${siteOrigin}/_allauth/browser/v1/auth/session`;
+      if (kind === "password") setAuthTokens(token());
+      else
+        server.use(
+          http.get(sessionUrl, () =>
+            HttpResponse.json({
+              meta: { is_authenticated: true },
+              data: { user: profile },
+            }),
+          ),
+        );
+      const respond = async () => {
+        entered.release();
+        await held.wait;
+        return HttpResponse.json({}, { status });
+      };
+      server.use(
+        kind === "password"
+          ? http.post(`${apiBaseUrl}/logout/`, respond)
+          : http.delete(sessionUrl, respond),
+      );
+      const view = mountUserChange();
+      await waitFor(() =>
+        expect(view.result.current.auth.user).toEqual(profile),
+      );
+      const running = await startHeldSave(view);
+      let logout: Promise<void>;
+      act(() => {
+        logout = view.result.current.auth.logout();
+      });
+      await entered.wait;
+      await waitFor(() =>
+        expect(view.result.current.auth.status).toBe("anonymous"),
+      );
+      expect(view.result.current.location.pathname).toBe("/login");
+      expect(window.location.href).toBe("http://localhost:3000/browse");
+      expect(localStorage.getItem("access_token")).toBeNull();
+      expect(sessionStorage.getItem("access_token")).toBeNull();
+      await expectRetiredSave(view, running);
+      expect(
+        screen.queryByText("You've been logged out"),
+      ).not.toBeInTheDocument();
+      await act(async () => {
+        held.release();
+        await logout;
+      });
+      expect(window.location.href).toBe("/login?signed_out=true");
+      expect(
+        screen.queryByText("You've been logged out"),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it.each([200, 503])(
+    "keeps a new sign-in's token through an older sign-out reload (%s)",
+    async (status) => {
+      setAuthTokens(token());
+      const held = gate();
+      const fresh = token(Math.floor(Date.now() / 1000) + 900);
+      server.use(
+        http.post(`${apiBaseUrl}/logout/`, async () => {
+          await held.wait;
+          return HttpResponse.json({}, { status });
+        }),
+        http.post(`${apiBaseUrl}/token/`, () =>
+          HttpResponse.json({
+            user_id: profile.id,
+            username: profile.username,
+            access_token: fresh,
+          }),
+        ),
+      );
+      const view = mountUserChange();
+      await waitFor(() =>
+        expect(view.result.current.auth.user).toEqual(profile),
+      );
+      let logout: Promise<void>;
+      act(() => {
+        logout = view.result.current.auth.logout();
+      });
+      await waitFor(() =>
+        expect(view.result.current.auth.status).toBe("anonymous"),
+      );
+      await act(async () => {
+        await view.result.current.auth.login("viewer", "password");
+      });
+      await act(async () => {
+        held.release();
+        await logout;
+      });
+      expect(sessionStorage.getItem("access_token")).toBe(fresh);
+      expect(window.location.href).toBe("/login?signed_out=true");
+    },
+  );
+});

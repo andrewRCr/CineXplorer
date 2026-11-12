@@ -39,8 +39,9 @@ test("sign in and sign out through the real session", async ({
     expect(response.ok(), `Logout returned HTTP ${response.status()}`).toBe(
         true,
     );
+    await expect(page).toHaveURL(new URL("/login", target.baseURL).href);
     await expect(
-        page.getByRole("button", { name: "Login", exact: true }),
+        page.getByRole("button", { name: "Login", exact: true }).first(),
     ).toBeVisible();
     await expect(menu).toHaveCount(0);
 });

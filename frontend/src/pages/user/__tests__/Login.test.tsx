@@ -22,6 +22,7 @@ import {
   toaster,
 } from "@/components/core/chakra/toaster";
 import logger from "@/services/logger";
+import { gate } from "@tests/helpers/web-locks";
 import Login from "../Login";
 
 const originalConfig = logger.getEnvironmentInfo().config;
@@ -235,4 +236,80 @@ describe("returning to the requested page", () => {
     );
     submit.mockRestore();
   });
+});
+
+describe("signed-out notice", () => {
+  function renderSignedOut() {
+    window.history.replaceState({}, "", "/login?signed_out=true");
+    return renderWithoutRouter(
+      <TestProviders>
+        <MemoryRouter initialEntries={["/login?signed_out=true"]}>
+          <AuthContextProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<h1>Home after sign-in</h1>} />
+            </Routes>
+            <PriorityToaster />
+          </AuthContextProvider>
+        </MemoryRouter>
+      </TestProviders>,
+    );
+  }
+  it("shows the notice once the reloaded page knows nobody is signed in", async () => {
+    const held = gate();
+    const entered = gate();
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+        entered.release();
+        await held.wait;
+        return HttpResponse.json({}, { status: 401 });
+      }),
+    );
+    renderSignedOut();
+    await entered.wait;
+    expect(
+      screen.queryByText("You've been logged out"),
+    ).not.toBeInTheDocument();
+    held.release();
+    await waitFor(() =>
+      expect(screen.getByText("You've been logged out")).toBeVisible(),
+    );
+    expect(new URL(document.URL).search).toBe("");
+  });
+  it.each(["stored token", "provider session"])(
+    "withholds the notice for a signed-in visitor (%s)",
+    async (kind) => {
+      const held = gate();
+      const entered = gate();
+      if (kind === "stored token") setAuthTokens(token());
+      else
+        server.use(
+          http.get(
+            `${siteOrigin}/_allauth/browser/v1/auth/session`,
+            async () => {
+              entered.release();
+              await held.wait;
+              return HttpResponse.json({
+                meta: { is_authenticated: true },
+                data: { user: profile },
+              });
+            },
+          ),
+        );
+      renderSignedOut();
+      if (kind === "provider session") {
+        await entered.wait;
+        expect(
+          screen.queryByText("You've been logged out"),
+        ).not.toBeInTheDocument();
+        held.release();
+      }
+      expect(
+        await screen.findByRole("heading", { name: "Home after sign-in" }),
+      ).toBeVisible();
+      expect(
+        screen.queryByText("You've been logged out"),
+      ).not.toBeInTheDocument();
+    },
+  );
 });

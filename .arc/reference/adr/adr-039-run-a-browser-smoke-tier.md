@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-11-07)
+Accepted; Superseded in part by ADR-044 (five-spec list and mobile-viewport exclusion)
 
 ## Context
 

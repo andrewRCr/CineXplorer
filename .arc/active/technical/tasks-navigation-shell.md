@@ -345,31 +345,30 @@ window tabs, and the phone-width spec follows Films there.
           Film filters, and Advanced filters exposes its panel state and inherits the shared button focus recipe.
         - The browse button-name baseline now describes only the cards' unnamed icon buttons.
 
-- [ ] **5.5 The decision record and the README describe the shell — R31**
+- [x] **5.5 The decision record and the README describe the shell — R31**
 
     **Goal:** A new ADR records the bar and the one catalog, ADR-002 and ADR-039 point to it, and the README names
     Films and its windows.
 
-    - [ ] **5.5.a Write the ADR "Navigate through one top bar into one film catalog"**
-        - The next free number, reading `Proposed`, from `adr-template.md`; it records decisions 1, 2, 4, 6 to 9 and
-          19 as § 8 of the PRD lists them, and the parts of ADR-002 and ADR-039 it supersedes
+    - [x] **5.5.a Write the ADR "Navigate through one top bar into one film catalog"**
+        - ADR-044 reads Proposed and records decisions 1, 2, 4, 6–9 and 19, including the two bar layouts, one catalog,
+          persistent descriptive titles, URL normalization, home alias and the phone spec in both smoke targets.
+    - [x] **5.5.b Point ADR-002 and ADR-039 at it**
+        - Updated only their Status sections to Accepted; Superseded in part by ADR-044, naming the affected parts.
+    - [x] **5.5.c Name Films in the README's feature line**
+        - The feature line names Films with All films, In theaters and Coming soon.
+    - [x] **5.5.d Run R31's search over `.arc/reference`, outside the archive and the ADR bodies, and the README**
+        - No further current descriptions of the old shell remain. Remaining generic sidebar examples, backend
+          endpoint names and desktop viewport counts are accurate in context. Documentation lint passes.
 
-    - [ ] **5.5.b Point ADR-002 and ADR-039 at it**
-        - Each Status reads `Accepted; Superseded in part by` the new ADR
-
-    - [ ] **5.5.c Name Films in the README's feature line**
-        - "Browse, Now Playing, Upcoming" becomes Films with All films, In theaters and Coming soon
-
-    - [ ] **5.5.d Run R31's search over `.arc/reference`, outside the archive and the ADR bodies, and the README**
-        - Fix any other statement it finds still describing the old shell as current
-
-- [ ] **5.6 Check the catalog through the smoke specs — R30**
+- [x] **5.6 Check the catalog through the smoke specs — R30**
 
     **Goal:** The exit criterion holds in a real browser, with the catalog's URLs, scroll keys and Back to Results
     unchanged.
 
-    - Run `browse.spec.ts`, `back-to-results.spec.ts`, `movie-detail.spec.ts` and `phone-width.spec.ts` against the
-      browsable stack; record what ran and the result
+    - The final local smoke run passed all six specs (seven cases), including browse, Back to Results, movie detail
+      and phone navigation. It ran against this worktree's isolated browsable stack after the final UI changes.
+      Existing browse URL, pagination and reloaded-detail scroll restoration checks all pass.
 
 ### **Phase 6:** Verification
 

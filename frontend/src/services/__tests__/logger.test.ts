@@ -596,4 +596,124 @@ describe("persisted critical reports", () => {
         }
         expect(received.map(messageOf)).toEqual(["Healthy deadline"]);
     });
+
+    const contextCases: {
+        name: string;
+        data: unknown;
+        expected: Record<string, unknown>;
+    }[] = [
+        {
+            name: "string",
+            data: "incident details",
+            expected: { originalData: "incident details" },
+        },
+        {
+            name: "array",
+            data: [{ token: "private-token", operation: "browse" }, "details"],
+            expected: {
+                originalData: [
+                    { token: "[FILTERED]", operation: "browse" },
+                    "details",
+                ],
+            },
+        },
+        { name: "zero", data: 0, expected: { originalData: 0 } },
+        { name: "false", data: false, expected: { originalData: false } },
+        { name: "empty string", data: "", expected: { originalData: "" } },
+    ];
+
+    it.each(contextCases)(
+        "normalises newly stored context: $name",
+        async ({ data, expected }) => {
+            server.use(
+                http.post(`${apiBaseUrl}/logs/`, () => HttpResponse.error()),
+            );
+            const logger = reportingLogger();
+            logger.critical("New context incident", data);
+            await waitFor(() =>
+                expect(
+                    localStorage.getItem("cinexplorer_critical_logs"),
+                ).not.toBeNull(),
+            );
+            const stored: unknown = JSON.parse(
+                localStorage.getItem("cinexplorer_critical_logs") ?? "[]",
+            );
+            expect(stored).toEqual([
+                expect.objectContaining({
+                    message: "New context incident",
+                    data: expected,
+                }),
+            ]);
+        },
+    );
+
+    it.each(contextCases)(
+        "replays legacy context without blocking later reports: $name",
+        async ({ data, expected }) => {
+            localStorage.setItem(
+                "cinexplorer_critical_logs",
+                JSON.stringify([
+                    { ...legacyReport("Legacy context"), data },
+                    {
+                        ...legacyReport("Object context"),
+                        data: { token: "private-token", operation: "browse" },
+                    },
+                    { ...legacyReport("Null context"), data: null },
+                ]),
+            );
+            const received: unknown[] = [];
+            server.use(
+                http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+                    const payload: unknown = await request.json();
+                    received.push(payload);
+                    const context =
+                        payload !== null &&
+                        typeof payload === "object" &&
+                        "data" in payload
+                            ? payload.data
+                            : undefined;
+                    if (
+                        context != null &&
+                        (typeof context !== "object" || Array.isArray(context))
+                    ) {
+                        return HttpResponse.json(
+                            {
+                                detail: [
+                                    {
+                                        type: "dict_type",
+                                        loc: ["body", "payload", "data"],
+                                        msg: "Input should be a valid dictionary",
+                                    },
+                                ],
+                            },
+                            { status: 422 },
+                        );
+                    }
+                    return succeeded();
+                }),
+            );
+            const logger = reportingLogger();
+            await expect(
+                logger.reportCriticalError("Recovery trigger"),
+            ).resolves.toBe(true);
+            expect(
+                localStorage.getItem("cinexplorer_critical_logs"),
+            ).toBeNull();
+            expect(received).toEqual([
+                expect.objectContaining({ message: "Recovery trigger" }),
+                expect.objectContaining({
+                    message: "Legacy context",
+                    data: expected,
+                }),
+                expect.objectContaining({
+                    message: "Object context",
+                    data: { token: "[FILTERED]", operation: "browse" },
+                }),
+                expect.objectContaining({
+                    message: "Null context",
+                    data: null,
+                }),
+            ]);
+        },
+    );
 });

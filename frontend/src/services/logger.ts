@@ -801,7 +801,9 @@ class Logger {
                         level: LogLevel.CRITICAL,
                         message: value.message,
                         timestamp: new Date(value.timestamp).toISOString(),
-                        data: this.removeSensitiveFields(value.data),
+                        data: this.normalizeReportData(
+                            this.removeSensitiveFields(value.data),
+                        ),
                         correlation_id:
                             typeof value.correlation_id === "string"
                                 ? value.correlation_id
@@ -1147,18 +1149,27 @@ class Logger {
         return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
+    private normalizeReportData(data: unknown): Record<string, unknown> | null {
+        if (data == null) return null;
+        return isRecord(data) ? data : { originalData: data };
+    }
+
     /**
      * Sanitize data for backend transmission (remove sensitive info, limit size)
      */
-    private sanitizeDataForBackend(data: unknown): unknown {
-        if (!data) return data;
+    private sanitizeDataForBackend(
+        data: unknown,
+    ): Record<string, unknown> | null {
+        if (data == null) return null;
 
         try {
             // Convert to string to check size and sanitize
-            let sanitized: unknown = JSON.parse(JSON.stringify(data));
+            const serializedData: unknown = JSON.parse(JSON.stringify(data));
 
-            // Remove sensitive fields recursively
-            sanitized = this.removeSensitiveFields(sanitized);
+            // Preserve the API's object-or-null shape after removing sensitive fields.
+            const sanitized = this.normalizeReportData(
+                this.removeSensitiveFields(serializedData),
+            );
 
             // Limit size to prevent large payloads
             const serialized = JSON.stringify(sanitized);

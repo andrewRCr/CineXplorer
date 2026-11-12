@@ -350,8 +350,9 @@ global border color, `border`. Where a Chakra default would reach a piece, it ta
 
 Where a Chakra default comes from a shared source, it is fixed there:
 
-- the project's select recipe gives its indicator, the dropdown arrow, a theme role at rest and when disabled, in place
-  of `fg.muted` and `fg.subtle` (the genre and year selects in `ConnectedDropdowns`, and `SortDropdown`);
+- the project's select recipe gives its indicator, the dropdown arrow, `foreground` at rest, as the language select's
+  arrow already draws, and `on-muted` when disabled, as the disabled filters' value text draws, in place of
+  `fg.muted` and `fg.subtle` (the genre and year selects in `ConnectedDropdowns`, and `SortDropdown`);
 - one global style gives input placeholders `on-muted`, in place of Chakra's global `fg.muted/80` (`YearSelector`,
   `RatingSelector` and the bar's search fields);
 - the project's button recipe gives each variant Chakra fills while expanded (solid, subtle, outline and ghost) its own
@@ -659,7 +660,8 @@ the work merges.
 1. Component tests show the bar's links and the drawer's, signed out, resolving and signed in, as R1, R4, R5 and R8
    list; Films marked `aria-current="page"` on the three catalog URLs only, and the Library link on `/watchlist` only;
    and no link in the bar or the drawer to `/journal`, `/library`, `/log`, `/settings` or `/featured`. Which controls
-   show at which width is a CSS breakpoint that jsdom doesn't apply, so the smoke specs check it (criterion 12).
+   show at which width is a CSS breakpoint that jsdom, fixed at a 1024px width, can't vary, so the smoke specs check
+   it (criterion 12).
 2. Component tests show the account menu with menu roles and `aria-expanded`, holding exactly Profile and Sign out;
    Escape closing the account menu, the drawer and the phone search field and returning focus to the control that opened
    each; and the phone search field, while open, leaving none of the row's other controls reachable by role or by Tab.
@@ -733,3 +735,14 @@ the work merges.
 ## 10. Open Questions
 
 None.
+
+## Amendments
+
+- **2026-11-12,** during task generation, on the Owner's approval: R29 names the select indicator's roles,
+  `foreground` at rest and `on-muted` when disabled, where it named only "a theme role". They are the colors the
+  language select's arrow and the disabled filters' value text already draw. Decision 13's disposition for the theme
+  roles (`none`, obvious from code) covers it. Wording only; the Success Criteria are unchanged, and the task list's
+  review reads the PRD.
+- **2026-11-12,** at the task list's review, on the Owner's approval: criterion 1's reason for leaving widths to the
+  smoke specs now says jsdom is fixed at a 1024px width, where it said jsdom applies no breakpoint; jsdom evaluates
+  media queries at that one width. Wording only; what criterion 1 checks is unchanged.

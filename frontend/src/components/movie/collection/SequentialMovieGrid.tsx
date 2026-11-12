@@ -1,3 +1,4 @@
+import { infiniteMoviesKey } from "@/lib/queries";
 import { useState, useCallback, useMemo } from "react";
 import { Box } from "@chakra-ui/react";
 import MovieCard from "../MovieCard";
@@ -39,7 +40,7 @@ const SequentialMovieGrid = () => {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   // Build stable query key (same as VirtualizedMovieGrid for cache sharing)
-  const queryKey = ["movies", "infinite", source, query, browseParams];
+  const queryKey = infiniteMoviesKey(source, query, browseParams);
 
   const {
     pages,

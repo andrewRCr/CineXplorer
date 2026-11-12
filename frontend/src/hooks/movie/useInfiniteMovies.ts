@@ -1,6 +1,7 @@
 import {
     useInfiniteQuery,
     type InfiniteData,
+    type QueryKey,
     type UseInfiniteQueryResult,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -15,7 +16,7 @@ export interface UseInfiniteMoviesOptions {
      * Should include all dependencies that affect results (filters, sort, source).
      * Example: ['movies', 'discover', { genre: 'action', sort: 'popularity' }]
      */
-    queryKey: unknown[];
+    queryKey: QueryKey;
 
     /**
      * Fetcher function that returns paginated movie response.

@@ -68,23 +68,17 @@ toast, and the grid tests and the browse smoke specs pass with the grids' keys t
         - The shared `server-error` ID updates the showing toast. Confirmed against locked Zag 1.47.0.
         - The client-related run passed all 268 tests in 27 files; frontend type-check, file lint and formatting passed.
 
-- [ ] **1.3 The grids take their query keys from one factory — D1**
+- [x] **1.3 The grids take their query keys from one factory — D1**
 
     **Goal:** Query keys come from `lib/queries.ts`, with the grids' key values unchanged, so their two caches and the
     scroll restoration behave as before.
 
-    - [ ] **1.3.a Create `frontend/src/lib/queries.ts`**
-        - Key builders for `['movies', 'virtualized', source, query, browseParams]` and
-          `['movies', 'infinite', source, query, browseParams]`, typed `as const`; 3.1, 3.2 and 4.1 add the detail,
-          Library and session entries as full `queryOptions`
-        - Nothing in it, or in any later module, imports `lib/queryClient` to act on the cache (Implementation Notes)
-    - [ ] **1.3.b Take the grids' keys from the factory**
-        - `VirtualizedMovieGrid` and `SequentialMovieGrid` build their keys through it and keep their fetchers;
-          `useInfiniteMovies`'s `queryKey` widens from `unknown[]` to TanStack's readonly `QueryKey`, so the factory's
-          `as const` keys fit and it still accepts any key
-        - A refactor with no behavior change: the grid and `useInfiniteMovies` tests pass unchanged
-        - Check in `frontend/`, with the worktree's browsable stack running:
-          `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/browse.spec.ts e2e/back-to-results.spec.ts`
+    - [x] **1.3.a Create `frontend/src/lib/queries.ts`**
+        - Typed readonly builders retain the virtualized and infinite key values.
+    - [x] **1.3.b Take the grids' keys from the factory**
+        - Both grids use the builders; `useInfiniteMovies` accepts readonly `QueryKey`.
+        - File lint, formatting, frontend type-check and 54 related tests pass unchanged.
+        - The browse and Back to Results Chromium specs pass on the worktree's browsable stack (two tests).
 
 ### **Phase 2:** A save shows at once on every card
 

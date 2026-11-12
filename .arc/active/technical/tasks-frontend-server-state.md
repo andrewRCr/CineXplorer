@@ -244,7 +244,7 @@ user's.
         - Kept sign-out's initial write/navigation synchronous after cancellation, correcting an await that changed
           navigation ordering. Formatting, lint, type-check, all 215 related tests and all five Chromium specs pass.
 
-- [ ] **4.2 A provider's return is read once, by the session query — D7, D8**
+- [x] **4.2 A provider's return is read once, by the session query — D7, D8**
 
     **Goal:** On a provider's return the session's first read asks allauth first and lands the provider's user over any
     stored token, and the callback's effect reacts to that read without sending a request.
@@ -263,10 +263,11 @@ user's.
           arrivals clear leftover flags without clearing a newly started provider flow on its original page.
         - Formatting, lint, type-check, 221 related tests and the real-session sign-in Chromium spec pass.
 
-    - [ ] **4.2.c Search for effects that fetch**
-        - No `useEffect` in `frontend/src` calls `apiClient`, `fetch` or a service that reads or changes server data
-          (`authService`, `httpService`, `movieService`, `userMovieDataService`, `userMovieService`), apart from the
-          60-second renewal in `useAuth.ts`; `useAuth` defines no `getUserDetails`
+    - [x] **4.2.c Search for effects that fetch**
+        - Audited 202 source files and 33 effects, following local helper calls and service imports. Only the
+          60-second credential-renewal effect performs network work. Query drivers remain allowed; the callback
+          effect fetches nothing and `useAuth` defines no `getUserDetails`. The development TestLogin helper stays
+          as the explicit non-goal. Audit script and output are retained with the run artifacts.
 
 ### **Phase 5:** A change of user leaves nothing of the previous user's
 

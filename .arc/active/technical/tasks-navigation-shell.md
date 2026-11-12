@@ -122,64 +122,29 @@ each carry one `h1`.
         - Five component tests, lint, formatting and TypeScript passed. All five smoke specs passed (six cases),
           including the updated menu sign-out steps and axe scans.
 
-- [ ] **2.4 The wide bar names its places and marks the current one — R1, R2, R4, R21, R28, R29, R30, R31**
+- [x] **2.4 The wide bar names its places and marks the current one — R1, R2, R4, R21, R28, R29, R30, R31**
 
     **Goal:** At 1024px and wider one 65px row, the page's banner, holds the wordmark, Films, the Library link for
     signed-in visitors, search and the account control, with the current place marked.
 
-    - [ ] **2.4.a Write the bar's tests and `catalogWindow`'s**
-        - In `src/components/layout/navbar/__tests__/NavBar.test.tsx` unless a case names its file
-        - Render the wide row's component on its own, apart from the phone row (Implementation Notes), and `NavBar`
-          only where a case needs the banner
-        - Test: the bar is the `banner` landmark; the wordmark is a link named "CineXplorer" to `/`, not a heading,
-          and its logo is decorative
-        - Test: the `nav` "Main" holds Films (`/browse`) signed out and while resolving, and Films and "Watchlist"
-          (`/watchlist`) signed in
-        - Test: Films has `aria-current="page"` on `/browse`, `/browse/now-playing` and `/browse/upcoming`, and on
-          none of `/`, `/search?query=x`, `/movie/550`, `/profile`, `/login`, `/watchlist` and `/browse/sequential`;
-          Watchlist on `/watchlist` only
-        - Test: in each sign-in state, no link in the bar opens `/journal`, `/library`, `/log`, `/settings` or
-          `/featured`; choosing a link in `MainNavLinks` calls its `onNavigate`
-        - Test, in `src/utilities/__tests__/catalogWindow.test.ts`: `catalogWindow` names `browse`, `now-playing`
-          and `upcoming` on their URLs, also with a trailing slash or in other letter case, as the router matches
-          them; `null` on `/browse/sequential`, `/search`, `/` and `/movie/550`
-        - Test, in `routeConfigResolver.metadata.test.ts`: `getFetcherAndSource` on `/Browse/Now-Playing` picks the
-          now-playing list
-        - Test (`styleSystem`): bar `layer-01` with a `border-strong-01` bottom border; links `foreground`; the
-          current link's underline `tertiary`; the links focused from the keyboard draw a 2px `ring` outline
-        - Expect tests to FAIL initially
-
-    - [ ] **2.4.b Rebuild the wide row of `NavBar` as its own component**
-        - A `Wordmark` component, which the phone row (3.2) reuses: a router link to `/` with the name as text, not a
-          `Heading`, the name smaller below `lg`, and the logo `alt=""`
-        - `catalogWindow(pathname)` in `src/utilities/catalogWindow.ts`: `browse`, `now-playing` or `upcoming` on the
-          three catalog URLs, matched as the router matches them (ignoring letter case and a trailing slash), and
-          `null` anywhere else, `/browse/sequential` included. Films is current where it names a window;
-          `getFetcherAndSource` picks those three lists through it, so the list fetched and the window named agree;
-          and Phase 5 keys the catalog's title, its window rule and its tabs on it
-        - `MainNavLinks` (Films, then the Library link once `status` is `authenticated`) in a `nav` labelled "Main",
-          marking the current page as R2 says; props for the drawer (3.1): `direction` (a row here, a column there)
-          and `onNavigate`, called when a link is chosen
-        - `SearchField` (2.2), then `AccountControl` (2.3); below `lg` the old phone row stays until 3.2 replaces it
-        - Remove the second row (the LOG button and the tabs) and `handleLogClick`
-        - `layout-navbar` becomes one value, 65px, at every breakpoint; delete `navbar-height-mobile` and
-          `navbar-height-desktop` from `foundations.ts`; size the row from the token so the two can't drift
-        - Tests should now PASS
-
-    - [ ] **2.4.c Bring `e2e/sign-in.spec.ts` to the bar**
-        - Signed out at 1280×800: find the bar by its `banner` landmark, its Films link, the search field by role
-          and the "Sign in" link; the banner's rendered height equals `--chakra-sizes-layout-navbar`
-        - Signed in: the Watchlist link; focused from the keyboard, the account menu's trigger draws a computed
-          `outline-color` equal to `ring`'s (the sign-out steps came in 2.3.b)
-        - The sign-in form's own "Login" button is unchanged
-        - Run all five specs against the browsable stack, since the bar is on every page they scan
-
-    - [ ] **2.4.d Update `strategy-component-styling.md`**
-        - A logo link takes no underline but keeps ADR-015's keyboard focus ring
-        - The "Navbar menu items" example shows the bar's links: `foreground` text, the current page underlined in
-          `tertiary`, and a keyboard `ring`
-        - "Interaction States on Surfaces" and "Surface Hover Pattern" give a menu's highlighted item, which is also
-          its keyboard focus mark, a solid `tertiary` fill with `on-tertiary` text
+    - [x] **2.4.a Write the bar's tests and `catalogWindow`'s**
+        - Rendered bar tests cover its landmark, decorative wordmark, all sign-in states, current-page marks,
+          forbidden links, navigation notification and resolved theme/focus styles. Route tests cover case and
+          trailing slashes, non-catalog paths, and fetcher agreement. Cases were seen failing against stubs; the
+          null cases failed against a narrow overmatch before the implementation was restored.
+    - [x] **2.4.b Rebuild the wide row of `NavBar` as its own component**
+        - `WideNavBar`, `Wordmark` and `MainNavLinks` compose search and account controls. Films and authenticated
+          Watchlist are the only main links. Removed the second row and its no-op action. The bar and layout token
+          both use 65px; removed the two navbar foundation heights. The old phone row remains until 3.2.
+    - [x] **2.4.c Bring `e2e/sign-in.spec.ts` to the bar**
+        - Browser checks cover banner controls, its token-sized height, Watchlist, and the account trigger's computed
+          keyboard ring. The banner assertion failed with a temporary missing landmark, then passed after
+          restoration. Color assertions independently resolve the ring and wait for the existing CSS transition.
+        - All five smoke specs (six cases) passed; related bar and route checks: six files, 57 tests passed. Lint,
+          formatting, type generation, TypeScript and documentation lint passed.
+    - [x] **2.4.d Update `strategy-component-styling.md`**
+        - Documented the wordmark's keyboard ring, the bar links' colors/current-page underline, and the menu's
+          solid accent highlight for keyboard and pointer navigation.
 
 ### **Phase 3:** The phone bar replaces the sidebar
 

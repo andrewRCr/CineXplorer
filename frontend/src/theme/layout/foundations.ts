@@ -11,18 +11,6 @@
 export const layoutFoundations = {
     sizes: {
         /**
-         * Navbar height (mobile) - Single row with extra bottom padding
-         * Calculation: pt(2) ~8px + content ~48px + pb(2) ~8px = 64px + 1px border = 65px
-         */
-        "navbar-height-mobile": { value: "65px" },
-
-        /**
-         * Navbar height (desktop) - Two rows (logo/search + nav tabs)
-         * Calculation: pt(2) ~8px + first row ~48px + second row ~36px + border 1px = 93px
-         */
-        "navbar-height-desktop": { value: "93px" },
-
-        /**
          * Sidebar width - Fixed width for desktop sidebar navigation
          * Used for desktop layout, hidden on mobile (handled by semantic tokens)
          */

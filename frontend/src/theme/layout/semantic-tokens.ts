@@ -18,14 +18,9 @@ export const layoutSemanticTokens = {
 
         /**
          * Navbar layout token
-         * Responsive: 64px on mobile (single row), 93px on desktop (two rows)
+         * One row, including its bottom border, at every breakpoint.
          */
-        "layout-navbar": {
-            value: {
-                base: "{sizes.navbar-height-mobile}", // Mobile: 64px
-                lg: "{sizes.navbar-height-desktop}", // Desktop: 93px
-            },
-        },
+        "layout-navbar": { value: "65px" },
 
         /**
          * Sidebar layout token

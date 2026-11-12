@@ -10,6 +10,25 @@ for (const rememberMe of [false, true]) {
         await expect(
             page.getByLabel("Username or Email Address", { exact: true }),
         ).toBeVisible();
+        const banner = page.getByRole("banner");
+        await expect(
+            banner.getByRole("link", { name: "Films", exact: true }),
+        ).toBeVisible();
+        await expect(
+            banner.getByRole("textbox", { name: "Search films", exact: true }),
+        ).toBeVisible();
+        await expect(
+            banner.getByRole("link", { name: "Sign in", exact: true }),
+        ).toBeVisible();
+        const dimensions = await banner.evaluate((element) => ({
+            height: element.getBoundingClientRect().height,
+            token: parseFloat(
+                getComputedStyle(element).getPropertyValue(
+                    "--chakra-sizes-layout-navbar",
+                ),
+            ),
+        }));
+        expect(dimensions.height).toBe(dimensions.token);
         await scanPage(page, info);
         await page
             .getByLabel("Username or Email Address", { exact: true })
@@ -76,6 +95,36 @@ for (const rememberMe of [false, true]) {
         }
         const menu = page.getByRole("button", { name: target.username });
         await expect(menu).toBeVisible();
+        await expect(
+            banner.getByRole("link", { name: "Watchlist", exact: true }),
+        ).toBeVisible();
+        for (let step = 0; step < 30; step++) {
+            await page.keyboard.press("Tab");
+            if (
+                await menu.evaluate(
+                    (element) => element === document.activeElement,
+                )
+            )
+                break;
+        }
+        await expect(menu).toBeFocused();
+        const ring = await menu.evaluate((element) => {
+            const reference = document.createElement("span");
+            reference.style.setProperty(
+                "color",
+                "var(--chakra-colors-ring)",
+                "important",
+            );
+            element.after(reference);
+            try {
+                return getComputedStyle(reference).color;
+            } finally {
+                reference.remove();
+            }
+        });
+        await expect(menu).toHaveCSS("outline-color", ring);
+        await expect(menu).toHaveCSS("outline-width", "2px");
+        await expect(menu).toHaveCSS("outline-style", "solid");
         await menu.click();
         const logoutResponse = page.waitForResponse(
             (response) =>

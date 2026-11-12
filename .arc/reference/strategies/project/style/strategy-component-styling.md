@@ -249,7 +249,10 @@ but their implementation differs by mode:
 
 ### Interaction States on Surfaces
 
-**For interactive surfaces** (cards with hover, list items, menu items):
+Menu items use `_highlighted={{ bg: "tertiary", color: "on-tertiary" }}`: their highlight marks both keyboard
+and pointer navigation.
+
+**For interactive surfaces** (cards with hover and selectable list items):
 
 ```tsx
 // Card with hover state
@@ -715,19 +718,25 @@ import { TextLink } from "@/components/common";
 </ChakraLink>
 ```
 
+**Top-bar links** use foreground text, an accent current-page underline, and a keyboard ring:
+
+```tsx
+// Top-bar navigation links
+<ChakraLink asChild color="foreground"
+  textDecoration={isCurrent ? "underline" : "none"}
+  textDecorationColor="tertiary" textDecorationThickness="2px"
+  textUnderlineOffset="6px"
+  _focusVisible={{ outlineWidth: "2px", outlineStyle: "solid", outlineColor: "ring", outlineOffset: "2px" }}>
+  <RouterLink to="/browse" aria-current={isCurrent ? "page" : undefined}>Films</RouterLink>
+</ChakraLink>
+```
+
 **When to use TextLink:**
 
 ✅ **Inline text links** - Navigation links that should look like hyperlinks:
 
 ```tsx
-// Navbar menu items
-<TextLink to="/movies">Movies</TextLink>
-
-// Footer links
-<TextLink to="/about">About</TextLink>
-
-// Content body links
-<Text>Read more in our <TextLink to="/guide">user guide</TextLink>.</Text>
+<TextLink to="/profile">View your profile</TextLink>
 ```
 
 ✅ **Standalone navigation text** - When you want full link styling (underline, color, focus):
@@ -791,17 +800,13 @@ import { Link } from "react-router-dom";
 </Text>
 ```
 
-❌ **Logo/brand elements** - Don't want underlines or focus rings:
+**Logo and brand links** keep their keyboard ring without an underline:
 
 ```tsx
-// ❌ Wrong: TextLink adds underline and focus ring to logo
-<TextLink to="/"><Heading>CineXplorer</Heading></TextLink>
-
-// ✅ Correct: Use Link without decoration
-import { Link } from "react-router-dom";
-<Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
-  <Heading>CineXplorer</Heading>
-</Link>
+<ChakraLink asChild color="foreground" textDecoration="none"
+  _focusVisible={{ outlineWidth: "2px", outlineStyle: "solid", outlineColor: "ring", outlineOffset: "2px" }}>
+  <RouterLink to="/">CineXplorer</RouterLink>
+</ChakraLink>
 ```
 
 ❌ **External links** - Use Chakra Link for external URLs:
@@ -1230,7 +1235,10 @@ use 16%.
 
 ### Surface Hover Pattern
 
-**For interactive surfaces** (cards, list items, menu items):
+Menu items use a solid `tertiary` highlight with `on-tertiary` text through `_highlighted`, covering keyboard
+and pointer navigation alike.
+
+**For interactive surfaces** (cards and selectable list items):
 
 ```tsx
 <Box

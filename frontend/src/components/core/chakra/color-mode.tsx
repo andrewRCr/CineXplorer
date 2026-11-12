@@ -10,8 +10,15 @@ import { LuMoon, LuSun } from "react-icons/lu";
 export type ColorModeProviderProps = ThemeProviderProps;
 
 export function ColorModeProvider(props: ColorModeProviderProps) {
+  // createRoot mounts this app on the client; index.html handles first paint.
+  // Keep the unused server bootstrap inert; revisit for SSR or hydration.
   return (
-    <ThemeProvider attribute="class" disableTransitionOnChange {...props} />
+    <ThemeProvider
+      attribute="class"
+      disableTransitionOnChange
+      scriptProps={{ type: "text/plain" }}
+      {...props}
+    />
   );
 }
 

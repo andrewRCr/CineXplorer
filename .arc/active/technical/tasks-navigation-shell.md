@@ -94,29 +94,17 @@ each carry one `h1`.
         - Reuses `loginPathFor` and the existing safety policy. All 42 return-path tests, lint, formatting and
           TypeScript checks passed.
 
-- [ ] **2.2 One labelled search field serves the bar — R6, R29**
+- [x] **2.2 One labelled search field serves the bar — R6, R29**
 
     **Goal:** The field is labelled "Search films", submits the trimmed query to `/search?query=`, ignores a blank
     one, and marks focus on its border only while the input has it.
 
-    - [ ] **2.2.a Write `SearchField` tests in `src/components/layout/navbar/__tests__/SearchField.test.tsx`**
-        - Test: the input is found by label "Search films", with placeholder "Search films"; Enter and the "Search"
-          button each open `/search?query=` with the trimmed, encoded query; a blank query stays on the page
-        - Test (`styleSystem`): the wrapper's 1px border is `border-strong-01`; with the input focused from the
-          keyboard it turns `tertiary` and the input draws no border or outline; with the Search button focused
-          the wrapper's border stays `border-strong-01` and the button draws a `ring` outline
-        - Test: `onSubmit` is called once a query is submitted, and not for a blank one; with `autoFocus` the input
-          has focus on mount; Escape in the input calls `onEscape`
-        - Expect tests to FAIL initially
-
-    - [ ] **2.2.b Implement `SearchField`, replacing `NavBarSearch`**
-        - A visually hidden label of its own, the placeholder, and Enter or the button to submit
-        - Props for the phone search (3.2): `onSubmit`, called after a query is submitted; `autoFocus`; and
-          `onEscape`, called on Escape in the input
-        - Mark focus with `&:has(input:focus-visible)` rather than `:focus-within`, so the Search button's own
-          focus leaves the border alone; hover keeps `border-strong-02` with a `tertiary/8` fill
-        - Repoint `NavBar` and `SidebarContent` (until 3.3 deletes it) at `SearchField`, and delete `NavBarSearch.tsx`
-        - Tests should now PASS
+    - [x] **2.2.a Write `SearchField` tests in `src/components/layout/navbar/__tests__/SearchField.test.tsx`**
+        - Five fail-first cases exercise Enter/button submission, encoding, blank queries, autofocus/Escape and the
+          rendered input/button focus styles, with observable submission and close callbacks.
+    - [x] **2.2.b Implement `SearchField`, replacing `NavBarSearch`**
+        - A labelled form uses `:has(input:focus-visible)` for its border. The bar and temporary sidebar use it.
+          All five tests, lint, formatting and TypeScript passed. Both real-session sign-in smoke cases passed.
 
 - [ ] **2.3 The account control shows Sign in, holds its space, or opens the account menu — R3, R5, R29, R30**
 

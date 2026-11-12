@@ -13,7 +13,7 @@ import {
 import { NAVIGATION_SECTIONS } from "@/constants/navigation";
 import { BsFillPlusCircleFill } from "react-icons/bs";
 import { useLocation, useNavigate } from "react-router-dom";
-import NavBarSearch from "../navbar/NavBarSearch";
+import SearchField from "../navbar/SearchField";
 import React from "react";
 
 interface SidebarContentProps {
@@ -118,7 +118,7 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({
       {/* Mobile Search - Only show on mobile */}
       {isMobile && (
         <Box mb={5}>
-          <NavBarSearch onSearch={onNavigate} />
+          <SearchField onSubmit={onNavigate} />
         </Box>
       )}
 

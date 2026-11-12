@@ -3631,6 +3631,12 @@
             "description": "User's password",
             "title": "Password",
             "type": "string"
+          },
+          "remember_me": {
+            "default": false,
+            "description": "Keep the refresh cookie between browser sessions",
+            "title": "Remember Me",
+            "type": "boolean"
           }
         },
         "required": [

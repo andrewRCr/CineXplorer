@@ -933,6 +933,12 @@ export interface components {
              * @description User's password
              */
             password: string;
+            /**
+             * Remember Me
+             * @description Keep the refresh cookie between browser sessions
+             * @default false
+             */
+            remember_me: boolean;
         };
         /**
          * HybridTokenRefreshResponseSchema

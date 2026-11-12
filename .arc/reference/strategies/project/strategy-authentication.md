@@ -111,6 +111,11 @@ going against its design and making upgrades difficult.
 | **CSRF Token**    | Cookie (readable) | 52 weeks  | JavaScript can read    | CSRF protection for unsafe methods     |
 
 The access token goes to local storage when the user asks to be remembered, and to session storage otherwise.
+The same choice controls the refresh cookie: remembered sign-ins set a 14-day cookie, while other sign-ins omit
+Max-Age and Expires so the cookie lasts for the browser session. A new sign-in defaults to not remembered when the
+optional request field is omitted. The signed refresh token carries this choice, and each replacement token and
+cookie preserve it through rotation. Tokens issued before this choice was recorded keep their persistent-cookie
+behavior. The refresh token's own 14-day validity and the access token's 5-minute validity are unchanged.
 
 **Why Hybrid Storage?**
 

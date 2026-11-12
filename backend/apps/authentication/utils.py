@@ -54,7 +54,7 @@ def set_auth_cookie(
     response: HttpResponse,
     token_name: str,
     token_value: str,
-    lifetime: timedelta,
+    lifetime: timedelta | None,
     samesite: Literal["Lax", "Strict", "None"] = "Lax",
 ) -> None:
     """Set authentication token as HTTP-only secure cookie.
@@ -63,7 +63,7 @@ def set_auth_cookie(
         response: HTTP response object to set cookie on
         token_name: Cookie name (e.g., 'refresh_token')
         token_value: JWT token string
-        lifetime: Token lifetime (timedelta)
+        lifetime: Cookie lifetime, or None for a browser-session cookie
         samesite: SameSite cookie attribute ('Lax', 'Strict', or 'None')
 
     Example:
@@ -80,7 +80,7 @@ def set_auth_cookie(
     response.set_cookie(
         token_name,
         token_value,
-        max_age=int(lifetime.total_seconds()),
+        max_age=int(lifetime.total_seconds()) if lifetime is not None else None,
         httponly=True,
         secure=True,
         samesite=samesite,

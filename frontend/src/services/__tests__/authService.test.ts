@@ -134,3 +134,31 @@ it.each([
         expect(window.location.href).toBe("http://localhost:3000");
     },
 );
+
+it.each([false, true, undefined])(
+    "sends the sign-in persistence choice %s",
+    async (rememberMe) => {
+        document.cookie = "csrftoken=django-csrf; path=/";
+        const signedIn = {
+            access_token: token(),
+            user_id: 42,
+            username: "viewer",
+            email_verified: true,
+        } satisfies components["schemas"]["TokenResponseSchema"];
+        let requestBody: unknown;
+        server.use(
+            http.post(`${apiBaseUrl}/token/`, async ({ request }) => {
+                requestBody = await request.json();
+                return HttpResponse.json(signedIn);
+            }),
+        );
+        await expect(login("viewer", "password", rememberMe)).resolves.toEqual(
+            signedIn,
+        );
+        expect(requestBody).toEqual({
+            login: "viewer",
+            password: "password",
+            remember_me: rememberMe ?? false,
+        });
+    },
+);

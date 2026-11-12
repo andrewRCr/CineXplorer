@@ -1,6 +1,6 @@
 import { HttpResponse, http } from "msw/http";
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@tests/helpers/test-renderer";
+import { render, screen, waitFor } from "@tests/helpers/test-renderer";
 import { server } from "@tests/mocks/server";
 import { apiBaseUrl } from "@/config/baseUrls";
 import type { MovieListResponseSchema } from "@/services/userMovieService";
@@ -15,6 +15,20 @@ const emptyWatchlist: MovieListResponseSchema = {
 };
 
 describe("Watchlist Page", () => {
+  it("requests the watchlist with a hundred stored cards per page", async () => {
+    let query: URLSearchParams | undefined;
+    server.use(
+      http.get(userMoviesUrl, ({ request }) => {
+        query = new URL(request.url).searchParams;
+        return HttpResponse.json(emptyWatchlist);
+      }),
+    );
+    render(<Watchlist />);
+    await screen.findByText("No movies on watchlist");
+    await waitFor(() => expect(query?.get("watchlist")).toBe("true"));
+    expect(query?.get("page_size")).toBe("100");
+  });
+
   it("displays watchlisted movies and excludes other movies", async () => {
     render(<Watchlist />);
 

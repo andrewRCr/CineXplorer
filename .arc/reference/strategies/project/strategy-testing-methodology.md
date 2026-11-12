@@ -403,9 +403,9 @@ def test_create_rating_validation(
     client, user = authenticated_user
     csrf_token = get_csrf_token(client)
 
-    response = client.post(
-        "/api/user-movie-data/create/",
-        json.dumps({"tmdb_id": 550, "user_rating": invalid_rating}),
+    response = client.patch(
+        "/api/user-movie-data/550",
+        json.dumps({"user_rating": invalid_rating}),
         content_type="application/json",
         HTTP_X_CSRFTOKEN=csrf_token,
     )
@@ -850,8 +850,9 @@ this tier.
   Results reload scenario supplies its own browse/detail fixtures in both targets to control page height; those
   overrides serve only same-origin GETs. The specs change none of the staging account's saved data.
 
-`/api/user-movie-data` also reaches TMDB, but these specs never call it. A future spec that does supplies its own
-fixtures. Assertions read titles from the browse responses the page received rather than assuming synthetic data;
+A PATCH of an unstored movie at `/api/user-movie-data/{tmdb_id}` also reaches TMDB, but these specs never call it.
+A future spec that does supplies its own fixtures. Assertions read titles from the browse responses the page received
+rather than assuming synthetic data;
 each movie card's link must be named by its title. Since two card links share that name, use an exact name and
 `first()`.
 

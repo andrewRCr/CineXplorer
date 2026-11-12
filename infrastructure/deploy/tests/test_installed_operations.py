@@ -1,4 +1,4 @@
-"""Installed jobs keep working while the mutable checkout selects a legacy release."""
+"""Installed jobs survive checkout changes and report unsupported backend commands."""
 
 from __future__ import annotations
 
@@ -59,7 +59,8 @@ git add .; git commit -qm legacy
             f"""
 set -euo pipefail
 cd {REPO}
-mkdir -p infrastructure/deploy
+mkdir -p infrastructure/deploy backend/apps/movie/management/commands
+: > backend/apps/movie/management/commands/refresh_movie_cards.py
 cp /opt/cinexplorer/stub-deploy infrastructure/deploy/deploy.sh
 cp /source/backup.sh /source/maintenance.sh infrastructure/deploy/
 git add .; git commit -qm supported
@@ -111,9 +112,25 @@ git push -qu origin main
                 for line in unit.splitlines()
                 if line.startswith("ExecStart=")
             )
-            self.fixture.run(
-                ["env", *ENVIRONMENT, *shlex.split(command)], user="deploy"
+            job_result = self.fixture.run(
+                ["env", *ENVIRONMENT, *shlex.split(command)], user="deploy", check=False
             )
+            if job == "maintenance":
+                self.assertNotEqual(job_result.returncode, 0)
+                self.assertIn(
+                    "Unknown command: 'refresh_movie_cards'",
+                    job_result.stdout + job_result.stderr,
+                )
+                self.assertIn(
+                    "refresh_movie_cards",
+                    self.fixture.read(f"{OPERATIONS}/maintenance.sh"),
+                )
+                self.fixture.run(
+                    ["test", "!", "-e", "/opt/cinexplorer/cards-refreshed"]
+                )
+            else:
+                self.assertEqual(job_result.returncode, 0, job_result.stderr)
+
         self.fixture.run(
             [
                 "env",
@@ -128,7 +145,7 @@ git push -qu origin main
             self.fixture.read("/opt/cinexplorer/ping-urls").splitlines(),
             [
                 "https://heartbeat.fixture/backup",
-                "https://heartbeat.fixture/maintenance",
+                "https://heartbeat.fixture/maintenance/fail",
                 "https://heartbeat.fixture/backup",
             ],
         )

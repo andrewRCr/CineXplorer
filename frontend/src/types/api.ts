@@ -786,28 +786,7 @@ export interface paths {
         };
         /**
          * Get User Movies
-         * @description Retrieve movies associated with the authenticated user.
-         *
-         *     This endpoint returns all movies that the user has interacted with
-         *     (watched, rated, added to watchlist, etc.). Movies are enriched with
-         *     complete TMDB data and user-specific metadata.
-         *
-         *     Note: Returns all results at once (no server-side pagination). Frontend
-         *     uses client-side virtualization for large lists.
-         *
-         *     Args:
-         *         request: HTTP request with authenticated user
-         *         watchlist: Filter to show only watchlist movies (default: False)
-         *
-         *     Returns:
-         *         MovieListResponseSchema: List of movies with user data
-         *
-         *     Raises:
-         *         HttpError: 401 if authentication fails
-         *
-         *     Example:
-         *         GET /api/user-movie-data/movies - All user movies
-         *         GET /api/user-movie-data/movies?watchlist=true - Watchlist only
+         * @description Read a filtered and sorted page of the authenticated user's stored cards.
          */
         get: operations["apps_user_movie_data_api_get_user_movies"];
         put?: never;
@@ -818,125 +797,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/user-movie-data/by-tmdb-id": {
+    "/api/user-movie-data/{tmdb_id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get User Movie Data By Tmdb Id
-         * @description Retrieve user movie data for a specific movie by TMDB ID.
-         *
-         *     This endpoint checks if the authenticated user has existing data
-         *     (watchlist, rating, review, etc.) for a movie identified by its TMDB ID.
-         *
-         *     Args:
-         *         request: HTTP request with authenticated user
-         *         tmdb_id: TMDB ID of the movie
-         *
-         *     Returns:
-         *         UserMovieDataDetailSchema: User's data for the specified movie
-         *
-         *     Raises:
-         *         HttpError: 404 if no data exists for this user/movie combination
-         */
-        get: operations["apps_user_movie_data_api_get_user_movie_data_by_tmdb_id"];
+        /** Get User Movie Data */
+        get: operations["apps_user_movie_data_api_get_user_movie_data"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/user-movie-data": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create User Movie Data
-         * @description Create new user movie data entry.
-         *
-         *     This endpoint creates a new UserMovieData record when a user first
-         *     interacts with a movie (adds to watchlist, rates, reviews, etc.).
-         *
-         *     If the movie doesn't exist in our local database yet, the service
-         *     fetches the movie data from TMDB and creates a local Movie stub record.
-         *
-         *     Args:
-         *         request: HTTP request with authenticated user
-         *         payload: User movie data to create (includes movie_id as TMDB ID)
-         *
-         *     Returns:
-         *         UserMovieDataDetailSchema: Created user movie data
-         *
-         *     Raises:
-         *         HttpError: 400 if entry already exists
-         *         HttpError: 404 if movie not found in TMDB
-         */
-        post: operations["apps_user_movie_data_api_create_user_movie_data"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/user-movie-data/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete User Movie Data
-         * @description Delete user movie data entry.
-         *
-         *     This endpoint removes a UserMovieData record. This is rare and typically
-         *     used only to correct mistakes in user input.
-         *
-         *     Args:
-         *         request: HTTP request with authenticated user
-         *         id: Primary key of the UserMovieData object
-         *
-         *     Returns:
-         *         204 No Content on successful deletion
-         *
-         *     Raises:
-         *         HttpError: 404 if object not found or doesn't belong to user
-         */
+        /** Delete User Movie Data */
         delete: operations["apps_user_movie_data_api_delete_user_movie_data"];
         options?: never;
         head?: never;
-        /**
-         * Update User Movie Data
-         * @description Update existing user movie data entry.
-         *
-         *     This endpoint supports partial updates (PATCH) to modify any subset
-         *     of user movie data fields (watchlist, rating, review, etc.).
-         *
-         *     Args:
-         *         request: HTTP request with authenticated user
-         *         id: Primary key of the UserMovieData object
-         *         payload: Fields to update (all optional for PATCH)
-         *
-         *     Returns:
-         *         UserMovieDataDetailSchema: Updated user movie data
-         *
-         *     Raises:
-         *         HttpError: 404 if object not found or doesn't belong to user
-         */
-        patch: operations["apps_user_movie_data_api_update_user_movie_data"];
+        /** Save User Movie Data */
+        patch: operations["apps_user_movie_data_api_save_user_movie_data"];
         trace?: never;
     };
 }
@@ -1530,8 +1407,9 @@ export interface components {
          *     user collections, etc. Supports optional pagination via page/total_pages fields.
          *
          *     The next_tmdb_page_start field enables cursor-based pagination for TMDB-backed
-         *     endpoints with smart buffer mechanism. For non-paginated responses (e.g., user
-         *     movie collections), this field is None and page=1, total_pages=1.
+         *     endpoints with the smart buffer mechanism; null signals their exhaustion.
+         *     Database-served collections always leave it null and use page < total_pages
+         *     to indicate another page.
          */
         MovieListResponseSchema: {
             /**
@@ -1559,34 +1437,23 @@ export interface components {
         };
         /**
          * UserMovieDataSchema
-         * @description Shape of the user-specific movie metadata attached to TMDB responses.
+         * @description The same complete user state on saved-data and movie responses.
          */
         UserMovieDataSchema: {
-            /** Id */
-            id?: number | null;
             /** Tmdb Id */
-            tmdb_id?: number | null;
-            /** Title */
-            title?: string | null;
-            /**
-             * User Watched
-             * @default false
-             */
+            tmdb_id: number;
+            /** User Watched */
             user_watched: boolean;
-            /**
-             * User On Watchlist
-             * @default false
-             */
+            /** User On Watchlist */
             user_on_watchlist: boolean;
-            /**
-             * User Liked
-             * @default false
-             */
+            /** User Liked */
             user_liked: boolean;
             /** User Rating */
-            user_rating?: number | null;
+            user_rating: number | null;
             /** User Review */
-            user_review?: string | null;
+            user_review: string | null;
+            /** Watched At */
+            watched_at: string | null;
         };
         /**
          * MovieSearchParamsSchema
@@ -1802,25 +1669,67 @@ export interface components {
             known_for?: components["schemas"]["MediaReferenceSchema"][];
         };
         /**
-         * UserMovieDataDetailSchema
-         * @description Extended ModelSchema with computed movie context fields.
-         *
-         *     Includes tmdb_id and title computed from the related Movie object.
-         *     These fields are populated at runtime in the API layer.
+         * LibraryQuerySchema
+         * @description Validated bounds and stable ordering for database-served collections.
          */
-        UserMovieDataDetailSchema: {
+        LibraryQuerySchema: {
             /**
-             * Tmdb Id
-             * @description TMDB ID of the associated movie (computed from obj.movie.tmdb_id)
+             * Watchlist
+             * @default false
              */
-            tmdb_id?: number | null;
+            watchlist: boolean;
             /**
-             * Title
-             * @description Title of the associated movie (computed from obj.movie.title)
+             * Watched
+             * @default false
              */
-            title?: string | null;
-            /** ID */
-            id?: number | null;
+            watched: boolean;
+            /**
+             * Liked
+             * @default false
+             */
+            liked: boolean;
+            /**
+             * Rated
+             * @default false
+             */
+            rated: boolean;
+            /**
+             * Sort
+             * @default added
+             * @enum {string}
+             */
+            sort: "added" | "watched" | "rating" | "title" | "release";
+            /**
+             * Direction
+             * @default desc
+             * @enum {string}
+             */
+            direction: "asc" | "desc";
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @default 20
+             */
+            page_size: number;
+        };
+        /**
+         * ErrorResponseSchema
+         * @description The error response sent by shared handlers.
+         */
+        ErrorResponseSchema: {
+            /** Detail */
+            detail: string;
+            code?: components["schemas"]["ErrorCode"] | null;
+        };
+        /**
+         * UserMovieDataPatchSchema
+         * @description Omitted fields stay unchanged; nullable fields can be explicitly cleared.
+         */
+        UserMovieDataPatchSchema: {
             /**
              * User Watched
              * @default false
@@ -1840,82 +1749,8 @@ export interface components {
             user_rating?: number | null;
             /** User Review */
             user_review?: string | null;
-        };
-        /**
-         * UserMovieDataCreateSchema
-         * @description Schema for creating new user movie data entries.
-         *
-         *     Uses manual Schema (not ModelSchema) because it includes movie_id field
-         *     which is not directly on the UserMovieData model (requires FK lookup).
-         */
-        UserMovieDataCreateSchema: {
-            /**
-             * Movie Id
-             * @description ID of the Movie object (database ID, not TMDB ID)
-             */
-            movie_id: number;
-            /**
-             * User Watched
-             * @description Whether the user has marked this movie as watched
-             * @default false
-             */
-            user_watched: boolean;
-            /**
-             * User On Watchlist
-             * @description Whether the movie is on the user's watchlist
-             * @default false
-             */
-            user_on_watchlist: boolean;
-            /**
-             * User Liked
-             * @description Whether the user has liked this movie
-             * @default false
-             */
-            user_liked: boolean;
-            /**
-             * User Rating
-             * @description User's rating of the movie (1-10)
-             */
-            user_rating?: number | null;
-            /**
-             * User Review
-             * @description User's text review of the movie
-             */
-            user_review?: string | null;
-        };
-        /**
-         * UserMovieDataUpdateSchema
-         * @description Schema for updating existing user movie data entries.
-         *
-         *     Uses manual Schema (not ModelSchema) with all optional fields
-         *     to support partial updates (PATCH operations).
-         */
-        UserMovieDataUpdateSchema: {
-            /**
-             * User Watched
-             * @description Whether the user has marked this movie as watched
-             */
-            user_watched?: boolean | null;
-            /**
-             * User On Watchlist
-             * @description Whether the movie is on the user's watchlist
-             */
-            user_on_watchlist?: boolean | null;
-            /**
-             * User Liked
-             * @description Whether the user has liked this movie
-             */
-            user_liked?: boolean | null;
-            /**
-             * User Rating
-             * @description User's rating of the movie (1-10)
-             */
-            user_rating?: number | null;
-            /**
-             * User Review
-             * @description User's text review of the movie
-             */
-            user_review?: string | null;
+            /** Watched At */
+            watched_at?: string | null;
         };
     };
     responses: never;
@@ -2798,6 +2633,13 @@ export interface operations {
         parameters: {
             query?: {
                 watchlist?: boolean;
+                watched?: boolean;
+                liked?: boolean;
+                rated?: boolean;
+                sort?: "added" | "watched" | "rating" | "title" | "release";
+                direction?: "asc" | "desc";
+                page?: number;
+                page_size?: number;
             };
             header?: never;
             path?: never;
@@ -2814,15 +2656,33 @@ export interface operations {
                     "application/json": components["schemas"]["MovieListResponseSchema"];
                 };
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
         };
     };
-    apps_user_movie_data_api_get_user_movie_data_by_tmdb_id: {
+    apps_user_movie_data_api_get_user_movie_data: {
         parameters: {
-            query: {
+            query?: never;
+            header?: never;
+            path: {
                 tmdb_id: number;
             };
-            header?: never;
-            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -2833,31 +2693,34 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
+                    "application/json": components["schemas"]["UserMovieDataSchema"];
                 };
             };
-        };
-    };
-    apps_user_movie_data_api_create_user_movie_data: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UserMovieDataCreateSchema"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
+            /** @description Unauthorized */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
                 };
             };
         };
@@ -2867,7 +2730,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                tmdb_id: number;
             };
             cookie?: never;
         };
@@ -2880,20 +2743,56 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
         };
     };
-    apps_user_movie_data_api_update_user_movie_data: {
+    apps_user_movie_data_api_save_user_movie_data: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: number;
+                tmdb_id: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UserMovieDataUpdateSchema"];
+                "application/json": components["schemas"]["UserMovieDataPatchSchema"];
             };
         };
         responses: {
@@ -2903,7 +2802,97 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UserMovieDataDetailSchema"];
+                    "application/json": components["schemas"]["UserMovieDataSchema"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieDataSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
                 };
             };
         };

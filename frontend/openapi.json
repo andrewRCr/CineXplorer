@@ -3068,6 +3068,91 @@
               "type": "boolean"
             },
             "required": false
+          },
+          {
+            "in": "query",
+            "name": "watched",
+            "schema": {
+              "default": false,
+              "title": "Watched",
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "liked",
+            "schema": {
+              "default": false,
+              "title": "Liked",
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "rated",
+            "schema": {
+              "default": false,
+              "title": "Rated",
+              "type": "boolean"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "default": "added",
+              "enum": [
+                "added",
+                "watched",
+                "rating",
+                "title",
+                "release"
+              ],
+              "title": "Sort",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "schema": {
+              "default": "desc",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "title": "Direction",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "maximum": 1000000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
           }
         ],
         "responses": {
@@ -3080,9 +3165,29 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
           }
         },
-        "description": "Retrieve movies associated with the authenticated user.\n\nThis endpoint returns all movies that the user has interacted with\n(watched, rated, added to watchlist, etc.). Movies are enriched with\ncomplete TMDB data and user-specific metadata.\n\nNote: Returns all results at once (no server-side pagination). Frontend\nuses client-side virtualization for large lists.\n\nArgs:\n    request: HTTP request with authenticated user\n    watchlist: Filter to show only watchlist movies (default: False)\n\nReturns:\n    MovieListResponseSchema: List of movies with user data\n\nRaises:\n    HttpError: 401 if authentication fails\n\nExample:\n    GET /api/user-movie-data/movies - All user movies\n    GET /api/user-movie-data/movies?watchlist=true - Watchlist only",
+        "description": "Read a filtered and sorted page of the authenticated user's stored cards.",
         "tags": [
           "user-movie-data"
         ],
@@ -3093,15 +3198,16 @@
         ]
       }
     },
-    "/api/user-movie-data/by-tmdb-id": {
+    "/api/user-movie-data/{tmdb_id}": {
       "get": {
-        "operationId": "apps_user_movie_data_api_get_user_movie_data_by_tmdb_id",
-        "summary": "Get User Movie Data By Tmdb Id",
+        "operationId": "apps_user_movie_data_api_get_user_movie_data",
+        "summary": "Get User Movie Data",
         "parameters": [
           {
-            "in": "query",
+            "in": "path",
             "name": "tmdb_id",
             "schema": {
+              "exclusiveMinimum": 0,
               "title": "Tmdb Id",
               "type": "integer"
             },
@@ -3114,71 +3220,61 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserMovieDataDetailSchema"
+                  "$ref": "#/components/schemas/UserMovieDataSchema"
                 }
-              }
-            }
-          }
-        },
-        "description": "Retrieve user movie data for a specific movie by TMDB ID.\n\nThis endpoint checks if the authenticated user has existing data\n(watchlist, rating, review, etc.) for a movie identified by its TMDB ID.\n\nArgs:\n    request: HTTP request with authenticated user\n    tmdb_id: TMDB ID of the movie\n\nReturns:\n    UserMovieDataDetailSchema: User's data for the specified movie\n\nRaises:\n    HttpError: 404 if no data exists for this user/movie combination",
-        "tags": [
-          "user-movie-data"
-        ],
-        "security": [
-          {
-            "JWTSessionAuth": []
-          }
-        ]
-      }
-    },
-    "/api/user-movie-data": {
-      "post": {
-        "operationId": "apps_user_movie_data_api_create_user_movie_data",
-        "summary": "Create User Movie Data",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserMovieDataDetailSchema"
-                }
-              }
-            }
-          }
-        },
-        "description": "Create new user movie data entry.\n\nThis endpoint creates a new UserMovieData record when a user first\ninteracts with a movie (adds to watchlist, rates, reviews, etc.).\n\nIf the movie doesn't exist in our local database yet, the service\nfetches the movie data from TMDB and creates a local Movie stub record.\n\nArgs:\n    request: HTTP request with authenticated user\n    payload: User movie data to create (includes movie_id as TMDB ID)\n\nReturns:\n    UserMovieDataDetailSchema: Created user movie data\n\nRaises:\n    HttpError: 400 if entry already exists\n    HttpError: 404 if movie not found in TMDB",
-        "tags": [
-          "user-movie-data"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserMovieDataCreateSchema"
               }
             }
           },
-          "required": true
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
         },
+        "tags": [
+          "user-movie-data"
+        ],
         "security": [
           {
             "JWTSessionAuth": []
           }
         ]
-      }
-    },
-    "/api/user-movie-data/{id}": {
+      },
       "patch": {
-        "operationId": "apps_user_movie_data_api_update_user_movie_data",
-        "summary": "Update User Movie Data",
+        "operationId": "apps_user_movie_data_api_save_user_movie_data",
+        "summary": "Save User Movie Data",
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "tmdb_id",
             "schema": {
-              "title": "Id",
+              "exclusiveMinimum": 0,
+              "title": "Tmdb Id",
               "type": "integer"
             },
             "required": true
@@ -3190,13 +3286,112 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserMovieDataDetailSchema"
+                  "$ref": "#/components/schemas/UserMovieDataSchema"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMovieDataSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
                 }
               }
             }
           }
         },
-        "description": "Update existing user movie data entry.\n\nThis endpoint supports partial updates (PATCH) to modify any subset\nof user movie data fields (watchlist, rating, review, etc.).\n\nArgs:\n    request: HTTP request with authenticated user\n    id: Primary key of the UserMovieData object\n    payload: Fields to update (all optional for PATCH)\n\nReturns:\n    UserMovieDataDetailSchema: Updated user movie data\n\nRaises:\n    HttpError: 404 if object not found or doesn't belong to user",
         "tags": [
           "user-movie-data"
         ],
@@ -3204,7 +3399,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserMovieDataUpdateSchema"
+                "$ref": "#/components/schemas/UserMovieDataPatchSchema"
               }
             }
           },
@@ -3222,9 +3417,10 @@
         "parameters": [
           {
             "in": "path",
-            "name": "id",
+            "name": "tmdb_id",
             "schema": {
-              "title": "Id",
+              "exclusiveMinimum": 0,
+              "title": "Tmdb Id",
               "type": "integer"
             },
             "required": true
@@ -3233,9 +3429,48 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
           }
         },
-        "description": "Delete user movie data entry.\n\nThis endpoint removes a UserMovieData record. This is rare and typically\nused only to correct mistakes in user input.\n\nArgs:\n    request: HTTP request with authenticated user\n    id: Primary key of the UserMovieData object\n\nReturns:\n    204 No Content on successful deletion\n\nRaises:\n    HttpError: 404 if object not found or doesn't belong to user",
         "tags": [
           "user-movie-data"
         ],
@@ -4622,7 +4857,7 @@
         "type": "object"
       },
       "MovieListResponseSchema": {
-        "description": "Response envelope for movie collection endpoints.\n\nUsed for all endpoints returning multiple movies: browse, search, discover,\nuser collections, etc. Supports optional pagination via page/total_pages fields.\n\nThe next_tmdb_page_start field enables cursor-based pagination for TMDB-backed\nendpoints with smart buffer mechanism. For non-paginated responses (e.g., user\nmovie collections), this field is None and page=1, total_pages=1.",
+        "description": "Response envelope for movie collection endpoints.\n\nUsed for all endpoints returning multiple movies: browse, search, discover,\nuser collections, etc. Supports optional pagination via page/total_pages fields.\n\nThe next_tmdb_page_start field enables cursor-based pagination for TMDB-backed\nendpoints with the smart buffer mechanism; null signals their exhaustion.\nDatabase-served collections always leave it null and use page < total_pages\nto indicate another page.",
         "properties": {
           "page": {
             "default": 1,
@@ -4663,59 +4898,29 @@
         "type": "object"
       },
       "UserMovieDataSchema": {
-        "description": "Shape of the user-specific movie metadata attached to TMDB responses.",
+        "description": "The same complete user state on saved-data and movie responses.",
         "properties": {
-          "id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Id"
-          },
           "tmdb_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tmdb Id"
-          },
-          "title": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Title"
+            "title": "Tmdb Id",
+            "type": "integer"
           },
           "user_watched": {
-            "default": false,
             "title": "User Watched",
             "type": "boolean"
           },
           "user_on_watchlist": {
-            "default": false,
             "title": "User On Watchlist",
             "type": "boolean"
           },
           "user_liked": {
-            "default": false,
             "title": "User Liked",
             "type": "boolean"
           },
           "user_rating": {
             "anyOf": [
               {
+                "maximum": 10,
+                "minimum": 1,
                 "type": "integer"
               },
               {
@@ -4734,8 +4939,29 @@
               }
             ],
             "title": "User Review"
+          },
+          "watched_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watched At"
           }
         },
+        "required": [
+          "tmdb_id",
+          "user_watched",
+          "user_on_watchlist",
+          "user_liked",
+          "user_rating",
+          "user_review",
+          "watched_at"
+        ],
         "title": "UserMovieDataSchema",
         "type": "object"
       },
@@ -5304,182 +5530,109 @@
         "title": "PersonSchema",
         "type": "object"
       },
-      "UserMovieDataDetailSchema": {
-        "description": "Extended ModelSchema with computed movie context fields.\n\nIncludes tmdb_id and title computed from the related Movie object.\nThese fields are populated at runtime in the API layer.",
+      "LibraryQuerySchema": {
+        "description": "Validated bounds and stable ordering for database-served collections.",
         "properties": {
-          "tmdb_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "TMDB ID of the associated movie (computed from obj.movie.tmdb_id)",
-            "title": "Tmdb Id"
-          },
-          "title": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Title of the associated movie (computed from obj.movie.title)",
-            "title": "Title"
-          },
-          "id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "ID"
-          },
-          "user_watched": {
+          "watchlist": {
             "default": false,
-            "title": "User Watched",
+            "title": "Watchlist",
             "type": "boolean"
           },
-          "user_on_watchlist": {
+          "watched": {
             "default": false,
-            "title": "User On Watchlist",
+            "title": "Watched",
             "type": "boolean"
           },
-          "user_liked": {
+          "liked": {
             "default": false,
-            "title": "User Liked",
+            "title": "Liked",
             "type": "boolean"
           },
-          "user_rating": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Rating"
+          "rated": {
+            "default": false,
+            "title": "Rated",
+            "type": "boolean"
           },
-          "user_review": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
+          "sort": {
+            "default": "added",
+            "enum": [
+              "added",
+              "watched",
+              "rating",
+              "title",
+              "release"
             ],
-            "title": "User Review"
-          }
-        },
-        "title": "UserMovieDataDetailSchema",
-        "type": "object"
-      },
-      "UserMovieDataCreateSchema": {
-        "description": "Schema for creating new user movie data entries.\n\nUses manual Schema (not ModelSchema) because it includes movie_id field\nwhich is not directly on the UserMovieData model (requires FK lookup).",
-        "properties": {
-          "movie_id": {
-            "description": "ID of the Movie object (database ID, not TMDB ID)",
-            "title": "Movie Id",
+            "title": "Sort",
+            "type": "string"
+          },
+          "direction": {
+            "default": "desc",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "page": {
+            "default": 1,
+            "maximum": 1000000,
+            "minimum": 1,
+            "title": "Page",
             "type": "integer"
           },
-          "user_watched": {
-            "default": false,
-            "description": "Whether the user has marked this movie as watched",
-            "title": "User Watched",
-            "type": "boolean"
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          }
+        },
+        "title": "LibraryQuerySchema",
+        "type": "object"
+      },
+      "ErrorResponseSchema": {
+        "description": "The error response sent by shared handlers.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
           },
-          "user_on_watchlist": {
-            "default": false,
-            "description": "Whether the movie is on the user's watchlist",
-            "title": "User On Watchlist",
-            "type": "boolean"
-          },
-          "user_liked": {
-            "default": false,
-            "description": "Whether the user has liked this movie",
-            "title": "User Liked",
-            "type": "boolean"
-          },
-          "user_rating": {
+          "code": {
             "anyOf": [
               {
-                "maximum": 10,
-                "minimum": 1,
-                "type": "integer"
+                "$ref": "#/components/schemas/ErrorCode"
               },
               {
                 "type": "null"
               }
-            ],
-            "description": "User's rating of the movie (1-10)",
-            "title": "User Rating"
-          },
-          "user_review": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "User's text review of the movie",
-            "title": "User Review"
+            ]
           }
         },
         "required": [
-          "movie_id"
+          "detail"
         ],
-        "title": "UserMovieDataCreateSchema",
+        "title": "ErrorResponseSchema",
         "type": "object"
       },
-      "UserMovieDataUpdateSchema": {
-        "description": "Schema for updating existing user movie data entries.\n\nUses manual Schema (not ModelSchema) with all optional fields\nto support partial updates (PATCH operations).",
+      "UserMovieDataPatchSchema": {
+        "description": "Omitted fields stay unchanged; nullable fields can be explicitly cleared.",
         "properties": {
           "user_watched": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Whether the user has marked this movie as watched",
-            "title": "User Watched"
+            "default": false,
+            "title": "User Watched",
+            "type": "boolean"
           },
           "user_on_watchlist": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Whether the movie is on the user's watchlist",
-            "title": "User On Watchlist"
+            "default": false,
+            "title": "User On Watchlist",
+            "type": "boolean"
           },
           "user_liked": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Whether the user has liked this movie",
-            "title": "User Liked"
+            "default": false,
+            "title": "User Liked",
+            "type": "boolean"
           },
           "user_rating": {
             "anyOf": [
@@ -5492,23 +5645,34 @@
                 "type": "null"
               }
             ],
-            "description": "User's rating of the movie (1-10)",
             "title": "User Rating"
           },
           "user_review": {
             "anyOf": [
               {
+                "maxLength": 10000,
                 "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "User's text review of the movie",
             "title": "User Review"
+          },
+          "watched_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watched At"
           }
         },
-        "title": "UserMovieDataUpdateSchema",
+        "title": "UserMovieDataPatchSchema",
         "type": "object"
       }
     },

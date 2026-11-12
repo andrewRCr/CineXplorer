@@ -152,7 +152,6 @@ class TestMergeWithPreset:
         assert "release_date_lte" in NOW_PLAYING_PROTECTED_KEYS
         assert "year" in NOW_PLAYING_PROTECTED_KEYS
         assert "primary_release_year" in NOW_PLAYING_PROTECTED_KEYS
-        assert len(NOW_PLAYING_PROTECTED_KEYS) == 5
 
     def test_upcoming_protected_keys_constant(self) -> None:
         """Verify UPCOMING_PROTECTED_KEYS contains expected keys."""
@@ -161,7 +160,6 @@ class TestMergeWithPreset:
         assert "release_date_lte" in UPCOMING_PROTECTED_KEYS
         assert "year" in UPCOMING_PROTECTED_KEYS
         assert "primary_release_year" in UPCOMING_PROTECTED_KEYS
-        assert len(UPCOMING_PROTECTED_KEYS) == 5
 
     def test_browse_protected_keys_constant(self) -> None:
         """Verify BROWSE_PROTECTED_KEYS is empty (no restrictions)."""

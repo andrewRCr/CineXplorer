@@ -29,6 +29,8 @@ NOW_PLAYING_PROTECTED_KEYS: Sequence[str] = [
     "release_date_gte",
     "release_date_lte",
     "year",
+    "year_min",
+    "year_max",
     "primary_release_year",
 ]
 """
@@ -53,6 +55,8 @@ UPCOMING_PROTECTED_KEYS: Sequence[str] = [
     "release_date_gte",
     "release_date_lte",
     "year",
+    "year_min",
+    "year_max",
     "primary_release_year",
 ]
 """
@@ -62,7 +66,7 @@ Date range, release type, and year filters define "movies coming soon to theater
 and must be controlled by the endpoint preset to maintain this semantic meaning.
 
 Protected parameters:
-- Date range: Defines the "upcoming" window (e.g., today +5 to end of year)
+- Date range: Defines the "upcoming" window (e.g., today +5 to +65 days)
 - Release type: Ensures theatrical releases only (not TV, VOD, etc.)
 - Year filters: Redundant with date range, prevented to avoid user confusion
 

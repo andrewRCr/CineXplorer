@@ -3,6 +3,7 @@ import { Text, Box, Spinner } from "@chakra-ui/react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import MovieCard from "../MovieCard";
 import MovieCardContainer from "../MovieCardContainer";
+import CatalogWindowTabs from "./CatalogWindowTabs";
 import { GridHeader } from "./GridHeader";
 import {
   CARD_WIDTH,
@@ -196,7 +197,7 @@ const VirtualizedMovieGrid = () => {
     if (!title) return undefined;
     if (typeof title === "string") return title;
     // Object with main/secondary - combine them
-    const titleObj = title as { main: string; secondary?: string };
+    const titleObj = title;
     return titleObj.secondary
       ? `${titleObj.main}${titleObj.secondary}`
       : titleObj.main;
@@ -214,7 +215,9 @@ const VirtualizedMovieGrid = () => {
         resultText={resultText}
         isLoading={isLoading}
         visible={showHeader}
-      />
+      >
+        <CatalogWindowTabs />
+      </GridHeader>
 
       {/* Error State */}
       {isError && (

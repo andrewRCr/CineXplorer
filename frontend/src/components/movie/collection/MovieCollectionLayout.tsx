@@ -7,6 +7,7 @@ import {
   getFetcherAndSource,
   type RouteConfig,
 } from "@/utilities/routeConfigResolver";
+import { catalogTitle } from "@/utilities/catalogTitle";
 import { catalogWindow } from "@/utilities/catalogWindow";
 import { parseSearchParamsFromUrl } from "@/utilities/searchUrlSync";
 import PageHeader from "@/components/movie/collection/PageHeader";
@@ -69,7 +70,7 @@ const MovieCollectionLayout = ({
   // Use provided props or route-based defaults
   const actualFetcher = fetcher || routeFetcher;
   const actualSource = source || routeSource;
-  const actualTitle = title || routeTitle;
+  const currentWindow = catalogWindow(location.pathname);
 
   // Extract search query from URL for search routes
   // This is needed for TanStack Query cache key and scroll position persistence
@@ -91,8 +92,12 @@ const MovieCollectionLayout = ({
     hasActiveAdvancedFilters,
   } = useMovieCollectionState({
     defaultBrowseParams,
-    releaseWindow: catalogWindow(location.pathname),
+    releaseWindow: currentWindow,
   });
+
+  const actualTitle =
+    title ||
+    (currentWindow ? catalogTitle(currentWindow, browseParams) : routeTitle);
 
   // Use the movie fetch router hook to route between search/discover endpoints
   const enhancedFetcher = useMovieFetchRouter({

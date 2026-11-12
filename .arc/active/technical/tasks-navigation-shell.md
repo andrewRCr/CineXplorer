@@ -304,40 +304,27 @@ window tabs, and the phone-width spec follows Films there.
         - Four related files, 50 tests passed; browse and filtered-detail smoke cases passed. Lint, formatting and
           TypeScript checks passed.
 
-- [ ] **5.3 The windows are tabs under a header that stays in every state — R18, R19, R20, R23, R29**
+- [x] **5.3 The windows are tabs under a header that stays in every state — R18, R19, R20, R23, R29**
 
     **Goal:** The catalog shows its composed title above three window tabs while results load, are empty or fail,
     and switching tabs keeps the filters that still apply.
 
-    - [ ] **5.3.a Write the header and tab tests**
-        - Test: a `nav` "Release windows" holding the links "All films", "In theaters" and "Coming soon" in that
-          order, to the three URLs with the current query; the current one `aria-current="page"`; none on search
-        - Test: from
-          `/browse?genres=27&minRating=7&maxRating=9&certifications=R&language=fr&sortBy=vote_average.desc&minYear=1990`,
-          In theaters keeps every filter but the years
-        - Test: the `h1` reads `catalogTitle`'s title ("Popular films" on `/browse`); the title and tabs stay
-          visible while loading, empty and failed; the result count shows while loading and with results and is
-          hidden when empty or failed; the search page's title stays visible when empty and when the request fails
-        - Test (`styleSystem`): tabs `foreground`, the current one marked in `tertiary`; tabs focused from the
-          keyboard draw a `ring` outline
-        - In `VirtualizedMovieGrid.test.tsx` and `Browse.test.tsx`, beside the grid's existing state cases
-        - Test: in `SequentialMovieGrid.test.tsx`, with no results the header's pagination controls stay hidden and
-          take no pointer events; in `BrowseSequential.test.tsx`, `/browse/sequential` keeps the title "Browse" and
-          shows no window tabs
-        - Expect tests to FAIL initially
+    - [x] **5.3.a Write the header and tab tests**
+        - Routed HTTP cases cover all three links, current-window marking, preserved applicable filters, titles and
+          counts in loading/loaded/empty/failed states, search without tabs, and resolved theme and keyboard colors.
+        - Added public-props `GridHeader` tests and routed sequential cases rather than extending the older grid
+          tests' internal mocks. Narrow temporary breaks proved the existing sequential title and hidden controls.
+        - Related tests: 61 passed across six files, including both existing grid suites; lint, format and types pass.
 
-    - [ ] **5.3.b Implement the tabs and the header**
-        - `MovieCollectionLayout` titles a page with `catalogTitle` where `catalogWindow` names a window;
-          `getFetcherAndSource`'s "Browse", "Now Playing" and "Upcoming" give way to it, while search keeps its title
-          and the development-only sequential page, which shares the `browse` list, keeps the fallback's
-        - A `CatalogWindowTabs` component under the title in `VirtualizedMovieGrid`, where `catalogWindow` names a
-          window
-        - `GridHeader` always shows its title; `visible` still hides the result count and the pagination controls
-          (`SequentialMovieGrid`'s), and `VirtualizedMovieGrid`'s `showHeader` feeds it
-        - Tests should now PASS
+    - [x] **5.3.b Implement the tabs and the header**
+        - The layout composes window titles from normalized selection; search retains its object title and the
+          sequential page retains Browse. Context now expresses both title shapes without a cast.
+        - Three Release windows links sit beneath the persistent title. Count and pagination visibility remain
+          separate, preserving sequential controls and the existing scroll behavior.
 
-    - [ ] **5.3.c Assert the catalog's header in `e2e/browse.spec.ts`**
-        - `/browse` shows the `h1` "Popular films" and the three window tabs; run `browse.spec.ts`
+    - [x] **5.3.c Assert the catalog's header in `e2e/browse.spec.ts`**
+        - The spec checks Popular films, the three window links and the current link; a temporary wrong title
+          demonstrated its failure. Browse, Back to Results, movie detail and phone specs all pass (four cases).
 
 - [ ] **5.4 The filter bar and the home page use the catalog's names — R22, R27, R29, R30**
 

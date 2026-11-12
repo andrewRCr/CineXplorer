@@ -17,6 +17,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { createMockMovieListItems } from "@tests/mocks/movieData";
@@ -29,7 +30,8 @@ import Browse from "../Browse";
 import NowPlaying from "../NowPlaying";
 import Upcoming from "../Upcoming";
 import SearchResults from "../SearchResults";
-import { styleSystem } from "@tests/helpers/theme-styles";
+import { gate } from "@tests/helpers/web-locks";
+import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
 
 const browseUrl = `${apiBaseUrl}/movies/browse`;
 
@@ -287,5 +289,172 @@ describe("release-window URL rules", () => {
       "/browse?minYear=1990",
     );
     expect(query?.get("release_date_gte")).toBe("1990-01-01");
+  });
+});
+
+describe("catalog headers and release tabs", () => {
+  it.each(["browse", "now-playing", "upcoming"])(
+    "links the windows with the current query on %s",
+    async (window) => {
+      server.use(
+        http.get(`${apiBaseUrl}/movies/${window}`, () =>
+          HttpResponse.json(browsePage),
+        ),
+      );
+      const path = window === "browse" ? "/browse" : `/browse/${window}`;
+      renderCatalog(`${path}?genres=27`);
+      await screen.findByText("20 results");
+      const nav = screen.getByRole("navigation", { name: "Release windows" });
+      const links = within(nav).getAllByRole("link");
+      expect(links.map((link) => link.textContent)).toEqual([
+        "All films",
+        "In theaters",
+        "Coming soon",
+      ]);
+      expect(links.map((link) => link.getAttribute("href"))).toEqual([
+        "/browse?genres=27",
+        "/browse/now-playing?genres=27",
+        "/browse/upcoming?genres=27",
+      ]);
+      for (const link of links) {
+        if (link.getAttribute("href") === `${path}?genres=27`)
+          expect(link).toHaveAttribute("aria-current", "page");
+        else expect(link).not.toHaveAttribute("aria-current");
+      }
+    },
+  );
+
+  it("carries applicable filters into the chosen window", async () => {
+    server.use(
+      http.get(browseUrl, () => HttpResponse.json(browsePage)),
+      http.get(`${apiBaseUrl}/movies/now-playing`, () =>
+        HttpResponse.json(browsePage),
+      ),
+    );
+    const user = userEvent.setup();
+    renderCatalog(
+      "/browse?genres=27&minRating=7&maxRating=9&certifications=R&language=fr&sortBy=vote_average.desc&minYear=1990",
+    );
+    await screen.findByText("20 results");
+    await user.click(screen.getByRole("link", { name: "In theaters" }));
+    await waitFor(() => {
+      const query = new URL(
+        screen.getByLabelText("Catalog location").textContent || "",
+        "https://example.test",
+      ).searchParams;
+      expect(query.has("minYear")).toBe(false);
+      expect(Object.fromEntries(query)).toEqual({
+        genres: "27",
+        minRating: "7",
+        maxRating: "9",
+        certifications: "R",
+        language: "fr",
+        sortBy: "vote_average.desc",
+      });
+    });
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Highest-rated French-language horror films in theaters",
+    );
+  });
+
+  it.each(["loading", "loaded", "empty", "failed"])(
+    "keeps the catalog title and tabs while %s",
+    async (state) => {
+      const held = gate();
+      server.use(
+        http.get(browseUrl, async () => {
+          if (state === "loading") await held.wait;
+          return state === "failed"
+            ? HttpResponse.json({ detail: "Unavailable" }, { status: 503 })
+            : HttpResponse.json(
+                state === "empty"
+                  ? {
+                      ...browsePage,
+                      results: [],
+                      total_results: 0,
+                      total_pages: 0,
+                    }
+                  : browsePage,
+              );
+        }),
+      );
+      renderCatalog("/browse");
+      if (state === "empty")
+        await screen.findByText("No movies found matching your filters.");
+      if (state === "failed")
+        await screen.findByRole("button", { name: "Retry" });
+      if (state === "loaded") await screen.findByText("20 results");
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Popular films" }),
+      ).toBeVisible();
+      expect(
+        screen.getByRole("navigation", { name: "Release windows" }),
+      ).toBeVisible();
+      if (state === "loading") {
+        expect(screen.getByText("Loading results...")).toBeVisible();
+        held.release();
+        await screen.findByText("20 results");
+      }
+      if (state === "loaded")
+        expect(screen.getByText("20 results")).toBeVisible();
+      if (state === "empty" || state === "failed")
+        expect(
+          screen.queryByText(/^(Loading results\.\.\.|20 results)$/),
+        ).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(["empty", "failed"])(
+    "keeps search's title without tabs while %s",
+    async (state) => {
+      server.use(
+        http.get(`${apiBaseUrl}/movies/search`, () =>
+          state === "failed"
+            ? HttpResponse.json({ detail: "Unavailable" }, { status: 503 })
+            : HttpResponse.json({
+                ...browsePage,
+                results: [],
+                total_results: 0,
+                total_pages: 0,
+              }),
+        ),
+      );
+      renderCatalog("/search?query=Alien");
+      if (state === "empty")
+        await screen.findByText("No movies found matching your filters.");
+      else await screen.findByRole("button", { name: "Retry" });
+      expect(
+        screen.getByRole("heading", {
+          level: 1,
+          name: 'Search Results for "Alien"',
+        }),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("navigation", { name: "Release windows" }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it("uses theme roles for the tabs and their keyboard rings", async () => {
+    server.use(http.get(browseUrl, () => HttpResponse.json(browsePage)));
+    const user = userEvent.setup();
+    renderCatalog("/browse");
+    await screen.findByText("20 results");
+    const links = within(
+      screen.getByRole("navigation", { name: "Release windows" }),
+    ).getAllByRole("link");
+    const current = screen.getByRole("link", { name: "All films" });
+    expectResolvedColor(
+      current,
+      "text-decoration-color",
+      "var(--chakra-colors-tertiary)",
+    );
+    await user.tab();
+    for (const link of links) {
+      await user.tab();
+      expect(link).toHaveFocus();
+      expectResolvedColor(link, "color", "var(--chakra-colors-foreground)");
+      expectResolvedColor(link, "outline-color", "var(--chakra-colors-ring)");
+    }
   });
 });

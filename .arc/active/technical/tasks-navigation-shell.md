@@ -82,24 +82,17 @@ expanded fill resolving to theme roles, and `npm run verify-contrast` passes wit
 _Mode:_ `slice` — closes on one bar at every width, its drawer, phone search and account menu working, over pages that
 each carry one `h1`.
 
-- [ ] **2.1 Sign in's target follows the visitor's page — R5**
+- [x] **2.1 Sign in's target follows the visitor's page — R5**
 
     **Goal:** Sign in on any page points at a sign-in URL that returns there; on the sign-in pages, at one the sign-in
     page accepts.
 
-    - [ ] **2.1.a Write `signInPathFor` tests in `src/utilities/__tests__/returnPath.test.ts`**
-        - Test: an app page with a query returns `/login?next=` with the encoded path and query
-          (`/browse?genres=27` gives `/login?next=%2Fbrowse%3Fgenres%3D27`)
-        - Test: `/login?next=%2Fwatchlist` keeps `next`; `/login` alone, `/register` and `/forgot-password`, each
-          with or without a query, give `/login`
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.b Implement `signInPathFor(pathname, search)` in `src/utilities/returnPath.ts`**
-        - Other pages: `loginPathFor` of the path and query. On `/login`: `loginPathFor` of the page's own `next`,
-          which drops a `next` the sign-in page would refuse anyway. On `/register` and `/forgot-password`:
-          `ROUTES.LOGIN`
-        - Recognize the sign-in pages as `safeReturnPath` does (case-insensitive, trailing slash ignored)
-        - Tests should now PASS
+    - [x] **2.1.a Write `signInPathFor` tests in `src/utilities/__tests__/returnPath.test.ts`**
+        - Eleven fail-first cases cover a filtered app URL, login's safe and unsafe next values, and all sign-in
+          pages with queries, mixed case and trailing slashes.
+    - [x] **2.1.b Implement `signInPathFor(pathname, search)` in `src/utilities/returnPath.ts`**
+        - Reuses `loginPathFor` and the existing safety policy. All 42 return-path tests, lint, formatting and
+          TypeScript checks passed.
 
 - [ ] **2.2 One labelled search field serves the bar — R6, R29**
 

@@ -48,3 +48,12 @@ export function loginPathFor(returnTo: string | null): string {
         ? `${ROUTES.LOGIN}?next=${encodeURIComponent(path)}`
         : ROUTES.LOGIN;
 }
+
+/** The bar's sign-in link, preserving an accepted return target on sign-in pages. */
+export function signInPathFor(pathname: string, search: string): string {
+    const path = pathname.replace(/\/+$/, "").toLowerCase() || "/";
+    if (path === ROUTES.LOGIN)
+        return loginPathFor(new URLSearchParams(search).get("next"));
+    if (SIGN_IN_PATHS.has(path)) return ROUTES.LOGIN;
+    return loginPathFor(`${pathname}${search}`);
+}

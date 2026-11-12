@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { loginPathFor, returnPathFrom, safeReturnPath } from "../returnPath";
+import {
+    loginPathFor,
+    returnPathFrom,
+    safeReturnPath,
+    signInPathFor,
+} from "../returnPath";
 
 describe("safeReturnPath", () => {
     it.each(["/watchlist", "/watchlist?sort=added#top", "/movie/550", "/"])(
@@ -61,4 +66,22 @@ describe("loginPathFor", () => {
             expect(loginPathFor(path)).toBe("/login");
         },
     );
+});
+
+describe("signInPathFor", () => {
+    it.each([
+        ["/browse", "?genres=27", "/login?next=%2Fbrowse%3Fgenres%3D27"],
+        ["/login", "?next=%2Fwatchlist", "/login?next=%2Fwatchlist"],
+        ["/LOGIN/", "?next=%2Fwatchlist", "/login?next=%2Fwatchlist"],
+        ["/login", "", "/login"],
+        ["/login", "?next=%2F%2Fevil.example", "/login"],
+        ["/register", "", "/login"],
+        ["/register", "?next=%2Fwatchlist", "/login"],
+        ["/REGISTER/", "?x=1", "/login"],
+        ["/forgot-password", "", "/login"],
+        ["/forgot-password", "?next=%2Fwatchlist", "/login"],
+        ["/FORGOT-PASSWORD/", "?x=1", "/login"],
+    ])("links from %s%s to %s", (path, search, expected) => {
+        expect(signInPathFor(path, search)).toBe(expected);
+    });
 });

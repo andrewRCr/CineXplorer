@@ -111,6 +111,11 @@ going against its design and making upgrades difficult.
 | **CSRF Token**    | Cookie (readable) | 52 weeks  | JavaScript can read    | CSRF protection for unsafe methods     |
 
 The access token goes to local storage when the user asks to be remembered, and to session storage otherwise.
+The same choice controls the refresh cookie: remembered sign-ins set a 14-day cookie, while other sign-ins omit
+Max-Age and Expires so the cookie lasts for the browser session. A new sign-in defaults to not remembered when the
+optional request field is omitted. The signed refresh token carries this choice, and each replacement token and
+cookie preserve it through rotation. Tokens issued before this choice was recorded keep their persistent-cookie
+behavior. The refresh token's own 14-day validity and the access token's 5-minute validity are unchanged.
 
 **Why Hybrid Storage?**
 
@@ -244,6 +249,11 @@ The site exposes only four exact browser paths under `/_allauth/browser/v1/`:
 endpoints and their throttles. Provider callbacks remain under `/accounts/`.
 
 Browser OAuth uses HTTP-only session cookies. The app client's session-token mechanism is unreachable.
+
+GitHub email intake keeps only addresses marked both primary and verified by GitHub, before account matching or
+storage. The public profile email is normalized to that address, or null when none qualifies; provider trust
+settings cannot promote an unverified GitHub address. Other providers retain allauth's verification behavior.
+Existing email rows are not removed, and connecting GitHub does not replace the account's existing email.
 
 **Attempting to force JWT tokens for browser OAuth would require**:
 

@@ -319,6 +319,7 @@ HEADLESS_FRONTEND_URLS = {
 }
 
 # Social account settings
+SOCIALACCOUNT_ADAPTER = "apps.authentication.adapters.CustomSocialAccountAdapter"
 SOCIALACCOUNT_AUTO_SIGNUP = True  # Auto-create account from social login
 SOCIALACCOUNT_EMAIL_VERIFICATION = "none"  # Social providers verify email
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True  # Use email for social account matching

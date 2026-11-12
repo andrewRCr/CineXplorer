@@ -56,14 +56,11 @@ def create_register_input(**overrides: str) -> RegisterInputSchema:
     return RegisterInputSchema(**merged)
 
 
-def create_token_input(**overrides: str) -> TokenObtainInputSchema:
+def create_token_input(
+    *, login: str = "testuser", password: str = "testpass123", remember_me: bool = False
+) -> TokenObtainInputSchema:
     """Build TokenObtainInputSchema with sensible defaults."""
-    data: dict[str, str] = {
-        "login": "testuser",
-        "password": "testpass123",
-    }
-    merged = {**data, **overrides}
-    return TokenObtainInputSchema(**merged)
+    return TokenObtainInputSchema(login=login, password=password, remember_me=remember_me)
 
 
 def create_email_verification_input(**overrides: str) -> EmailVerificationInputSchema:

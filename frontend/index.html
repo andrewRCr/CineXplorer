@@ -17,13 +17,22 @@
     />
     <title>CineXplorer</title>
     <style>
+      :root {
+        --app-bg: #f2e8ce;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --app-bg: #110e0a;
+        }
+      }
+
       /* Prevent white flash: background on ALL containers */
       html,
       body,
       #root {
         margin: 0;
         min-height: 100vh;
-        background-color: var(--app-bg, #110e0a) !important;
+        background-color: var(--app-bg) !important;
       }
 
       /* Preload overlay: covers screen, independent of React */
@@ -34,7 +43,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: var(--app-bg, #110e0a);
+        background-color: var(--app-bg);
         /* Start invisible but in DOM (faster than display:none toggle) */
         opacity: 0;
         pointer-events: none;
@@ -68,7 +77,9 @@
       // Prevent flash of wrong background before React/Chakra loads
       // Sets CSS variable used by html/body/#root/#preload-overlay styles
       (function () {
-        var bg = "#110E0A"; // Default: Marquee dark
+        var bg = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "#110E0A"
+          : "#F2E8CE";
         try {
           var stored = localStorage.getItem("cinexplorer-bg");
           // Validate 6-char hex format (#XXXXXX) with valid hex digits

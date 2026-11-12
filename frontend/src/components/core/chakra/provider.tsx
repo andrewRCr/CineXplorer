@@ -32,6 +32,7 @@ function BackgroundSync() {
     localStorage.setItem(BG_STORAGE_KEY, bg);
 
     // Apply immediately to prevent any flash during this session
+    document.documentElement.style.setProperty("--app-bg", bg);
     document.documentElement.style.backgroundColor = bg;
     document.body.style.backgroundColor = bg;
   }, [theme, colorMode]);

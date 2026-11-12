@@ -57,17 +57,16 @@ toast, and the grid tests and the browse smoke specs pass with the grids' keys t
         - Retry twice only for uncancelled axios network errors or 5xx; mutations explicitly never retry.
         - Existing backoff, cache times and refetch settings stay. All seven retry tests pass.
 
-- [ ] **1.2 Retried reads share one "Server error" toast — D2**
+- [x] **1.2 Retried reads share one "Server error" toast — D2**
 
     **Goal:** A read that fails with a 5xx again after a retry updates the "Server error" toast already showing instead
     of stacking another, in the grids too.
 
-    - [ ] **1.2.a Test two failing reads in `apiClient.test.ts`**
-        - Two GETs answered 500 with `<Toaster />` rendered: one "Server error" toast shows
-        - Expect test to FAIL initially (two toasts today)
-    - [ ] **1.2.b Give the toast a fixed `id` in `apiClient`'s response interceptor**
-        - The toaster updates a toast created with an id it already shows (`create` in `@zag-js/toast`'s store)
-        - Tests should now PASS
+    - [x] **1.2.a Test two failing reads in `apiClient.test.ts`**
+        - Two MSW 500 responses render one visible server-error toast; the test failed with two before the change.
+    - [x] **1.2.b Give the toast a fixed `id` in `apiClient`'s response interceptor**
+        - The shared `server-error` ID updates the showing toast. Confirmed against locked Zag 1.47.0.
+        - The client-related run passed all 268 tests in 27 files; frontend type-check, file lint and formatting passed.
 
 - [ ] **1.3 The grids take their query keys from one factory — D1**
 

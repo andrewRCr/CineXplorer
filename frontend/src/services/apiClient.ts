@@ -256,6 +256,7 @@ apiClient.interceptors.response.use(
             !handledEmailFailure
         ) {
             toaster.error({
+                id: "server-error",
                 title: "Server error",
                 description: "Please try again later.",
                 closable: true,

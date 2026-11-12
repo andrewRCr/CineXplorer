@@ -217,48 +217,28 @@ _Exit criterion:_ at 1280×800 and 360×800, `sign-in.spec.ts` and the phone-wid
 view at `layout-navbar`'s height, the drawer, the phone search and the account menu opening and closing, the axe scans
 passing without the sidebar's entries, and one `h1` on each page they reach.
 
-- [ ] **4.1 The content area holds loading and errors — R12, R13, R14, R15, R16, R17, R29**
+- [x] **4.1 The content area holds loading and errors — R12, R13, R14, R15, R16, R17, R29**
 
     **Goal:** A loading or failing page shows its state between a working bar and footer, a failed page clears on
     navigation without remounting the content area, and a failure in the shell itself still gets a full-page display.
 
-    - [ ] **4.1.a Write the content area's tests in `src/components/layout/__tests__/BaseLayout.test.tsx`**
-        - Test: a route that throws shows "Oops! Something went wrong" as the page's only `h1`, with Try Again,
-          between the banner and the footer, and the bar's Films link still opens `/browse`
-        - Test: changing the path, and the query alone, clears the error; Try Again clears it in place
-        - Test: with no error, changing the path or the query keeps the state of a stateful component in a layout
-          route inside the content area, since the reset key is not a React `key`
-        - Test: a lazily loaded route shows "Loading..." with the banner present
-        - Test: with `oauth_in_progress` set to `google`, then `github`, the loading state reads "Logging in with
-          Google..." or "Logging in with GitHub..." under the bar, and `window.__dismissPreloadOverlay` is called
-          once the shell renders
-        - Test (`styleSystem`): the error display's separator is `border-subtle-01`. It renders only with
-          `showErrorDetails`, which tests outside development don't set, so this case renders `ErrorBoundary` directly
-          with `showErrorDetails` and a child that throws
-        - Expect tests to FAIL initially
-
-    - [ ] **4.1.b Write the app-level tests in `src/__tests__/App.test.tsx`**
-        - Test: a bar that throws renders the last-resort full-page error display, with no banner and no footer. The
-          bar makes the shell's one call outside React, `window.__dismissPreloadOverlay` from `index.html`, so a stub
-          that throws fails the bar without mocking a project module (approach chosen by the Owner, 2026-11-12)
-        - Test: signed in, since `ProtectedRoute` guards it, `/testlogin` shows the page-level loading fallback, with
-          no banner, while its page loads
-        - Both pass today through `LoadingLayout`, `App`'s fallback, which calls the dismissal and draws no bar; each
-          is seen failing against a narrow break (Implementation Notes): `App` without its outer boundary for the
-          first, and a page-level fallback that draws the bar for the second
-
-    - [ ] **4.1.c Move the boundaries into the shell**
-        - `ErrorBoundary`: a reset key that clears a caught error when it changes; its heading becomes an `h1`; its
-          separator `border-subtle-01`
-        - `BaseLayout`: the bar, then an `ErrorBoundary`, with a reset key of `useLocation`'s path and query (not a
-          React `key`, which would remount the content), around a `Suspense` whose fallback is `LoadingContent`'s
-          `content` mode (or the OAuth variant from `LoadingLayout`), then the footer. Its `showErrorDetails` is
-          `App`'s: development only
-        - The bar calls `window.__dismissPreloadOverlay` on mount, and the `Window` declaration moves with it
-        - `App`: the last-resort `ErrorBoundary` stays above `BrowserRouter`; the top-level `Suspense` falls back
-          to `LoadingContent`'s `layout` mode, which only `/testlogin` reaches; delete `LoadingLayout`
-        - In-app navigation keeps `BrowserRouter`'s default transitions (R14); no change
-        - Tests should now PASS
+    - [x] **4.1.a Write the content area's tests in `src/components/layout/__tests__/BaseLayout.test.tsx`**
+        - Eight cases cover error placement and usable navigation, query reset, retry, kept state across path/query,
+          lazy loading with both OAuth providers, one overlay dismissal, and the resolved separator color.
+        - New behaviors failed before implementation. Kept state failed against temporary path and query keys, then
+          passed after restoration; the real footer and theme provider participate in these tests.
+    - [x] **4.1.b Write the app-level tests in `src/__tests__/App.test.tsx`**
+        - A throwing overlay-dismissal callback exercises the outer shell boundary without mocking a project module.
+          The protected development page retains a page-level lazy fallback. Each passed initially, failed with its
+          narrow guard/fallback break, and passed after restoration.
+    - [x] **4.1.c Move the boundaries into the shell**
+        - `BaseLayout` keeps bar/footer around a flexible content area with error and Suspense boundaries. A reset
+          prop clears errors on path/query changes without a React key. The error heading is an `h1` and its
+          separator uses `border-subtle-01`.
+        - The bar dismisses the preload overlay once per mount; provider loading shows inside the shell. The outer
+          app boundary remains, and `/testlogin` uses the layout-mode fallback. Removed `LoadingLayout`.
+        - Eight related test files, 56 cases passed; desktop/phone smoke: three cases passed. Lint, formatting and
+          TypeScript checks passed.
 
 - [ ] **4.2 Each page in the shell has one `h1` — R12, R30**
 

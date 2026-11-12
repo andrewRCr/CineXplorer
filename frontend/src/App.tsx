@@ -6,7 +6,7 @@ import "./App.css";
 import MovieCollectionLayout from "./components/movie/collection/MovieCollectionLayout";
 import AppLayout from "./components/layout/AppLayout";
 import AuthLayout from "./components/layout/AuthLayout";
-import LoadingLayout from "./components/layout/LoadingLayout";
+import LoadingContent from "./components/layout/LoadingContent";
 import AuthContextProvider from "./components/auth/AuthContextProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ErrorBoundary from "./components/core/ErrorBoundary";
@@ -47,7 +47,7 @@ const App: React.FC = () => {
     <ErrorBoundary showErrorDetails={import.meta.env.MODE === "development"}>
       <BrowserRouter>
         <AuthContextProvider>
-          <Suspense fallback={<LoadingLayout />}>
+          <Suspense fallback={<LoadingContent mode="layout" />}>
             <Routes>
               {/* Auth routes - separate layout */}
               <Route

@@ -1,8 +1,22 @@
+import { useEffect, useRef } from "react";
 import { Box, Container } from "@chakra-ui/react";
 import PhoneNavBar from "./PhoneNavBar";
 import WideNavBar from "./WideNavBar";
 
+declare global {
+  interface Window {
+    __dismissPreloadOverlay?: () => void;
+  }
+}
+
 export default function NavBar() {
+  const preloadDismissed = useRef(false);
+  useEffect(() => {
+    if (!preloadDismissed.current) {
+      preloadDismissed.current = true;
+      window.__dismissPreloadOverlay?.();
+    }
+  }, []);
   return (
     <Box
       as="header"

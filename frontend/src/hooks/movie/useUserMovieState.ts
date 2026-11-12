@@ -1,8 +1,10 @@
 import {
     mutationOptions,
+    MutationObserver,
     useMutation,
     useMutationState,
     type MutationState,
+    type UseMutationOptions,
 } from "@tanstack/react-query";
 import {
     saveUserMovieData,
@@ -16,7 +18,9 @@ import { toaster } from "@/components/core/chakra/toaster";
 type SaveVariables = { changes: UserMovieDataPatchSchema; undo?: boolean };
 const saveKey = (tmdbId: number | undefined) => ["movie-save", tmdbId] as const;
 
-export const saveMutationOptions = (tmdbId: number) =>
+export const saveMutationOptions = (
+    tmdbId: number,
+): UseMutationOptions<UserMovieDataSchema, Error, SaveVariables, number> =>
     mutationOptions({
         mutationKey: saveKey(tmdbId),
         scope: { id: `movie-save:${tmdbId}` },
@@ -32,6 +36,27 @@ export const saveMutationOptions = (tmdbId: number) =>
             if ("user_on_watchlist" in variables.changes) {
                 toaster.success({
                     id: createSaveToastId(),
+                    action: variables.undo
+                        ? undefined
+                        : {
+                              label: "Undo",
+                              onClick: () => {
+                                  if (change !== getChangeCount()) return;
+                                  const observer = new MutationObserver(
+                                      client,
+                                      saveMutationOptions(tmdbId),
+                                  );
+                                  void observer
+                                      .mutate({
+                                          changes: {
+                                              user_on_watchlist:
+                                                  !record.user_on_watchlist,
+                                          },
+                                          undo: true,
+                                      })
+                                      .catch(() => {});
+                              },
+                          },
                     title: record.user_on_watchlist
                         ? "Added to watchlist"
                         : "Removed from watchlist",

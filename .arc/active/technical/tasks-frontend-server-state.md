@@ -117,25 +117,20 @@ through the shared save hook.
           excludes the session key; `changeOfUser` composes both. The session key is owned here.
         - Frontend type-check, file lint and formatting pass after guarding the toast API's optional ID.
 
-- [ ] **2.3 A watchlist toast offers Undo, one save per click — D4, D8**
+- [x] **2.3 A watchlist toast offers Undo, one save per click — D4, D8**
 
     **Goal:** Undo on a watchlist save's toast saves the opposite value once per click, also after the component that
     started the save is gone, and its own toast offers no further Undo.
 
-    - [ ] **2.3.a Test Undo in `useUserMovieState.test.tsx`**
-        - Undo on "Added to watchlist" sends one PATCH with `user_on_watchlist: false`; its toast reads
-          "Removed from watchlist" and offers no Undo
-        - Undo from a toast whose component has unmounted still saves and shows its toast
-        - Expect tests to FAIL initially; with Undo added and `renderToast` unchanged, a click sends two saves. Undo's
-          own toast offering no Undo passes before Undo exists, and is seen failing against Undo on every watchlist
-          save's toast
-    - [ ] **2.3.b Add Undo, and stop the renderer's second call**
-        - The success toast's `action` is Undo, which runs a save marked as an Undo through
-          `saveMutationOptions(tmdbId)` and the callback's `client`, outside any component (for example through a
-          `MutationObserver`)
-        - `renderToast` in `toaster.tsx` stops passing `toast.action.onClick` to `Toast.ActionTrigger`, whose trigger
-          props already call it
-        - Tests should now PASS
+    - [x] **2.3.a Test Undo in `useUserMovieState.test.tsx`**
+        - One click sends one opposite PATCH, including after the original component unmounts, and Undo's toast has
+          no further action. Both cases failed without Undo and with the renderer's duplicate handler; always
+          offering Undo failed the negative assertion.
+    - [x] **2.3.b Add Undo, and stop the renderer's second call**
+        - Undo runs the same guarded mutation options through a component-independent observer; the renderer leaves
+          action dispatch to its trigger. Frontend type-check, formatting, lint and all 285 related tests pass.
+        - The unrelated login visibility failure was repaired separately in #180 and merged from main. Main also
+          brought TanStack Query 5.106.0; ordered saves, cache clearing and retention pass against that version.
 
 - [ ] **2.4 Cards show and save their state through the save hook — D5, D8**
 

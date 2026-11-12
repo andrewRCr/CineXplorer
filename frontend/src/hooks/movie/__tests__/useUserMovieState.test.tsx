@@ -65,6 +65,49 @@ afterEach(() => {
 });
 
 describe("shared movie saves", () => {
+  it.each([false, true])(
+    "Undo sends one opposite save without offering another Undo; unmounted: %s",
+    async (unmounted) => {
+      const requests: unknown[] = [];
+      server.use(
+        http.patch(`${apiBaseUrl}/user-movie-data/1`, async ({ request }) => {
+          const changes = await request.json();
+          requests.push(changes);
+          return HttpResponse.json(
+            createMockUserMovieData({
+              user_on_watchlist: requests.length === 1,
+            }),
+          );
+        }),
+      );
+      const user = userEvent.setup();
+      const view = render(
+        <>
+          <Probe key="probe" />
+          <Toaster key="toasts" />
+        </>,
+      );
+      await user.click(screen.getByRole("button", { name: "Watchlist" }));
+      await waitFor(() =>
+        expect(screen.getByText("Added to watchlist")).toBeVisible(),
+      );
+      if (unmounted) view.rerender(<Toaster key="toasts" />);
+      await user.click(screen.getByRole("button", { name: "Undo" }));
+      await waitFor(() =>
+        expect(screen.getByText("Removed from watchlist")).toBeVisible(),
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("button", { name: "Undo" }),
+        ).not.toBeInTheDocument(),
+      );
+      expect(requests).toEqual([
+        { user_on_watchlist: true },
+        { user_on_watchlist: false },
+      ]);
+    },
+  );
+
   it.each([true, false])(
     "takes its watchlist toast from the server record: %s",
     async (onWatchlist) => {

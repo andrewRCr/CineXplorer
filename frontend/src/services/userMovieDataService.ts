@@ -1,4 +1,4 @@
-/** Read and partially save the signed-in user's movie state by TMDB ID. */
+/** Partially save the signed-in user's movie state by TMDB ID. */
 import create from "./httpService";
 import type { components } from "@/types/api";
 
@@ -9,9 +9,6 @@ export type UserMovieDataPatchSchema = Partial<
 >;
 
 const userMovieDataService = create("/user-movie-data");
-
-export const getUserMovieDataByTmdbId = ({ tmdb_id }: { tmdb_id: number }) =>
-    userMovieDataService.get<UserMovieDataSchema>(tmdb_id);
 
 /** Omitted fields stay unchanged; explicit null clears a nullable field. */
 export const saveUserMovieData = (

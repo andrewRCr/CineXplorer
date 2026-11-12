@@ -1,3 +1,6 @@
+import { queryOptions } from "@tanstack/react-query";
+import { fetchMovieDetail } from "@/services/movieService";
+import type { MovieDetail } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 
 export const virtualizedMoviesKey = (
@@ -13,3 +16,23 @@ export const infiniteMoviesKey = (
 ) => ["movies", "infinite", source, query, browseParams] as const;
 
 export const libraryKey = ["library"] as const;
+
+// Link the query lifetime to the service's existing cancellation contract.
+function readWithSignal<T>(
+    signal: AbortSignal,
+    operation: { request: Promise<{ data: T }>; cancel: () => void },
+): Promise<T> {
+    const { request, cancel } = operation;
+    if (signal.aborted) cancel();
+    signal.addEventListener("abort", cancel, { once: true });
+    return request
+        .then((response) => response.data)
+        .finally(() => signal.removeEventListener("abort", cancel));
+}
+
+export const movieDetailQuery = (tmdbId: number) =>
+    queryOptions({
+        queryKey: ["movies", "detail", tmdbId] as const,
+        queryFn: ({ signal }) =>
+            readWithSignal(signal, fetchMovieDetail().get<MovieDetail>(tmdbId)),
+    });

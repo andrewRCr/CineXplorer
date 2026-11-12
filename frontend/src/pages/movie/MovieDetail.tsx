@@ -1,9 +1,9 @@
-import useMovieDetail from "@/hooks/movie/useMovieDetail";
+import { useQuery } from "@tanstack/react-query";
+import { movieDetailQuery } from "@/lib/queries";
+import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
+import { getErrorStatus } from "@/utilities/axiosErrorUtils";
 import { useParams, useSearchParams } from "react-router-dom";
-import { useMemo } from "react";
-import { fetchMovieDetail } from "@/services/movieService";
 import type {
-  MovieDetail as MovieDetailType,
   Genre,
   CastMember,
   CrewMember,
@@ -25,7 +25,6 @@ import {
   Tag,
 } from "@chakra-ui/react";
 import MovieUserScore from "@/components/movie/MovieUserScore";
-import { useUserMovieData } from "@/hooks/movie/useUserMovieData";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 
 /* ============================================================
@@ -33,19 +32,17 @@ import useAuthContext from "@/hooks/auth/useAuthContext";
    ============================================================ */
 const MovieDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const fetcher = useMemo(() => {
-    return () => fetchMovieDetail().get<MovieDetailType>(id!);
-  }, [id]);
-  const { movie, error, isLoading } = useMovieDetail(fetcher);
-
-  const { isAuthenticated } = useAuthContext() ?? {};
-  const shouldFetchUserMovieData = isAuthenticated && !!movie?.tmdb_id;
-
   const {
-    data: userMovieData,
-    loading: userMovieDataLoading,
-    update,
-  } = useUserMovieData(shouldFetchUserMovieData ? String(movie.tmdb_id) : "");
+    data: movie,
+    error,
+    isPending: isLoading,
+  } = useQuery(movieDetailQuery(Number(id)));
+  const { status } = useAuthContext() ?? {};
+  const isAuthenticated = status === "authenticated";
+  const { state, save } = useUserMovieState(
+    movie?.tmdb_id,
+    movie?.user_movie_data,
+  );
 
   const [searchParams] = useSearchParams();
 
@@ -102,7 +99,7 @@ const MovieDetail = () => {
   }
 
   // Check for non-404 errors first (actual errors)
-  const is404 = error && (error.includes("404") || error.includes("not found"));
+  const is404 = getErrorStatus(error) === 404;
 
   if (error && !is404) {
     return (
@@ -118,7 +115,9 @@ const MovieDetail = () => {
           <Heading as="h2" size="xl" mb={4}>
             Error Loading Movie
           </Heading>
-          <Text color="on-muted">{error}</Text>
+          <Text color="on-muted">
+            {error instanceof Error ? error.message : "Failed to load movie"}
+          </Text>
         </Box>
       </Box>
     );
@@ -250,24 +249,19 @@ const MovieDetail = () => {
                Replace inline bg/color/_hover with conditional variant="solid"/"outline" (or custom recipe).
                This is deferred until comprehensive MovieDetail redesign. */}
           <Button
-            bg={userMovieData?.user_on_watchlist ? "secondary" : "primary"}
-            color={
-              userMovieData?.user_on_watchlist ? "on-secondary" : "on-primary"
-            }
+            bg={state.user_on_watchlist ? "secondary" : "primary"}
+            color={state.user_on_watchlist ? "on-secondary" : "on-primary"}
             _hover={{
-              bg: userMovieData?.user_on_watchlist
-                ? "secondary-hover"
-                : "primary-hover",
+              bg: state.user_on_watchlist ? "secondary-hover" : "primary-hover",
             }}
-            loading={userMovieDataLoading && isAuthenticated}
             onClick={() =>
-              void update({
-                user_on_watchlist: !userMovieData?.user_on_watchlist,
+              save({
+                user_on_watchlist: !state.user_on_watchlist,
               })
             }
             disabled={!isAuthenticated}
           >
-            {userMovieData?.user_on_watchlist
+            {state.user_on_watchlist
               ? "Remove from Watchlist"
               : "Add to Watchlist"}
           </Button>

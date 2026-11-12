@@ -156,7 +156,7 @@ _Exit criterion:_ in frontend tests with the network mocked, a card's watchlist 
 its detail page with no movie list refetched, still shows after the list's next page lands, and refetches the watchlist
 page; on the browsable stack the same journey works against the real API, with Undo from a toast.
 
-- [ ] **3.1 The detail page reads its movie through a query — D3, D5, D2, D1, D8**
+- [x] **3.1 The detail page reads its movie through a query — D3, D5, D2, D1, D8**
 
     **Goal:** The detail page makes one request for its movie, shows its user state from the payload under this tab's
     saves, tells "not found" by status, and saves through the shared hook with its toasts and Undo.
@@ -167,37 +167,18 @@ page; on the browsable stack the same journey works against the real API, with U
         - All 21 migrated cases failed under temporary broken back links and score props, then passed restored.
           File formatting, lint and frontend type-check pass.
 
-    - [ ] **3.1.b Test the query-backed page**
-        - A 404 shows "Movie Not Found", and a 500 shows "Error Loading Movie"
-        - Signed in (`AuthContextProvider`, a current stored token, MSW's profile): one request for the movie and none
-          to `GET /user-movie-data/{tmdb_id}`; the button shows the payload's `user_on_watchlist` (`true`, so it fails
-          while the page reads its user state elsewhere)
-        - The watchlist button shows the save toasts and Undo, and stays enabled with no loading state while its save
-          is held; it stays disabled unless the status is `authenticated`
-        - A movie whose detail entry is cached by an earlier visit, saved from its card, shows the save on its detail
-          page after the card list's next page has landed, with no request for the list's first page from the save on
-          (routes for a card list and the detail page). `TestProviders`' client has no stale time, so a page refetches
-          what it mounts over: the list on its return before the save, and the movie on the detail page's mount
-        - Leaving the page while its read is held aborts the request: the handler sees its `signal` aborted
-        - Expect the request, toast, button and cached-entry cases to FAIL initially. The status, disabled and abort
-          cases pass today (axios's message carries the status the page matches, and `useApiRequest` cancels on
-          unmount), and so do the request case's single movie request (`useApiRequest` reads once per fetcher) and the
-          cached-entry case's first-page clause (a save invalidates only the Library): see each fail against a narrow
-          break (Implementation Notes), the single request against a second read of the movie (the query beside
-          `useMovieDetail`), and the clause against a save that invalidates the movie lists
-
-    - [ ] **3.1.c Read the detail through the factory's detail query**
-        - `lib/queries.ts` adds `movieDetailQuery(tmdbId)` on `['movies', 'detail', tmdbId]`: its query function calls
-          `fetchMovieDetail().get(...)` and links the `signal` it receives to that pair's `cancel`, through a helper
-          every factory query uses; `HttpService` is unchanged
-        - The page reads it with `useQuery`, shows "Movie Not Found" when `getErrorStatus(error)` is 404, takes its user
-          state from `useUserMovieState(movie.tmdb_id, movie.user_movie_data)`, and drops the button's `loading`; the
-          layout and the placeholder buttons stay
-        - Delete `useApiRequest.ts`, `useMovieDetail.ts` and `useUserMovieData.ts` with their tests, and
-          `getUserMovieDataByTmdbId`
-        - Tests should now PASS, with `MovieDetail.styles.test.tsx` unchanged
-        - Check in `frontend/`, with the browsable stack running:
-          `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/movie-detail.spec.ts e2e/back-to-results.spec.ts`
+    - [x] **3.1.b Test the query-backed page**
+        - Real-auth network cases cover one movie request and no user-state read, payload state, enabled pending
+          saves, toasts/Undo, anonymous and resolving controls, status-specific errors, cancellation, and a card save
+          over a detail cached before a next-page load.
+        - New behaviors failed before the move. Narrow breaks failed status classification, disabled controls,
+          cancellation, the single-request count and the composition case's first-page request count.
+    - [x] **3.1.c Read the detail through the factory's detail query**
+        - The factory owns the typed detail query and a reusable signal-to-service-cancel adapter. The page reads
+          through `useQuery` and shared saves, with 404s detected by status and no loading state on pending saves.
+        - Removed the effect-fetch hooks and their tests and the separate user-state read. Layout stays unchanged.
+        - Formatting, file lint, frontend type-check and 134 related tests pass, including unchanged detail styles;
+          the movie-detail and Back to Results Chromium specs pass (two tests).
 
 - [ ] **3.2 The watchlist page reads the Library through a query — D6, D2, D1, D8**
 

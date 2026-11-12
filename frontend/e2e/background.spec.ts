@@ -1,4 +1,5 @@
 import { scanPage } from "./axe";
+import { target } from "./target";
 import {
     test,
     expect,
@@ -91,3 +92,113 @@ test("mode and palette changes update every page background without reloading", 
         .toBe("#ffffff");
     await expectPageBackground(page, "rgb(255, 255, 255)");
 });
+
+const colorModeCases: {
+    name: string;
+    system: "light" | "dark";
+    saved: "light" | null;
+}[] = [
+    { name: "fresh light mode", system: "light", saved: null },
+    { name: "fresh dark mode", system: "dark", saved: null },
+    {
+        name: "saved light mode on a dark system",
+        system: "dark",
+        saved: "light",
+    },
+];
+
+for (const scenario of colorModeCases) {
+    test(`color mode stays quiet and persists: ${scenario.name}`, async ({
+        page,
+    }, info) => {
+        const diagnostics: string[] = [];
+        page.on("console", (message) => {
+            const expectedSessionProbe =
+                message.type() === "error" &&
+                message.location().url ===
+                    new URL("/_allauth/browser/v1/auth/session", target.baseURL)
+                        .href &&
+                /^Failed to load resource: the server responded with a status of 401(?:\s|$)/.test(
+                    message.text(),
+                );
+            if (expectedSessionProbe) {
+                info.annotations.push({
+                    type: "expected-anonymous-session",
+                    description:
+                        "The signed-out session probe returned HTTP 401.",
+                });
+            } else if (
+                message.type() === "warning" ||
+                message.type() === "error"
+            ) {
+                diagnostics.push(message.text());
+            }
+        });
+        page.on("pageerror", (error) => diagnostics.push(error.message));
+        await page.emulateMedia({ colorScheme: scenario.system });
+        await page.addInitScript(
+            ({ saved }) => {
+                if (saved && localStorage.getItem("theme") === null) {
+                    localStorage.setItem("theme", saved);
+                    localStorage.setItem("cinexplorer-bg", "#F2E8CE");
+                }
+            },
+            { saved: scenario.saved },
+        );
+        await page.goto("/");
+        const heading = page.getByRole("heading", {
+            name: "Welcome to CineXplorer",
+            exact: true,
+        });
+        await expect(heading).toBeVisible();
+        await scanPage(page, info);
+        const initial = scenario.saved ?? scenario.system;
+        const changed = initial === "dark" ? "light" : "dark";
+        const marqueeColors = {
+            light: "rgb(242, 232, 206)",
+            dark: "rgb(17, 14, 10)",
+        };
+        await expectPageBackground(page, marqueeColors[initial]);
+        if (scenario.saved === null) {
+            await page.emulateMedia({ colorScheme: changed });
+            await expectPageBackground(page, marqueeColors[changed]);
+            await page.emulateMedia({ colorScheme: scenario.system });
+            await expectPageBackground(page, marqueeColors[initial]);
+        }
+        await page
+            .getByRole("button", {
+                name: "Toggle color mode",
+                exact: true,
+            })
+            .click();
+        await expect
+            .poll(() => page.evaluate(() => localStorage.getItem("theme")))
+            .toBe(changed);
+        await expectPageBackground(page, marqueeColors[changed]);
+        await page
+            .getByRole("button", { name: "Marquee", exact: true })
+            .click();
+        await page
+            .getByRole("menuitem", {
+                name: "GitHub Primer",
+                exact: true,
+            })
+            .click();
+        const paletteColor =
+            changed === "dark" ? "rgb(13, 17, 23)" : "rgb(255, 255, 255)";
+        await expectPageBackground(page, paletteColor);
+        await page.reload();
+        await expect(heading).toBeVisible();
+        await expectPageBackground(page, paletteColor);
+        await expect
+            .poll(() => page.evaluate(() => localStorage.getItem("theme")))
+            .toBe(changed);
+        await expect(
+            page.getByRole("button", {
+                name: "GitHub Primer",
+                exact: true,
+            }),
+        ).toBeVisible();
+        expect(diagnostics).toEqual([]);
+    });
+}

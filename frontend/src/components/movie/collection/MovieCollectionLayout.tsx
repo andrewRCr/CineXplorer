@@ -7,6 +7,7 @@ import {
   getFetcherAndSource,
   type RouteConfig,
 } from "@/utilities/routeConfigResolver";
+import { catalogWindow } from "@/utilities/catalogWindow";
 import { parseSearchParamsFromUrl } from "@/utilities/searchUrlSync";
 import PageHeader from "@/components/movie/collection/PageHeader";
 import BrowseControlsSection from "@/components/movie/collection/BrowseControlsSection";
@@ -90,6 +91,7 @@ const MovieCollectionLayout = ({
     hasActiveAdvancedFilters,
   } = useMovieCollectionState({
     defaultBrowseParams,
+    releaseWindow: catalogWindow(location.pathname),
   });
 
   // Use the movie fetch router hook to route between search/discover endpoints

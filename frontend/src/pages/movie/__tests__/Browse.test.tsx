@@ -7,6 +7,8 @@ import {
   Route,
   Routes,
   type InitialEntry,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -24,6 +26,10 @@ import { apiBaseUrl } from "@/config/baseUrls";
 import type { MovieListResponse } from "@/types/movie";
 import { isRecord } from "@/utilities/typeGuards";
 import Browse from "../Browse";
+import NowPlaying from "../NowPlaying";
+import Upcoming from "../Upcoming";
+import SearchResults from "../SearchResults";
+import { styleSystem } from "@tests/helpers/theme-styles";
 
 const browseUrl = `${apiBaseUrl}/movies/browse`;
 
@@ -169,5 +175,117 @@ describe("Browse", () => {
     act(() => pendingFrames.forEach((callback) => callback(performance.now())));
     await new Promise((resolve) => setTimeout(resolve, 150));
     expect(scrollTargets().slice(scrollsBeforeLeaving)).toEqual([]);
+  });
+});
+
+function CatalogLocation() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (
+    <>
+      <output aria-label="Catalog location">
+        {location.pathname}
+        {location.search}
+      </output>
+      <button onClick={() => void navigate(-1)}>Back in history</button>
+    </>
+  );
+}
+function renderCatalog(entry: string) {
+  return render(
+    <StrictMode>
+      <TestProviders system={styleSystem}>
+        <MemoryRouter initialEntries={["/", entry]}>
+          <CatalogLocation />
+          <Routes>
+            <Route path="/" element={<h1>Home</h1>} />
+            <Route
+              path="/browse"
+              element={<MovieCollectionLayout renderPageHeader={false} />}
+            >
+              <Route index element={<Browse />} />
+              <Route path="now-playing" element={<NowPlaying />} />
+              <Route path="upcoming" element={<Upcoming />} />
+            </Route>
+            <Route
+              path="/search"
+              element={<MovieCollectionLayout renderPageHeader={false} />}
+            >
+              <Route index element={<SearchResults />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </TestProviders>
+    </StrictMode>,
+  );
+}
+
+describe("release-window URL rules", () => {
+  it.each(["now-playing", "upcoming"])(
+    "replaces years on %s before the first request",
+    async (window) => {
+      const requests: URLSearchParams[] = [];
+      server.use(
+        http.get(`${apiBaseUrl}/movies/${window}`, ({ request }) => {
+          requests.push(new URL(request.url).searchParams);
+          return HttpResponse.json(browsePage);
+        }),
+      );
+      const user = userEvent.setup();
+      renderCatalog(`/browse/${window}?minYear=1990&maxYear=1999&genres=27`);
+      await screen.findByText("20 results");
+      await waitFor(() =>
+        expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+          `/browse/${window}?genres=27`,
+        ),
+      );
+      expect(requests[0]?.has("release_date_gte")).toBe(false);
+      expect(requests[0]?.has("release_date_lte")).toBe(false);
+      expect(requests[0]?.get("genres")).toBe("27");
+      await user.click(screen.getByRole("button", { name: "Back in history" }));
+      expect(screen.getByRole("heading", { name: "Home" })).toBeVisible();
+    },
+  );
+
+  it.each(["", "&minYear=1990&maxYear=1999"])(
+    "replaces Coming soon's rating sort and any years (%s)",
+    async (years) => {
+      const requests: URLSearchParams[] = [];
+      server.use(
+        http.get(`${apiBaseUrl}/movies/upcoming`, ({ request }) => {
+          requests.push(new URL(request.url).searchParams);
+          return HttpResponse.json(browsePage);
+        }),
+      );
+      const user = userEvent.setup();
+      renderCatalog(`/browse/upcoming?sortBy=vote_average.desc${years}`);
+      await screen.findByText("20 results");
+      await waitFor(() =>
+        expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+          /^\/browse\/upcoming\??$/,
+        ),
+      );
+      expect(requests[0]?.get("sort_by")).toBe("popularity.desc");
+      expect(requests[0]?.has("release_date_gte")).toBe(false);
+      expect(requests[0]?.has("release_date_lte")).toBe(false);
+      await user.click(screen.getByRole("button", { name: "Back in history" }));
+      expect(screen.getByRole("heading", { name: "Home" })).toBeVisible();
+    },
+  );
+
+  it("keeps the years on All films", async () => {
+    let query: URLSearchParams | undefined;
+    server.use(
+      http.get(browseUrl, ({ request }) => {
+        query = new URL(request.url).searchParams;
+        return HttpResponse.json(browsePage);
+      }),
+    );
+    renderCatalog("/browse?minYear=1990");
+    await screen.findByText("20 results");
+    expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+      "/browse?minYear=1990",
+    );
+    expect(query?.get("release_date_gte")).toBe("1990-01-01");
   });
 });

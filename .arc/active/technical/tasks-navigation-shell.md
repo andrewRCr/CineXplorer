@@ -289,24 +289,20 @@ window tabs, and the phone-width spec follows Films there.
           from the request mapper, keeps the title's parsed bounds and the outgoing dates aligned.
         - Six related test files, 104 cases passed. Lint, formatting and TypeScript checks passed.
 
-- [ ] **5.2 A window ignores what it fixes — R21**
+- [x] **5.2 A window ignores what it fixes — R21**
 
     **Goal:** However a visitor reaches In theaters or Coming soon, neither the request nor the URL carries years,
     nor Coming soon a Highest rated sort, and the URL is replaced rather than pushed.
 
-    - [ ] **5.2.a Write the window rule's tests in `Browse.test.tsx`**
-        - Use the real `MovieCollectionLayout` routes with MSW, starting from history entries `/` and the window's
-          URL, and step back to tell a replaced entry from a pushed one
-        - Test: `/browse/now-playing?minYear=1990&maxYear=1999&genres=27` becomes `?genres=27`, Back opens `/`, and
-          the first now-playing request carries no release dates; the same on `/browse/upcoming`
-        - Test: `/browse/upcoming?sortBy=vote_average.desc` drops the sort, and the request sorts by popularity
-        - Test: `/browse?minYear=1990` keeps its years
-        - Expect tests to FAIL initially
-
-    - [ ] **5.2.b Implement the rule in `useMovieCollectionState`, beside the A to Z reset**
-        - The hook receives the window from `MovieCollectionLayout`, through `catalogWindow`; it renders the
-          corrected parameters while one replacing update rewrites the URL, as the A to Z reset does today
-        - Tests should now PASS
+    - [x] **5.2.a Write the window rule's tests in `Browse.test.tsx`**
+        - Real routed layouts under StrictMode and MSW cover both windows' years, Coming soon's rating sort alone
+          and with years, first-request parameters, retained genres and Back returning to the prior entry. These
+          four cases failed before implementation. All films' retained years failed against a narrow overmatch.
+    - [x] **5.2.b Implement the rule in `useMovieCollectionState`, beside the A to Z reset**
+        - The layout passes `catalogWindow`'s window; the hook renders corrected parameters before fetching and
+          replaces all fixed fields together, alongside the title-sort rule.
+        - Four related files, 50 tests passed; browse and filtered-detail smoke cases passed. Lint, formatting and
+          TypeScript checks passed.
 
 - [ ] **5.3 The windows are tabs under a header that stays in every state — R18, R19, R20, R23, R29**
 

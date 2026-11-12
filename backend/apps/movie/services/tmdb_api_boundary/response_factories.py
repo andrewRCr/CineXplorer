@@ -22,8 +22,9 @@ Architecture Notes:
     - These factories are pure functions with no side effects
     - They use the TMDB models from apps.core.tmdb_models for input validation
     - They create schemas from apps.movie.schemas for application use
-    - A failed TMDB response raises a domain exception from apps.core.exceptions; data that
-      fails to convert is logged and its error re-raised, so the API answers it as a 500
+    - Failed TMDB responses raise domain exceptions from apps.core.exceptions. Card mapping
+      answers invalid data with an upstream error; MovieService's detail path translates
+      conversion validation failures to 502. Other endpoint conversion paths keep their handling.
 """
 
 from __future__ import annotations
@@ -31,9 +32,14 @@ from __future__ import annotations
 import logging
 import uuid
 from collections.abc import Mapping
+from datetime import date
 from typing import NoReturn
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from pydantic import ValidationError
+
 from apps.core.exceptions import UpstreamError
+from apps.core.models import Movie
 from apps.core.services.api_response import ApiResponse
 from apps.core.services.validators import raise_upstream_error
 from apps.core.tmdb_models.tmdb_responses import (
@@ -561,3 +567,24 @@ def create_genre_list_from_tmdb(tmdb_response: Mapping[str, object]) -> list[Gen
             extra={"operation": "create_genre_list_from_tmdb", "error_type": type(e).__name__},
         )
         raise
+
+
+def movie_card_fields(data: Mapping[str, object]) -> dict[str, object]:
+    """Map a TMDB details payload to stored card fields."""
+    try:
+        detail = TMDBMovieDetail.model_validate(data)
+        for field, value in (("title", detail.title), ("poster_path", detail.poster_path)):
+            Movie._meta.get_field(field).run_validators(value)
+        release_date = date.fromisoformat(detail.release_date) if detail.release_date else None
+    except (ValidationError, DjangoValidationError, ValueError) as error:
+        raise UpstreamError("Invalid movie data from external API") from error
+    return {
+        "title": detail.title,
+        "poster_path": detail.poster_path,
+        "release_date": release_date,
+        "vote_average": detail.vote_average,
+        "vote_count": detail.vote_count,
+        "runtime": detail.runtime or None,
+        "overview": detail.overview or None,
+        "genre_ids": [genre.id for genre in detail.genres],
+    }

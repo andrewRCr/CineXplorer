@@ -330,7 +330,7 @@ RequestLoggingMiddleware(lambda request: HttpResponse())(http_request)
 
 
 @pytest.mark.parametrize("environment", ["production", "staging"])
-def test_request_query_logs_redact_verification_reset_and_oauth_credentials(
+def test_request_query_logs_redact_search_text_and_credentials(
     environment: str,
 ) -> None:
     parameters = {
@@ -342,6 +342,7 @@ def test_request_query_logs_redact_verification_reset_and_oauth_credentials(
         "refresh_token": "private-refresh-token",
         "id_token": "private-id-token",
         "key": "private-key",
+        "QuErY": "private-search-text",
         "page": "2",
     }
     output = _render(
@@ -380,4 +381,77 @@ except ValueError as exc:
             query_string = record["query_string"]
             assert isinstance(query_string, str)
             assert dict(parse_qsl(query_string)) == expected
+    assert "private-" not in output
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
+@pytest.mark.parametrize("failure", [None, "Timeout", "ConnectionError", "RequestException"])
+def test_tmdb_logs_redact_search_text_without_changing_the_request(
+    environment: str,
+    failure: str | None,
+) -> None:
+    output = _render(
+        f"""
+import django
+django.setup()
+import requests
+from apps.core.services.tmdb_api_client import TMDBApiClient
+from urllib.parse import parse_qs, urlsplit
+from apps.core.tests.integration.test_tmdb_authentication import tmdb_transport
+error_type = getattr(requests.exceptions, {failure!r}) if {failure!r} else None
+params = {{
+    "query": ["private-search &/夜", "private-second-search"],
+    "page": 2,
+    "api_key": "private-api-key",
+    "access_token": "private-access-token",
+}}
+original = params.copy()
+with tmdb_transport(error_type) as received:
+    result = TMDBApiClient().get("search/movie", params=params)
+expected_status = 200 if error_type is None else 504 if {failure!r} == "Timeout" else 502
+assert result.status_code == expected_status
+[prepared] = received
+assert parse_qs(urlsplit(prepared.url).query) == {{"query": params["query"], "page": ["2"]}}
+assert params == original
+""",
+        environment,
+    )
+    records = [_one_record(line) for line in output.splitlines()]
+    [started] = [record for record in records if record["message"] == "API request started"]
+    assert started["params"] == {"query": "[REDACTED]", "page": 2}
+    if failure is not None:
+        [error] = [record for record in records if record["level"] == "ERROR"]
+        assert error["params"] == started["params"]
+    assert "private-" not in output
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
+def test_not_found_logs_omit_the_raw_request_and_keep_safe_metadata(environment: str) -> None:
+    output = _render(
+        """
+import django
+django.setup()
+from django.test import Client
+response = Client().get(
+    "/api/redaction-probe/",
+    data={"code": "private-code", "key": "private-key", "query": "private-search", "page": "2"},
+    HTTP_REFERER="https://example.com/login?key=private-referer-key",
+    HTTP_X_FORWARDED_PROTO="https",
+)
+assert response.status_code == 404
+""",
+        environment,
+    )
+    records = [_one_record(line) for line in output.splitlines()]
+    [django_record] = [record for record in records if record["logger"] == "django.request"]
+    assert django_record["status_code"] == 404
+    assert django_record["message"] == "Not Found: /api/redaction-probe/"
+    [started] = [record for record in records if record.get("event_type") == "request_start"]
+    [completed] = [record for record in records if record.get("event_type") == "request_complete"]
+    assert started["path"] == completed["path"] == "/api/redaction-probe/"
+    assert started["referer"] == "https://example.com/login"
+    assert completed["status_code"] == 404
+    assert started["correlation_id"] == completed["correlation_id"]
+    assert isinstance(started["correlation_id"], str)
+    assert all("request" not in record for record in records)
     assert "private-" not in output

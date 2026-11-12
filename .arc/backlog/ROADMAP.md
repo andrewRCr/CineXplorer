@@ -3,7 +3,7 @@
 **Purpose:** The order of the work remaining before launch, and what is in and out of launch scope. Subject to change
 as we learn.
 
-**Last Updated:** 2026-11-07
+**Last Updated:** 2026-11-11
 
 ---
 
@@ -98,7 +98,9 @@ later work unit keeps them green.
 
 **Design track:**
 
-1. **Palette:** a CineXplorer Dark theme beside the four existing ones, settled before any layout work
+1. **Palette** ✅ (2026-11-11): Marquee, CineXplorer's own default palette (antique brass on warm black, a deep-cream
+   light mode), with movie scores shown as a colored dot beside a neutral number. The four existing palettes remain.
+   Archive: `reference/archive/2026-q4/technical/10_palette/`
 2. **Navigation shell:** one auth-aware navigation with no dead links or development routes, and an error boundary
    inside the layout
 3. **Landing page,** then the **privacy and terms pages**

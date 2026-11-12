@@ -15,6 +15,8 @@ from __future__ import annotations
 from django.http import HttpRequest
 from ninja import Query, Router
 
+from apps.authentication.auth_ninja import get_current_user_optional
+
 from .helpers import (
     enrich_response_with_user_movie_data,
     enrich_single_movie_with_user_movie_data,
@@ -159,6 +161,8 @@ def get_now_playing_movies(
         HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,
             is busy or times out
     """
+    user = get_current_user_optional(request)
+
     # Create deduplication tracker from request context
     dedup_tracker = _create_dedup_tracker(request)
 
@@ -170,7 +174,7 @@ def get_now_playing_movies(
     )
 
     # Enrich with user data if authenticated
-    return enrich_response_with_user_movie_data(request, response)
+    return enrich_response_with_user_movie_data(response, user)
 
 
 @movies_router.get("/upcoming", response=MovieListResponseSchema, auth=None)
@@ -194,6 +198,8 @@ def get_upcoming_movies(
         HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,
             is busy or times out
     """
+    user = get_current_user_optional(request)
+
     # Create deduplication tracker from request context
     dedup_tracker = _create_dedup_tracker(request)
 
@@ -205,7 +211,7 @@ def get_upcoming_movies(
     )
 
     # Enrich with user data if authenticated
-    return enrich_response_with_user_movie_data(request, response)
+    return enrich_response_with_user_movie_data(response, user)
 
 
 @movies_router.get("/search", response=MovieListResponseSchema, auth=None)
@@ -218,6 +224,8 @@ def search_movies(
     Uses MovieSearchParamsSchema to handle Django Ninja 1.4.3 +
     Pydantic 2.12.0 empty string validation issue with optional parameters.
     """
+    user = get_current_user_optional(request)
+
     # Create deduplication tracker from request context
     dedup_tracker = _create_dedup_tracker(request)
 
@@ -235,7 +243,7 @@ def search_movies(
     )
 
     # Enrich with user data if authenticated
-    return enrich_response_with_user_movie_data(request, response)
+    return enrich_response_with_user_movie_data(response, user)
 
 
 @movies_router.get("/browse", response=MovieListResponseSchema, auth=None)
@@ -285,6 +293,8 @@ def browse_movies(
         HttpError: 400 for invalid parameters, or 502, 503 or 504 when TMDB fails,
             is busy or times out
     """
+    user = get_current_user_optional(request)
+
     # Create deduplication tracker from request context
     dedup_tracker = _create_dedup_tracker(request)
 
@@ -301,7 +311,7 @@ def browse_movies(
     )
 
     # Enrich with user data if authenticated
-    return enrich_response_with_user_movie_data(request, response)
+    return enrich_response_with_user_movie_data(response, user)
 
 
 @movies_router.get("/{tmdb_id}", response=MovieDetailSchema, auth=None)
@@ -322,8 +332,10 @@ def get_movie_detail(request: HttpRequest, tmdb_id: int) -> MovieDetailSchema:
         HttpError: 404 if movie not found, or 502, 503 or 504 when TMDB fails,
             is busy or times out
     """
+    user = get_current_user_optional(request)
+
     # Fetch movie details from TMDB
     movie_data = _movie_service.get_movie_by_id(tmdb_id)
 
     # Enrich with user data if authenticated
-    return enrich_single_movie_with_user_movie_data(request, movie_data)  # pyright: ignore[reportReturnType]
+    return enrich_single_movie_with_user_movie_data(movie_data, user)  # pyright: ignore[reportReturnType]

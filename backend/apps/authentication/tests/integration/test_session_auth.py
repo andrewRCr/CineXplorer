@@ -44,7 +44,7 @@ def test_session_authentication_works_with_django_ninja_endpoints():
     client.force_login(user)  # pyright: ignore[reportUnknownArgumentType]
 
     # Test 1: GET request to user-movie-data endpoint (read operation)
-    response = client.get("/api/user-movie-data/by-tmdb-id/?tmdb_id=550")
+    response = client.get("/api/user-movie-data/550")
 
     # Should get 404 (no data) or 200 (data exists), NOT 401 (unauthorized)
     assert response.status_code in [200, 404], (
@@ -58,7 +58,7 @@ def test_session_authentication_supports_write_operations():
     """Verify that session-authenticated users can perform write operations.
 
     This test ensures that OAuth users can create and modify data via
-    authenticated POST/PATCH requests using only session cookies.
+    authenticated PATCH requests using only session cookies.
     """
     # Create test user and movie
     user = User.objects.create_user(  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
@@ -75,20 +75,19 @@ def test_session_authentication_supports_write_operations():
     )
 
     # Create client with session
-    client = Client()
+    client = Client(enforce_csrf_checks=True)
     client.force_login(user)  # pyright: ignore[reportUnknownArgumentType]
 
-    # Get CSRF token for POST request
+    # Get CSRF token for the save request
     csrf_response = client.get("/api/csrf/")
     assert csrf_response.status_code == 200
     csrf_token = csrf_response.json()["csrf_token"]
 
-    # Test: POST request to create user-movie-data entry
-    response = client.post(
-        "/api/user-movie-data",
+    # Create user movie data through its TMDB ID
+    response = client.patch(
+        "/api/user-movie-data/550",
         data=json.dumps(
             {
-                "movie_id": movie.tmdb_id,  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType]
                 "user_on_watchlist": True,
                 "user_watched": False,
             }
@@ -98,7 +97,7 @@ def test_session_authentication_supports_write_operations():
     )
 
     # Should get 200 (created/updated) or 201, NOT 401 Unauthorized
-    assert response.status_code in [200, 201], (
+    assert response.status_code == 201, (
         f"Session auth write operation failed: got {response.status_code}, expected 200/201. "
         f"Session authentication not working for write operations."
     )
@@ -175,9 +174,7 @@ def test_jwt_authentication_still_works():
     access_token = data["access_token"]
 
     # Test: Use JWT token in Authorization header
-    response = client.get(
-        "/api/user-movie-data/by-tmdb-id/?tmdb_id=550", HTTP_AUTHORIZATION=f"Bearer {access_token}"
-    )
+    response = client.get("/api/user-movie-data/550", HTTP_AUTHORIZATION=f"Bearer {access_token}")
 
     # Should get 200 or 404, NOT 401
     assert response.status_code in [200, 404], (

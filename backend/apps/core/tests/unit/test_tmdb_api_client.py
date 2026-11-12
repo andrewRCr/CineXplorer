@@ -63,7 +63,7 @@ class TestTMDBApiClientParamSanitization:
 
         assert "api_key" not in sanitized
         assert sanitized["page"] == 1
-        assert sanitized["query"] == "test"
+        assert sanitized["query"] == "[REDACTED]"
 
     def test_get_sanitized_params_handles_none(self) -> None:
         client = TMDBApiClient()

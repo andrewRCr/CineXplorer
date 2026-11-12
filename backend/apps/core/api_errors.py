@@ -15,6 +15,7 @@ from django.http import HttpRequest, HttpResponse
 from ninja import NinjaAPI
 from ninja.errors import ValidationError
 
+from apps.authentication.auth_ninja import InvalidBearerTokenError
 from apps.core.exceptions import DomainError
 from apps.core.schemas import ErrorCode
 
@@ -22,7 +23,13 @@ logger = logging.getLogger(__name__)
 
 
 def register_error_handlers(api: NinjaAPI) -> None:
-    """Register handlers for domain errors, oversized bodies, validation and unhandled errors."""
+    """Register handlers for authentication, domain and request errors."""
+
+    @api.exception_handler(InvalidBearerTokenError)
+    def invalid_bearer_token(request: HttpRequest, exc: InvalidBearerTokenError) -> HttpResponse:
+        response = api.create_response(request, error_body(exc.message), status=exc.status_code)
+        response["WWW-Authenticate"] = 'Bearer error="invalid_token"'
+        return response
 
     @api.exception_handler(DomainError)
     def domain_error(request: HttpRequest, exc: DomainError) -> HttpResponse:

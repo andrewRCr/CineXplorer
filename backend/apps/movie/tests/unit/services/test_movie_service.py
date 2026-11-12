@@ -78,6 +78,7 @@ def test_movie_service_constructor_with_default_client() -> None:
 # ============================================================================
 
 
+@pytest.mark.django_db
 def test_get_movie_by_id_uses_injected_client() -> None:
     """Test get_movie_by_id calls injected client, not global tmdb_client."""
     from apps.movie.services.movie_service import MovieService

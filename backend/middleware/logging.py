@@ -72,6 +72,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         "access_token",
         "refresh_token",
         "id_token",
+        "query",
     }
 
     # Health check endpoints to filter (unless unhealthy)

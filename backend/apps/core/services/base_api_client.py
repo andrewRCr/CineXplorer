@@ -19,12 +19,12 @@ from urllib3.util.retry import Retry
 
 from .api_response import ApiResponse
 
-_API_KEY_IN_QUERY = re.compile(r"(api_key=)[^&\s'\"()]+")
+_PRIVATE_URL_PARAM = re.compile(r"((?:api_key|query)=)[^&\s'\"()]+", re.IGNORECASE)
 
 
-def redact_api_keys(text: str) -> str:
-    """Mask API keys in request URLs quoted by exception messages."""
-    return _API_KEY_IN_QUERY.sub(r"\1[REDACTED]", text)
+def redact_url_params(text: str) -> str:
+    """Mask credentials and search text in request URLs quoted by exceptions."""
+    return _PRIVATE_URL_PARAM.sub(r"\1[REDACTED]", text)
 
 
 class BaseApiClient(ABC):
@@ -311,8 +311,8 @@ class BaseApiClient(ABC):
         """Handle request exceptions (network errors, timeouts, etc.).
 
         The exception text can quote the request URL, query string included, so it
-        goes only to the log, with API keys redacted. The response carries a fixed
-        message and a gateway status: 504 for a timeout, 502 for any other failure.
+        goes only to the log, with API keys and search text redacted. The response carries
+        a fixed message and a gateway status: 504 for a timeout, 502 for any other failure.
 
         Args:
             error: The exception that occurred
@@ -354,7 +354,7 @@ class BaseApiClient(ABC):
                     "duration_ms": duration_ms,
                     "error_type": "timeout_error",
                     "error_category": "network_error",
-                    "timeout_error": redact_api_keys(str(error)),
+                    "timeout_error": redact_url_params(str(error)),
                     "url": url,
                     "params": sanitized_params,
                     "timeout_threshold_exceeded": duration_ms > 30000,
@@ -382,7 +382,7 @@ class BaseApiClient(ABC):
                     "duration_ms": duration_ms,
                     "error_type": "connection_error",
                     "error_category": "network_error",
-                    "connection_error": redact_api_keys(str(error)),
+                    "connection_error": redact_url_params(str(error)),
                     "url": url,
                     "base_url": self.base_url,
                     "params": sanitized_params,
@@ -416,7 +416,7 @@ class BaseApiClient(ABC):
                 "request_error": (
                     "Invalid request header"
                     if isinstance(error, requests.exceptions.InvalidHeader)
-                    else redact_api_keys(str(error))
+                    else redact_url_params(str(error))
                 ),
                 "url": url,
                 "params": sanitized_params,

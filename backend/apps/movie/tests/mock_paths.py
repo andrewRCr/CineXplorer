@@ -22,9 +22,6 @@ TMDB_CLIENT_GET_MOVIE_DETAILS = (
     "apps.core.services.tmdb_api_client.TMDBApiClient.get_movie_details"
 )
 
-# Batch pipeline's local tmdb_client reference (module-level import)
-BATCH_TMDB_GET_MOVIE_DETAILS = "apps.movie.services.pipelines.batch.tmdb_client.get_movie_details"
-
 # =============================================================================
 # Data Quality / Filtering Paths
 # =============================================================================
@@ -35,10 +32,3 @@ BLACKLIST_CACHE = "apps.movie.services.data_quality.filters.cache"
 
 # Deduplication tracker
 DEDUP_GET_CLIENT = "apps.movie.services.deduplication_tracker.get_atomic_set_client"
-
-# =============================================================================
-# Logging Paths
-# =============================================================================
-
-# Batch pipeline logger (for verifying log output)
-BATCH_LOGGER = "apps.movie.services.pipelines.batch.logger"

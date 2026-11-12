@@ -180,7 +180,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
 
     try {
       // Toast notifications handled by useMovieActions hook
-      await toggleWatchlist();
+      await toggleWatchlist(!wasOnWatchlist);
     } catch {
       // Rollback to previous state on error (toast handled by hook)
       setLocalWatchlistState(wasOnWatchlist);
@@ -358,6 +358,12 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                     variant="ghost"
                     color={isOnWatchlist ? "tertiary" : undefined}
                     size="sm"
+                    aria-label={
+                      isOnWatchlist
+                        ? "Remove from watchlist"
+                        : "Add to watchlist"
+                    }
+                    aria-pressed={isOnWatchlist}
                     onClick={(event) => void handleWatchlistToggle(event)}
                     disabled={isUpdating}
                   >

@@ -47,6 +47,8 @@ import os
 import sys
 from typing import TypedDict, cast
 
+from pythonjsonlogger.core import RESERVED_ATTRS
+
 
 class HealthCheckFilter(logging.Filter):
     """Custom filter to suppress health check requests from console output.
@@ -475,6 +477,8 @@ def get_logging_config(
             # Production formatter - structured JSON for parsing and monitoring
             "production": {
                 "()": "pythonjsonlogger.json.JsonFormatter",
+                # Django attaches an HttpRequest whose repr includes raw query values.
+                "reserved_attrs": [*RESERVED_ATTRS, "request"],
                 "fmt": ["asctime", "levelname", "name", "message", "module", "funcName", "lineno"],
                 "rename_fields": {
                     "asctime": "timestamp",

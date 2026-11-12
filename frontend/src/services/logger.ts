@@ -451,7 +451,7 @@ class Logger {
 
             // Send to backend with timeout
             const response = await Promise.race([
-                apiClient.post("/logs/", payload),
+                apiClient.post("/logs/", payload, { skipAuthRefresh: true }),
                 new Promise((_, reject) =>
                     setTimeout(
                         () => reject(new Error("Backend logging timeout")),

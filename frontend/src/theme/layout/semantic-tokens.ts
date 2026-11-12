@@ -23,17 +23,6 @@ export const layoutSemanticTokens = {
         "layout-navbar": { value: "65px" },
 
         /**
-         * Sidebar layout token
-         * Responsive: hidden (0) on mobile, visible (280px) on desktop
-         */
-        "layout-sidebar": {
-            value: {
-                base: "0px", // Mobile: sidebar hidden (drawer used instead)
-                lg: "{sizes.sidebar-width}", // Desktop: sidebar visible
-            },
-        },
-
-        /**
          * Footer layout token
          * References foundation token - same on all breakpoints
          */

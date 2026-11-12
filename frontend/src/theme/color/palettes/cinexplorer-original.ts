@@ -58,7 +58,7 @@ export const cinexplorerOriginalPalette = {
     /** Chakra gray 900 - Used for sub-items, hover, and selected states */
     chakra_gray_900: "#1a202c",
 
-    /** Tailwind zinc 900 - Used for navbar, sidebar interior, skeletons */
+    /** Tailwind zinc 900 - Used for navigation surfaces and skeletons */
     tailwind_zinc_900: "#18181b",
 
     // ===================================================================

@@ -11,12 +11,6 @@
 export const layoutFoundations = {
     sizes: {
         /**
-         * Sidebar width - Fixed width for desktop sidebar navigation
-         * Used for desktop layout, hidden on mobile (handled by semantic tokens)
-         */
-        "sidebar-width": { value: "280px" },
-
-        /**
          * Footer height - Approximate height for footer component
          * Note: Footer height is fluid based on content, this is an estimate
          */

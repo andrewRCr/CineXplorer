@@ -14,7 +14,9 @@ import ErrorBoundary from "./components/core/ErrorBoundary";
 // Lazy load page components
 const Featured = lazy(() => import("./pages/movie/Featured"));
 const Browse = lazy(() => import("./pages/movie/Browse"));
-const BrowseSequential = lazy(() => import("./pages/movie/BrowseSequential"));
+const BrowseSequential = import.meta.env.DEV
+  ? lazy(() => import("./pages/movie/BrowseSequential"))
+  : null;
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Login = lazy(() => import("./pages/user/Login"));
@@ -104,18 +106,19 @@ const App: React.FC = () => {
                   <Route path="upcoming" element={<Upcoming />} />
                 </Route>
 
-                {/* Sequential browse - reference implementation (title in PageHeader) */}
-                <Route
-                  path={`${ROUTES.BROWSE}/sequential`}
-                  element={
-                    <MovieCollectionLayout
-                      showBrowseControls={true}
-                      renderPageHeader={true}
-                    />
-                  }
-                >
-                  <Route index element={<BrowseSequential />} />
-                </Route>
+                {BrowseSequential && (
+                  <Route
+                    path={ROUTES.BROWSE_SEQUENTIAL}
+                    element={
+                      <MovieCollectionLayout
+                        showBrowseControls
+                        renderPageHeader
+                      />
+                    }
+                  >
+                    <Route index element={<BrowseSequential />} />
+                  </Route>
+                )}
 
                 {/* Search results with shared layout (title in GridHeader) */}
                 <Route

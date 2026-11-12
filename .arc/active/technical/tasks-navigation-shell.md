@@ -174,29 +174,23 @@ each carry one `h1`.
         - `PhoneNavBar` composes the shared controls; its search replaces the row and restores focus on close.
           `NavBar` switches rows through CSS at `lg`. All 38 navbar tests, lint, formatting and TypeScript passed.
 
-- [ ] **3.3 The sidebar, its drawer and the links that lead nowhere go — R10, R11, R28, R31**
+- [x] **3.3 The sidebar, its drawer and the links that lead nowhere go — R10, R11, R28, R31**
 
     **Goal:** Nothing in `frontend/src` reaches the sidebar, `useSidebar`, the navigation constants or their tokens,
     and production builds serve no development routes.
 
-    - [ ] **3.3.a Remove the sidebar and what only it used**
-        - Delete `Sidebar`, `SidebarContent`, `SidebarDrawer`, `SidebarOverlay`, `MobileMenuButton` and
-          `useSidebar`; `AppLayout` drops its sidebar column and `BaseLayout` the `SidebarDrawerViewport`
-        - Delete `constants/navigation.ts`; from `constants/routes.ts`, remove `LIBRARY`, `JOURNAL`, `LOG` and
-          `ROUTE_NAMES`, which nothing else reads
-        - Remove `layout-sidebar`, `sidebar-width` and the `sidebar` z-index token; `LayoutDebug` drops its sidebar
-          width and z-index readouts and its diagram's sidebar; fix comments that still name the sidebar
-          (`z-index.ts`, the palette note in `cinexplorer-original.ts`)
-        - Check criterion 10's search: `grep` `frontend/src` for each removed name; `layout-navbar` resolves to
-          65px at every breakpoint
-
-    - [ ] **3.3.b Register `/browse/sequential` only in development builds**
-        - `BrowseSequential`'s lazy import and its route behind `import.meta.env.DEV`, as `TestLogin` is
-        - Run `npm run build` and confirm `dist/assets` holds no `BrowseSequential` chunk
-
-    - [ ] **3.3.c Update `strategy-layout-tokens.md`**
-        - The one-row bar and its single 65px `layout-navbar`, with no `navbar-height-*` sizes, sidebar, sidebar
-          tokens or examples built on them
+    - [x] **3.3.a Remove the sidebar and what only it used**
+        - Removed the four sidebar modules, old mobile trigger, hook and navigation constants. The app's content now
+          takes the full container; the shared layout no longer mounts the overlay viewport. Removed unused route
+          names, unrouted constants and the sidebar dimensions/z-index, including debug readouts and diagram.
+        - Criterion 10's source search finds no removed names; the navbar retains its one 65px value.
+    - [x] **3.3.b Register `/browse/sequential` only in development builds**
+        - Guarded its lazy import and route. The production build passed and emitted zero BrowseSequential chunks.
+    - [x] **3.3.c Update `strategy-layout-tokens.md`**
+        - The guide uses the single 65px bar, its phone/wide rows and current token names/stacking values, with the
+          full-width content diagram and no sidebar examples.
+        - Full frontend run: 83 files, 2,744 tests passed. All five smoke specs (six cases), touched-source lint,
+          formatting, type generation, TypeScript, build and documentation lint passed.
 
 - [ ] **3.4 A phone-width spec drives the bar at 360×800 — R30, R31**
 

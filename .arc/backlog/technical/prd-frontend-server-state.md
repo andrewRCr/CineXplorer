@@ -5,14 +5,6 @@
 **Class:** Heavy
 **Status:** Ready for Implementation
 **Created:** 2026-11-11
-**Updated:** 2026-11-11
-
-**Related Work:**
-
-- ✅ Complete: the user-movie data API on `main` (#173): one save by TMDB ID, the Library read, and each movie's
-  `user_movie_data` on list and detail payloads (§ 6, Prerequisites)
-- ✅ Complete: the token-renewal fix on `main` (#174), renewing an expired stored access token before a request is
-  sent (§ 6, Prerequisites)
 
 ---
 

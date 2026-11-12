@@ -274,33 +274,20 @@ _Exit criterion:_ against the browsable stack, `browse.spec.ts`, `back-to-result
 pass with the catalog's URLs and saved `scroll-` keys unchanged, `/browse` shows "Popular films" above its three
 window tabs, and the phone-width spec follows Films there.
 
-- [ ] **5.1 The header's title names what is showing — R23, R24, R25, R26**
+- [x] **5.1 The header's title names what is showing — R23, R24, R25, R26**
 
     **Goal:** One function gives every catalog title R23 to R25 define, exactly as written, from the window and the
     request's sort, language, genres and years.
 
-    - [ ] **5.1.a Write `catalogTitle` tests in `src/utilities/__tests__/catalogTitle.test.ts`**
-        - Test: every row of R23's table, with no language or genre and with one (`it.each` over the rows)
-        - Test (R24): the language with "-language"; each genre's word (Animation "animated", TV Movie
-          "made-for-TV", the rest lowercased) in alphabetical order by those words; two joined with "and"; three
-          or more naming none, giving the language alone with one and the table's first column without
-        - Test (R25): a decade, one year, a range with an en dash, "since" and "through"; a lower bound that isn't
-          a number giving no years (the upper dropped with it); an upper that isn't, beside a lower that is, giving
-          "since"; an upper alone that isn't giving none; "1990s" read as 1990; `minYear` later than `maxYear`
-          ("1990–1980"); no years on In theaters or Coming soon
-        - Test (R23's last paragraph): a sort outside the five giving the window's name, then `{films}` after a
-          colon and the years; a language or genre without a label left out; three genres, one unlabelled, still
-          naming none
-        - Test: each example in R23 to R25 comes out exactly as written
-        - Expect tests to FAIL initially
-
-    - [ ] **5.1.b Implement `catalogTitle(window, browseParams)` in `src/utilities/catalogTitle.ts`**
-        - `window` is what `catalogWindow` (2.4) returns: `browse`, `now-playing` or `upcoming`
-        - Labels from `languageOptions` and `genreOptions`; the year bounds from one helper extracted from
-          `addReleaseDateRange` in `browseParamMapper.ts`, which both then use, so the title and the request read
-          the bounds alike
-        - Callers pass parameters after R21's rewrite (5.2), so Coming soon never receives Highest rated
-        - Tests should now PASS
+    - [x] **5.1.a Write `catalogTitle` tests in `src/utilities/__tests__/catalogTitle.test.ts`**
+        - All 76 cases failed against a behavior stub. Coverage includes every offered table row, every genre's
+          wording, language/genre composition, unknown labels and sorts, three-genre suppression, year forms and
+          invalid bounds, omitted window years, and the written examples. Unoffered language-free A-to-Z rows are
+          normalized by the existing caller rule rather than exposed as a title choice.
+    - [x] **5.1.b Implement `catalogTitle(window, browseParams)` in `src/utilities/catalogTitle.ts`**
+        - A table names the window/order; labelled selection words and years fill it. `readYearBounds`, extracted
+          from the request mapper, keeps the title's parsed bounds and the outgoing dates aligned.
+        - Six related test files, 104 cases passed. Lint, formatting and TypeScript checks passed.
 
 - [ ] **5.2 A window ignores what it fixes — R21**
 

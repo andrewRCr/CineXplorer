@@ -15,6 +15,7 @@ import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
 import { useMovieActions } from "@/hooks/movie/useMovieActions";
+import PosterPlaceholder from "@/assets/PosterPlaceholder";
 
 // ============================================================================
 // MovieCard Component
@@ -127,7 +128,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   const posterUrl = useMemo(() => {
     return movie.poster_path
       ? `https://image.tmdb.org/t/p/w342${movie.poster_path}`
-      : "https://placehold.co/500x750?text=No\nImage";
+      : null;
   }, [movie.poster_path]);
 
   // ==========================================================================
@@ -220,19 +221,32 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
           style={{ display: "block", textDecoration: "none" }}
         >
           <Box position="relative" paddingBottom="150%" overflow="hidden">
-            <Image
+            <Box
               position="absolute"
               top="0"
               left="0"
               width="100%"
               height="100%"
-              objectFit="cover"
-              src={posterUrl}
-              alt={movie.title}
               transform={isCardHovered ? "scale(1.05)" : "scale(1)"}
               transition="transform 0.3s ease-in-out"
               transformOrigin="center center"
-            />
+            >
+              {posterUrl ? (
+                <Image
+                  width="100%"
+                  height="100%"
+                  objectFit="cover"
+                  src={posterUrl}
+                  alt={movie.title}
+                />
+              ) : (
+                <PosterPlaceholder
+                  width="100%"
+                  height="100%"
+                  aria-label={movie.title}
+                />
+              )}
+            </Box>
           </Box>
         </Link>
 

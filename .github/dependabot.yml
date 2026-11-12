@@ -29,8 +29,6 @@ updates:
     ignore:
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
-      # Temporarily hold Chakra React updates until UI compatibility is validated.
-      - dependency-name: "@chakra-ui/react"
     groups:
       npm-minor-and-patch:
         patterns: ["*"]

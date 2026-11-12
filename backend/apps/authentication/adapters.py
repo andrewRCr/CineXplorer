@@ -1,7 +1,8 @@
-"""Custom django-allauth adapter for CineXplorer.
+"""Custom django-allauth adapters for CineXplorer.
 
 Customizes email confirmation URLs to point to the frontend application.
 Email sending uses the project's bounded ZeptoMail backend.
+GitHub accounts retain only the provider's primary verified email.
 """
 
 from __future__ import annotations
@@ -9,11 +10,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from allauth.account.adapter import DefaultAccountAdapter
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.http import HttpRequest
 
 if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
+    from allauth.socialaccount.models import SocialLogin
+    from allauth.socialaccount.providers.base import Provider
+    from django.contrib.auth.models import AbstractUser
 
 
 EMAIL_DELIVERY_FAILURE_MESSAGE = "We couldn't send the email. Please try again in a few minutes."
@@ -81,3 +86,30 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         frontend_url = getattr(settings, "FRONTEND_URL", "https://localhost:8444").rstrip("/")
         key = emailconfirmation.key
         return f"{frontend_url}/login?verify={key}"
+
+
+class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    """Restrict GitHub email intake before account matching or persistence."""
+
+    def is_email_verified(self, provider: Provider, email: str) -> bool:
+        """For GitHub, trust verification from its email response only."""
+        if provider.id == "github":
+            return False
+        return super().is_email_verified(provider, email)
+
+    def populate_user(
+        self, request: HttpRequest, sociallogin: SocialLogin, data: dict[str, object]
+    ) -> AbstractUser:
+        if sociallogin.account.provider == "github":
+            sociallogin.email_addresses = [
+                address
+                for address in sociallogin.email_addresses
+                if address.primary and address.verified
+            ]
+            email = sociallogin.email_addresses[0].email if sociallogin.email_addresses else ""
+            data = {**data, "email": email}
+            # GitHub's public profile email can differ from its primary address.
+            profile = sociallogin.account.extra_data
+            if isinstance(profile, dict):
+                profile["email"] = email or None
+        return super().populate_user(request, sociallogin, data)

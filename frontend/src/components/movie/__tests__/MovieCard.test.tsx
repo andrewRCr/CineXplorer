@@ -78,24 +78,30 @@ describe("MovieCard Component", () => {
     });
 
     it.each([null, ""])(
-      "uses a local placeholder when poster_path is %j",
+      "uses theme colors for the local placeholder when poster_path is %j",
       (posterPath) => {
         const movieWithoutPoster = createMockMovieListItem({
           poster_path: posterPath,
           title: "No Poster Movie",
         });
 
-        render(<MovieCard {...defaultProps} movie={movieWithoutPoster} />);
+        render(<MovieCard {...defaultProps} movie={movieWithoutPoster} />, {
+          system: styleSystem,
+        });
 
-        const posterImage = screen.getByRole<HTMLImageElement>("img", {
+        const posterImage = screen.getByRole("img", {
           name: "No Poster Movie",
         });
-        expect(posterImage.src).not.toBe("");
-        const imageUrl = new URL(posterImage.src);
-        expect(
-          imageUrl.protocol === "data:" ||
-            imageUrl.origin === window.location.origin,
-        ).toBe(true);
+        expectResolvedColor(
+          posterImage,
+          "background-color",
+          "var(--chakra-colors-badge)",
+        );
+        expectResolvedColor(
+          posterImage,
+          "color",
+          "var(--chakra-colors-on-badge)",
+        );
       },
     );
   });

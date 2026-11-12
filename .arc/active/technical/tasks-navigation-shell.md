@@ -44,63 +44,38 @@ reached the shell's pieces.
 _Exit criterion:_ theme tests show the focus outlines, the select indicator, input placeholders and each variant's
 expanded fill resolving to theme roles, and `npm run verify-contrast` passes with the two added pairs.
 
-- [ ] **1.1 Focus outlines draw `ring` in the button, checkbox and switch recipes — R29**
+- [x] **1.1 Focus outlines draw `ring` in the button, checkbox and switch recipes — R29**
 
     **Goal:** A keyboard-focused button, checkbox or switch draws a 2px solid outline in `ring`, not in the text color
     the `outline` shorthand leaves today.
 
-    - [ ] **1.1.a Write the focus-outline tests**
-        - New `src/theme/recipes/__tests__/focus-outline.test.tsx`, rendered with `styleSystem`: a `Button` in each
-          variant (`solid`, `secondary`, `outline`, `subtle`, `ghost`), a `Checkbox` (default and `outline`) and a
-          `Switch`, each focused with `userEvent.tab()`
-        - Give each a text color other than `ring`'s (`color="foreground"`): the shorthand falls back to the text
-          color, and in Marquee light `ghost`'s and `secondary`'s text already equals `ring`, which would hide it
-        - Test: `outline-color` matches `ring` (`expectResolvedColor`), with `outline-style` `solid` and
-          `outline-width` `2px`, as `CertificationFilter.test.tsx` checks its pills
-        - Expect tests to FAIL initially
+    - [x] **1.1.a Write the focus-outline tests**
+        - Eight rendered keyboard-focus cases cover five button variants, default and outline checkboxes, and a
+          switch, with contrasting text. All eight failed on the text-colored outline before the fix.
+    - [x] **1.1.b Set each recipe's focus outline by width, style and color**
+        - Explicit width and style preserve the ring color and offset in every recipe variant. All eight cases pass.
 
-    - [ ] **1.1.b Set each recipe's focus outline by width, style and color**
-        - In `button.ts`, `checkbox.ts` and `switch.ts`, replace each `outline: "2px solid"` with `outlineWidth` and
-          `outlineStyle`, keeping `outlineColor: "ring"` and the offset; `radio.ts` already draws `ring`
-        - Tests should now PASS
-
-- [ ] **1.2 The select indicator, input placeholders and expanded buttons take theme roles — R29**
+- [x] **1.2 The select indicator, input placeholders and expanded buttons take theme roles — R29**
 
     **Goal:** No select arrow, placeholder or expanded button in the app draws Chakra's `fg.*` or `colorPalette.*`
     colors.
 
-    - [ ] **1.2.a Write the tests**
-        - Select: in a new `src/theme/recipes/__tests__/select.test.tsx`, a `Select` trigger's indicator resolves to
-          `foreground` at rest and `on-muted` disabled; the trigger focused from the keyboard draws a `tertiary`
-          border and no outline (ADR-017)
-        - Placeholder: the system's global styles give `::placeholder` `on-muted`. jsdom can't compute a
-          pseudo-element, so read it from `styleSystem.getGlobalCss()`
-        - Buttons: each of `solid`, `subtle`, `outline` and `ghost` with `aria-expanded="true"` resolves, in both its
-          background and its text, to that variant's own pressed colors (`subtle` to its hover colors; `ghost`, whose
-          pressed state adds no fill, to a transparent background), not Chakra's `colorPalette.*` fills. Assert
-          `ghost`'s background directly as zero alpha, as `tests/README.md` says for transparent backgrounds, since
-          `expectResolvedColor` rejects a transparent reference; its text goes through `expectResolvedColor`
-        - Expect tests to FAIL initially
+    - [x] **1.2.a Write the tests**
+        - Rendered indicator colors (enabled and disabled), global placeholder CSS and four expanded button variants
+          failed before their fixes. The existing select border-focus behavior failed against a narrow temporary
+          color change, then passed after restoration.
+    - [x] **1.2.b Set the roles at their shared sources**
+        - The fourth select slot styles the indicator without moving other slots; placeholders use `on-muted`;
+          expanded buttons use their own pressed colors, with subtle using its hover colors and ghost transparent.
 
-    - [ ] **1.2.b Set the roles at their shared sources**
-        - `select.ts`: an `indicator` slot, `color: "foreground"`, with `on-muted` under `_disabled`. Chakra merges
-          the project's slot list into its own by index, so append `indicator` fourth, where Chakra's list already
-          has it, and no other slot moves
-        - `src/theme/index.ts` `globalCss`: `"*::placeholder": { color: "on-muted" }`
-        - `button.ts`: an `_expanded` block per variant above, matching its `_active` (`subtle`: its `_hover`). The
-          project's config merges into Chakra's deeply, so each block sets every property Chakra's `_expanded` sets
-          for that variant: `ghost` sets `bg: "transparent"` beside its `tertiary-active` text. The unused `surface`
-          keeps Chakra's
-        - Tests should now PASS
-
-- [ ] **1.3 The contrast check covers the error display's ring and the menu's highlight — R29**
+- [x] **1.3 The contrast check covers the error display's ring and the menu's highlight — R29**
 
     **Goal:** `npm run verify-contrast` holds `ring` on the alert's `destructive/10` tint over `background`, and
     `tertiary` on `popover`, at 3:1 in all five themes.
 
-    - Add both pairs to `src/theme/color/contrast-checks.ts` with the `ui` threshold, the tint with
-      `backdrop: ["background"]` as the existing translucent pairs carry theirs
-    - Run `npm run verify-contrast` and the contrast-check tests
+    - Both UI-threshold pairs are included. Contrast validation: 1,398 passed, 272 scoped out, zero failures.
+    - Related recipes, contrast and certification checks: seven files, 1,592 tests passed. ESLint, Prettier, Chakra
+      type generation and TypeScript checks passed.
 
 ### **Phase 2:** One bar at 1024px and wider
 

@@ -217,6 +217,7 @@ const baseConfig = defineConfig({
         },
     },
     globalCss: {
+        "*::placeholder": { color: "on-muted" },
         body: {
             bg: "background",
             color: "foreground",

@@ -196,12 +196,13 @@ page; on the browsable stack the same journey works against the real API, with U
         - Formatting, file lint, documentation lint, frontend type-check and 141 related tests pass, as does the
           real-session sign-in Chromium spec (one test).
 
-- [ ] **3.3 The technical overview describes the query factory and the save hook — D9**
+- [x] **3.3 The technical overview describes the query factory and the save hook — D9**
 
     **Goal:** A reader of the technical overview learns that server data is read through queries from `lib/queries.ts`
     and changed through the save hook, not through `useApiRequest`.
 
-    - Rewrite the Data Fetching bullet in `TECHNICAL-OVERVIEW.md` § 3
+    - The Data Fetching bullet now describes the query factory, grids' own fetchers, save overlays and ordering,
+      retained confirmed records and Library-only invalidation. Documentation lint passes.
 
 - [ ] **3.4 Check a save shows everywhere at once**
 

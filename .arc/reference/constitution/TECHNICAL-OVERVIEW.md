@@ -81,9 +81,11 @@ The frontend is a single-page application (SPA) built with React.
   Context API (`AuthContext`). Component-level state is managed with standard React hooks (`useState`, `useReducer`).
   A more complex, unified state management system is in place for the movie filter controls, handling shared state
   between default, minimal, and advanced filter UIs.
-- **Data Fetching**: API communication is handled by a service layer (`src/services/`) that uses `axios`.
-  Custom hooks like `useApiRequest` provide a consistent, reusable interface for components to fetch
-  and mutate data.
+- **Data Fetching**: The `axios` service layer supplies TanStack Query reads. `src/lib/queries.ts` owns query keys
+  and options; browse grids use its keys and retain their own fetchers. `useUserMovieState` shows the latest
+  confirmed save over each movie's payload, with pending fields applied on top. Saves run in movie order and
+  retain confirmed records until the signed-in user changes. A successful save invalidates Library queries without
+  refetching movie lists.
 - **Advanced Filtering Logic**: The filtering system is a hybrid model. While most filters map to TMDB API
   queries, it also applies custom client-side filtering to correct data inconsistencies from the API
   (e.g., movies with incorrect release dates). To prevent empty spaces in the UI from these removals,

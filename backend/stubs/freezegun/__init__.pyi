@@ -1,11 +1,11 @@
 """Type stubs for freezegun library.
 
-Library: freezegun 1.5.1
+Library: freezegun 1.5.5
 Purpose: Time mocking for tests
 Docs: https://github.com/spulec/freezegun
-Last verified: 2025-10-20
+Last verified: 2026-11-12
 
-Minimal stub providing freeze_time context manager for test usage.
+Minimal stub providing clock configuration and freeze_time for test usage.
 Only includes commonly used features - extend as needed.
 
 Maintenance:
@@ -46,3 +46,9 @@ def freeze_time(
             # time is frozen at 2025-01-01
             assert datetime.now().year == 2025
     """
+
+def configure(
+    default_ignore_list: list[str] | None = None,
+    extend_ignore_list: list[str] | None = None,
+) -> None:
+    """Configure modules excluded from clock patching."""

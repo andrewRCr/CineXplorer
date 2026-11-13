@@ -11,6 +11,9 @@ CineXplorer uses one responsive top bar and one Films catalog with All films, In
 windows. Pages retain navigation and the footer while loading or showing an error, and their headings identify the
 page or current film selection.
 
+The merged release `cc88dacd` passed main CI, the staging deployment and the staging smoke run (run 43363839434), and
+staging serves the not-found page at `/browse/sequential`.
+
 ## Key Deliverables
 
 - One 65px bar, with direct navigation and search at 1024px and wider, and a drawer and inline search below it.
@@ -49,7 +52,5 @@ page or current film selection.
 
 ## Follow-Up Work
 
-- Criterion 17 requires the pull request's smoke job, the post-merge staging smoke run and staging's not-found
-  response at `/browse/sequential`.
 - Separate captured work covers the development sequential page's empty state, remaining Chakra recipe defaults,
   the unused frontend search component and source constants, and migration from `react-router-dom` imports.

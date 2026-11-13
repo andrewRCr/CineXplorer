@@ -378,7 +378,7 @@ window tabs, and the phone-width spec follows Films there.
 
     - Criteria 1–16 are validated against the source and completed local checks; their evidence is recorded beside
       each criterion. The full verification run and the affected checks after the repairs passed.
-    - ADR-044 is Accepted. Criterion 17 remains for the pull request and post-merge staging evidence.
+    - ADR-044 is Accepted. Criterion 17 was proven after merge; its evidence is recorded beside the criterion.
 
 - [x] **6.2 Preserve the title fallback for every undeclared sort**
 
@@ -569,6 +569,12 @@ window tabs, and the phone-width spec follows Films there.
 
 ### Proven after merge
 
-- [ ] 17. The pull request's end-to-end smoke job passes with the six specs, and after merge the staging smoke run
+- [x] 17. The pull request's end-to-end smoke job passes with the six specs, and after merge the staging smoke run
   passes the five it runs (it skips sign-up), the phone-width spec included; staging serves the not-found page at
   `/browse/sequential`.
+
+  Met: PR #193's required end-to-end smoke job passed in CI run 43362895469. After merge `cc88dacd`, main run
+  43363839434 deployed staging, and its staging smoke job passed 16 tests with registration skipped, running all five
+  journey specs this criterion names, `phone-width.spec.ts` included; `background.spec.ts`, which reached main
+  separately, accounts for the larger count. On staging, a Chromium check of `/browse/sequential` found the `404`
+  heading, "Page Not Found" and the home control, with no "Release windows" navigation.

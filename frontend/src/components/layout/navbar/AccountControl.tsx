@@ -8,7 +8,7 @@ import {
   Link as ChakraLink,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { signInPathFor } from "@/utilities/returnPath";
 import { ROUTES } from "@/constants/routes";
@@ -20,7 +20,6 @@ export default function AccountControl() {
   );
   const { status, user, logout } = useAuthContext() ?? {};
   const location = useLocation();
-  const navigate = useNavigate();
   if (status === "resolving") return <Box h="8" w="16" aria-hidden="true" />;
   if (status !== "authenticated")
     return (
@@ -105,7 +104,6 @@ export default function AccountControl() {
               _highlighted={{ bg: "tertiary", color: "on-tertiary" }}
               onSelect={() => {
                 void logout?.();
-                void navigate(ROUTES.HOME);
               }}
             >
               Sign out

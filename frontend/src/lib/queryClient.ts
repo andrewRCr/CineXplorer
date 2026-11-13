@@ -1,3 +1,4 @@
+import axios from "axios";
 import { QueryClient } from "@tanstack/react-query";
 
 /**
@@ -6,11 +7,12 @@ import { QueryClient } from "@tanstack/react-query";
  * Default settings optimized for movie discovery data:
  * - staleTime: 5 minutes (movie data doesn't change frequently)
  * - gcTime: 30 minutes (keep cached data available for back navigation)
- * - retry: 2 attempts with exponential backoff
+ * - retry: network errors and 5xx twice with exponential backoff
  * - refetchOnWindowFocus: false (avoid unnecessary refetches during browsing)
  */
 export const queryClient = new QueryClient({
     defaultOptions: {
+        mutations: { retry: false },
         queries: {
             // Movie data is relatively stable - 5 minute stale time
             staleTime: 5 * 60 * 1000,
@@ -19,8 +21,12 @@ export const queryClient = new QueryClient({
             // Supports scroll position restoration on back navigation
             gcTime: 30 * 60 * 1000,
 
-            // Retry failed requests twice with exponential backoff
-            retry: 2,
+            // Retry transient failures, preserving refusals and cancellations.
+            retry: (failureCount, error) =>
+                failureCount < 2 &&
+                axios.isAxiosError(error) &&
+                !axios.isCancel(error) &&
+                (!error.response || error.response.status >= 500),
             retryDelay: (attemptIndex) =>
                 Math.min(1000 * 2 ** attemptIndex, 30000),
 

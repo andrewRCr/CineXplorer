@@ -42,6 +42,7 @@ function renderControl(entry = "/browse?genres=27") {
 beforeEach(() => {
   clearBrowserAuth();
   authHandlers();
+  window.location.href = "http://localhost:3000/";
 });
 
 it("holds the account space until the session check settles", async () => {
@@ -155,7 +156,7 @@ it("closes the menu when Profile opens", async () => {
   );
 });
 
-it("posts sign out, closes the menu and returns home", async () => {
+it("posts sign out, closes the menu and lets sign-out choose Login", async () => {
   const user = userEvent.setup();
   let signedOut = false;
   server.use(
@@ -172,6 +173,9 @@ it("posts sign out, closes the menu and returns home", async () => {
   await user.click(await screen.findByRole("menuitem", { name: "Sign out" }));
   await waitFor(() => expect(signedOut).toBe(true));
   expect(await screen.findByRole("link", { name: "Sign in" })).toBeVisible();
-  expect(screen.getByLabelText("Location")).toHaveTextContent(/^\/$/);
+  expect(screen.getByLabelText("Location")).toHaveTextContent(/^\/login$/);
+  await waitFor(() =>
+    expect(window.location.href).toBe("/login?signed_out=true"),
+  );
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });

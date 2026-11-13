@@ -1,6 +1,15 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
+import { infiniteMoviesKey } from "@/lib/queries";
+import { browseMovies } from "@/services/movieService";
+import apiClient from "@/services/apiClient";
+import { apiBaseUrl } from "@/config/baseUrls";
+import { gate } from "@tests/helpers/web-locks";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
+  act,
   render,
   screen,
   isInaccessible,
@@ -618,23 +627,23 @@ describe("MovieCard Component", () => {
 
 describe("MovieCard watchlist saves", () => {
   beforeEach(() => {
-    toaster.remove();
+    act(() => toaster.remove());
     document.cookie = "csrftoken=movie-save-csrf; path=/";
   });
 
-  it("sends true then false from a card initially drawn without user data", async () => {
-    const requests: { method: string; path: string; body: unknown }[] = [];
+  it("queues two quick toggles while keeping the control enabled", async () => {
+    const first = gate();
+    const requests: unknown[] = [];
     server.use(
-      http.all(/\/api\/user-movie-data(?:\/\d+)?$/, async ({ request }) => {
-        const body = await request.json();
-        requests.push({
-          method: request.method,
-          path: new URL(request.url).pathname,
-          body,
-        });
-        const desired = requests.length === 1;
+      http.patch(`${apiBaseUrl}/user-movie-data/550`, async ({ request }) => {
+        requests.push(await request.json());
+        const index = requests.length;
+        if (index === 1) await first.wait;
         return HttpResponse.json(
-          createMockUserMovieData({ tmdb_id: 550, user_on_watchlist: desired }),
+          createMockUserMovieData({
+            tmdb_id: 550,
+            user_on_watchlist: index === 1,
+          }),
         );
       }),
     );
@@ -651,30 +660,71 @@ describe("MovieCard watchlist saves", () => {
     );
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
-    await screen.findByText("Added to watchlist");
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Remove from watchlist" }),
-      ).toBeEnabled(),
-    );
+    await waitFor(() => expect(requests).toHaveLength(1));
+    const remove = screen.getByRole("button", {
+      name: "Remove from watchlist",
+    });
+    expect(remove).toBeEnabled();
+    await user.click(remove);
     expect(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await user.click(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
-    );
+      screen.getByRole("button", { name: "Add to watchlist" }),
+    ).toBeEnabled();
+    expect(requests).toEqual([{ user_on_watchlist: true }]);
+    first.release();
     await screen.findByText("Removed from watchlist");
+    expect(requests).toEqual([
+      { user_on_watchlist: true },
+      { user_on_watchlist: false },
+    ]);
     expect(
       screen.getByRole("button", { name: "Add to watchlist" }),
     ).toHaveAttribute("aria-pressed", "false");
-    expect(requests).toEqual(
-      [true, false].map((desired) => ({
-        method: "PATCH",
-        path: "/api/user-movie-data/550",
-        body: { user_on_watchlist: desired },
-      })),
-    );
   });
+
+  it.each(["pending", "settled"])(
+    "keeps a %s save when its card remounts",
+    async (when) => {
+      const release = gate();
+      server.use(
+        http.patch(`${apiBaseUrl}/user-movie-data/550`, async () => {
+          await release.wait;
+          return HttpResponse.json(
+            createMockUserMovieData({ tmdb_id: 550, user_on_watchlist: true }),
+          );
+        }),
+      );
+      const movie = createMockMovieListItem({
+        tmdb_id: 550,
+        user_movie_data: null,
+      });
+      const user = userEvent.setup();
+      const view = render(
+        <>
+          <MovieCard key="card" movie={movie} />
+          <Toaster key="toasts" />
+        </>,
+      );
+      await user.click(
+        screen.getByRole("button", { name: "Add to watchlist" }),
+      );
+      if (when === "settled") {
+        release.release();
+        await screen.findByText("Added to watchlist");
+      }
+      view.rerender(<Toaster key="toasts" />);
+      view.rerender(
+        <>
+          <MovieCard key="card" movie={movie} />
+          <Toaster key="toasts" />
+        </>,
+      );
+      expect(
+        screen.getByRole("button", { name: "Remove from watchlist" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      release.release();
+      await screen.findByText("Added to watchlist");
+    },
+  );
 
   it.each([500, 429])(
     "rolls back a failed save (%s) and shows the failure toast",
@@ -709,4 +759,183 @@ describe("MovieCard watchlist saves", () => {
       ).toHaveAttribute("aria-pressed", "false");
     },
   );
+});
+
+function CardLibraryProbe() {
+  const { data } = useQuery({
+    queryKey: ["library", "card-probe"],
+    queryFn: () =>
+      apiClient.get("/card-library").then((response) => response.data),
+  });
+  return <output aria-label="Library reads">{data}</output>;
+}
+function PagedCards() {
+  const [showCards, setShowCards] = useState(true);
+  const { movies, fetchNextPage } = useInfiniteMovies({
+    queryKey: infiniteMoviesKey("browse", undefined, undefined),
+    fetcher: ({ pageParam }) =>
+      browseMovies({ tmdb_page_start: pageParam }).request.then(
+        (response) => response.data,
+      ),
+  });
+  return (
+    <>
+      <button onClick={() => void fetchNextPage()}>Load more</button>
+      <button onClick={() => setShowCards((value) => !value)}>
+        Toggle cards
+      </button>
+      {showCards &&
+        movies.map((movie) => <MovieCard key={movie.tmdb_id} movie={movie} />)}
+    </>
+  );
+}
+
+describe("MovieCard shared-save composition", () => {
+  beforeEach(() => {
+    act(() => toaster.remove());
+    document.cookie = "csrftoken=card-save; path=/";
+  });
+  it("keeps a save when the next page lands and the cards remount, without refetching page one", async () => {
+    const next = gate();
+    let firstReads = 0;
+    let nextReads = 0;
+    server.use(
+      http.get(`${apiBaseUrl}/movies/browse`, async ({ request }) => {
+        const second =
+          new URL(request.url).searchParams.get("tmdb_page_start") === "2";
+        if (second) {
+          nextReads++;
+          await next.wait;
+        } else firstReads++;
+        return HttpResponse.json({
+          page: second ? 2 : 1,
+          total_pages: 2,
+          total_results: 2,
+          next_tmdb_page_start: second ? null : 2,
+          results: [
+            createMockMovieListItem({
+              tmdb_id: second ? 551 : 550,
+              title: second ? "Second movie" : "First movie",
+              user_movie_data: null,
+            }),
+          ],
+        });
+      }),
+      http.patch(`${apiBaseUrl}/user-movie-data/550`, () =>
+        HttpResponse.json(
+          createMockUserMovieData({ tmdb_id: 550, user_on_watchlist: true }),
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    render(
+      <>
+        <PagedCards />
+        <Toaster />
+      </>,
+    );
+    await screen.findByText("First movie");
+    await user.click(screen.getByRole("button", { name: "Load more" }));
+    await waitFor(() => expect(nextReads).toBe(1));
+    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await screen.findByText("Added to watchlist");
+    expect(
+      screen.getByRole("button", { name: "Remove from watchlist" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(firstReads).toBe(1);
+    next.release();
+    await screen.findByText("Second movie");
+    expect(
+      screen.getByRole("button", { name: "Remove from watchlist" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(firstReads).toBe(1);
+    await user.click(screen.getByRole("button", { name: "Toggle cards" }));
+    await user.click(screen.getByRole("button", { name: "Toggle cards" }));
+    expect(
+      screen.getByRole("button", { name: "Remove from watchlist" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(firstReads).toBe(1);
+  });
+  it("shows a save toast and refetches the Library after its card unmounts", async () => {
+    const release = gate();
+    let reads = 0;
+    server.use(
+      http.get(`${apiBaseUrl}/card-library`, () => HttpResponse.json(++reads)),
+      http.patch(`${apiBaseUrl}/user-movie-data/550`, async () => {
+        await release.wait;
+        return HttpResponse.json(
+          createMockUserMovieData({ tmdb_id: 550, user_on_watchlist: true }),
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    const view = render(
+      <>
+        <MovieCard
+          key="card"
+          movie={createMockMovieListItem({
+            tmdb_id: 550,
+            user_movie_data: null,
+          })}
+        />
+        <CardLibraryProbe key="library" />
+        <Toaster key="toasts" />
+      </>,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("Library reads")).toHaveTextContent("1"),
+    );
+    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    view.rerender(
+      <>
+        <CardLibraryProbe key="library" />
+        <Toaster key="toasts" />
+      </>,
+    );
+    release.release();
+    await waitFor(() =>
+      expect(screen.getByText("Added to watchlist")).toBeVisible(),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("Library reads")).toHaveTextContent("2"),
+    );
+  });
+  it("runs Undo from a toast whose card is gone", async () => {
+    const requests: unknown[] = [];
+    server.use(
+      http.patch(`${apiBaseUrl}/user-movie-data/550`, async ({ request }) => {
+        requests.push(await request.json());
+        return HttpResponse.json(
+          createMockUserMovieData({
+            tmdb_id: 550,
+            user_on_watchlist: requests.length === 1,
+          }),
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    const view = render(
+      <>
+        <MovieCard
+          key="card"
+          movie={createMockMovieListItem({
+            tmdb_id: 550,
+            user_movie_data: null,
+          })}
+        />
+        <Toaster key="toasts" />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await screen.findByText("Added to watchlist");
+    view.rerender(<Toaster key="toasts" />);
+    await user.click(screen.getByRole("button", { name: "Undo" }));
+    await waitFor(() =>
+      expect(screen.getByText("Removed from watchlist")).toBeVisible(),
+    );
+    expect(requests).toEqual([
+      { user_on_watchlist: true },
+      { user_on_watchlist: false },
+    ]);
+  });
 });

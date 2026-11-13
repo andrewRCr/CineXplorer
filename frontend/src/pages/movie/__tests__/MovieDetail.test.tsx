@@ -1,34 +1,40 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { screen } from "@tests/helpers/test-renderer";
+import userEvent from "@testing-library/user-event";
+import { render as renderWithoutRouter } from "@testing-library/react";
+import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { TestProviders } from "@tests/helpers/test-providers";
+import { setAuthTokens } from "@/utilities/tokenUtils";
+import {
+  createMockMovieListItem,
+  createMockUserMovieData,
+} from "@tests/mocks/movieData";
+import { Toaster } from "@/components/core/chakra/toaster";
+import MovieCard from "@/components/movie/MovieCard";
+import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
+import { infiniteMoviesKey, movieDetailQuery } from "@/lib/queries";
+import { useQueryClient } from "@tanstack/react-query";
+import { browseMovies } from "@/services/movieService";
+import { siteOrigin } from "@/config/baseUrls";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { act, screen, waitFor } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 import MovieDetail from "../MovieDetail";
 import { createMockMovieDetail } from "@tests/mocks/movieData";
 import type { MovieDetail as MovieDetailType } from "@/types/movie";
 
-// Mock the hooks and services
-vi.mock("@/hooks/movie/useMovieDetail", () => ({
-  default: vi.fn(),
-}));
+import { http, HttpResponse } from "msw/http";
+import { server } from "@tests/mocks/server";
+import { apiBaseUrl } from "@/config/baseUrls";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { gate } from "@tests/helpers/web-locks";
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { toaster } from "@/components/core/chakra/toaster";
 
-vi.mock("@/hooks/movie/useUserMovieData", () => ({
-  useUserMovieData: vi.fn(() => ({
-    data: null,
-    loading: false,
-    update: vi.fn(),
-  })),
-}));
-
-vi.mock("@/hooks/auth/useAuth", () => ({
-  useAuth: vi.fn(() => ({
-    isAuthenticated: false,
-  })),
-}));
-
-vi.mock("@/services/movieService", () => ({
-  fetchMovieDetail: vi.fn(),
-}));
-
-import useMovieDetail from "@/hooks/movie/useMovieDetail";
+beforeEach(() => {
+  clearBrowserAuth();
+  authHandlers();
+  act(() => toaster.remove());
+});
+afterEach(() => act(() => toaster.remove()));
 
 // Helper to render MovieDetail with router and URL params
 const renderMovieDetailWithRoute = (
@@ -37,7 +43,16 @@ const renderMovieDetailWithRoute = (
 ) => {
   const initialRoute = `/movie/${movieId}${searchParams}`;
 
-  return renderWithRoute("/movie/:id", <MovieDetail />, { initialRoute });
+  return renderWithRoute(
+    "/movie/:id",
+    <>
+      <AuthContextProvider>
+        <MovieDetail />
+      </AuthContextProvider>
+      <Toaster />
+    </>,
+    { initialRoute },
+  );
 };
 
 describe("MovieDetail - Back Button URL Construction", () => {
@@ -49,15 +64,9 @@ describe("MovieDetail - Back Button URL Construction", () => {
   });
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Default mock: successful movie load
-    vi.mocked(useMovieDetail).mockReturnValue({
-      movie: mockMovie,
-      error: "",
-      setMovie: vi.fn(),
-      setError: vi.fn(),
-      isLoading: false,
-    });
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, () => HttpResponse.json(mockMovie)),
+    );
   });
 
   describe("Basic Back URL Construction", () => {
@@ -391,31 +400,31 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
   describe("Loading and Error States", () => {
     it("shows back button even while loading", () => {
-      vi.mocked(useMovieDetail).mockReturnValue({
-        movie: undefined,
-        error: "",
-        setMovie: vi.fn(),
-        setError: vi.fn(),
-        isLoading: true,
-      });
+      const release = gate();
+      server.use(
+        http.get(`${apiBaseUrl}/movies/550`, async () => {
+          await release.wait;
+          return HttpResponse.json(mockMovie);
+        }),
+      );
 
       renderMovieDetailWithRoute("550", "?page=2&from=browse");
 
       // Back button should be visible immediately
       expect(screen.getByText("Back to Results")).toBeInTheDocument();
+      act(() => release.release());
     });
 
-    it("shows back button on error", () => {
-      vi.mocked(useMovieDetail).mockReturnValue({
-        movie: undefined,
-        error: "Failed to load",
-        setMovie: vi.fn(),
-        setError: vi.fn(),
-        isLoading: false,
-      });
+    it("shows back button on error", async () => {
+      server.use(
+        http.get(`${apiBaseUrl}/movies/550`, () =>
+          HttpResponse.json({}, { status: 500 }),
+        ),
+      );
 
       renderMovieDetailWithRoute("550", "?page=2&from=browse");
 
+      await screen.findByRole("heading", { name: "Error Loading Movie" });
       // Back button should still work on error
       expect(screen.getByText("Back to Results")).toBeInTheDocument();
     });
@@ -424,40 +433,353 @@ describe("MovieDetail - Back Button URL Construction", () => {
 
 describe("MovieDetail - TMDB Score", () => {
   const mockMovieDetail = (overrides: Partial<MovieDetailType>) => {
-    vi.mocked(useMovieDetail).mockReturnValue({
-      movie: createMockMovieDetail(overrides),
-      error: "",
-      setMovie: vi.fn(),
-      setError: vi.fn(),
-      isLoading: false,
-    });
+    server.use(
+      http.get(`${apiBaseUrl}/movies/1`, () =>
+        HttpResponse.json(createMockMovieDetail(overrides)),
+      ),
+    );
   };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('shows "Not yet rated" for a movie with no votes', () => {
+  it('shows "Not yet rated" for a movie with no votes', async () => {
     mockMovieDetail({ vote_average: 0, vote_count: 0 });
 
     renderMovieDetailWithRoute("1");
 
-    expect(screen.getByText("Not yet rated")).toBeInTheDocument();
+    expect(await screen.findByText("Not yet rated")).toBeInTheDocument();
   });
 
-  it("shows the average with its vote count below 10 votes", () => {
+  it("shows the average with its vote count below 10 votes", async () => {
     mockMovieDetail({ vote_average: 6.8, vote_count: 4 });
 
     renderMovieDetailWithRoute("1");
 
-    expect(screen.getByText("6.8 · 4 votes")).toBeInTheDocument();
+    expect(await screen.findByText("6.8 · 4 votes")).toBeInTheDocument();
   });
 
-  it("shows the score for a movie with 10 or more votes", () => {
+  it("shows the score for a movie with 10 or more votes", async () => {
     mockMovieDetail({});
 
     renderMovieDetailWithRoute("1");
 
-    expect(screen.getByText("8.2")).toBeInTheDocument();
+    expect(await screen.findByText("8.2")).toBeInTheDocument();
   });
+});
+
+function RefreshMovieDetail() {
+  const client = useQueryClient();
+  return (
+    <button
+      onClick={() =>
+        void client.invalidateQueries({
+          queryKey: movieDetailQuery(550).queryKey,
+        })
+      }
+    >
+      Refresh movie
+    </button>
+  );
+}
+
+describe("MovieDetail query and shared saves", () => {
+  it("replaces cached details and save controls when a refetch returns 404", async () => {
+    setAuthTokens(token());
+    let reads = 0;
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, () => {
+        if (++reads > 1)
+          return HttpResponse.json({ detail: "Not found" }, { status: 404 });
+        return HttpResponse.json(
+          createMockMovieDetail({ tmdb_id: 550, title: "Cached movie" }),
+        );
+      }),
+    );
+    renderWithRoute(
+      "/movie/:id",
+      <AuthContextProvider>
+        <RefreshMovieDetail />
+        <MovieDetail />
+      </AuthContextProvider>,
+      { initialRoute: "/movie/550" },
+    );
+    await screen.findByRole("heading", { name: "Cached movie" });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Add to Watchlist" }),
+      ).toBeEnabled(),
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Refresh movie" }));
+    await screen.findByRole("heading", { name: "Movie Not Found" });
+    expect(
+      screen.queryByRole("heading", { name: "Cached movie" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /to Watchlist/ }),
+    ).not.toBeInTheDocument();
+    expect(reads).toBe(2);
+  });
+
+  it.each([404, 500])(
+    "shows the status-specific failure for %s",
+    async (status) => {
+      server.use(
+        http.get(`${apiBaseUrl}/movies/550`, () =>
+          HttpResponse.json({ detail: "Unavailable" }, { status }),
+        ),
+      );
+      renderMovieDetailWithRoute("550");
+      await screen.findByRole("heading", {
+        name: status === 404 ? "Movie Not Found" : "Error Loading Movie",
+      });
+    },
+  );
+  it("reads the movie once without requesting separate user state", async () => {
+    setAuthTokens(token());
+    let movies = 0;
+    let userReads = 0;
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, () => {
+        movies++;
+        return HttpResponse.json(
+          createMockMovieDetail({ tmdb_id: 550, user_movie_data: null }),
+        );
+      }),
+      http.get(`${apiBaseUrl}/user-movie-data/550`, () => {
+        userReads++;
+        return HttpResponse.json(createMockUserMovieData({ tmdb_id: 550 }));
+      }),
+    );
+    renderMovieDetailWithRoute("550");
+    await screen.findByRole("heading", { name: "Test Movie" });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Add to Watchlist" }),
+      ).toBeEnabled(),
+    );
+    expect(movies).toBe(1);
+    expect(userReads).toBe(0);
+  });
+  it("shows the payload's watchlist state", async () => {
+    setAuthTokens(token());
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, () =>
+        HttpResponse.json(
+          createMockMovieDetail({
+            tmdb_id: 550,
+            user_movie_data: createMockUserMovieData({
+              tmdb_id: 550,
+              user_on_watchlist: true,
+            }),
+          }),
+        ),
+      ),
+      http.get(`${apiBaseUrl}/user-movie-data/550`, () =>
+        HttpResponse.json(createMockUserMovieData({ tmdb_id: 550 })),
+      ),
+    );
+    renderMovieDetailWithRoute("550");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Remove from Watchlist" }),
+      ).toBeEnabled(),
+    );
+  });
+  it("keeps its save enabled and shows save toasts with Undo", async () => {
+    setAuthTokens(token());
+    const release = gate();
+    let saves = 0;
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, () =>
+        HttpResponse.json(
+          createMockMovieDetail({ tmdb_id: 550, user_movie_data: null }),
+        ),
+      ),
+      http.get(`${apiBaseUrl}/user-movie-data/550`, () =>
+        HttpResponse.json(createMockUserMovieData({ tmdb_id: 550 })),
+      ),
+      http.patch(`${apiBaseUrl}/user-movie-data/550`, async () => {
+        const index = ++saves;
+        if (index === 1) await release.wait;
+        return HttpResponse.json(
+          createMockUserMovieData({
+            tmdb_id: 550,
+            user_on_watchlist: index === 1,
+          }),
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    renderMovieDetailWithRoute("550");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Add to Watchlist" }),
+      ).toBeEnabled(),
+    );
+    await user.click(screen.getByRole("button", { name: "Add to Watchlist" }));
+    await waitFor(() => expect(saves).toBe(1));
+    expect(
+      screen.getByRole("button", { name: "Remove from Watchlist" }),
+    ).toBeEnabled();
+    release.release();
+    await waitFor(() =>
+      expect(screen.getByText("Added to watchlist")).toBeVisible(),
+    );
+    await user.click(screen.getByRole("button", { name: "Undo" }));
+    await waitFor(() =>
+      expect(screen.getByText("Removed from watchlist")).toBeVisible(),
+    );
+    expect(saves).toBe(2);
+    expect(
+      screen.getByRole("button", { name: "Add to Watchlist" }),
+    ).toBeEnabled();
+  });
+  it.each(["resolving", "anonymous"])(
+    "disables saves while %s",
+    async (status) => {
+      const release = gate();
+      if (status === "resolving")
+        server.use(
+          http.get(
+            `${siteOrigin}/_allauth/browser/v1/auth/session`,
+            async () => {
+              await release.wait;
+              return HttpResponse.json({ status: 401 }, { status: 401 });
+            },
+          ),
+        );
+      server.use(
+        http.get(`${apiBaseUrl}/movies/550`, () =>
+          HttpResponse.json(
+            createMockMovieDetail({ tmdb_id: 550, user_movie_data: null }),
+          ),
+        ),
+      );
+      renderMovieDetailWithRoute("550");
+      expect(
+        await screen.findByRole("button", { name: "Add to Watchlist" }),
+      ).toBeDisabled();
+      act(() => release.release());
+    },
+  );
+  it("aborts the movie request when its page unmounts", async () => {
+    const entered = gate();
+    const release = gate();
+    let incoming: Request | undefined;
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, async ({ request }) => {
+        incoming = request;
+        entered.release();
+        await release.wait;
+        return HttpResponse.json(createMockMovieDetail());
+      }),
+    );
+    const view = renderMovieDetailWithRoute("550");
+    await entered.wait;
+    view.unmount();
+    await waitFor(() => expect(incoming?.signal.aborted).toBe(true));
+    release.release();
+  });
+});
+
+function CachedDetailCards() {
+  const { movies, fetchNextPage } = useInfiniteMovies({
+    queryKey: infiniteMoviesKey("browse", undefined, undefined),
+    fetcher: ({ pageParam }) =>
+      browseMovies({ tmdb_page_start: pageParam }).request.then(
+        (response) => response.data,
+      ),
+  });
+  return (
+    <>
+      <button onClick={() => void fetchNextPage()}>Load next page</button>
+      {movies.map((movie) => (
+        <MovieCard key={movie.tmdb_id} movie={movie} source="browse" />
+      ))}
+    </>
+  );
+}
+it("shows a card save over a previously cached detail after the next list page lands", async () => {
+  setAuthTokens(token());
+  const next = gate();
+  let firstReads = 0;
+  let nextReads = 0;
+  let detailReads = 0;
+  server.use(
+    http.get(`${apiBaseUrl}/movies/browse`, async ({ request }) => {
+      const second =
+        new URL(request.url).searchParams.get("tmdb_page_start") === "2";
+      if (second) {
+        nextReads++;
+        await next.wait;
+      } else firstReads++;
+      return HttpResponse.json({
+        page: second ? 2 : 1,
+        total_pages: 2,
+        total_results: 2,
+        next_tmdb_page_start: second ? null : 2,
+        results: [
+          createMockMovieListItem({
+            tmdb_id: second ? 551 : 550,
+            title: second ? "Second movie" : "First movie",
+            user_movie_data: null,
+          }),
+        ],
+      });
+    }),
+    http.get(`${apiBaseUrl}/movies/550`, () => {
+      detailReads++;
+      return HttpResponse.json(
+        createMockMovieDetail({
+          tmdb_id: 550,
+          title: "First movie",
+          user_movie_data: createMockUserMovieData({ tmdb_id: 550 }),
+        }),
+      );
+    }),
+    http.get(`${apiBaseUrl}/user-movie-data/550`, () =>
+      HttpResponse.json(createMockUserMovieData({ tmdb_id: 550 })),
+    ),
+    http.patch(`${apiBaseUrl}/user-movie-data/550`, () =>
+      HttpResponse.json(
+        createMockUserMovieData({ tmdb_id: 550, user_on_watchlist: true }),
+      ),
+    ),
+  );
+  const user = userEvent.setup();
+  renderWithoutRouter(
+    <TestProviders>
+      <MemoryRouter initialEntries={["/browse"]}>
+        <AuthContextProvider>
+          <Routes>
+            <Route path="/browse" element={<CachedDetailCards />} />
+            <Route path="/movie/:id" element={<MovieDetail />} />
+          </Routes>
+          <Toaster />
+        </AuthContextProvider>
+      </MemoryRouter>
+    </TestProviders>,
+  );
+  await user.click(await screen.findByText("First movie", { selector: "a" }));
+  await screen.findByRole("heading", { name: "First movie" });
+  expect(detailReads).toBe(1);
+  await user.click(screen.getByRole("link", { name: "Back to Results" }));
+  await screen.findByText("First movie", { selector: "a" });
+  await waitFor(() => expect(firstReads).toBe(2));
+  await user.click(screen.getByRole("button", { name: "Load next page" }));
+  await waitFor(() => expect(nextReads).toBe(1));
+  await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+  await waitFor(() =>
+    expect(screen.getByText("Added to watchlist")).toBeVisible(),
+  );
+  expect(firstReads).toBe(2);
+  next.release();
+  await screen.findByText("Second movie", { selector: "a" });
+  await user.click(screen.getByText("First movie", { selector: "a" }));
+  await screen.findByRole("heading", { name: "First movie" });
+  await waitFor(() => expect(detailReads).toBe(2));
+  expect(
+    screen.getByRole("button", { name: "Remove from Watchlist" }),
+  ).toBeEnabled();
+  expect(firstReads).toBe(2);
 });

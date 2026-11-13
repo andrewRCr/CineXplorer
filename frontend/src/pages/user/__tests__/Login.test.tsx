@@ -10,7 +10,6 @@ import {
   profile,
   token,
 } from "@tests/helpers/auth";
-import { gate } from "@tests/helpers/web-locks";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { server } from "@tests/mocks/server";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
@@ -23,6 +22,7 @@ import {
   toaster,
 } from "@/components/core/chakra/toaster";
 import logger from "@/services/logger";
+import { gate } from "@tests/helpers/web-locks";
 import Login from "../Login";
 
 const originalConfig = logger.getEnvironmentInfo().config;
@@ -238,13 +238,97 @@ describe("returning to the requested page", () => {
   });
 });
 
-describe("the sign-in page heading", () => {
-  it("gives the form one visually hidden heading", async () => {
-    render(
-      <AuthContextProvider>
-        <Login />
-      </AuthContextProvider>,
+describe("signed-out notice", () => {
+  function renderSignedOut() {
+    window.history.replaceState({}, "", "/login?signed_out=true");
+    return renderWithoutRouter(
+      <TestProviders>
+        <MemoryRouter initialEntries={["/login?signed_out=true"]}>
+          <AuthContextProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<h1>Home after sign-in</h1>} />
+            </Routes>
+            <PriorityToaster />
+          </AuthContextProvider>
+        </MemoryRouter>
+      </TestProviders>,
     );
+  }
+  it("shows the notice once the reloaded page knows nobody is signed in", async () => {
+    const held = gate();
+    const entered = gate();
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+        entered.release();
+        await held.wait;
+        return HttpResponse.json({}, { status: 401 });
+      }),
+    );
+    renderSignedOut();
+    await entered.wait;
+    expect(
+      screen.queryByText("You've been logged out"),
+    ).not.toBeInTheDocument();
+    held.release();
+    await waitFor(() =>
+      expect(screen.getByText("You've been logged out")).toBeVisible(),
+    );
+    expect(new URL(document.URL).search).toBe("");
+  });
+  it.each(["stored token", "provider session"])(
+    "withholds the notice for a signed-in visitor (%s)",
+    async (kind) => {
+      const held = gate();
+      const entered = gate();
+      if (kind === "stored token") setAuthTokens(token());
+      else
+        server.use(
+          http.get(
+            `${siteOrigin}/_allauth/browser/v1/auth/session`,
+            async () => {
+              entered.release();
+              await held.wait;
+              return HttpResponse.json({
+                meta: { is_authenticated: true },
+                data: { user: profile },
+              });
+            },
+          ),
+        );
+      renderSignedOut();
+      if (kind === "provider session") {
+        await entered.wait;
+        expect(
+          screen.queryByText("You've been logged out"),
+        ).not.toBeInTheDocument();
+        held.release();
+      }
+      expect(
+        await screen.findByRole("heading", { name: "Home after sign-in" }),
+      ).toBeVisible();
+      expect(
+        screen.queryByText("You've been logged out"),
+      ).not.toBeInTheDocument();
+    },
+  );
+});
+
+describe("the sign-in page heading", () => {
+  function renderSignIn() {
+    return renderWithoutRouter(
+      <TestProviders>
+        <MemoryRouter initialEntries={["/login"]}>
+          <AuthContextProvider>
+            <Login />
+          </AuthContextProvider>
+        </MemoryRouter>
+      </TestProviders>,
+    );
+  }
+
+  it("gives the form one visually hidden heading", async () => {
+    renderSignIn();
     await screen.findByRole("textbox", { name: "Username or Email Address" });
     const heading = screen.getByRole("heading", { level: 1, name: "Sign in" });
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
@@ -263,11 +347,7 @@ describe("the sign-in page heading", () => {
         }),
       );
       sessionStorage.setItem("oauth_in_progress", provider);
-      render(
-        <AuthContextProvider>
-          <Login />
-        </AuthContextProvider>,
-      );
+      renderSignIn();
       expect(
         screen.getByText(
           `Logging in with ${provider === "google" ? "Google" : "GitHub"}...`,
@@ -277,6 +357,7 @@ describe("the sign-in page heading", () => {
         screen.queryByRole("heading", { level: 1 }),
       ).not.toBeInTheDocument();
       held.release();
+      await screen.findByRole("textbox", { name: "Username or Email Address" });
     },
   );
 });

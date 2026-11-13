@@ -165,7 +165,6 @@ const renderToast = (toast: {
           fontWeight="medium"
           fontSize="sm"
           _hover={{ color: "tertiary-hover" }}
-          onClick={toast.action.onClick}
         >
           {toast.action.label}
         </Toast.ActionTrigger>

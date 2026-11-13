@@ -302,6 +302,25 @@ it.each(["later", "same", "earlier", "expired"] as const)(
 );
 
 describe("email failures and the global server-error toast", () => {
+    it("keeps one server-error toast across two failed reads", async () => {
+        server.use(
+            http.get(`${apiBaseUrl}/failing-read/:id`, () =>
+                HttpResponse.json({}, { status: 500 }),
+            ),
+        );
+        render(createElement(Toaster));
+        await act(async () => {
+            await Promise.allSettled([
+                apiClient.get("/failing-read/one"),
+                apiClient.get("/failing-read/two"),
+            ]);
+        });
+        await waitFor(() => {
+            expect(screen.getAllByText("Server error")).toHaveLength(1);
+            expect(screen.getByText("Server error")).toBeVisible();
+        });
+    });
+
     beforeEach(() => {
         act(() => {
             toaster.remove();

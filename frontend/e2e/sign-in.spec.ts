@@ -139,6 +139,7 @@ for (const rememberMe of [false, true]) {
         expect(response.ok(), `Logout returned HTTP ${response.status()}`).toBe(
             true,
         );
+        await expect(page).toHaveURL(new URL("/login", target.baseURL).href);
         await expect(
             page.getByRole("link", { name: "Sign in", exact: true }),
         ).toBeVisible();

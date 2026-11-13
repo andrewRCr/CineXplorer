@@ -43,8 +43,18 @@ Import `render`, queries, and async utilities from the shared renderer:
 ```tsx
 import { render, screen } from "@tests/helpers/test-renderer";
 import Watchlist from "@/pages/user/Watchlist";
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { setAuthTokens } from "@/utilities/tokenUtils";
 
-render(<Watchlist />);
+clearBrowserAuth();
+authHandlers();
+setAuthTokens(token());
+render(
+    <AuthContextProvider>
+        <Watchlist />
+    </AuthContextProvider>,
+);
 expect(await screen.findByText("Fight Club")).toBeInTheDocument();
 ```
 
@@ -109,6 +119,9 @@ import { render, screen } from "@tests/helpers/test-renderer";
 import { server } from "@tests/mocks/server";
 import { apiBaseUrl } from "@/config/baseUrls";
 import Watchlist from "@/pages/user/Watchlist";
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { setAuthTokens } from "@/utilities/tokenUtils";
 
 it("shows an empty watchlist", async () => {
     server.use(
@@ -122,7 +135,14 @@ it("shows an empty watchlist", async () => {
         ),
     );
 
-    render(<Watchlist />);
+    clearBrowserAuth();
+    authHandlers();
+    setAuthTokens(token());
+    render(
+        <AuthContextProvider>
+            <Watchlist />
+        </AuthContextProvider>,
+    );
     expect(
         await screen.findByText("No movies on watchlist"),
     ).toBeInTheDocument();
@@ -134,6 +154,26 @@ and an HTTP failure. Its fixtures follow the generated API response types. Finis
 delayed requests before ending a test so later tests inherit no pending work.
 
 ## Test Discipline
+
+Authentication overlap tests keep the session query, hook and API interceptors real. Hold provider discovery and
+password fallback separately with network gates. While either is pending, an idle tick starts no renewal and an API
+renewal failure rejects without clearing credentials or redirecting. Cover both pre-request expiry and response-401
+recovery, including a failed renewal followed by an available success that the original operation must never use.
+When fallback and API work share renewal, exercise both waiter orders and caller-specific feedback policies.
+Cancel the query during profile recovery and confirm the late result stays inert while another caller can still
+complete their shared renewal. Release held responses after explicit sign-in/out too, and check that old cleanup
+cannot release a newer read. After successful fallback, ordinary password-renewal failure handling must resume.
+
+Seed the CSRF cookie before a fake idle tick when the scenario concerns renewal rather than CSRF initialization.
+Restore real intervals before RTL polling, and finish held requests before ending the test.
+
+Save-ownership tests keep the shared save options and HTTP stack real. Public mutation-cache notifications can
+schedule a user change after the mutation guard but ahead of asynchronous Axios preparation. Separately hold the
+browser Cookie Store read used by the actual XHR adapter, retire the save, then release it and assert zero PATCHes.
+This catches a guard that stops at the interceptor. Release that cookie gate before awaiting reset queries that
+also need it. Cover ordinary saves and Undo, CSRF/renewal waits, count-only retirement and another live renewal
+caller. An already-received request can be canceled locally; assert no obsolete effects without assuming server
+rollback. Keep current-owner, unmount and ordering controls.
 
 - Assert user-visible behavior, including error and empty states.
 - Prefer role and accessible-name queries; use `userEvent` for interactions.

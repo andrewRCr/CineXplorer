@@ -14,7 +14,7 @@ import { Tooltip } from "../core/chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";
 import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
-import { useMovieActions } from "@/hooks/movie/useMovieActions";
+import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
 import PosterPlaceholder from "@/assets/PosterPlaceholder";
 
 // ============================================================================
@@ -51,24 +51,16 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   const [isCardHovered, setIsCardHovered] = useState(false);
   const titleRef = useRef<HTMLParagraphElement>(null);
 
-  // Local state for watchlist to handle immediate UI updates
-  const [localWatchlistState, setLocalWatchlistState] = useState<
-    boolean | null
-  >(null);
-
-  // Movie actions hook for watchlist, watched, liked, etc.
-  const { toggleWatchlist, isUpdating } = useMovieActions({ movie });
+  const { state, save } = useUserMovieState(
+    movie.tmdb_id,
+    movie.user_movie_data,
+  );
 
   // ==========================================================================
   // Computed Values
   // ==========================================================================
 
-  // Watchlist state: prefer local state (after toggle), fallback to prop
-  const isOnWatchlist = useMemo(
-    () =>
-      localWatchlistState ?? movie.user_movie_data?.user_on_watchlist ?? false,
-    [localWatchlistState, movie.user_movie_data],
-  );
+  const isOnWatchlist = state.user_on_watchlist;
 
   // Format release date for display
   // CRITICAL: Parse ISO date without timezone conversion to avoid date shift
@@ -169,23 +161,10 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   // Event Handlers
   // ==========================================================================
 
-  const handleWatchlistToggle = async (e: React.MouseEvent) => {
+  const handleWatchlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-
-    // Capture previous state before optimistic update (avoids stale closure issues)
-    const wasOnWatchlist = isOnWatchlist;
-
-    // Optimistically update local state for immediate UI feedback
-    setLocalWatchlistState(!wasOnWatchlist);
-
-    try {
-      // Toast notifications handled by useMovieActions hook
-      await toggleWatchlist(!wasOnWatchlist);
-    } catch {
-      // Rollback to previous state on error (toast handled by hook)
-      setLocalWatchlistState(wasOnWatchlist);
-    }
+    save({ user_on_watchlist: !state.user_on_watchlist });
   };
 
   // ==========================================================================
@@ -379,7 +358,6 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                     }
                     aria-pressed={isOnWatchlist}
                     onClick={(event) => void handleWatchlistToggle(event)}
-                    disabled={isUpdating}
                   >
                     {isOnWatchlist ? <RiPlayListFill /> : <RiPlayListAddLine />}
                   </IconButton>

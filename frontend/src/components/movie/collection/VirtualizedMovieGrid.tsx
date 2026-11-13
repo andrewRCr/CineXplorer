@@ -1,3 +1,4 @@
+import { virtualizedMoviesKey } from "@/lib/queries";
 import { useEffect, useRef, useMemo, useState } from "react";
 import { Text, Box, Spinner } from "@chakra-ui/react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
@@ -54,7 +55,7 @@ const VirtualizedMovieGrid = () => {
 
   // Build stable query key from actual filter values
   const queryKey = useMemo(
-    () => ["movies", "virtualized", source, query, browseParams],
+    () => virtualizedMoviesKey(source, query, browseParams),
     [source, query, browseParams],
   );
 

@@ -142,8 +142,10 @@ export async function logout(): Promise<LogoutResponse> {
  *
  * @returns User profile with id, username, email, first_name, last_name, email_verified, full_name
  */
-export async function getUserProfile(): Promise<UserProfile> {
-    const response = await apiClient.get<UserProfile>(`/profile/`);
+export async function getUserProfile(
+    signal?: AbortSignal,
+): Promise<UserProfile> {
+    const response = await apiClient.get<UserProfile>(`/profile/`, { signal });
     return response.data;
 }
 

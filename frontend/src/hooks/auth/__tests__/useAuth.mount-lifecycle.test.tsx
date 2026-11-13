@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -14,6 +15,7 @@ import {
   token,
 } from "@tests/helpers/auth";
 import { gate, installWebLocks } from "@tests/helpers/web-locks";
+import { TestProviders } from "@tests/helpers/test-providers";
 
 const sessionUrl = `${siteOrigin}/_allauth/browser/v1/auth/session`;
 
@@ -24,8 +26,16 @@ beforeEach(() => {
   document.cookie = "csrftoken=csrf-test-token; path=/";
 });
 
+function AuthProviders({ children }: { children: ReactNode }) {
+  return (
+    <TestProviders>
+      <MemoryRouter>{children}</MemoryRouter>
+    </TestProviders>
+  );
+}
+
 function mountAuth() {
-  return renderHook(() => useAuth(), { wrapper: MemoryRouter });
+  return renderHook(() => useAuth(), { wrapper: AuthProviders });
 }
 
 describe("authentication mount lifecycle", () => {
@@ -140,7 +150,7 @@ describe("authentication mount lifecycle", () => {
         seen.push(auth.status);
         return auth;
       },
-      { wrapper: MemoryRouter, reactStrictMode: true },
+      { wrapper: AuthProviders, reactStrictMode: true },
     );
     try {
       await act(async () => {

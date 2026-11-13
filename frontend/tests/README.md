@@ -159,6 +159,14 @@ cannot release a newer read. After successful fallback, ordinary password-renewa
 Seed the CSRF cookie before a fake idle tick when the scenario concerns renewal rather than CSRF initialization.
 Restore real intervals before RTL polling, and finish held requests before ending the test.
 
+Save-ownership tests keep the shared save options and HTTP stack real. Public mutation-cache notifications can
+schedule a user change after the mutation guard but ahead of asynchronous Axios preparation. Separately hold the
+browser Cookie Store read used by the actual XHR adapter, retire the save, then release it and assert zero PATCHes.
+This catches a guard that stops at the interceptor. Release that cookie gate before awaiting reset queries that
+also need it. Cover ordinary saves and Undo, CSRF/renewal waits, count-only retirement and another live renewal
+caller. An already-received request can be canceled locally; assert no obsolete effects without assuming server
+rollback. Keep current-owner, unmount and ordering controls.
+
 - Assert user-visible behavior, including error and empty states.
 - Prefer role and accessible-name queries; use `userEvent` for interactions.
 - Await asynchronous UI updates with `findBy*` or `waitFor`.

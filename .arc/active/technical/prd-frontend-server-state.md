@@ -122,6 +122,8 @@ changes.
   after awaiting renewal and before credential clearing, redirect or replay. A cancelled caller rejects as
   cancellation without those effects; its read cannot publish a profile or anonymous result. Cancelling one caller
   does not abort the shared renewal another current caller may still need.
+  Save requests carry their save-ownership generation's signal (D4) through the same request-local cancellation
+  checks. A change of user aborts those callers without making their signal the shared renewal's transport signal.
 
 `apiClient`'s "Server error" toast takes a fixed `id`, so a retried read that fails again updates the toast already
 showing instead of stacking another: the toaster updates a toast in place when it is created with an `id` it already
@@ -178,16 +180,36 @@ observes it, and a grid kept mounted would then show its stale payload again. Th
 signed-in user changes (D7), a sign-out included. A save still running then drops out of what is shown, and a save
 still queued never runs: clearing the mutation cache removes it from its scope, so nothing starts it.
 
-**A change of user stops a save's work.** Clearing doesn't stop a save already running, so its success and failure
-work first checks that the signed-in user hasn't changed since the save was made, and does nothing if it has: no
-toast, no Undo and no Library invalidation. The check reads the **change count**, a number the session module keeps
-and advances in the same step that clears the saves (D7). A save records the count when it is made, a queued save
-included, by carrying it with the mutation's variables before asynchronous setup begins, and compares it when it
-settles. The request's global error feedback uses that same count; an obsolete save does not dispatch if ownership
-changes while its mutation setup yields.
+**A change of user stops a save's work.** A change of user cancels the previous user's save requests, including
+pending request preparation and in-flight transport. Cancellation does not guarantee reversal of work already
+received by the server. Success and failure work still checks that the signed-in user hasn't changed since the
+save was made, and does nothing if it has: no toast, no Undo and no Library invalidation. The check reads the
+**change count**, a number the session module keeps and advances in the same step that clears the saves (D7).
+A save records the count when it is made, a queued save included, by carrying it with the mutation's variables
+before asynchronous setup begins. Its request and settlement effects remain bound to that count. The request's
+global error feedback uses the same count; an obsolete save cannot acquire replacement credentials or start a
+PATCH or recovery replay after ownership changes, including during HTTP preparation.
 The session version (`getAuthSessionVersion`) can't serve: sign-out and password or provider sign-in advance it
 (`invalidateAuthSession`), but stored credentials the session's first read rejects and a failed renewal at the
 60-second check do not.
+
+**One cancellation signal per save-ownership generation.** The session module lazily keeps one `AbortController`
+for saves under its current change count. The shared save `mutationFn` synchronously verifies its invocation count
+and obtains that generation's signal before calling `saveUserMovieData`; an obsolete invocation rejects as Axios
+cancellation without entering request preparation. The ordinary save and Undo use these same options.
+`beginUserChange` first advances the count, detaches the old controller and aborts it synchronously, then clears
+saves and feedback as usual. Saves of the replacement owner obtain a fresh controller. There is no separate epoch,
+per-request registry or persisted cancellation state. Finishing one save does not abort its siblings, and unmounting
+a control does not abort its current owner's saves.
+
+The signal passes through the existing service request configuration to `apiClient`, both renewal continuations
+and the browser transport. It remains authoritative across asynchronous credential/CSRF preparation and the
+adapter's own preparation before sending. In particular, Axios may asynchronously read an XSRF cookie before native
+XHR sends; checking only before or at the end of its async request interceptor does not close that interval.
+Do not disable that protection or replace the transport to enforce save ownership. A retired caller cannot start
+or join renewal, clear credentials, redirect or replay after cancellation. Its signal does not abort shared renewal
+for other current callers; independent authentication invalidation and credential-presence checks keep their
+existing effects. `shouldReportServerError` remains a feedback policy, not a cancellation or dispatch predicate.
 
 **The work belongs to the save,** not to the control that started it, so a save finishes the same way after its card
 has scrolled out of the virtualized grid or unmounted, and Undo works from a toast whose card is gone. TanStack Query
@@ -325,7 +347,8 @@ new read to the one in flight rather than starting another, and a read landing a
   provider discovery, clear a newer provider session or act after authoritative anonymous completion; outside
   owned resolution, a current password user's failed renewal still signs them out.
 
-**A change of user** is one step in the session module: it advances the change count (D4), clears the saves,
+**A change of user** is one step in the session module: it advances the change count (D4), synchronously aborts the
+previous save generation's signal (D4), clears the saves,
 dismisses the save toasts still showing (D4), and resets every query except the session, so what is on screen
 refetches. It runs at exactly these points, which are every way the signed-in user can change in this tab:
 
@@ -456,6 +479,13 @@ navigation bar's Login button, since the sign-in page also has the form's.
   route fails against infinite lists, without changing what was decided. Ordering saves by movie, keeping them until
   a change of user, and the change count are `none`: tactical mechanics. Undo and the toasts are `none`: tactical
   interface choices.
+  **A change of user cancels old save requests through transport preparation,** over a guard only in `mutationFn`
+  or the API interceptor, since Axios can yield after those guards before sending with replacement authority.
+  One controller per existing ownership generation composes the request cancellation already supported by Axios;
+  a per-request registry adds lifecycle without independent save-cancellation needs. Already-sent requests are
+  canceled locally too, without promising that the server reverses a received write. _ADR:_ extend ADR-027's dated
+  amendment beside user-data clearing to record this cancellation boundary. Controller placement and lazy signal
+  acquisition are `none`: tactical mechanics; there is no new authentication mechanism or transport policy.
 - **D5: controls stay enabled while a save is pending,** over disabling them: with saves queued in order and computed
   from the shown state, a second click is a valid save. _ADR:_ covered by ADR-027 as amended (D4).
 - **D6: a plain query keyed by the full parameter set,** over an infinite query over page numbers now: nothing scrolls
@@ -505,6 +535,8 @@ next-page load undoes a patch in place (D4); and every change of signed-in user,
 end-to-end watchlist test its Decision names is still to come. A dated amendment to ADR-028 will record pending
 session-resolution ownership through provider discovery and password fallback, including explicit-command
 supersession and request-local cancellation through nested API work, alongside its existing status and query decisions.
+ADR-027's dated amendment will also record cancellation of the previous user's save requests during preparation and
+in-flight transport, without guaranteeing server rollback, while retaining count-based settlement guards (D4, D7).
 
 ## 6. Cross-cutting Considerations
 
@@ -594,6 +626,21 @@ background API caller joins it. Reject without cancellation or version supersess
 both stores are cleared, the caller rejects, one refresh was sent and no redirect occurs. Exercise both API entry
 paths and reverse the waiter order. A successful-fallback control then fails a later current-password renewal and
 observes ordinary failure handling, so suppressing all post-resolution failures cannot pass.
+
+Save-ownership tests retire a save after `mutationFn` has passed its initial count check but before Axios prepares
+the request, for both provider and password replacement. Hold the actual browser adapter's asynchronous cookie
+read separately, change ownership and release it: no retired PATCH may send. Cover a transition that advances only
+the change count, and retirement while CSRF initialization or either renewal entry path is held. On renewal success
+and failure, the retired caller stays canceled with no PATCH/replay, feedback, Library invalidation, credential
+clearing or redirect of its own. At the public user-change-step boundary, retain credentials/version while retiring
+the save generation to isolate caller cancellation: a separate current caller sharing renewal can still succeed.
+Actual authentication transitions retain their independent session invalidation and credential-clearing semantics.
+
+Exercise ordinary saves and Undo through the shared options. A request already sent can be canceled locally with
+no obsolete settlement effects; never assert that cancellation undoes server-received work. Keep current-owner
+success, per-movie ordering, unmount completion and one-save-per-Undo coverage. See every added behavior fail before
+it passes, with narrow reconstructions for behavior already supported. Adapt held-save assertions to cancellation
+where ownership changes, preserving their user-visible state, feedback and invalidation assertions.
 
 ### Migration and rollout
 
@@ -693,6 +740,16 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
    successful password fallback, later failure while current password credentials remain present still receives
    ordinary handling. (D7)
 
+10. **Save request ownership.** Network tests show a save retired after its mutation guard, before Axios prepares
+    the request, sends no PATCH with a replacement provider session or password token. Holding the actual browser
+    adapter's asynchronous cookie preparation, then changing user before releasing it, also sends no retired PATCH.
+    A change-count-only transition, held CSRF initialization and held renewal success/failure leave the old caller
+    canceled with no PATCH/replay, obsolete feedback or Library invalidation, or credential clearing/redirect of its
+    own. Canceling a save generation alone does not abort a separate current caller's shared renewal. Both ordinary
+    saves and Undo carry the signal. An already-sent request is canceled locally without obsolete settlement effects
+    or a claim of server rollback. Current-owner saves, ordering, completion after unmount and Undo still work.
+    (D4, D7)
+
 ## 8. Open Questions
 
 None.
@@ -708,3 +765,8 @@ None.
   operation's terminal renewal failure, request budget and feedback attribution across both interceptors.
   Failure authority also requires password credentials still to be present at the effect boundary, so a shared
   rejection cannot regain authority after the reader's anonymous completion clears both stores.
+- **2026-11-12:** D4 binds saves to their invocation's user through request preparation and transport. Every user
+  change cancels the old save generation, including already-sent requests, without promising server rollback;
+  count-based settlement and feedback guards remain. D2/D7 retain caller-local cancellation and independent shared
+  renewal. Added criterion 10 and the corresponding implementation/tests/reference work; goals and criteria 1–9
+  stay unchanged. ADR-027's implementation amendment will describe this lifecycle beside user-data clearing.

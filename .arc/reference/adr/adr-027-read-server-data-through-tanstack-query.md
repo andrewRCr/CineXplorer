@@ -66,6 +66,12 @@ rework ([ADR-028](adr-028-use-three-state-sign-in-status.md)).
   Sign-in clears saves when it stores its token, then resets queries after the fresh session read lands. Sign-out
   also loads the sign-in page afresh after its request settles, dropping data fetched while a provider cookie was
   still live.
+- A change of user cancels the previous user's save requests, including asynchronous request preparation and
+  in-flight transport. Saves obtain one signal for their invocation's ownership generation before entering the HTTP
+  client; the user-change step retires that generation synchronously. This prevents old work from acquiring
+  replacement credentials while Axios prepares a request. Cancellation cannot guarantee reversal of a write the
+  server already received, so count-based settlement and feedback guards remain. Current-owner saves still finish
+  after their control unmounts, and one canceled caller does not abort shared renewal for another current caller.
 
 ## References
 

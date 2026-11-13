@@ -435,6 +435,45 @@ its request settles; on the browsable stack, signing out and in again shows no p
         - The authorized increment is complete and uncommitted. Its independent fix check and any commit remain
           separate approval boundaries.
 
+- [x] **6.5 Bind save requests to their invocation's user through transport — D4 amendment**
+
+    **Goal:** A save made before a change of user cannot acquire replacement credentials or start a PATCH or
+    recovery replay afterward; cancellation and late settlement cannot affect the replacement user's state.
+
+    - [x] **6.5.a Prove the request-preparation and transport boundaries**
+        - Added 13 real-hook/TanStack/Axios/MSW cases: replacement credentials between the mutation guard and HTTP
+          preparation; native Cookie Store preparation for normal save and Undo; held CSRF/count-only retirement;
+          both renewal entry paths with 200/401/500, a surviving live waiter; and already-sent 200/500 cancellation.
+        - Native preparation sends no retired PATCH, and a replacement generation still saves successfully. Retired
+          callers produce no replay, obsolete feedback/Library invalidation or credential clearing/redirect of their
+          own. Already-received requests abort locally without a server-rollback assertion.
+        - Both original boundary cases failed before implementation. Narrow reconstructions without generation abort
+          failed native/CSRF/renewal/in-flight assertions; reusing the aborted controller failed new-owner success.
+          Restored code passes. Corrected a fixture wait that held reset queries behind the same cookie gate.
+        - Adapted older held-save checks to require Axios cancellation, retaining UI state, feedback and invalidation
+          assertions; the first full run identified 11 stale success-status expectations. Current-owner, ordering,
+          unmount and exact Undo controls remain green. The touched limit-refusal fixture now uses its API error shape.
+    - [x] **6.5.b Carry one owner-generation signal through the existing request path**
+        - The session module's `getSaveSignal(change)` synchronously rejects obsolete invocations and lazily returns
+          one current-generation signal. Shared save options forward it through the existing service configuration;
+          ordinary save and Undo use the same path. Existing API cancellation handles preparation and renewal.
+        - `beginUserChange` advances the count, detaches and aborts the old controller before clearing saves/feedback.
+          Later saves acquire a fresh signal. No new epoch, per-request registry, persistence, transport substitution
+          or XSRF policy. Current-owner unmount/settlement does not abort siblings; count-based effects stay guarded.
+        - Shared refresh keeps its separate controller. Caller retirement cannot acquire replacement credentials,
+          dispatch/replay or trigger stale failure effects; authentication invalidation retains its own semantics.
+    - [x] **6.5.c Document save cancellation and its server-side limit**
+        - Extended ADR-027's dated amendment and updated authentication/test guidance and completion summary for the
+          generation signal, preparation/in-flight cancellation and retained guards. Server-received work may still
+          complete; no rollback guarantee or new ADR file.
+    - [x] **6.5.d Verify the repair and close its criterion**
+        - Full frontend: 2,757 tests in 77 files pass, including all 13 new ownership cases. ESLint, generated Chakra
+          types, TypeScript, changed-file formatting, affected Markdown and real-session Chromium sign-in/out pass.
+          The browser check waited for routed local capacity before its successful run; routing policy was unchanged.
+        - Criterion 10 is validated below; goals and criteria 1–9 are unchanged. Bounded Astra completion advice found
+          no required omission; it is not an independent implementation check. Changes remain uncommitted and the
+          material repair's independent fix check is offered separately, before the later full-review scope decision.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation
@@ -466,8 +505,10 @@ its request settles; on the browsable stack, signing out and in again shows no p
 - **Current password failure authority.** Check live stored access credentials, even when expired, at the effect
   boundary. Anonymous fallback clears both stores before owner release; a later subscriber to the same rejection
   cannot acquire authority from that release. A successful fallback retains credentials and ordinary handling.
-- **Save feedback ownership.** Save variables carry the ownership count from invocation, including Undo, before
-  asynchronous mutation setup. Both save callbacks and global error feedback compare it; retired saves do not dispatch.
+- **Save request and feedback ownership.** Keep the count captured at invocation, including Undo, before async
+  mutation setup. Task 6.5 carries that count into synchronous generation-signal acquisition and existing HTTP
+  cancellation, so retirement reaches request/adapter preparation and in-flight transport. Keep callbacks and
+  global error feedback comparing the count even after cancellation; no server rollback is guaranteed.
   Save-toast IDs are retained until the user changes so cleanup reaches queued notifications as well as visible ones.
 - **Toasts in tests.** The toasters are module-level: render `<Toaster />` (and `<PriorityToaster />` for the auth
   toasts) where a test reads them, and remove leftover toasts before each test, as `MovieCard.test.tsx` does with
@@ -595,3 +636,20 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   Narrow reconstructions produced the corresponding observable failures before restoration. Lint, types,
   formatting, affected Markdown and real-session sign-in/out smoke pass. Independent implementation fix check
   remains a separate approval boundary.
+
+- [x] 10. **Save request ownership.** Network tests show a save retired after its mutation guard, before Axios prepares
+    the request, sends no PATCH with a replacement provider session or password token. Holding the actual browser
+    adapter's asynchronous cookie preparation, then changing user before releasing it, also sends no retired PATCH.
+    A change-count-only transition, held CSRF initialization and held renewal success/failure leave the old caller
+    canceled with no PATCH/replay, obsolete feedback or Library invalidation, or credential clearing/redirect of its
+    own. Canceling a save generation alone does not abort a separate current caller's shared renewal. Both ordinary
+    saves and Undo carry the signal. An already-sent request is canceled locally without obsolete settlement effects
+    or a claim of server rollback. Current-owner saves, ordering, completion after unmount and Undo still work.
+    (D4, D7)
+
+  _Evidence:_ All 13 ownership cases pass in the full 2,757-test run: mutation-to-HTTP turnover, native cookie
+  preparation for ordinary save/Undo, CSRF/count-only retirement, both renewal paths and 200/401/500 outcomes,
+  surviving shared caller, in-flight transport cancellation and new-generation success. Behavioral red/green and
+  narrow reconstructions prove the boundaries. Existing auth-command tests require canceled retired saves with
+  state/feedback/invalidation guards intact; current-owner/order/unmount/Undo controls pass. Lint, types, formatting,
+  Markdown and real-session sign-in/out pass. Independent implementation fix check remains separately offered.

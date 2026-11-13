@@ -26,6 +26,10 @@ clears the previous user’s cached data, retained saves and save feedback.
 - Saves for a movie run in order. A failed save falls out of the overlay, revealing the last server-confirmed state.
 - Saves and Undo carry their invocation ownership through asynchronous setup. Retired saves cannot dispatch or
   create late feedback; user changes remove visible and queued save toasts while preserving unrelated errors.
+- One save-generation signal binds that ownership through HTTP preparation, renewal and native transport. A user
+  change aborts old requests, including asynchronous cookie preparation and in-flight transport, without aborting
+  shared renewal for another current caller. Count-based settlement guards remain because cancellation cannot
+  guarantee reversal of a server-received write; current-owner saves still finish after control unmount.
 - Password sign-in clears retained saves before reading its fresh session and resetting other queries. Sign-out
   writes anonymous immediately, then loads Login afresh after its request settles, with an anonymous-only notice.
 - Accepting a provider session retires earlier password authentication work, including API renewal failures that

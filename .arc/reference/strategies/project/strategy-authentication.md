@@ -503,13 +503,23 @@ Session writers cancel any in-flight session read before replacing it:
   and user ownership remain current, checked before and after canceling the session read. An older renewal cannot
   clear a provider session that landed while it was pending.
 
-The change-of-user step advances this tab's save ownership count, clears its mutation cache, removes its visible and
-queued save toasts and resets every query except the session. This refetches visible lists while late saves can
+The change-of-user step advances this tab's save ownership count, detaches and aborts the old save-generation
+controller, clears its mutation cache, removes its visible and queued save toasts and resets every query except the
+session. This refetches visible lists while late saves can
 neither show feedback nor invalidate Library. Each save carries its original ownership count from invocation, before
 mutation setup can yield; the request's global error toast checks it too. Password sign-in splits that step as above;
 the initial session read also runs it when a provider return lands a user, or when it clears rejected stored
 credentials. An initial profile landing for a user already shown as signed in, and an anonymous landing without a
 stored token, leave the caches intact. Unrelated feedback, including the global server-error toast, remains visible.
+
+`getSaveSignal` synchronously checks a save's invocation count and lazily supplies one `AbortSignal` per current
+ownership generation. Ordinary saves and Undo pass it through the service request configuration before Axios
+preparation starts. A user change aborts old preparation, renewal continuations and in-flight save transport; the
+signal remains effective during the browser adapter's asynchronous XSRF-cookie read before sending. The shared
+renewal has its own controller. Canceling the save caller therefore does not cancel another current caller's renewal;
+authentication invalidation retains its separate effects. Cancellation cannot undo a write already received by the
+server, so settlement and feedback still compare the original count. Unmounting a control and finishing one save
+do not abort the generation. The server-error feedback predicate remains separate from request cancellation.
 
 Password sign-out blacklists a valid refresh token before expiring its HttpOnly cookie, so a copy cannot renew
 credentials afterward. Missing, expired, malformed or already revoked refresh cookies still receive a successful

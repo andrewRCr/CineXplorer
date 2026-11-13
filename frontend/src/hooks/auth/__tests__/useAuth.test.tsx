@@ -32,6 +32,7 @@ import {
 } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpResponse, http } from "msw/http";
+import { isCancel } from "axios";
 import { useAuth } from "../useAuth";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";
@@ -1245,7 +1246,6 @@ async function startHeldSave(view: ChangeView) {
 async function expectRetiredSave(
   view: ChangeView,
   running: Awaited<ReturnType<typeof startHeldSave>>,
-  saveStatus = 200,
 ) {
   await waitFor(() =>
     expect(view.result.current.state.user_on_watchlist).toBe(false),
@@ -1255,9 +1255,8 @@ async function expectRetiredSave(
   );
   const before = view.libraries;
   view.saved.release();
-  await waitFor(() =>
-    expect(running.state.status).toBe(saveStatus === 200 ? "success" : "error"),
-  );
+  await waitFor(() => expect(running.state.status).toBe("error"));
+  expect(isCancel(running.state.error)).toBe(true);
   expect(view.libraries).toBe(before);
   expect(screen.queryByText("Added to watchlist")).not.toBeInTheDocument();
   expect(
@@ -1294,7 +1293,7 @@ describe("user ownership changes", () => {
       await waitFor(() =>
         expect(view.result.current.auth.status).toBe("anonymous"),
       );
-      await expectRetiredSave(view, running, saveStatus);
+      await expectRetiredSave(view, running);
       expect(view.headers).toEqual([`Bearer ${current}`, null]);
     },
   );
@@ -1544,7 +1543,7 @@ describe("settled sign-out reload", () => {
       expect(window.location.href).toBe("http://localhost:3000/browse");
       expect(localStorage.getItem("access_token")).toBeNull();
       expect(sessionStorage.getItem("access_token")).toBeNull();
-      await expectRetiredSave(view, running, saveStatus);
+      await expectRetiredSave(view, running);
       expect(
         screen.queryByText("You've been logged out"),
       ).not.toBeInTheDocument();

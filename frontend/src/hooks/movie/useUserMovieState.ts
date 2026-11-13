@@ -1,4 +1,3 @@
-import { CanceledError } from "axios";
 import {
     mutationOptions,
     MutationObserver,
@@ -12,7 +11,11 @@ import {
     type UserMovieDataPatchSchema,
     type UserMovieDataSchema,
 } from "@/services/userMovieDataService";
-import { createSaveToastId, getChangeCount } from "@/lib/session";
+import {
+    createSaveToastId,
+    getChangeCount,
+    getSaveSignal,
+} from "@/lib/session";
 import { libraryKey } from "@/lib/queries";
 import { toaster } from "@/components/core/chakra/toaster";
 
@@ -31,9 +34,8 @@ export const saveMutationOptions = (
         scope: { id: `movie-save:${tmdbId}` },
         gcTime: Infinity,
         mutationFn: ({ changes, change }: SaveVariables) => {
-            if (change !== getChangeCount())
-                throw new CanceledError("Save belongs to an earlier user");
             return saveUserMovieData(tmdbId, changes, {
+                signal: getSaveSignal(change),
                 shouldReportServerError: () => change === getChangeCount(),
             }).then((response) => response.data);
         },

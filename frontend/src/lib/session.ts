@@ -19,11 +19,19 @@ import { toaster } from "@/components/core/chakra/toaster";
 
 /** A tab's save ownership changes whenever its signed-in user changes. */
 let changeCount = 0;
+let saveController: AbortController | null = null;
 let toastSequence = 0;
 const saveToastPrefix = "movie-save:";
 const saveToastIds = new Set<string>();
 
 export const getChangeCount = () => changeCount;
+/** Bind a save to its invocation's user before asynchronous request preparation. */
+export function getSaveSignal(change: number): AbortSignal {
+    if (change !== changeCount)
+        throw new CanceledError("Save belongs to an earlier user");
+    saveController ??= new AbortController();
+    return saveController.signal;
+}
 export const createSaveToastId = () => {
     const id = `${saveToastPrefix}${changeCount}:${++toastSequence}`;
     saveToastIds.add(id);
@@ -33,6 +41,9 @@ export const sessionKey = ["session"] as const;
 
 export function beginUserChange(client: QueryClient) {
     changeCount++;
+    const previousController = saveController;
+    saveController = null;
+    previousController?.abort();
     client.getMutationCache().clear();
     // remove(id) also removes a toast queued behind the visible limit.
     for (const id of saveToastIds) toaster.remove(id);

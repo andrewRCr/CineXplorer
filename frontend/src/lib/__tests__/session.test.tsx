@@ -1,4 +1,5 @@
 import { beforeEach, expect, it } from "vitest";
+import { isCancel } from "axios";
 import {
   useQuery,
   useQueryClient,
@@ -73,16 +74,17 @@ it.each([200, 429])(
       http.patch(`${apiBaseUrl}/user-movie-data/1`, async ({ request }) => {
         requests.push(await request.json());
         await release.wait;
-        return HttpResponse.json(
-          createMockUserMovieData({ user_on_watchlist: true }),
-          { status },
-        );
+        return status === 200
+          ? HttpResponse.json(
+              createMockUserMovieData({ user_on_watchlist: true }),
+            )
+          : HttpResponse.json({ detail: "Save limit reached" }, { status });
       }),
     );
     const counts = reads();
     const user = userEvent.setup();
     // Keep a reference only to await the running operation after it leaves the cache.
-    let running: { state: { status: string } } | undefined;
+    let running: { state: { status: string; error?: unknown } } | undefined;
     function Capture() {
       const client = useQueryClient();
       return (
@@ -116,9 +118,8 @@ it.each([200, 429])(
     expect(screen.getByLabelText("watchlist")).toHaveTextContent("false");
     const before = counts.library;
     release.release();
-    await waitFor(() =>
-      expect(running?.state.status).toBe(status === 200 ? "success" : "error"),
-    );
+    await waitFor(() => expect(running?.state.status).toBe("error"));
+    expect(isCancel(running?.state.error)).toBe(true);
     expect(requests).toEqual([{ user_on_watchlist: true }]);
     expect(counts.library).toBe(before);
     expect(screen.queryByText("Added to watchlist")).not.toBeInTheDocument();

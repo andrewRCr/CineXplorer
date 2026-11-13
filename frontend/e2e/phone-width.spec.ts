@@ -93,6 +93,7 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     await page.setViewportSize({ width: 360, height: 800 });
     await menuButton.click();
     await drawer.getByRole("link", { name: "Films", exact: true }).click();
+    await expect(drawer).toBeHidden();
     await expect(page).toHaveURL(new URL("/browse", target.baseURL).href);
     await expect(page.getByText(/^\d[\d,]*\+? results$/)).toBeVisible();
     await scanPage(page, info);

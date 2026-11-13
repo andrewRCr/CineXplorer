@@ -229,7 +229,7 @@ const baseConfig = defineConfig({
     },
     globalCss: {
         "*::placeholder": { color: "on-muted" },
-        "*::selection": { bg: "tertiary/30" },
+        "*::selection": { bg: "tertiary/20", color: "foreground" },
         body: {
             bg: "background",
             color: "foreground",

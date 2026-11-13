@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { toastAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Toast slot recipe implementing semantic status feedback patterns
@@ -26,14 +27,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const toastRecipe = defineSlotRecipe({
     className: "toast",
 
-    slots: [
-        "root",
-        "indicator",
-        "title",
-        "description",
-        "actionTrigger",
-        "closeTrigger",
-    ],
+    slots: toastAnatomy.keys(),
 
     base: {
         root: {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createThemeSystem, themeRegistry } from "@/theme";
+import { styleSystem } from "@tests/helpers/theme-styles";
 
 /** Chakra's own token names that its recipes and global styles draw, with the theme role each must render. */
 const EXPECTED_COLOR_ROLES: Record<string, string> = {
@@ -94,4 +95,15 @@ describe.each(Object.values(themeRegistry))("$label", (theme) => {
             ]);
         },
     );
+});
+
+it("draws selected text in foreground on a 20% tertiary tint", () => {
+    expect(styleSystem.getGlobalCss()).toMatchObject({
+        "&*::selection": {
+            "--mix-background":
+                "color-mix(in srgb, var(--chakra-colors-tertiary) 20%, transparent)",
+            background: "var(--mix-background, var(--chakra-colors-tertiary))",
+            color: "var(--chakra-colors-foreground)",
+        },
+    });
 });

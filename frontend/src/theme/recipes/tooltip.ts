@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { tooltipAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Tooltip slot recipe implementing semantic token styling
@@ -15,7 +16,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
  */
 export const tooltipRecipe = defineSlotRecipe({
     className: "tooltip",
-    slots: ["content", "arrow", "arrowTip", "positioner", "trigger"],
+    slots: tooltipAnatomy.keys(),
 
     base: {
         content: {

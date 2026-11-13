@@ -77,8 +77,8 @@ export const selectRecipe = defineSlotRecipe({
     variants: {
         variant: {
             /**
-             * The default variant. Chakra's own outline styles sit in a later layer than base styles, so the
-             * trigger's color states live here.
+             * The default variant. Variant styles merge over base styles key by key, and Chakra's outline variant
+             * sets the trigger's border and background, so the trigger's color states live here.
              */
             outline: {
                 trigger: {

@@ -103,8 +103,12 @@ const textOnSurfaces: TokenPair[] = [
     // Chakra's muted text (fg.muted) on overlay panels
     { fg: "on-muted", bg: "popover" },
 
-    // Selected text (global text-selection color)
-    { fg: "foreground", bg: "tertiary/30" },
+    // Selected text (global text-selection colors) on each surface that carries text
+    { fg: "foreground", bg: "tertiary/20" },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["layer-01"] },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["layer-02"] },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["popover"] },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["muted"] },
 ];
 
 /**

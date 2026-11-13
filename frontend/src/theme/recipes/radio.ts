@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { radioGroupAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Radio (RadioGroup) slot recipe implementing form control patterns
@@ -25,14 +26,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const radioRecipe = defineSlotRecipe({
     className: "radioGroup",
 
-    slots: [
-        "root",
-        "item",
-        "itemControl",
-        "itemIndicator",
-        "label",
-        "itemText",
-    ],
+    slots: radioGroupAnatomy.keys(),
 
     base: {
         root: {

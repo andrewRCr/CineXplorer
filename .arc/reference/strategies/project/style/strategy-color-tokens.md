@@ -215,8 +215,8 @@ examples.
 ### Chakra's Own Tokens
 
 Chakra's recipes and global styles color whatever a component leaves unset with Chakra's own names. The theme
-defines those names as theme roles (ADR-045; source: `frontend/src/theme/color/chakra-roles.ts`), so an unstyled
-default renders a role in every theme and mode:
+defines those names as theme roles (ADR-045; source: `frontend/src/theme/color/chakra-roles.ts`), so a default that
+draws one of them renders a role in every theme and mode:
 
 | Chakra name | Renders as |
 | --- | --- |
@@ -227,7 +227,8 @@ default renders a role in every theme and mode:
 | `gray.focusRing` (Chakra's default focus ring) | `ring` |
 | shadows `xs`/`sm`, `md`, `lg`/`xl`/`2xl` | `shadow-sm`, `shadow-md`, `shadow-lg` |
 
-The ADR lists every name. Selected text uses `tertiary/30`, and dialog and drawer backdrops use `backdrop`.
+The ADR lists every name. Selected text is drawn in `foreground` on `tertiary/20`, and dialog and drawer backdrops
+use `backdrop`.
 
 **Rules:**
 

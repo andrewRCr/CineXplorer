@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { checkboxAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Checkbox slot recipe implementing form control patterns
@@ -23,7 +24,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const checkboxRecipe = defineSlotRecipe({
     className: "checkbox",
 
-    slots: ["root", "control", "indicator", "label"],
+    slots: checkboxAnatomy.keys(),
 
     base: {
         root: {
@@ -45,7 +46,7 @@ export const checkboxRecipe = defineSlotRecipe({
             flexShrink: 0,
             borderRadius: "sm",
             transition: "all 0.2s",
-            // Content on the checked fill; replaces Chakra's fixed white
+            // Replaces Chakra's fixed white on the unchecked control; the check mark's color is the indicator's
             color: "on-primary",
         },
         indicator: {

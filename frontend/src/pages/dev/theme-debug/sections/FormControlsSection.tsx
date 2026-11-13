@@ -199,23 +199,12 @@ export function FormControlsSection() {
                         borderColor="border-subtle-02"
                         color="foreground"
                       >
-                        {selectCollection.items.map((item) => {
-                          const isSelected = selectValue.includes(item.value);
-                          return (
-                            <Select.Item
-                              key={item.value}
-                              item={item}
-                              bg={isSelected ? "tertiary" : undefined}
-                              color={isSelected ? "on-tertiary" : undefined}
-                              _hover={{
-                                bg: isSelected ? "tertiary" : "tertiary/12",
-                                color: isSelected ? "on-tertiary" : undefined,
-                              }}
-                            >
-                              {item.label}
-                            </Select.Item>
-                          );
-                        })}
+                        {selectCollection.items.map((item) => (
+                          <Select.Item key={item.value} item={item}>
+                            {item.label}
+                            <Select.ItemIndicator />
+                          </Select.Item>
+                        ))}
                       </Select.Content>
                     </Select.Positioner>
                   </Select.Root>
@@ -259,10 +248,11 @@ export function FormControlsSection() {
                 <Code fontSize="xs">tertiary/8</Code> (hover),{" "}
                 <Code fontSize="xs">tertiary</Code> border-only focus (keyboard
                 only, matches StyledInput pattern). Content uses{" "}
-                <Code fontSize="xs">muted</Code> bg. Items: selected state uses{" "}
+                <Code fontSize="xs">muted</Code> bg. Items: the highlighted
+                option (keyboard or pointer) uses{" "}
                 <Code fontSize="xs">tertiary</Code> +{" "}
-                <Code fontSize="xs">on-tertiary</Code>, hover (non-selected)
-                uses <Code fontSize="xs">tertiary/12</Code>.
+                <Code fontSize="xs">on-tertiary</Code>; the chosen option shows
+                a check mark, not a fill.
               </Text>
             </VStack>
           </Box>

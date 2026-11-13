@@ -132,11 +132,15 @@ function provision(root, main, { install = true } = {}) {
     }
     const codexSource = join(main, ".codex");
     const codexTarget = join(root, ".codex");
-    if (existsSync(codexSource) && !lstatSync(codexTarget, { throwIfNoEntry: false })) {
+    const codexState = lstatSync(codexTarget, { throwIfNoEntry: false });
+    if (existsSync(codexSource) && (!codexState || codexState.isDirectory())) {
         // Codex's sandbox requires a real .codex folder; its entries can remain shared.
-        mkdirSync(codexTarget);
+        mkdirSync(codexTarget, { recursive: true });
         for (const entry of readdirSync(codexSource, { withFileTypes: true })) {
-            symlinkSync(join(codexSource, entry.name), join(codexTarget, entry.name), entry.isDirectory() ? "dir" : "file");
+            const target = join(codexTarget, entry.name);
+            if (!lstatSync(target, { throwIfNoEntry: false })) {
+                symlinkSync(join(codexSource, entry.name), target, entry.isDirectory() ? "dir" : "file");
+            }
         }
     }
     provisionEnv(root, main);

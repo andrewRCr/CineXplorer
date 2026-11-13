@@ -92,11 +92,14 @@ const isUserProfile = (value: unknown): value is UserProfile => {
  * Used for both initial mount detection and OAuth callback handling.
  * @returns User profile if authenticated, null otherwise
  */
-async function checkOAuthSession(): Promise<UserProfile | null> {
+async function checkOAuthSession(
+    signal?: AbortSignal,
+): Promise<UserProfile | null> {
     try {
         const response = await fetch(ALLAUTH_SESSION_URL, {
             method: "GET",
             credentials: "include",
+            signal,
         });
 
         if (response.ok) {
@@ -152,6 +155,8 @@ export function useAuth(): AuthStateProps {
     // On initial mount, check for existing authentication (JWT or session)
     // This runs ONCE on mount to detect existing sessions
     useEffect(() => {
+        // Only the provider lookup belongs to this mount; password renewal is shared.
+        const controller = new AbortController();
         const checkExistingAuth = async () => {
             const sessionVersion = getAuthSessionVersion();
             const { access_token } = getAuthTokens();
@@ -159,10 +164,14 @@ export function useAuth(): AuthStateProps {
                 try {
                     if (areTokensExpired()) await refreshAccessToken();
                     // The authentication-state effect owns profile loading.
-                    if (sessionVersion === getAuthSessionVersion())
+                    if (
+                        !controller.signal.aborted &&
+                        sessionVersion === getAuthSessionVersion()
+                    )
                         setStatus("authenticated");
                 } catch (error) {
                     if (
+                        controller.signal.aborted ||
                         isCancel(error) ||
                         sessionVersion !== getAuthSessionVersion()
                     )
@@ -179,8 +188,12 @@ export function useAuth(): AuthStateProps {
             logger.debug(
                 "[useAuth] No JWT tokens found, checking for OAuth session...",
             );
-            const oauthUser = await checkOAuthSession();
-            if (sessionVersion !== getAuthSessionVersion()) return;
+            const oauthUser = await checkOAuthSession(controller.signal);
+            if (
+                controller.signal.aborted ||
+                sessionVersion !== getAuthSessionVersion()
+            )
+                return;
             if (oauthUser) {
                 logger.debug(
                     "[useAuth] OAuth session detected, user authenticated",
@@ -194,6 +207,7 @@ export function useAuth(): AuthStateProps {
         };
 
         void checkExistingAuth();
+        return () => controller.abort();
     }, []);
 
     // When authentication state changes, fetch user details (JWT users only)

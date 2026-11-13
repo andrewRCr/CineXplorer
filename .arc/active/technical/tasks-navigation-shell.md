@@ -2,9 +2,10 @@
 
 **PRD:** `prd-navigation-shell.md`
 **Created:** 2026-11-12
+**Completed:** 2026-11-12
 **Branch:** `technical/navigation-shell`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -103,8 +104,9 @@ each carry one `h1`.
         - Five fail-first cases exercise Enter/button submission, encoding, blank queries, autofocus/Escape and the
           rendered input/button focus styles, with observable submission and close callbacks.
     - [x] **2.2.b Implement `SearchField`, replacing `NavBarSearch`**
-        - A labelled form uses `:has(input:focus-visible)` for its border. The bar and temporary sidebar use it.
-          All five tests, lint, formatting and TypeScript passed. Both real-session sign-in smoke cases passed.
+        - A labelled form uses `:has(input:focus-visible)` for its border. The bar and sidebar shared the field at
+          its introduction. All five tests, lint, formatting and TypeScript passed. Both real-session sign-in smoke
+          cases passed.
 
 - [x] **2.3 The account control shows Sign in, holds its space, or opens the account menu — R3, R5, R29, R30**
 
@@ -135,7 +137,7 @@ each carry one `h1`.
     - [x] **2.4.b Rebuild the wide row of `NavBar` as its own component**
         - `WideNavBar`, `Wordmark` and `MainNavLinks` compose search and account controls. Films and authenticated
           Watchlist are the only main links. Removed the second row and its no-op action. The bar and layout token
-          both use 65px; removed the two navbar foundation heights. The old phone row remains until 3.2.
+          both use 65px; removed the two navbar foundation heights.
     - [x] **2.4.c Bring `e2e/sign-in.spec.ts` to the bar**
         - Browser checks cover banner controls, its token-sized height, Watchlist, and the account trigger's computed
           keyboard ring. The banner assertion failed with a temporary missing landmark, then passed after
@@ -351,7 +353,7 @@ window tabs, and the phone-width spec follows Films there.
     Films and its windows.
 
     - [x] **5.5.a Write the ADR "Navigate through one top bar into one film catalog"**
-        - ADR-044 reads Proposed and records decisions 1, 2, 4, 6–9 and 19, including the two bar layouts, one catalog,
+        - ADR-044 records decisions 1, 2, 4, 6–9 and 19, including the two bar layouts, one catalog,
           persistent descriptive titles, URL normalization, home alias and the phone spec in both smoke targets.
     - [x] **5.5.b Point ADR-002 and ADR-039 at it**
         - Updated only their Status sections to Accepted; Superseded in part by ADR-044, naming the affected parts.
@@ -366,14 +368,17 @@ window tabs, and the phone-width spec follows Films there.
     **Goal:** The exit criterion holds in a real browser, with the catalog's URLs, scroll keys and Back to Results
     unchanged.
 
-    - The final local smoke run passed all six specs (seven cases), including browse, Back to Results, movie detail
+    - The local smoke run passed all six specs (seven cases), including browse, Back to Results, movie detail
       and phone navigation. It ran against this worktree's isolated browsable stack after the final UI changes.
       Existing browse URL, pagination and reloaded-detail scroll restoration checks all pass.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation, the new ADR set to `Accepted`, and
-  the verification review)
+- [x] **6.1 Verify the work**
+
+    - Criteria 1–16 are validated against the source and completed local checks; their evidence is recorded beside
+      each criterion. The full verification run and the affected checks after the repairs passed.
+    - ADR-044 is Accepted. Criterion 17 remains for the pull request and post-merge staging evidence.
 
 - [x] **6.2 Preserve the title fallback for every undeclared sort**
 
@@ -392,76 +397,92 @@ window tabs, and the phone-width spec follows Films there.
     - All 146 related tests across eight files and the five affected browser specs (six cases) pass, with frontend
       lint, formatting and types. The earlier full frontend/backend suites and registration smoke were not rerun.
 
-## Implementation Notes
-
-- **Colors in tests:** render with `styleSystem` and compare with `expectResolvedColor`
-  (`frontend/tests/helpers/theme-styles.ts`), as `alert.test.tsx` and `MovieDetail.styles.test.tsx` do. jsdom
-  computes neither `:hover` nor a pseudo-element, so hover colors are checked by eye and the placeholder through the
-  generated global CSS.
-- **Breakpoints in tests:** jsdom evaluates media queries at a fixed 1024px width, where `lg` (64rem) matches, so
-  which controls show at which width is the smoke specs' to check. `NavBar` renders both rows, which share names
-  ("CineXplorer", the account trigger), so component tests render the wide row and the phone row each on its own;
-  the switch between the rows sits on `NavBar`'s two row wrappers, never inside a row's own component, or a row
-  tested alone would be hidden. The specs find bar controls by role: Playwright's `getByLabel` also matches an
-  `aria-label` on any element, hidden ones included, so "Search films" would match the hidden row's control too.
-- **New modules fail first on behavior:** a test of a component or function that doesn't exist yet is seen failing
-  against a stub that exports it, not on the missing import.
-- **Chakra's portals:** `Menu` and `Drawer` content renders in a portal at the end of `document.body`; query it through
-  `screen`, not within the banner.
-- **Sign-in state in tests:** `authHandlers`, `clearBrowserAuth`, `profile` and `gate` in `frontend/tests/helpers/`
-  drive the session as `NavBarUserMenu.test.tsx` does today.
-- **The error boundary today:** a caught error goes to `logger.reportCriticalError`, and in development only it resets
-  itself after 30 seconds; tests run outside development. `ErrorBoundary.integration.test.tsx` shows how its tests
-  quiet the console.
-- **Smoke runs:** `node scripts/worktree.mjs browse` starts the browsable stack and prints its address; run a spec from
-  `frontend/` with `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/<spec>`.
-- **Tests that pass before their implementation:** a case the current code already satisfies (the select trigger's
-  border focus, `/browse?minYear=1990` keeping its years, the sequential page's title and hidden controls, 4.1.a's
-  kept state, 4.1.b's app-level cases) is seen failing against a narrow break of that behavior, then passing once it
-  is restored, and the completion notes record it.
+---
 
 ## Success Criteria
 
 ### Implemented
 
-- [ ] 1. Component tests show the bar's links and the drawer's, signed out, resolving and signed in, as R1, R4, R5 and
+- [x] 1. Component tests show the bar's links and the drawer's, signed out, resolving and signed in, as R1, R4, R5 and
   R8 list; Films marked `aria-current="page"` on the three catalog URLs only, and the Library link on `/watchlist`
   only; and no link in the bar or the drawer to `/journal`, `/library`, `/log`, `/settings` or `/featured`. Which
   controls show at which width is a CSS breakpoint that jsdom, fixed at a 1024px width, can't vary, so the smoke specs
   check it (criterion 12).
-- [ ] 2. Component tests show the account menu with menu roles and `aria-expanded`, holding exactly Profile and Sign
+
+  Met: `NavBar.test.tsx` checks all three session states, current-link paths and excluded destinations;
+  `NavDrawer.test.tsx` checks the same shared links in all session states.
+
+- [x] 2. Component tests show the account menu with menu roles and `aria-expanded`, holding exactly Profile and Sign
   out; Escape closing the account menu, the drawer and the phone search field and returning focus to the control that
   opened each; and the phone search field, while open, leaving none of the row's other controls reachable by role or
   by Tab.
-- [ ] 3. Unit tests show Sign in's target: `/login?next=` with the current path and query on an app page; the same
+
+  Met: `AccountControl.test.tsx`, `NavDrawer.test.tsx` and `PhoneNavBar.test.tsx` exercise menu roles, expansion,
+  Escape/focus restoration from the input and both search buttons, and the search row's role and Tab exclusion. The
+  phone browser spec also verifies both button-focus Escape paths.
+
+- [x] 3. Unit tests show Sign in's target: `/login?next=` with the current path and query on an app page; the same
   `next` on `/login?next=%2Fwatchlist`; and `/login` on `/login` without `next`, on `/register` and on
   `/forgot-password`.
-- [ ] 4. Unit tests show the header's title for every row of R23's table, with and without a language or genre, and
+
+  Met: `returnPath.test.ts` checks the current app path/query and all sign-in-page return cases, including unsafe
+  targets and case/trailing-slash variants.
+
+- [x] 4. Unit tests show the header's title for every row of R23's table, with and without a language or genre, and
   R24's and R25's rules: each genre's wording and their order, three or more genres with and without a language, each
   year form, and no years on In theaters or Coming soon; a sort outside the five, a language or genre without a label,
   and three genres of which one has no label, as R23's last paragraph gives them; each bound that doesn't read as a
   number, as R25 gives them; and a range whose `minYear` is the later year. The examples given in R23 to R25 come out
   exactly as written.
-- [ ] 5. Tests show In theaters and Coming soon, reached by a URL carrying `minYear` and `maxYear`, and Coming soon
+
+  Met: all 85 `catalogTitle.test.ts` cases pass, covering the offered table rows, genre wording/composition, unknown
+  labels/sorts, parsed and reversed year bounds, window omissions and written examples. The unknown-sort cases
+  include inherited-property names on every window, with and without labelled filters.
+
+- [x] 5. Tests show In theaters and Coming soon, reached by a URL carrying `minYear` and `maxYear`, and Coming soon
   reached with `sortBy=vote_average.desc`, replacing the URL without them (no new history entry) and requesting the
   window without them; and a tab switch keeping genres, rating range, certifications, language and sort.
-- [ ] 6. Tests show the catalog's title and window tabs, and the search page's title, visible when results are empty
+
+  Met: the routed MSW cases in `Browse.test.tsx` inspect first-request parameters, replacement history and both
+  windows; tab switches retain all applicable filters and Back restores the original selection.
+
+- [x] 6. Tests show the catalog's title and window tabs, and the search page's title, visible when results are empty
   and when the request fails.
-- [ ] 7. Tests show a page that throws rendering the error display between the bar and the footer, with the bar's
+
+  Met: `Browse.test.tsx` asserts visible catalog titles/tabs in loading, loaded, empty and failed states, and the
+  search title without tabs in empty and failed states.
+
+- [x] 7. Tests show a page that throws rendering the error display between the bar and the footer, with the bar's
   links working, and a location change clearing it without remounting the content area; and a lazily loaded page
   showing the loading state with the bar present.
-- [ ] 8. Component tests show one `h1` in each page state R12 changes: the movie detail page loaded, not found and
+
+  Met: `BaseLayout.test.tsx` exercises the working bar/footer around a throwing page, path/query error recovery,
+  retained content state and a held lazy page.
+
+- [x] 8. Component tests show one `h1` in each page state R12 changes: the movie detail page loaded, not found and
   failed; the watchlist page loading, failed, empty and listed; the password-reset page before and after sending; the
   sign-in and registration pages; and a page showing the content area's error display; and no `h1` while the movie
   detail page loads its film, while the sign-in check runs, or while the sign-in page completes a Google or GitHub
   sign-in.
-- [ ] 9. `/browse/sequential` is registered only when `import.meta.env.DEV` is true, as `/dev/*` and `/testlogin` are,
+
+  Met: `MovieDetail.headings.test.tsx`, the watchlist/reset/login/registration tests, `ProtectedRoute.test.tsx` and
+  `BaseLayout.test.tsx` assert exactly one or no h1 in the specified states.
+
+- [x] 9. `/browse/sequential` is registered only when `import.meta.env.DEV` is true, as `/dev/*` and `/testlogin` are,
   and a production build (`npm run build`) emits no `BrowseSequential` chunk.
-- [ ] 10. A search of `frontend/src` finds no import of the removed sidebar components or of `useSidebar`, no
+
+  Met: `App.tsx` guards both the sequential lazy import and its route with the development condition. The production
+  build passes; its emitted files contain no `BrowseSequential` chunk.
+
+- [x] 10. A search of `frontend/src` finds no import of the removed sidebar components or of `useSidebar`, no
   `USER_NAVIGATION_ITEMS` or `MOVIE_VIEW_NAVIGATION_ITEMS`, no `layout-sidebar`, `sidebar-width`,
   `navbar-height-mobile` or `navbar-height-desktop` size and no `sidebar` z-index token; and `layout-navbar` resolves
   to 65px at every breakpoint.
-- [ ] 11. Tests over the theme show the select recipe's indicator color, the global placeholder style, the button
+
+  Met: the source search finds none of the removed components, hook, navigation constants or size/z-index tokens.
+  `layout-navbar` is a single 65px value; component and both browser viewport checks pass.
+
+- [x] 11. Tests over the theme show the select recipe's indicator color, the global placeholder style, the button
   recipe's expanded fill in each variant R29 names, and the button, checkbox and switch recipes' focus outline (color
   `ring`, with no `outline` shorthand) naming theme roles; the select trigger and the search field focusing with a
   `tertiary` border and no outline, the field's border staying unchanged while its Search button has focus, and the
@@ -472,29 +493,53 @@ window tabs, and the phone-width spec follows Films there.
   compared as resolved semantic variables (`var(--chakra-colors-…)`); the sign-in spec finds the account menu's
   trigger, focused from the keyboard, drawing its outline in `ring`'s color; and `npm run verify-contrast` passes with
   R29's two added pairs.
-- [ ] 12. The smoke tier passes locally with six specs: `sign-in.spec.ts` finding the wide bar's controls at 1280×800
+
+  Met: rendered recipe, search, account, drawer, bar, tab and advanced-toggle tests assert resolved semantic colors
+  and focus forms. Desktop smoke checks the account ring; contrast verification passes 1,398 pairs with 272 scoped
+  out and zero failures.
+
+- [x] 12. The smoke tier passes locally with six specs: `sign-in.spec.ts` finding the wide bar's controls at 1280×800
   as R30 lists; the phone-width spec at 360×800 finding every bar control's whole box inside the viewport signed out
   and signed in, the account trigger showing no username text, and the drawer's and the search field's controls; the
   axe scans without the sidebar's six baseline entries; exactly one `h1` on each page the specs reach; and the bar,
   found by its banner landmark, rendering at `layout-navbar`'s height at both viewports.
-- [ ] 13. The documentation search R31 describes finds nothing, and ADR-002's and ADR-039's statuses name the new ADR,
+
+  Met: all six local Chromium specs pass (seven cases), including 360×800 signed-out/signed-in bounds,
+  drawer/search/menu, desktop controls, axe scans, exactly one h1 and the shared bar height.
+
+- [x] 13. The documentation search R31 describes finds nothing, and ADR-002's and ADR-039's statuses name the new ADR,
   which reads `Accepted`.
-- [ ] 14. Component tests show, with `oauth_in_progress` set to `google` and to `github`, the shell calling
+
+  Met: R31's documentation search finds only accurate viewport counts, generic examples and row-wrapper
+  descriptions. ADR-002 and ADR-039 name ADR-044, now Accepted (2026-11-12).
+
+- [x] 14. Component tests show, with `oauth_in_progress` set to `google` and to `github`, the shell calling
   `window.__dismissPreloadOverlay` once it renders, and the content area showing "Logging in with Google..." or
   "Logging in with GitHub..." under the bar while the page loads (R17); and a component that throws in the bar itself
   rendering the last-resort full-page error display, and `/testlogin` showing its page-level loading fallback while it
   loads (R16).
-- [ ] 15. Component tests show the bar as the banner landmark; the wordmark as a link named "CineXplorer" and not a
+
+  Met: `BaseLayout.test.tsx` checks both provider messages and one preload dismissal; `App.test.tsx` checks the
+  shell failure above the router and `/testlogin`'s page-level fallback.
+
+- [x] 15. Component tests show the bar as the banner landmark; the wordmark as a link named "CineXplorer" and not a
   heading; the account menu's trigger named by the full username, its username text cut off past 12rem with an
   ellipsis (a 12rem maximum width, no wrapping, hidden overflow); the phone bar's buttons named "Open menu", "Search
   films" and "Close search", and the drawer titled "Menu"; and the search field labelled "Search films", with that
   placeholder, submitting the trimmed query to `/search?query=` on Enter and on its Search button, and doing nothing
   for a blank query (R1, R3, R6 to R9).
-- [ ] 16. Component tests show the window tabs as three links in a `nav` labelled "Release windows", the current one
+
+  Met: the bar, account, phone, drawer and search component tests assert landmarks, full names, truncation styles,
+  labels/placeholders, both submission paths and blank-query behavior.
+
+- [x] 16. Component tests show the window tabs as three links in a `nav` labelled "Release windows", the current one
   marked `aria-current="page"` (R19); the disabled year field reading "Release Year (In theaters)" and "Release Year
   (Coming soon)", the filter bar's region labelled "Film filters", and the advanced-filters toggle named "Advanced
   filters" with `aria-expanded` following its panel (R22); and the home page's section headed "Films", with buttons
   "All films", "In theaters" and "Coming soon" opening the three catalog URLs (R27).
+
+  Met: routed catalog tests assert the three links and current window; year-selector, sub-navigation,
+  advanced-toggle and Featured tests assert the specified labels, expansion state and destinations.
 
 ### Proven after merge
 

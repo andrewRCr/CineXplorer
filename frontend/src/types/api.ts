@@ -594,10 +594,9 @@ export interface paths {
          * Browse Movies
          * @description Browse movies with advanced filtering options and user-specific data.
          *
-         *     This is a thin wrapper around the TMDB discover endpoint with zero presets,
-         *     giving users full control over all filter parameters. Unlike now-playing and
-         *     upcoming endpoints which protect date ranges, this endpoint allows unrestricted
-         *     filtering for general movie browsing.
+         *     Newest-first without an explicit year or date constraint defaults to films
+         *     released through today in UTC. Explicit year and date filters retain control
+         *     over the browsing range. The service layer applies this default for all callers.
          *
          *     This endpoint implements a two-pass filtering architecture:
          *     1. TMDB API filtering (primary) - Reduces millions of movies to thousands
@@ -933,6 +932,12 @@ export interface components {
              * @description User's password
              */
             password: string;
+            /**
+             * Remember Me
+             * @description Keep the refresh cookie between browser sessions
+             * @default false
+             */
+            remember_me: boolean;
         };
         /**
          * HybridTokenRefreshResponseSchema

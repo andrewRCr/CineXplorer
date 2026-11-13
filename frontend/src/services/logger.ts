@@ -14,10 +14,10 @@
  *   - Styling: Full color coding and timestamps
  *
  * PRODUCTION:
- *   - Log Level: ERROR (critical messages only)
+ *   - Log Level: ERROR (errors and critical messages)
  *   - Console: Disabled for security
  *   - Storage: 50 entries maximum  
- *   - Backend Reporting: WARN+ levels
+ *   - Backend Reporting: ERROR+ levels
  *   - Styling: Simple formatting when console enabled
  *
  * TEST:
@@ -28,10 +28,10 @@
  *   - Styling: Minimal formatting
  *
  * STAGING:
- *   - Log Level: WARN (moderate verbosity)
+ *   - Log Level: ERROR (errors and critical messages)
  *   - Console: Enabled for debugging
- *   - Storage: 100 entries maximum
- *   - Backend Reporting: WARN+ levels
+ *   - Storage: 50 entries maximum
+ *   - Backend Reporting: ERROR+ levels
  *   - Styling: Simplified formatting
  */
 import { apiBaseUrl } from "@/config/baseUrls";
@@ -66,7 +66,20 @@ export interface LoggerConfig {
     backendReportingThreshold: LogLevel;
 }
 
+type StoredCriticalReport = Omit<
+    LogEntry,
+    "timestamp" | "user_id" | "level"
+> & {
+    id: string;
+    level: LogLevel.CRITICAL;
+    timestamp: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+    value !== null && typeof value === "object" && !Array.isArray(value);
+
 interface FailedReport {
+    id: string;
     entry: LogEntry;
     error: string;
     timestamp: Date;
@@ -97,6 +110,7 @@ class Logger {
     private sessionId: string;
     private logStorage: LogEntry[] = [];
     private failedReports: FailedReport[] = [];
+    private recoveryPromise?: Promise<void>;
     private userInteractions: UserInteraction[] = [];
     private readonly maxInteractions = 50; // Keep last 50 interactions
     private interactionTrackingEnabled = false;
@@ -135,6 +149,9 @@ class Logger {
         // if (environment === 'development') {
         //  this.enableInteractionTracking();
         // }
+
+        // Remove legacy sensitive metadata before reports remain in browser storage.
+        this.readStoredCriticalReports();
 
         // Initialize logger with environment context
         this.info("Frontend Logger initialized", {
@@ -245,7 +262,12 @@ class Logger {
     /**
      * Core logging method
      */
-    private log(level: LogLevel, message: string, data?: unknown): void {
+    private log(
+        level: LogLevel,
+        message: string,
+        data?: unknown,
+        sendToBackend = true,
+    ): void {
         // Check if this log level should be processed
         if (level < this.config.level) {
             return;
@@ -286,6 +308,7 @@ class Logger {
 
         // Backend reporting for critical errors
         if (
+            sendToBackend &&
             this.config.enableBackendReporting &&
             level >= this.config.backendReportingThreshold
         ) {
@@ -428,50 +451,99 @@ class Logger {
     /**
      * Send critical logs to backend for centralized monitoring with enhanced error handling
      */
-    private async reportToBackend(entry: LogEntry): Promise<void> {
+    private async reportToBackend(entry: LogEntry): Promise<boolean> {
         try {
-            // Import API client dynamically to avoid circular dependencies
-            const { default: apiClient } = await import("./apiClient");
-
-            // Prepare sanitized payload for backend
-            const payload = {
-                level: LogLevel[entry.level],
-                message: entry.message,
-                timestamp: entry.timestamp.toISOString(),
-                data: this.sanitizeDataForBackend(entry.data),
-                correlation_id: entry.correlation_id,
-                user_agent: entry.user_agent,
-                url: entry.url,
-                user_id: entry.user_id,
-                session_id: entry.session_id,
-                source: "frontend",
-                environment: this.detectEnvironment(),
-                browser_info: this.getBrowserInfo(),
-            };
-
-            // Send to backend with timeout
-            const response = await Promise.race([
-                apiClient.post("/logs/", payload, { skipAuthRefresh: true }),
-                new Promise((_, reject) =>
-                    setTimeout(
-                        () => reject(new Error("Backend logging timeout")),
-                        5000,
-                    ),
-                ),
-            ]);
-
-            // Log successful backend reporting in development
-            if (this.detectEnvironment() === "development") {
-                console.debug("Successfully reported log to backend:", {
-                    level: LogLevel[entry.level],
-                    message: entry.message,
-                    response: response,
-                });
-            }
+            await this.sendReport(entry);
         } catch (error) {
-            // Enhanced error handling for backend reporting failures
             this.handleBackendReportingError(error, entry);
+            return false;
         }
+        await this.recoverStoredCriticalReports();
+        return true;
+    }
+
+    /** Send one report without enqueueing failures or starting another recovery. */
+    private async sendReport(entry: LogEntry): Promise<void> {
+        const controller = new AbortController();
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+            await Promise.race([
+                this.postReport(entry, controller.signal),
+                new Promise<never>((_, reject) => {
+                    timer = setTimeout(() => {
+                        controller.abort();
+                        reject(new Error("Backend logging timeout"));
+                    }, 5000);
+                }),
+            ]);
+        } finally {
+            if (timer !== undefined) clearTimeout(timer);
+        }
+    }
+
+    private async postReport(
+        entry: LogEntry,
+        signal: AbortSignal,
+    ): Promise<void> {
+        const { default: apiClient } = await import("./apiClient");
+        const payload = {
+            level: LogLevel[entry.level],
+            message: entry.message,
+            timestamp: entry.timestamp.toISOString(),
+            data: this.sanitizeDataForBackend(entry.data),
+            correlation_id: entry.correlation_id,
+            user_agent: entry.user_agent,
+            url: entry.url,
+            user_id: entry.user_id,
+            session_id: entry.session_id,
+            source: "frontend",
+            environment: this.detectEnvironment(),
+            browser_info: this.getBrowserInfo(),
+        };
+        await apiClient.post("/logs/", payload, {
+            skipAuthRefresh: true,
+            signal,
+            timeout: 5000,
+        });
+    }
+
+    private recoverStoredCriticalReports(): Promise<void> {
+        if (!this.recoveryPromise) {
+            this.recoveryPromise = this.replayStoredCriticalReports().finally(
+                () => {
+                    this.recoveryPromise = undefined;
+                },
+            );
+        }
+        return this.recoveryPromise;
+    }
+
+    private async replayStoredCriticalReports(): Promise<void> {
+        const snapshot = this.readStoredCriticalReports();
+        if (snapshot === null) return;
+        for (const report of snapshot) {
+            try {
+                await this.sendReport({
+                    ...report,
+                    timestamp: new Date(report.timestamp),
+                });
+            } catch {
+                // Leave this and later reports for the next successful trigger.
+                break;
+            }
+            this.acknowledgeReport(report.id);
+        }
+    }
+
+    private acknowledgeReport(id: string): void {
+        this.failedReports = this.failedReports.filter(
+            (report) => report.id !== id,
+        );
+        const reports = this.readStoredCriticalReports();
+        if (reports === null) return;
+        this.writeStoredCriticalReports(
+            reports.filter((report) => report.id !== id),
+        );
     }
 
     /**
@@ -481,8 +553,9 @@ class Logger {
         const errorMessage =
             error instanceof Error ? error.message : "Unknown error";
 
-        // Store failed reports for potential retry
-        this.storeFailedBackendReport(entry, errorMessage);
+        const id = crypto.randomUUID();
+        // Use the same identity in memory and persistent recovery.
+        this.storeFailedBackendReport(entry, errorMessage, id);
 
         // Log to console in development, suppress in production
         if (this.detectEnvironment() === "development") {
@@ -496,48 +569,38 @@ class Logger {
             });
         }
 
-        // For critical errors, also store in localStorage as last resort (browser only)
-        if (
-            entry.level === LogLevel.CRITICAL &&
-            typeof localStorage !== "undefined"
-        ) {
-            try {
-                const criticalLogs = this.getCriticalLogsFromStorage();
-                criticalLogs.push({
-                    ...entry,
-                    timestamp: entry.timestamp.toISOString(),
-                    backendReportFailed: true,
-                    backendError: errorMessage,
-                });
-
-                // Keep only last 10 critical logs in localStorage
-                if (criticalLogs.length > 10) {
-                    criticalLogs.shift();
-                }
-
-                localStorage.setItem(
-                    "cinexplorer_critical_logs",
-                    JSON.stringify(criticalLogs),
-                );
-            } catch (storageError) {
-                // If localStorage also fails, there's nothing more we can do
-                console.error(
-                    "Failed to store critical log in localStorage:",
-                    storageError,
-                );
-            }
+        if (entry.level === LogLevel.CRITICAL) {
+            const reports = this.readStoredCriticalReports();
+            if (reports === null) return;
+            reports.push({
+                id,
+                level: LogLevel.CRITICAL,
+                message: entry.message,
+                timestamp: entry.timestamp.toISOString(),
+                data: this.sanitizeDataForBackend(entry.data),
+                correlation_id: entry.correlation_id,
+                user_agent: entry.user_agent,
+                url: this.sanitizeStoredUrl(entry.url),
+                session_id: entry.session_id,
+            });
+            this.writeStoredCriticalReports(reports);
         }
     }
 
     /**
      * Store failed backend reports for potential retry
      */
-    private storeFailedBackendReport(entry: LogEntry, error: string): void {
+    private storeFailedBackendReport(
+        entry: LogEntry,
+        error: string,
+        id: string,
+    ): void {
         if (!this.failedReports) {
             this.failedReports = [];
         }
 
         this.failedReports.push({
+            id,
             entry,
             error,
             timestamp: new Date(),
@@ -615,12 +678,12 @@ class Logger {
             };
 
             // Report to backend immediately
-            await this.reportToBackend(logEntry);
+            const reported = await this.reportToBackend(logEntry);
 
-            // Also log locally
-            this.critical(message, enhancedErrorData);
+            // Store locally without sending the same incident a second time.
+            this.log(LogLevel.CRITICAL, message, enhancedErrorData, false);
 
-            return true;
+            return reported;
         } catch (error) {
             this.error("Failed to report critical error manually", {
                 originalMessage: message,
@@ -641,36 +704,38 @@ class Logger {
 
         let successCount = 0;
         let failedCount = 0;
-        const remainingReports: FailedReport[] = [];
-
-        for (const failedReport of this.failedReports) {
-            // Skip reports that have been retried too many times
+        const snapshot = [...this.failedReports];
+        for (const failedReport of snapshot) {
+            if (
+                !this.failedReports.some(
+                    (report) => report.id === failedReport.id,
+                )
+            )
+                continue;
             if (failedReport.retryCount >= 3) {
+                this.failedReports = this.failedReports.filter(
+                    (report) => report.id !== failedReport.id,
+                );
                 failedCount++;
                 continue;
             }
-
             try {
-                await this.reportToBackend(failedReport.entry);
+                await this.sendReport(failedReport.entry);
+                this.acknowledgeReport(failedReport.id);
                 successCount++;
             } catch {
                 failedReport.retryCount++;
-                remainingReports.push(failedReport);
                 failedCount++;
             }
-
-            // Small delay between retries
             await new Promise((resolve) => setTimeout(resolve, 100));
         }
-
-        // Update failed reports list
-        this.failedReports = remainingReports;
+        if (successCount > 0) await this.recoverStoredCriticalReports();
 
         if (successCount > 0 || failedCount > 0) {
             this.info("Retry failed backend reports completed", {
                 success: successCount,
                 failed: failedCount,
-                remaining: remainingReports.length,
+                remaining: this.failedReports.length,
             });
         }
 
@@ -688,16 +753,88 @@ class Logger {
      * Get critical logs stored in localStorage (fallback storage)
      */
     getCriticalLogsFromStorage(): unknown[] {
-        if (typeof localStorage === "undefined") {
+        return this.readStoredCriticalReports() ?? [];
+    }
+
+    private sanitizeStoredUrl(value: string): string {
+        try {
+            const url = new URL(value);
+            return url.protocol === "https:" || url.protocol === "http:"
+                ? `${url.origin}${url.pathname}`
+                : "unknown";
+        } catch {
+            return "unknown";
+        }
+    }
+
+    /** null means unreadable storage, so callers must preserve the unknown queue. */
+    private readStoredCriticalReports(): StoredCriticalReport[] | null {
+        let serialized: string | null;
+        try {
+            if (typeof localStorage === "undefined") return null;
+            serialized = localStorage.getItem("cinexplorer_critical_logs");
+        } catch {
+            return null;
+        }
+        if (!serialized) return [];
+        try {
+            const parsed: unknown = JSON.parse(serialized);
+            const reports: StoredCriticalReport[] = [];
+            if (Array.isArray(parsed)) {
+                for (const value of parsed.slice(-10)) {
+                    if (
+                        !isRecord(value) ||
+                        value.level !== LogLevel.CRITICAL ||
+                        typeof value.message !== "string" ||
+                        typeof value.timestamp !== "string" ||
+                        !Number.isFinite(Date.parse(value.timestamp)) ||
+                        typeof value.user_agent !== "string" ||
+                        typeof value.url !== "string" ||
+                        typeof value.session_id !== "string"
+                    )
+                        continue;
+                    reports.push({
+                        id:
+                            typeof value.id === "string" && value.id
+                                ? value.id
+                                : crypto.randomUUID(),
+                        level: LogLevel.CRITICAL,
+                        message: value.message,
+                        timestamp: new Date(value.timestamp).toISOString(),
+                        data: this.normalizeReportData(
+                            this.removeSensitiveFields(value.data),
+                        ),
+                        correlation_id:
+                            typeof value.correlation_id === "string"
+                                ? value.correlation_id
+                                : undefined,
+                        user_agent: value.user_agent,
+                        url: this.sanitizeStoredUrl(value.url),
+                        session_id: value.session_id,
+                    });
+                }
+            }
+            this.writeStoredCriticalReports(reports);
+            return reports;
+        } catch {
+            this.writeStoredCriticalReports([]);
             return [];
         }
+    }
+
+    private writeStoredCriticalReports(reports: StoredCriticalReport[]): void {
         try {
-            const logs: unknown = JSON.parse(
-                localStorage.getItem("cinexplorer_critical_logs") || "[]",
-            );
-            return Array.isArray(logs) ? logs : [];
+            if (typeof localStorage === "undefined") return;
+            if (reports.length === 0) {
+                localStorage.removeItem("cinexplorer_critical_logs");
+            } else {
+                localStorage.setItem(
+                    "cinexplorer_critical_logs",
+                    JSON.stringify(reports.slice(-10)),
+                );
+            }
         } catch {
-            return [];
+            // Reporting is best-effort when browser storage is unavailable or full.
         }
     }
 
@@ -1012,18 +1149,27 @@ class Logger {
         return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     }
 
+    private normalizeReportData(data: unknown): Record<string, unknown> | null {
+        if (data == null) return null;
+        return isRecord(data) ? data : { originalData: data };
+    }
+
     /**
      * Sanitize data for backend transmission (remove sensitive info, limit size)
      */
-    private sanitizeDataForBackend(data: unknown): unknown {
-        if (!data) return data;
+    private sanitizeDataForBackend(
+        data: unknown,
+    ): Record<string, unknown> | null {
+        if (data == null) return null;
 
         try {
             // Convert to string to check size and sanitize
-            let sanitized: unknown = JSON.parse(JSON.stringify(data));
+            const serializedData: unknown = JSON.parse(JSON.stringify(data));
 
-            // Remove sensitive fields recursively
-            sanitized = this.removeSensitiveFields(sanitized);
+            // Preserve the API's object-or-null shape after removing sensitive fields.
+            const sanitized = this.normalizeReportData(
+                this.removeSensitiveFields(serializedData),
+            );
 
             // Limit size to prevent large payloads
             const serialized = JSON.stringify(sanitized);

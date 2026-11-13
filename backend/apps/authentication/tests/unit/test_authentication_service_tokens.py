@@ -39,7 +39,7 @@ def test_obtain_token_success(auth_service_factory: AuthServiceFactory) -> None:
         response,
         deps.jwt_settings_provider.return_value.refresh_token_name,
         "refresh-token",
-        deps.jwt_settings_provider.return_value.refresh_lifetime,
+        None,
         deps.jwt_settings_provider.return_value.samesite,
     )
     deps.logger.info.assert_called()

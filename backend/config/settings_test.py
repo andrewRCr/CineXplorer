@@ -7,6 +7,9 @@ import os
 
 from .settings import *  # noqa: F403
 
+# Avoid production password-hashing cost when creating and authenticating test users.
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
 # Use Django's in-memory email backend for tests
 # Emails are captured in django.core.mail.outbox for assertion
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"  # pyright: ignore[reportConstantRedefinition]

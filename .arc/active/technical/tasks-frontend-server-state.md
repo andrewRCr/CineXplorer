@@ -484,6 +484,19 @@ its request settles; on the browsable stack, signing out and in again shows no p
       detail/back-navigation Chromium smoke specs pass. Existing status-specific errors and successful cached-detail
       save composition pass. Changes remain uncommitted; the approved independent repair fix check follows.
 
+- [x] **6.7 Integrate main's Remember Me coverage with query-backed authentication**
+
+    **Goal:** The integrated branch preserves Remember Me cookie persistence and query-backed session/sign-out
+    behavior, with the conflicting tests covering both before publication.
+
+    - Resolved both test conflicts: retained both Remember Me modes, refresh-cookie attributes and two rotations,
+      plus the Login destination/selector after sign-out and query-subscriber wait after sign-in. The submitted
+      remember_me value remains asserted. Automatic production merges preserve login forwarding and profile cancellation.
+    - All 2,783 frontend tests in 78 files, lint, generated types/type-check, affected formatting/Markdown and both
+      real-session sign-in/out Chromium cases pass. Imported backend and other main-only files match main.
+      The approved independent integration check precedes the merge commit/push and renewed exact-head CI observation;
+      merge to main remains a separate decision.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation

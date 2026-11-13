@@ -118,6 +118,8 @@ class MovieService(BaseTMDBService):
             HttpError: If API error or data processing fails
 
         Note:
+            Newest-first without an explicit year or date constraint defaults to
+            films released through today in UTC. Caller-owned params are preserved.
             Runtime filtering is disabled due to TMDB API limitations.
             Year and rating filters use two-pass architecture: TMDB API (primary)
             + backend filtering (catches data quality issues).
@@ -125,6 +127,19 @@ class MovieService(BaseTMDBService):
         # Use empty params if none provided
         if params is None:
             params = BrowseServiceParams()
+
+        # Unfiltered newest-first discovery shows released films, including today.
+        if (
+            params.sort_by in ("release_date.desc", "primary_release_date.desc")
+            and params.year is None
+            and params.year_min is None
+            and params.year_max is None
+            and params.release_date_gte is None
+            and params.release_date_lte is None
+        ):
+            params = params.model_copy(
+                update={"release_date_lte": datetime.now(tz=UTC).date().isoformat()}
+            )
 
         # Extract backend filtering params (used for TMDB API first-pass and logging)
         year_min = params.year_min

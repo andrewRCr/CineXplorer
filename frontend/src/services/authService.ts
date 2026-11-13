@@ -27,11 +27,13 @@ type LogoutResponse = components["schemas"]["LogoutResponseSchema"];
  *
  * @param username - Username or email (backend accepts both via 'login' field)
  * @param password - User's password
+ * @param rememberMe - Keep the refresh cookie between browser sessions
  * @returns Access token and user details; the refresh token is delivered in its HttpOnly cookie
  */
 export async function login(
     username: string,
     password: string,
+    rememberMe: boolean = false,
 ): Promise<TokenResponse> {
     await ensureCsrfTokenCookie(BASE_URL);
     const csrfToken = getCsrfToken();
@@ -43,6 +45,7 @@ export async function login(
     const payload: TokenObtainInput = {
         login: username, // Backend accepts username or email
         password,
+        remember_me: rememberMe,
     };
 
     const response = await apiClient.post<TokenResponse>(`/token/`, payload, {

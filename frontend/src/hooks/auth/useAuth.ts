@@ -247,7 +247,11 @@ export function useAuth(): AuthStateProps {
             logger.debug(
                 "[useAuth] login() called, attempting authentication...",
             );
-            const response = await authService.login(username, password);
+            const response = await authService.login(
+                username,
+                password,
+                rememberMe,
+            );
 
             const user_id = response.user_id;
             const accessToken = response.access_token;

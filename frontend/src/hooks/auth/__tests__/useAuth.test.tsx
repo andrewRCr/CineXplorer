@@ -342,14 +342,16 @@ describe("sign-in and sign-out", () => {
     "stores password sign-in with remember me %s and fetches the profile",
     async (rememberMe) => {
       const access = token();
+      let requestBody: unknown;
       server.use(
-        http.post(`${apiBaseUrl}/token/`, () =>
-          HttpResponse.json({
+        http.post(`${apiBaseUrl}/token/`, async ({ request }) => {
+          requestBody = await request.json();
+          return HttpResponse.json({
             user_id: profile.id,
             access_token: access,
             username: profile.username,
-          }),
-        ),
+          });
+        }),
       );
       localStorage.setItem("refresh_token", "legacy-local");
       sessionStorage.setItem("refresh_token", "legacy-session");
@@ -358,6 +360,11 @@ describe("sign-in and sign-out", () => {
         expect(
           await result.current.login("viewer", "password", rememberMe),
         ).toEqual({ success: true, data: { displayName: profile.username } });
+      });
+      expect(requestBody).toEqual({
+        login: "viewer",
+        password: "password",
+        remember_me: rememberMe,
       });
       await waitFor(() => expect(result.current.isAuthenticated).toBe(true));
       expect(localStorage.getItem("refresh_token")).toBeNull();

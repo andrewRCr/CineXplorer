@@ -22,20 +22,24 @@ const entry = `
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MemoryRouter } from 'react-router';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '/src/lib/queryClient.ts';
 import { useAuth } from '/src/hooks/auth/useAuth.ts';
 function Probe() {
   const auth = useAuth();
   const [operation, setOperation] = useState('ready');
   return React.createElement(React.Fragment, null,
-    React.createElement('div', { role: 'status' }, auth.isAuthenticated ? auth.user?.username || 'loading' : 'signed out'),
-    React.createElement('button', { onClick: async () => { await auth.logout(); setOperation('logout complete'); } }, 'Sign out'),
+    React.createElement('div', { role: 'status' }, auth.status === 'resolving' ? 'loading' : auth.isAuthenticated ? auth.user?.username || 'loading' : 'signed out'),
+    React.createElement('button', { onClick: () => { void auth.logout(); } }, 'Sign out'),
     React.createElement('button', { onClick: async () => {
       const result = await auth.login('new-viewer', 'fixture-password', sessionStorage.getItem('remember') === 'true');
       setOperation(result.success ? 'login complete' : 'login failed');
     } }, 'Sign in'),
     React.createElement('div', { role: 'log' }, operation));
 }
-createRoot(document.getElementById('root')).render(React.createElement(MemoryRouter, null, React.createElement(Probe)));
+createRoot(document.getElementById('root')).render(
+  React.createElement(QueryClientProvider, { client: queryClient },
+    React.createElement(MemoryRouter, { initialEntries: [window.location.pathname + window.location.search] }, React.createElement(Probe))));
 `;
 let scenario;
 const account = (id) => ({
@@ -91,6 +95,7 @@ const vite = await createServer({
       "react",
       "react-dom/client",
       "react-router",
+      "@tanstack/react-query",
       "axios",
       "@chakra-ui/react",
     ],
@@ -110,7 +115,7 @@ const vite = await createServer({
 });
 const server = http.createServer((req, res) => {
   void (async () => {
-    if (req.url === "/") {
+    if (req.url === "/" || req.url === "/login?signed_out=true") {
       const html = await vite.transformIndexHtml(
         "/",
         '<div id="root"></div><script type="module" src="/probe-entry.js"></script>',
@@ -160,6 +165,9 @@ const server = http.createServer((req, res) => {
       return;
     }
     if (req.url === "/api/logout/") {
+      const active = scenario;
+      active.logoutEntered.release();
+      await active.logoutRelease.wait;
       json(
         res,
         { message: "Logged out successfully." },
@@ -237,6 +245,8 @@ try {
           entered: gate(),
           release: gate(),
           sent: gate(),
+          logoutEntered: gate(),
+          logoutRelease: gate(),
         };
         const context = await browser.newContext();
         const page = await context.newPage();
@@ -256,8 +266,11 @@ try {
           ]);
           await page.addInitScript(
             ({ storage, access }) => {
-              window[storage].setItem("access_token", access);
-              window[storage].setItem("isAuthenticated", "true");
+              // Seed once; logout must leave the next document anonymous.
+              if (window.location.pathname === "/") {
+                window[storage].setItem("access_token", access);
+                window[storage].setItem("isAuthenticated", "true");
+              }
               sessionStorage.setItem(
                 "remember",
                 String(storage === "localStorage"),
@@ -294,7 +307,8 @@ try {
               await import("/src/services/apiClient.ts");
             window.oldRenewal = refreshAccessToken().then(
               () => "success",
-              () => "ended",
+              (error) =>
+                error?.code === "ERR_CANCELED" ? "cancelled" : "failed",
             );
           });
           if (heldAt === "body") {
@@ -307,14 +321,25 @@ try {
           await page
             .getByRole("button", { name: "Sign out", exact: true })
             .click();
-          await page
-            .getByRole("log")
-            .filter({ hasText: "logout complete" })
-            .waitFor();
-          assert.equal(
-            await page.getByRole("status").textContent(),
-            "signed out",
+          await until(
+            scenario.logoutEntered.wait,
+            "Logout did not reach the HTTP fixture",
           );
+          // Prove explicit cancellation before document teardown can cancel the request.
+          assert.equal(
+            await until(
+              page.evaluate(() => window.oldRenewal),
+              "Obsolete renewal was not cancelled before navigation",
+            ),
+            "cancelled",
+          );
+          assert.equal(page.url(), base + "/");
+          scenario.logoutRelease.release();
+          await page.waitForURL(base + "/login?signed_out=true");
+          await page
+            .getByRole("status")
+            .filter({ hasText: "signed out" })
+            .waitFor();
           if (signInAgain) {
             await page
               .getByRole("button", { name: "Sign in", exact: true })
@@ -330,7 +355,6 @@ try {
           }
           scenario.release.release();
           await until(scenario.sent.wait, "Delayed response was not released");
-          await page.evaluate(() => window.oldRenewal);
           const refreshCookie = (await context.cookies()).find(
             (value) => value.name === "refresh_token",
           );
@@ -397,6 +421,7 @@ try {
           });
         } finally {
           scenario.release.release();
+          scenario.logoutRelease.release();
           await context.close();
         }
       }
@@ -412,6 +437,7 @@ try {
   if (results.some((result) => !result.passed)) process.exitCode = 1;
 } finally {
   scenario?.release.release();
+  scenario?.logoutRelease.release();
   await browser?.close();
   await vite.close();
   server.closeAllConnections();

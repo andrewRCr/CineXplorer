@@ -45,6 +45,15 @@ if (typeof window !== "undefined") {
     window.ResizeObserver = ResizeObserverMock as typeof ResizeObserver;
 }
 
+// jsdom stamps animation frames with the time since its window was created, while performance.now() counts from
+// the worker's start. Zag's timers start on one clock and tick on the other, so without this each delay (a
+// dismissed toast's removal, for one) runs long by the worker's startup time, enough under load to outlast a
+// test's wait. Stamping frames with performance.now() keeps both clocks in step.
+const requestFrame = window.requestAnimationFrame.bind(window);
+window.requestAnimationFrame = (callback) =>
+    requestFrame(() => callback(performance.now()));
+globalThis.requestAnimationFrame = window.requestAnimationFrame;
+
 // Mock scrollIntoView since it's not implemented in jsdom
 Element.prototype.scrollIntoView = vi.fn();
 

@@ -223,6 +223,39 @@ function renderCatalog(entry: string) {
 }
 
 describe("release-window URL rules", () => {
+  it.each(["/br%6Fwse/upcoming", "/browse/%75pcoming"])(
+    "normalizes the routed window at %s before fetching",
+    async (path) => {
+      const requests: URLSearchParams[] = [];
+      server.use(
+        http.get(`${apiBaseUrl}/movies/upcoming`, ({ request }) => {
+          requests.push(new URL(request.url).searchParams);
+          return HttpResponse.json(browsePage);
+        }),
+        http.get(browseUrl, () => HttpResponse.json(browsePage)),
+      );
+      renderCatalog(`${path}?minYear=1990&sortBy=vote_average.desc&genres=27`);
+      await screen.findByText("20 results");
+      expect(requests.length).toBeGreaterThan(0);
+      expect(requests[0]?.get("sort_by")).toBe("popularity.desc");
+      expect(requests[0]?.has("release_date_gte")).toBe(false);
+      expect(requests[0]?.get("genres")).toBe("27");
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "Most anticipated horror films",
+      );
+      expect(
+        within(
+          screen.getByRole("navigation", { name: "Release windows" }),
+        ).getByRole("link", { name: "Coming soon" }),
+      ).toHaveAttribute("aria-current", "page");
+      await waitFor(() =>
+        expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+          `${path}?genres=27`,
+        ),
+      );
+    },
+  );
+
   it.each(["now-playing", "upcoming"])(
     "replaces years on %s before the first request",
     async (window) => {

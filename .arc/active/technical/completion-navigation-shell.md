@@ -32,7 +32,8 @@ page or current film selection.
   interaction behavior and reset when the breakpoint changes; the phone row handles Escape throughout its open
   search region.
 - Window rules normalize the parameters used by the first request and replace the URL entry. Catalog URLs, saved
-  scroll keys and Back to Results retain their contracts.
+  scroll keys and Back to Results retain their contracts. Catalog and sign-in route identity follows the router's
+  matching rules, including encoded paths.
 - Titles share year parsing with request mapping. Unknown sort names use the window fallback, including names that
   coincide with inherited object properties.
 - The content error boundary resets on path or query changes through a reset prop. A separate boundary above the

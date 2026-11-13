@@ -1,10 +1,15 @@
+import { matchRoutes } from "react-router-dom";
+import { ROUTES } from "@/constants/routes";
+
 export type CatalogWindow = "browse" | "now-playing" | "upcoming";
 
-/** Match the catalog routes with React Router's case and trailing-slash rules. */
+const windows: { path: string; window: CatalogWindow }[] = [
+    { path: ROUTES.BROWSE, window: "browse" },
+    { path: ROUTES.NOW_PLAYING, window: "now-playing" },
+    { path: ROUTES.UPCOMING, window: "upcoming" },
+];
+
+/** Use the router's decoding, case and trailing-slash rules to identify a catalog window. */
 export function catalogWindow(pathname: string): CatalogWindow | null {
-    const path = pathname.replace(/\/+$/, "").toLowerCase();
-    if (path === "/browse") return "browse";
-    if (path === "/browse/now-playing") return "now-playing";
-    if (path === "/browse/upcoming") return "upcoming";
-    return null;
+    return matchRoutes(windows, { pathname })?.[0]?.route.window ?? null;
 }

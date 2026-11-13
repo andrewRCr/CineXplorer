@@ -150,6 +150,19 @@ it.each([
   expectResolvedColor(watchlist, "outline-color", "var(--chakra-colors-ring)");
 });
 
+it.each([
+  ["/br%6Fwse/upcoming", "Films"],
+  ["/wa%74chlist", "Watchlist"],
+])("marks the routed link on %s", async (entry, name) => {
+  setAuthTokens(token());
+  renderBar(entry);
+  await screen.findByRole("button", { name: profile.username });
+  expect(screen.getByRole("link", { name })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+});
+
 it("notifies the drawer when a navigation link is chosen", async () => {
   function Example() {
     const [closed, setClosed] = useState(false);

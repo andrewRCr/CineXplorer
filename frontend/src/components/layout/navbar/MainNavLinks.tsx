@@ -1,5 +1,5 @@
 import { Flex, Link as ChakraLink } from "@chakra-ui/react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useMatch } from "react-router-dom";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { ROUTES } from "@/constants/routes";
 import { catalogWindow } from "@/utilities/catalogWindow";
@@ -10,6 +10,7 @@ interface Props {
 }
 export default function MainNavLinks({ direction = "row", onNavigate }: Props) {
   const { pathname } = useLocation();
+  const onWatchlist = useMatch(ROUTES.WATCHLIST) !== null;
   const { status } = useAuthContext() ?? {};
   const links = [
     {
@@ -22,7 +23,7 @@ export default function MainNavLinks({ direction = "row", onNavigate }: Props) {
     links.push({
       path: ROUTES.WATCHLIST,
       label: "Watchlist",
-      current: pathname.replace(/\/+$/, "").toLowerCase() === ROUTES.WATCHLIST,
+      current: onWatchlist,
     });
   return (
     <Flex

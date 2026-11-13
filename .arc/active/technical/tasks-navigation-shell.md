@@ -410,6 +410,19 @@ window tabs, and the phone-width spec follows Films there.
     - All 443 affected tests across 35 files and the five affected Chromium specs (six cases) pass. Frontend lint,
       formatting and types pass. The earlier full frontend/backend suites and registration smoke were not rerun.
 
+- [x] **6.5 Match encoded URLs as the router does**
+
+    **Goal:** Encoded paths select the routed catalog window, current navigation link and safe Sign in target, with
+    the same normalization before the first request as their unencoded equivalents.
+
+    - Four catalog identity cases, six auth-path cases, two current-link cases and two routed request cases failed
+      first. Catalog and auth-path classification now use the router's matcher; Watchlist uses its route-match hook.
+      Encoded auth pages are also excluded from return destinations.
+    - Routed regressions assert the Upcoming endpoint's first request, corrected sort and years, retained genre,
+      composed title, current tab and replacement URL. All 104 cases in the four initial regression files pass.
+    - The shared affected-test run passes all 443 cases across 35 files; the five affected Chromium specs pass all
+      six cases. Frontend lint, formatting and types pass.
+
 ---
 
 ## Success Criteria

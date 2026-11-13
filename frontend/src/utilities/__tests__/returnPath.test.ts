@@ -33,6 +33,9 @@ describe("safeReturnPath", () => {
         "/login?next=%2Fwatchlist",
         "/register",
         "/forgot-password",
+        "/lo%67in?next=%2Fwatchlist",
+        "/regis%74er",
+        "/forgot%2Dpassword",
     ])("refuses %j", (value) => {
         expect(safeReturnPath(value)).toBeNull();
     });
@@ -81,6 +84,9 @@ describe("signInPathFor", () => {
         ["/forgot-password", "", "/login"],
         ["/forgot-password", "?next=%2Fwatchlist", "/login"],
         ["/FORGOT-PASSWORD/", "?x=1", "/login"],
+        ["/lo%67in", "?next=%2Fwatchlist", "/login?next=%2Fwatchlist"],
+        ["/regis%74er", "", "/login"],
+        ["/forgot%2Dpassword", "", "/login"],
     ])("links from %s%s to %s", (path, search, expected) => {
         expect(signInPathFor(path, search)).toBe(expected);
     });

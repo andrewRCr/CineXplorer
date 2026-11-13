@@ -1,39 +1,14 @@
 export interface BaselineEntry {
-    route: "/" | "/login" | "/register" | "/browse" | "/movie/:id";
+    route: "/" | "/login" | "/register" | "/browse" | "/movie/:id" | "/search";
     rule: string;
     reason: string;
 }
 
 export const axeBaseline: BaselineEntry[] = [
     {
-        route: "/",
-        rule: "aria-input-field-name",
-        reason: "The shared sidebar navigation listbox has no accessible name.",
-    },
-    {
-        route: "/",
-        rule: "aria-required-children",
-        reason: "The sidebar listbox contains a separator outside its permitted child roles.",
-    },
-    {
-        route: "/browse",
-        rule: "aria-input-field-name",
-        reason: "The shared sidebar navigation listbox has no accessible name.",
-    },
-    {
-        route: "/browse",
-        rule: "aria-required-children",
-        reason: "The sidebar listbox contains a separator outside its permitted child roles.",
-    },
-    {
-        route: "/movie/:id",
-        rule: "aria-input-field-name",
-        reason: "The shared sidebar navigation listbox has no accessible name.",
-    },
-    {
-        route: "/movie/:id",
-        rule: "aria-required-children",
-        reason: "The sidebar listbox contains a separator outside its permitted child roles.",
+        route: "/search",
+        rule: "button-name",
+        reason: "Movie cards' icon buttons lack accessible names, as in the catalog.",
     },
     {
         route: "/browse",
@@ -43,7 +18,7 @@ export const axeBaseline: BaselineEntry[] = [
     {
         route: "/browse",
         rule: "button-name",
-        reason: "Browse filter and movie controls include buttons without accessible names.",
+        reason: "Movie cards' icon buttons lack accessible names.",
     },
 ];
 

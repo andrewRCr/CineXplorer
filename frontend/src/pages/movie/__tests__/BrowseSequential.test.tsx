@@ -2,7 +2,7 @@ import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { createMockMovieListItem } from "@tests/mocks/movieData";
 import { server } from "@tests/mocks/server";
@@ -90,4 +90,43 @@ describe("BrowseSequential", () => {
       screen.getAllByText("Showing 6-7 of 200 results").length,
     ).toBeGreaterThan(0);
   });
+});
+
+it("keeps its Browse title without release-window tabs", async () => {
+  server.use(
+    http.get(browseUrl, () =>
+      HttpResponse.json(browsePage(["Alpha One"], 1, null)),
+    ),
+  );
+  renderSequentialBrowse();
+  await screen.findByText("Alpha One");
+  expect(screen.getByText("Browse")).toBeVisible();
+  expect(
+    screen.queryByRole("navigation", { name: "Release windows" }),
+  ).not.toBeInTheDocument();
+});
+
+it("keeps empty pagination controls hidden and inert", async () => {
+  server.use(
+    http.get(browseUrl, () =>
+      HttpResponse.json({
+        page: 1,
+        results: [],
+        total_pages: 0,
+        total_results: 0,
+        next_tmdb_page_start: null,
+      } satisfies MovieListResponse),
+    ),
+  );
+  renderSequentialBrowse();
+  await waitFor(() =>
+    expect(screen.queryByText("Loading results...")).not.toBeInTheDocument(),
+  );
+  for (const control of screen.getAllByRole("button", {
+    name: "Next page",
+    hidden: true,
+  })) {
+    expect(control).not.toBeVisible();
+    expect(getComputedStyle(control).pointerEvents).toBe("none");
+  }
 });

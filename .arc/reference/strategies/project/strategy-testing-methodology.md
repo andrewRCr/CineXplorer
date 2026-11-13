@@ -836,10 +836,10 @@ import { createMockUser } from '@/test/helpers/mocks';
 
 ### E2E Test Coordination
 
-The five specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail, and
-Back to Results after reloading detail. They run in Chromium at 1280×800 with no retries. Sign-up stops at the
-check-your-email notice; email-link verification, OAuth, watchlists, other browsers, and mobile viewports are outside
-this tier.
+The six specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
+Back to Results after reloading detail, and the phone shell's drawer, search and account menu. They run in Chromium
+with no retries: five at 1280×800, and `phone-width.spec.ts` at 360×800, signed out and signed in. Sign-up stops at the
+check-your-email notice; email-link verification, OAuth, watchlist contents and other browsers are outside this tier.
 
 - **`local`** (default): the real development backend, PostgreSQL, Redis, registration, and session cookies. Browser
   fixtures answer catalogue paths beginning `/api/movies`, `/api/genres`, `/api/keywords`, and `/api/people`. An
@@ -881,7 +881,7 @@ is fixed; staging can reveal live-content violations that local fixture data doe
 ### E2E Best Practices
 
 Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
-its address. From `frontend/`, one command runs the five specs:
+its address. From `frontend/`, one command runs the six specs:
 
 ```bash
 # Worktree root

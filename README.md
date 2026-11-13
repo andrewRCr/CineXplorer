@@ -29,7 +29,7 @@ launch.
 
 **Built:**
 
-- Browse, Now Playing, Upcoming and search across TMDB's catalog, with category, filter and
+- Films (All films, In theaters and Coming soon) and search across TMDB's catalog, with category, filter and
   sort controls, infinite scroll, and scroll position kept on return
 - Movie detail pages and a personal watchlist
 - Accounts: email sign-up with verification, and sign-in with Google or GitHub

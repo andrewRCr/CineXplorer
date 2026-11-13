@@ -63,9 +63,23 @@ describe("password-reset request outcomes", () => {
         expect(screen.queryByText("Check your email")).not.toBeInTheDocument();
         expect(screen.queryByText("Server error")).not.toBeInTheDocument();
       } else {
-        expect(await screen.findByText("Check your email")).toBeVisible();
+        expect(
+          await screen.findByRole("heading", {
+            level: 1,
+            name: "Check your email",
+          }),
+        ).toBeVisible();
+        expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
         expect(screen.queryByText(failureMessage)).not.toBeInTheDocument();
       }
     },
   );
+});
+
+it("gives the reset form one page heading", () => {
+  render(<ForgotPassword />);
+  expect(
+    screen.getByRole("heading", { level: 1, name: "Reset your password" }),
+  ).toBeVisible();
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 });

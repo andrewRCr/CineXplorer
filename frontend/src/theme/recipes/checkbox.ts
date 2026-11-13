@@ -82,7 +82,8 @@ export const checkboxRecipe = defineSlotRecipe({
                         },
                     },
                     _focusVisible: {
-                        outline: "2px solid",
+                        outlineWidth: "2px",
+                        outlineStyle: "solid",
                         outlineColor: "ring",
                         outlineOffset: "2px",
                     },
@@ -106,7 +107,8 @@ export const checkboxRecipe = defineSlotRecipe({
                         borderColor: "primary",
                     },
                     _focusVisible: {
-                        outline: "2px solid",
+                        outlineWidth: "2px",
+                        outlineStyle: "solid",
                         outlineColor: "ring",
                         outlineOffset: "2px",
                     },
@@ -131,7 +133,8 @@ export const checkboxRecipe = defineSlotRecipe({
                         borderColor: "primary",
                     },
                     _focusVisible: {
-                        outline: "2px solid",
+                        outlineWidth: "2px",
+                        outlineStyle: "solid",
                         outlineColor: "ring",
                         outlineOffset: "2px",
                     },

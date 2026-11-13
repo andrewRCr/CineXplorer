@@ -20,9 +20,10 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const selectRecipe = defineSlotRecipe({
     className: "select",
 
-    slots: ["trigger", "content", "item"],
+    slots: ["trigger", "content", "item", "indicator"],
 
     base: {
+        indicator: { color: "foreground", _disabled: { color: "on-muted" } },
         /**
          * Trigger: Select control that opens dropdown
          * - Border hierarchy: border-strong-01 (default) → border-strong-02 (hover) → tertiary (focus)

@@ -6,6 +6,7 @@ import {
     type MovieListResponse,
 } from "@/services/movieService";
 import { PAGINATED_SOURCES } from "@/constants/routes";
+import { catalogWindow } from "./catalogWindow";
 import { parseSearchParamsFromUrl } from "./searchUrlSync";
 
 export interface RouteConfig {
@@ -45,7 +46,8 @@ export const getFetcherAndSource = (
         return parseSearchParamsFromUrl(window.location.search).query;
     };
 
-    if (pathname.includes("/now-playing")) {
+    const currentWindow = catalogWindow(pathname);
+    if (currentWindow === "now-playing") {
         return {
             fetcher: (
                 page: number,
@@ -61,7 +63,7 @@ export const getFetcherAndSource = (
             title: "Now Playing",
         };
     }
-    if (pathname.includes("/upcoming")) {
+    if (currentWindow === "upcoming") {
         return {
             fetcher: (
                 page: number,
@@ -79,7 +81,7 @@ export const getFetcherAndSource = (
     }
     // Browse route - exact match for /browse path
     // (not /browse/now-playing or /browse/upcoming which are handled above)
-    if (pathname === "/browse" || pathname.endsWith("/browse")) {
+    if (currentWindow === "browse") {
         return {
             fetcher: (
                 page: number,

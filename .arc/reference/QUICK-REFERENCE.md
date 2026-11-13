@@ -195,7 +195,8 @@ E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e
 E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e -- e2e/browse.spec.ts
 ```
 
-The five Chromium specs scan their pages with axe, use catalogue fixtures locally, and have no retries. CI requires
+The six Chromium specs scan their pages with axe, use catalogue fixtures locally, and have no retries. Five use
+1280×800; `phone-width.spec.ts` drives the shell at 360×800, signed out and signed in. CI requires
 them through `ci-ok`; its staging target skips registration and runs after deployment. See the
 [testing strategy](strategies/project/strategy-testing-methodology.md#e2e-best-practices) for staging credentials,
 artifacts, the accessibility baseline, and resetting the local registration limit.

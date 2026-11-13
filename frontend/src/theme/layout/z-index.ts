@@ -6,8 +6,8 @@
  *
  * Scale Philosophy:
  * - base (1): Default content layer
- * - sidebar/debug (5): Persistent navigation and debug tools
- * - footer (6): Footer above sidebar
+ * - debug (5): Theme and layout debug tools
+ * - footer (6): Footer above content
  * - navbar (10): Primary navigation, always on top of content
  * - dropdown (9999): Overlays, modals, tooltips (must appear above everything)
  */
@@ -19,12 +19,6 @@ export const zIndexSemanticTokens = {
          * Used for: Cards, content sections, default elements
          */
         base: { value: 1 },
-
-        /**
-         * Sidebar z-index
-         * Used for: Sidebar navigation component
-         */
-        sidebar: { value: 5 },
 
         /**
          * Theme debug tool z-index
@@ -41,14 +35,14 @@ export const zIndexSemanticTokens = {
         /**
          * Footer z-index
          * Used for: Application footer
-         * Appears above sidebar but below navbar
+         * Appears above content but below navbar
          */
         footer: { value: 6 },
 
         /**
          * Navbar z-index
          * Used for: Primary navigation bar
-         * Always visible above content and sidebar
+         * Always visible above content
          */
         navbar: { value: 10 },
 

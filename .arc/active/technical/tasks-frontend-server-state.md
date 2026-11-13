@@ -496,6 +496,8 @@ its request settles; on the browsable stack, signing out and in again shows no p
       real-session sign-in/out Chromium cases pass. Imported backend and other main-only files match main.
       The approved independent integration check precedes the merge commit/push and renewed exact-head CI observation;
       merge to main remains a separate decision.
+    - PR CI identified two unformatted JSX examples in the test guide. Applied Prettier's line-wrap-only correction;
+      the full frontend format check and affected Markdown pass. No runtime or test behavior changed.
 
 ## Implementation Notes
 

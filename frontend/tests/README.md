@@ -50,7 +50,11 @@ import { setAuthTokens } from "@/utilities/tokenUtils";
 clearBrowserAuth();
 authHandlers();
 setAuthTokens(token());
-render(<AuthContextProvider><Watchlist /></AuthContextProvider>);
+render(
+    <AuthContextProvider>
+        <Watchlist />
+    </AuthContextProvider>,
+);
 expect(await screen.findByText("Fight Club")).toBeInTheDocument();
 ```
 
@@ -134,7 +138,11 @@ it("shows an empty watchlist", async () => {
     clearBrowserAuth();
     authHandlers();
     setAuthTokens(token());
-    render(<AuthContextProvider><Watchlist /></AuthContextProvider>);
+    render(
+        <AuthContextProvider>
+            <Watchlist />
+        </AuthContextProvider>,
+    );
     expect(
         await screen.findByText("No movies on watchlist"),
     ).toBeInTheDocument();

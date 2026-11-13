@@ -529,6 +529,21 @@ its request settles; on the browsable stack, signing out and in again shows no p
       The approved independent integration check and commit/push/CI observation follow separately; merge to main
       remains a separate decision.
 
+- [x] **6.10 Preserve authentication mount lifetimes through the session query**
+
+    **Goal:** Unmount cancels provider discovery without letting an obsolete read handle shared renewal or disturb
+    its live callers, and a replayed mount stays resolving until its current discovery completes.
+
+    - Retained the query-backed hook and its signal-aware session reader unchanged while integrating main's six
+      mount-lifecycle cases. Both ordinary and StrictMode fixtures use the real query provider; their original
+      cancellation, credential-store and live-caller assertions remain.
+    - Narrow reconstructions fail all six behaviors: missing signal forwarding leaves provider work alive and clears
+      retired credentials, aborting shared renewal breaks live callers, and premature anonymous state breaks replay.
+      Production files were restored byte-for-byte before final checks.
+    - All 101 focused auth tests and the full 3,012-test suite in 94 files pass, with coverage thresholds satisfied and
+      no unhandled errors. Lint, types, formatting, affected Markdown/whitespace and both Remember Me browser cases
+      pass. The approved independent integration check and commit/push/CI observation follow separately.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation

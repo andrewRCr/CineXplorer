@@ -375,6 +375,14 @@ window tabs, and the phone-width spec follows Films there.
 - [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation, the new ADR set to `Accepted`, and
   the verification review)
 
+- [x] **6.2 Preserve the title fallback for every undeclared sort**
+
+    **Goal:** Unknown URL sort values, including inherited object-property names, use the window-name title fallback.
+
+    - Nine new inherited-key cases failed first across all three windows; the title lookup now accepts only its
+      own keys. All 85 title cases pass, including plain and labelled-filter fallbacks.
+    - Related tests, frontend lint/format/types and the affected catalog/browser checks pass.
+
 ## Implementation Notes
 
 - **Colors in tests:** render with `styleSystem` and compare with `expectResolvedColor`

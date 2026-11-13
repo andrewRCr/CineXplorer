@@ -103,7 +103,9 @@ export function catalogTitle(
     const words = selectionWords(params);
     const films = [...words, "films"].join(" ");
     const capitalized = films.charAt(0).toUpperCase() + films.slice(1);
-    const pattern = patterns[window][params.sortBy];
+    const pattern = Object.hasOwn(patterns[window], params.sortBy)
+        ? patterns[window][params.sortBy]
+        : undefined;
     const title = pattern
         ? pattern[words.length ? 1 : 0]
               .replace("{films}", films)

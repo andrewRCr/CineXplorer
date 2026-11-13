@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { DEFAULT_BROWSE_PARAMS } from "@/constants/browseDefaults";
 import type { BrowseParams, SortOptionValue } from "@/types/browseTypes";
 import type { CatalogWindow } from "../catalogWindow";
@@ -197,27 +197,32 @@ it.each(["now-playing", "upcoming"] as const)("omits years on %s", (window) => {
     );
 });
 
-it.each([
-    ["browse", "All films"],
-    ["now-playing", "In theaters"],
-    ["upcoming", "Coming soon"],
-] as const)(
-    "falls back to the window name for an unknown sort on %s",
-    (window, expected) => {
-        expect(
-            catalogTitle(
-                window,
-                parseBrowseParamsFromUrl("?sortBy=unexpected"),
-            ),
-        ).toBe(expected);
-        expect(
-            catalogTitle(
-                window,
-                parseBrowseParamsFromUrl(
-                    "?sortBy=unexpected&language=fr&genres=27",
-                ),
-            ),
-        ).toBe(`${expected}: French-language horror films`);
+describe.each(["unexpected", "toString", "constructor", "__proto__"])(
+    "unknown sort %s",
+    (sortBy) => {
+        it.each([
+            ["browse", "All films"],
+            ["now-playing", "In theaters"],
+            ["upcoming", "Coming soon"],
+        ] as const)(
+            "falls back to the window name on %s",
+            (window, expected) => {
+                expect(
+                    catalogTitle(
+                        window,
+                        parseBrowseParamsFromUrl(`?sortBy=${sortBy}`),
+                    ),
+                ).toBe(expected);
+                expect(
+                    catalogTitle(
+                        window,
+                        parseBrowseParamsFromUrl(
+                            `?sortBy=${sortBy}&language=fr&genres=27`,
+                        ),
+                    ),
+                ).toBe(`${expected}: French-language horror films`);
+            },
+        );
     },
 );
 

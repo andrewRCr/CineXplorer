@@ -950,7 +950,8 @@ Chakra Select component structure.
 **What the recipe provides:**
 
 - Trigger states (border upgrade and background tint on hover, `border-strong-02` while open, `tertiary` border on
-  keyboard focus), set in its default `outline` variant because Chakra's variant styles override base styles
+  keyboard focus), set in its default `outline` variant: Chakra's outline variant sets the resting and open colors,
+  which override the same keys in base styles, and the hover and focus states sit beside them
 - Content styling (muted background, elevated with subtle border)
 - The highlighted option (keyboard or pointer): solid `tertiary` fill with `on-tertiary` text
 

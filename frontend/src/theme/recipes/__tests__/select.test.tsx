@@ -146,13 +146,7 @@ it("marks the chosen option with its check mark rather than a fill", async () =>
   const chosen = within(list).getByRole("option", { name: "Two" });
   expect(chosen).toHaveAttribute("aria-selected", "true");
   expect(chosen).not.toHaveAttribute("data-highlighted");
-  expect(getComputedStyle(chosen).backgroundColor).not.toBe(
-    resolveTokenColor(
-      chosen,
-      "background-color",
-      "var(--chakra-colors-tertiary)",
-    ),
-  );
+  expect(getComputedStyle(chosen).backgroundColor).toBe("rgba(0, 0, 0, 0)");
   expect(screen.getByTestId("check-Two")).toBeVisible();
   expect(screen.getByTestId("check-One")).not.toBeVisible();
 });

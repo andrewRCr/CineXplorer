@@ -45,6 +45,9 @@ We will define Chakra's own color and shadow names as references to theme roles:
 What a name mapping cannot express is set in the theme's recipes and global styles:
 
 - Dialog and drawer backdrops use `backdrop`; Chakra's is a fixed `blackAlpha.500`.
+- Warning, success and error toasts draw what an info toast does: `foreground` text, the toast's own border on the
+  action button and a `muted` hover fill, where Chakra gives them a solid status fill with white text, borders and
+  hover fills.
 - Selected text is drawn in `foreground` on `tertiary/20`, so secondary text and links stay readable while
   selected.
 - In Menu and Select, the highlighted item (keyboard or pointer) is a solid `tertiary` fill with `on-tertiary` text.
@@ -79,7 +82,7 @@ the pairs the mapping relies on.
 ### Risks
 
 - Chakra's palettes other than `gray`, and its `inner` and `inset` shadows, are not mapped. A component that sets a
-  non-gray `colorPalette`, Chakra's alert in its `surface`, `outline` and `solid` variants, and its checkbox and
-  radio marks when invalid still draw Chakra's colors. Production uses none of these: its alerts use the `subtle`
+  non-gray `colorPalette`, Chakra's alert in its `surface`, `outline` and `solid` variants, and its radio marks when
+  invalid still draw Chakra's colors. Production uses none of these: its alerts use the `subtle`
   variant, and the switch, slider, progress and segment-group recipes that draw `inset` appear only on development
   pages.

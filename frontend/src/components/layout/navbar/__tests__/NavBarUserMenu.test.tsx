@@ -35,6 +35,7 @@ function renderMenu() {
 beforeEach(() => {
   clearBrowserAuth();
   authHandlers();
+  window.location.href = "http://localhost:3000/";
 });
 
 describe("the navigation bar's sign-in control", () => {
@@ -76,5 +77,8 @@ it("lets sign-out choose the sign-in route", async () => {
   await user.click(screen.getByRole("button", { name: "Logout" }));
   await waitFor(() =>
     expect(screen.getByLabelText("route")).toHaveTextContent("/login"),
+  );
+  await waitFor(() =>
+    expect(window.location.href).toBe("/login?signed_out=true"),
   );
 });

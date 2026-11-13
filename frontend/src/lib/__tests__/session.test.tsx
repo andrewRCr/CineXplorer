@@ -1,4 +1,5 @@
 import { beforeEach, expect, it } from "vitest";
+import { useEffect } from "react";
 import { isCancel } from "axios";
 import {
   useQuery,
@@ -16,15 +17,21 @@ import { createMockUserMovieData } from "@tests/mocks/movieData";
 import { clearBrowserAuth } from "@tests/helpers/auth";
 import { gate } from "@tests/helpers/web-locks";
 import { server } from "@tests/mocks/server";
-import { changeOfUser, sessionKey } from "../session";
+import { beginUserChange, changeOfUser, sessionKey } from "../session";
 
 beforeEach(() => {
   clearBrowserAuth();
   document.cookie = "csrftoken=change-test; path=/";
   act(() => toaster.remove());
 });
-function Probe() {
+// Retire fixture-owned saves before cleanup replaces the network handlers.
+function useFixtureClient() {
   const client = useQueryClient();
+  useEffect(() => () => beginUserChange(client), [client]);
+  return client;
+}
+function Probe() {
+  const client = useFixtureClient();
   const { state, save } = useUserMovieState(1, null);
   const movie = useQuery({
     queryKey: ["movies", "change-probe"],
@@ -162,7 +169,7 @@ it("dismisses save toasts and preserves the server-error toast and session", asy
 });
 
 function ManySaveToasts() {
-  const client = useQueryClient();
+  const client = useFixtureClient();
   const { save } = useUserMovieState(1, null);
   const completed = useMutationState({ filters: { status: "success" } });
   return (
@@ -170,10 +177,10 @@ function ManySaveToasts() {
       <output aria-label="Completed saves">{completed.length}</output>
       <button
         onClick={() => {
-          for (let i = 0; i < 25; i++) save({ user_on_watchlist: true });
+          for (let i = 0; i < 3; i++) save({ user_on_watchlist: true });
         }}
       >
-        Save many times
+        Save three times
       </button>
       <button onClick={() => void changeOfUser(client)}>Change user</button>
     </>
@@ -192,13 +199,18 @@ it("removes queued save confirmations and Undo while retaining unrelated errors"
       <Toaster />
     </>,
   );
-  act(() => toaster.error({ id: "server-error", title: "Server error" }));
-  await user.click(screen.getByRole("button", { name: "Save many times" }));
+  const unrelatedIds = Array.from({ length: 22 }, (_, i) => `unrelated-${i}`);
+  act(() => {
+    toaster.error({ id: "server-error", title: "Server error" });
+    for (const id of unrelatedIds)
+      toaster.error({ id, title: "Unrelated error" });
+  });
+  await user.click(screen.getByRole("button", { name: "Save three times" }));
   await waitFor(() =>
-    expect(screen.getByLabelText("Completed saves")).toHaveTextContent("25"),
+    expect(screen.getByLabelText("Completed saves")).toHaveTextContent("3"),
   );
-  // The unrelated error leaves 23 visible slots, so two completed saves are queued.
-  expect(screen.getAllByText("Added to watchlist")).toHaveLength(23);
+  // Unrelated notifications leave one slot, so two completed saves are queued.
+  expect(screen.getAllByText("Added to watchlist")).toHaveLength(1);
   await user.click(screen.getByRole("button", { name: "Change user" }));
   await waitFor(() =>
     expect(screen.queryAllByText("Added to watchlist")).toHaveLength(0),
@@ -207,7 +219,11 @@ it("removes queued save confirmations and Undo while retaining unrelated errors"
     screen.queryByRole("button", { name: "Undo" }),
   ).not.toBeInTheDocument();
   expect(screen.getByText("Server error")).toBeVisible();
-  act(() => toaster.remove("server-error"));
+  act(() => {
+    for (const id of unrelatedIds) toaster.remove(id);
+    toaster.info({ id: "queue-probe", title: "Slots reopened" });
+  });
+  await screen.findByText("Slots reopened");
   expect(screen.queryAllByText("Added to watchlist")).toHaveLength(0);
   expect(
     screen.queryByRole("button", { name: "Undo" }),
@@ -224,7 +240,7 @@ it("does not dispatch a save retired while mutation setup yields", async () => {
     }),
   );
   function SaveAndChange() {
-    const client = useQueryClient();
+    const client = useFixtureClient();
     const { save } = useUserMovieState(1, null);
     return (
       <button

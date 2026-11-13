@@ -499,6 +499,20 @@ its request settles; on the browsable stack, signing out and in again shows no p
     - PR CI identified two unformatted JSX examples in the test guide. Applied Prettier's line-wrap-only correction;
       the full frontend format check and affected Markdown pass. No runtime or test behavior changed.
 
+- [x] **6.8 Finish asynchronous test work before fixture teardown**
+
+    **Goal:** Save-overflow and navbar sign-out tests retain their assertions while completing or retiring their
+    asynchronous work before the next fixture or test environment replaces it.
+
+    - Pre-filled 23 real toast slots and completed three saves, retaining one visible and two queued confirmations.
+      Removing unrelated entries reopens slots and proves old confirmations/Undo stay gone. Fixture unmount retires
+      unfinished saves. Navbar sign-out waits for its final reload from a fresh location sentinel.
+    - Narrow visible-only toast cleanup and omitted final reload each fail the corresponding assertion; restored
+      production code passes. Full coverage passes all 2,783 tests in 78 files, clears thresholds and reports no
+      unhandled errors. Lint, generated types/type-check, affected formatting/Markdown and whitespace checks pass.
+      The approved independent repair check and commit/push/CI recovery follow; production behavior and global
+      timeout settings are unchanged.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation

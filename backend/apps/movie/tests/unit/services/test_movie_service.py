@@ -161,7 +161,7 @@ def test_search_movies_uses_injected_client() -> None:
 
     # Assert: Injected client was called with correct params
     mock_client.search_movies.assert_called_once_with(
-        query="test", page=2, include_adult=False, language="en-US", region="US"
+        query="test", page=2, include_adult=False, language="en-US"
     )
     assert isinstance(result, MovieListResponseSchema)
     assert len(result.results) == 1

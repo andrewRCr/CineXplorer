@@ -445,8 +445,10 @@ to `src/`, configured in `tsconfig.json` and `vite.config.ts`.
 
   Exception: `scripts/worktree.mjs` may name `.arc/reference/harness-hooks/seed-session-notes.mjs` and
   `.arc/reference/harness-hooks/finish-work.mjs` to run them, including recovery instructions, and expose
-  `--work-unit` to request starting notes for planned work. Its tests may name those paths for stand-in scripts. The
-  notes' content, the closing steps and process rules remain under `.arc/`.
+  `--work-unit` to request starting notes for planned work. Its advisory `overlap` command may inspect committed
+  task-list filenames under `.arc/active/` to identify a branch's work unit and print that classification. Its tests
+  may name those paths for stand-in scripts and task-list fixtures. The notes' content, the closing steps and process
+  rules remain under `.arc/`.
 
 - **References to `.arc/` work documents**: PRDs, task lists, notes and completion docs move between `backlog/`,
   `active/` and `archive/`, so:

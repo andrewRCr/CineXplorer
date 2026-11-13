@@ -50,6 +50,27 @@
 **Working Directory Note**: Run commands from the repository root. From `backend/` or `frontend/`, adjust each path
 by one level.
 
+### Worktree Commands
+
+Create an isolated checkout from the primary; see [worktree sessions](workflows/supplemental/worktree-sessions.md)
+for provisioning, browser setup and removal:
+
+```bash
+node scripts/worktree.mjs create fix/example --no-install
+node scripts/worktree.mjs overlap frontend/src/hooks/useAuth.ts frontend/src/pages/user/
+```
+
+`overlap` runs from any checkout, including a subdirectory. Its literal file or directory paths are relative to the
+repository root; `.` selects everything. For every other registered worktree it lists committed touches separately
+from staged, unstaged and untracked edits; ignored files are excluded. Committed touches are non-merge commits
+reachable from that checkout's HEAD but absent from the locally fetched `origin/main`, even if later reverted.
+Fetch before running when the comparison needs current remote history; the command itself never fetches or changes
+files.
+
+A committed `tasks-{name}.md` under `.arc/active/`, matching the branch's `{type}/{name}`, marks a work unit.
+Inherited unrelated task lists do not; other branches are errands, with primary and detached trees labelled
+separately. The report is advisory: overlap still exits 0; usage or Git errors exit non-zero.
+
 ### Network Architecture & Ports
 
 **Container Network:**

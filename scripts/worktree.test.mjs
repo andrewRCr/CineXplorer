@@ -123,13 +123,183 @@ function envOf(root) {
     return readFileSync(join(root, "infrastructure/.env"), "utf8");
 }
 
-test("help describes all five commands and unknown commands refuse", (t) => {
+function overlapSection(output, path) {
+    const heading = `${JSON.stringify(path)} [`;
+    const start = output.indexOf(heading);
+    assert.notEqual(start, -1, output);
+    const end = output.indexOf("\n\n", start);
+    return output.slice(start, end === -1 ? undefined : end);
+}
+
+test("overlap reports committed and dirty files in other trees without blocking", (t) => {
+    const f = fixture(t);
+    const busy = f.worktree("busy");
+    const clean = f.worktree("clean");
+    write(busy, "frontend/committed.ts", "committed\n");
+    git(busy, "add", "frontend/committed.ts");
+    git(busy, "commit", "-q", "-m", "change frontend");
+    write(busy, "frontend/committed.ts", "unstaged\n");
+    write(busy, "frontend/staged.ts", "staged\n");
+    git(busy, "add", "frontend/staged.ts");
+    write(busy, "frontend/untracked.ts", "untracked\n");
+    write(busy, "frontend/.env", "ignored\n");
+    write(f.main, "frontend/only-here.ts", "caller\n");
+
+    const result = f.invoke(f.main, ["overlap", "frontend"]);
+    success(result);
+    const report = overlapSection(result.stdout, busy);
+    assert.match(report, /fix\/busy \| errand/);
+    assert.match(report, /committed:\n    "frontend\/committed.ts"/);
+    assert.match(report, /uncommitted:\n    "frontend\/committed.ts"\n    "frontend\/staged.ts"\n    "frontend\/untracked.ts"/);
+    assert.doesNotMatch(result.stdout, /frontend\/\.env|only-here/);
+    assert.match(overlapSection(result.stdout, clean), /committed: none\n  uncommitted: none/);
+    assert.doesNotMatch(result.stdout, new RegExp(`${JSON.stringify(f.main).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} \\[`));
+    assert.deepEqual(f.calls(), []);
+});
+
+test("overlap identifies branch-matched task lists, primary and detached trees", (t) => {
+    const f = fixture(t);
+    write(f.main, ".arc/active/technical/tasks-unrelated.md", "inherited\n");
+    git(f.main, "add", ".arc/active");
+    git(f.main, "commit", "-q", "-m", "keep unrelated tasks");
+    git(f.main, "push", "-q", "origin", "main");
+    const planned = f.worktree("planned");
+    write(planned, ".arc/active/technical/tasks-planned.md", "planned\n");
+    git(planned, "add", ".arc/active");
+    git(planned, "commit", "-q", "-m", "plan work");
+    const errand = f.worktree("errand");
+    write(errand, ".arc/active/technical/tasks-errand.md", "not committed\n");
+    const detached = f.worktree("detached");
+    git(detached, "checkout", "-q", "--detach");
+    write(detached, "frontend/detached.ts", "dirty\n");
+    const caller = f.worktree("caller");
+
+    const result = f.invoke(caller, ["overlap", "frontend"]);
+    success(result);
+    assert.match(overlapSection(result.stdout, planned), /fix\/planned \| work unit.*tasks-planned\.md/);
+    assert.match(overlapSection(result.stdout, errand), /fix\/errand \| errand/);
+    assert.match(overlapSection(result.stdout, f.main), /main \| primary/);
+    assert.match(overlapSection(result.stdout, detached), /detached.*\| detached/);
+    assert.match(overlapSection(result.stdout, detached), /"frontend\/detached.ts"/);
+    assert.equal(result.stdout.includes(`${JSON.stringify(caller)} [`), false);
+});
+
+test("overlap keeps non-merge touches hidden by merge results and excludes main commits", (t) => {
+    const f = fixture(t);
+    write(f.main, "frontend/side.ts", "base\n");
+    git(f.main, "add", "frontend/side.ts");
+    git(f.main, "commit", "-q", "-m", "base file");
+    git(f.main, "push", "-q", "origin", "main");
+    const busy = f.worktree("history");
+    const side = f.worktree("side");
+    write(side, "frontend/side.ts", "side change\n");
+    git(side, "add", "frontend/side.ts");
+    git(side, "commit", "-q", "-m", "side touch");
+    git(busy, "merge", "-q", "--no-ff", "-s", "ours", "fix/side", "-m", "retain first parent");
+    write(busy, "frontend/reverted.ts", "temporary\n");
+    git(busy, "add", "frontend/reverted.ts");
+    git(busy, "commit", "-q", "-m", "temporary touch");
+    git(busy, "revert", "--no-edit", "HEAD");
+    write(f.main, "frontend/main-only.ts", "main advance\n");
+    git(f.main, "add", "frontend/main-only.ts");
+    git(f.main, "commit", "-q", "-m", "main advance");
+    git(f.main, "push", "-q", "origin", "main");
+    git(busy, "merge", "-q", "--no-ff", "main", "-m", "bring in main");
+
+    const result = f.invoke(f.main, ["overlap", "frontend"]);
+    success(result);
+    const report = overlapSection(result.stdout, busy);
+    assert.match(report, /"frontend\/side.ts"/);
+    assert.match(report, /"frontend\/reverted.ts"/);
+    assert.doesNotMatch(report, /main-only/);
+    assert.match(report, /uncommitted: none/);
+});
+
+test("overlap reports both dirty rename endpoints and only matching requested paths", (t) => {
+    const f = fixture(t);
+    write(f.main, "frontend/source.ts", "rename me\n");
+    git(f.main, "add", "frontend/source.ts");
+    git(f.main, "commit", "-q", "-m", "source file");
+    git(f.main, "push", "-q", "origin", "main");
+    const busy = f.worktree("rename");
+    git(busy, "mv", "frontend/source.ts", "frontend/destination.ts");
+    const both = f.invoke(f.main, ["overlap", "frontend"]);
+    success(both);
+    assert.match(overlapSection(both.stdout, busy), /uncommitted:\n    "frontend\/destination.ts"\n    "frontend\/source.ts"/);
+    for (const [wanted, absent] of [["source", "destination"], ["destination", "source"]]) {
+        const result = f.invoke(f.main, ["overlap", `frontend/${wanted}.ts`]);
+        success(result);
+        const report = overlapSection(result.stdout, busy);
+        assert.ok(report.includes(JSON.stringify(`frontend/${wanted}.ts`)), report);
+        assert.equal(report.includes(JSON.stringify(`frontend/${absent}.ts`)), false, report);
+    }
+});
+
+test("overlap preserves literal file and worktree names with whitespace and brackets", (t) => {
+    const f = fixture(t);
+    const busy = join(f.parent, "primary.space\nname");
+    git(f.main, "worktree", "add", "-q", "-b", "fix/names", busy);
+    const wanted = "frontend/ [title]\n .ts ";
+    const other = "frontend/ t\n .ts ";
+    write(busy, wanted, "committed\n");
+    write(busy, other, "other\n");
+    git(busy, "add", "frontend");
+    git(busy, "commit", "-q", "-m", "literal names");
+    write(busy, wanted, "dirty\n");
+
+    const result = f.invoke(f.main, ["overlap", wanted]);
+    success(result);
+    const report = overlapSection(result.stdout, busy);
+    assert.ok(report.includes(`committed:\n    ${JSON.stringify(wanted)}`), report);
+    assert.ok(report.includes(`uncommitted:\n    ${JSON.stringify(wanted)}`), report);
+    assert.equal(report.includes(JSON.stringify(other)), false, report);
+});
+
+test("overlap paths stay root-relative from a subdirectory and accept directory normalization", (t) => {
+    const f = fixture(t);
+    const busy = f.worktree("paths");
+    write(busy, "frontend/root.ts", "requested\n");
+    write(busy, "frontend-other.ts", "outside directory\n");
+    git(busy, "add", "frontend/root.ts", "frontend-other.ts");
+    git(busy, "commit", "-q", "-m", "path scope");
+    const caller = f.worktree("caller");
+    mkdirSync(join(caller, "frontend"));
+
+    const result = f.invoke(join(caller, "frontend"), ["overlap", "./frontend/../frontend/"]);
+    success(result);
+    const report = overlapSection(result.stdout, busy);
+    assert.match(report, /"frontend\/root.ts"/);
+    assert.doesNotMatch(report, /frontend-other/);
+    const all = f.invoke(caller, ["overlap", "."]);
+    success(all);
+    assert.match(overlapSection(all.stdout, busy), /"frontend-other.ts"/);
+});
+
+test("overlap rejects empty, absolute and escaping paths as usage errors", (t) => {
+    const f = fixture(t);
+    for (const path of ["", f.main, "../outside", "frontend/../../outside"]) {
+        refusal(f.invoke(f.main, ["overlap", path]), /repository-root-relative/);
+    }
+});
+
+test("overlap fails on a missing comparison ref even with no other worktree", (t) => {
+    const f = fixture(t);
+    git(f.main, "update-ref", "-d", "refs/remotes/origin/main");
+    refusal(f.invoke(f.main, ["overlap", "frontend"]), /origin\/main/);
+});
+
+test("help describes all six commands and unknown commands refuse", (t) => {
     const f = fixture(t);
     const help = f.invoke(f.main, ["--help"]);
     success(help);
-    for (const command of ["create", "provision", "browse", "remove", "finish"]) assert.match(help.stdout, new RegExp(command));
+    for (const command of ["create", "provision", "browse", "remove", "finish", "overlap"]) assert.match(help.stdout, new RegExp(command));
     refusal(f.invoke(f.main, ["unknown"]), /unknown command/i);
     assert.deepEqual(f.calls(), []);
+});
+
+test("overlap without paths gives usage guidance", (t) => {
+    const f = fixture(t);
+    refusal(f.invoke(f.main, ["overlap"]), /overlap <path>/);
 });
 
 test("provision refuses the main checkout without changing its environment", (t) => {

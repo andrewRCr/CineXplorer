@@ -165,6 +165,8 @@ frontend/
     ├── browse.spec.ts
     ├── movie-detail.spec.ts
     ├── back-to-results.spec.ts
+    ├── phone-width.spec.ts
+    ├── background.spec.ts
     ├── fixtures.ts
     ├── catalogue.ts
     ├── target.ts
@@ -195,7 +197,9 @@ frontend/
 - Real sign-up to the check-your-email notice, and sign-in/sign-out through session cookies
 - Browse pagination, movie detail with preserved filters, and Back to Results after a reload
 - Browser layout and scroll restoration across the frontend, API, and database
-- axe scans on every distinct page each spec reaches; Chromium only, with no retries
+- The phone shell at 360×800, and the page background's first frame, JavaScript-off fallback and mode and palette
+  changes
+- axe scans on every distinct page each journey spec reaches; Chromium only, with no retries
 
 ### File Splitting Guidelines
 
@@ -836,9 +840,11 @@ import { createMockUser } from '@/test/helpers/mocks';
 
 ### E2E Test Coordination
 
-The six specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
-Back to Results after reloading detail, and the phone shell's drawer, search and account menu. They run in Chromium
-with no retries: five at 1280×800, and `phone-width.spec.ts` at 360×800, signed out and signed in. Sign-up stops at the
+The seven specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
+Back to Results after reloading detail, and the phone shell's drawer, search and account menu, and
+`background.spec.ts` checks the page background: the first frame before React loads, the CSS fallback with JavaScript
+disabled, and mode and palette changes without reloading. They run in Chromium with no retries: six at 1280×800, and
+`phone-width.spec.ts` at 360×800, signed out and signed in. Sign-up stops at the
 check-your-email notice; email-link verification, OAuth, watchlist contents and other browsers are outside this tier.
 
 - **`local`** (default): the real development backend, PostgreSQL, Redis, registration, and session cookies. Browser
@@ -871,17 +877,18 @@ Outside fixture and axe helpers, every element lookup starts with `getByRole`, `
 only by `filter`, `first`, `last`, or `nth`. CSS and XPath selector strings, `getByTestId`, and DOM queries inside
 `evaluate()` are prohibited. Reading a found element's state or `boundingBox()` is allowed.
 
-Each spec scans each distinct reached page with axe after its ready check: a heading or result count, or the first
-labelled field on the auth forms. Scans use WCAG 2.0 and 2.1 A/AA rules. `axe-baseline.ts` excuses only explicit route
-patterns and rule IDs, each with a reason; a new violation of that same rule on that route is also excused until the
-entry is removed. Other violations fail with the route, rule, and affected elements. The reporter lists unmatched
-entries without failing, so focused runs and staging can omit a baselined page. Remove an entry when its violation
-is fixed; staging can reveal live-content violations that local fixture data does not show.
+Each journey spec scans each distinct reached page with axe after its ready check: a heading or result count, or the
+first labelled field on the auth forms. `background.spec.ts` scans the pages its rendered-app tests reach. Scans use
+WCAG 2.0 and 2.1 A/AA rules. `axe-baseline.ts` excuses only explicit route patterns and rule IDs, each with a reason; a
+new violation of that same rule on that route is also excused until the entry is removed. Other violations fail with the
+route, rule, and affected elements. The reporter lists unmatched entries without failing, so focused runs and staging
+can omit a baselined page. Remove an entry when its violation is fixed; staging can reveal live-content violations that
+local fixture data does not show.
 
 ### E2E Best Practices
 
 Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
-its address. From `frontend/`, one command runs the six specs:
+its address. From `frontend/`, one command runs the seven specs:
 
 ```bash
 # Worktree root

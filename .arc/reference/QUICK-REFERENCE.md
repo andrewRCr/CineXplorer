@@ -159,8 +159,9 @@ uv pip sync backend/requirements/req.dev.txt --python .venv-backend/bin/python -
 **CRITICAL: Tests MUST run via Docker** (require PostgreSQL + Redis)
 
 **Test Runner**: pytest with parallel execution enabled by default via pytest-xdist, capped at 4 workers
-(`--maxprocesses 4` in `backend/pyproject.toml`; `-n auto` alone would start one per core). The full suite takes about
-35 seconds and peaks near 650 MiB in the backend container; 8 workers save under 10 seconds for about 60% more memory.
+(`--maxprocesses 4` in `backend/pyproject.toml`; `-n auto` alone would start one per core).
+`backend/config/settings_test.py` uses a fast password hasher for test users. Measure runtime and container memory
+with the current suite when sizing a run.
 
 ```bash
 # Run all tests (parallel execution is automatic, 4 workers)

@@ -7,6 +7,7 @@ Accepted (Owner, 2026-11-03)
 Implemented by: #104, which adds the status, the guarded layout route and the return to the requested page after
 sign-in. Frontend Server State (`prd-frontend-server-state.md`) moves the session onto TanStack Query while
 preserving that status and return-path behavior.
+Its dated amendment below specifies ownership while a provider-return read is pending.
 
 ## Context
 
@@ -52,6 +53,31 @@ We will give the frontend a three-state sign-in status: `resolving`, `authentica
 - Every place that shows sign-in state has to handle `resolving`, usually with a placeholder.
 - A brief wait on first load while the session check returns, where today the page renders at once (in the wrong
   state).
+
+## Amendments
+
+**Amendment (2026-11-12): Pending session resolution owns authentication.** A provider-return session query acquires
+a version-bound identity before discovery and retains it through any password renewal and profile fallback. Stored
+credentials can still give an immediate authenticated display, but background password failure cannot cancel that
+read, publish anonymous or redirect while it owns resolution. Idle checks start no renewal during that interval.
+API requests continue normally, including shared renewal; waiting for discovery would deadlock the fallback profile
+read that uses the same client.
+
+Background failure effects require the originating authentication version, present password access credentials
+(including expired credentials), no resolution owner and an uncancelled API caller. Idle handling also requires its
+original user-change count and rechecks after awaiting query cancellation. Failed fallback clears both credential
+stores synchronously before releasing ownership. Thus a shared renewal rejection cannot redirect either before
+the reader concludes or afterward, when credentials are absent. Successful fallback retains ordinary subsequent
+password-failure handling.
+
+Each API caller keeps its renewal budget, version, cancellation signal and feedback policy. Renewal failure is
+terminal for that operation and preserves the underlying failure with caller-specific attribution; it cannot replay
+the refresh request or fulfill a movie/profile read with token data. Query cancellation reaches provider and profile
+requests and their renewal continuations, preventing late credential or user changes even after ownership ends.
+Canceling one caller leaves shared renewal available to other current callers. Cleanup releases only its own
+identity. Explicit successful password sign-in and sign-out invalidate prior ownership and renewal before replacing
+credentials or session data. Provider acceptance checks cancellation and version, then invalidates prior work,
+clears password credentials and returns its profile synchronously.
 
 ## References
 

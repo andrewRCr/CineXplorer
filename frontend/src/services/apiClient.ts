@@ -1,7 +1,11 @@
 import { isRecord } from "@/utilities/typeGuards";
 import { loginPathFor } from "@/utilities/returnPath";
 import { apiBaseUrl as BASE_URL } from "@/config/baseUrls";
-import axios, { CanceledError, type InternalAxiosRequestConfig } from "axios";
+import axios, {
+    AxiosError,
+    CanceledError,
+    type InternalAxiosRequestConfig,
+} from "axios";
 import {
     clearAuthTokens,
     getAuthTokens,
@@ -60,13 +64,40 @@ const apiClient = axios.create({
 let pendingRefresh: Promise<string> | null = null;
 let refreshController: AbortController | null = null;
 let authSessionVersion = 0;
+let sessionResolution: { version: number } | null = null;
 
 /** Identify asynchronous work belonging to the current sign-in. */
 export const getAuthSessionVersion = () => authSessionVersion;
 
+export const isSessionResolving = () =>
+    sessionResolution?.version === authSessionVersion;
+
+export const canHandlePasswordFailure = (
+    version: number,
+    signal?: Pick<AbortSignal, "aborted">,
+) =>
+    version === authSessionVersion &&
+    !isSessionResolving() &&
+    !signal?.aborted &&
+    Boolean(getAuthTokens().access_token);
+
+/** Keep background credential work subordinate to the provider-return session read. */
+export function beginSessionResolution(signal?: AbortSignal): () => void {
+    const resolution = { version: authSessionVersion };
+    sessionResolution = resolution;
+    const release = () => {
+        if (sessionResolution === resolution) sessionResolution = null;
+        signal?.removeEventListener("abort", release);
+    };
+    if (signal?.aborted) release();
+    else signal?.addEventListener("abort", release, { once: true });
+    return release;
+}
+
 /** Retire old renewal work before clearing credentials or accepting a new sign-in. */
 export function invalidateAuthSession(): void {
     authSessionVersion++;
+    sessionResolution = null;
     refreshController?.abort();
     refreshController = null;
     pendingRefresh = null;
@@ -156,20 +187,40 @@ type AuthRequestConfig = InternalAxiosRequestConfig & {
     _authSessionVersion?: number;
 };
 
-function assertAuthSessionVersion(sessionVersion: number): void {
+function assertAuthSessionVersion(
+    sessionVersion: number,
+    signal?: Pick<AbortSignal, "aborted">,
+): void {
+    if (signal?.aborted) throw new CanceledError("Request canceled");
     if (sessionVersion !== getAuthSessionVersion())
         throw new CanceledError("Authentication session changed");
 }
 
 /** Apply the same current-session failure handling to both interceptor renewal paths. */
-async function refreshRequestToken(sessionVersion: number): Promise<string> {
+async function refreshRequestToken(
+    sessionVersion: number,
+    request: AuthRequestConfig,
+): Promise<string> {
+    assertAuthSessionVersion(sessionVersion, request.signal);
     try {
         const renewedToken = await refreshAccessToken();
-        assertAuthSessionVersion(sessionVersion);
+        assertAuthSessionVersion(sessionVersion, request.signal);
         return renewedToken;
     } catch (error) {
-        if (axios.isCancel(error) || sessionVersion !== getAuthSessionVersion())
-            throw error;
+        if (axios.isCancel(error)) throw error;
+        assertAuthSessionVersion(sessionVersion, request.signal);
+        // Each waiting operation keeps its own retry budget and feedback policy.
+        const failure = axios.isAxiosError<unknown>(error)
+            ? AxiosError.from(
+                  error,
+                  error.code,
+                  request,
+                  error.request,
+                  error.response,
+              )
+            : error;
+        if (!canHandlePasswordFailure(sessionVersion, request.signal))
+            throw failure;
         clearAuthTokens();
         const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
         const loginUrl = new URL(
@@ -178,7 +229,7 @@ async function refreshRequestToken(sessionVersion: number): Promise<string> {
         );
         loginUrl.searchParams.set("session_expired", "true");
         window.location.href = `${loginUrl.pathname}${loginUrl.search}`;
-        throw error;
+        throw failure;
     }
 }
 
@@ -187,7 +238,7 @@ apiClient.interceptors.request.use(async (config: AuthRequestConfig) => {
     const sessionVersion =
         config._authSessionVersion ?? getAuthSessionVersion();
     config._authSessionVersion = sessionVersion;
-    assertAuthSessionVersion(sessionVersion);
+    assertAuthSessionVersion(sessionVersion, config.signal);
     // Attach JWT access token from storage (email/password authentication only)
     // OAuth users authenticate via session cookie automatically (no Authorization header needed)
     let { access_token } = getAuthTokens();
@@ -201,7 +252,7 @@ apiClient.interceptors.request.use(async (config: AuthRequestConfig) => {
     ) {
         // This request has used its one renewal, even if the server later refuses it.
         config._retry = true;
-        access_token = await refreshRequestToken(sessionVersion);
+        access_token = await refreshRequestToken(sessionVersion, config);
     }
     if (access_token) {
         config.headers.Authorization = `Bearer ${access_token}`;
@@ -232,7 +283,7 @@ apiClient.interceptors.request.use(async (config: AuthRequestConfig) => {
     }
 
     // CSRF initialization also yields; do not dispatch work from an older sign-in.
-    assertAuthSessionVersion(sessionVersion);
+    assertAuthSessionVersion(sessionVersion, config.signal);
     return config;
 });
 
@@ -281,7 +332,7 @@ apiClient.interceptors.response.use(
         ) {
             const sessionVersion =
                 originalRequest._authSessionVersion ?? getAuthSessionVersion();
-            assertAuthSessionVersion(sessionVersion);
+            assertAuthSessionVersion(sessionVersion, originalRequest.signal);
             // Check if user has JWT tokens (email/password authentication)
             const { access_token } = getAuthTokens();
 
@@ -291,7 +342,10 @@ apiClient.interceptors.response.use(
             }
 
             originalRequest._retry = true;
-            const renewedToken = await refreshRequestToken(sessionVersion);
+            const renewedToken = await refreshRequestToken(
+                sessionVersion,
+                originalRequest,
+            );
             // Retry failures must not clear a successfully renewed session.
             originalRequest.headers.Authorization = `Bearer ${renewedToken}`;
             return apiClient(originalRequest);

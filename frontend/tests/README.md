@@ -147,6 +147,18 @@ delayed requests before ending a test so later tests inherit no pending work.
 
 ## Test Discipline
 
+Authentication overlap tests keep the session query, hook and API interceptors real. Hold provider discovery and
+password fallback separately with network gates. While either is pending, an idle tick starts no renewal and an API
+renewal failure rejects without clearing credentials or redirecting. Cover both pre-request expiry and response-401
+recovery, including a failed renewal followed by an available success that the original operation must never use.
+When fallback and API work share renewal, exercise both waiter orders and caller-specific feedback policies.
+Cancel the query during profile recovery and confirm the late result stays inert while another caller can still
+complete their shared renewal. Release held responses after explicit sign-in/out too, and check that old cleanup
+cannot release a newer read. After successful fallback, ordinary password-renewal failure handling must resume.
+
+Seed the CSRF cookie before a fake idle tick when the scenario concerns renewal rather than CSRF initialization.
+Restore real intervals before RTL polling, and finish held requests before ending the test.
+
 - Assert user-visible behavior, including error and empty states.
 - Prefer role and accessible-name queries; use `userEvent` for interactions.
 - Await asynchronous UI updates with `findBy*` or `waitFor`.

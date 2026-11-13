@@ -32,6 +32,12 @@ clears the previous user’s cached data, retained saves and save feedback.
   would otherwise redirect to Login.
 - An idle credential-renewal failure clears the session only for its original user ownership, so it cannot erase a
   provider sign-in that landed while the renewal was pending.
+- Provider-return discovery retains resolution ownership through password fallback. Idle renewal pauses; background
+  API failures reject without clearing credentials or redirecting. Anonymous fallback clears both stores before
+  release, and successful fallback restores ordinary password-failure handling.
+- Session cancellation reaches provider/profile requests and nested renewal without aborting other shared callers.
+  Caller-specific failure context keeps renewal terminal and prevents refresh payloads from fulfilling data reads.
+  Identity-checked cleanup and authentication invalidation protect replacement reads and explicit sign-in/out.
 
 ## Related Documentation
 

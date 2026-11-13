@@ -116,8 +116,12 @@ changes.
 - **Cancellation.** A query built by the factory aborts its request when TanStack Query aborts the read (a superseded
   or unmounted read): its query function links the `signal` it receives to the `cancel` of the `{ request, cancel }`
   pair `HttpService` returns, so `HttpService`, which the grid fetchers share, is unchanged. The session read (D7)
-  doesn't abort its requests: a cancelled read's result is discarded, and its session-version check keeps it from
-  touching stored tokens.
+  passes its query's `AbortSignal` through provider discovery and `authService.getUserProfile` to the profile API
+  request. That originating signal remains available to both interceptor paths and their renewal continuations,
+  including after the request has already received a 401. They check caller cancellation before starting recovery,
+  after awaiting renewal and before credential clearing, redirect or replay. A cancelled caller rejects as
+  cancellation without those effects; its read cannot publish a profile or anonymous result. Cancelling one caller
+  does not abort the shared renewal another current caller may still need.
 
 `apiClient`'s "Server error" toast takes a fixed `id`, so a retried read that fails again updates the toast already
 showing instead of stacking another: the toaster updates a toast in place when it is created with an `id` it already
@@ -242,6 +246,71 @@ stored sign-in flag, as `useAuth`'s initial state decides today), otherwise `res
 `isAuthenticated`, `user`, `login`, `logout` and `register` keep their shapes, so `AuthContext`'s consumers don't
 change.
 
+**Pending provider resolution owns the session.** A provider-return read in `readSession` acquires one resolution
+identity synchronously, before its first await, tied to the current authentication-session version. That identity
+lasts through both allauth discovery and any password-token renewal and profile fallback, until the read returns,
+fails or is canceled. Only this owning read may conclude that authentication is anonymous while resolution is
+pending. The rendered status and stored credentials stay as described above; an initial `authenticated` status does
+not give background password work permission to end the read.
+
+- The authentication coordinator in `apiClient.ts` holds the active identity and version. `readSession` acquires and
+  releases it; neither the API client nor the idle checker imports the session module to inspect query state. One
+  shared predicate permits background password-failure handling only for the current version, with stored password
+  access credentials still present, no active resolution owner and, for API work, an uncancelled originating
+  request. Presence includes an expired token: expiry is when legitimate renewal failure needs handling. Read
+  `getAuthTokens` at the failure-effect boundary, not an initiating-token snapshot, including again after awaited
+  cancellation. The predicate governs both `refreshRequestToken` and the idle-renewal failure handler, whose
+  original user-change-count guard also remains. Releasing global resolution ownership does not authorize a
+  cancelled request's continuation or work whose password credentials were cleared meanwhile.
+- The idle checker in `useAuth` starts no new renewal while that ownership is active. A renewal already in flight
+  may settle, but its failure cannot clear credentials, cancel or replace the session query, or redirect while
+  resolution is owned. The failure handler checks permission before cancellation and again after its await, alongside
+  its
+  existing version and user-change-count guards.
+- API requests keep using the existing credentials and shared renewal. During owned resolution, renewal failure
+  rejects an uncancelled waiting request with the underlying failure's status, response data and error
+  classification, without clearing credentials or redirecting. It is not artificially converted to cancellation:
+  the session reader's fallback must still be able to handle failure as anonymous. Actual caller cancellation
+  instead rejects as cancellation under D2.
+  Requests do not wait for provider discovery, because the fallback's profile read uses the same API client and
+  could otherwise wait on itself. Successful current-version renewal can update the stored password token for
+  fallback; provider acceptance subsequently retires that work and clears the token. Existing request errors and
+  global server-error feedback retain their normal handling.
+- Each API operation retains its originating request context across preparation, both interceptors and nested
+  renewal: its consumed renewal budget, authentication version, cancellation signal and existing feedback policy.
+  A failed renewal is terminal for that operation. Its error must not re-enter 401 recovery as a fresh operation,
+  and the refresh transport's URL/configuration must never be replayed as the caller's movie/profile operation or
+  supply a successful token payload to that caller. The operation gets at most its one renewal through either
+  entry path. Propagate the underlying failure semantics with caller-specific attribution rather than relying on
+  the nested refresh error's configuration. Shared renewal must not overwrite one caller's context with another's
+  or mutate a shared error to carry whichever caller happened to settle last.
+- A provider result that finds no user, or a provider request that fails without cancellation, continues through
+  the password fallback under the same resolution identity. That reader may renew, read the profile, or clear
+  rejected credentials and return `null` through its existing failure path. Ownership is not released between
+  discovery and fallback. Before anonymous completion releases ownership, `clearAuthTokens` synchronously removes
+  access credentials from both stores. For a shared renewal rejection, an API waiter handling it first is denied
+  failure effects by active ownership; a waiter handling it after the reader concludes is denied by missing
+  password credentials. Neither order can interrupt the reader's anonymous outcome with a redirect. Keep the
+  underlying renewal failure for the reader rather than fabricating cancellation because credentials are absent.
+  A successful password fallback retains credentials, so a subsequent current-password-session failure still gets
+  ordinary handling, including the API client's expired-session redirect. Preserve `refreshAccessToken`'s check
+  for current version and credential presence immediately before its synchronous token write; it cannot recreate
+  credentials after the reader cleared them. This uses existing credential state, not another epoch or waiter log.
+- The session query passes its cancellation signal into `readSession` and the read's provider/profile requests.
+  Cancellation rejects the read as cancellation, retires the identity and prevents its later response from
+  clearing credentials, changing user ownership or publishing a profile or `null`; canceled provider discovery
+  must not become password fallback. Check cancellation and originating authentication version after asynchronous
+  boundaries and before these effects. The profile request and its renewal continuation keep checking their
+  originating signal after ownership is released; a late renewal failure cannot clear credentials or redirect
+  before the reader sees it. This cancels that caller, not the shared renewal or unrelated current-session work.
+  Releasing an identity affects only that identity, so an old completion cannot release a newer read's ownership.
+- Explicit successful password sign-in and explicit sign-out supersede resolution through `invalidateAuthSession`
+  before replacing credentials or session data. Provider acceptance first checks its originating version and
+  cancellation, then synchronously invalidates old authentication work, clears password tokens, runs the
+  change-of-user step and returns the provider profile, without another await or rejecting its own version change.
+  Authentication invalidation retires the previous resolution identity as well as renewal work. No state is
+  persisted or synchronized between tabs.
+
 **Its writers** each cancel any session read in flight first: while the query holds no data, TanStack Query joins a
 new read to the one in flight rather than starting another, and a read landing after a write would overwrite it.
 
@@ -251,8 +320,10 @@ new read to the one in flight rather than starting another, and a read landing a
 - **Sign-out** invalidates the session version (`invalidateAuthSession`), clears stored tokens and writes `null`, then
   sends its sign-out request, and once that has settled loads the sign-in page afresh (below).
 - **A failed renewal at the 60-second check** writes `null` only while the authentication version and change count
-  captured at its start remain current, checking both before and after canceling a session read. It cannot clear a
-  newer provider session; a current user's failed renewal still signs them out.
+  captured at its start remain current, password access credentials remain present and no provider-resolution
+  owner is active. It checks these conditions before and after canceling a session read. It cannot end pending
+  provider discovery, clear a newer provider session or act after authoritative anonymous completion; outside
+  owned resolution, a current password user's failed renewal still signs them out.
 
 **A change of user** is one step in the session module: it advances the change count (D4), clears the saves,
 dismisses the save toasts still showing (D4), and resets every query except the session, so what is on screen
@@ -275,8 +346,8 @@ before it were sent with those tokens, renewed through the shared renewal when e
 the requests after it carry none. Leaving `resolving` otherwise clears nothing: lists fetched meanwhile already
 carried whatever user the server saw, by bearer token or session cookie, and later requests carry the same, which
 rests on the token-renewal prerequisite (§ 6). A profile arriving for a user already shown as signed in is not a
-change. A renewal that fails before a request loads the sign-in page afresh instead (§ 6), which drops the cache with
-the page, so it needs no step.
+change. Outside owned provider resolution, a current-session renewal that fails before a request loads the sign-in
+page afresh instead (§ 6), which drops the cache with the page, so it needs no step.
 
 **Sign-out loads the sign-in page afresh once its request settles.** Its status reads `anonymous` at once, and that is
 the change of user: the step runs then, and the app moves to the sign-in page. Today sign-out ends on the home page
@@ -403,14 +474,23 @@ navigation bar's Login button, since the sign-in page also has the form's.
   sign-in page,** over loading the home page afresh, where it ends today: the sign-in page already shows a notice from a
   parameter. **On a provider's return the session's first read asks allauth first,** over the callback reading allauth
   from an effect of its own, a fetch in an effect that ADR-027 doesn't except, and over the session's usual read alone,
-  whose password path wouldn't ask allauth while a stale token is stored. **The auth commands stay direct calls,** over
+  whose password path wouldn't ask allauth while a stale token is stored. **That read owns authentication resolution
+  through its password fallback,** over guarding individual completion orderings: background failure must not cancel
+  discovery, overwrite its result or redirect, whether it settles before or after the provider. Waiting all API work
+  on discovery could deadlock the reader's own password-profile fallback. Its owner is independent of rendered
+  status, so a current stored token can still give immediate sign-in. **The auth commands stay direct calls,** over
   wrapping them in mutations: they change no cached data but the session, which their writers set. _ADR:_ covered by
   ADR-028 (the session onto TanStack Query) and by ADR-027 as amended: its renewal exception, and clearing a user's data
   on every change of signed-in user, sign-in included, which the dated amendment records beside the sign-out its
   Consequences name. Running the step at named points, sign-out's page load and where it ends, the sign-in's waiting
   reset and the provider-return read are `none`: tactical mechanics. The callback's effect fetches nothing, so ADR-027
   keeps its one exception. Keeping the auth commands as direct calls is `none`: a tactical reading of the frontend data
-  rule.
+  rule. The resolution-ownership contract is an amendment to ADR-028: the session read, including fallback, owns
+  authentication failure while pending, explicit authentication commands supersede it, and cancellation remains
+  authoritative through its nested profile/renewal continuations after ownership release. Coordinator placement,
+  identity-checked cleanup, the shared failure predicate and preserving terminal renewal-failure attribution are
+  `none`: tactical code organization, concurrency and error handling within the existing one-renewal policy, with
+  no new authentication mechanism or persistent data.
 - **D8: tests through the network.** _ADR:_ `none`: it follows the testing rules.
 - **D9: documents follow the code.** _ADR:_ `none`: documentation of the decisions above.
 - **Boundary: one change.** The save, the queries and the session are one concern, since a change of user clears the
@@ -422,7 +502,9 @@ navigation bar's Login button, since the sign-in page also has the form's.
 with this change (D3); a movie's user state shows over the payloads with this tab's saves, because an infinite list's
 next-page load undoes a patch in place (D4); and every change of signed-in user, sign-in included, clears the cache
 (D7). The Status lines of ADR-027 and ADR-028 name this change as the move they planned; ADR-027's also says the
-end-to-end watchlist test its Decision names is still to come.
+end-to-end watchlist test its Decision names is still to come. A dated amendment to ADR-028 will record pending
+session-resolution ownership through provider discovery and password fallback, including explicit-command
+supersession and request-local cancellation through nested API work, alongside its existing status and query decisions.
 
 ## 6. Cross-cutting Considerations
 
@@ -449,7 +531,7 @@ watchlist page reading the Library. This change relies on:
 **Renewing an expired token before a request.** Before the token-renewal fix, the public movie routes found the user
 through `get_current_user_optional`, which treated an expired bearer token as no user rather than answering 401, so a
 list or detail read sent with an expired stored token carried no user state. The fix closes that from both sides, and
-this change relies on three properties:
+this change retains the first two properties below and refines failure handling during owned provider resolution:
 
 - **No read or save sends an expired token.** A request first renews an expired stored access token through the
   shared `refreshAccessToken` and is sent with the renewed token. Only operations that don't depend on the previous
@@ -460,10 +542,14 @@ this change relies on three properties:
   token doesn't authenticate and no session does, so a token the client still took for current is renewed and the
   request retried through `apiClient`'s 401 path, rather than answered without user state.
 - **A failed renewal never leaves the tab reading signed in while its requests carry no user.** When the renewal a
-  request waits on fails for the current session (not a cancellation or a changed session version), `apiClient`
-  doesn't send the request: it clears stored tokens and loads the sign-in page afresh
+  request waits on fails while password credentials remain present for the current session outside owned provider
+  resolution (not a cancellation or a changed session version), `apiClient` doesn't send the request: it clears
+  stored tokens and loads the sign-in page afresh
   (`/login?next=…&session_expired=true`, returning to the page after sign-in), as its 401 path does, which drops this
-  tab's cache with the page.
+  tab's cache with the page. During owned resolution the request still fails without sending an expired token, but
+  the session reader determines the user through discovery and fallback rather than letting an interceptor end it
+  (D7). If that reader already concluded anonymous and cleared credentials, later subscribers to the same failure
+  reject without regaining redirect authority.
 
 ### Security
 
@@ -491,8 +577,23 @@ this change relies on three properties:
 ### Testing
 
 D8 sets the test approach. The tests replace only the network (MSW), with a real query client; the toaster is the
-real one, so toasts are found by role and text. The retry rule is tested against `lib/queryClient`'s own defaults,
-since `TestProviders` turns retries off.
+real one, so toasts are found by role and text. Pending-resolution tests hold discovery and fallback independently,
+advance the 60-second check, and settle API renewal through both pre-request expiry and response-401 recovery.
+They cover failures before and after provider acceptance, successful and failed password fallback, cancellation,
+explicit-command supersession and a subsequent read after cleanup. The retry rule is tested against
+`lib/queryClient`'s own defaults, since `TestProviders` turns retries off.
+
+Renewal-failure tests make the first refresh return 401 while a later refresh would succeed, through each API
+entry path. The original caller must still reject, with one refresh and no replay of the refresh URL as the
+original operation. Cancellation tests hold a fallback profile's 401 recovery, cancel the session query without
+changing the authentication version, then fail renewal and observe no credential clearing or redirect. A separate
+shared-renewal case cancels one caller while another current caller still completes successfully.
+
+For shared rejection, make allauth unavailable and let password fallback initiate a held renewal before a
+background API caller joins it. Reject without cancellation or version supersession: the session lands anonymous,
+both stores are cleared, the caller rejects, one refresh was sent and no redirect occurs. Exercise both API entry
+paths and reverse the waiter order. A successful-fallback control then fails a later current-password renewal and
+observes ordinary failure handling, so suppressing all post-resolution failures cannot pass.
 
 ### Migration and rollout
 
@@ -575,6 +676,35 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
    session query and the change of user; ADR-027 carries the dated amendment D4's disposition describes, and the
    Status lines of ADR-027 and ADR-028 name this change. (D9)
 
+9. **Pending provider resolution.** Network tests show: while provider discovery or its password fallback is held,
+   the idle check starts no renewal; background API renewal failure through either interceptor path rejects its request
+   without clearing credentials, canceling or replacing the session query, or redirecting. A later valid provider
+   response lands authenticated. An unavailable provider continues to successful password fallback or anonymous on
+   fallback failure, without losing resolution ownership between them. Cancellation and explicit sign-in/out
+   prevent obsolete responses and cleanup from changing the replacement session. After resolution ends, a current
+   password session still receives ordinary renewal-failure handling. An earlier password renewal settling after
+   provider acceptance cannot clear that user or redirect. If the first renewal returns 401 and a later one would
+   succeed, the original API operation still rejects after exactly one renewal; it never receives refresh-token
+   response data as a successful movie/profile read. Canceling the query during held fallback 401 recovery prevents
+   its later renewal failure from clearing credentials or redirecting after ownership release. Another current
+   caller can still complete their shared renewal. When fallback initiates shared renewal before a background API
+   caller joins and it fails, the session lands anonymous, both credential stores are cleared, the caller rejects
+   after one refresh and no redirect occurs, through both API entry paths and with reversed waiter order. After
+   successful password fallback, later failure while current password credentials remain present still receives
+   ordinary handling. (D7)
+
 ## 8. Open Questions
 
 None.
+
+## Amendments
+
+- **2026-11-12:** D7 gives the provider-return session read ownership through discovery and password fallback.
+  Background password renewal cannot end that read or redirect it; explicit authentication commands supersede it.
+  This closes races in which renewal failure canceled pending provider discovery or acted after provider acceptance.
+  Added criterion 9 for the pending-resolution lifecycle; existing goals and criteria 1–8 stay unchanged. ADR-028's
+  dated amendment will record the ownership contract, and the task list carries its implementation and verification.
+  D2 and D7 carry cancellation through nested profile/renewal work after ownership release and preserve the original
+  operation's terminal renewal failure, request budget and feedback attribution across both interceptors.
+  Failure authority also requires password credentials still to be present at the effect boundary, so a shared
+  rejection cannot regain authority after the reader's anonymous completion clears both stores.

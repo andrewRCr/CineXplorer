@@ -23,7 +23,7 @@ of signed-in user.
 - Cards and the detail page's watchlist button reading their state through that hook
 - The detail page, the watchlist page and the session read through queries, with the session's writers
 - A change-of-user step at every way the signed-in user changes, and sign-out ending on a freshly loaded sign-in page
-- Tests at the network for everything touched, the reference documents, and ADR-027's dated amendment
+- Tests at the network for everything touched, the reference documents, and dated amendments to ADR-027 and ADR-028
 
 ### Won't Do
 
@@ -394,6 +394,47 @@ its request settles; on the browsable stack, signing out and in again shows no p
     - All 2,718 frontend tests, frontend lint and type-check, sign-in smoke and reference Markdown lint passed.
       Updated authentication references and the completion summary; a mechanical line-wrap lint error was corrected.
 
+- [x] **6.4 Make provider discovery and password fallback own session resolution — D7 amendment**
+
+    **Goal:** A provider-return session read, including password fallback, determines authentication while it is
+    pending; background password work cannot cancel it, replace its result or redirect it.
+
+    - [x] **6.4.a Prove the resolution lifecycle through the network**
+        - Added 28 MSW cases using the real session query, hook and API client. Held discovery and password fallback
+          cover idle suppression, both API renewal entry paths, 401/500 failures, successful fallback, current profile
+          rejection, cancellation, explicit sign-in/out, shared transport and replacement-owner cleanup.
+        - Both shared-rejection waiter orders conclude anonymous without redirect; both stores clear before release.
+          Terminal renewal failures use one refresh even when another could succeed, and shared callers retain their
+          own feedback policies. Ordinary failure handling resumes after success, cancellation and superseding login.
+        - Revised the earlier idle regression to start renewal before provider discovery; separate cases now prove
+          no idle renewal starts during discovery. The four API failures after provider acceptance remain covered.
+        - Behavioral failures preceded passing checks. Narrow reconstructions proved already-supported outcomes,
+          including owner release, per-caller context, shared-transport survival, supersession and profile refusal.
+    - [x] **6.4.b Enforce one resolution-ownership rule**
+        - The authentication coordinator holds a version-bound identity acquired synchronously by the provider-return
+          read and retained through fallback. Cancellation/final cleanup releases only its own identity; explicit
+          authentication invalidation retires ownership and renewal work.
+        - API and idle failure handling share the current-version, live-password-credential and no-owner predicate.
+          API callers also require an uncancelled signal; idle handling retains its original change-count checks
+          before and after cancellation. No idle renewal starts during resolution; API work never waits on discovery.
+        - Query cancellation reaches provider/profile requests and renewal continuations without aborting shared
+          renewal for another caller. Per-caller error clones retain original request budget, version, signal and
+          feedback policy, making renewal failure terminal while preserving its underlying error semantics.
+        - Anonymous fallback clears both stores synchronously before releasing ownership. Successful fallback keeps
+          ordinary password-failure authority. No additional epoch, waiter history or persisted state was introduced.
+    - [x] **6.4.c Document the implemented ownership contract**
+        - Added ADR-028's dated amendment and updated both authentication-strategy sections, the completion summary
+          and test guidance for resolution ownership, supersession, cancellation and terminal caller-attributed errors.
+    - [x] **6.4.d Verify the amendment and close its criterion**
+        - All 2,744 frontend tests in 76 files pass, including 28 resolution cases. Frontend lint, generated Chakra
+          types, TypeScript, changed-file formatting, affected Markdown lint and real-session Chromium sign-in/out
+          smoke pass. Backend/schema code is unchanged; build and contrast remain CI checks.
+        - Criterion 9 is validated below; criteria 1–8 and their evidence remain unchanged. A bounded Astra completion
+          consultation identified the required current-fallback profile-refusal coverage, now proved red/green; it
+          found no additional implementation defect. This is advice, not an independent implementation check.
+        - The authorized increment is complete and uncommitted. Its independent fix check and any commit remain
+          separate approval boundaries.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation
@@ -414,6 +455,17 @@ its request settles; on the browsable stack, signing out and in again shows no p
   `window.location`, which `tests/setup.ts` replaces. Decide it before any child's cleanup runs, since `useOAuthFlow`
   removes the flag when the sign-in page unmounts. Keep the page it requests (`next`) from that same location, since the
   sign-in page may redirect a signed-in visitor before the read lands.
+- **Pending provider ownership.** Keep resolution identity and the failure predicate with API authentication
+  coordination. The session reader acquires/releases ownership; the API client does not import the session module.
+  Ownership spans password fallback and ends safely on cancellation or explicit-command supersession. API requests
+  never wait on the provider read, whose fallback uses that same client.
+- **Originating API work.** Nested renewal keeps the caller's request budget, auth version, AbortSignal and feedback
+  policy. A renewal failure cannot become a new 401 operation or replay the refresh URL as the caller's request.
+  A canceled profile caller stays canceled after resolution-owner release, while other callers can still use their
+  shared renewal. Context belongs to each caller, not a mutable field on a shared failure.
+- **Current password failure authority.** Check live stored access credentials, even when expired, at the effect
+  boundary. Anonymous fallback clears both stores before owner release; a later subscriber to the same rejection
+  cannot acquire authority from that release. A successful fallback retains credentials and ordinary handling.
 - **Save feedback ownership.** Save variables carry the ownership count from invocation, including Undo, before
   asynchronous mutation setup. Both save callbacks and global error feedback compare it; retired saves do not dispatch.
   Save-toast IDs are retained until the user changes so cleanup reaches queued notifications as well as visible ones.
@@ -471,7 +523,8 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   _Evidence:_ The named ownership-change and sign-out cases passed, including six added late-save-500 cases. The
   overflow regression clears queued save confirmations and Undo while retaining unrelated errors; a separate case
   retires saves before dispatch when setup yields. Narrow reconstructions failed, then restored guards passed. The
-  complete frontend suite (2,712 tests) and real-session sign-in smoke passed after both fixes. The independent fix check
+  complete frontend suite (2,712 tests) and real-session sign-in smoke passed after both fixes. The independent fix
+  check
   found no incomplete repair or introduced failure.
 
   _Additional evidence:_ The provider session survives an older idle renewal’s held 401/500 failure; all 88 auth
@@ -517,3 +570,28 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   _Evidence:_ The overview, authentication sections, dated ADR-027 amendment and both Status attributions match the
   implementation. F1’s approved wording correction makes the amendment independent of delivery history; the
   attribution remains in Status. Markdown lint passes.
+
+- [x] 9. **Pending provider resolution.** Network tests show: while provider discovery or its password fallback is held,
+   the idle check starts no renewal; background API renewal failure through either interceptor path rejects its request
+   without clearing credentials, canceling or replacing the session query, or redirecting. A later valid provider
+   response lands authenticated. An unavailable provider continues to successful password fallback or anonymous on
+   fallback failure, without losing resolution ownership between them. Cancellation and explicit sign-in/out
+   prevent obsolete responses and cleanup from changing the replacement session. After resolution ends, a current
+   password session still receives ordinary renewal-failure handling. An earlier password renewal settling after
+   provider acceptance cannot clear that user or redirect. If the first renewal returns 401 and a later one would
+   succeed, the original API operation still rejects after exactly one renewal; it never receives refresh-token
+   response data as a successful movie/profile read. Canceling the query during held fallback 401 recovery prevents
+   its later renewal failure from clearing credentials or redirecting after ownership release. Another current
+   caller can still complete their shared renewal. When fallback initiates shared renewal before a background API
+   caller joins and it fails, the session lands anonymous, both credential stores are cleared, the caller rejects
+   after one refresh and no redirect occurs, through both API entry paths and with reversed waiter order. After
+   successful password fallback, later failure while current password credentials remain present still receives
+   ordinary handling. (D7)
+
+  _Evidence:_ All 28 resolution cases pass in the full 2,744-test frontend run: held discovery/fallback, both API
+  paths and failure statuses, both shared-rejection waiter orders, one terminal renewal, per-caller feedback,
+  cancellation with another successful shared caller, explicit command supersession, identity-safe old cleanup,
+  current profile refusal, ordinary later failure and already-started idle/API failures after provider acceptance.
+  Narrow reconstructions produced the corresponding observable failures before restoration. Lint, types,
+  formatting, affected Markdown and real-session sign-in/out smoke pass. Independent implementation fix check
+  remains a separate approval boundary.

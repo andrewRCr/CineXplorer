@@ -8,6 +8,7 @@ import {
 } from "@/utilities/tokenUtils";
 import {
     getAuthSessionVersion,
+    beginSessionResolution,
     invalidateAuthSession,
     refreshAccessToken,
 } from "@/services/apiClient";
@@ -72,11 +73,14 @@ const isUserProfile = (value: unknown): value is UserProfile => {
 /**
  * Read a valid provider profile or treat the response as anonymous.
  */
-async function checkOAuthSession(): Promise<UserProfile | null> {
+async function checkOAuthSession(
+    signal?: AbortSignal,
+): Promise<UserProfile | null> {
     try {
         const response = await fetch(ALLAUTH_SESSION_URL, {
             method: "GET",
             credentials: "include",
+            signal,
         });
 
         if (response.ok) {
@@ -104,39 +108,49 @@ export interface FirstReadContext {
 export async function readSession(
     client: QueryClient,
     firstRead?: FirstReadContext,
+    signal?: AbortSignal,
 ): Promise<UserProfile | null> {
     const version = getAuthSessionVersion();
     const assertCurrent = () => {
-        if (version !== getAuthSessionVersion())
-            throw new CanceledError("Authentication session changed");
+        if (signal?.aborted || version !== getAuthSessionVersion())
+            throw new CanceledError("Authentication session read changed");
     };
-    if (firstRead?.providerReturn) {
-        const provider = await checkOAuthSession();
-        assertCurrent();
-        if (provider) {
-            invalidateAuthSession();
-            clearAuthTokens();
-            void changeOfUser(client);
-            return provider;
-        }
-    }
-    const { access_token } = getAuthTokens();
-    if (!access_token) {
-        if (firstRead?.providerReturn) return null;
-        const user = await checkOAuthSession();
-        assertCurrent();
-        return user;
-    }
+    assertCurrent();
+    const release = firstRead?.providerReturn
+        ? beginSessionResolution(signal)
+        : undefined;
     try {
-        if (areTokensExpired()) await refreshAccessToken();
-        assertCurrent();
-        const user = await authService.getUserProfile();
-        assertCurrent();
-        return user;
-    } catch (error) {
-        if (isCancel(error) || version !== getAuthSessionVersion()) throw error;
-        clearAuthTokens();
-        if (firstRead) void changeOfUser(client);
-        return null;
+        if (firstRead?.providerReturn) {
+            const provider = await checkOAuthSession(signal);
+            assertCurrent();
+            if (provider) {
+                invalidateAuthSession();
+                clearAuthTokens();
+                void changeOfUser(client);
+                return provider;
+            }
+        }
+        const { access_token } = getAuthTokens();
+        if (!access_token) {
+            if (firstRead?.providerReturn) return null;
+            const user = await checkOAuthSession(signal);
+            assertCurrent();
+            return user;
+        }
+        try {
+            if (areTokensExpired()) await refreshAccessToken();
+            assertCurrent();
+            const user = await authService.getUserProfile(signal);
+            assertCurrent();
+            return user;
+        } catch (error) {
+            assertCurrent();
+            if (isCancel(error)) throw error;
+            clearAuthTokens();
+            if (firstRead) void changeOfUser(client);
+            return null;
+        }
+    } finally {
+        release?.();
     }
 }

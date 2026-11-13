@@ -51,7 +51,7 @@ export const libraryQuery = (params: UserMoviesQueryParams) =>
 export const sessionQuery = (firstRead?: FirstReadContext) =>
     queryOptions({
         queryKey: sessionKey,
-        queryFn: ({ client }) => readSession(client, firstRead),
+        queryFn: ({ client, signal }) => readSession(client, firstRead, signal),
         retry: false,
         staleTime: Infinity,
         refetchOnMount: false,

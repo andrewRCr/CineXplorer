@@ -160,6 +160,23 @@ Sign-in pages are excluded from the return path. The session read and idle check
 the change-of-user step described below. A failed retry
 of the original API request does not invalidate a successful refresh.
 
+A provider-return session read owns resolution from before allauth discovery through any password fallback. The idle
+check starts no renewal while this identity is active. API requests continue using credentials and shared renewal;
+they never wait for discovery, since fallback itself uses the API client. During owned resolution, renewal failure
+rejects its API caller without clearing credentials or redirecting. Failure effects require the current auth version,
+live stored password access credentials (expired tokens count), no resolution owner and an uncancelled originating
+request. The idle handler also checks its original user-change count before and after awaiting query cancellation.
+Anonymous fallback clears both stores before releasing ownership, so later subscribers to the same rejection cannot
+redirect. Successful fallback retains normal subsequent password-failure handling.
+
+Renewal failures retain their status, data and classification, attributed separately to each caller's original
+request. They are terminal for that operation, preserving its consumed renewal budget and feedback policy; the refresh
+transport's request cannot enter recovery again or supply a token payload as a successful profile/movie response.
+Shared failures are never mutated to carry another caller's configuration. The session query's cancellation signal
+reaches native provider fetches, profile requests and renewal continuations. Cancellation makes that caller inert
+after ownership release without aborting shared renewal another caller still needs. Cleanup releases only the
+identity it acquired; explicit authentication invalidation retires ownership as well as renewal work.
+
 Explicit sign-out invalidates this tab's pending renewal before clearing credentials. Queued work checks the session
 version before starting a request; sent work is canceled before the logout request, and completion checks precede
 storage writes. The successful logout response deletes any refresh cookie applied before cancellation; later headers
@@ -452,6 +469,12 @@ URLs only register OAuth callback views (login/signup HTML views are disabled).
 
 **Authentication Hook** (`frontend/src/hooks/auth/useAuth.ts`):
 
+The provider-return read owns session resolution through discovery and password fallback, independently of rendered
+status. Idle renewal pauses while it is owned. Query cancellation reaches provider and profile work; late results
+cannot change credentials or user ownership, and old cleanup cannot release a replacement read. Explicit sign-in/out
+supersede that ownership through authentication invalidation. Background failure authority follows the live
+credential/version/cancellation rule in Token Refresh Flow above.
+
 `useAuth` reads the shared `['session']` query built by `lib/queries.ts`. It holds a profile or `null`, never goes
 stale, does not retry, and does not refetch on mount, focus or reconnect. Its first read receives the initial route's
 provider-return context. On a provider return it asks allauth first and invalidates prior authentication work before
@@ -511,30 +534,29 @@ apiClient.interceptors.request.use(async (config) => {
 });
 ```
 
-The response interceptor handles `401` for password users through the same pending refresh as the hook. It marks
-each request before waiting, validates and stores the response through `refreshAccessToken`, and retries outside the
-refresh-failure handler. Its refresh branch is:
+The response interceptor handles `401` for password users through the same pending refresh as the hook, provided
+the request has not used its renewal and does not bypass renewal. It preserves the originating authentication
+version and passes the original request to `refreshRequestToken`. Its refresh branch is:
 
 ```typescript
+const sessionVersion = originalRequest._authSessionVersion ?? getAuthSessionVersion();
+assertAuthSessionVersion(sessionVersion, originalRequest.signal);
 originalRequest._retry = true;
-const sessionVersion = getAuthSessionVersion();
-let renewedToken: string;
-try {
-  renewedToken = await refreshAccessToken();
-} catch (refreshError) {
-  if (axios.isCancel(refreshError) || sessionVersion !== getAuthSessionVersion()) throw refreshError;
-  clearAuthTokens();
-  window.location.href = "/login?session_expired=true";
-  throw refreshError;
-}
-if (sessionVersion !== getAuthSessionVersion()) throw new CanceledError("Authentication session changed");
+const renewedToken = await refreshRequestToken(sessionVersion, originalRequest);
 originalRequest.headers.Authorization = `Bearer ${renewedToken}`;
 return apiClient(originalRequest);
 ```
 
-The helper accepts only a `200` response with a nonempty string `access_token`. Failures reject every waiting caller
-and release the pending promise, allowing a later attempt. OAuth users hold no access token, so their `401` responses
-never enter this branch. CSRF initialization and the refresh POST live inside the shared helper.
+`refreshRequestToken` checks the originating version and cancellation before and after awaiting renewal. Failure is
+terminal for that operation. An Axios failure gets a per-caller error clone carrying the original request
+configuration and feedback policy.
+Credential clearing and an expired-session redirect require `canHandlePasswordFailure`: current version, present
+password credentials, no resolution owner and an uncancelled originating request. The retry above runs only after
+renewal succeeds, outside failure handling.
+
+`refreshAccessToken` owns the shared transport, CSRF initialization and token storage. It accepts only a `200`
+response with a nonempty string `access_token`. Failure releases the shared pending promise so a later operation
+can attempt renewal. OAuth users hold no access token, so their `401` responses never enter this branch.
 
 ---
 

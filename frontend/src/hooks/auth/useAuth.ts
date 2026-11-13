@@ -46,6 +46,8 @@ import {
 } from "@/utilities/returnPath";
 import {
     getAuthSessionVersion,
+    isSessionResolving,
+    canHandlePasswordFailure,
     invalidateAuthSession,
     refreshAccessToken,
 } from "@/services/apiClient";
@@ -108,6 +110,7 @@ export function useAuth(): AuthStateProps {
     // Provider sessions have no access token and are managed by allauth.
     useEffect(() => {
         const checkTokenExpiration = async () => {
+            if (isSessionResolving()) return;
             const sessionVersion = getAuthSessionVersion();
             const change = getChangeCount();
             const { access_token } = getAuthTokens();
@@ -117,13 +120,13 @@ export function useAuth(): AuthStateProps {
                 } catch (error) {
                     if (
                         isCancel(error) ||
-                        sessionVersion !== getAuthSessionVersion() ||
+                        !canHandlePasswordFailure(sessionVersion) ||
                         change !== getChangeCount()
                     )
                         return;
                     await client.cancelQueries({ queryKey: sessionKey });
                     if (
-                        sessionVersion !== getAuthSessionVersion() ||
+                        !canHandlePasswordFailure(sessionVersion) ||
                         change !== getChangeCount()
                     )
                         return;

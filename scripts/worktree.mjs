@@ -4,7 +4,7 @@ import {
     accessSync, constants, copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, readlinkSync, realpathSync, symlinkSync,
     writeFileSync,
 } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename, dirname, join, posix } from "node:path";
 
 const COMPOSE = ["compose", "-f", "infrastructure/docker-compose.yml", "-f", "infrastructure/docker-compose.worktree.yml"];
 const CLOSING = ".arc/reference/harness-hooks/finish-work.mjs";
@@ -18,6 +18,11 @@ const HELP = `Usage: node scripts/worktree.mjs <command>
       Copy development files, allocate a port and key, and install dependencies.
   browse
       Start the worktree's app, migrate and seed its development database.
+  overlap <path>...
+      Advisory report for every other worktree; paths are literal and repository-root-relative.
+      Show non-merge commits reachable from its HEAD but not origin/main, plus uncommitted edits.
+      Mark work units by their committed branch-matched task list; never fetch or change files.
+      Exit 0 even with overlap; usage and Git errors exit non-zero.
   remove <name> [--keep-branch] [--no-stack]
       Remove a clean merged worktree and its stack; optionally keep its branch.
       --no-stack skips Docker cleanup; remove any leftover project containers and volumes later.
@@ -27,13 +32,13 @@ const HELP = `Usage: node scripts/worktree.mjs <command>
       --no-stack skips Docker cleanup; remove any leftover project containers and volumes later.
 `;
 
-function run(cwd, command, args) {
+function run(cwd, command, args, { trim = true } = {}) {
     const result = spawnSync(command, args, { cwd, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
     if (result.error) throw result.error;
     if (result.status !== 0) {
         throw new Error(`${command} ${args.join(" ")} failed:\n${result.stdout}${result.stderr}`.trim());
     }
-    return result.stdout.trim();
+    return trim ? result.stdout.trim() : result.stdout;
 }
 
 function git(cwd, ...args) {
@@ -69,14 +74,51 @@ function envValue(contents, key) {
 }
 
 function worktrees(main) {
-    return git(main, "worktree", "list", "--porcelain").split("\n\n").map((block) => {
-        const lines = block.split("\n");
+    return git(main, "worktree", "list", "--porcelain", "-z").split("\0\0").map((block) => {
+        const lines = block.split("\0");
         return {
             path: lines.find((line) => line.startsWith("worktree "))?.slice(9),
             branch: lines.find((line) => line.startsWith("branch "))?.slice(7).replace(/^refs\/heads\//, ""),
             locked: lines.some((line) => /^locked(?: |$)/.test(line)),
         };
     }).filter((entry) => entry.path);
+}
+
+function overlap(root, main, paths) {
+    paths = [...new Set(paths.map((path) => {
+        const normalized = posix.normalize(path).replace(/\/$/, "");
+        if (!path || posix.isAbsolute(path) || normalized === ".." || normalized.startsWith("../")) {
+            throw new Error("Supply literal repository-root-relative paths that stay inside the checkout.");
+        }
+        return normalized;
+    }))];
+    git(root, "rev-parse", "--verify", "origin/main^{commit}");
+    const selected = (file) => paths.some((path) => path === "." || file === path || file.startsWith(`${path}/`));
+    const listed = (path, ...args) => run(path, "git", ["--literal-pathspecs", ...args], { trim: false })
+        .split("\0").filter(Boolean);
+    const print = (label, files) => {
+        const matches = [...new Set(files.filter(selected))].sort();
+        console.log(`  ${label}:${matches.length ? "\n" + matches.map((file) => `    ${JSON.stringify(file)}`).join("\n") : " none"}`);
+    };
+    console.log("Advisory overlap report against origin/main (repository-root-relative paths)");
+    for (const entry of worktrees(main).filter((entry) => entry.path !== root)) {
+        const committed = listed(entry.path, "log", "--full-history", "--no-merges", "--format=", "--name-only", "-z", "--no-renames",
+            "origin/main..HEAD", "--", ...paths);
+        const status = listed(entry.path, "status", "--porcelain=v1", "-z", "--untracked-files=all", "--", ...paths);
+        const dirty = [];
+        for (let i = 0; i < status.length; i++) {
+            dirty.push(status[i].slice(3));
+            if (/[RC]/.test(status[i].slice(0, 2))) dirty.push(status[++i]);
+        }
+        const slug = /^[a-z]+\/([a-z0-9][a-z0-9-]*)$/.exec(entry.branch ?? "")?.[1];
+        const tasks = slug ? listed(entry.path, "ls-tree", "-r", "--name-only", "-z", "HEAD", "--", ".arc/active")
+            .filter((file) => basename(file) === `tasks-${slug}.md`) : [];
+        const kind = tasks.length ? `work unit: ${tasks.map((file) => JSON.stringify(file)).join(", ")}`
+            : !entry.branch ? "detached" : entry.path === main ? "primary" : "errand";
+        console.log(`\n${JSON.stringify(entry.path)} [${entry.branch ?? "detached"} | ${kind}]`);
+        print("committed", committed);
+        print("uncommitted", dirty);
+    }
 }
 
 function allocatePort(root, main) {
@@ -409,8 +451,12 @@ function finish(root, main, name, noStack) {
 function main() {
     const [command, ...args] = process.argv.slice(2);
     if (command === "--help" || command === "-h") return console.log(HELP);
-    if (!["create", "provision", "browse", "remove", "finish"].includes(command)) throw new Error(`Unknown command: ${command ?? "[none]"}. Use --help.`);
+    if (!["create", "provision", "browse", "remove", "finish", "overlap"].includes(command)) throw new Error(`Unknown command: ${command ?? "[none]"}. Use --help.`);
     const { root, main } = context();
+    if (command === "overlap") {
+        if (!args.length) throw new Error("Usage: node scripts/worktree.mjs overlap <path>...");
+        return overlap(root, main, args);
+    }
     if (command === "provision" && args.length === 0) return provision(root, main);
     if (command === "browse" && args.length === 0) return browse(root, main);
     if (command === "remove" && args.length >= 1 && args.length <= 3 &&

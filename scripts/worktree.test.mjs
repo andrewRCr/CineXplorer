@@ -214,9 +214,68 @@ test("provision copies only included ignored files and keeps existing copies and
     }
     assert.equal(readFileSync(join(path, "frontend/.env"), "utf8"), "keep this copy\n");
     assert.equal(existsSync(join(path, "unignored.txt")), false);
-    for (const folder of [".venv-backend", ".codex"]) assert.equal(readlinkSync(join(path, folder)), join(f.main, folder));
+    assert.equal(readlinkSync(join(path, ".venv-backend")), join(f.main, ".venv-backend"));
+    assert.equal(lstatSync(join(path, ".codex")).isDirectory(), true);
     assert.equal(realpathSync(join(path, ".claude")), join(path, ".claude"));
 });
+
+test("provision creates a real Codex folder with live links to each shared entry", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    const entries = {
+        "hooks/check.mjs": "export const message = 'shared hook';\n",
+        "hooks.json": '{"hooks": {}}\n',
+        "skills/example/SKILL.md": "Shared skill\n",
+    };
+    for (const [file, contents] of Object.entries(entries)) write(f.main, `.codex/${file}`, contents);
+    success(f.invoke(path, ["provision"]));
+    assert.equal(lstatSync(join(path, ".codex")).isDirectory(), true);
+    for (const entry of ["hooks", "hooks.json", "skills"]) {
+        assert.equal(readlinkSync(join(path, ".codex", entry)), join(f.main, ".codex", entry));
+    }
+    for (const [file, contents] of Object.entries(entries)) {
+        assert.equal(readFileSync(join(path, ".codex", file), "utf8"), contents);
+    }
+    write(f.main, ".codex/hooks/check.mjs", "export const message = 'updated hook';\n");
+    success(f.invoke(path, ["provision"]));
+    assert.equal(lstatSync(join(path, ".codex")).isDirectory(), true);
+    assert.equal(readFileSync(join(path, ".codex/hooks/check.mjs"), "utf8"), "export const message = 'updated hook';\n");
+});
+
+for (const localEntries of [false, true]) {
+    test(`provision adds later shared Codex entries${localEntries ? " without replacing local entries" : ""}`, (t) => {
+        const f = fixture(t);
+        const path = f.worktree();
+        if (localEntries) {
+            write(path, ".codex/hooks.json", '{"local": true}\n');
+            write(path, ".codex/local/settings.json", '{"keep": true}\n');
+            write(path, "local-skills/example/SKILL.md", "Local skill\n");
+            symlinkSync(join(path, "local-skills"), join(path, ".codex/skills"), "dir");
+        }
+        success(f.invoke(path, ["provision"]));
+        const entries = {
+            "hooks/check.mjs": "export const message = 'installed later';\n",
+            "hooks.json": '{"hooks": {}}\n',
+            "skills/example/SKILL.md": "Shared skill\n",
+            "local/shared.txt": "Shared settings\n",
+        };
+        for (const [file, contents] of Object.entries(entries)) write(f.main, `.codex/${file}`, contents);
+        success(f.invoke(path, ["provision"]));
+        assert.equal(lstatSync(join(path, ".codex")).isDirectory(), true);
+        assert.equal(readFileSync(join(path, ".codex/hooks/check.mjs"), "utf8"), entries["hooks/check.mjs"]);
+        if (localEntries) {
+            assert.equal(readFileSync(join(path, ".codex/hooks.json"), "utf8"), '{"local": true}\n');
+            assert.equal(readFileSync(join(path, ".codex/local/settings.json"), "utf8"), '{"keep": true}\n');
+            assert.equal(existsSync(join(path, ".codex/local/shared.txt")), false);
+            assert.equal(readlinkSync(join(path, ".codex/skills")), join(path, "local-skills"));
+            assert.equal(readFileSync(join(path, ".codex/skills/example/SKILL.md"), "utf8"), "Local skill\n");
+        } else {
+            for (const [file, contents] of Object.entries(entries)) {
+                assert.equal(readFileSync(join(path, ".codex", file), "utf8"), contents);
+            }
+        }
+    });
+}
 
 test("provision skips missing shared tools and links later installations without replacing local tools", (t) => {
     const f = fixture(t);
@@ -360,9 +419,10 @@ for (const option of [null, "--existing", "--work-unit"]) {
             "infrastructure/dev-certs/cert.pem", "infrastructure/dev-certs/key.pem"]) {
             assert.equal(readFileSync(join(path, file), "utf8"), `stand-in ${file}\n`);
         }
-        for (const folder of [".venv-backend", ".claude", ".codex"]) {
+        for (const folder of [".venv-backend", ".claude"]) {
             assert.equal(readlinkSync(join(path, folder)), join(f.main, folder));
         }
+        assert.equal(lstatSync(join(path, ".codex")).isDirectory(), true);
         assert.match(result.stdout, /node scripts\/worktree.mjs provision/);
         assert.deepEqual(f.calls(), option === "--work-unit"
             ? [{ command: "seed", args: [], cwd: path }] : []);

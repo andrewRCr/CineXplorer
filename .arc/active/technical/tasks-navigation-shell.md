@@ -383,6 +383,15 @@ window tabs, and the phone-width spec follows Films there.
       own keys. All 85 title cases pass, including plain and labelled-filter fallbacks.
     - Related tests, frontend lint/format/types and the affected catalog/browser checks pass.
 
+- [x] **6.3 Close phone search with Escape from every control**
+
+    **Goal:** Escape from the input, Search or Close search closes phone search and restores focus to its opener.
+
+    - Both new button-focus component cases and the phone browser regression failed first. Escape is handled on
+      the phone row; removed the input-only callback. Closing from all three controls restores the opener.
+    - All 146 related tests across eight files and the five affected browser specs (six cases) pass, with frontend
+      lint, formatting and types. The earlier full frontend/backend suites and registration smoke were not rerun.
+
 ## Implementation Notes
 
 - **Colors in tests:** render with `styleSystem` and compare with `expectResolvedColor`

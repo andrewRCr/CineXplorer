@@ -1,14 +1,9 @@
 interface SearchFieldProps {
   onSubmit?: () => void;
   autoFocus?: boolean;
-  onEscape?: () => void;
 }
 
-export default function SearchField({
-  onSubmit,
-  autoFocus,
-  onEscape,
-}: SearchFieldProps) {
+export default function SearchField({ onSubmit, autoFocus }: SearchFieldProps) {
   const [query, setQuery] = useState("");
   const inputId = useId();
   const navigate = useNavigate();
@@ -53,9 +48,6 @@ export default function SearchField({
         id={inputId}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") onEscape?.();
-        }}
         placeholder="Search films"
         autoFocus={autoFocus}
         size="sm"

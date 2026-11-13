@@ -88,6 +88,28 @@ it.each(["Escape", "close button"])(
   },
 );
 
+it.each(["Search", "Close search"])(
+  "closes with Escape while %s has keyboard focus",
+  async (control) => {
+    const user = userEvent.setup();
+    renderPhone();
+    await screen.findByRole("link", { name: "Sign in" });
+    await user.click(screen.getByRole("button", { name: "Search films" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Search films" }),
+      "Alien",
+    );
+    await user.tab();
+    if (control === "Close search") await user.tab();
+    expect(screen.getByRole("button", { name: control })).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(
+      screen.queryByRole("textbox", { name: "Search films" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Search films" })).toHaveFocus();
+  },
+);
+
 it("submits the query and restores the row on the results page", async () => {
   const user = userEvent.setup();
   renderPhone();

@@ -10,20 +10,17 @@ import SearchField from "../SearchField";
 function Example({ autoFocus = false }) {
   const location = useLocation();
   const [submitted, setSubmitted] = useState(0);
-  const [escaped, setEscaped] = useState(false);
   return (
     <>
       <SearchField
         autoFocus={autoFocus}
         onSubmit={() => setSubmitted((n) => n + 1)}
-        onEscape={() => setEscaped(true)}
       />
       <output aria-label="Location">
         {location.pathname}
         {location.search}
       </output>
       <output aria-label="Submissions">{submitted}</output>
-      {escaped && <p>Search closed</p>}
     </>
   );
 }
@@ -67,12 +64,9 @@ it("ignores a blank query on Enter and on the button", async () => {
   expect(screen.getByLabelText("Submissions")).toHaveTextContent("0");
 });
 
-it("focuses on mount when requested and handles Escape", async () => {
-  const user = userEvent.setup();
+it("focuses on mount when requested", () => {
   renderField(true);
   expect(screen.getByRole("textbox", { name: "Search films" })).toHaveFocus();
-  await user.keyboard("{Escape}");
-  expect(screen.getByText("Search closed")).toBeVisible();
 });
 
 it("marks the wrapper only while its input has keyboard focus", async () => {

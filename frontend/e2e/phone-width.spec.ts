@@ -97,6 +97,22 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     });
     await expect(input).toBeFocused();
     await input.fill("Alien");
+    for (const control of ["Search", "Close search"]) {
+        await input.press("Tab");
+        if (control === "Close search") await page.keyboard.press("Tab");
+        await expect(
+            banner.getByRole("button", { name: control, exact: true }),
+        ).toBeFocused();
+        await page.keyboard.press("Escape");
+        await expect(input).toBeHidden();
+        const opener = banner.getByRole("button", {
+            name: "Search films",
+            exact: true,
+        });
+        await expect(opener).toBeFocused();
+        await opener.click();
+        await input.fill("Alien");
+    }
     await input.press("Enter");
     await expect(page).toHaveURL(
         new URL("/search?query=Alien", target.baseURL).href,

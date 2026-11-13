@@ -15,14 +15,21 @@ export default function PhoneNavBar() {
     wasSearching.current = searchOpen;
   }, [searchOpen]);
   return (
-    <HStack w="100%" h="100%" gap="1" justifyContent="space-between">
+    <HStack
+      w="100%"
+      h="100%"
+      gap="1"
+      justifyContent="space-between"
+      onKeyDown={(event) => {
+        if (searchOpen && event.key === "Escape") {
+          event.preventDefault();
+          setSearchOpen(false);
+        }
+      }}
+    >
       {searchOpen ? (
         <>
-          <SearchField
-            autoFocus
-            onEscape={() => setSearchOpen(false)}
-            onSubmit={() => setSearchOpen(false)}
-          />
+          <SearchField autoFocus onSubmit={() => setSearchOpen(false)} />
           <IconButton
             aria-label="Close search"
             variant="ghost"

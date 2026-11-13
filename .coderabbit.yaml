@@ -36,12 +36,8 @@ reviews:
 knowledge_base:
   opt_out: false
   code_guidelines:
-    enabled: true
-    filePatterns:
-      - ".arc/reference/constitution/DEVELOPMENT-RULES.md"
-      - ".arc/reference/constitution/TECHNICAL-OVERVIEW.md"
-      - ".arc/reference/strategies/**/*.md"
-      - ".arc/reference/adr/**/*.md"
+    # Reviews apply no repository guideline files.
+    enabled: false
   learnings:
     scope: auto
   issues:

@@ -22,7 +22,7 @@ import {
 } from "@/components/auth";
 import type { VerificationState } from "@/components/auth";
 import { useFormik } from "formik";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { useOAuthFlow } from "@/hooks/auth/useOAuthFlow";
 import { useLoginAlerts } from "@/hooks/auth/useLoginAlerts";

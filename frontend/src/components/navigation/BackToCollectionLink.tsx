@@ -18,7 +18,7 @@
  * ```
  */
 
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { Box, Button } from "@chakra-ui/react";
 import { LuArrowLeft } from "react-icons/lu";
 

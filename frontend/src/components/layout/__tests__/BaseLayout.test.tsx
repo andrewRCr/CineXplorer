@@ -6,7 +6,7 @@ import {
   Outlet,
   Link,
   useLocation,
-} from "react-router-dom";
+} from "react-router";
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";

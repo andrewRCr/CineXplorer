@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { TestProviders } from "@tests/helpers/test-providers";

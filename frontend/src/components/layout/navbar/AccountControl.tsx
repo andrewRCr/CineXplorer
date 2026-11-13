@@ -8,7 +8,7 @@ import {
   Link as ChakraLink,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { signInPathFor } from "@/utilities/returnPath";
 import { ROUTES } from "@/constants/routes";

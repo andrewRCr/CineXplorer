@@ -1,4 +1,4 @@
-import { matchRoutes } from "react-router-dom";
+import { matchRoutes } from "react-router";
 import { ROUTES } from "@/constants/routes";
 
 export type CatalogWindow = "browse" | "now-playing" | "upcoming";

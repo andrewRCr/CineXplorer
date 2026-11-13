@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router";
 import VirtualizedMovieGrid from "@/components/movie/collection/VirtualizedMovieGrid";
 
 const SearchResults = () => {

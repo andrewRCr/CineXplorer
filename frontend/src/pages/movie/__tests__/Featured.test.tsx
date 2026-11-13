@@ -12,11 +12,11 @@
 
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import { Provider as ChakraProvider } from "@/components/core/chakra/provider";
 import Featured from "../Featured";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router";
 
 function renderWithProviders(component: React.ReactElement) {
   return render(

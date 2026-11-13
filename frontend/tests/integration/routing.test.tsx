@@ -12,7 +12,7 @@
 
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { MemoryRouter, Routes, Route, Navigate } from "react-router-dom";
+import { MemoryRouter, Routes, Route, Navigate } from "react-router";
 import { Provider as ChakraProvider } from "@/components/core/chakra/provider";
 import { ROUTES } from "@/constants/routes";
 

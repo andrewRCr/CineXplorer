@@ -5,7 +5,7 @@
  * flight, sends a signed-out visitor to sign in with the requested page as `next`, and otherwise
  * renders the matched page.
  */
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router";
 import LoadingContent from "@/components/layout/LoadingContent";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { loginPathFor } from "@/utilities/returnPath";

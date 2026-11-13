@@ -76,5 +76,5 @@ export default function SearchField({ onSubmit, autoFocus }: SearchFieldProps) {
 import { useId, useState } from "react";
 import { Box, Input, IconButton, VisuallyHidden } from "@chakra-ui/react";
 import { FiSearch } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ROUTES } from "@/constants/routes";

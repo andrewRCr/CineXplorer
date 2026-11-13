@@ -29,7 +29,7 @@ import {
   useNavigate,
   Routes,
   Route,
-} from "react-router-dom";
+} from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { HttpResponse, http } from "msw/http";
 import { isCancel } from "axios";

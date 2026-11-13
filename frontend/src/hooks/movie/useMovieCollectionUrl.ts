@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { type BrowseParams, BROWSE_PARAM_KEYS } from "@/types/browseTypes";
 import {
     parseBrowseParamsFromUrl,

@@ -1,6 +1,6 @@
 import type { RouteConfig } from "@/utilities/routeConfigResolver";
 import { useMemo } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext } from "react-router";
 import type { MovieListResponse } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 

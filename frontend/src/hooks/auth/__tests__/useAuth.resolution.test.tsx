@@ -1,6 +1,6 @@
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { http, HttpResponse } from "msw/http";
 import { useAuth } from "@/hooks/auth/useAuth";

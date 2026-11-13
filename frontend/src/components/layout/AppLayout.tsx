@@ -1,6 +1,6 @@
 import BaseLayout from "./BaseLayout";
 import { Container } from "@chakra-ui/react";
-import { Outlet } from "react-router-dom";
+import { Outlet } from "react-router";
 
 const AppLayout = () => {
   return (

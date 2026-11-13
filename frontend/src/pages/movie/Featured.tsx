@@ -7,7 +7,7 @@ import {
   Container,
   Card,
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ROUTES } from "@/constants/routes";
 
 const Featured = () => {

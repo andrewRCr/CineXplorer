@@ -8,7 +8,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router";
 import { type MovieListItem } from "@/types/movie";
 import { Tooltip } from "../core/chakra/tooltip";
 import { LuEye, LuHeart } from "react-icons/lu";

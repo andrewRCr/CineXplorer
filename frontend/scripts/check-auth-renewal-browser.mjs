@@ -21,7 +21,7 @@ const cacheDir = await mkdtemp(resolve(tmpdir(), "auth-renewal-browser-"));
 const entry = `
 import React, { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { useAuth } from '/src/hooks/auth/useAuth.ts';
 function Probe() {
   const auth = useAuth();
@@ -90,7 +90,7 @@ const vite = await createServer({
     include: [
       "react",
       "react-dom/client",
-      "react-router-dom",
+      "react-router",
       "axios",
       "@chakra-ui/react",
     ],

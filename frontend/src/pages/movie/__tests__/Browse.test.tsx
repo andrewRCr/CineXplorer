@@ -9,7 +9,7 @@ import {
   type InitialEntry,
   useLocation,
   useNavigate,
-} from "react-router-dom";
+} from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   act,

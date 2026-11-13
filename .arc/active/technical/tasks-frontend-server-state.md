@@ -432,8 +432,8 @@ its request settles; on the browsable stack, signing out and in again shows no p
         - Criterion 9 is validated below; criteria 1–8 and their evidence remain unchanged. A bounded Astra completion
           consultation identified the required current-fallback profile-refusal coverage, now proved red/green; it
           found no additional implementation defect. This is advice, not an independent implementation check.
-        - The authorized increment is complete and uncommitted. Its independent fix check and any commit remain
-          separate approval boundaries.
+        - An independent fix check found no runtime defect. Its one minor finding, the authentication strategy's
+          outdated renewal-failure example, was corrected.
 
 - [x] **6.5 Bind save requests to their invocation's user through transport — D4 amendment**
 
@@ -471,8 +471,8 @@ its request settles; on the browsable stack, signing out and in again shows no p
           types, TypeScript, changed-file formatting, affected Markdown and real-session Chromium sign-in/out pass.
           The browser check waited for routed local capacity before its successful run; routing policy was unchanged.
         - Criterion 10 is validated below; goals and criteria 1–9 are unchanged. Bounded Astra completion advice found
-          no required omission; it is not an independent implementation check. Changes remain uncommitted and the
-          material repair's independent fix check is offered separately, before the later full-review scope decision.
+          no required omission; it is not an independent implementation check. An independent fix check of the
+          repair returned no findings.
 
 - [x] **6.6 Show not-found after a cached detail refetch returns 404 — D3**
 
@@ -482,7 +482,7 @@ its request settles; on the browsable stack, signing out and in again shows no p
       passed after making the explicit 404 enter the existing not-found branch despite retained query data.
     - All 31 related detail tests, frontend lint/generated types/type-check/format, affected Markdown and both
       detail/back-navigation Chromium smoke specs pass. Existing status-specific errors and successful cached-detail
-      save composition pass. Changes remain uncommitted; the approved independent repair fix check follows.
+      save composition pass. An independent fix check of the repair returned no findings.
 
 - [x] **6.7 Integrate main's Remember Me coverage with query-backed authentication**
 
@@ -494,8 +494,7 @@ its request settles; on the browsable stack, signing out and in again shows no p
       remember_me value remains asserted. Automatic production merges preserve login forwarding and profile cancellation.
     - All 2,783 frontend tests in 78 files, lint, generated types/type-check, affected formatting/Markdown and both
       real-session sign-in/out Chromium cases pass. Imported backend and other main-only files match main.
-      The approved independent integration check precedes the merge commit/push and renewed exact-head CI observation;
-      merge to main remains a separate decision.
+      An independent integration check returned no findings.
     - PR CI identified two unformatted JSX examples in the test guide. Applied Prettier's line-wrap-only correction;
       the full frontend format check and affected Markdown pass. No runtime or test behavior changed.
 
@@ -510,8 +509,8 @@ its request settles; on the browsable stack, signing out and in again shows no p
     - Narrow visible-only toast cleanup and omitted final reload each fail the corresponding assertion; restored
       production code passes. Full coverage passes all 2,783 tests in 78 files, clears thresholds and reports no
       unhandled errors. Lint, generated types/type-check, affected formatting/Markdown and whitespace checks pass.
-      The approved independent repair check and commit/push/CI recovery follow; production behavior and global
-      timeout settings are unchanged.
+      An independent check of the repair returned no findings; production behavior and global timeout settings are
+      unchanged.
 
 - [x] **6.9 Integrate shared navigation with query-backed user state**
 
@@ -526,8 +525,7 @@ its request settles; on the browsable stack, signing out and in again shows no p
       a production change. Retired component locators now identify AccountControl; required behaviors are unchanged.
     - Full coverage passes all 3,006 tests in 93 files with no unhandled errors; all 17 Chromium scenarios across
       seven specs pass. Frontend lint, type-check, formatting and affected Markdown/whitespace checks pass.
-      The approved independent integration check and commit/push/CI observation follow separately; merge to main
-      remains a separate decision.
+      An independent integration check returned no findings.
 
 - [x] **6.10 Preserve authentication mount lifetimes through the session query**
 
@@ -542,7 +540,8 @@ its request settles; on the browsable stack, signing out and in again shows no p
       Production files were restored byte-for-byte before final checks.
     - All 101 focused auth tests and the full 3,012-test suite in 94 files pass, with coverage thresholds satisfied and
       no unhandled errors. Lint, types, formatting, affected Markdown/whitespace and both Remember Me browser cases
-      pass. The approved independent integration check and commit/push/CI observation follow separately.
+      pass. An independent integration check returned no findings, and CI passed on the pull request's final head
+      (run 43369989459).
 
 ## Implementation Notes
 
@@ -705,8 +704,8 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   cancellation with another successful shared caller, explicit command supersession, identity-safe old cleanup,
   current profile refusal, ordinary later failure and already-started idle/API failures after provider acceptance.
   Narrow reconstructions produced the corresponding observable failures before restoration. Lint, types,
-  formatting, affected Markdown and real-session sign-in/out smoke pass. Independent implementation fix check
-  remains a separate approval boundary.
+  formatting, affected Markdown and real-session sign-in/out smoke pass. An independent fix check found no runtime
+  defect; its one minor finding, the authentication strategy's outdated renewal-failure example, was corrected.
 
 - [x] 10. **Save request ownership.** Network tests show a save retired after its mutation guard, before Axios prepares
     the request, sends no PATCH with a replacement provider session or password token. Holding the actual browser
@@ -723,4 +722,4 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   surviving shared caller, in-flight transport cancellation and new-generation success. Behavioral red/green and
   narrow reconstructions prove the boundaries. Existing auth-command tests require canceled retired saves with
   state/feedback/invalidation guards intact; current-owner/order/unmount/Undo controls pass. Lint, types, formatting,
-  Markdown and real-session sign-in/out pass. Independent implementation fix check remains separately offered.
+  Markdown and real-session sign-in/out pass. An independent fix check of the repair returned no findings.

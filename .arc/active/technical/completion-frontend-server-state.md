@@ -11,6 +11,13 @@ Cards and movie details share each movie’s saved state, including pending chan
 movie lists. Movie detail, watchlist and session reads use shared query options, and a change of signed-in user
 clears the previous user’s cached data, retained saves and save feedback.
 
+The pull request's final head passed CI (run 43369989459). Main run 43370780346 on the merge `b3658421` passed every
+acceptance job and deployed staging, but its staging smoke run failed: the phone-width spec scanned Browse for
+accessibility while the phone drawer was still fading out, and found a color-contrast violation. The same failure
+occurred on `b4ea3586` (run 43367965305), before this merge. #197 made the spec wait for the drawer to close before
+scanning. Main run 43429223988 on its merge `544314ad` passed CI, the staging deployment and the staging smoke
+run (16 passed, sign-up skipped): the first passing staging smoke run to include this release.
+
 ## Key Deliverables
 
 - A query factory for movie grids, detail, Library and session reads, with retries limited to network and server errors.

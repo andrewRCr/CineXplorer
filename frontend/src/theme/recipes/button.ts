@@ -40,6 +40,7 @@ export const buttonRecipe = defineRecipe({
              * - Active: primary-active (16% foreground overlay)
              */
             solid: {
+                _expanded: { bg: "primary-active", color: "on-primary" },
                 bg: "primary",
                 color: "on-primary",
                 _hover: {
@@ -52,7 +53,8 @@ export const buttonRecipe = defineRecipe({
                     bg: "primary-active",
                 },
                 _focusVisible: {
-                    outline: "2px solid",
+                    outlineWidth: "2px",
+                    outlineStyle: "solid",
                     outlineColor: "ring",
                     outlineOffset: "2px",
                 },
@@ -87,7 +89,8 @@ export const buttonRecipe = defineRecipe({
                     borderColor: "border-strong-01",
                 },
                 _focusVisible: {
-                    outline: "2px solid",
+                    outlineWidth: "2px",
+                    outlineStyle: "solid",
                     outlineColor: "ring",
                     outlineOffset: "2px",
                 },
@@ -103,6 +106,11 @@ export const buttonRecipe = defineRecipe({
              * For form pairs: Use 'secondary' variant instead
              */
             outline: {
+                _expanded: {
+                    bg: "primary/12",
+                    color: "on-button-outline",
+                    borderColor: "primary",
+                },
                 borderWidth: "1px",
                 borderColor: "button-outline",
                 color: "on-button-outline",
@@ -120,7 +128,8 @@ export const buttonRecipe = defineRecipe({
                     borderColor: "primary",
                 },
                 _focusVisible: {
-                    outline: "2px solid",
+                    outlineWidth: "2px",
+                    outlineStyle: "solid",
                     outlineColor: "ring",
                     outlineOffset: "2px",
                 },
@@ -134,6 +143,7 @@ export const buttonRecipe = defineRecipe({
              * - Compound variants handle selection state
              */
             subtle: {
+                _expanded: { bg: "secondary-hover", color: "on-button-subtle" },
                 bg: "button-subtle",
                 color: "on-button-subtle",
                 _hover: {
@@ -143,7 +153,8 @@ export const buttonRecipe = defineRecipe({
                     },
                 },
                 _focusVisible: {
-                    outline: "2px solid",
+                    outlineWidth: "2px",
+                    outlineStyle: "solid",
                     outlineColor: "ring",
                     outlineOffset: "2px",
                 },
@@ -156,6 +167,7 @@ export const buttonRecipe = defineRecipe({
              * - Active darkens text further
              */
             ghost: {
+                _expanded: { bg: "transparent", color: "tertiary-active" },
                 bg: "transparent",
                 color: "tertiary",
                 _hover: {
@@ -170,7 +182,8 @@ export const buttonRecipe = defineRecipe({
                     color: "tertiary-active",
                 },
                 _focusVisible: {
-                    outline: "2px solid",
+                    outlineWidth: "2px",
+                    outlineStyle: "solid",
                     outlineColor: "ring",
                     outlineOffset: "2px",
                 },

@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import type { CatalogWindow } from "@/utilities/catalogWindow";
 import type { BrowseParams } from "@/types/browseTypes";
 import {
     DEFAULT_BROWSE_PARAMS,
@@ -24,6 +25,7 @@ import {
 
 // Better hook composition with multiple related concerns
 interface UseMovieCollectionStateConfig {
+    releaseWindow?: CatalogWindow | null;
     defaultBrowseParams?: Partial<BrowseParams>;
     // Hook configuration
     enableUrlSync?: boolean;
@@ -63,6 +65,7 @@ interface MovieCollectionState {
  */
 export const useMovieCollectionState = ({
     defaultBrowseParams,
+    releaseWindow = null,
     enableUrlSync = true,
     enableAdvancedFilters = true,
 }: UseMovieCollectionStateConfig = {}): MovieCollectionState => {
@@ -91,22 +94,41 @@ export const useMovieCollectionState = ({
 
     // Choose between URL-synced or local state
     const rawBrowseParams = enableUrlSync ? urlBrowseParams : localBrowseParams;
+    const needsYearReset =
+        (releaseWindow === "now-playing" || releaseWindow === "upcoming") &&
+        Boolean(rawBrowseParams.minYear || rawBrowseParams.maxYear);
     const needsSortReset =
-        isTitleSort(rawBrowseParams.sortBy) &&
-        !isLatinScriptLanguage(rawBrowseParams.language);
+        (isTitleSort(rawBrowseParams.sortBy) &&
+            !isLatinScriptLanguage(rawBrowseParams.language)) ||
+        (releaseWindow === "upcoming" &&
+            rawBrowseParams.sortBy === "vote_average.desc");
     const browseParams = useMemo(
         () =>
-            needsSortReset
-                ? { ...rawBrowseParams, sortBy: DEFAULT_SORT }
+            needsYearReset || needsSortReset
+                ? {
+                      ...rawBrowseParams,
+                      minYear: needsYearReset ? "" : rawBrowseParams.minYear,
+                      maxYear: needsYearReset ? "" : rawBrowseParams.maxYear,
+                      sortBy: needsSortReset
+                          ? DEFAULT_SORT
+                          : rawBrowseParams.sortBy,
+                  }
                 : rawBrowseParams,
-        [rawBrowseParams, needsSortReset],
+        [rawBrowseParams, needsYearReset, needsSortReset],
     );
-    if (!enableUrlSync && needsSortReset) setLocalBrowseParams(browseParams);
-    // The URL is external state; render the normalized values while replacing it.
+    if (!enableUrlSync && (needsYearReset || needsSortReset))
+        setLocalBrowseParams(browseParams);
+    // Render corrected values before the first fetch, then replace all fixed URL fields together.
     useEffect(() => {
-        if (enableUrlSync && needsSortReset)
-            urlHandleBrowseParamsChange({ sortBy: DEFAULT_SORT });
-    }, [enableUrlSync, needsSortReset, urlHandleBrowseParamsChange]);
+        if (enableUrlSync && (needsYearReset || needsSortReset))
+            urlHandleBrowseParamsChange(browseParams);
+    }, [
+        enableUrlSync,
+        needsYearReset,
+        needsSortReset,
+        browseParams,
+        urlHandleBrowseParamsChange,
+    ]);
 
     // Track previous filter hash to detect filter changes (not initial mount)
     const prevFilterHashRef = useRef<string | null>(null);

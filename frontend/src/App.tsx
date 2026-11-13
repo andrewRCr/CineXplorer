@@ -6,7 +6,7 @@ import "./App.css";
 import MovieCollectionLayout from "./components/movie/collection/MovieCollectionLayout";
 import AppLayout from "./components/layout/AppLayout";
 import AuthLayout from "./components/layout/AuthLayout";
-import LoadingLayout from "./components/layout/LoadingLayout";
+import LoadingContent from "./components/layout/LoadingContent";
 import AuthContextProvider from "./components/auth/AuthContextProvider";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ErrorBoundary from "./components/core/ErrorBoundary";
@@ -14,7 +14,9 @@ import ErrorBoundary from "./components/core/ErrorBoundary";
 // Lazy load page components
 const Featured = lazy(() => import("./pages/movie/Featured"));
 const Browse = lazy(() => import("./pages/movie/Browse"));
-const BrowseSequential = lazy(() => import("./pages/movie/BrowseSequential"));
+const BrowseSequential = import.meta.env.DEV
+  ? lazy(() => import("./pages/movie/BrowseSequential"))
+  : null;
 const NowPlaying = lazy(() => import("./pages/movie/NowPlaying"));
 const Upcoming = lazy(() => import("./pages/movie/Upcoming"));
 const Login = lazy(() => import("./pages/user/Login"));
@@ -45,7 +47,7 @@ const App: React.FC = () => {
     <ErrorBoundary showErrorDetails={import.meta.env.MODE === "development"}>
       <BrowserRouter>
         <AuthContextProvider>
-          <Suspense fallback={<LoadingLayout />}>
+          <Suspense fallback={<LoadingContent mode="layout" />}>
             <Routes>
               {/* Auth routes - separate layout */}
               <Route
@@ -104,18 +106,19 @@ const App: React.FC = () => {
                   <Route path="upcoming" element={<Upcoming />} />
                 </Route>
 
-                {/* Sequential browse - reference implementation (title in PageHeader) */}
-                <Route
-                  path={`${ROUTES.BROWSE}/sequential`}
-                  element={
-                    <MovieCollectionLayout
-                      showBrowseControls={true}
-                      renderPageHeader={true}
-                    />
-                  }
-                >
-                  <Route index element={<BrowseSequential />} />
-                </Route>
+                {BrowseSequential && (
+                  <Route
+                    path={ROUTES.BROWSE_SEQUENTIAL}
+                    element={
+                      <MovieCollectionLayout
+                        showBrowseControls
+                        renderPageHeader
+                      />
+                    }
+                  >
+                    <Route index element={<BrowseSequential />} />
+                  </Route>
+                )}
 
                 {/* Search results with shared layout (title in GridHeader) */}
                 <Route

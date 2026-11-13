@@ -5,9 +5,6 @@ export const ROUTES = {
     FEATURED: "/featured", // Alias that redirects to HOME
     PROFILE: "/profile",
     WATCHLIST: "/watchlist",
-    LIBRARY: "/library",
-    JOURNAL: "/journal",
-    LOG: "/log",
     SETTINGS: "/settings",
     BROWSE: "/browse",
     BROWSE_SEQUENTIAL: "/browse/sequential", // Reference implementation for sequential pagination
@@ -20,28 +17,6 @@ export const ROUTES = {
     FORGOT_PASSWORD: "/forgot-password",
     TEST_LOGIN: "/testlogin",
     TYPOGRAPHY_TEST: "/dev/typography-debug",
-    // more to be added as needed
-};
-
-export const ROUTE_NAMES = {
-    HOME: "Home",
-    FEATURED: "Featured",
-    PROFILE: "Profile",
-    WATCHLIST: "Watchlist",
-    LIBRARY: "Library",
-    JOURNAL: "Journal",
-    LOG: "Log",
-    SETTINGS: "Settings",
-    BROWSE: "Browse",
-    NOW_PLAYING: "Now Playing",
-    UPCOMING: "Upcoming",
-    SEARCH_RESULTS: "Search Results",
-    MOVIE_DETAIL: "Movie Detail",
-    LOGIN: "Login",
-    REGISTER: "Register",
-    FORGOT_PASSWORD: "Forgot Password",
-    TEST_LOGIN: "Test Login",
-    TYPOGRAPHY_TEST: "Typography Debug",
     // more to be added as needed
 };
 

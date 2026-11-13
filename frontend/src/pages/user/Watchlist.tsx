@@ -1,4 +1,5 @@
 /** The first watchlist page, refreshed by successful movie saves. */
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Box, Text, VStack } from "@chakra-ui/react";
 import { libraryQuery } from "@/lib/queries";
@@ -12,40 +13,26 @@ const Watchlist = () => {
   });
   const movies = data?.results ?? [];
 
-  if (isLoading) {
-    return (
-      <Box p={8}>
-        <Text>Loading watchlist...</Text>
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box p={8}>
-        <Text color="on-destructive">Error: {error.message}</Text>
-      </Box>
-    );
-  }
-
-  if (movies.length === 0) {
-    return (
-      <Box p={8}>
-        <Text>No movies on watchlist</Text>
-      </Box>
-    );
-  }
-
-  return (
-    <Box p={8}>
-      <Text fontSize="2xl" fontWeight="bold" mb={4}>
-        My Watchlist
-      </Text>
+  let content: ReactNode;
+  if (isLoading) content = <Text>Loading watchlist...</Text>;
+  else if (error)
+    content = <Text color="on-destructive">Error: {error.message}</Text>;
+  else if (movies.length === 0) content = <Text>No movies on watchlist</Text>;
+  else
+    content = (
       <VStack align="stretch" gap={2}>
         {movies.map((movie) => (
           <Text key={movie.tmdb_id}>{movie.title}</Text>
         ))}
       </VStack>
+    );
+
+  return (
+    <Box p={8}>
+      <Text as="h1" fontSize="2xl" fontWeight="bold" mb={4}>
+        My Watchlist
+      </Text>
+      {content}
     </Box>
   );
 };

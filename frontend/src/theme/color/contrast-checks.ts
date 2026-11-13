@@ -177,6 +177,13 @@ const interactionStates: TokenPair[] = [
  * Source: Component Styling Strategy - Focus Indicators (ADR-015)
  */
 const focusIndicators: TokenPair[] = [
+    {
+        fg: "ring",
+        bg: "destructive/10",
+        backdrop: ["background"],
+        threshold: "ui",
+    },
+    { fg: "tertiary", bg: "popover", threshold: "ui" },
     // Focus rings on surfaces (outline with offset, not direct contact)
     { fg: "ring", bg: "background", threshold: "ui" },
     { fg: "ring", bg: "layer-01", threshold: "ui" },

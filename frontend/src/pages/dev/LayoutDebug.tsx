@@ -19,14 +19,13 @@ export default function LayoutDebug() {
   const [viewportHeight, setViewportHeight] = useState(0);
   const [computedTokens, setComputedTokens] = useState({
     navbarHeight: "",
-    sidebarWidth: "",
     footerHeight: "",
   });
 
   // Get z-index values
-  const [zBase, zSidebar, zFooter, zNavbar, zDropdown] = useToken("zIndex", [
+  const [zBase, zDebug, zFooter, zNavbar, zDropdown] = useToken("zIndex", [
     "base",
-    "sidebar",
+    "layout-debug",
     "footer",
     "navbar",
     "dropdown",
@@ -55,9 +54,6 @@ export default function LayoutDebug() {
       setComputedTokens({
         navbarHeight: rootStyles
           .getPropertyValue("--chakra-sizes-layout-navbar")
-          .trim(),
-        sidebarWidth: rootStyles
-          .getPropertyValue("--chakra-sizes-layout-sidebar")
           .trim(),
         footerHeight: rootStyles
           .getPropertyValue("--chakra-sizes-layout-footer")
@@ -117,17 +113,6 @@ export default function LayoutDebug() {
               </Text>
               <Text fontSize="xs" color="foreground/60">
                 NavBar height (includes border)
-              </Text>
-            </Box>
-            <Box bg="layer-02" p={4} borderRadius="sm">
-              <Text fontSize="sm" fontWeight="bold" color="foreground/60">
-                layout.sidebar
-              </Text>
-              <Text fontSize="2xl" fontWeight="bold">
-                {computedTokens.sidebarWidth || "Loading..."}
-              </Text>
-              <Text fontSize="xs" color="foreground/60">
-                Sidebar width (desktop only)
               </Text>
             </Box>
             <Box bg="layer-02" p={4} borderRadius="sm">
@@ -195,11 +180,9 @@ export default function LayoutDebug() {
               bg="layer-02"
               borderRadius="sm"
             >
-              <Text fontWeight="medium">
-                sidebar, theme-debug, layout-debug
-              </Text>
+              <Text fontWeight="medium">theme-debug, layout-debug</Text>
               <Text fontFamily="mono" color="tertiary">
-                {zSidebar}
+                {zDebug}
               </Text>
             </HStack>
             <HStack
@@ -228,7 +211,7 @@ export default function LayoutDebug() {
             Layout Structure
           </Text>
           <Text fontSize="sm" color="foreground/60" mb={4}>
-            Visual representation of layout hierarchy with responsive sidebar
+            Visual representation of the top bar, content and footer
           </Text>
           <Box
             position="relative"
@@ -254,42 +237,6 @@ export default function LayoutDebug() {
 
             {/* Main Layout */}
             <HStack align="start" gap={2}>
-              {/* Sidebar - responsive */}
-              <Box
-                bg="tertiary/20"
-                borderWidth="1px"
-                borderColor="tertiary"
-                p={2}
-                borderRadius="sm"
-                width={{ base: "0", lg: computedTokens.sidebarWidth }}
-                display={{ base: "none", lg: "block" }}
-                flexShrink={0}
-              >
-                <Text fontSize="xs" fontWeight="bold" mb={2}>
-                  Sidebar ({computedTokens.sidebarWidth})
-                </Text>
-                <VStack align="stretch" gap={1}>
-                  <Text fontSize="2xs" color="foreground/60">
-                    • Featured
-                  </Text>
-                  <Text fontSize="2xs" color="foreground/60">
-                    • Now Playing
-                  </Text>
-                  <Text fontSize="2xs" color="foreground/60">
-                    • Upcoming
-                  </Text>
-                  <Text fontSize="2xs" color="foreground/60">
-                    • Top Rated
-                  </Text>
-                  <Text fontSize="2xs" color="foreground/60" mt={2}>
-                    Desktop only
-                  </Text>
-                  <Text fontSize="2xs" color="foreground/60">
-                    Mobile uses drawer
-                  </Text>
-                </VStack>
-              </Box>
-
               {/* Content Area */}
               <Box
                 flex="1"
@@ -307,11 +254,7 @@ export default function LayoutDebug() {
                   Expands to fill available space
                 </Text>
                 <Text fontSize="xs" color="foreground/60">
-                  • Mobile (base): Full width, no sidebar
-                </Text>
-                <Text fontSize="xs" color="foreground/60">
-                  • Desktop (lg+): Width = container -{" "}
-                  {computedTokens.sidebarWidth} - gap
+                  Full container width at every breakpoint
                 </Text>
               </Box>
             </HStack>

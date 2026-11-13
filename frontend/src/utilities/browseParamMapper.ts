@@ -70,38 +70,34 @@ function addRatings(
     }
 }
 
-// Helper: Add release date range with NaN validation
+/** Parse the user-supplied bounds without inventing an upper bound for an open-ended range. */
+export function readYearBounds({
+    minYear,
+    maxYear,
+}: Pick<BrowseParams, "minYear" | "maxYear">): {
+    minimum?: number;
+    maximum?: number;
+} {
+    const minimum = minYear ? parseInt(minYear, 10) : undefined;
+    if (minimum !== undefined && isNaN(minimum)) return {};
+    const maximum = maxYear ? parseInt(maxYear, 10) : undefined;
+    return {
+        minimum,
+        maximum: maximum !== undefined && !isNaN(maximum) ? maximum : undefined,
+    };
+}
+
 function addReleaseDateRange(
     params: Record<string, string | number | number[]>,
     browseParams: BrowseParams,
 ) {
-    // Handle maxYear-only case (e.g., "movies before 2000")
-    if (!browseParams.minYear) {
-        if (browseParams.maxYear) {
-            const maxYear = parseInt(browseParams.maxYear, 10);
-            if (!isNaN(maxYear)) {
-                params.release_date_lte = `${maxYear}-12-31`;
-            }
-        }
-        return;
+    const { minimum, maximum } = readYearBounds(browseParams);
+    if (minimum !== undefined) {
+        params.release_date_gte = `${minimum}-01-01`;
+        params.release_date_lte = `${maximum ?? new Date().getFullYear()}-12-31`;
+    } else if (maximum !== undefined) {
+        params.release_date_lte = `${maximum}-12-31`;
     }
-
-    // Standard year range handling
-    const startYear = parseInt(browseParams.minYear, 10);
-    // NaN check: Skip invalid years (upstream validation expected, but defensive)
-    if (isNaN(startYear)) return;
-
-    const effectiveMaxYear = browseParams.maxYear
-        ? parseInt(browseParams.maxYear, 10)
-        : new Date().getFullYear();
-
-    // NaN check for maxYear (fallback to current year if invalid)
-    const endYear = isNaN(effectiveMaxYear)
-        ? new Date().getFullYear()
-        : effectiveMaxYear;
-
-    params.release_date_gte = `${startYear}-01-01`;
-    params.release_date_lte = `${endYear}-12-31`;
 }
 
 export function mapBrowseParamsToApi(

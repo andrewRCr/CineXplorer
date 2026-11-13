@@ -61,6 +61,7 @@ describe("pages that need a signed-in user", () => {
     );
     renderAt("/watchlist");
     expect(screen.getByText("Checking your sign-in...")).toBeVisible();
+    expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
     expect(screen.queryByText(/Sign-in page/)).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Watchlist page" }),

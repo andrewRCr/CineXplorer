@@ -374,7 +374,7 @@ page afresh instead (§ 6), which drops the cache with the page, so it needs no 
 
 **Sign-out loads the sign-in page afresh once its request settles.** Its status reads `anonymous` at once, and that is
 the change of user: the step runs then, and the app moves to the sign-in page. Today sign-out ends on the home page
-instead, because `NavBarUserMenu`'s `handleLogout` navigates home after calling `logout`; that navigation goes, so
+instead, because `AccountControl` navigates home after calling `logout`; that navigation goes, so
 `logout` alone decides where sign-out ends. Once the sign-out request (`authService.logout`, or allauth's session DELETE
 for a provider user) has settled, whether it succeeded or failed, sign-out loads `/login?signed_out=true` afresh, and
 the sign-in page, when it finds nobody signed in, shows the "You've been logged out" toast from that parameter, as it
@@ -677,7 +677,7 @@ where ownership changes, preserving their user-visible state, feedback and inval
 - **Tabs share stored tokens but not state.** A sign-out in one tab doesn't reach another tab's state, and a
   remembered sign-in in another tab stores its token where this tab's requests read it, so it reaches this tab's
   requests but not its state or cache. Accepted: the session isn't synced between tabs (Non-Goals).
-- **Only `useAuth` reads the profile.** `NavBarUserMenu` shows `user`; no other page reads or refreshes it, so the
+- **Only `useAuth` reads the profile.** `AccountControl` shows `user`; no other page reads or refreshes it, so the
   session needs no writer beyond D7's.
 
 ## 7. Success Criteria
@@ -716,7 +716,7 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
    `localWatchlistState`; `useAuth` defines no `getUserDetails`; no `useEffect` in `frontend/src` calls `apiClient`,
    `fetch` or a service that reads or changes server data (today `authService`, `httpService`, `movieService`,
    `userMovieDataService` and `userMovieService`), apart from the 60-second renewal in `useAuth.ts`;
-   `NavBarUserMenu.tsx`'s sign-out doesn't navigate; `MovieDetail.test.tsx` has no `vi.mock`; and `MovieCard.tsx` passes
+   `AccountControl.tsx`'s sign-out doesn't navigate; `MovieDetail.test.tsx` has no `vi.mock`; and `MovieCard.tsx` passes
    no `disabled` to its watchlist control. (D3–D8)
 8. **Documents.** The technical overview's Data Fetching section describes the query factory and the save hook, not
    `useApiRequest`; the authentication strategy's Token Refresh Flow and Authentication Hook sections describe the

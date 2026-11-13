@@ -5,12 +5,17 @@
  * sign-in page, which would send a signed-in visitor straight back to itself.
  */
 import { ROUTES } from "@/constants/routes";
+import { matchRoutes } from "react-router-dom";
 
-const SIGN_IN_PATHS = new Set([
+const signInRoutes = [
     ROUTES.LOGIN,
     ROUTES.REGISTER,
     ROUTES.FORGOT_PASSWORD,
-]);
+].map((path) => ({ path }));
+
+function signInRoute(pathname: string): string | undefined {
+    return matchRoutes(signInRoutes, { pathname })?.[0]?.route.path;
+}
 
 /** The value as a path on this site, or null when it is missing, leaves the site or is a sign-in page. */
 export function safeReturnPath(
@@ -29,8 +34,7 @@ export function safeReturnPath(
     // Dot segments can turn "/.//evil.example" into "//evil.example", which a browser reads as
     // another site.
     if (url.pathname.startsWith("//")) return null;
-    const path = url.pathname.replace(/\/+$/, "").toLowerCase() || "/";
-    if (SIGN_IN_PATHS.has(path)) return null;
+    if (signInRoute(url.pathname)) return null;
     return `${url.pathname}${url.search}${url.hash}`;
 }
 
@@ -47,4 +51,13 @@ export function loginPathFor(returnTo: string | null): string {
     return path
         ? `${ROUTES.LOGIN}?next=${encodeURIComponent(path)}`
         : ROUTES.LOGIN;
+}
+
+/** The bar's sign-in link, preserving an accepted return target on sign-in pages. */
+export function signInPathFor(pathname: string, search: string): string {
+    const path = signInRoute(pathname);
+    if (path === ROUTES.LOGIN)
+        return loginPathFor(new URLSearchParams(search).get("next"));
+    if (path) return ROUTES.LOGIN;
+    return loginPathFor(`${pathname}${search}`);
 }

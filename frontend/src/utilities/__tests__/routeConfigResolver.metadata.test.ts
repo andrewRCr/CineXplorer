@@ -267,3 +267,9 @@ describe("routeConfigHelper - pagination metadata support", () => {
         });
     });
 });
+
+it("matches the router’s case-insensitive catalog paths", () => {
+    expect(getFetcherAndSource("/Browse/Now-Playing").source).toBe(
+        "now-playing",
+    );
+});

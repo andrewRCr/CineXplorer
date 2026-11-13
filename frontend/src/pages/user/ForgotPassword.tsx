@@ -54,7 +54,7 @@ const ForgotPassword = () => {
       >
         <AuthFormCard>
           <VStack gap="24px" align="flex-start">
-            <Text fontSize="20px" fontWeight="semibold">
+            <Text as="h1" fontSize="20px" fontWeight="semibold">
               Check your email
             </Text>
             <Text fontSize="16px" color="on-muted">
@@ -80,7 +80,7 @@ const ForgotPassword = () => {
       <AuthFormCard>
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">
-            <Text fontSize="20px" fontWeight="semibold">
+            <Text as="h1" fontSize="20px" fontWeight="semibold">
               Reset your password
             </Text>
             <Text fontSize="16px" color="on-muted">

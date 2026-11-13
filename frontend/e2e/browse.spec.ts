@@ -31,6 +31,18 @@ test("browse loads another page as the user scrolls", async ({
     const movie = initial[0];
     if (!movie) throw new Error("Browse returned no movies");
     await expect(page.getByText(/^\d[\d,]*\+? results$/)).toBeVisible();
+    await expect(
+        page.getByRole("heading", { level: 1, name: "Popular films" }),
+    ).toBeVisible();
+    const windows = page.getByRole("navigation", { name: "Release windows" });
+    await expect(windows.getByRole("link")).toHaveText([
+        "All films",
+        "In theaters",
+        "Coming soon",
+    ]);
+    await expect(
+        windows.getByRole("link", { name: "All films" }),
+    ).toHaveAttribute("aria-current", "page");
     await scanPage(page, info);
     await expect(
         page.getByRole("link", { name: movie.title, exact: true }).first(),

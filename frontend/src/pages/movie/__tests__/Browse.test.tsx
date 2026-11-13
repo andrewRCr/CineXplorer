@@ -7,6 +7,8 @@ import {
   Route,
   Routes,
   type InitialEntry,
+  useLocation,
+  useNavigate,
 } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -15,6 +17,7 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { createMockMovieListItems } from "@tests/mocks/movieData";
@@ -24,6 +27,11 @@ import { apiBaseUrl } from "@/config/baseUrls";
 import type { MovieListResponse } from "@/types/movie";
 import { isRecord } from "@/utilities/typeGuards";
 import Browse from "../Browse";
+import NowPlaying from "../NowPlaying";
+import Upcoming from "../Upcoming";
+import SearchResults from "../SearchResults";
+import { gate } from "@tests/helpers/web-locks";
+import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
 
 const browseUrl = `${apiBaseUrl}/movies/browse`;
 
@@ -169,5 +177,364 @@ describe("Browse", () => {
     act(() => pendingFrames.forEach((callback) => callback(performance.now())));
     await new Promise((resolve) => setTimeout(resolve, 150));
     expect(scrollTargets().slice(scrollsBeforeLeaving)).toEqual([]);
+  });
+});
+
+function CatalogLocation() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  return (
+    <>
+      <output aria-label="Catalog location">
+        {location.pathname}
+        {location.search}
+      </output>
+      <button onClick={() => void navigate(-1)}>Back in history</button>
+    </>
+  );
+}
+function renderCatalog(entry: string) {
+  return render(
+    <StrictMode>
+      <TestProviders system={styleSystem}>
+        <MemoryRouter initialEntries={["/", entry]}>
+          <CatalogLocation />
+          <Routes>
+            <Route path="/" element={<h1>Home</h1>} />
+            <Route
+              path="/browse"
+              element={<MovieCollectionLayout renderPageHeader={false} />}
+            >
+              <Route index element={<Browse />} />
+              <Route path="now-playing" element={<NowPlaying />} />
+              <Route path="upcoming" element={<Upcoming />} />
+            </Route>
+            <Route
+              path="/search"
+              element={<MovieCollectionLayout renderPageHeader={false} />}
+            >
+              <Route index element={<SearchResults />} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </TestProviders>
+    </StrictMode>,
+  );
+}
+
+describe("release-window URL rules", () => {
+  it.each(["/br%6Fwse/upcoming", "/browse/%75pcoming"])(
+    "normalizes the routed window at %s before fetching",
+    async (path) => {
+      const requests: URLSearchParams[] = [];
+      server.use(
+        http.get(`${apiBaseUrl}/movies/upcoming`, ({ request }) => {
+          requests.push(new URL(request.url).searchParams);
+          return HttpResponse.json(browsePage);
+        }),
+        http.get(browseUrl, () => HttpResponse.json(browsePage)),
+      );
+      renderCatalog(`${path}?minYear=1990&sortBy=vote_average.desc&genres=27`);
+      await screen.findByText("20 results");
+      expect(requests.length).toBeGreaterThan(0);
+      expect(requests[0]?.get("sort_by")).toBe("popularity.desc");
+      expect(requests[0]?.has("release_date_gte")).toBe(false);
+      expect(requests[0]?.get("genres")).toBe("27");
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "Most anticipated horror films",
+      );
+      expect(
+        within(
+          screen.getByRole("navigation", { name: "Release windows" }),
+        ).getByRole("link", { name: "Coming soon" }),
+      ).toHaveAttribute("aria-current", "page");
+      await waitFor(() =>
+        expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+          `${path}?genres=27`,
+        ),
+      );
+    },
+  );
+
+  it.each(["now-playing", "upcoming"])(
+    "replaces years on %s before the first request",
+    async (window) => {
+      const requests: URLSearchParams[] = [];
+      server.use(
+        http.get(`${apiBaseUrl}/movies/${window}`, ({ request }) => {
+          requests.push(new URL(request.url).searchParams);
+          return HttpResponse.json(browsePage);
+        }),
+      );
+      const user = userEvent.setup();
+      renderCatalog(`/browse/${window}?minYear=1990&maxYear=1999&genres=27`);
+      await screen.findByText("20 results");
+      await waitFor(() =>
+        expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+          `/browse/${window}?genres=27`,
+        ),
+      );
+      expect(requests[0]?.has("release_date_gte")).toBe(false);
+      expect(requests[0]?.has("release_date_lte")).toBe(false);
+      expect(requests[0]?.get("genres")).toBe("27");
+      await user.click(screen.getByRole("button", { name: "Back in history" }));
+      expect(screen.getByRole("heading", { name: "Home" })).toBeVisible();
+    },
+  );
+
+  it.each(["", "&minYear=1990&maxYear=1999"])(
+    "replaces Coming soon's rating sort and any years (%s)",
+    async (years) => {
+      const requests: URLSearchParams[] = [];
+      server.use(
+        http.get(`${apiBaseUrl}/movies/upcoming`, ({ request }) => {
+          requests.push(new URL(request.url).searchParams);
+          return HttpResponse.json(browsePage);
+        }),
+      );
+      const user = userEvent.setup();
+      renderCatalog(`/browse/upcoming?sortBy=vote_average.desc${years}`);
+      await screen.findByText("20 results");
+      await waitFor(() =>
+        expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+          /^\/browse\/upcoming\??$/,
+        ),
+      );
+      expect(requests[0]?.get("sort_by")).toBe("popularity.desc");
+      expect(requests[0]?.has("release_date_gte")).toBe(false);
+      expect(requests[0]?.has("release_date_lte")).toBe(false);
+      await user.click(screen.getByRole("button", { name: "Back in history" }));
+      expect(screen.getByRole("heading", { name: "Home" })).toBeVisible();
+    },
+  );
+
+  it("keeps the years on All films", async () => {
+    let query: URLSearchParams | undefined;
+    server.use(
+      http.get(browseUrl, ({ request }) => {
+        query = new URL(request.url).searchParams;
+        return HttpResponse.json(browsePage);
+      }),
+    );
+    renderCatalog("/browse?minYear=1990");
+    await screen.findByText("20 results");
+    expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+      "/browse?minYear=1990",
+    );
+    expect(query?.get("release_date_gte")).toBe("1990-01-01");
+  });
+});
+
+describe("catalog headers and release tabs", () => {
+  it.each(["browse", "now-playing", "upcoming"])(
+    "links the windows with the current query on %s",
+    async (window) => {
+      server.use(
+        http.get(`${apiBaseUrl}/movies/${window}`, () =>
+          HttpResponse.json(browsePage),
+        ),
+      );
+      const path = window === "browse" ? "/browse" : `/browse/${window}`;
+      renderCatalog(`${path}?genres=27`);
+      await screen.findByText("20 results");
+      const nav = screen.getByRole("navigation", { name: "Release windows" });
+      const links = within(nav).getAllByRole("link");
+      expect(links.map((link) => link.textContent)).toEqual([
+        "All films",
+        "In theaters",
+        "Coming soon",
+      ]);
+      expect(links.map((link) => link.getAttribute("href"))).toEqual([
+        "/browse?genres=27",
+        "/browse/now-playing?genres=27",
+        "/browse/upcoming?genres=27",
+      ]);
+      for (const link of links) {
+        if (link.getAttribute("href") === `${path}?genres=27`)
+          expect(link).toHaveAttribute("aria-current", "page");
+        else expect(link).not.toHaveAttribute("aria-current");
+      }
+    },
+  );
+
+  it("carries applicable filters into the chosen window", async () => {
+    server.use(
+      http.get(browseUrl, () => HttpResponse.json(browsePage)),
+      http.get(`${apiBaseUrl}/movies/now-playing`, () =>
+        HttpResponse.json(browsePage),
+      ),
+    );
+    const user = userEvent.setup();
+    renderCatalog(
+      "/browse?genres=27&minRating=7&maxRating=9&certifications=R&language=fr&sortBy=vote_average.desc&minYear=1990",
+    );
+    await screen.findByText("20 results");
+    await user.click(screen.getByRole("link", { name: "In theaters" }));
+    await waitFor(() => {
+      const query = new URL(
+        screen.getByLabelText("Catalog location").textContent || "",
+        "https://example.test",
+      ).searchParams;
+      expect(query.has("minYear")).toBe(false);
+      expect(Object.fromEntries(query)).toEqual({
+        genres: "27",
+        minRating: "7",
+        maxRating: "9",
+        certifications: "R",
+        language: "fr",
+        sortBy: "vote_average.desc",
+      });
+    });
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Highest-rated French-language horror films in theaters",
+    );
+  });
+
+  it("normalizes Coming soon on a tab switch and returns to the original selection", async () => {
+    const requests: URLSearchParams[] = [];
+    server.use(
+      http.get(browseUrl, () => HttpResponse.json(browsePage)),
+      http.get(`${apiBaseUrl}/movies/upcoming`, ({ request }) => {
+        requests.push(new URL(request.url).searchParams);
+        return HttpResponse.json(browsePage);
+      }),
+    );
+    const original =
+      "/browse?genres=27&minRating=7&maxRating=9&certifications=R&language=fr&sortBy=vote_average.desc&minYear=1990&maxYear=1999";
+    const user = userEvent.setup();
+    renderCatalog(original);
+    await screen.findByText("20 results");
+    await user.click(screen.getByRole("link", { name: "Coming soon" }));
+    await waitFor(() => expect(requests.length).toBeGreaterThan(0));
+    expect(requests[0]?.get("sort_by")).toBe("popularity.desc");
+    expect(requests[0]?.has("release_date_gte")).toBe(false);
+    expect(requests[0]?.has("release_date_lte")).toBe(false);
+    expect(requests[0]?.get("genres")).toBe("27");
+    expect(requests[0]?.get("language")).toBe("fr");
+    expect(requests[0]?.get("vote_average_gte")).toBe("7");
+    expect(requests[0]?.get("vote_average_lte")).toBe("9");
+    expect(requests[0]?.get("certification")).toBe("R");
+    const targetQuery = new URL(
+      screen.getByLabelText("Catalog location").textContent || "",
+      "https://example.test",
+    ).searchParams;
+    expect(Object.fromEntries(targetQuery)).toEqual({
+      genres: "27",
+      minRating: "7",
+      maxRating: "9",
+      certifications: "R",
+      language: "fr",
+    });
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Most anticipated French-language horror films",
+    );
+    await user.click(screen.getByRole("button", { name: "Back in history" }));
+    expect(screen.getByLabelText("Catalog location")).toHaveTextContent(
+      original,
+    );
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Highest-rated French-language horror films, 1990s",
+    );
+  });
+
+  it.each(["loading", "loaded", "empty", "failed"])(
+    "keeps the catalog title and tabs while %s",
+    async (state) => {
+      const held = gate();
+      server.use(
+        http.get(browseUrl, async () => {
+          if (state === "loading") await held.wait;
+          return state === "failed"
+            ? HttpResponse.json({ detail: "Unavailable" }, { status: 503 })
+            : HttpResponse.json(
+                state === "empty"
+                  ? {
+                      ...browsePage,
+                      results: [],
+                      total_results: 0,
+                      total_pages: 0,
+                    }
+                  : browsePage,
+              );
+        }),
+      );
+      renderCatalog("/browse");
+      if (state === "empty")
+        await screen.findByText("No movies found matching your filters.");
+      if (state === "failed")
+        await screen.findByRole("button", { name: "Retry" });
+      if (state === "loaded") await screen.findByText("20 results");
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Popular films" }),
+      ).toBeVisible();
+      expect(
+        screen.getByRole("navigation", { name: "Release windows" }),
+      ).toBeVisible();
+      if (state === "loading") {
+        expect(screen.getByText("Loading results...")).toBeVisible();
+        held.release();
+        await screen.findByText("20 results");
+      }
+      if (state === "loaded")
+        expect(screen.getByText("20 results")).toBeVisible();
+      if (state === "empty" || state === "failed")
+        expect(
+          screen.queryByText(/^(Loading results\.\.\.|20 results)$/),
+        ).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(["empty", "failed"])(
+    "keeps search's title without tabs while %s",
+    async (state) => {
+      server.use(
+        http.get(`${apiBaseUrl}/movies/search`, () =>
+          state === "failed"
+            ? HttpResponse.json({ detail: "Unavailable" }, { status: 503 })
+            : HttpResponse.json({
+                ...browsePage,
+                results: [],
+                total_results: 0,
+                total_pages: 0,
+              }),
+        ),
+      );
+      renderCatalog("/search?query=Alien");
+      if (state === "empty")
+        await screen.findByText("No movies found matching your filters.");
+      else await screen.findByRole("button", { name: "Retry" });
+      expect(
+        screen.getByRole("heading", {
+          level: 1,
+          name: 'Search Results for "Alien"',
+        }),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("navigation", { name: "Release windows" }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it("uses theme roles for the tabs and their keyboard rings", async () => {
+    server.use(http.get(browseUrl, () => HttpResponse.json(browsePage)));
+    const user = userEvent.setup();
+    renderCatalog("/browse");
+    await screen.findByText("20 results");
+    const links = within(
+      screen.getByRole("navigation", { name: "Release windows" }),
+    ).getAllByRole("link");
+    const current = screen.getByRole("link", { name: "All films" });
+    expectResolvedColor(
+      current,
+      "text-decoration-color",
+      "var(--chakra-colors-tertiary)",
+    );
+    await user.tab();
+    for (const link of links) {
+      await user.tab();
+      expect(link).toHaveFocus();
+      expectResolvedColor(link, "color", "var(--chakra-colors-foreground)");
+      expectResolvedColor(link, "outline-color", "var(--chakra-colors-ring)");
+    }
   });
 });

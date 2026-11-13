@@ -3,6 +3,9 @@ import { expect, type Page, type TestInfo } from "@playwright/test";
 import { axeBaseline, baselineKey } from "./axe-baseline";
 
 export async function scanPage(page: Page, info: TestInfo): Promise<void> {
+    await expect(
+        page.getByRole("heading", { level: 1, includeHidden: true }),
+    ).toHaveCount(1);
     const path = new URL(page.url()).pathname;
     const route = /^\/movie\/\d+$/.test(path) ? "/movie/:id" : path;
     const { violations } = await new AxeBuilder({ page })

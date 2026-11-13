@@ -112,7 +112,7 @@ const MovieDetail = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <Heading as="h2" size="xl" mb={4}>
+          <Heading as="h1" size="xl" mb={4}>
             Error Loading Movie
           </Heading>
           <Text color="on-muted">
@@ -135,7 +135,7 @@ const MovieDetail = () => {
           alignItems="center"
           justifyContent="center"
         >
-          <Heading as="h2" size="xl" mb={4}>
+          <Heading as="h1" size="xl" mb={4}>
             Movie Not Found
           </Heading>
           <Text color="on-muted">
@@ -166,7 +166,9 @@ const MovieDetail = () => {
         </Box>
         <Stack gap={2} flex={1}>
           {/* Header: Movie Title */}
-          <Heading size="lg">{movie.title}</Heading>
+          <Heading as="h1" size="lg">
+            {movie.title}
+          </Heading>
           {/* Header: Release Date */}
           <Text fontSize="md" color="on-muted">
             {formattedReleaseDate}

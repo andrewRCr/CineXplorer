@@ -513,6 +513,22 @@ its request settles; on the browsable stack, signing out and in again shows no p
       The approved independent repair check and commit/push/CI recovery follow; production behavior and global
       timeout settings are unchanged.
 
+- [x] **6.9 Integrate shared navigation with query-backed user state**
+
+    **Goal:** The shared account control and page headings coexist with query-backed reads and logout-owned
+    navigation, preserving both the navigation shell and server-state behavior.
+
+    - AccountControl retains the shared menu and delegates navigation to logout; its migrated regression observes
+      both the Login route and terminal reload. Watchlist retains its authenticated Library query under the shared
+      heading; Login retains notice and heading coverage, and browser selectors use the shared navigation.
+    - The sign-out regression failed on the extra Home navigation before its removal. The first coverage run exposed
+      heading fixtures mounted at the wrong route; mounting them at /login fixes the provider-return setup without
+      a production change. Retired component locators now identify AccountControl; required behaviors are unchanged.
+    - Full coverage passes all 3,006 tests in 93 files with no unhandled errors; all 17 Chromium scenarios across
+      seven specs pass. Frontend lint, type-check, formatting and affected Markdown/whitespace checks pass.
+      The approved independent integration check and commit/push/CI observation follow separately; merge to main
+      remains a separate decision.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation
@@ -636,7 +652,7 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   `localWatchlistState`; `useAuth` defines no `getUserDetails`; no `useEffect` in `frontend/src` calls `apiClient`,
   `fetch` or a service that reads or changes server data (today `authService`, `httpService`, `movieService`,
   `userMovieDataService` and `userMovieService`), apart from the 60-second renewal in `useAuth.ts`;
-  `NavBarUserMenu.tsx`'s sign-out doesn't navigate; `MovieDetail.test.tsx` has no `vi.mock`; and `MovieCard.tsx` passes
+  `AccountControl.tsx`'s sign-out doesn't navigate; `MovieDetail.test.tsx` has no `vi.mock`; and `MovieCard.tsx` passes
   no `disabled` to its watchlist control. (D3–D8)
 
   _Evidence:_ Fresh searches found none of the removed paths or forbidden getUserDetails/vi.mock uses. An AST-assisted

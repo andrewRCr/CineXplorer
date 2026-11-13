@@ -1,3 +1,4 @@
+import type { RouteConfig } from "@/utilities/routeConfigResolver";
 import { useMemo } from "react";
 import { useOutletContext } from "react-router-dom";
 import type { MovieListResponse } from "@/types/movie";
@@ -17,7 +18,7 @@ interface MovieCollectionContext {
     fetcher: MovieFetcher;
     source?: string;
     query?: string;
-    title?: string;
+    title?: RouteConfig["title"];
     renderPageHeader?: boolean;
     enhancedFetcher: MovieFetcher;
     browseParams?: BrowseParams;
@@ -28,7 +29,7 @@ interface MovieGridProps {
     fetcher?: MovieFetcher;
     source?: string;
     query?: string;
-    title?: string;
+    title?: RouteConfig["title"];
     renderPageHeader?: boolean;
     enhancedFetcher?: MovieFetcher;
     browseParams?: BrowseParams;
@@ -38,7 +39,7 @@ interface ResolvedContext {
     fetcher: MovieFetcher | undefined;
     source: string | undefined;
     query: string | undefined;
-    title: string | undefined;
+    title: RouteConfig["title"] | undefined;
     renderPageHeader: boolean;
     enhancedFetcher: MovieFetcher | undefined;
     finalFetcher: MovieFetcher | undefined;

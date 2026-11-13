@@ -30,6 +30,7 @@ const resultTextStyles = {
 } as const;
 
 export interface GridHeaderProps {
+  children?: ReactNode;
   /** Optional page title to display on the left */
   title?: string;
   /** Results count text to display (e.g., "Showing 40 of 500 results") */
@@ -38,7 +39,7 @@ export interface GridHeaderProps {
   paginationControls?: ReactNode;
   /** Whether data is currently loading (dims the text) */
   isLoading?: boolean;
-  /** Whether to show the header (false hides but preserves space) */
+  /** Whether result count and pagination are visible; the title stays present. */
   visible?: boolean;
 }
 
@@ -67,6 +68,7 @@ export interface GridHeaderProps {
  */
 export function GridHeader({
   title,
+  children,
   resultText,
   paginationControls,
   isLoading = false,
@@ -94,9 +96,6 @@ export function GridHeader({
       paddingBottom={4}
       borderBottom="1px solid"
       borderBottomColor="border-subtle-00"
-      opacity={visible ? 1 : 0}
-      pointerEvents={visible ? "auto" : "none"}
-      transition="opacity 0.2s ease"
     >
       {/* Left side: Title (when present) or Results (when controls present) */}
       {hasTitle ? (
@@ -116,7 +115,8 @@ export function GridHeader({
         <Text
           {...resultTextStyles}
           minWidth="150px"
-          opacity={isLoading ? 0.6 : 1}
+          opacity={visible ? (isLoading ? 0.6 : 1) : 0}
+          pointerEvents={visible ? "auto" : "none"}
           transition="opacity 0.2s ease"
         >
           {resultText}
@@ -127,13 +127,20 @@ export function GridHeader({
       {hasTitle ? (
         <Text
           {...resultTextStyles}
-          opacity={isLoading ? 0.6 : 1}
+          opacity={visible ? (isLoading ? 0.6 : 1) : 0}
+          pointerEvents={visible ? "auto" : "none"}
           transition="opacity 0.2s ease"
         >
           {resultText}
         </Text>
       ) : hasControls ? (
-        <Box minWidth="200px" display="flex" justifyContent="flex-end">
+        <Box
+          minWidth="200px"
+          display="flex"
+          justifyContent="flex-end"
+          opacity={visible ? 1 : 0}
+          pointerEvents={visible ? "auto" : "none"}
+        >
           {paginationControls}
         </Box>
       ) : (
@@ -141,12 +148,14 @@ export function GridHeader({
           {...resultTextStyles}
           minWidth="150px"
           textAlign="right"
-          opacity={isLoading ? 0.6 : 1}
+          opacity={visible ? (isLoading ? 0.6 : 1) : 0}
+          pointerEvents={visible ? "auto" : "none"}
           transition="opacity 0.2s ease"
         >
           {resultText}
         </Text>
       )}
+      {children}
     </Box>
   );
 }

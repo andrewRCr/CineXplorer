@@ -3,7 +3,7 @@
 **Purpose:** The order of the work remaining before launch, and what is in and out of launch scope. Subject to change
 as we learn.
 
-**Last Updated:** 2026-11-12
+**Last Updated:** 2026-11-13
 
 ---
 
@@ -108,8 +108,10 @@ later work unit keeps them green.
 
 **Data track:**
 
-- **User-movie data:** one consolidated layer for watchlist, watched, liked, rating and review, with the frontend's
-  server state on TanStack Query. Every user feature builds on it.
+- **User-movie data** ✅ (2026-11-12): one consolidated layer for watchlist, watched, liked, rating and review, with
+  the frontend's server state on TanStack Query. Every user feature builds on it.
+  Archives: `reference/archive/2026-q4/technical/11_user-movie-data/` and
+  `reference/archive/2026-q4/technical/13_frontend-server-state/`
 
 ### 3. After Those
 

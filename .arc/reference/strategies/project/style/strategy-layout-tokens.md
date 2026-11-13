@@ -43,9 +43,6 @@ Base values for layout dimensions. Non-responsive, single source of truth.
 ```typescript
 export const layoutFoundations = {
   sizes: {
-    "navbar-height-mobile": { value: "64px" },   // Single row
-    "navbar-height-desktop": { value: "93px" },  // Two rows + border
-    "sidebar-width": { value: "280px" },         // Desktop sidebar
     "footer-height": { value: "64px" },          // Approximate
   },
 };
@@ -55,23 +52,13 @@ export const layoutFoundations = {
 
 ### Layer 2: Semantic Tokens (`semantic-tokens.ts`)
 
-Responsive tokens that adapt to breakpoints. Use foundation token references.
+Semantic dimensions identify a structural role. The one-row bar is 65px, including its border, at every
+breakpoint; the footer references its approximate foundation height.
 
 ```typescript
 export const layoutSemanticTokens = {
   sizes: {
-    "layout-navbar": {
-      value: {
-        base: "{sizes.navbar-height-mobile}",   // 64px on mobile
-        lg: "{sizes.navbar-height-desktop}",    // 93px on desktop
-      },
-    },
-    "layout-sidebar": {
-      value: {
-        base: "0px",                             // Hidden on mobile
-        lg: "{sizes.sidebar-width}",             // 280px on desktop
-      },
-    },
+    "layout-navbar": { value: "65px" },
     "layout-footer": {
       value: "{sizes.footer-height}",            // Same all breakpoints
     },
@@ -79,7 +66,7 @@ export const layoutSemanticTokens = {
 };
 ```
 
-**Purpose:** Provide responsive values that reference foundations.
+**Purpose:** Share structural dimensions across components, using foundation references where appropriate.
 
 ### Layer 3: Z-Index Scale (`z-index.ts`)
 
@@ -87,11 +74,12 @@ Semantic stacking hierarchy prevents z-index conflicts.
 
 ```typescript
 export const zIndexScale = {
-  base: 0,       // Default stacking context
-  sidebar: 5,    // Sidebar drawer, debug pages
-  footer: 8,     // Footer (above sidebar)
-  navbar: 10,    // Navbar (above footer)
-  dropdown: 50,  // Dropdowns, tooltips (above all layout)
+  base: 1,             // Content
+  "theme-debug": 5,
+  "layout-debug": 5,
+  footer: 6,
+  navbar: 10,
+  dropdown: 9999,
 };
 ```
 
@@ -112,8 +100,8 @@ export const zIndexScale = {
 
 ```
 Need a dimension value?
-├─ Is it for major layout structure? (navbar, sidebar, footer)
-│  └─ ✅ Use layout token: height="layout.navbar"
+├─ Is it for major layout structure? (navbar, content, footer)
+│  └─ ✅ Use layout token: height="layout-navbar"
 │
 ├─ Is it for component spacing/padding?
 │  └─ ❌ Use Chakra spacing scale: p={4}, gap={6}
@@ -130,19 +118,17 @@ Need a dimension value?
 ✅ **Major structural elements:**
 
 - NavBar height
-- Sidebar width
 - Footer height
 - Sticky header offsets
 
 ✅ **Values that must be consistent across components:**
 
 - Multiple components reference navbar height for sticky positioning
-- Sidebar width used in both AppLayout and visual diagrams
+- The bar and sticky controls use the same navbar height
 
-✅ **Values that are responsive:**
-
-- NavBar height differs on mobile (64px) vs desktop (93px)
-- Sidebar width is 0px mobile, 280px desktop
+The bar uses one `layout-navbar` value (65px). Below `lg` (1024px), its phone row holds a menu drawer and a search
+button; at `lg` and wider, the wide row shows the main links and search field directly. The content uses the full
+container width at every breakpoint.
 
 ### Chakra Spacing Scale (Use When...)
 
@@ -174,14 +160,13 @@ There are three ways to access layout tokens. Choose based on context:
 
 ```tsx
 // Layout dimensions
-<Box height="layout.navbar" />
-<Box width="layout.sidebar" />
+<Box height="layout-navbar" />
 
 // Z-index
 <Box zIndex="navbar" />
 
-// Responsive values (object syntax)
-<Box height={{ base: "64px", lg: "layout.navbar" }} />
+// The bar has one height at every width
+<Box height="layout-navbar" />
 ```
 
 **Pros:** Type-safe, intellisense support, cleaner syntax
@@ -215,18 +200,10 @@ There are three ways to access layout tokens. Choose based on context:
 ```tsx
 import { useToken } from "@chakra-ui/react";
 
-const [navbarHeight, sidebarWidth] = useToken("sizes", [
-  "layout-navbar",
-  "layout-sidebar",
+const [navbarHeight, footerHeight] = useToken("sizes", [
+  "layout-navbar", "layout-footer",
 ]);
-
-// Use in calculations
-const contentHeight = `calc(100vh - ${navbarHeight})`;
-
-// Use in conditional logic
-if (sidebarWidth === "0px") {
-  // Mobile layout
-}
+const contentHeight = `calc(100vh - ${navbarHeight} - ${footerHeight})`;
 ```
 
 **Pros:** Get actual computed values, useful for calculations
@@ -268,17 +245,11 @@ return isMobile ? <MobileView /> : <DesktopView />;
 </Box>
 ```
 
-**Real example from AppLayout:**
+**Real example from NavBar:**
 
 ```tsx
-// Static Sidebar - Desktop only (hidden on mobile via CSS)
-<Box
-  width="layout-sidebar"
-  flexShrink={0}
-  mr={6}
-  display={{ base: 'none', lg: 'block' }}
->
-  <Sidebar />
+<Box display={{ base: "none", lg: "block" }} h="100%">
+  <WideNavBar />
 </Box>
 ```
 
@@ -315,19 +286,9 @@ return isMobile ? <MobileView /> : <DesktopView />;
 **Real example from NavBar:**
 
 ```tsx
-// Mobile layout: hamburger - logo - user controls
-<HStack display={{ base: 'flex', lg: 'none' }}>
-  <MobileMenuButton />
-  <LogoAndTitle />
-  <NavBarUserMenu />
-</HStack>
-
-// Desktop layout: logo - search - user controls
-<HStack display={{ base: 'none', lg: 'flex' }}>
-  <LogoAndTitle />
-  <NavBarSearch />
-  <NavBarUserMenu />
-</HStack>
+// Both rows share one breakpoint and the same bar height.
+<Box display={{ base: "block", lg: "none" }} h="100%"><PhoneNavBar /></Box>
+<Box display={{ base: "none", lg: "block" }} h="100%"><WideNavBar /></Box>
 ```
 
 ### Pattern 3: Responsive Props
@@ -345,26 +306,8 @@ return isMobile ? <MobileView /> : <DesktopView />;
 
 ### When useBreakpointValue IS Acceptable
 
-Only use for **behavioral logic**, not visibility:
-
-```tsx
-// ✅ Acceptable: controls interaction behavior
-const isMobile = useBreakpointValue(
-  { base: true, lg: false },
-  { ssr: false }
-) ?? true;
-
-// Different click handlers based on breakpoint
-const handleClick = () => {
-  if (isMobile) {
-    closeSidebarDrawer();  // Mobile: drawer closes after click
-  }
-  // Desktop: sidebar stays open
-  navigate(path);
-};
-```
-
-**See also:** Inline comments in `useSidebar.ts`, `NavBarUserMenu.tsx`, `SidebarContent.tsx` reference ADR-007 for rationale.
+Use it for interaction behavior that depends on a breakpoint, rather than for visibility. The bar's two row wrappers
+use CSS; its drawer and inline search use explicit open/closed state.
 
 ---
 
@@ -375,11 +318,12 @@ const handleClick = () => {
 ```
 Stacking Order (lowest to highest):
 ────────────────────────────────────
-base (0)         ← Page content, cards, default elements
-sidebar (5)      ← Sidebar drawer, debug pages (ThemeDebug, LayoutDebug)
-footer (8)       ← Footer (above sidebar)
-navbar (10)      ← NavBar (above footer, always visible)
-dropdown (50)    ← Dropdowns, tooltips, modals (above everything)
+base (1)          ← Content and cards
+theme-debug (5)   ← Theme debug tools
+layout-debug (5)  ← Layout debug tools
+footer (6)        ← Footer
+navbar (10)       ← Top bar
+dropdown (9999)   ← Overlays above the structural layout
 ```
 
 ### Usage Examples
@@ -387,11 +331,6 @@ dropdown (50)    ← Dropdowns, tooltips, modals (above everything)
 ```tsx
 // NavBar - should be above footer
 <Box zIndex="navbar">...</Box>
-
-// Sidebar drawer - below navbar but above content
-<Drawer.Root>
-  <Drawer.Content zIndex="sidebar">...</Drawer.Content>
-</Drawer.Root>
 
 // Dropdown menu - above all layout
 <Menu.Content zIndex="dropdown">...</Menu.Content>
@@ -401,7 +340,7 @@ dropdown (50)    ← Dropdowns, tooltips, modals (above everything)
 
 **Structural layers (cross-component stacking):**
 
-- **MUST use semantic tokens:** navbar, sidebar, footer, dropdown
+- **MUST use semantic tokens:** navbar, footer, dropdown
 - Affects multiple components, creates stacking order for app layout
 - Values typically 10+
 - Examples: NavBar above Footer, Modal above content, Tooltip above everything
@@ -447,35 +386,35 @@ dropdown (50)    ← Dropdowns, tooltips, modals (above everything)
 **Before:**
 
 ```tsx
-<Box height="93px" />  // ❌ Magic number
+<Box height="65px" />  // ❌ Magic number
 ```
 
 **After:**
 
 ```tsx
-<Box height="layout.navbar" />  // ✅ Semantic token
+<Box height="layout-navbar" />  // ✅ Semantic token
 ```
 
-**Why:** Single source of truth, responsive (64px mobile, 93px desktop), semantic meaning.
+**Why:** One source of truth for the bar and every control offset below it.
 
 ### Example 2: Conditional Rendering → CSS Display Props
 
 **Before (causes flash):**
 
 ```tsx
-const showStaticSidebar = useBreakpointValue(
+const showWideRow = useBreakpointValue(
   { base: false, lg: true },
   { ssr: false }
 ) ?? false;
 
-return showStaticSidebar && <Sidebar />;  // ❌ JavaScript conditional
+return showWideRow && <WideNavBar />;  // ❌ JavaScript conditional
 ```
 
 **After (flash-free):**
 
 ```tsx
 <Box display={{ base: 'none', lg: 'block' }}>
-  <Sidebar />  // ✅ CSS controls visibility
+  <WideNavBar />  // ✅ CSS controls visibility
 </Box>
 ```
 
@@ -488,7 +427,7 @@ return showStaticSidebar && <Sidebar />;  // ❌ JavaScript conditional
 ```tsx
 <Box
   position="sticky"
-  top="93px"  // ❌ Hardcoded, breaks on mobile
+  top="65px"  // ❌ Duplicates the bar height
 />
 ```
 
@@ -502,7 +441,7 @@ return showStaticSidebar && <Sidebar />;  // ❌ JavaScript conditional
 />
 ```
 
-**Why:** Responsive offset (64px mobile, 93px desktop), no layout jump.
+**Why:** The offset follows the bar token without duplicating its dimension.
 
 ### Example 4: Unnecessary Hook → Direct Value
 
@@ -527,25 +466,24 @@ return <Box width={cardWidth} />;
 
 ### Accessing the Page
 
-Navigate to `/layout-debug` (dev mode only - link in Footer).
+Navigate to `/dev/layout-debug` (dev mode only - link in Footer).
 
 ### What It Shows
 
 **1. Layout Foundation Tokens**
 
 - Live computed values (updates on resize)
-- Shows current breakpoint values (navbar: 64px mobile, 93px desktop)
+- Shows the 65px bar height at every breakpoint and the footer height
 
 **2. Z-Index Hierarchy**
 
-- All 5 levels with numeric values
+- Structural and debug tokens with their numeric values
 - Visual stacking order
 
 **3. Layout Structure**
 
-- Visual diagram of navbar/sidebar/content/footer
-- Proportional widths (sidebar actually 280px wide)
-- Demonstrates responsive behavior
+- Visual diagram of the top bar, content and footer
+- Demonstrates the full-width content area
 
 **4. Sticky Positioning Test**
 
@@ -570,7 +508,7 @@ Navigate to `/layout-debug` (dev mode only - link in Footer).
 
 **After layout changes:**
 
-1. Navigate to `/layout-debug`
+1. Navigate to `/dev/layout-debug`
 2. Check "Layout Foundation Tokens" shows expected values
 3. Verify "Layout Structure" diagram looks correct
 4. Resize browser window to test responsive behavior
@@ -593,7 +531,6 @@ Navigate to `/layout-debug` (dev mode only - link in Footer).
 Pattern: layout-{element}
 Examples:
   layout-navbar
-  layout-sidebar
   layout-footer
 ```
 
@@ -601,7 +538,7 @@ Examples:
 
 ```tsx
 // Chakra props (most common)
-height="layout.navbar"
+height="layout-navbar"
 
 // CSS variable (calculations)
 top="var(--chakra-sizes-layout-navbar)"
@@ -631,18 +568,17 @@ getComputedStyle(document.documentElement)
 ### Z-Index Quick Pick
 
 ```tsx
-zIndex="base"      // 0 - Default
-zIndex="sidebar"   // 5 - Drawers, debug pages
-zIndex="footer"    // 8 - Footer
+zIndex="base"      // 1 - Content
+zIndex="footer"    // 6 - Footer
 zIndex="navbar"    // 10 - NavBar
-zIndex="dropdown"  // 50 - Menus, tooltips, modals
+zIndex="dropdown"  // 9999 - Menus, tooltips, modals
 ```
 
 ### When to Use What
 
 | Scenario                | Solution                                                |
 |-------------------------|---------------------------------------------------------|
-| Major layout dimension  | Layout token: `height="layout.navbar"`                  |
+| Major layout dimension  | Layout token: `height="layout-navbar"`                  |
 | Component spacing       | Chakra scale: `p={4}`                                   |
 | Show/hide by breakpoint | CSS display: `display={{ base: 'none', lg: 'block' }}`  |
 | Sticky offset           | CSS variable: `top="var(--chakra-sizes-layout-navbar)"` |
@@ -665,8 +601,8 @@ zIndex="dropdown"  // 50 - Menus, tooltips, modals
 **For implementation:**
 
 - `frontend/src/theme/layout/foundations.ts` - Foundation token definitions
-- `frontend/src/theme/layout/semanticTokens.ts` - Responsive semantic tokens
-- `/layout-debug` page - Visual validation of all layout tokens and breakpoints
+- `frontend/src/theme/layout/semantic-tokens.ts` - Responsive semantic tokens
+- `/dev/layout-debug` page - Visual validation of all layout tokens and breakpoints
 
 ---
 

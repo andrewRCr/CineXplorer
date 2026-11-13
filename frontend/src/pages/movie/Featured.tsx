@@ -39,7 +39,7 @@ const Featured = () => {
 
         <Card.Root bg="layer-01" p={8} width="100%" maxW="500px">
           <Heading as="h2" size="xl" mb={6}>
-            Browse Movies
+            Films
           </Heading>
 
           <VStack gap={4}>
@@ -49,7 +49,7 @@ const Featured = () => {
               size="lg"
               width="100%"
             >
-              Browse Movies
+              All films
             </Button>
 
             <Button
@@ -58,7 +58,7 @@ const Featured = () => {
               size="lg"
               width="100%"
             >
-              Now Playing in Theaters
+              In theaters
             </Button>
 
             <Button
@@ -67,7 +67,7 @@ const Featured = () => {
               size="lg"
               width="100%"
             >
-              Upcoming Releases
+              Coming soon
             </Button>
           </VStack>
         </Card.Root>

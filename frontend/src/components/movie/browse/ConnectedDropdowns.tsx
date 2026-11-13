@@ -354,6 +354,8 @@ const ConnectedDropdowns = ({
       {onToggleAdvanced && (
         <Button
           onClick={onToggleAdvanced}
+          aria-label="Advanced filters"
+          aria-expanded={isAdvancedOpen}
           size="sm"
           variant="outline"
           borderRadius="0 4px 4px 0"
@@ -366,10 +368,6 @@ const ConnectedDropdowns = ({
           }
           _hover={{
             bg: "tertiary/8",
-          }}
-          _focusVisible={{
-            borderColor: "tertiary",
-            outline: "none",
           }}
           minW="auto"
           px={3}

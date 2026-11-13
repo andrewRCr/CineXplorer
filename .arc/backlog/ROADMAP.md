@@ -3,7 +3,7 @@
 **Purpose:** The order of the work remaining before launch, and what is in and out of launch scope. Subject to change
 as we learn.
 
-**Last Updated:** 2026-11-11
+**Last Updated:** 2026-11-12
 
 ---
 
@@ -101,8 +101,9 @@ later work unit keeps them green.
 1. **Palette** ✅ (2026-11-11): Marquee, CineXplorer's own default palette (antique brass on warm black, a deep-cream
    light mode), with movie scores shown as a colored dot beside a neutral number. The four existing palettes remain.
    Archive: `reference/archive/2026-q4/technical/10_palette/`
-2. **Navigation shell:** one auth-aware navigation with no dead links or development routes, and an error boundary
-   inside the layout
+2. **Navigation shell** ✅ (2026-11-12): one responsive top bar and one Films catalog with All films, In theaters and
+   Coming soon release windows; pages keep their navigation and footer while loading or showing an error.
+   Archive: `reference/archive/2026-q4/technical/12_navigation-shell/`
 3. **Landing page,** then the **privacy and terms pages**
 
 **Data track:**

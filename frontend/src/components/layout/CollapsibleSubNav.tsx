@@ -104,7 +104,7 @@ export function CollapsibleSubNav({
       ref={containerRef}
       as="nav"
       data-testid={SUB_NAV_TEST_ID}
-      aria-label="Browse filters"
+      aria-label="Film filters"
       aria-hidden={isCollapsed}
       // Positioning: fixed below navbar, full width
       position="fixed"

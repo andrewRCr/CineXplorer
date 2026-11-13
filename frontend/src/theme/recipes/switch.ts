@@ -67,7 +67,8 @@ export const switchRecipe = defineSlotRecipe({
                         bg: "primary",
                     },
                     _focusVisible: {
-                        outline: "2px solid",
+                        outlineWidth: "2px",
+                        outlineStyle: "solid",
                         outlineColor: "ring",
                         outlineOffset: "2px",
                     },
@@ -89,7 +90,8 @@ export const switchRecipe = defineSlotRecipe({
                         bg: "primary",
                     },
                     _focusVisible: {
-                        outline: "2px solid",
+                        outlineWidth: "2px",
+                        outlineStyle: "solid",
                         outlineColor: "ring",
                         outlineOffset: "2px",
                     },

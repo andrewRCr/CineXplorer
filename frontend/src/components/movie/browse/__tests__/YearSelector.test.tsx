@@ -39,6 +39,19 @@ describe("YearSelector Component", () => {
   });
 
   describe("Basic Rendering", () => {
+    it.each([
+      ["now-playing", "In theaters"],
+      ["upcoming", "Coming soon"],
+    ])("names the disabled %s window", (pageSource, label) => {
+      render(<YearSelector {...defaultProps} pageSource={pageSource} />);
+      expect(screen.getByText("Release Year")).toHaveTextContent(
+        `Release Year(${label})`,
+      );
+      for (const input of screen.getAllByRole("spinbutton")) {
+        expect(input).toBeDisabled();
+      }
+    });
+
     it("renders year selector with title", () => {
       render(<YearSelector {...defaultProps} />);
 

@@ -141,7 +141,8 @@ They take seconds. Skipping them lets type errors and lint violations accumulate
 Not naming the broader checks that have not run. The report says what ran and what did not.
 
 **❌ The full E2E suite for one component:**
-Run the files that drive the change against the worktree's browsable stack; CI and verification run all five specs.
+Run the files that drive the change against the worktree's browsable stack; CI and verification run all seven specs,
+including the 360×800 phone shell alongside the six at 1280×800.
 
 **❌ Merging on red:**
 A failing CI check is resolved before merge, never overridden.

@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Accepted; Superseded in part by ADR-044 (Navigation Structure, landing entries in Routing Structure and matching
+Frontend Implementation items)
 
 ## Context
 

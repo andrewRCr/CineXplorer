@@ -28,6 +28,7 @@ interface ErrorBoundaryState {
 
 interface ErrorBoundaryProps {
   children: ReactNode;
+  resetKey?: string;
   fallback?: ReactNode;
   showErrorDetails?: boolean;
   onError?: (error: Error, errorInfo: ErrorInfo, errorId: string) => void;
@@ -108,7 +109,7 @@ const ErrorDisplay: React.FC<{
                 <MdWarning size="40px" color="destructive" />
               </Box>
             </Alert.Indicator>
-            <Heading as="h2" size="lg" mb={2} color="destructive">
+            <Heading as="h1" size="lg" mb={2} color="destructive">
               Oops! Something went wrong
             </Heading>
             <Text color="foreground" mb={4}>
@@ -188,7 +189,7 @@ const ErrorDisplay: React.FC<{
           {/* Developer/Debug Information */}
           {showErrorDetails && (
             <Box width="100%">
-              <Separator mb={4} />
+              <Separator mb={4} borderColor="border-subtle-01" />
 
               <Button
                 variant="ghost"
@@ -436,6 +437,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       alert("Thank you for reporting this error. Our team has been notified.");
     }
   };
+
+  override componentDidUpdate(previous: ErrorBoundaryProps) {
+    if (this.state.hasError && previous.resetKey !== this.props.resetKey) {
+      this.handleReset();
+    }
+  }
 
   override componentWillUnmount() {
     // Clean up timeout when component unmounts

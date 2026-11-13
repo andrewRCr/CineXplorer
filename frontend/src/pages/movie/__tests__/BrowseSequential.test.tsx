@@ -2,7 +2,7 @@ import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { createMockMovieListItem } from "@tests/mocks/movieData";
 import { server } from "@tests/mocks/server";
@@ -106,7 +106,7 @@ it("keeps its Browse title without release-window tabs", async () => {
   ).not.toBeInTheDocument();
 });
 
-it("keeps empty pagination controls hidden and inert", async () => {
+it("shows empty results guidance with pagination controls hidden and inert", async () => {
   server.use(
     http.get(browseUrl, () =>
       HttpResponse.json({
@@ -119,9 +119,12 @@ it("keeps empty pagination controls hidden and inert", async () => {
     ),
   );
   renderSequentialBrowse();
-  await waitFor(() =>
-    expect(screen.queryByText("Loading results...")).not.toBeInTheDocument(),
-  );
+  expect(
+    await screen.findByText("No movies found matching your filters."),
+  ).toBeVisible();
+  expect(
+    screen.getByText("Try adjusting your search criteria or filters."),
+  ).toBeVisible();
   for (const control of screen.getAllByRole("button", {
     name: "Next page",
     hidden: true,

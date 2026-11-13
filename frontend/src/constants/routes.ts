@@ -22,7 +22,6 @@ export const ROUTES = {
 
 // Paginated sources - for nav back from detail results
 export const PAGINATED_SOURCES = {
-    FEATURED: "featured",
     BROWSE: "browse",
     NOW_PLAYING: "now-playing",
     UPCOMING: "upcoming",

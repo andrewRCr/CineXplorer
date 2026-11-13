@@ -5,7 +5,8 @@
  * multi-variant component styles that reference semantic tokens.
  *
  * - Single-part recipes (defineRecipe): button, badge
- * - Multi-part recipes (defineSlotRecipe): select, alert, checkbox, radio, switch
+ * - Multi-part recipes (defineSlotRecipe): select, alert, checkbox, radio, switch, tooltip, toast,
+ *   menu, dialog, drawer
  */
 
 export { buttonRecipe } from "./button";
@@ -17,3 +18,6 @@ export { radioRecipe } from "./radio";
 export { switchRecipe } from "./switch";
 export { tooltipRecipe } from "./tooltip";
 export { toastRecipe } from "./toast";
+export { menuRecipe } from "./menu";
+export { dialogRecipe } from "./dialog";
+export { drawerRecipe } from "./drawer";

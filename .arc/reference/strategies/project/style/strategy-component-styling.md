@@ -247,10 +247,15 @@ but their implementation differs by mode:
 - `shadow-md` - Medium elevation (popovers, dropdowns)
 - `shadow-lg` - High elevation (modals, dialogs)
 
+Chakra's own `xs` to `2xl` shadows render as these roles too ([Color Token System § Chakra's Own
+Tokens](./strategy-color-tokens.md#chakras-own-tokens)); name the role directly.
+
 ### Interaction States on Surfaces
 
-Menu items use `_highlighted={{ bg: "tertiary", color: "on-tertiary" }}`: their highlight marks both keyboard
-and pointer navigation.
+The menu and select recipes give the highlighted item a solid `tertiary` fill with `on-tertiary` text. Menu and
+Select keep focus on their list, so this highlight is the item's focus indicator and marks both keyboard and pointer
+navigation. A chosen option shows its check mark (`Menu.ItemIndicator` inside a `Menu.RadioItem`, or
+`Select.ItemIndicator`), never a fill, so the choice stays distinguishable from the highlight.
 
 **For interactive surfaces** (cards with hover and selectable list items):
 
@@ -934,6 +939,7 @@ Chakra Select component structure.
       {collection.items.map((item) => (
         <Select.Item key={item.value} item={item}>
           {item.label}
+          <Select.ItemIndicator />
         </Select.Item>
       ))}
     </Select.Content>
@@ -943,28 +949,13 @@ Chakra Select component structure.
 
 **What the recipe provides:**
 
-- Trigger hover/focus states (border upgrade, background tint, keyboard-only focus ring)
+- Trigger states (border upgrade and background tint on hover, `border-strong-02` while open, `tertiary` border on
+  keyboard focus), set in its default `outline` variant because Chakra's variant styles override base styles
 - Content styling (muted background, elevated with subtle border)
-- Item hover states (background tint for non-selected items)
+- The highlighted option (keyboard or pointer): solid `tertiary` fill with `on-tertiary` text
 
-**Selected item state (recipe limitation):**
-
-The recipe cannot determine which item is currently selected, so you must add runtime conditionals:
-
-```tsx
-<Select.Item
-  key={item.value}
-  item={item}
-  bg={isSelected ? "tertiary" : undefined}
-  color={isSelected ? "on-tertiary" : "foreground"}
-  _hover={{
-    bg: isSelected ? "tertiary" : "tertiary/12",
-    color: isSelected ? "on-tertiary" : "foreground",
-  }}
->
-  {item.label}
-</Select.Item>
-```
+**Chosen option:** add `Select.ItemIndicator` to each item. It shows a check mark on the chosen option; the recipe
+draws no fill for it, since a fill would look like the highlight.
 
 **Focus indicator pattern:** Select.Trigger uses **border-only focus** (like text inputs, not outline rings like buttons)
 because Select.Trigger is semantically a form control (choose a value) not an action button. CSS `:focus-visible` correctly

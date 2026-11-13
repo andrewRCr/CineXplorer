@@ -61,21 +61,22 @@ export function ThemeSelector() {
               borderColor="border-subtle-02"
               color="on-popover"
             >
-              {THEME_OPTIONS.map((option) => (
-                <Menu.Item
-                  key={option.value}
-                  value={option.value}
-                  onClick={() => setTheme(option.value)}
-                  bg={theme === option.value ? "tertiary" : undefined}
-                  color={theme === option.value ? "on-tertiary" : undefined}
-                  _hover={{
-                    bg: theme === option.value ? "tertiary" : "tertiary/12",
-                    color: theme === option.value ? "on-tertiary" : undefined,
-                  }}
-                >
-                  {option.label}
-                </Menu.Item>
-              ))}
+              <Menu.RadioItemGroup
+                value={theme}
+                onValueChange={({ value }) => {
+                  const selected = THEME_OPTIONS.find(
+                    (option) => option.value === value,
+                  );
+                  if (selected) setTheme(selected.value);
+                }}
+              >
+                {THEME_OPTIONS.map((option) => (
+                  <Menu.RadioItem key={option.value} value={option.value}>
+                    {option.label}
+                    <Menu.ItemIndicator />
+                  </Menu.RadioItem>
+                ))}
+              </Menu.RadioItemGroup>
             </Menu.Content>
           </Menu.Positioner>
         </Portal>

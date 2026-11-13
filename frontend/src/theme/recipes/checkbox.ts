@@ -45,6 +45,8 @@ export const checkboxRecipe = defineSlotRecipe({
             flexShrink: 0,
             borderRadius: "sm",
             transition: "all 0.2s",
+            // Content on the checked fill; replaces Chakra's fixed white
+            color: "on-primary",
         },
         indicator: {
             // Checkmark icon

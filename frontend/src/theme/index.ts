@@ -26,6 +26,7 @@ import {
     materialDesign3Theme,
 } from "./color/definitions";
 import type { Theme } from "./types";
+import { chakraColorRoles, chakraShadowRoles } from "./color/chakra-roles";
 
 // Import layout tokens
 import { layoutFoundations } from "./layout/foundations";
@@ -43,6 +44,9 @@ import {
     switchRecipe,
     tooltipRecipe,
     toastRecipe,
+    menuRecipe,
+    dialogRecipe,
+    drawerRecipe,
 } from "./recipes";
 
 /**
@@ -192,6 +196,9 @@ const baseConfig = defineConfig({
         semanticTokens: {
             // Layout semantic tokens (responsive sizing)
             ...layoutSemanticTokens,
+            // Chakra's own color and shadow names, rendered as theme roles
+            colors: chakraColorRoles,
+            shadows: chakraShadowRoles,
         },
         recipes: {
             // Button recipe (5 finalized variants: solid, secondary, outline, subtle, ghost)
@@ -214,10 +221,15 @@ const baseConfig = defineConfig({
             tooltip: tooltipRecipe,
             // Toast recipe (root, indicator, title, description, actionTrigger, closeTrigger slots)
             toast: toastRecipe,
+            // Menu, dialog and drawer: keyboard highlight and backdrops in theme roles
+            menu: menuRecipe,
+            dialog: dialogRecipe,
+            drawer: drawerRecipe,
         },
     },
     globalCss: {
         "*::placeholder": { color: "on-muted" },
+        "*::selection": { bg: "tertiary/30" },
         body: {
             bg: "background",
             color: "foreground",

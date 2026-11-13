@@ -1,32 +1,28 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { selectAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Select slot recipe implementing dropdown/select control patterns
  *
- * Slots:
- * - trigger: The button that opens the dropdown (button-like styling)
- * - content: The dropdown container (elevated surface)
- * - item: Individual option items (with selected/hover states)
+ * Slots come from Chakra's anatomy because configured slot lists merge with Chakra's by position.
  *
  * Pattern:
  * - Trigger uses button-like border hierarchy (border-strong-01 → border-strong-02)
- * - Keyboard-only focus ring (ring token)
+ * - Border-only keyboard focus (tertiary border)
  * - Content uses muted background for elevation
- * - Items use tertiary tokens for selection/hover states
- *
- * Note: Item selected state requires runtime conditionals in components
- * (recipe provides base styles, components apply bg/color based on isSelected logic)
+ * - The highlighted option (keyboard or pointer) is a solid tertiary fill; the chosen option shows its
+ *   check mark (`Select.ItemIndicator`)
  */
 export const selectRecipe = defineSlotRecipe({
     className: "select",
 
-    slots: ["trigger", "content", "item", "indicator"],
+    slots: selectAnatomy.keys(),
 
     base: {
         indicator: { color: "foreground", _disabled: { color: "on-muted" } },
         /**
          * Trigger: Select control that opens dropdown
-         * - Border hierarchy: border-strong-01 (default) → border-strong-02 (hover) → tertiary (focus)
+         * - Border hierarchy: border-strong-01 (default) → border-strong-02 (hover, open) → tertiary (focus)
          * - Hover adds tertiary/8 background tint
          * - Border-only focus (matches StyledInput pattern, not outline rings like buttons)
          *
@@ -39,27 +35,13 @@ export const selectRecipe = defineSlotRecipe({
             alignItems: "center",
             justifyContent: "space-between",
             borderWidth: "1px",
-            borderColor: "border-strong-01",
-            bg: "background",
             color: "foreground",
             borderRadius: "md",
             transition: "all 0.2s",
             cursor: "pointer",
-            _hover: {
-                borderColor: "border-strong-02",
-                bg: "tertiary/8",
-                _disabled: {
-                    borderColor: "border-strong-01",
-                    bg: "background",
-                },
-            },
             _disabled: {
                 opacity: 0.4,
                 cursor: "not-allowed",
-            },
-            _focusVisible: {
-                borderColor: "tertiary",
-                outline: "none",
             },
         },
 
@@ -74,35 +56,47 @@ export const selectRecipe = defineSlotRecipe({
             borderColor: "border-subtle-02",
             color: "foreground",
             borderRadius: "md",
-            boxShadow: "md",
+            boxShadow: "shadow-md",
         },
 
         /**
          * Item: Individual option in dropdown
-         * - Base transparent background
-         * - Selected state uses tertiary + on-tertiary
-         * - Highlight/hover uses tertiary/12
+         * - The highlight is the option's focus indicator: Select keeps focus on its list
          */
         item: {
             cursor: "pointer",
             transition: "all 0.15s",
             borderRadius: "sm",
-            _hover: {
-                bg: "tertiary/12",
-            },
             _highlighted: {
-                bg: "tertiary/12",
-            },
-            _checked: {
                 bg: "tertiary",
                 color: "on-tertiary",
-                _hover: {
-                    bg: "tertiary",
-                    color: "on-tertiary",
-                },
-                _highlighted: {
-                    bg: "tertiary",
-                    color: "on-tertiary",
+            },
+        },
+    },
+
+    variants: {
+        variant: {
+            /**
+             * The default variant. Chakra's own outline styles sit in a later layer than base styles, so the
+             * trigger's color states live here.
+             */
+            outline: {
+                trigger: {
+                    bg: "transparent",
+                    borderColor: "border-strong-01",
+                    _hover: {
+                        borderColor: "border-strong-02",
+                        bg: "tertiary/8",
+                        _disabled: {
+                            borderColor: "border-strong-01",
+                            bg: "transparent",
+                        },
+                    },
+                    _expanded: { borderColor: "border-strong-02" },
+                    _focusVisible: {
+                        borderColor: "tertiary",
+                        outline: "none",
+                    },
                 },
             },
         },

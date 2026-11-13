@@ -34,6 +34,7 @@ Organized for quick lookups when implementing components or validating token usa
 
 1. [Token Naming Conventions](#token-naming-conventions)
 2. [UnifiedTheme Interface Reference](#unifiedtheme-interface-reference)
+    - [Chakra's Own Tokens](#chakras-own-tokens)
 3. [Text Color Semantics](#text-color-semantics)
 4. [Brand Identity](#brand-identity)
 5. [Accessibility Standards](#accessibility-standards)
@@ -210,6 +211,32 @@ examples.
 3. Add to Chakra semantic tokens in `createThemeSystem()`
 4. Document usage in Component Styling Strategy
 5. Update this reference
+
+### Chakra's Own Tokens
+
+Chakra's recipes and global styles color whatever a component leaves unset with Chakra's own names. The theme
+defines those names as theme roles (ADR-045; source: `frontend/src/theme/color/chakra-roles.ts`), so an unstyled
+default renders a role in every theme and mode:
+
+| Chakra name | Renders as |
+| --- | --- |
+| `bg`, `bg.subtle`, `bg.muted`, `bg.emphasized`, `bg.panel` | `background`, `layer-01`, `muted`, `layer-hover-01`, `popover` |
+| `fg`, `fg.muted` | `foreground`, `on-muted` |
+| `border`, `border.emphasized`, `border.subtle` | `border-strong-01`, `border-strong-02`, `border-subtle-00` |
+| `fg.error`, `border.error`; `bg.error` | `destructive`; `destructive` at 10% (likewise warning, success, info) |
+| `gray.focusRing` (Chakra's default focus ring) | `ring` |
+| shadows `xs`/`sm`, `md`, `lg`/`xl`/`2xl` | `shadow-sm`, `shadow-md`, `shadow-lg` |
+
+The ADR lists every name. Selected text uses `tertiary/30`, and dialog and drawer backdrops use `backdrop`.
+
+**Rules:**
+
+- Name theme roles in components; Chakra's names exist only so unstyled defaults stay in the theme.
+- `border` meets 3:1 on the page and on cards, but not on overlays in some dark themes: an input on an overlay names
+  `border-strong-02`.
+- A project slot recipe takes its `slots` from Chakra's anatomy (`@chakra-ui/react/anatomy`), since slot lists merge
+  by position.
+- A color that Chakra's default variant also sets goes in that variant, since variant styles override base styles.
 
 ---
 

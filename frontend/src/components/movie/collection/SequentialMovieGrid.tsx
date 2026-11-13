@@ -21,8 +21,8 @@ import { type MovieListItem } from "@/types/movie";
 /**
  * SequentialMovieGrid
  *
- * **Status:** Reference implementation - fully functional but not currently
- * wired to routes. Retained as an alternative pagination approach.
+ * Reference implementation used by the development-only /browse/sequential route.
+ * Retained as an alternative pagination approach.
  *
  * Displays movies in a grid with sequential (prev/next) pagination.
  * Uses the same useInfiniteMovies hook as VirtualizedMovieGrid but displays
@@ -98,8 +98,7 @@ const SequentialMovieGrid = () => {
   const hasNext = currentPageIndex < pageCount - 1 || hasNextPage;
 
   // Empty state check
-  const isEmpty =
-    !isLoading && currentPageMovies.length === 0 && pageCount === 0;
+  const isEmpty = !isLoading && currentPageMovies.length === 0;
 
   // Pages vary in size, so count the results on the pages before this one
   const resultsBefore = pages

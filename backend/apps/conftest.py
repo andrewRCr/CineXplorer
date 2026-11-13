@@ -35,11 +35,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 import pytest
+from freezegun import configure
 
 if TYPE_CHECKING:
     from django.test import Client
 
     from apps.users.models import User
+
+
+# Pytest measures setup/call/teardown here; keep its clock real across frozen fixtures.
+configure(extend_ignore_list=["_pytest.timing"])
 
 
 @pytest.fixture

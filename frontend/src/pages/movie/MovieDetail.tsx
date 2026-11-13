@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { movieDetailQuery } from "@/lib/queries";
 import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
 import { getErrorStatus } from "@/utilities/axiosErrorUtils";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router";
 import type {
   Genre,
   CastMember,

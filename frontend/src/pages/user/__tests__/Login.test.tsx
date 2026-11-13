@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
 import { render as renderWithoutRouter } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router";
 import { act, render, screen, waitFor } from "@tests/helpers/test-renderer";
 import {
   authHandlers,

@@ -1,5 +1,5 @@
 import { Flex, Link as ChakraLink } from "@chakra-ui/react";
-import { Link, useLocation, useMatch } from "react-router-dom";
+import { Link, useLocation, useMatch } from "react-router";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { ROUTES } from "@/constants/routes";
 import { catalogWindow } from "@/utilities/catalogWindow";

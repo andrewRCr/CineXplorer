@@ -6,7 +6,7 @@ import {
   VStack,
   Container,
 } from "@chakra-ui/react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import { ROUTES } from "@/constants/routes";
 
 const NotFound = () => {

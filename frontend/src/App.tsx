@@ -1,5 +1,5 @@
 import { ROUTES } from "@/constants/routes";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import { lazy, Suspense } from "react";
 import "./App.css";
 

@@ -8,7 +8,7 @@ import {
 import { AuthFormCard, FormField } from "@/components/auth";
 import { useFormik } from "formik";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { priorityToaster } from "@/components/core/chakra/toaster";
 

@@ -2,7 +2,7 @@ import { Link as ChakraLink } from "@chakra-ui/react";
 import {
   Link as RouterLink,
   type LinkProps as RouterLinkProps,
-} from "react-router-dom";
+} from "react-router";
 import type { ReactNode } from "react";
 
 /**

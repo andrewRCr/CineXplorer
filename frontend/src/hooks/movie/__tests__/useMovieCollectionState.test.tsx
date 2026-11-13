@@ -1,7 +1,7 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { useMovieCollectionState } from "@/hooks/movie/useMovieCollectionState";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import { type ReactNode } from "react";
 import { createMockBrowseParams } from "@tests/mocks/browseParams";
 

@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event";
 import { render as renderWithoutRouter } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { setAuthTokens } from "@/utilities/tokenUtils";
 import {

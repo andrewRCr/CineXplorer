@@ -5,7 +5,7 @@
  * sign-in page, which would send a signed-in visitor straight back to itself.
  */
 import { ROUTES } from "@/constants/routes";
-import { matchRoutes } from "react-router-dom";
+import { matchRoutes } from "react-router";
 
 const signInRoutes = [
     ROUTES.LOGIN,

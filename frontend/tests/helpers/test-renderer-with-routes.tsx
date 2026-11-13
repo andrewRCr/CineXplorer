@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { type ReactElement } from "react";
 import { render, type RenderOptions } from "@testing-library/react";
-import { MemoryRouter, Routes, Route } from "react-router-dom";
+import { MemoryRouter, Routes, Route } from "react-router";
 import { TestProviders } from "./test-providers";
 import type { SystemContext } from "@chakra-ui/react";
 

@@ -7,7 +7,7 @@
 
 import { render, screen } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { ChakraProvider } from "@chakra-ui/react";
 import ErrorBoundary from "../ErrorBoundary";
 import { defaultSystem } from "@/theme";

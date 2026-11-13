@@ -31,7 +31,7 @@ import {
 } from "@/utilities/csrfTokenFetcher";
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router";
 import type {
     AuthStateProps,
     AuthStatus,

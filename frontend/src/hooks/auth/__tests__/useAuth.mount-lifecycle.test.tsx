@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it } from "vitest";
 import { HttpResponse, http } from "msw/http";
 import { siteOrigin, apiBaseUrl } from "@/config/baseUrls";

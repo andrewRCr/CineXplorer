@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from "react";
-import { useLocation, Outlet } from "react-router-dom";
+import { useLocation, Outlet } from "react-router";
 import { Box } from "@chakra-ui/react";
 import type { BrowseParams } from "@/types/browseTypes";
 import { useMovieFetchRouter } from "@/hooks/movie/useMovieFetchRouter";

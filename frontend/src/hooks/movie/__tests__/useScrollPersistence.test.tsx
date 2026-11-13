@@ -24,7 +24,7 @@ import {
   beforeEach,
   afterEach,
 } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 import { useScrollPersistence } from "../useScrollPersistence";
 

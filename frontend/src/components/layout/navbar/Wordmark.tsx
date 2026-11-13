@@ -1,5 +1,5 @@
 import { HStack, Image, Link as ChakraLink, Text } from "@chakra-ui/react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import logo from "@/assets/icons8-movie-64.webp";
 
 export default function Wordmark() {

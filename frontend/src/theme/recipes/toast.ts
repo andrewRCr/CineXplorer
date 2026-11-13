@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { toastAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Toast slot recipe implementing semantic status feedback patterns
@@ -26,14 +27,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const toastRecipe = defineSlotRecipe({
     className: "toast",
 
-    slots: [
-        "root",
-        "indicator",
-        "title",
-        "description",
-        "actionTrigger",
-        "closeTrigger",
-    ],
+    slots: toastAnatomy.keys(),
 
     base: {
         root: {
@@ -50,6 +44,14 @@ export const toastRecipe = defineSlotRecipe({
             borderColor: "border-strong-02",
             minW: "xs",
             maxW: "sm",
+            // Chakra gives these types a solid status fill with white text, action border and action hover;
+            // they stay on the toast's surface, so they draw what an info toast does.
+            "&[data-type=warning], &[data-type=success], &[data-type=error]": {
+                color: "foreground",
+                "--toast-trigger-bg": "colors.muted",
+                // Unset, so the action button falls back to the toast's own border color
+                "--toast-border-color": "initial",
+            },
         },
         indicator: {
             // Icon/indicator sizing and alignment

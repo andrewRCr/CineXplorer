@@ -270,6 +270,7 @@ const ConnectedDropdowns = ({
               {genreCollection.items.map((item) => (
                 <Select.Item key={item.value} item={item}>
                   {item.label}
+                  <Select.ItemIndicator />
                 </Select.Item>
               ))}
             </Select.Content>
@@ -337,6 +338,7 @@ const ConnectedDropdowns = ({
               {yearCollection.items.map((item) => (
                 <Select.Item key={item.value} item={item}>
                   {item.label}
+                  <Select.ItemIndicator />
                 </Select.Item>
               ))}
             </Select.Content>

@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { alertAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Alert slot recipe implementing semantic status feedback patterns
@@ -25,7 +26,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const alertRecipe = defineSlotRecipe({
     className: "alert",
 
-    slots: ["root", "indicator", "title", "description"],
+    slots: alertAnatomy.keys(),
 
     base: {
         root: {

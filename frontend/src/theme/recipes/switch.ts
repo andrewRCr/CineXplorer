@@ -1,4 +1,5 @@
 import { defineSlotRecipe } from "@chakra-ui/react";
+import { switchAnatomy } from "@chakra-ui/react/anatomy";
 
 /**
  * Switch slot recipe implementing toggle patterns
@@ -22,7 +23,7 @@ import { defineSlotRecipe } from "@chakra-ui/react";
 export const switchRecipe = defineSlotRecipe({
     className: "switch",
 
-    slots: ["root", "control", "thumb", "label"],
+    slots: switchAnatomy.keys(),
 
     base: {
         root: {

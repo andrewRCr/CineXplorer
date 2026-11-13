@@ -100,6 +100,15 @@ const textOnSurfaces: TokenPair[] = [
     { fg: "on-muted", bg: "background" },
     { fg: "on-muted", bg: "layer-01" },
     { fg: "on-muted", bg: "layer-02" },
+    // Chakra's muted text (fg.muted) on overlay panels
+    { fg: "on-muted", bg: "popover" },
+
+    // Selected text (global text-selection colors) on each surface that carries text
+    { fg: "foreground", bg: "tertiary/20" },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["layer-01"] },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["layer-02"] },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["popover"] },
+    { fg: "foreground", bg: "tertiary/20", backdrop: ["muted"] },
 ];
 
 /**
@@ -142,6 +151,11 @@ const bordersOnSurfaces: TokenPair[] = [
     { fg: "border-strong-01", bg: "layer-01", threshold: "ui" },
     { fg: "border-strong-02", bg: "layer-02", threshold: "ui" },
     { fg: "border-strong-03", bg: "layer-03", threshold: "ui" },
+
+    // Chakra's default border (border) on the page, and its emphasized border on the page and overlays
+    { fg: "border-strong-01", bg: "background", threshold: "ui" },
+    { fg: "border-strong-02", bg: "background", threshold: "ui" },
+    { fg: "border-strong-02", bg: "popover", threshold: "ui" },
 
     // Subtle borders (decorative only - visibility check, not WCAG)
     { fg: "border-subtle-00", bg: "background", threshold: "decorative" },
@@ -188,6 +202,10 @@ const focusIndicators: TokenPair[] = [
     { fg: "ring", bg: "background", threshold: "ui" },
     { fg: "ring", bg: "layer-01", threshold: "ui" },
     { fg: "ring", bg: "layer-02", threshold: "ui" },
+    { fg: "ring", bg: "popover", threshold: "ui" },
+
+    // Highlighted menu items and select options (solid tertiary fill against the list)
+    { fg: "tertiary", bg: "muted", threshold: "ui" },
 
     // Focus border on inputs (tertiary border color change)
     { fg: "tertiary", bg: "background", threshold: "ui" },

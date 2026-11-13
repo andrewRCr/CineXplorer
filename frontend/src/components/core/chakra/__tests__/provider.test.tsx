@@ -59,7 +59,7 @@ it("updates the page background variable when the palette changes", async () => 
   await user.click(await screen.findByRole("button", { name: "Marquee" }));
   const menu = await screen.findByRole("menu");
   await user.click(
-    within(menu).getByRole("menuitem", { name: "GitHub Primer" }),
+    within(menu).getByRole("menuitemradio", { name: "GitHub Primer" }),
   );
   await waitFor(() => {
     expect(localStorage.getItem("cinexplorer-bg")).toBe("#0d1117");

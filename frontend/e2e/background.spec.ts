@@ -85,7 +85,7 @@ test("mode and palette changes update every page background without reloading", 
     await expectPageBackground(page, "rgb(242, 232, 206)");
     await page.getByRole("button", { name: "Marquee", exact: true }).click();
     await page
-        .getByRole("menuitem", { name: "GitHub Primer", exact: true })
+        .getByRole("menuitemradio", { name: "GitHub Primer", exact: true })
         .click();
     await expect
         .poll(() => page.evaluate(() => localStorage.getItem("cinexplorer-bg")))
@@ -179,7 +179,7 @@ for (const scenario of colorModeCases) {
             .getByRole("button", { name: "Marquee", exact: true })
             .click();
         await page
-            .getByRole("menuitem", {
+            .getByRole("menuitemradio", {
                 name: "GitHub Primer",
                 exact: true,
             })

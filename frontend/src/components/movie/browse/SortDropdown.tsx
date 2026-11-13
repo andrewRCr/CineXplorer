@@ -94,6 +94,7 @@ const SortDropdown = ({
                     fontStyle={isDisabled ? "italic" : "normal"}
                   >
                     {item.label}
+                    <Select.ItemIndicator />
                   </Select.Item>
                 );
               })}

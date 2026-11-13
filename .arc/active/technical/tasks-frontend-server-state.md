@@ -474,6 +474,16 @@ its request settles; on the browsable stack, signing out and in again shows no p
           no required omission; it is not an independent implementation check. Changes remain uncommitted and the
           material repair's independent fix check is offered separately, before the later full-review scope decision.
 
+- [x] **6.6 Show not-found after a cached detail refetch returns 404 — D3**
+
+    **Goal:** A detail read that returns 404 shows "Movie Not Found" even when a prior successful movie remains cached.
+
+    - A successful-read-then-404 network regression failed with the cached title/save control still visible, then
+      passed after making the explicit 404 enter the existing not-found branch despite retained query data.
+    - All 31 related detail tests, frontend lint/generated types/type-check/format, affected Markdown and both
+      detail/back-navigation Chromium smoke specs pass. Existing status-specific errors and successful cached-detail
+      save composition pass. Changes remain uncommitted; the approved independent repair fix check follows.
+
 ## Implementation Notes
 
 - **The query client.** Code reaches the cache through `useQueryClient()` or the `client` a query or mutation
@@ -583,7 +593,8 @@ All criteria are implemented criteria, checked locally and in CI; each is marked
   none to `GET /user-movie-data/{tmdb_id}`, and its watchlist button shows the save toasts. (D3)
 
   _Evidence:_ MovieDetail tests passed status-specific 404/500, one movie read and zero separate user-state reads,
-  payload state, enabled pending save with toasts/Undo, and request cancellation on unmount.
+  payload state, enabled pending save with toasts/Undo, and request cancellation on unmount. A successful cached
+  detail followed by a 404 refetch now shows not-found and removes the previous title/save controls, proved red/green.
 
 - [x] 6. **The watchlist page.** A test shows it requests `watchlist=true` with a `page_size` of 100 through its query,
   and refetches after a save. (D6)

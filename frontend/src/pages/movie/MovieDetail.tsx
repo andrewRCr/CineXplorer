@@ -124,7 +124,7 @@ const MovieDetail = () => {
   }
 
   // 404 or no movie data - show not found
-  if (!movie) {
+  if (is404 || !movie) {
     return (
       <Box maxW="6xl" mx="auto" p={4}>
         <BackToCollectionLink searchParams={searchParams} />

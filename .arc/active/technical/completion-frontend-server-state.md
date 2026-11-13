@@ -24,6 +24,8 @@ clears the previous user’s cached data, retained saves and save feedback.
 - Confirmed saves and pending fields overlay each cached movie payload. This survives an infinite list’s next-page
   replacement without patching or refetching movie lists; successful saves invalidate Library queries.
 - Saves for a movie run in order. A failed save falls out of the overlay, revealing the last server-confirmed state.
+- A detail refetch returning 404 shows not-found even when a previous successful movie remains cached, removing
+  its stale details and save controls.
 - Saves and Undo carry their invocation ownership through asynchronous setup. Retired saves cannot dispatch or
   create late feedback; user changes remove visible and queued save toasts while preserving unrelated errors.
 - One save-generation signal binds that ownership through HTTP preparation, renewal and native transport. A user

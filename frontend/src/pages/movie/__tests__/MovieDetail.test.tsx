@@ -10,7 +10,8 @@ import {
 import { Toaster } from "@/components/core/chakra/toaster";
 import MovieCard from "@/components/movie/MovieCard";
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
-import { infiniteMoviesKey } from "@/lib/queries";
+import { infiniteMoviesKey, movieDetailQuery } from "@/lib/queries";
+import { useQueryClient } from "@tanstack/react-query";
 import { browseMovies } from "@/services/movieService";
 import { siteOrigin } from "@/config/baseUrls";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
@@ -464,7 +465,61 @@ describe("MovieDetail - TMDB Score", () => {
   });
 });
 
+function RefreshMovieDetail() {
+  const client = useQueryClient();
+  return (
+    <button
+      onClick={() =>
+        void client.invalidateQueries({
+          queryKey: movieDetailQuery(550).queryKey,
+        })
+      }
+    >
+      Refresh movie
+    </button>
+  );
+}
+
 describe("MovieDetail query and shared saves", () => {
+  it("replaces cached details and save controls when a refetch returns 404", async () => {
+    setAuthTokens(token());
+    let reads = 0;
+    server.use(
+      http.get(`${apiBaseUrl}/movies/550`, () => {
+        if (++reads > 1)
+          return HttpResponse.json({ detail: "Not found" }, { status: 404 });
+        return HttpResponse.json(
+          createMockMovieDetail({ tmdb_id: 550, title: "Cached movie" }),
+        );
+      }),
+    );
+    renderWithRoute(
+      "/movie/:id",
+      <AuthContextProvider>
+        <RefreshMovieDetail />
+        <MovieDetail />
+      </AuthContextProvider>,
+      { initialRoute: "/movie/550" },
+    );
+    await screen.findByRole("heading", { name: "Cached movie" });
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Add to Watchlist" }),
+      ).toBeEnabled(),
+    );
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Refresh movie" }));
+    await screen.findByRole("heading", { name: "Movie Not Found" });
+    expect(
+      screen.queryByRole("heading", { name: "Cached movie" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /to Watchlist/ }),
+    ).not.toBeInTheDocument();
+    expect(reads).toBe(2);
+  });
+
   it.each([404, 500])(
     "shows the status-specific failure for %s",
     async (status) => {

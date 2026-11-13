@@ -340,12 +340,12 @@ class MovieService(BaseTMDBService):
 
         def fetch_search_page(page_num: int) -> TMDBPaginatedMovieResponse:
             """Fetch a specific search page with current query."""
+            # Omit region so search and detail use the same primary release date.
             page_response = self._tmdb_client.search_movies(
                 query=params.query,
                 page=page_num,
                 include_adult=False,
                 language="en-US",
-                region="US",
             )
             return validate_tmdb_paginated_response(page_response, TMDBPaginatedMovieResponse)
 

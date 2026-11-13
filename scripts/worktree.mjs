@@ -125,10 +125,19 @@ function provision(root, main, { install = true } = {}) {
         mkdirSync(dirname(target), { recursive: true });
         copyFileSync(join(main, file), target);
     }
-    for (const folder of [".venv-backend", ".claude", ".codex"]) {
+    for (const folder of [".venv-backend", ".claude"]) {
         const target = join(root, folder);
         const source = join(main, folder);
         if (existsSync(source) && !lstatSync(target, { throwIfNoEntry: false })) symlinkSync(source, target, "dir");
+    }
+    const codexSource = join(main, ".codex");
+    const codexTarget = join(root, ".codex");
+    if (existsSync(codexSource) && !lstatSync(codexTarget, { throwIfNoEntry: false })) {
+        // Codex's sandbox requires a real .codex folder; its entries can remain shared.
+        mkdirSync(codexTarget);
+        for (const entry of readdirSync(codexSource, { withFileTypes: true })) {
+            symlinkSync(join(codexSource, entry.name), join(codexTarget, entry.name), entry.isDirectory() ? "dir" : "file");
+        }
     }
     provisionEnv(root, main);
     const project = install ? checkedProject(root, main) : envValue(readEnv(root), "COMPOSE_PROJECT_NAME");

@@ -1,6 +1,145 @@
 import { scanPage } from "./axe";
 import { test, expect } from "./fixtures";
 import { target } from "./target";
+import type { Locator, Page } from "@playwright/test";
+
+async function alertLayout(page: Page, alert: Locator) {
+    const [box, usernameLabel, passwordLabel, username, password, banner] =
+        await Promise.all([
+            alert.boundingBox(),
+            page
+                .getByText("Username or Email Address", { exact: true })
+                .boundingBox(),
+            page
+                .locator("label")
+                .filter({ hasText: /^Password$/ })
+                .boundingBox(),
+            page
+                .getByLabel("Username or Email Address", { exact: true })
+                .boundingBox(),
+            page.getByLabel("Password", { exact: true }).boundingBox(),
+            page.getByRole("banner").boundingBox(),
+        ]);
+    const viewport = page.viewportSize();
+    if (
+        !box ||
+        !usernameLabel ||
+        !passwordLabel ||
+        !username ||
+        !password ||
+        !banner ||
+        !viewport
+    ) {
+        throw new Error(
+            "Sign-in alert, labels and fields must have visible bounds",
+        );
+    }
+    return {
+        box,
+        usernameLabel,
+        passwordLabel,
+        withinViewport: box.x >= 0 && box.x + box.width <= viewport.width,
+        beforeFields:
+            box.y + box.height <=
+            Math.min(usernameLabel.y, passwordLabel.y, username.y, password.y),
+        belowBanner: box.y >= banner.y + banner.height,
+        noHorizontalOverflow: await page.evaluate(
+            () =>
+                document.documentElement.scrollWidth <=
+                document.documentElement.clientWidth,
+        ),
+    };
+}
+
+for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1280, height: 800 },
+]) {
+    test(`rejected credentials fit above the form at ${viewport.width}px`, async ({
+        page,
+    }) => {
+        const message = "Unable to authenticate with provided credentials.";
+        await page.setViewportSize(viewport);
+        await page.route("**/api/token/", (route) =>
+            route.fulfill({ status: 401, json: { error: message } }),
+        );
+        await page.goto("/login");
+        await page
+            .getByLabel("Username or Email Address", { exact: true })
+            .fill("browser-viewer");
+        await page
+            .getByLabel("Password", { exact: true })
+            .fill("incorrect-password");
+        await page.getByRole("button", { name: "Login", exact: true }).click();
+        const alert = page.getByRole("alert").filter({ hasText: message });
+        await expect(alert).toBeVisible();
+        await expect
+            .poll(() => alertLayout(page, alert))
+            .toMatchObject({
+                withinViewport: true,
+                beforeFields: true,
+                belowBanner: true,
+                noHorizontalOverflow: true,
+            });
+        await expect(alert).toHaveAttribute("aria-live", "assertive");
+        await alert
+            .getByRole("button", { name: "Dismiss", exact: true })
+            .click();
+        await expect(alert).toHaveCount(0);
+        await expect(
+            page.getByLabel("Username or Email Address", { exact: true }),
+        ).toHaveValue("browser-viewer");
+        await expect(page.getByLabel("Password", { exact: true })).toHaveValue(
+            "incorrect-password",
+        );
+    });
+}
+
+test("email-verification guidance and resend action fit above the form on a phone", async ({
+    page,
+}) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.route("**/api/token/", (route) =>
+        route.fulfill({
+            status: 403,
+            json: {
+                error: "Please verify your email address before logging in. Check your email for the verification link.",
+                email: "v***@example.com",
+                resend_token: "a".repeat(64),
+            },
+        }),
+    );
+    await page.goto("/login");
+    await page
+        .getByLabel("Username or Email Address", { exact: true })
+        .fill("browser-viewer");
+    await page.getByLabel("Password", { exact: true }).fill("correct-password");
+    await page.getByRole("button", { name: "Login", exact: true }).click();
+    const message = page.getByText(
+        "We've sent a verification link to v***@example.com. Please check your inbox.",
+    );
+    await expect(message).toBeVisible();
+    const resend = page.getByRole("button", {
+        name: "Resend verification",
+        exact: true,
+    });
+    await expect(resend).toBeVisible();
+    for (const element of [
+        message,
+        resend,
+        page.getByRole("button", { name: "Dismiss", exact: true }),
+    ]) {
+        await expect
+            .poll(() => alertLayout(page, element))
+            .toMatchObject({
+                withinViewport: true,
+                beforeFields: true,
+                belowBanner: true,
+                noHorizontalOverflow: true,
+            });
+    }
+});
 
 for (const rememberMe of [false, true]) {
     test(`sign in and sign out through the real session (remember me: ${rememberMe})`, async ({

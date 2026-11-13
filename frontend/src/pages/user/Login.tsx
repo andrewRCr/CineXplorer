@@ -405,6 +405,34 @@ const Login = () => {
         <h1>Sign in</h1>
       </VisuallyHidden>
       <AuthFormCard>
+        {alert &&
+          (alert.type === "general" || alert.type === "emailVerification") && (
+            <Box w="full" mb={6}>
+              {alert.type === "emailVerification" && (
+                <FloatingAlert
+                  status="info"
+                  onDismiss={clearAlert}
+                  action={
+                    alert.resendToken
+                      ? {
+                          label: "Resend verification",
+                          onClick: () =>
+                            void handleResendVerification(alert.resendToken),
+                        }
+                      : undefined
+                  }
+                >
+                  {alert.message}
+                </FloatingAlert>
+              )}
+              {alert.type === "general" && (
+                <FloatingAlert status="error" onDismiss={clearAlert}>
+                  {alert.message}
+                </FloatingAlert>
+              )}
+            </Box>
+          )}
+
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">
             <FormField
@@ -541,35 +569,6 @@ const Login = () => {
       {/* ====================================================================
           Alerts
           ==================================================================== */}
-
-      {/* Blocking alerts (center) - auth errors and workflow requirements */}
-      {alert &&
-        (alert.type === "general" || alert.type === "emailVerification") && (
-          <FloatingAlertContainer>
-            {alert.type === "emailVerification" && (
-              <FloatingAlert
-                status="info"
-                onDismiss={clearAlert}
-                action={
-                  alert.resendToken
-                    ? {
-                        label: "Resend verification",
-                        onClick: () =>
-                          void handleResendVerification(alert.resendToken),
-                      }
-                    : undefined
-                }
-              >
-                {alert.message}
-              </FloatingAlert>
-            )}
-            {alert.type === "general" && (
-              <FloatingAlert status="error" onDismiss={clearAlert}>
-                {alert.message}
-              </FloatingAlert>
-            )}
-          </FloatingAlertContainer>
-        )}
 
       {/* Non-blocking alerts (top-right) - success CTAs and session state that persist but don't block */}
       {(alert?.type === "registrationSuccess" ||

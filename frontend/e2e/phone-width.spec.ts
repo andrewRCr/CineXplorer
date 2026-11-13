@@ -83,6 +83,15 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     await expect(drawer).toBeHidden();
     await expect(menuButton).toBeFocused();
     await menuButton.click();
+    await page.setViewportSize({ width: 1024, height: 800 });
+    await expect(drawer).toBeHidden();
+    await page.keyboard.press("Tab");
+    await expect(page.locator(":focus")).toBeVisible();
+    await banner.getByRole("link", { name: "Films", exact: true }).click();
+    await page.setViewportSize({ width: 1023, height: 800 });
+    await expect(drawer).toBeHidden();
+    await page.setViewportSize({ width: 360, height: 800 });
+    await menuButton.click();
     await drawer.getByRole("link", { name: "Films", exact: true }).click();
     await expect(page).toHaveURL(new URL("/browse", target.baseURL).href);
     await expect(page.getByText(/^\d[\d,]*\+? results$/)).toBeVisible();
@@ -135,4 +144,14 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     await expect(
         accountMenu.getByRole("menuitem", { name: "Sign out", exact: true }),
     ).toBeVisible();
+    for (const width of [1024, 1023]) {
+        await page.setViewportSize({ width, height: 800 });
+        await expect(accountMenu).toBeHidden();
+        await page.keyboard.press("Tab");
+        await expect(page.locator(":focus")).toBeVisible();
+        await banner
+            .getByRole("button", { name: target.username, exact: true })
+            .click();
+        await expect(accountMenu).toBeVisible();
+    }
 });

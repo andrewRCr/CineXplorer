@@ -397,6 +397,19 @@ window tabs, and the phone-width spec follows Films there.
     - All 146 related tests across eight files and the five affected browser specs (six cases) pass, with frontend
       lint, formatting and types. The earlier full frontend/backend suites and registration smoke were not rerun.
 
+- [x] **6.4 Close navigation overlays when the layout changes**
+
+    **Goal:** The drawer and account menus close when their row becomes hidden at the shared breakpoint, with no
+    stale overlay or hidden focus target left behind.
+
+    - The phone browser regression failed first with the drawer still visible at 1024px, then with an account menu
+      still visible after its row changed. Their Chakra roots now reset interaction state at the shared breakpoint;
+      CSS continues to control the rows' visibility.
+    - The browser checks drawer closure and no reopening on return, and account-menu closure in both directions at
+      1024px and 1023px, with subsequent keyboard focus visible and the active controls usable.
+    - All 443 affected tests across 35 files and the five affected Chromium specs (six cases) pass. Frontend lint,
+      formatting and types pass. The earlier full frontend/backend suites and registration smoke were not rerun.
+
 ---
 
 ## Success Criteria

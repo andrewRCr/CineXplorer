@@ -6,6 +6,7 @@ import {
   Portal,
   Text,
   Link as ChakraLink,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuthContext from "@/hooks/auth/useAuthContext";
@@ -13,6 +14,10 @@ import { signInPathFor } from "@/utilities/returnPath";
 import { ROUTES } from "@/constants/routes";
 
 export default function AccountControl() {
+  const layout = useBreakpointValue(
+    { base: "phone", lg: "wide" },
+    { ssr: false },
+  );
   const { status, user, logout } = useAuthContext() ?? {};
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,7 +41,10 @@ export default function AccountControl() {
       </ChakraLink>
     );
   return (
-    <Menu.Root positioning={{ placement: "bottom-end", gutter: 8 }}>
+    <Menu.Root
+      key={layout}
+      positioning={{ placement: "bottom-end", gutter: 8 }}
+    >
       <Menu.Trigger asChild>
         <Button
           size="sm"

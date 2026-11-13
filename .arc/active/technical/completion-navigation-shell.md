@@ -29,7 +29,8 @@ page or current film selection.
 ## Implementation Highlights
 
 - Wide and phone bars compose shared navigation, account and search controls. Chakra's Menu and Drawer provide their
-  interaction behavior; the phone row handles Escape throughout its open search region.
+  interaction behavior and reset when the breakpoint changes; the phone row handles Escape throughout its open
+  search region.
 - Window rules normalize the parameters used by the first request and replace the URL entry. Catalog URLs, saved
   scroll keys and Back to Results retain their contracts.
 - Titles share year parsing with request mapping. Unknown sort names use the window fallback, including names that

@@ -1,16 +1,20 @@
-import { useState } from "react";
-import { Drawer, IconButton, Portal } from "@chakra-ui/react";
+import {
+  Drawer,
+  IconButton,
+  Portal,
+  useBreakpointValue,
+} from "@chakra-ui/react";
 import { LuMenu, LuX } from "react-icons/lu";
 import MainNavLinks from "./MainNavLinks";
 
 export default function NavDrawer() {
-  const [open, setOpen] = useState(false);
+  // Reset portalled interaction state when its CSS-controlled row changes layout.
+  const layout = useBreakpointValue(
+    { base: "phone", lg: "wide" },
+    { ssr: false },
+  );
   return (
-    <Drawer.Root
-      open={open}
-      onOpenChange={(details) => setOpen(details.open)}
-      placement="start"
-    >
+    <Drawer.Root key={layout} placement="start">
       <Drawer.Trigger asChild>
         <IconButton
           aria-label="Open menu"
@@ -53,10 +57,14 @@ export default function NavDrawer() {
               </Drawer.CloseTrigger>
             </Drawer.Header>
             <Drawer.Body>
-              <MainNavLinks
-                direction="column"
-                onNavigate={() => setOpen(false)}
-              />
+              <Drawer.Context>
+                {(drawer) => (
+                  <MainNavLinks
+                    direction="column"
+                    onNavigate={() => drawer.setOpen(false)}
+                  />
+                )}
+              </Drawer.Context>
             </Drawer.Body>
           </Drawer.Content>
         </Drawer.Positioner>

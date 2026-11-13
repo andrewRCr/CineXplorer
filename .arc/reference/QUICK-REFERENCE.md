@@ -189,9 +189,9 @@ sends real verification mail. From the worktree root:
 node scripts/worktree.mjs browse
 # Prints https://localhost:{SITE_PORT}; use SITE_PORT from infrastructure/.env below
 cd frontend
-E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e
+E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e
 # Only the affected flow
-E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/browse.spec.ts
+E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e -- e2e/browse.spec.ts
 ```
 
 The five Chromium specs scan their pages with axe, use catalogue fixtures locally, and have no retries. CI requires
@@ -203,8 +203,8 @@ artifacts, the accessibility baseline, and resetting the local registration limi
 
 ```bash
 # On host Node (any checkout)
-(cd frontend && npm run lint)
-(cd frontend && npm run lint -- --fix)   # with auto-fix
+(cd frontend && arc-offload npm run lint)
+(cd frontend && arc-offload npm run lint -- --fix)   # with auto-fix
 
 # Via Docker (the primary's frontend container)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint
@@ -221,7 +221,7 @@ module resolution.
 ```bash
 # CORRECT: Use npm script (runs tsc -b with project references), after `npm run typegen`
 # On host Node (any checkout)
-(cd frontend && npm run type-check)
+(cd frontend && arc-offload npm run type-check)
 # Via Docker (the primary's frontend container)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run type-check
 
@@ -306,29 +306,42 @@ npx --yes markdown-table-prettify < input.md > output.md
 The full command set: the verification run, and the wider run when the affected surface calls for one
 (DEVELOPMENT-RULES § Quality Gates). A task runs only its own checks; CI runs the full set on every pull request.
 
-Heavy container commands carry `nice -n 15` inside the container: Docker Desktop runs container processes outside
-this WSL distro, so the host's `nicecap` wrapper around `docker compose` would reach only the client. `memcap_gated`
-cannot cap them either. The primary stack sets no memory limits, since limits in `docker-compose.yml` would also bind
-CI and the production override; the worker cap keeps the full backend suite near 650 MiB in the backend container.
-Revisit that as the suite grows. A worktree's stack caps every container in either mode: backend 1 GiB, `dev-db`
-512 MiB, Redis 128 MiB, frontend 1 GiB and Caddy 128 MiB. Measured peaks and commands are in
+Host-side frontend checks run through `arc-offload` from `frontend/`. Its shared pool admits them locally and
+sets CPU priority, reserved CPUs, the Node heap cap and `VITEST_MAX_WORKERS`; do not add ad hoc worker caps.
+The registered script names are `test` (test class), `type-check` and `lint` (build class), and
+`verify-contrast` (light class). npm's `-s` and `--silent` options and trailing script arguments retain those
+classes. Other scripts, such as `test:coverage` and `test:e2e`, use the catch-all without a recorded peak and run
+alone through `arc-offload`.
+
+```bash
+# From frontend/; typegen is a prerequisite for type-check
+arc-offload npm run test              # npm test is also accepted
+npm run typegen
+arc-offload npm run type-check
+arc-offload npm run lint              # append -- --fix for auto-fix
+arc-offload npm run verify-contrast
+```
+
+Backend pytest stays in the container with `nice -n 15`. Heavy container commands carry that priority inside the
+container: Docker Desktop runs them outside this WSL distro, so a host wrapper reaches only the Docker client.
+Container memory limits come from the Compose `mem_limit` settings in `infrastructure/docker-compose.yml` and
 `infrastructure/docker-compose.worktree.yml`.
 
 ```bash
 # 1. Backend Tests (parallel execution enabled by default)
 docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pytest apps/
 
-# 2. Frontend Tests (or on host Node: cd frontend && npm test)
-docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm test
+# 2. Frontend Tests (host Node)
+(cd frontend && arc-offload npm run test)
 
 # 3. Backend Linting (with auto-fix)
 .venv-backend/bin/ruff check backend/apps/ backend/config/ --fix
 
-# 4. Frontend Linting (or on host Node: cd frontend && npm run lint)
-docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint
+# 4. Frontend Linting (host Node)
+(cd frontend && arc-offload npm run lint)
 
-# 5. TypeScript Type Checking (or on host Node, after typegen: cd frontend && npm run type-check)
-docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run type-check
+# 5. TypeScript Type Checking (host Node, after typegen)
+(cd frontend && arc-offload npm run type-check)
 
 # 6. Python Type Safety
 npx pyright backend/apps/ backend/config/ --project backend
@@ -339,7 +352,7 @@ npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
 # 8. End-to-End Smoke Tests: precondition is this worktree's running browsable stack
 # Start it from the worktree root: node scripts/worktree.mjs browse
 # Use SITE_PORT from infrastructure/.env; run the command from frontend/
-(cd frontend && E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e)
+(cd frontend && E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e)
 ```
 
 ---

@@ -10,21 +10,27 @@ it("explains the three things a visitor can do under a hidden section heading", 
       hidden: true,
     }),
   ).toBeInTheDocument();
-  for (const title of ["See what's on", "Keep a watchlist", "Search any film"])
+  for (const title of [
+    "Browse every film",
+    "Keep a watchlist",
+    "Know before you watch",
+  ])
     expect(
       screen.getByRole("heading", { level: 3, name: title }),
     ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "What's in theaters and coming soon, ordered and named for what it is.",
+      "What's in theaters, what's coming, or the whole catalog by genre, year and rating.",
     ),
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Save films to see next from any poster, and find them on Home.",
+      "Save films from any poster and find them waiting on Home.",
     ),
   ).toBeInTheDocument();
   expect(
-    screen.getByText("Find any film by its title, from the search in the bar."),
+    screen.getByText(
+      "The story, cast, crew, score and runtime of any film, on one page.",
+    ),
   ).toBeInTheDocument();
 });

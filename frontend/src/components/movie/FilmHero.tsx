@@ -10,22 +10,28 @@ type HeroFilm = Pick<
   "tmdb_id" | "title" | "release_date" | "backdrop_path" | "tagline"
 >;
 
-// The mask is opaque within the text bounds and feathers only through the outer margin.
-const textFade = {
-  position: "relative",
-  isolation: "isolate",
-  _before: {
-    content: '""',
-    position: "absolute",
-    inset: "-48px",
-    zIndex: -1,
-    pointerEvents: "none",
-    bg: "background/90",
-    maskImage:
-      "linear-gradient(to right, transparent, black 48px, black calc(100% - 48px), transparent), linear-gradient(to bottom, transparent, black 48px, black calc(100% - 48px), transparent)",
-    maskComposite: "intersect",
-  },
-} as const;
+const panelPadding = "24px";
+// The page content stops widening at 1440px with a 32px inset, so below a 1456px hero the panel's padding would
+// leave less than 16px of image at the window's edge; the panel runs flush there instead (clipped by the hero).
+const flushBelow = "@container hero (min-width: 1456px)";
+
+/** A hard-edged panel behind text, flush to the hero's edge on its outer side where only a sliver would remain. */
+function textPanel(outer: "left" | "right") {
+  return {
+    position: "relative",
+    isolation: "isolate",
+    _before: {
+      content: '""',
+      position: "absolute",
+      inset: `-${panelPadding}`,
+      [outer]: "-100vw",
+      zIndex: -1,
+      pointerEvents: "none",
+      bg: "background/90",
+      [flushBelow]: { [outer]: `-${panelPadding}` },
+    },
+  } as const;
+}
 
 /** Film presentation independent of its query, with content slots shared by both arrangements. */
 export function FilmHero({
@@ -108,7 +114,7 @@ export function FilmHero({
 
   const creditColumn = (
     <Box justifySelf="end" textAlign="right" maxW={desktop ? "100%" : "600px"}>
-      {credit && <Box css={textFade}>{credit}</Box>}
+      {credit && <Box css={textPanel("right")}>{credit}</Box>}
     </Box>
   );
   return (
@@ -121,6 +127,7 @@ export function FilmHero({
       bg="background"
       color="foreground"
       overflow="hidden"
+      css={{ containerType: "inline-size", containerName: "hero" }}
     >
       {artwork}
       <Box
@@ -129,7 +136,7 @@ export function FilmHero({
         pointerEvents="none"
         css={{
           backgroundImage:
-            "linear-gradient(to top, {colors.background/95}, {colors.background/75} 35%, transparent 85%), linear-gradient(to right, {colors.background/75}, {colors.background/20} 65%, transparent)",
+            "linear-gradient(to top, {colors.background/85}, {colors.background/40} 18%, transparent 40%)",
         }}
       />
       <Container
@@ -145,10 +152,12 @@ export function FilmHero({
         alignItems={desktop ? "end" : "start"}
         justifyContent="space-between"
         gap={desktop ? 8 : 4}
-        pb={desktop ? "80px" : 8}
+        pb={desktop ? "80px" : 10}
       >
         {!desktop && creditColumn}
-        <Box css={textFade}>{pitch}</Box>
+        <Box justifySelf="start" maxW="100%" css={textPanel("left")}>
+          {pitch}
+        </Box>
         {desktop && creditColumn}
       </Container>
     </Theme>

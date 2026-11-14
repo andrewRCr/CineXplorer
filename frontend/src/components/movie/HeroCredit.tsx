@@ -13,9 +13,8 @@ export function HeroCredit({
   href?: string;
   showTagline: boolean;
 }) {
-  const metadata = [directors.join(", "), film.release_date?.slice(0, 4)]
-    .filter(Boolean)
-    .join(" | ");
+  const names = directors.join(", ");
+  const year = film.release_date?.slice(0, 4);
   return (
     <Box data-hero-credit>
       <Link
@@ -23,15 +22,29 @@ export function HeroCredit({
         color="foreground"
         fontFamily="heading"
         fontWeight="semibold"
-        fontSize="18px"
+        fontSize="17px"
         lineHeight="1.4"
+        textTransform="uppercase"
+        letterSpacing="0.08em"
         _hover={{ color: "tertiary-hover" }}
       >
-        <RouterLink to={href ?? "#"}>{film.title}</RouterLink>
+        {/* Browsers can name a capitalized link in capitals; keep the title's own case. */}
+        <RouterLink to={href ?? "#"} aria-label={film.title}>
+          {film.title}
+        </RouterLink>
       </Link>
-      {metadata && (
+      {(names || year) && (
         <Text data-hero-director fontSize="16px" lineHeight="1.5" mt={1}>
-          {metadata}
+          {names}
+          {names && year && (
+            <>
+              {" "}
+              <Box as="span" aria-hidden="true" color="on-muted" mx="0.2em">
+                |
+              </Box>{" "}
+            </>
+          )}
+          {year}
         </Text>
       )}
       {showTagline && film.tagline && (

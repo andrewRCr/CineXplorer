@@ -49,9 +49,10 @@ it("shows the pitch before the film read, then a title link and noninteractive t
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "See what's in theaters and coming soon, and keep a watchlist of what to see next. Film data from TMDB.",
+      "New releases, all-time classics, and everything in between.",
     ),
   ).toBeInTheDocument();
+  expect(screen.queryByText(/TMDB/)).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
     "href",
     "/register",
@@ -64,7 +65,7 @@ it("shows the pitch before the film read, then a title link and noninteractive t
   expect(
     await screen.findByRole("link", { name: /Lawrence of Arabia/ }),
   ).toHaveAttribute("href", "/movie/947?from=home");
-  expect(screen.getByText("David Lean | 1962")).toBeInTheDocument();
+  expect(screen.getByText("David Lean 1962")).toBeInTheDocument();
   expect(screen.getByText("An epic.")).toBeInTheDocument();
   expect(
     screen.queryByRole("link", { name: /An epic/ }),
@@ -225,7 +226,7 @@ it("uses director names from the featured response without a second read", async
   );
   render(<HomeHero />);
   expect(
-    await screen.findByText("First Director, Second Director | 1962"),
+    await screen.findByText("First Director, Second Director 1962"),
   ).toBeInTheDocument();
   expect(reads).toBe(1);
 });

@@ -11,16 +11,16 @@ import { pageContainerProps } from "@/components/layout/pageContainer";
 
 const points = [
   [
-    "See what's on",
-    "What's in theaters and coming soon, ordered and named for what it is.",
+    "Browse every film",
+    "What's in theaters, what's coming, or the whole catalog by genre, year and rating.",
   ],
   [
     "Keep a watchlist",
-    "Save films to see next from any poster, and find them on Home.",
+    "Save films from any poster and find them waiting on Home.",
   ],
   [
-    "Search any film",
-    "Find any film by its title, from the search in the bar.",
+    "Know before you watch",
+    "The story, cast, crew, score and runtime of any film, on one page.",
   ],
 ];
 export function HomeBand() {

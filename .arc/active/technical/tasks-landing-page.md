@@ -729,33 +729,37 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
           No candidate was imported or approved; Owner sign-off remains in 5.1. Full verification, CI and the final
           code review remain in Phase 6.
 
-- [ ] **4.13 Text panels, capital titles and the revised pitch and band copy — R6, R7, R8, R14, R27**
+- [x] **4.13 Text panels, capital titles and the revised pitch and band copy — R6, R7, R8, R14, R27**
 
     **Goal:** The full-bleed hero's text reads the same over any frame, and Home's copy pitches the whole app.
 
-    - [ ] **4.13.a Update the component tests**
-        - `HomeHero.test.tsx` shows R6's new line and no TMDB attribution; `HomeBand.test.tsx` shows R14's points
-        - The credit's director/year separator is hidden from assistive technology and still never orphaned; the
-          title link carries an accessible name equal to the title. Update the joined director/year text
-          assertions in `FilmHero.test.tsx` and `HomeHero.test.tsx` for the separator element
-    - [ ] **4.13.b Replace the feathered fades with hard-edged panels in `FilmHero` and restyle `HeroCredit`**
-        - Pitch and credit panels: square corners, no mask, `background` at about 90%, about 24px of padding,
-          fitted to their text; text keeps the content edges; a credit panel spans its column only when a row
-          wraps; at least 16px of image between panels; each outer edge flush to the window's edge or at least 16px
-          from it, chosen by CSS media query; long titles wrap naturally, without balance
-        - In `HomeHero.tsx`, the new line and, from 1024px, the headline's sentences and the line's two phrases on
-          their own lines; in `HomeBand.tsx`, R14's points
-        - Keep the `data-hero-*` hooks the external sheet's capture and screen rely on
-        - Remove the side-to-side gradient and keep a bottom fade. In `HeroCredit`, the title in capitals with
-          slightly widened letter spacing and an accessible name equal to the title; separator muted (`on-muted`)
-          and spaced. Semantic tokens only
-    - [ ] **4.13.c Check the restyled hero in the browsable stack**
-        - At 2000×1000, 1500×900, 1450×900, 1280×800, 1024×1000, 900×700, 768×600, 768×1024, 390×844 and 360×800 in both
-          modes: panel bounds and bright-frame contrast; read the title link's name from the browser's accessibility
-          tree. Measure capitalized credit fit, including the top inset, for the longest candidate titles and record
-          any that need a short title; 5.1.a's full rescreen settles them
-        - Run related frontend tests, lint, types and format, and `background.spec.ts`, `sign-in.spec.ts` and
-          `phone-width.spec.ts`
+    - [x] **4.13.a Update the component tests**
+    - [x] **4.13.b Replace the feathered fades with hard-edged panels in `FilmHero` and restyle `HeroCredit`**
+    - [x] **4.13.c Check the restyled hero in the browsable stack**
+
+    - Tests first: `HomeHero.test.tsx` and `HomeBand.test.tsx` assert R6's line without TMDB attribution and R14's
+      points; `FilmHero.test.tsx` asserts the title link's explicit accessible name, its capitals and an
+      `aria-hidden` separator; the joined director/year assertions now read the row's own text ("David Lean 1962").
+      They failed against the previous hero and pass now, with the orphan-separator cases unchanged.
+    - `FilmHero` replaces the masked fades with one `textPanel` style: `background/90`, 24px of padding, square
+      corners, fitted to its text (`justifySelf="start"` for the pitch). Flush or inset follows a container query on
+      the hero (`@container hero (min-width: 1456px)`); a container query measures the hero itself, so a classic
+      scrollbar cannot shift the switch as a viewport media query would. The flush side extends past the hero and is
+      clipped by its overflow. The side gradient is gone and the bottom fade is lighter. Compact landscape's bottom
+      padding grows from 32px to 40px so 16px of image stays below the pitch panel.
+    - `HeroCredit` sets the title at 17px in capitals with 0.08em tracking and `aria-label` equal to the title, and
+      renders the separator as a muted, spaced, `aria-hidden` span. `HomeHero` breaks the headline's sentences and
+      the line's phrases with `br` elements hidden below `lg`; `HomeBand` carries R14's points. `data-hero-*` hooks
+      are unchanged.
+    - Browser checks at 2000×1000, 1500×900, 1450×900, 1280×800, 1024×1000, 900×700 and 768×600 for three films
+      (including the longest titles) pass: panels flush at 1450px and below and 38px in at 1500px, separation at
+      least 20px, pitch panel equal to its longest line (370px from 1024px), wrapped credits within their column, 16px
+      or more of image below the pitch. Over a white frame the lowest panel-text contrast is 6.39:1 (muted tagline
+      and separator) in both page modes. The accessibility tree names the title link in its own case.
+    - Capitalized credit fit: every measured title fits at 390×844, 768×1024, 900×700 and 768×600; _Dr. Strangelove
+      or: How I Learned to Stop Worrying and Love the Bomb_ needs 99px of the 84px at 360×800 and goes to 5.1.a for a
+      short title. Related tests (44), lint, format and type-check pass; `background.spec.ts`, `sign-in.spec.ts` and
+      `phone-width.spec.ts` pass (17).
 
 - [ ] **4.14 A film entry's optional short title — R3, R4**
 

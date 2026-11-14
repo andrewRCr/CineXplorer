@@ -52,6 +52,9 @@ it.each([
     const action = screen.getByRole("link", { name: "Create account" });
     expect(screen.getAllByRole("link")[0]).toBe(compact ? title : action);
     expect(title).toHaveAccessibleName("A film");
+    // Browsers can name a capitalized link in capitals, so the title's own case is set explicitly.
+    expect(title).toHaveAttribute("aria-label", "A film");
+    expect(getComputedStyle(title).textTransform).toBe("uppercase");
     expect(title).toHaveAttribute("href", "/movie/62?from=home");
     expect(
       screen.getByRole("heading", { level: 1, name: "Pitch" }),
@@ -62,8 +65,9 @@ it.each([
     if (tagline) expect(screen.getByText("An epic.")).toBeInTheDocument();
     else expect(screen.queryByText("An epic.")).not.toBeInTheDocument();
     expect(
-      screen.getByText("First Director, Second Director | 1968"),
+      screen.getByText("First Director, Second Director 1968"),
     ).toBeInTheDocument();
+    expect(screen.getByText("|")).toHaveAttribute("aria-hidden", "true");
     expect(
       screen.queryByRole("link", { name: /First Director|An epic/ }),
     ).not.toBeInTheDocument();

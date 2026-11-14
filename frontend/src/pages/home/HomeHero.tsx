@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, Link as RouterLink } from "react-router";
-import { Button, Flex, Heading, Link, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Heading, Link, Text } from "@chakra-ui/react";
 import { featuredFilmQuery } from "@/lib/queries";
 import { FilmHero } from "@/components/movie/FilmHero";
 import { homeFilmPath } from "@/utilities/filmLinks";
@@ -26,13 +26,14 @@ export function HomeHero() {
           mb={5}
           textWrap="balance"
         >
-          Track what you watch. Find what's next.
+          Track what you watch. <Box as="br" hideBelow="lg" />
+          Find what's next.
         </Heading>
       }
       description={
-        <Text mb={6} fontSize="lg">
-          See what's in theaters and coming soon, and keep a watchlist of what
-          to see next. Film data from TMDB.
+        <Text mb={6} fontSize="lg" textWrap="balance">
+          New releases, all-time classics, <Box as="br" hideBelow="lg" />
+          and everything in between.
         </Text>
       }
       actions={

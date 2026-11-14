@@ -1,3 +1,4 @@
+import type { ReadOptions } from "@/services/httpService";
 import { readSession, sessionKey, type FirstReadContext } from "@/lib/session";
 import {
     getUserMovies,
@@ -10,7 +11,7 @@ import {
     getNowPlayingMovies,
     getUpcomingMovies,
 } from "@/services/movieService";
-import { homeSectionOptions } from "@/services/homeRequests";
+import { homeReadOptions, homeSectionOptions } from "@/services/homeRequests";
 import type { MovieDetail } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 
@@ -48,10 +49,14 @@ export const movieDetailQuery = (tmdbId: number) =>
             readWithSignal(signal, fetchMovieDetail().get<MovieDetail>(tmdbId)),
     });
 
-export const libraryQuery = (params: UserMoviesQueryParams) =>
+export const libraryQuery = (
+    params: UserMoviesQueryParams,
+    options?: ReadOptions,
+) =>
     queryOptions({
         queryKey: [...libraryKey, params] as const,
-        queryFn: ({ signal }) => readWithSignal(signal, getUserMovies(params)),
+        queryFn: ({ signal }) =>
+            readWithSignal(signal, getUserMovies(params, options)),
     });
 
 export const sessionQuery = (firstRead?: FirstReadContext) =>
@@ -87,3 +92,6 @@ export const featuredFilmQuery = (film?: number) =>
         refetchOnReconnect: false,
         queryFn: ({ signal }) => readWithSignal(signal, getFeaturedMovie(film)),
     });
+
+export const homeWatchlistQuery = () =>
+    libraryQuery({ watchlist: true, page: 1, page_size: 20 }, homeReadOptions);

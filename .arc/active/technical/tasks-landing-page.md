@@ -449,14 +449,14 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
         - All three large-card cases pass after behavioral failures; frontend lint and type-check pass.
         - Tests should now PASS
 
-- [ ] **4.2 The watchlist section leads with the newest addition and follows saves — R10, R20, R21**
+- [x] **4.2 The watchlist section leads with the newest addition and follows saves — R10, R20, R21**
 
     **Goal:** "Your watchlist" shows the watchlist's first film large and the rest in a row, in the Library's `added`
     order, changing at once as the visitor saves.
 
     **Check:** `sign-in.spec.ts` and `phone-width.spec.ts` (signed-in `/`).
 
-    - [ ] **4.2.a Write the section's tests in `src/pages/home/__tests__/WatchlistSection.test.tsx`**
+    - [x] **4.2.a Write the section's tests in `src/pages/home/__tests__/WatchlistSection.test.tsx`**
         - Test: the read sends `watchlist=true`, `page=1` and `page_size=20` and no sort, so the endpoint's `added`
           order, newest first, applies
         - Test: the first film as the large card and the rest in the scroller, its buttons in the section's header;
@@ -466,11 +466,13 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
         - Test: a failed read shows the section's failed state with no "Server error" toast, a `Toaster` mounted,
           while the watchlist page's failed read still raises it (`Watchlist.test.tsx`'s failure case, rendering the
           `Toaster`)
+        - Eleven section and Watchlist-page tests pass after the new section cases failed.
+          Frontend lint/type-check and both required browser specs pass (seven scenarios).
         - The shared `userMoviesHandler` is static; the save cases use a per-test handler that records saves and
           serves the watchlist newest first, as `Watchlist.test.tsx`'s refetch case does
         - Expect tests to FAIL initially
 
-    - [ ] **4.2.b Build `WatchlistSection` in `src/pages/home/`**
+    - [x] **4.2.b Build `WatchlistSection` in `src/pages/home/`**
         - `libraryQuery(params, options?)` passes `homeReadOptions` to `getUserMovies` (no pagination context: it is
           not a movie list endpoint); the key stays `[...libraryKey, params]`, so a save's invalidation refreshes it
         - A `FilmSection` titled "Your watchlist" holding `LargeFilmCard` and a `PosterScroller` with `source="home"`,

@@ -104,7 +104,17 @@ class UserMovieDataService:
             records = records.rated()
         if not any((query.watchlist, query.watched, query.liked, query.rated)):
             records = records.with_state()
-        records = records.ordered_for_library(query.sort, query.direction)
+        joined_lists = [
+            field
+            for active, field in [
+                (query.watchlist, "watchlist_added_at"),
+                (query.watched, "watched_added_at"),
+                (query.liked, "liked_added_at"),
+            ]
+            if active
+        ]
+        added_field = joined_lists[0] if len(joined_lists) == 1 else "created_at"
+        records = records.ordered_for_library(query.sort, query.direction, added_field)
         rows, metadata = paginate_queryset(records, query.page, query.page_size)
         movies: list[MovieListItemSchema] = []
         for record in rows:

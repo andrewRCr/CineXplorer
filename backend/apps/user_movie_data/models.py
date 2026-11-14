@@ -65,9 +65,11 @@ class UserMovieDataQuerySet(models.QuerySet["UserMovieData"]):
             last_logged_on=models.Subquery(dated.values("watched_on")[:1]),
         )
 
-    def ordered_for_library(self, sort: str, direction: str) -> Self:
+    def ordered_for_library(
+        self, sort: str, direction: str, added_field: str = "created_at"
+    ) -> Self:
         field = {
-            "added": "created_at",
+            "added": added_field,
             "watched": "last_logged_on",
             "rating": "user_rating",
             "title": "movie__title",

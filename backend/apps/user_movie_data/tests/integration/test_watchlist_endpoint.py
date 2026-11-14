@@ -253,3 +253,53 @@ def test_openapi_declares_library_responses() -> None:
             responses[status]["content"]["application/json"]["schema"]["$ref"]
             == "#/components/schemas/ErrorResponseSchema"
         )
+
+
+@pytest.mark.parametrize(
+    ("query", "join_sort"),
+    [
+        ({"watchlist": True}, True),
+        ({"watched": True}, True),
+        ({"liked": True}, True),
+        ({"watchlist": True, "rated": True}, True),
+        ({}, False),
+        ({"watchlist": True, "watched": True}, False),
+        ({"rated": True}, False),
+    ],
+)
+@pytest.mark.parametrize("direction", ["asc", "desc"])
+def test_added_sort_uses_one_filtered_list(
+    signed_in: tuple[Client, User], query: dict[str, object], join_sort: bool, direction: str
+) -> None:
+    client, user = signed_in
+    for movie_id, created_month, joined_month in [(111, 1, 3), (222, 2, 1)]:
+        record = create_user_movie_data(
+            user,
+            create_movie(movie_id),
+            user_watched=True,
+            user_on_watchlist=True,
+            user_liked=True,
+            user_rating=7,
+        )
+        join_times = {
+            stamp: datetime(
+                2020,
+                joined_month if not join_sort or query.get(flag) else created_month,
+                1,
+                tzinfo=UTC,
+            )
+            for flag, stamp in [
+                ("watchlist", "watchlist_added_at"),
+                ("watched", "watched_added_at"),
+                ("liked", "liked_added_at"),
+            ]
+        }
+        UserMovieData.objects.filter(pk=record.pk).update(
+            created_at=datetime(2020, created_month, 1, tzinfo=UTC), **join_times
+        )
+    response = client.get(URL, {**query, "sort": "added", "direction": direction})
+    assert response.status_code == 200
+    expected = [222, 111] if join_sort else [111, 222]
+    if direction == "desc":
+        expected.reverse()
+    assert [movie["tmdb_id"] for movie in response.json()["results"]] == expected

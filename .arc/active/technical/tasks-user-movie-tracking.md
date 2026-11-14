@@ -157,20 +157,19 @@ and two for a Library page.
           Library and enrichment share the annotated QuerySet. Updated type-safety Pattern 2 and its read example.
         - Relevant combined suite: 240 passed. Ruff, full-backend Pyright and documentation checks passed.
 
-- [ ] **2.3 The Library's "date added" is when a film joined the filtered list — D9**
+- [x] **2.3 The Library's "date added" is when a film joined the filtered list — D9**
 
     **Goal:** `/watchlist` and any other one-list Library query order films by when they joined that list, falling back
     to the record's creation time where no single list applies.
 
-    - [ ] **2.3.a Write the sort tests in `test_watchlist_endpoint.py`**
-        - `added` sorts by `watchlist_added_at`, `watched_added_at` or `liked_added_at` when exactly one of
-          `watchlist`, `watched` and `liked` is set, with or without `rated` (a list-plus-rated case among them), and
-          by `created_at` with no list filter, several, or `rated` alone; nulls last and TMDB-ID ties as today
-        - The `created_at` cases pass on arrival, since `added` sorts by `created_at` for every query today: see them
-          fail against a narrow break (`added` mapped to another field) and pass restored
-        - Expect the other tests to FAIL initially
-    - [ ] **2.3.b Give `ordered_for_library` the filtered list**
-        - Tests should now PASS
+    - [x] **2.3.a Write the sort tests in `test_watchlist_endpoint.py`**
+        - Fourteen cases distinguish each individual list's join time, including watchlist plus rated, from
+          creation-time fallback for no list, several lists and rated alone, in both directions.
+        - Single-list cases failed first. Mapping every added sort to watched time breaks the fallback and other
+          lists' assertions; restored endpoint run passes all 42 cases.
+    - [x] **2.3.b Give `ordered_for_library` the filtered list**
+        - The service selects one list's timestamp only when exactly one membership filter is active; ordering
+          retains nulls-last and TMDB-ID ties. All 201 app tests, Ruff and full-backend Pyright passed.
 
 - [ ] **2.4 Undoing a removal puts a film back in its place — D1, D5**
 

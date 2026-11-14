@@ -33,6 +33,8 @@ CASES = [
     "session_patch",
     "session_delete",
     "session_entry_create",
+    "session_entry_edit",
+    "session_entry_delete",
 ]
 
 
@@ -52,6 +54,17 @@ def request_data(case: str, entry: UserMovieData) -> tuple[str, str, dict[str, o
             user=user, email=user.email, verified=False, primary=True
         )
         return "post", "/api/verify-email/", {"key": EmailConfirmationHMAC(address).key}
+    if case in {"session_entry_edit", "session_entry_delete"}:
+        from datetime import date
+
+        child = UserMovieEntry.objects.create(
+            record=entry, watched_on=date(2020, 1, 1), rating=5, made_on=date(2020, 1, 1)
+        )
+        return (
+            "put" if case == "session_entry_edit" else "delete",
+            f"/api/user-movie-data/{entry.movie.tmdb_id}/entries/{child.pk}",
+            {"review": "Review", "rating": 8, "liked": False, "time_zone": "UTC"},
+        )
     cases: dict[str, tuple[str, str, dict[str, object]]] = {
         "login": (
             "post",
@@ -95,6 +108,12 @@ def assert_session_movie_write(case: str, entry: UserMovieData) -> None:
         assert not UserMovieData.objects.filter(pk=entry.pk).exists()
     if case == "session_entry_create":
         assert UserMovieEntry.objects.filter(record=entry).count() == 1
+    if case == "session_entry_edit":
+        entry.refresh_from_db()
+        assert entry.user_rating == 8
+        assert UserMovieEntry.objects.get(record=entry).rating == 8
+    if case == "session_entry_delete":
+        assert not UserMovieEntry.objects.filter(record=entry).exists()
 
 
 @pytest.mark.parametrize("case", CASES)

@@ -221,34 +221,23 @@ rewatch, passing in a backend test and on the browsable stack.
         - Named private viewing/review history and the shared card lookup beside record saves.
         - Full user-data and authentication suites: 564 passed. Ruff, full-backend Pyright and Markdown checks passed.
 
-- [ ] **3.2 An entry can be corrected or removed — D4, D6**
+- [x] **3.2 An entry can be corrected or removed — D4, D6**
 
     **Goal:** Any entry, old or new, can be replaced or deleted; an edit changes the current rating only where D4 says
     and never watched or the watchlist, and a delete changes nothing on the record.
 
-    - [ ] **3.2.a Write the service and API tests**
-        - Edit replaces `watched_on`, `rating`, `review` and `rewatch`, an omitted nullable field becoming null and an
-          omitted `rewatch` false; keeps `made_on` whatever the zone and date; sets Liked, stamping its join time when
-          it turns on; leaves watched and the watchlist; refuses the three 400s
-        - D4 on edit: editing the latest entry's rating sets the current rating; editing only its review after a
-          re-rating by PATCH leaves the re-rating; editing an older entry's rating leaves it; moving an entry's date to
-          make it the latest sets it to that entry's rating; clearing the latest entry's rating leaves the current
-          rating
-        - The edit's `record` carries a correct log summary after the entry's date moves later, moves earlier, and is
-          cleared (criterion 9)
-        - Delete answers 200 with the entry as it was and the record after, its log summary reflecting the delete;
-          the current rating, watched and the watchlist stay. `DELETE /user-movie-data/{tmdb_id}` deletes the
-          record's entries: that case passes on arrival, since the cascade lands in 1.3.c, so see it fail against a
-          narrow break of the cascade and pass restored
-        - Both routes: 401 with no user; 404 for a missing entry, another user's, and one addressed under another
-          film; 422; their OpenAPI statuses (edit's 429 joins in 3.4); a session-signed-in edit or delete without a
-          CSRF token answers 403 (`test_csrf_protection.py`)
-        - Expect the other tests to FAIL initially
-    - [ ] **3.2.b Add `edit` and `delete` to `UserMovieEntryService` and their routes**
-        - `PUT` and `DELETE /user-movie-data/{tmdb_id}/entries/{entry_id}`, under the record's lock; an edit applies
-          none of D3's rules
-        - Both answer with the record re-read through the log-summary method after the write
-        - Tests should now PASS
+    - [x] **3.2.a Write the service and API tests**
+        - Covered complete replacement/default clearing, immutable made-on, Liked stamping, unchanged watched and
+          watchlist flags, and all current-rating edit cases, including review-only corrections after direct re-rating.
+        - Verified summaries after later/earlier/cleared dates; deletes preserve facts and return the deleted entry
+          with a fresh summary. Older/latest deletion tests fail under recomputed-rating mutation and pass restored.
+        - Covered no user, missing/unowned/wrong-film entries, bad IDs, semantic validation, exact OpenAPI statuses
+          and session edit/delete CSRF. Route-absence and cascade-disabled reconstructions fail and pass restored.
+    - [x] **3.2.b Add `edit` and `delete` to `UserMovieEntryService` and their routes**
+        - Lock the owning record before entry lookup. Edits replace only entry content, Liked and the specified
+          current-rating cases; deletes keep record facts and return a snapshot taken before deletion.
+        - Coupled edit/delete behavior was tested in one red batch; final user-data/auth suites: 601 passed.
+          Ruff and full-backend Pyright passed.
 
 - [ ] **3.3 A film's entries are read with its record — D2, D6**
 

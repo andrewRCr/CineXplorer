@@ -249,3 +249,151 @@ def test_entry_create_and_unwatch_serialize_on_parent(
     assert record.user_watched
     assert UserMovieEntry.objects.filter(record=record).count() == 1
     assert tmdb.requested_ids == []
+
+
+@pytest.mark.parametrize(
+    ("which", "watched_on", "rating", "expected_rating"),
+    [
+        ("latest", "2020-01-02", 9, 9),
+        ("latest", "2020-01-02", 7, 3),
+        ("older", "2020-01-01", 9, 3),
+        ("older", "2020-01-03", 5, 5),
+        ("latest", "2020-01-02", None, 3),
+        ("latest", "2019-12-31", 9, 3),
+        ("latest", None, None, 3),
+    ],
+)
+def test_edit_current_rating_and_summary(
+    service: UserMovieEntryService,
+    user: User,
+    which: str,
+    watched_on: str | None,
+    rating: int | None,
+    expected_rating: int,
+) -> None:
+    record = create_user_movie_data(
+        user,
+        user_watched=True,
+        user_on_watchlist=True,
+        user_liked=True,
+        user_rating=3,
+        watchlist_added_at=datetime(2019, 1, 1, tzinfo=UTC),
+    )
+    older = UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 1), rating=5, made_on=date(2020, 1, 3)
+    )
+    latest = UserMovieEntry.objects.create(
+        record=record,
+        watched_on=date(2020, 1, 2),
+        rating=7,
+        rewatch=True,
+        made_on=date(2020, 1, 3),
+    )
+    target = latest if which == "latest" else older
+    result = service.edit(
+        user,
+        550,
+        target.pk,
+        body(
+            watched_on=watched_on,
+            rating=rating,
+            review="Corrected",
+            liked=False,
+            time_zone="Pacific/Kiritimati",
+        ),
+    )
+    record.refresh_from_db()
+    target.refresh_from_db()
+    assert record.user_rating == expected_rating
+    assert record.user_watched
+    assert record.user_on_watchlist
+    assert not record.user_liked
+    assert target.made_on == date(2020, 1, 3)
+    assert target.review == "Corrected"
+    assert not target.rewatch
+    dates = list(
+        UserMovieEntry.objects.filter(record=record, watched_on__isnull=False).values_list(
+            "watched_on", flat=True
+        )
+    )
+    assert result.record.last_logged_on == max(value for value in dates if value is not None)
+    assert result.record.has_entries
+
+
+def test_edit_replaces_omitted_nullable_fields_and_sets_liked(
+    service: UserMovieEntryService, user: User
+) -> None:
+    record = create_user_movie_data(user, user_watched=True, user_rating=7)
+    entry = UserMovieEntry.objects.create(
+        record=record,
+        watched_on=date(2020, 1, 1),
+        rating=7,
+        review="Old",
+        rewatch=True,
+        made_on=date(2020, 1, 1),
+    )
+    with freeze_time("2020-02-01 12:00:00"):
+        result = service.edit(
+            user,
+            550,
+            entry.pk,
+            UserMovieEntryWriteSchema(
+                liked=True, time_zone="America/Chicago", review="Only review"
+            ),
+        )
+        record.refresh_from_db()
+        assert record.liked_added_at == datetime(2020, 2, 1, 12, tzinfo=UTC)
+    entry.refresh_from_db()
+    assert (entry.watched_on, entry.rating, entry.rewatch, entry.review, entry.made_on) == (
+        None,
+        None,
+        False,
+        "Only review",
+        date(2020, 1, 1),
+    )
+    assert record.user_rating == 7
+    assert result.record.last_logged_on is None
+
+
+def test_delete_keeps_record_facts_and_updates_summary(
+    service: UserMovieEntryService, user: User, tmdb: TMDBStub
+) -> None:
+    record = create_user_movie_data(user, user_watched=True, user_on_watchlist=True, user_rating=7)
+    entry = UserMovieEntry.objects.create(
+        record=record,
+        watched_on=date(2020, 1, 1),
+        rating=7,
+        review="Review",
+        made_on=date(2020, 1, 1),
+    )
+    before = UserMovieData.objects.values().get(pk=record.pk)
+    result = service.delete(user, 550, entry.pk)
+    assert result.entry.id == entry.pk
+    assert result.entry.rating == 7
+    assert result.entry.review == "Review"
+    assert not result.record.has_entries
+    assert result.record.last_logged_on is None
+    assert UserMovieData.objects.values().get(pk=record.pk) == before
+    assert not UserMovieEntry.objects.exists()
+    assert tmdb.requested_ids == []
+
+
+@pytest.mark.parametrize("delete_latest", [False, True])
+def test_deleting_any_entry_preserves_a_later_direct_rating(
+    service: UserMovieEntryService, user: User, delete_latest: bool
+) -> None:
+    record = create_user_movie_data(user, user_watched=True, user_rating=9)
+    older = UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 1), rating=5, made_on=date(2020, 1, 1)
+    )
+    latest = UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 2), rating=7, made_on=date(2020, 1, 2)
+    )
+    result = service.delete(user, 550, latest.pk if delete_latest else older.pk)
+    record.refresh_from_db()
+    assert record.user_rating == 9
+    assert record.user_watched
+    assert result.record.has_entries
+    assert result.record.last_logged_on == (
+        date(2020, 1, 1) if delete_latest else date(2020, 1, 2)
+    )

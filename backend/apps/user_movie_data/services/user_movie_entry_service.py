@@ -7,7 +7,7 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
 from django.utils import timezone
 
-from apps.core.exceptions import InvalidInputError
+from apps.core.exceptions import InvalidInputError, NotFoundError
 from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 from apps.user_movie_data.schemas import (
@@ -83,3 +83,67 @@ class UserMovieEntryService:
             stamp_list_joins(record, previous)
             record.save()
             return self._response(user, tmdb_id, entry)
+
+    @staticmethod
+    def _locked_entry(
+        user: AbstractBaseUser, tmdb_id: int, entry_id: int
+    ) -> tuple[UserMovieData, UserMovieEntry]:
+        record = (
+            UserMovieData.objects.select_for_update().filter(user=user, movie_id=tmdb_id).first()
+        )
+        if record is None:
+            raise NotFoundError("Entry not found")
+        entry = UserMovieEntry.objects.filter(record=record, pk=entry_id).first()
+        if entry is None:
+            raise NotFoundError("Entry not found")
+        return record, entry
+
+    def edit(
+        self,
+        user: AbstractBaseUser,
+        tmdb_id: int,
+        entry_id: int,
+        payload: UserMovieEntryWriteSchema,
+    ) -> UserMovieEntryWriteResponseSchema:
+        self._validate(payload)
+        with transaction.atomic():
+            record, entry = self._locked_entry(user, tmdb_id, entry_id)
+            previous_flags = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
+            history = UserMovieEntry.objects.get_queryset().filter(record=record)
+            previous_latest = history.ordered_for_history().first()
+            previous_rating = entry.rating
+            entry.watched_on = payload.watched_on
+            entry.rating = payload.rating
+            entry.review = payload.review
+            entry.rewatch = payload.rewatch
+            entry.save()
+            latest = history.ordered_for_history().first()
+            if (
+                entry.rating is not None
+                and latest is not None
+                and latest.pk == entry.pk
+                and (
+                    previous_rating != entry.rating
+                    or previous_latest is None
+                    or previous_latest.pk != entry.pk
+                )
+            ):
+                record.user_rating = entry.rating
+            record.user_liked = payload.liked
+            stamp_list_joins(record, previous_flags)
+            record.save()
+            return self._response(user, tmdb_id, entry)
+
+    def delete(
+        self, user: AbstractBaseUser, tmdb_id: int, entry_id: int
+    ) -> UserMovieEntryWriteResponseSchema:
+        with transaction.atomic():
+            _, entry = self._locked_entry(user, tmdb_id, entry_id)
+            deleted = UserMovieEntrySchema.from_entry(entry, tmdb_id)
+            entry.delete()
+            return UserMovieEntryWriteResponseSchema(
+                entry=deleted,
+                record=UserMovieDataSchema.from_record(
+                    self._records.get_by_tmdb_id(user, tmdb_id)
+                ),
+            )

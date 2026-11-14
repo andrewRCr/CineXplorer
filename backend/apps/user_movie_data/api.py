@@ -119,3 +119,39 @@ def create_movie_entry(
     request: HttpRequest, tmdb_id: PositiveTMDBId, payload: UserMovieEntryWriteSchema
 ) -> Status[UserMovieEntryWriteResponseSchema]:
     return Status(201, _entry_service.create(get_current_user(request), tmdb_id, payload))
+
+
+@user_movie_data_router.put(
+    "/{tmdb_id}/entries/{entry_id}",
+    response={
+        200: UserMovieEntryWriteResponseSchema,
+        400: ErrorResponseSchema,
+        401: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+    },
+)
+def edit_movie_entry(
+    request: HttpRequest,
+    tmdb_id: PositiveTMDBId,
+    entry_id: PositiveTMDBId,
+    payload: UserMovieEntryWriteSchema,
+) -> UserMovieEntryWriteResponseSchema:
+    return _entry_service.edit(get_current_user(request), tmdb_id, entry_id, payload)
+
+
+@user_movie_data_router.delete(
+    "/{tmdb_id}/entries/{entry_id}",
+    response={
+        200: UserMovieEntryWriteResponseSchema,
+        401: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+    },
+)
+def delete_movie_entry(
+    request: HttpRequest, tmdb_id: PositiveTMDBId, entry_id: PositiveTMDBId
+) -> UserMovieEntryWriteResponseSchema:
+    return _entry_service.delete(get_current_user(request), tmdb_id, entry_id)

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { beforeEach, afterEach, it, expect } from "vitest";
+import { beforeEach, afterEach, it, expect, vi } from "vitest";
 import {
   render,
   screen,
@@ -10,6 +10,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw/http";
 import { server } from "@tests/mocks/server";
+import { gate } from "@tests/helpers/web-locks";
 import { apiBaseUrl } from "@/config/baseUrls";
 import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
 import { setAuthTokens } from "@/utilities/tokenUtils";
@@ -173,3 +174,34 @@ function ReadWatchlistSection() {
   const result = useQuery(homeWatchlistQuery());
   return <WatchlistSection result={result} />;
 }
+
+it("uses the measured row count for watchlist loading placeholders", async () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+  const pending = gate();
+  server.use(
+    http.get(`${apiBaseUrl}/user-movie-data/movies`, async () => {
+      await pending.wait;
+      return HttpResponse.json(
+        createMockMoviePage([movie(1), movie(2), movie(3)]),
+      );
+    }),
+  );
+  try {
+    render(
+      <AuthContextProvider>
+        <ReadWatchlistSection />
+      </AuthContextProvider>,
+    );
+    const status = await screen.findByRole("status");
+    expect(
+      within(status).getAllByRole("listitem", { hidden: true }),
+    ).toHaveLength(2);
+    pending.release();
+    const region = screen.getByRole("region", { name: "Your watchlist" });
+    await within(region).findByRole("heading", { name: "Film 1" });
+    expect(within(region).getAllByRole("listitem")).toHaveLength(2);
+  } finally {
+    pending.release();
+    vi.restoreAllMocks();
+  }
+});

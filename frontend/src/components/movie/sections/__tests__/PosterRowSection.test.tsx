@@ -1,4 +1,4 @@
-import { it, expect } from "vitest";
+import { it, expect, vi, afterEach } from "vitest";
 import {
   render,
   screen,
@@ -21,7 +21,10 @@ import { homeWindowQuery } from "@/lib/queries";
 import { getHomePaginationContextId } from "@/services/paginationContext";
 import { PosterRowSection } from "@/components/movie/sections/PosterRowSection";
 
+afterEach(() => vi.restoreAllMocks());
+
 it("holds the heading and placeholders until films arrive, then caps a named list at twenty", async () => {
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
   const pending = gate();
   server.use(
     http.get(`${apiBaseUrl}/movies/now-playing`, async ({ request }) => {
@@ -49,6 +52,12 @@ it("holds the heading and placeholders until films arrive, then caps a named lis
   );
   const section = screen.getByRole("region", { name: "Popular in theaters" });
   expect(within(section).getByRole("status")).toBeInTheDocument();
+  // The same measured viewport has two loading cards and two complete film slots.
+  expect(
+    within(within(section).getByRole("status")).getAllByRole("listitem", {
+      hidden: true,
+    }),
+  ).toHaveLength(2);
   expect(
     within(section).getByRole("link", { name: "See all" }),
   ).toHaveAttribute("href", "/browse/now-playing");

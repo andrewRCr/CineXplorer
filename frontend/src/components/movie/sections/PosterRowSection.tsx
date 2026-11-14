@@ -22,6 +22,14 @@ export function PosterRowSection<Key extends QueryKey>({
       result={result}
       films={films}
       controls={<PosterScrollButtons scroll={scroll} />}
+      placeholder={
+        <PosterScroller
+          films={[]}
+          listRef={scroll.ref}
+          count={scroll.count}
+          loading
+        />
+      }
     >
       <PosterScroller films={films} listRef={scroll.ref} source="home" />
     </FilmSection>

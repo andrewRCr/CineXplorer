@@ -23,6 +23,14 @@ export function WatchlistSection({
       seeAll="/watchlist"
       result={result}
       films={films}
+      placeholder={
+        <PosterScroller
+          films={[]}
+          listRef={scroll.ref}
+          count={scroll.count}
+          loading
+        />
+      }
       controls={
         rest.length > 0 ? <PosterScrollButtons scroll={scroll} /> : undefined
       }

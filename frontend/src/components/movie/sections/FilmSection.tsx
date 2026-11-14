@@ -26,6 +26,7 @@ interface FilmSectionProps {
   title: string;
   seeAll?: string;
   controls?: ReactNode;
+  placeholder?: ReactNode;
   result: Pick<
     UseQueryResult<MovieListResponse>,
     "isPending" | "isError" | "isFetching" | "refetch"
@@ -38,6 +39,7 @@ export function FilmSection({
   title,
   seeAll,
   controls,
+  placeholder,
   result,
   films,
   children,
@@ -71,23 +73,22 @@ export function FilmSection({
         </Flex>
       </Flex>
       {result.isPending || (result.isError && result.isFetching) ? (
-        <Flex
-          role="status"
-          aria-label={`Loading ${title}`}
-          gap={4}
-          overflow="hidden"
-        >
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton
-              key={i}
-              bg="layer-02"
-              minW="138px"
-              h="360px"
-              flex="1"
-              borderRadius="md"
-            />
-          ))}
-        </Flex>
+        <Box role="status" aria-label={`Loading ${title}`}>
+          {placeholder ?? (
+            <Flex gap={4} overflow="hidden">
+              {[0, 1, 2, 3].map((i) => (
+                <Skeleton
+                  key={i}
+                  bg="layer-02"
+                  minW="138px"
+                  h="360px"
+                  flex="1"
+                  borderRadius="md"
+                />
+              ))}
+            </Flex>
+          )}
+        </Box>
       ) : result.isError ? (
         <Box>
           <Text mb={3}>Couldn't load these films.</Text>

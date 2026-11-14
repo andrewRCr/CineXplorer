@@ -612,19 +612,19 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
       confirm alignment; white-frame checks retain pitch/actions through pending and failure states.
       Minimum measured muted-tagline contrast is 7.95:1 across the five widths in both page modes.
 
-- [ ] **4.9 Verify the accepted whole-card rows and the final hero geometry — R2, R3, R6–R8, R11, R12, R14, R27**
+- [x] **4.9 Verify the accepted whole-card rows and the final hero geometry — R2, R3, R6–R8, R11, R12, R14, R27**
 
     **Goal:** The final hero, its input focus and credit, and both uses of the poster scroller satisfy the amended
     browser geometry and contrast checks before the Owner settles the final films and points.
 
-    - [ ] **4.9.a Retain and verify the whole-card row implementation from the preview**
+    - [x] **4.9.a Retain and verify the whole-card row implementation from the preview**
         - Shared measured count near 194px and never below 138px, including loading placeholders and the watchlist
           scroller; count-based buttons at every width, card-edge snaps, hidden scrollbar and a complete final page
         - Preview tests already cover fixed-count/width regressions, paging and placeholders; retain those tests
           and the reduced-motion and resize behavior, adding coverage only where criterion 20 identifies a missing case
         - Run related section/watchlist tests, frontend lint and types over the final implementation
 
-    - [ ] **4.9.b Check the finished Home in the browsable stack and smoke tier**
+    - [x] **4.9.b Check the finished Home in the browsable stack and smoke tier**
         - Criterion 21 at 2000×1000, 1024×1000 and 390×844 in both page modes, plus 1280×800 and 360×800 for the
           calendar, minimum phone width, band and rows. Use Seven Samurai (346), 2001 (62), Lawrence of Arabia (947)
           and Blade Runner (78), and exercise an explicit point as well as the default
@@ -634,6 +634,21 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
         - Hold and fail the film read and image to show reserved height with no pitch/action movement. Resize,
           page to both ends, swipe, scroll by trackpad and Tab, and check reduced motion and no partial cards
         - Run `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`; record results for the final code
+
+    - All 38 related section/watchlist/geometry tests pass, including new cases seen failing against narrow
+      reconstructions for the final overlapping page, native-scroll paging, resize alignment and watchlist loading
+      count. Frontend lint/types pass; the test geometry helper was corrected to use role queries after lint.
+    - Four films across five widths in both modes produce 40 captures with the approved geometry. White-frame
+      checks confirm stable loading/failure positions, visible title focus and muted-tagline contrast of at least
+      7.95:1. An additional 320×600 check fits the credit within its reserved row without clipping the pitch.
+    - Rows settle on complete cards after button, trackpad, Tab and emulated touch movement; resize checks from
+      320px to 2200px pass with hidden scrollbars and visible controls. At 1280px, twenty films page from first
+      indices 0 to 6, 12 and 14; the watchlist uses the same count and paging. Reduced motion is instant.
+    - The calendar retains four side-by-side weeks at 1280px and stacks them at 360px, in both modes; shared
+      widths, the full-width band and page overflow checks pass. Original artwork is selected at 2000px at both
+      tested pixel densities. The three covering smoke specs pass all 17 scenarios on this implementation.
+    - Final film selection and per-film focus approval remain in 5.1; full verification and code review remain
+      in Phase 6. No success criterion is marked by these implementation checks.
 
 ### **Phase 5:** Home is ready to merge
 
@@ -718,8 +733,7 @@ recorded, and the three changed smoke specs pass.
 
 ## Implementation Notes
 
-- **The approved full-width hero amendment** adds 4.7–4.9 before 5.1. Preview code is uncommitted and still contains
-  alternatives; it is evidence for the design, not completion of the revised credit and focus contract. The
+- **The approved full-width hero amendment** is implemented by 4.7–4.9 before the final film checks in 5.1. The
   presentation takes focus as an input; no film-page integration or interactive point editor is part of this work.
 
 - **The interim signed-in Home (3.1 to 4.3)** is deliberate: the three specs change once, in 3.2, the task that

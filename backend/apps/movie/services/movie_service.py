@@ -24,7 +24,7 @@ from apps.core.tmdb_models.tmdb_responses import (
 )
 from apps.core.types.api_types import TMDBParams
 
-from ..featured import FEATURED_FILM_IDS
+from ..featured import FEATURED_FILMS, FeaturedFilm
 from ..helpers import (
     NOW_PLAYING_PROTECTED_KEYS,
     UPCOMING_PROTECTED_KEYS,
@@ -78,16 +78,24 @@ class MovieService(BaseTMDBService):
     def __init__(
         self,
         tmdb_client: TMDBApiClient | None = None,
-        choose_film: Callable[[Sequence[int]], int] = random.choice,
+        choose_film: Callable[[Sequence[FeaturedFilm]], FeaturedFilm] = random.choice,
+        featured_films: Sequence[FeaturedFilm] = FEATURED_FILMS,
     ) -> None:
         super().__init__(tmdb_client)
         self._choose_film = choose_film
+        self._featured_films = featured_films
 
     def get_featured_movie(self, film: int | None = None) -> FeaturedMovieSchema:
         """Read the homepage's film without fetching credits."""
-        movie_id = (
-            film if settings.DEBUG and film is not None else self._choose_film(FEATURED_FILM_IDS)
+        selected = (
+            next(
+                (entry for entry in self._featured_films if entry.tmdb_id == film),
+                FeaturedFilm(film),
+            )
+            if settings.DEBUG and film is not None
+            else self._choose_film(self._featured_films)
         )
+        movie_id = selected.tmdb_id
         response = self._tmdb_client.get_movie_details(movie_id)
         if not response.is_success():
             handle_tmdb_api_error(
@@ -97,7 +105,7 @@ class MovieService(BaseTMDBService):
         if data is None:
             raise UpstreamError("Invalid movie data from external API")
         try:
-            return create_featured_movie_from_tmdb(data)
+            return create_featured_movie_from_tmdb(data, selected.focus_point)
         except ValidationError as error:
             raise UpstreamError("Invalid movie data from external API") from error
 

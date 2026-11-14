@@ -20,6 +20,7 @@ export function homeHandlers() {
                 release_date: "1962-12-11",
                 backdrop_path: null,
                 tagline: null,
+                focus_point: null,
             }),
         ),
         http.get(`${apiBaseUrl}/movies/now-playing`, () =>

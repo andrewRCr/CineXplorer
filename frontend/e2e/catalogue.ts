@@ -57,6 +57,7 @@ function homeCatalogueResponse(url: URL): object | undefined {
             release_date: "1962-12-11",
             backdrop_path: null,
             tagline: null,
+            focus_point: null,
         } satisfies components["schemas"]["FeaturedMovieSchema"];
     if (url.pathname === "/api/movies/now-playing")
         return moviePage(1, 20, null);

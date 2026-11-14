@@ -6,7 +6,7 @@ import pytest
 from django.test import Client, override_settings
 
 from apps.core.services.api_response import ApiResponse
-from apps.movie.featured import FEATURED_FILM_IDS
+from apps.movie.featured import FEATURED_FILMS
 from apps.movie.tests.mock_paths import TMDB_CLIENT_GET, TMDB_CLIENT_GET_MOVIE_DETAILS
 from apps.movie.tests.test_helpers import create_mock_error_response
 from apps.movie.tests.tmdb_test_builders import create_tmdb_movie_detail
@@ -28,7 +28,7 @@ def detail_response(movie_id: int, **kwargs: object) -> ApiResponse:
 
 @pytest.mark.parametrize("debug", [False, True])
 def test_public_featured_contract(api_client: Client, debug: bool) -> None:
-    override = max(FEATURED_FILM_IDS) + 1
+    override = max(entry.tmdb_id for entry in FEATURED_FILMS) + 1
     with (
         override_settings(DEBUG=debug),
         patch(TMDB_CLIENT_GET_MOVIE_DETAILS, side_effect=detail_response),
@@ -38,13 +38,19 @@ def test_public_featured_contract(api_client: Client, debug: bool) -> None:
     assert response.status_code == 200
     body = response.json()
     movie_id = body["tmdb_id"]
-    assert movie_id == override if debug else movie_id in FEATURED_FILM_IDS
+    assert (
+        movie_id == override if debug else movie_id in {entry.tmdb_id for entry in FEATURED_FILMS}
+    )
+    point = next(
+        (entry.focus_point for entry in FEATURED_FILMS if entry.tmdb_id == movie_id), None
+    )
     assert body == {
         "tmdb_id": movie_id,
         "title": f"Film {movie_id}",
         "release_date": "1962-12-11",
         "backdrop_path": "/still.jpg",
         "tagline": "An epic.",
+        "focus_point": point.model_dump() if point is not None else None,
     }
 
 

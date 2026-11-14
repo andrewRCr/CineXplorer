@@ -7,20 +7,19 @@ from django.test import override_settings
 
 from apps.core.exceptions import NotFoundError, UpstreamError
 from apps.core.services.api_response import ApiResponse
-from apps.movie.featured import FEATURED_FILM_IDS
+from apps.movie.featured import FEATURED_FILMS, FeaturedFilm, FilmFocusPoint
 from apps.movie.services.movie_service import MovieService
 from apps.movie.tests.tmdb_stub import TMDBStub
 from apps.movie.tests.tmdb_test_builders import create_tmdb_movie_detail
 
 
-def choose_last(ids: Sequence[int]) -> int:
-    assert ids == FEATURED_FILM_IDS
-    return ids[-1]
+def choose_last(films: Sequence[FeaturedFilm]) -> FeaturedFilm:
+    return films[-1]
 
 
 def test_selected_film_is_returned_without_credits() -> None:
     stub = TMDBStub()
-    selected = FEATURED_FILM_IDS[-1]
+    selected = FEATURED_FILMS[-1].tmdb_id
     stub.add_movie(
         create_tmdb_movie_detail(
             selected,
@@ -38,6 +37,7 @@ def test_selected_film_is_returned_without_credits() -> None:
         "release_date": "1962-12-11",
         "backdrop_path": "/still.jpg",
         "tagline": "An epic.",
+        "focus_point": None,
     }
     assert stub.requested_endpoints == [f"movie/{selected}"]
 
@@ -45,8 +45,10 @@ def test_selected_film_is_returned_without_credits() -> None:
 @pytest.mark.parametrize("debug", [True, False])
 @pytest.mark.parametrize("listed", [True, False])
 def test_override_only_in_debug(debug: bool, listed: bool) -> None:
-    selected = FEATURED_FILM_IDS[-1]
-    override = FEATURED_FILM_IDS[0] if listed else max(FEATURED_FILM_IDS) + 1
+    selected = FEATURED_FILMS[-1].tmdb_id
+    override = (
+        FEATURED_FILMS[0].tmdb_id if listed else max(entry.tmdb_id for entry in FEATURED_FILMS) + 1
+    )
     expected = override if debug else selected
     stub = TMDBStub()
     stub.add_movie(create_tmdb_movie_detail(expected, "Expected film", "1954-04-26", 8.0))
@@ -59,7 +61,7 @@ def test_override_only_in_debug(debug: bool, listed: bool) -> None:
 @pytest.mark.parametrize("tagline", [None, "", "   "])
 def test_missing_art_and_empty_tagline_are_null(tagline: str | None) -> None:
     stub = TMDBStub()
-    selected = FEATURED_FILM_IDS[-1]
+    selected = FEATURED_FILMS[-1].tmdb_id
     stub.add_movie(create_tmdb_movie_detail(selected, "Film", "1954-04-26", 8.0, tagline=tagline))
     result = MovieService(stub, choose_film=choose_last).get_featured_movie()
     assert result.backdrop_path is None
@@ -78,7 +80,7 @@ def test_failed_lookup_does_not_try_another_film(
     status: int, timeout: bool, error: type[Exception]
 ) -> None:
     stub = TMDBStub()
-    selected = FEATURED_FILM_IDS[-1]
+    selected = FEATURED_FILMS[-1].tmdb_id
     stub.add_error(selected, status, timeout=timeout)
     with pytest.raises(error):
         MovieService(stub, choose_film=choose_last).get_featured_movie()
@@ -87,8 +89,30 @@ def test_failed_lookup_does_not_try_another_film(
 
 def test_invalid_success_body_is_an_upstream_error() -> None:
     stub = TMDBStub()
-    selected = FEATURED_FILM_IDS[-1]
+    selected = FEATURED_FILMS[-1].tmdb_id
     stub.details[selected] = ApiResponse(status_code=200, data={"id": selected})
     with pytest.raises(UpstreamError):
         MovieService(stub, choose_film=choose_last).get_featured_movie()
     assert stub.requested_endpoints == [f"movie/{selected}"]
+
+
+@pytest.mark.parametrize("debug", [False, True])
+@pytest.mark.parametrize("candidate", [None, 101, 102, 103])
+def test_selected_entry_carries_its_focus(debug: bool, candidate: int | None) -> None:
+    films = (
+        FeaturedFilm(101, FilmFocusPoint(x=0, y=100)),
+        FeaturedFilm(102, FilmFocusPoint(x=91, y=12)),
+    )
+    selected_id = candidate if debug and candidate is not None else 102
+    expected_point = next(
+        (entry.focus_point for entry in films if entry.tmdb_id == selected_id), None
+    )
+    stub = TMDBStub()
+    stub.add_movie(create_tmdb_movie_detail(selected_id, "Selected film", "1968-04-02", 8.0))
+    with override_settings(DEBUG=debug):
+        result = MovieService(
+            stub, choose_film=choose_last, featured_films=films
+        ).get_featured_movie(candidate)
+    assert result.tmdb_id == selected_id
+    assert result.focus_point == expected_point
+    assert stub.requested_endpoints == [f"movie/{selected_id}"]

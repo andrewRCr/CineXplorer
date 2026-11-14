@@ -555,25 +555,29 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     - After the walkthrough, `sign-in.spec.ts` and `phone-width.spec.ts` passed all seven scenarios with their axe
       scans.
 
-- [ ] **4.7 The featured film carries its list entry's optional focus point — R3, R4**
+- [x] **4.7 The featured film carries its list entry's optional focus point — R3, R4**
 
     **Goal:** The selected film and its optional percentage focus point travel together, including development
     candidates, with no additional TMDB call or change to production's random selection.
 
-    - [ ] **4.7.a Write the focus contract tests before changing the backend**
+    - [x] **4.7.a Write the focus contract tests before changing the backend**
         - Extend the service and endpoint tests in `backend/apps/movie/tests/`: choice picks an entry's ID and
           configured point together; an unset point is `null`; listed DEBUG candidates retain their point and
           unlisted candidates have none; production ignores the candidate and returns its random entry's point
         - Schema tests accept both coordinates at 0 and 100 and reject partial, non-finite or out-of-range points
         - Keep authentication, single detail call, no credits, nullable fields and error assertions; see criterion 18
 
-    - [ ] **4.7.b Carry focus metadata from the list through the schema and generated types**
+    - [x] **4.7.b Carry focus metadata from the list through the schema and generated types**
         - Replace the bare `FEATURED_FILM_IDS` list with entries containing `tmdb_id` and optional `focus_point`
           in `backend/apps/movie/featured.py`; choose entries through the existing replaceable choice seam
         - Extend `FeaturedMovieSchema` and the service/factory boundary with nullable `focus_point: {x, y}` as R4
           defines. It is local list metadata, not a TMDB field; the movie detail schema gains no focus field
         - Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts`; update the Home test fixtures and
           `e2e/catalogue.ts` to match. Run the movie app's Docker tests, touched-app Ruff/Pyright and frontend types
+
+    - Schema and selection tests failed before their implementations, then passed. The movie app passes all
+      576 Docker tests; Ruff, Pyright, generated frontend types and fixture lint pass. All provisional points remain
+      unset for the Owner’s final film checks.
 
 - [ ] **4.8 The selected full-width neutral hero uses its input focus and aligned credit — R3, R6–R9, R25, R27**
 

@@ -52,6 +52,7 @@ from apps.core.tmdb_models.tmdb_responses import (
     TMDBReleaseDatesResponse,
 )
 from apps.core.utils import empty_str_to_none
+from apps.movie.featured import FilmFocusPoint
 
 from ...schemas import (
     CastMemberSchema,
@@ -248,7 +249,9 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
         raise
 
 
-def create_featured_movie_from_tmdb(movie_data: Mapping[str, object]) -> FeaturedMovieSchema:
+def create_featured_movie_from_tmdb(
+    movie_data: Mapping[str, object], focus_point: FilmFocusPoint | None = None
+) -> FeaturedMovieSchema:
     """Validate a TMDB detail response and retain only the homepage's fields."""
     movie = TMDBMovieDetail.model_validate(movie_data)
     return FeaturedMovieSchema.model_validate(
@@ -258,6 +261,7 @@ def create_featured_movie_from_tmdb(movie_data: Mapping[str, object]) -> Feature
             "release_date": empty_str_to_none(movie.release_date),
             "backdrop_path": movie.backdrop_path,
             "tagline": empty_str_to_none(movie.tagline),
+            "focus_point": focus_point,
         }
     )
 

@@ -15,6 +15,7 @@ from pydantic import Field, field_validator
 
 from apps.core.models import Movie
 from apps.movie.constants import TMDB_MAX_PAGE
+from apps.movie.featured import FilmFocusPoint
 from apps.user_movie_data.schemas import UserMovieDataSchema
 
 
@@ -176,6 +177,7 @@ class FeaturedMovieSchema(Schema):
     release_date: date | None = None
     backdrop_path: str | None = None
     tagline: str | None = None
+    focus_point: FilmFocusPoint | None = None
 
 
 class MovieDetailSchema(MovieListItemSchema):

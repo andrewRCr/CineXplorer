@@ -1519,6 +1519,17 @@ export interface components {
             backdrop_path?: string | null;
             /** Tagline */
             tagline?: string | null;
+            focus_point?: components["schemas"]["FilmFocusPoint"] | null;
+        };
+        /**
+         * FilmFocusPoint
+         * @description An image anchor expressed as paired percentages.
+         */
+        FilmFocusPoint: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
         };
         /** CastMemberSchema */
         CastMemberSchema: {

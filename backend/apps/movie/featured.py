@@ -1,4 +1,37 @@
 """Hand-selected classic films for the homepage."""
 
+from dataclasses import dataclass
+
+from pydantic import BaseModel, Field
+
+
+class FilmFocusPoint(BaseModel):
+    """An image anchor expressed as paired percentages."""
+
+    x: float = Field(ge=0, le=100, allow_inf_nan=False)
+    y: float = Field(ge=0, le=100, allow_inf_nan=False)
+
+
+@dataclass(frozen=True)
+class FeaturedFilm:
+    """A curated film and its optional image anchor."""
+
+    tmdb_id: int
+    focus_point: FilmFocusPoint | None = None
+
+
 # Check a film in the built hero in both color modes before adding it to the final list.
-FEATURED_FILM_IDS = (289, 567, 346, 426, 213, 947, 62, 238, 829, 578, 348, 78)
+FEATURED_FILMS = (
+    FeaturedFilm(289),
+    FeaturedFilm(567),
+    FeaturedFilm(346),
+    FeaturedFilm(426),
+    FeaturedFilm(213),
+    FeaturedFilm(947),
+    FeaturedFilm(62),
+    FeaturedFilm(238),
+    FeaturedFilm(829),
+    FeaturedFilm(578),
+    FeaturedFilm(348),
+    FeaturedFilm(78),
+)

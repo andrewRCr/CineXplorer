@@ -1,4 +1,6 @@
-import { Container, VisuallyHidden } from "@chakra-ui/react";
+import { getChangeCount } from "@/lib/session";
+import { SignedInHome } from "./SignedInHome";
+import { Container } from "@chakra-ui/react";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { pageContainerProps } from "@/components/layout/pageContainer";
@@ -11,10 +13,7 @@ export default function Home() {
   if (status === "resolving") return <LoadingContent mode="content" />;
   if (status === "authenticated")
     return (
-      <Container {...pageContainerProps}>
-        <VisuallyHidden as="h1">Home</VisuallyHidden>
-        <WhatsOn />
-      </Container>
+      <SignedInHome key={getChangeCount()} generation={getChangeCount()} />
     );
   return (
     <>

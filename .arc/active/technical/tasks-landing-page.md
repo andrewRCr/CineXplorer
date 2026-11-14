@@ -479,14 +479,14 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
           its `PosterScrollButtons` in the section's header
         - Tests should now PASS
 
-- [ ] **4.3 Signed-in Home greets on arrival, and the visitor's reads decide the page — R18, R19, R22**
+- [x] **4.3 Signed-in Home greets on arrival, and the visitor's reads decide the page — R18, R19, R22**
 
     **Goal:** Signed-in Home greets once per load or sign-in, then waits for the visitor's reads, shows their sections
     or the nothing-saved set, and holds that set while it is shown.
 
     **Check:** `sign-in.spec.ts` and `phone-width.spec.ts` (signed-in `/`).
 
-    - [ ] **4.3.a Write signed-in Home's tests in `Home.test.tsx`**
+    - [x] **4.3.a Write signed-in Home's tests in `Home.test.tsx`**
         - Each case starts "after load": `beforeEach` calls `beginUserChange`, the change the greeting compares
           against, so no case depends on another's greeting; 3.1's interim signed-in cases are rewritten to the
           arrival rule
@@ -502,7 +502,7 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
           visitor saves a first film
         - Expect tests to FAIL initially
 
-    - [ ] **4.3.b Build the greeting and signed-in Home's composition**
+    - [x] **4.3.b Build the greeting and signed-in Home's composition**
         - The greeting is held in memory: the change count it greeted at, compared with `getChangeCount()`
           (`lib/session.ts`), so `beginUserChange` clears it and nothing is stored
         - The name from the session's user, `first_name` or else `username`; the hidden `h1` with `VisuallyHidden`
@@ -510,7 +510,12 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
           stays in its loading state until the session read and the watchlist read have each settled once; the
           set (the visitor's sections or nothing-saved) is chosen then and held in component state while Home shows;
           a Retry never returns the page to loading; `status` turning `anonymous` drops the signed-in page
-        - Replaces the interim signed-in form from 3.1
+        - Replaces the interim signed-in form from 3.1. Home owns the one watchlist observer and passes its result
+          to the section, avoiding an automatic retry when an error section mounts. Initial selection also waits
+          for an active invalidation refetch, preventing cached empty data from choosing the next visit's set.
+        - All thirteen Home cases pass, including StrictMode, delayed refetch and the real cross-user sign-in sequence.
+          The refetch case fails without its initial-fetch guard and passes with it. The full frontend suite passes
+          (3,256 tests); lint/type-check and both required browser specs pass (seven scenarios).
         - Tests should now PASS
 
 - [ ] **4.4 Signing in shows no welcome toast — R23**

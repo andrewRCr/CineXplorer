@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { beforeEach, afterEach, it, expect } from "vitest";
 import {
   render,
@@ -25,7 +26,7 @@ import {
 } from "@/components/core/chakra/toaster";
 import { WatchlistSection } from "@/pages/home/WatchlistSection";
 import { PosterRowSection } from "@/components/movie/sections/PosterRowSection";
-import { homeWindowQuery } from "@/lib/queries";
+import { homeWindowQuery, homeWatchlistQuery } from "@/lib/queries";
 
 const movie = (id: number, saved = true) =>
   createMockMovieListItem({
@@ -72,7 +73,7 @@ it.each([1, 3])(
     );
     render(
       <AuthContextProvider>
-        <WatchlistSection />
+        <ReadWatchlistSection />
       </AuthContextProvider>,
     );
     const region = await screen.findByRole("region", {
@@ -121,7 +122,7 @@ it("updates the leading film and removes saved films through real card saves", a
   );
   render(
     <AuthContextProvider>
-      <WatchlistSection />
+      <ReadWatchlistSection />
       <PosterRowSection
         title="Theaters"
         query={homeWindowQuery("now-playing")}
@@ -158,7 +159,7 @@ it("shows a section failure without the global error toast", async () => {
   );
   render(
     <AuthContextProvider>
-      <WatchlistSection />
+      <ReadWatchlistSection />
       <Toaster />
     </AuthContextProvider>,
   );
@@ -167,3 +168,8 @@ it("shows a section failure without the global error toast", async () => {
   ).toBeInTheDocument();
   expect(screen.queryByText("Server error")).not.toBeInTheDocument();
 });
+
+function ReadWatchlistSection() {
+  const result = useQuery(homeWatchlistQuery());
+  return <WatchlistSection result={result} />;
+}

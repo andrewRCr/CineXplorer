@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import type { UseQueryResult } from "@tanstack/react-query";
+import type { MovieListResponse } from "@/types/movie";
 import { Box } from "@chakra-ui/react";
-import { homeWatchlistQuery } from "@/lib/queries";
 import { FilmSection } from "@/components/movie/sections/FilmSection";
 import { LargeFilmCard } from "@/components/movie/sections/LargeFilmCard";
 import {
@@ -9,8 +9,11 @@ import {
 } from "@/components/movie/sections/PosterScroller";
 import { usePosterScroll } from "@/components/movie/sections/usePosterScroll";
 
-export function WatchlistSection() {
-  const result = useQuery(homeWatchlistQuery());
+export function WatchlistSection({
+  result,
+}: {
+  result: UseQueryResult<MovieListResponse>;
+}) {
   const films = result.data?.results ?? [];
   const [first, ...rest] = films;
   const scroll = usePosterScroll();

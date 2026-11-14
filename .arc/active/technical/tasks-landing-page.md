@@ -579,21 +579,21 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
       576 Docker tests; Ruff, Pyright, generated frontend types and fixture lint pass. All provisional points remain
       unset for the Owner’s final film checks.
 
-- [ ] **4.8 The selected full-width neutral hero uses its input focus and aligned credit — R3, R6–R9, R25, R27**
+- [x] **4.8 The selected full-width neutral hero uses its input focus and aligned credit — R3, R6–R9, R25, R27**
 
     **Goal:** A dark hero in both page modes presents the approved pitch over the focused backdrop, with a separate
     readable credit aligned to the actions and shared content edge, and no jump when artwork fails.
 
     **Check:** `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`.
 
-    - [ ] **4.8.a Update the hero tests and input boundary before completing the presentation**
+    - [x] **4.8.a Update the hero tests and input boundary before completing the presentation**
         - The hero takes film data and optional focus as inputs; Home alone owns the featured query and development
           film parameter. Direct input cases cover configured points, inclusive edge values and the `50% 28%` default
         - Retain immediate pitch, lifetime cache, navigation and quiet read/image failure checks. Assert the exact
           R6 copy, a title/year-only link, and a plain tagline; update Home, App and background spec assertions
         - Keep the band's copy. Criterion 19 gives the complete component contract
 
-    - [ ] **4.8.b Keep only the chosen full-width layout and apply the revised credit**
+    - [x] **4.8.b Keep only the chosen full-width layout and apply the revised credit**
         - Remove the `hero` layout selector and the split and amber alternatives from the preview code
         - Scope the existing dark palette to the hero; cover the viewport-wide 73svh area with the backdrop, its
           minimum heights from R8 and `object-position` from the input at every width. Select a larger original
@@ -606,6 +606,11 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
           normal-text contrast over bright frames. No boxed card or light-page fade
         - Retain the input presentation for later film-page reuse without implementing that page here; run related
           frontend tests, format, lint, types and the three covering smoke specs
+
+    - Focus-input assertions failed against the centered prototype, then all 29 related tests passed.
+      Frontend lint/types and the three covering smoke specs pass (17 scenarios). Forty film/width/mode captures
+      confirm alignment; white-frame checks retain pitch/actions through pending and failure states.
+      Minimum measured muted-tagline contrast is 7.95:1 across the five widths in both page modes.
 
 - [ ] **4.9 Verify the accepted whole-card rows and the final hero geometry — R2, R3, R6–R8, R11, R12, R14, R27**
 

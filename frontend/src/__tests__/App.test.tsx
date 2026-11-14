@@ -69,7 +69,7 @@ it("serves Home's pitch at the root route", async () => {
   expect(
     await screen.findByRole("heading", {
       level: 1,
-      name: "Track the films you watch. Find the next one.",
+      name: "Track what you watch. Find what's next.",
     }),
   ).toBeVisible();
 });

@@ -10,6 +10,7 @@ import { http, HttpResponse } from "msw/http";
 import { server } from "@tests/mocks/server";
 import { gate } from "@tests/helpers/web-locks";
 import { apiBaseUrl } from "@/config/baseUrls";
+import { FilmHero } from "@/components/movie/FilmHero";
 import { HomeHero } from "@/pages/home/HomeHero";
 import {
   Toaster,
@@ -18,15 +19,16 @@ import {
 } from "@/components/core/chakra/toaster";
 import { signInPathFor } from "@/utilities/returnPath";
 
-const headline = "Track the films you watch. Find the next one.";
+const headline = "Track what you watch. Find what's next.";
 const film = {
   tmdb_id: 947,
   title: "Lawrence of Arabia",
   release_date: "1962-12-11",
   backdrop_path: "/still.jpg",
   tagline: "An epic.",
+  focus_point: null,
 };
-it("shows the pitch and actions before the film read settles, then its credit and decorative still", async () => {
+it("shows the pitch before the film read, then a title link and noninteractive tagline", async () => {
   const pending = gate();
   server.use(
     http.get(`${apiBaseUrl}/movies/featured`, async () => {
@@ -34,13 +36,15 @@ it("shows the pitch and actions before the film read settles, then its credit an
       return HttpResponse.json(film);
     }),
   );
-  render(<HomeHero />);
+  renderWithRoutes([{ path: "/", element: <HomeHero /> }], {
+    initialRoute: "/",
+  });
   expect(
     screen.getByRole("heading", { level: 1, name: headline }),
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Browse what's in theaters and coming soon, keep a watchlist, and search any film. Film data from TMDB.",
+      "See what's in theaters and coming soon, and keep a watchlist of what to see next. Film data from TMDB.",
     ),
   ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
@@ -56,6 +60,14 @@ it("shows the pitch and actions before the film read settles, then its credit an
     await screen.findByRole("link", { name: /Lawrence of Arabia \(1962\)/ }),
   ).toHaveAttribute("href", "/movie/947?from=home");
   expect(screen.getByText("An epic.")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: /An epic/ }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("link", {
+      name: "Lawrence of Arabia (1962)",
+    }),
+  ).toHaveAttribute("href", "/movie/947?from=home");
   expect(screen.getByAltText("")).toHaveAttribute(
     "src",
     "https://image.tmdb.org/t/p/w1280/still.jpg",
@@ -158,4 +170,35 @@ it("retains its selected film for the loaded page's lifetime", () => {
   expect(options.refetchOnMount).toBe(false);
   expect(options.refetchOnWindowFocus).toBe(false);
   expect(options.refetchOnReconnect).toBe(false);
+});
+
+it.each([
+  { point: undefined, position: "50% 28%" },
+  { point: null, position: "50% 28%" },
+  { point: { x: 0, y: 100 }, position: "0% 100%" },
+  { point: { x: 100, y: 0 }, position: "100% 0%" },
+  { point: { x: 91, y: 12 }, position: "91% 12%" },
+])("anchors supplied artwork at $position", ({ point, position }) => {
+  render(
+    <FilmHero film={film} focusPoint={point} creditHref="/movie/947?from=home">
+      <p>Pitch</p>
+    </FilmHero>,
+  );
+  expect(getComputedStyle(screen.getByAltText("")).objectPosition).toBe(
+    position,
+  );
+});
+
+it("uses the featured film's configured focus without another read", async () => {
+  let reads = 0;
+  server.use(
+    http.get(`${apiBaseUrl}/movies/featured`, () => {
+      reads++;
+      return HttpResponse.json({ ...film, focus_point: { x: 33, y: 61 } });
+    }),
+  );
+  render(<HomeHero />);
+  const image = await screen.findByAltText("");
+  expect(getComputedStyle(image).objectPosition).toBe("33% 61%");
+  expect(reads).toBe(1);
 });

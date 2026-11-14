@@ -74,7 +74,7 @@ test("mode and palette changes update every page background without reloading", 
     await page.goto("/");
     await expect(
         page.getByRole("heading", {
-            name: "Track the films you watch. Find the next one.",
+            name: "Track what you watch. Find what's next.",
             exact: true,
         }),
     ).toBeVisible();
@@ -152,7 +152,7 @@ for (const scenario of colorModeCases) {
         );
         await page.goto("/");
         const heading = page.getByRole("heading", {
-            name: "Track the films you watch. Find the next one.",
+            name: "Track what you watch. Find what's next.",
             exact: true,
         });
         await expect(heading).toBeVisible();

@@ -64,7 +64,7 @@ it("composes signed-out Home in order with named sections and no card actions", 
   );
   await screen.findByRole("heading", {
     level: 1,
-    name: "Track the films you watch. Find the next one.",
+    name: "Track what you watch. Find what's next.",
   });
   await screen.findByText("Opening soon");
   expect(
@@ -98,7 +98,7 @@ it("shows signed-in Home without the hero", async () => {
     screen.getByRole("heading", { name: "Popular in theaters" }),
   ).toBeInTheDocument();
   expect(
-    screen.queryByText("Track the films you watch. Find the next one."),
+    screen.queryByText("Track what you watch. Find what's next."),
   ).not.toBeInTheDocument();
 });
 it("switches a rejected stored sign-in to the pitch", async () => {
@@ -115,7 +115,7 @@ it("switches a rejected stored sign-in to the pitch", async () => {
   );
   expect(
     await screen.findByRole("heading", {
-      name: "Track the films you watch. Find the next one.",
+      name: "Track what you watch. Find what's next.",
     }),
   ).toBeInTheDocument();
 });
@@ -186,7 +186,7 @@ it.each(["Ada", ""])(
         .map((node) => node.textContent),
     ).toEqual(["Your watchlist", "Popular in theaters", "Most anticipated"]);
     expect(
-      screen.queryByText("Track the films you watch. Find the next one."),
+      screen.queryByText("Track what you watch. Find what's next."),
     ).not.toBeInTheDocument();
   },
 );

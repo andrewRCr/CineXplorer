@@ -1,5 +1,6 @@
 import { Box, Text, VStack, HStack } from "@chakra-ui/react";
 import MovieUserScore from "@/components/movie/MovieUserScore";
+import { RatingStars } from "@/components/movie/RatingStars";
 
 /**
  * CineXplorer Extensions Section - App-Specific Tokens
@@ -45,27 +46,19 @@ export function CineXplorerExtensionsSection() {
             </Text>
           </Box>
 
-          {/* User Personal Rating - future 5-star system */}
           <Box>
             <Text fontSize="sm" fontWeight="bold" mb={2} textAlign="center">
-              User Personal Rating (future 5-star)
+              User Personal Ratings
             </Text>
-            <Box textAlign="center">
-              <Box
-                bg="layer-01"
-                px={3}
-                py={2}
-                borderRadius="md"
-                display="inline-block"
-              >
-                <Text color="imdb-gold" fontWeight="bold" fontSize="xl">
-                  ★★★★☆
-                </Text>
-              </Box>
-            </Box>
+            <HStack gap={4} justify="center" align="end">
+              <RatingStars rating={1} />
+              <RatingStars rating={7} />
+              <RatingStars rating={8} size="lg" />
+              <RatingStars rating={10} size="lg" />
+            </HStack>
             <Text fontSize="xs" color="foreground/60" mt={1} textAlign="center">
-              Star icons use the active theme's imdb-gold. Numeric user ratings
-              use the dot chip with a neutral star.
+              Half a star per rating point: 0.5, 3.5, 4 and 5 earned stars.
+              Small and large stars use the active theme's imdb-gold.
             </Text>
           </Box>
 

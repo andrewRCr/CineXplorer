@@ -511,7 +511,7 @@ Fast lookup cheat sheet for common token choices.
 | TMDB score (medium)      | `foreground` dot and number                              | `<MovieUserScore score={6.5} voteCount={10} />` (displayed 5.0–7.4)      |
 | TMDB score (low)         | `destructive` dot, `foreground` number                   | `<MovieUserScore score={4.1} voteCount={10} />` (displayed <5.0)         |
 | TMDB score (<10 votes)   | `badge` / `on-badge`                                     | `<Badge variant="neutral">—</Badge>` (fewer than 10 votes)               |
-| User rating star icons   | `imdb-gold`                                              | `<Text color="imdb-gold">★★★★☆</Text>`; numeric ratings use the dot chip |
+| User rating star icons   | `imdb-gold`                                              | <RatingStars rating={8} /> (four earned gold stars)                      |
 | Genre tag                | `badge` / `on-badge`                                     | `<Badge variant="neutral">Action</Badge>`                                |
 | Secondary text           | `on-muted`                                               | `<Text color="on-muted">`                                                |
 | Border                   | `border-strong-01`                                       | `<Card borderColor="border-strong-01">`                                  |
@@ -573,7 +573,7 @@ Fast lookup cheat sheet for common token choices.
 ✅ <Box bg="muted">Container</Box>
 ✅ <Badge variant="info">New</Badge>
 ✅ <MovieUserScore score={8.2} voteCount={10} /> {/* Outlined score chip with success dot */}
-✅ <Text color="imdb-gold">★★★★☆</Text> {/* Star icons; numeric ratings use the chip */}
+✅ <RatingStars rating={7} /> {/* 3.5 earned stars in imdb-gold */}
 ```
 
 ### Quick Decision Flowchart
@@ -584,7 +584,7 @@ Fast lookup cheat sheet for common token choices.
 3. Surface? → background/layer-01/layer-02/layer-03
 4. Interactive text? → tertiary + tertiary-hover
 5. TMDB score? → 10+ votes: Outlined chip with success/foreground/destructive dot by displayed value; fewer: neutral
-6. User rating? → Numeric dot chip (8/5 thresholds); star icons alone use imdb-gold
+6. User rating? → RatingStars in imdb-gold (half a star per rating point)
 7. Neutral badge? → badge + on-badge
 8. Border? → border-strong-01 (or see Border Strategy)
 9. Focus? → ring

@@ -23,7 +23,7 @@
  * CineXplorer-specific token values for a single mode (light or dark).
  */
 export interface ExtensionTokens {
-    /** Star icon color; numeric scores use neutral dot chips */
+    /** User-rating star color; TMDB scores use neutral dot chips */
     "imdb-gold": string;
 
     /** Badge background (genre tags, neutral labels, TMDB scores below 10 votes) */
@@ -40,7 +40,7 @@ export interface ExtensionTokens {
 /**
  * Gold for star icons in the four adapted palettes: accessible dark gold in
  * light mode and IMDb gold in dark mode. Marquee sets its own gold per mode.
- * Numeric ratings use dot chips, independently of these star-icon colors.
+ * TMDB ratings use dot chips, independently of these user-rating star colors.
  */
 export const standardRatingColors = {
     light: {

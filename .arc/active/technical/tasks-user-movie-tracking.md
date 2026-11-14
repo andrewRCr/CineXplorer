@@ -375,29 +375,21 @@ rule.
         - Updated TECHNICAL-OVERVIEW. All 384 related tests, types, ESLint, formatting and markdown lint passed;
           seven focused tests passed after strengthening the queue-retirement assertion.
 
-- [ ] **5.5 A rating shows as gold half stars, and a rewatch has its icon — D13**
+- [x] **5.5 A rating shows as gold half stars, and a rewatch has its icon — D13**
 
     **Goal:** Later pages can show a user's rating at a glance and mark a rewatch with components that take no focus
     and read correctly to a screen reader.
 
-    - [ ] **5.5.a Write the component tests**
-        - `RatingStars` draws ratings 1 to 10 at half a star a point, earned stars only, as one image named "Rated 3.5
-          out of 5 stars" ("Rated 4 out of 5 stars" for a whole number) with no focusable element, at both sizes; it
-          renders nothing with no rating
-        - `RewatchIcon` is named "Rewatch"
-        - A `@ts-expect-error` render of `MovieUserScore` with `userRating` shows the prop is gone, failing type-check
-          if it returns
-        - Expect tests to FAIL initially
-
-    - [ ] **5.5.b Add `RatingStars` and `RewatchIcon` to `frontend/src/components/movie/`**
-        - Icons from `react-icons`, as the app's others; `imdb-gold` for the stars, the surrounding text color for the
-          rewatch icon
-
-    - [ ] **5.5.c Drop `MovieUserScore`'s user-rating props and chip, and show the stars on the theme page**
-        - Remove `userRating`, `userRatingOnly`, their chip and their tests; `CineXplorerExtensionsSection` shows
-          `RatingStars` at several ratings, with captions that describe them
-        - The color-token and component-styling strategies show a user's rating as `RatingStars` in `imdb-gold` (D14)
-        - Tests should now PASS
+    - [x] **5.5.a Write the component tests**
+        - All ten ratings at both sizes cover earned full/half-star ink, semantic gold, one image name and keyboard
+          focus; missing ratings render nothing. Rewatch naming and removed user-rating prop contracts are pinned.
+        - Extra-star and empty-image mutations fail; the initial rewatch test exposed the icon wrapper's hidden
+          default. Explicit accessibility fixes pass, and the old prop produced the expected unused error directive.
+    - [x] **5.5.b Add `RatingStars` and `RewatchIcon` to `frontend/src/components/movie/`**
+        - Non-interactive icons use semantic gold for stars and inherited text color for the rewatch marker.
+    - [x] **5.5.c Drop `MovieUserScore`'s user-rating props and chip, and show the stars on the theme page**
+        - Retained TMDB behavior/tests; replaced the theme example and living token/styling guidance with stars.
+        - All 2,644 related tests, types, ESLint, formatting, markdown lint and eight browser smoke cases passed.
 
 - [ ] **5.6 ADR-047 records how films are tracked — D14, D15**
 

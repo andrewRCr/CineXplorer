@@ -19,7 +19,8 @@ def choose_last(films: Sequence[FeaturedFilm]) -> FeaturedFilm:
 
 def test_selected_film_uses_one_detail_request() -> None:
     stub = TMDBStub()
-    selected = FEATURED_FILMS[-1].tmdb_id
+    films = (FeaturedFilm(101),)
+    selected = films[-1].tmdb_id
     stub.add_movie(
         create_tmdb_movie_detail(
             selected,
@@ -30,7 +31,7 @@ def test_selected_film_uses_one_detail_request() -> None:
             tagline="An epic.",
         )
     )
-    result = MovieService(stub, choose_film=choose_last).get_featured_movie()
+    result = MovieService(stub, choose_film=choose_last, featured_films=films).get_featured_movie()
     assert result.model_dump(mode="json") == {
         "tmdb_id": selected,
         "title": "Chosen film",
@@ -62,9 +63,10 @@ def test_override_only_in_debug(debug: bool, listed: bool) -> None:
 @pytest.mark.parametrize("tagline", [None, "", "   "])
 def test_missing_art_and_empty_tagline_are_null(tagline: str | None) -> None:
     stub = TMDBStub()
-    selected = FEATURED_FILMS[-1].tmdb_id
+    films = (FeaturedFilm(101),)
+    selected = films[-1].tmdb_id
     stub.add_movie(create_tmdb_movie_detail(selected, "Film", "1954-04-26", 8.0, tagline=tagline))
-    result = MovieService(stub, choose_film=choose_last).get_featured_movie()
+    result = MovieService(stub, choose_film=choose_last, featured_films=films).get_featured_movie()
     assert result.backdrop_path is None
     assert result.tagline is None
 
@@ -142,6 +144,23 @@ def test_selected_entry_preserves_checked_backdrop(
         ).get_featured_movie(candidate)
     assert result.tmdb_id == selected_id
     assert result.backdrop_path == ("/checked-artwork.jpg" if selected_id == 201 else primary)
+    assert stub.requested_endpoints == [f"movie/{selected_id}"]
+
+
+@pytest.mark.parametrize("debug", [False, True])
+@pytest.mark.parametrize("candidate", [None, 301, 302, 303])
+def test_selected_entry_uses_its_short_title(debug: bool, candidate: int | None) -> None:
+    full_title = "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb"
+    films = (FeaturedFilm(301, title="Dr. Strangelove"), FeaturedFilm(302))
+    selected_id = candidate if debug and candidate is not None else 301
+    stub = TMDBStub()
+    stub.add_movie(create_tmdb_movie_detail(selected_id, full_title, "1964-01-29", 8.0))
+    with override_settings(DEBUG=debug):
+        result = MovieService(
+            stub, choose_film=lambda entries: entries[0], featured_films=films
+        ).get_featured_movie(candidate)
+    assert result.tmdb_id == selected_id
+    assert result.title == ("Dr. Strangelove" if selected_id == 301 else full_title)
     assert stub.requested_endpoints == [f"movie/{selected_id}"]
 
 

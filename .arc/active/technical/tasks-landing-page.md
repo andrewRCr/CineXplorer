@@ -761,17 +761,25 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
       short title. Related tests (44), lint, format and type-check pass; `background.spec.ts`, `sign-in.spec.ts` and
       `phone-width.spec.ts` pass (17).
 
-- [ ] **4.14 A film entry's optional short title — R3, R4**
+- [x] **4.14 A film entry's optional short title — R3, R4**
 
     **Goal:** A film whose full title cannot fit its credit space can ship under a short title the Owner chose.
 
-    - [ ] **4.14.a Write the tests**
-        - In `tests/unit/services/test_featured_movie.py`: an entry's `title` replaces TMDB's, for a listed DEBUG
-          candidate and the production pick; an unlisted candidate and an entry without one return TMDB's title;
-          still one TMDB detail call
-        - In `tests/integration/api/test_featured_movie.py`: no request parameter supplies a title
-    - [ ] **4.14.b Add the optional `title` to `FeaturedFilm` and apply it in the featured read**
-        - Run movie-app Docker tests, Ruff and Pyright; regenerating the API types leaves no diff
+    - [x] **4.14.a Write the tests**
+    - [x] **4.14.b Add the optional `title` to `FeaturedFilm` and apply it in the featured read**
+
+    - Tests first: the service test shows an entry's short title replacing TMDB's for the listed DEBUG candidate
+      and the production pick, and TMDB's title for an unlisted candidate and an entry without one, with one detail
+      call each. The endpoint contract test sends `title` and `backdrop_path` query parameters and expects the list
+      entry's metadata, or TMDB's, in the body, so no request supplies them. The new cases failed before the field
+      existed.
+    - `FeaturedFilm` gains `title: str | None`, passed through `create_featured_movie_from_tmdb` beside the checked
+      path; the response shape and generated API types are unchanged.
+    - Two service tests read the real list's last entry and assumed it had no checked artwork, which an imported
+      entry breaks; they now use their own one-film list. Default-list wiring stays covered by the DEBUG override
+      test, and the contract test derives expected point, path and title from the selected entry.
+    - Movie-app Docker tests pass (607) with and without the local film preview; Ruff, format and movie-app
+      Pyright pass; regenerating the API types leaves no diff.
 
 ### **Phase 5:** Home is ready to merge
 

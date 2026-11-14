@@ -253,6 +253,7 @@ def create_featured_movie_from_tmdb(
     movie_data: Mapping[str, object],
     focus_point: FilmFocusPoint | None = None,
     backdrop_path: str | None = None,
+    title: str | None = None,
 ) -> FeaturedMovieSchema:
     """Validate a TMDB detail response and retain only the homepage's fields."""
     movie = TMDBMovieDetail.model_validate(movie_data)
@@ -268,7 +269,7 @@ def create_featured_movie_from_tmdb(
     return FeaturedMovieSchema.model_validate(
         {
             "tmdb_id": movie.id,
-            "title": movie.title,
+            "title": title if title is not None else movie.title,
             "release_date": empty_str_to_none(movie.release_date),
             "backdrop_path": backdrop_path if backdrop_path is not None else movie.backdrop_path,
             "tagline": empty_str_to_none(movie.tagline),

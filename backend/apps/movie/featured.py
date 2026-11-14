@@ -14,11 +14,15 @@ class FilmFocusPoint(BaseModel):
 
 @dataclass(frozen=True)
 class FeaturedFilm:
-    """A curated film and its optional image anchor."""
+    """A curated film with its optional image anchor, checked artwork and short title.
+
+    A short title replaces TMDB's only where the full title cannot fit the hero's credit space.
+    """
 
     tmdb_id: int
     focus_point: FilmFocusPoint | None = None
     backdrop_path: str | None = None
+    title: str | None = None
 
 
 # Add only films approved through artwork and credit review.

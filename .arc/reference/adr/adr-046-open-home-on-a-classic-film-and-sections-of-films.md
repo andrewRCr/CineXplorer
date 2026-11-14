@@ -20,8 +20,9 @@ a separate credits request. The application has dark-palette semantic colors
 for text and backgrounds, which a hero can scope locally while the rest of the page follows its selected mode.
 
 Alternatives considered included a trending hero without a curated identity, a daily rotation, a page made entirely
-of poster rows, a page-colored or side-by-side hero, an amber-tinted fade, and a signed-in page that repeats the
-catalog or Library. Picking a film in the browser through the full detail endpoint would expose the curated list
+of poster rows, a page-colored or side-by-side hero, an amber-tinted fade, feathered fades sized to the hero's text,
+and a signed-in page that repeats the catalog or Library. Feathered fades vanish on dark frames and read as smudges
+on bright ones. Picking a film in the browser through the full detail endpoint would expose the curated list
 there and pay the full detail endpoint's separate credits request and larger cast/crew response.
 Storing backdrop and tagline on saved movie cards would add fields and refresh obligations solely for the hero.
 
@@ -33,17 +34,19 @@ soon, then a band explaining its capabilities. Signed-in Home shows the visitor'
 what's-on sections. A later list of logged viewings can supply a recently-watched section when that source exists.
 
 We will choose the hero's film randomly from a hand-selected list of classic TMDB IDs with optional percentage
-focus points and checked backdrop paths on each page load. A public endpoint returns its ID, title, release date,
-backdrop, director names, tagline and nullable focus point through one TMDB detail request with credits appended,
-without a separate credits call or server caching. Focus and an optional checked backdrop
-path are local list metadata; a stored path replaces TMDB’s primary. An input point anchors the reusable full-bleed
+focus points, checked backdrop paths and short titles on each page load. A public endpoint returns its ID, title,
+release date, backdrop, director names, tagline and nullable focus point through one TMDB detail request with credits
+appended, without a separate credits call or server caching. Focus, an optional checked backdrop
+path and an optional short title are local list metadata; a stored path replaces TMDB’s primary, and a stored title
+replaces TMDB's for a film whose full title cannot fit the credit space. An input point anchors the reusable full-bleed
 presentation, defaulting to 50% across and 28% down when unset;
 the whole-frame portrait arrangement ignores focus. The browser
 retains that result for the loaded application's lifetime, until reload or a change of signed-in user. Development
 builds can request a particular film for visual checks; production servers ignore
-that override. Candidates are screened and reviewed in an external two-crop/whole-frame sheet in one page mode;
-custom-point
-or flagged films also receive all three built-hero checks. The dark full-bleed and page-mode portrait treatments are
+that override. Candidates are screened and reviewed in an external two-crop/whole-frame sheet in one page mode,
+built from the hero's own markup and styles. Approved entries are applied together and confirmed against the
+endpoint by script, and built-hero captures of custom-point or flagged films are reviewed as one batch rather than
+film by film. The dark full-bleed and page-mode portrait treatments are
 checked in both modes once for the component. Only approved films ship, with further approvals able to follow
 through later pull requests.
 
@@ -51,10 +54,9 @@ The pitch and account actions render before the film arrives. Portrait windows b
 image in a stable 16:9 area above the credit and pitch, without a fade or focus point, preserving image proportions
 with letterboxing when necessary. Their text follows page mode; the explanatory pitch line is omitted. The image
 and credit spaces remain on failure, avoiding a shift. Landscape windows and widths from 1024px remain full bleed.
-The full-bleed hero uses the existing dark palette in both page modes, with a neutral fade under the lower-left
-pitch and a separate fade under the film credit. Each
-fade suppresses at least 75% of the image beneath its text and is strengthened as needed for text contrast over
-bright frames; contrast comes from that minimum darkness, not an opaque page background. The desktop credit sits on
+The full-bleed hero uses the existing dark palette in both page modes, with the lower-left pitch and the film credit
+each on a separate hard-edged dark panel that fits its text. The panels carry the text's contrast over any frame,
+so outside them the image keeps only a bottom fade, without side-to-side darkening. The desktop credit sits on
 the right aligned with the actions and content edge. In compact landscape it is above
 the pitch, right-aligned, without a tagline; in the portrait stack it is below the image and above the pitch,
 left-aligned. Its rows are title, director/year, and optional tagline. Only the title links. The tagline is visible
@@ -94,7 +96,8 @@ never depend on live TMDB. Other staging journeys continue using live catalog da
 
 - Visitors see films and the application's purpose; returning visitors see their own next films first.
 - Section forms can support a later Films hub without reproducing Home as a catalog grid.
-- Existing dark-palette roles and sufficiently dark fades keep the text legible; the pitch survives failed reads.
+- Existing dark-palette roles and the text panels keep the text legible on any frame; the pitch survives failed
+  reads.
 - Home reuses the catalog and Library's contracts without disturbing catalog pagination or duplicating ordering.
 
 ### Negative
@@ -102,6 +105,7 @@ never depend on live TMDB. Other staging journeys continue using live catalog da
 - First-time and provider visitors wait for the session read before seeing the pitch.
 - The curated list requires visual checks. A checked path protects it from primary-backdrop changes, but a pinned
   image can still disappear and require replacement or removal.
+- The text panels all but hide the image beneath them, so a film's focus point must keep its subject clear of both.
 - Consecutive page loads can pick the same film, and a user change selects a new one.
 - A second saved film can introduce a row; removing films can remove the row or whole section.
 - Signed-out catalog cards are shorter while their fixed row spacing still accommodates signed-in controls.

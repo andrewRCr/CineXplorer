@@ -20,7 +20,7 @@ the visitor's watchlist first, then the same sections, built from section forms 
   and the detail schema's backdrop and tagline
 - Request options on Home's reads: no global server-error toast, and a pagination context of their own
 - The section forms (poster row, calendar, large card, band) with their loading, empty and failed states
-- The dark full-bleed hero with focus and fades, and the whole-frame portrait stack following page mode, with
+- The dark full-bleed hero with focus and text panels, and the whole-frame portrait stack following page mode, with
   director/year credits; signed-out and signed-in Home at `/`, rendered outside the padded container
 - The greeting on arrival in place of the sign-in toast, and the watchlist section led by a large card
 - Card actions for signed-in visitors only; films opened from Home leading back to Home
@@ -412,7 +412,7 @@ selected portrait/full-bleed hero, director credit and whole-card rows before th
 
 _Exit criterion:_ in the browsable stack, signing in lands on Home greeting the account by name with its watchlist's
 newest film as the large card; navigating away and back shows no greeting; an account with an empty watchlist sees the
-nothing-saved line; the amended featured focus metadata, hero and row checks in 4.7–4.12 pass; and
+nothing-saved line; the amended featured focus metadata, hero and row checks in 4.7–4.14 pass; and
 `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts` pass.
 
 - [x] **4.1 A large card shows one film at one height — R13, R27**
@@ -729,6 +729,46 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
           No candidate was imported or approved; Owner sign-off remains in 5.1. Full verification, CI and the final
           code review remain in Phase 6.
 
+- [ ] **4.13 Text panels, capital titles and the revised pitch and band copy — R6, R7, R8, R14, R27**
+
+    **Goal:** The full-bleed hero's text reads the same over any frame, and Home's copy pitches the whole app.
+
+    - [ ] **4.13.a Update the component tests**
+        - `HomeHero.test.tsx` shows R6's new line and no TMDB attribution; `HomeBand.test.tsx` shows R14's points
+        - The credit's director/year separator is hidden from assistive technology and still never orphaned; the
+          title link carries an accessible name equal to the title. Update the joined director/year text
+          assertions in `FilmHero.test.tsx` and `HomeHero.test.tsx` for the separator element
+    - [ ] **4.13.b Replace the feathered fades with hard-edged panels in `FilmHero` and restyle `HeroCredit`**
+        - Pitch and credit panels: square corners, no mask, `background` at about 90%, about 24px of padding,
+          fitted to their text; text keeps the content edges; a credit panel spans its column only when a row
+          wraps; at least 16px of image between panels; each outer edge flush to the window's edge or at least 16px
+          from it, chosen by CSS media query; long titles wrap naturally, without balance
+        - In `HomeHero.tsx`, the new line and, from 1024px, the headline's sentences and the line's two phrases on
+          their own lines; in `HomeBand.tsx`, R14's points
+        - Keep the `data-hero-*` hooks the external sheet's capture and screen rely on
+        - Remove the side-to-side gradient and keep a bottom fade. In `HeroCredit`, the title in capitals with
+          slightly widened letter spacing and an accessible name equal to the title; separator muted (`on-muted`)
+          and spaced. Semantic tokens only
+    - [ ] **4.13.c Check the restyled hero in the browsable stack**
+        - At 2000×1000, 1500×900, 1450×900, 1280×800, 1024×1000, 900×700, 768×600, 768×1024, 390×844 and 360×800 in both
+          modes: panel bounds and bright-frame contrast; read the title link's name from the browser's accessibility
+          tree. Measure capitalized credit fit, including the top inset, for the longest candidate titles and record
+          any that need a short title; 5.1.a's full rescreen settles them
+        - Run related frontend tests, lint, types and format, and `background.spec.ts`, `sign-in.spec.ts` and
+          `phone-width.spec.ts`
+
+- [ ] **4.14 A film entry's optional short title — R3, R4**
+
+    **Goal:** A film whose full title cannot fit its credit space can ship under a short title the Owner chose.
+
+    - [ ] **4.14.a Write the tests**
+        - In `tests/unit/services/test_featured_movie.py`: an entry's `title` replaces TMDB's, for a listed DEBUG
+          candidate and the production pick; an unlisted candidate and an entry without one return TMDB's title;
+          still one TMDB detail call
+        - In `tests/integration/api/test_featured_movie.py`: no request parameter supplies a title
+    - [ ] **4.14.b Add the optional `title` to `FeaturedFilm` and apply it in the featured read**
+        - Run movie-app Docker tests, Ruff and Pyright; regenerating the API types leaves no diff
+
 ### **Phase 5:** Home is ready to merge
 
 _Mode:_ `slice` — closes on Home composing with what `main` holds at merge, and showing the Owner's films.
@@ -775,20 +815,32 @@ recorded, and the three changed smoke specs pass.
     **Goal:** Each film shipped has the Owner's sign-off under the scalable review process; the remainder can follow
     in later pull requests.
 
-    - [ ] **5.1.a Import the signed-off entries into `featured.py`**
-        - The Owner chooses the final size; 200–250 is a possible pool, not a merge minimum
-        - Keep title/year identity decisions explicit, store the sheet's checked backdrop paths and chosen points,
-          and import only approved films. The uniqueness test stays independent of which IDs ship
-    - [ ] **5.1.b Review the sheet, then show custom-point or flagged films in the built hero**
-        - Script-screen all candidates, including director/year and credit fit, and bring flags to the Owner.
-          Review two full-bleed crops and the whole-frame phone credit in one page mode. Component mode/shape
-          checks are covered once by 4.12, not repeated in both modes for each film
-        - For each custom-point or flagged film, use `/?film={tmdb_id}` at 2000×1000, 1024×1000 and 390×844 in one
-          mode. Apply the exported entry and reload the lifetime query before these built-hero checks
-        - Confirm the subject survives wide/near-1024px cover crops; at phone width confirm the whole-frame credit
-          fits without a focus point or tagline. Settle flags, adjust full-bleed focus or exclude failures. Unset
-          full-bleed focus uses `50% 28%`. Unapproved candidates do not ship
-        - Films approved by merge ship; remaining candidates can be reviewed and added by later pull request
+    - [ ] **5.1.a Refresh the external sheet for the panel hero and streamline its review**
+        - Recapture the built hero after 4.13 and rescreen every candidate, including capitalized credit fit at
+          360×800 and compact-landscape panel separation; bring flags to the Owner, set the short titles the Owner
+          chooses for films that cannot fit, and rescreen those films with their short titles. Carry the earlier
+          sheet's saved points across
+        - Open on the next pending film; keys approve, exclude and move, and a decision advances to the next pending
+          film. Remove the per-film built-check gate and app-open controls; keep identity selection, flag
+          acknowledgement, notes and the review JSON. Exports include any short title
+        - The screen and the sheet reproduce the restyled credit's markup, including the separator, and the panel
+          wrappers the sheet
+          locates the pitch and credit by. Re-run the sheet's browser checks against the rebuilt sheet
+    - [ ] **5.1.b The Owner reviews the sheet in one page mode**
+        - The Owner settles flags, sets full-bleed points (unset uses `50% 28%`) and approves or excludes each film,
+          then supplies the saved review JSON. Component mode/shape checks are covered by 4.12 and 4.13, not
+          repeated for each film. Owner choices are never inferred from simulated browser state
+    - [ ] **5.1.c Import the approved entries and check them as one batch**
+        - The Owner chooses the final size; 200–250 is a possible pool, not a merge minimum. Import only approved
+          films, with explicit title/year identity, checked backdrop paths, chosen points and short titles. The
+          uniqueness test stays independent of which IDs ship
+        - By script, confirm each applied entry's point, path and title through the DEBUG endpoint; rerun the
+          credit-fit screen over every applied entry with its shipped title at 360×800, 390×844, 768×1024, 900×700
+          and 768×600; and capture the built hero at 2000×1000, 1024×1000 and 390×844 in one mode for every
+          custom-point or flagged film
+        - The Owner reviews the captures; reframe, give a short title to a credit that does not fit, or exclude any
+          failure. Unapproved candidates do not ship;
+          remaining candidates can be reviewed and added by later pull request
 
 - [ ] **5.2 Checkpoint on the user-movie tracking model before merging `main` — R30**
 
@@ -866,7 +918,7 @@ recorded, and the three changed smoke specs pass.
 - **The module-level `_movie_service` in `api.py` is built at import,** so the endpoint tests replace TMDB at the
   client's class path, and the chooser is replaced in the service tests, where `MovieService` is constructed.
 - **The browsable stack runs its backend with `DEBUG` on** (`backend/config/.env`), so `/?film=` serves any film
-  there, for 3.3 and 5.1.b.
+  there, for 3.3 and 5.1.c.
 - **The neighbouring user-movie units** are separate work units (tracking, controls, Library, then the queue). The
   tracking model lands first, changes the API schema and the Library's `added` order, and its draft lands shared
   frontend pieces Home draws; 5.2 checks its state before `main` merges in.
@@ -1068,7 +1120,7 @@ recorded, and the three changed smoke specs pass.
   landscape views. Supplied and default focus apply only in full bleed; the portrait stack shows the whole frame.
   Home supplies API director data, with no preview-name fixtures or layout/surface query selectors remaining.
 
-- [ ] 26. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+- [~] 26. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
   answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline`, `directors`
   and nullable
   `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
@@ -1089,7 +1141,9 @@ recorded, and the three changed smoke specs pass.
   returning `[]`, and non-director or blank-name crew omitted. Credits are appended within the one detail request;
   generated OpenAPI/frontend types expose the director-name list and no full cast/crew payload.
 
-- [ ] 27. Browser checks in both page modes retain criterion 24's whole-card rows, calendar, band, shared widths,
+  _Superseded by the label-panel amendment of 2026-11-14; replacement: criterion 28._
+
+- [~] 27. Browser checks in both page modes retain criterion 24's whole-card rows, calendar, band, shared widths,
   overflow, keyboard/swipe/trackpad/reduced-motion and text contrast checks. At 390×844 and 768×1024 the hero stacks
   a whole image over credit and pitch, follows page mode, omits the pitch line, and ignores focus. At 900×700 and
   768×600 it stays full bleed with credit above the pitch, right-aligned and without a tagline; at 1024×1000 and
@@ -1102,6 +1156,36 @@ recorded, and the three changed smoke specs pass.
   credit fit; no phone focus crop or per-film two-mode requirement remains. The sheet uses actual layout snapshots,
   preserves focus for full bleed only, exports approved entry lines with title/year comments and checked paths,
   and remains outside the repository/app without an API key. Pending candidates can follow in later pull requests.
+
+  _Superseded by the label-panel amendment of 2026-11-14; replacement: criterion 29._
+
+- [ ] 28. Backend tests retain criterion 26's featured-film coverage, and also show an entry's optional short title
+  returned as `title` in place of TMDB's: kept for a listed DEBUG candidate and for the random entry in
+  production, while an unlisted candidate and an entry without one return TMDB's title. The response shape, the
+  one TMDB detail call and the generated OpenAPI and frontend types are unchanged, and no request parameter
+  supplies a title.
+
+- [ ] 29. Browser checks in both page modes retain criterion 27's rows, calendar, band, shared widths, overflow,
+  interaction, arrangement, reserved-space, hover and focus checks, with these changes. In full bleed at 2000×1000,
+  1500×900, 1450×900, 1280×800, 1024×1000, 900×700 and 768×600, the pitch and the credit sit on separate hard-edged
+  panels that fit their text and never overlap, with at least 16px of image between them. A panel runs flush to the
+  window's edge exactly where its padding would leave less than 16px of image there, and otherwise stands at least 16px
+  from it; flush at 1450×900 and below, inset at 1500×900 and wider. At 1024px and wider the headline's sentences and
+  the line's two phrases take their own lines, and the pitch panel is no wider than its longest line plus its padding. A
+  credit panel is no wider than its longest row plus its padding, or its column plus its padding when a row wraps; on a
+  side where a panel runs flush, that limit extends to the window's edge. Long titles wrap without truncation. Outside
+  the panels the image keeps only its bottom fade. Measured over bright frames, panel text reaches 4.5:1 for normal
+  text, including director/year and the muted tagline, and 3:1 for large text. The film title shows in capitals while
+  the browser's accessibility tree names its link with the title in its own case, and the director/year separator is
+  muted and hidden from assistive technology. The hero shows R6's line and the band R14's points. With capitalized
+  titles, every shipped film's credit fits its reservation at 360×800, 390×844, 768×1024, 900×700 and 768×600. All films
+  shipped at merge have Owner approval through the external sheet in one mode, retaining the exact shown backdrop path
+  and any short title. Script flags failed reads/artwork, identity/year mismatches and credit-fit problems for
+  decisions. A script confirms each applied entry's point, path and title through the DEBUG endpoint, and the Owner has
+  reviewed built-hero captures of every custom-point or flagged film at 2000×1000, 1024×1000 and 390×844 in one mode.
+  The sheet uses actual layout snapshots, preserves focus for full bleed only, exports approved entry lines with
+  title/year comments, checked paths and short titles, and remains outside the repository/app without an API key.
+  Pending candidates can follow in later pull requests.
 
 ### Proven after merge
 

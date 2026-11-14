@@ -331,8 +331,14 @@ def test_rating_rule_stamps_watched_join(service: UserMovieDataService, user: Us
         (7, True, "Delete this film's entries before marking it unwatched"),
     ],
 )
+@pytest.mark.parametrize("undo", [False, True])
 def test_entries_lock_watched_and_roll_back_save(
-    service: UserMovieDataService, user: User, rating: int | None, clear: bool, detail: str
+    service: UserMovieDataService,
+    user: User,
+    rating: int | None,
+    clear: bool,
+    detail: str,
+    undo: bool,
 ) -> None:
     from datetime import date
 
@@ -342,9 +348,49 @@ def test_entries_lock_watched_and_roll_back_save(
     record = create_user_movie_data(user, user_watched=True, user_rating=rating)
     UserMovieEntry.objects.create(record=record, review="Review", made_on=date(2020, 1, 1))
     before = UserMovieData.objects.values().get(pk=record.pk)
-    fields: dict[str, object] = {"user_watched": False, "user_liked": True}
+    fields: dict[str, object] = {"user_watched": False, "user_liked": True, "undo": undo}
     if clear:
         fields["user_rating"] = None
     with pytest.raises(ConflictError, match=detail):
         service.save(user, 550, fields)
     assert UserMovieData.objects.values().get(pk=record.pk) == before
+
+
+@pytest.mark.parametrize(
+    ("flag", "stamp"),
+    [
+        ("user_watched", "watched_added_at"),
+        ("user_on_watchlist", "watchlist_added_at"),
+        ("user_liked", "liked_added_at"),
+    ],
+)
+def test_undo_keeps_existing_join_time(
+    service: UserMovieDataService, user: User, flag: str, stamp: str
+) -> None:
+    from freezegun import freeze_time
+
+    with freeze_time("2020-01-01 10:00:00"):
+        record = create_user_movie_data(user)
+        setattr(record, flag, True)
+        setattr(record, stamp, timezone.now())
+        record.save()
+        first = getattr(record, stamp)
+        service.save(user, 550, {flag: False})
+    with freeze_time("2020-02-01 10:00:00"):
+        service.save(user, 550, {flag: True, "undo": True})
+        record.refresh_from_db()
+        assert getattr(record, stamp) == first
+
+
+def test_undo_first_join_stamps_and_applies_rules(
+    service: UserMovieDataService, user: User
+) -> None:
+    from freezegun import freeze_time
+
+    record = create_user_movie_data(user, user_on_watchlist=True)
+    with freeze_time("2020-02-01 10:00:00"):
+        service.save(user, 550, {"user_rating": 7, "undo": True})
+        record.refresh_from_db()
+        assert record.user_watched
+        assert not record.user_on_watchlist
+        assert record.watched_added_at == timezone.now()

@@ -317,3 +317,12 @@ def test_log_summary_on_get_patch_and_library(
     for payload in payloads:
         assert payload["has_entries"] is (history != "empty")
         assert payload["last_logged_on"] == ("2020-01-02" if history == "dated" else None)
+
+
+def test_undo_alone_is_not_a_save(signed_in: tuple[Client, User]) -> None:
+    client, _ = signed_in
+    with patch(TMDB_CLIENT_GET_MOVIE_DETAILS, return_value=create_mock_error_response(404)):
+        response = client.patch(URL, {"undo": True}, content_type="application/json")
+    assert response.status_code == 400
+    assert not UserMovieData.objects.exists()
+    assert not Movie.objects.exists()

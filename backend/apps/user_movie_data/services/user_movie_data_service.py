@@ -62,7 +62,7 @@ class UserMovieDataService:
             )
             previous = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
             apply_record_save(record, changes)
-            stamp_list_joins(record, previous)
+            stamp_list_joins(record, previous, undo=fields.get("undo") is True)
             record.save()
         return self.get_by_tmdb_id(user, tmdb_id), created
 

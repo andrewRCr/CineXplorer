@@ -303,3 +303,38 @@ def test_added_sort_uses_one_filtered_list(
     if direction == "desc":
         expected.reverse()
     assert [movie["tmdb_id"] for movie in response.json()["results"]] == expected
+
+
+@pytest.mark.parametrize("undo", [True, False])
+def test_readding_with_undo_preserves_watchlist_place(
+    signed_in: tuple[Client, User], undo: bool
+) -> None:
+    from freezegun import freeze_time
+
+    client, user = signed_in
+    with freeze_time("2020-01-01 10:00:00"):
+        create_user_movie_data(user, create_movie(111), user_on_watchlist=True)
+    with freeze_time("2020-02-01 10:00:00"):
+        create_user_movie_data(user, create_movie(222), user_on_watchlist=True)
+    with freeze_time("2020-03-01 10:00:00"):
+        authenticate_client(client, user.username, "testpass123")
+        client.defaults["HTTP_X_CSRFTOKEN"] = get_csrf_token(client)
+        assert (
+            client.patch(
+                "/api/user-movie-data/111",
+                {"user_on_watchlist": False},
+                content_type="application/json",
+            ).status_code
+            == 200
+        )
+        response = client.patch(
+            "/api/user-movie-data/111",
+            {"user_on_watchlist": True, "undo": undo},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert "undo" not in response.json()
+        result = client.get(URL, {"watchlist": True}).json()
+    assert [movie["tmdb_id"] for movie in result["results"]] == (
+        [222, 111] if undo else [111, 222]
+    )

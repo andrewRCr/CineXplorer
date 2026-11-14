@@ -42,6 +42,7 @@ class UserMovieDataPatchSchema(Schema):
     user_on_watchlist: bool = False
     user_liked: bool = False
     user_rating: int | None = Field(default=None, ge=1, le=10)
+    undo: bool = False
 
 
 class LibraryQuerySchema(Schema):

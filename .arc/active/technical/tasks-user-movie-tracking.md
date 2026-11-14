@@ -171,23 +171,20 @@ and two for a Library page.
         - The service selects one list's timestamp only when exactly one membership filter is active; ordering
           retains nulls-last and TMDB-ID ties. All 201 app tests, Ruff and full-backend Pyright passed.
 
-- [ ] **2.4 Undoing a removal puts a film back in its place — D1, D5**
+- [x] **2.4 Undoing a removal puts a film back in its place — D1, D5**
 
     **Goal:** A save sent with `undo: true` restores a list without moving the film to the top, while a removal and a
     re-add by hand does move it.
 
-    - [ ] **2.4.a Write the tests**
-        - A save with `undo: true` that turns a list back on keeps the stored join time, and stamps one where none is
-          stored; rules, the lock and the statuses are as for any save; `{"undo": true}` alone answers 400
-        - In the watchlist's `added` sort, a removal undone with `undo: true` keeps the film's earlier place, and a
-          removal and re-add without it moves the film to the top
-        - Only the kept join time and the kept place fail first: today's schema drops the unknown `undo` key, so such a
-          save runs as any other, and the save refuses a body with no data field. Once 2.4.b lands, see each other case
-          fail against a narrow break of what it pins (`undo` counted as a data field, `undo` skipping the rules or the
-          stamp, a re-add keeping its stored join time) and pass restored
-        - Expect the kept-time and kept-place tests to FAIL initially
-    - [ ] **2.4.b Add `undo` to `UserMovieDataPatchSchema` and pass it to the save's stamping**
-        - Tests should now PASS
+    - [x] **2.4.a Write the tests**
+        - Covered all three lists' retained join times, first-join stamping and rules under Undo, watched locks,
+          a body with only Undo, omission from returned state, and watchlist position after Undo versus a fresh add.
+        - Retained-time cases failed first; ignored Undo also breaks the corrected ordering scenario. Narrow
+          mutations counting Undo as a field, skipping rules/stamps, or restoring every re-add all fail behaviorally.
+        - Corrected test authentication under its frozen clock; restored app suite: 211 passed.
+    - [x] **2.4.b Add `undo` to `UserMovieDataPatchSchema` and pass it to the save's stamping**
+        - Optional boolean affects only false-to-true join-time restoration when a stored timestamp exists; all
+          validation and watched-lock rules remain active. Ruff and full-backend Pyright passed.
 
 ### **Phase 3:** A film's viewings and reviews are logged, corrected and read
 

@@ -518,20 +518,22 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
           (3,256 tests); lint/type-check and both required browser specs pass (seven scenarios).
         - Tests should now PASS
 
-- [ ] **4.4 Signing in shows no welcome toast — R23**
+- [x] **4.4 Signing in shows no welcome toast — R23**
 
     **Goal:** Neither the password sign-in nor a Google or GitHub return shows "Welcome back", and both still land
     where they did.
 
     **Check:** `sign-in.spec.ts` and `phone-width.spec.ts` (the password sign-in).
 
-    - [ ] **4.4.a Update the sign-in tests**
+    - [x] **4.4.a Update the sign-in tests**
+        - The password and provider toast assertions failed before removal; all 106 sign-in tests now pass.
+          The full frontend suite, lint/type-check and both required browser specs pass (seven scenarios).
         - `Login.test.tsx`'s "returns there after a password sign-in" also shows no "Welcome back" toast
         - `useAuth.test.tsx`'s two provider-return cases keep their navigation checks and assert no "Welcome back"
           toast (around lines 1091 and 1152)
         - Expect the new assertions to FAIL initially
 
-    - [ ] **4.4.b Remove the toast from `Login.tsx` and `useAuth.ts`**
+    - [x] **4.4.b Remove the toast from `Login.tsx` and `useAuth.ts`**
         - `Login`'s `onSubmit` success and `useAuth`'s provider-return branch; the navigation stays
         - `LoginSuccessData` and `login()`'s `displayName` existed only for the toast: `login()` returns
           `AuthResult<void>` as `register()` does, and `useAuth.test.tsx`'s assertion of it (around line 362) follows

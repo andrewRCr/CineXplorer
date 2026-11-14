@@ -1,7 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { waitFor } from "@tests/helpers/test-renderer";
 import { featuredFilmQuery } from "@/lib/queries";
-import { it, expect } from "vitest";
+import { afterEach, beforeEach, it, expect, vi } from "vitest";
+import { mockViewport } from "@tests/helpers/viewport";
 import { render, screen, fireEvent, act } from "@tests/helpers/test-renderer";
 import { renderWithRoutes } from "@tests/helpers/test-renderer-with-routes";
 import { Link } from "react-router";
@@ -19,6 +20,9 @@ import {
 } from "@/components/core/chakra/toaster";
 import { signInPathFor } from "@/utilities/returnPath";
 
+beforeEach(() => mockViewport(1024, 1000));
+afterEach(() => vi.restoreAllMocks());
+
 const headline = "Track what you watch. Find what's next.";
 const film = {
   tmdb_id: 947,
@@ -27,6 +31,7 @@ const film = {
   backdrop_path: "/still.jpg",
   tagline: "An epic.",
   focus_point: null,
+  directors: ["David Lean"],
 };
 it("shows the pitch before the film read, then a title link and noninteractive tagline", async () => {
   const pending = gate();
@@ -57,15 +62,16 @@ it("shows the pitch before the film read, then a title link and noninteractive t
   );
   pending.release();
   expect(
-    await screen.findByRole("link", { name: /Lawrence of Arabia \(1962\)/ }),
+    await screen.findByRole("link", { name: /Lawrence of Arabia/ }),
   ).toHaveAttribute("href", "/movie/947?from=home");
+  expect(screen.getByText("David Lean | 1962")).toBeInTheDocument();
   expect(screen.getByText("An epic.")).toBeInTheDocument();
   expect(
     screen.queryByRole("link", { name: /An epic/ }),
   ).not.toBeInTheDocument();
   expect(
     screen.getByRole("link", {
-      name: "Lawrence of Arabia (1962)",
+      name: "Lawrence of Arabia",
     }),
   ).toHaveAttribute("href", "/movie/947?from=home");
   expect(screen.getByAltText("")).toHaveAttribute(
@@ -136,13 +142,11 @@ it("keeps the same film and makes one read across navigation", async () => {
     },
     { path: "/other", element: <Link to="/">Return Home</Link> },
   ]);
-  await screen.findByText("Lawrence of Arabia (1962)");
+  await screen.findByText("Lawrence of Arabia");
   const user = userEvent.setup();
   await user.click(screen.getByRole("link", { name: "Leave Home" }));
   await user.click(screen.getByRole("link", { name: "Return Home" }));
-  expect(
-    await screen.findByText("Lawrence of Arabia (1962)"),
-  ).toBeInTheDocument();
+  expect(await screen.findByText("Lawrence of Arabia")).toBeInTheDocument();
   expect(reads).toBe(1);
 });
 
@@ -180,9 +184,13 @@ it.each([
   { point: { x: 91, y: 12 }, position: "91% 12%" },
 ])("anchors supplied artwork at $position", ({ point, position }) => {
   render(
-    <FilmHero film={film} focusPoint={point} creditHref="/movie/947?from=home">
-      <p>Pitch</p>
-    </FilmHero>,
+    <FilmHero
+      film={film}
+      focusPoint={point}
+      creditHref="/movie/947?from=home"
+      heading={<h1>Pitch</h1>}
+      actions={<a href="/register">Create account</a>}
+    />,
   );
   expect(getComputedStyle(screen.getByAltText("")).objectPosition).toBe(
     position,
@@ -200,5 +208,24 @@ it("uses the featured film's configured focus without another read", async () =>
   render(<HomeHero />);
   const image = await screen.findByAltText("");
   expect(getComputedStyle(image).objectPosition).toBe("33% 61%");
+  expect(reads).toBe(1);
+});
+
+it("uses director names from the featured response without a second read", async () => {
+  let reads = 0;
+  server.use(
+    http.get(`${apiBaseUrl}/movies/featured`, () => {
+      reads++;
+      return HttpResponse.json({
+        ...film,
+        tmdb_id: 917347,
+        directors: ["First Director", "Second Director"],
+      });
+    }),
+  );
+  render(<HomeHero />);
+  expect(
+    await screen.findByText("First Director, Second Director | 1962"),
+  ).toBeInTheDocument();
   expect(reads).toBe(1);
 });

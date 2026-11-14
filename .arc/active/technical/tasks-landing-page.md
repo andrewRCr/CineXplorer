@@ -675,20 +675,28 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
       Pyright, regenerated frontend types and fixture lint pass. Corrected the parameterized test's argument-name
       syntax for Ruff. The live DEBUG endpoint returns Stanley Kubrick for film 62.
 
-- [ ] **4.11 Deliver the selected portrait and compact-landscape hero — R3, R6–R9**
+- [x] **4.11 Deliver the selected portrait and compact-landscape hero — R3, R6–R9**
 
     **Goal:** Whole-frame portrait artwork and correctly ordered movie credits hold through loading and failure.
 
-    - [ ] **4.11.a Update component contracts after the approved preview**
+    - [x] **4.11.a Update component contracts after the approved preview**
         - Cover title-only link, plain director/year and missing-part handling; tagline on portrait/tablet from
           768px and desktop, absent on phones and compact landscape; pitch line only in full bleed; focus ignored
           in the stack. Keep immediate pitch, lifetime cache, navigation and quiet failure coverage
-    - [ ] **4.11.b Finish the input-based presentation and remove prototype controls/data**
+    - [x] **4.11.b Finish the input-based presentation and remove prototype controls/data**
         - Portrait below 1024px stacks contain-fit artwork, credit and pitch, using page mode and reserved spaces.
           Compact landscape stays dark/full bleed, credit above the pitch and right-aligned, without tagline.
           Desktop keeps right-hand credit alignment. Title 18px semibold, director/year 16px, tagline 15px muted
         - Use API director names; remove preview mappings and switch/surface selectors. Run related frontend tests,
           lint/types/format and `background.spec.ts`, `sign-in.spec.ts`, `phone-width.spec.ts`
+
+    - Delivered explicit heading/description/actions slots with one viewport decision and shared credit/artwork
+      renderers. Compact DOM order follows the visible credit-before-pitch order. The description and excluded
+      tagline are absent, not CSS-hidden; the production UI consumes API director names with no preview fixtures.
+    - New contracts failed against pre-amendment rendering, preview-name inputs and a targeted separator omission.
+      All 43 related/direct presentation tests pass, including 768/1024 boundaries and missing metadata. Lint,
+      types, format and the 17 covering browser smoke scenarios pass. Fixed quote escapes and media-result defaults
+      found by lint/types. Actual geometry/contrast and the sheet update follow in 4.12.
 
 - [ ] **4.12 Refresh the external sheet and verify final hero geometry — R3, R7, R8**
 

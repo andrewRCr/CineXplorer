@@ -6,34 +6,6 @@ import { FilmHero } from "@/components/movie/FilmHero";
 import { homeFilmPath } from "@/utilities/filmLinks";
 import { signInPathFor } from "@/utilities/returnPath";
 
-function HeroPitch() {
-  return (
-    <>
-      <Heading
-        as="h1"
-        size={{ base: "3xl", lg: "4xl" }}
-        lineHeight="1.1"
-        mb={5}
-        textWrap="balance"
-      >
-        Track what you watch. Find what's next.
-      </Heading>
-      <Text mb={6} fontSize="lg">
-        See what's in theaters and coming soon, and keep a watchlist of what to
-        see next. Film data from TMDB.
-      </Text>
-      <Flex gap={5} align="center" flexWrap="wrap">
-        <Button asChild variant="solid">
-          <RouterLink to="/register">Create account</RouterLink>
-        </Button>
-        <Link asChild color="tertiary">
-          <RouterLink to={signInPathFor("/", "")}>Sign in</RouterLink>
-        </Link>
-      </Flex>
-    </>
-  );
-}
-
 export function HomeHero() {
   const [params] = useSearchParams();
   const candidate = import.meta.env.DEV ? Number(params.get("film")) : 0;
@@ -44,9 +16,35 @@ export function HomeHero() {
     <FilmHero
       film={film}
       focusPoint={film?.focus_point}
+      directors={film?.directors}
       creditHref={film ? homeFilmPath(film.tmdb_id) : undefined}
-    >
-      <HeroPitch />
-    </FilmHero>
+      heading={
+        <Heading
+          as="h1"
+          size={{ base: "3xl", lg: "4xl" }}
+          lineHeight="1.1"
+          mb={5}
+          textWrap="balance"
+        >
+          Track what you watch. Find what's next.
+        </Heading>
+      }
+      description={
+        <Text mb={6} fontSize="lg">
+          See what's in theaters and coming soon, and keep a watchlist of what
+          to see next. Film data from TMDB.
+        </Text>
+      }
+      actions={
+        <Flex gap={5} align="center" flexWrap="wrap">
+          <Button asChild variant="solid">
+            <RouterLink to="/register">Create account</RouterLink>
+          </Button>
+          <Link asChild color="tertiary">
+            <RouterLink to={signInPathFor("/", "")}>Sign in</RouterLink>
+          </Link>
+        </Flex>
+      }
+    />
   );
 }

@@ -1,16 +1,16 @@
 import { useState, type ReactNode } from "react";
-import { Link as RouterLink } from "react-router";
-import { Box, Container, Image, Link, Text, Theme } from "@chakra-ui/react";
+import { Box, Container, Theme, useMediaQuery } from "@chakra-ui/react";
 import type { FeaturedMovie } from "@/services/movieService";
 import { pageContainerProps } from "@/components/layout/pageContainer";
+import { HeroArtwork } from "./HeroArtwork";
+import { HeroCredit } from "./HeroCredit";
 
 type HeroFilm = Pick<
   FeaturedMovie,
   "tmdb_id" | "title" | "release_date" | "backdrop_path" | "tagline"
 >;
-type FocusPoint = NonNullable<FeaturedMovie["focus_point"]>;
 
-// The opaque mask plateau covers the wrapper; only the surrounding margin feathers.
+// The mask is opaque within the text bounds and feathers only through the outer margin.
 const textFade = {
   position: "relative",
   isolation: "isolate",
@@ -27,48 +27,102 @@ const textFade = {
   },
 } as const;
 
-/** Artwork and credit presentation, independent of how the film is selected or read. */
+/** Film presentation independent of its query, with content slots shared by both arrangements. */
 export function FilmHero({
   film,
   focusPoint,
+  directors = [],
   creditHref,
-  children,
+  heading,
+  description,
+  actions,
 }: {
   film?: HeroFilm;
-  focusPoint?: FocusPoint | null;
+  focusPoint?: FeaturedMovie["focus_point"];
+  directors?: readonly string[];
   creditHref?: string;
-  children: ReactNode;
+  heading: ReactNode;
+  description?: ReactNode;
+  actions: ReactNode;
 }) {
+  // Match Chakra's lg/md boundaries and resolve the actual browser viewport on the first render.
+  const [desktop = false, portrait = false, tablet = false] = useMediaQuery(
+    ["(min-width: 64rem)", "(orientation: portrait)", "(min-width: 48rem)"],
+    { ssr: false },
+  );
+  const stacked = !desktop && portrait;
   const [failedFilm, setFailedFilm] = useState<number | null>(null);
-  const hasArt = !!film?.backdrop_path && failedFilm !== film.tmdb_id;
+  const backdrop =
+    film && failedFilm !== film.tmdb_id ? film.backdrop_path : null;
+  const artwork = backdrop ? (
+    <HeroArtwork
+      path={backdrop}
+      contained={stacked}
+      focusPoint={focusPoint}
+      onError={() => {
+        if (film) setFailedFilm(film.tmdb_id);
+      }}
+    />
+  ) : null;
+  const credit =
+    film && backdrop ? (
+      <HeroCredit
+        film={film}
+        directors={directors}
+        href={creditHref}
+        showTagline={desktop || (stacked && tablet)}
+      />
+    ) : null;
+  const pitch = (
+    <>
+      {heading}
+      {!stacked && description}
+      {actions}
+    </>
+  );
+
+  if (stacked)
+    return (
+      <Box data-hero-presentation="stacked" bg="background" color="foreground">
+        <Theme
+          appearance="dark"
+          bg="background"
+          position="relative"
+          aspectRatio="16 / 9"
+          w="100%"
+        >
+          {artwork}
+        </Theme>
+        <Container
+          {...pageContainerProps}
+          minH={tablet ? "128px" : "96px"}
+          pt={3}
+        >
+          {credit}
+        </Container>
+        <Container {...pageContainerProps} pb={8}>
+          {pitch}
+        </Container>
+      </Box>
+    );
+
+  const creditColumn = (
+    <Box justifySelf="end" textAlign="right" maxW={desktop ? "100%" : "600px"}>
+      {credit && <Box css={textFade}>{credit}</Box>}
+    </Box>
+  );
   return (
     <Theme
       appearance="dark"
+      data-hero-presentation="full"
       position="relative"
       h="73svh"
-      minH={{ base: "560px", lg: "480px" }}
+      minH={desktop ? "480px" : "560px"}
       bg="background"
       color="foreground"
       overflow="hidden"
     >
-      {hasArt && (
-        <Box as="picture" position="absolute" inset={0}>
-          <source
-            media="(min-width: 80rem), (min-height: 987px)"
-            srcSet={`https://image.tmdb.org/t/p/original${film.backdrop_path}`}
-          />
-          <Image
-            src={`https://image.tmdb.org/t/p/w1280${film.backdrop_path}`}
-            srcSet={`https://image.tmdb.org/t/p/w1280${film.backdrop_path} 1x, https://image.tmdb.org/t/p/original${film.backdrop_path} 2x`}
-            alt=""
-            w="100%"
-            h="100%"
-            objectFit="cover"
-            objectPosition={`${focusPoint?.x ?? 50}% ${focusPoint?.y ?? 28}%`}
-            onError={() => setFailedFilm(film.tmdb_id)}
-          />
-        </Box>
-      )}
+      {artwork}
       <Box
         position="absolute"
         inset={0}
@@ -83,55 +137,19 @@ export function FilmHero({
         position="relative"
         h="100%"
         display="grid"
-        gridTemplateColumns={{
-          base: "minmax(0, 1fr)",
-          lg: "minmax(0, 600px) minmax(0, 420px)",
-        }}
-        gridTemplateRows={{ base: "auto 128px", lg: "auto" }}
+        gridTemplateColumns={
+          desktop ? "minmax(0, 600px) minmax(0, 420px)" : "minmax(0, 1fr)"
+        }
+        gridTemplateRows={desktop ? "auto" : "128px auto"}
         alignContent="end"
-        alignItems={{ base: "start", lg: "end" }}
+        alignItems={desktop ? "end" : "start"}
         justifyContent="space-between"
-        gap={{ base: 4, lg: 8 }}
-        pb={{ base: 6, lg: "80px" }}
+        gap={desktop ? 8 : 4}
+        pb={desktop ? "80px" : 8}
       >
-        <Box css={textFade}>{children}</Box>
-        <Box
-          textAlign={{ base: "left", lg: "right" }}
-          justifySelf={{ base: "start", lg: "end" }}
-          maxW="100%"
-        >
-          {hasArt && (
-            <Box css={textFade}>
-              <Link
-                asChild
-                color="foreground"
-                fontFamily="heading"
-                fontWeight="semibold"
-                fontSize="18px"
-                lineHeight="1.4"
-                _hover={{ color: "tertiary-hover" }}
-              >
-                <RouterLink to={creditHref ?? "#"}>
-                  {film.title}
-                  {film.release_date
-                    ? ` (${film.release_date.slice(0, 4)})`
-                    : ""}
-                </RouterLink>
-              </Link>
-              {film.tagline && (
-                <Text
-                  fontSize="15px"
-                  color="on-muted"
-                  lineHeight="1.5"
-                  lineClamp={2}
-                  mt={1}
-                >
-                  {film.tagline}
-                </Text>
-              )}
-            </Box>
-          )}
-        </Box>
+        {!desktop && creditColumn}
+        <Box css={textFade}>{pitch}</Box>
+        {desktop && creditColumn}
       </Container>
     </Theme>
   );

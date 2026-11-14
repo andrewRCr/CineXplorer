@@ -11,7 +11,7 @@ export type UserMovieDataPatchSchema = Partial<
 
 const userMovieDataService = create("/user-movie-data");
 
-/** Omitted fields stay unchanged; explicit null clears a nullable field. */
+/** An omitted field stays unchanged except where data rules change it; null clears it. */
 export const saveUserMovieData = (
     tmdbId: number,
     data: UserMovieDataPatchSchema,

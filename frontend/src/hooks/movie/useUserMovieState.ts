@@ -109,8 +109,8 @@ export function useUserMovieState(
         user_watched: false,
         user_liked: false,
         user_rating: null,
-        user_review: null,
-        watched_at: null,
+        has_entries: false,
+        last_logged_on: null,
     };
     // The cache preserves insertion order even when submittedAt timestamps tie.
     for (const save of saves) {

@@ -15,8 +15,8 @@ import { useUserMovieState } from "../useUserMovieState";
 
 const payload = createMockUserMovieData({
   user_watched: true,
-  watched_at: "2026-11-01",
-  user_review: "Keep this review",
+  has_entries: false,
+  last_logged_on: null,
 });
 function Probe({ value = payload }: { value?: UserMovieDataSchema | null }) {
   const { state, save } = useUserMovieState(1, value);
@@ -144,7 +144,9 @@ describe("shared movie saves", () => {
   it("shows a pending save and replaces the whole record on success", async () => {
     const release = gate();
     const accepted = createMockUserMovieData({
-      user_review: "Server kept this",
+      has_entries: true,
+      last_logged_on: "2026-11-01",
+      user_watched: true,
       user_liked: true,
     });
     server.use(
@@ -160,9 +162,9 @@ describe("shared movie saves", () => {
         <Toaster />
       </>,
     );
-    await user.click(screen.getByRole("button", { name: "Unwatch" }));
+    await user.click(screen.getByRole("button", { name: "Like" }));
     await waitFor(() =>
-      expect(shown()).toEqual({ ...payload, user_watched: false }),
+      expect(shown()).toEqual({ ...payload, user_liked: true }),
     );
     release.release();
     await waitFor(() => expect(shown()).toEqual(accepted));

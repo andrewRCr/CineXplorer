@@ -322,25 +322,18 @@ _Exit criterion:_ the save layer's and the display components' tests pass (crite
 movie-detail and sign-in smoke specs pass on the new record, and 5.7's searches find no living site stating a replaced
 rule.
 
-- [ ] **5.1 The frontend reads the new record — D12**
+- [x] **5.1 The frontend reads the new record — D12**
 
     **Goal:** The generated types, the mocks and the save hook's empty state match the new record, and today's pages
     show and save as before.
 
-    **Check:** the browse, movie-detail and sign-in smoke specs on the worktree's browsable stack, since cards and the
-    detail page read the record.
-
-    **Note:** Type-check fails between 5.1.a and 5.1.b by design, until the code follows the regenerated types. At
-    5.1's start, propose its subtasks as one increment.
-
-    - [ ] **5.1.a Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts`**
-        - From this worktree's own backend container, with its stack running
-    - [ ] **5.1.b Follow the new record through the frontend**
-        - `useUserMovieState`'s empty state drops `user_review` and `watched_at` and gains `has_entries: false` and
-          `last_logged_on: null`; so does `createMockUserMovieData` in `tests/mocks/movieData.ts`; tests that name the
-          removed fields, `useUserMovieState.test.tsx` among them, move to the new ones
-        - The comment on `saveUserMovieData` states the new omission rule (D14)
-        - Type-check, related tests and the three smoke specs should PASS
+    - [x] **5.1.a Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts`**
+        - Generated from this worktree's running backend, including entry routes and record summaries.
+    - [x] **5.1.b Follow the new record through the frontend**
+        - Empty records, shared mocks and save tests use `has_entries` and `last_logged_on`; the service comment
+          qualifies omitted-field behavior. The empty-state test failed on the prior fields and passes restored.
+        - All 3,206 related frontend tests, type-check, ESLint and Prettier passed. The browse, movie-detail and
+          sign-in smoke specs passed all eight cases against this worktree's stack.
 
 - [ ] **5.2 The watchlist Undo sends the Undo mark — D12**
 

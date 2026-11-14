@@ -335,20 +335,17 @@ rule.
         - All 3,206 related frontend tests, type-check, ESLint and Prettier passed. The browse, movie-detail and
           sign-in smoke specs passed all eight cases against this worktree's stack.
 
-- [ ] **5.2 The watchlist Undo sends the Undo mark — D12**
+- [x] **5.2 The watchlist Undo sends the Undo mark — D12**
 
     **Goal:** Undoing a watchlist change from its toast puts the film back in its place, and the mark never shows in
     the film's state.
 
-    - [ ] **5.2.a Test the Undo's request in `useUserMovieState.test.tsx`**
-        - The Undo's PATCH body carries `undo: true` and the first save's doesn't
-        - While the Undo is pending and after it lands, the shown state holds no `undo`: this passes on arrival, since
-          the overlay spreads only `changes`, so see it fail against a narrow break (the mark spread into the state)
-          and pass restored
-        - Expect the body case to FAIL initially
-    - [ ] **5.2.b Send `undo: true` in the body of a save whose variables mark it as an Undo**
-        - The mark stays out of `changes`, which the overlay applies
-        - Tests should now PASS
+    - [x] **5.2.a Test the Undo's request in `useUserMovieState.test.tsx`**
+        - Mounted and unmounted Undo requests failed without the mark; pending and settled state exclude it.
+          A narrow state-spread mutation failed the pending assertion and passes restored.
+    - [x] **5.2.b Send `undo: true` in the body of a save whose variables mark it as an Undo**
+        - Kept the request mark outside overlay changes; updated the card-level Undo request expectation.
+          All 239 related tests, types, ESLint and formatting passed.
 
 - [ ] **5.3 Pages can read a film's entries and the cross-film list — D12**
 

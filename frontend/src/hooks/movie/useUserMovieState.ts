@@ -33,11 +33,15 @@ export const saveMutationOptions = (
         mutationKey: saveKey(tmdbId),
         scope: { id: `movie-save:${tmdbId}` },
         gcTime: Infinity,
-        mutationFn: ({ changes, change }: SaveVariables) => {
-            return saveUserMovieData(tmdbId, changes, {
-                signal: getSaveSignal(change),
-                shouldReportServerError: () => change === getChangeCount(),
-            }).then((response) => response.data);
+        mutationFn: ({ changes, change, undo }: SaveVariables) => {
+            return saveUserMovieData(
+                tmdbId,
+                undo ? { ...changes, undo: true } : changes,
+                {
+                    signal: getSaveSignal(change),
+                    shouldReportServerError: () => change === getChangeCount(),
+                },
+            ).then((response) => response.data);
         },
         onMutate: ({ change }) => change,
         onSuccess: (record, variables, change, { client }) => {

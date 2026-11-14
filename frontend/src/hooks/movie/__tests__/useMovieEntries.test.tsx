@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it } from "vitest";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { onlineManager, useQuery, useQueryClient } from "@tanstack/react-query";
+import { isCancel } from "axios";
 import { http, HttpResponse } from "msw/http";
 import { Toaster, toaster } from "@/components/core/chakra/toaster";
 import { apiBaseUrl } from "@/config/baseUrls";
@@ -37,11 +38,16 @@ const record = createMockUserMovieData({
   has_entries: true,
   last_logged_on: entry.watched_on,
 });
-function mount() {
+function mount(retireOnUnmount = true) {
   return renderHook(
     () => {
       const client = useQueryClient();
-      useEffect(() => () => beginUserChange(client), [client]);
+      useEffect(
+        () => () => {
+          if (retireOnUnmount) beginUserChange(client);
+        },
+        [client],
+      );
       return { ...useUserMovieState(1, null), ...useMovieEntries(1), client };
     },
     {
@@ -245,49 +251,95 @@ it("reports an entry failure and keeps the prior record", async () => {
   expect(view.result.current.state).toEqual(createMockUserMovieData());
 });
 
-it("drops an entry queued behind a save when the user changes", async () => {
-  const release = gate();
-  let posts = 0;
-  const entered = gate();
-  server.use(
-    http.patch(`${apiBaseUrl}/user-movie-data/1`, async () => {
-      entered.release();
-      await release.wait;
-      return HttpResponse.json(record);
-    }),
-    http.post(`${apiBaseUrl}/user-movie-data/1/entries`, () => {
-      posts++;
-      return HttpResponse.json({ entry, record });
-    }),
-  );
-  const view = mount();
-  try {
-    act(() => view.result.current.save({ user_liked: true }));
-    await entered.wait;
-    const running = view.result.current.client.getMutationCache().getAll()[0];
-    act(() => {
-      void view.result.current.createEntry(body).catch(() => {});
-    });
-    await waitFor(() => expect(view.result.current.isPending).toBe(true));
-    await act(async () => {
-      await changeOfUser(view.result.current.client);
-    });
-    expect(view.result.current.client.getMutationCache().getAll()).toHaveLength(
-      0,
+it.each(["mounted", "multiple", "unmounted", "offline"] as const)(
+  "settles retired queued entries and permits the next owner's write (%s)",
+  async (mode) => {
+    const release = gate();
+    const entered = gate();
+    let posts = 0;
+    const outcomes: unknown[] = [];
+    const pending: Promise<void>[] = [];
+    server.use(
+      http.patch(`${apiBaseUrl}/user-movie-data/1`, async () => {
+        entered.release();
+        await release.wait;
+        return HttpResponse.json(record);
+      }),
+      http.post(`${apiBaseUrl}/user-movie-data/1/entries`, () => {
+        posts++;
+        return HttpResponse.json({ entry, record });
+      }),
     );
-    await waitFor(() =>
-      expect(view.result.current.state).toEqual(createMockUserMovieData()),
-    );
-    release.release();
-    await waitFor(() => expect(running?.state.status).toBe("error"));
-    expect(posts).toBe(0);
-    expect(view.result.current.state).toEqual(createMockUserMovieData());
-    expect(screen.queryByText("Failed to save entry")).not.toBeInTheDocument();
-  } finally {
-    release.release();
-    view.unmount();
-  }
-});
+    const view = mount(mode !== "unmounted");
+    const client = view.result.current.client;
+    try {
+      act(() => view.result.current.save({ user_liked: true }));
+      await entered.wait;
+      if (mode === "offline") onlineManager.setOnline(false);
+      act(() => {
+        const writes = [() => view.result.current.createEntry(body)];
+        if (mode === "multiple") {
+          writes.push(
+            () => view.result.current.editEntry(7, body),
+            () => view.result.current.deleteEntry(7),
+          );
+        }
+        for (const write of writes) {
+          pending.push(
+            write().then(
+              (value) => {
+                outcomes.push(value);
+              },
+              (error: unknown) => {
+                outcomes.push(error);
+              },
+            ),
+          );
+        }
+      });
+      await waitFor(() =>
+        expect(
+          client
+            .getMutationCache()
+            .getAll()
+            .filter((item) => item.state.isPaused),
+        ).toHaveLength(pending.length),
+      );
+      expect(view.result.current.isPending).toBe(true);
+      if (mode === "unmounted") {
+        view.unmount();
+        expect(outcomes).toHaveLength(0);
+      }
+      await act(async () => {
+        await changeOfUser(client);
+      });
+      await waitFor(() => expect(outcomes).toHaveLength(pending.length));
+      expect(outcomes.every(isCancel)).toBe(true);
+      await Promise.all(pending);
+      expect(client.getMutationCache().getAll()).toHaveLength(0);
+      expect(posts).toBe(0);
+      expect(
+        screen.queryByText("Failed to save entry"),
+      ).not.toBeInTheDocument();
+      if (mode !== "unmounted") {
+        expect(view.result.current.isPending).toBe(false);
+        expect(view.result.current.state).toEqual(createMockUserMovieData());
+        onlineManager.setOnline(true);
+        await act(async () => {
+          await view.result.current.createEntry(body);
+        });
+        await waitFor(() => expect(view.result.current.state).toEqual(record));
+        expect(view.result.current.isPending).toBe(false);
+        expect(posts).toBe(1);
+      }
+    } finally {
+      onlineManager.setOnline(true);
+      release.release();
+      view.unmount();
+      act(() => beginUserChange(client));
+    }
+  },
+);
 
 it("aborts an entry already in transport and ignores its obsolete response", async () => {
   const release = gate();

@@ -1,10 +1,11 @@
 """Django admin interface customization for user movie data."""
 
 from django.contrib import admin
-from django.db.models import Model
+from django.db.models import Model, QuerySet
 from django.http import HttpRequest
 
 from .models import UserMovieData
+from .services.user_movie_data_service import UserMovieDataService
 
 
 @admin.register(UserMovieData)
@@ -16,6 +17,12 @@ class UserMovieDataAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request: HttpRequest, obj: Model | None = None) -> bool:
         return False
+
+    def delete_model(self, request: HttpRequest, obj: Model) -> None:
+        UserMovieDataService.delete_records(UserMovieData.objects.filter(pk=obj.pk))
+
+    def delete_queryset(self, request: HttpRequest, queryset: QuerySet[UserMovieData]) -> None:
+        UserMovieDataService.delete_records(queryset)
 
     list_display = (
         "user",

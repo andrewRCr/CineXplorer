@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
+from django.db.models import QuerySet
 
 from apps.core.exceptions import InvalidInputError, NotFoundError
 from apps.core.pagination import paginate_queryset
@@ -28,7 +29,7 @@ class UserMovieDataService:
     def save(
         self, user: AbstractBaseUser, tmdb_id: int, fields: dict[str, object]
     ) -> tuple[UserMovieData, bool]:
-        """Apply only supplied fields, serializing concurrent saves of one user's movie."""
+        """Apply supplied fields and derived rules under the user's movie lock."""
         allowed = {
             "user_watched",
             "user_on_watchlist",
@@ -51,11 +52,24 @@ class UserMovieDataService:
             apply_record_save(record, changes)
             stamp_list_joins(record, previous, undo=fields.get("undo") is True)
             record.save()
-        return self.get_by_tmdb_id(user, tmdb_id), created
+            return self.get_by_tmdb_id(user, tmdb_id), created
 
     def delete(self, user: AbstractBaseUser, tmdb_id: int) -> None:
         """Delete the requesting user's state while keeping its movie card."""
-        self.get_by_tmdb_id(user, tmdb_id).delete()
+        records = UserMovieData.objects.filter(user=user, movie_id=tmdb_id)
+        if not self.delete_records(records):
+            raise NotFoundError("User movie data not found for this TMDB ID")
+
+    @staticmethod
+    def delete_records(records: QuerySet[UserMovieData]) -> int:
+        """Lock an authorized selection of records before collecting dependent entries."""
+        with transaction.atomic():
+            record_ids = list(
+                records.order_by("pk").select_for_update(of=("self",)).values_list("pk", flat=True)
+            )
+            if record_ids:
+                UserMovieData.objects.filter(pk__in=record_ids).delete()
+            return len(record_ids)
 
     def get_by_tmdb_id(self, user: AbstractBaseUser, tmdb_id: int) -> UserMovieData:
         record = (

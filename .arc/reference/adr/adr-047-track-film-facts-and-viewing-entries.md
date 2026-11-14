@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-14)
 
 Supersedes ADR-043 in part (record date/review fields, their clearing, and unconditional omitted-field preservation),
 ADR-027 in part (one optimistic mutation hook for movie data), and ADR-042 in part (numeric user-rating chips).

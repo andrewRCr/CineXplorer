@@ -4,7 +4,8 @@
 **Created:** 2026-11-13
 **Branch:** `technical/user-movie-tracking`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
+**Completed:** 2026-11-14
 
 ## Overview
 
@@ -12,12 +13,8 @@
 between watched, the watchlist, ratings and entries in the backend's saves, sort each list by when a film joined it,
 and land the shared frontend layer later pages build on, with today's pages working as before.
 
-**The design draft stays in the backlog.** `draft-user-movie-uis.md` designs this unit and the two after it (the
-controls and the Library), which check their designs against it and this PRD, reading both from this branch now and
-from `main` after merge. At activation (`activate-work-unit.md` Step 4), move only the PRD and this task list, and say
-why in the activation commit's body. At archive, leave the draft where it is: the completion document cites
-`draft-user-movie-uis.md` by filename and says it stays in the backlog for the two later units. Whichever of them
-archives last moves it into its own archive folder.
+**Shared design:** `draft-user-movie-uis.md` covers this work, the controls and the Library. It remains in the
+backlog for those later units; the last of them to archive moves the draft into its archive folder.
 
 ## Scope
 
@@ -64,7 +61,7 @@ and the record's save, reads, Library and admin working on the new shape, before
         - Six request-level cases cover the changelist, read-only detail, add GET/POST and change POST refusals,
           and deletion preserving the movie. Add/change cases failed against the existing admin; denying view and
           delete permissions separately broke the already-supported list/delete cases before restoration.
-        - The form's review tests went with the form; entries cascade coverage joins in 1.3.e.
+        - The form's review tests went with the form; entry cascade coverage is recorded in 1.3.e.
     - [x] **1.1.b Make `UserMovieDataAdmin` view-and-delete only in `admin.py`**
         - Removed the custom form and refused add/change permissions; retained standard view/delete permissions,
           list columns, filters, search and ordering.
@@ -121,7 +118,7 @@ and the record's save, reads, Library and admin working on the new shape, before
         - Updated fixtures across authentication, core, movie and user-data tests to use valid watched states and
           stamped list membership; removed obsolete field assertions. Queried all backend writers and old-field uses.
         - Full backend suite: 1,315 passed. Restored targeted run: 61 passed. Pinned Ruff, full-backend Pyright
-          (zero errors/warnings), and migration drift check passed. Planned entry guard follows immediately in 2.1.
+          (zero errors/warnings), and migration drift check passed.
 
 ### **Phase 2:** The record's saves and reads follow its entries and join times
 
@@ -311,7 +308,7 @@ sees its 31st write within one minute answer 429.
       and Undo's earlier watchlist place passed. A fresh minute allowed 30 writes and refused the 31st with 429 and
       Retry-After. All 15 live checks passed.
     - Kept the script, `live-journey-output.json` and the initial card-count evidence in the work unit's gitignored
-      personal folder. The five-service stack remains running for the frontend smoke checks.
+      personal folder.
 
 ### **Phase 5:** Pages can build on the new record, and the documents state it
 
@@ -400,7 +397,7 @@ rule.
       updates, Undo, activity pagination and shared limits, local dates, Library sorts, frontend queues and stars,
       with their alternatives and consequences.
     - ADR-043, ADR-027 and ADR-042 name the exact partial supersession in Status; historical bodies stand.
-      Markdown lint passed. Acceptance remains in the verification task, before merge.
+      Markdown lint passed.
 
 - [x] **5.7 Every living site states the new rules — D14**
 
@@ -418,21 +415,49 @@ rule.
       Remaining broad matches describe TMDB chips or unrelated numeric IDs/task examples. Fixed the token table's
       inline-code markup. Search transcripts are retained as session evidence.
     - Type-check, ESLint, formatting, markdown lint and all 1,091 related tests passed. All original goals and
-      success-criterion text remain unchanged; no criterion is marked verified. ADR acceptance stays in 6.1.
+      success-criterion text remain unchanged.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; ADR-047
+- [x] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; ADR-047
   set `Accepted` before merge; after merging `main`, regenerate the API types again if its schema changed; criterion
   16 is proven after merge, § 9)
 
+    Implemented criteria 1–15 verified; the full local run passed. Independent criteria verification found no
+    findings, with 398 backend and 36 frontend focused tests passing. ADR-047 is Accepted. Criterion 16 awaits
+    the post-merge staging evidence. Criterion evidence is recorded below and in the work unit's review log.
+
+- [x] **6.2 Correct the approved code-review findings**
+
+    **Goal:** Record deletion shares the entry writers' locking boundary, retired entry operations settle for
+    their callers, and the save's docstring states its derived-field behavior.
+
+    - Service and admin single/bulk deletion share a transaction that locks the authorized parent records in
+      primary-key order before collecting entries. Six PostgreSQL request-level races cover entry creation/editing
+      against all three deletion paths; bulk cases select multiple films. All six failed before the correction.
+    - Entry callers bind ownership before queueing. Retirement rejects their promises as cancellation and resets
+      the current owner's observer, retaining deferred dispatch and feedback guards. MSW covers mounted, multiple,
+      unmounted and offline callers plus a new owner's subsequent write; all four retirement cases failed first.
+    - Corrected the save docstring. The coupled deletion and cancellation behaviors each shared a test batch.
+      All 317 user-data tests and 46 frontend entry/save/ownership/query tests passed, with lint, formatting and
+      type checks. Full suites and browser smoke passed at verification; they were not repeated for this correction.
+
+- [x] **6.3 Keep save acknowledgements within the record lock**
+
+    **Goal:** A successful record save returns its own annotated result even when another request immediately
+    deletes or overwrites the record.
+
+    - Moved the annotated result lookup inside the save transaction, retaining the parent lock until its result
+      is captured. Entry responses already share this boundary.
+    - Two real-request PostgreSQL cases coordinate competing deletion and watchlist overwrite at the response
+      query, forwarding all SQL unchanged. They failed first with a 404 and the competing writer's value;
+      both then returned the save's own successful result while the competing operation also completed.
+    - The coupled acknowledgement cases shared one test batch. All 319 user-data tests, app Ruff, touched-file
+      formatting and locked-stub backend Pyright passed. Corrected the new test's helper placement for the
+      complexity limit. Full suites, frontend checks and browser smoke were not repeated for this backend-only fix.
+
 ## Implementation Notes
 
-- **Backend tests run in this worktree's own stack** (`worktree-sessions.md` § Test Stack): both Compose files, the
-  test stack's `dev-db`, `redis` and `backend`, and `pytest apps/{app}/` for the apps a task touched. API type
-  generation (5.1.a) needs that stack or the browsable one running.
-- **`--reuse-db`** is on in `backend/pyproject.toml`. Run once with `--create-db` after changing `0003` once it has
-  been applied.
 - **Migration tests** use Django's `MigrationExecutor` with `django_db(transaction=True)`, write rows through historical
   models, and migrate back to the leaf in teardown, as `test_review_cleanup_and_reversible_schema` does: foreign keys
   here are deferred, so rows inserted in one transaction leave pending trigger events and Postgres refuses the next
@@ -457,18 +482,13 @@ rule.
 - **TMDB in tests:** service tests inject `TMDBStub`; API tests patch the client class through
   `TMDB_CLIENT_GET_MOVIE_DETAILS` in `tests/mock_paths.py`, since routers build their services at import.
 - **A fixed clock:** `test_save_limits.py`'s `isolated_counters` builds the Pydantic date schemas before `freezegun`
-  replaces the date class; a new test that freezes time around a date schema needs the same.
-- **Threads and transactions:** 3.1.e needs `django_db(transaction=True)`, as `test_concurrent_first_saves_merge_fields`
-  does; 3.4.a's sequential writes don't, as `test_save_limits.py`'s other tests use plain `django_db`.
+  replaces the date class.
+- **Threads and transactions:** the concurrency tests use `django_db(transaction=True)`; the sequential
+  throttle tests use plain `django_db`.
 - **Tests that pass on arrival:** a case the code already satisfies is seen failing against a narrow break of that
   behaviour, then passing once it is restored, and the completion notes say so.
 - **The rules module's callers** pass the fields the request supplied, never the merged record, since a rule changes
   only a field the request left out (D3). Stamping (D1) runs after the rules, so a flag a rule turns on is stamped.
-- **The overlay's types.** `useUserMovieState`'s `select` cast assumes only saves write the film's mutation key; 5.4
-  changes that assumption and its comment.
-- **The scripted check (4.3):** `node scripts/worktree.mjs browse` prints the stack's address, and the stack reaches
-  TMDB with the worktree's `backend/config/.env`. Write until 429 last, since it holds every further write for the
-  rest of the minute.
 
 ## Success Criteria
 
@@ -477,42 +497,63 @@ from its deploy, so it is checked once the change has merged, with its evidence 
 
 ### Implemented
 
-- [ ] 1. **The tracking journey, through the API.** One backend test, signed in as one user, adds a film to the
+- [x] 1. **The tracking journey, through the API.** One backend test, signed in as one user, adds a film to the
   watchlist with a PATCH; creates an entry dated today with a rating of 7 and a review; and shows the film is watched,
   off the watchlist, rated 7, with `has_entries` true and `last_logged_on` today, listed by the Library's watched,
   rated and unfiltered queries and not its watchlist query, and in the cross-film list. It then adds the film to the
   watchlist again, creates a rewatch entry dated today with a rating of 9 and another review, and shows the film off
   the watchlist again, rated 9, with two entries in the film's list and the cross-film list, newest first, each keeping
   its own rating and review. (D3, D4, D5, D6, D9)
-- [ ] 2. **The rules.** Tests show each row of D3's table and its converse: marking an unwatched film watched, rating
+
+  **Evidence:** `test_tracking_journey_retains_each_viewing` passed in the full backend run; current live readback
+  retains both viewings.
+
+- [x] 2. **The rules.** Tests show each row of D3's table and its converse: marking an unwatched film watched, rating
   it, and giving it an undated entry each remove it from the watchlist; an entry dated before the day it joined the
   watchlist, and rating or reviewing a film already watched, leave it on; a watched film can be added to the
   watchlist; a save supplying watched and the watchlist together keeps both; an entry edit and an entry delete change
   neither watched nor the watchlist. (D3)
-- [ ] 3. **The watched lock.** Un-marking watched answers 409 and changes nothing while the film has a current rating,
+
+  **Evidence:** Record-save, entry-create, edit and delete rule tests passed, covering the transitions and the
+  converse cases.
+
+- [x] 3. **The watched lock.** Un-marking watched answers 409 and changes nothing while the film has a current rating,
   and again while it has an entry; `user_watched: false` with a rating answers 400; `user_watched: false` with
   `user_rating: null` succeeds on a film with no entries. Written through the ORM, a rating on an unwatched record is
   refused by the database, as is a violation of each other constraint in D1 and D2: a flag that is on without its join
   time; an entry with neither a date nor a review; a rewatch without a date; an entry rating of 0 or 11; an entry
   review that is empty, only whitespace, or 10,001 characters. The concurrency test leaves the film watched with its
   entry, whichever request takes the lock first. (D1, D2, D3)
-- [ ] 4. **The current rating.** Tests show: a new latest entry with a rating sets it; a backdated entry with a later
+
+  **Evidence:** API refusal/rollback, database constraints and both real PostgreSQL lock-order cases passed.
+
+- [x] 4. **The current rating.** Tests show: a new latest entry with a rating sets it; a backdated entry with a later
   entry after it leaves it; an entry with no rating leaves it; editing the latest entry's rating sets it; editing only
   the latest entry's review after a re-rating by PATCH leaves the re-rating; editing an older entry's rating leaves
   it; moving an entry's date to make it the latest sets it to that entry's rating; deleting any entry leaves it; a
   PATCH with `user_rating: null` clears it. An undated entry orders by the day it was made, and same-day entries by
   when each was made. (D2, D4)
-- [ ] 5. **Join times and the Library's sorts.** Tests show each list's join time is stamped when the film joins it
+
+  **Evidence:** Create/edit/delete rating and ordering tests, plus explicit PATCH clearing, passed.
+
+- [x] 5. **Join times and the Library's sorts.** Tests show each list's join time is stamped when the film joins it
   and kept when it leaves; a removal undone with `undo: true` keeps the film's earlier place in the `added` sort,
   while a removal and a re-add without it moves the film to the top; `added` sorts by the single filtered list's join
   time and by `created_at` for no filter, several, or `rated` alone; `watched` sorts by last logged with films with no
   dated entry last in both directions; the unfiltered Library leaves out a record with no flag and no rating. (D1, D5,
   D9)
-- [ ] 6. **Time zones.** With the clock fixed at a UTC time that is already tomorrow in `Pacific/Kiritimati`, an entry
+
+  **Evidence:** Join-time, Undo, filtered-sort, null-order and empty-record tests passed; live watchlist order
+  remains intact.
+
+- [x] 6. **Time zones.** With the clock fixed at a UTC time that is already tomorrow in `Pacific/Kiritimati`, an entry
   dated that zone's today is accepted and one dated a day later answers 400; a film added to the watchlist late in the
   evening in `America/Chicago`, which is the next UTC day, is removed by an entry dated that Chicago day; an unknown
   time zone answers 422; an undated entry's `made_on` is the zone's date. (D2, D3, D7)
-- [ ] 7. **The endpoints' contract.** API tests show each route's answers and errors in D6's table, with the shared
+
+  **Evidence:** Frozen Kiritimati and Chicago cases, immutable made_on, and unknown-zone validation passed.
+
+- [x] 7. **The endpoints' contract.** API tests show each route's answers and errors in D6's table, with the shared
   error body: create answers 201 and fetches an unstored film's card once; a film's list answers the defaults for a
   film the user has no record of, without a TMDB request; an entry with neither date nor review, a rewatch without a
   date, and a date after today each answer 400; each route answers 401 with no user, and 404 for another user's entry
@@ -522,35 +563,68 @@ from its deploy, so it is checked once the change has merged, with its evidence 
   an edit keeps the entry's `made_on` whatever its time zone and date, sets an omitted `watched_on`, `rating` or
   `review` to null and an omitted `rewatch` to false. The committed OpenAPI schema lists exactly these statuses for
   each route. (D5, D6)
-- [ ] 8. **Shared limits.** With throttling enabled, a mix of 31 record saves, entry creates and entry edits within
+
+  **Evidence:** Entry/activity/API/schema/CSRF tests passed; committed OpenAPI statuses match exactly, and
+  regeneration produced no drift.
+
+- [x] 8. **Shared limits.** With throttling enabled, a mix of 31 record saves, entry creates and entry edits within
   one clock minute leaves the 31st answering 429 with `Retry-After`; entry deletes and reads are not counted. (D6)
-- [ ] 9. **The log summary on every read.** `has_entries` and `last_logged_on` are correct on the record GET, the
+
+  **Evidence:** Mixed 31-write tests passed for bearer and session, with Retry-After and read/delete exclusion.
+
+- [x] 9. **The log summary on every read.** `has_entries` and `last_logged_on` are correct on the record GET, the
   PATCH response, every entry route's `record`, a Library page, an enriched movie list and the movie detail payload;
   the enrichment of a list stays one query and a Library page two, whatever the number of entries. (D8)
-- [ ] 10. **The migration.** A migration test shows: a record with a date, a review and a rating becomes watched with
+
+  **Evidence:** Record, entry, Library, list and detail summary assertions passed, with one enrichment and two
+  Library queries.
+
+- [x] 10. **The migration.** A migration test shows: a record with a date, a review and a rating becomes watched with
   one entry carrying all three; a record with only a review becomes one undated entry; a rated, unwatched record on
   the watchlist becomes watched and stays on the watchlist, with `watched_added_at` its `updated_at`; each list a
   record was on takes its `created_at`; and migrating back restores each record's latest watched date and review.
   (D10)
-- [ ] 11. **The admin.** An admin test shows records can be listed and viewed but not added or changed, and deleting
+
+  **Evidence:** `test_viewing_history_migrates_forward_and_back` passed against PostgreSQL, including multiple-entry
+  reverse selection.
+
+- [x] 11. **The admin.** An admin test shows records can be listed and viewed but not added or changed, and deleting
   one deletes its entries. (D11)
-- [ ] 12. **The frontend's save layer.** Component tests with MSW show: the watchlist Undo's PATCH body carries
+
+  **Evidence:** All six admin request cases passed, including entry cascade and preservation of the movie.
+
+- [x] 12. **The frontend's save layer.** Component tests with MSW show: the watchlist Undo's PATCH body carries
   `undo: true`, and the Undo mark never appears in the shown state; an entry create queued behind a pending save of
   the same film is sent after it, and `useUserMovieState` then shows the record the create returned; a pending entry
   write changes nothing shown; a successful entry write refetches active Library and entry queries; a failed one shows
   an error toast; every entry create and edit sends the browser's time zone; signing out discards queued entry writes
   and resets the entry queries. (D12)
-- [ ] 13. **The star display and rewatch icon.** Component tests show `RatingStars` draws ratings 1 to 10 as half a
+
+  **Evidence:** MSW save/entry/ownership/query tests passed in the full frontend run, including Undo, queueing,
+  zones and cancellation.
+
+- [x] 13. **The star display and rewatch icon.** Component tests show `RatingStars` draws ratings 1 to 10 as half a
   star a point, earned stars only, with the accessible names in D13 and no focusable element, and renders nothing
   with no rating; `RewatchIcon` is named "Rewatch"; `MovieUserScore` has no user-rating props. (D13)
-- [ ] 14. **The old fields are gone.** A search of the repository outside migrations, the migration tests in
+
+  **Evidence:** All ten ratings at both sizes, gold, accessible names, focus, absent ratings and removed props
+  passed.
+
+- [x] 14. **The old fields are gone.** A search of the repository outside migrations, the migration tests in
   `backend/apps/user_movie_data/tests/`, ADRs and the planning records in `.arc/backlog/`, `.arc/active/` and
   `.arc/reference/archive/` finds no `user_review` or `watched_at`. (D1, D5, D14)
-- [ ] 15. **The documents.** ADR-047 reads `Accepted` with its date; ADR-043, ADR-027 and ADR-042 record their partial
+
+  **Evidence:** Repository search found no old field names outside the explicitly permitted historical and planning
+  files.
+
+- [x] 15. **The documents.** ADR-047 reads `Accepted` with its date; ADR-043, ADR-027 and ADR-042 record their partial
   supersession; DEVELOPMENT-RULES' PATCH rule, the type-safety strategy's Pattern 3, the color-token and
   component-styling strategies, the pagination strategy, the service-layer strategy and TECHNICAL-OVERVIEW read as D14
   says. Every site D14's last bullet reaches (each site its search for a rule this change replaces or departs from
   finds, the known sites it names among them) states the new rule. (D14, D15)
+
+  **Evidence:** ADR-047 is Accepted (2026-11-14); reference diffs and rule searches confirm the partial
+  supersessions and living examples.
 
 ### Proven after merge
 

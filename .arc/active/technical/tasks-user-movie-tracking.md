@@ -391,14 +391,16 @@ rule.
         - Retained TMDB behavior/tests; replaced the theme example and living token/styling guidance with stars.
         - All 2,644 related tests, types, ESLint, formatting, markdown lint and eight browser smoke cases passed.
 
-- [ ] **5.6 ADR-047 records how films are tracked — D14, D15**
+- [x] **5.6 ADR-047 records how films are tracked — D14, D15**
 
     **Goal:** A later reader finds each decision D15 lists, with its reasons and the alternatives the PRD weighed, and
     each ADR it supersedes in part says which part.
 
-    - Write ADR-047 reading `Proposed`, from `adr-template.md` and the ADR methodology strategy
-    - ADR-043, ADR-027 and ADR-042 each add `Superseded in part by ADR-047 (part)` to their Status sections, naming
-      the parts D14 lists, the rest of each decision standing
+    - Wrote ADR-047 as `Proposed`, recording film facts, entry history/order, backend rules and locks, current-rating
+      updates, Undo, activity pagination and shared limits, local dates, Library sorts, frontend queues and stars,
+      with their alternatives and consequences.
+    - ADR-043, ADR-027 and ADR-042 name the exact partial supersession in Status; historical bodies stand.
+      Markdown lint passed. Acceptance remains in the verification task, before merge.
 
 - [ ] **5.7 Every living site states the new rules — D14**
 

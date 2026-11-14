@@ -55,23 +55,21 @@ archives last moves it into its own archive folder.
 _Mode:_ `layer` — closes on the reshaped record and the entries table under every constraint, existing data migrated,
 and the record's save, reads, Library and admin working on the new shape, before any entry route builds on them.
 
-- [ ] **1.1 The admin lists, shows and deletes records, and no longer adds or changes them — D11**
+- [x] **1.1 The admin lists, shows and deletes records, and no longer adds or changes them — D11**
 
     **Goal:** No admin form can write a record's flags past the rules, while staff can still find, read and delete
     records.
 
-    - [ ] **1.1.a Rewrite `tests/integration/test_admin.py`**
-        - Test: a superuser's changelist and record page answer 200, the record shown read-only; the add page and a
-          change POST are refused and leave the record as it was; a delete from the admin removes the record and keeps
-          its movie
-        - The form's review tests go with the form; the entries-cascade case joins in 1.3.e, once entries exist
-        - The changelist and record page answering 200 and the delete pass on arrival, since today's admin is a plain
-          `ModelAdmin`: see each fail against a narrow break of the admin's permissions and pass restored
-        - Expect the other tests to FAIL initially
-    - [ ] **1.1.b Make `UserMovieDataAdmin` view-and-delete only in `admin.py`**
-        - Remove `UserMovieDataAdminForm`; refuse add and change permissions, keep view and delete; the list, filters
-          and search stay
-        - Tests should now PASS
+    - [x] **1.1.a Rewrite `tests/integration/test_admin.py`**
+        - Six request-level cases cover the changelist, read-only detail, add GET/POST and change POST refusals,
+          and deletion preserving the movie. Add/change cases failed against the existing admin; denying view and
+          delete permissions separately broke the already-supported list/delete cases before restoration.
+        - The form's review tests went with the form; entries cascade coverage joins in 1.3.e.
+    - [x] **1.1.b Make `UserMovieDataAdmin` view-and-delete only in `admin.py`**
+        - Removed the custom form and refused add/change permissions; retained standard view/delete permissions,
+          list columns, filters, search and ordering.
+        - App tests: 174 passed; admin rerun after typed request changes: six passed. Pinned container Ruff and
+          Pyright with locked Django stubs passed.
 
 - [ ] **1.2 The record save keeps watched, the watchlist and the rating consistent — D3**
 

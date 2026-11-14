@@ -34,7 +34,7 @@ from apps.movie.tests.test_helpers import (
     create_mock_paginated_response,
     create_tmdb_movie,
 )
-from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.tests.test_helpers import create_user_movie_data
 
 if TYPE_CHECKING:
     from apps.users.models import User
@@ -95,16 +95,22 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     """
     # Arrange: Create movie stub and user data
     movie_stub = create_movie_stub(tmdb_id=101, title="Blade Runner")
-    UserMovieData.objects.create(
+    record = create_user_movie_data(
         user=user,
         movie=movie_stub,
         user_watched=True,
         user_on_watchlist=True,
         user_liked=True,
         user_rating=9,
-        user_review="Classic sci-fi!",
     )
 
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+
+    UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 2), made_on=date(2020, 1, 3)
+    )
     # Arrange: Mock TMDB API response using test helper
     movies = [create_tmdb_movie(101, "Blade Runner", "1982-06-25", 8.1, poster_path="/test.jpg")]
     mock_api_response = create_mock_paginated_response(movies=movies, page=1, total_pages=1)
@@ -126,20 +132,20 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     user_data = movie_data["user_movie_data"]
     assert user_data is not None
     assert set(user_data) == {
+        "has_entries",
+        "last_logged_on",
         "tmdb_id",
         "user_watched",
         "user_on_watchlist",
         "user_liked",
         "user_rating",
-        "user_review",
-        "watched_at",
     }
-    assert user_data["watched_at"] is None
     assert user_data["user_watched"] is True
     assert user_data["user_on_watchlist"] is True
     assert user_data["user_liked"] is True
     assert user_data["user_rating"] == 9
-    assert user_data["user_review"] == "Classic sci-fi!"
+    assert user_data["has_entries"] is True
+    assert user_data["last_logged_on"] == "2020-01-02"
 
 
 @pytest.mark.django_db
@@ -263,14 +269,13 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     """
     # Arrange: Create movie stub and user data
     movie_stub = create_movie_stub(tmdb_id=78, title="Blade Runner")
-    UserMovieData.objects.create(
+    create_user_movie_data(
         user=user,
         movie=movie_stub,
         user_watched=True,
         user_on_watchlist=False,
         user_liked=True,
         user_rating=9,
-        user_review="Masterpiece!",
     )
 
     # Arrange: Mock TMDB API responses
@@ -302,20 +307,18 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     user_data = data["user_movie_data"]
     assert user_data is not None
     assert set(user_data) == {
+        "has_entries",
+        "last_logged_on",
         "tmdb_id",
         "user_watched",
         "user_on_watchlist",
         "user_liked",
         "user_rating",
-        "user_review",
-        "watched_at",
     }
-    assert user_data["watched_at"] is None
     assert user_data["user_watched"] is True
     assert user_data["user_on_watchlist"] is False
     assert user_data["user_liked"] is True
     assert user_data["user_rating"] == 9
-    assert user_data["user_review"] == "Masterpiece!"
 
 
 @pytest.mark.django_db
@@ -389,8 +392,8 @@ def test_enrichment_handles_multiple_movies_efficiently(
     create_movie_stub(tmdb_id=103, title="The Matrix")  # No user data
 
     # Create user data for first two movies only
-    UserMovieData.objects.create(user=user, movie=movie1, user_watched=True, user_rating=9)
-    UserMovieData.objects.create(user=user, movie=movie2, user_on_watchlist=True)
+    create_user_movie_data(user=user, movie=movie1, user_watched=True, user_rating=9)
+    create_user_movie_data(user=user, movie=movie2, user_on_watchlist=True)
 
     # Arrange: Mock TMDB API response with 3 movies using test helper
     movies = [
@@ -452,7 +455,7 @@ def test_public_movie_reads_do_not_silently_discard_bearer_authentication(
     auth_state: str,
 ) -> None:
     movie = create_movie_stub(101)
-    UserMovieData.objects.create(user=user, movie=movie, user_on_watchlist=True)
+    create_user_movie_data(user=user, movie=movie, user_on_watchlist=True)
     access = AccessToken.for_user(cast(AbstractBaseUser, user))
     if auth_state in {"expired", "provider"}:
         access.payload["exp"] = int((timezone.now() - timedelta(seconds=5)).timestamp())

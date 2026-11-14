@@ -61,7 +61,12 @@ class MovieEnrichmentService:
         # Extract all tmdb_ids from the movie list
         tmdb_ids = [movie.tmdb_id for movie in movies]
 
-        records = UserMovieData.objects.get_queryset().for_user(user).for_movies(tmdb_ids)
+        records = (
+            UserMovieData.objects.get_queryset()
+            .for_user(user)
+            .for_movies(tmdb_ids)
+            .with_log_summary()
+        )
         user_data_map = {
             record.movie.tmdb_id: record for record in records.select_related("movie")
         }

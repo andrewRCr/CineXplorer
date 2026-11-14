@@ -298,10 +298,10 @@ export function FeedbackStatusSection() {
                 lineHeight="1.5"
                 mt={2}
               >
-                Note: TMDB and numeric user ratings use outlined chips with a
-                colored dot and neutral text. TMDB scores below 10 votes keep
-                the filled neutral badge. Star icons use{" "}
-                <Code fontSize="xs">imdb-gold</Code> token color.
+                TMDB ratings use outlined chips with a colored dot and neutral
+                text. Scores below 10 votes keep the filled neutral badge.
+                Personal ratings use earned half stars in{" "}
+                <Code fontSize="xs">imdb-gold</Code>.
               </Text>
             </VStack>
           </Box>

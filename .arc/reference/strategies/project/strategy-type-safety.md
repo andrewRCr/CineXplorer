@@ -126,7 +126,8 @@ class MovieSummarySchema(ModelSchema):
 
 `UserMovieDataSchema` declares every response field without defaults, including nullable fields. Its
 `from_record` class method maps the stored record and its related movie. Load that movie with `select_related`
-when reading the record, so serialization makes no extra query.
+when reading the record, and call `with_log_summary()` to annotate `has_entries` and `last_logged_on` in
+the same query, so serialization makes no extra query.
 
 **API usage:**
 
@@ -150,8 +151,8 @@ class UserMovieDataPatchSchema(Schema):
     user_rating: int | None = Field(default=None, ge=1, le=10)
 ```
 
-Use `payload.model_dump(exclude_unset=True)` when calling the service: omission keeps a field unchanged while an
-explicit null clears a nullable field.
+Use `payload.model_dump(exclude_unset=True)` when calling the service: an absent field stays unchanged except
+where the data's rules change it, and an explicit null clears a nullable field.
 
 ### Pattern 4: Pydantic List Defaults (Type-Safe)
 
@@ -295,8 +296,12 @@ user_id: int = user.id  # ✅ Custom stub provides explicit id field
 
 ```python path=null start=null
 def read_movie_state(user: AbstractBaseUser, tmdb_id: int) -> UserMovieDataSchema:
-    record = UserMovieData.objects.get_queryset().for_user(user).select_related("movie").get(
-        movie_id=tmdb_id
+    record = (
+        UserMovieData.objects.get_queryset()
+        .for_user(user)
+        .with_log_summary()
+        .select_related("movie")
+        .get(movie_id=tmdb_id)
     )
     return UserMovieDataSchema.from_record(record)
 ```

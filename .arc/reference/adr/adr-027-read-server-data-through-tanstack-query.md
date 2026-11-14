@@ -4,6 +4,9 @@
 
 Accepted (Owner, 2026-11-03)
 
+Superseded in part by ADR-047 (one mutation hook changing movie data with an optimistic update). The overlay of
+pending and confirmed saves stands.
+
 Implemented by: Frontend Server State (`prd-frontend-server-state.md`), including the movie detail query. The
 end-to-end watchlist test remains deferred.
 

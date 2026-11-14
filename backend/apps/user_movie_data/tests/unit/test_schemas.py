@@ -1,7 +1,5 @@
 """The save body distinguishes omission, explicit clearing and invalid input."""
 
-from datetime import date
-
 import pytest
 from pydantic import ValidationError
 
@@ -19,8 +17,6 @@ def test_null_flags_are_refused(field: str) -> None:
     [
         {"user_rating": 0},
         {"user_rating": 11},
-        {"user_review": "a" * 10001},
-        {"user_review": "bad\x00review"},
     ],
 )
 def test_invalid_rating_and_review_are_refused(fields: dict[str, object]) -> None:
@@ -28,53 +24,37 @@ def test_invalid_rating_and_review_are_refused(fields: dict[str, object]) -> Non
         UserMovieDataPatchSchema.model_validate(fields)
 
 
-@pytest.mark.parametrize(
-    ("review", "expected"),
-    [("", None), (" \t\n", None), ("\u00a0\u2007", None), ("  Keep spaces  ", "  Keep spaces  ")],
-)
-def test_review_normalization_preserves_meaningful_text(review: str, expected: str | None) -> None:
-    result = UserMovieDataPatchSchema.model_validate({"user_review": review})
-    assert result.model_dump(exclude_unset=True) == {"user_review": expected}
-
-
 def test_patch_only_contains_known_supplied_fields() -> None:
     assert (
         UserMovieDataPatchSchema.model_validate({"unknown": True}).model_dump(exclude_unset=True)
         == {}
     )
-    result = UserMovieDataPatchSchema.model_validate(
-        {"user_rating": None, "user_review": None, "watched_at": None}
-    )
+    result = UserMovieDataPatchSchema.model_validate({"user_rating": None})
     assert result.model_dump(exclude_unset=True) == {
         "user_rating": None,
-        "user_review": None,
-        "watched_at": None,
     }
 
 
-def test_patch_accepts_valid_values_and_any_calendar_date() -> None:
+def test_patch_accepts_valid_values() -> None:
     payload = {
         "user_watched": True,
         "user_on_watchlist": False,
         "user_liked": True,
         "user_rating": 10,
-        "user_review": "Review",
-        "watched_at": "1900-01-01",
     }
     result = UserMovieDataPatchSchema.model_validate(payload)
-    assert result.watched_at == date(1900, 1, 1)
     assert result.user_rating == 10
     assert result.user_watched is True
 
 
 RESPONSE = {
+    "has_entries": False,
+    "last_logged_on": None,
     "tmdb_id": 550,
     "user_watched": False,
     "user_on_watchlist": False,
     "user_liked": False,
     "user_rating": None,
-    "user_review": None,
-    "watched_at": None,
 }
 
 
@@ -87,3 +67,53 @@ def test_every_response_field_is_required(field: str) -> None:
 
 def test_response_contains_exactly_the_shared_state_fields() -> None:
     assert UserMovieDataSchema.model_validate(RESPONSE).model_dump() == RESPONSE
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"rating": 0},
+        {"rating": 11},
+        {"review": "a" * 10001},
+        {"review": "bad\x00review"},
+        {"time_zone": "Mars/Base"},
+        {"time_zone": "a" * 300},
+        {"time_zone": "../etc/passwd"},
+        {"time_zone": ""},
+    ],
+)
+def test_entry_write_validation(changes: dict[str, object]) -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+
+    with pytest.raises(ValidationError):
+        UserMovieEntryWriteSchema.model_validate({"liked": False, "time_zone": "UTC", **changes})
+
+
+@pytest.mark.parametrize("missing", ["liked", "time_zone"])
+def test_entry_required_fields(missing: str) -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+
+    fields: dict[str, object] = {"liked": False, "time_zone": "UTC"}
+    del fields[missing]
+    with pytest.raises(ValidationError):
+        UserMovieEntryWriteSchema.model_validate(fields)
+
+
+def test_entry_write_defaults_and_review_normalization() -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+
+    body = UserMovieEntryWriteSchema(liked=False, time_zone="UTC")
+    assert body.model_dump() == {
+        "liked": False,
+        "time_zone": "UTC",
+        "watched_on": None,
+        "rating": None,
+        "review": None,
+        "rewatch": False,
+    }
+    for review in ["", " \t\n", "\u00a0\u2007"]:
+        assert UserMovieEntryWriteSchema(liked=True, time_zone="UTC", review=review).review is None
+    assert (
+        UserMovieEntryWriteSchema(liked=True, time_zone="UTC", review="  Keep spaces  ").review
+        == "  Keep spaces  "
+    )

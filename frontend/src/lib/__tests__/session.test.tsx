@@ -2,6 +2,7 @@ import { beforeEach, expect, it } from "vitest";
 import { useEffect } from "react";
 import { isCancel } from "axios";
 import {
+  QueryClient,
   useQuery,
   useQueryClient,
   useMutationState,
@@ -18,6 +19,7 @@ import { clearBrowserAuth } from "@tests/helpers/auth";
 import { gate } from "@tests/helpers/web-locks";
 import { server } from "@tests/mocks/server";
 import { beginUserChange, changeOfUser, sessionKey } from "../session";
+import { movieEntriesQuery, activityQuery } from "../queries";
 
 beforeEach(() => {
   clearBrowserAuth();
@@ -270,4 +272,27 @@ it("does not dispatch a save retired while mutation setup yields", async () => {
   expect(
     screen.queryByText("Failed to update watchlist"),
   ).not.toBeInTheDocument();
+});
+
+it("clears both entry query caches when the user changes, preserving the session", async () => {
+  const client = new QueryClient();
+  const keys = [
+    movieEntriesQuery(1).queryKey,
+    activityQuery({ page: 1 }).queryKey,
+  ];
+  client.setQueryData(movieEntriesQuery(1).queryKey, {
+    record: createMockUserMovieData(),
+    entries: [],
+  });
+  client.setQueryData(activityQuery({ page: 1 }).queryKey, {
+    page: 1,
+    total_pages: 0,
+    total_results: 0,
+    results: [],
+  });
+  client.setQueryData(sessionKey, { username: "current" });
+  await changeOfUser(client);
+  for (const key of keys) expect(client.getQueryData(key)).toBeUndefined();
+  expect(client.getQueryData(sessionKey)).toEqual({ username: "current" });
+  client.clear();
 });

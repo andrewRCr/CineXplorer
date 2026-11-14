@@ -1,4 +1,4 @@
-import { Badge, Box, HStack, VisuallyHidden } from "@chakra-ui/react";
+import { Badge, Box, VisuallyHidden } from "@chakra-ui/react";
 import React from "react";
 
 /** Fewer TMDB votes than this and the chip stays neutral, without a score dot. */
@@ -13,10 +13,6 @@ interface MovieUserScoreProps {
   voteCount: number | null | undefined;
   /** "compact" for cards, "detailed" for the detail page */
   presentation?: "compact" | "detailed";
-  /** Optional user rating (1-10 scale) - if provided, shows both ratings */
-  userRating?: number;
-  /** Show just the user rating (for user-specific views) */
-  userRatingOnly?: boolean;
 }
 
 interface ScoreChipProps {
@@ -68,8 +64,6 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
   score,
   voteCount,
   presentation = "compact",
-  userRating,
-  userRatingOnly = false,
 }) => {
   const getTmdbChip = (): ScoreChipProps => {
     const isDetailed = presentation === "detailed";
@@ -94,30 +88,7 @@ const MovieUserScore: React.FC<MovieUserScoreProps> = ({
     return { tier: scoreTier(Number(label), 7.5), label, title: "TMDB Rating" };
   };
 
-  if (userRatingOnly && userRating) {
-    return (
-      <ScoreChip
-        tier={scoreTier(userRating, 8)}
-        label={`★ ${userRating}/10`}
-        title="Your Rating"
-      />
-    );
-  }
-
-  const tmdbChip = getTmdbChip();
-  if (userRating) {
-    return (
-      <HStack gap={1}>
-        <ScoreChip {...tmdbChip} />
-        <ScoreChip
-          tier={scoreTier(userRating, 8)}
-          label={`★ ${userRating}`}
-          title="Your Rating"
-        />
-      </HStack>
-    );
-  }
-  return <ScoreChip {...tmdbChip} />;
+  return <ScoreChip {...getTmdbChip()} />;
 };
 
 export default MovieUserScore;

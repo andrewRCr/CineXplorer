@@ -19,25 +19,28 @@ import {
 import { libraryKey } from "@/lib/queries";
 import { toaster } from "@/components/core/chakra/toaster";
 
-type SaveVariables = {
-    changes: UserMovieDataPatchSchema;
-    undo?: boolean;
-    change: number;
-};
-const saveKey = (tmdbId: number | undefined) => ["movie-save", tmdbId] as const;
+import {
+    movieWriteKey,
+    movieWriteOptions,
+    type SaveVariables,
+    type MovieWriteVariables,
+    type MovieWriteResponse,
+} from "./movieWriteOptions";
 
 export const saveMutationOptions = (
     tmdbId: number,
 ): UseMutationOptions<UserMovieDataSchema, Error, SaveVariables, number> =>
     mutationOptions({
-        mutationKey: saveKey(tmdbId),
-        scope: { id: `movie-save:${tmdbId}` },
-        gcTime: Infinity,
-        mutationFn: ({ changes, change }: SaveVariables) => {
-            return saveUserMovieData(tmdbId, changes, {
-                signal: getSaveSignal(change),
-                shouldReportServerError: () => change === getChangeCount(),
-            }).then((response) => response.data);
+        ...movieWriteOptions(tmdbId),
+        mutationFn: ({ changes, change, undo }: SaveVariables) => {
+            return saveUserMovieData(
+                tmdbId,
+                undo ? { ...changes, undo: true } : changes,
+                {
+                    signal: getSaveSignal(change),
+                    shouldReportServerError: () => change === getChangeCount(),
+                },
+            ).then((response) => response.data);
         },
         onMutate: ({ change }) => change,
         onSuccess: (record, variables, change, { client }) => {
@@ -62,6 +65,7 @@ export const saveMutationOptions = (
                                               user_on_watchlist:
                                                   !record.user_on_watchlist,
                                           },
+                                          kind: "save",
                                           undo: true,
                                           change,
                                       })
@@ -93,13 +97,13 @@ export function useUserMovieState(
 ) {
     const mutation = useMutation(saveMutationOptions(tmdbId ?? 0));
     const saves = useMutationState({
-        filters: { mutationKey: saveKey(tmdbId), exact: true },
-        // Only saveMutationOptions writes this key, so its state carries these types.
+        filters: { mutationKey: movieWriteKey(tmdbId), exact: true },
+        // Record and entry options are the only writers of this key; both use these union types.
         select: (item) =>
             item.state as MutationState<
-                UserMovieDataSchema,
+                MovieWriteResponse,
                 Error,
-                SaveVariables,
+                MovieWriteVariables,
                 number
             >,
     });
@@ -109,22 +113,27 @@ export function useUserMovieState(
         user_watched: false,
         user_liked: false,
         user_rating: null,
-        user_review: null,
-        watched_at: null,
+        has_entries: false,
+        last_logged_on: null,
     };
     // The cache preserves insertion order even when submittedAt timestamps tie.
     for (const save of saves) {
-        if (save.status === "success" && save.data) state = save.data;
+        if (save.status === "success" && save.data)
+            state = "record" in save.data ? save.data.record : save.data;
     }
     for (const save of saves) {
-        if (save.status === "pending")
+        if (save.status === "pending" && save.variables?.kind === "save")
             state = { ...state, ...save.variables?.changes };
     }
     return {
         state,
         save: (changes: UserMovieDataPatchSchema) => {
             if (tmdbId !== undefined)
-                mutation.mutate({ changes, change: getChangeCount() });
+                mutation.mutate({
+                    kind: "save",
+                    changes,
+                    change: getChangeCount(),
+                });
         },
     };
 }

@@ -102,7 +102,7 @@ export const createMockUserMovieData = (
     user_on_watchlist: false,
     user_liked: false,
     user_rating: null,
-    user_review: null,
-    watched_at: null,
+    has_entries: false,
+    last_logged_on: null,
     ...overrides,
 });

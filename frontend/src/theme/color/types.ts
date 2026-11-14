@@ -1038,12 +1038,12 @@ export interface UnifiedTheme {
      * IMDb gold color for rating star icons.
      *
      * **Standard:** Each theme sets its own accessible gold in both modes.
-     * **Usage:** Star icons, such as a row of rating stars.
-     * Numeric TMDB and user ratings use an outlined dot chip with neutral text;
+     * **Usage:** RatingStars shows earned gold half stars for a user rating.
+     * Numeric TMDB ratings use an outlined dot chip with neutral text;
      * fewer than 10 TMDB votes use the filled `badge` / `on-badge` pair.
      *
      * ```tsx
-     * <Text color="imdb-gold" fontSize="xl">★★★★☆</Text>
+     * <RatingStars rating={7} />
      * ```
      */
     "imdb-gold": string;

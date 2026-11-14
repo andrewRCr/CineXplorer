@@ -222,3 +222,53 @@ def test_reads_deletes_and_another_users_saves_remain_available() -> None:
         .status_code
         == 201
     )
+
+
+@pytest.mark.parametrize("mode", ["bearer", "session"])
+def test_record_saves_entry_creates_and_edits_share_limit(mode: str) -> None:
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+    from apps.user_movie_data.tests.test_helpers import create_user_movie_data
+
+    user = create_user()
+    record = create_user_movie_data(user, user_watched=True)
+    entry = UserMovieEntry.objects.create(record=record, review="Review", made_on=date(2020, 1, 1))
+    client = signed_client(user, mode)
+    payload = {"review": "Review", "liked": True, "time_zone": "UTC"}
+    for number in range(30):
+        if number % 3 == 0:
+            response = client.patch(URL, {"user_liked": True}, content_type="application/json")
+            assert response.status_code == 200
+        elif number % 3 == 1:
+            response = client.post(f"{URL}/entries", payload, content_type="application/json")
+            assert response.status_code == 201
+        else:
+            response = client.put(
+                f"{URL}/entries/{entry.pk}", payload, content_type="application/json"
+            )
+            assert response.status_code == 200
+    refused = client.post(f"{URL}/entries", payload, content_type="application/json")
+    assert refused.status_code == 429
+    assert refused["Retry-After"] == "60"
+    assert UserMovieEntry.objects.filter(record=record).count() == 11
+
+
+def test_entry_reads_and_deletes_are_not_counted() -> None:
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+    from apps.user_movie_data.tests.test_helpers import create_user_movie_data
+
+    user = create_user()
+    record = create_user_movie_data(user, user_watched=True)
+    client = signed_client(user, "session")
+    for _ in range(31):
+        entry = UserMovieEntry.objects.create(
+            record=record, review="Review", made_on=date(2020, 1, 1)
+        )
+        assert client.get(f"{URL}/entries").status_code == 200
+        assert client.delete(f"{URL}/entries/{entry.pk}").status_code == 200
+    assert (
+        client.patch(URL, {"user_liked": True}, content_type="application/json").status_code == 200
+    )

@@ -4,6 +4,10 @@
 
 Accepted (2026-11-11)
 
+Superseded in part by ADR-047 (record watched date and review, their explicit-null clearing, clearing a watched
+date when unwatching, and unconditional preservation of omitted fields). The upsert, record and throttle decisions
+stand.
+
 ## Context
 
 A user's watchlist, watched and liked flags, rating, review and watched date belong to one record per movie.

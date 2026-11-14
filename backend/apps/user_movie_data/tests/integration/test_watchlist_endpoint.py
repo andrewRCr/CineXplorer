@@ -14,7 +14,7 @@ from django.test.utils import CaptureQueriesContext
 from apps.core.tests.test_helpers import authenticate_client, create_user, get_csrf_token
 from apps.movie.tests.mock_paths import TMDB_CLIENT_GET_MOVIE_DETAILS
 from apps.movie.tests.test_helpers import create_mock_error_response
-from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 from apps.user_movie_data.tests.test_helpers import create_movie, create_user_movie_data
 from apps.users.models import User
 from config.api import api
@@ -44,13 +44,13 @@ def signed_in() -> tuple[Client, User]:
 @pytest.mark.parametrize(
     ("query", "expected"),
     [
-        ({}, {111, 222, 333, 444, 555, 777}),
+        ({}, {111, 222, 333, 444, 777}),
         ({"watchlist": True}, {111, 777}),
-        ({"watched": True}, {222, 777}),
+        ({"watched": True}, {222, 444, 777}),
         ({"liked": True}, {333, 777}),
         ({"rated": True}, {444, 777}),
         ({"watchlist": True, "watched": True, "liked": True, "rated": True}, {777}),
-        ({"watchlist": False}, {111, 222, 333, 444, 555, 777}),
+        ({"watchlist": False}, {111, 222, 333, 444, 777}),
     ],
 )
 def test_filters_and_default_state_selection(
@@ -61,8 +61,7 @@ def test_filters_and_default_state_selection(
         (111, {"user_on_watchlist": True}),
         (222, {"user_watched": True}),
         (333, {"user_liked": True}),
-        (444, {"user_rating": 8}),
-        (555, {"user_review": "Review"}),
+        (444, {"user_watched": True, "user_rating": 8}),
         (666, {}),
         (
             777,
@@ -106,9 +105,12 @@ def test_sort_nulls_last_and_id_ties(
             movie,
             user_on_watchlist=True,
             user_watched=True,
-            watched_at=None if missing else date(2020, 1, 1),
             user_rating=None if missing else 7,
         )
+        if not missing:
+            UserMovieEntry.objects.create(
+                record=record, watched_on=date(2020, 1, 1), made_on=date(2020, 1, 1)
+            )
         UserMovieData.objects.filter(pk=record.pk).update(
             created_at=datetime(2020, 1, 2 if missing else 1, tzinfo=UTC)
         )
@@ -153,7 +155,7 @@ def test_page_envelope_stored_card_and_empty_page(signed_in: tuple[Client, User]
         genre_ids=[18],
         overview="Stored overview",
     )
-    create_user_movie_data(user, movie, user_on_watchlist=True, user_rating=9)
+    create_user_movie_data(user, movie, user_on_watchlist=True, user_watched=True, user_rating=9)
     create_user_movie_data(user, create_movie(551), user_liked=True)
     first = client.get(URL, {"page": 1, "page_size": 1, "direction": "asc"}).json()
     assert (
@@ -173,13 +175,13 @@ def test_page_envelope_stored_card_and_empty_page(signed_in: tuple[Client, User]
         "genre_ids": [18],
         "overview": "Stored overview",
         "user_movie_data": {
+            "has_entries": False,
+            "last_logged_on": None,
             "tmdb_id": 550,
-            "user_watched": False,
+            "user_watched": True,
             "user_on_watchlist": True,
             "user_liked": False,
             "user_rating": 9,
-            "user_review": None,
-            "watched_at": None,
         },
     }
     second = client.get(URL, {"page": 2, "page_size": 1, "direction": "asc"}).json()
@@ -251,3 +253,88 @@ def test_openapi_declares_library_responses() -> None:
             responses[status]["content"]["application/json"]["schema"]["$ref"]
             == "#/components/schemas/ErrorResponseSchema"
         )
+
+
+@pytest.mark.parametrize(
+    ("query", "join_sort"),
+    [
+        ({"watchlist": True}, True),
+        ({"watched": True}, True),
+        ({"liked": True}, True),
+        ({"watchlist": True, "rated": True}, True),
+        ({}, False),
+        ({"watchlist": True, "watched": True}, False),
+        ({"rated": True}, False),
+    ],
+)
+@pytest.mark.parametrize("direction", ["asc", "desc"])
+def test_added_sort_uses_one_filtered_list(
+    signed_in: tuple[Client, User], query: dict[str, object], join_sort: bool, direction: str
+) -> None:
+    client, user = signed_in
+    for movie_id, created_month, joined_month in [(111, 1, 3), (222, 2, 1)]:
+        record = create_user_movie_data(
+            user,
+            create_movie(movie_id),
+            user_watched=True,
+            user_on_watchlist=True,
+            user_liked=True,
+            user_rating=7,
+        )
+        join_times = {
+            stamp: datetime(
+                2020,
+                joined_month if not join_sort or query.get(flag) else created_month,
+                1,
+                tzinfo=UTC,
+            )
+            for flag, stamp in [
+                ("watchlist", "watchlist_added_at"),
+                ("watched", "watched_added_at"),
+                ("liked", "liked_added_at"),
+            ]
+        }
+        UserMovieData.objects.filter(pk=record.pk).update(
+            created_at=datetime(2020, created_month, 1, tzinfo=UTC), **join_times
+        )
+    response = client.get(URL, {**query, "sort": "added", "direction": direction})
+    assert response.status_code == 200
+    expected = [222, 111] if join_sort else [111, 222]
+    if direction == "desc":
+        expected.reverse()
+    assert [movie["tmdb_id"] for movie in response.json()["results"]] == expected
+
+
+@pytest.mark.parametrize("undo", [True, False])
+def test_readding_with_undo_preserves_watchlist_place(
+    signed_in: tuple[Client, User], undo: bool
+) -> None:
+    from freezegun import freeze_time
+
+    client, user = signed_in
+    with freeze_time("2020-01-01 10:00:00"):
+        create_user_movie_data(user, create_movie(111), user_on_watchlist=True)
+    with freeze_time("2020-02-01 10:00:00"):
+        create_user_movie_data(user, create_movie(222), user_on_watchlist=True)
+    with freeze_time("2020-03-01 10:00:00"):
+        authenticate_client(client, user.username, "testpass123")
+        client.defaults["HTTP_X_CSRFTOKEN"] = get_csrf_token(client)
+        assert (
+            client.patch(
+                "/api/user-movie-data/111",
+                {"user_on_watchlist": False},
+                content_type="application/json",
+            ).status_code
+            == 200
+        )
+        response = client.patch(
+            "/api/user-movie-data/111",
+            {"user_on_watchlist": True, "undo": undo},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert "undo" not in response.json()
+        result = client.get(URL, {"watchlist": True}).json()
+    assert [movie["tmdb_id"] for movie in result["results"]] == (
+        [222, 111] if undo else [111, 222]
+    )

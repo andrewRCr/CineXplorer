@@ -116,3 +116,8 @@ class UserMovieEntrySchema(Schema):
 class UserMovieEntryWriteResponseSchema(Schema):
     entry: UserMovieEntrySchema
     record: UserMovieDataSchema
+
+
+class MovieEntriesSchema(Schema):
+    record: UserMovieDataSchema
+    entries: list[UserMovieEntrySchema]

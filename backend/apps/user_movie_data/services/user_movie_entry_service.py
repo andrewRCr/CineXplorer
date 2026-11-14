@@ -11,6 +11,7 @@ from apps.core.exceptions import InvalidInputError, NotFoundError
 from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 from apps.user_movie_data.schemas import (
+    MovieEntriesSchema,
     UserMovieDataSchema,
     UserMovieEntrySchema,
     UserMovieEntryWriteResponseSchema,
@@ -147,3 +148,26 @@ class UserMovieEntryService:
                     self._records.get_by_tmdb_id(user, tmdb_id)
                 ),
             )
+
+    def get_for_movie(self, user: AbstractBaseUser, tmdb_id: int) -> MovieEntriesSchema:
+        """Read only stored private history, returning defaults for an untracked film."""
+        try:
+            record = self._records.get_by_tmdb_id(user, tmdb_id)
+        except NotFoundError:
+            return MovieEntriesSchema(
+                record=UserMovieDataSchema(
+                    tmdb_id=tmdb_id,
+                    user_watched=False,
+                    user_on_watchlist=False,
+                    user_liked=False,
+                    user_rating=None,
+                    has_entries=False,
+                    last_logged_on=None,
+                ),
+                entries=[],
+            )
+        history = UserMovieEntry.objects.get_queryset().filter(record=record).ordered_for_history()
+        return MovieEntriesSchema(
+            record=UserMovieDataSchema.from_record(record),
+            entries=[UserMovieEntrySchema.from_entry(entry, tmdb_id) for entry in history],
+        )

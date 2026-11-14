@@ -239,19 +239,17 @@ rewatch, passing in a backend test and on the browsable stack.
         - Coupled edit/delete behavior was tested in one red batch; final user-data/auth suites: 601 passed.
           Ruff and full-backend Pyright passed.
 
-- [ ] **3.3 A film's entries are read with its record — D2, D6**
+- [x] **3.3 A film's entries are read with its record — D2, D6**
 
     **Goal:** A page can show a film's state and its entries, latest first, from one call that never reaches TMDB.
 
-    - [ ] **3.3.a Write the tests**
-        - `GET /user-movie-data/{tmdb_id}/entries` answers the record and its entries in the reverse of D2's order (an
-          undated entry by its `made_on`, same-day entries by when each was made); a stored record with dated and
-          undated entries carries a correct log summary (criterion 9); a film the user has no record of answers the
-          defaults and no entries, with no TMDB request; only the user's own entries; 401 and 422; the route's exact
-          OpenAPI statuses (200, 401, 422); a fixed number of queries whatever the number of entries
-        - Expect tests to FAIL initially
-    - [ ] **3.3.b Add `MovieEntriesSchema`, the read in `UserMovieEntryService` and its route**
-        - Tests should now PASS
+    - [x] **3.3.a Write the tests**
+        - Six cases failed against the absent GET route, then passed with default/untracked responses, privacy,
+          effective-date and creation/ID ordering, log summaries, auth/path validation and exact OpenAPI statuses.
+        - Query count stays fixed from one to 31 entries; reads make no TMDB request.
+    - [x] **3.3.b Add `MovieEntriesSchema`, the read in `UserMovieEntryService` and its route**
+        - Compose the annotated owner-scoped record read and one ordered entry query; return an explicit default
+          record and empty entries when no record exists. All 299 app tests, Ruff and full-backend Pyright passed.
 
 - [ ] **3.4 Saves, entry creates and entry edits share one count — D6**
 

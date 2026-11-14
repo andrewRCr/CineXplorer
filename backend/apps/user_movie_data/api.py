@@ -13,6 +13,7 @@ from apps.core.schemas import ErrorResponseSchema
 from apps.movie.schemas import MovieListResponseSchema
 from apps.user_movie_data.schemas import (
     LibraryQuerySchema,
+    MovieEntriesSchema,
     UserMovieDataPatchSchema,
     UserMovieDataSchema,
     UserMovieEntryWriteResponseSchema,
@@ -155,3 +156,11 @@ def delete_movie_entry(
     request: HttpRequest, tmdb_id: PositiveTMDBId, entry_id: PositiveTMDBId
 ) -> UserMovieEntryWriteResponseSchema:
     return _entry_service.delete(get_current_user(request), tmdb_id, entry_id)
+
+
+@user_movie_data_router.get(
+    "/{tmdb_id}/entries",
+    response={200: MovieEntriesSchema, 401: ErrorResponseSchema, 422: ErrorResponseSchema},
+)
+def get_movie_entries(request: HttpRequest, tmdb_id: PositiveTMDBId) -> MovieEntriesSchema:
+    return _entry_service.get_for_movie(get_current_user(request), tmdb_id)

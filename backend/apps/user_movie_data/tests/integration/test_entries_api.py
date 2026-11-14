@@ -299,3 +299,107 @@ def test_openapi_entry_edit_and_delete_contract() -> None:
                     response["content"]["application/json"]["schema"]["$ref"]
                     == "#/components/schemas/ErrorResponseSchema"
                 )
+
+
+def test_film_entries_default_without_card_lookup(
+    signed_in: tuple[Client, User], tmdb: TMDBStub
+) -> None:
+    client, _ = signed_in
+    response = client.get(URL)
+    assert response.status_code == 200
+    assert response.json() == {
+        "record": {
+            "tmdb_id": 550,
+            "user_watched": False,
+            "user_on_watchlist": False,
+            "user_liked": False,
+            "user_rating": None,
+            "has_entries": False,
+            "last_logged_on": None,
+        },
+        "entries": [],
+    }
+    assert not Movie.objects.exists()
+    assert tmdb.requested_ids == []
+
+
+def test_film_entries_order_and_summary(signed_in: tuple[Client, User], tmdb: TMDBStub) -> None:
+    from datetime import date
+
+    from django.utils import timezone
+
+    client, user = signed_in
+    record = create_user_movie_data(user, user_watched=True)
+    dated = UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 2), rating=7, made_on=date(2020, 1, 1)
+    )
+    old = UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 1), made_on=date(2020, 1, 1)
+    )
+    undated = UserMovieEntry.objects.create(
+        record=record, review="Undated", made_on=date(2020, 1, 3)
+    )
+    tie = UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 3), rewatch=True, made_on=date(2020, 1, 1)
+    )
+    UserMovieEntry.objects.filter(pk__in=[undated.pk, tie.pk]).update(created_at=timezone.now())
+    response = client.get(URL)
+    assert response.status_code == 200
+    payload = response.json()
+    assert [entry["id"] for entry in payload["entries"]] == [tie.pk, undated.pk, dated.pk, old.pk]
+    assert payload["entries"][1]["review"] == "Undated"
+    assert payload["record"]["has_entries"] is True
+    assert payload["record"]["last_logged_on"] == "2020-01-03"
+    assert tmdb.requested_ids == []
+
+
+def test_film_entries_are_private(signed_in: tuple[Client, User]) -> None:
+    from datetime import date
+
+    client, _ = signed_in
+    other = create_user_movie_data(create_user(username="other"), user_watched=True, user_rating=9)
+    UserMovieEntry.objects.create(record=other, review="Private", made_on=date(2020, 1, 1))
+    response = client.get(URL)
+    assert response.status_code == 200
+    assert response.json()["entries"] == []
+    assert response.json()["record"]["user_rating"] is None
+    assert not response.json()["record"]["has_entries"]
+
+
+def test_film_entry_read_authentication_and_validation(signed_in: tuple[Client, User]) -> None:
+    client, _ = signed_in
+    assert Client().get(URL).status_code == 401
+    for movie_id in ["0", "-1", "bad"]:
+        assert client.get(f"/api/user-movie-data/{movie_id}/entries").status_code == 422
+
+
+def test_film_entry_read_query_count_is_fixed(signed_in: tuple[Client, User]) -> None:
+    from datetime import date
+
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    client, user = signed_in
+    record = create_user_movie_data(user, user_watched=True)
+    UserMovieEntry.objects.create(record=record, review="First", made_on=date(2020, 1, 1))
+    with CaptureQueriesContext(connection) as small:
+        first = client.get(URL)
+    for number in range(30):
+        UserMovieEntry.objects.create(
+            record=record, review=f"Review {number}", made_on=date(2020, 1, 1)
+        )
+    with CaptureQueriesContext(connection) as large:
+        second = client.get(URL)
+    assert len(first.json()["entries"]) == 1
+    assert len(second.json()["entries"]) == 31
+    assert len(small) == len(large)
+
+
+def test_openapi_film_entries_read_contract() -> None:
+    schema = json.loads(json.dumps(api.get_openapi_schema(), cls=DjangoJSONEncoder))
+    path = next(
+        value
+        for key, value in schema["paths"].items()
+        if key.endswith("/user-movie-data/{tmdb_id}/entries")
+    )
+    assert {int(status) for status in path["get"]["responses"]} == {200, 401, 422}

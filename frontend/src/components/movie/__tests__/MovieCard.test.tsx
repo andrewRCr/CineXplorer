@@ -935,7 +935,7 @@ describe("MovieCard shared-save composition", () => {
     );
     expect(requests).toEqual([
       { user_on_watchlist: true },
-      { user_on_watchlist: false },
+      { user_on_watchlist: false, undo: true },
     ]);
   });
 });

@@ -63,9 +63,10 @@ Use page numbers through `paginate_queryset` for lists read from the database. V
 1,000,000 and page_size between 1 and 100 (default 20) in the query schema; invalid values answer 422 rather than
 being clamped. A page past the end returns an empty result list with valid counts.
 
-Use the `MovieListResponseSchema` envelope: page, total_pages and total_results describe the page and collection.
-A further page exists while page is below total_pages. Set next_tmdb_page_start to null because the list has no
-TMDB cursor; that null does not mean the database list has ended.
+Film lists use `MovieListResponseSchema`, with next_tmdb_page_start set to null because they have no TMDB cursor.
+Other database-served lists, such as the cross-film list of dated entries, use `PaginatedResponse[T]`, which has no
+cursor field. In both envelopes, page, total_pages and total_results describe the page and collection, and a further
+page exists while page is below total_pages.
 
 Every ordering ends on a unique key in the requested direction, with nulls last in both directions, so unchanged
 lists have deterministic, non-overlapping pages. After a save or DELETE, clients refetch their loaded pages because
@@ -235,9 +236,10 @@ else:
 
 ### End-of-Results Signal
 
-`next_tmdb_page_start = null` signals exhaustion only for a TMDB-backed list. Database-served lists always leave
-that field null and use page against total_pages to signal whether another page exists.
-This triggers `hasNextPage = false` in TanStack Query.
+`next_tmdb_page_start = null` signals exhaustion only for a TMDB-backed list, triggering `hasNextPage = false`
+in TanStack Query. Database-served film lists keep `MovieListResponseSchema` with that field null; other
+database-served lists, such as dated entries across films, use `PaginatedResponse[T]` without a TMDB cursor. Both
+use page against total_pages to signal whether another page exists.
 
 Conditions for end-of-results:
 

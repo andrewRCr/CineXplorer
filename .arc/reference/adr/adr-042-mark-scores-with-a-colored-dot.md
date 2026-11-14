@@ -4,6 +4,8 @@
 
 Accepted (2026-11-11)
 
+Superseded in part by ADR-047 (the dot chip and numeric star labels for user ratings). The TMDB score chips stand.
+
 Supersedes ADR-003 in part: its assignment of gold to numeric TMDB and user score displays. Star icons keep gold.
 
 ## Context

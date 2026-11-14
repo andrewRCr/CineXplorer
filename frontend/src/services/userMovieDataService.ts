@@ -22,3 +22,16 @@ export const saveUserMovieData = (
         data,
         config,
     );
+
+export type MovieEntries = components["schemas"]["MovieEntriesSchema"];
+export type ActivityPage =
+    components["schemas"]["PaginatedResponse_ActivityEntrySchema_"];
+export type ActivityParams = Partial<
+    components["schemas"]["ActivityQuerySchema"]
+>;
+
+export const getMovieEntries = (tmdbId: number) =>
+    userMovieDataService.get<MovieEntries>(`${tmdbId}/entries`);
+
+export const getActivity = (params: ActivityParams) =>
+    create("/user-movie-data/entries").getPaginated<ActivityPage>(params);

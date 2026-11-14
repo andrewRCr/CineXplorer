@@ -347,21 +347,17 @@ rule.
         - Kept the request mark outside overlay changes; updated the card-level Undo request expectation.
           All 239 related tests, types, ESLint and formatting passed.
 
-- [ ] **5.3 Pages can read a film's entries and the cross-film list — D12**
+- [x] **5.3 Pages can read a film's entries and the cross-film list — D12**
 
     **Goal:** A later page reads entries through the query factory, and a change of user clears them with every other
     user query.
 
-    - [ ] **5.3.a Write the tests**
-        - With MSW serving both reads, `movieEntriesQuery(tmdbId)` and `activityQuery(params)` return them under keys
-          built from `entriesKey`; cancelling a read aborts its request, as `libraryQuery`'s does
-        - A change of user resets them (`session.test.tsx`): this passes on arrival once the queries exist, since
-          `resetUserQueries` resets every query but the session, so see it fail against a narrow break of that
-          predicate and pass restored
-        - Expect the other tests to FAIL initially
-    - [ ] **5.3.b Add the two entry reads to `userMovieDataService.ts`, and the key and queries to `lib/queries.ts`**
-        - The reads return `HttpService`'s `{ request, cancel }`, as `getUserMovies` does; 5.4.b adds the writes
-        - Tests should now PASS
+    - [x] **5.3.a Write the tests**
+        - MSW checks both reads and activity pagination, exact entry keys, request aborts and user-change resets.
+          Narrow key, cancellation and reset-predicate breaks produced four behavioral failures; restored tests pass.
+    - [x] **5.3.b Add the two entry reads to `userMovieDataService.ts`, and the key and queries to `lib/queries.ts`**
+        - Reused the service cancellation contract and query signal adapter. All 377 related tests, types, ESLint
+          and formatting passed; nine focused tests passed after matching cache fixtures to generated schemas.
 
 - [ ] **5.4 Entry writes run as saves of their film — D12**
 

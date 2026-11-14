@@ -159,7 +159,7 @@ while the catalog's requests keep the tab's context and the toast.
 _Mode:_ `slice` — closes on signed-out and signed-in Home at `/` showing the pitch, the hero's film and what's on, with
 the three changed smoke specs passing.
 
-- [ ] **2.1 Cards show their actions only to signed-in visitors — R26**
+- [x] **2.1 Cards show their actions only to signed-in visitors — R26**
 
     **Goal:** A signed-out or resolving visitor sees no card action on any `MovieCard`, and a signed-in one keeps the
     working watchlist toggle.
@@ -167,7 +167,7 @@ the three changed smoke specs passing.
     **Check:** `browse.spec.ts`, `movie-detail.spec.ts` and `back-to-results.spec.ts` (signed-out catalog cards) and
     `phone-width.spec.ts` (signed-in `/browse` and `/search`).
 
-    - [ ] **2.1.a Write the sign-in cases in `MovieCard.test.tsx`**
+    - [x] **2.1.a Write the sign-in cases in `MovieCard.test.tsx`**
         - Test: no button in the card while `status` is `anonymous` or `resolving`, counted by role, since the
           Watched and Liked buttons have no accessible name
         - The "MovieCard watchlist saves" cases (around line 628) and the "MovieCard shared-save composition" cases
@@ -176,9 +176,10 @@ the three changed smoke specs passing.
           don't touch the actions stay as they are
         - Expect the signed-out and resolving cases to FAIL initially
 
-    - [ ] **2.1.b Render `MovieCard`'s footer only when `useAuthContext()?.status` is `authenticated`**
+    - [x] **2.1.b Render `MovieCard`'s footer only when `useAuthContext()?.status` is `authenticated`**
         - A missing context counts as signed out, as `ProtectedRoute` reads it
-        - `ROW_HEIGHT` in `VirtualizedMovieGrid` stays 449; run its tests unchanged
+        - `ROW_HEIGHT` stays 449; all 21 existing grid tests pass.
+        - All 77 card/return-link tests pass; the four required browser specs, lint and type-check pass.
         - Tests should now PASS
 
 - [ ] **2.2 Films opened from Home lead back to Home — R25**

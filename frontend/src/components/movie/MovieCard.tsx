@@ -16,6 +16,7 @@ import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
 import MovieUserScore from "./MovieUserScore";
 import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
 import PosterPlaceholder from "@/assets/PosterPlaceholder";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 
 // ============================================================================
 // MovieCard Component
@@ -46,6 +47,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   // ==========================================================================
 
   const [searchParams] = useSearchParams();
+  const signedIn = useAuthContext()?.status === "authenticated";
   const [isTitleTooltipOpen, setIsTitleTooltipOpen] = useState(false);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
@@ -328,43 +330,51 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
           </Card.Body>
 
           {/* Action Buttons */}
-          <Card.Footer p={3} pt={0}>
-            <Center width="100%">
-              <ButtonGroup size="sm" spaceX={1}>
-                <Tooltip content="Watched" openDelay={500}>
-                  <IconButton variant="ghost" size="sm">
-                    <LuEye />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip content="Liked" openDelay={500}>
-                  <IconButton variant="ghost" size="sm">
-                    <LuHeart />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip
-                  content={
-                    isOnWatchlist ? "Remove from watchlist" : "Add to watchlist"
-                  }
-                  openDelay={500}
-                >
-                  <IconButton
-                    variant="ghost"
-                    color={isOnWatchlist ? "tertiary" : undefined}
-                    size="sm"
-                    aria-label={
+          {signedIn && (
+            <Card.Footer p={3} pt={0}>
+              <Center width="100%">
+                <ButtonGroup size="sm" spaceX={1}>
+                  <Tooltip content="Watched" openDelay={500}>
+                    <IconButton variant="ghost" size="sm">
+                      <LuEye />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip content="Liked" openDelay={500}>
+                    <IconButton variant="ghost" size="sm">
+                      <LuHeart />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip
+                    content={
                       isOnWatchlist
                         ? "Remove from watchlist"
                         : "Add to watchlist"
                     }
-                    aria-pressed={isOnWatchlist}
-                    onClick={(event) => void handleWatchlistToggle(event)}
+                    openDelay={500}
                   >
-                    {isOnWatchlist ? <RiPlayListFill /> : <RiPlayListAddLine />}
-                  </IconButton>
-                </Tooltip>
-              </ButtonGroup>
-            </Center>
-          </Card.Footer>
+                    <IconButton
+                      variant="ghost"
+                      color={isOnWatchlist ? "tertiary" : undefined}
+                      size="sm"
+                      aria-label={
+                        isOnWatchlist
+                          ? "Remove from watchlist"
+                          : "Add to watchlist"
+                      }
+                      aria-pressed={isOnWatchlist}
+                      onClick={(event) => void handleWatchlistToggle(event)}
+                    >
+                      {isOnWatchlist ? (
+                        <RiPlayListFill />
+                      ) : (
+                        <RiPlayListAddLine />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                </ButtonGroup>
+              </Center>
+            </Card.Footer>
+          )}
         </Box>
 
         {/* Animated Accent Line */}

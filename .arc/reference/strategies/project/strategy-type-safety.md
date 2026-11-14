@@ -126,7 +126,8 @@ class MovieSummarySchema(ModelSchema):
 
 `UserMovieDataSchema` declares every response field without defaults, including nullable fields. Its
 `from_record` class method maps the stored record and its related movie. Load that movie with `select_related`
-when reading the record, so serialization makes no extra query.
+when reading the record, and call `with_log_summary()` to annotate `has_entries` and `last_logged_on` in
+the same query, so serialization makes no extra query.
 
 **API usage:**
 
@@ -295,8 +296,12 @@ user_id: int = user.id  # ✅ Custom stub provides explicit id field
 
 ```python path=null start=null
 def read_movie_state(user: AbstractBaseUser, tmdb_id: int) -> UserMovieDataSchema:
-    record = UserMovieData.objects.get_queryset().for_user(user).select_related("movie").get(
-        movie_id=tmdb_id
+    record = (
+        UserMovieData.objects.get_queryset()
+        .for_user(user)
+        .with_log_summary()
+        .select_related("movie")
+        .get(movie_id=tmdb_id)
     )
     return UserMovieDataSchema.from_record(record)
 ```

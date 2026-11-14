@@ -21,6 +21,8 @@ from config.api import api
 pytestmark = pytest.mark.django_db
 URL = "/api/user-movie-data/550"
 STATE_FIELDS = {
+    "has_entries",
+    "last_logged_on",
     "tmdb_id",
     "user_watched",
     "user_on_watchlist",
@@ -44,6 +46,8 @@ def test_first_save_then_update_read_and_delete(signed_in: tuple[Client, User]) 
     first = client.patch(URL, {"user_on_watchlist": True}, content_type="application/json")
     assert first.status_code == 201
     assert first.json() == {
+        "has_entries": False,
+        "last_logged_on": None,
         "tmdb_id": 550,
         "user_watched": False,
         "user_on_watchlist": True,
@@ -286,3 +290,30 @@ def test_entries_prevent_unwatching(signed_in: tuple[Client, User], rating: int 
         else "Clear the rating and delete this film's entries before marking this film unwatched"
     }
     assert UserMovieData.objects.values().get(pk=record.pk) == before
+
+
+@pytest.mark.parametrize("history", ["empty", "undated", "dated"])
+def test_log_summary_on_get_patch_and_library(
+    signed_in: tuple[Client, User], history: str
+) -> None:
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+
+    client, user = signed_in
+    record = create_user_movie_data(user, user_watched=True)
+    if history != "empty":
+        UserMovieEntry.objects.create(record=record, review="Review", made_on=date(2020, 1, 3))
+    if history == "dated":
+        for day in [2, 1]:
+            UserMovieEntry.objects.create(
+                record=record, watched_on=date(2020, 1, day), made_on=date(2020, 1, 3)
+            )
+    payloads = [
+        client.get(URL).json(),
+        client.patch(URL, {"user_liked": True}, content_type="application/json").json(),
+        client.get("/api/user-movie-data/movies").json()["results"][0]["user_movie_data"],
+    ]
+    for payload in payloads:
+        assert payload["has_entries"] is (history != "empty")
+        assert payload["last_logged_on"] == ("2020-01-02" if history == "dated" else None)

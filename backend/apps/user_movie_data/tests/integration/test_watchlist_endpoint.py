@@ -175,6 +175,8 @@ def test_page_envelope_stored_card_and_empty_page(signed_in: tuple[Client, User]
         "genre_ids": [18],
         "overview": "Stored overview",
         "user_movie_data": {
+            "has_entries": False,
+            "last_logged_on": None,
             "tmdb_id": 550,
             "user_watched": True,
             "user_on_watchlist": True,

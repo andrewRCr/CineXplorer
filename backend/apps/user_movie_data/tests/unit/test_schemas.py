@@ -48,6 +48,8 @@ def test_patch_accepts_valid_values() -> None:
 
 
 RESPONSE = {
+    "has_entries": False,
+    "last_logged_on": None,
     "tmdb_id": 550,
     "user_watched": False,
     "user_on_watchlist": False,

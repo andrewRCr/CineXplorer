@@ -64,7 +64,7 @@ class UserMovieDataService:
             apply_record_save(record, changes)
             stamp_list_joins(record, previous)
             record.save()
-        return record, created
+        return self.get_by_tmdb_id(user, tmdb_id), created
 
     def delete(self, user: AbstractBaseUser, tmdb_id: int) -> None:
         """Delete the requesting user's state while keeping its movie card."""
@@ -74,6 +74,7 @@ class UserMovieDataService:
         record = (
             UserMovieData.objects.get_queryset()
             .for_user(user)
+            .with_log_summary()
             .select_related("movie")
             .filter(movie_id=tmdb_id)
             .first()

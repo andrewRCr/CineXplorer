@@ -95,7 +95,7 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     """
     # Arrange: Create movie stub and user data
     movie_stub = create_movie_stub(tmdb_id=101, title="Blade Runner")
-    create_user_movie_data(
+    record = create_user_movie_data(
         user=user,
         movie=movie_stub,
         user_watched=True,
@@ -104,6 +104,13 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
         user_rating=9,
     )
 
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+
+    UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 2), made_on=date(2020, 1, 3)
+    )
     # Arrange: Mock TMDB API response using test helper
     movies = [create_tmdb_movie(101, "Blade Runner", "1982-06-25", 8.1, poster_path="/test.jpg")]
     mock_api_response = create_mock_paginated_response(movies=movies, page=1, total_pages=1)
@@ -125,6 +132,8 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     user_data = movie_data["user_movie_data"]
     assert user_data is not None
     assert set(user_data) == {
+        "has_entries",
+        "last_logged_on",
         "tmdb_id",
         "user_watched",
         "user_on_watchlist",
@@ -135,6 +144,8 @@ def test_discovery_endpoint_enriches_user_movie_data_for_authenticated_user(
     assert user_data["user_on_watchlist"] is True
     assert user_data["user_liked"] is True
     assert user_data["user_rating"] == 9
+    assert user_data["has_entries"] is True
+    assert user_data["last_logged_on"] == "2020-01-02"
 
 
 @pytest.mark.django_db
@@ -296,6 +307,8 @@ def test_movie_detail_endpoint_enriches_user_movie_data_for_authenticated_user(
     user_data = data["user_movie_data"]
     assert user_data is not None
     assert set(user_data) == {
+        "has_entries",
+        "last_logged_on",
         "tmdb_id",
         "user_watched",
         "user_on_watchlist",

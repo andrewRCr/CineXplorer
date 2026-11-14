@@ -142,26 +142,20 @@ and two for a Library page.
         - Refuse un-watching while any entry remains, naming the entry and rating causes from the resulting state.
         - All 179 app tests, Ruff and full-backend Pyright passed; the guard closes the planned migration follow-on.
 
-- [ ] **2.2 Every record read carries the film's log summary — D8**
+- [x] **2.2 Every record read carries the film's log summary — D8**
 
     **Goal:** Wherever a film's state is read, it says whether the film has entries and the date of its latest logged
     viewing, with no added query.
 
-    - [ ] **2.2.a Write the tests**
-        - `has_entries` and `last_logged_on` are correct with no entries, only undated entries, and dated entries, on
-          the record GET, the PATCH response, a Library page (`test_watchlist_endpoint.py`), an enriched movie list and
-          the movie detail payload (`movie`'s `test_endpoint_enrichment_integration.py` and `test_movie_detail.py`)
-        - An enrichment stays one query and a Library page two, whatever the number of entries
-          (`test_movie_enrichment_query_optimization.py`, `test_library_service.py`). These pass on arrival, since no
-          read touches entries yet: once 2.2.b lands, see each fail against a narrow break (the summary read per record
-          from `record.entries`) and pass restored
-        - Expect the other tests to FAIL initially
-    - [ ] **2.2.b Add the fields and read every path through the annotated QuerySet**
-        - `UserMovieDataSchema` gains `has_entries` and `last_logged_on`, which `from_record` reads from 1.3.c's
-          annotation. `get_by_tmdb_id`, the PATCH response (re-read after the save), `get_library` and
-          `MovieEnrichmentService` read through it
-        - The type-safety strategy's Pattern 2 and its `read_movie_state` example read through the method (D14)
-        - Tests should now PASS
+    - [x] **2.2.a Write the tests**
+        - Empty, undated-only and dated history are covered through GET, PATCH, Library and enrichment, with dated
+          summaries on movie-detail and all discovery routes. Required response shapes include both fields.
+        - Tests failed before the fields existed. Constant empty summaries fail discovery assertions; per-record
+          entry queries break the fixed-cost enrichment and Library assertions. Restored targeted run: 69 passed.
+    - [x] **2.2.b Add the fields and read every path through the annotated QuerySet**
+        - Required `has_entries` and `last_logged_on` read annotations; saves re-read their response, and GET,
+          Library and enrichment share the annotated QuerySet. Updated type-safety Pattern 2 and its read example.
+        - Relevant combined suite: 240 passed. Ruff, full-backend Pyright and documentation checks passed.
 
 - [ ] **2.3 The Library's "date added" is when a film joined the filtered list — D9**
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Literal
 
 from ninja import Schema
@@ -18,6 +19,8 @@ class UserMovieDataSchema(Schema):
     user_on_watchlist: bool
     user_liked: bool
     user_rating: int | None = Field(..., ge=1, le=10)
+    has_entries: bool
+    last_logged_on: date | None
 
     @classmethod
     def from_record(cls, record: UserMovieData) -> UserMovieDataSchema:
@@ -27,6 +30,8 @@ class UserMovieDataSchema(Schema):
             user_on_watchlist=record.user_on_watchlist,
             user_liked=record.user_liked,
             user_rating=record.user_rating,
+            has_entries=record.has_entries,
+            last_logged_on=record.last_logged_on,
         )
 
 

@@ -64,6 +64,8 @@ def test_enrich_with_authenticated_user_populates_user_movie_data(
     data = result[0].user_movie_data
     assert data is not None
     assert data.model_dump() == {
+        "has_entries": False,
+        "last_logged_on": None,
         "tmdb_id": 550,
         "user_watched": True,
         "user_on_watchlist": False,
@@ -205,3 +207,26 @@ def test_no_query_for_empty_movies(service: MovieEnrichmentService, user: User) 
         result = service.enrich_movies_with_user_movie_data([], user)
     assert len(queries) == 0
     assert result == []
+
+
+@pytest.mark.parametrize("history", ["empty", "undated", "dated"])
+def test_enrichment_log_summary_in_one_query(
+    service: MovieEnrichmentService, user: User, history: str
+) -> None:
+    from apps.user_movie_data.models import UserMovieEntry
+
+    record = create_user_movie_data(user, user_watched=True)
+    if history != "empty":
+        UserMovieEntry.objects.create(record=record, review="Review", made_on=date(2020, 1, 3))
+    if history == "dated":
+        for day in [2, 1]:
+            UserMovieEntry.objects.create(
+                record=record, watched_on=date(2020, 1, day), made_on=date(2020, 1, 3)
+            )
+    with CaptureQueriesContext(connection) as queries:
+        movies = service.enrich_movies_with_user_movie_data([movie_schema()], user)
+    assert len(queries) == 1
+    state = movies[0].user_movie_data
+    assert state is not None
+    assert state.has_entries is (history != "empty")
+    assert state.last_logged_on == (date(2020, 1, 2) if history == "dated" else None)

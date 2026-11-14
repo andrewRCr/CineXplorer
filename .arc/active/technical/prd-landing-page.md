@@ -123,23 +123,29 @@ for merge. With N entries an immediate repeat has probability 1/N, which is acce
   pull requests. The full candidate list need not block the first merge.
 - **Focus and checked artwork.** Each entry contains its TMDB ID, optional `focus_point` and optional
   `backdrop_path`. A point has paired finite `x` and `y` percentages from 0 to 100 inclusive, used as CSS
-  `object-position`, not a TMDB crop. An unset point is returned as `null`, and the hero uses `50% 28%` at every
-  width. A stored backdrop path is the exact TMDB image path the Owner checked; when unset the current primary
+  `object-position`, not a TMDB crop. An unset point is returned as `null`, and the full-bleed hero uses `50% 28%`.
+  Focus applies only to the full-bleed layout; the stacked portrait image
+  is shown whole without a focus point. A stored backdrop path is the exact TMDB image path the Owner checked; when
+  unset the current primary
   backdrop is used. A listed development candidate retains both fields; an unlisted candidate has no configured
   point or backdrop override. No request parameter supplies either value. No focus editor is built into the app.
 - **The check.** First screen the candidates by script through the DEBUG server's
   `GET /api/movies/featured?film={id}`: flag 404s, absent backdrops, unresolved title/year matches and credits
-  (title, year and tagline) that may not fit R7's position. Other failed reads or image loads remain unresolved,
+  (title, directors, year and any visible tagline) that may not fit R7's position. Other failed reads or image loads
+  remain unresolved,
   never a passing screen. Flags advise; the Owner decides on each film.
   An external review sheet, kept in the landing run folder outside the repository and app, uses those responses
   without an API key. For each film it shows the same backdrop at the hero's wide, near-1024px and phone proportions,
-  using the hero's cover fit, position, pitch, credit and fades. Points start at `50% 28%`; one click sets a point
-  for all three. It exports `FeaturedFilm(...)` lines containing the backdrop path shown, optional custom focus and
-  a title-and-year comment. The Owner reviews each film in one page mode; the hero's dark palette in both modes is
-  checked once for the component, as 4.9 does, rather than twice for every film.
+  using the hero's actual layouts: cover fit, focus, pitch and fades in the wide and near-1024px views; the whole
+  image with its credit in the phone view. Points start at `50% 28%`; a click changes the two full-bleed views while
+  the phone frame and credit stay unchanged. It exports `FeaturedFilm(...)` lines containing the backdrop path
+  shown, optional custom focus and
+  a title-and-year comment. The Owner reviews each film in one page mode. The component's dark full-bleed and
+  page-mode stacked treatments are checked in both modes once, rather than twice for every film.
   Only films with a custom point or a flag additionally require the built hero at all three widths through
-  `/?film={tmdb_id}`, in one page mode. Settle the flags and confirm the intended subject survives all three crops,
-  and the credit fits and remains legible, before approving an entry. A point exchanges visible edges; it cannot
+  `/?film={tmdb_id}`, in one page mode. Settle the flags and confirm the subject survives the two full-bleed crops;
+  at phone width check the whole frame and whether its credit fits, not a focus-dependent crop. Credits must fit
+  their reserved space and remain legible before approving an entry. A point exchanges visible edges; it cannot
   recover the full cover-cropped frame. Unapproved candidates stay out of the shipped list.
   A development Home passes its address's `film` parameter to the endpoint; a DEBUG server serves any candidate,
   listed or not. A production build never sends it and a production server ignores it for the random choice.
@@ -148,15 +154,18 @@ for merge. With N entries an immediate repeat has probability 1/N, which is acce
 
 - public (no authentication), and registered before the detail route `/movies/{tmdb_id}`, as the list routes are;
 - it returns a schema of its own, `FeaturedMovieSchema`: `tmdb_id`, `title`, `release_date`, `backdrop_path`,
-  `tagline` and `focus_point`. Backdrop and tagline are nullable, and an empty tagline from TMDB is returned as
+  `tagline`, `directors` and `focus_point`. `directors` is a list of director names from TMDB's appended credits:
+  crew entries whose job is `Director`, in crew order, once per person; blank names are omitted. Missing credits or
+  no named director returns `[]`. Backdrop and tagline are nullable, and an empty tagline from TMDB is returned as
   `null`. `focus_point` is either `null` or an object with required numeric `x` and `y` in the inclusive range 0–100,
   taken from the selected list entry (R3), not from TMDB. `backdrop_path` returns the entry’s checked path when
   present, otherwise TMDB’s current primary backdrop path;
 - it takes one optional query parameter, `film`, honored only as R3 gives it; no request parameter supplies a
   focus point or a backdrop path;
 - a `MovieService` method picks the film (R3), through a choice that tests can replace, and reads it with one TMDB
-  detail call through the client's `get_movie_details`, without the credits or release dates the detail page appends;
-  the route only extracts the parameter, calls it and returns the result;
+  detail call through the client's `get_movie_details` with `append_to_response=credits`. This is one HTTP request,
+  not a separate credits call; release dates are not appended. Only director names reach this response, not the full
+  cast/crew payload. The route only extracts the parameter, calls the service and returns its result;
 - a failed TMDB call raises the domain error the detail lookup raises (`handle_tmdb_api_error` with `lookup=True`:
   `UpstreamError` with 502, 503 or 504, or `NotFoundError` with 404 when TMDB no longer knows the ID), which the API's
   one handler maps to its `{"detail": ...}` response. No other film is tried in its place;
@@ -177,61 +186,63 @@ TMDB detail response it already reads, with an empty tagline returned as `null`.
 
 **R6.** The hero shows the pitch at once, without waiting for the film:
 
-- the page's one `h1`, the headline: "Track what you watch. Find what's next.", using `text-wrap: balance`;
-- one line saying what the app does: "See what's in theaters and coming soon, and keep a watchlist of what to see
-  next. Film data from TMDB.";
-- the actions: **Create account**, the primary button, opening `/register`, then **Sign in**, a link to the sign-in
-  page that returns to Home. The first place is left for the demo account's "Try the demo", which that work adds
-  without changing the hero's layout; until then nothing stands in for it.
+- the page's one `h1`, "Track what you watch. Find what's next.", using `text-wrap: balance`;
+- in the full-bleed layout only, the line "See what's in theaters and coming soon, and keep a watchlist of what to
+  see next. Film data from TMDB." The stacked layout omits this line; the existing footer retains TMDB attribution;
+- **Create account**, the primary button opening `/register`, then **Sign in**, returning to Home after sign-in.
+  The demo account's later "Try the demo" keeps its reserved first place; nothing stands in for it here.
 
-**R7.** The hero uses the selected theme's dark palette in both page color modes, scoped to the hero alone through
-Chakra's `Theme appearance="dark"` or the equivalent dark class. Its background, foreground, muted text and controls
-use existing semantic roles; the bar, rows and rest of the page continue to follow the page's mode.
+**R7.** The hero has two arrangements, selected by the window rather than device identity:
 
-When a backdrop is available, it fills the viewport-wide hero with `object-fit: cover`, anchored at the input focus
-point from R3. The complete frame need not remain visible. The pitch sits at the lower left, aligned to the content
-container, over a neutral dark gradient with no box. The fade uses the scoped dark `background` role and suppresses
-at least 75% of the image beneath every word of the pitch and its actions. Its dark plateau covers the actual text
-bounds at every supported width; it does not assume the copy occupies a fixed number of lines. There is no amber
-variant and no fade into a light page background.
+- **Stacked:** below 1024px when the window is portrait (height at least width). The entire backdrop is shown at the
+  top, without a fade or focus point, using `object-fit: contain` in R8's full-width 16:9 area. Its aspect ratio is
+  preserved; a non-16:9 image letterboxes rather than being cropped. A dark background remains under the image.
+  Directly beneath it, the credit is left-aligned to the shared content edge, above the headline and actions.
+  The text block, credit and controls follow the page's selected palette and mode through existing roles; the
+  stacked hero is not forced dark. No text sits on the image.
+- **Full bleed:** at 1024px and wider, and in landscape windows below 1024px. The backdrop covers the hero and uses
+  the input focus point, defaulting to `50% 28%`. The hero alone scopes the selected theme's dark palette in either
+  page mode. The pitch sits lower left over a neutral dark fade, with no box. At 1024px and wider the credit stays
+  on the right, right-aligned to the shared container edge, its bottom level with the actions row. In compact
+  landscape windows below 1024px, the credit is above the pitch and right-aligned to that same container's right
+  edge. It never follows the actions in compact layouts. Full-bleed fades cover the actual pitch/control bounds
+  and the separate credit bounds with at least 75% image suppression, strengthened for text contrast.
 
-The film's credit appears only when its backdrop is available:
+The credit is shown only while a backdrop is available and has this order:
 
-- at 1024px and wider, it sits on the right, with its bottom level with the bottom of the actions row and its right
-  edge on the content container's right edge, the same line as the bar's Sign in and the poster row's arrows. Its
-  text is right-aligned, and it occupies its own column without overlapping the pitch;
-- below 1024px, it follows the actions with a gap and is left-aligned to the same content edge;
-- the title and release year, as "Lawrence of Arabia (1962)", are about 18px and semibold. Only this title links to
-  the film's page with `from=home` (R25), with `tertiary-hover` on hover and a visible keyboard focus indicator;
-- the tagline, when present, is about 15px in `on-muted`, cut to two lines. It is plain text, without a link or a
-  hover color change. The credit carries no label of its own;
-- a separate dark gradient follows the credit's bounds, with at least 75% image suppression beneath all its text,
-  so the credit remains readable over bright frames. This is a fade, not a boxed card.
+1. The title alone, about 18px semibold, linked with `from=home`, `tertiary-hover` on hover and a visible focus ring.
+2. Director names and release year, about 16px regular, as "Stanley Kubrick | 1968", using `foreground`. Show the
+   available names comma-separated; if names or year are absent, show the remaining part without an orphan separator.
+   Omit the row when both are absent. This is plain text, with no link or hover effect.
+3. The optional tagline, about 15px in `on-muted`, plain text clamped to two lines. It is visible at 768px and wider
+   in stacked portrait and desktop layouts, but hidden in compact landscape below 1024px as well as below 768px.
+   Thus 768×1024 portrait shows it, while 768×600 and 900×700 landscape do not.
 
-The 75% minimum is an opacity floor, not a contrast guarantee. Strengthen each fade as needed for WCAG AA contrast
-against bright image content: at least 4.5:1 for normal text, including the muted tagline, and 3:1 for large text.
-Contrast comes from the darkness under the text, not from text sitting on an opaque page background. The backdrop
-is decorative (`alt=""`). Use responsive TMDB image sources including `original` when the rendered frame needs more
-than 1280 device pixels; do not upscale `w1280` for that case or use the site's `*_multi_faces` or `*_face` crops.
+The full-bleed fade's 75% floor is not a contrast guarantee: achieve at least 4.5:1 for normal text, including
+metadata and muted tagline, and 3:1 for large text over bright frames. There is no amber variant or fade into a light
+page. All colors use existing semantic roles. The bar, rows and footer continue following the page mode.
 
-The hero presentation takes film data and an optional focus point as inputs and applies the same point at every
-width, with the default when unset. Home owns the featured-film read and passes its result into that presentation;
-the presentation does not pick a film or read its own route or query. This keeps the focus input reusable by the
-film page later, without implementing that page's redesign here.
+Images are decorative (`alt=""`). Responsive TMDB sources include `original` when rendered image width exceeds 1280
+device pixels; do not upscale `w1280` in that case or use site-only `*_multi_faces` or `*_face` crops.
+The presentation takes film data and optional focus as inputs, using focus only in full bleed. Home owns the
+featured read and development film parameter. The presentation does not pick a film or read its own route/query;
+its inputs remain reusable for a later movie-page design without implementing that page here.
 
-**R8.** The hero reserves its full height before the film read settles and keeps it when the image is missing or
-fails. Its target height is 73% of the current window height (`73svh`), with a minimum of 480px at 1024px and wider
-and 560px below. A short window can therefore show a taller hero than 73% of its height so the pitch, actions and
-credit fit. At a fixed window size, the image and credit arriving or disappearing never move the pitch or actions.
+**R8.** Pending data, loaded artwork and read/image failure never move the pitch or actions at a fixed window size.
+The full-bleed hero retains its 73svh height, minimum 480px at 1024px and wider and 560px in compact landscape.
+Its compact credit occupies a reserved 128px row above the pitch even when no credit is shown. Desktop credit arrival
+must not change the pitch row's height.
 
-The image stays behind the content at every width; there is no separate phone image strip whose space is released.
-Reserve the phone credit's space while the film read is pending and when no credit is shown, so the actions stay in
-place. Window resizing may change the height and crop; it never causes sideways page scrolling or an overlap between
-the pitch, actions and credit.
+The stacked hero's height follows its image, reserved credit and pitch. Hold the 16:9 image area while pending and
+on missing/failed artwork; retain a dark band instead of releasing the space. Releasing it would shift the pitch,
+the reason the earlier phone strip was rejected. Hold 96px for the credit below 768px and 128px at wider stacked
+widths, including its top inset, so arriving title/director/tagline text does not shift the pitch. Credits must fit
+that reservation at film acceptance; no title truncation is added. Resizing can change arrangement and height, but
+never introduces sideways page scrolling or credit/pitch overlap.
 
-**R9.** If the hero's read fails, the film has no backdrop (`backdrop_path` is `null`) or its image fails to load, the
-hero keeps the pitch and actions on its scoped dark `background`, at R8's reserved height, with no image, no credit
-and no error toast (R10).
+**R9.** A failed read, missing backdrop or failed image leaves the pitch and actions, with no image, credit or error
+toast. In full bleed the existing dark fallback and reserved height remain. In stacked mode the dark image band and
+credit reservation remain above the page-mode pitch. No failed image slot or caption space is released.
 
 ### Section forms
 
@@ -527,9 +538,9 @@ further changes, each checked against `main`'s code at that merge:
 - **Content beyond these sections:** curated collections, trending, "this week in film history", trailers and where to
   watch.
 - **Caching TMDB responses on the server.**
-- **A separate tablet layout.** Widths below 1024px get the phone arrangement of the credit and calendar; rows have
-  cards determined by available width, as R11 gives them. The hero uses a full-width image at every width; only the
-  pitch and credit arrangement changes at 1024px.
+- **A separate tablet page.** The hero alone has R7's two arrangements and tagline rules. The calendar keeps its
+  existing below-1024px arrangement; poster counts come from available row width. No third tablet page or hero
+  arrangement is added.
 
 ## 6. Technical Considerations
 
@@ -586,9 +597,10 @@ further changes, each checked against `main`'s code at that merge:
 - **Copy.** The headline states what the app is for, so it stands whether or not every part of tracking has merged.
   The pitch's line and the band name only what works when this work merges (R6, R14), and grow with the card controls
   in the controls' work. R30c does not overwrite the approved pitch or band. New names are in sentence case.
-- **Widths.** 1024px (`lg`), where the bar switches, changes the hero credit from a right-hand column to a block
-  below the actions and stacks the calendar's weeks. The backdrop fills the hero at every width, and poster rows
-  derive their whole-card count from their own width rather than a breakpoint. The phone layouts fit from 360px.
+- **Widths.** At 1024px (`lg`), where the bar switches, full-bleed credit uses the desktop right-hand column and
+  calendar weeks sit side by side. Below it, portrait stacks the image while landscape keeps full bleed with credit
+  above the pitch. Stacked taglines appear from 768px; compact landscape omits them. Rows derive whole-card counts
+  from their own width. Phone layouts fit from 360px.
 
 ## 8. Design Decisions
 
@@ -605,25 +617,27 @@ further changes, each checked against `main`'s code at that merge:
    top trending title needs no list, but gives up the identity the list provides, and some weeks the top title is a poor
    fit for the first screen. With N unique IDs an immediate repeat has probability 1/N and is accepted. The
    candidate pool may reach 200–250; signed-off films can ship in stages. The external three-crop sheet and scripted
-   flags keep review practical; only custom-point or flagged films need all three built-hero views, in one mode.
+   flags keep review practical; only custom-point or flagged films need the built-hero checks in one mode. Phone
+   review checks the whole frame and credit fit, not focus cropping.
    Checked backdrop paths preserve the reviewed image. _ADR: revise this work's Proposed ADR-046 for curated
    artwork metadata and the review method; sheet controls are temporary review tooling and need no separate ADR._
 3. **A small hero endpoint reads the hero's film from TMDB** (R4, R5): one TMDB detail call, a schema with only what the
    hero shows, and no stored state. Having the frontend pick the film and call the detail endpoint was rejected:
-   the list would live in the frontend, and every page load would pay the detail endpoint's two TMDB calls for a credits
-   list the hero doesn't show. Storing the backdrop and tagline on `Movie` and serving the hero from the database was
+   the list would live in the frontend and every page load would pay its two TMDB calls. The hero now needs director
+   names, so it appends credits to its own single detail request and returns only those names. Storing the backdrop
+   and tagline on `Movie` and serving the hero from the database was
    rejected: a migration and two card fields that no card shows, kept only for the hero, and `Movie` rows exist only
    for films someone has saved. When TMDB fails, the hero falls back to the pitch rather than to another film, since
    the pitch stands alone (R9). _ADR: the new ADR below._
-4. **The hero is a full-width film with a neutral dark fade in both page modes** (R3, R6 to R9). Scoping the
-   existing dark palette to the hero avoids fading a photograph into the light page and needs no new color roles.
-   The pitch sits lower left; the credit stays attached to the film on the right, or below the actions on phones.
-   Contrast comes from a minimum 75% dark fade under the pitch and a separate fade under the credit, strengthened
-   for the actual text's contrast, rather than an opaque page background. The shorter side-by-side layout preserved
-   the full frame but gave the film less presence; the full-width version was chosen for that presence, accepting
-   cropping. An amber-tinted fade was considered and set aside in favour of neutral. Optional list focus points
-   frame each film, defaulting to `50% 28%`, and are inputs to the presentation so a later film page can reuse it.
-   _ADR: the new ADR below, whose hero and endpoint paragraphs are revised to this decision._
+4. **The hero preserves the whole frame in narrow portrait windows and stays full bleed elsewhere** (R3, R6–R9).
+   Portrait-only stacking below 1024px avoids severe phone cropping without a tall image stack in narrow landscape
+   windows. Width-only stacking was rejected after the 900×700 preview put actions below the initial view.
+   Stacked text follows page mode because it no longer sits on an image; full bleed retains the scoped dark palette
+   and separate neutral text fades. Compact landscape credits stay above the pitch, right-aligned, with no tagline;
+   desktop credits keep their right-hand position. Title, director/year and permitted tagline form separate rows.
+   Keeping the stacked image and credit spaces on failure avoids the shift caused by releasing a phone strip.
+   Full-bleed focus defaults to `50% 28%`; the stack ignores it. _ADR: revise this work's Proposed ADR-046 for the
+   arrangements, director read, palette scope and retained fallback. Credit typography is tactical._
 5. **Home's copy names only what works when it merges** (R6, R14, R30c): a visitor who reads "rate what you've seen"
    and can't would distrust the rest. The headline states the app's purpose and stands either way. _ADR: `none`
    (temporary: the copy grows with the card controls)._
@@ -707,8 +721,8 @@ further changes, each checked against `main`'s code at that merge:
 
 - **New: ADR-046, "Open Home on a classic film and sections of films"** (decisions 1 to 4, 6 to 11, and 15). It
   records Home's two forms by sign-in status at `/`; the hero's classic film, picked at random from a fixed list and
-  served by its own endpoint with optional focus and checked-backdrop metadata; a full-width hero scoped to the dark
-  palette with minimum
+  served by its own endpoint with director names, optional focus and checked-backdrop metadata; a dark full-bleed
+  hero and a page-mode whole-frame portrait stack with minimum
   darkness under its text; Home's section forms and states; signed-in Home's job beside Films and the Library,
   its greeting on arrival and its watchlist order; what's on
   from catalog views; cards without actions for signed-out visitors; and `background.spec.ts` supplying Home's
@@ -834,7 +848,7 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 
     _Superseded by the 2026-11-14 amendment; replacement: criterion 23._
 
-19. Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
+19. [~] Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
     the title and year alone link with `from=home` and the optional tagline is noninteractive text. The pitch and
     actions remain with no credit, image or Server error toast on read failure, a null backdrop or image failure.
     The film stays the same across navigation with one read; query options remain never stale, `gcTime: Infinity`
@@ -842,6 +856,8 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     passes that ID to the read. The input-based hero uses a supplied focus point, including edge values, and defaults
     to `50% 28%` when unset; Home passes the featured response's point without another read. No selected-layout or
     amber preview option remains in the delivered page.
+
+    _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 25._
 
 20. Row geometry and component tests, with browser measurements supplied in jsdom, show at most twenty cards,
     whole-card counts and widths near 194px and never below 138px, count-based paging including gaps, the overlapping
@@ -875,7 +891,7 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
     link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
 
-23. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+23. [~] Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
     answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
     `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
     coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
@@ -890,7 +906,9 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     that override, unlisted candidates use TMDB, and production returns the random entry's metadata. No extra TMDB
     request or request-supplied focus or backdrop is introduced.
 
-24. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+    _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 26._
+
+24. [~] In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
     the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
     minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
     cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
@@ -909,6 +927,50 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     check above is not repeated per film. Unapproved candidates remain out of the shipped list and may follow by
     later pull request. The sheet exports entry lines with title/year comments, optional focus and checked paths;
     it remains outside the repository and application, uses the DEBUG endpoint and holds no API key.
+
+    _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 27._
+
+25. Component tests retain the immediate headline/actions, lifetime query, navigation and quiet failure contract
+    of criterion 19, with the new arrangements: the pitch line appears only in full bleed; the title alone links;
+    director/year is plain text with available parts and no orphan separator; missing names use the year alone.
+    Taglines appear on desktop and stacked widths from 768px, and disappear on smaller phones and all compact
+    landscape views. Supplied and default focus apply only in full bleed; the portrait stack shows the whole frame.
+    Home supplies API director data, with no preview-name fixtures or layout/surface query selectors remaining.
+
+26. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+    answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline`,
+    `directors` and nullable
+    `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
+    coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
+    carries its configured point and an unlisted candidate returns `null`; with `DEBUG` off the random entry's film
+    and point are returned instead. They show one TMDB detail call per request and no separate credits or
+    release-dates call, an empty tagline
+    returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
+    `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
+    featured focus-point contract.
+    The list's IDs are unique without
+    depending on particular IDs. Selection returns an entry's checked backdrop path when present, even when TMDB's
+    primary changes or is null; without a checked path it returns the current primary. Listed DEBUG candidates keep
+    that override, unlisted candidates use TMDB, and production returns the random entry's metadata. No extra TMDB
+    request or request-supplied focus or backdrop is introduced.
+
+    Tests show named Director crew returned once per person in crew order, multiple directors, empty/absent credits
+    returning `[]`, and non-director or blank-name crew omitted. Credits are appended within the one detail request;
+    generated OpenAPI/frontend types expose the director-name list and no full cast/crew payload.
+
+27. Browser checks in both page modes retain criterion 24's whole-card rows, calendar, band, shared widths,
+    overflow, keyboard/swipe/trackpad/reduced-motion and text contrast checks. At 390×844 and 768×1024 the hero stacks
+    a whole image over credit and pitch, follows page mode, omits the pitch line, and ignores focus. At 900×700 and
+    768×600 it stays full bleed with credit above the pitch, right-aligned and without a tagline; at 1024×1000 and
+    2000×1000 the dark full-bleed arrangement and right-hand credit remain. Taglines appear on the portrait tablet.
+    Pending, loaded and failed reads/images retain pitch/action coordinates and reserved image/credit space.
+    Bright-frame measurements include the new 16px director row; title-only hover and keyboard focus remain.
+    All films shipped at merge have Owner approval through the external sheet in one mode, retaining the exact shown
+    backdrop path. Script flags failed reads/artwork, identity/year mismatches and credit-fit problems for decisions.
+    Custom-point or flagged films receive built checks at wide and near-1024px focus crops and phone whole-frame
+    credit fit; no phone focus crop or per-film two-mode requirement remains. The sheet uses actual layout snapshots,
+    preserves focus for full bleed only, exports approved entry lines with title/year comments and checked paths,
+    and remains outside the repository/app without an API key. Pending candidates can follow in later pull requests.
 
 ### Proven after merge
 
@@ -939,3 +1001,12 @@ None.
   the backdrop risk, ADR-046 and Tasks 5.0–5.1. Criteria 18 and 21 are superseded by 23 and 24. ADR disposition:
   revise this work's Proposed ADR-046 for checked artwork and the review method; temporary external sheet controls
   require no separate ADR. The app's no-editor and no-request-focus boundaries remain.
+
+- **2026-11-14 — Whole-frame portrait hero and director credit (Owner).** Below 1024px, portrait windows stack a
+  whole image above a page-mode credit and pitch; landscape retains full bleed. Retained image/credit space prevents
+  failure shifts. Compact landscape credit is above the pitch, right-aligned and without a tagline. The credit now
+  separates title from director/year; tagline remains from 768px on portrait/tablet and desktop only. Director names
+  use appended credits within one TMDB detail request. Focus applies to full bleed only, and the external sheet's
+  phone view/check becomes whole frame plus credit fit. Updates R3/R4/R6–R9, the tablet non-goal, decisions, affected
+  tasks and ADR-046. Criteria 19, 23 and 24 are superseded by 25–27. ADR disposition: amend this work's Proposed
+  ADR-046 for layout, source of director metadata, palette and retained failure space; type sizes remain tactical.

@@ -20,8 +20,8 @@ the visitor's watchlist first, then the same sections, built from section forms 
   and the detail schema's backdrop and tagline
 - Request options on Home's reads: no global server-error toast, and a pagination context of their own
 - The section forms (poster row, calendar, large card, band) with their loading, empty and failed states
-- The full-width, permanently dark signed-out hero with a neutral fade and input focus point; signed-out and
-  signed-in Home at `/`, rendered outside the padded container
+- The dark full-bleed hero with focus and fades, and the whole-frame portrait stack following page mode, with
+  director/year credits; signed-out and signed-in Home at `/`, rendered outside the padded container
 - The greeting on arrival in place of the sign-in toast, and the watchlist section led by a large card
 - Card actions for signed-in visitors only; films opened from Home leading back to Home
 - The smoke tier's three changed specs, its fixtures and baseline; the documentation and ADR-046
@@ -408,11 +408,11 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
 ### **Phase 4:** Personal Home and the approved hero refinements
 
 _Mode:_ `slice` — closes on signed-in Home greeting the visitor and leading with their watchlist, plus the approved
-full-width dark hero and whole-card rows before the final film checks.
+selected portrait/full-bleed hero, director credit and whole-card rows before the final film checks.
 
 _Exit criterion:_ in the browsable stack, signing in lands on Home greeting the account by name with its watchlist's
 newest film as the large card; navigating away and back shows no greeting; an account with an empty watchlist sees the
-nothing-saved line; the amended featured focus metadata, hero and row checks in 4.7–4.9 pass; and
+nothing-saved line; the amended featured focus metadata, hero and row checks in 4.7–4.12 pass; and
 `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts` pass.
 
 - [x] **4.1 A large card shows one film at one height — R13, R27**
@@ -584,6 +584,9 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     **Goal:** A dark hero in both page modes presents the approved pitch over the focused backdrop, with a separate
     readable credit aligned to the actions and shared content edge, and no jump when artwork fails.
 
+    The portrait/director amendment refines this completed full-bleed baseline through 4.10–4.12; its earlier
+    phone placement and geometry are superseded, while the whole-card rows remain.
+
     **Check:** `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`.
 
     - [x] **4.8.a Update the hero tests and input boundary before completing the presentation**
@@ -617,6 +620,9 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     **Goal:** The final hero, its input focus and credit, and both uses of the poster scroller satisfy the amended
     browser geometry and contrast checks before the Owner settles the final films and points.
 
+    The portrait/director amendment refines this completed full-bleed baseline through 4.10–4.12; its earlier
+    phone placement and geometry are superseded, while the whole-card rows remain.
+
     - [x] **4.9.a Retain and verify the whole-card row implementation from the preview**
         - Shared measured count near 194px and never below 138px, including loading placeholders and the watchlist
           scroller; count-based buttons at every width, card-edge snaps, hidden scrollbar and a complete final page
@@ -649,6 +655,49 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
       tested pixel densities. The three covering smoke specs pass all 17 scenarios on this implementation.
     - Final film selection and per-film focus approval remain in 5.1; full verification and code review remain
       in Phase 6. No success criterion is marked by these implementation checks.
+
+- [ ] **4.10 Serve director names with the featured film — R4**
+
+    **Goal:** The hero receives the director-name list within its existing one-request TMDB read.
+
+    - [ ] **4.10.a Test director projection and the public contract first**
+        - Named Director crew in order, once per person; multiple directors; absent/empty credits and blank names;
+          unrelated crew omitted. Append credits within one detail request, with no separate credits/release-date
+          read. Preserve checked art, focus, DEBUG/production selection, quiet failures and ID-independent tests
+    - [ ] **4.10.b Add the director schema/service/factory projection and regenerate client types**
+        - No director constants in the delivered UI; no database fields. Run movie-app Docker tests, Ruff/Pyright
+          and generated frontend type/fixture checks
+
+- [ ] **4.11 Deliver the selected portrait and compact-landscape hero — R3, R6–R9**
+
+    **Goal:** Whole-frame portrait artwork and correctly ordered movie credits hold through loading and failure.
+
+    - [ ] **4.11.a Update component contracts after the approved preview**
+        - Cover title-only link, plain director/year and missing-part handling; tagline on portrait/tablet from
+          768px and desktop, absent on phones and compact landscape; pitch line only in full bleed; focus ignored
+          in the stack. Keep immediate pitch, lifetime cache, navigation and quiet failure coverage
+    - [ ] **4.11.b Finish the input-based presentation and remove prototype controls/data**
+        - Portrait below 1024px stacks contain-fit artwork, credit and pitch, using page mode and reserved spaces.
+          Compact landscape stays dark/full bleed, credit above the pitch and right-aligned, without tagline.
+          Desktop keeps right-hand credit alignment. Title 18px semibold, director/year 16px, tagline 15px muted
+        - Use API director names; remove preview mappings and switch/surface selectors. Run related frontend tests,
+          lint/types/format and `background.spec.ts`, `sign-in.spec.ts`, `phone-width.spec.ts`
+
+- [ ] **4.12 Refresh the external sheet and verify final hero geometry — R3, R7, R8**
+
+    **Goal:** Review uses two focus-dependent crops and a whole-frame phone credit, with final layout evidence.
+
+    - [ ] **4.12.a Refresh the external review sheet from the DEBUG endpoint and actual hero layouts**
+        - Refresh director data for candidates and identity alternatives, screen all visible credit fields, and
+          snapshot full bleed plus the distinct portrait DOM/CSS. Point edits affect full bleed only; the phone
+          remains whole frame with its credit. Retain pinned-path export, Owner decisions, state and load gating
+        - Exercise export, changed points, alternate identity, multiple/no directors, missing artwork and delayed
+          larger sources; keep the sheet and generators outside the repository
+    - [ ] **4.12.b Check both modes across the selected window shapes and the covering smoke tier**
+        - 390×844, 768×1024, 900×700, 768×600, 1024×1000 and 2000×1000; include 360px minimum phone width and
+          the existing calendar/band/row checks. Measure director/tagline contrast over white, credit bounds/order,
+          no focus in the whole-frame stack, unchanged pitch/actions pending/loaded/failed, hover/focus and sources
+        - Record actual results; Owner film approvals remain in 5.1 and full verification/review remains in Phase 6
 
 ### **Phase 5:** Home is ready to merge
 
@@ -701,12 +750,14 @@ recorded, and the three changed smoke specs pass.
         - Keep title/year identity decisions explicit, store the sheet's checked backdrop paths and chosen points,
           and import only approved films. The uniqueness test stays independent of which IDs ship
     - [ ] **5.1.b Review the sheet, then show custom-point or flagged films in the built hero**
-        - Script-screen all candidates and bring each flag to the Owner. Review all three crops per film in the
-          external sheet in one page mode; the permanently dark hero's two-mode check is already covered by 4.9
+        - Script-screen all candidates, including director/year and credit fit, and bring flags to the Owner.
+          Review two full-bleed crops and the whole-frame phone credit in one page mode. Component mode/shape
+          checks are covered once by 4.12, not repeated in both modes for each film
         - For each custom-point or flagged film, use `/?film={tmdb_id}` at 2000×1000, 1024×1000 and 390×844 in one
           mode. Apply the exported entry and reload the lifetime query before these built-hero checks
-        - Confirm the subject survives the cover crop and credit fits R7's position; settle flags, adjust the point
-          or exclude a film that fails. Unset focus uses `50% 28%`. Unapproved candidates do not ship
+        - Confirm the subject survives wide/near-1024px cover crops; at phone width confirm the whole-frame credit
+          fits without a focus point or tagline. Settle flags, adjust full-bleed focus or exclude failures. Unset
+          full-bleed focus uses `50% 28%`. Unapproved candidates do not ship
         - Films approved by merge ship; remaining candidates can be reviewed and added by later pull request
 
 - [ ] **5.2 Checkpoint on the user-movie tracking model before merging `main` — R30**
@@ -898,7 +949,7 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the 2026-11-14 amendment; replacement: criterion 23._
 
-- [ ] 19. Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
+- [~] 19. Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
   the title and year alone link with `from=home` and the optional tagline is noninteractive text. The pitch and
   actions remain with no credit, image or Server error toast on read failure, a null backdrop or image failure.
   The film stays the same across navigation with one read; query options remain never stale, `gcTime: Infinity`
@@ -906,6 +957,8 @@ recorded, and the three changed smoke specs pass.
   passes that ID to the read. The input-based hero uses a supplied focus point, including edge values, and defaults
   to `50% 28%` when unset; Home passes the featured response's point without another read. No selected-layout or
   amber preview option remains in the delivered page.
+
+  _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 25._
 
 - [ ] 20. Row geometry and component tests, with browser measurements supplied in jsdom, show at most twenty cards,
   whole-card counts and widths near 194px and never below 138px, count-based paging including gaps, the overlapping
@@ -939,7 +992,7 @@ recorded, and the three changed smoke specs pass.
   watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
   link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
 
-- [ ] 23. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+- [~] 23. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
   answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
   `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
   coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
@@ -954,7 +1007,9 @@ recorded, and the three changed smoke specs pass.
   that override, unlisted candidates use TMDB, and production returns the random entry's metadata. No extra TMDB
   request or request-supplied focus or backdrop is introduced.
 
-- [ ] 24. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+  _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 26._
+
+- [~] 24. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
   the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
   minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
   cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
@@ -973,6 +1028,50 @@ recorded, and the three changed smoke specs pass.
   check above is not repeated per film. Unapproved candidates remain out of the shipped list and may follow by
   later pull request. The sheet exports entry lines with title/year comments, optional focus and checked paths;
   it remains outside the repository and application, uses the DEBUG endpoint and holds no API key.
+
+  _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 27._
+
+- [ ] 25. Component tests retain the immediate headline/actions, lifetime query, navigation and quiet failure contract
+  of criterion 19, with the new arrangements: the pitch line appears only in full bleed; the title alone links;
+  director/year is plain text with available parts and no orphan separator; missing names use the year alone.
+  Taglines appear on desktop and stacked widths from 768px, and disappear on smaller phones and all compact
+  landscape views. Supplied and default focus apply only in full bleed; the portrait stack shows the whole frame.
+  Home supplies API director data, with no preview-name fixtures or layout/surface query selectors remaining.
+
+- [ ] 26. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+  answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline`, `directors`
+  and nullable
+  `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
+  coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
+  carries its configured point and an unlisted candidate returns `null`; with `DEBUG` off the random entry's film
+  and point are returned instead. They show one TMDB detail call per request and no separate credits or
+  release-dates call, an empty tagline
+  returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
+  `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
+  featured focus-point contract.
+  The list's IDs are unique without
+  depending on particular IDs. Selection returns an entry's checked backdrop path when present, even when TMDB's
+  primary changes or is null; without a checked path it returns the current primary. Listed DEBUG candidates keep
+  that override, unlisted candidates use TMDB, and production returns the random entry's metadata. No extra TMDB
+  request or request-supplied focus or backdrop is introduced.
+
+  Tests show named Director crew returned once per person in crew order, multiple directors, empty/absent credits
+  returning `[]`, and non-director or blank-name crew omitted. Credits are appended within the one detail request;
+  generated OpenAPI/frontend types expose the director-name list and no full cast/crew payload.
+
+- [ ] 27. Browser checks in both page modes retain criterion 24's whole-card rows, calendar, band, shared widths,
+  overflow, keyboard/swipe/trackpad/reduced-motion and text contrast checks. At 390×844 and 768×1024 the hero stacks
+  a whole image over credit and pitch, follows page mode, omits the pitch line, and ignores focus. At 900×700 and
+  768×600 it stays full bleed with credit above the pitch, right-aligned and without a tagline; at 1024×1000 and
+  2000×1000 the dark full-bleed arrangement and right-hand credit remain. Taglines appear on the portrait tablet.
+  Pending, loaded and failed reads/images retain pitch/action coordinates and reserved image/credit space.
+  Bright-frame measurements include the new 16px director row; title-only hover and keyboard focus remain.
+  All films shipped at merge have Owner approval through the external sheet in one mode, retaining the exact shown
+  backdrop path. Script flags failed reads/artwork, identity/year mismatches and credit-fit problems for decisions.
+  Custom-point or flagged films receive built checks at wide and near-1024px focus crops and phone whole-frame
+  credit fit; no phone focus crop or per-film two-mode requirement remains. The sheet uses actual layout snapshots,
+  preserves focus for full bleed only, exports approved entry lines with title/year comments and checked paths,
+  and remains outside the repository/app without an API key. Pending candidates can follow in later pull requests.
 
 ### Proven after merge
 

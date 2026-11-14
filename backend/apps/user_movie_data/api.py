@@ -15,12 +15,18 @@ from apps.user_movie_data.schemas import (
     LibraryQuerySchema,
     UserMovieDataPatchSchema,
     UserMovieDataSchema,
+    UserMovieEntryWriteResponseSchema,
+    UserMovieEntryWriteSchema,
 )
-from apps.user_movie_data.services.service_factory import get_user_movie_data_service
+from apps.user_movie_data.services.service_factory import (
+    get_user_movie_data_service,
+    get_user_movie_entry_service,
+)
 from apps.user_movie_data.throttles import SaveThrottle
 
 user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTSessionAuth())
 _service = get_user_movie_data_service()
+_entry_service = get_user_movie_entry_service()
 PositiveTMDBId = Annotated[int, Field(gt=0)]
 
 
@@ -93,3 +99,23 @@ def save_user_movie_data(
 def delete_user_movie_data(request: HttpRequest, tmdb_id: PositiveTMDBId) -> Status[None]:
     _service.delete(get_current_user(request), tmdb_id)
     return Status(204, None)
+
+
+@user_movie_data_router.post(
+    "/{tmdb_id}/entries",
+    response={
+        201: UserMovieEntryWriteResponseSchema,
+        400: ErrorResponseSchema,
+        401: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+        502: ErrorResponseSchema,
+        503: ErrorResponseSchema,
+        504: ErrorResponseSchema,
+    },
+)
+def create_movie_entry(
+    request: HttpRequest, tmdb_id: PositiveTMDBId, payload: UserMovieEntryWriteSchema
+) -> Status[UserMovieEntryWriteResponseSchema]:
+    return Status(201, _entry_service.create(get_current_user(request), tmdb_id, payload))

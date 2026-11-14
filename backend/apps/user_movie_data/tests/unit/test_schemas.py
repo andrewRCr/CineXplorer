@@ -67,3 +67,53 @@ def test_every_response_field_is_required(field: str) -> None:
 
 def test_response_contains_exactly_the_shared_state_fields() -> None:
     assert UserMovieDataSchema.model_validate(RESPONSE).model_dump() == RESPONSE
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"rating": 0},
+        {"rating": 11},
+        {"review": "a" * 10001},
+        {"review": "bad\x00review"},
+        {"time_zone": "Mars/Base"},
+        {"time_zone": "a" * 300},
+        {"time_zone": "../etc/passwd"},
+        {"time_zone": ""},
+    ],
+)
+def test_entry_write_validation(changes: dict[str, object]) -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+
+    with pytest.raises(ValidationError):
+        UserMovieEntryWriteSchema.model_validate({"liked": False, "time_zone": "UTC", **changes})
+
+
+@pytest.mark.parametrize("missing", ["liked", "time_zone"])
+def test_entry_required_fields(missing: str) -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+
+    fields: dict[str, object] = {"liked": False, "time_zone": "UTC"}
+    del fields[missing]
+    with pytest.raises(ValidationError):
+        UserMovieEntryWriteSchema.model_validate(fields)
+
+
+def test_entry_write_defaults_and_review_normalization() -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+
+    body = UserMovieEntryWriteSchema(liked=False, time_zone="UTC")
+    assert body.model_dump() == {
+        "liked": False,
+        "time_zone": "UTC",
+        "watched_on": None,
+        "rating": None,
+        "review": None,
+        "rewatch": False,
+    }
+    for review in ["", " \t\n", "\u00a0\u2007"]:
+        assert UserMovieEntryWriteSchema(liked=True, time_zone="UTC", review=review).review is None
+    assert (
+        UserMovieEntryWriteSchema(liked=True, time_zone="UTC", review="  Keep spaces  ").review
+        == "  Keep spaces  "
+    )

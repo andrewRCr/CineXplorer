@@ -59,7 +59,8 @@ The backend is a REST API built with Django and Django Ninja.
         - `core/tests/test_helpers.py`: Cross-domain test utilities (`create_user`, `create_user_and_auth_payload`)
     - `movie`: Movie-related functionality and API endpoints
         - `movie/helpers.py`: Movie enrichment helpers for UserMovieData integration
-    - `user_movie_data`: User-movie interaction models and API (`UserMovieData`, watchlist, ratings)
+    - `user_movie_data`: Film facts and list join times (`UserMovieData`), viewing/review history
+      (`UserMovieEntry`), and their authenticated API
 
 ## 3. Frontend
 
@@ -144,6 +145,7 @@ The backend uses a layered architecture with class-based services for all busine
 
 - `MovieService` - TMDB integration (discovery, search, details)
 - `UserMovieDataService` - Partial movie-state saves and database-served Library pages
+- `UserMovieEntryService` - Private viewing and review history, with writes serialized on the film record
 - `AuthenticationService` - Security-critical auth operations
 - `MovieEnrichmentService` - Enriches movie lists with user-specific data
 

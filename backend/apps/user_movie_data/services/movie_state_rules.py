@@ -1,5 +1,8 @@
 """Keep a film's facts consistent while its record is locked by the caller."""
 
+from datetime import date
+from zoneinfo import ZoneInfo
+
 from apps.core.exceptions import ConflictError
 from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 
@@ -48,3 +51,19 @@ def stamp_list_joins(
             and not (undo and getattr(record, stamp) is not None)
         ):
             setattr(record, stamp, now)
+
+
+def apply_entry_create(record: UserMovieData, watched_on: date | None, zone: ZoneInfo) -> None:
+    """A new log marks watched and removes only a viewing due from the watchlist."""
+    was_watched = record.user_watched
+    record.user_watched = True
+    if not record.user_on_watchlist:
+        return
+    if watched_on is None:
+        if not was_watched:
+            record.user_on_watchlist = False
+    elif (
+        record.watchlist_added_at is not None
+        and watched_on >= record.watchlist_added_at.astimezone(zone).date()
+    ):
+        record.user_on_watchlist = False

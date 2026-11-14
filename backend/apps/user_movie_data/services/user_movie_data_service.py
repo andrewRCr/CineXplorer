@@ -4,19 +4,14 @@ from __future__ import annotations
 
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
-from django.utils import timezone
 
 from apps.core.exceptions import InvalidInputError, NotFoundError
-from apps.core.models import Movie
 from apps.core.pagination import paginate_queryset
 from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.movie.schemas import MovieListItemSchema, MovieListResponseSchema
-from apps.movie.services.tmdb_api_boundary.response_factories import (
-    handle_tmdb_api_error,
-    movie_card_fields,
-)
 from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.schemas import LibraryQuerySchema, UserMovieDataSchema
+from apps.user_movie_data.services.movie_card import get_or_fetch_card
 from apps.user_movie_data.services.movie_state_rules import (
     LIST_TIMES,
     apply_record_save,
@@ -46,15 +41,7 @@ class UserMovieDataService:
         if changes.get("user_watched") is False and changes.get("user_rating") is not None:
             raise InvalidInputError("A rating requires a watched movie")
 
-        movie = Movie.objects.filter(pk=tmdb_id).first()
-        if movie is None:
-            response = self._tmdb_client.get_movie_details(tmdb_id)
-            if not response.is_success():
-                handle_tmdb_api_error(response, "save_movie", lookup=True, tmdb_id=tmdb_id)
-            card = movie_card_fields(response.get_json_data() or {})
-            movie, _ = Movie.objects.get_or_create(
-                tmdb_id=tmdb_id, defaults={**card, "refreshed_at": timezone.now()}
-            )
+        movie = get_or_fetch_card(self._tmdb_client, tmdb_id)
 
         with transaction.atomic():
             record, created = UserMovieData.objects.select_for_update().get_or_create(

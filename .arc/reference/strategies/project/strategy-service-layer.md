@@ -127,22 +127,22 @@ Use this guide when deciding whether to implement as a class-based service or st
 
 **Use class-based service when:**
 
-| Criterion                                             | Example                                                |
-|-------------------------------------------------------|--------------------------------------------------------|
-| Has external dependencies (API clients, repositories) | MovieService needs TMDBApiClient                       |
-| Wraps an external client tests replace                | MovieService with a stub TMDB client                   |
-| Has multiple related methods sharing state            | AuthenticationService with shared user model           |
-| Benefits from inheritance                             | BaseTMDBService shared by MovieService, KeywordService |
-| Stateful operations (caching, connection pooling)     | Future: services with connection pools                 |
+| Criterion                                               | Example                                                  |
+| ------------------------------------------------------- | -------------------------------------------------------- |
+| Has external dependencies (API clients, repositories)   | MovieService needs TMDBApiClient                         |
+| Wraps an external client tests replace                  | MovieService with a stub TMDB client                     |
+| Has multiple related methods sharing state              | AuthenticationService with shared user model             |
+| Benefits from inheritance                               | BaseTMDBService shared by MovieService, KeywordService   |
+| Stateful operations (caching, connection pooling)       | Future: services with connection pools                   |
 
 **Use standalone function when:**
 
-| Criterion                                     | Example                                 |
-|-----------------------------------------------|-----------------------------------------|
-| Pure transformation, no external dependencies | `merge_with_preset()` filter merging    |
-| Single-purpose utility                        | `paginate_queryset()` pagination helper |
-| No need for mocking (logic is deterministic)  | Data quality filter functions           |
-| Called from within services (helper role)     | `_filter_non_visual_content()`          |
+| Criterion                                       | Example                                   |
+| ----------------------------------------------- | ----------------------------------------- |
+| Pure transformation, no external dependencies   | `merge_with_preset()` filter merging      |
+| Single-purpose utility                          | `paginate_queryset()` pagination helper   |
+| No need for mocking (logic is deterministic)    | Data quality filter functions             |
+| Called from within services (helper role)       | `_filter_non_visual_content()`            |
 
 **Rule of thumb:** If it wraps an external client, use a class and inject the client. If the logic is pure and
 deterministic, a function is fine.
@@ -165,14 +165,16 @@ against the test database, replacing only external clients.
 Services can depend on other services or repositories for complex operations.
 
 A service can call another service when it needs that service's behavior, sharing the injected external client.
-`UserMovieDataService` calls TMDB directly for a missing card and uses the model's QuerySet for stored state;
+`UserMovieDataService` and `UserMovieEntryService` share the TMDB card lookup for an unstored film and use the
+model's QuerySets for stored facts and history;
 `MovieEnrichmentService` reads the same QuerySet when attaching user state to movie responses.
 
 **Current service dependencies:**
 
 | Service                                     | Depends On                  | Purpose                          |
 | ------------------------------------------- | --------------------------- | -------------------------------- |
-| UserMovieDataService                        | TMDBApiClient               | CRUD + TMDB fetching             |
+| UserMovieDataService                        | TMDBApiClient               | Record saves and Library reads   |
+| UserMovieEntryService                       | TMDBApiClient               | Viewing and review history       |
 | MovieEnrichmentService                      | UserMovieDataQuerySet       | Enriches movies with user data   |
 
 ### Factory Functions
@@ -216,6 +218,7 @@ def get_movie_service() -> MovieService:
 | KeywordService         | `movie/services/keyword_service.py`                    | Class + DI, inherits BaseTMDBService | TMDB keyword operations                         |
 | PeopleService          | `movie/services/people_service.py`                     | Class + DI, inherits BaseTMDBService | TMDB people/cast operations                     |
 | UserMovieDataService   | `user_movie_data/services/user_movie_data_service.py`  | Class + DI + ORM                     | CRUD with TMDB integration                      |
+| UserMovieEntryService  | `user_movie_data/services/user_movie_entry_service.py` | Class + DI + ORM                     | Viewing and review history                      |
 | MovieEnrichmentService | `user_movie_data/services/movie_enrichment_service.py` | Class + ORM                          | Enriches movies with user data                  |
 | AuthenticationService  | `authentication/services/authentication_service.py`    | Class + DI (extensive)               | Security-critical auth operations               |
 | BaseTMDBService        | `movie/services/base_service.py`                       | Base class                           | Shared DI pattern for TMDB services             |
@@ -375,14 +378,14 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 
 ### Reference Implementations (Frontend)
 
-| Service              | File                               | Purpose                                                 |
-|----------------------|------------------------------------|---------------------------------------------------------|
-| apiClient            | `services/apiClient.ts`            | Axios instance with auth, CSRF, pagination interceptors |
-| httpService          | `services/httpService.ts`          | Generic HTTP service factory with CRUD operations       |
-| movieService         | `services/movieService.ts`         | Movie domain: browse, search, detail, genres            |
-| authService          | `services/authService.ts`          | Authentication: login, logout, register, verify         |
-| userMovieDataService | `services/userMovieDataService.ts` | User movie data CRUD                                    |
-| paginationContext    | `services/paginationContext.ts`    | Multi-tab pagination isolation                          |
+| Service                | File                                 | Purpose                                                   |
+| ---------------------- | ------------------------------------ | --------------------------------------------------------- |
+| apiClient              | `services/apiClient.ts`              | Axios instance with auth, CSRF, pagination interceptors   |
+| httpService            | `services/httpService.ts`            | Generic HTTP service factory with CRUD operations         |
+| movieService           | `services/movieService.ts`           | Movie domain: browse, search, detail, genres              |
+| authService            | `services/authService.ts`            | Authentication: login, logout, register, verify           |
+| userMovieDataService   | `services/userMovieDataService.ts`   | User movie data CRUD                                      |
+| paginationContext      | `services/paginationContext.ts`      | Multi-tab pagination isolation                            |
 
 ---
 
@@ -396,19 +399,20 @@ export const getMovieDetail = (tmdb_id: string | number) => {
 | `base_service.py`             | `backend/apps/movie/services/`           | Base class for TMDB services       |
 | `service_factory.py`          | `backend/apps/movie/services/`           | Factory functions for movie domain |
 | `user_movie_data_service.py`  | `backend/apps/user_movie_data/services/` | User movie data CRUD               |
+| `user_movie_entry_service.py` | `backend/apps/user_movie_data/services/` | Viewing and review history         |
 | `movie_enrichment_service.py` | `backend/apps/user_movie_data/services/` | Enrichment with user data          |
 | `authentication_service.py`   | `backend/apps/authentication/services/`  | Auth operations                    |
 
 ### Frontend
 
-| File                      | Location                 | Purpose                 |
-|---------------------------|--------------------------|-------------------------|
-| `apiClient.ts`            | `frontend/src/services/` | Axios with interceptors |
-| `httpService.ts`          | `frontend/src/services/` | Generic HTTP factory    |
-| `movieService.ts`         | `frontend/src/services/` | Movie domain wrapper    |
-| `authService.ts`          | `frontend/src/services/` | Auth operations         |
-| `userMovieDataService.ts` | `frontend/src/services/` | User movie data         |
-| `paginationContext.ts`    | `frontend/src/services/` | Multi-tab isolation     |
+| File                        | Location                   | Purpose                   |
+| --------------------------- | -------------------------- | ------------------------- |
+| `apiClient.ts`              | `frontend/src/services/`   | Axios with interceptors   |
+| `httpService.ts`            | `frontend/src/services/`   | Generic HTTP factory      |
+| `movieService.ts`           | `frontend/src/services/`   | Movie domain wrapper      |
+| `authService.ts`            | `frontend/src/services/`   | Auth operations           |
+| `userMovieDataService.ts`   | `frontend/src/services/`   | User movie data           |
+| `paginationContext.ts`      | `frontend/src/services/`   | Multi-tab isolation       |
 
 ---
 

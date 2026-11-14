@@ -191,72 +191,35 @@ and two for a Library page.
 _Mode:_ `slice` — closes on the tracking journey (criterion 1), from a watchlist save through a logged viewing and a
 rewatch, passing in a backend test and on the browsable stack.
 
-- [ ] **3.1 Logging an entry keeps the viewing and applies the rules — D2, D3, D4, D6, D7**
+- [x] **3.1 Logging an entry keeps the viewing and applies the rules — D2, D3, D4, D6, D7**
 
     **Goal:** A signed-in user can log a viewing or a review of any film, stored or not; the server dates it in the
     user's time zone, sets Liked and the current rating, and marks the film watched and off the watchlist exactly where
     D3 says.
 
-    - [ ] **3.1.a Write the schema tests in `tests/unit/test_schemas.py`**
-        - `UserMovieEntryWriteSchema`: its defaults; a rating of 0 or 11, a review over 10,000 characters or holding a
-          NUL, an unknown `time_zone` (`Mars/Base`, a name of 300 characters) or a malformed one (`../etc/passwd`,
-          empty), and a missing `liked` or `time_zone` are refused; a whitespace-only review becomes null
-        - Expect tests to FAIL initially
-
-    - [ ] **3.1.b Write the service tests in a new `tests/integration/test_entry_service.py`**
-        - An unstored film's card is fetched once (`TMDBStub`), and TMDB's failures write nothing; the record is created
-          when there is none; `made_on` is today in the given zone; Liked follows the body, its join time stamped when
-          it turns on
-        - D3's entry-create rows and their converse: an entry marks an unwatched film watched; an undated entry takes
-          an unwatched film off the watchlist, while one for a film already watched leaves it on; an entry dated on or
-          after the day the film joined the watchlist, in the user's zone, takes it off; an entry dated before that day
-          leaves it on, whether the film was watched or not
-        - D4: a new latest entry with a rating sets the current rating; a backdated entry with a later one after it
-          leaves it; an entry with no rating leaves it
-        - 400, refused before any TMDB request with nothing written (no `Movie`, record or entry): neither a date nor a
-          review; a rewatch without a date; a date after today in the zone
-        - Time zones (criterion 6), with the clock fixed: at a UTC time already tomorrow in `Pacific/Kiritimati`, that
-          zone's today is accepted and the day after refused; a film added late in the evening in `America/Chicago`,
-          the next UTC day, is taken off by an entry dated that Chicago day; an undated entry's `made_on` is the zone's
-          date
-        - Expect tests to FAIL initially
-
-    - [ ] **3.1.c Write the API tests in a new `tests/integration/test_entries_api.py`**
-        - `POST /user-movie-data/{tmdb_id}/entries` answers 201 with the entry and the record after the write, its log
-          summary included; 400 for each 400 above, with no TMDB request and nothing written; 401, 404 from TMDB, 422
-          (an unknown `time_zone` among them) and TMDB's 502, 503 and 504, each with the shared error body; the OpenAPI
-          schema lists exactly D6's statuses for the route (429 joins in 3.4)
-        - A session-signed-in create without a CSRF token answers 403: add the case to `authentication`'s
-          `test_csrf_protection.py`
-        - Expect tests to FAIL initially
-
-    - [ ] **3.1.d Add the schemas, `UserMovieEntryService.create`, the entry-create rules and the route**
-        - `UserMovieEntrySchema`, `UserMovieEntryWriteSchema` and `UserMovieEntryWriteResponseSchema` in `schemas.py`,
-          as D6 defines them (3.3.b and 4.1.b add the others); `time_zone` is refused unless `zoneinfo` knows it
-        - `UserMovieEntryService` in `services/` takes its TMDB client by injection, with a factory in
-          `service_factory.py`; it shares `UserMovieDataService.save`'s card lookup rather than copying it
-        - The three 400s need only the body, the zone and the clock, so they are checked before the card lookup
-          (`InvalidInputError`), as the save checks its body
-        - One transaction under the record's lock: create the record if needed, add the entry, set Liked, then the
-          current rating (D4, by 1.3.c's entry order) and the entry-create rules in 1.2.b's module
-        - The route sits on `user_movie_data_router` and handles HTTP only; its `record` is read through the log-summary
-          method
-        - Tests should now PASS
-
-    - [ ] **3.1.e Show an un-marking save and an entry create racing for one film**
-        - A watched, unrated film with no entry: a `user_watched: false` PATCH and an entry create on two threads with
-          real transactions; the film ends watched with its entry in either order (criterion 3)
-        - The film is stored, so neither request reaches TMDB, and `test_concurrent_first_saves_merge_fields`'s barrier
-          in the stub can't order them. Order them with a row lock the test holds: in its own transaction it locks the
-          record (`select_for_update`), starts the first request, waits until one backend in this database waits on a
-          lock (`pg_stat_activity` where `datname = current_database()` and `wait_event_type = 'Lock'`; each xdist
-          worker has its own test database), starts the second, waits for two, and commits. Postgres's tuple lock
-          queues the waiters in arrival order. Run both orders
-        - It can pass on arrival: see the create-first order fail with 2.1's entries check removed (an unwatched film
-          with an entry), which also confirms the order held, then pass restored
-
-    - [ ] **3.1.f Name the entry service in the service-layer strategy and TECHNICAL-OVERVIEW (D14)**
-        - Beside `UserMovieDataService`; TECHNICAL-OVERVIEW's description of the `user_movie_data` app names entries
+    - [x] **3.1.a Write the schema tests in `tests/unit/test_schemas.py`**
+        - Covered complete-write defaults, required Liked/zone, rating/review bounds, NUL refusal, whitespace
+          normalization, and invalid zone names including malformed paths and oversized names. Validator cases failed
+          before implementation; optional-required-field and changed-default mutations fail and pass restored.
+    - [x] **3.1.b Write the service tests in `tests/integration/test_entry_service.py`**
+        - Covered stored/unstored cards, upstream failures without writes, each watchlist rule and converse,
+          current-rating order, body-only 400s before TMDB, local today/made-on, and Chicago's local join date.
+        - Coupled behaviors shared a red batch against the service scaffold, then passed with the implementation.
+    - [x] **3.1.c Write the API tests in `tests/integration/test_entries_api.py`**
+        - Covered the full create response, ownership, authentication, input errors, upstream statuses and exact
+          OpenAPI errors. Added session-create CSRF cases with persisted-success assertions. Routes failed first.
+    - [x] **3.1.d Add the schemas, `UserMovieEntryService.create`, the entry-create rules and the route**
+        - Shared the existing card lookup between saves and entries; validated before lookup; created history, Liked,
+          current rating and watched/watchlist transitions atomically under the parent lock, returning its summary.
+        - Oversized unknown zone names raise a filename-length OSError in the installed zoneinfo loader; that
+          specific errno is normalized to validation failure. Other filesystem errors still propagate.
+    - [x] **3.1.e Show an un-marking save and an entry create racing for one film**
+        - Real threads and transactions queue behind a held parent-row lock, using database waiters to establish each
+          order. Both finish watched with one entry; create-first returns a 409 for un-watching.
+        - Removing the entries guard makes create-first fail with an allowed un-watch, demonstrating the queue order.
+    - [x] **3.1.f Name the entry service in the service-layer strategy and TECHNICAL-OVERVIEW (D14)**
+        - Named private viewing/review history and the shared card lookup beside record saves.
+        - Full user-data and authentication suites: 564 passed. Ruff, full-backend Pyright and Markdown checks passed.
 
 - [ ] **3.2 An entry can be corrected or removed — D4, D6**
 

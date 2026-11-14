@@ -6,6 +6,7 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 import {
     fetchMovieDetail,
+    getFeaturedMovie,
     getNowPlayingMovies,
     getUpcomingMovies,
 } from "@/services/movieService";
@@ -74,4 +75,15 @@ export const homeWindowQuery = (window: "now-playing" | "upcoming") =>
                     ? getNowPlayingMovies
                     : getUpcomingMovies)({ page: 1 }, homeSectionOptions),
             ),
+    });
+
+export const featuredFilmQuery = (film?: number) =>
+    queryOptions({
+        queryKey: ["featured", film ?? null] as const,
+        staleTime: Infinity,
+        gcTime: Infinity,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        queryFn: ({ signal }) => readWithSignal(signal, getFeaturedMovie(film)),
     });

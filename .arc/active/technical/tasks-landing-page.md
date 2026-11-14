@@ -276,12 +276,12 @@ the three changed smoke specs passing.
           `catalogTitle.ts` does
         - Tests should now PASS
 
-- [ ] **2.5 The hero shows the pitch at once and the film when it arrives — R3, R6, R7, R8, R9, R25, R27**
+- [x] **2.5 The hero shows the pitch at once and the film when it arrives — R3, R6, R7, R8, R9, R25, R27**
 
     **Goal:** The headline, line and actions show before any read settles; the film's backdrop and credit join when it
     arrives; any failure leaves the pitch alone with no toast.
 
-    - [ ] **2.5.a Write the hero's tests in `src/pages/home/__tests__/HomeHero.test.tsx`**
+    - [x] **2.5.a Write the hero's tests in `src/pages/home/__tests__/HomeHero.test.tsx`**
         - Test: the `h1` "Track the films you watch. Find the next one.", R6's line, **Create account** opening
           `/register` and **Sign in** linking to `signInPathFor("/", "")`, all before the read settles (MSW held)
         - Test: once settled with a film, the credit "{title} ({year})" with its tagline when present, linking to
@@ -292,14 +292,15 @@ the three changed smoke specs passing.
         - Test: `featuredFilmQuery()`'s options are `staleTime: Infinity`, `gcTime: Infinity` and `false` for
           `refetchOnMount`, `refetchOnWindowFocus` and `refetchOnReconnect`, checked on the options object, since the
           test client already keeps every query
-        - Test: at `/?film=550`, the read sends `film=550` (Vitest runs a development build)
+        - At `/?film=550`, the read sends `film=550` in the development build.
+        - All seven hero cases pass after behavioral failures; lint and type-check pass.
         - Expect tests to FAIL initially
 
-    - [ ] **2.5.b Add `featuredFilmQuery(film?)` to `src/lib/queries.ts`**
+    - [x] **2.5.b Add `featuredFilmQuery(film?)` to `src/lib/queries.ts`**
         - Key `["featured", film ?? null]`, read through `getFeaturedMovie` (1.3), with the options above and the
           client's default retry
 
-    - [ ] **2.5.c Build `HomeHero` in `src/pages/home/`**
+    - [x] **2.5.c Build `HomeHero` in `src/pages/home/`**
         - The pitch's copy exactly as R6 gives it; **Create account** as the primary button, **Sign in** a link to
           `signInPathFor("/", "")`; nothing stands in the first place the demo will take
         - `film` from `useSearchParams` only when `import.meta.env.DEV`

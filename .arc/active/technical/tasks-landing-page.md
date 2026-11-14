@@ -201,16 +201,18 @@ the three changed smoke specs passing.
           hero's credit, the calendar and the large card; Home's `MovieCard`s take `source="home"`
         - Tests should now PASS
 
-- [ ] **2.3 A poster row scrolls up to 20 cards inside a section with its states — R10, R11, R27**
+- [x] **2.3 A poster row scrolls up to 20 cards inside a section with its states — R10, R11, R27**
 
     **Goal:** Any query of films renders as a titled section whose row scrolls by swipe, trackpad, buttons and focus,
     never moves on its own, and shows its own loading, empty and failed states without the server-error toast.
 
-    - [ ] **2.3.a Write the section's and the row's tests in `src/components/movie/sections/__tests__/`**
+    - [x] **2.3.a Write the section's and the row's tests in `src/components/movie/sections/__tests__/`**
         - Section: a `section` named by its `h2` (`aria-labelledby`); "See all" a link in its header, or absent;
           while loading, the title and placeholders; with no films, nothing rendered; on failure, the title,
           "Couldn't load these films." and **Retry**, which refetches that section's read alone (a sibling section's
           request count unchanged)
+        - Ten row, scroll and grouping cases and the calendar component case pass after behavioral failures.
+          Lint and type-check pass. The empty-state case was also seen failing against a section without its guard.
         - Row, with the list's `scrollWidth`, `clientWidth` and `scrollLeft` supplied, since jsdom does no layout: at
           most 20 cards in a `ul` of `li`; "Previous films" disabled at the start and "Next films" at the end, both
           when the list doesn't overflow; Next scrolls by the visible width with `behavior: "smooth"`, and `"auto"`
@@ -222,11 +224,11 @@ the three changed smoke specs passing.
           the tab's `getPaginationContextId()`, checked in the MSW handlers
         - Expect tests to FAIL initially
 
-    - [ ] **2.3.b Add Home's section queries to `src/lib/queries.ts`**
+    - [x] **2.3.b Add Home's section queries to `src/lib/queries.ts`**
         - `homeWindowQuery(window)` for `"now-playing"` and `"upcoming"`: page 1, no sort (the catalog's default
           order), key `["movies", "home", window]`, read with `homeSectionOptions` (1.3)
 
-    - [ ] **2.3.c Build the section shell, the scroller and the row section**
+    - [x] **2.3.c Build the section shell, the scroller and the row section**
         - `FilmSection` (`src/components/movie/sections/`): a title, an optional "See all" destination, optional
           header controls, the query's result and the films it yields; renders R10's three states around its
           children
@@ -240,12 +242,12 @@ the three changed smoke specs passing.
           them (`GridSkeletonLoader`)
         - Tests should now PASS
 
-- [ ] **2.4 A calendar groups Coming soon by the week each film opens — R10, R12, R27**
+- [x] **2.4 A calendar groups Coming soon by the week each film opens — R10, R12, R27**
 
     **Goal:** Coming soon's most popular films show grouped by opening week, at most four weeks and three films a week
     at wide widths, each film linking to its page.
 
-    - [ ] **2.4.a Write the grouping's unit tests in `src/utilities/__tests__/`**
+    - [x] **2.4.a Write the grouping's unit tests in `src/utilities/__tests__/`**
         - Test: only the first 20 films are taken
         - Test: a Monday's and a Sunday's release fall in the same week, and a Friday's in another week its own
         - Test: the first four weeks with films, in date order, an empty week skipped
@@ -254,19 +256,19 @@ the three changed smoke specs passing.
         - Test: a week whose Monday is November 16 is headed "Week of November 16"
         - Expect tests to FAIL initially
 
-    - [ ] **2.4.b Implement `groupByOpeningWeek(films, perWeek)` in `src/utilities/`**
+    - [x] **2.4.b Implement `groupByOpeningWeek(films, perWeek)` in `src/utilities/`**
         - Calendar arithmetic on the `YYYY-MM-DD` dates in UTC, so no time zone shifts a day; a film without a
           release date is left out (Coming soon's window filters by date)
         - Tests should now PASS
 
-    - [ ] **2.4.c Write the calendar's component tests**
+    - [x] **2.4.c Write the calendar's component tests**
         - Test: each week's `h3`, with its day of the month drawn apart; each entry's small poster, or
           `PosterPlaceholder`, its title, its weekday and day ("Fri 20"), its first genre or none, and its link with
           `from=home`; "and N more" as plain text
         - Test: titled "Most anticipated", with "See all" opening `/browse/upcoming`; its states through `FilmSection`
         - Expect tests to FAIL initially
 
-    - [ ] **2.4.d Build `ReleaseCalendar` in `src/components/movie/sections/`**
+    - [x] **2.4.d Build `ReleaseCalendar` in `src/components/movie/sections/`**
         - Takes a title, a "See all" destination and a query yielding films; Home passes `homeWindowQuery("upcoming")`
         - Day numerals in `tertiary`; weeks side by side at `lg`, stacked below; three films a week at `lg` and two
           below, with "and N more" counted for the cap that shows

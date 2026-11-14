@@ -4,7 +4,12 @@ import {
     type UserMoviesQueryParams,
 } from "@/services/userMovieService";
 import { queryOptions } from "@tanstack/react-query";
-import { fetchMovieDetail } from "@/services/movieService";
+import {
+    fetchMovieDetail,
+    getNowPlayingMovies,
+    getUpcomingMovies,
+} from "@/services/movieService";
+import { homeSectionOptions } from "@/services/homeRequests";
 import type { MovieDetail } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 
@@ -57,4 +62,16 @@ export const sessionQuery = (firstRead?: FirstReadContext) =>
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
+    });
+
+export const homeWindowQuery = (window: "now-playing" | "upcoming") =>
+    queryOptions({
+        queryKey: ["movies", "home", window] as const,
+        queryFn: ({ signal }) =>
+            readWithSignal(
+                signal,
+                (window === "now-playing"
+                    ? getNowPlayingMovies
+                    : getUpcomingMovies)({ page: 1 }, homeSectionOptions),
+            ),
     });

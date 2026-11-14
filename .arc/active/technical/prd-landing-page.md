@@ -111,18 +111,26 @@ shows.
 
 ### The hero's film
 
-**R3.** The hero's films are a fixed list of TMDB IDs of classic films, about 50, kept as a constant in the movie app's
-backend code and changed through a pull request, like the catalog's window presets. Each read picks one film from the
-list at random, so a new page load usually shows a different film; with about 50 films, the same one shows on two loads
-in a row about one time in fifty, which is accepted.
+**R3.** The hero's films are a fixed list of classic films identified by TMDB ID, about 50, kept as a constant in the
+movie app's backend code and changed through a pull request, like the catalog's window presets. Each read picks one
+film from the list at random, so a new page load usually shows a different film; with about 50 films, the same one
+shows on two loads in a row about one time in fifty, which is accepted.
 
 - **The list.** The Owner chooses the films and settles the list's size. The build starts from a provisional list of
   twelve: _Casablanca_, _Rear Window_, _Seven Samurai_, _Vertigo_, _North by Northwest_, _Lawrence of Arabia_,
   _2001: A Space Odyssey_, _The Godfather_, _Chinatown_, _Jaws_, _Alien_ and _Blade Runner_. No test depends on which
   IDs it holds, and the Owner's list replaces it before the work merges.
+- **Focus.** Each entry contains its TMDB ID and an optional `focus_point` object with `x` and `y`, each a finite
+  percentage from 0 to 100 inclusive. Both coordinates are present together. They specify the image's CSS
+  `object-position`, not a crop supplied by TMDB. An unset point is returned as `null`; the hero then uses
+  `50% 28%`, a horizontal centre with a top bias, at every width. The Owner settles each film's point during the
+  visual check; no focus editor is built here. A development request for a listed film returns that entry's point;
+  an unlisted candidate returns `null` and uses the same default. No request parameter supplies a focus point.
 - **The check.** Each film is checked in the built hero, in light and dark mode, before it joins the list: its still
-  reads well behind the gradient, and its credit fits above the headline (R7). So that any film, a candidate as well
-  as a listed one, can be shown on demand, a development build's Home passes a `film` parameter from its own address
+  keeps its intended subject in the full-width crop at wide, near-1024px and phone widths using its chosen point,
+  and its credit fits and remains legible in R7's position. A point can exchange visible edges; it cannot recover
+  the full frame from a cover crop. So that any film, a candidate as well as a listed one, can be shown on demand,
+  a development build's Home passes a `film` parameter from its own address
   (`/?film={tmdb_id}`) to the read, and the backend serves that film, listed or not, when the server runs with `DEBUG`
   on. Otherwise the parameter is ignored and the pick is random: a production build never sends it, and a production
   server never honors it.
@@ -130,8 +138,10 @@ in a row about one time in fifty, which is accepted.
 **R4.** `GET /movies/featured` serves the hero's film:
 
 - public (no authentication), and registered before the detail route `/movies/{tmdb_id}`, as the list routes are;
-- it returns a schema of its own, `FeaturedMovieSchema`: `tmdb_id`, `title`, `release_date`, `backdrop_path` and
-  `tagline`, the last two nullable, and an empty tagline from TMDB returned as `null`;
+- it returns a schema of its own, `FeaturedMovieSchema`: `tmdb_id`, `title`, `release_date`, `backdrop_path`,
+  `tagline` and `focus_point`. Backdrop and tagline are nullable, and an empty tagline from TMDB is returned as
+  `null`. `focus_point` is either `null` or an object with required numeric `x` and `y` in the inclusive range 0–100,
+  taken from the selected list entry (R3), not from TMDB;
 - it takes one optional query parameter, `film`, honored only as R3 gives it;
 - a `MovieService` method picks the film (R3), through a choice that tests can replace, and reads it with one TMDB
   detail call through the client's `get_movie_details`, without the credits or release dates the detail page appends;
@@ -156,29 +166,61 @@ TMDB detail response it already reads, with an empty tagline returned as `null`.
 
 **R6.** The hero shows the pitch at once, without waiting for the film:
 
-- the page's one `h1`, the headline: "Track the films you watch. Find the next one.";
-- one line saying what the app does: "Browse what's in theaters and coming soon, keep a watchlist, and search any film.
-  Film data from TMDB.";
+- the page's one `h1`, the headline: "Track what you watch. Find what's next.", using `text-wrap: balance`;
+- one line saying what the app does: "See what's in theaters and coming soon, and keep a watchlist of what to see
+  next. Film data from TMDB.";
 - the actions: **Create account**, the primary button, opening `/register`, then **Sign in**, a link to the sign-in
   page that returns to Home. The first place is left for the demo account's "Try the demo", which that work adds
   without changing the hero's layout; until then nothing stands in for it.
 
-**R7.** When the hero's read settles with a backdrop, the film's backdrop image fills the hero, and a gradient of the
-page's `background` color covers the text side of the image and fades into the page below it. The film's credit appears
-above the headline: its title and release year, as "Lawrence of Arabia (1962)", with its tagline below when it has one,
-cut to two lines. The credit links to the film's page (R25) and carries no label of its own. The credit, the headline,
-the line and the actions all sit where the gradient is opaque `background`, so every word of the hero is text on
-`background`.
+**R7.** The hero uses the selected theme's dark palette in both page color modes, scoped to the hero alone through
+Chakra's `Theme appearance="dark"` or the equivalent dark class. Its background, foreground, muted text and controls
+use existing semantic roles; the bar, rows and rest of the page continue to follow the page's mode.
 
-**R8.** The hero's space doesn't jump:
+When a backdrop is available, it fills the viewport-wide hero with `object-fit: cover`, anchored at the input focus
+point from R3. The complete frame need not remain visible. The pitch sits at the lower left, aligned to the content
+container, over a neutral dark gradient with no box. The fade uses the scoped dark `background` role and suppresses
+at least 75% of the image beneath every word of the pitch and its actions. Its dark plateau covers the actual text
+bounds at every supported width; it does not assume the copy occupies a fixed number of lines. There is no amber
+variant and no fade into a light page background.
 
-- at 1024px and wider (`lg`), the hero keeps one height whether or not a film arrives, with its text set at the
-  bottom, so the credit grows upward and the headline and actions never move;
-- below 1024px, the backdrop sits above the text and fades into the page. Its space is held while the read is pending,
-  and released when the read settles without a backdrop or when the image fails to load.
+The film's credit appears only when its backdrop is available:
+
+- at 1024px and wider, it sits on the right, with its bottom level with the bottom of the actions row and its right
+  edge on the content container's right edge, the same line as the bar's Sign in and the poster row's arrows. Its
+  text is right-aligned, and it occupies its own column without overlapping the pitch;
+- below 1024px, it follows the actions with a gap and is left-aligned to the same content edge;
+- the title and release year, as "Lawrence of Arabia (1962)", are about 18px and semibold. Only this title links to
+  the film's page with `from=home` (R25), with `tertiary-hover` on hover and a visible keyboard focus indicator;
+- the tagline, when present, is about 15px in `on-muted`, cut to two lines. It is plain text, without a link or a
+  hover color change. The credit carries no label of its own;
+- a separate dark gradient follows the credit's bounds, with at least 75% image suppression beneath all its text,
+  so the credit remains readable over bright frames. This is a fade, not a boxed card.
+
+The 75% minimum is an opacity floor, not a contrast guarantee. Strengthen each fade as needed for WCAG AA contrast
+against bright image content: at least 4.5:1 for normal text, including the muted tagline, and 3:1 for large text.
+Contrast comes from the darkness under the text, not from text sitting on an opaque page background. The backdrop
+is decorative (`alt=""`). Use responsive TMDB image sources including `original` when the rendered frame needs more
+than 1280 device pixels; do not upscale `w1280` for that case or use the site's `*_multi_faces` or `*_face` crops.
+
+The hero presentation takes film data and an optional focus point as inputs and applies the same point at every
+width, with the default when unset. Home owns the featured-film read and passes its result into that presentation;
+the presentation does not pick a film or read its own route or query. This keeps the focus input reusable by the
+film page later, without implementing that page's redesign here.
+
+**R8.** The hero reserves its full height before the film read settles and keeps it when the image is missing or
+fails. Its target height is 73% of the current window height (`73svh`), with a minimum of 480px at 1024px and wider
+and 560px below. A short window can therefore show a taller hero than 73% of its height so the pitch, actions and
+credit fit. At a fixed window size, the image and credit arriving or disappearing never move the pitch or actions.
+
+The image stays behind the content at every width; there is no separate phone image strip whose space is released.
+Reserve the phone credit's space while the film read is pending and when no credit is shown, so the actions stay in
+place. Window resizing may change the height and crop; it never causes sideways page scrolling or an overlap between
+the pitch, actions and credit.
 
 **R9.** If the hero's read fails, the film has no backdrop (`backdrop_path` is `null`) or its image fails to load, the
-hero stays as the pitch and actions on the page background, with no image and no credit, and no error toast (R10).
+hero keeps the pitch and actions on its scoped dark `background`, at R8's reserved height, with no image, no credit
+and no error toast (R10).
 
 ### Section forms
 
@@ -212,14 +254,20 @@ hero stays as the pitch and actions on the page background, with no image and no
 
 The watchlist section (R20) uses the scroller alone, inside its own section. In either use:
 
-- Cards keep the grids' width, `CARD_WIDTH` (194px), at 1024px and wider, and are never narrower than 138px below it,
-  the narrowest card the user-movie card controls' actions fit (§ 6).
-- The list scrolls sideways natively, by swipe and by trackpad, and by the two buttons, named "Previous films" and
-  "Next films", that move the list by its visible width and are disabled at the start and the end; both are disabled
-  when the list doesn't overflow.
-- Keyboard focus moving through its cards brings each card into view.
-- Nothing advances on its own. Scrolling by the buttons is smooth, and instant when the visitor asks for reduced motion
-  (`prefers-reduced-motion: reduce`).
+- At every supported width, the row's measured width and a whole-card count determine one shared card width.
+  Prefer the grids' `CARD_WIDTH` (194px) and never go below 138px, the narrowest card the card controls fit (§ 6).
+  Use the existing 16px gap: round `(row width + gap) / (194px + gap)` to choose the count, with at least one card,
+  reducing it when needed to keep cards at least 138px. Divide the remaining width equally across that count.
+- Every settled viewport shows complete cards, with no partial card at either edge. The loading placeholders and
+  the watchlist's scroller use the same width calculation and count. A shorter list simply shows its films.
+- The list scrolls sideways natively by swipe and trackpad, snaps to card edges, and hides its scrollbar. The two
+  buttons, "Previous films" and "Next films", remain visible at every width. Each moves by the measured whole-card
+  count, including the gaps; it is disabled at its corresponding end, and both are disabled when the list fits.
+- The last page clamps to the final complete set of cards, overlapping the previous page when needed rather than
+  showing a partial card or adding empty cells. After native scrolling, buttons page from the actual first card in
+  view; resizing realigns the view to complete card edges using the new count.
+- Keyboard focus moving through the cards brings each card into view. Nothing advances on its own. Button scrolling
+  is smooth, and instant under `prefers-reduced-motion: reduce`.
 
 **R12.** A **calendar** groups films by the week they open. "Most anticipated" (R17) is its one use in this work:
 
@@ -370,7 +418,8 @@ clear the record of a catalog view the visitor had scrolled, and on their return
   section requests carry a second one, so they never clear the catalog's record.
 
 **R25.** **Films opened from Home lead back to Home.** Every film link on Home (its cards, the large card, the
-calendar's and the diary's entries) and the hero's credit open the film's page with `from=home`, and the movie page's
+calendar's and the diary's entries) and the hero's credit title open the film's page with `from=home`, and the
+movie page's
 back link then reads "Back to Home" and opens `/`. Today `buildBackUrl` (`BackToCollectionLink`) sends a missing `from`
 to `/browse/now-playing` and an unknown one to `/browse/{from}`, which for `home` would be a dead link.
 
@@ -388,7 +437,8 @@ after the grid has rendered, and saved scroll positions mean the same rows whate
 ### Theme roles, tests and documentation
 
 **R27.** What this work builds takes theme roles, not a Chakra recipe's own colors or raw values: among them the row's
-controls, the placeholders, the hero's gradient (`background`), the band's background (`layer-01`) and the calendar's
+controls, the placeholders, the hero's gradients (its scoped dark `background`), the band's background
+(`layer-01`) and the calendar's
 large week numerals (`tertiary`, a text role already checked for contrast on `background`). The Films card that drew
 Chakra's card colors goes with `Featured`.
 
@@ -434,10 +484,8 @@ further changes, each checked against `main`'s code at that merge:
   nothing-saved set counts its viewings.
 - **c. If `main`'s `MovieCard` gives its watched and liked buttons accessible names and wires them,** this work adds no
   `/` baseline entry and restores no `/browse` or `/search` entry (R28); keeps `main`'s form of the signed-out rule
-  (R26) where the two differ; and the pitch's line and the band name what that work makes possible. The line reads
-  "Browse what's in theaters and coming soon, keep a watchlist, track and rate what you've watched, and search any
-  film. Film data from TMDB.", and the band's second point becomes "Keep track": "Save films to see next, mark what
-  you've watched, and rate and like them."
+  (R26) where the two differ. This work retains R6's headline and line and R14's band copy; any copy expansion
+  accompanying the card controls belongs with those controls, not this merge condition.
 - **d. If `main` orders the watchlist as a queue on the Library's Watchlist tab,** the watchlist section reads "Up next"
   in place of "Your watchlist" and leads with the first film in the queue: its read sends the sort value and direction
   that put the queue's first film first, as the Library's Watchlist tab does, in place of R20's defaults (the endpoint's
@@ -463,13 +511,14 @@ further changes, each checked against `main`'s code at that merge:
 - **The privacy and terms pages and their links** from Home and the footer, and Home's line on why the app asks for
   Google sign-in data, which must agree with the policy those pages publish.
 - **The footer,** including its TMDB attribution, already in `Footer`.
-- **The movie detail page's redesign.** It uses the two new detail fields (R5); this work changes only its back link
-  (R25).
+- **The movie detail page's redesign.** It can use the two new detail fields (R5) and the input-based hero later;
+  this work changes only its back link (R25), not its presentation or API focus metadata.
 - **Content beyond these sections:** curated collections, trending, "this week in film history", trailers and where to
   watch.
 - **Caching TMDB responses on the server.**
-- **A tablet layout.** Widths below 1024px get the phone layouts of the hero and the calendar, and the rows' narrower
-  cards, as the bar does.
+- **A separate tablet layout.** Widths below 1024px get the phone arrangement of the credit and calendar; rows have
+  cards determined by available width, as R11 gives them. The hero uses a full-width image at every width; only the
+  pitch and credit arrangement changes at 1024px.
 
 ## 6. Technical Considerations
 
@@ -483,8 +532,8 @@ further changes, each checked against `main`'s code at that merge:
     - **The user-movie card controls** wire and name `MovieCard`'s watched and liked buttons, adopt the signed-out
       rule (R26), and place their actions on cards 138px wide or wider, which R11 keeps every row card to. They also
       change the card's height and the grid's row spacing (R26). If this work merges first, they remove the three
-      `button-name` baseline entries (R28) and add watching, rating and liking to the pitch's line and the band, in
-      R30c's words.
+      `button-name` baseline entries (R28). Any associated copy changes belong with the controls; this work keeps
+      R6's pitch and R14's band copy.
     - **The Library page** gives the visitor's lists tabs at `/library/{tab}`, with `/watchlist` redirecting to its
       Watchlist tab, renames the bar's Watchlist link to Library, and adds the Activity tab. If this work merges first,
       the Library's work adds "Recently watched" as R15 designs it.
@@ -497,11 +546,12 @@ further changes, each checked against `main`'s code at that merge:
   lived records per page load.
 - **Images.** The local smoke target aborts requests to other origins, so images there never load: the hero then shows
   the pitch alone (R9), and posters leave their alt text, as the catalog's cards already do there (R10). Axe can't
-  measure text over an image and leaves such text for manual review rather than failing it, so R7's contrast holds by
-  construction: every word of the hero sits where the gradient is opaque `background`.
+  measure text over an image and leaves such text for manual review rather than failing it. R7's contrast relies on
+  the scoped dark palette and the minimum darkness of its separate pitch and credit fades. Check the actual text
+  bounds and contrast over bright frames, including the muted tagline; a green axe scan alone does not prove it.
 - **TMDB backdrops change.** The still behind the hero is TMDB's primary backdrop for the film, which TMDB's
   contributors can change. The gradient keeps the text legible whatever the image, and a film whose still stops reading
-  well is swapped out of the list (R3).
+  well is reframed with its optional focus point or removed from the list (R3).
 - **The calendar's shape changes from week to week.** Coming soon's most popular films can bunch into a few weeks or
   spread across two months. Showing the first four weeks with films, at most three each, bounds it either way, and a
   quiet season shows fewer weeks. "And N more" counts the others among the 20 the calendar takes, not every film
@@ -523,9 +573,10 @@ further changes, each checked against `main`'s code at that merge:
   hub. Their stills were drawn stand-ins, the posters color fields, and their spacing and type sizes a first pass.
 - **Copy.** The headline states what the app is for, so it stands whether or not every part of tracking has merged.
   The pitch's line and the band name only what works when this work merges (R6, R14), and grow with the card controls
-  (R30c). New names are in sentence case.
-- **Widths.** 1024px (`lg`) is the one switch for the hero's and the calendar's layouts and the rows' card width, the
-  breakpoint where the bar switches to its phone layout. The phone layouts must fit from 360px wide, as the bar does.
+  in the controls' work. R30c does not overwrite the approved pitch or band. New names are in sentence case.
+- **Widths.** 1024px (`lg`), where the bar switches, changes the hero credit from a right-hand column to a block
+  below the actions and stacks the calendar's weeks. The backdrop fills the hero at every width, and poster rows
+  derive their whole-card count from their own width rather than a breakpoint. The phone layouts fit from 360px.
 
 ## 8. Design Decisions
 
@@ -549,12 +600,15 @@ further changes, each checked against `main`'s code at that merge:
    rejected: a migration and two card fields that no card shows, kept only for the hero, and `Movie` rows exist only
    for films someone has saved. When TMDB fails, the hero falls back to the pitch rather than to another film, since
    the pitch stands alone (R9). _ADR: the new ADR below._
-4. **The hero shows the pitch at once and the film when it arrives, with its text on the page's own background**
-   (R6 to R9). No theme role exists for text over a photograph, and colors come from theme roles, so the hero composes
-   existing roles: a gradient of `background` holds every word of its text, which keeps the contrast the palettes are
-   already checked for, in both modes, and the hero follows the mode like the rest of the page. A dark hero in both
-   modes was set aside after a study in both modes: it needs new roles for the scrim and the text on it, in the role
-   types, every palette and the contrast check. _ADR: the new ADR below._
+4. **The hero is a full-width film with a neutral dark fade in both page modes** (R3, R6 to R9). Scoping the
+   existing dark palette to the hero avoids fading a photograph into the light page and needs no new color roles.
+   The pitch sits lower left; the credit stays attached to the film on the right, or below the actions on phones.
+   Contrast comes from a minimum 75% dark fade under the pitch and a separate fade under the credit, strengthened
+   for the actual text's contrast, rather than an opaque page background. The shorter side-by-side layout preserved
+   the full frame but gave the film less presence; the full-width version was chosen for that presence, accepting
+   cropping. An amber-tinted fade was considered and set aside in favour of neutral. Optional list focus points
+   frame each film, defaulting to `50% 28%`, and are inputs to the presentation so a later film page can reuse it.
+   _ADR: the new ADR below, whose hero and endpoint paragraphs are revised to this decision._
 5. **Home's copy names only what works when it merges** (R6, R14, R30c): a visitor who reads "rate what you've seen"
    and can't would distrust the rest. The headline states the app's purpose and stands either way. _ADR: `none`
    (temporary: the copy grows with the card controls)._
@@ -564,7 +618,8 @@ further changes, each checked against `main`'s code at that merge:
    The shorter signed-out card leaves the catalog grid's fixed row spacing as it is, so signed-out catalog rows sit
    further apart for now. A row height chosen by sign-in status was set aside: a scroll position saved under one status
    and restored under the other would land on another row, and the card controls change that spacing anyway. Row cards
-   keep the grids' width and never go below 138px, so the card controls' actions fit every card a row draws. _ADR: the
+   fill a whole-card viewport near the grids' width and never go below 138px, so the controls fit. Count-based
+   paging, card-edge snapping and shared loading geometry avoid a clipped card at any settled width. _ADR: the
    new ADR below._
 7. **Signed-in Home is a quick look at what's next and recent, sending the visitor on** (R18, R20 to R22). Each page
    keeps its own job: Films is the same program for everyone, personal only in the marks on its cards; the Library
@@ -623,9 +678,9 @@ further changes, each checked against `main`'s code at that merge:
     calendar exist. _ADR: `none` (it orders delivery and decides nothing about the system)._
 18. **Particulars settled with the design** (R1, R4, R7, R10, R12, R14): no `h1` while Home loads, as on the other pages
     that load; "Couldn't load these films." with Retry for a failed section; an empty TMDB tagline read as none; the
-    tagline cut to two lines, so the wide hero's one height holds every credit; 1024px as the one layout switch, the
-    bar's, for the hero, the calendar and the rows' card width; and the band's heading visually hidden, its points
-    carrying the visible titles. _ADR: `none` (tactical)._
+    tagline cut to two lines; 1024px as the bar's switch, changing the credit's arrangement and the calendar but not
+    prescribing poster widths; and the band's heading visually hidden, its points carrying the visible titles.
+    _ADR: `none` (tactical)._
 19. **One change** (§ 6, The size). The hero endpoint serves this page, the two detail fields come from the same TMDB
     response, and Home's two forms share the section forms. The demo account and moving the app's other toasts inline
     are separate concerns and stay their own work. _ADR: `none` (meets none of the ADR criteria)._
@@ -637,8 +692,9 @@ further changes, each checked against `main`'s code at that merge:
 
 - **New: ADR-046, "Open Home on a classic film and sections of films"** (decisions 1 to 4, 6 to 11, and 15). It
   records Home's two forms by sign-in status at `/`; the hero's classic film, picked at random from a fixed list and
-  served by its own endpoint; the hero composed on the page's own background; Home's section forms and their
-  states; signed-in Home's job beside Films and the Library, its greeting on arrival and its watchlist order; what's on
+  served by its own endpoint with optional focus metadata; a full-width hero scoped to the dark palette with minimum
+  darkness under its text; Home's section forms and states; signed-in Home's job beside Films and the Library,
+  its greeting on arrival and its watchlist order; what's on
   from catalog views; cards without actions for signed-out visitors; and `background.spec.ts` supplying Home's
   responses itself in both smoke targets. It supersedes in part:
     - ADR-044: the sentence giving the home page a Films section that offers the three windows;
@@ -659,32 +715,42 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 
 ### Implemented
 
-1. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+1. [~] Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
    answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path` and `tagline`; the film
    the choice picks from the list; with `DEBUG` on, an ID passed as `film` served, whether or not it is on the list;
    with `DEBUG` off, a `film` ignored for the choice's pick; one TMDB detail call per request and no credits call;
    an empty tagline returned as `null`; and a failed TMDB call answered 502 and an unknown ID 404, each with
    `{"detail": ...}`. They show `MovieDetailSchema` carrying `backdrop_path` and `tagline`.
+
+   _Superseded by the 2026-11-13 amendment; replacement: criterion 18._
+
 2. Component tests show Home at `/` in the loading state with no `h1` and no pitch while `status` is `resolving`, the
    signed-out page while it is `anonymous`, the signed-in page while it is `authenticated`, and Home switching when
    `status` changes; signed-out Home rendering the hero, "Popular in theaters", "Most anticipated" and the band, in
    that order, with no card actions; and `routing.test.tsx` shows `/featured` redirecting to `/` and rendering Home.
-3. Component tests show the hero's `h1`, line and actions before its read settles; once it settles with a film, the
+3. [~] Component tests show the hero's `h1`, line and actions before its read settles; once it settles with a film, the
    credit naming the title and year, with the tagline when present, linking to the film with `from=home`; the pitch
    and actions with no credit, no image and no "Server error" toast when the read fails, when `backdrop_path` is `null`
    and when the image fails to load; the same film after navigating away from Home and back, with no second read; the
    hero's query options never stale, with `gcTime: Infinity` and no refetch on mount, focus or reconnect, checked on
    the options themselves, since the test client already keeps every query; and, in a development build, Home at
    `/?film={tmdb_id}` passing that ID to the read.
+
+   _Superseded by the 2026-11-13 amendment; replacement: criterion 19._
+
 4. Component tests show each section form but the band with its title and placeholders while loading, absent with no
    films, and failed with its title, "Couldn't load these films." and Retry, which refetches that section's read alone;
    no "Server error" toast on a failed section, while a failed read on the watchlist page still raises it; each
    section as a `section` named by its `h2`; and `PosterPlaceholder` for a film without a `poster_path` in a row, in
    the calendar and on the large card.
-5. Component tests of the poster row, with the list's scroll measurements supplied since jsdom does no layout, show at
-   most 20 cards in a list; "Previous films" disabled at the start and "Next films" at the end, and both when the list
+5. [~] Component tests of the poster row, with the list's scroll measurements supplied since jsdom does no layout,
+   show at most 20 cards in a list; "Previous films" disabled at the start and "Next films" at the end, and both
+   when the list
    doesn't overflow; Next scrolling by the visible width, smoothly, and instantly under reduced motion; and "See all"
    present or absent with its destination.
+
+   _Superseded by the 2026-11-13 amendment; replacement: criterion 20._
+
 6. Unit tests of the calendar's grouping show the first 20 films taken; a Monday's and a Sunday's release in the same
    week and a Friday's in its own; the first four weeks with films, an empty week skipped; up to three films a week
    with three as the cap and up to two with two, each with "and N more" counting the rest of that week among the 20;
@@ -713,8 +779,8 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 13. The smoke tier passes locally with seven specs: `background.spec.ts` waiting for the headline with Home's three
     reads stubbed, `sign-in.spec.ts` and `phone-width.spec.ts` waiting for "Popular in theaters" after signing in, and
     the axe scans passing with the `button-name` entries for `/browse`, `/search` and `/`, each with its reason, or
-    without them where R30c applies (criterion 16).
-14. In the browsable stack at 1280×800 and 360×800, in light and dark mode, checked by hand: the hero and the band
+    without them where R30c applies (criterion 22).
+14. [~] In the browsable stack at 1280×800 and 360×800, in light and dark mode, checked by hand: the hero and the band
     spanning the viewport with no sideways scroll, and Home's other sections at every page's width; the wide hero
     keeping its height with and without a film, and the phone hero holding the backdrop's space while the read is
     pending and releasing it when the image fails; the calendar showing weeks side by side with up to three films at
@@ -723,16 +789,71 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     motion emulated; and nothing on Home drawing a color outside its theme roles. The Owner's list has replaced the
     provisional one, and the Owner has signed off each film on it in the built hero, in both modes, through `/?film=`
     (R3).
+
+    _Superseded by the 2026-11-13 amendment; replacement: criterion 21._
+
 15. A search of `.arc/reference`, outside the archive and the ADR bodies, and of the root README finds no description
     of one pagination context for every movie request, of Back to Results as the only spec supplying its own responses
     on staging, or of the landing page as in development, as current; ADR-002's, ADR-026's, ADR-039's and ADR-044's
     statuses name ADR-046 as superseding them in part, each with its part named, and ADR-046 reads `Accepted`.
-16. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged backend
-    (CI's type-drift check passes); with the Activity tab on `main`, component tests show "Recently watched" as R15
+16. [~] R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+    backend (CI's type-drift check passes); with the Activity tab on `main`, component tests show "Recently
+    watched" as R15
     gives it and the nothing-saved set counting viewings; with named card buttons on `main`, the scans pass without the
     three `button-name` entries and the pitch's line and the band name watching, rating and liking; and with the queue
     on `main`, component tests show the watchlist read sending the queue's sort value and direction, "Up next" leading
     with the queue's first film, and the large card's "Reorder" link.
+
+    _Superseded by the 2026-11-13 amendment; replacement: criterion 22._
+
+18. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+    answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
+    `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
+    coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
+    carries its configured point and an unlisted candidate returns `null`; with `DEBUG` off the random entry's film
+    and point are returned instead. They show one TMDB detail call per request and no credits call, an empty tagline
+    returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
+    `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
+    featured focus-point contract.
+
+19. Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
+    the title and year alone link with `from=home` and the optional tagline is noninteractive text. The pitch and
+    actions remain with no credit, image or Server error toast on read failure, a null backdrop or image failure.
+    The film stays the same across navigation with one read; query options remain never stale, `gcTime: Infinity`
+    and no refetch on mount, focus or reconnect, checked on the options themselves. In development, `/?film={tmdb_id}`
+    passes that ID to the read. The input-based hero uses a supplied focus point, including edge values, and defaults
+    to `50% 28%` when unset; Home passes the featured response's point without another read. No selected-layout or
+    amber preview option remains in the delivered page.
+
+20. Row geometry and component tests, with browser measurements supplied in jsdom, show at most twenty cards,
+    whole-card counts and widths near 194px and never below 138px, count-based paging including gaps, the overlapping
+    final complete page, paging from the actual position after native scrolling, and realignment after resizing.
+    Previous is disabled at the start, Next at the end, and both when the list fits. Loading placeholders and the
+    watchlist scroller use the same count. See all is present with its destination or absent as supplied. Button
+    scrolling is smooth and instant under reduced motion. Browser checks show no partial cards at rest, card-edge
+    snapping, a hidden scrollbar and visible buttons at every checked width.
+
+21. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+    the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
+    minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
+    cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
+    with the actions and its right edge with the content container; on phones it follows the actions aligned left.
+    Its title is about 18px semibold with title-only hover and visible keyboard focus, and its noninteractive
+    tagline about 15px muted and at most two lines. Separate neutral fades cover the actual pitch and credit bounds
+    with at least 75% image suppression; bright-frame checks show the required text contrast, including the tagline.
+    At 1280×800 and 360×800 the calendar still shows side-by-side weeks with up to three films and stacked weeks
+    with up to two respectively. At those widths and the three hero widths, rows show complete cards at least
+    138px wide, with buttons, swipe, trackpad and Tab movement and instant reduced-motion scrolling. The band spans
+    the viewport, the other sections retain the shared page width, and all colors use existing roles. The Owner's
+    final films and focus points replace the provisional list, each signed off through `/?film=` at wide,
+    near-1024px and phone widths in both modes (R3).
+
+22. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+    backend (CI's type-drift check passes); with the Activity tab and viewing source on `main`, component tests show
+    Recently watched as R15 gives it and the nothing-saved set counting viewings; with named card controls on `main`,
+    the scans pass without the three button-name baselines; and with the queue on `main`, component tests show the
+    watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
+    link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
 
 ### Proven after merge
 
@@ -743,3 +864,15 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 ## 10. Open Questions
 
 None.
+
+## Amendments
+
+- **2026-11-13 — Full-width dark hero, film focus and whole-card rows (Owner).** Replaces the page-colored strip
+  and detached credit with the selected full-width neutral-fade design, scoped to the dark palette in either page
+  mode. Records the revised credit placement and type, per-film optional focus points with a `50% 28%` default,
+  the balanced headline and new line, and whole-card row sizing and paging. Updates R3, R4, R6–R9 and R11, with
+  corresponding theme, copy, image and decision wording. Criteria 1, 3, 5, 14 and 16 are superseded by 18–22;
+  implementation Tasks 4.7–4.9 precede the final film checks in 5.1. ADR disposition: revise this work's Proposed
+  ADR-046 for the dark hero, contrast source and focus metadata; row measurements, copy and credit typography are
+  tactical details and require no additional ADR. The film page's later reuse and a focus editor remain outside
+  this work.

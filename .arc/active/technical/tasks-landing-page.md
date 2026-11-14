@@ -16,11 +16,12 @@ the visitor's watchlist first, then the same sections, built from section forms 
 
 ### Will Do
 
-- `GET /movies/featured`, serving one film at random from a fixed list of classic films, and the detail schema's
-  backdrop and tagline
+- `GET /movies/featured`, serving one film at random with its optional focus point from a fixed classic-film list,
+  and the detail schema's backdrop and tagline
 - Request options on Home's reads: no global server-error toast, and a pagination context of their own
 - The section forms (poster row, calendar, large card, band) with their loading, empty and failed states
-- The signed-out hero; signed-out and signed-in Home at `/`, rendered outside the padded container
+- The full-width, permanently dark signed-out hero with a neutral fade and input focus point; signed-out and
+  signed-in Home at `/`, rendered outside the padded container
 - The greeting on arrival in place of the sign-in toast, and the watchlist section led by a large card
 - Card actions for signed-in visitors only; films opened from Home leading back to Home
 - The smoke tier's three changed specs, its fixtures and baseline; the documentation and ADR-046
@@ -53,7 +54,8 @@ while the catalog's requests keep the tab's context and the toast.
         - Build `MovieService` with `TMDBStub` (`tests/tmdb_stub.py`) and a fixed chooser; give
           `create_tmdb_movie_detail` (`tests/tmdb_test_builders.py`) `backdrop_path` and `tagline` parameters
         - Test: the chooser receives the list and its pick is the film read
-        - Test: with `DEBUG` on (`override_settings`), a `film` ID is read whether or not it is listed; with `DEBUG` off,
+        - Test: with `DEBUG` on (`override_settings`), a `film` ID is read whether or not it is listed; with
+          `DEBUG` off,
           `film` is ignored and the chooser's pick is read
         - Test: one TMDB request per read, `movie/{id}`, and no credits request (`TMDBStub.requested_endpoints`)
         - Test: an empty tagline and a missing backdrop come back as `None`
@@ -191,6 +193,9 @@ the three changed smoke specs passing.
         - `homeFilmPath(tmdbId)` in a new `src/utilities/filmLinks.ts` returns `/movie/{tmdbId}?from=home`, for the
           hero's credit, the calendar and the large card; Home's `MovieCard`s take `source="home"`
 
+The row and hero work below records the completed baseline. Tasks 4.7–4.9 carry the approved hero and whole-card
+amendment before the final film checks in 5.1.
+
 - [x] **2.3 A poster row scrolls up to 20 cards inside a section with its states — R10, R11, R27**
 
     **Goal:** Any query of films renders as a titled section whose row scrolls by swipe, trackpad, buttons and focus,
@@ -205,8 +210,8 @@ the three changed smoke specs passing.
           Lint and type-check pass. The empty-state case was also seen failing against a section without its guard.
         - Row, with the list's `scrollWidth`, `clientWidth` and `scrollLeft` supplied, since jsdom does no layout: at
           most 20 cards in a `ul` of `li`; "Previous films" disabled at the start and "Next films" at the end, both
-          when the list doesn't overflow; Next scrolls by the visible width with `behavior: "smooth"`, and `"auto"`
-          under `prefers-reduced-motion: reduce` (`matchMedia` stub)
+          when the list doesn't overflow. The baseline paged by visible pixels, smoothly or instantly under reduced
+          motion; 4.9 verifies the replacement count-based paging and edge snapping
         - A film without a `poster_path` shows `PosterPlaceholder`; a card's links carry `from=home`
         - Home's In theaters read failing with a 500 (MSW) shows the failed state and no "Server error" toast, with
           a `Toaster` mounted (the shared renderer mounts none), as `MovieCard.test.tsx` does
@@ -222,8 +227,9 @@ the three changed smoke specs passing.
           header controls, the query's result and the films it yields; renders R10's three states around its
           children
         - `usePosterScroll()` returns the list's ref and the state and handlers of both buttons; `PosterScroller`
-          takes that ref, the films and a `source`, and lays out at most 20 `MovieCard`s in a `ul`, `CARD_WIDTH` wide
-          at `lg` and never under 138px below, scrolling natively; `PosterScrollButtons` takes the state and handlers
+          takes that ref, the films and a `source`, and lays out at most 20 `MovieCard`s in a `ul`, scrolling natively.
+          The baseline's fixed widths are replaced by the whole-card calculation verified in 4.9;
+          `PosterScrollButtons` takes the state and handlers
           and renders "Previous films" and "Next films" wherever a header places it (the row section's here, the
           watchlist section's in 4.2)
         - `PosterRowSection`: a title, an optional "See all" and a query yielding films, composing the two
@@ -266,10 +272,10 @@ the three changed smoke specs passing.
     arrives; any failure leaves the pitch alone with no toast.
 
     - [x] **2.5.a Write the hero's tests in `src/pages/home/__tests__/HomeHero.test.tsx`**
-        - Test: the `h1` "Track the films you watch. Find the next one.", R6's line, **Create account** opening
-          `/register` and **Sign in** linking to `signInPathFor("/", "")`, all before the read settles (MSW held)
-        - Test: once settled with a film, the credit "{title} ({year})" with its tagline when present, linking to
-          `/movie/{id}?from=home`, and the backdrop image
+        - Immediate headline, line and actions covered with the read held in MSW: Create account opens `/register`,
+          and Sign in links to `signInPathFor("/", "")`. Task 4.8 verifies the approved replacement copy and credit
+        - Film credit and backdrop covered after the read settles. Task 4.8 narrows the credit's link to the title
+          and year alone and verifies its new position, typography and focus input
         - Test: the pitch and actions with no credit, no image and no "Server error" toast (a `Toaster` mounted)
           when the read fails, when `backdrop_path` is `null`, and when the image fires `error`
         - Test: the same film after navigating away from Home and back, with one read
@@ -287,11 +293,9 @@ the three changed smoke specs passing.
         - The pitch's copy exactly as R6 gives it; **Create account** as the primary button, **Sign in** a link to
           `signInPathFor("/", "")`; nothing stands in the first place the demo will take
         - `film` from `useSearchParams` only when `import.meta.env.DEV`
-        - The backdrop from TMDB's `w1280` size, decorative (`alt=""`); a gradient of `background` covers the text side
-          and fades into the page below, and every word sits where it is opaque
-        - The credit above the headline, its tagline cut to two lines; at `lg`, one height with or without a film,
-          its text set at the bottom; below `lg`, the backdrop above the text, its space held while the read is
-          pending and released when it settles without a backdrop or the image fails
+        - The initial decorative backdrop used `w1280` and an opaque page-colored fade, with the credit above the
+          headline and a separate phone image strip. Task 4.8 replaces that presentation with the full-width dark
+          hero, responsive original image source, input focus point and independently faded credit
 
 - [x] **2.6 The band says what a visitor can do — R14, R27**
 
@@ -392,14 +396,8 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
       Cards measured 194px and 138px; all four layouts had no page overflow, correctly arranged weeks and full-width
       hero and band. Button scrolling, Tab focus and emulated touch swipes passed; reduced motion was instant.
       The wide hero stayed 560px with failed artwork; the phone released exactly its reserved 220px.
-    - The hero and the band span the viewport with no sideways scroll; the sections keep every page's width
-    - The wide hero keeps its height with and without a film (`/?film=` with a film TMDB gives no backdrop); the phone
-      hero holds the backdrop's space while the read is pending and releases it when the image fails (block
-      `image.tmdb.org` in devtools)
-    - The calendar's weeks side by side with up to three films at 1280, stacked with up to two at 360
-    - Row cards 194px wide at 1280 and no narrower than 138px at 360; each row scrolls by its buttons, by swipe (touch
-      emulation) and by Tab through its cards; scrolling is instant with reduced motion emulated
-    - No color outside theme roles on Home (R27)
+    - These measurements describe the completed baseline. Task 4.9 checks the amended full-width dark hero,
+      credit alignment and whole-card row geometry, retaining the calendar, band and shared-width checks.
 
 - [x] **3.4 Check Home in the smoke tier** (run `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`)
 
@@ -407,13 +405,15 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
 
     - The three changed specs passed within the 20-scenario browser run against the worktree’s browsable stack.
 
-### **Phase 4:** Signed-in Home greets on arrival and leads with the watchlist
+### **Phase 4:** Personal Home and the approved hero refinements
 
-_Mode:_ `slice` — closes on signed-in Home greeting the visitor on arrival and leading with their watchlist.
+_Mode:_ `slice` — closes on signed-in Home greeting the visitor and leading with their watchlist, plus the approved
+full-width dark hero and whole-card rows before the final film checks.
 
 _Exit criterion:_ in the browsable stack, signing in lands on Home greeting the account by name with its watchlist's
 newest film as the large card; navigating away and back shows no greeting; an account with an empty watchlist sees the
-nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
+nothing-saved line; the amended featured focus metadata, hero and row checks in 4.7–4.9 pass; and
+`background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts` pass.
 
 - [x] **4.1 A large card shows one film at one height — R13, R27**
 
@@ -552,7 +552,79 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
     - A second never-saved film took the large card's place and moved the first into the row. The card stayed
       320px wide-layout height and 300px phone height across swaps; no page overflow in any of the four layouts.
     - Removed the scenario's saved films through their card controls; the dev account's watchlist ends empty.
-    - After the walkthrough, `sign-in.spec.ts` and `phone-width.spec.ts` passed all seven scenarios with their axe scans.
+    - After the walkthrough, `sign-in.spec.ts` and `phone-width.spec.ts` passed all seven scenarios with their axe
+      scans.
+
+- [ ] **4.7 The featured film carries its list entry's optional focus point — R3, R4**
+
+    **Goal:** The selected film and its optional percentage focus point travel together, including development
+    candidates, with no additional TMDB call or change to production's random selection.
+
+    - [ ] **4.7.a Write the focus contract tests before changing the backend**
+        - Extend the service and endpoint tests in `backend/apps/movie/tests/`: choice picks an entry's ID and
+          configured point together; an unset point is `null`; listed DEBUG candidates retain their point and
+          unlisted candidates have none; production ignores the candidate and returns its random entry's point
+        - Schema tests accept both coordinates at 0 and 100 and reject partial, non-finite or out-of-range points
+        - Keep authentication, single detail call, no credits, nullable fields and error assertions; see criterion 18
+
+    - [ ] **4.7.b Carry focus metadata from the list through the schema and generated types**
+        - Replace the bare `FEATURED_FILM_IDS` list with entries containing `tmdb_id` and optional `focus_point`
+          in `backend/apps/movie/featured.py`; choose entries through the existing replaceable choice seam
+        - Extend `FeaturedMovieSchema` and the service/factory boundary with nullable `focus_point: {x, y}` as R4
+          defines. It is local list metadata, not a TMDB field; the movie detail schema gains no focus field
+        - Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts`; update the Home test fixtures and
+          `e2e/catalogue.ts` to match. Run the movie app's Docker tests, touched-app Ruff/Pyright and frontend types
+
+- [ ] **4.8 The selected full-width neutral hero uses its input focus and aligned credit — R3, R6–R9, R25, R27**
+
+    **Goal:** A dark hero in both page modes presents the approved pitch over the focused backdrop, with a separate
+    readable credit aligned to the actions and shared content edge, and no jump when artwork fails.
+
+    **Check:** `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`.
+
+    - [ ] **4.8.a Update the hero tests and input boundary before completing the presentation**
+        - The hero takes film data and optional focus as inputs; Home alone owns the featured query and development
+          film parameter. Direct input cases cover configured points, inclusive edge values and the `50% 28%` default
+        - Retain immediate pitch, lifetime cache, navigation and quiet read/image failure checks. Assert the exact
+          R6 copy, a title/year-only link, and a plain tagline; update Home, App and background spec assertions
+        - Keep the band's copy. Criterion 19 gives the complete component contract
+
+    - [ ] **4.8.b Keep only the chosen full-width layout and apply the revised credit**
+        - Remove the `hero` layout selector and the split and amber alternatives from the preview code
+        - Scope the existing dark palette to the hero; cover the viewport-wide 73svh area with the backdrop, its
+          minimum heights from R8 and `object-position` from the input at every width. Select a larger original
+          image source when needed; no face crops
+        - Pitch lower left, with a neutral fade covering its actual bounds by at least 75%. Credit on the right,
+          bottom aligned with the actions and right aligned with the content edge; on phones below the actions,
+          aligned left. Reserve its space during loading and failure so pitch and actions never move
+        - Title/year about 18px semibold with title-only hover and keyboard focus; tagline about 15px `on-muted`,
+          plain and at most two lines. Its own dark fade covers all credit text by at least 75%, strengthened for
+          normal-text contrast over bright frames. No boxed card or light-page fade
+        - Retain the input presentation for later film-page reuse without implementing that page here; run related
+          frontend tests, format, lint, types and the three covering smoke specs
+
+- [ ] **4.9 Verify the accepted whole-card rows and the final hero geometry — R2, R3, R6–R8, R11, R12, R14, R27**
+
+    **Goal:** The final hero, its input focus and credit, and both uses of the poster scroller satisfy the amended
+    browser geometry and contrast checks before the Owner settles the final films and points.
+
+    - [ ] **4.9.a Retain and verify the whole-card row implementation from the preview**
+        - Shared measured count near 194px and never below 138px, including loading placeholders and the watchlist
+          scroller; count-based buttons at every width, card-edge snaps, hidden scrollbar and a complete final page
+        - Preview tests already cover fixed-count/width regressions, paging and placeholders; retain those tests
+          and the reduced-motion and resize behavior, adding coverage only where criterion 20 identifies a missing case
+        - Run related section/watchlist tests, frontend lint and types over the final implementation
+
+    - [ ] **4.9.b Check the finished Home in the browsable stack and smoke tier**
+        - Criterion 21 at 2000×1000, 1024×1000 and 390×844 in both page modes, plus 1280×800 and 360×800 for the
+          calendar, minimum phone width, band and rows. Use Seven Samurai (346), 2001 (62), Lawrence of Arabia (947)
+          and Blade Runner (78), and exercise an explicit point as well as the default
+        - Check credit/action bottom alignment and content-edge alignment; phone stacking; unchanged dark hero
+          colors across page modes; title-only hover and focus; and separate fades over bright frames. Measure
+          text contrast including the muted tagline, rather than relying on axe alone
+        - Hold and fail the film read and image to show reserved height with no pitch/action movement. Resize,
+          page to both ends, swipe, scroll by trackpad and Tab, and check reduced motion and no partial cards
+        - Run `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`; record results for the final code
 
 ### **Phase 5:** Home is ready to merge
 
@@ -565,13 +637,17 @@ recorded, and the three changed smoke specs pass.
 
     **Goal:** The hero's list is the Owner's, and each film on it is signed off in the built hero in both modes.
 
-    - [ ] **5.1.a Replace `FEATURED_FILM_IDS` with the Owner's list**
+    - [ ] **5.1.a Replace the provisional entries in `featured.py` with the Owner's list**
         - The Owner chooses the films and settles the list's size (R3); ask for the list if it isn't in hand, and stop
           until it is
-        - Each ID looked up and its title and year confirmed as 1.1.c does; no test changes
+        - Each ID looked up and its title and year confirmed as 1.1.c does; tests remain independent of the list's IDs
+        - Each entry can carry the optional focus point added in 4.7; points are settled in 5.1.b
     - [ ] **5.1.b Show each film to the Owner through `/?film={tmdb_id}`, in light and dark mode**
-        - The browsable stack's development build and its `DEBUG` server; the still reads behind the gradient and the
-          credit fits above the headline; a film that fails comes off the list
+        - Use the development build and DEBUG server at wide, near-1024px and phone widths. The Owner sets each
+          entry's optional `focus_point` here; reload after changing the constant so the lifetime query reads it
+        - Confirm the subject survives the cover crop with the same anchor at every width, and the credit remains
+          readable in its new position. Adjust the point or remove a film whose framing fails; a point cannot
+          recover content discarded by the crop. An unset point uses `50% 28%`
 
 - [ ] **5.2 Checkpoint on the user-movie tracking model before merging `main` — R30**
 
@@ -603,24 +679,24 @@ recorded, and the three changed smoke specs pass.
       viewings**
         - Check both against `main`'s code, then ground R15 in them: the viewings list and its read, the rewatch icon
           and the read-only star display
-        - Tests first, per criterion 16: "Recently watched" as R15 gives it, between the watchlist and what's on (R18),
+        - Tests first, per criterion 22: "Recently watched" as R15 gives it, between the watchlist and what's on (R18),
           its read joining R22's, the nothing-saved set counting viewings, and a failed read with no "Server error"
           toast, a `Toaster` mounted; expect them to FAIL initially
         - Build the diary form and the section; the viewings read takes `homeReadOptions` through request options on
           its fetcher, as 1.3 gives `getUserMovies`; the tests should now PASS
         - Mark `[~]` with what `main` lacked when the condition fails
     - [ ] **5.4.b Named card buttons, if `main`'s `MovieCard` names and wires its watched and liked buttons**
-        - Tests first: 2.5.a's and 2.6's copy assertions take R30c's line and band point; expect them to FAIL
-        - Change the copy; remove the three `button-name` entries (R28); keep `main`'s form of the signed-out rule
-          where it differs; the tests should now PASS
+        - Remove the three `button-name` entries (R28); keep `main`'s form of the signed-out rule where it differs,
+          and run the covering tests and scans. Retain R6's pitch and R14's band; copy expansion belongs with the
+          controls' work, not this condition
         - Mark `[~]` when the condition fails
     - [ ] **5.4.c The queue, if `main` orders the watchlist as a queue on the Library's Watchlist tab**
-        - Tests first, per criterion 16: the watchlist read sends the queue's sort value and direction as the
+        - Tests first, per criterion 22: the watchlist read sends the queue's sort value and direction as the
           Watchlist tab does, the section reads "Up next" and leads with the queue's first film, and the large card
           links "Reorder" to `/library/watchlist`; expect them to FAIL
         - Add `sort` and `direction` to `UserMoviesQueryParams` and make the change; the tests should now PASS
         - Mark `[~]` when the condition fails
-    - Repeat 5.3 and this task if `main` moves before the pull request merges (criterion 16 reads the final merge)
+    - Repeat 5.3 and this task if `main` moves before the pull request merges (criterion 22 reads the final merge)
 
 - [ ] **5.5 Check Home over the merged code** (generate the API types, then run `background.spec.ts`,
   `sign-in.spec.ts` and `phone-width.spec.ts`)
@@ -632,6 +708,10 @@ recorded, and the three changed smoke specs pass.
 - [ ] **6.1 Verify the work** (load `archive-completed.md` § 1)
 
 ## Implementation Notes
+
+- **The approved full-width hero amendment** adds 4.7–4.9 before 5.1. Preview code is uncommitted and still contains
+  alternatives; it is evidence for the design, not completion of the revised credit and focus contract. The
+  presentation takes focus as an input; no film-page integration or interactive point editor is part of this work.
 
 - **The interim signed-in Home (3.1 to 4.3)** is deliberate: the three specs change once, in 3.2, the task that
   routes `/` to Home, and the signed-in specs' wait for "Popular in theaters" holds from then on.
@@ -657,32 +737,41 @@ recorded, and the three changed smoke specs pass.
 
 ### Implemented
 
-- [ ] 1. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+- [~] 1. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
   answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path` and `tagline`; the film
   the choice picks from the list; with `DEBUG` on, an ID passed as `film` served, whether or not it is on the list;
   with `DEBUG` off, a `film` ignored for the choice's pick; one TMDB detail call per request and no credits call;
   an empty tagline returned as `null`; and a failed TMDB call answered 502 and an unknown ID 404, each with
   `{"detail": ...}`. They show `MovieDetailSchema` carrying `backdrop_path` and `tagline`.
+
+  _Superseded by the 2026-11-13 amendment; replacement: criterion 18._
+
 - [ ] 2. Component tests show Home at `/` in the loading state with no `h1` and no pitch while `status` is `resolving`,
   the signed-out page while it is `anonymous`, the signed-in page while it is `authenticated`, and Home switching when
   `status` changes; signed-out Home rendering the hero, "Popular in theaters", "Most anticipated" and the band, in
   that order, with no card actions; and `routing.test.tsx` shows `/featured` redirecting to `/` and rendering Home.
-- [ ] 3. Component tests show the hero's `h1`, line and actions before its read settles; once it settles with a film,
+- [~] 3. Component tests show the hero's `h1`, line and actions before its read settles; once it settles with a film,
   the credit naming the title and year, with the tagline when present, linking to the film with `from=home`; the
   pitch and actions with no credit, no image and no "Server error" toast when the read fails, when `backdrop_path` is
   `null` and when the image fails to load; the same film after navigating away from Home and back, with no second
   read; the hero's query options never stale, with `gcTime: Infinity` and no refetch on mount, focus or reconnect,
   checked on the options themselves, since the test client already keeps every query; and, in a development build,
   Home at `/?film={tmdb_id}` passing that ID to the read.
+
+  _Superseded by the 2026-11-13 amendment; replacement: criterion 19._
+
 - [ ] 4. Component tests show each section form but the band with its title and placeholders while loading, absent
   with no films, and failed with its title, "Couldn't load these films." and Retry, which refetches that section's
   read alone; no "Server error" toast on a failed section, while a failed read on the watchlist page still raises it;
   each section as a `section` named by its `h2`; and `PosterPlaceholder` for a film without a `poster_path` in a row,
   in the calendar and on the large card.
-- [ ] 5. Component tests of the poster row, with the list's scroll measurements supplied since jsdom does no layout,
+- [~] 5. Component tests of the poster row, with the list's scroll measurements supplied since jsdom does no layout,
   show at most 20 cards in a list; "Previous films" disabled at the start and "Next films" at the end, and both when
   the list doesn't overflow; Next scrolling by the visible width, smoothly, and instantly under reduced motion; and
   "See all" present or absent with its destination.
+
+  _Superseded by the 2026-11-13 amendment; replacement: criterion 20._
+
 - [ ] 6. Unit tests of the calendar's grouping show the first 20 films taken; a Monday's and a Sunday's release in the
   same week and a Friday's in its own; the first four weeks with films, an empty week skipped; up to three films a
   week with three as the cap and up to two with two, each with "and N more" counting the rest of that week among the
@@ -711,8 +800,8 @@ recorded, and the three changed smoke specs pass.
 - [ ] 13. The smoke tier passes locally with seven specs: `background.spec.ts` waiting for the headline with Home's
   three reads stubbed, `sign-in.spec.ts` and `phone-width.spec.ts` waiting for "Popular in theaters" after signing in,
   and the axe scans passing with the `button-name` entries for `/browse`, `/search` and `/`, each with its reason, or
-  without them where R30c applies (criterion 16).
-- [ ] 14. In the browsable stack at 1280×800 and 360×800, in light and dark mode, checked by hand: the hero and the
+  without them where R30c applies (criterion 22).
+- [~] 14. In the browsable stack at 1280×800 and 360×800, in light and dark mode, checked by hand: the hero and the
   band spanning the viewport with no sideways scroll, and Home's other sections at every page's width; the wide hero
   keeping its height with and without a film, and the phone hero holding the backdrop's space while the read is
   pending and releasing it when the image fails; the calendar showing weeks side by side with up to three films at
@@ -721,17 +810,71 @@ recorded, and the three changed smoke specs pass.
   motion emulated; and nothing on Home drawing a color outside its theme roles. The Owner's list has replaced the
   provisional one, and the Owner has signed off each film on it in the built hero, in both modes, through `/?film=`
   (R3).
+
+  _Superseded by the 2026-11-13 amendment; replacement: criterion 21._
+
 - [ ] 15. A search of `.arc/reference`, outside the archive and the ADR bodies, and of the root README finds no
   description of one pagination context for every movie request, of Back to Results as the only spec supplying its
   own responses on staging, or of the landing page as in development, as current; ADR-002's, ADR-026's, ADR-039's and
   ADR-044's statuses name ADR-046 as superseding them in part, each with its part named, and ADR-046 reads
   `Accepted`.
-- [ ] 16. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+- [~] 16. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
   backend (CI's type-drift check passes); with the Activity tab on `main`, component tests show "Recently watched" as
   R15 gives it and the nothing-saved set counting viewings; with named card buttons on `main`, the scans pass without
   the three `button-name` entries and the pitch's line and the band name watching, rating and liking; and with the
   queue on `main`, component tests show the watchlist read sending the queue's sort value and direction, "Up next"
   leading with the queue's first film, and the large card's "Reorder" link.
+
+  _Superseded by the 2026-11-13 amendment; replacement: criterion 22._
+
+- [ ] 18. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+  answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
+  `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
+  coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
+  carries its configured point and an unlisted candidate returns `null`; with `DEBUG` off the random entry's film
+  and point are returned instead. They show one TMDB detail call per request and no credits call, an empty tagline
+  returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
+  `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
+  featured focus-point contract.
+
+- [ ] 19. Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
+  the title and year alone link with `from=home` and the optional tagline is noninteractive text. The pitch and
+  actions remain with no credit, image or Server error toast on read failure, a null backdrop or image failure.
+  The film stays the same across navigation with one read; query options remain never stale, `gcTime: Infinity`
+  and no refetch on mount, focus or reconnect, checked on the options themselves. In development, `/?film={tmdb_id}`
+  passes that ID to the read. The input-based hero uses a supplied focus point, including edge values, and defaults
+  to `50% 28%` when unset; Home passes the featured response's point without another read. No selected-layout or
+  amber preview option remains in the delivered page.
+
+- [ ] 20. Row geometry and component tests, with browser measurements supplied in jsdom, show at most twenty cards,
+  whole-card counts and widths near 194px and never below 138px, count-based paging including gaps, the overlapping
+  final complete page, paging from the actual position after native scrolling, and realignment after resizing.
+  Previous is disabled at the start, Next at the end, and both when the list fits. Loading placeholders and the
+  watchlist scroller use the same count. See all is present with its destination or absent as supplied. Button
+  scrolling is smooth and instant under reduced motion. Browser checks show no partial cards at rest, card-edge
+  snapping, a hidden scrollbar and visible buttons at every checked width.
+
+- [ ] 21. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+  the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
+  minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
+  cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
+  with the actions and its right edge with the content container; on phones it follows the actions aligned left.
+  Its title is about 18px semibold with title-only hover and visible keyboard focus, and its noninteractive
+  tagline about 15px muted and at most two lines. Separate neutral fades cover the actual pitch and credit bounds
+  with at least 75% image suppression; bright-frame checks show the required text contrast, including the tagline.
+  At 1280×800 and 360×800 the calendar still shows side-by-side weeks with up to three films and stacked weeks
+  with up to two respectively. At those widths and the three hero widths, rows show complete cards at least
+  138px wide, with buttons, swipe, trackpad and Tab movement and instant reduced-motion scrolling. The band spans
+  the viewport, the other sections retain the shared page width, and all colors use existing roles. The Owner's
+  final films and focus points replace the provisional list, each signed off through `/?film=` at wide,
+  near-1024px and phone widths in both modes (R3).
+
+- [ ] 22. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+  backend (CI's type-drift check passes); with the Activity tab and viewing source on `main`, component tests show
+  Recently watched as R15 gives it and the nothing-saved set counting viewings; with named card controls on `main`,
+  the scans pass without the three button-name baselines; and with the queue on `main`, component tests show the
+  watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
+  link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
 
 ### Proven after merge
 

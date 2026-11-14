@@ -15,12 +15,13 @@ The homepage must be visible without signing in and describe the application for
 
 The catalog already supplies theatrical and upcoming releases with data-quality filtering. The Library supplies
 stored watchlist cards in its own order. TMDB's detail response supplies backdrops and taglines, but the full detail
-page also requests credits that a homepage credit does not need. The application has semantic colors for page text
-and backgrounds; it has no roles for text over a photograph in a permanently dark hero.
+page also requests credits that a homepage credit does not need. The application has dark-palette semantic colors
+for text and backgrounds, which a hero can scope locally while the rest of the page follows its selected mode.
 
 Alternatives considered included a trending hero without a curated identity, a daily rotation, a page made entirely
-of poster rows, a permanently dark hero, and a signed-in page that repeats the catalog or Library. Picking a film in
-the browser through the full detail endpoint would expose the curated list there and request unnecessary credits.
+of poster rows, a page-colored or side-by-side hero, an amber-tinted fade, and a signed-in page that repeats the
+catalog or Library. Picking a film in the browser through the full detail endpoint would expose the curated list
+there and request unnecessary credits.
 Storing backdrop and tagline on saved movie cards would add fields and refresh obligations solely for the hero.
 
 ## Decision
@@ -30,15 +31,21 @@ page heading. Signed-out Home shows a classic film and the application's pitch, 
 soon, then a band explaining its capabilities. Signed-in Home shows the visitor's watchlist first and the same
 what's-on sections. A later list of logged viewings can supply a recently-watched section when that source exists.
 
-We will choose the hero's film randomly from a hand-selected list of classic TMDB IDs on each page load. A public
-endpoint returns only its ID, title, release date, backdrop and tagline through one TMDB detail call, without credits
-or server caching. The browser retains that result for the loaded application's lifetime, until reload or a change
-of signed-in user. Development builds can request a particular film for visual checks; production servers ignore
+We will choose the hero's film randomly from a hand-selected list of classic TMDB IDs with optional percentage
+focus points on each page load. A public endpoint returns its ID, title, release date, backdrop, tagline and nullable
+focus point through one TMDB detail call, without credits or server caching. Focus is local list metadata; an input
+point anchors the reusable hero presentation, defaulting to 50% across and 28% down when unset. The browser
+retains that result for the loaded application's lifetime, until reload or a change of signed-in user. Development
+builds can request a particular film for visual checks; production servers ignore
 that override. Each film is checked in the built hero in both modes before joining the final list.
 
-The pitch and account actions render before the film arrives. A gradient of the page's background keeps every word
-on that background in either color mode. The wide hero keeps one height; on phones its image sits above the text,
-with space held while loading and released if no image can be shown. A failed read or image leaves the pitch alone.
+The pitch and account actions render before the film arrives. The viewport-wide hero uses the existing dark palette
+in both page modes, with a neutral fade under the lower-left pitch and a separate fade under the film credit. Each
+fade suppresses at least 75% of the image beneath its text and is strengthened as needed for text contrast over
+bright frames; contrast comes from that minimum darkness, not an opaque page background. The credit sits on the
+right aligned with the actions and content edge, and follows the actions aligned left on phones. Only its title
+links to the film. The hero reserves roughly 73% of the window height, with minimum heights for its content, whether
+the read succeeds or fails. A failed read or image leaves the pitch alone on the dark hero background.
 
 We will compose Home from reusable section forms: native scrolling poster rows, an opening-week calendar, a large
 film card, and a text band. Sections have named headings and their own loading, empty and retry states. Rows draw
@@ -70,7 +77,7 @@ never depend on live TMDB. Other staging journeys continue using live catalog da
 
 - Visitors see films and the application's purpose; returning visitors see their own next films first.
 - Section forms can support a later Films hub without reproducing Home as a catalog grid.
-- Existing theme roles retain their contrast guarantees, and the pitch survives failed external reads.
+- Existing dark-palette roles and sufficiently dark fades keep the text legible; the pitch survives failed reads.
 - Home reuses the catalog and Library's contracts without disturbing catalog pagination or duplicating ordering.
 
 ### Negative

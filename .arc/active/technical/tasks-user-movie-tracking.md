@@ -402,15 +402,23 @@ rule.
     - ADR-043, ADR-027 and ADR-042 name the exact partial supersession in Status; historical bodies stand.
       Markdown lint passed. Acceptance remains in the verification task, before merge.
 
-- [ ] **5.7 Every living site states the new rules — D14**
+- [x] **5.7 Every living site states the new rules — D14**
 
     **Goal:** Nothing outside the kept history states a rule this change replaced; criteria 14 and 15 are this task's
     definition of done.
 
-    - Search for each rule D14's last bullet names: `watched_at` and `user_review`; an omitted field always staying
-      unchanged; a record read into `UserMovieDataSchema` without the log summary; a user's rating as a numeric chip.
-      Change each living site found; migrations, the migration tests, other ADRs and planning records stay as written
-    - Record the searches and their results here; markdown lint passes
+    - Searched the repository for `watched_at|user_review`, excluding migrations, migration tests, ADRs and kept
+      planning/history: zero matches. The old fields remain only in those explicitly preserved records.
+    - Searched omitted/absent-field preservation wording: five live contract statements all qualify preservation
+      with the data rules; the sixth match concerns unrelated criteria summaries.
+    - Searched `UserMovieDataSchema` construction, `from_record` and `with_log_summary`: production reads and the
+      reference examples load the annotations; the untracked-film default supplies both summary fields explicitly.
+    - Searched numeric user ratings, dot chips, numeric star labels and old props. Corrected the remaining theme
+      type comment and feedback-page caption, clarified the badge comment, and kept the negative old-prop regression.
+      Remaining broad matches describe TMDB chips or unrelated numeric IDs/task examples. Fixed the token table's
+      inline-code markup. Search transcripts are retained as session evidence.
+    - Type-check, ESLint, formatting, markdown lint and all 1,091 related tests passed. All original goals and
+      success-criterion text remain unchanged; no criterion is marked verified. ADR acceptance stays in 6.1.
 
 ### **Phase 6:** Verification
 

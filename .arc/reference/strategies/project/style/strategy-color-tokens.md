@@ -511,7 +511,7 @@ Fast lookup cheat sheet for common token choices.
 | TMDB score (medium)      | `foreground` dot and number                              | `<MovieUserScore score={6.5} voteCount={10} />` (displayed 5.0–7.4)      |
 | TMDB score (low)         | `destructive` dot, `foreground` number                   | `<MovieUserScore score={4.1} voteCount={10} />` (displayed <5.0)         |
 | TMDB score (<10 votes)   | `badge` / `on-badge`                                     | `<Badge variant="neutral">—</Badge>` (fewer than 10 votes)               |
-| User rating star icons   | `imdb-gold`                                              | <RatingStars rating={8} /> (four earned gold stars)                      |
+| User rating star icons   | `imdb-gold`                                              | `<RatingStars rating={8} />` (four earned gold stars)                    |
 | Genre tag                | `badge` / `on-badge`                                     | `<Badge variant="neutral">Action</Badge>`                                |
 | Secondary text           | `on-muted`                                               | `<Text color="on-muted">`                                                |
 | Border                   | `border-strong-01`                                       | `<Card borderColor="border-strong-01">`                                  |

@@ -44,12 +44,12 @@ _Exit criterion:_ backend tests show `GET /movies/featured`'s contract and the d
 `apiClient` tests show Home's section requests carrying their own pagination context without the server-error toast,
 while the catalog's requests keep the tab's context and the toast.
 
-- [ ] **1.1 `GET /movies/featured` serves a classic film from a fixed list — R3, R4**
+- [x] **1.1 `GET /movies/featured` serves a classic film from a fixed list — R3, R4**
 
     **Goal:** Anyone can read one film picked at random from the list, with only what the hero shows, and a failed
     TMDB read answers as the detail lookup's does.
 
-    - [ ] **1.1.a Write the service's tests in `backend/apps/movie/tests/unit/services/test_featured_movie.py`**
+    - [x] **1.1.a Write the service's tests in `backend/apps/movie/tests/unit/services/test_featured_movie.py`**
         - Build `MovieService` with `TMDBStub` (`tests/tmdb_stub.py`) and a fixed chooser; give
           `create_tmdb_movie_detail` (`tests/tmdb_test_builders.py`) `backdrop_path` and `tagline` parameters
         - Test: the chooser receives the list and its pick is the film read
@@ -61,7 +61,7 @@ while the catalog's requests keep the tab's context and the toast.
         - Test: a 200 whose body fails validation (no `title`) raises `UpstreamError`
         - Expect tests to FAIL initially
 
-    - [ ] **1.1.b Write the endpoint's tests in `backend/apps/movie/tests/integration/api/test_featured_movie.py`**
+    - [x] **1.1.b Write the endpoint's tests in `backend/apps/movie/tests/integration/api/test_featured_movie.py`**
         - Patch the TMDB client at `TMDB_CLIENT_GET_MOVIE_DETAILS` and `TMDB_CLIENT_GET` (`tests/mock_paths.py`), as
           `test_movie_detail.py` does, with a detail response per requested ID
         - Test: an anonymous `GET /api/movies/featured` answers 200 with exactly `tmdb_id`, `title`, `release_date`,
@@ -71,7 +71,10 @@ while the catalog's requests keep the tab's context and the toast.
           answers 502
         - Expect tests to FAIL initially
 
-    - [ ] **1.1.c Implement the list, the schema, the service method and the route**
+    - [x] **1.1.c Implement the list, the schema, the service method and the route**
+        - All twelve IDs confirmed against TMDB. Casablanca’s TMDB release date is 1943-01-15.
+        - Coupled lookup behaviors tested together; initial service and HTTP assertions failed before implementation.
+        - Movie app: 558 tests pass; pinned container Ruff passes; API types regenerated.
         - `FEATURED_FILM_IDS` in a new `backend/apps/movie/featured.py`: the provisional twelve R3 names, each ID
           looked up and its title and year confirmed in the backend container's `manage.py shell` with
           `from apps.core.services.tmdb_api_client import TMDBApiClient` and `response.is_success()` (QUICK-REFERENCE
@@ -89,21 +92,21 @@ while the catalog's requests keep the tab's context and the toast.
           `/{tmdb_id}`, with an optional `film: int` query parameter: it extracts it, calls the service and returns
         - Tests should now PASS
 
-- [ ] **1.2 The detail schema carries the backdrop and tagline — R5**
+- [x] **1.2 The detail schema carries the backdrop and tagline — R5**
 
     **Goal:** `GET /movies/{tmdb_id}` returns `backdrop_path` and `tagline` from the TMDB response it already reads,
     and the frontend's types know both endpoints.
 
-    - [ ] **1.2.a Add the fields' tests to `test_movie_detail.py`**
+    - [x] **1.2.a Add the fields' tests to `test_movie_detail.py`**
         - Test: the detail response carries `backdrop_path` and `tagline` from TMDB's detail; an empty tagline reads
           `null`; both read `null` when TMDB omits them
         - Expect tests to FAIL initially
 
-    - [ ] **1.2.b Add both fields to `MovieDetailSchema` and `create_movie_detail_from_tmdb`**
+    - [x] **1.2.b Add both fields to `MovieDetailSchema` and `create_movie_detail_from_tmdb`**
         - Nullable, the tagline through `empty_str_to_none` as in 1.1.c; the movie page doesn't show them
         - Tests should now PASS
 
-    - [ ] **1.2.c Regenerate the API types**
+    - [x] **1.2.c Regenerate the API types**
         - `npm run generate-types --prefix frontend` against this worktree's test stack; `frontend/openapi.json` and
           `frontend/src/types/api.ts` carry `FeaturedMovieSchema`, the route and the two detail fields
         - `e2e/catalogue.ts`'s `movieDetail()` still type-checks (`npm run type-check` covers `e2e/`)

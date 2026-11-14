@@ -168,6 +168,16 @@ class CastMemberSchema(Schema):
     profile_path: str | None = None
 
 
+class FeaturedMovieSchema(Schema):
+    """The film credit and backdrop shown on the homepage."""
+
+    tmdb_id: int
+    title: str
+    release_date: date | None = None
+    backdrop_path: str | None = None
+    tagline: str | None = None
+
+
 class MovieDetailSchema(MovieListItemSchema):
     """Full movie representation for detail page endpoints.
 
@@ -179,6 +189,8 @@ class MovieDetailSchema(MovieListItemSchema):
     MovieListItemSchema has, plus the additional detail-specific fields.
     """
 
+    backdrop_path: str | None = None
+    tagline: str | None = None
     overview: str | None = None
     genres: list[GenreSchema] = Field(default_factory=_empty_genre_list)
     production_companies: list[ProductionCompanySchema] = Field(

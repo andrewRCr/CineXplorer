@@ -164,3 +164,39 @@ def test_get_movie_detail_returns_tmdb_vote_count(
     # Assert
     assert res.status_code == HTTPStatus.OK
     assert res.json()["vote_count"] == 100
+
+
+@pytest.mark.parametrize(
+    ("backdrop", "tagline", "expected_tagline"),
+    [
+        ("/still.jpg", "An epic.", "An epic."),
+        (None, "", None),
+        (None, "   ", None),
+        (None, None, None),
+    ],
+)
+@patch(TMDB_CLIENT_GET)
+@patch(TMDB_CLIENT_GET_MOVIE_DETAILS)
+def test_detail_carries_backdrop_and_tagline(
+    mock_details: Mock,
+    mock_get: Mock,
+    api_client: Client,
+    backdrop: str | None,
+    tagline: str | None,
+    expected_tagline: str | None,
+) -> None:
+    from apps.movie.tests.tmdb_test_builders import create_tmdb_movie_detail
+
+    movie = create_tmdb_movie_detail(
+        78, "Blade Runner", "1982-06-25", 8.0, backdrop_path=backdrop, tagline=tagline
+    )
+    data = movie.model_dump()
+    if tagline is None:
+        data.pop("tagline")
+        data.pop("backdrop_path")
+    mock_details.return_value = ApiResponse(status_code=200, data=data)
+    mock_get.return_value = ApiResponse(status_code=200, data={"cast": [], "crew": []})
+    response = api_client.get("/api/movies/78")
+    assert response.status_code == 200
+    assert response.json()["backdrop_path"] == backdrop
+    assert response.json()["tagline"] == expected_tagline

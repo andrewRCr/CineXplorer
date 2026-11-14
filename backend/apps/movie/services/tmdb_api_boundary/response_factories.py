@@ -51,10 +51,12 @@ from apps.core.tmdb_models.tmdb_responses import (
     TMDBPaginatedPersonResponse,
     TMDBReleaseDatesResponse,
 )
+from apps.core.utils import empty_str_to_none
 
 from ...schemas import (
     CastMemberSchema,
     CrewMemberSchema,
+    FeaturedMovieSchema,
     GenreSchema,
     KeywordListResponseSchema,
     KeywordSchema,
@@ -246,6 +248,20 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
         raise
 
 
+def create_featured_movie_from_tmdb(movie_data: Mapping[str, object]) -> FeaturedMovieSchema:
+    """Validate a TMDB detail response and retain only the homepage's fields."""
+    movie = TMDBMovieDetail.model_validate(movie_data)
+    return FeaturedMovieSchema.model_validate(
+        {
+            "tmdb_id": movie.id,
+            "title": movie.title,
+            "release_date": empty_str_to_none(movie.release_date),
+            "backdrop_path": movie.backdrop_path,
+            "tagline": empty_str_to_none(movie.tagline),
+        }
+    )
+
+
 def create_movie_detail_from_tmdb(
     movie_data: Mapping[str, object], credits_data: Mapping[str, object] | None = None
 ) -> MovieDetailSchema:
@@ -288,6 +304,8 @@ def create_movie_detail_from_tmdb(
         detail_data: dict[str, object] = {
             "tmdb_id": tmdb_movie.id,
             "title": tmdb_movie.title,
+            "backdrop_path": tmdb_movie.backdrop_path,
+            "tagline": empty_str_to_none(tmdb_movie.tagline),
             "poster_path": tmdb_movie.poster_path,
             "release_date": release_date,
             "vote_average": tmdb_movie.vote_average,

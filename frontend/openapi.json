@@ -2840,6 +2840,46 @@
         ]
       }
     },
+    "/api/movies/featured": {
+      "get": {
+        "operationId": "apps_movie_api_get_featured_movie",
+        "summary": "Get Featured Movie",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "film",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Film"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedMovieSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Serve one classic film for the homepage.",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
     "/api/movies/{tmdb_id}": {
       "get": {
         "operationId": "apps_movie_api_get_movie_detail",
@@ -5014,6 +5054,59 @@
         "title": "MovieSearchParamsSchema",
         "type": "object"
       },
+      "FeaturedMovieSchema": {
+        "description": "The film credit and backdrop shown on the homepage.",
+        "properties": {
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "backdrop_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backdrop Path"
+          },
+          "tagline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tagline"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "FeaturedMovieSchema",
+        "type": "object"
+      },
       "CastMemberSchema": {
         "properties": {
           "id": {
@@ -5206,6 +5299,28 @@
                 "type": "null"
               }
             ]
+          },
+          "backdrop_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backdrop Path"
+          },
+          "tagline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tagline"
           },
           "genres": {
             "items": {

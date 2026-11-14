@@ -300,18 +300,18 @@ sees its 31st write within one minute answer 429.
     - Keeping a logged film on the watchlist makes the new journey fail; restoring the rule passes. All 311 app
       tests, Ruff and full-backend Pyright passed.
 
-- [ ] **4.3 Check the journey on the browsable stack**
+- [x] **4.3 Check the journey on the browsable stack**
 
     **Goal:** The entry routes compose through the real stack (routing, sign-in, CSRF, TMDB and the Redis counters),
     with what ran and the result recorded here.
 
-    - A script against the stack `node scripts/worktree.mjs browse` starts, signed in as the dev user with a bearer
-      token and matching CSRF and Origin headers: add an unstored film to the watchlist; log an entry dated today,
-      rated 7, with a review; read the record, the Library's watchlist, watched, rated and unfiltered queries, the
-      film's entries and the cross-film list; add the film to the watchlist again and log a rewatch rated 9; take a
-      second film off the watchlist, restore it with `undo: true` and read its place; last, write until one answers
-      429
-    - Keep the script and its output in the work unit's personal folder
+    - Ran `live-journey.py` against the worktree's browsable stack, signed in as dev with bearer, CSRF and Origin
+      headers. The fresh development database had zero movie cards before the run.
+    - Real TMDB-backed saves, today's viewing rated 7, a rewatch rated 9, all Library filters, both history reads,
+      and Undo's earlier watchlist place passed. A fresh minute allowed 30 writes and refused the 31st with 429 and
+      Retry-After. All 15 live checks passed.
+    - Kept the script, `live-journey-output.json` and the initial card-count evidence in the work unit's gitignored
+      personal folder. The five-service stack remains running for the frontend smoke checks.
 
 ### **Phase 5:** Pages can build on the new record, and the documents state it
 

@@ -311,10 +311,11 @@ the three changed smoke specs passing.
           pending and released when it settles without a backdrop or the image fails
         - Tests should now PASS
 
-- [ ] **2.6 The band says what a visitor can do — R14, R27**
+- [x] **2.6 The band says what a visitor can do — R14, R27**
 
     **Goal:** A full-width band on `layer-01` lists R14's three points under a visually hidden heading, with no read.
 
+    - The band test failed before implementation and passes with lint and type-check.
     - Test first, in `src/pages/home/__tests__/HomeBand.test.tsx`: the hidden `h2` "What you can do" and R14's three
       `h3` titles with their lines; expect it to FAIL initially
     - Build `HomeBand` in `src/pages/home/`: full width, `layer-01`, the heading hidden with `VisuallyHidden`; the

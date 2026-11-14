@@ -827,17 +827,23 @@ recorded, and the three changed smoke specs pass.
     **Goal:** Each film shipped has the Owner's sign-off under the scalable review process; the remainder can follow
     in later pull requests.
 
-    - [ ] **5.1.a Refresh the external sheet for the panel hero and streamline its review**
-        - Recapture the built hero after 4.13 and rescreen every candidate, including capitalized credit fit at
-          360×800 and compact-landscape panel separation; bring flags to the Owner, set the short titles the Owner
-          chooses for films that cannot fit, and rescreen those films with their short titles. Carry the earlier
-          sheet's saved points across
-        - Open on the next pending film; keys approve, exclude and move, and a decision advances to the next pending
-          film. Remove the per-film built-check gate and app-open controls; keep identity selection, flag
-          acknowledgement, notes and the review JSON. Exports include any short title
-        - The screen and the sheet reproduce the restyled credit's markup, including the separator, and the panel
-          wrappers the sheet
-          locates the pitch and credit by. Re-run the sheet's browser checks against the rebuilt sheet
+    - [x] **5.1.a Refresh the external sheet for the panel hero and streamline its review**
+        - The screen loads the app afresh at each size and measures every candidate and identity alternative (190)
+          with its shipped title and the restyled credit markup at 2000×1000, 1450×900, 1024×1000, 900×700,
+          768×600, 768×1024, 390×844 and 360×800: reserved credit space below 1024px, the credit inside the hero,
+          and at least 16px between the panels. With the Owner's short title for _Dr. Strangelove_ (the full title
+          needs 99px of the 84px at 360×800) every candidate passes; the tightest are 20.4px of panel separation at
+          900×700 and 768×600 and a 76px credit at 360×800. Tagline ellipses are notes rather than flags; the 13
+          remaining flags are identity and year questions.
+        - The sheet opens on the next pending film. Keys approve, exclude, leave pending, move and reset the point,
+          and a decision advances to the next pending film in the selected filter. The per-film built-check gate
+          and app-open controls are gone; identity selection, flag acknowledgement, notes and the review JSON
+          remain, and exports and the saved JSON carry any short title. The earlier sheet's saved points and notes
+          migrate; its approvals return to pending.
+        - The sheet's credit reproduces the separator and the title's accessible name, and the sheet locates the
+          pitch and credit by their panel wrappers. Against the built app, crop, credit markup, panel boxes and
+          panel edges match at 2000×1000 and 1024×1000. The sheet's browser checks pass, including keys with focus
+          in a preview, a restore in a fresh browser, and exported lines parsed as real `FeaturedFilm` entries.
     - [ ] **5.1.b The Owner reviews the sheet in one page mode**
         - The Owner settles flags, sets full-bleed points (unset uses `50% 28%`) and approves or excludes each film,
           then supplies the saved review JSON. Component mode/shape checks are covered by 4.12 and 4.13, not

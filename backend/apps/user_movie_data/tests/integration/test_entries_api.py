@@ -163,7 +163,18 @@ def test_openapi_entry_create_contract() -> None:
         if key.endswith("/user-movie-data/{tmdb_id}/entries")
     )
     responses = path["post"]["responses"]
-    assert {int(status) for status in responses} == {201, 400, 401, 403, 404, 422, 502, 503, 504}
+    assert {int(status) for status in responses} == {
+        201,
+        400,
+        401,
+        403,
+        404,
+        422,
+        429,
+        502,
+        503,
+        504,
+    }
     for status, response in responses.items():
         if int(status) >= 400:
             assert (
@@ -288,7 +299,7 @@ def test_openapi_entry_edit_and_delete_contract() -> None:
         if key.endswith("/user-movie-data/{tmdb_id}/entries/{entry_id}")
     )
     for method, statuses in [
-        ("put", {200, 400, 401, 403, 404, 422}),
+        ("put", {200, 400, 401, 403, 404, 422, 429}),
         ("delete", {200, 401, 403, 404, 422}),
     ]:
         responses = path[method]["responses"]

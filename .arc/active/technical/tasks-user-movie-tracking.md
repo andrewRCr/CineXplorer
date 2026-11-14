@@ -251,20 +251,19 @@ rewatch, passing in a backend test and on the browsable stack.
         - Compose the annotated owner-scoped record read and one ordered entry query; return an explicit default
           record and empty entries when no record exists. All 299 app tests, Ruff and full-backend Pyright passed.
 
-- [ ] **3.4 Saves, entry creates and entry edits share one count — D6**
+- [x] **3.4 Saves, entry creates and entry edits share one count — D6**
 
     **Goal:** Logging and correcting entries can't grow the stored catalogue through TMDB faster than the save limits
     allow.
 
-    - [ ] **3.4.a Extend `test_save_limits.py`, and add 429 to the create and edit routes' OpenAPI statuses**
-        - With throttling enabled, 31 record saves, entry creates and entry edits mixed within one clock minute leave
-          the 31st answering 429 with `Retry-After`; entry deletes and reads are not counted
-        - The exact OpenAPI statuses 3.1.c and 3.2.a set for the create and edit routes gain 429
-        - Deletes and reads going uncounted passes on arrival, since their routes carry no throttle: see it fail against
-          a narrow break (a delete or read route given the save's throttle) and pass restored
-        - Expect the other tests to FAIL initially
-    - [ ] **3.4.b Give the create and edit routes the record save's two `SaveThrottle` windows and 429**
-        - Tests should now PASS
+    - [x] **3.4.a Extend `test_save_limits.py`, and add 429 to the create and edit routes' OpenAPI statuses**
+        - Mixed PATCH/POST/PUT requests hit the shared 31st-write refusal with Retry-After in bearer and session
+          modes; failed before the route throttles. Exact OpenAPI expectations now include 429 for create/edit.
+        - Thirty-one entry reads/deletes remain available without consuming the save count. Giving either read or
+          delete the save throttle breaks that assertion; restored behavior passes.
+    - [x] **3.4.b Give the create and edit routes the record save's two `SaveThrottle` windows and 429**
+        - Both windows use the existing user/window counters. Reads and deletes remain unthrottled.
+        - All 302 app tests, Ruff and full-backend Pyright passed.
 
 ### **Phase 4:** Viewings are listed across films, and the tracking journey holds end to end
 

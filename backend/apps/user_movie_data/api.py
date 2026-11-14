@@ -104,6 +104,10 @@ def delete_user_movie_data(request: HttpRequest, tmdb_id: PositiveTMDBId) -> Sta
 
 @user_movie_data_router.post(
     "/{tmdb_id}/entries",
+    throttle=[
+        SaveThrottle(limit=30, window_seconds=60),
+        SaveThrottle(limit=1000, window_seconds=86400),
+    ],
     response={
         201: UserMovieEntryWriteResponseSchema,
         400: ErrorResponseSchema,
@@ -111,6 +115,7 @@ def delete_user_movie_data(request: HttpRequest, tmdb_id: PositiveTMDBId) -> Sta
         403: ErrorResponseSchema,
         404: ErrorResponseSchema,
         422: ErrorResponseSchema,
+        429: ErrorResponseSchema,
         502: ErrorResponseSchema,
         503: ErrorResponseSchema,
         504: ErrorResponseSchema,
@@ -124,6 +129,10 @@ def create_movie_entry(
 
 @user_movie_data_router.put(
     "/{tmdb_id}/entries/{entry_id}",
+    throttle=[
+        SaveThrottle(limit=30, window_seconds=60),
+        SaveThrottle(limit=1000, window_seconds=86400),
+    ],
     response={
         200: UserMovieEntryWriteResponseSchema,
         400: ErrorResponseSchema,
@@ -131,6 +140,7 @@ def create_movie_entry(
         403: ErrorResponseSchema,
         404: ErrorResponseSchema,
         422: ErrorResponseSchema,
+        429: ErrorResponseSchema,
     },
 )
 def edit_movie_entry(

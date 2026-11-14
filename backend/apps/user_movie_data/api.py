@@ -10,8 +10,11 @@ from pydantic import Field
 
 from apps.authentication.auth_ninja import JWTSessionAuth, get_current_user
 from apps.core.schemas import ErrorResponseSchema
+from apps.core.utils.schemas import PaginatedResponse
 from apps.movie.schemas import MovieListResponseSchema
 from apps.user_movie_data.schemas import (
+    ActivityEntrySchema,
+    ActivityQuerySchema,
     LibraryQuerySchema,
     MovieEntriesSchema,
     UserMovieDataPatchSchema,
@@ -40,6 +43,20 @@ def get_user_movies(
 ) -> MovieListResponseSchema:
     """Read a filtered and sorted page of the authenticated user's stored cards."""
     return _service.get_library(get_current_user(request), query)
+
+
+@user_movie_data_router.get(
+    "/entries",
+    response={
+        200: PaginatedResponse[ActivityEntrySchema],
+        401: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+    },
+)
+def get_activity(
+    request: HttpRequest, query: Query[ActivityQuerySchema]
+) -> PaginatedResponse[ActivityEntrySchema]:
+    return _entry_service.get_activity(get_current_user(request), query)
 
 
 @user_movie_data_router.get(

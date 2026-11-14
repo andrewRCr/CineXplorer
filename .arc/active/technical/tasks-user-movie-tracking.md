@@ -271,25 +271,23 @@ _Exit criterion:_ on the browsable stack, a scripted scenario signed in as the d
 a film not yet stored, restores a watchlist removal with `undo: true` and finds the film in its earlier place, and
 sees its 31st write within one minute answer 429.
 
-- [ ] **4.1 The cross-film list pages a user's dated entries — D6**
+- [x] **4.1 The cross-film list pages a user's dated entries — D6**
 
     **Goal:** A timeline of a user's viewings can be read a page at a time, newest first, with each film's title,
     release date and poster, and no undated entry.
 
-    - [ ] **4.1.a Write the tests**
-        - `GET /user-movie-data/entries`: dated entries only, latest first by `watched_on`, then `created_at`, then ID,
-          each with its film's `title`, `release_date` and `poster_path`; pages at the given size in the
-          `PaginatedResponse` envelope, a page past the end empty with valid counts; `page` and `page_size` bounded as
-          the Library's are (422 outside); only the user's own; 401; one count query and one row query; matched before
-          `/{tmdb_id}`; the route's OpenAPI statuses
-        - Expect tests to FAIL initially
-
-    - [ ] **4.1.b Add `ActivityQuerySchema`, `ActivityEntrySchema`, the service method and the route**
-        - Pages through `paginate_queryset`; the route is declared before the `/{tmdb_id}` routes
-        - Tests should now PASS
-
-    - [ ] **4.1.c The pagination strategy states both database-served envelopes (D14)**
-        - § Database-Served Lists and § Cursor-Based Pagination's End-of-Results Signal, as D14 says
+    - [x] **4.1.a Write the tests**
+        - Covered owner-only dated entries, effective descending viewing/creation/ID order, full reviews and stored
+          card fields, numbered pages, empty past-end pages, bounds, authentication and exact OpenAPI statuses.
+        - Route/data tests failed first; query-bound cases failed with unbounded schemas before constraints were
+          added. Removing the activity route's authority check makes the anonymous-read test fail; restored cases pass.
+        - Service query capture proves one count and one joined-row query.
+    - [x] **4.1.b Add `ActivityQuerySchema`, `ActivityEntrySchema`, the service method and the route**
+        - Page through `paginate_queryset` in `PaginatedResponse[ActivityEntrySchema]`, joining card data with the
+          page and registering the static route before TMDB-ID routes. All 310 app tests, Ruff and Pyright passed.
+    - [x] **4.1.c The pagination strategy states both database-served envelopes (D14)**
+        - Film lists retain the null-cursor movie envelope; dated entry lists use the generic envelope. Both compare
+          page with total_pages for continuation. Markdown checks passed.
 
 - [ ] **4.2 Pin the tracking journey in one backend test — D3, D4, D5, D6, D9**
 

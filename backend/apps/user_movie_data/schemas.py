@@ -121,3 +121,14 @@ class UserMovieEntryWriteResponseSchema(Schema):
 class MovieEntriesSchema(Schema):
     record: UserMovieDataSchema
     entries: list[UserMovieEntrySchema]
+
+
+class ActivityQuerySchema(Schema):
+    page: int = Field(default=1, ge=1, le=1000000)
+    page_size: int = Field(default=20, ge=1, le=100)
+
+
+class ActivityEntrySchema(UserMovieEntrySchema):
+    title: str
+    release_date: date | None
+    poster_path: str | None

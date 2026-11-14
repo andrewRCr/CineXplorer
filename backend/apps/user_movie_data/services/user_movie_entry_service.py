@@ -8,9 +8,13 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import InvalidInputError, NotFoundError
+from apps.core.pagination import paginate_queryset
 from apps.core.services.tmdb_api_client import TMDBApiClient
+from apps.core.utils.schemas import PaginatedResponse
 from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 from apps.user_movie_data.schemas import (
+    ActivityEntrySchema,
+    ActivityQuerySchema,
     MovieEntriesSchema,
     UserMovieDataSchema,
     UserMovieEntrySchema,
@@ -170,4 +174,29 @@ class UserMovieEntryService:
         return MovieEntriesSchema(
             record=UserMovieDataSchema.from_record(record),
             entries=[UserMovieEntrySchema.from_entry(entry, tmdb_id) for entry in history],
+        )
+
+    def get_activity(
+        self, user: AbstractBaseUser, query: ActivityQuerySchema
+    ) -> PaginatedResponse[ActivityEntrySchema]:
+        """Page dated viewings across the owner's stored films."""
+        history = (
+            UserMovieEntry.objects.filter(record__user=user, watched_on__isnull=False)
+            .select_related("record__movie")
+            .order_by("-watched_on", "-created_at", "-pk")
+        )
+        rows, metadata = paginate_queryset(history, query.page, query.page_size)
+        return PaginatedResponse[ActivityEntrySchema](
+            **metadata,
+            results=[
+                ActivityEntrySchema(
+                    **UserMovieEntrySchema.from_entry(
+                        entry, entry.record.movie.tmdb_id
+                    ).model_dump(),
+                    title=entry.record.movie.title,
+                    release_date=entry.record.movie.release_date,
+                    poster_path=entry.record.movie.poster_path,
+                )
+                for entry in rows
+            ],
         )

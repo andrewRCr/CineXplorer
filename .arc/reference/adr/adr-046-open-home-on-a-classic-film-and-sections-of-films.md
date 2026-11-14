@@ -32,12 +32,16 @@ soon, then a band explaining its capabilities. Signed-in Home shows the visitor'
 what's-on sections. A later list of logged viewings can supply a recently-watched section when that source exists.
 
 We will choose the hero's film randomly from a hand-selected list of classic TMDB IDs with optional percentage
-focus points on each page load. A public endpoint returns its ID, title, release date, backdrop, tagline and nullable
-focus point through one TMDB detail call, without credits or server caching. Focus is local list metadata; an input
+focus points and checked backdrop paths on each page load. A public endpoint returns its ID, title, release date,
+backdrop, tagline and nullable
+focus point through one TMDB detail call, without credits or server caching. Focus and an optional checked backdrop
+path are local list metadata; a stored path replaces TMDB’s primary. An input
 point anchors the reusable hero presentation, defaulting to 50% across and 28% down when unset. The browser
 retains that result for the loaded application's lifetime, until reload or a change of signed-in user. Development
 builds can request a particular film for visual checks; production servers ignore
-that override. Each film is checked in the built hero in both modes before joining the final list.
+that override. Candidates are screened and reviewed in an external three-crop sheet in one page mode; custom-point
+or flagged films also receive all three built-hero checks. The hero’s dark palette in both modes is checked once
+for the component. Only approved films ship, with further approvals able to follow through later pull requests.
 
 The pitch and account actions render before the film arrives. The viewport-wide hero uses the existing dark palette
 in both page modes, with a neutral fade under the lower-left pitch and a separate fade under the film credit. Each
@@ -83,7 +87,8 @@ never depend on live TMDB. Other staging journeys continue using live catalog da
 ### Negative
 
 - First-time and provider visitors wait for the session read before seeing the pitch.
-- The curated list requires visual checks, and TMDB contributors can later change its primary backdrop.
+- The curated list requires visual checks. A checked path protects it from primary-backdrop changes, but a pinned
+  image can still disappear and require replacement or removal.
 - Consecutive page loads can pick the same film, and a user change selects a new one.
 - A second saved film can introduce a row; removing films can remove the row or whole section.
 - Signed-out catalog cards are shorter while their fixed row spacing still accommodates signed-in controls.

@@ -111,29 +111,38 @@ shows.
 
 ### The hero's film
 
-**R3.** The hero's films are a fixed list of classic films identified by TMDB ID, about 50, kept as a constant in the
-movie app's backend code and changed through a pull request, like the catalog's window presets. Each read picks one
-film from the list at random, so a new page load usually shows a different film; with about 50 films, the same one
-shows on two loads in a row about one time in fifty, which is accepted.
+**R3.** The hero's films are a fixed list of classic films identified by unique TMDB IDs, kept as a constant in
+movie app backend code and changed through pull requests, like the catalog's window presets. Each read picks one
+entry at random. The Owner is considering about 200–250 films, but settles the size after review; it is not a minimum
+for merge. With N entries an immediate repeat has probability 1/N, which is accepted without tracking past picks.
 
-- **The list.** The Owner chooses the films and settles the list's size. The build starts from a provisional list of
-  twelve: _Casablanca_, _Rear Window_, _Seven Samurai_, _Vertigo_, _North by Northwest_, _Lawrence of Arabia_,
-  _2001: A Space Odyssey_, _The Godfather_, _Chinatown_, _Jaws_, _Alien_ and _Blade Runner_. No test depends on which
-  IDs it holds, and the Owner's list replaces it before the work merges.
-- **Focus.** Each entry contains its TMDB ID and an optional `focus_point` object with `x` and `y`, each a finite
-  percentage from 0 to 100 inclusive. Both coordinates are present together. They specify the image's CSS
-  `object-position`, not a crop supplied by TMDB. An unset point is returned as `null`; the hero then uses
-  `50% 28%`, a horizontal centre with a top bias, at every width. The Owner settles each film's point during the
-  visual check; no focus editor is built here. A development request for a listed film returns that entry's point;
-  an unlisted candidate returns `null` and uses the same default. No request parameter supplies a focus point.
-- **The check.** Each film is checked in the built hero, in light and dark mode, before it joins the list: its still
-  keeps its intended subject in the full-width crop at wide, near-1024px and phone widths using its chosen point,
-  and its credit fits and remains legible in R7's position. A point can exchange visible edges; it cannot recover
-  the full frame from a cover crop. So that any film, a candidate as well as a listed one, can be shown on demand,
-  a development build's Home passes a `film` parameter from its own address
-  (`/?film={tmdb_id}`) to the read, and the backend serves that film, listed or not, when the server runs with `DEBUG`
-  on. Otherwise the parameter is ignored and the pick is random: a production build never sends it, and a production
-  server never honors it.
+- **The list.** The Owner chooses the films. The build starts from twelve provisional films: _Casablanca_,
+  _Rear Window_, _Seven Samurai_, _Vertigo_, _North by Northwest_, _Lawrence of Arabia_, _2001: A Space Odyssey_,
+  _The Godfather_, _Chinatown_, _Jaws_, _Alien_ and _Blade Runner_. A test asserts unique IDs without naming any
+  particular ID. At merge, only films the Owner has signed off ship; additional approved films can follow in later
+  pull requests. The full candidate list need not block the first merge.
+- **Focus and checked artwork.** Each entry contains its TMDB ID, optional `focus_point` and optional
+  `backdrop_path`. A point has paired finite `x` and `y` percentages from 0 to 100 inclusive, used as CSS
+  `object-position`, not a TMDB crop. An unset point is returned as `null`, and the hero uses `50% 28%` at every
+  width. A stored backdrop path is the exact TMDB image path the Owner checked; when unset the current primary
+  backdrop is used. A listed development candidate retains both fields; an unlisted candidate has no configured
+  point or backdrop override. No request parameter supplies either value. No focus editor is built into the app.
+- **The check.** First screen the candidates by script through the DEBUG server's
+  `GET /api/movies/featured?film={id}`: flag 404s, absent backdrops, unresolved title/year matches and credits
+  (title, year and tagline) that may not fit R7's position. Other failed reads or image loads remain unresolved,
+  never a passing screen. Flags advise; the Owner decides on each film.
+  An external review sheet, kept in the landing run folder outside the repository and app, uses those responses
+  without an API key. For each film it shows the same backdrop at the hero's wide, near-1024px and phone proportions,
+  using the hero's cover fit, position, pitch, credit and fades. Points start at `50% 28%`; one click sets a point
+  for all three. It exports `FeaturedFilm(...)` lines containing the backdrop path shown, optional custom focus and
+  a title-and-year comment. The Owner reviews each film in one page mode; the hero's dark palette in both modes is
+  checked once for the component, as 4.9 does, rather than twice for every film.
+  Only films with a custom point or a flag additionally require the built hero at all three widths through
+  `/?film={tmdb_id}`, in one page mode. Settle the flags and confirm the intended subject survives all three crops,
+  and the credit fits and remains legible, before approving an entry. A point exchanges visible edges; it cannot
+  recover the full cover-cropped frame. Unapproved candidates stay out of the shipped list.
+  A development Home passes its address's `film` parameter to the endpoint; a DEBUG server serves any candidate,
+  listed or not. A production build never sends it and a production server ignores it for the random choice.
 
 **R4.** `GET /movies/featured` serves the hero's film:
 
@@ -141,8 +150,10 @@ shows on two loads in a row about one time in fifty, which is accepted.
 - it returns a schema of its own, `FeaturedMovieSchema`: `tmdb_id`, `title`, `release_date`, `backdrop_path`,
   `tagline` and `focus_point`. Backdrop and tagline are nullable, and an empty tagline from TMDB is returned as
   `null`. `focus_point` is either `null` or an object with required numeric `x` and `y` in the inclusive range 0–100,
-  taken from the selected list entry (R3), not from TMDB;
-- it takes one optional query parameter, `film`, honored only as R3 gives it;
+  taken from the selected list entry (R3), not from TMDB. `backdrop_path` returns the entry’s checked path when
+  present, otherwise TMDB’s current primary backdrop path;
+- it takes one optional query parameter, `film`, honored only as R3 gives it; no request parameter supplies a
+  focus point or a backdrop path;
 - a `MovieService` method picks the film (R3), through a choice that tests can replace, and reads it with one TMDB
   detail call through the client's `get_movie_details`, without the credits or release dates the detail page appends;
   the route only extracts the parameter, calls it and returns the result;
@@ -549,9 +560,10 @@ further changes, each checked against `main`'s code at that merge:
   measure text over an image and leaves such text for manual review rather than failing it. R7's contrast relies on
   the scoped dark palette and the minimum darkness of its separate pitch and credit fades. Check the actual text
   bounds and contrast over bright frames, including the muted tagline; a green axe scan alone does not prove it.
-- **TMDB backdrops change.** The still behind the hero is TMDB's primary backdrop for the film, which TMDB's
-  contributors can change. The gradient keeps the text legible whatever the image, and a film whose still stops reading
-  well is reframed with its optional focus point or removed from the list (R3).
+- **TMDB backdrops change.** A curated entry can pin the exact backdrop path the Owner checked, so a changed
+  primary backdrop does not silently change its framing. An entry without a stored path still follows the primary.
+  A pinned image can later disappear; R9 then keeps the pitch without artwork or credit. Recheck and replace the
+  path, reframe or remove that film through a pull request. The fades protect text contrast, not image availability.
 - **The calendar's shape changes from week to week.** Coming soon's most popular films can bunch into a few weeks or
   spread across two months. Showing the first four weeks with films, at most three each, bounds it either way, and a
   quiet season shows fewer weeks. "And N more" counts the others among the 20 the calendar takes, not every film
@@ -585,14 +597,17 @@ further changes, each checked against `main`'s code at that merge:
    `status` resolves keeps a returning visitor from seeing the pitch flash. Its cost is accepted: every visitor without
    a stored token, first-time visitors included, waits for the session read before the pitch shows, since a returning
    Google or GitHub visitor also has no stored token. _ADR: the new ADR below, which supersedes ADR-044 in part._
-2. **The hero is a classic film from a fixed list of about 50, picked at random on each page load** (R3, R4), and held
+2. **The hero is a classic film from an Owner-sized fixed list, picked at random on each page load** (R3, R4), and held
    while the app stays loaded, until a reload or a change of user, so coming back to Home doesn't swap the film under
    the visitor. The list keeps the identity of films chosen by hand, and its size and a new film on each load make the
    page feel alive. One film a day from a dozen was considered first, the same film all day so that it could be checked
    by hand; a development-only parameter showing any film answers that need with a random pick too. The week's
    top trending title needs no list, but gives up the identity the list provides, and some weeks the top title is a poor
-   fit for the first screen. An occasional repeat on two loads in a row is accepted rather than tracking what each
-   visitor last saw. _ADR: the new ADR below._
+   fit for the first screen. With N unique IDs an immediate repeat has probability 1/N and is accepted. The
+   candidate pool may reach 200–250; signed-off films can ship in stages. The external three-crop sheet and scripted
+   flags keep review practical; only custom-point or flagged films need all three built-hero views, in one mode.
+   Checked backdrop paths preserve the reviewed image. _ADR: revise this work's Proposed ADR-046 for curated
+   artwork metadata and the review method; sheet controls are temporary review tooling and need no separate ADR._
 3. **A small hero endpoint reads the hero's film from TMDB** (R4, R5): one TMDB detail call, a schema with only what the
    hero shows, and no stored state. Having the frontend pick the film and call the detail endpoint was rejected:
    the list would live in the frontend, and every page load would pay the detail endpoint's two TMDB calls for a credits
@@ -692,7 +707,8 @@ further changes, each checked against `main`'s code at that merge:
 
 - **New: ADR-046, "Open Home on a classic film and sections of films"** (decisions 1 to 4, 6 to 11, and 15). It
   records Home's two forms by sign-in status at `/`; the hero's classic film, picked at random from a fixed list and
-  served by its own endpoint with optional focus metadata; a full-width hero scoped to the dark palette with minimum
+  served by its own endpoint with optional focus and checked-backdrop metadata; a full-width hero scoped to the dark
+  palette with minimum
   darkness under its text; Home's section forms and states; signed-in Home's job beside Films and the Library,
   its greeting on arrival and its watchlist order; what's on
   from catalog views; cards without actions for signed-out visitors; and `background.spec.ts` supplying Home's
@@ -806,7 +822,7 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 
     _Superseded by the 2026-11-13 amendment; replacement: criterion 22._
 
-18. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+18. [~] Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
     answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
     `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
     coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
@@ -815,6 +831,8 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
     `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
     featured focus-point contract.
+
+    _Superseded by the 2026-11-14 amendment; replacement: criterion 23._
 
 19. Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
     the title and year alone link with `from=home` and the optional tagline is noninteractive text. The pitch and
@@ -833,7 +851,7 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     scrolling is smooth and instant under reduced motion. Browser checks show no partial cards at rest, card-edge
     snapping, a hidden scrollbar and visible buttons at every checked width.
 
-21. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+21. [~] In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
     the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
     minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
     cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
@@ -848,12 +866,49 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     final films and focus points replace the provisional list, each signed off through `/?film=` at wide,
     near-1024px and phone widths in both modes (R3).
 
+    _Superseded by the 2026-11-14 amendment; replacement: criterion 24._
+
 22. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
     backend (CI's type-drift check passes); with the Activity tab and viewing source on `main`, component tests show
     Recently watched as R15 gives it and the nothing-saved set counting viewings; with named card controls on `main`,
     the scans pass without the three button-name baselines; and with the queue on `main`, component tests show the
     watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
     link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
+
+23. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+    answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
+    `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
+    coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
+    carries its configured point and an unlisted candidate returns `null`; with `DEBUG` off the random entry's film
+    and point are returned instead. They show one TMDB detail call per request and no credits call, an empty tagline
+    returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
+    `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
+    featured focus-point contract.
+    The list's IDs are unique without
+    depending on particular IDs. Selection returns an entry's checked backdrop path when present, even when TMDB's
+    primary changes or is null; without a checked path it returns the current primary. Listed DEBUG candidates keep
+    that override, unlisted candidates use TMDB, and production returns the random entry's metadata. No extra TMDB
+    request or request-supplied focus or backdrop is introduced.
+
+24. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+    the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
+    minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
+    cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
+    with the actions and its right edge with the content container; on phones it follows the actions aligned left.
+    Its title is about 18px semibold with title-only hover and visible keyboard focus, and its noninteractive
+    tagline about 15px muted and at most two lines. Separate neutral fades cover the actual pitch and credit bounds
+    with at least 75% image suppression; bright-frame checks show the required text contrast, including the tagline.
+    At 1280×800 and 360×800 the calendar still shows side-by-side weeks with up to three films and stacked weeks
+    with up to two respectively. At those widths and the three hero widths, rows show complete cards at least
+    138px wide, with buttons, swipe, trackpad and Tab movement and instant reduced-motion scrolling. The band spans
+    the viewport, the other sections retain the shared page width, and all colors use existing roles. Each film
+    shipped at merge has Owner sign-off from
+    the external three-crop review sheet in one mode, with its shown backdrop path stored. The screen flags failed
+    lookups, missing artwork and potential credit-fit problems for Owner decisions. Every custom-point or flagged
+    film is additionally checked in the built hero at all three hero widths in one mode; the component's two-mode
+    check above is not repeated per film. Unapproved candidates remain out of the shipped list and may follow by
+    later pull request. The sheet exports entry lines with title/year comments, optional focus and checked paths;
+    it remains outside the repository and application, uses the DEBUG endpoint and holds no API key.
 
 ### Proven after merge
 
@@ -876,3 +931,11 @@ None.
   ADR-046 for the dark hero, contrast source and focus metadata; row measurements, copy and credit typography are
   tactical details and require no additional ADR. The film page's later reuse and a focus editor remain outside
   this work.
+
+- **2026-11-14 — Scale film review and retain checked backdrops (Owner).** The Owner may choose 200–250 films
+  or a smaller staged list. R3's external three-crop sheet and scripted flags replace exhaustive two-mode built-hero
+  checks; only custom-point or flagged films need three built views, in one mode. R4 returns the optional checked
+  backdrop path from each entry instead of a changed primary. Adds ID uniqueness coverage and updates decision 2,
+  the backdrop risk, ADR-046 and Tasks 5.0–5.1. Criteria 18 and 21 are superseded by 23 and 24. ADR disposition:
+  revise this work's Proposed ADR-046 for checked artwork and the review method; temporary external sheet controls
+  require no separate ADR. The app's no-editor and no-request-focus boundaries remain.

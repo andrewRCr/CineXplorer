@@ -657,21 +657,42 @@ _Mode:_ `slice` — closes on Home composing with what `main` holds at merge, an
 _Exit criterion:_ with `main` merged in, regenerating the API types leaves no diff, each R30 condition's result is
 recorded, and the three changed smoke specs pass.
 
-- [ ] **5.1 The Owner's films replace the provisional list — R3**
+- [ ] **5.0 Prepare checked artwork and the external film review sheet — R3, R4**
 
-    **Goal:** The hero's list is the Owner's, and each film on it is signed off in the built hero in both modes.
+    **Goal:** A large candidate list can be screened and reviewed without repeated source edits, while shipped
+    entries retain the exact artwork approved by the Owner.
 
-    - [ ] **5.1.a Replace the provisional entries in `featured.py` with the Owner's list**
-        - The Owner chooses the films and settles the list's size (R3); ask for the list if it isn't in hand, and stop
-          until it is
-        - Each ID looked up and its title and year confirmed as 1.1.c does; tests remain independent of the list's IDs
-        - Each entry can carry the optional focus point added in 4.7; points are settled in 5.1.b
-    - [ ] **5.1.b Show each film to the Owner through `/?film={tmdb_id}`, in light and dark mode**
-        - Use the development build and DEBUG server at wide, near-1024px and phone widths. The Owner sets each
-          entry's optional `focus_point` here; reload after changing the constant so the lifetime query reads it
-        - Confirm the subject survives the cover crop with the same anchor at every width, and the credit remains
-          readable in its new position. Adjust the point or remove a film whose framing fails; a point cannot
-          recover content discarded by the crop. An unset point uses `50% 28%`
+    - [ ] **5.0.a Test and carry the optional checked backdrop through featured selection**
+        - Tests first: ID uniqueness independent of particular films; a checked path overrides a changed or absent
+          TMDB primary, while unset entries and unlisted DEBUG candidates retain the primary. Listed candidates and
+          production picks keep their own metadata, with one detail call and unchanged failures
+        - Add optional `backdrop_path` to `FeaturedFilm`; keep the response schema and no-request-override boundary
+        - Run movie-app Docker tests, Ruff and Pyright
+    - [ ] **5.0.b Build and exercise the external review sheet in the landing run folder**
+        - Resolve the supplied titles/years, keeping ambiguous matches for Owner decisions; screen DEBUG featured
+          responses for 404s, missing artwork, read/image failures and potentially oversized credits
+        - Show each film at the actual hero's three proportions with its fit, point, pitch, credit and fades; default
+          to `50% 28%` and apply a clicked point to all three views. Export entry lines with title/year comments and
+          the path shown. Keep the sheet outside the repository and app, without an API key
+        - Exercise point editing, screening flags, review decisions and export; do not mark Owner sign-off yourself
+
+- [ ] **5.1 The Owner's approved films replace the provisional list — R3**
+
+    **Goal:** Each film shipped has the Owner's sign-off under the scalable review process; the remainder can follow
+    in later pull requests.
+
+    - [ ] **5.1.a Import the signed-off entries into `featured.py`**
+        - The Owner chooses the final size; 200–250 is a possible pool, not a merge minimum
+        - Keep title/year identity decisions explicit, store the sheet's checked backdrop paths and chosen points,
+          and import only approved films. The uniqueness test stays independent of which IDs ship
+    - [ ] **5.1.b Review the sheet, then show custom-point or flagged films in the built hero**
+        - Script-screen all candidates and bring each flag to the Owner. Review all three crops per film in the
+          external sheet in one page mode; the permanently dark hero's two-mode check is already covered by 4.9
+        - For each custom-point or flagged film, use `/?film={tmdb_id}` at 2000×1000, 1024×1000 and 390×844 in one
+          mode. Apply the exported entry and reload the lifetime query before these built-hero checks
+        - Confirm the subject survives the cover crop and credit fits R7's position; settle flags, adjust the point
+          or exclude a film that fails. Unset focus uses `50% 28%`. Unapproved candidates do not ship
+        - Films approved by merge ship; remaining candidates can be reviewed and added by later pull request
 
 - [ ] **5.2 Checkpoint on the user-movie tracking model before merging `main` — R30**
 
@@ -734,7 +755,7 @@ recorded, and the three changed smoke specs pass.
 ## Implementation Notes
 
 - **The approved full-width hero amendment** is implemented by 4.7–4.9 before the final film checks in 5.1. The
-  presentation takes focus as an input; no film-page integration or interactive point editor is part of this work.
+  presentation takes focus as an input; no film-page integration or in-app point editor is part of this work.
 
 - **The interim signed-in Home (3.1 to 4.3)** is deliberate: the three specs change once, in 3.2, the task that
   routes `/` to Home, and the signed-in specs' wait for "Popular in theaters" holds from then on.
@@ -850,7 +871,7 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the 2026-11-13 amendment; replacement: criterion 22._
 
-- [ ] 18. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+- [~] 18. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
   answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
   `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
   coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
@@ -859,6 +880,8 @@ recorded, and the three changed smoke specs pass.
   returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
   `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
   featured focus-point contract.
+
+  _Superseded by the 2026-11-14 amendment; replacement: criterion 23._
 
 - [ ] 19. Component tests show R6's exact headline, line and actions before the film read settles; once it settles,
   the title and year alone link with `from=home` and the optional tagline is noninteractive text. The pitch and
@@ -877,7 +900,7 @@ recorded, and the three changed smoke specs pass.
   scrolling is smooth and instant under reduced motion. Browser checks show no partial cards at rest, card-edge
   snapping, a hidden scrollbar and visible buttons at every checked width.
 
-- [ ] 21. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+- [~] 21. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
   the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
   minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
   cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
@@ -892,12 +915,49 @@ recorded, and the three changed smoke specs pass.
   final films and focus points replace the provisional list, each signed off through `/?film=` at wide,
   near-1024px and phone widths in both modes (R3).
 
+  _Superseded by the 2026-11-14 amendment; replacement: criterion 24._
+
 - [ ] 22. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
   backend (CI's type-drift check passes); with the Activity tab and viewing source on `main`, component tests show
   Recently watched as R15 gives it and the nothing-saved set counting viewings; with named card controls on `main`,
   the scans pass without the three button-name baselines; and with the queue on `main`, component tests show the
   watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
   link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
+
+- [ ] 23. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
+  answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
+  `focus_point`; the film the choice picks from the list and its configured point, or `null` when unset. Both point
+  coordinates accept 0 and 100 and reject non-finite or out-of-range values. With `DEBUG` on, a listed candidate
+  carries its configured point and an unlisted candidate returns `null`; with `DEBUG` off the random entry's film
+  and point are returned instead. They show one TMDB detail call per request and no credits call, an empty tagline
+  returned as `null`, and a failed TMDB call answered 502 and an unknown ID 404, each with `{"detail": ...}`.
+  `MovieDetailSchema` retains its backdrop and tagline fields. Regenerated OpenAPI and frontend types carry the
+  featured focus-point contract.
+  The list's IDs are unique without
+  depending on particular IDs. Selection returns an entry's checked backdrop path when present, even when TMDB's
+  primary changes or is null; without a checked path it returns the current primary. Listed DEBUG candidates keep
+  that override, unlisted candidates use TMDB, and production returns the random entry's metadata. No extra TMDB
+  request or request-supplied focus or backdrop is introduced.
+
+- [ ] 24. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
+  the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
+  minimum) before loading, with a film and on read or image failure, with no movement of pitch or actions. The
+  cover crop follows the input point at every width, defaulting to `50% 28%`. The desktop credit's bottom aligns
+  with the actions and its right edge with the content container; on phones it follows the actions aligned left.
+  Its title is about 18px semibold with title-only hover and visible keyboard focus, and its noninteractive
+  tagline about 15px muted and at most two lines. Separate neutral fades cover the actual pitch and credit bounds
+  with at least 75% image suppression; bright-frame checks show the required text contrast, including the tagline.
+  At 1280×800 and 360×800 the calendar still shows side-by-side weeks with up to three films and stacked weeks
+  with up to two respectively. At those widths and the three hero widths, rows show complete cards at least
+  138px wide, with buttons, swipe, trackpad and Tab movement and instant reduced-motion scrolling. The band spans
+  the viewport, the other sections retain the shared page width, and all colors use existing roles. Each film
+  shipped at merge has Owner sign-off from
+  the external three-crop review sheet in one mode, with its shown backdrop path stored. The screen flags failed
+  lookups, missing artwork and potential credit-fit problems for Owner decisions. Every custom-point or flagged
+  film is additionally checked in the built hero at all three hero widths in one mode; the component's two-mode
+  check above is not repeated per film. Unapproved candidates remain out of the shipped list and may follow by
+  later pull request. The sheet exports entry lines with title/year comments, optional focus and checked paths;
+  it remains outside the repository and application, uses the DEBUG endpoint and holds no API key.
 
 ### Proven after merge
 

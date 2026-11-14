@@ -414,3 +414,72 @@ def test_openapi_film_entries_read_contract() -> None:
         if key.endswith("/user-movie-data/{tmdb_id}/entries")
     )
     assert {int(status) for status in path["get"]["responses"]} == {200, 401, 422}
+
+
+def test_tracking_journey_retains_each_viewing(
+    signed_in: tuple[Client, User], tmdb: TMDBStub
+) -> None:
+    from django.utils import timezone
+
+    client, _ = signed_in
+    today = timezone.now().date().isoformat()
+    record_url = "/api/user-movie-data/550"
+    assert (
+        client.patch(
+            record_url, {"user_on_watchlist": True}, content_type="application/json"
+        ).status_code
+        == 201
+    )
+    first = client.post(
+        URL,
+        {**BODY, "watched_on": today, "review": "First viewing"},
+        content_type="application/json",
+    )
+    assert first.status_code == 201
+    first_data = first.json()
+    expected = {
+        "tmdb_id": 550,
+        "user_watched": True,
+        "user_on_watchlist": False,
+        "user_liked": True,
+        "user_rating": 7,
+        "has_entries": True,
+        "last_logged_on": today,
+    }
+    assert first_data["record"] == expected
+    assert client.get(record_url).json() == expected
+    for filters in [{"watched": True}, {"rated": True}, {}]:
+        movies = client.get("/api/user-movie-data/movies", filters).json()["results"]
+        assert [movie["tmdb_id"] for movie in movies] == [550]
+        assert movies[0]["user_movie_data"] == expected
+    assert client.get("/api/user-movie-data/movies", {"watchlist": True}).json()["results"] == []
+    assert (
+        client.get("/api/user-movie-data/entries").json()["results"][0]["id"]
+        == first_data["entry"]["id"]
+    )
+    assert (
+        client.patch(
+            record_url, {"user_on_watchlist": True}, content_type="application/json"
+        ).status_code
+        == 200
+    )
+    second = client.post(
+        URL,
+        {**BODY, "watched_on": today, "rating": 9, "review": "Second viewing", "rewatch": True},
+        content_type="application/json",
+    )
+    assert second.status_code == 201
+    second_data = second.json()
+    assert second_data["record"] == {**expected, "user_rating": 9}
+    assert client.get("/api/user-movie-data/movies", {"watchlist": True}).json()["results"] == []
+    for entries in [
+        client.get(URL).json()["entries"],
+        client.get("/api/user-movie-data/entries").json()["results"],
+    ]:
+        assert [entry["id"] for entry in entries] == [
+            second_data["entry"]["id"],
+            first_data["entry"]["id"],
+        ]
+        assert [entry["rating"] for entry in entries] == [9, 7]
+        assert [entry["review"] for entry in entries] == ["Second viewing", "First viewing"]
+    assert tmdb.requested_endpoints == ["movie/550"]

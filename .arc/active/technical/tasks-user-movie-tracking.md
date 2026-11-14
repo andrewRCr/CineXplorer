@@ -289,13 +289,16 @@ sees its 31st write within one minute answer 429.
         - Film lists retain the null-cursor movie envelope; dated entry lists use the generic envelope. Both compare
           page with total_pages for continuation. Markdown checks passed.
 
-- [ ] **4.2 Pin the tracking journey in one backend test — D3, D4, D5, D6, D9**
+- [x] **4.2 Pin the tracking journey in one backend test — D3, D4, D5, D6, D9**
 
     **Goal:** Criterion 1's journey, which composes the rules, the current rating, the entry routes and the Library,
     stays pinned by one test.
 
-    - Write it in `test_entries_api.py` as criterion 1 states it. Its parts exist by now, so see it fail against a
-      narrow break of a rule it relies on, then pass once that is restored
+    - One API test saves an unstored film to the watchlist, logs today's viewing with rating/review, checks record
+      and every Library filter plus activity, then queues a rewatch and confirms both entries retain their own
+      reviews/ratings in latest-first order. TMDB is fetched once.
+    - Keeping a logged film on the watchlist makes the new journey fail; restoring the rule passes. All 311 app
+      tests, Ruff and full-backend Pyright passed.
 
 - [ ] **4.3 Check the journey on the browsable stack**
 

@@ -59,7 +59,6 @@ while the catalog's requests keep the tab's context and the toast.
         - Test: an empty tagline and a missing backdrop come back as `None`
         - Test: a TMDB 5xx or timeout raises `UpstreamError` and a TMDB 404 `NotFoundError`, with no other film read
         - Test: a 200 whose body fails validation (no `title`) raises `UpstreamError`
-        - Expect tests to FAIL initially
 
     - [x] **1.1.b Write the endpoint's tests in `backend/apps/movie/tests/integration/api/test_featured_movie.py`**
         - Patch the TMDB client at `TMDB_CLIENT_GET_MOVIE_DETAILS` and `TMDB_CLIENT_GET` (`tests/mock_paths.py`), as
@@ -69,7 +68,6 @@ while the catalog's requests keep the tab's context and the toast.
         - Test: with `DEBUG` on, `?film={id}` answers with that film; with `DEBUG` off, it answers with a listed film
         - Test: a TMDB failure answers 502 and an unknown ID 404, each with `{"detail": ...}`; an invalid TMDB body
           answers 502
-        - Expect tests to FAIL initially
 
     - [x] **1.1.c Implement the list, the schema, the service method and the route**
         - All twelve IDs confirmed against TMDB. Casablanca’s TMDB release date is 1943-01-15.
@@ -90,7 +88,6 @@ while the catalog's requests keep the tab's context and the toast.
           `empty_str_to_none` (`apps.core.utils`), which also reads a blank one as `None`, and 1.2 reuses it
         - Route `@movies_router.get("/featured", response=FeaturedMovieSchema, auth=None)` registered before
           `/{tmdb_id}`, with an optional `film: int` query parameter: it extracts it, calls the service and returns
-        - Tests should now PASS
 
 - [x] **1.2 The detail schema carries the backdrop and tagline — R5**
 
@@ -100,11 +97,9 @@ while the catalog's requests keep the tab's context and the toast.
     - [x] **1.2.a Add the fields' tests to `test_movie_detail.py`**
         - Test: the detail response carries `backdrop_path` and `tagline` from TMDB's detail; an empty tagline reads
           `null`; both read `null` when TMDB omits them
-        - Expect tests to FAIL initially
 
     - [x] **1.2.b Add both fields to `MovieDetailSchema` and `create_movie_detail_from_tmdb`**
         - Nullable, the tagline through `empty_str_to_none` as in 1.1.c; the movie page doesn't show them
-        - Tests should now PASS
 
     - [x] **1.2.c Regenerate the API types**
         - `npm run generate-types --prefix frontend` against this worktree's test stack; `frontend/openapi.json` and
@@ -128,7 +123,6 @@ while the catalog's requests keep the tab's context and the toast.
         - Test: `getFeaturedMovie()` sends no `film`, `getFeaturedMovie(550)` sends `film=550`, and its 500 shows no
           toast
         - Test: `getUserMovies` given `homeReadOptions` shows no toast on a 500
-        - Expect tests to FAIL initially
 
     - [x] **1.3.b Pass request options through the read path**
         - `HttpService.getPaginated<T>(params?, options?)`, with `options` a
@@ -143,7 +137,6 @@ while the catalog's requests keep the tab's context and the toast.
           for the what's on reads)
         - The request interceptor in `apiClient.ts` sets the tab's context on the movie list endpoints only when the
           request carries none
-        - Tests should now PASS
 
     - [x] **1.3.c State the two-context rule where the one-context rule is stated**
         - `strategy-pagination.md` § Multi-Tab Isolation and the interceptor example in `strategy-service-layer.md`
@@ -180,7 +173,6 @@ the three changed smoke specs passing.
         - A missing context counts as signed out, as `ProtectedRoute` reads it
         - `ROW_HEIGHT` stays 449; all 21 existing grid tests pass.
         - All 77 card/return-link tests pass; the four required browser specs, lint and type-check pass.
-        - Tests should now PASS
 
 - [x] **2.2 Films opened from Home lead back to Home — R25**
 
@@ -192,14 +184,12 @@ the three changed smoke specs passing.
         - Test: `from=home` reads "Back to Home" and links to `/`, carrying no other parameter
         - Existing sources retain their labels and routes; all 32 navigation tests pass.
         - Both required browser specs, frontend lint and type-check pass.
-        - Expect tests to FAIL initially
 
     - [x] **2.2.b Give `buildBackUrl` and the label a `home` source, and add Home's film link**
         - `from=home` returns `/`; the button reads "Back to Home" for it, since `MovieDetail` passes no label; the
           component's comments describe the `home` source beside the collection routes
         - `homeFilmPath(tmdbId)` in a new `src/utilities/filmLinks.ts` returns `/movie/{tmdbId}?from=home`, for the
           hero's credit, the calendar and the large card; Home's `MovieCard`s take `source="home"`
-        - Tests should now PASS
 
 - [x] **2.3 A poster row scrolls up to 20 cards inside a section with its states — R10, R11, R27**
 
@@ -222,7 +212,6 @@ the three changed smoke specs passing.
           a `Toaster` mounted (the shared renderer mounts none), as `MovieCard.test.tsx` does
         - Home's In theaters and Coming soon reads carry `getHomePaginationContextId()` in `X-Pagination-Context`, not
           the tab's `getPaginationContextId()`, checked in the MSW handlers
-        - Expect tests to FAIL initially
 
     - [x] **2.3.b Add Home's section queries to `src/lib/queries.ts`**
         - `homeWindowQuery(window)` for `"now-playing"` and `"upcoming"`: page 1, no sort (the catalog's default
@@ -240,7 +229,6 @@ the three changed smoke specs passing.
         - `PosterRowSection`: a title, an optional "See all" and a query yielding films, composing the two
         - Theme roles: the buttons through the button recipe's variants, the placeholders as the grids' skeletons draw
           them (`GridSkeletonLoader`)
-        - Tests should now PASS
 
 - [x] **2.4 A calendar groups Coming soon by the week each film opens — R10, R12, R27**
 
@@ -254,19 +242,16 @@ the three changed smoke specs passing.
         - Test: up to three films a week with three as the cap and up to two with two, each week counting the rest of
           its films among the 20 as "and N more"
         - Test: a week whose Monday is November 16 is headed "Week of November 16"
-        - Expect tests to FAIL initially
 
     - [x] **2.4.b Implement `groupByOpeningWeek(films, perWeek)` in `src/utilities/`**
         - Calendar arithmetic on the `YYYY-MM-DD` dates in UTC, so no time zone shifts a day; a film without a
           release date is left out (Coming soon's window filters by date)
-        - Tests should now PASS
 
     - [x] **2.4.c Write the calendar's component tests**
         - Test: each week's `h3`, with its day of the month drawn apart; each entry's small poster, or
           `PosterPlaceholder`, its title, its weekday and day ("Fri 20"), its first genre or none, and its link with
           `from=home`; "and N more" as plain text
         - Test: titled "Most anticipated", with "See all" opening `/browse/upcoming`; its states through `FilmSection`
-        - Expect tests to FAIL initially
 
     - [x] **2.4.d Build `ReleaseCalendar` in `src/components/movie/sections/`**
         - Takes a title, a "See all" destination and a query yielding films; Home passes `homeWindowQuery("upcoming")`
@@ -274,7 +259,6 @@ the three changed smoke specs passing.
           below, with "and N more" counted for the cap that shows
         - Genre names from `browseOptions.ts`'s genre map, looked up in `genreOptions` by `String(id)` as
           `catalogTitle.ts` does
-        - Tests should now PASS
 
 - [x] **2.5 The hero shows the pitch at once and the film when it arrives — R3, R6, R7, R8, R9, R25, R27**
 
@@ -294,7 +278,6 @@ the three changed smoke specs passing.
           test client already keeps every query
         - At `/?film=550`, the read sends `film=550` in the development build.
         - All seven hero cases pass after behavioral failures; lint and type-check pass.
-        - Expect tests to FAIL initially
 
     - [x] **2.5.b Add `featuredFilmQuery(film?)` to `src/lib/queries.ts`**
         - Key `["featured", film ?? null]`, read through `getFeaturedMovie` (1.3), with the options above and the
@@ -309,7 +292,6 @@ the three changed smoke specs passing.
         - The credit above the headline, its tagline cut to two lines; at `lg`, one height with or without a film,
           its text set at the bottom; below `lg`, the backdrop above the text, its space held while the read is
           pending and released when it settles without a backdrop or the image fails
-        - Tests should now PASS
 
 - [x] **2.6 The band says what a visitor can do — R14, R27**
 
@@ -352,7 +334,6 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
         - Signed out: `HomeHero`, `WhatsOn`, `HomeBand`; signed in: the hidden "Home" `h1` and `WhatsOn`
         - `AppLayout`'s container props move to an export it and Home share; Home wraps all but the hero and the band
           in them, so its sections keep every page's width and padding
-        - Tests should now PASS
 
 - [x] **3.2 Home replaces Featured at `/`, outside the padded container, and the smoke tier follows — R2, R28**
 
@@ -442,12 +423,10 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
     - [x] **4.1.a Write `LargeFilmCard`'s tests in `src/components/movie/sections/__tests__/`**
         - Test: the poster (or `PosterPlaceholder`), title, release year, runtime when TMDB has one, genres named
           through `genreOptions` and the overview; its link to `/movie/{id}?from=home`; no card actions
-        - Expect tests to FAIL initially
 
     - [x] **4.1.b Build `LargeFilmCard` in `src/components/movie/sections/`**
         - Fixed 300px on phones and 320px at wide widths, with the overview clamped by width.
         - All three large-card cases pass after behavioral failures; frontend lint and type-check pass.
-        - Tests should now PASS
 
 - [x] **4.2 The watchlist section leads with the newest addition and follows saves — R10, R20, R21**
 
@@ -470,14 +449,12 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
           Frontend lint/type-check and both required browser specs pass (seven scenarios).
         - The shared `userMoviesHandler` is static; the save cases use a per-test handler that records saves and
           serves the watchlist newest first, as `Watchlist.test.tsx`'s refetch case does
-        - Expect tests to FAIL initially
 
     - [x] **4.2.b Build `WatchlistSection` in `src/pages/home/`**
         - `libraryQuery(params, options?)` passes `homeReadOptions` to `getUserMovies` (no pagination context: it is
           not a movie list endpoint); the key stays `[...libraryKey, params]`, so a save's invalidation refreshes it
         - A `FilmSection` titled "Your watchlist" holding `LargeFilmCard` and a `PosterScroller` with `source="home"`,
           its `PosterScrollButtons` in the section's header
-        - Tests should now PASS
 
 - [x] **4.3 Signed-in Home greets on arrival, and the visitor's reads decide the page — R18, R19, R22**
 
@@ -500,7 +477,6 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
         - Test: an empty watchlist shows "Welcome, {name}", "Films you add to your watchlist will show up here." and
           both what's on sections; the hidden "Home" and the line after navigating back; the set held after the
           visitor saves a first film
-        - Expect tests to FAIL initially
 
     - [x] **4.3.b Build the greeting and signed-in Home's composition**
         - The greeting is held in memory: the change count it greeted at, compared with `getChangeCount()`
@@ -516,7 +492,6 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
         - All thirteen Home cases pass, including StrictMode, delayed refetch and the real cross-user sign-in sequence.
           The refetch case fails without its initial-fetch guard and passes with it. The full frontend suite passes
           (3,256 tests); lint/type-check and both required browser specs pass (seven scenarios).
-        - Tests should now PASS
 
 - [x] **4.4 Signing in shows no welcome toast — R23**
 
@@ -539,43 +514,45 @@ nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
           `AuthResult<void>` as `register()` does, and `useAuth.test.tsx`'s assertion of it (around line 362) follows
         - `AuthResult`'s JSDoc in `src/types/auth-state.ts` (line 20) drops "displayName for login, void for
           register", since every caller then takes `void`
-        - Tests should now PASS
 
-- [ ] **4.5 ADR-046 and the README describe the shipped Home — R29**
+- [x] **4.5 ADR-046 and the README describe the shipped Home — R29**
 
     **Goal:** A new ADR records Home's design, the four ADRs it supersedes in part point to it, and the README lists
     Home as built.
 
-    - [ ] **4.5.a Write ADR-046, "Open Home on a classic film and sections of films", reading `Proposed`**
+    - [x] **4.5.a Write ADR-046, "Open Home on a classic film and sections of films", reading `Proposed`**
         - Decisions 1 to 4, 6 to 11 and 15, as § 8's ADR list gives them, from `adr-template.md`
         - Confirm 046 is still free on `main` (`git ls-tree origin/main .arc/reference/adr/`); the neighbouring
           user-movie units also plan ADRs
 
-    - [ ] **4.5.b Point ADR-002, ADR-026, ADR-039 and ADR-044 at it**
+    - [x] **4.5.b Point ADR-002, ADR-026, ADR-039 and ADR-044 at it**
         - Each Status section gains `Superseded in part by ADR-046 ({part})`, naming its part as § 8 gives it, beside
           any supersession it already names; the bodies stay as written
 
-    - [ ] **4.5.c Move the landing page to "Built" in the root README**
+    - [x] **4.5.c Move the landing page to "Built" in the root README**
         - A home page with a classic film and what's in theaters and coming soon, and the visitor's watchlist first
           once signed in; the status line stops naming a landing page as in development
 
-    - [ ] **4.5.d Run criterion 15's search**
+    - [x] **4.5.d Run criterion 15's search**
+        - No outdated current description remains in the searched reference docs or README.
+          ADR-046 is Proposed; the four earlier statuses name their precise superseded parts. Markdown lint passes.
         - `.arc/reference`, outside the archive and the ADR bodies, and the root README: no current description of
           one pagination context for every movie request, of Back to Results as the only spec supplying its own
           responses on staging, or of the landing page as in development
 
-- [ ] **4.6 Check signed-in Home in the browsable stack and the smoke tier** (scripted scenario, then
+- [x] **4.6 Check signed-in Home in the browsable stack and the smoke tier** (scripted scenario, then
   `sign-in.spec.ts` and `phone-width.spec.ts`)
 
     **Goal:** The phase's exit criterion is shown on the running app and by the two specs, with what ran recorded.
 
-    - Empty the worktree's dev account's watchlist from `/watchlist` first (`browse` keeps an existing account's
-      films), then sign in afresh: Home greets it by name, with the nothing-saved line
-    - Add a film the account has never saved from "Popular in theaters" (a film saved before keeps its place, R21),
-      reload: "Your watchlist" leads with it as the large card
-    - Open Films and come back by the wordmark: no greeting, the sections at the top
-    - Add a second never-saved film: it takes the large card's place, the first moving into the row; check both
-      widths
+    - Against application commit `0f696edc`, checked at 1280×800 and 360×800 in light and dark mode.
+      Confirmed the dev account's empty watchlist at `/watchlist` before each scenario, then signed in afresh.
+    - Empty Home greeted by name with the nothing-saved line. A first never-saved film from Popular in theaters
+      led the watchlist after reload. Returning through Films and the wordmark showed the hidden Home heading.
+    - A second never-saved film took the large card's place and moved the first into the row. The card stayed
+      320px wide-layout height and 300px phone height across swaps; no page overflow in any of the four layouts.
+    - Removed the scenario's saved films through their card controls; the dev account's watchlist ends empty.
+    - After the walkthrough, `sign-in.spec.ts` and `phone-width.spec.ts` passed all seven scenarios with their axe scans.
 
 ### **Phase 5:** Home is ready to merge
 

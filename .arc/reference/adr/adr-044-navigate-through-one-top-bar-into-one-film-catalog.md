@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-11-12)
+Accepted (2026-11-12); Superseded in part by ADR-046 (the home page’s Films section offering the three windows)
 
 ## Context
 

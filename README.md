@@ -15,9 +15,8 @@ service architecture with dependency injection and shared ORM queries, running i
 with a Caddy reverse proxy and Redis caching. Type safety spans the full stack, from Pydantic
 schemas and Pyright strict mode to auto-generated TypeScript types.
 
-**Status: in progress.** Browsing, accounts and the watchlist work today. Tracking what you've
-watched, a landing page and a redesigned movie page are in development ahead of the public
-launch.
+**Status: in progress.** Home, browsing, accounts and the watchlist work today. Tracking what you've
+watched and a redesigned movie page are in development ahead of the public launch.
 
 <p align="center">
   <a href="https://andrewcreekmore.dev/projects/software/cinexplorer">Portfolio</a>
@@ -31,14 +30,14 @@ launch.
 
 - Films (All films, In theaters and Coming soon) and search across TMDB's catalog, with category, filter and
   sort controls, infinite scroll, and scroll position kept on return
+- Home with a classic film, what's in theaters and coming soon, and the visitor's watchlist first once signed in
 - Movie detail pages and a personal watchlist
 - Accounts: email sign-up with verification, and sign-in with Google or GitHub
 
 **In development, for launch:**
 
 - Marking movies watched, liked and rated, and a library to browse them
-- A landing page, a redesigned movie detail page, and a demo account to try it without signing
-  up
+- A redesigned movie detail page and a demo account to try it without signing up
 - The public deployment; a staging server runs today
 
 **Engineering:**

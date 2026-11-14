@@ -424,8 +424,9 @@ rule.
   16 is proven after merge, § 9)
 
     Implemented criteria 1–15 verified; the full local run passed. Independent criteria verification found no
-    findings, with 398 backend and 36 frontend focused tests passing. ADR-047 is Accepted. Criterion 16 awaits
-    the post-merge staging evidence. Criterion evidence is recorded below and in the work unit's review log.
+    findings, with 398 backend and 36 frontend focused tests passing. ADR-047 is Accepted. Criterion 16 is proven by
+    the merge commit's successful staging deploy and smoke run. Criterion evidence is recorded below and in the
+    work unit's review log.
 
 - [x] **6.2 Correct the approved code-review findings**
 
@@ -628,5 +629,13 @@ from its deploy, so it is checked once the change has merged, with its evidence 
 
 ### Proven after merge
 
-- [ ] 16. **The migration runs on staging.** The deploy job for the merge commit applies the migration on staging (its
+- [x] 16. **The migration runs on staging.** The deploy job for the merge commit applies the migration on staging (its
   log lists it applied), and the staging smoke run that follows the deploy passes. (D10)
+
+  **Evidence:** Merge `3a66bf478e100a87f08010cb0371e80d8c556542`, CI run `43621395375`: Deploy staging
+  (job `132529042058`) succeeded. The job's output shows the six step markers and names the deploy's full log on the
+  server, /opt/cinexplorer/deploy-logs/20261114T173437Z-3a66bf4.VcmtTX, which lists
+  `Applying user_movie_data.0003_movie_entries... OK` and ends "Deploy succeeded (exit 0)"; its status file holds
+  `0`, and `deploy-history.log` gained the `ci` line `e1540ef9… sha-e1540ef → 3a66bf47… sha-3a66bf4` at
+  2026-11-14T17:35:15Z. Staging smoke (job `132529280652`) then passed: 20 tests passed, and the sign-up case was
+  skipped for the staging target.

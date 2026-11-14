@@ -59,6 +59,10 @@ counts, Undo, queue order and user-change cancellation.
 The live development-stack journey exercised real TMDB-backed saves, viewings, rewatches, Library reads, Undo
 position and the Redis throttle; a later readback confirmed the retained history and record summaries.
 
+Staging CI run `43621395375` deployed merge `3a66bf478e100a87f08010cb0371e80d8c556542`, applied
+`user_movie_data.0003_movie_entries` successfully, and passed the following staging smoke run (20 passed;
+registration skipped on staging).
+
 ## Related Documentation
 
 - Shared design: `draft-user-movie-uis.md`, retained in the backlog for the controls and Library units
@@ -68,7 +72,5 @@ position and the Redis throttle; a later readback confirmed the retained history
 
 ## Follow-Up Work
 
-- Criterion 16 requires the merge commit's staging deploy to apply the migration, followed by a passing staging
-  smoke run. Its evidence must be recorded before archival.
 - The controls and Library remain separate planned work. The last of those units to archive moves the shared
   design draft from the backlog into its archive folder.

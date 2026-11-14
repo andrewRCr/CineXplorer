@@ -402,11 +402,15 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
           Targets: `background.spec.ts` supplies Home's reads itself in both targets, since its console checks must
           not depend on live TMDB
 
-- [ ] **3.3 Home's layout holds at both widths in both modes — R2, R6, R7, R8, R11, R12, R14, R27**
+- [x] **3.3 Home's layout holds at both widths in both modes — R2, R6, R7, R8, R11, R12, R14, R27**
 
     **Goal:** What jsdom can't lay out is checked by hand on the running app, in the browsable stack at 1280×800 and
     360×800, in light and dark mode.
 
+    - Checked at 1280×800 and 360×800 in light and dark mode with the real hero film and deterministic sections.
+      Cards measured 194px and 138px; all four layouts had no page overflow, correctly arranged weeks and full-width
+      hero and band. Button scrolling, Tab focus and emulated touch swipes passed; reduced motion was instant.
+      The wide hero stayed 560px with failed artwork; the phone released exactly its reserved 220px.
     - The hero and the band span the viewport with no sideways scroll; the sections keep every page's width
     - The wide hero keeps its height with and without a film (`/?film=` with a film TMDB gives no backdrop); the phone
       hero holds the backdrop's space while the read is pending and releases it when the image fails (block
@@ -430,18 +434,19 @@ _Exit criterion:_ in the browsable stack, signing in lands on Home greeting the 
 newest film as the large card; navigating away and back shows no greeting; an account with an empty watchlist sees the
 nothing-saved line; and `sign-in.spec.ts` and `phone-width.spec.ts` pass.
 
-- [ ] **4.1 A large card shows one film at one height — R13, R27**
+- [x] **4.1 A large card shows one film at one height — R13, R27**
 
     **Goal:** One film shows large with its poster, title, year, runtime, genres and overview, linking to its page,
     at one height whichever film it shows.
 
-    - [ ] **4.1.a Write `LargeFilmCard`'s tests in `src/components/movie/sections/__tests__/`**
+    - [x] **4.1.a Write `LargeFilmCard`'s tests in `src/components/movie/sections/__tests__/`**
         - Test: the poster (or `PosterPlaceholder`), title, release year, runtime when TMDB has one, genres named
           through `genreOptions` and the overview; its link to `/movie/{id}?from=home`; no card actions
         - Expect tests to FAIL initially
 
-    - [ ] **4.1.b Build `LargeFilmCard` in `src/components/movie/sections/`**
-        - The overview cut to a set number of lines at each width, so the card keeps one height
+    - [x] **4.1.b Build `LargeFilmCard` in `src/components/movie/sections/`**
+        - Fixed 300px on phones and 320px at wide widths, with the overview clamped by width.
+        - All three large-card cases pass after behavioral failures; frontend lint and type-check pass.
         - Tests should now PASS
 
 - [ ] **4.2 The watchlist section leads with the newest addition and follows saves — R10, R20, R21**

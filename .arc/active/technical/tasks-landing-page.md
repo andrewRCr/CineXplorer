@@ -698,21 +698,36 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
       types, format and the 17 covering browser smoke scenarios pass. Fixed quote escapes and media-result defaults
       found by lint/types. Actual geometry/contrast and the sheet update follow in 4.12.
 
-- [ ] **4.12 Refresh the external sheet and verify final hero geometry — R3, R7, R8**
+- [x] **4.12 Refresh the external sheet and verify final hero geometry — R3, R7, R8**
 
     **Goal:** Review uses two focus-dependent crops and a whole-frame phone credit, with final layout evidence.
 
-    - [ ] **4.12.a Refresh the external review sheet from the DEBUG endpoint and actual hero layouts**
-        - Refresh director data for candidates and identity alternatives, screen all visible credit fields, and
-          snapshot full bleed plus the distinct portrait DOM/CSS. Point edits affect full bleed only; the phone
-          remains whole frame with its credit. Retain pinned-path export, Owner decisions, state and load gating
-        - Exercise export, changed points, alternate identity, multiple/no directors, missing artwork and delayed
-          larger sources; keep the sheet and generators outside the repository
-    - [ ] **4.12.b Check both modes across the selected window shapes and the covering smoke tier**
-        - 390×844, 768×1024, 900×700, 768×600, 1024×1000 and 2000×1000; include 360px minimum phone width and
-          the existing calendar/band/row checks. Measure director/tagline contrast over white, credit bounds/order,
-          no focus in the whole-frame stack, unchanged pitch/actions pending/loaded/failed, hover/focus and sources
-        - Record actual results; Owner film approvals remain in 5.1 and full verification/review remains in Phase 6
+    - [x] **4.12.a Refresh the external review sheet from the DEBUG endpoint and actual hero layouts**
+        - Refreshed all 152 candidates and their identity alternatives through 179 distinct DEBUG endpoint reads;
+          all returned 200. Proposed main IDs are unique and all have backdrops. Credit screening across five
+          shapes flags 17 candidates for identity/year or clamped-tagline decisions; alternatives are screened too.
+        - Captured the built hero's distinct full-bleed and portrait markup, CSS and fonts. The 390px view shows
+          the whole frame and credit; point edits affect only 2000px and 1024px crops. Export pins the displayed
+          path, with title/year comments. The sheet and generators stay outside the repository in the landing run.
+        - Browser checks pass for export, point invalidation, alternate identity, multiple/no directors, missing
+          artwork, delayed/failed larger sources and stale image completions. Approval waits for all current images
+          and a successful film read, plus the required built checks and flag acknowledgement.
+        - The preceding sheet's saved points/notes migrate only across matching identity/artwork; obsolete sign-off
+          resets, changed artwork resets its point with a note, and invalid backups leave current state intact.
+          Migration assertions failed before implementation and now pass; browser upgrade/restore checks pass.
+    - [x] **4.12.b Check both modes across the selected window shapes and the covering smoke tier**
+        - Checked 390×844, 768×1024, 900×700, 768×600, 1024×1000 and 2000×1000, plus 360×800, in both modes.
+          Portrait follows page mode, contains the whole frame and ignores focus. Compact landscape credit sits
+          above the pitch, right-aligned without tagline. Desktop credit remains level with the actions.
+        - White-frame checks preserve pitch/actions through pending, success and image failure; failed reads and
+          missing backdrops also retain their reserved space. Title-only hover and visible keyboard focus pass.
+          Minimum director/title contrast is 13.61:1 and muted-tagline contrast 5.70:1 across the selected shapes.
+        - Calendar/band alignment, both-mode phone/desktop layouts, hidden scrollbars, complete cards across ten
+          widths from 320px to 2200px, button/native/touch paging and the signed-in watchlist scroller pass.
+          Larger sources select original at 2000px in both modes at 1× and 2× density.
+        - The 17 covering smoke scenarios passed against the unchanged implementation recorded in `358c27cb`.
+          No candidate was imported or approved; Owner sign-off remains in 5.1. Full verification, CI and the final
+          code review remain in Phase 6.
 
 ### **Phase 5:** Home is ready to merge
 

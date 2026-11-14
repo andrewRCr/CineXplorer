@@ -130,18 +130,17 @@ watchlist removal keeps the film's place in the watchlist's `added` sort; and th
 Library page, an enriched movie list and the movie detail carry a correct log summary, in one query for an enrichment
 and two for a Library page.
 
-- [ ] **2.1 A film with entries can't be marked unwatched — D3**
+- [x] **2.1 A film with entries can't be marked unwatched — D3**
 
     **Goal:** Un-marking a film that has an entry is refused under the record's lock, with a detail naming the cause, so
     no save leaves an unwatched film with an entry.
 
-    - [ ] **2.1.a Write the service and API tests**
-        - A film with an entry: `user_watched: false` answers 409 "Delete this film's entries before marking it
-          unwatched"; with a rating too, "Clear the rating and delete this film's entries before marking this film
-          unwatched"; nothing changes in either case
-        - Expect tests to FAIL initially
-    - [ ] **2.1.b Check for entries in the rules module, under the lock the save already takes**
-        - Tests should now PASS. The concurrency test joins in 3.1.e, once an entry create exists
+    - [x] **2.1.a Write the service and API tests**
+        - Five new cases failed first, covering entry-only and combined rating/entry causes, rating clear plus
+          un-watch, and unchanged persisted state including timestamps and other supplied flags.
+    - [x] **2.1.b Check for entries in the rules module, under the lock the save already takes**
+        - Refuse un-watching while any entry remains, naming the entry and rating causes from the resulting state.
+        - All 179 app tests, Ruff and full-backend Pyright passed; the guard closes the planned migration follow-on.
 
 - [ ] **2.2 Every record read carries the film's log summary — D8**
 

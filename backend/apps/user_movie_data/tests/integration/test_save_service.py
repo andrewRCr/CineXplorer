@@ -317,3 +317,34 @@ def test_rating_rule_stamps_watched_join(service: UserMovieDataService, user: Us
     record.refresh_from_db()
     assert record.user_rating is None
     assert record.user_watched
+
+
+@pytest.mark.parametrize(
+    ("rating", "clear", "detail"),
+    [
+        (None, False, "Delete this film's entries before marking it unwatched"),
+        (
+            7,
+            False,
+            "Clear the rating and delete this film's entries before marking this film unwatched",
+        ),
+        (7, True, "Delete this film's entries before marking it unwatched"),
+    ],
+)
+def test_entries_lock_watched_and_roll_back_save(
+    service: UserMovieDataService, user: User, rating: int | None, clear: bool, detail: str
+) -> None:
+    from datetime import date
+
+    from apps.core.exceptions import ConflictError
+    from apps.user_movie_data.models import UserMovieEntry
+
+    record = create_user_movie_data(user, user_watched=True, user_rating=rating)
+    UserMovieEntry.objects.create(record=record, review="Review", made_on=date(2020, 1, 1))
+    before = UserMovieData.objects.values().get(pk=record.pk)
+    fields: dict[str, object] = {"user_watched": False, "user_liked": True}
+    if clear:
+        fields["user_rating"] = None
+    with pytest.raises(ConflictError, match=detail):
+        service.save(user, 550, fields)
+    assert UserMovieData.objects.values().get(pk=record.pk) == before

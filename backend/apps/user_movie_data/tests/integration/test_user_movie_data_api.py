@@ -262,3 +262,27 @@ def test_unwatch_rating_errors_and_explicit_clear(signed_in: tuple[Client, User]
     assert response.status_code == 200
     assert response.json()["user_watched"] is False
     assert response.json()["user_rating"] is None
+
+
+@pytest.mark.parametrize("rating", [None, 7])
+def test_entries_prevent_unwatching(signed_in: tuple[Client, User], rating: int | None) -> None:
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+
+    client, user = signed_in
+    record = create_user_movie_data(user, user_watched=True, user_rating=rating)
+    UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 1), made_on=date(2020, 1, 1)
+    )
+    before = UserMovieData.objects.values().get(pk=record.pk)
+    response = client.patch(
+        URL, {"user_watched": False, "user_liked": True}, content_type="application/json"
+    )
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "Delete this film's entries before marking it unwatched"
+        if rating is None
+        else "Clear the rating and delete this film's entries before marking this film unwatched"
+    }
+    assert UserMovieData.objects.values().get(pk=record.pk) == before

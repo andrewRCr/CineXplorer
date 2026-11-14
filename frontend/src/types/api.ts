@@ -1520,6 +1520,8 @@ export interface components {
             /** Tagline */
             tagline?: string | null;
             focus_point?: components["schemas"]["FilmFocusPoint"] | null;
+            /** Directors */
+            directors?: string[];
         };
         /**
          * FilmFocusPoint

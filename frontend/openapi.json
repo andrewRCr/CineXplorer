@@ -5108,6 +5108,13 @@
                 "type": "null"
               }
             ]
+          },
+          "directors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Directors",
+            "type": "array"
           }
         },
         "required": [

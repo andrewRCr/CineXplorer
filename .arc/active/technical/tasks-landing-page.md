@@ -656,17 +656,24 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     - Final film selection and per-film focus approval remain in 5.1; full verification and code review remain
       in Phase 6. No success criterion is marked by these implementation checks.
 
-- [ ] **4.10 Serve director names with the featured film — R4**
+- [x] **4.10 Serve director names with the featured film — R4**
 
     **Goal:** The hero receives the director-name list within its existing one-request TMDB read.
 
-    - [ ] **4.10.a Test director projection and the public contract first**
+    - [x] **4.10.a Test director projection and the public contract first**
         - Named Director crew in order, once per person; multiple directors; absent/empty credits and blank names;
           unrelated crew omitted. Append credits within one detail request, with no separate credits/release-date
           read. Preserve checked art, focus, DEBUG/production selection, quiet failures and ID-independent tests
-    - [ ] **4.10.b Add the director schema/service/factory projection and regenerate client types**
+    - [x] **4.10.b Add the director schema/service/factory projection and regenerate client types**
         - No director constants in the delivered UI; no database fields. Run movie-app Docker tests, Ruff/Pyright
           and generated frontend type/fixture checks
+
+    - The service appends credits to its one detail request; the factory returns named Director crew in order,
+      deduplicated by person, with empty metadata handled as an empty list. Checked artwork/focus and error behavior
+      are retained. The producer-shaped stub supplies appended fields only for an appended request.
+    - Eight contract assertions failed before implementation; all 599 movie-app Docker tests now pass. Ruff/format,
+      Pyright, regenerated frontend types and fixture lint pass. Corrected the parameterized test's argument-name
+      syntax for Ruff. The live DEBUG endpoint returns Stanley Kubrick for film 62.
 
 - [ ] **4.11 Deliver the selected portrait and compact-landscape hero — R3, R6–R9**
 

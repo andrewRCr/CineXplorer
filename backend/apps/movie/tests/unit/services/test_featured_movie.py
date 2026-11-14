@@ -17,7 +17,7 @@ def choose_last(films: Sequence[FeaturedFilm]) -> FeaturedFilm:
     return films[-1]
 
 
-def test_selected_film_is_returned_without_credits() -> None:
+def test_selected_film_uses_one_detail_request() -> None:
     stub = TMDBStub()
     selected = FEATURED_FILMS[-1].tmdb_id
     stub.add_movie(
@@ -38,6 +38,7 @@ def test_selected_film_is_returned_without_credits() -> None:
         "backdrop_path": "/still.jpg",
         "tagline": "An epic.",
         "focus_point": None,
+        "directors": [],
     }
     assert stub.requested_endpoints == [f"movie/{selected}"]
 
@@ -142,3 +143,48 @@ def test_selected_entry_preserves_checked_backdrop(
     assert result.tmdb_id == selected_id
     assert result.backdrop_path == ("/checked-artwork.jpg" if selected_id == 201 else primary)
     assert stub.requested_endpoints == [f"movie/{selected_id}"]
+
+
+@pytest.mark.parametrize(
+    ("crew", "expected"),
+    [
+        (None, []),
+        ([], []),
+        ([{"id": 1, "name": "Writer", "job": "Writer"}], []),
+        ([{"id": 1, "name": "  ", "job": "Director"}], []),
+        (
+            [
+                {"id": 1, "name": "Director One", "job": "Director"},
+                {"id": 2, "name": "Director Two", "job": "Director"},
+                {"id": 1, "name": "Director One", "job": "Director"},
+                {"id": 3, "name": "Writer", "job": "Writer"},
+            ],
+            ["Director One", "Director Two"],
+        ),
+    ],
+)
+def test_featured_projects_directors_from_appended_credits(
+    crew: list[dict[str, object]] | None, expected: list[str]
+) -> None:
+    stub = TMDBStub()
+    movie_id = FEATURED_FILMS[-1].tmdb_id
+    stub.add_movie(create_tmdb_movie_detail(movie_id, "Film", "1968-04-02", 8.0))
+    if crew is None:
+        del stub.credits[movie_id]
+    else:
+        stub.credits[movie_id] = ApiResponse(status_code=200, data={"cast": [], "crew": crew})
+    result = MovieService(stub, choose_film=choose_last).get_featured_movie()
+    assert result.model_dump().get("directors") == expected
+    assert stub.requested_endpoints == [f"movie/{movie_id}"]
+
+
+def test_malformed_appended_director_data_is_an_upstream_error() -> None:
+    stub = TMDBStub()
+    movie_id = FEATURED_FILMS[-1].tmdb_id
+    stub.add_movie(create_tmdb_movie_detail(movie_id, "Film", "1968-04-02", 8.0))
+    stub.credits[movie_id] = ApiResponse(
+        status_code=200, data={"crew": [{"id": 1, "name": None, "job": "Director"}]}
+    )
+    with pytest.raises(UpstreamError):
+        MovieService(stub, choose_film=choose_last).get_featured_movie()
+    assert stub.requested_endpoints == [f"movie/{movie_id}"]

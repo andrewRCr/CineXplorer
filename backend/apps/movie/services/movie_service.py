@@ -86,7 +86,7 @@ class MovieService(BaseTMDBService):
         self._featured_films = featured_films
 
     def get_featured_movie(self, film: int | None = None) -> FeaturedMovieSchema:
-        """Read the homepage's film without fetching credits."""
+        """Read the homepage film and director names in one TMDB request."""
         selected = (
             next(
                 (entry for entry in self._featured_films if entry.tmdb_id == film),
@@ -96,7 +96,7 @@ class MovieService(BaseTMDBService):
             else self._choose_film(self._featured_films)
         )
         movie_id = selected.tmdb_id
-        response = self._tmdb_client.get_movie_details(movie_id)
+        response = self._tmdb_client.get_movie_details(movie_id, append_to_response="credits")
         if not response.is_success():
             handle_tmdb_api_error(
                 response, operation="get_featured_movie", lookup=True, movie_id=movie_id

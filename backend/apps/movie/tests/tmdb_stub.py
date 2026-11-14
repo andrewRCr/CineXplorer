@@ -32,7 +32,19 @@ class TMDBStub(TMDBApiClient):
         )
 
     def get_movie_details(self, movie_id: int, **kwargs: object) -> ApiResponse:
-        return self.get(f"movie/{movie_id}", params=kwargs)
+        response = self.get(f"movie/{movie_id}", params=kwargs)
+        credits = self.credits.get(movie_id)
+        data = response.get_json_data()
+        if (
+            kwargs.get("append_to_response") != "credits"
+            or not response.is_success()
+            or data is None
+            or credits is None
+        ):
+            return response
+        return ApiResponse(
+            status_code=response.status_code, data={**data, "credits": credits.get_json_data()}
+        )
 
     def get(
         self,

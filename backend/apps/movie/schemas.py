@@ -169,6 +169,10 @@ class CastMemberSchema(Schema):
     profile_path: str | None = None
 
 
+def _empty_director_names() -> list[str]:
+    return []
+
+
 class FeaturedMovieSchema(Schema):
     """The film credit and backdrop shown on the homepage."""
 
@@ -178,6 +182,7 @@ class FeaturedMovieSchema(Schema):
     backdrop_path: str | None = None
     tagline: str | None = None
     focus_point: FilmFocusPoint | None = None
+    directors: list[str] = Field(default_factory=_empty_director_names)
 
 
 class MovieDetailSchema(MovieListItemSchema):

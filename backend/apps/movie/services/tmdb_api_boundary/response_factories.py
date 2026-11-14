@@ -256,6 +256,15 @@ def create_featured_movie_from_tmdb(
 ) -> FeaturedMovieSchema:
     """Validate a TMDB detail response and retain only the homepage's fields."""
     movie = TMDBMovieDetail.model_validate(movie_data)
+    credits_data = movie_data.get("credits")
+    credits = TMDBCreditsResponse.model_validate(credits_data if credits_data is not None else {})
+    directors: list[str] = []
+    seen: set[int] = set()
+    for person in credits.crew:
+        name = person.name.strip()
+        if person.job == "Director" and name and person.id not in seen:
+            seen.add(person.id)
+            directors.append(name)
     return FeaturedMovieSchema.model_validate(
         {
             "tmdb_id": movie.id,
@@ -264,6 +273,7 @@ def create_featured_movie_from_tmdb(
             "backdrop_path": backdrop_path if backdrop_path is not None else movie.backdrop_path,
             "tagline": empty_str_to_none(movie.tagline),
             "focus_point": focus_point,
+            "directors": directors,
         }
     )
 

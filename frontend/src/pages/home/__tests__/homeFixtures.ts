@@ -21,6 +21,7 @@ export function homeHandlers() {
                 backdrop_path: null,
                 tagline: null,
                 focus_point: null,
+                directors: [],
             }),
         ),
         http.get(`${apiBaseUrl}/movies/now-playing`, () =>

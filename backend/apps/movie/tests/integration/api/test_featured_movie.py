@@ -23,7 +23,13 @@ def detail_response(movie_id: int, **kwargs: object) -> ApiResponse:
         backdrop_path="/still.jpg",
         tagline="An epic.",
     )
-    return ApiResponse(status_code=200, data=movie.model_dump())
+    data = movie.model_dump()
+    if kwargs.get("append_to_response") == "credits":
+        data["credits"] = {
+            "cast": [],
+            "crew": [{"id": 900, "name": "Director", "job": "Director"}],
+        }
+    return ApiResponse(status_code=200, data=data)
 
 
 @pytest.mark.parametrize("debug", [False, True])
@@ -50,6 +56,7 @@ def test_public_featured_contract(api_client: Client, debug: bool) -> None:
         "release_date": "1962-12-11",
         "backdrop_path": "/still.jpg",
         "tagline": "An epic.",
+        "directors": ["Director"],
         "focus_point": point.model_dump() if point is not None else None,
     }
 

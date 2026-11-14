@@ -182,18 +182,19 @@ the three changed smoke specs passing.
         - All 77 card/return-link tests pass; the four required browser specs, lint and type-check pass.
         - Tests should now PASS
 
-- [ ] **2.2 Films opened from Home lead back to Home — R25**
+- [x] **2.2 Films opened from Home lead back to Home — R25**
 
     **Goal:** A film page opened with `from=home` shows "Back to Home", which opens `/`.
 
     **Check:** `movie-detail.spec.ts` and `back-to-results.spec.ts`.
 
-    - [ ] **2.2.a Add the `home` cases to `BackToCollectionLink.test.tsx`**
+    - [x] **2.2.a Add the `home` cases to `BackToCollectionLink.test.tsx`**
         - Test: `from=home` reads "Back to Home" and links to `/`, carrying no other parameter
-        - Test: the existing sources keep "Back to Results" and their routes
+        - Existing sources retain their labels and routes; all 32 navigation tests pass.
+        - Both required browser specs, frontend lint and type-check pass.
         - Expect tests to FAIL initially
 
-    - [ ] **2.2.b Give `buildBackUrl` and the label a `home` source, and add Home's film link**
+    - [x] **2.2.b Give `buildBackUrl` and the label a `home` source, and add Home's film link**
         - `from=home` returns `/`; the button reads "Back to Home" for it, since `MovieDetail` passes no label; the
           component's comments describe the `home` source beside the collection routes
         - `homeFilmPath(tmdbId)` in a new `src/utilities/filmLinks.ts` returns `/movie/{tmdbId}?from=home`, for the

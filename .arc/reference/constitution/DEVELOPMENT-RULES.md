@@ -379,7 +379,8 @@ rules below are the checkable part: lint and type checks enforce what they can, 
 ### API Contracts (Backend)
 
 - Error responses share one shape, `{"detail": ...}`, as Django Ninja returns them.
-- PATCH tells an absent field (leave unchanged) from an explicit `null` (clear it).
+- PATCH tells an absent field from an explicit null: an absent field stays unchanged except where the data's rules
+  change it, and an explicit null clears it.
 - An endpoint that reads or writes a user's data checks ownership, with tests for another user and for no user.
 
 ### Layered Architecture (Backend)

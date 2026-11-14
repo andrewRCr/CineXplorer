@@ -36,7 +36,7 @@ class UserMovieDataSchema(Schema):
 
 
 class UserMovieDataPatchSchema(Schema):
-    """Omitted fields stay unchanged; nullable fields can be explicitly cleared."""
+    """An absent field stays unchanged except where data rules change it; null clears it."""
 
     user_watched: bool = False
     user_on_watchlist: bool = False

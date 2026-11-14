@@ -277,3 +277,57 @@ def test_first_save_of_unstorable_card_writes_nothing(
     assert error.value.status_code == 502
     assert not Movie.objects.exists()
     assert not UserMovieData.objects.exists()
+
+
+@pytest.mark.parametrize(
+    ("watched", "on_watchlist", "fields", "expected"),
+    [
+        (False, True, {"user_rating": 7}, (True, False, 7)),
+        (False, True, {"user_watched": True}, (True, False, None)),
+        (False, True, {"user_watched": True, "user_on_watchlist": True}, (True, True, None)),
+        (True, True, {"user_rating": 7}, (True, True, 7)),
+        (True, False, {"user_on_watchlist": True}, (True, True, None)),
+    ],
+)
+def test_record_save_rules(
+    service: UserMovieDataService,
+    user: User,
+    watched: bool,
+    on_watchlist: bool,
+    fields: dict[str, object],
+    expected: tuple[bool, bool, int | None],
+) -> None:
+    record = create_user_movie_data(user, user_watched=watched, user_on_watchlist=on_watchlist)
+    service.save(user, 550, fields)
+    record.refresh_from_db()
+    assert (record.user_watched, record.user_on_watchlist, record.user_rating) == expected
+
+
+def test_contradictory_rating_precedes_tmdb(
+    service: UserMovieDataService, user: User, tmdb: TMDBStub
+) -> None:
+    with pytest.raises(InvalidInputError, match="rating"):
+        service.save(user, 550, {"user_watched": False, "user_rating": 7})
+    assert tmdb.requested_ids == []
+    assert not Movie.objects.exists()
+    assert not UserMovieData.objects.exists()
+
+
+def test_unwatch_rated_record_changes_nothing(service: UserMovieDataService, user: User) -> None:
+    from apps.core.exceptions import ConflictError
+
+    record = create_user_movie_data(user, user_watched=True, user_rating=7)
+    with pytest.raises(ConflictError, match="Clear the rating before marking this film unwatched"):
+        service.save(user, 550, {"user_watched": False, "user_liked": True})
+    record.refresh_from_db()
+    assert record.user_watched
+    assert not record.user_liked
+    assert record.user_rating == 7
+
+
+def test_unwatch_and_clear_rating_together(service: UserMovieDataService, user: User) -> None:
+    record = create_user_movie_data(user, user_watched=True, user_rating=7)
+    service.save(user, 550, {"user_watched": False, "user_rating": None})
+    record.refresh_from_db()
+    assert not record.user_watched
+    assert record.user_rating is None

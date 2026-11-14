@@ -71,45 +71,24 @@ and the record's save, reads, Library and admin working on the new shape, before
         - App tests: 174 passed; admin rerun after typed request changes: six passed. Pinned container Ruff and
           Pyright with locked Django stubs passed.
 
-- [ ] **1.2 The record save keeps watched, the watchlist and the rating consistent — D3**
+- [x] **1.2 The record save keeps watched, the watchlist and the rating consistent — D3**
 
     **Goal:** Whatever a client sends, a saved rating leaves the film watched, a film newly watched leaves the
     watchlist unless the save keeps it there, and un-marking a rated film is refused, with no rule overriding a field
     the save supplies.
 
-    **Note:** This lands on today's model, before the reshape: these rules read only the flags and the rating. Until
-    1.3.f, fixtures still hold rated, unwatched records, so the 409 fires when a save supplies `user_watched: false`,
-    never on another save of such a record (D3: only the record save can un-mark watched).
-
-    - [ ] **1.2.a Write the rule tests in `test_save_service.py` and `test_user_movie_data_api.py`**
-        - Each record-save row of D3's table and its converse: a rating marks an unwatched film watched and so takes it
-          off the watchlist; marking an unwatched film watched takes it off; a save supplying `user_watched: true` and
-          `user_on_watchlist: true` keeps both; rating a watched film, and adding a watched film to the watchlist,
-          leave the watchlist alone
-        - `user_watched: false` with a rating answers 400 before any TMDB request (as
-          `test_body_only_errors_precede_tmdb` shows for today's 400); `user_watched: false` on a rated film answers
-          409 with "Clear the rating before marking this film unwatched" and changes nothing; `user_watched: false`
-          with `user_rating: null` succeeds
-        - Rewrite the existing cases these rules change to the new contract, such as
-          `test_each_field_can_be_set_from_empty_or_full_state` un-marking a rated film
-        - The cases that leave the watchlist on and the null-rating success pass on arrival, since today's save ties
-          neither the watchlist nor the rating to watched: see each fail against a narrow break (a rule applied whatever
-          the film's state, the 409 reading the stored rating rather than the saved one) and pass restored
-        - Expect the other tests to FAIL initially
-
-    - [ ] **1.2.b Add the rules module and call it from `UserMovieDataService.save`**
-        - One module in `apps/user_movie_data/services/` holds D3's rules. The save calls it inside its transaction,
-          after `select_for_update`, with the record and the fields the request supplied; a rule changes only a field
-          the request left out. 2.1 adds the lock's entries check to it, and 3.1 the entry-create rules
-        - The 400 is a body-only check (`InvalidInputError`) made before the card lookup, beside today's; the rules
-          module raises only the 409 (`ConflictError`), under the lock. Add 409 to the PATCH route's responses and to
-          `test_openapi_declares_exact_statuses_and_shared_errors`
-        - Tests should now PASS
-
-    - [ ] **1.2.c State the save's omission rule where it is written down (D14)**
-        - `UserMovieDataPatchSchema`'s docstring: an absent field stays unchanged except where the data's rules change
-          it, and an explicit null clears a nullable field
-        - DEVELOPMENT-RULES § API Contracts and the type-safety strategy's Pattern 3, in D14's words
+    - [x] **1.2.a Write the rule tests in `test_save_service.py` and `test_user_movie_data_api.py`**
+        - Covered every record-save rule and converse, supplied-field precedence, contradictory request validation
+          before TMDB, the rated-film conflict and atomic rollback, and explicit rating clear plus un-watch.
+        - Coupled rule cases shared a test batch. New rules failed against the old service; the existing success
+          cases failed under narrow unconditional-removal and stored-rating-lock mutations, then passed restored.
+        - Updated existing API expectations and pinned 409 in OpenAPI.
+    - [x] **1.2.b Add the rules module and call it from `UserMovieDataService.save`**
+        - Applied supplied fields and then omitted-field rules inside the save transaction under the record lock;
+          body-only contradictions fail before card lookup. The PATCH response declares 409.
+        - All 184 app tests, pinned Ruff and Pyright passed.
+    - [x] **1.2.c State the save's omission rule where it is written down (D14)**
+        - Updated the input schema docstring, DEVELOPMENT-RULES' API contract and type-safety Pattern 3.
 
 - [ ] **1.3 Records keep a film's facts, entries its history, and existing data carries over — D1, D2, D8, D9, D10**
 

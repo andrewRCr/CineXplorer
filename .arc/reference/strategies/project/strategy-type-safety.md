@@ -150,8 +150,8 @@ class UserMovieDataPatchSchema(Schema):
     user_rating: int | None = Field(default=None, ge=1, le=10)
 ```
 
-Use `payload.model_dump(exclude_unset=True)` when calling the service: omission keeps a field unchanged while an
-explicit null clears a nullable field.
+Use `payload.model_dump(exclude_unset=True)` when calling the service: an absent field stays unchanged except
+where the data's rules change it, and an explicit null clears a nullable field.
 
 ### Pattern 4: Pydantic List Defaults (Type-Safe)
 

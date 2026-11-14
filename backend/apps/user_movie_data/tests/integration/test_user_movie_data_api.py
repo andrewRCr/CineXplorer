@@ -57,7 +57,7 @@ def test_first_save_then_update_read_and_delete(signed_in: tuple[Client, User]) 
     }
     updated = client.patch(URL, {"user_rating": 9}, content_type="application/json")
     assert updated.status_code == 200
-    assert updated.json()["user_on_watchlist"] is True
+    assert updated.json()["user_on_watchlist"] is False
     assert updated.json()["user_rating"] == 9
     assert client.get(URL).json() == updated.json()
     assert UserMovieData.objects.filter(user=user).count() == 1
@@ -97,6 +97,8 @@ def test_each_field_can_be_set_from_empty_or_full_state(
     if full_state and field in {"user_watched", "user_on_watchlist", "user_liked"}:
         value = False
     payload = {field: value}
+    if field == "user_watched" and value is False:
+        payload["user_rating"] = None
     if field == "watched_at":
         payload["user_watched"] = True
     response = client.patch(URL, payload, content_type="application/json")
@@ -266,7 +268,7 @@ def test_openapi_declares_exact_statuses_and_shared_errors() -> None:
     )
     expected = {
         "get": {200, 401, 404, 422},
-        "patch": {200, 201, 400, 401, 403, 404, 422, 429, 502, 503, 504},
+        "patch": {200, 201, 400, 401, 403, 404, 409, 422, 429, 502, 503, 504},
         "delete": {204, 401, 403, 404, 422},
     }
     for method, statuses in expected.items():
@@ -278,3 +280,33 @@ def test_openapi_declares_exact_statuses_and_shared_errors() -> None:
                     response["content"]["application/json"]["schema"]["$ref"]
                     == "#/components/schemas/ErrorResponseSchema"
                 )
+
+
+def test_rating_marks_watched_and_removes_watchlist(signed_in: tuple[Client, User]) -> None:
+    client, user = signed_in
+    create_user_movie_data(user, user_on_watchlist=True)
+    response = client.patch(URL, {"user_rating": 7}, content_type="application/json")
+    assert response.status_code == 200
+    assert response.json()["user_watched"] is True
+    assert response.json()["user_on_watchlist"] is False
+
+
+def test_unwatch_rating_errors_and_explicit_clear(signed_in: tuple[Client, User]) -> None:
+    client, user = signed_in
+    record = create_user_movie_data(user, user_watched=True, user_rating=7)
+    response = client.patch(URL, {"user_watched": False}, content_type="application/json")
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Clear the rating before marking this film unwatched"}
+    record.refresh_from_db()
+    assert record.user_watched
+    assert record.user_rating == 7
+    response = client.patch(
+        URL, {"user_watched": False, "user_rating": 3}, content_type="application/json"
+    )
+    assert response.status_code == 400
+    response = client.patch(
+        URL, {"user_watched": False, "user_rating": None}, content_type="application/json"
+    )
+    assert response.status_code == 200
+    assert response.json()["user_watched"] is False
+    assert response.json()["user_rating"] is None

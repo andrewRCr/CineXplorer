@@ -17,6 +17,7 @@ from apps.movie.services.tmdb_api_boundary.response_factories import (
 )
 from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.schemas import LibraryQuerySchema, UserMovieDataSchema
+from apps.user_movie_data.services.movie_state_rules import apply_record_save
 
 
 class UserMovieDataService:
@@ -43,6 +44,9 @@ class UserMovieDataService:
         if changes.get("user_watched") is False and changes.get("watched_at") is not None:
             raise InvalidInputError("A watched date requires a watched movie")
 
+        if changes.get("user_watched") is False and changes.get("user_rating") is not None:
+            raise InvalidInputError("A rating requires a watched movie")
+
         movie = Movie.objects.filter(pk=tmdb_id).first()
         if movie is None:
             response = self._tmdb_client.get_movie_details(tmdb_id)
@@ -57,8 +61,7 @@ class UserMovieDataService:
             record, created = UserMovieData.objects.select_for_update().get_or_create(
                 user=user, movie=movie
             )
-            for field, value in changes.items():
-                setattr(record, field, value)
+            apply_record_save(record, changes)
             if changes.get("user_watched") is False:
                 record.watched_at = None
             if not record.user_watched and record.watched_at is not None:

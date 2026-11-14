@@ -64,6 +64,7 @@ def get_user_movie_data(request: HttpRequest, tmdb_id: PositiveTMDBId) -> UserMo
         403: ErrorResponseSchema,
         404: ErrorResponseSchema,
         422: ErrorResponseSchema,
+        409: ErrorResponseSchema,
         429: ErrorResponseSchema,
         502: ErrorResponseSchema,
         503: ErrorResponseSchema,

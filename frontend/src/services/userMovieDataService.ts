@@ -1,5 +1,6 @@
 /** Partially save the signed-in user's movie state by TMDB ID. */
 import create from "./httpService";
+import apiClient from "./apiClient";
 import type { AxiosRequestConfig } from "axios";
 import type { components } from "@/types/api";
 
@@ -35,3 +36,48 @@ export const getMovieEntries = (tmdbId: number) =>
 
 export const getActivity = (params: ActivityParams) =>
     create("/user-movie-data/entries").getPaginated<ActivityPage>(params);
+
+export type EntryWriteResponse =
+    components["schemas"]["UserMovieEntryWriteResponseSchema"];
+export type EntryWriteInput = Pick<
+    components["schemas"]["UserMovieEntryWriteSchema"],
+    "liked" | "time_zone"
+> &
+    Partial<
+        Omit<
+            components["schemas"]["UserMovieEntryWriteSchema"],
+            "liked" | "time_zone"
+        >
+    >;
+export type EntryInput = Omit<EntryWriteInput, "time_zone">;
+
+export const createMovieEntry = (
+    tmdbId: number,
+    data: EntryWriteInput,
+    config?: AxiosRequestConfig,
+) =>
+    apiClient.post<EntryWriteResponse>(
+        `/user-movie-data/${tmdbId}/entries`,
+        data,
+        config,
+    );
+export const editMovieEntry = (
+    tmdbId: number,
+    entryId: number,
+    data: EntryWriteInput,
+    config?: AxiosRequestConfig,
+) =>
+    apiClient.put<EntryWriteResponse>(
+        `/user-movie-data/${tmdbId}/entries/${entryId}`,
+        data,
+        config,
+    );
+export const deleteMovieEntry = (
+    tmdbId: number,
+    entryId: number,
+    config?: AxiosRequestConfig,
+) =>
+    apiClient.delete<EntryWriteResponse>(
+        `/user-movie-data/${tmdbId}/entries/${entryId}`,
+        config,
+    );

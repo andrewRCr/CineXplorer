@@ -84,8 +84,10 @@ The frontend is a single-page application (SPA) built with React.
   between default, minimal, and advanced filter UIs.
 - **Data Fetching**: The `axios` service layer supplies TanStack Query reads. `src/lib/queries.ts` owns query keys
   and options; browse grids use its keys and retain their own fetchers. `useUserMovieState` shows the latest
-  confirmed save over each movie's payload, with pending fields applied on top. Saves run in movie order and
-  retain confirmed records until the signed-in user changes. A successful save invalidates Library queries without
+  confirmed record over each movie's payload, with pending record-save fields applied on top. Record saves and
+  entry creates, edits and deletes share the film's queue and retain confirmed records until the signed-in user
+  changes. Pending entries add no client-side effects; their returned record supplies the server's rules. Successful
+  writes invalidate Library queries, and entry writes also invalidate film history and activity queries, without
   refetching movie lists.
 - **Advanced Filtering Logic**: The filtering system is a hybrid model. While most filters map to TMDB API
   queries, it also applies custom client-side filtering to correct data inconsistencies from the API

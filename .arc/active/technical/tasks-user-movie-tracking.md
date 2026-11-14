@@ -359,31 +359,21 @@ rule.
         - Reused the service cancellation contract and query signal adapter. All 377 related tests, types, ESLint
           and formatting passed; nine focused tests passed after matching cache fixtures to generated schemas.
 
-- [ ] **5.4 Entry writes run as saves of their film — D12**
+- [x] **5.4 Entry writes run as saves of their film — D12**
 
     **Goal:** An entry create, edit or delete waits its turn behind the film's other saves, is dropped on a change of
     user, and shows its effects when the server returns the record, with no rule copied into the client.
 
-    - [ ] **5.4.a Write the tests with MSW**
-        - An entry create queued behind a pending save of the same film is sent after it, and `useUserMovieState` then
-          shows the record the create returned; a successful entry write refetches active Library and entry queries; a
-          failed one shows an error toast, and none shows a success toast; every create and edit sends the browser's
-          time zone
-        - Two cases pass on arrival once the hook exists, so see each fail against a narrow break and pass restored: a
-          pending entry write changes nothing shown (the overlay spreads only a save's `changes`), and signing out
-          discards queued entry writes (`beginUserChange` clears the whole mutation cache;
-          `useUserMovieState.ownership.test.tsx`)
-        - Expect the other tests to FAIL initially
-    - [ ] **5.4.b Add the entry-write hook in `frontend/src/hooks/movie/`, and teach the overlay entry writes**
-        - Writes run under `saveMutationOptions`'s key, scope and `gcTime`, with `getSaveSignal` and `getChangeCount`;
-          their variables say which kind of write they are, so the overlay takes a save's response as the record and an
-          entry write's `record`, and lays only pending saves' fields on top
-        - Add the three entry writes (POST, PUT, DELETE) to `userMovieDataService.ts`, each sending the save's abort
-          signal. `HttpService` has no PUT, and its `create` and `remove` take no request config, so call `apiClient`
-          with the config or extend `HttpService`
-        - `time_zone` comes from `Intl.DateTimeFormat().resolvedOptions().timeZone`
-        - TECHNICAL-OVERVIEW's description of the frontend's saves names entry writes (D14)
-        - Tests should now PASS
+    - [x] **5.4.a Write the tests with MSW**
+        - Seven cases cover queue order in both directions, pending/confirmed overlays, all write methods and browser
+          time zones, active Library/history/activity refetches, error-only feedback and user-change retirement.
+        - Narrow breaks fail queue, zone, cancellation, invalidation, feedback, returned-record and pending-entry
+          assertions. Removing whole-cache clearing fails the queued-entry retirement assertion; restored tests pass.
+    - [x] **5.4.b Add the entry-write hook in `frontend/src/hooks/movie/`, and teach the overlay entry writes**
+        - Shared film-write options/types keep key, scope and retention together. Entry writes use owned save signals;
+          only confirmed server records affect state. Added configured POST/PUT/DELETE services and browser time zones.
+        - Updated TECHNICAL-OVERVIEW. All 384 related tests, types, ESLint, formatting and markdown lint passed;
+          seven focused tests passed after strengthening the queue-retirement assertion.
 
 - [ ] **5.5 A rating shows as gold half stars, and a rewatch has its icon — D13**
 

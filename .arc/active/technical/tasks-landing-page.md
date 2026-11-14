@@ -354,7 +354,7 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
           in them, so its sections keep every page's width and padding
         - Tests should now PASS
 
-- [ ] **3.2 Home replaces Featured at `/`, outside the padded container, and the smoke tier follows — R2, R28**
+- [x] **3.2 Home replaces Featured at `/`, outside the padded container, and the smoke tier follows — R2, R28**
 
     **Goal:** `/` serves Home without the padded container while every other page keeps it, `/featured` still
     redirects there, and the three specs that land on `/` wait for the new Home in the same change.
@@ -363,7 +363,7 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
     `back-to-results.spec.ts`, `movie-detail.spec.ts` and `browse.spec.ts`, since every page renders through the
     changed `AppLayout`.
 
-    - [ ] **3.2.a Write the route and layout tests**
+    - [x] **3.2.a Write the route and layout tests**
         - `src/__tests__/App.test.tsx`, which renders the real `App` at a path: signed out, with MSW answering the
           session and Home's reads, `/` shows Home's headline. No case here follows the `/featured` redirect:
           `tests/setup.ts` fixes `window.location`, so the router stays on the first path after a redirect
@@ -375,14 +375,14 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
           asks, and its comments (lines 5 and 51) name Home. With Home built in 3.1 it passes at once, so the change
           is a rename; the `App.test.tsx` case is the one that proves the switch
 
-    - [ ] **3.2.b Supply Home's three reads in `e2e/catalogue.ts`**
+    - [x] **3.2.b Supply Home's three reads in `e2e/catalogue.ts`**
         - `catalogueResponse` answers `/api/movies/featured` with `backdrop_path: null`, and the first pages of
           `/api/movies/now-playing` and `/api/movies/upcoming` with posters at `null`
         - `useHomeCatalogue(page, baseURL)` routes the same three on the page, in both targets, as
           `useRestoreCatalogue` does
         - Nothing requests them until 3.2.c, so every spec still passes
 
-    - [ ] **3.2.c Route `/` to Home, remove `Featured`, let only Home skip the container, and move the specs with it**
+    - [x] **3.2.c Route `/` to Home, remove `Featured`, let only Home skip the container, and move the specs with it**
         - `App.tsx` lazy-loads `src/pages/home/Home.tsx` at `ROUTES.HOME`, its comment (line 80) naming Home;
           `/featured` keeps its redirect
         - Delete `pages/movie/Featured.tsx` and `Featured.test.tsx`; correct `routes.ts`'s `HOME` comment
@@ -393,9 +393,11 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
         - `sign-in.spec.ts` (line 192) and `phone-width.spec.ts` (line 56) wait for the "Popular in theaters" heading
         - `axe-baseline.ts`: a `/` `button-name` entry for signed-in Home's cards; the `/browse` and `/search`
           `button-name` reasons name the signed-in cards
-        - Tests should now PASS, and the Check's six specs with them
+        - The real App and layout assertions failed before the change and now pass.
+          All 20 scenarios in the six required browser specs pass, with the axe scans.
+          The full frontend suite passes (3,240 tests); frontend type-check passes.
 
-    - [ ] **3.2.d Name `background.spec.ts` beside Back to Results**
+    - [x] **3.2.d Name `background.spec.ts` beside Back to Results**
         - The `staging` bullet in `strategy-testing-methodology.md` (around line 855) and TECHNICAL-OVERVIEW § 7's
           Targets: `background.spec.ts` supplies Home's reads itself in both targets, since its console checks must
           not depend on live TMDB
@@ -414,9 +416,11 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
       emulation) and by Tab through its cards; scrolling is instant with reduced motion emulated
     - No color outside theme roles on Home (R27)
 
-- [ ] **3.4 Check Home in the smoke tier** (run `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`)
+- [x] **3.4 Check Home in the smoke tier** (run `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts`)
 
     **Goal:** The phase's exit criterion is shown by a local run against the browsable stack, with what ran recorded.
+
+    - The three changed specs passed within the 20-scenario browser run against the worktree’s browsable stack.
 
 ### **Phase 4:** Signed-in Home greets on arrival and leads with the watchlist
 

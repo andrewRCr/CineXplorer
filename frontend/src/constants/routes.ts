@@ -1,7 +1,7 @@
 // constants/routes.ts
 
 export const ROUTES = {
-    HOME: "/", // Featured content (canonical URL)
+    HOME: "/", // Home (canonical URL)
     FEATURED: "/featured", // Alias that redirects to HOME
     PROFILE: "/profile",
     WATCHLIST: "/watchlist",

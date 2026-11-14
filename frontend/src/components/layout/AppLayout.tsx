@@ -1,20 +1,21 @@
-import { pageContainerProps } from "./pageContainer";
 import BaseLayout from "./BaseLayout";
+import { pageContainerProps } from "./pageContainer";
 import { Container } from "@chakra-ui/react";
-import { Outlet } from "react-router";
+import { Outlet, useMatch } from "react-router";
+import { ROUTES } from "@/constants/routes";
 
 const AppLayout = () => {
+  const home = useMatch(ROUTES.HOME);
   return (
     <BaseLayout>
-      {/* Main Content Area */}
-      <Container
-        {...pageContainerProps}
-        flex="1"
-      >
+      {home ? (
         <Outlet />
-      </Container>
+      ) : (
+        <Container {...pageContainerProps} flex="1">
+          <Outlet />
+        </Container>
+      )}
     </BaseLayout>
   );
 };
-
 export default AppLayout;

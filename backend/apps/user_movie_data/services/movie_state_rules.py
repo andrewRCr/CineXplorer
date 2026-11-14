@@ -15,3 +15,26 @@ def apply_record_save(record: UserMovieData, changes: dict[str, object]) -> None
         record.user_watched = True
     if not was_watched and record.user_watched and "user_on_watchlist" not in changes:
         record.user_on_watchlist = False
+
+
+LIST_TIMES = (
+    ("user_watched", "watched_added_at"),
+    ("user_on_watchlist", "watchlist_added_at"),
+    ("user_liked", "liked_added_at"),
+)
+
+
+def stamp_list_joins(
+    record: UserMovieData, previous: dict[str, bool], *, undo: bool = False
+) -> None:
+    """Keep departure times and stamp only transitions into a list."""
+    from django.utils import timezone
+
+    now = timezone.now()
+    for flag, stamp in LIST_TIMES:
+        if (
+            getattr(record, flag)
+            and not previous[flag]
+            and not (undo and getattr(record, stamp) is not None)
+        ):
+            setattr(record, stamp, now)

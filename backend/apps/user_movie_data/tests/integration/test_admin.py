@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from apps.core.models import Movie
 from apps.core.tests.test_helpers import create_user
-from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 from apps.user_movie_data.tests.test_helpers import create_user_movie_data
 
 pytestmark = pytest.mark.django_db
@@ -60,6 +60,9 @@ def test_admin_refuses_change(admin_record: tuple[Client, UserMovieData]) -> Non
 
 def test_admin_deletes_record_and_keeps_movie(admin_record: tuple[Client, UserMovieData]) -> None:
     client, record = admin_record
+    from datetime import date
+
+    UserMovieEntry.objects.create(record=record, review="Review", made_on=date(2020, 1, 1))
     movie_id = record.movie.pk
     response = client.post(
         reverse("admin:user_movie_data_usermoviedata_delete", args=[record.pk]), {"post": "yes"}
@@ -67,3 +70,4 @@ def test_admin_deletes_record_and_keeps_movie(admin_record: tuple[Client, UserMo
     assert response.status_code == 302
     assert not UserMovieData.objects.filter(pk=record.pk).exists()
     assert Movie.objects.filter(pk=movie_id).exists()
+    assert not UserMovieEntry.objects.exists()

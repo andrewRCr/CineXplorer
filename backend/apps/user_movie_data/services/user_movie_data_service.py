@@ -17,7 +17,11 @@ from apps.movie.services.tmdb_api_boundary.response_factories import (
 )
 from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.schemas import LibraryQuerySchema, UserMovieDataSchema
-from apps.user_movie_data.services.movie_state_rules import apply_record_save
+from apps.user_movie_data.services.movie_state_rules import (
+    LIST_TIMES,
+    apply_record_save,
+    stamp_list_joins,
+)
 
 
 class UserMovieDataService:
@@ -35,15 +39,10 @@ class UserMovieDataService:
             "user_on_watchlist",
             "user_liked",
             "user_rating",
-            "user_review",
-            "watched_at",
         }
         changes = {key: value for key, value in fields.items() if key in allowed}
         if not changes:
             raise InvalidInputError("Provide at least one movie data field")
-        if changes.get("user_watched") is False and changes.get("watched_at") is not None:
-            raise InvalidInputError("A watched date requires a watched movie")
-
         if changes.get("user_watched") is False and changes.get("user_rating") is not None:
             raise InvalidInputError("A rating requires a watched movie")
 
@@ -61,11 +60,9 @@ class UserMovieDataService:
             record, created = UserMovieData.objects.select_for_update().get_or_create(
                 user=user, movie=movie
             )
+            previous = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
             apply_record_save(record, changes)
-            if changes.get("user_watched") is False:
-                record.watched_at = None
-            if not record.user_watched and record.watched_at is not None:
-                raise InvalidInputError("A watched date requires a watched movie")
+            stamp_list_joins(record, previous)
             record.save()
         return record, created
 
@@ -90,7 +87,12 @@ class UserMovieDataService:
     ) -> MovieListResponseSchema:
         """Read a bounded page from stored cards with one count and one row query."""
         query = query if query is not None else LibraryQuerySchema()
-        records = UserMovieData.objects.get_queryset().for_user(user).select_related("movie")
+        records = (
+            UserMovieData.objects.get_queryset()
+            .for_user(user)
+            .with_log_summary()
+            .select_related("movie")
+        )
         if query.watchlist:
             records = records.on_watchlist()
         if query.watched:

@@ -13,6 +13,7 @@ from django.test import Client, override_settings
 from apps.core.models import Movie
 from apps.core.tests.test_helpers import create_user, get_csrf_token
 from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.tests.test_helpers import create_user_movie_data
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -38,7 +39,7 @@ CASES = [
 def entry() -> UserMovieData:
     user = create_user(username="csrfviewer")
     movie = Movie.objects.create(tmdb_id=12345, title="Blade Runner")
-    return UserMovieData.objects.create(user=user, movie=movie, user_rating=5)
+    return create_user_movie_data(user=user, movie=movie, user_watched=True, user_rating=5)
 
 
 def request_data(case: str, entry: UserMovieData) -> tuple[str, str, dict[str, object]]:

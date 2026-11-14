@@ -51,7 +51,7 @@ def test_service_initialization(user: User) -> None:
 def test_service_reads_only_the_requested_users_records(
     service: MovieEnrichmentService, user: User
 ) -> None:
-    create_user_movie_data(create_user(username="other"), user_rating=9)
+    create_user_movie_data(create_user(username="other"), user_watched=True, user_rating=9)
     result = service.enrich_movies_with_user_movie_data([movie_schema()], user)
     assert result[0].user_movie_data is None
 
@@ -59,9 +59,7 @@ def test_service_reads_only_the_requested_users_records(
 def test_enrich_with_authenticated_user_populates_user_movie_data(
     service: MovieEnrichmentService, user: User
 ) -> None:
-    create_user_movie_data(
-        user, user_watched=True, user_liked=True, user_rating=9, user_review="Excellent!"
-    )
+    create_user_movie_data(user, user_watched=True, user_liked=True, user_rating=9)
     result = service.enrich_movies_with_user_movie_data([movie_schema()], user)
     data = result[0].user_movie_data
     assert data is not None
@@ -71,8 +69,6 @@ def test_enrich_with_authenticated_user_populates_user_movie_data(
         "user_on_watchlist": False,
         "user_liked": True,
         "user_rating": 9,
-        "user_review": "Excellent!",
-        "watched_at": None,
     }
 
 
@@ -121,8 +117,8 @@ def test_movies_without_user_data_have_none_field(
 
 def test_user_isolation_with_different_state(service: MovieEnrichmentService, user: User) -> None:
     movie = create_movie()
-    create_user_movie_data(user, movie, user_rating=3)
-    create_user_movie_data(create_user(username="other"), movie, user_rating=9)
+    create_user_movie_data(user, movie, user_watched=True, user_rating=3)
+    create_user_movie_data(create_user(username="other"), movie, user_watched=True, user_rating=9)
     result = service.enrich_movies_with_user_movie_data([movie_schema()], user)
     assert result[0].user_movie_data is not None
     assert result[0].user_movie_data.user_rating == 3
@@ -182,8 +178,10 @@ def test_enrichment_reads_all_requested_movie_ids_in_one_query(
     service: MovieEnrichmentService, user: User
 ) -> None:
     for movie_id in (111, 222, 333):
-        create_user_movie_data(user, create_movie(movie_id), user_rating=movie_id // 100)
-    create_user_movie_data(user, create_movie(444), user_rating=9)
+        create_user_movie_data(
+            user, create_movie(movie_id), user_watched=True, user_rating=movie_id // 100
+        )
+    create_user_movie_data(user, create_movie(444), user_watched=True, user_rating=9)
     with CaptureQueriesContext(connection) as queries:
         result = service.enrich_movies_with_user_movie_data(
             [movie_schema(i) for i in (111, 222, 333)], user

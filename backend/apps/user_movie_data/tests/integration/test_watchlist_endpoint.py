@@ -14,7 +14,7 @@ from django.test.utils import CaptureQueriesContext
 from apps.core.tests.test_helpers import authenticate_client, create_user, get_csrf_token
 from apps.movie.tests.mock_paths import TMDB_CLIENT_GET_MOVIE_DETAILS
 from apps.movie.tests.test_helpers import create_mock_error_response
-from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 from apps.user_movie_data.tests.test_helpers import create_movie, create_user_movie_data
 from apps.users.models import User
 from config.api import api
@@ -44,13 +44,13 @@ def signed_in() -> tuple[Client, User]:
 @pytest.mark.parametrize(
     ("query", "expected"),
     [
-        ({}, {111, 222, 333, 444, 555, 777}),
+        ({}, {111, 222, 333, 444, 777}),
         ({"watchlist": True}, {111, 777}),
-        ({"watched": True}, {222, 777}),
+        ({"watched": True}, {222, 444, 777}),
         ({"liked": True}, {333, 777}),
         ({"rated": True}, {444, 777}),
         ({"watchlist": True, "watched": True, "liked": True, "rated": True}, {777}),
-        ({"watchlist": False}, {111, 222, 333, 444, 555, 777}),
+        ({"watchlist": False}, {111, 222, 333, 444, 777}),
     ],
 )
 def test_filters_and_default_state_selection(
@@ -61,8 +61,7 @@ def test_filters_and_default_state_selection(
         (111, {"user_on_watchlist": True}),
         (222, {"user_watched": True}),
         (333, {"user_liked": True}),
-        (444, {"user_rating": 8}),
-        (555, {"user_review": "Review"}),
+        (444, {"user_watched": True, "user_rating": 8}),
         (666, {}),
         (
             777,
@@ -106,9 +105,12 @@ def test_sort_nulls_last_and_id_ties(
             movie,
             user_on_watchlist=True,
             user_watched=True,
-            watched_at=None if missing else date(2020, 1, 1),
             user_rating=None if missing else 7,
         )
+        if not missing:
+            UserMovieEntry.objects.create(
+                record=record, watched_on=date(2020, 1, 1), made_on=date(2020, 1, 1)
+            )
         UserMovieData.objects.filter(pk=record.pk).update(
             created_at=datetime(2020, 1, 2 if missing else 1, tzinfo=UTC)
         )
@@ -153,7 +155,7 @@ def test_page_envelope_stored_card_and_empty_page(signed_in: tuple[Client, User]
         genre_ids=[18],
         overview="Stored overview",
     )
-    create_user_movie_data(user, movie, user_on_watchlist=True, user_rating=9)
+    create_user_movie_data(user, movie, user_on_watchlist=True, user_watched=True, user_rating=9)
     create_user_movie_data(user, create_movie(551), user_liked=True)
     first = client.get(URL, {"page": 1, "page_size": 1, "direction": "asc"}).json()
     assert (
@@ -174,12 +176,10 @@ def test_page_envelope_stored_card_and_empty_page(signed_in: tuple[Client, User]
         "overview": "Stored overview",
         "user_movie_data": {
             "tmdb_id": 550,
-            "user_watched": False,
+            "user_watched": True,
             "user_on_watchlist": True,
             "user_liked": False,
             "user_rating": 9,
-            "user_review": None,
-            "watched_at": None,
         },
     }
     second = client.get(URL, {"page": 2, "page_size": 1, "direction": "asc"}).json()

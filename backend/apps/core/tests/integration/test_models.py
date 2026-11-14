@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 
 from apps.core import models
 from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.tests.test_helpers import create_user_movie_data
 
 if TYPE_CHECKING:
     from apps.users.models import User as UserType
@@ -123,7 +124,7 @@ def test_create_default_user_movie_data() -> None:
         title="Blade Runner",
         # ...other movie fields...
     )
-    user_movie_data: UserMovieData = UserMovieData.objects.create(
+    user_movie_data: UserMovieData = create_user_movie_data(
         user=user,
         movie=movie,
         # ...other UserMovieData fields...
@@ -145,27 +146,24 @@ def test_create_nondefault_user_movie_data() -> None:
         ),
     )
 
-    movie_review_str = "Blade Runner is one of the greatest films of all time."
     movie = models.Movie.objects.create(
         tmdb_id=78,
         title="Blade Runner",
         # ...other movie fields...
     )
-    user_movie_data: UserMovieData = UserMovieData.objects.create(
+    user_movie_data: UserMovieData = create_user_movie_data(
         user=user,
         movie=movie,
         user_watched=True,
         user_on_watchlist=True,
         user_liked=True,
         user_rating=10,
-        user_review=movie_review_str,
     )
 
     assert user_movie_data.user_watched is True
     assert user_movie_data.user_on_watchlist is True
     assert user_movie_data.user_liked is True
     assert user_movie_data.user_rating == 10
-    assert user_movie_data.user_review == movie_review_str
 
 
 @pytest.mark.django_db

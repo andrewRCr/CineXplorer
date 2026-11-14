@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
 from threading import Barrier
 
 import pytest
@@ -56,9 +55,7 @@ def test_first_save_stores_card_and_default_user_state(
         record.user_watched,
         record.user_liked,
         record.user_rating,
-        record.user_review,
-        record.watched_at,
-    ) == (False, False, None, None, None)
+    ) == (False, False, None)
     movie = Movie.objects.get(pk=550)
     assert (movie.title, movie.runtime, movie.overview, movie.vote_average, movie.vote_count) == (
         "Stored card",
@@ -80,28 +77,6 @@ def test_save_stored_movie_makes_no_request(
     assert created is True
     assert record.user_liked is True
     assert tmdb.requested_ids == []
-
-
-def test_update_preserves_omissions_and_clears_nullable_values(
-    service: UserMovieDataService, user: User
-) -> None:
-    record = create_user_movie_data(
-        user,
-        user_watched=True,
-        watched_at=date(2020, 1, 1),
-        user_rating=8,
-        user_review="Review",
-        user_on_watchlist=True,
-    )
-    updated, created = service.save(
-        user, 550, {"user_rating": None, "user_review": None, "watched_at": None}
-    )
-    assert created is False
-    assert updated.pk == record.pk
-    record.refresh_from_db()
-    assert (record.user_rating, record.user_review, record.watched_at) == (None, None, None)
-    assert record.user_watched is True
-    assert record.user_on_watchlist is True
 
 
 @pytest.mark.parametrize(
@@ -144,7 +119,7 @@ def test_invalid_tmdb_data_writes_nothing(
 
 
 @pytest.mark.parametrize(
-    "fields", [{}, {"unknown": True}, {"watched_at": date(2020, 1, 1), "user_watched": False}]
+    "fields", [{}, {"unknown": True}, {"user_rating": 7, "user_watched": False}]
 )
 def test_body_only_errors_precede_tmdb(
     service: UserMovieDataService, user: User, tmdb: TMDBStub, fields: dict[str, object]
@@ -154,41 +129,6 @@ def test_body_only_errors_precede_tmdb(
     assert not Movie.objects.exists()
     assert not UserMovieData.objects.exists()
     assert tmdb.requested_ids == []
-
-
-def test_unwatched_result_refuses_date_and_rolls_back_user_state(
-    service: UserMovieDataService, user: User
-) -> None:
-    create_user_movie_data(user, user_on_watchlist=True)
-    with pytest.raises(InvalidInputError, match="watched"):
-        service.save(user, 550, {"watched_at": date(2020, 1, 1), "user_liked": True})
-    record = UserMovieData.objects.get()
-    assert record.watched_at is None
-    assert record.user_liked is False
-    assert record.user_on_watchlist is True
-
-
-def test_first_unwatched_date_keeps_movie_but_not_user_record(
-    service: UserMovieDataService, user: User
-) -> None:
-    with pytest.raises(InvalidInputError):
-        service.save(user, 550, {"watched_at": date(2020, 1, 1)})
-    assert Movie.objects.filter(pk=550).exists()
-    assert not UserMovieData.objects.exists()
-
-
-@pytest.mark.parametrize("explicit_null", [True, False])
-def test_marking_unwatched_clears_date(
-    service: UserMovieDataService, user: User, explicit_null: bool
-) -> None:
-    create_user_movie_data(user, user_watched=True, watched_at=date(2020, 1, 1))
-    fields: dict[str, object] = {"user_watched": False}
-    if explicit_null:
-        fields["watched_at"] = None
-    service.save(user, 550, fields)
-    record = UserMovieData.objects.get()
-    assert record.user_watched is False
-    assert record.watched_at is None
 
 
 def test_clearing_last_state_keeps_readable_record(
@@ -223,7 +163,9 @@ def test_missing_record_does_not_call_tmdb(
 
 def test_operations_preserve_other_users_data(service: UserMovieDataService, user: User) -> None:
     movie = create_movie()
-    other = create_user_movie_data(create_user(username="other"), movie, user_rating=9)
+    other = create_user_movie_data(
+        create_user(username="other"), movie, user_watched=True, user_rating=9
+    )
     service.save(user, 550, {"user_rating": 3})
     assert service.get_by_tmdb_id(user, 550).user_rating == 3
     service.delete(user, 550)
@@ -331,3 +273,47 @@ def test_unwatch_and_clear_rating_together(service: UserMovieDataService, user: 
     record.refresh_from_db()
     assert not record.user_watched
     assert record.user_rating is None
+
+
+@pytest.mark.parametrize(
+    ("flag", "stamp"),
+    [
+        ("user_watched", "watched_added_at"),
+        ("user_on_watchlist", "watchlist_added_at"),
+        ("user_liked", "liked_added_at"),
+    ],
+)
+def test_list_join_timestamps(
+    service: UserMovieDataService, user: User, flag: str, stamp: str
+) -> None:
+    from freezegun import freeze_time
+
+    with freeze_time("2020-01-01 10:00:00"):
+        record = create_user_movie_data(user)
+        service.save(user, 550, {flag: True})
+        record.refresh_from_db()
+        first = timezone.now()
+        assert getattr(record, stamp) == first
+    with freeze_time("2020-02-01 10:00:00"):
+        service.save(user, 550, {flag: True})
+        record.refresh_from_db()
+        assert getattr(record, stamp) == first
+        service.save(user, 550, {flag: False})
+        record.refresh_from_db()
+        assert getattr(record, stamp) == first
+        service.save(user, 550, {flag: True})
+        record.refresh_from_db()
+        assert getattr(record, stamp) == timezone.now()
+
+
+def test_rating_rule_stamps_watched_join(service: UserMovieDataService, user: User) -> None:
+    from freezegun import freeze_time
+
+    create_movie()
+    with freeze_time("2020-01-01 10:00:00"):
+        record, _ = service.save(user, 550, {"user_rating": 7})
+        assert record.watched_added_at == timezone.now()
+    service.save(user, 550, {"user_rating": None})
+    record.refresh_from_db()
+    assert record.user_rating is None
+    assert record.user_watched

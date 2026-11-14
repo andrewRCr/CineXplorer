@@ -90,86 +90,38 @@ and the record's save, reads, Library and admin working on the new shape, before
     - [x] **1.2.c State the save's omission rule where it is written down (D14)**
         - Updated the input schema docstring, DEVELOPMENT-RULES' API contract and type-safety Pattern 3.
 
-- [ ] **1.3 Records keep a film's facts, entries its history, and existing data carries over — D1, D2, D8, D9, D10**
+- [x] **1.3 Records keep a film's facts, entries its history, and existing data carries over — D1, D2, D8, D9, D10**
 
     **Goal:** The database refuses every record or entry that breaks D1's and D2's rules, every stored watched date and
     review survives as an entry through a migration that also runs backwards, and every writer and reader of a record
     works on the new shape.
 
-    **Check:** the full backend suite once, at 1.3.f: the shared factory and fixtures in four apps change.
-
-    **Note:** From 1.3.c until 1.3.f, the save, the schemas and the fixtures still name the removed fields, so the
-    app's suite and pyright fail there by design. At 1.3's start, propose its subtasks as one increment.
-
-    - [ ] **1.3.a Write the model tests in `tests/integration/test_models.py`**
-        - Through the ORM the database refuses: a rating on an unwatched record; each flag that is on without its join
-          time; an entry with neither a date nor a review; a rewatch without a date; an entry rating of 0 or 11; an
-          entry review that is empty, only whitespace (the set `REVIEW_HAS_TEXT_PATTERN` covers), or 10,001 characters
-        - Deleting a record deletes its entries. The log-summary QuerySet method gives `has_entries` and the latest
-          dated `watched_on` for records with dated, only undated, and no entries. The entry-order method orders by
-          `watched_on`, or `made_on` when undated, then `created_at`, then ID
-        - Expect tests to FAIL initially
-
-    - [ ] **1.3.b Write the migration tests in `tests/integration/test_migrations.py`**
-        - A new test writes rows through `0002`'s historical models, migrates forward and back: a watched record with
-          a date, a review and a rating becomes one entry carrying all three; a record with only a review becomes one
-          undated entry and is marked watched; a rated, unwatched record on the watchlist is marked watched, stays on
-          the watchlist and takes its `updated_at` as `watched_added_at`; each list a record was on takes its
-          `created_at`; an entry takes the record's `updated_at` as its timestamps and that time's UTC date as
-          `made_on`
-        - Before migrating back, add entries at the leaf state so one record holds several: a later dated entry with no
-          review, and an undated entry with a review that orders by its `made_on`. Migrating back restores each
-          record's date from its latest dated entry and its review from its latest entry with one, by D2's order
-        - The existing test migrates to `0002` instead of the leaf, keeping its checks of that migration
-        - Expect tests to FAIL initially
-
-    - [ ] **1.3.c Reshape the models and write migration `0003`**
-        - `UserMovieData`: `watched_added_at`, `watchlist_added_at` and `liked_added_at`, and D1's four constraints;
-          `watched_at`, `user_review` and their three constraints go
-        - `UserMovieEntry` per D2's table: `record` (`related_name="entries"`, deleted with it), its constraints
-          (`user_movie_entry_has_content`, `user_movie_entry_rewatch_dated`, rating range, review text and length),
-          and a QuerySet method for D2's entry order, which 3.1–3.3 use for the current rating and a film's list
-        - `UserMovieDataQuerySet` gains the one method that annotates `has_entries` and `last_logged_on` (D8); 1.3.e's
-          sort and 2.2's reads use it
-        - `0003` in this order: add the join times, and the entries table with its check constraints; the data step and
-          its reverse; drop the old constraints and fields; add the record's new constraints. Django adds the entries
-          table's foreign key and its index only as the migration ends, so the data step's inserts leave no foreign-key
-          check pending
-        - Postgres refuses an `ALTER TABLE` while inserted rows leave deferred foreign-key checks pending; if the steps
-          after the data step are refused, end the data step (and its reverse) with `SET CONSTRAINTS ALL IMMEDIATE`.
-          1.3.b's test, with rows present, is the probe
-        - `create_user_movie_data` stamps the join time of each flag it turns on, so every later subtask can build
-          records through it; `test_models.py`'s existing cases that set a flag directly set its join time, and those
-          naming the removed fields go or move to the new ones. `test_database_refuses_invalid_state`'s ratings of 0
-          and 11 go on watched records, through the factory, so they test the range and not only
-          `user_movie_rating_watched`
-        - `test_models.py` and `test_migrations.py` should now PASS
-
-    - [ ] **1.3.d The record save drops the watched date and review and stamps join times**
-        - Tests first in `test_save_service.py`: a flag that turns on stamps its join time with the current time,
-          whether the save or a rule turned it on; a flag that turns off keeps its time; a flag left as it was keeps
-          its time. Until the save drops the removed fields every save errors, and then the two keep cases pass with no
-          stamping written: see each fail against a narrow break (a join time cleared when its flag turns off, every
-          supplied flag stamped) and pass restored
-        - `UserMovieDataPatchSchema` and `save` drop `user_review`, `watched_at` and the watched-date checks, with
-          their test cases
-        - Tests should now PASS
-
-    - [ ] **1.3.e Reads, the Library and the admin follow the new record**
-        - `UserMovieDataSchema` drops `user_review` and `watched_at` (and `test_schemas.py`'s field set with them);
-          `with_state` stops reading the review, still leaving out a record with no flag and no rating
-        - The `watched` sort orders by 1.3.c's `last_logged_on`, which the Library's query now annotates, records with
-          no dated entry last in both directions: rewrite that case of `test_sort_nulls_last_and_id_ties`
-        - `test_admin.py`: deleting a record from the admin deletes its entries. This passes on arrival, since the
-          cascade lands in 1.3.c, so see it fail against a narrow break of the cascade and pass restored
-
-    - [ ] **1.3.f Every other direct writer of a record stays within the constraints**
-        - A fixture holding a rating marks its record watched; a flag a fixture turns on has its join time
-        - Find the writers by searching every app for `UserMovieData.objects.create`, `create_user_movie_data` and a
-          field set on a fetched record that is then saved. Known sites: `authentication`'s `test_csrf_protection.py`
-          (`entry`, rated and unwatched), `core`'s `test_models.py`, and `movie`'s `test_movie_detail.py` and
-          `test_endpoint_enrichment_integration.py`, which also name the removed fields
-        - The full backend suite should now PASS
+    - [x] **1.3.a Write the model tests in `tests/integration/test_models.py`**
+        - Covered rating/watched and join-time constraints, every entry constraint, summary states, effective-date
+          ordering with creation-time and ID ties, and cascading deletion. Removing database checks produced fourteen
+          behavioral failures; restored checks pass. Creation-order-only sorting fails the history-order assertion.
+    - [x] **1.3.b Write the migration tests in `tests/integration/test_migrations.py`**
+        - Populated historical rows exercise the forward carry of dates, reviews, ratings and timestamps, watched
+          normalization, approximate join times, and the reverse's independent latest dated viewing and review.
+        - Kept the earlier cleanup test targeting `0002`, with its other historical dependency states preserved.
+    - [x] **1.3.c Reshape the models and write migration `0003`**
+        - Added list join times, entry history with its constraints, descending effective-date order and one
+          Exists/Subquery log-summary method; removed the record's date/review fields and constraints.
+        - One reversible migration carries data between the shapes, flushing deferred constraints before later
+          schema operations. The shared factory stamps active lists; record rating-range tests use watched rows.
+    - [x] **1.3.d The record save drops the watched date and review and stamps join times**
+        - Removed the obsolete input fields/checks and their tests. Shared stamping records only false-to-true
+          transitions and retains times on departure and unchanged flags, including rule-driven watched changes.
+        - Narrow omitted-stamp, repeated-stamp and departure-clear mutations fail; restored behavior passes.
+    - [x] **1.3.e Reads, the Library and the admin follow the new record**
+        - Removed the old response fields; the unfiltered Library selects facts only and its watched sort reads the
+          latest dated entry, nulls last in both directions. Admin deletion now asserts entry cascade, demonstrated
+          failing when cascade is disabled and passing restored.
+    - [x] **1.3.f Every other direct writer of a record stays within the constraints**
+        - Updated fixtures across authentication, core, movie and user-data tests to use valid watched states and
+          stamped list membership; removed obsolete field assertions. Queried all backend writers and old-field uses.
+        - Full backend suite: 1,315 passed. Restored targeted run: 61 passed. Pinned Ruff, full-backend Pyright
+          (zero errors/warnings), and migration drift check passed. Planned entry guard follows immediately in 2.1.
 
 ### **Phase 2:** The record's saves and reads follow its entries and join times
 

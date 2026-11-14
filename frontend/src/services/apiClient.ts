@@ -278,7 +278,10 @@ apiClient.interceptors.request.use(async (config: AuthRequestConfig) => {
         "/movies/search",
     ];
     const url = config.url ?? "";
-    if (movieEndpoints.some((endpoint) => url.includes(endpoint))) {
+    if (
+        movieEndpoints.some((endpoint) => url.includes(endpoint)) &&
+        !config.headers.has("X-Pagination-Context")
+    ) {
         config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
 

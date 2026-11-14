@@ -236,7 +236,8 @@ services/
 ├── authService.ts        # Authentication operations
 ├── userMovieDataService.ts  # User movie data operations
 ├── userMovieService.ts   # User-specific movie operations
-├── paginationContext.ts  # Multi-tab pagination isolation
+├── paginationContext.ts  # Catalog and Home pagination isolation
+├── homeRequests.ts       # Home’s quiet reads and separate section context
 ├── consoleCapture.ts     # Development logging
 └── logger.ts             # Application logging
 ```
@@ -266,8 +267,8 @@ apiClient.interceptors.request.use((config) => {
         config.headers["X-CSRFToken"] = getCsrfToken();
     }
 
-    // Pagination context for movie endpoints
-    if (isMovieEndpoint(config.url)) {
+    // Catalog lists share the tab’s context; Home supplies its own.
+    if (isMovieEndpoint(config.url) && !config.headers.has("X-Pagination-Context")) {
         config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
 
@@ -285,6 +286,10 @@ apiClient.interceptors.response.use(
     }
 );
 ```
+
+Home’s section reads pass `homeSectionOptions`: no global server-error toast and a second pagination context,
+so they never reset the catalog’s record. Its Library read passes `homeReadOptions`, the toast opt-out alone.
+Other readers keep the tab’s context and the global toast.
 
 **Key features:**
 
@@ -315,7 +320,7 @@ class HttpService {
         return { request, cancel: () => controller.abort() };
     }
 
-    getPaginated<T>(params?: Record<string, unknown>) {
+    getPaginated<T>(params?: Record<string, unknown>, options?: ReadOptions) {
         // Paginated resource fetch with cancellation
     }
 

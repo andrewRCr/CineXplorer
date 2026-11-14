@@ -111,12 +111,14 @@ while the catalog's requests keep the tab's context and the toast.
           `frontend/src/types/api.ts` carry `FeaturedMovieSchema`, the route and the two detail fields
         - `e2e/catalogue.ts`'s `movieDetail()` still type-checks (`npm run type-check` covers `e2e/`)
 
-- [ ] **1.3 Home's reads pass request options and a pagination context of their own — R10, R24**
+- [x] **1.3 Home's reads pass request options and a pagination context of their own — R10, R24**
 
     **Goal:** A Home read can opt out of the global server-error toast and carry Home's own pagination context, while
     every other reader keeps both behaviors as they are.
 
-    - [ ] **1.3.a Write the read path's tests in `src/services/__tests__/apiClient.test.ts`**
+    - [x] **1.3.a Write the read path's tests in `src/services/__tests__/apiClient.test.ts`**
+        - 33 request-path tests pass after observed behavioral failures. Frontend lint and type-check pass.
+        - The toast visibility assertion waits for its animation, matching the existing tests.
         - Replace the assertion of one shared context for every movie endpoint (around line 419) with: the catalog's
           list requests (`browseMovies`, `getNowPlayingMovies`, `getUpcomingMovies`, `searchMovies`) carry the tab's
           context; a request that sets `X-Pagination-Context` keeps it; a read passed `homeSectionOptions` carries
@@ -128,7 +130,7 @@ while the catalog's requests keep the tab's context and the toast.
         - Test: `getUserMovies` given `homeReadOptions` shows no toast on a 500
         - Expect tests to FAIL initially
 
-    - [ ] **1.3.b Pass request options through the read path**
+    - [x] **1.3.b Pass request options through the read path**
         - `HttpService.getPaginated<T>(params?, options?)`, with `options` a
           `Pick<AxiosRequestConfig, "headers" | "shouldReportServerError">` merged into the request beside `signal`
           and `params`; `fetchPaginatedMovies`, `getNowPlayingMovies`, `getUpcomingMovies` and `getUserMovies` take
@@ -143,7 +145,7 @@ while the catalog's requests keep the tab's context and the toast.
           request carries none
         - Tests should now PASS
 
-    - [ ] **1.3.c State the two-context rule where the one-context rule is stated**
+    - [x] **1.3.c State the two-context rule where the one-context rule is stated**
         - `strategy-pagination.md` § Multi-Tab Isolation and the interceptor example in `strategy-service-layer.md`
           (around line 271): the catalog's lists share the tab's context, and Home's section requests carry a second
           one, so they never clear the catalog's record

@@ -1,4 +1,7 @@
-import create from "./httpService";
+import create, { type ReadOptions } from "./httpService";
+import apiClient from "./apiClient";
+import { homeReadOptions } from "./homeRequests";
+import type { components } from "@/types/api";
 import type {
     MovieListItem,
     MovieDetail,
@@ -69,8 +72,9 @@ export const fetchSearchPeopleService = create("/people/search");
 export const fetchPaginatedMovies = (
     service: ReturnType<typeof create>,
     params?: MovieQueryParams,
+    options?: ReadOptions,
 ) => {
-    return service.getPaginated<MovieListResponse>(params);
+    return service.getPaginated<MovieListResponse>(params, options);
 };
 
 /**
@@ -115,15 +119,21 @@ export const fetchPaginatedPeople = (
 /**
  * Fetch now playing movies with optional pagination and filtering
  */
-export const getNowPlayingMovies = (params?: MovieQueryParams) => {
-    return fetchPaginatedMovies(fetchNowPlayingMoviesService, params);
+export const getNowPlayingMovies = (
+    params?: MovieQueryParams,
+    options?: ReadOptions,
+) => {
+    return fetchPaginatedMovies(fetchNowPlayingMoviesService, params, options);
 };
 
 /**
  * Fetch upcoming movies with optional pagination and filtering
  */
-export const getUpcomingMovies = (params?: MovieQueryParams) => {
-    return fetchPaginatedMovies(fetchUpcomingMovies(), params);
+export const getUpcomingMovies = (
+    params?: MovieQueryParams,
+    options?: ReadOptions,
+) => {
+    return fetchPaginatedMovies(fetchUpcomingMovies(), params, options);
 };
 
 /**
@@ -175,3 +185,18 @@ export const searchPeople = (params?: PersonQueryParams) => {
 // 4. Updated parameter naming to match backend (tmdb_id instead of id)
 // 5. All response types now use auto-generated schemas from OpenAPI
 // 6. Implemented multiple router structure: /api/movies, /api/genres, /api/keywords, /api/people
+
+export type FeaturedMovie = components["schemas"]["FeaturedMovieSchema"];
+
+/** Read the homepage credit, optionally previewing a candidate film. */
+export const getFeaturedMovie = (film?: number) => {
+    const controller = new AbortController();
+    const request = apiClient
+        .get<FeaturedMovie>("/movies/featured", {
+            ...homeReadOptions,
+            signal: controller.signal,
+            ...(film === undefined ? {} : { params: { film } }),
+        })
+        .then((response) => ({ data: response.data }));
+    return { request, cancel: () => controller.abort() };
+};

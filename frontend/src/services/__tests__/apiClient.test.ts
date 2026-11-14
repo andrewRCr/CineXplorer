@@ -1,3 +1,14 @@
+import {
+    getNowPlayingMovies,
+    getUpcomingMovies,
+    getFeaturedMovie,
+} from "@/services/movieService";
+import { getUserMovies } from "@/services/userMovieService";
+import { homeReadOptions, homeSectionOptions } from "@/services/homeRequests";
+import {
+    getHomePaginationContextId,
+    getPaginationContextId,
+} from "@/services/paginationContext";
 import { createElement } from "react";
 import { act, render, screen } from "@tests/helpers/test-renderer";
 import {
@@ -404,7 +415,7 @@ describe("authorization and pagination responses", () => {
         expect(refreshes).toBe(0);
     });
 
-    it("uses one pagination context for movie collections and omits it elsewhere", async () => {
+    it("shares the catalog context across its lists and omits it elsewhere", async () => {
         const endpoints = [
             "/movies/browse",
             "/movies/now-playing",
@@ -449,5 +460,117 @@ describe("authorization and pagination responses", () => {
                 results: [],
             });
         expect((await apiClient.get("/profile/")).data).toEqual({ id: 7 });
+    });
+});
+
+describe("Home requests", () => {
+    afterEach(() => {
+        act(() => {
+            toaster.remove();
+            priorityToaster.remove();
+        });
+    });
+
+    it("keeps a caller's pagination context", async () => {
+        server.use(
+            http.get(`${apiBaseUrl}/movies/now-playing`, ({ request }) =>
+                request.headers.get("X-Pagination-Context") === "home-context"
+                    ? HttpResponse.json({ results: [] })
+                    : HttpResponse.json({}, { status: 400 }),
+            ),
+        );
+        expect(
+            (
+                await apiClient.get("/movies/now-playing", {
+                    headers: { "X-Pagination-Context": "home-context" },
+                })
+            ).data,
+        ).toEqual({ results: [] });
+    });
+});
+
+it.each([getNowPlayingMovies, getUpcomingMovies])(
+    "separates Home's section context from the catalog",
+    async (read) => {
+        expect(getHomePaginationContextId()).not.toBe(getPaginationContextId());
+        server.use(
+            http.get(`${apiBaseUrl}/movies/:kind`, ({ request }) =>
+                request.headers.get("X-Pagination-Context") ===
+                getHomePaginationContextId()
+                    ? HttpResponse.json({ results: [] })
+                    : HttpResponse.json({}, { status: 400 }),
+            ),
+        );
+        expect(
+            (await read({ page: 1 }, homeSectionOptions).request).data,
+        ).toEqual({ results: [] });
+    },
+);
+
+it.each([getNowPlayingMovies, getUpcomingMovies, getUserMovies])(
+    "suppresses Home errors while other readers keep the toast",
+    async (read) => {
+        act(() => {
+            toaster.remove();
+            priorityToaster.remove();
+        });
+        render(createElement(Toaster));
+        server.use(
+            http.get(`${apiBaseUrl}/*`, () =>
+                HttpResponse.json({}, { status: 500 }),
+            ),
+        );
+        await act(async () => {
+            await expect(
+                read({ page: 1 }, homeReadOptions).request,
+            ).rejects.toThrow();
+        });
+        expect(screen.queryByText("Server error")).not.toBeInTheDocument();
+        await act(async () => {
+            await expect(read({ page: 1 }).request).rejects.toThrow();
+        });
+        await waitFor(() =>
+            expect(screen.getByText("Server error")).toBeVisible(),
+        );
+        act(() => {
+            toaster.remove();
+            priorityToaster.remove();
+        });
+    },
+);
+
+it.each([undefined, 550])(
+    "sends the featured film parameter only when supplied: %s",
+    async (film) => {
+        server.use(
+            http.get(`${apiBaseUrl}/movies/featured`, ({ request }) => {
+                const received = new URL(request.url).searchParams.get("film");
+                return received === (film === undefined ? null : String(film))
+                    ? HttpResponse.json({ tmdb_id: 550 })
+                    : HttpResponse.json({}, { status: 400 });
+            }),
+        );
+        expect((await getFeaturedMovie(film).request).data.tmdb_id).toBe(550);
+    },
+);
+
+it("keeps a failed featured read quiet", async () => {
+    act(() => {
+        toaster.remove();
+        priorityToaster.remove();
+    });
+    render(createElement(Toaster));
+    server.use(
+        http.get(`${apiBaseUrl}/movies/featured`, () =>
+            HttpResponse.json({}, { status: 500 }),
+        ),
+    );
+    await act(async () => {
+        await expect(getFeaturedMovie().request).rejects.toThrow();
+    });
+    expect(screen.queryByText("Server error")).not.toBeInTheDocument();
+    act(() => {
+        toaster.remove();
+        priorityToaster.remove();
     });
 });

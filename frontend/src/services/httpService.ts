@@ -14,6 +14,11 @@ import type { AxiosRequestConfig } from "axios";
  * Supports all common CRUD operations and paginated requests.
  * This service is decoupled from the shape of the data (entities) it handles.
  */
+export type ReadOptions = Pick<
+    AxiosRequestConfig,
+    "headers" | "shouldReportServerError"
+>;
+
 class HttpService {
     endpoint: string;
 
@@ -39,10 +44,14 @@ class HttpService {
      * Fetch a paginated resource.
      * @param params - Optional query parameters for pagination, filtering, etc.
      */
-    getPaginated<T>(params?: Record<string, unknown> | object) {
+    getPaginated<T>(
+        params?: Record<string, unknown> | object,
+        options?: ReadOptions,
+    ) {
         const controller = new AbortController();
         const request = apiClient
             .get<T>(this.endpoint, {
+                ...options,
                 signal: controller.signal,
                 params,
             })

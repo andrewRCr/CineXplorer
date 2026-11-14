@@ -1,5 +1,9 @@
 import type { components } from "@/types/api";
-import { type MovieListItem, type MovieDetail } from "@/types/movie";
+import {
+    type MovieListItem,
+    type MovieDetail,
+    type MovieListResponse,
+} from "@/types/movie";
 
 /**
  * Factory for creating mock movie list items (for grids, lists, cards).
@@ -106,3 +110,16 @@ export const createMockUserMovieData = (
     watched_at: null,
     ...overrides,
 });
+
+/** One complete list page, as the movie and Library endpoints return it. */
+export function createMockMoviePage(
+    results: MovieListItem[],
+): MovieListResponse {
+    return {
+        page: 1,
+        total_pages: results.length ? 1 : 0,
+        total_results: results.length,
+        results,
+        next_tmdb_page_start: null,
+    };
+}

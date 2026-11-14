@@ -326,14 +326,14 @@ the three changed smoke specs passing.
 _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out with Home's three reads stubbed, and
 `sign-in.spec.ts` and `phone-width.spec.ts` sign in and land on `/` showing "Popular in theaters", each scan passing.
 
-- [ ] **3.1 Home renders by sign-in status, signed out in full and signed in with what's on — R1, R16, R17, R18,
+- [x] **3.1 Home renders by sign-in status, signed out in full and signed in with what's on — R1, R16, R17, R18,
   R27**
 
     **Goal:** Home shows a loading state without an `h1` while sign-in resolves, then the form `status` gives,
     following every change: signed out, the hero, "Popular in theaters", "Most anticipated" and the band; signed in, a
     visually hidden "Home" `h1` over the same what's on, which Phase 4 builds on.
 
-    - [ ] **3.1.a Write Home's tests in `src/pages/home/__tests__/Home.test.tsx`**
+    - [x] **3.1.a Write Home's tests in `src/pages/home/__tests__/Home.test.tsx`**
         - Render `<Home />` itself, through `AuthContextProvider` and MSW; `/` still serves `Featured` until 3.2
         - Test: resolving shows the loading state with no `h1` and no pitch; anonymous shows signed-out Home; a stored
           token shows signed-in Home; a stored token whose session read fails switches to the pitch
@@ -341,9 +341,10 @@ _Exit criterion:_ locally, `background.spec.ts` sees the headline signed out wit
           (the headline) and no button in any card; each "See all" opening `/browse/now-playing` and
           `/browse/upcoming`
         - Test: signed in, no hero, the visually hidden `h1` "Home", and both what's on sections
-        - Expect tests to FAIL initially
+        - All four composition cases failed before implementation and now pass.
+          The full frontend suite passes (3,240 tests); lint and type-check pass.
 
-    - [ ] **3.1.b Build `Home` and its two forms in `src/pages/home/`**
+    - [x] **3.1.b Build `Home` and its two forms in `src/pages/home/`**
         - `Home` renders `LoadingContent mode="content"` while `resolving`, and the form `status` gives otherwise
         - `WhatsOn`: a `PosterRowSection` over `homeWindowQuery("now-playing")` and a `ReleaseCalendar` over
           `homeWindowQuery("upcoming")`, titled by `catalogTitle(window, DEFAULT_BROWSE_PARAMS)`, cards with

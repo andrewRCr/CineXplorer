@@ -1,3 +1,4 @@
+import { pageContainerProps } from "./pageContainer";
 import BaseLayout from "./BaseLayout";
 import { Container } from "@chakra-ui/react";
 import { Outlet } from "react-router";
@@ -7,9 +8,7 @@ const AppLayout = () => {
     <BaseLayout>
       {/* Main Content Area */}
       <Container
-        maxW="container.xl"
-        px={{ base: 2, md: 6, lg: 8 }}
-        w="100%"
+        {...pageContainerProps}
         flex="1"
       >
         <Outlet />

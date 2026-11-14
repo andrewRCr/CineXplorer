@@ -116,3 +116,29 @@ def test_selected_entry_carries_its_focus(debug: bool, candidate: int | None) ->
     assert result.tmdb_id == selected_id
     assert result.focus_point == expected_point
     assert stub.requested_endpoints == [f"movie/{selected_id}"]
+
+
+@pytest.mark.parametrize("debug", [False, True])
+@pytest.mark.parametrize("candidate", [None, 201, 202, 203])
+@pytest.mark.parametrize("primary", ["/new-primary.jpg", None])
+def test_selected_entry_preserves_checked_backdrop(
+    debug: bool, candidate: int | None, primary: str | None
+) -> None:
+    films = (
+        FeaturedFilm(201, backdrop_path="/checked-artwork.jpg"),
+        FeaturedFilm(202),
+    )
+    selected_id = candidate if debug and candidate is not None else 201
+    stub = TMDBStub()
+    stub.add_movie(
+        create_tmdb_movie_detail(
+            selected_id, "Selected film", "1968-04-02", 8.0, backdrop_path=primary
+        )
+    )
+    with override_settings(DEBUG=debug):
+        result = MovieService(
+            stub, choose_film=lambda entries: entries[0], featured_films=films
+        ).get_featured_movie(candidate)
+    assert result.tmdb_id == selected_id
+    assert result.backdrop_path == ("/checked-artwork.jpg" if selected_id == 201 else primary)
+    assert stub.requested_endpoints == [f"movie/{selected_id}"]

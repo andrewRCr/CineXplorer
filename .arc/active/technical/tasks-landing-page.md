@@ -657,24 +657,39 @@ _Mode:_ `slice` — closes on Home composing with what `main` holds at merge, an
 _Exit criterion:_ with `main` merged in, regenerating the API types leaves no diff, each R30 condition's result is
 recorded, and the three changed smoke specs pass.
 
-- [ ] **5.0 Prepare checked artwork and the external film review sheet — R3, R4**
+- [x] **5.0 Prepare checked artwork and the external film review sheet — R3, R4**
 
     **Goal:** A large candidate list can be screened and reviewed without repeated source edits, while shipped
     entries retain the exact artwork approved by the Owner.
 
-    - [ ] **5.0.a Test and carry the optional checked backdrop through featured selection**
+    - [x] **5.0.a Test and carry the optional checked backdrop through featured selection**
         - Tests first: ID uniqueness independent of particular films; a checked path overrides a changed or absent
           TMDB primary, while unset entries and unlisted DEBUG candidates retain the primary. Listed candidates and
           production picks keep their own metadata, with one detail call and unchanged failures
         - Add optional `backdrop_path` to `FeaturedFilm`; keep the response schema and no-request-override boundary
         - Run movie-app Docker tests, Ruff and Pyright
-    - [ ] **5.0.b Build and exercise the external review sheet in the landing run folder**
+    - [x] **5.0.b Build and exercise the external review sheet in the landing run folder**
         - Resolve the supplied titles/years, keeping ambiguous matches for Owner decisions; screen DEBUG featured
           responses for 404s, missing artwork, read/image failures and potentially oversized credits
         - Show each film at the actual hero's three proportions with its fit, point, pitch, credit and fades; default
           to `50% 28%` and apply a clicked point to all three views. Export entry lines with title/year comments and
           the path shown. Keep the sheet outside the repository and app, without an API key
         - Exercise point editing, screening flags, review decisions and export; do not mark Owner sign-off yourself
+
+    - The optional checked path is carried through the existing single-detail read without changing the response
+      shape. ID uniqueness and checked-path assertions failed first; the movie app now passes all 593 Docker
+      tests. Touched-file Ruff/format checks and movie-app Pyright pass.
+    - The external landing run folder holds the self-contained `hero-review.html`, its generators, screening
+      report and portable review-state controls. All 152 supplied candidates were resolved or proposed with explicit
+      identity alternatives; 13 retain flags for Owner decisions. Proposed IDs are unique, their reads and artwork
+      succeed, and the largest measured phone credit is 120px within the 128px reservation.
+    - The sheet uses the built hero's captured markup, CSS and embedded fonts, with three frames loaded at a time.
+      Browser checks pass shared focus, snapshot geometry, default and flagged review paths, saved state, approval
+      invalidation, exact checked-path export and missing-art exclusion. Delayed/failed larger sources hold approval
+      until all current previews load; retry and switching selections preserve identity/artwork coupling.
+    - The sheet and simulated browser choices are outside the repository. No Owner candidate is approved or imported;
+      5.1 remains open. Independent amendment review found one minor scope-wording conflict, corrected with Owner
+      approval; an optional fix check has not run.
 
 - [ ] **5.1 The Owner's approved films replace the provisional list — R3**
 

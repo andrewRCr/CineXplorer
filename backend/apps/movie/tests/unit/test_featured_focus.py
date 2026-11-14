@@ -29,3 +29,10 @@ def test_featured_focus_preserves_percentage_coordinates(point: dict[str, float]
 def test_featured_focus_rejects_partial_or_invalid_coordinates(point: dict[str, float]) -> None:
     with pytest.raises(ValidationError):
         FeaturedMovieSchema.model_validate({"tmdb_id": 62, "title": "Film", "focus_point": point})
+
+
+def test_curated_film_ids_are_unique() -> None:
+    from apps.movie.featured import FEATURED_FILMS
+
+    ids = [entry.tmdb_id for entry in FEATURED_FILMS]
+    assert len(ids) == len(set(ids))

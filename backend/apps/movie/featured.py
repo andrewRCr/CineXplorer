@@ -18,9 +18,10 @@ class FeaturedFilm:
 
     tmdb_id: int
     focus_point: FilmFocusPoint | None = None
+    backdrop_path: str | None = None
 
 
-# Check a film in the built hero in both color modes before adding it to the final list.
+# Add only films approved through artwork and credit review.
 FEATURED_FILMS = (
     FeaturedFilm(289),
     FeaturedFilm(567),

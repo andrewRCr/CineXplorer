@@ -371,7 +371,7 @@ def test_undo_keeps_existing_join_time(
     from freezegun import freeze_time
 
     with freeze_time("2020-01-01 10:00:00"):
-        record = create_user_movie_data(user)
+        record = create_user_movie_data(user, user_watched=flag == "user_liked")
         setattr(record, flag, True)
         setattr(record, stamp, timezone.now())
         record.save()

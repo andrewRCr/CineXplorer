@@ -46,7 +46,7 @@ def signed_in() -> tuple[Client, User]:
     [
         ({}, {111, 222, 333, 444, 777}),
         ({"watchlist": True}, {111, 777}),
-        ({"watched": True}, {222, 444, 777}),
+        ({"watched": True}, {222, 333, 444, 777}),
         ({"liked": True}, {333, 777}),
         ({"rated": True}, {444, 777}),
         ({"watchlist": True, "watched": True, "liked": True, "rated": True}, {777}),
@@ -60,7 +60,7 @@ def test_filters_and_default_state_selection(
     for movie_id, fields in [
         (111, {"user_on_watchlist": True}),
         (222, {"user_watched": True}),
-        (333, {"user_liked": True}),
+        (333, {"user_liked": True, "user_watched": True}),
         (444, {"user_watched": True, "user_rating": 8}),
         (666, {}),
         (
@@ -156,7 +156,7 @@ def test_page_envelope_stored_card_and_empty_page(signed_in: tuple[Client, User]
         overview="Stored overview",
     )
     create_user_movie_data(user, movie, user_on_watchlist=True, user_watched=True, user_rating=9)
-    create_user_movie_data(user, create_movie(551), user_liked=True)
+    create_user_movie_data(user, create_movie(551), user_liked=True, user_watched=True)
     first = client.get(URL, {"page": 1, "page_size": 1, "direction": "asc"}).json()
     assert (
         first["page"],

@@ -65,38 +65,21 @@ forward and leaves it watched going back, and date added sorts by the first filt
         - Likes mark watched; an allowed un-mark clears an omitted like; explicit watchlist choices stay in force.
         - All 328 app tests passed; pinned Ruff lint and format and app Pyright passed.
 
-- [ ] **1.2 The database refuses a liked, unwatched record, and existing ones become watched — D2**
+- [x] **1.2 The database refuses a liked, unwatched record, and existing ones become watched — D2**
 
     **Goal:** No write of any kind can leave a film liked but unwatched; every such record already stored is watched
     from the time it was liked; and the migration runs backward, leaving those records watched.
 
-    - [ ] **1.2.a Write the constraint and migration tests**
-        - `test_models.py`: a liked, unwatched record written through the ORM raises `IntegrityError`, as
-          `test_database_rating_requires_watched_record` shows for a rating
-        - `test_migrations.py`: a new test in the manner of `test_viewing_history_migrates_forward_and_back`. At
-          `0003_movie_entries`, seed a liked, unwatched record on the watchlist with an earlier `watched_added_at`, a
-          liked, watched record and an unliked record. Migrated forward, the first is watched with `watched_added_at`
-          equal to its `liked_added_at` and still on the watchlist, and the others are unchanged. Migrated back to
-          `0003`, a liked, unwatched record can be written again and the converted record stays watched. End at the
-          latest state
-        - Expect tests to FAIL initially
-
-    - [ ] **1.2.b Rewrite the existing tests that store a liked, unwatched record**
-        - `test_watchlist_endpoint.py`: the liked-only fixtures in `test_filters_and_default_state_selection` (film
-          333), with its expected results for each filter, and in `test_page_envelope_stored_card_and_empty_page` (film
-          551)
-        - `test_models.py`: `test_record_timestamps_track_creation_and_save` likes a watched record; the `user_liked`
-          case of `test_active_flag_requires_join_time` starts from a watched record, so only `user_movie_liked_added`
-          refuses it
-        - `test_save_service.py`: the `user_liked` case of `test_undo_keeps_existing_join_time` starts from a watched
-          record
-        - They pass before and after 1.2.c
-
-    - [ ] **1.2.c Add `user_movie_liked_watched` to `UserMovieData.Meta` and write migration `0004`**
-        - A data step converts first (`RunPython`, its reverse a no-op), then the constraint is added
-        - The conversion writes no change rows (the table arrives in 2.2)
-        - Tests should now PASS; `makemigrations --check` shows no drift
-        - Also run `core`'s and `movie`'s integration tests, which create records
+    - [x] **1.2.a Write the constraint and migration tests**
+        - The ORM test failed before the constraint; the conversion test failed against an empty migration.
+          Forward migration replaces an old watched time with the like time, preserves watchlist and other records;
+          reversing leaves the conversion in place and permits liked, unwatched records again.
+    - [x] **1.2.b Rewrite the existing liked, unwatched fixtures**
+        - Updated library filters, join-time, Undo and timestamp fixtures to start liked films watched.
+    - [x] **1.2.c Add `user_movie_liked_watched` and reversible migration `0004`**
+        - Conversion precedes the constraint and flushes deferred constraints. Reverse conversion is a no-op.
+        - All 663 app and core/movie integration tests passed with a fresh database; no migration drift.
+          Pinned Ruff and app Pyright passed.
 
 - [ ] **1.3 Date added sorts by the first filtered list — D9**
 

@@ -31,7 +31,7 @@ def test_watched_record_accepts_unknown_date() -> None:
 
 def test_record_timestamps_track_creation_and_save() -> None:
     with freeze_time("2026-01-01 10:00:00"):
-        record = create_user_movie_data(create_user())
+        record = create_user_movie_data(create_user(), user_watched=True)
         created = timezone.now()
         assert getattr(record, "created_at", None) == created
         assert getattr(record, "updated_at", None) == created
@@ -58,7 +58,7 @@ def test_database_rating_requires_watched_record() -> None:
     ],
 )
 def test_active_flag_requires_join_time(flag: str, stamp: str) -> None:
-    record = create_user_movie_data(create_user())
+    record = create_user_movie_data(create_user(), user_watched=flag == "user_liked")
     with pytest.raises(IntegrityError), transaction.atomic():
         UserMovieData.objects.filter(pk=record.pk).update(**{flag: True, stamp: None})
 
@@ -119,3 +119,8 @@ def test_log_summary_and_entry_order_and_cascade() -> None:
 def test_record_rating_range(rating: int) -> None:
     with pytest.raises(IntegrityError), transaction.atomic():
         create_user_movie_data(create_user(), user_watched=True, user_rating=rating)
+
+
+def test_database_like_requires_watched_record() -> None:
+    with pytest.raises(IntegrityError, match="user_movie_liked_watched"), transaction.atomic():
+        create_user_movie_data(create_user(), user_liked=True)

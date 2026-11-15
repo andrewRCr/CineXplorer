@@ -140,6 +140,10 @@ class UserMovieData(models.Model):
                 name="user_movie_rating_watched",
             ),
             models.CheckConstraint(
+                condition=models.Q(user_liked=False) | models.Q(user_watched=True),
+                name="user_movie_liked_watched",
+            ),
+            models.CheckConstraint(
                 condition=models.Q(user_watched=False) | models.Q(watched_added_at__isnull=False),
                 name="user_movie_watched_added",
             ),

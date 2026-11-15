@@ -155,3 +155,51 @@ def test_viewing_history_migrates_forward_and_back() -> None:
         assert getattr(restored.objects.get(movie_id=3), "user_watched", None)
     finally:
         MigrationExecutor(connection).migrate(latest)
+
+
+@pytest.mark.django_db(transaction=True)
+def test_liked_records_convert_forward_and_stay_watched_backward() -> None:
+    previous = [("user_movie_data", "0003_movie_entries")]
+    target = [("user_movie_data", "0004_liked_requires_watched")]
+    executor = MigrationExecutor(connection)
+    latest = executor.loader.graph.leaf_nodes()
+    liked_at = datetime(2020, 2, 1, tzinfo=UTC)
+    old_at = datetime(2020, 1, 1, tzinfo=UTC)
+    try:
+        executor.migrate(list(previous))
+        historical = executor.loader.project_state(previous).apps
+        user = historical.get_model("users", "User").objects.create(username="likes")
+        movies = historical.get_model("core", "Movie")
+        records = historical.get_model("user_movie_data", "UserMovieData")
+        for movie_id, watched, liked in [(1, False, True), (2, True, True), (3, False, False)]:
+            records.objects.create(
+                user=user,
+                movie=movies.objects.create(tmdb_id=movie_id, title="Existing"),
+                user_watched=watched,
+                user_liked=liked,
+                user_on_watchlist=True,
+                watched_added_at=old_at,
+                liked_added_at=liked_at if liked else None,
+                watchlist_added_at=old_at,
+            )
+        before = list(records.objects.exclude(movie_id=1).order_by("pk").values())
+        executor = MigrationExecutor(connection)
+        executor.migrate(list(target))
+        records = executor.loader.project_state(target).apps.get_model(
+            "user_movie_data", "UserMovieData"
+        )
+        converted = records.objects.get(movie_id=1)
+        assert getattr(converted, "user_watched", None) is True
+        assert getattr(converted, "watched_added_at", None) == liked_at
+        assert getattr(converted, "user_on_watchlist", None) is True
+        assert list(records.objects.exclude(movie_id=1).order_by("pk").values()) == before
+        executor = MigrationExecutor(connection)
+        executor.migrate(list(previous))
+        records = executor.loader.project_state(previous).apps.get_model(
+            "user_movie_data", "UserMovieData"
+        )
+        assert getattr(records.objects.get(movie_id=1), "user_watched", None) is True
+        records.objects.filter(movie_id=1).update(user_watched=False)
+        assert getattr(records.objects.get(movie_id=1), "user_watched", None) is False
+    finally:
+        MigrationExecutor(connection).migrate(latest)

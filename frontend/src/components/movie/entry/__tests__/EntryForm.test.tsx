@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { render, screen, waitFor, within } from "@tests/helpers/test-renderer";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw/http";
 import { apiBaseUrl } from "@/config/baseUrls";
+import { beginUserChange } from "@/lib/session";
 import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
 import { Toaster } from "@/components/core/chakra/toaster";
 import type { EntryDialogOptions } from "@/contexts/EntryDialogContext";
@@ -104,6 +106,37 @@ it("prefills a new entry from its log and uses today's local calendar date", asy
     ),
   ).toHaveAccessibleName(/3.5/);
   expect(screen.getByRole("textbox", { name: "Review" })).toHaveValue("");
+});
+
+it("cannot submit a private draft under a new owner before the form unmounts", async () => {
+  log();
+  const requests: unknown[] = [];
+  server.use(
+    http.put(
+      `${apiBaseUrl}/user-movie-data/1/entries/7`,
+      async ({ request }) => {
+        requests.push(await request.json());
+        return HttpResponse.json({ entry, record });
+      },
+    ),
+  );
+  function RetiringForm() {
+    const client = useQueryClient();
+    return (
+      <div onSubmitCapture={() => beginUserChange(client)}>
+        <Probe entry={entry} />
+      </div>
+    );
+  }
+  const user = userEvent.setup();
+  render(<RetiringForm />);
+  const review = screen.getByRole("textbox", { name: "Review" });
+  await waitFor(() => expect(review).toBeEnabled());
+  await user.type(review, " with private changes");
+  await user.click(saveButton());
+  await waitFor(() => expect(saveButton()).toBeEnabled());
+  expect(requests).toEqual([]);
+  expect(savedResults()).toEqual([]);
 });
 
 it.each(["dated", "review", "save", "edit"] as const)(

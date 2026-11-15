@@ -1,4 +1,11 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { useLocation } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, Dialog, IconButton, Portal } from "@chakra-ui/react";
@@ -9,21 +16,46 @@ import {
 } from "@/contexts/EntryDialogContext";
 import { EntryForm, type EntrySavedResult } from "./EntryForm";
 import { showEntryFeedback } from "./entryDialogFeedback";
+import { getChangeCount, getSaveSignal } from "@/lib/session";
+
+interface Opening {
+  options: EntryDialogOptions;
+  id: number;
+  owner: number;
+  signal: AbortSignal;
+}
 
 export function EntryDialogHost({ children }: { children: ReactNode }) {
   const client = useQueryClient();
   const location = useLocation();
   const [routeKey, setRouteKey] = useState(location.key);
-  const [request, setRequest] = useState<{
-    options: EntryDialogOptions;
-    id: number;
-  } | null>(null);
+  const [request, setRequest] = useState<Opening | null>(null);
   const [isOpen, setOpen] = useState(false);
   const [reviewDirty, setReviewDirty] = useState(false);
   const [discardOpen, setDiscardOpen] = useState(false);
   const sequence = useRef(0);
+  const active = useRef<Opening | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const fallback = useRef<EntryDialogOptions["returnFocus"]>(undefined);
+  useLayoutEffect(() => {
+    if (!request) return;
+    const retire = () => {
+      if (active.current !== request) return;
+      active.current = null;
+      opener.current = null;
+      fallback.current = undefined;
+      setRequest(null);
+      setOpen(false);
+      setReviewDirty(false);
+      setDiscardOpen(false);
+    };
+    if (request.owner !== getChangeCount() || request.signal.aborted) {
+      retire();
+      return;
+    }
+    request.signal.addEventListener("abort", retire, { once: true });
+    return () => request.signal.removeEventListener("abort", retire);
+  }, [request]);
   // Navigation closes the old draft before rendering the destination, including history traversal.
   if (routeKey !== location.key) {
     setRouteKey(location.key);
@@ -31,23 +63,46 @@ export function EntryDialogHost({ children }: { children: ReactNode }) {
     setDiscardOpen(false);
   }
   const open = useCallback((options: EntryDialogOptions) => {
+    const owner = getChangeCount();
+    const opening = {
+      options,
+      owner,
+      signal: getSaveSignal(owner),
+      id: ++sequence.current,
+    };
+    active.current = opening;
     opener.current =
       document.activeElement instanceof HTMLElement
         ? document.activeElement
         : null;
     fallback.current = options.returnFocus;
-    setRequest({ options, id: ++sequence.current });
+    setRequest(opening);
     setReviewDirty(false);
     setDiscardOpen(false);
     setOpen(true);
   }, []);
   const value = useMemo(() => ({ open }), [open]);
+  const owns = useCallback(
+    (opening: Opening | null) =>
+      opening !== null &&
+      active.current === opening &&
+      opening.owner === getChangeCount(),
+    [],
+  );
+  const reviewChanged = useCallback(
+    (dirty: boolean) => {
+      if (owns(request)) setReviewDirty(dirty);
+    },
+    [owns, request],
+  );
   const requestClose = () => {
+    if (!owns(request)) return;
     if (reviewDirty) setDiscardOpen(true);
     else setOpen(false);
   };
-  const saved = (result: EntrySavedResult, opening: number) => {
-    if (opening === sequence.current) {
+  const saved = (result: EntrySavedResult, opening: Opening) => {
+    if (opening.owner !== getChangeCount()) return;
+    if (owns(opening)) {
       setReviewDirty(false);
       setDiscardOpen(false);
       setOpen(false);
@@ -65,10 +120,13 @@ export function EntryDialogHost({ children }: { children: ReactNode }) {
         placement="center"
         size={{ mdDown: "full", md: "md" }}
         scrollBehavior="inside"
+        restoreFocus={request !== null && request.owner === getChangeCount()}
         finalFocusEl={() =>
-          opener.current?.isConnected
-            ? opener.current
-            : (fallback.current?.() ?? null)
+          owns(request)
+            ? opener.current?.isConnected
+              ? opener.current
+              : (fallback.current?.() ?? null)
+            : null
         }
       >
         <Portal>
@@ -90,9 +148,10 @@ export function EntryDialogHost({ children }: { children: ReactNode }) {
                   <EntryForm
                     key={request.id}
                     {...request.options}
-                    onSaved={(result) => saved(result, request.id)}
+                    owner={request.owner}
+                    onSaved={(result) => saved(result, request)}
                     onCancel={requestClose}
-                    onReviewDirtyChange={setReviewDirty}
+                    onReviewDirtyChange={reviewChanged}
                   />
                 )}
               </Dialog.Body>
@@ -108,7 +167,10 @@ export function EntryDialogHost({ children }: { children: ReactNode }) {
       <Dialog.Root
         role="alertdialog"
         open={discardOpen}
-        onOpenChange={({ open }) => setDiscardOpen(open)}
+        onOpenChange={({ open }) => {
+          if (owns(request)) setDiscardOpen(open);
+        }}
+        restoreFocus={request !== null && request.owner === getChangeCount()}
         placement="center"
         size="sm"
       >
@@ -127,12 +189,15 @@ export function EntryDialogHost({ children }: { children: ReactNode }) {
               <Dialog.Footer>
                 <Button
                   variant="secondary"
-                  onClick={() => setDiscardOpen(false)}
+                  onClick={() => {
+                    if (owns(request)) setDiscardOpen(false);
+                  }}
                 >
                   Keep editing
                 </Button>
                 <Button
                   onClick={() => {
+                    if (!owns(request)) return;
                     setDiscardOpen(false);
                     setReviewDirty(false);
                     setOpen(false);

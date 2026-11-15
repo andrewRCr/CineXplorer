@@ -30,6 +30,8 @@ the film page lists entries with editing and confirmed deletion.
   restores only differing fields; undoing an entry creation deletes the entry before restoring film fields.
 - A single dialog host owns drafts and focus restoration. Confirmed entry removal updates the cached list before
   invalidation, so deletion and focus movement finish while the refreshed read is pending.
+- Drafts retain their opening's user ownership. Session retirement clears private draft and discard state, and
+  a submission already in progress cannot assign the draft to a later user.
 - The picker carries an independent pagination context, and the HTTP layer preserves a caller-supplied context.
 - Card text height and virtualized row estimates share constants, with the row gap kept separate.
 - Completed pointer activation resolves half-star selection without relying on hover movement. Keyboard changes keep
@@ -44,7 +46,7 @@ Catalogue responses use deterministic content with tracking fields read from per
 
 Local verification passed the backend and frontend suites, lint, formatting, type checks, semantic-token contrast
 checks and the complete browser suite. Poster readability was visually inspected in every palette and color mode.
-Independent criteria verification covered the complete change and all active criteria without findings.
+All active criteria were checked; private draft retirement and late submissions have additional regression coverage.
 
 ## Related Documentation
 

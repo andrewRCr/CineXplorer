@@ -27,6 +27,7 @@ export type EntrySavedResult = {
   sent: UserMovieDataPatchSchema;
 } & ({ kind: "create"; entryId: number } | { kind: "edit" | "save" });
 export interface EntryFormProps extends EntryDialogOptions {
+  owner?: number;
   onSaved: (result: EntrySavedResult) => void;
   onCancel: () => void;
   onReviewDirtyChange: (dirty: boolean) => void;
@@ -36,10 +37,12 @@ export function EntryForm({
   dateOn,
   filmChangeable,
   entry,
+  owner: openingOwner,
   onSaved,
   onCancel,
   onReviewDirtyChange,
 }: EntryFormProps) {
+  const [owner] = useState(() => openingOwner ?? getChangeCount());
   const today = localToday();
   const [film, setFilm] = useState(initialFilm);
   const initialized = useRef<number | undefined>(undefined);
@@ -126,8 +129,7 @@ export function EntryForm({
     values.review.length <= 10000 &&
     (!entry || values.dateOn || hasReview);
   const submit = handleSubmit(async (values) => {
-    if (!canSave || !film) return;
-    const owner = getChangeCount();
+    if (!canSave || !film || owner !== getChangeCount()) return;
     const shown = state;
     const sent: UserMovieDataPatchSchema = {
       user_liked: values.liked,

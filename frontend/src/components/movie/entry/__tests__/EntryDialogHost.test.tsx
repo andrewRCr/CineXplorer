@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import { act, render, screen, waitFor } from "@tests/helpers/test-renderer";
@@ -616,6 +616,96 @@ it("a change of user removes an entry Undo before it can send anything", async (
   expect(
     screen.queryByRole("button", { name: "Undo" }),
   ).not.toBeInTheDocument();
+});
+
+it.each(["edit", "new review", "discard confirmation"])(
+  "retires the private %s without navigation when user ownership ends",
+  async (draft) => {
+    let retire = () => {};
+    function OwnershipBoundary() {
+      const client = useQueryClient();
+      useEffect(() => {
+        retire = () => beginUserChange(client);
+      }, [client]);
+      return null;
+    }
+    const user = userEvent.setup();
+    const view = render(
+      <EntryDialogHost>
+        <OwnershipBoundary />
+        <Opener edit={draft === "edit"} />
+      </EntryDialogHost>,
+    );
+    const location = screen.getByRole("status", { name: "Current location" });
+    const original = location.textContent;
+    await user.click(screen.getByRole("button", { name: "Open entry" }));
+    const review = screen.getByRole("textbox", { name: "Review" });
+    await waitFor(() => expect(review).toBeEnabled());
+    if (draft === "edit") expect(review).toHaveValue(entry.review);
+    else await user.type(review, "Private unfinished review");
+    if (draft === "discard confirmation") {
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+      expect(
+        await screen.findByRole("alertdialog", {
+          name: "Discard your review?",
+        }),
+      ).toBeVisible();
+    }
+
+    act(() => retire());
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
+    expect(review).not.toBeInTheDocument();
+    expect(location.textContent).toBe(original);
+
+    // A later owner's entry point opens a fresh form in the same host and route.
+    view.rerender(
+      <EntryDialogHost>
+        <OwnershipBoundary />
+        <Opener />
+      </EntryDialogHost>,
+    );
+    await user.click(screen.getByRole("button", { name: "Open entry" }));
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: "Review" })).toBeEnabled(),
+    );
+    expect(screen.getByRole("textbox", { name: "Review" })).toHaveValue("");
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  },
+);
+
+it("retires an opening whose owner ended before its listener was installed", async () => {
+  function RetiringOpener() {
+    const { open } = useEntryDialog();
+    const client = useQueryClient();
+    return (
+      <button
+        onClick={() => {
+          open({ film, entry, dateOn: true, filmChangeable: false });
+          beginUserChange(client);
+        }}
+      >
+        Open expired entry
+      </button>
+    );
+  }
+  const user = userEvent.setup();
+  render(
+    <EntryDialogHost>
+      <RetiringOpener />
+    </EntryDialogHost>,
+  );
+  await user.click(screen.getByRole("button", { name: "Open expired entry" }));
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+  );
+  expect(screen.queryByDisplayValue(entry.review)).not.toBeInTheDocument();
 });
 
 it("shows save progress and leaves a newly opened draft intact when an earlier save finishes", async () => {

@@ -501,6 +501,21 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
         - Fresh checks passed 264 tests across 20 criterion-related files and 15 browser cases. The reviewed file
           hashes matched before and after the pass. No findings required a fix, deferral or further verification pass.
 
+- [x] **6.2 Retire private entry drafts when authentication ownership ends**
+
+    **Goal:** Private entry content disappears when its owner's session ends, including without navigation, and
+    a pending submission cannot acquire a later user's ownership.
+
+    - Each dialog opening retains its owner and existing ownership-abort signal. Retirement clears the form,
+      retained entry, discard confirmation and focus references; callbacks remain bound to their opening.
+      The form checks its immutable owner before queueing a write. Normal close/focus and same-owner saves retain
+      their behavior.
+    - New regressions failed before the correction for edit/new/discard retirement and a submit during ownership
+      change. Removing the already-aborted guard failed the late-listener case; restoring it passes.
+    - Related entry, authentication, session and integration checks pass all 248 tests across 13 files. All six
+      affected browser cases pass, including the mouse/keyboard/touch journeys; frontend type checks, touched-file
+      lint/format checks and documentation checks pass.
+
 ## Implementation Notes
 
 - **Pointer kind and breakpoints in tests.** `tests/setup.ts` stubs `window.matchMedia` to answer no to every query,

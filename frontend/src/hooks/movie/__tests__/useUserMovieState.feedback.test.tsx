@@ -335,3 +335,29 @@ it.each([true, false])(
       );
   },
 );
+
+it("a refused watched unmark explains the conflict and keeps the film watched", async () => {
+  const initial = createMockUserMovieData({ user_watched: true });
+  const reason =
+    "Remove your rating and entries before marking this film unwatched.";
+  server.use(
+    http.patch(`${apiBaseUrl}/user-movie-data/1`, () =>
+      HttpResponse.json({ detail: reason }, { status: 409 }),
+    ),
+  );
+  const user = userEvent.setup();
+  render(
+    <>
+      <Probe shown={initial} changes={{ user_watched: false }} />
+      <Toaster />
+    </>,
+  );
+  await user.click(screen.getByRole("button", { name: "Save" }));
+  await waitFor(() =>
+    expect(screen.getByText("Couldn't change Watched")).toBeVisible(),
+  );
+  expect(screen.getByText(reason)).toBeVisible();
+  expect(screen.getByRole("status", { name: "Film state" })).toHaveTextContent(
+    JSON.stringify(initial),
+  );
+});

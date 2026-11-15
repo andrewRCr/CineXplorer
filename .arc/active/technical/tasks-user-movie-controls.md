@@ -80,18 +80,17 @@ Undo bodies, the 409 message, and `useMovieEntries`' tests passing on the expose
           remains guarded by user ownership. Its own feedback only reports changed watchlist membership.
         - Focused save/ownership tests, ESLint, Prettier and the frontend type check passed.
 
-- [ ] **1.2 A refused un-mark says why — R36**
+- [x] **1.2 A refused un-mark says why — R36**
 
     **Goal:** When the server answers 409 to un-marking Watched, the visitor reads "Couldn't change Watched" with the
     server's reason, and the control shows the film watched.
 
-    - [ ] **1.2.a Write the 409 case in `useUserMovieState.feedback.test.tsx`**
-        - Answer `{ user_watched: false }` with 409 and a `detail`; expect the error toast's title and description, and
-          the shown state watched once the save settles; other failures keep "Failed to save changes" and "Failed to
-          update watchlist"
-        - Expect tests to FAIL initially
-    - [ ] **1.2.b Read the status in `saveMutationOptions`' `onError`** (`getErrorStatus` in `axiosErrorUtils`)
-        - Tests should now PASS
+    - [x] **1.2.a Cover a refused un-mark in `useUserMovieState.feedback.test.tsx`**
+        - The 409 case failed against generic feedback, then passed with the server's reason and the watched state
+          retained. The existing watchlist and ordinary-save failure cases stay green.
+    - [x] **1.2.b Read status and reason in `saveMutationOptions`' error handler**
+        - Only a 409 while un-marking Watched uses "Couldn't change Watched" and the server reason. Other failures
+          keep their shared titles and retry message. All 43 save/ownership tests, ESLint, format and type checks pass.
 
 - [ ] **1.3 Entry writes expose their mutation options — R38**
 

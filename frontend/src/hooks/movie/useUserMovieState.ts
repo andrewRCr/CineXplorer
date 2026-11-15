@@ -18,6 +18,7 @@ import {
 } from "@/lib/session";
 import { libraryKey } from "@/lib/queries";
 import { toaster } from "@/components/core/chakra/toaster";
+import { getErrorMessage, getErrorStatus } from "@/utilities/axiosErrorUtils";
 import { saveFeedback } from "./saveFeedback";
 
 import {
@@ -93,15 +94,21 @@ export const saveMutationOptions = (
                 });
             }
         },
-        onError: (_error, variables, change) => {
+        onError: (error, variables, change) => {
             if (change !== getChangeCount()) return;
+            const refusedUnmark =
+                variables.changes.user_watched === false &&
+                getErrorStatus(error) === 409;
             toaster.error({
                 id: createSaveToastId(),
-                title:
-                    "user_on_watchlist" in variables.changes
-                        ? "Failed to update watchlist"
-                        : "Failed to save changes",
-                description: "Please try again.",
+                title: refusedUnmark
+                    ? "Couldn't change Watched"
+                    : "user_on_watchlist" in variables.changes
+                      ? "Failed to update watchlist"
+                      : "Failed to save changes",
+                description: refusedUnmark
+                    ? getErrorMessage(error)
+                    : "Please try again.",
             });
         },
     });

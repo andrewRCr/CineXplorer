@@ -64,7 +64,8 @@ Use page numbers through `paginate_queryset` for lists read from the database. V
 being clamped. A page past the end returns an empty result list with valid counts.
 
 Film lists use `MovieListResponseSchema`, with next_tmdb_page_start set to null because they have no TMDB cursor.
-Other database-served lists, such as the cross-film list of dated entries, use `PaginatedResponse[T]`, which has no
+Other database-served lists, such as the cross-film list of dated entries and the private History timeline, use
+`PaginatedResponse[T]`, which has no
 cursor field. In both envelopes, page, total_pages and total_results describe the page and collection, and a further
 page exists while page is below total_pages.
 

@@ -98,6 +98,28 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
         page.getByRole("link", { name: secondTitle, exact: true }).first(),
     ).toBeVisible();
     await scanPage(page, info);
+    const historyResponse = page.waitForResponse(
+        (response) =>
+            new URL(response.url()).pathname ===
+                "/api/user-movie-data/history" &&
+            response.request().method() === "GET",
+        { timeout: 5000 },
+    );
+    await page
+        .getByRole("navigation", { name: "Library", exact: true })
+        .getByRole("link", { name: "History", exact: true })
+        .click();
+    expect((await historyResponse).status()).toBe(200);
+    await expect(page).toHaveURL(
+        new URL("/library/history", target.baseURL).href,
+    );
+    await expect(
+        page.getByRole("region", { name: "History", exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole("status", { name: "Loading history" }),
+    ).toBeHidden();
+    await scanPage(page, info);
     await banner.getByRole("link", { name: "Watchlist", exact: true }).click();
     await expect(page).toHaveURL(new URL("/watchlist", target.baseURL).href);
     await page

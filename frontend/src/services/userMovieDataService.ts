@@ -37,6 +37,15 @@ export const getMovieEntries = (tmdbId: number) =>
 export const getActivity = (params: ActivityParams) =>
     create("/user-movie-data/entries").getPaginated<ActivityPage>(params);
 
+export type HistoryPage =
+    components["schemas"]["PaginatedResponse_HistoryEntrySchema_"];
+export type HistoryEntry = components["schemas"]["HistoryEntrySchema"];
+export type HistoryParams = Partial<
+    components["schemas"]["HistoryQuerySchema"]
+>;
+export const getHistory = (params: HistoryParams) =>
+    create("/user-movie-data/history").getPaginated<HistoryPage>(params);
+
 export type EntryWriteResponse =
     components["schemas"]["UserMovieEntryWriteResponseSchema"];
 export type EntryWriteInput = Pick<

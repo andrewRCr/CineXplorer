@@ -6,6 +6,7 @@ import {
 import {
     getMovieEntries,
     getActivity,
+    getHistory,
     type ActivityParams,
 } from "@/services/userMovieDataService";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
@@ -90,4 +91,19 @@ export const activityQuery = (params: ActivityParams) =>
     queryOptions({
         queryKey: [...entriesKey, "activity", params] as const,
         queryFn: ({ signal }) => readWithSignal(signal, getActivity(params)),
+    });
+
+export const historyPagesQuery = () =>
+    infiniteQueryOptions({
+        queryKey: [...libraryKey, "history"] as const,
+        initialPageParam: 1,
+        queryFn: ({ signal, pageParam }) =>
+            readWithSignal(
+                signal,
+                getHistory({ page: pageParam, page_size: 100 }),
+            ),
+        getNextPageParam: (lastPage) =>
+            lastPage.page < lastPage.total_pages
+                ? lastPage.page + 1
+                : undefined,
     });

@@ -262,43 +262,27 @@ the same rows.
           lint/format, Python checking in an isolated environment with locked dependencies, and frontend type-check
           pass. The host's shared tools remain unchanged.
 
-- [ ] **4.2 History lists viewings and reviews under month headings, loading as the visitor scrolls — R17, R18, R19,
+- [x] **4.2 History lists viewings and reviews under month headings, loading as the visitor scrolls — R17, R18, R19,
   R25, R26, R30, R33**
 
     **Goal:** `/library/history` shows each viewing and undated review as its own read-only row under month headings,
     each day's date once, in a measured virtualized list that pages by 100, refreshes after any save, and shows its
     loading, failed and empty states.
 
-    - [ ] **4.2.a Write the cases in `pages/user/__tests__/LibraryHistory.test.tsx`**
-        - MSW answers `/user-movie-data/history` per page with rows shaped as the regenerated types say
-        - Month headings as `h2` ("November 2026"); a day's date ("Nov 14") once, beside its first row
-        - A viewing shows a decorative small poster (empty alt, or the placeholder), the title and release year,
-          `RatingStars` at `sm` when rated, `RewatchIcon` when a rewatch, and the review's first two lines as plain
-          text; a review shows a "Review" tag in place of the rewatch icon
-        - Each title links to its film with `from=history`
-        - It reads page 1 with `page_size: 100`; the next page as the visitor nears the end, only while no fetch runs
-          and another page exists; an entry repeated across pages drawn once
-        - Placeholder rows while the first page loads; "Couldn't load your history." with Retry; a later page's
-          failure shows Retry in its place
-        - Empty: "Your history is empty" with "Explore films" to `/browse`
-        - A record save through `useUserMovieState`, and an entry write through `useMovieEntries`, refetch History
-        - Expect tests to FAIL initially
-
-    - [ ] **4.2.b Build the read and the view**
-        - `getHistory` in `services/userMovieDataService.ts` beside `getActivity`, and `historyPagesQuery` in
-          `lib/queries.ts` keyed `[...libraryKey, "history"]`, numbered pages as 2.1.c's
-        - `pages/user/LibraryHistory.tsx`: pages joined without duplicate rows, keyed by what each row shows (an
-          entry's ID; 5.4 adds a `changes` row's day and field), month headings keyed by month, all under one
-          `useWindowVirtualizer` with `measureElement` and `getItemKey` by those keys
-        - The row component draws posters from TMDB's smaller poster sizes as `MovieCard` builds its URL, the quiet
-          text with semantic tokens, and the review clamped to two lines
-        - Tests should now PASS
-
-    - [ ] **4.2.c Extend `library.spec.ts` and the pagination strategy**
-        - Step 3's next part: open History from the Library's navigation and `scanPage`; finding the "Marked watched"
-          change waits for 5.4
-        - `strategy-pagination.md` names History's read among the database-served lists in `PaginatedResponse`
-        - Run the spec against the browsable stack
+    - [x] **4.2.a Cover the timeline and its reads**
+        - Seven coupled cases cover month/day labels, viewing/review fields and plain clamped text, title links,
+          loading/empty states, first/later Retry, numbered paging, deduplication, end-of-list and fetch exclusion,
+          and refresh after record and entry writes. All failed against the empty view, then passed implemented.
+        - An additional later-error placement assertion failed with Retry above the rows and passes beneath them.
+    - [x] **4.2.b Build the read and the view**
+        - Added the typed History service/query under the Library key, stable entry/month keys and measured timeline,
+          with small decorative posters, stars, rewatch marks and review tags. Semantic styling uses shared components.
+        - Related frontend tests: 446 passed across 29 files; lint and type-check pass. The run emits existing act
+          warnings in authentication/entry tests; no failures or unrelated test edits.
+    - [x] **4.2.c Extend the browser journey and pagination strategy**
+        - The signed-in journey opens History, waits for its successful private read and scans the view. Replacing
+          the route with its old placeholder made that read assertion fail; restored, the browser spec passes.
+        - The pagination strategy names the private History list; Markdown lint passes.
 
 - [ ] **4.3 A film opened from History returns to the same rows — R27, R28**
 

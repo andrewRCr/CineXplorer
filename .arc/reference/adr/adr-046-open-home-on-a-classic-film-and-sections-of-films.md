@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-14)
 
 Supersedes in part ADR-044 (the home page's Films section), ADR-002 (the remaining trending Featured page),
 ADR-026 (the landing page's trending-list cache), and ADR-039 (Back to Results as the only self-stubbing smoke spec).

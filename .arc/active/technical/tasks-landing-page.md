@@ -2,9 +2,10 @@
 
 **PRD:** `prd-landing-page.md`
 **Created:** 2026-11-13
+**Completed:** 2026-11-14
 **Branch:** `technical/landing-page`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -534,8 +535,9 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
           once signed in; the status line stops naming a landing page as in development
 
     - [x] **4.5.d Run criterion 15's search**
-        - No outdated current description remains in the searched reference docs or README.
-          ADR-046 is Proposed; the four earlier statuses name their precise superseded parts. Markdown lint passes.
+        - No outdated current description remained in the searched reference docs or README at this check.
+          ADR-046 was Proposed then and was accepted in 6.1; the four earlier statuses name their precise
+          superseded parts. Markdown lint passes.
         - `.arc/reference`, outside the archive and the ADR bodies, and the root README: no current description of
           one pagination context for every movie request, of Back to Results as the only spec supplying its own
           responses on staging, or of the landing page as in development
@@ -576,8 +578,8 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
           `e2e/catalogue.ts` to match. Run the movie app's Docker tests, touched-app Ruff/Pyright and frontend types
 
     - Schema and selection tests failed before their implementations, then passed. The movie app passes all
-      576 Docker tests; Ruff, Pyright, generated frontend types and fixture lint pass. All provisional points remain
-      unset for the Owner’s final film checks.
+      576 Docker tests; Ruff, Pyright, generated frontend types and fixture lint pass. All provisional points were
+      unset at this stage; the final approved films and points are recorded in 5.1.
 
 - [x] **4.8 The selected full-width neutral hero uses its input focus and aligned credit — R3, R6–R9, R25, R27**
 
@@ -653,8 +655,8 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     - The calendar retains four side-by-side weeks at 1280px and stacks them at 360px, in both modes; shared
       widths, the full-width band and page overflow checks pass. Original artwork is selected at 2000px at both
       tested pixel densities. The three covering smoke specs pass all 17 scenarios on this implementation.
-    - Final film selection and per-film focus approval remain in 5.1; full verification and code review remain
-      in Phase 6. No success criterion is marked by these implementation checks.
+    - Final film selection and per-film focus approval are recorded in 5.1, and full verification in Phase 6.
+      These implementation checks did not mark success criteria; code review is a separate completion stage.
 
 - [x] **4.10 Serve director names with the featured film — R4**
 
@@ -696,7 +698,7 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     - New contracts failed against pre-amendment rendering, preview-name inputs and a targeted separator omission.
       All 43 related/direct presentation tests pass, including 768/1024 boundaries and missing metadata. Lint,
       types, format and the 17 covering browser smoke scenarios pass. Fixed quote escapes and media-result defaults
-      found by lint/types. Actual geometry/contrast and the sheet update follow in 4.12.
+      found by lint/types. Actual geometry/contrast and the sheet update are recorded in 4.12.
 
 - [x] **4.12 Refresh the external sheet and verify final hero geometry — R3, R7, R8**
 
@@ -726,8 +728,8 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
           widths from 320px to 2200px, button/native/touch paging and the signed-in watchlist scroller pass.
           Larger sources select original at 2000px in both modes at 1× and 2× density.
         - The 17 covering smoke scenarios passed against the unchanged implementation recorded in `358c27cb`.
-          No candidate was imported or approved; Owner sign-off remains in 5.1. Full verification, CI and the final
-          code review remain in Phase 6.
+          No candidate was imported or approved at this stage; Owner sign-off is recorded in 5.1 and full
+          verification in Phase 6. CI and code review belong to the later completion stages.
 
 - [x] **4.13 Text panels, capital titles and the revised pitch and band copy — R6, R7, R8, R14, R27**
 
@@ -851,9 +853,9 @@ recorded, and the three changed smoke specs pass.
       Browser checks pass shared focus, snapshot geometry, default and flagged review paths, saved state, approval
       invalidation, exact checked-path export and missing-art exclusion. Delayed/failed larger sources hold approval
       until all current previews load; retry and switching selections preserve identity/artwork coupling.
-    - The sheet and simulated browser choices are outside the repository. No Owner candidate is approved or imported;
-      5.1 remains open. Independent amendment review found one minor scope-wording conflict, corrected with Owner
-      approval; an optional fix check has not run.
+    - The sheet and simulated browser choices are outside the repository. No Owner candidate was approved or
+      imported at this stage; 5.1 records the final decisions. Independent amendment review found one minor
+      scope-wording conflict, corrected with Owner approval; the optional fix check was not run.
 
 - [x] **5.1 The Owner's approved films replace the provisional list — R3**
 
@@ -935,7 +937,7 @@ recorded, and the three changed smoke specs pass.
       model's list of viewings**
         - Check both against `main`'s code, then ground R15 in them: the viewings list and its read, the rewatch icon
           and the read-only star display
-        - Tests first, per criterion 30: "Recently watched" as R15 gives it, between the watchlist and what's on (R18),
+        - Tests first, per criterion 33: "Recently watched" as R15 gives it, between the watchlist and what's on (R18),
           its read joining R22's, the nothing-saved set counting viewings, and a failed read with no "Server error"
           toast, a `Toaster` mounted; expect them to FAIL initially
         - Build the diary form and the section; the viewings read takes `homeReadOptions` through request options on
@@ -951,7 +953,7 @@ recorded, and the three changed smoke specs pass.
           no accessible name or click handler, and the baseline still excuses `button-name` on `/browse` and
           `/search`, so R28's three entries stay
     - [~] **5.4.c The queue, if `main` orders the watchlist as a queue on the Watchlist page**
-        - Tests first, per criterion 30: the watchlist read sends the queue's sort value and direction as the
+        - Tests first, per criterion 33: the watchlist read sends the queue's sort value and direction as the
           Watchlist page does, the section reads "Up next" and leads with the queue's first film, and the large card
           links "Reorder" to `/watchlist`; expect them to FAIL
         - Add `sort` and `direction` to `UserMoviesQueryParams` unless `main`'s already carries them, and make the
@@ -959,7 +961,7 @@ recorded, and the three changed smoke specs pass.
         - Not applied: at `0e029c0c`, `main`'s Watchlist page reads the watchlist in the default order, newest
           addition first, and the watchlist's sort values are added, watched, rating, title and release, with no
           queue, so the section stays "Your watchlist" on R20's defaults
-    - Repeat 5.3 and this task if `main` moves before the pull request merges (criterion 30 reads the final merge)
+    - Repeat 5.3 and this task if `main` moves before the pull request merges (criterion 33 reads the final merge)
 
     - All three conditions fail against `main` at the merge, so Home is unchanged by them. No pull request was open
       for the Library, the card controls or the queue when they were checked.
@@ -976,7 +978,39 @@ recorded, and the three changed smoke specs pass.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1)
+- [x] **6.0 Cover the calendar's loading, empty, failed and Retry states — criterion 4**
+
+    **Goal:** The calendar's component tests demonstrate its section states and section-only Retry through real
+    queries with MSW at the network boundary.
+
+    - Added three MSW component cases: delayed loading through success, omission after an empty read, and quiet
+      failure through a gated Retry while the sibling section stays visible and receives no new request. The tests
+      check the named heading, visible nonempty placeholders and recovery, with the real Toaster mounted.
+    - Seven narrow reconstructions each produce the expected behavioral assertion failure: missing loading status,
+      empty placeholders, a retained empty section, missing error fallback, missing Retry placeholders, a Retry that
+      refetches both sections, and an enabled global error toast. Application source is restored after every probe.
+    - All 28 focused section/watchlist tests, changed-file ESLint and Prettier, frontend type-check and task-list
+      markdown lint pass. Application code is unchanged. Full checks remain those recorded by 6.1's author walk.
+
+- [x] **6.1 Verify the work** (load `archive-completed.md` § 1)
+
+    - Full local verification checks pass on `3bd893f6`: 1547 backend tests with 96.56% coverage, 3288 frontend
+      tests, all 21 smoke scenarios across seven specs, lint, formatting, both type checks, contrast, production
+      build, markdown and API regeneration without drift. The additional calendar cases pass in 6.0's focused
+      checks. The criteria walk and all subsequent evidence are recorded in `REVIEW-LOG.md`.
+    - The approved independent pass used three read-only source scopes and a fresh aggregate over all 91 changed
+      paths. It found no application defect and one minor documentation gap, resolved by accepting ADR-046 on the
+      local date. The optional fix check was declined. Requested checks pass, including a fresh bound backend run,
+      focused component/grid checks, all seven smoke specs and source-bound browser probes. Historical film
+      evidence is reconciled with the approved import commit and unchanged hero source.
+    - Working-tree ADR validation confirms five changed records have settled statuses and all 47 numbers are
+      unique. Only ADR-046's Status changed. Its decision text remains the reviewed text.
+    - The approved proof-timing amendment replaces criterion 30 with 33 (all original conditional clauses and local
+      regeneration with no diff) and 34 (actual PR CI type-drift proof). Fresh regeneration leaves no diff, so 33 is
+      met and pre-PR verification closes. Criteria 34 and 17 remain open for PR and post-merge proof. The amendment's
+      author coherence/grounding checks pass; the independent pass is omitted for this wording-level change.
+    - Every pre-PR criterion is met or explicitly superseded. The PRD and task list read Complete. Application and
+      test source are unchanged by the amendment; the completed criteria verification evidence remains applicable.
 
 ## Implementation Notes
 
@@ -998,8 +1032,8 @@ recorded, and the three changed smoke specs pass.
 - **The browsable stack runs its backend with `DEBUG` on** (`backend/config/.env`), so `/?film=` serves any film
   there, for 3.3 and 5.1.c.
 - **The neighbouring user-movie units** are separate work units (tracking, controls, Library, then the queue). The
-  tracking model lands first, changes the API schema and the Library's `added` order, and its draft lands shared
-  frontend pieces Home draws; 5.2 checks its state before `main` merges in.
+  tracking model merged first, changing the API schema and the Library's `added` order and adding shared frontend
+  pieces Home draws. Tasks 5.2–5.4 record its integration and the unmet conditions for the later units.
 
 ---
 
@@ -1016,10 +1050,14 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the 2026-11-13 amendment; replacement: criterion 18._
 
-- [ ] 2. Component tests show Home at `/` in the loading state with no `h1` and no pitch while `status` is `resolving`,
+- [x] 2. Component tests show Home at `/` in the loading state with no `h1` and no pitch while `status` is `resolving`,
   the signed-out page while it is `anonymous`, the signed-in page while it is `authenticated`, and Home switching when
   `status` changes; signed-out Home rendering the hero, "Popular in theaters", "Most anticipated" and the band, in
   that order, with no card actions; and `routing.test.tsx` shows `/featured` redirecting to `/` and rendering Home.
+
+  _Verification evidence:_ `Home.test.tsx`, `App.test.tsx` and `routing.test.tsx` passed in the full 3288-test
+  frontend run; source confirms the status branches and section order.
+
 - [~] 3. Component tests show the hero's `h1`, line and actions before its read settles; once it settles with a film,
   the credit naming the title and year, with the tagline when present, linking to the film with `from=home`; the
   pitch and actions with no credit, no image and no "Server error" toast when the read fails, when `backdrop_path` is
@@ -1030,11 +1068,16 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the 2026-11-13 amendment; replacement: criterion 19._
 
-- [ ] 4. Component tests show each section form but the band with its title and placeholders while loading, absent
+- [x] 4. Component tests show each section form but the band with its title and placeholders while loading, absent
   with no films, and failed with its title, "Couldn't load these films." and Retry, which refetches that section's
   read alone; no "Server error" toast on a failed section, while a failed read on the watchlist page still raises it;
   each section as a `section` named by its `h2`; and `PosterPlaceholder` for a film without a `poster_path` in a row,
   in the calendar and on the large card.
+
+  _Verification evidence:_ Calendar loading-to-success, empty, quiet failure and isolated-Retry cases pass with the
+  real section reads and Toaster. All 28 focused section/watchlist tests pass; seven narrow reconstructions fail at
+  the intended behavioral assertions before restoration.
+
 - [~] 5. Component tests of the poster row, with the list's scroll measurements supplied since jsdom does no layout,
   show at most 20 cards in a list; "Previous films" disabled at the start and "Next films" at the end, and both when
   the list doesn't overflow; Next scrolling by the visible width, smoothly, and instantly under reduced motion; and
@@ -1042,15 +1085,23 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the 2026-11-13 amendment; replacement: criterion 20._
 
-- [ ] 6. Unit tests of the calendar's grouping show the first 20 films taken; a Monday's and a Sunday's release in the
+- [x] 6. Unit tests of the calendar's grouping show the first 20 films taken; a Monday's and a Sunday's release in the
   same week and a Friday's in its own; the first four weeks with films, an empty week skipped; up to three films a
   week with three as the cap and up to two with two, each with "and N more" counting the rest of that week among the
   20; and the heading "Week of November 16" for a week whose Monday is November 16. Component tests show each entry's
   weekday and day, its first genre or none, and its link with `from=home`.
-- [ ] 7. Component tests show the large card's poster, title, year, runtime when present, genres and overview, its
+
+  _Verification evidence:_ The four grouping cases and the calendar component case pass in the full frontend run;
+  source preserves within-week input order and the two/three-film caps.
+
+- [x] 7. Component tests show the large card's poster, title, year, runtime when present, genres and overview, its
   link with `from=home`, no card actions, and the card alone with one film on the watchlist; and signed-out Home's
   band, under its hidden heading, with R14's three points.
-- [ ] 8. Component tests of signed-in Home show no hero, and its sections in R18's order with the watchlist's first
+
+  _Verification evidence:_ Large-card poster/placeholder, metadata, missing-runtime and no-action cases, one-film
+  watchlist cases, and exact band-copy tests pass.
+
+- [x] 8. Component tests of signed-in Home show no hero, and its sections in R18's order with the watchlist's first
   film as the large card and the rest in its row, read with `watchlist`, page 1, 20 films and the default `added`
   sort, newest first; the greeting "Welcome back, {first name}", and the username when no first name is set, on the
   first render after load; the visually hidden "Home" after navigating away and back; the greeting again after
@@ -1059,18 +1110,42 @@ recorded, and the three changed smoke specs pass.
   the session and watchlist reads first settle; a failed watchlist read shown in its section's failed state under the
   greeting, and its Retry showing that section's placeholders with the greeting and what's on still in place; a film
   added from what's on taking the large card's place; and a film removed from the watchlist leaving the section.
-- [ ] 9. Tests show no "Welcome back" toast after a password sign-in (`Login`) or a Google or GitHub return
+
+  _Verification evidence:_ Home and watchlist component cases pass: initial-read gating, user-generation changes,
+  greeting lifetime, held nothing-saved set, retry isolation, lead-film replacement and removal.
+
+- [x] 9. Tests show no "Welcome back" toast after a password sign-in (`Login`) or a Google or GitHub return
   (`useAuth`), and `useAuth.test.tsx`'s provider-return cases still checking where the return navigates.
-- [ ] 10. `apiClient.test.ts` shows the catalog's list requests carrying the tab's pagination context, Home's section
+
+  _Verification evidence:_ Password/provider sign-in tests pass; source removes the success toast while retaining
+  provider return navigation.
+
+- [x] 10. `apiClient.test.ts` shows the catalog's list requests carrying the tab's pagination context, Home's section
   requests carrying a different one, and the interceptor keeping a context the caller set.
-- [ ] 11. Tests show the movie page's back link reading "Back to Home" and opening `/` for `from=home`, and every film
+
+  _Verification evidence:_ The catalog, caller-header preservation and Home-context cases in `apiClient.test.ts` pass;
+  the two context IDs are distinct.
+
+- [x] 11. Tests show the movie page's back link reading "Back to Home" and opening `/` for `from=home`, and every film
   link on Home and the hero's credit carrying `from=home`.
-- [ ] 12. `MovieCard.test.tsx` shows no card actions while `status` is `anonymous` or `resolving`, and the watchlist
+
+  _Verification evidence:_ Home links and the Back to Home component case pass; source routes row, calendar,
+  large-card and credit links through the Home source.
+
+- [x] 12. `MovieCard.test.tsx` shows no card actions while `status` is `anonymous` or `resolving`, and the watchlist
   toggle working signed in; `VirtualizedMovieGrid`'s tests pass with its row spacing unchanged.
-- [ ] 13. The smoke tier passes locally with seven specs: `background.spec.ts` waiting for the headline with Home's
+
+  _Verification evidence:_ Anonymous/resolving and signed-in watchlist-toggle MovieCard cases pass; the unchanged
+  virtualized-grid tests pass in the full frontend run.
+
+- [x] 13. The smoke tier passes locally with seven specs: `background.spec.ts` waiting for the headline with Home's
   three reads stubbed, `sign-in.spec.ts` and `phone-width.spec.ts` waiting for "Popular in theaters" after signing in,
   and the axe scans passing with the `button-name` entries for `/browse`, `/search` and `/`, each with its reason, or
   without them where R30c applies (criterion 30).
+
+  _Verification evidence:_ All seven smoke specs pass locally: 21 tests, zero retries, including all axe scans with
+  the documented baselines. Routed run `25ae2282a50b4a78a6e28986c89e860c`.
+
 - [~] 14. In the browsable stack at 1280×800 and 360×800, in light and dark mode, checked by hand: the hero and the
   band spanning the viewport with no sideways scroll, and Home's other sections at every page's width; the wide hero
   keeping its height with and without a film, and the phone hero holding the backdrop's space while the read is
@@ -1083,11 +1158,15 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the 2026-11-13 amendment; replacement: criterion 21._
 
-- [ ] 15. A search of `.arc/reference`, outside the archive and the ADR bodies, and of the root README finds no
+- [x] 15. A search of `.arc/reference`, outside the archive and the ADR bodies, and of the root README finds no
   description of one pagination context for every movie request, of Back to Results as the only spec supplying its
   own responses on staging, or of the landing page as in development, as current; ADR-002's, ADR-026's, ADR-039's and
   ADR-044's statuses name ADR-046 as superseding them in part, each with its part named, and ADR-046 reads
   `Accepted`.
+
+  _Verification evidence:_ The documentation search and the four supersession statuses meet the criterion. ADR-046
+  reads Accepted (2026-11-14); its decision text is unchanged and working-tree ADR validation passes.
+
 - [~] 16. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
   backend (CI's type-drift check passes); with the Activity tab on `main`, component tests show "Recently watched" as
   R15 gives it and the nothing-saved set counting viewings; with named card buttons on `main`, the scans pass without
@@ -1120,13 +1199,17 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 25._
 
-- [ ] 20. Row geometry and component tests, with browser measurements supplied in jsdom, show at most twenty cards,
+- [x] 20. Row geometry and component tests, with browser measurements supplied in jsdom, show at most twenty cards,
   whole-card counts and widths near 194px and never below 138px, count-based paging including gaps, the overlapping
   final complete page, paging from the actual position after native scrolling, and realignment after resizing.
   Previous is disabled at the start, Next at the end, and both when the list fits. Loading placeholders and the
   watchlist scroller use the same count. See all is present with its destination or absent as supplied. Button
   scrolling is smooth and instant under reduced motion. Browser checks show no partial cards at rest, card-edge
   snapping, a hidden scrollbar and visible buttons at every checked width.
+
+  _Verification evidence:_ Geometry, scroller and watchlist tests pass. Live row checks cover 320px through 2200px,
+  complete final pages, resize, native scrolling, buttons, Tab, touch, hidden scrollbars, loading count and reduced
+  motion.
 
 - [~] 21. In the browsable stack at 2000×1000, 1024×1000 and 390×844, in light and dark page mode, the hero alone keeps
   the dark palette and fills the viewport width without page overflow. It holds its 73svh height (subject to R8's
@@ -1193,12 +1276,16 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the portrait/director amendment of 2026-11-14; replacement: criterion 27._
 
-- [ ] 25. Component tests retain the immediate headline/actions, lifetime query, navigation and quiet failure contract
+- [x] 25. Component tests retain the immediate headline/actions, lifetime query, navigation and quiet failure contract
   of criterion 19, with the new arrangements: the pitch line appears only in full bleed; the title alone links;
   director/year is plain text with available parts and no orphan separator; missing names use the year alone.
   Taglines appear on desktop and stacked widths from 768px, and disappear on smaller phones and all compact
   landscape views. Supplied and default focus apply only in full bleed; the portrait stack shows the whole frame.
   Home supplies API director data, with no preview-name fixtures or layout/surface query selectors remaining.
+
+  _Verification evidence:_ HomeHero and FilmHero component cases pass: immediate pitch, quiet failures, lifetime query
+  options, development candidate, director/year combinations, arrangement boundaries and focus behavior; no preview
+  selectors remain in application source.
 
 - [~] 26. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
   answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline`, `directors`
@@ -1271,7 +1358,7 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the mirrored-backdrop amendment of 2026-11-14; replacement: criterion 32._
 
-- [ ] 30. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+- [~] 30. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
   backend (CI's type-drift check passes); with the Library's History and the viewing source on `main`, component tests
   show Recently watched as R15 gives it, its See all opening `/library/history`, and the nothing-saved set counting
   viewings; with named card controls on `main`, the scans pass without the three button-name baselines; and with the
@@ -1279,12 +1366,17 @@ recorded, and the three changed smoke specs pass.
   first film, and the large card's Reorder link opening `/watchlist`. The approved R6 pitch and R14 band copy are
   retained; this merge condition does not expand them.
 
-- [ ] 31. Backend tests retain criterion 28's featured-film coverage, except that the response and the generated
+  _Superseded by the verification-proof timing amendment of 2026-11-14; replacements: criteria 33 and 34._
+
+- [x] 31. Backend tests retain criterion 28's featured-film coverage, except that the response and the generated
   OpenAPI and frontend types gain `mirrored`, and also show an entry's `mirrored` returned as configured: kept for a
   listed DEBUG candidate and for the random entry in production, and `false` for an entry without it and for an
   unlisted candidate. The one TMDB detail call is unchanged, and no request parameter supplies mirroring.
 
-- [ ] 32. Browser checks retain criterion 29's checks, with these changes. Component tests show a mirrored film's
+  _Verification evidence:_ The full 1547-test backend run passes, including featured service, endpoint, focus and
+  detail contracts; frontend regeneration leaves no diff and exposes mirroring and director names.
+
+- [x] 32. Browser checks retain criterion 29's checks, with these changes. Component tests show a mirrored film's
   full-bleed image flipped horizontally with its position the mirror of its point (`100 − x`), so a point given in
   the flipped frame holds; its stacked image unflipped; an unmirrored film's image unchanged; and no text flipped.
   Home passes the featured response's `mirrored` to the presentation. The script confirms each applied entry's
@@ -1292,6 +1384,31 @@ recorded, and the three changed smoke specs pass.
   every mirrored film as well as every custom-point or flagged one. The sheet flips its two full-bleed views and its
   full frame, but not its phone view; moves a set point with its subject when the flip changes, returning an
   approved film to pending; and exports and saves the flip with each approved entry.
+
+  _Verification evidence:_ Mirroring tests and current two-mode geometry/contrast/interaction probes pass. All 135
+  entries match final approvals; retained endpoint, fit and capture evidence has zero failures. Full evidence:
+  `REVIEW-LOG.md`.
+
+  The approved film list and hero presentation remain unchanged from `55bcb461`; subsequent theme changes are
+  comments only. All 300 retained captures match the current focus/mirroring metadata. The Owner's sheet and batch
+  capture decisions recorded in 5.1 remain applicable.
+
+- [x] 33. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+  backend (regenerating `frontend/openapi.json` and `frontend/src/types/api.ts` from the merged backend leaves no
+  local diff); with the Library's History and the viewing source on `main`, component tests show Recently watched as
+  R15 gives it, its See all opening `/library/history`, and the nothing-saved set counting viewings; with named card
+  controls on `main`, the scans pass without the three button-name baselines; and with the queue on `main`, component
+  tests show the watchlist read sending its sort and direction, Up next leading with its first film, and the large
+  card's Reorder link opening `/watchlist`. The approved R6 pitch and R14 band copy are retained; this merge condition
+  does not expand them.
+
+  _Verification evidence:_ Regenerating the schema and TypeScript types from this worktree's merged backend leaves no
+  local diff. The conditional History, named-control and queue clauses were checked against `0e029c0c` and do not
+  apply; their source and execution evidence remain recorded in 5.4 and `REVIEW-LOG.md`.
+
+### Proven on the pull request
+
+- [ ] 34. The pull request's API type-drift check passes before merge.
 
 ### Proven after merge
 

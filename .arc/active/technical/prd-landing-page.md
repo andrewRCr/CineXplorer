@@ -3,7 +3,7 @@
 **Type:** Technical
 **Form:** detailed · PRD
 **Class:** Heavy
-**Status:** Ready for Implementation
+**Status:** Complete
 **Created:** 2026-11-13
 
 ---
@@ -535,6 +535,8 @@ further changes, each checked against `main`'s code at that merge:
 
 - **a. API types, always.** The frontend's API types (`frontend/openapi.json` and `frontend/src/types/api.ts`) are
   regenerated from the merged backend, so they carry this work's schema changes (R4, R5) and any on `main`.
+  Before the pull request, regeneration must leave no local diff. On the pull request, CI's type-drift check must
+  pass; that result is proven once the pull request exists.
 - **b. If `main` has the Library's History (`/library/history`) and the tracking model's list of viewings,**
   signed-in Home builds "Recently watched" (R15) in its place (R18), with its read joining R22's, and the
   nothing-saved set counts its viewings.
@@ -770,6 +772,9 @@ further changes, each checked against `main`'s code at that merge:
 20. **Home renders outside the app's padded container** (R2), so the hero and the band can span the viewport while
     Home's other sections keep every page's width and padding. A `100vw` breakout inside the container was set aside:
     it scrolls sideways while a vertical scrollbar shows. _ADR: `none` (tactical)._
+21. **API type agreement is proven locally before the pull request and by CI on it** (R30a). Local regeneration
+    must leave no diff so verification can close before the pull request opens; the pull request's type-drift check
+    must then pass before merge. _ADR: `none` (verification timing; the API contract and architecture are unchanged)._
 
 **ADRs this work delivers:**
 
@@ -1063,13 +1068,15 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 
     _Superseded by the mirrored-backdrop amendment of 2026-11-14; replacement: criterion 32._
 
-30. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+30. [~] R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
     backend (CI's type-drift check passes); with the Library's History and the viewing source on `main`, component
     tests show Recently watched as R15 gives it, its See all opening `/library/history`, and the nothing-saved set
     counting viewings; with named card controls on `main`, the scans pass without the three button-name baselines;
     and with the queue on `main`, component tests show the watchlist read sending its sort and direction, Up next
     leading with its first film, and the large card's Reorder link opening `/watchlist`. The approved R6 pitch and
     R14 band copy are retained; this merge condition does not expand them.
+
+    _Superseded by the verification-proof timing amendment of 2026-11-14; replacements: criteria 33 and 34._
 
 31. Backend tests retain criterion 28's featured-film coverage, except that the response and the generated OpenAPI
     and frontend types gain `mirrored`, and also show an entry's `mirrored` returned as configured: kept for a listed
@@ -1084,6 +1091,19 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     every mirrored film as well as every custom-point or flagged one. The sheet flips its two full-bleed views and its
     full frame, but not its phone view; moves a set point with its subject when the flip changes, returning an
     approved film to pending; and exports and saves the flip with each approved entry.
+
+33. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+    backend (regenerating `frontend/openapi.json` and `frontend/src/types/api.ts` from the merged backend leaves no
+    local diff); with the Library's History and the viewing source on `main`, component tests show Recently watched
+    as R15 gives it, its See all opening `/library/history`, and the nothing-saved set counting viewings; with named
+    card controls on `main`, the scans pass without the three button-name baselines; and with the queue on `main`,
+    component tests show the watchlist read sending its sort and direction, Up next leading with its first film, and
+    the large card's Reorder link opening `/watchlist`. The approved R6 pitch and R14 band copy are retained; this
+    merge condition does not expand them.
+
+### Proven on the pull request
+
+34. The pull request's API type-drift check passes before merge.
 
 ### Proven after merge
 
@@ -1160,3 +1180,9 @@ None.
   check and captures cover mirrored films. Updates R3, R4 and R7, decision 2 and ADR-046, and in the task list a new
   Task 4.15, Tasks 5.1.b and 5.1.c and the Phase 4 exit criterion. Criteria 28 and 29 are superseded by 31 and 32.
   ADR disposition: revise this work's Proposed ADR-046 for the mirroring metadata; no new ADR.
+
+- **2026-11-14 — Verification proof timing (Owner).** Separates R30a's proof into local regeneration before the
+  pull request and the required CI type-drift result on it. Verification can therefore close before the pull request
+  exists, while the CI requirement remains due before merge. Criterion 30 is superseded by 33 (the existing
+  conditional changes and local no-diff check) and 34 (CI proof on the pull request), identically in the task list.
+  Adds decision 21 and clarifies R30a. ADR disposition: `none` (verification timing; no architectural decision).

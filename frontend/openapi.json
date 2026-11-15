@@ -3346,7 +3346,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_HistoryEntrySchema_"
+                  "$ref": "#/components/schemas/PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"
                 }
               }
             }
@@ -6489,6 +6489,107 @@
         "title": "HistoryQuerySchema",
         "type": "object"
       },
+      "HistoryChangeFilmSchema": {
+        "description": "A stored film's latest shown change within one day and field.",
+        "properties": {
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "poster_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Path"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title",
+          "release_date",
+          "poster_path",
+          "rating"
+        ],
+        "title": "HistoryChangeFilmSchema",
+        "type": "object"
+      },
+      "HistoryChangesSchema": {
+        "description": "One indivisible day and field in the private timeline.",
+        "properties": {
+          "kind": {
+            "const": "changes",
+            "title": "Kind",
+            "type": "string"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "watchlist",
+              "watched",
+              "liked",
+              "rating"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "films": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryChangeFilmSchema"
+            },
+            "title": "Films",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "day",
+          "field",
+          "count",
+          "films"
+        ],
+        "title": "HistoryChangesSchema",
+        "type": "object"
+      },
       "HistoryEntrySchema": {
         "description": "A dated viewing or an undated review on its own calendar day.",
         "properties": {
@@ -6597,7 +6698,7 @@
         "title": "HistoryEntrySchema",
         "type": "object"
       },
-      "PaginatedResponse_HistoryEntrySchema_": {
+      "PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__": {
         "properties": {
           "page": {
             "default": 1,
@@ -6617,13 +6718,20 @@
           "results": {
             "default": [],
             "items": {
-              "$ref": "#/components/schemas/HistoryEntrySchema"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/HistoryEntrySchema"
+                },
+                {
+                  "$ref": "#/components/schemas/HistoryChangesSchema"
+                }
+              ]
             },
             "title": "Results",
             "type": "array"
           }
         },
-        "title": "PaginatedResponse[HistoryEntrySchema]",
+        "title": "PaginatedResponse[Union[HistoryEntrySchema, HistoryChangesSchema]]",
         "type": "object"
       },
       "UserMovieDataPatchSchema": {

@@ -50,6 +50,11 @@ pages. `GET /user-movie-data/history` returns the unified viewing, review and ch
 numbered pagination and only the signed-in visitor's stored data. The existing `/user-movie-data/entries` dated-entry
 list and its schema stay unchanged for consumers needing viewings alone.
 
+The mixed timeline uses a parameterized PostgreSQL selection shared with its group reads. Named query stages form
+saves before selecting each next save, suppress reversals before deduplicating films, then group and join entries.
+One count and ordered page plus one batched sample query keep the number of queries independent of collection size
+and avoid nested correlated selections. It returns the same bounded pagination envelope as database QuerySets.
+
 Until the record of changes is available, History returns viewings and reviews; the changes member and group route
 are added with it. The frontend reads History under the Library query key and measures rows keyed by their content,
 so saves refresh the timeline and existing entries retain their measured heights when other rows move before them.

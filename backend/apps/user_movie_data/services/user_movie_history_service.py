@@ -1,52 +1,67 @@
-"""Read an owner's private timeline from stored entries and movie cards."""
+"""Read an owner's private timeline from stored entries, changes and movie cards."""
+
+from datetime import date
+from math import ceil
+from typing import cast
 
 from django.contrib.auth.models import AbstractBaseUser
-from django.db.models import Case, IntegerField, Q, Value, When
-from django.db.models.functions import Coalesce
+from pydantic import TypeAdapter
 
-from apps.core.pagination import paginate_queryset
 from apps.core.utils.schemas import PaginatedResponse
-from apps.user_movie_data.models import UserMovieEntry
-from apps.user_movie_data.schemas import HistoryQuerySchema, HistoryRowSchema
+from apps.user_movie_data.schemas import (
+    HistoryChangeFilmSchema,
+    HistoryChangesSchema,
+    HistoryQuerySchema,
+    HistoryRowSchema,
+)
+from apps.user_movie_data.services.history_queries import (
+    COUNT_HISTORY,
+    PAGE_HISTORY,
+    fetch_rows,
+    sample_changes,
+)
+
+row_adapter = TypeAdapter[HistoryRowSchema](HistoryRowSchema)
+film_adapter = TypeAdapter(HistoryChangeFilmSchema)
+group_key_adapter = TypeAdapter(tuple[date, str])
 
 
 class UserMovieHistoryService:
-    """Page viewings and undated reviews in a deterministic timeline order."""
+    """Page one stable timeline and sample its change groups in one additional query."""
 
     def get_history(
         self, user: AbstractBaseUser, query: HistoryQuerySchema
     ) -> PaginatedResponse[HistoryRowSchema]:
-        entries = (
-            UserMovieEntry.objects.filter(record__user=user)
-            .filter(Q(watched_on__isnull=False) | Q(review__isnull=False))
-            .select_related("record__movie")
-            .annotate(
-                history_day=Coalesce("watched_on", "made_on"),
-                kind_rank=Case(
-                    When(watched_on__isnull=False, then=Value(0)),
-                    default=Value(1),
-                    output_field=IntegerField(),
-                ),
-            )
-            .order_by("-history_day", "-created_at", "kind_rank", "-pk")
+        parameters = [user.pk, user.pk]
+        # COUNT(*) has one integer column; the SQL driver cannot encode this contract.
+        total = cast(int, fetch_rows(COUNT_HISTORY, parameters)[0][0])
+        values = fetch_rows(
+            PAGE_HISTORY, [*parameters, query.page_size, (query.page - 1) * query.page_size]
         )
-        rows, metadata = paginate_queryset(entries, query.page, query.page_size)
-        return PaginatedResponse[HistoryRowSchema](
-            **metadata,
-            results=[
-                HistoryRowSchema(
-                    kind="viewing" if entry.watched_on else "review",
-                    day=entry.watched_on or entry.made_on,
-                    id=entry.pk,
-                    tmdb_id=entry.record.movie.tmdb_id,
-                    watched_on=entry.watched_on,
-                    rating=entry.rating,
-                    review=entry.review,
-                    rewatch=entry.rewatch,
-                    title=entry.record.movie.title,
-                    release_date=entry.record.movie.release_date,
-                    poster_path=entry.record.movie.poster_path,
+        rows = [
+            row_adapter.validate_json(value)
+            if isinstance(value, str)
+            else row_adapter.validate_python(value)
+            for (value,) in values
+        ]
+        groups = {
+            (row.day, row.field): row for row in rows if isinstance(row, HistoryChangesSchema)
+        }
+        if groups:
+            sample_parameters: list[int | str] = [user.pk]
+            for day, field in groups:
+                sample_parameters.extend([day.isoformat(), field])
+            for day, field, value in fetch_rows(sample_changes(len(groups)), sample_parameters):
+                film = (
+                    film_adapter.validate_json(value)
+                    if isinstance(value, str)
+                    else film_adapter.validate_python(value)
                 )
-                for entry in rows
-            ],
+                group = groups[group_key_adapter.validate_python((day, field))]
+                group.films.append(film)
+        return PaginatedResponse[HistoryRowSchema](
+            page=query.page,
+            total_pages=ceil(total / query.page_size),
+            total_results=total,
+            results=rows,
         )

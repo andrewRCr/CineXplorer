@@ -1932,6 +1932,47 @@ export interface components {
             page_size: number;
         };
         /**
+         * HistoryChangeFilmSchema
+         * @description A stored film's latest shown change within one day and field.
+         */
+        HistoryChangeFilmSchema: {
+            /** Tmdb Id */
+            tmdb_id: number;
+            /** Title */
+            title: string;
+            /** Release Date */
+            release_date: string | null;
+            /** Poster Path */
+            poster_path: string | null;
+            /** Rating */
+            rating: number | null;
+        };
+        /**
+         * HistoryChangesSchema
+         * @description One indivisible day and field in the private timeline.
+         */
+        HistoryChangesSchema: {
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "changes";
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "watchlist" | "watched" | "liked" | "rating";
+            /** Count */
+            count: number;
+            /** Films */
+            films: components["schemas"]["HistoryChangeFilmSchema"][];
+        };
+        /**
          * HistoryEntrySchema
          * @description A dated viewing or an undated review on its own calendar day.
          */
@@ -1965,8 +2006,8 @@ export interface components {
              */
             day: string;
         };
-        /** PaginatedResponse[HistoryEntrySchema] */
-        PaginatedResponse_HistoryEntrySchema_: {
+        /** PaginatedResponse[Union[HistoryEntrySchema, HistoryChangesSchema]] */
+        PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__: {
             /**
              * Page
              * @default 1
@@ -1986,7 +2027,7 @@ export interface components {
              * Results
              * @default []
              */
-            results: components["schemas"]["HistoryEntrySchema"][];
+            results: (components["schemas"]["HistoryEntrySchema"] | components["schemas"]["HistoryChangesSchema"])[];
         };
         /**
          * UserMovieDataPatchSchema
@@ -3073,7 +3114,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedResponse_HistoryEntrySchema_"];
+                    "application/json": components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];
                 };
             };
             /** @description Unauthorized */

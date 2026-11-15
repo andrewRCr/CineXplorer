@@ -149,4 +149,24 @@ class HistoryEntrySchema(ActivityEntrySchema):
     day: date
 
 
-HistoryRowSchema = HistoryEntrySchema
+class HistoryChangeFilmSchema(Schema):
+    """A stored film's latest shown change within one day and field."""
+
+    tmdb_id: int
+    title: str
+    release_date: date | None
+    poster_path: str | None
+    rating: int | None
+
+
+class HistoryChangesSchema(Schema):
+    """One indivisible day and field in the private timeline."""
+
+    kind: Literal["changes"]
+    day: date
+    field: Literal["watchlist", "watched", "liked", "rating"]
+    count: int
+    films: list[HistoryChangeFilmSchema]
+
+
+HistoryRowSchema = HistoryEntrySchema | HistoryChangesSchema

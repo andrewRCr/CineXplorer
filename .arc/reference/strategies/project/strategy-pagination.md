@@ -59,7 +59,9 @@ Frontend: Store next cursor, display the 22 movies
 
 ## Database-Served Lists
 
-Use page numbers through `paginate_queryset` for lists read from the database. Validate page between 1 and
+Use page numbers through `paginate_queryset` for database QuerySets. History's mixed timeline uses a parameterized
+PostgreSQL selection: one count, one ordered union page and one batched sample read for the page's change groups.
+It constructs the same pagination metadata directly, since its selection is not a QuerySet. Validate page between 1 and
 1,000,000 and page_size between 1 and 100 (default 20) in the query schema; invalid values answer 422 rather than
 being clamped. A page past the end returns an empty result list with valid counts.
 

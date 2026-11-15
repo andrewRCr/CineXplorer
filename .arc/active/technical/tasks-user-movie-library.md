@@ -376,39 +376,36 @@ History, with each case of R34 that holds applied.
           also pass. Frontend lint/types, Ruff lint/format, isolated locked-dependency Python checking and changed
           Markdown pass. A Markdown line-wrap correction was mechanical.
 
-- [ ] **5.2 History's read selects the shown changes and groups them by day and field — R20, R22, R23, R24**
+- [x] **5.2 History's read selects the shown changes and groups them by day and field — R20, R22, R23, R24**
 
     **Goal:** The history route adds one `changes` row per day and field holding the films with a shown change that
     day, counted and sampled as R24 says, ordered with the entries and paged without ever splitting a group, in a
     fixed number of queries.
 
-    - [ ] **5.2.a Write the change cases in `test_history_api.py`**
-        - Recorded changes are seeded directly through the model 5.1.b names, each save with its own made time (two
-          saves sharing one read as a single save)
-        - A change row only for a record save's turn-on; never for an entry write's rating change, or a reversal
-        - A change hidden when the film's next save reverses it in its own field, and shown when a save of another
-          field came between; re-liking after an unlike shows the new like only; an entry write's like removal hides
-          the like before it; a save holding only an entry write's rating change does not count as the next save;
-          deleting a reversal shows the change it hid
-        - A film once per kind per day, with its latest shown change; for ratings, that change's value
-        - 4 films of one kind on a day form one row with `count` 4 and its `films` most recent first; 9 films sample 8
-        - Changes sit on their stored day, not their made time's UTC date; within a day a kind's row sits where its
-          latest change does among the day's rows; ties order viewings, reviews, then changes by field (`watchlist`,
-          `watched`, `liked`, `rating`)
-        - A group is never split across two pages; another user's changes are never returned
-        - The 10-row and 500-row query counts stay equal with changes among the rows
-        - Expect tests to FAIL initially
-
-    - [ ] **5.2.b Build the selection, the grouping and the union**
-        - Shown changes: the record saves' turn-ons whose film's next save (the earliest later made time among that
-          film's rows, leaving out entry writes' rating changes) holds no reversal in the same field; per film, day and
-          field, the latest of them
-        - Grouped rows (day, field, count, latest made time) joined to 4.1's entry rows in one ordered, paged query
-          with one count; each page's samples (up to 8 films per group, most recent first) in one more query
-        - `HistoryChangeFilmSchema` (`tmdb_id`, `title`, `release_date`, `poster_path`, `rating`) and the
-          `kind: "changes"` member (`day`, `field`, `count`, `films`) of `HistoryRowSchema`
-        - Regenerate the API types
-        - Tests should now PASS
+    - [x] **5.2.a Cover selection, grouping and ordering through the route**
+        - Directly seeded changes cover turn-ons, owner isolation, ignored entry ratings and reversals, immediate
+          own-field reversals, intervening other-field saves (including mixed entry writes), re-liking, Undo deletion,
+          latest shown ratings, multi-field save timestamps and local days.
+        - Four/nine-film groups stay whole between entry pages and sample at most eight films newest first. Kind,
+          field and entry-ID ties stay deterministic. Mixed pages take exactly three queries with 10 or 500 films,
+          spanning 10 or 100 groups; entry-only pages still take two.
+        - The initial change-kind case and five selection cases failed before their implementation. Narrow valid
+          SQL reconstructions failed the already-satisfied ordering, grouping, sample, local-day and batching cases;
+          the intended query passes restored. The required union tag also failed its OpenAPI case before correction.
+    - [x] **5.2.b Build the shared PostgreSQL selection and typed union**
+        - Added focused psycopg SQL composition: owner changes, distinct saves and next save, reversal suppression,
+          latest shown change per film/day/field, grouped rows and one ordered union with entries. Values remain bound
+          parameters. One further query samples every group on the page; schemas validate the typed query boundary.
+        - Astra recommended these explicit stages over nested correlated ORM selections. Documented the timeline's
+          direct pagination metadata as the QuerySet-helper exception in the pagination strategy and Proposed ADR.
+        - Regenerated the required-tag union and client types. The current client narrows to entry rows until 5.4's
+          change rendering; its existing behavior remains covered. All 420 user-movie tests, 501 related frontend tests,
+          the Library browser journey, Ruff lint/format, Python and TypeScript checking, frontend lint and Markdown
+          pass. SQL parameter typing and test/line formatting corrections were mechanical.
+        - Prepared 5.6's separate retained heavy account early to check this approach: 2,500 viewings, 500 undated
+          reviews, 10,000 changes, 420 watched films and 70 queued films. Through the signed-in route, warmed pages 1
+          and 30 returned in 94.107–103.977 ms across five runs each. Raw evidence is retained; 5.6 repeats the final
+          measurement after the backend is complete, and no success criterion is checked here.
 
 - [ ] **5.3 A group's films page from their own route — R21, R24**
 

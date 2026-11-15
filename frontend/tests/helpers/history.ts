@@ -2,7 +2,7 @@ import type { components } from "@/types/api";
 
 export type HistoryEntry = components["schemas"]["HistoryEntrySchema"];
 export type HistoryPage =
-    components["schemas"]["PaginatedResponse_HistoryEntrySchema_"];
+    components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];
 export function historyEntry(
     id: number,
     overrides: Partial<HistoryEntry> = {},

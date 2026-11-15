@@ -38,7 +38,7 @@ export const getActivity = (params: ActivityParams) =>
     create("/user-movie-data/entries").getPaginated<ActivityPage>(params);
 
 export type HistoryPage =
-    components["schemas"]["PaginatedResponse_HistoryEntrySchema_"];
+    components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];
 export type HistoryEntry = components["schemas"]["HistoryEntrySchema"];
 export type HistoryParams = Partial<
     components["schemas"]["HistoryQuerySchema"]

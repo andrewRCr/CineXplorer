@@ -24,7 +24,11 @@ export default function LibraryHistory() {
   });
   const items = useMemo(
     () =>
-      historyTimeline(query.data?.pages.flatMap((page) => page.results) ?? []),
+      historyTimeline(
+        query.data?.pages
+          .flatMap((page) => page.results)
+          .filter((row) => row.kind !== "changes") ?? [],
+      ),
     [query.data],
   );
   const container = useRef<HTMLDivElement>(null);

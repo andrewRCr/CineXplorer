@@ -120,38 +120,20 @@ scanned, and `sign-in.spec.ts` and `phone-width.spec.ts` pass with their Explore
         - Eight focused cases, 402 tests affected by the query/service changes, frontend lint, type-check and
           formatting passed. Astra's bounded advice led to the reproduced refetch-Retry correction before completion.
 
-- [ ] **2.2 The Watchlist page lists the watchlist in the grid, sorted by the address — R9, R10, R11**
+- [x] **2.2 The Watchlist page lists the watchlist in the grid, sorted by the address — R9, R10, R11**
 
     **Goal:** `/watchlist` reads the watchlist's films into the grid with a "Sort by" dropdown whose six options each
     send their pair, the address carries only a sort that differs from the default and is corrected in place when the
     page doesn't offer it, and an empty watchlist offers Explore films.
 
-    - [ ] **2.2.a Rewrite `Watchlist.test.tsx` for the grid**
-        - It reads `watchlist: true` with `page_size: 100`, `sort: added` and `direction: desc` by default, from its
-          own handler (the default `userMoviesHandler` reads only `watchlist`)
-        - Each of R9's six options sends its pair and sets the address as R10 says: the default sets none, "Title: A–Z"
-          sets `?sort=title&direction=asc`, "Title: Z–A" `?sort=title`
-        - Each choice replaces the history entry rather than adding one: rendered with `renderWithRoutes` from
-          `["/browse", "/watchlist"]`, going back after two choices lands on `/browse`
-        - An unknown value (`?sort=popularity`, `?direction=sideways`, and `?sort=rating`, which this page doesn't
-          offer) reads the default and corrects the address in place, replacing its history entry the same way
-        - Empty: "Your watchlist is empty" with an "Explore films" link to `/browse`
-        - A first-page failure: "Couldn't load your watchlist." with Retry
-        - A removal from a card's "Remove from watchlist" refetches the loaded pages and the film leaves the page
-          (under R34c, the card's Watchlist toggle; 5.5 moves it)
-        - Expect tests to FAIL initially
-
-    - [ ] **2.2.b Build the sort and the page**
-        - `useLibrarySort(options)` in `hooks/movie/`: reads `sort` and `direction` against the page's option table,
-          corrects an unknown pair with `navigate(…, { replace: true })`, and sets a choice with the same replace,
-          dropping a default value; the Films view reuses it (3.1)
-        - `LibrarySortSelect` in `components/movie/library/`: a Chakra `Select` labelled "Sort by" over the option
-          table, styled with `BROWSE_SELECT_TRIGGER_BASE_PROPS` and `BROWSE_SELECT_TRIGGER_CSS` from
-          `components/movie/browse/selectStyles.ts`
-        - `Watchlist.tsx`: the heading, the select and `LibraryGrid` with `{ watchlist: true, sort, direction }`; the
-          page adds no horizontal padding of its own, so R5's column counts hold inside `AppLayout`'s
-        - Starting the list at the top on a sort change comes with the scroll persistence in 3.3
-        - Tests should now PASS
+    - [x] **2.2.a Cover the Watchlist grid and six sorts through the network**
+        - Cases cover each field/direction pair and address, invalid values falling back with replacement, multiple
+          choices replacing history, empty Explore link, first-page Retry and card removal after a save.
+        - Thirteen Watchlist cases failed against the plain-text page, then passed; the App cases also pass (21 total).
+    - [x] **2.2.b Build the shared sort hook, labelled select and Watchlist page**
+        - Sort changes replace history, omit defaults and preserve unrelated parameters. The select uses the browse
+          trigger styles and a visible Sort by label. The page adds no horizontal padding and reads through LibraryGrid.
+        - Frontend lint, type-check and formatting pass. The signed-in browser journey also passes on this page.
 
 - [x] **2.3 The development seed stores two fixture films — R29**
 

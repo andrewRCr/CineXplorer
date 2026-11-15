@@ -72,10 +72,11 @@ at most twenty existing movie cards, use native scrolling and keyboard focus, an
 group the first twenty upcoming films into the first four occupied Monday-to-Sunday weeks, preserving popularity
 within each week. Cards show actions only to signed-in visitors; catalog row spacing stays unchanged.
 
-Signed-in Home is a quick look that sends the visitor onward. Films presents a shared program; the Library is where
-the visitor sorts, filters or reorders personal lists. Home's watchlist leads with the Library's first film, currently
-the newest addition, shown large, followed by the rest in a row. When a watchlist queue exists, its first film and
-order will replace that default; ordering remains in the Library. Each section's link opens its complete list.
+Signed-in Home is a quick look that sends the visitor onward. Films presents a shared program; the visitor sorts,
+filters or reorders personal lists on their own pages, never on Home. Home's watchlist leads with the first film in
+the watchlist's default order, currently the newest addition, shown large, followed by the rest in a row. When a
+watchlist queue exists, its first film and order will replace that default; ordering remains on the watchlist's own
+page. Each section's link opens its complete list.
 
 Home greets a signed-in visitor once per loaded application or change of user, replacing the sign-in welcome toast.
 A return within the application uses a visually hidden Home heading. The first session and watchlist reads decide

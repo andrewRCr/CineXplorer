@@ -867,7 +867,7 @@ recorded, and the three changed smoke specs pass.
     - Check its state: its pull request (`gh pr list --head technical/user-movie-tracking --state all`) and its
       session notes; ask `project-manager.CX` when it is expected to merge
     - Bring the Owner what it changes here: the API schema (R30a), the Library's `added` order (R20 reads it with no
-      change) and the shared frontend layer its draft says Home draws; R30b also needs the Library's Activity tab,
+      change) and the shared frontend layer its draft says Home draws; R30b also needs the Library's History,
       which the Library's unit delivers, so the tracking model alone doesn't bring "Recently watched"
     - Stop for the Owner's decision; record it here
 
@@ -886,11 +886,11 @@ recorded, and the three changed smoke specs pass.
     **Goal:** Each of R30's conditions is checked against `main`'s code at the merge, and its change is made only when
     it holds.
 
-    - [ ] **5.4.a Recently watched, if `main` has the Library's Activity tab and the tracking model's list of
-      viewings**
+    - [ ] **5.4.a Recently watched, if `main` has the Library's History (`/library/history`) and the tracking
+      model's list of viewings**
         - Check both against `main`'s code, then ground R15 in them: the viewings list and its read, the rewatch icon
           and the read-only star display
-        - Tests first, per criterion 22: "Recently watched" as R15 gives it, between the watchlist and what's on (R18),
+        - Tests first, per criterion 30: "Recently watched" as R15 gives it, between the watchlist and what's on (R18),
           its read joining R22's, the nothing-saved set counting viewings, and a failed read with no "Server error"
           toast, a `Toaster` mounted; expect them to FAIL initially
         - Build the diary form and the section; the viewings read takes `homeReadOptions` through request options on
@@ -901,13 +901,14 @@ recorded, and the three changed smoke specs pass.
           and run the covering tests and scans. Retain R6's pitch and R14's band; copy expansion belongs with the
           controls' work, not this condition
         - Mark `[~]` when the condition fails
-    - [ ] **5.4.c The queue, if `main` orders the watchlist as a queue on the Library's Watchlist tab**
-        - Tests first, per criterion 22: the watchlist read sends the queue's sort value and direction as the
-          Watchlist tab does, the section reads "Up next" and leads with the queue's first film, and the large card
-          links "Reorder" to `/library/watchlist`; expect them to FAIL
-        - Add `sort` and `direction` to `UserMoviesQueryParams` and make the change; the tests should now PASS
+    - [ ] **5.4.c The queue, if `main` orders the watchlist as a queue on the Watchlist page**
+        - Tests first, per criterion 30: the watchlist read sends the queue's sort value and direction as the
+          Watchlist page does, the section reads "Up next" and leads with the queue's first film, and the large card
+          links "Reorder" to `/watchlist`; expect them to FAIL
+        - Add `sort` and `direction` to `UserMoviesQueryParams` unless `main`'s already carries them, and make the
+          change; the tests should now PASS
         - Mark `[~]` when the condition fails
-    - Repeat 5.3 and this task if `main` moves before the pull request merges (criterion 22 reads the final merge)
+    - Repeat 5.3 and this task if `main` moves before the pull request merges (criterion 30 reads the final merge)
 
 - [ ] **5.5 Check Home over the merged code** (generate the API types, then run `background.spec.ts`,
   `sign-in.spec.ts` and `phone-width.spec.ts`)
@@ -1010,7 +1011,7 @@ recorded, and the three changed smoke specs pass.
 - [ ] 13. The smoke tier passes locally with seven specs: `background.spec.ts` waiting for the headline with Home's
   three reads stubbed, `sign-in.spec.ts` and `phone-width.spec.ts` waiting for "Popular in theaters" after signing in,
   and the axe scans passing with the `button-name` entries for `/browse`, `/search` and `/`, each with its reason, or
-  without them where R30c applies (criterion 22).
+  without them where R30c applies (criterion 30).
 - [~] 14. In the browsable stack at 1280×800 and 360×800, in light and dark mode, checked by hand: the hero and the
   band spanning the viewport with no sideways scroll, and Home's other sections at every page's width; the wide hero
   keeping its height with and without a film, and the phone hero holding the backdrop's space while the read is
@@ -1085,12 +1086,14 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the 2026-11-14 amendment; replacement: criterion 24._
 
-- [ ] 22. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+- [~] 22. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
   backend (CI's type-drift check passes); with the Activity tab and viewing source on `main`, component tests show
   Recently watched as R15 gives it and the nothing-saved set counting viewings; with named card controls on `main`,
   the scans pass without the three button-name baselines; and with the queue on `main`, component tests show the
   watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
   link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
+
+  _Superseded by the Library-pages amendment of 2026-11-14; replacement: criterion 30._
 
 - [~] 23. Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
   answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
@@ -1204,6 +1207,14 @@ recorded, and the three changed smoke specs pass.
   The sheet uses actual layout snapshots, preserves focus for full bleed only, exports approved entry lines with
   title/year comments, checked paths and short titles, and remains outside the repository/app without an API key.
   Pending candidates can follow in later pull requests.
+
+- [ ] 30. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+  backend (CI's type-drift check passes); with the Library's History and the viewing source on `main`, component tests
+  show Recently watched as R15 gives it, its See all opening `/library/history`, and the nothing-saved set counting
+  viewings; with named card controls on `main`, the scans pass without the three button-name baselines; and with the
+  queue on `main`, component tests show the watchlist read sending its sort and direction, Up next leading with its
+  first film, and the large card's Reorder link opening `/watchlist`. The approved R6 pitch and R14 band copy are
+  retained; this merge condition does not expand them.
 
 ### Proven after merge
 

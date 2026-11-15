@@ -363,9 +363,9 @@ It needs no read, so it has no loading or failed state.
   can appear twice, read from the user-movie tracking model's list of viewings (§ 6, Neighbouring work).
 - Each entry shows the viewing's date; beside it, when the viewing is marked as a rewatch, the rewatch icon (a circular
   arrow named "Rewatch"); a small poster; the title and year; and the viewing's rating in the read-only star display.
-  The icon and the star display are the tracking model's, shared with the Library's Activity tab and the film page.
-- Each entry links to its film's page (R25), and "See all" opens the Library's Activity tab (`/library/activity`), which
-  lists every viewing, newest first, so the section is that tab's top.
+  The icon and the star display are the tracking model's, shared with the Library's History and the film page.
+- Each entry links to its film's page (R25), and "See all" opens the Library's History (`/library/history`), the
+  timeline of the visitor's viewings, reviews and other changes to their films, newest first.
 
 ### Signed-out Home
 
@@ -386,8 +386,8 @@ whose header matches the section they left.
 
 **R18.** Signed-in Home is a quick look at what's next and recent for the visitor, and sends them on: each section shows
 the top of a list, and its "See all" opens the page that holds the whole list. Home never sorts, filters or reorders a
-list; the Library is the one place the visitor does. A card's own actions, which mark one film, are offered on Home as
-wherever cards show. There is no hero. It shows, in order:
+list; the visitor does that on the Watchlist page and in the Library. A card's own actions, which mark one film, are
+offered on Home as wherever cards show. There is no hero. It shows, in order:
 
 1. the greeting, or the visually hidden heading (R19);
 2. the visitor's watchlist (R20);
@@ -408,8 +408,8 @@ counts through `beginUserChange`, so a visitor who signs in again on another pag
 `watchlist: true`, page 1 and `page_size` 20, under the Library endpoint's default sort, `added`, newest first: the
 order the watchlist page shows today. The first film shows as a large card (R13); the rest follow in a poster row's
 scroller (R11) under the same heading, with the scroller's buttons in the section's header; with one film on the
-watchlist, the card shows alone. "See all" opens `/watchlist`, where the bar's Watchlist link leads (the Library page
-renames it, § 6). The section's loading and failure are the watchlist read's (R22).
+watchlist, the card shows alone. "See all" opens `/watchlist`, the Watchlist page, where the bar's Watchlist link
+leads. The section's loading and failure are the watchlist read's (R22).
 
 `ordered_for_library` sorts `added` by the record's `created_at`, so the newest addition leads. A change to what
 `added` sorts by, such as the tracking model's (§ 6), reaches Home with no change to its read. A queue order is a
@@ -533,19 +533,19 @@ further changes, each checked against `main`'s code at that merge:
 
 - **a. API types, always.** The frontend's API types (`frontend/openapi.json` and `frontend/src/types/api.ts`) are
   regenerated from the merged backend, so they carry this work's schema changes (R4, R5) and any on `main`.
-- **b. If `main` has the Library's Activity tab (`/library/activity`) and the tracking model's list of viewings,**
+- **b. If `main` has the Library's History (`/library/history`) and the tracking model's list of viewings,**
   signed-in Home builds "Recently watched" (R15) in its place (R18), with its read joining R22's, and the
   nothing-saved set counts its viewings.
 - **c. If `main`'s `MovieCard` gives its watched and liked buttons accessible names and wires them,** this work adds no
   `/` baseline entry and restores no `/browse` or `/search` entry (R28); keeps `main`'s form of the signed-out rule
   (R26) where the two differ. This work retains R6's headline and line and R14's band copy; any copy expansion
   accompanying the card controls belongs with those controls, not this merge condition.
-- **d. If `main` orders the watchlist as a queue on the Library's Watchlist tab,** the watchlist section reads "Up next"
-  in place of "Your watchlist" and leads with the first film in the queue: its read sends the sort value and direction
-  that put the queue's first film first, as the Library's Watchlist tab does, in place of R20's defaults (the endpoint's
-  `direction` defaults to `desc`), and the frontend's `UserMoviesQueryParams` gains `sort` and `direction` to carry
-  them. The large card gains a "Reorder" link to the Library's Watchlist tab (`/library/watchlist`), since the queue
-  is ordered only there.
+- **d. If `main` orders the watchlist as a queue on the Watchlist page,** the watchlist section reads "Up next" in
+  place of "Your watchlist" and leads with the first film in the queue: its read sends the sort value and direction
+  that put the queue's first film first, as the Watchlist page does, in place of R20's defaults (the endpoint's
+  `direction` defaults to `desc`), and the frontend's `UserMoviesQueryParams` carries `sort` and `direction`, gaining
+  them unless `main`'s already does. The large card gains a "Reorder" link to the Watchlist page (`/watchlist`),
+  since the queue is ordered only there.
 
 ## 5. Non-Goals (Out of Scope)
 
@@ -555,7 +555,7 @@ further changes, each checked against `main`'s code at that merge:
   that open the catalog already filtered), which follows as its own work and settles its own sections. Until it exists,
   Films opens the catalog.
 - **The user-movie tracking model, card controls and Library,** and what they own: the list of logged viewings, card
-  actions, the Library page and its Activity tab. This work builds "Recently watched" only under R30.
+  actions, the Watchlist page, and the Library with its History. This work builds "Recently watched" only under R30.
 - **Card actions on the large card:** planned follow-up work, once the user-movie card controls settle those actions.
   Until then the large card links to the film's page.
 - **The watchlist's queue and its ordering:** the queue's own work. Home reads the order it sets (R20, R30).
@@ -588,11 +588,13 @@ further changes, each checked against `main`'s code at that merge:
       change the card's height and the grid's row spacing (R26). If this work merges first, they remove the three
       `button-name` baseline entries (R28). Any associated copy changes belong with the controls; this work keeps
       R6's pitch and R14's band copy.
-    - **The Library page** gives the visitor's lists tabs at `/library/{tab}`, with `/watchlist` redirecting to its
-      Watchlist tab, renames the bar's Watchlist link to Library, and adds the Activity tab. If this work merges first,
-      the Library's work adds "Recently watched" as R15 designs it.
-    - **The watchlist queue** adds an order the visitor sets on the Library's Watchlist tab, which the Library endpoint
-      returns as one more sort value. If this work merges first, the queue's work makes R30d's change.
+    - **The Library** keeps the Watchlist page at `/watchlist`, which shows the watchlist with its sorts and no
+      redirect, and adds the Library at `/library`, the films the visitor has seen, with History at
+      `/library/history`, the timeline of their viewings and reviews. The bar's Watchlist link stays, Library joins
+      it and Films reads Explore. If this work merges first, the Library's work adds "Recently watched" as R15
+      designs it.
+    - **The watchlist queue** adds an order the visitor sets on the Watchlist page, which the Library endpoint returns
+      as one more sort value. If this work merges first, the queue's work makes R30d's change.
 - **A first visit starts a session per list request.** Each list request from a visitor without a session creates one
   (`_create_dedup_tracker`), so Home's two parallel section requests on a first visit can create two, of which the
   browser keeps the last. The catalog already does this, one request at a time, and the nightly `clearsessions` removes
@@ -695,16 +697,18 @@ further changes, each checked against `main`'s code at that merge:
    paging, card-edge snapping and shared loading geometry avoid a clipped card at any settled width. _ADR: the
    new ADR below._
 7. **Signed-in Home is a quick look at what's next and recent, sending the visitor on** (R18, R20 to R22). Each page
-   keeps its own job: Films is the same program for everyone, personal only in the marks on its cards; the Library
-   holds everything the visitor has kept and is the only place they sort, filter or reorder; Home shows the top of the
-   visitor's lists and a little of what's on. A smaller copy of the Library or of the catalog was rejected: a personal
-   list on Home competes with the Library, and rows of what's on alone repeat what Films shows everyone. The page set
-   is held while shown, so a first save doesn't rebuild the page under the pointer. _ADR: the new ADR below._
-8. **The watchlist leads with the film the Library's Watchlist tab puts first** (R20, R30d), which becomes the first
-   film in the visitor's queue once the watchlist can be ordered: the film they plan to see next. The newest addition,
-   what the order gives today, is not necessarily that film. Home reads the Library endpoint's default order today and
+   keeps its own job: Films is the same program for everyone, personal only in the marks on its cards; the Watchlist
+   page and the Library hold everything the visitor has kept and are the only places they sort, filter or reorder;
+   Home shows the top of the visitor's lists and a little of what's on. A smaller copy of those pages or of the
+   catalog was rejected: a personal list on Home competes with them, and rows of what's on alone repeat what Films
+   shows everyone. The page set is held while shown, so a first save doesn't rebuild the page under the pointer.
+   _ADR: the new ADR below._
+8. **The watchlist leads with the film the Watchlist page puts first** (R20, R30d), which becomes the first film in
+   the visitor's queue once the watchlist can be ordered: the film they plan to see next. The newest addition, what
+   the order gives today, is not necessarily that film. Home reads the Library endpoint's default order today and
    sends the queue's sort value and direction once the queue exists. Reordering the queue on Home was rejected: the
-   Library stays the one place the visitor reorders, and the large card links there. _ADR: the new ADR below._
+   Watchlist page stays the one place the visitor reorders it, and the large card links there. _ADR: the new ADR
+   below._
 9. **Signed-in Home greets on arrival only** (R19, R23). Home is also the front door, reached by the wordmark from
    every page, so a greeting every time reads as a banner; no visible heading is quick to the rows but cold on arrival.
    A greeting once per visit or sign-in welcomes the visitor, and replaces the sign-in toast, which would greet twice.
@@ -767,9 +771,9 @@ further changes, each checked against `main`'s code at that merge:
   records Home's two forms by sign-in status at `/`; the hero's classic film, picked at random from a fixed list and
   served by its own endpoint with director names, optional focus, checked-backdrop and short-title metadata; a dark
   full-bleed hero with hard-edged text panels and a page-mode whole-frame portrait stack; Home's section forms and
-  states; signed-in Home's job beside Films and the Library, its greeting on arrival and its watchlist order; what's on
-  from catalog views; cards without actions for signed-out visitors; and `background.spec.ts` supplying Home's
-  responses itself in both smoke targets. It supersedes in part:
+  states; signed-in Home's job beside Films, the Watchlist page and the Library, its greeting on arrival and its
+  watchlist order; what's on from catalog views; cards without actions for signed-out visitors; and
+  `background.spec.ts` supplying Home's responses itself in both smoke targets. It supersedes in part:
     - ADR-044: the sentence giving the home page a Films section that offers the three windows;
     - ADR-002: what ADR-044 left of its trending Featured page: the four Future items in its Frontend Implementation,
       each about the Featured page that Home replaces (researching TMDB's trending endpoints for it, designing its hero
@@ -852,7 +856,7 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 13. The smoke tier passes locally with seven specs: `background.spec.ts` waiting for the headline with Home's three
     reads stubbed, `sign-in.spec.ts` and `phone-width.spec.ts` waiting for "Popular in theaters" after signing in, and
     the axe scans passing with the `button-name` entries for `/browse`, `/search` and `/`, each with its reason, or
-    without them where R30c applies (criterion 22).
+    without them where R30c applies (criterion 30).
 14. [~] In the browsable stack at 1280×800 and 360×800, in light and dark mode, checked by hand: the hero and the band
     spanning the viewport with no sideways scroll, and Home's other sections at every page's width; the wide hero
     keeping its height with and without a film, and the phone hero holding the backdrop's space while the read is
@@ -927,12 +931,14 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 
     _Superseded by the 2026-11-14 amendment; replacement: criterion 24._
 
-22. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+22. [~] R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
     backend (CI's type-drift check passes); with the Activity tab and viewing source on `main`, component tests show
     Recently watched as R15 gives it and the nothing-saved set counting viewings; with named card controls on `main`,
     the scans pass without the three button-name baselines; and with the queue on `main`, component tests show the
     watchlist read sending its sort and direction, Up next leading with its first film, and the large card's Reorder
     link. The approved R6 pitch and R14 band copy are retained; this merge condition does not expand them.
+
+    _Superseded by the Library-pages amendment of 2026-11-14; replacement: criterion 30._
 
 23. [~] Backend tests, with TMDB replaced at its client and the random choice replaced, show `GET /movies/featured`
     answering without authentication with `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline` and nullable
@@ -1047,6 +1053,14 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     lines with title/year comments, checked paths and short titles, and remains outside the repository/app without an
     API key. Pending candidates can follow in later pull requests.
 
+30. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
+    backend (CI's type-drift check passes); with the Library's History and the viewing source on `main`, component
+    tests show Recently watched as R15 gives it, its See all opening `/library/history`, and the nothing-saved set
+    counting viewings; with named card controls on `main`, the scans pass without the three button-name baselines;
+    and with the queue on `main`, component tests show the watchlist read sending its sort and direction, Up next
+    leading with its first film, and the large card's Reorder link opening `/watchlist`. The approved R6 pitch and
+    R14 band copy are retained; this merge condition does not expand them.
+
 ### Proven after merge
 
 17. The pull request's end-to-end smoke job passes with the seven specs, and after merge the staging smoke run passes
@@ -1102,3 +1116,13 @@ None.
   delivers, ADR-046, and in the task list Tasks 4.13, 4.14 and 5.1, the Phase 4 exit criterion and the Implementation
   Notes. Criteria 26 and 27 are superseded by 28 and 29. ADR disposition: revise this work's Proposed ADR-046 for the
   text panels, short title and review method; copy, the title's capitals and the separator's spacing are tactical.
+
+- **2026-11-14 — The Library's pages (Owner).** The Library's settled design keeps the Watchlist page at
+  `/watchlist` with no redirect and adds the Library at `/library` with History, the timeline of viewings and
+  reviews, at `/library/history`; it has no Activity tab and no `/library/watchlist`, and the bar's Watchlist link
+  stays. R15's "See all", R30b's condition and R30d's queue page and "Reorder" link now name History and the Watchlist
+  page, so "Recently watched" is built whichever work merges first and "Reorder" opens a page that exists. Updates
+  R15, R18, R20, R30b and R30d, the Library non-goal, the neighbouring-work note, decisions 7 and 8 and the summary of
+  ADRs this work delivers, and in the task list Tasks 5.2 and 5.4. Criterion 22 is superseded by 30. ADR disposition:
+  revise this work's Proposed ADR-046 so ordering stays on the watchlist's own page rather than in the Library; no
+  new ADR. Home's design is unchanged.

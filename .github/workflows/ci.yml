@@ -232,6 +232,9 @@ jobs:
             docker compose -f infrastructure/docker-compose.prod.yml \
               --env-file infrastructure/prod.env.example config --quiet
 
+      - name: Check proxy and backend idle connection timeouts
+        run: python3 -m unittest discover -s infrastructure/deploy/tests -p test_http_transport.py -v
+
       - name: Log in to GitHub Container Registry
         if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main') }}
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0

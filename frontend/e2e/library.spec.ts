@@ -141,6 +141,26 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
     await expect(
         page.getByRole("status", { name: "Loading history" }),
     ).toBeHidden();
+    const history = page.getByRole("region", { name: "History", exact: true });
+    const watchedGroup = history
+        .getByRole("group", { name: /^Marked \d+ films watched:/ })
+        .first();
+    if (await watchedGroup.count()) {
+        await watchedGroup.getByRole("button", { name: /^Show all / }).click();
+        await expect(
+            watchedGroup.getByRole("article", {
+                name: `Marked watched: ${secondTitle}`,
+                exact: true,
+            }),
+        ).toBeVisible();
+    } else {
+        await expect(
+            history.getByRole("article", {
+                name: `Marked watched: ${secondTitle}`,
+                exact: true,
+            }),
+        ).toBeVisible();
+    }
     await scanPage(page, info);
     await banner.getByRole("link", { name: "Watchlist", exact: true }).click();
     await expect(page).toHaveURL(new URL("/watchlist", target.baseURL).href);

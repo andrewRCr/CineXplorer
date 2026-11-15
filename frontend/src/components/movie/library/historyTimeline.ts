@@ -1,18 +1,22 @@
-import type { HistoryEntry } from "@/services/userMovieDataService";
+import type { HistoryRow } from "@/services/userMovieDataService";
 
 export type HistoryItem =
     | { type: "month"; key: string; day: string }
-    | { type: "entry"; key: string; entry: HistoryEntry; showDay: boolean };
+    | { type: "entry"; key: string; entry: HistoryRow; showDay: boolean };
 
-/** Keep each entry once and add the calendar labels in the server's timeline order. */
-export function historyTimeline(entries: HistoryEntry[]): HistoryItem[] {
-    const seen = new Set<number>();
+/** Keep each timeline row once and add the calendar labels in the server's timeline order. */
+export function historyTimeline(entries: HistoryRow[]): HistoryItem[] {
+    const seen = new Set<string>();
     const items: HistoryItem[] = [];
     let previousMonth = "";
     let previousDay = "";
     for (const entry of entries) {
-        if (seen.has(entry.id)) continue;
-        seen.add(entry.id);
+        const key =
+            entry.kind === "changes"
+                ? `changes-${entry.day}-${entry.field}`
+                : `entry-${entry.id}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
         const month = entry.day.slice(0, 7);
         if (month !== previousMonth) {
             items.push({
@@ -24,7 +28,7 @@ export function historyTimeline(entries: HistoryEntry[]): HistoryItem[] {
         }
         items.push({
             type: "entry",
-            key: `entry-${entry.id}`,
+            key,
             entry,
             showDay: entry.day !== previousDay,
         });

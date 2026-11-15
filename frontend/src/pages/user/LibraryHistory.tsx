@@ -14,6 +14,7 @@ import { historyPagesQuery } from "@/lib/queries";
 import { TextLink } from "@/components/common";
 import { calendarDate } from "@/components/movie/library/calendarDate";
 import { historyTimeline } from "@/components/movie/library/historyTimeline";
+import HistoryChangesRow from "@/components/movie/library/HistoryChangesRow";
 import HistoryEntryRow from "@/components/movie/library/HistoryEntryRow";
 
 export default function LibraryHistory() {
@@ -24,11 +25,7 @@ export default function LibraryHistory() {
   });
   const items = useMemo(
     () =>
-      historyTimeline(
-        query.data?.pages
-          .flatMap((page) => page.results)
-          .filter((row) => row.kind !== "changes") ?? [],
-      ),
+      historyTimeline(query.data?.pages.flatMap((page) => page.results) ?? []),
     [query.data],
   );
   const container = useRef<HTMLDivElement>(null);
@@ -133,6 +130,11 @@ export default function LibraryHistory() {
                   <Heading as="h2" size="md" py={3}>
                     {calendarDate(item.day, { month: "long", year: "numeric" })}
                   </Heading>
+                ) : item.entry.kind === "changes" ? (
+                  <HistoryChangesRow
+                    changes={item.entry}
+                    showDay={item.showDay}
+                  />
                 ) : (
                   <HistoryEntryRow entry={item.entry} showDay={item.showDay} />
                 )}

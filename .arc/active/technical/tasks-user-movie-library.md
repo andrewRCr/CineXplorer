@@ -424,34 +424,27 @@ History, with each case of R34 that holds applied.
           declarations. All 429 user-movie tests, Ruff lint/format, Python and client type checking, and the Library
           browser spec pass. Import and line formatting were corrected mechanically.
 
-- [ ] **5.4 History draws change rows and groups, expanded in memory — R20, R21, R25, R28, R30**
+- [x] **5.4 History draws change rows and groups, expanded in memory — R20, R21, R25, R28, R30**
 
     **Goal:** A day's changes of one kind show as up to 3 quiet rows or one group with a strip of up to 8 posters and
     "Show all {n}", which expands in place 100 films at a time and stays expanded across a return, and the spec finds
     the setup's "Marked watched" change.
 
-    - [ ] **5.4.a Write the change cases in `LibraryHistory.test.tsx`**
-        - 3 changes of a kind on a day show as 3 quiet rows (muted text, tiny posters) reading R20's labels, "Rated"
-          with the stars; 4 show as one group, "Marked 4 films watched" (each kind's label per R20), a strip of up to 8
-          posters and "Show all 4"
-        - "Show all {n}" reads `/history/changes` with the row's `day` and `field`, page 1 and `page_size: 100`, and
-          lists the films inside the row as change rows without dates; "Show more" reads the next page while more
-          remain; "Show fewer" collapses it; a failed read shows Retry in its place
-        - A group stays expanded after leaving for a film and returning; a change of user collapses every group
-        - A `changes` row repeated across pages is drawn once, by its day and field
-        - The films in rows and groups link with `from=history`
-        - Expect tests to FAIL initially
-
-    - [ ] **5.4.b Build the change rows**
-        - One virtualized row per `changes` row, holding its single rows or its group with the films it has expanded,
-          keyed by day and field
-        - The group's films through an infinite query under `libraryKey`, numbered pages as 2.1.c's
-        - Expanded groups kept in the Library scroll memory (3.3.b), cleared with it
-        - Tests should now PASS
-
-    - [ ] **5.4.c Finish step 3 of `library.spec.ts`**
-        - Find the second fixture film's "Marked watched" change: its own row, or, when the account marked more than 3
-          films watched that day, among the films of that day's group after "Show all {n}"; `scanPage`
+    - [x] **5.4.a Cover change rows and group interactions**
+        - Added `LibraryHistoryChanges.test.tsx` beside the existing entry/return cases: four single and group labels,
+          rating stars, decorative posters, film links, first/later errors and Retry, 100-film paging and collapse,
+          return persistence, user reset, repeated timeline groups and exclusion during refetch.
+        - Labels, expansion and film return failed before implementation. Narrow valid reconstructions exposed
+          reset, duplicate-group and fetch-guard failures; restoring the implementation passed all 24 History cases.
+    - [x] **5.4.b Build the change rows**
+        - Timeline keys deduplicate day/field groups alongside entry IDs; each changes row remains one measured item.
+          Small sets draw quiet film rows; larger groups sample eight posters and page explicitly through the shared
+          query factory. Failed pages retain their films and Retry; fetching excludes another page.
+        - Expansion lives with the existing Library memory and notifies mounted rows on user change. Frontend lint,
+          formatting, type-check and 513 related cases across 36 files pass; the test selector's type error was fixed.
+    - [x] **5.4.c Finish the watched-change browser assertion**
+        - The local journey finds the second fixture's Marked watched row, expanding its day's watched group when
+          present, then scans History. Hiding change rows made the assertion fail; restoring them passed the spec.
 
 - [ ] **5.5 Apply what `main` holds of the neighbouring work — R34, R35**
 

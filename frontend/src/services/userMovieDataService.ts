@@ -39,6 +39,10 @@ export const getActivity = (params: ActivityParams) =>
 
 export type HistoryPage =
     components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];
+export type HistoryChanges = components["schemas"]["HistoryChangesSchema"];
+export type HistoryChangeFilm =
+    components["schemas"]["HistoryChangeFilmSchema"];
+export type HistoryRow = HistoryPage["results"][number];
 export type HistoryEntry = components["schemas"]["HistoryEntrySchema"];
 export type HistoryParams = Partial<
     components["schemas"]["HistoryQuerySchema"]
@@ -89,4 +93,12 @@ export const deleteMovieEntry = (
     apiClient.delete<EntryWriteResponse>(
         `/user-movie-data/${tmdbId}/entries/${entryId}`,
         config,
+    );
+
+export type HistoryChangesPage =
+    components["schemas"]["PaginatedResponse_HistoryChangeFilmSchema_"];
+export type HistoryGroupKey = Pick<HistoryChanges, "day" | "field">;
+export const getHistoryChanges = (params: HistoryGroupKey & HistoryParams) =>
+    create("/user-movie-data/history/changes").getPaginated<HistoryChangesPage>(
+        params,
     );

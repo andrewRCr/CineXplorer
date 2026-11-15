@@ -8,6 +8,8 @@ import {
     getMovieEntries,
     getActivity,
     getHistory,
+    getHistoryChanges,
+    type HistoryGroupKey,
     type ActivityParams,
 } from "@/services/userMovieDataService";
 import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
@@ -138,6 +140,25 @@ export const historyPagesQuery = () =>
             readWithSignal(
                 signal,
                 getHistory({ page: pageParam, page_size: 100 }),
+            ),
+        getNextPageParam: (lastPage) =>
+            lastPage.page < lastPage.total_pages
+                ? lastPage.page + 1
+                : undefined,
+    });
+
+export const historyChangesQuery = (group: HistoryGroupKey) =>
+    infiniteQueryOptions({
+        queryKey: [...libraryKey, "history", "changes", group] as const,
+        initialPageParam: 1,
+        queryFn: ({ signal, pageParam }) =>
+            readWithSignal(
+                signal,
+                getHistoryChanges({
+                    ...group,
+                    page: pageParam,
+                    page_size: 100,
+                }),
             ),
         getNextPageParam: (lastPage) =>
             lastPage.page < lastPage.total_pages

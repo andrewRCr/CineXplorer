@@ -148,62 +148,30 @@ scanned, and `sign-in.spec.ts` and `phone-width.spec.ts` pass with their Explore
         - All 305 core tests, pinned Ruff lint/format and core Pyright passed. Completed independently while the
           grid's frontend checks ran; no backend API contract changed.
 
-- [ ] **2.4 The signed-in spec adds a film from a card, finds it on the Watchlist page and removes it — R30, R32,
+- [x] **2.4 The signed-in spec adds a film from a card, finds it on the Watchlist page and removes it — R30, R32,
   R33**
 
     **Goal:** `library.spec.ts` starts from the same state on every local run, skips on staging, and proves a
     watchlist add and removal through the bar with `/watchlist` scanned, and the documents that count the smoke specs
     count it.
 
-    - [ ] **2.4.a Extend the accessibility baseline**
-        - `BaselineEntry.route` in `e2e/axe-baseline.ts` gains `/watchlist`, `/library` and `/library/history`
-        - A `button-name` entry for `/watchlist`, with the catalog's reason ("Movie cards' icon buttons lack
-          accessible names."); `/library`'s comes with the Films view (3.1); History draws no cards and adds none
-        - Unless `main` names the cards' icon buttons by then (R34c)
+    - [x] **2.4.a Extend the accessibility baseline**
+        - Added the three personal routes and the Watchlist card button-name baseline with the catalog's reason.
+    - [x] **2.4.b Add the local signed-in journey**
+        - Signs in directly toward Explore, resets both seeded films' records with Bearer and CSRF headers, marks the
+          second watched, adds the first through a catalog card, finds it through Watchlist and removes it there.
+        - Own catalog fixtures use the seed's titles; the spec skips staging and scans sign-in, Explore and Watchlist.
+          Reconstructing the text-only Watchlist failed on its missing removal control; restoring the grid passed.
+    - [x] **2.4.c Describe the new smoke spec**
+        - Updated the technical overview, quick reference, testing strategy and quality-gates strategy for eight
+          specs, seven journeys and staging's skipped saved-film journey. Markdown lint, spec lint and type-check pass.
 
-    - [ ] **2.4.b Write `frontend/e2e/library.spec.ts`**
-        - 1280×800, using `e2e/fixtures.ts`' `test`; `test.skip(target.name === "staging", …)` as `sign-up.spec.ts`
-          does, since the staging run changes none of its account's data
-        - Setup: sign in as `target.username` through the form at `/login?next=%2Fbrowse`, so the spec lands on the
-          catalog page step 1 uses and never reaches Home, and wait for the bar's account control (named
-          `target.username`), which no Home section owns (the landing page changes the heading other specs wait for
-          after signing in); then, through `page.request`, `DELETE /api/user-movie-data/{tmdb_id}` for both fixture
-          films (a 404 counts as deleted), then `PATCH` the second with `{ user_watched: true, time_zone }`, the
-          browser's time zone (`UserMovieDataPatchSchema` ignores the field until the backend change reads it)
-        - Each setup request carries the page's `access_token` (in `localStorage` or `sessionStorage`, as the sign-in's
-          "remember me" chose) as a Bearer header, and, since `CsrfProtectionMiddleware` checks every unsafe request,
-          the `csrftoken` cookie as `X-CSRFToken` with `Origin` and `Referer`, as `sign-in.spec.ts`'s refresh request
-          sends them
-        - The spec serves a catalog page holding both fixture films, titled as the seed titles them, from its own
-          `page.route` in `MoviePage`'s shape (`moviePage` in `e2e/catalogue.ts` titles its films "Movie {id}"), since
-          the fixtures abort any catalog read they don't hold
-        - Step 1: add the first fixture film to the watchlist from its card on the catalog grid
-        - Step 2: follow the bar's Watchlist link, find the film's card on `/watchlist`, and `scanPage`
-        - Step 4: remove the film from its card on `/watchlist` and see it leave the page
-        - Step 3 is written in 3.1 (the Films view), 4.2 (History) and 5.4 (the change); the step numbers follow R30
-        - The spec scans each distinct page it reaches, as the testing strategy's journey specs do: `/login` and the
-          catalog page as well as R30's pages; 3.1.c and 4.2.c scan `/library` and `/library/history`, and 5.5.a the
-          film's page under R34c
-
-    - [ ] **2.4.c Name and count the spec where the smoke tier is described**
-        - TECHNICAL-OVERVIEW § 7 (its "Coverage" line), QUICK-REFERENCE § End-to-End Smoke Tests (the spec counts and
-          viewport sentence), `strategy-testing-methodology.md` (the spec tree, "The seven specs…", "watchlist
-          contents… outside this tier" and "one command runs the seven specs") and `strategy-quality-gates.md` ("all
-          seven specs")
-        - The sentences saying what the staging target skips, since it skips `library.spec.ts` too: TECHNICAL-OVERVIEW
-          § 7's "Targets" line ("skips sign-up"), QUICK-REFERENCE's "its staging target skips registration", and the
-          testing strategy's "Registration is skipped" (its staging target) and "registration is skipped"
-        - Find every other site with `git grep -n -i -E "spec\.ts|seven|six|skip" -- .arc/reference README.md .github`
-          and judge each hit; ADRs other than R33's and archived records stay as written
-        - ADR-027's Status: a dated note that its deferred end-to-end watchlist test is now `library.spec.ts`
-        - Markdown lint the changed files
-
-- [ ] **2.5 Check the watchlist journey in the browser**
+- [x] **2.5 Check the watchlist journey in the browser**
 
     **Goal:** The segment's exit criterion is shown on this branch, with what ran and the result recorded here.
 
-    - Start or refresh the worktree's browsable stack (`node scripts/worktree.mjs browse` runs `seed_dev_data`)
-    - Run `e2e/library.spec.ts`, `e2e/sign-in.spec.ts` and `e2e/phone-width.spec.ts`
+    - Refreshed the browsable stack and seeded fixtures. Library, sign-in and phone-width specs all passed together
+      (8 tests), including the Watchlist scan and the signed-in 1024px bar check.
 
 ### **Phase 3:** The Films view lists every film seen, and films lead back to where they were opened
 

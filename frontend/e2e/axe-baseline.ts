@@ -1,10 +1,24 @@
 export interface BaselineEntry {
-    route: "/" | "/login" | "/register" | "/browse" | "/movie/:id" | "/search";
+    route:
+        | "/"
+        | "/login"
+        | "/register"
+        | "/browse"
+        | "/movie/:id"
+        | "/search"
+        | "/watchlist"
+        | "/library"
+        | "/library/history";
     rule: string;
     reason: string;
 }
 
 export const axeBaseline: BaselineEntry[] = [
+    {
+        route: "/watchlist",
+        rule: "button-name",
+        reason: "Movie cards' icon buttons lack accessible names.",
+    },
     {
         route: "/search",
         rule: "button-name",

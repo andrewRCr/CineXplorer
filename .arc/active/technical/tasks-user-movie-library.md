@@ -493,13 +493,20 @@ History, with each case of R34 that holds applied.
       import. Corrected instrumentation records each sample immediately; the complete run above used that script.
       No application setting, logging level or bound changed for measurement.
 
-- [ ] **5.7 Check the full journey**
+- [x] **5.7 Check the full journey**
 
     **Goal:** The segment's exit criterion is shown on this branch after `main`'s merge, with what ran and the result
     recorded here.
 
-    - Run `e2e/library.spec.ts`, `e2e/sign-in.spec.ts`, `e2e/phone-width.spec.ts`, `e2e/back-to-results.spec.ts`,
-      `e2e/browse.spec.ts` and `e2e/movie-detail.spec.ts` against the browsable stack
+    - All six covering specs pass against the worktree's browsable stack at source `ca03c082`: `library.spec.ts`,
+      `sign-in.spec.ts`, `phone-width.spec.ts`, `back-to-results.spec.ts`, `browse.spec.ts` and `movie-detail.spec.ts`
+      (**11 browser cases**). The Library journey finds the watched fixture's change and scans the personal pages.
+    - Fresh independent read-only review covered the complete `516150cb..ca03c082` diff and `516150cb`'s merge
+      integration against both parents, requirements and all six review dimensions: **no material findings**.
+      The review assessed test source; it did not rerun the suites or measurements. The completion advisory found
+      no demonstrated blocker.
+    - Phase 5 is complete. The full verification run, manual browser criteria, criterion checkoffs and final code
+      review remain in Phase 6 and completion; no success criteria were checked in this range.
 
 ### **Phase 6:** Verification
 

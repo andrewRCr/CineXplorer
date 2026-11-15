@@ -407,22 +407,22 @@ History, with each case of R34 that holds applied.
           and 30 returned in 94.107–103.977 ms across five runs each. Raw evidence is retained; 5.6 repeats the final
           measurement after the backend is complete, and no success criterion is checked here.
 
-- [ ] **5.3 A group's films page from their own route — R21, R24**
+- [x] **5.3 A group's films page from their own route — R21, R24**
 
     **Goal:** `GET /user-movie-data/history/changes` returns one day and field's films with a shown change, most recent
     first and each once, 100 at a time, and an empty page for a day and field with none.
 
-    - [ ] **5.3.a Write the cases in `test_history_api.py`**
-        - Paging a group of 250 films; most recent first; each film once; an empty page for a day and field with no
-          shown change; another user's changes never returned
-        - 401 with no user; 422 for a missing or malformed `day`, an unknown `field` and `page_size` 101; the
-          committed OpenAPI schema lists 401 and 422 for both routes
-        - Expect tests to FAIL initially
-
-    - [ ] **5.3.b Build the route on 5.2's selection**
-        - `GET /history/changes`, declared before `/{tmdb_id}`, with `day` and `field` required
-        - Regenerate the API types
-        - Tests should now PASS
+    - [x] **5.3.a Cover the private group contract**
+        - Ten route/contract cases failed while the route was absent. The 250-film case covers paging, rerating and
+          deduplication, latest-first order, ownership, a next-day reversal that must still hide an earlier change,
+          a past-end page and an empty day/field. Required inputs, invalid day/field/bounds, authentication and
+          OpenAPI statuses are covered; all 37 History cases pass implemented.
+    - [x] **5.3.b Share the shown-change selection**
+        - Added the bounded required day/field schema and thin private GET before the ID route. The service counts
+          and pages the same shown selection, filtering day/field afterward; no date restriction can hide a next save.
+        - Shared the stored-film payload with timeline samples, regenerated OpenAPI/client types, and retained 401/422
+          declarations. All 429 user-movie tests, Ruff lint/format, Python and client type checking, and the Library
+          browser spec pass. Import and line formatting were corrected mechanically.
 
 - [ ] **5.4 History draws change rows and groups, expanded in memory — R20, R21, R25, R28, R30**
 

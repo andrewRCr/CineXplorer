@@ -850,6 +850,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-movie-data/history/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get History Changes
+         * @description Read one day and field's shown films from the authenticated user's history.
+         */
+        get: operations["apps_user_movie_data_api_get_history_changes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-movie-data/{tmdb_id}": {
         parameters: {
             query?: never;
@@ -2030,6 +2050,55 @@ export interface components {
             results: (components["schemas"]["HistoryEntrySchema"] | components["schemas"]["HistoryChangesSchema"])[];
         };
         /**
+         * HistoryChangesQuerySchema
+         * @description Select one private day and field before paging its shown films.
+         */
+        HistoryChangesQuerySchema: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @default 20
+             */
+            page_size: number;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "watchlist" | "watched" | "liked" | "rating";
+        };
+        /** PaginatedResponse[HistoryChangeFilmSchema] */
+        PaginatedResponse_HistoryChangeFilmSchema_: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Total Pages
+             * @default 0
+             */
+            total_pages: number;
+            /**
+             * Total Results
+             * @default 0
+             */
+            total_results: number;
+            /**
+             * Results
+             * @default []
+             */
+            results: components["schemas"]["HistoryChangeFilmSchema"][];
+        };
+        /**
          * UserMovieDataPatchSchema
          * @description An absent field stays unchanged except where data rules change it; null clears it.
          */
@@ -3115,6 +3184,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_history_changes: {
+        parameters: {
+            query: {
+                page?: number;
+                page_size?: number;
+                day: string;
+                field: "watchlist" | "watched" | "liked" | "rating";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_HistoryChangeFilmSchema_"];
                 };
             };
             /** @description Unauthorized */

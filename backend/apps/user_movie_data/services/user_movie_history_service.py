@@ -10,12 +10,15 @@ from pydantic import TypeAdapter
 from apps.core.utils.schemas import PaginatedResponse
 from apps.user_movie_data.schemas import (
     HistoryChangeFilmSchema,
+    HistoryChangesQuerySchema,
     HistoryChangesSchema,
     HistoryQuerySchema,
     HistoryRowSchema,
 )
 from apps.user_movie_data.services.history_queries import (
+    COUNT_GROUP,
     COUNT_HISTORY,
+    PAGE_GROUP,
     PAGE_HISTORY,
     fetch_rows,
     sample_changes,
@@ -64,4 +67,25 @@ class UserMovieHistoryService:
             total_pages=ceil(total / query.page_size),
             total_results=total,
             results=rows,
+        )
+
+    def get_changes(
+        self, user: AbstractBaseUser, query: HistoryChangesQuerySchema
+    ) -> PaginatedResponse[HistoryChangeFilmSchema]:
+        parameters = [user.pk, query.day.isoformat(), query.field]
+        # COUNT(*) has one integer column, as in the timeline count above.
+        total = cast(int, fetch_rows(COUNT_GROUP, parameters)[0][0])
+        values = fetch_rows(
+            PAGE_GROUP, [*parameters, query.page_size, (query.page - 1) * query.page_size]
+        )
+        return PaginatedResponse[HistoryChangeFilmSchema](
+            page=query.page,
+            total_pages=ceil(total / query.page_size),
+            total_results=total,
+            results=[
+                film_adapter.validate_json(value)
+                if isinstance(value, str)
+                else film_adapter.validate_python(value)
+                for (value,) in values
+            ],
         )

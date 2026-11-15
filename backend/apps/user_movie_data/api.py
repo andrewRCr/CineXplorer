@@ -15,6 +15,8 @@ from apps.movie.schemas import MovieListResponseSchema
 from apps.user_movie_data.schemas import (
     ActivityEntrySchema,
     ActivityQuerySchema,
+    HistoryChangeFilmSchema,
+    HistoryChangesQuerySchema,
     HistoryQuerySchema,
     HistoryRowSchema,
     LibraryQuerySchema,
@@ -75,6 +77,21 @@ def get_history(
     request: HttpRequest, query: Query[HistoryQuerySchema]
 ) -> PaginatedResponse[HistoryRowSchema]:
     return _history_service.get_history(get_current_user(request), query)
+
+
+@user_movie_data_router.get(
+    "/history/changes",
+    response={
+        200: PaginatedResponse[HistoryChangeFilmSchema],
+        401: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+    },
+)
+def get_history_changes(
+    request: HttpRequest, query: Query[HistoryChangesQuerySchema]
+) -> PaginatedResponse[HistoryChangeFilmSchema]:
+    """Read one day and field's shown films from the authenticated user's history."""
+    return _history_service.get_changes(get_current_user(request), query)
 
 
 @user_movie_data_router.get(

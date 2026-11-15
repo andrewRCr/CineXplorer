@@ -3382,6 +3382,104 @@
         ]
       }
     },
+    "/api/user-movie-data/history/changes": {
+      "get": {
+        "operationId": "apps_user_movie_data_api_get_history_changes",
+        "summary": "Get History Changes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "maximum": 1000000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "day",
+            "schema": {
+              "format": "date",
+              "title": "Day",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "field",
+            "schema": {
+              "enum": [
+                "watchlist",
+                "watched",
+                "liked",
+                "rating"
+              ],
+              "title": "Field",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_HistoryChangeFilmSchema_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Read one day and field's shown films from the authenticated user's history.",
+        "tags": [
+          "user-movie-data"
+        ],
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/user-movie-data/{tmdb_id}": {
       "get": {
         "operationId": "apps_user_movie_data_api_get_user_movie_data",
@@ -6732,6 +6830,75 @@
           }
         },
         "title": "PaginatedResponse[Union[HistoryEntrySchema, HistoryChangesSchema]]",
+        "type": "object"
+      },
+      "HistoryChangesQuerySchema": {
+        "description": "Select one private day and field before paging its shown films.",
+        "properties": {
+          "page": {
+            "default": 1,
+            "maximum": 1000000,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "watchlist",
+              "watched",
+              "liked",
+              "rating"
+            ],
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "field"
+        ],
+        "title": "HistoryChangesQuerySchema",
+        "type": "object"
+      },
+      "PaginatedResponse_HistoryChangeFilmSchema_": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          },
+          "total_results": {
+            "default": 0,
+            "title": "Total Results",
+            "type": "integer"
+          },
+          "results": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/HistoryChangeFilmSchema"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "title": "PaginatedResponse[HistoryChangeFilmSchema]",
         "type": "object"
       },
       "UserMovieDataPatchSchema": {

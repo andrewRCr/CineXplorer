@@ -173,6 +173,13 @@ def test_openapi_history_contract() -> None:
     )
     assert {int(status) for status in path["get"]["responses"]} == {200, 401, 422}
     assert "kind" in schema["components"]["schemas"]["HistoryChangesSchema"]["required"]
+    group_paths = [
+        value
+        for key, value in schema["paths"].items()
+        if key.endswith("/user-movie-data/history/changes")
+    ]
+    assert len(group_paths) == 1
+    assert {int(status) for status in group_paths[0]["get"]["responses"]} == {200, 401, 422}
 
 
 def change(
@@ -435,3 +442,65 @@ def test_history_uses_latest_rating_once_per_film_in_a_day(signed_in: tuple[Clie
     assert len(rows) == 1
     assert rows[0]["count"] == 1
     assert rows[0]["films"][0]["rating"] == 9
+
+
+CHANGES_URL = URL + "/changes"
+
+
+def test_history_group_films_page_once_in_latest_order(signed_in: tuple[Client, User]) -> None:
+    client, user = signed_in
+    instant = datetime(2020, 1, 1, tzinfo=UTC)
+    records = [create_user_movie_data(user, create_movie(1001 + i)) for i in range(250)]
+    for index, record in enumerate(records):
+        change(record, "rating", at=instant + timedelta(seconds=index), rating=6)
+    change(records[0], "rating", at=instant + timedelta(minutes=10), rating=9)
+    hidden = create_user_movie_data(user, create_movie(9000))
+    change(hidden, "rating", at=instant + timedelta(minutes=5), rating=7)
+    change(hidden, "rating", at=instant + timedelta(days=1), day=date(2020, 1, 2), on=False)
+    change(
+        create_user_movie_data(create_user(username="other-group"), create_movie(9999)),
+        "rating",
+        rating=8,
+    )
+    pages = [
+        client.get(
+            CHANGES_URL, {"day": "2020-01-01", "field": "rating", "page": page, "page_size": 100}
+        )
+        for page in range(1, 5)
+    ]
+    assert [page.status_code for page in pages] == [200] * 4
+    data = [page.json() for page in pages]
+    assert [page["total_results"] for page in data] == [250] * 4
+    assert [page["total_pages"] for page in data] == [3] * 4
+    films = [film for page in data for film in page["results"]]
+    assert [film["tmdb_id"] for film in films] == [1001, *range(1250, 1001, -1)]
+    assert films[0]["rating"] == 9
+    assert data[3]["results"] == []
+    empty = client.get(CHANGES_URL, {"day": "2020-01-02", "field": "watchlist"}).json()
+    assert empty == {"page": 1, "total_pages": 0, "total_results": 0, "results": []}
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        {},
+        {"day": "2020-01-01"},
+        {"field": "watched"},
+        {"day": "bad", "field": "watched"},
+        {"day": "2020-01-01", "field": "unknown"},
+        {"day": "2020-01-01", "field": "watched", "page_size": 101},
+        {"day": "2020-01-01", "field": "watched", "page": 0},
+    ],
+)
+def test_history_group_rejects_invalid_queries(
+    signed_in: tuple[Client, User], query: dict[str, object]
+) -> None:
+    client, _ = signed_in
+    response = client.get(CHANGES_URL, query)
+    assert response.status_code == 422
+    assert isinstance(response.json()["detail"], str)
+
+
+def test_history_group_requires_authentication() -> None:
+    response = Client().get(CHANGES_URL, {"day": "2020-01-01", "field": "watched"})
+    assert response.status_code == 401

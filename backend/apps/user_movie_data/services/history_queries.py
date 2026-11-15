@@ -77,6 +77,23 @@ LIMIT %s OFFSET %s
 )
 
 
+CHANGE_FILM = SQL("""jsonb_build_object(
+        'tmdb_id', m.tmdb_id, 'title', m.title, 'release_date', m.release_date,
+        'poster_path', m.poster_path,
+        'rating', CASE WHEN s.field = 'rating' THEN s.rating ELSE NULL END
+    )""")
+GROUP_SCOPE = SQL(" WHERE s.made_on = %s::date AND s.field = %s")
+COUNT_GROUP = SHOWN_CHANGES + SQL("SELECT count(*) FROM shown s") + GROUP_SCOPE
+PAGE_GROUP = (
+    SHOWN_CHANGES
+    + SQL("SELECT {film} FROM shown s JOIN core_movie m ON m.tmdb_id = s.movie_id").format(
+        film=CHANGE_FILM
+    )
+    + GROUP_SCOPE
+    + SQL(" ORDER BY s.created_at DESC, s.id DESC LIMIT %s OFFSET %s")
+)
+
+
 def sample_changes(pair_count: int) -> Composable:
     """Compose placeholders for exact page groups; values remain query parameters."""
     pairs = SQL(", ").join([SQL("(%s::date, %s::text)")] * pair_count)
@@ -88,15 +105,11 @@ def sample_changes(pair_count: int) -> Composable:
         ) AS position
         FROM shown s JOIN page_groups p ON p.day = s.made_on AND p.field = s.field
     )
-    SELECT s.made_on, s.field, jsonb_build_object(
-        'tmdb_id', m.tmdb_id, 'title', m.title, 'release_date', m.release_date,
-        'poster_path', m.poster_path,
-        'rating', CASE WHEN s.field = 'rating' THEN s.rating ELSE NULL END
-    )
+    SELECT s.made_on, s.field, {film}
     FROM ranked s JOIN core_movie m ON m.tmdb_id = s.movie_id
     WHERE s.position <= 8
     ORDER BY s.made_on DESC, s.field, s.position
-    """).format(pairs=pairs)
+    """).format(pairs=pairs, film=CHANGE_FILM)
 
 
 def fetch_rows(sql: Composable, params: Sequence[int | str]) -> list[tuple[object, ...]]:

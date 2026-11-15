@@ -5,13 +5,6 @@
 **Class:** Heavy
 **Status:** Ready for Implementation
 **Created:** 2026-11-14
-**Updated:** 2026-11-14
-
-**Related Work:**
-
-- ✅ Complete: User movie tracking (`prd-user-movie-tracking.md`) - the record with its rules, dated entries and
-  their endpoints, and the shared frontend layer these controls draw, now on `main`. This branch merges `main` before
-  its task list is written.
 
 ---
 
@@ -215,13 +208,16 @@ opens it through one hook, `useEntryDialog()`, whose `open(options)` takes:
 - `film`: the film to start on (its TMDB ID, title, release year and poster path), or none to start on the picker;
 - `dateOn`: whether "Watched on" starts on;
 - `filmChangeable`: whether a chosen film can be changed;
-- `entry`: an entry to edit, which fixes the film.
+- `entry`: an entry to edit, which fixes the film;
+- `returnFocus`: optional, the control to return focus to when the one that opened the dialog is gone, for an entry
+  point whose control closes with its menu or drawer.
 
 The entry points are: a card's "Review or log" (its film, date on, not changeable); the panel's Review (its film,
 date off, not changeable); an entry's Edit (that entry); the bar's Log (R29); and any later page, such as the
 Library's empty states, through the same call. The dialog has no URL and opens over the current page. Closing it
-returns focus to the control that opened it or, when that control is gone, to the nearest that remains: the card's
-"⋯" button after the dialog opened from its menu, and the drawer's "Open menu" after "Log a film".
+returns focus to the control that opened it or, when that control is gone, to the nearest that remains, which its
+entry point names through `returnFocus`: the card's "⋯" button after the dialog opened from its menu, and the drawer's
+"Open menu" after "Log a film".
 
 **R20. Shape.** The dialog is titled "Review or log", or "Edit entry" when editing. On phones it fills the screen;
 from `md` up it is centered, at most 560px wide. Its form is built with React Hook Form 7. Its fields, in order:
@@ -432,13 +428,21 @@ these further changes, each checked against `main`'s code at that merge:
   context (R27). And ADR-048 supersedes in part ADR-046's statements that the catalog's row spacing stays unchanged
   and that signed-out cards are shorter, since cards now share one height and the row height is computed (R1, R7);
   ADR-046's Status says so.
-- **c. If `main` has the Library pages,** this work adds the dialog's steps to the signed-in smoke spec (logging a film
-  from a card with a date, a rating and a review, and finding the entry on the film's page), with a dated note on
-  ADR-050 recording that they were added; makes the Library's empty states that offer logging open the dialog through
-  R19's call; and removes the `button-name` baseline entries the Library added for its routes. Without those pages,
-  this work adds none of these.
-- **d. If `main` has the server's like rule,** nothing here changes: the controls already show what the server returns
-  and their tests already follow the rule (§ 6).
+- **c. If `main` has the Library pages,** this work puts the dialog's steps in the signed-in smoke spec in place of its
+  step 4, which removed the first fixture film from its card on `/watchlist` (logging that film from its card with
+  today's date, a rating and a review, which takes it off the watchlist since it is logged on the day it joined, and
+  seeing it leave the page; finding the entry on the film's page; and finding the film in Films, `/library`, and
+  History, `/library/history`), with a dated note on ADR-050 recording that they were added; adds "Log a film" to the
+  Films view's empty state ("Your Library is empty") and History's ("Your history is empty"), which opens the dialog on
+  its picker with the date on and, since the empty state goes once a film is logged, returns focus to the current view's
+  link in the Library's navigation (`open({ dateOn: true, returnFocus })`); and removes the `button-name` baseline
+  entries the Library added for its routes. The bar's catalog link then reads Explore (ADR-050), and any test this work
+  adds that names that link follows it. Without those pages, this work adds none of these.
+- **d. If `main` has the backend unit that adds the server's like rule,** the like rule changes nothing here: the
+  controls already show what the server returns and their tests already follow the rule (§ 6). The same unit fills an
+  optional `time_zone` on every record save in `saveMutationOptions`, with a test asserting it; the rewritten options
+  (R37) keep filling it, that test stays, and the watchlist tests keep the expected request bodies `main` gives
+  them.
 
 ## 5. Non-Goals
 
@@ -519,6 +523,13 @@ stubbing `matchMedia` for `(hover: hover)`.
 
 **Privacy.** A film's entries and reviews are read only for their signed-in owner, on that owner's film page, and are
 never shown to anyone else.
+
+**Size.** The task list forecasts about 7,000 to 7,500 changed lines of code and tests, about 10,000 with the planning
+documents, over six phases in a task list of about 770 lines: the change set reaches the project's 10,000-line mark with
+the planning documents, and runs above the shared draft's 5,000 to 6,000 for this unit. It stays one work unit (Owner,
+2026-11-14). The change is frontend only, with no data, migration or API contract change, since every write goes through
+the tracking model's reviewed endpoints, so one review reads the composition of its controls phase by phase, and its
+code and tests stay under the 10,000-line mark.
 
 ## 7. Design Considerations
 
@@ -603,7 +614,8 @@ never shown to anyone else.
 - **D24: entry buttons named by position and date** (R16), over the date alone, which two viewings on one day share.
   _ADR:_ `none`, a tactical choice.
 - **D25: the fallbacks and the date rule** (R18, R19, R23, R29): focus moving to the nearest remaining control when
-  the dialog's opener or a deleted entry is gone, over leaving it on the page's body; Log opening on the picker on a
+  the dialog's opener or a deleted entry is gone, over leaving it on the page's body, with an entry point whose control
+  closes with its menu or drawer naming that control through `open()`'s `returnFocus`; Log opening on the picker on a
   film page whose film hasn't loaded, over a disabled Log; and Save refusing an empty or future date with its message,
   over leaving the server's 400 to the error toast. _ADR:_ `none`, tactical choices.
 
@@ -628,15 +640,15 @@ pages are on `main` when this work merges it, a dated note on ADR-050 (R41c).
 3. **The lock.** A rated film, and a film with entries, show Watched locked on the card, in the menu and on the panel,
    with the explanation, and activating it sends no request. A film that is only liked shows Watched unlocked. A 409
    from an un-mark shows "Couldn't change Watched" with the server's reason.
-4. **Toasts and Undo.** Tests show, for each row of R32, the title, the description and whether Undo is offered, and the
-   Undo's request: liking an unwatched film on the watchlist sends `{ user_liked: false, user_watched: false,
-   user_on_watchlist: true, undo: true }`; un-marking Watched on a liked film on the watchlist sends `{ user_watched:
-   true, user_liked: true, user_on_watchlist: true, undo: true }`; Clear rating sends `{ user_rating: <earlier rating>,
-   undo: true }`; a dialog save that created an entry offers Undo even when no film field changed, and sends its
-   `DELETE` and then the save, and sends no save when the `DELETE` fails, including after the dialog has closed. Marking
-   watched, liking and rating without a watchlist change show no toast. After a change of user, Undo sends nothing.
-   `useUserMovieState`'s watchlist tests pass with their assertions unchanged, their mock answers keeping the payload's
-   `user_watched`.
+4. **Toasts and Undo.** _Superseded by criterion 15 (amendment, 2026-11-14)._ Tests show, for each row of R32, the
+   title, the description and whether Undo is offered, and the Undo's request: liking an unwatched film on the watchlist
+   sends `{ user_liked: false, user_watched: false, user_on_watchlist: true, undo: true }`; un-marking Watched on a
+   liked film on the watchlist sends `{ user_watched: true, user_liked: true, user_on_watchlist: true, undo: true }`;
+   Clear rating sends `{ user_rating: <earlier rating>, undo: true }`; a dialog save that created an entry offers Undo
+   even when no film field changed, and sends its `DELETE` and then the save, and sends no save when the `DELETE` fails,
+   including after the dialog has closed. Marking watched, liking and rating without a watchlist change show no toast.
+   After a change of user, Undo sends nothing. `useUserMovieState`'s watchlist tests pass with their assertions
+   unchanged, their mock answers keeping the payload's `user_watched`.
 5. **The dialog.** Tests show each row of R22 sending its request; Save disabled until R23 holds; an edit with the
    switch off and no review refused with its message; an emptied rating on the third path sending `user_rating: null`;
    changing the film re-reading its list; Rewatch on by default for a same-day or earlier viewing and following the
@@ -672,6 +684,29 @@ pages are on `main` when this work merges it, a dated note on ADR-050 (R41c).
     log; a rendered card's height equals `CARD_WIDTH × 1.5 + CARD_TEXT_HEIGHT`; and the card's controls read clearly
     over a light and a dark poster in each palette.
 
+### Implemented, added by amendment
+
+15. **Toasts and Undo.** Tests show, for each row of R32, the title, the description and whether Undo is offered, and
+    the Undo's request: liking an unwatched film on the watchlist sends `{ user_liked: false, user_watched: false,
+    user_on_watchlist: true, undo: true }`; un-marking Watched on a liked film on the watchlist sends `{ user_watched:
+    true, user_liked: true, user_on_watchlist: true, undo: true }`; Clear rating sends `{ user_rating: <earlier
+    rating>, undo: true }`, each with `time_zone` beside these fields once R41d applies; a dialog save that created an
+    entry offers Undo even when no film field changed, and sends its `DELETE` and then the save, and sends no save when
+    the `DELETE` fails, including after the dialog has closed. Marking watched, liking and rating without a watchlist
+    change show no toast. After a change of user, Undo sends nothing. `useUserMovieState`'s watchlist tests pass with
+    their assertions unchanged by this work, their mock answers keeping the payload's `user_watched`.
+
 ## 10. Open Questions
 
 None.
+
+## Amendments
+
+- **2026-11-14, at task generation.** R19's `open()` takes an optional `returnFocus`, which an entry point whose control
+  closes with its menu or drawer passes, and D25 says so (the task list's review found the fallback had no carrier).
+  R41c's dialog steps replace the Library spec's step 4 and combine its checks with this work's, it adds the Library's
+  empty states' "Log a film" itself (the Library adds it only when the dialog is already on `main`), and tests this
+  work adds follow the catalog link's rename to Explore; R41d keeps the backend unit's `time_zone` on record saves;
+  criterion 4 is superseded by criterion 15, whose watchlist tests keep the assertions `main` gives them and whose
+  Undo bodies carry `time_zone` once R41d applies (the Library's draft, decisions 6, 10 and 11, and its PRD's R34c
+  set these meeting points after this PRD was written).

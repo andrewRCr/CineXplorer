@@ -557,6 +557,27 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
       mismatches were corrected before the full green run. Library UI is absent, so its conditional changes do not
       apply.
 
+- [x] **6.5 Wait for application and film-page readiness in tracking journeys**
+
+    **Goal:** Tracking journeys begin their actions on a settled application and film page, preserving all tracking,
+    persistence, focus and accessibility assertions under slower startup and navigation.
+
+    - [x] **6.5.a Diagnose the App journey's initial readiness deadline**
+        - Monotonic diagnostics measured the first catalogue request near one second after rendering, with controls
+          appearing just beyond one second. A controlled 1.25-second first response failed the old initial query while
+          the catalogue was pending, then completed the full two-log journey with a scoped five-second startup wait.
+          The journey now covers immediate and delayed catalogue delivery. Later waits, real App internals and all
+          persistence assertions remain intact. The precise CI scheduling cause remains unproven.
+    - [x] **6.5.b Wait for the film page before the browser's navigation Log action**
+        - The journey awaits the film heading and its pressed watchlist control before navigation Log. Temporary
+          12-times CPU throttling reproduced the CI failure on the old sequence and passed with the waits. The final
+          source removes that diagnostic throttle; mouse, keyboard and touch retain their complete assertions.
+    - [x] **6.5.c Verify the two repairs**
+        - All 3,453 frontend tests across 125 files pass with CI-equivalent coverage. The three normal browser
+          journeys, frontend type checking, touched-file lint/format checks and documentation checks pass. Diagnostic
+          listeners, timing output and CPU throttling are removed. Completion notes describe the readiness boundaries.
+          Backend tests and the production build were not rerun locally for this test-only correction.
+
 ## Implementation Notes
 
 - **Pointer kind and breakpoints in tests.** `tests/setup.ts` stubs `window.matchMedia` to answer no to every query,

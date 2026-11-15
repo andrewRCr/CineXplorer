@@ -2,6 +2,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw/http";
+import { delay } from "msw";
 import App from "@/App";
 import { ThemeSelectProvider } from "@/components/core/chakra/theme-provider";
 import { Toaster, toaster } from "@/components/core/chakra/toaster";
@@ -51,6 +52,7 @@ let record = initial;
 let entries: MovieEntries["entries"] = [];
 let patches: unknown[] = [];
 let creates: unknown[] = [];
+let initialBrowseDelay = 0;
 
 function alignLocation(url: string | URL | null | undefined) {
   if (url == null) return;
@@ -145,8 +147,11 @@ beforeEach(() => {
     },
   );
   server.use(
-    http.get(`${apiBaseUrl}/movies/browse`, () =>
-      HttpResponse.json({
+    http.get(`${apiBaseUrl}/movies/browse`, async () => {
+      const firstResponseDelay = initialBrowseDelay;
+      initialBrowseDelay = 0;
+      await delay(firstResponseDelay);
+      return HttpResponse.json({
         page: 1,
         total_pages: 1,
         total_results: 1,
@@ -158,8 +163,8 @@ beforeEach(() => {
             user_movie_data: record,
           }),
         ],
-      }),
-    ),
+      });
+    }),
     http.get(`${apiBaseUrl}/movies/550`, () =>
       HttpResponse.json(
         createMockMovieDetail({ tmdb_id: 550, title, user_movie_data: record }),
@@ -214,11 +219,17 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it("tracks a film from discovery through two same-day viewings", async () => {
+it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
+  initialBrowseDelay = ms;
   const view = start();
   try {
     const user = userEvent.setup();
-    await screen.findByRole("group", { name: `Your actions for ${title}` });
+    // Initial readiness spans cold route loading, session resolution and the first catalogue response.
+    await screen.findByRole(
+      "group",
+      { name: `Your actions for ${title}` },
+      { timeout: 5000 },
+    );
     await user.hover(screen.getByRole("img", { name: title }));
     await user.click(
       within(actions()).getByRole("button", { name: "Watchlist" }),

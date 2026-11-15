@@ -278,6 +278,16 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
             await checkWatchlist(true);
             await navigate("Films");
             await input.activate(title);
+            await expect(
+                page.getByRole("heading", {
+                    name: tracking.title,
+                    level: 1,
+                    exact: true,
+                }),
+            ).toBeVisible();
+            await expect(
+                panel.getByRole("button", { name: "Watchlist", exact: true }),
+            ).toHaveAttribute("aria-pressed", "true");
             if (mode === "touch") {
                 await input.activate(openMenu);
                 await input.activate(

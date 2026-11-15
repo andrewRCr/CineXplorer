@@ -53,6 +53,8 @@ checks and the complete browser suite. Poster readability was visually inspected
 All active criteria were checked; private draft retirement and late submissions have additional regression coverage.
 Browser accessibility audits include the tracking dialog and phone rating sheet after finite motion inside those
 surfaces and notifications settles. A controlled-width browser fixture checks card metadata and rating alignment.
+The App journey covers immediate and delayed initial catalogue delivery with a bounded startup wait, while browser
+navigation waits for the destination film and its tracking panel before using Log.
 
 ## Related Documentation
 

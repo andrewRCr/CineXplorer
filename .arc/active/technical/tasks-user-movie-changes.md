@@ -81,24 +81,17 @@ forward and leaves it watched going back, and date added sorts by the first filt
         - All 663 app and core/movie integration tests passed with a fresh database; no migration drift.
           Pinned Ruff and app Pyright passed.
 
-- [ ] **1.3 Date added sorts by the first filtered list — D9**
+- [x] **1.3 Date added sorts by the first filtered list — D9**
 
     **Goal:** The Library's `added` sort reads the join time of the first list a read filters, in the order watchlist,
     watched, liked, so the Films view, which always filters watched films, sorts by when each film was marked watched.
 
-    - [ ] **1.3.a Change the combined-filter cases of `test_added_sort_uses_one_filtered_list` in
-      `test_watchlist_endpoint.py`**
-        - Filtering the watchlist and watched now sorts by `watchlist_added_at`; add watched and liked (by
-          `watched_added_at`) and watched, liked and rated (by `watched_added_at`); no filter and `rated` alone keep
-          creation time
-        - Today every filtered list shares one join time, so the first and last filtered lists sort alike. Seed three
-          films whose `watchlist_added_at`, `watched_added_at`, `liked_added_at` and `created_at` each order them
-          differently, so a sort by any other list, or by creation time, fails each case
-        - Rename the test for what it now shows
-        - Expect tests to FAIL initially
-
-    - [ ] **1.3.b Pick the first filtered list's join time in `get_library`**
-        - Tests should now PASS
+    - [x] **1.3.a Test date added under single and combined filters**
+        - Three films sort differently by creation, watchlist, watched and liked times, in both directions.
+          Combined cases failed on the old rule; all 18 cases failed with deliberately wrong timestamp selection.
+    - [x] **1.3.b Pick the first filtered list's join time in `get_library`**
+        - Watchlist precedes watched, then liked; no list filter keeps creation time.
+        - All 334 app tests, pinned Ruff lint/format and app Pyright passed.
 
 ### **Phase 2:** A record save records its changes on the visitor's day
 

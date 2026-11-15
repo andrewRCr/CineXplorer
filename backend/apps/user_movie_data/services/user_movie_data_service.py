@@ -90,7 +90,7 @@ class UserMovieDataService:
     def get_library(
         self, user: AbstractBaseUser, query: LibraryQuerySchema | None = None
     ) -> MovieListResponseSchema:
-        """Read a bounded page from stored cards with one count and one row query."""
+        """Read stored cards, sorting added by the first filtered list's join time."""
         query = query if query is not None else LibraryQuerySchema()
         records = (
             UserMovieData.objects.get_queryset()
@@ -117,7 +117,7 @@ class UserMovieDataService:
             ]
             if active
         ]
-        added_field = joined_lists[0] if len(joined_lists) == 1 else "created_at"
+        added_field = joined_lists[0] if joined_lists else "created_at"
         records = records.ordered_for_library(query.sort, query.direction, added_field)
         rows, metadata = paginate_queryset(records, query.page, query.page_size)
         movies: list[MovieListItemSchema] = []

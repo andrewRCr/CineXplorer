@@ -132,3 +132,17 @@ class ActivityEntrySchema(UserMovieEntrySchema):
     title: str
     release_date: date | None
     poster_path: str | None
+
+
+class HistoryQuerySchema(ActivityQuerySchema):
+    """The private timeline uses the same validated database paging bounds."""
+
+
+class HistoryEntrySchema(ActivityEntrySchema):
+    """A dated viewing or an undated review on its own calendar day."""
+
+    kind: Literal["viewing", "review"]
+    day: date
+
+
+HistoryRowSchema = HistoryEntrySchema

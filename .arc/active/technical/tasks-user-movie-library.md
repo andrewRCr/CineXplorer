@@ -244,37 +244,23 @@ _Exit criterion:_ `library.spec.ts` finds the second fixture film in the Films v
 `/library/history`, and criterion 9's tests show a film opened deep in the Films view, and from History, returning to
 the same rows.
 
-- [ ] **4.1 History's read returns viewings and reviews in one stable order — R22, R24**
+- [x] **4.1 History's read returns viewings and reviews in one stable order — R22, R24**
 
     **Goal:** `GET /user-movie-data/history` pages the signed-in user's viewings and undated reviews, days newest first
     and the most recently made first within a day, in a fixed number of queries, with nothing of any other user's.
 
-    - [ ] **4.1.a Write the cases in `apps/user_movie_data/tests/integration/test_history_api.py`**
-        - A viewing is `kind: "viewing"` on its `watched_on` day, with `ActivityEntrySchema`'s fields; a review saved
-          without a date is `kind: "review"` on its `made_on` day; an entry with a date and a review is a viewing
-        - Days run newest first; within a day the entry created last comes first; equal creation times order
-          viewings before reviews, then by entry ID, newest first
-        - `page` and `page_size` bounds and defaults as the cross-film entry list's; a page past the end is empty with
-          valid counts
-        - Another user's entries are never returned; 401 with no user; 422 for `page_size` 101, `page` 0 and
-          `page` 1,000,001, each with the shared error body
-        - A page takes the same number of queries with 10 rows as with 500 (`CaptureQueriesContext`, as
-          `test_library_service.py` counts)
-        - Expect tests to FAIL initially
-
-    - [ ] **4.1.b Build the route, the schemas and the service**
-        - `HistoryQuerySchema` with `ActivityQuerySchema`'s bounds; `HistoryRowSchema`, a union told apart by `kind`,
-          whose first member carries `kind` (`"viewing"` or `"review"`), `day` and `ActivityEntrySchema`'s fields; 5.2
-          adds the `changes` member
-        - The service in `apps/user_movie_data/services/`: one queryset of the user's entries (with a date, or a review
-          without one), annotated with the row's day (`watched_on`, else `made_on`) and a kind rank, ordered day
-          descending, creation time descending, kind, ID descending, paged with `paginate_queryset`, its film read
-          with `select_related`. Its ordering columns are the ones 5.2's grouped changes join in one union
-        - `GET /history` on `user_movie_data_router`, declared before `/{tmdb_id}`, answering 200, 401 and 422 with the
-          shared error body; the route only maps HTTP
-        - Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts` (`npm run generate-types --prefix
-          frontend`); the schema lists 401 and 422 for the route
-        - Tests should now PASS
+    - [x] **4.1.a Cover private timeline reads**
+        - Cases cover viewing/review fields and days, ownership, creation-time/kind/ID tie-breaking, paging and
+          defaults, empty/past-end pages, authentication, bounds and declared OpenAPI statuses.
+        - Four behavior cases failed before the route existed. Narrow public/unbounded and non-eager-loading
+          reconstructions then failed the security, bounds and query-cost cases; all twelve cases pass restored.
+        - Both 10-entry and 500-entry collections take exactly two service queries for a page.
+    - [x] **4.1.b Build the read, contract and route**
+        - Added the dedicated history service with one annotated queryset and related stored cards, inherited paging
+          bounds and an entry-row schema alias ready for a further row kind. The thin route precedes the ID route.
+        - Regenerated OpenAPI and frontend types, including 401 and 422. All 331 user-movie tests, pinned Ruff
+          lint/format, Python checking in an isolated environment with locked dependencies, and frontend type-check
+          pass. The host's shared tools remain unchanged.
 
 - [ ] **4.2 History lists viewings and reviews under month headings, loading as the visitor scrolls — R17, R18, R19,
   R25, R26, R30, R33**

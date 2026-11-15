@@ -4,13 +4,29 @@ from __future__ import annotations
 
 from datetime import date
 from errno import ENAMETOOLONG
-from typing import Literal
+from typing import Annotated, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from ninja import Schema
-from pydantic import Field, field_validator
+from pydantic import AfterValidator, Field, field_validator
 
 from apps.user_movie_data.models import UserMovieData, UserMovieEntry
+
+
+def validate_time_zone(name: str) -> str:
+    """Reject unknown or invalid IANA names, including over-long paths."""
+    try:
+        ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError) as error:
+        raise ValueError("Unknown time zone") from error
+    except OSError as error:
+        if error.errno != ENAMETOOLONG:
+            raise
+        raise ValueError("Unknown time zone") from error
+    return name
+
+
+TimeZoneName = Annotated[str, AfterValidator(validate_time_zone)]
 
 
 class UserMovieDataSchema(Schema):
@@ -45,6 +61,7 @@ class UserMovieDataPatchSchema(Schema):
     user_liked: bool = False
     user_rating: int | None = Field(default=None, ge=1, le=10)
     undo: bool = False
+    time_zone: TimeZoneName | None = None
 
 
 class LibraryQuerySchema(Schema):
@@ -68,7 +85,7 @@ class UserMovieEntryWriteSchema(Schema):
     review: str | None = Field(default=None, max_length=10000)
     rewatch: bool = False
     liked: bool
-    time_zone: str
+    time_zone: TimeZoneName
 
     @field_validator("review")
     @classmethod
@@ -76,19 +93,6 @@ class UserMovieEntryWriteSchema(Schema):
         if review is not None and "\x00" in review:
             raise ValueError("Review must not contain NUL characters")
         return review if review is not None and review.strip() else None
-
-    @field_validator("time_zone")
-    @classmethod
-    def validate_time_zone(cls, name: str) -> str:
-        try:
-            ZoneInfo(name)
-        except (ZoneInfoNotFoundError, ValueError) as error:
-            raise ValueError("Unknown time zone") from error
-        except OSError as error:
-            if error.errno != ENAMETOOLONG:
-                raise
-            raise ValueError("Unknown time zone") from error
-        return name
 
 
 class UserMovieEntrySchema(Schema):

@@ -281,7 +281,7 @@ def test_entries_prevent_unwatching(signed_in: tuple[Client, User], rating: int 
     )
     before = UserMovieData.objects.values().get(pk=record.pk)
     response = client.patch(
-        URL, {"user_watched": False, "user_liked": True}, content_type="application/json"
+        URL, {"user_watched": False, "user_liked": False}, content_type="application/json"
     )
     assert response.status_code == 409
     assert response.json() == {
@@ -326,3 +326,110 @@ def test_undo_alone_is_not_a_save(signed_in: tuple[Client, User]) -> None:
     assert response.status_code == 400
     assert not UserMovieData.objects.exists()
     assert not Movie.objects.exists()
+
+
+@pytest.mark.parametrize("with_entry", [False, True])
+def test_unwatch_locked_liked_film_preserves_all_state(
+    signed_in: tuple[Client, User], with_entry: bool
+) -> None:
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+
+    client, user = signed_in
+    record = create_user_movie_data(
+        user, user_watched=True, user_liked=True, user_rating=None if with_entry else 8
+    )
+    if with_entry:
+        UserMovieEntry.objects.create(record=record, review="Seen", made_on=date(2020, 1, 1))
+    before = UserMovieData.objects.values().get(pk=record.pk)
+    response = client.patch(URL, {"user_watched": False}, content_type="application/json")
+    assert response.status_code == 409
+    assert UserMovieData.objects.values().get(pk=record.pk) == before
+
+
+def test_contradictory_like_is_400_without_tmdb_or_writes(signed_in: tuple[Client, User]) -> None:
+    client, _ = signed_in
+    with patch(
+        TMDB_CLIENT_GET_MOVIE_DETAILS, return_value=create_mock_error_response(404)
+    ) as tmdb:
+        response = client.patch(
+            URL, {"user_liked": True, "user_watched": False}, content_type="application/json"
+        )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "A like requires a watched movie"}
+    tmdb.assert_not_called()
+    assert not Movie.objects.exists()
+    assert not UserMovieData.objects.exists()
+
+
+@pytest.mark.parametrize("zone", ["Mars/Base", "", "x" * 500])
+def test_unknown_save_zone_is_422_without_writes(
+    signed_in: tuple[Client, User], zone: str
+) -> None:
+    client, _ = signed_in
+    response = client.patch(
+        URL, {"user_on_watchlist": True, "time_zone": zone}, content_type="application/json"
+    )
+    assert response.status_code == 422
+    assert not Movie.objects.exists()
+    assert not UserMovieData.objects.exists()
+
+
+@pytest.mark.parametrize(
+    "fields", [{}, {"time_zone": None}, {"time_zone": "UTC"}, {"time_zone": "Pacific/Auckland"}]
+)
+def test_save_zone_is_optional_and_accepts_known_names(
+    signed_in: tuple[Client, User], fields: dict[str, object]
+) -> None:
+    client, _ = signed_in
+    create_movie()
+    response = client.patch(
+        URL, {"user_on_watchlist": True, **fields}, content_type="application/json"
+    )
+    assert response.status_code == 201
+    assert response.json()["user_on_watchlist"] is True
+
+
+def test_time_zone_alone_is_not_a_save(signed_in: tuple[Client, User]) -> None:
+    client, _ = signed_in
+    create_movie()
+    response = client.patch(URL, {"time_zone": "UTC"}, content_type="application/json")
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Provide at least one movie data field"}
+    assert not UserMovieData.objects.exists()
+
+
+@pytest.mark.parametrize("delete_user", [False, True])
+def test_changes_cascade_with_record_or_user(
+    signed_in: tuple[Client, User], delete_user: bool
+) -> None:
+    from django.utils import timezone
+
+    from apps.user_movie_data.models import UserMovieChange
+
+    client, user = signed_in
+    records = [
+        create_user_movie_data(user),
+        create_user_movie_data(user, create_movie(551)),
+        create_user_movie_data(create_user(username="other"), Movie.objects.get(pk=550)),
+    ]
+    changes = [
+        UserMovieChange.objects.create(
+            record=record,
+            field="watchlist",
+            turned_on=True,
+            rating=None,
+            from_entry=False,
+            created_at=timezone.now(),
+            made_on=timezone.now().date(),
+        )
+        for record in records
+    ]
+    if delete_user:
+        user.delete()
+    else:
+        assert client.delete(URL).status_code == 204
+    assert set(UserMovieChange.objects.values_list("pk", flat=True)) == {
+        change.pk for change in changes[2 if delete_user else 1 :]
+    }

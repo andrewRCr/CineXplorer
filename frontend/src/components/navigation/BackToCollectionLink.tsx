@@ -5,6 +5,7 @@
  * - Preserves filter parameters from the original collection view
  * - Signals scroll restoration intent via React Router location state
  * - Supports browse routes (presets like now-playing, upcoming) and search routes
+ * - Returns films opened from Home directly to Home
  *
  * The `restoreScroll: true` state enables VirtualizedMovieGrid to restore
  * the user's scroll position when navigating back, while page refreshes
@@ -62,6 +63,7 @@ const EXCLUDED_PARAMS = new Set(["from", "page", "tmdb_page_start"]);
  */
 function buildBackUrl(searchParams: URLSearchParams): string {
   const from = searchParams.get("from") || "now-playing";
+  if (from === "home") return "/";
 
   // Build query string, filtering out excluded and empty params
   const queryParts: string[] = [];
@@ -100,6 +102,7 @@ export function BackToCollectionLink({
 }: BackToCollectionLinkProps) {
   const backUrl = buildBackUrl(searchParams);
   const labels: Record<string, string> = {
+    home: "Back to Home",
     watchlist: "Back to Watchlist",
     library: "Back to Library",
     history: "Back to History",

@@ -21,7 +21,7 @@ describe("SortDropdown", () => {
         />,
       );
 
-      expect(screen.getByText("Sort by")).toBeInTheDocument();
+      expect(screen.getByRole("combobox", { name: "Sort by" })).toBeVisible();
     });
 
     it("displays current sort value in trigger", () => {

@@ -14,6 +14,7 @@ import {
 } from "@tests/helpers/auth";
 import { server } from "@tests/mocks/server";
 import App from "../App";
+import { homeHandlers } from "@/pages/home/__tests__/homeFixtures";
 
 declare const jsdom: { window: Window };
 const mockLocation = window.location;
@@ -149,3 +150,14 @@ it.each(["/library", "/library/history", "/library?liked=true&sort=title"])(
     }
   },
 );
+
+it("serves Home's pitch at the root route", async () => {
+  homeHandlers();
+  startAt("/");
+  expect(
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Track what you watch. Find what's next.",
+    }),
+  ).toBeVisible();
+});

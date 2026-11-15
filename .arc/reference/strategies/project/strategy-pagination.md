@@ -202,11 +202,15 @@ export function getPaginationContextId(): string {
 }
 ```
 
-Sent via header on every movie endpoint request:
+The catalog’s movie list requests share the tab’s context. Home’s section requests use a second ID,
+`getHomePaginationContextId()`, generated once per page load. Their first-page reads therefore never clear the
+catalog’s pagination record. A caller-supplied header is preserved; the interceptor adds the tab’s only when absent:
 
 ```typescript
 // frontend/src/services/apiClient.ts
-config.headers["X-Pagination-Context"] = getPaginationContextId();
+if (!config.headers.has("X-Pagination-Context")) {
+    config.headers["X-Pagination-Context"] = getPaginationContextId();
+}
 ```
 
 ---

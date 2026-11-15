@@ -197,6 +197,7 @@ describe("returning to the requested page", () => {
     expect(
       await screen.findByText("Now at /watchlist?sort=added"),
     ).toBeVisible();
+    expect(screen.queryByText(/Welcome back/)).not.toBeInTheDocument();
   });
 
   it("goes home after a password sign-in when the page is unsafe", async () => {

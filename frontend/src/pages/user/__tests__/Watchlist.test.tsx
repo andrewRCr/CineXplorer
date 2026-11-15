@@ -1,6 +1,9 @@
+import useAuthContext from "@/hooks/auth/useAuthContext";
+import { clearBrowserAuth } from "@tests/helpers/auth";
+import { toaster, Toaster } from "@/components/core/chakra/toaster";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, expect, it } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, expect, it } from "vitest";
+import { act, screen, waitFor } from "@testing-library/react";
 import { useLocation, useNavigate } from "react-router";
 import { http, HttpResponse } from "msw/http";
 import { apiBaseUrl } from "@/config/baseUrls";
@@ -12,6 +15,15 @@ import Watchlist from "../Watchlist";
 
 const url = `${apiBaseUrl}/user-movie-data/movies`;
 beforeEach(prepareLibrary);
+afterEach(() => {
+  clearBrowserAuth();
+  act(() => toaster.remove());
+});
+function AuthStatus() {
+  return (
+    <output aria-label="Sign-in status">{useAuthContext()?.status}</output>
+  );
+}
 function Location() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -32,7 +44,9 @@ function page(entry = "/watchlist") {
         path: "/watchlist",
         element: (
           <AuthContextProvider>
+            <AuthStatus />
             <Watchlist />
+            <Toaster />
             <Location />
           </AuthContextProvider>
         ),
@@ -133,6 +147,7 @@ it("offers Retry after its first page fails", async () => {
   expect(
     await screen.findByText("Couldn't load your watchlist."),
   ).toBeVisible();
+  expect(await screen.findByText("Server error")).toBeVisible();
   failed = false;
   await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
   expect(
@@ -176,4 +191,23 @@ it("opens films with the Watchlist source and sort", async () => {
       sort: "title",
     });
   }
+});
+
+it("makes no Library request for a signed-out visitor", async () => {
+  clearBrowserAuth();
+  let reads = 0;
+  server.use(
+    http.get(url, () => {
+      reads++;
+      return HttpResponse.json(filmPage([], 1, 0));
+    }),
+  );
+  page();
+  await waitFor(() =>
+    expect(screen.getByLabelText("Sign-in status")).toHaveTextContent(
+      "anonymous",
+    ),
+  );
+  expect(screen.getByText("Your watchlist is empty")).toBeVisible();
+  expect(reads).toBe(0);
 });

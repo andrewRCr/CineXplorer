@@ -90,7 +90,7 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     await page.getByRole("button", { name: "Login", exact: true }).click();
     await expect(
         page.getByRole("heading", {
-            name: "Welcome to CineXplorer",
+            name: "Popular in theaters",
             exact: true,
         }),
     ).toBeVisible();

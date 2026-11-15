@@ -37,7 +37,6 @@ import type {
     AuthStatus,
     AuthResult,
     AuthError,
-    LoginSuccessData,
 } from "@/types/auth-state";
 import {
     loginPathFor,
@@ -63,7 +62,6 @@ import {
 } from "@/utilities/tokenUtils";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import * as authService from "@/services/authService";
-import { priorityToaster } from "@/components/core/chakra/toaster";
 
 export function useAuth(): AuthStateProps {
     const navigate = useNavigate();
@@ -165,11 +163,6 @@ export function useAuth(): AuthStateProps {
             hasHandledOAuthRef.current = true;
             clearProviderFlags();
             if (session.data && !getAuthTokens().access_token) {
-                const displayName =
-                    session.data.first_name || session.data.username;
-                priorityToaster.success({
-                    title: `Welcome back, ${displayName}!`,
-                });
                 void navigate(firstRead.returnPath);
             }
         } else if (
@@ -242,7 +235,7 @@ export function useAuth(): AuthStateProps {
         username: string,
         password: string,
         rememberMe: boolean = false,
-    ): Promise<AuthResult<LoginSuccessData>> => {
+    ): Promise<AuthResult<void>> => {
         try {
             logger.debug(
                 "[useAuth] login() called, attempting authentication...",
@@ -271,9 +264,7 @@ export function useAuth(): AuthStateProps {
                 await client.fetchQuery({ ...sessionQuery(), staleTime: 0 });
                 void resetUserQueries(client);
 
-                // Return display name for component to use in success feedback
-                const displayName = response.first_name || response.username;
-                return { success: true, data: { displayName } };
+                return { success: true, data: undefined };
             }
 
             // Login response missing required credentials

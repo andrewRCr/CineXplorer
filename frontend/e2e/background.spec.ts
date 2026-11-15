@@ -1,3 +1,4 @@
+import { useHomeCatalogue } from "./catalogue";
 import { scanPage } from "./axe";
 import { target } from "./target";
 import {
@@ -7,6 +8,10 @@ import {
     expectStartupBackground,
     expectPageBackground,
 } from "./fixtures";
+
+test.beforeEach(async ({ page }) => {
+    await useHomeCatalogue(page, target.baseURL);
+});
 
 interface StartupCase {
     name: string;
@@ -69,7 +74,7 @@ test("mode and palette changes update every page background without reloading", 
     await page.goto("/");
     await expect(
         page.getByRole("heading", {
-            name: "Welcome to CineXplorer",
+            name: "Track what you watch. Find what's next.",
             exact: true,
         }),
     ).toBeVisible();
@@ -147,7 +152,7 @@ for (const scenario of colorModeCases) {
         );
         await page.goto("/");
         const heading = page.getByRole("heading", {
-            name: "Welcome to CineXplorer",
+            name: "Track what you watch. Find what's next.",
             exact: true,
         });
         await expect(heading).toBeVisible();

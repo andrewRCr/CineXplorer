@@ -347,30 +347,34 @@ _Mode:_ `slice` — closes on History showing the visitor's own changes, grouped
 _Exit criterion:_ `library.spec.ts` passes in full, finding the second fixture film's "Marked watched" change in
 History, with each case of R34 that holds applied.
 
-- [ ] **5.1 Merge `main` and confirm the record of changes meets the PRD's contract — R34**
+- [x] **5.1 Merge `main` and confirm the record of changes meets the PRD's contract — R34**
 
     **Goal:** The branch carries `main` with the like rule and the record of changes, and what landed matches § 6's
     expected contract, or the PRD is amended before anything is built on it.
 
-    - [ ] **5.1.a Merge `main` into the branch** (the Owner approves the merge)
-        - If the record of changes is not on `main` yet, stop: this phase waits for it (R34b)
-
-    - [ ] **5.1.b Check the landed record of changes against § 6, and record its names here**
-        - One row per change a save makes to a film's watchlist, watched, liked or current rating, deleted with the
-          film's record; each holding the record, the field, the new value (on or off; the rating's value, or
-          cleared), whether an entry write made it, the made time every row of one save shares, and the day in the
-          visitor's time zone (a record save without `time_zone` records its UTC day)
-        - Turn-ons only from the visitor's own record saves; an entry write recording its rating changes and a like
-          it removes, never its other turn-ons; reversals whatever caused them, except a watchlist removal a rule
-          makes; an Undo deleting the field's latest row when it recorded the change being undone
-        - The like rule, and `added` sorting by the first of `watchlist`, `watched` and `liked` the query filters
-        - Record the model, fields and manager names here for 5.2 to 5.4; a mismatch with § 6 is a design question:
-          stop and amend the PRD
-
-    - [ ] **5.1.c Apply what the merge changes everywhere**
-        - Regenerate the API types if the schema changed (R34a); where `main`'s Library read or back link changed,
-          keep its form (R34e)
-        - Run the frontend tests and the `user_movie_data` and `core` backend tests
+    - [x] **5.1.a Merge the shipped backend and Home**
+        - Owner explicitly approved merging `main`; integrated `1f7416f5`, containing the recorded-change and landing
+          page work. Resolved nine shared-file conflicts, preserving Home and all personal routes, query options,
+          return labels, accessibility baselines, regressions and ADR supersessions.
+    - [x] **5.1.b Confirm and name the recorded-change contract**
+        - `UserMovieChange` in `models.py`, through its ordinary `objects` manager: `record` (cascading, related name
+          `changes`), `field` (`UserMovieChange.Field`: watchlist/watched/liked/rating), `turned_on`, nullable `rating`,
+          `from_entry`, `created_at` (one timestamp per save) and `made_on` (the save's local day, UTC if omitted).
+        - `movie_state_rules.record_changes` records supplied turn-ons and non-watchlist reversals. Entry writes
+          supply only rating, so their like removals remain reversals and their other turn-ons and automatic watchlist
+          removals produce no row. Undo deletes each changed supplied field's latest differing row and records none.
+        - The service holds the record lock, shares the save clock with join stamps, and enforces the like rule with
+          a database constraint and backfill migration. Library `added` uses the first active list in watchlist,
+          watched, liked order. The source and shipped regression cases match the expected contract; no amendment.
+        - Home is present without Recently watched; the log dialog is absent at this merge. Task 5.5 applies those
+          cases using the actual `SignedInHome`, `WatchlistSection`, `WhatsOn` and shared `FilmSection` components.
+    - [x] **5.1.c Regenerate contracts and check integration**
+        - Applied the two new migrations to the worktree stack; regenerated OpenAPI/types from its merged backend.
+          Kept `ReadOptions` on Library reads and Home's return address/label beside the personal destinations.
+        - All 3,367 frontend cases across 117 files and 709 user-movie/core backend cases pass; covering Library,
+          sign-in, phone, browse and catalog-return browser specs pass (10 cases). Preserved focused merge regressions
+          also pass. Frontend lint/types, Ruff lint/format, isolated locked-dependency Python checking and changed
+          Markdown pass. A Markdown line-wrap correction was mechanical.
 
 - [ ] **5.2 History's read selects the shown changes and groups them by day and field — R20, R22, R23, R24**
 
@@ -553,8 +557,8 @@ History, with each case of R34 that holds applied.
   `Watchlist.tsx` adds `p={8}`; a page that adds horizontal padding changes the counts.
 - **Calendar dates.** `last_logged_on`, `watched_on`, `made_on` and a change's `day` are calendar dates: format them
   without passing through `Date`'s UTC parse, which shifts a date a day back west of UTC.
-- **The record of changes.** Nothing on `main` names it yet, so Phase 5 is written in § 6's terms; 5.1.b records the
-  landed names, and 5.2 to 5.4 use them.
+- **The record of changes.** Task 5.1.b records the landed `UserMovieChange` fields and recording helper; 5.2 to 5.4
+  use that contract.
 - **Merges of `main`.** A merge before 5.1, the Owner approving each, keeps the branch's tests green and applies only
   the API types and what R34e asks; 5.1 and 5.5 apply the rest. Overlaps known today:
     - `technical/landing-page` changes `BackToCollectionLink.tsx` (`from=home` returning to `/`, the label read from

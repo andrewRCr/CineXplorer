@@ -189,7 +189,7 @@ for (const rememberMe of [false, true]) {
         await expect(page).toHaveURL(new URL("/", target.baseURL).href);
         await expect(
             page.getByRole("heading", {
-                name: "Welcome to CineXplorer",
+                name: "Popular in theaters",
                 exact: true,
             }),
         ).toBeVisible();

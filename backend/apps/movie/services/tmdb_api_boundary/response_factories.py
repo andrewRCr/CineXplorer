@@ -51,10 +51,13 @@ from apps.core.tmdb_models.tmdb_responses import (
     TMDBPaginatedPersonResponse,
     TMDBReleaseDatesResponse,
 )
+from apps.core.utils import empty_str_to_none
+from apps.movie.featured import FilmFocusPoint
 
 from ...schemas import (
     CastMemberSchema,
     CrewMemberSchema,
+    FeaturedMovieSchema,
     GenreSchema,
     KeywordListResponseSchema,
     KeywordSchema,
@@ -246,6 +249,38 @@ def create_movie_base_from_tmdb(tmdb_data: Mapping[str, object]) -> MovieListIte
         raise
 
 
+def create_featured_movie_from_tmdb(
+    movie_data: Mapping[str, object],
+    focus_point: FilmFocusPoint | None = None,
+    backdrop_path: str | None = None,
+    title: str | None = None,
+    mirrored: bool = False,
+) -> FeaturedMovieSchema:
+    """Validate a TMDB detail response and retain only the homepage's fields."""
+    movie = TMDBMovieDetail.model_validate(movie_data)
+    credits_data = movie_data.get("credits")
+    credits = TMDBCreditsResponse.model_validate(credits_data if credits_data is not None else {})
+    directors: list[str] = []
+    seen: set[int] = set()
+    for person in credits.crew:
+        name = person.name.strip()
+        if person.job == "Director" and name and person.id not in seen:
+            seen.add(person.id)
+            directors.append(name)
+    return FeaturedMovieSchema.model_validate(
+        {
+            "tmdb_id": movie.id,
+            "title": title if title is not None else movie.title,
+            "release_date": empty_str_to_none(movie.release_date),
+            "backdrop_path": backdrop_path if backdrop_path is not None else movie.backdrop_path,
+            "tagline": empty_str_to_none(movie.tagline),
+            "focus_point": focus_point,
+            "mirrored": mirrored,
+            "directors": directors,
+        }
+    )
+
+
 def create_movie_detail_from_tmdb(
     movie_data: Mapping[str, object], credits_data: Mapping[str, object] | None = None
 ) -> MovieDetailSchema:
@@ -288,6 +323,8 @@ def create_movie_detail_from_tmdb(
         detail_data: dict[str, object] = {
             "tmdb_id": tmdb_movie.id,
             "title": tmdb_movie.title,
+            "backdrop_path": tmdb_movie.backdrop_path,
+            "tagline": empty_str_to_none(tmdb_movie.tagline),
             "poster_path": tmdb_movie.poster_path,
             "release_date": release_date,
             "vote_average": tmdb_movie.vote_average,

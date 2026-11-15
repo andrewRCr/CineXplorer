@@ -854,10 +854,11 @@ check-your-email notice; email-link verification, OAuth and other browsers are o
   unhandled catalogue method/path aborts and fails the spec with its method and path; requests to another origin are
   aborted. Synthetic fixtures use generated API types and cover all score badge variants. Worktrees and CI discard
   mail through Django's dummy backend; the primary checkout's stack sends real verification mail.
-- **`staging`**: live catalogue data and an existing verified, non-staff account. Registration and the saved-film
-  journey are skipped. The Back to Results reload scenario supplies its own browse/detail fixtures in both targets
-  to control page height; those overrides serve only same-origin GETs. The specs change none of the staging
-  account's saved data.
+- **`staging`**: live catalogue data and an existing verified, non-staff account. Registration and the saved-
+  film   journey are skipped. The Back to Results reload scenario supplies its own browse/detail fixtures in
+  both targets to control page height.   `background.spec.ts` supplies Home's three reads in both targets so its
+  console checks never depend on live TMDB.   Both overrides serve only same-origin GETs. The specs change none
+  of the staging account's saved data.
 
 A PATCH of an unstored movie at `/api/user-movie-data/{tmdb_id}` also reaches TMDB. The saved-film journey uses
 two cards stored by `seed_dev_data`, resets their records before each run, and serves its own catalogue fixtures.

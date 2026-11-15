@@ -54,3 +54,8 @@ it("takes the button keyboard ring and keeps its outline border", async () => {
     "var(--chakra-colors-button-outline)",
   );
 });
+
+it.each(["Genre", "Year"])("names the %s selector", (name) => {
+  render(<Filters />);
+  expect(screen.getByRole("combobox", { name })).toBeVisible();
+});

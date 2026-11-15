@@ -60,7 +60,7 @@ The backend is a REST API built with Django and Django Ninja.
     - `movie`: Movie-related functionality and API endpoints
         - `movie/helpers.py`: Movie enrichment helpers for UserMovieData integration
     - `user_movie_data`: Film facts and list join times (`UserMovieData`), viewing/review history
-      (`UserMovieEntry`), and their authenticated API
+      (`UserMovieEntry`), the private record of changes (`UserMovieChange`), and their authenticated API
 
 ## 3. Frontend
 
@@ -187,7 +187,8 @@ The project checks backend behavior, frontend components, and complete browser j
 - **Targets**: `local` uses real authentication with synthetic catalogue fixtures and discarded mail in a worktree's
   browsable stack; `staging` uses live data and a verified test account, skips sign-up and the saved-film journey,
   disables traces/screenshots,
-  and uploads no artifacts. The reload scenario supplies its own catalogue fixtures in both targets
+  and uploads no artifacts. The reload scenario supplies its own catalogue fixtures in both targets;
+  `background.spec.ts` supplies Home's three reads in both targets so its console checks never depend on live TMDB
 - **Command**: With the worktree's browsable stack running (`node scripts/worktree.mjs browse`), run
   `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e` from `frontend/`
 - **CI**: Required on pull requests through `ci-ok`; the staging target runs after deployment

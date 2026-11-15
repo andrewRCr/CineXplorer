@@ -2,7 +2,7 @@
  * Routing integration tests for browse page structure
  *
  * Tests the routing configuration for:
- * - Home/Featured landing page
+ * - Home landing page
  * - Browse pages (/browse, /browse/now-playing, /browse/upcoming)
  * - Redirect behavior (/featured → /)
  *
@@ -17,8 +17,8 @@ import { Provider as ChakraProvider } from "@/components/core/chakra/provider";
 import { ROUTES } from "@/constants/routes";
 
 // Mock the page components to verify routing without loading full implementations
-vi.mock("@/pages/movie/Featured", () => ({
-  default: () => <div data-testid="featured-page">Featured Page</div>,
+vi.mock("@/pages/home/Home", () => ({
+  default: () => <div data-testid="home-page">Home Page</div>,
 }));
 
 vi.mock("@/pages/movie/Browse", () => ({
@@ -34,7 +34,7 @@ vi.mock("@/pages/movie/Upcoming", () => ({
 }));
 
 // Import mocked components
-import Featured from "@/pages/movie/Featured";
+import Home from "@/pages/home/Home";
 import Browse from "@/pages/movie/Browse";
 import NowPlaying from "@/pages/movie/NowPlaying";
 import Upcoming from "@/pages/movie/Upcoming";
@@ -48,8 +48,8 @@ function TestRouter({ initialRoute }: { initialRoute: string }) {
     <ChakraProvider>
       <MemoryRouter initialEntries={[initialRoute]}>
         <Routes>
-          {/* Home IS the Featured landing page */}
-          <Route path={ROUTES.HOME} element={<Featured />} />
+          {/* Home is the landing page */}
+          <Route path={ROUTES.HOME} element={<Home />} />
           {/* /featured redirects to home */}
           <Route
             path={ROUTES.FEATURED}
@@ -80,14 +80,14 @@ describe("Browse Route Structure", () => {
   describe("Home and Featured routes", () => {
     it("renders Featured page at root path (/)", () => {
       render(<TestRouter initialRoute="/" />);
-      expect(screen.getByTestId("featured-page")).toBeInTheDocument();
+      expect(screen.getByTestId("home-page")).toBeInTheDocument();
     });
 
     it("redirects /featured to root path", async () => {
       render(<TestRouter initialRoute="/featured" />);
       // After redirect, should show Featured page (at / path)
       await waitFor(() => {
-        expect(screen.getByTestId("featured-page")).toBeInTheDocument();
+        expect(screen.getByTestId("home-page")).toBeInTheDocument();
       });
     });
   });

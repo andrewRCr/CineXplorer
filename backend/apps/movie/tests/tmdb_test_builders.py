@@ -279,6 +279,8 @@ def create_tmdb_movie_detail(
     poster_path: str | None = None,
     vote_count: int | None = None,
     genre_ids: list[int] | None = None,
+    backdrop_path: str | None = None,
+    tagline: str | None = None,
 ) -> TMDBMovieDetail:
     """Create a validated TMDB movie detail model for testing.
 
@@ -297,6 +299,8 @@ def create_tmdb_movie_detail(
         poster_path: Poster path (defaults to generated path)
         vote_count: Number of votes (defaults to 100)
         genre_ids: Genre IDs (defaults to [18, 28])
+        backdrop_path: Optional backdrop image path
+        tagline: Optional promotional line
 
     Returns:
         Validated TMDBMovieDetail Pydantic model
@@ -335,9 +339,11 @@ def create_tmdb_movie_detail(
         overview=overview,
     )
 
+    base_movie.backdrop_path = backdrop_path
     # Create detail model with base fields + detail-specific fields
     return TMDBMovieDetail(
         **base_movie.model_dump(),
+        tagline=tagline,
         runtime=runtime,
         genres=genres or [],
         production_companies=production_companies or [],

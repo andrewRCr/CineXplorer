@@ -43,6 +43,11 @@ test("browse loads another page as the user scrolls", async ({
     await expect(
         windows.getByRole("link", { name: "All films" }),
     ).toHaveAttribute("aria-current", "page");
+    for (const name of ["Genre", "Year", "Sort by"]) {
+        await expect(
+            page.getByRole("combobox", { name, exact: true }),
+        ).toBeVisible();
+    }
     await scanPage(page, info);
     await expect(
         page.getByRole("link", { name: movie.title, exact: true }).first(),

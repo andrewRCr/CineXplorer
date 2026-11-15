@@ -6,9 +6,14 @@ export interface BaselineEntry {
 
 export const axeBaseline: BaselineEntry[] = [
     {
+        route: "/",
+        rule: "button-name",
+        reason: "Signed-in Home draws movie cards whose watched and liked buttons lack accessible names.",
+    },
+    {
         route: "/search",
         rule: "button-name",
-        reason: "Movie cards' icon buttons lack accessible names, as in the catalog.",
+        reason: "Signed-in movie cards lack accessible names for watched and liked buttons.",
     },
     {
         route: "/browse",
@@ -18,7 +23,7 @@ export const axeBaseline: BaselineEntry[] = [
     {
         route: "/browse",
         rule: "button-name",
-        reason: "Movie cards' icon buttons lack accessible names.",
+        reason: "Signed-in movie cards lack accessible names for watched and liked buttons.",
     },
 ];
 

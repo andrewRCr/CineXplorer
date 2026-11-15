@@ -203,23 +203,22 @@ layer's test shows the browser's zone on a plain save and on an Undo.
     - [x] **3.3.c Name the record of changes in TECHNICAL-OVERVIEW and check changed docstrings**
         - The rules, library sort and write-once model docstrings describe the new behavior. Markdown lint passed.
 
-- [ ] **3.4 Merge `main` and apply what it holds — D10**
+- [x] **3.4 Merge `main` and apply what it holds — D10**
 
     **Goal:** The branch carries `main` as it stands before the pull request, with the time zone filled wherever the
     save layer then lives, and the API types matching the merged backend.
 
-    - [ ] **3.4.a Merge `main` into the branch** (the Owner approves the merge)
-        - Parked under away mode, which prohibits merges. The Owner must release this step on return; 3.4.b–c
-          depend on it.
-
-    - [ ] **3.4.b Apply each case that holds**
-        - If `main` has the card controls' rewrite of `saveMutationOptions`, the fill and its test go into it, and
-          every record-save body its tests assert gains `time_zone`
-        - If `main` added a `user_movie_data` migration, this work's migrations follow it
-        - If the backend's schema changed, regenerate `frontend/openapi.json` and `frontend/src/types/api.ts`
-        - Record here which cases held; a case that doesn't hold is noted as such
-
-    - [ ] **3.4.c Run the tests the applied cases touch**
+    - [x] **3.4.a Merge `main` at `9962f991` into the branch**
+        - Clean automatic merge, including the architecture overview, movie-card tests and generated API files.
+    - [x] **3.4.b Apply the cases present on `main`**
+        - No card-controls rewrite was present: `saveMutationOptions` and its zone assertions remain in place.
+        - No new `user_movie_data` migration was present: this branch retains `0004` and `0005` in order.
+        - Home's API schemas were added. Regenerated schema/types from this worktree's backend; the automatic
+          merge already matched that output, with the optional patch zone retained.
+    - [x] **3.4.c Check the merged integration**
+        - All 392 user-movie app tests and 284 related frontend tests across 18 files passed.
+        - Pinned backend Ruff lint/format, app Pyright, frontend lint/type-check after type generation,
+          migration drift and markdown checks passed.
 
 - [ ] **3.5 Check a like and its Undo from the save layer to the record of changes**
 

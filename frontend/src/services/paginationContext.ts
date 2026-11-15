@@ -20,3 +20,10 @@ const paginationContextId = crypto.randomUUID();
 export function getPaginationContextId(): string {
     return paginationContextId;
 }
+
+const homePaginationContextId = crypto.randomUUID();
+
+/** Home's first-page reads never reset the catalog's pagination record. */
+export function getHomePaginationContextId(): string {
+    return homePaginationContextId;
+}

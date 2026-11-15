@@ -398,3 +398,15 @@ describe("BackToCollectionLink", () => {
     });
   });
 });
+
+it("returns directly to Home without collection parameters", () => {
+  render(
+    <BackToCollectionLink
+      searchParams={new URLSearchParams("from=home&film=550&genres=28&page=2")}
+    />,
+  );
+  expect(screen.getByRole("link", { name: "Back to Home" })).toHaveAttribute(
+    "href",
+    "/",
+  );
+});

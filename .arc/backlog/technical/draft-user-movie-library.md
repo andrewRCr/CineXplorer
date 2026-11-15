@@ -273,7 +273,8 @@ Settled by the Owner, 2026-11-14, after the Library Study design reference.
      an addition by its removal, a mark by its unmark, a like by its unlike, a rating by its clearing. That is judged
      against that next save only. Later changes never alter it; only Undo, by deleting a row, changes which save comes
      next. Re-liking adds a new row and leaves the hidden one hidden, and a save that changes anything else in between
-     keeps the row as history.
+     keeps the row as history. History's read applies this selection, built by the Library unit, and ADR-050 records it
+     (Owner, 2026-11-14); the backend unit records the rows and deletes them on Undo.
    - **Undo** (ADR-047's Undo mark, `undo: true`, unchanged). The controls' toasts send it with the fields their save
      changed, and when Watched is among them, also the watchlist and Liked at the values that save returned (the
      controls' R33). For each field the Undo save changes, Undo deletes that field's latest row when that row recorded

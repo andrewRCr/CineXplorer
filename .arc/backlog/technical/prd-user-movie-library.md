@@ -5,19 +5,6 @@
 **Class:** Heavy
 **Status:** Ready for Implementation
 **Created:** 2026-11-14
-**Updated:** 2026-11-14
-
-**Related Work:**
-
-- ✅ Complete: User movie tracking (`prd-user-movie-tracking.md`) - the record with each list's join time, dated
-  entries, the Library endpoint's sorts and the shared frontend layer, now on `main`. This branch merges `main` before
-  its task list is written.
-- ⏳ Depends on: the like rule and the record of changes - a backend change that makes liking mark a film watched and
-  keeps a private row for each change to a film's watchlist, watched, liked and rating (§ 6). History's change rows
-  are built once it is on `main`, and this work's pull request merges after it (R34).
-- ⏳ Meets: the card controls (`prd-user-movie-controls.md`) and the landing page (`prd-landing-page.md`) - whichever
-  merges second adds what they share (R34, R35). The landing page's PRD builds "Recently watched" once History is on
-  `main` (its R30b), with "See all" opening `/library/history` (its R15), so the section is built in either order.
 
 ---
 

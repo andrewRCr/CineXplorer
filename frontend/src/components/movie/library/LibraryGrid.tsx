@@ -128,10 +128,23 @@ export default function LibraryGrid({
               {movies
                 .slice(row.index * columns, (row.index + 1) * columns)
                 .map((movie) => (
-                  <Box role="gridcell" key={movie.tmdb_id} minW={0}>
-                    <MovieCard movie={movie} source={source} />
+                  <Box
+                    role="gridcell"
+                    key={movie.tmdb_id}
+                    minW={0}
+                    display="flex"
+                    flexDirection="column"
+                  >
+                    <Box flex="1" minH={0}>
+                      <MovieCard movie={movie} source={source} />
+                    </Box>
                     {cellFooter && (
-                      <Box h="6" mt={1} data-testid="film-date-slot">
+                      <Box
+                        h="6"
+                        mt={1}
+                        flexShrink={0}
+                        data-testid="film-date-slot"
+                      >
                         {cellFooter(movie)}
                       </Box>
                     )}

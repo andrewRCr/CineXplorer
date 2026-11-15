@@ -97,6 +97,21 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
     await expect(
         page.getByRole("link", { name: secondTitle, exact: true }).first(),
     ).toBeVisible();
+    // The footer must contribute to the measured row height, even when empty.
+    const filmRows = page
+        .getByRole("grid", { name: "Films", exact: true })
+        .getByRole("row");
+    for (const row of await filmRows.all()) {
+        const rowBox = await row.boundingBox();
+        if (!rowBox) throw new Error("Missing film row bounds");
+        for (const slot of await row.getByTestId("film-date-slot").all()) {
+            const slotBox = await slot.boundingBox();
+            if (!slotBox) throw new Error("Missing film date bounds");
+            expect(slotBox.y + slotBox.height).toBeLessThanOrEqual(
+                rowBox.y + rowBox.height + 1,
+            );
+        }
+    }
     await scanPage(page, info);
     const historyResponse = page.waitForResponse(
         (response) =>

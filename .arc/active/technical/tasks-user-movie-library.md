@@ -196,6 +196,9 @@ back link to the place the visitor left.
         - The spec finds the second seeded film through Library and scans the view; the baseline includes its card
           buttons. Replacing the index with its old empty region failed the new assertion; restoring it passed.
         - Frontend lint, type-check and formatting passed; the shared App and Watchlist tests also pass.
+        - Review fix: the card and footer now share a flex column so the footer contributes to row measurement.
+          A real-browser bounds assertion failed with 28px overflow before the fix and passes afterward; related
+          component tests and frontend gates pass.
 
 - [x] **3.2 Films opened from the Watchlist page and the Films view lead back there — R27**
 

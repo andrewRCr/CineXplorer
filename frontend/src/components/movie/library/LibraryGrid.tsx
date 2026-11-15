@@ -59,7 +59,7 @@ export default function LibraryGrid({
     params,
     isLoading: query.isLoading,
     hasContent: movies.length > 0,
-    isError: query.isError,
+    isError: query.isError && !query.data,
     count: rowCount,
     estimateSize: () => 449,
     gap: GAP,

@@ -1,4 +1,5 @@
-import { beforeEach, expect, it } from "vitest";
+import { measuredCollectionGeometry } from "@tests/helpers/measuredCollectionGeometry";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import { HttpResponse, http } from "msw/http";
 import { server } from "@tests/mocks/server";
@@ -15,6 +16,7 @@ import LibraryGrid from "../LibraryGrid";
 
 const url = `${apiBaseUrl}/user-movie-data/movies`;
 beforeEach(prepareLibrary);
+afterEach(() => vi.unstubAllGlobals());
 function grid() {
   return renderLibrary(
     <LibraryGrid
@@ -92,14 +94,20 @@ it("ends an empty collection at the first page", async () => {
 });
 
 it("retries a later page, drops repeats and stops at the last page", async () => {
+  measuredCollectionGeometry();
+  const entered = gate();
+  const failure = gate();
   let fail = true;
   const reads: number[] = [];
   server.use(
-    http.get(url, ({ request }) => {
+    http.get(url, async ({ request }) => {
       const page = Number(new URL(request.url).searchParams.get("page"));
       reads.push(page);
-      if (page === 2 && fail)
+      if (page === 2 && fail) {
+        entered.release();
+        await failure.wait;
         return HttpResponse.json({ detail: "Unavailable" }, { status: 503 });
+      }
       return HttpResponse.json({
         ...filmPage(
           page === 1
@@ -115,9 +123,16 @@ it("retries a later page, drops repeats and stops at the last page", async () =>
   grid();
   await screen.findAllByRole("link", { name: "Film 1" });
   await scrollLibrary(22000);
+  await act(async () => {
+    await entered.wait;
+  });
+  const beforeFailure = window.scrollY;
+  expect(beforeFailure).toBeGreaterThan(0);
+  failure.release();
   expect(
     await screen.findByText("Couldn't load your watchlist."),
   ).toBeVisible();
+  expect(window.scrollY).toBe(beforeFailure);
   fail = false;
   await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
   expect(

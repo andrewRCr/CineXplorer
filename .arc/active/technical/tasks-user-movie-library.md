@@ -303,6 +303,9 @@ the same rows.
           Both keep fresh snapshots under their position key and restore only with the signal, heights and saved flag.
         - All 69 related cases pass, including both grid pages' measured returns. Frontend lint/type-check and all
           three Library, browse and catalog-return browser specs pass. New test queries were corrected for lint.
+        - Review fix: only an initial-load error resets personal views to the top. Grid and History cases hold a
+          failing next page after measurements settle and prove the failure preserves that position before Retry;
+          both failed at zero before the fix and pass afterward. Related tests and frontend/browser gates pass.
 
 - [x] **4.4 ADR-050 records the Library, and the documents say what it changes — R33**
 

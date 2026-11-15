@@ -25,6 +25,7 @@ import LibraryHistory from "../LibraryHistory";
 
 const url = `${apiBaseUrl}/user-movie-data/history`;
 beforeEach(prepareLibrary);
+afterEach(() => vi.unstubAllGlobals());
 function SaveProbe() {
   const { save } = useUserMovieState(
     1,
@@ -155,14 +156,20 @@ it("ends an empty history on its first page and offers Explore", async () => {
   expect(reads).toEqual([1]);
 });
 it("retries a later page, drops repeated entries and stops after its last page", async () => {
+  measuredCollectionGeometry();
+  const entered = gate();
+  const failure = gate();
   let fail = true;
   const reads: number[] = [];
   server.use(
-    http.get(url, ({ request }) => {
+    http.get(url, async ({ request }) => {
       const page = Number(new URL(request.url).searchParams.get("page"));
       reads.push(page);
-      if (page === 2 && fail)
+      if (page === 2 && fail) {
+        entered.release();
+        await failure.wait;
         return HttpResponse.json({ detail: "Unavailable" }, { status: 503 });
+      }
       return HttpResponse.json(
         historyPage(
           page === 1
@@ -178,6 +185,12 @@ it("retries a later page, drops repeated entries and stops after its last page",
   page();
   await screen.findByRole("link", { name: "Entry 1" });
   await scrollLibrary(50000);
+  await act(async () => {
+    await entered.wait;
+  });
+  const beforeFailure = window.scrollY;
+  expect(beforeFailure).toBeGreaterThan(0);
+  failure.release();
   await screen.findByText("Couldn't load your history.");
   const lastRow = screen.getAllByTestId("history-row").at(-1);
   if (!lastRow) throw new Error("Missing loaded timeline rows");
@@ -186,6 +199,7 @@ it("retries a later page, drops repeated entries and stops after its last page",
       screen.getByRole("button", { name: "Retry" }),
     ) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).not.toBe(0);
+  expect(window.scrollY).toBe(beforeFailure);
   fail = false;
   await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
   expect(await screen.findByRole("link", { name: "Entry 101" })).toBeVisible();
@@ -358,7 +372,6 @@ describe("measured History returns", () => {
       ),
     );
   });
-  afterEach(() => vi.unstubAllGlobals());
   function journey() {
     return renderLibrary(
       <Routes>

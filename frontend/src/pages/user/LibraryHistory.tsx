@@ -48,7 +48,7 @@ export default function LibraryHistory() {
     params: {},
     isLoading: query.isLoading,
     hasContent: items.length > 0,
-    isError: query.isError,
+    isError: query.isError && !query.data,
     count: items.length,
     estimateSize: () => 100,
     getItemKey,

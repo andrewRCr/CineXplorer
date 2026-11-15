@@ -541,9 +541,9 @@ History, with each case of R34 that holds applied.
           film's record; each holding the record, the field, the new value (on or off; the rating's value, or
           cleared), whether an entry write made it, the made time every row of one save shares, and the day in the
           visitor's time zone (a record save without `time_zone` records its UTC day)
-        - Turn-ons only from the visitor's own record saves; an entry write recording only its rating changes;
-          reversals whatever caused them, except a watchlist removal a rule makes; an Undo deleting the field's
-          latest row when it recorded the change being undone
+        - Turn-ons only from the visitor's own record saves; an entry write recording its rating changes and a like
+          it removes, never its other turn-ons; reversals whatever caused them, except a watchlist removal a rule
+          makes; an Undo deleting the field's latest row when it recorded the change being undone
         - The like rule, and `added` sorting by the first of `watchlist`, `watched` and `liked` the query filters
         - Record the model, fields and manager names here for 5.2 to 5.4; a mismatch with § 6 is a design question:
           stop and amend the PRD
@@ -560,11 +560,13 @@ History, with each case of R34 that holds applied.
     fixed number of queries.
 
     - [ ] **5.2.a Write the change cases in `test_history_api.py`**
-        - Recorded changes are seeded directly through the model 5.1.b names
+        - Recorded changes are seeded directly through the model 5.1.b names, each save with its own made time (two
+          saves sharing one read as a single save)
         - A change row only for a record save's turn-on; never for an entry write's rating change, or a reversal
         - A change hidden when the film's next save reverses it in its own field, and shown when a save of another
-          field came between; re-liking after an unlike shows the new like only; a save holding only an entry write's
-          rating change does not count as the next save; deleting a reversal shows the change it hid
+          field came between; re-liking after an unlike shows the new like only; an entry write's like removal hides
+          the like before it; a save holding only an entry write's rating change does not count as the next save;
+          deleting a reversal shows the change it hid
         - A film once per kind per day, with its latest shown change; for ratings, that change's value
         - 4 films of one kind on a day form one row with `count` 4 and its `films` most recent first; 9 films sample 8
         - Changes sit on their stored day, not their made time's UTC date; within a day a kind's row sits where its

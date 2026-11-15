@@ -855,7 +855,7 @@ recorded, and the three changed smoke specs pass.
       5.1 remains open. Independent amendment review found one minor scope-wording conflict, corrected with Owner
       approval; an optional fix check has not run.
 
-- [ ] **5.1 The Owner's approved films replace the provisional list — R3**
+- [x] **5.1 The Owner's approved films replace the provisional list — R3**
 
     **Goal:** Each film shipped has the Owner's sign-off under the scalable review process; the remainder can follow
     in later pull requests.
@@ -877,22 +877,27 @@ recorded, and the three changed smoke specs pass.
           pitch and credit by their panel wrappers. Against the built app, crop, credit markup, panel boxes and
           panel edges match at 2000×1000 and 1024×1000. The sheet's browser checks pass, including keys with focus
           in a preview, a restore in a fresh browser, and exported lines parsed as real `FeaturedFilm` entries.
-    - [ ] **5.1.b The Owner reviews the sheet in one page mode**
-        - The Owner settles flags, sets full-bleed points (unset uses `50% 28%`), flips a frame where that clears the
-          pitch panel, and approves or excludes each film,
-          then supplies the saved review JSON. Component mode/shape checks are covered by 4.12 and 4.13, not
-          repeated for each film. Owner choices are never inferred from simulated browser state
-    - [ ] **5.1.c Import the approved entries and check them as one batch**
-        - The Owner chooses the final size; 200–250 is a possible pool, not a merge minimum. Import only approved films,
-          with explicit title/year identity, checked backdrop paths, chosen points, short titles and mirroring. The
-          uniqueness test stays independent of which IDs ship
-        - By script, confirm each applied entry's point, path, title and mirroring through the DEBUG endpoint; rerun the
-          credit-fit screen over every applied entry with its shipped title at 360×800, 390×844, 768×1024, 900×700
-          and 768×600; and capture the built hero at 2000×1000, 1024×1000 and 390×844 in one mode for every
-          custom-point, mirrored or flagged film
-        - The Owner reviews the captures; reframe, give a short title to a credit that does not fit, or exclude any
-          failure. Unapproved candidates do not ship;
-          remaining candidates can be reviewed and added by later pull request
+    - [x] **5.1.b The Owner reviews the sheet in one page mode**
+        - The Owner decided all 152 candidates: 135 approved and 17 excluded. Of the approved films, 96 have a custom
+          point, 11 are flipped and one ships a short title (_Dr. Strangelove_); the twelve flagged films approved have
+          their identity or year confirmed, each keeping the proposed identity. The saved review JSON reached the run
+          folder through a tailnet-only upload page. Component mode and shape checks stay with 4.12 and 4.13, not
+          repeated per film
+    - [x] **5.1.c Import the approved entries and check them as one batch**
+        - `FEATURED_FILMS` holds exactly the Owner's 135 approved films, each with a title-and-year comment, its
+          checked backdrop path and any custom point, flip or short title, and none of the 17 excluded (two of them
+          from the twelve provisional films). Loaded in the backend and compared with the Owner's review, every
+          field matches. 8½ ships at the Owner's point (50%, 0%) in place of the earlier preview entry.
+        - By script against the browsable stack: the DEBUG endpoint returns every entry's point, path, title and
+          flip as reviewed (135 of 135; no TMDB title changed since review). Every credit fits at 360×800, 390×844,
+          768×1024, 900×700 and 768×600 across 676 built-hero loads (tallest phone credit 75.6px of 84px, portrait
+          tablet 101px of 116px, tightest panel gap 20.4px), and an unlisted long title is flagged as a control. The
+          built hero was captured at 2000×1000, 1024×1000 and 390×844 in dark mode for the 100 films with a custom
+          point, flip or flag, with flips shown only in the full-bleed captures.
+        - The Owner reviewed the numbered captures, asked for three more flips (_Blue Velvet_, _Aliens_ and _The
+          Silence of the Lambs_, whose centred points stay as they were) and accepted the rest; the list and checks
+          were rerun with them, for 14 flipped films. Removals and about two dozen further films follow as a later
+          errand, captured in the inbox, with the review tooling kept outside the repository for it
 
 - [ ] **5.2 Checkpoint on the user-movie tracking model before merging `main` — R30**
 

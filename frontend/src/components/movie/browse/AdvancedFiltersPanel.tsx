@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useId, useMemo } from "react";
 import {
   Box,
   VStack,
@@ -40,6 +40,7 @@ const AdvancedFiltersPanel = ({
   pageSource,
   isDrawerOpen = true,
 }: AdvancedFiltersPanelProps) => {
+  const languageLabelId = useId();
   const languageCollection = useMemo(
     () =>
       createListCollection({
@@ -97,10 +98,17 @@ const AdvancedFiltersPanel = ({
       {/* Row 2: Language, Year, Rating */}
       <Flex gap={6} wrap="wrap" align="flex-start" justify="center">
         <Box>
-          <Text fontSize="sm" fontWeight="medium" mb={2} color="foreground">
+          <Text
+            id={languageLabelId}
+            fontSize="sm"
+            fontWeight="medium"
+            mb={2}
+            color="foreground"
+          >
             Language
           </Text>
           <Select.Root
+            ids={{ label: languageLabelId }}
             collection={languageCollection}
             value={browseParams.language ? [browseParams.language] : [""]}
             onValueChange={(details) => {

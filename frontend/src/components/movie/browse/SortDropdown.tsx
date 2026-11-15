@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import { Box, Text, Select, createListCollection } from "@chakra-ui/react";
 import { getAvailableSortOptions } from "@/utilities/sortAvailabilityUtils";
 import type { BrowseParams } from "@/types/browseTypes";
@@ -20,6 +20,7 @@ const SortDropdown = ({
   onSortChange,
   pageSource,
 }: SortDropdownProps) => {
+  const labelId = useId();
   const currentSortValue = browseParams.sortBy;
 
   // Get available sort options based on language (hides title sorts for non-Latin)
@@ -50,6 +51,7 @@ const SortDropdown = ({
 
       {/* Sort by label */}
       <Text
+        id={labelId}
         fontSize="sm"
         fontWeight="400"
         fontFamily="body"
@@ -64,6 +66,7 @@ const SortDropdown = ({
       {/* Sort dropdown */}
       <Box position="relative">
         <Select.Root
+          ids={{ label: labelId }}
           collection={sortCollection}
           value={[currentSortValue]}
           onValueChange={(details) => {

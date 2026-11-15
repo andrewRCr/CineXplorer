@@ -406,39 +406,22 @@ the film page.
 _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack the smoke specs pass with no
 `button-name` baseline entry for `/browse` or `/search`, `phone-width.spec.ts` scanning both signed in.
 
-- [ ] **5.1 Merge `main` and apply what it holds — R41**
+- [x] **5.1 Merge `main` and apply what it holds — R41**
 
     **Goal:** The branch carries `main` as it stands before the pull request, with each change R41 assigns to what
     `main` holds made and checked against `main`'s code at that merge.
 
-    - [ ] **5.1.a Merge `main` into the branch** (the Owner approves the merge)
-
-    - [ ] **5.1.b Apply each case that holds**
-        - a. If the backend's schema changed, regenerate `frontend/openapi.json` and `frontend/src/types/api.ts`
-        - b. The landing page: remove the `/` `button-name` entry where 3.1.e didn't already; move its card tests to the
-          new controls where 3.1 didn't already ("Merges of `main`"); set the hero's line and the band's second point to
-          R41b's copy; keep one form of the interceptor check and the request options, passing the picker's context
-          through them; name both callers with their own context in the strategies, where 2.1.h didn't already; and,
-          where 4.5 didn't already, cite ADR-046 in ADR-048 for cards without actions for signed-out visitors (D19),
-          supersede ADR-046's statements on row spacing and shorter signed-out cards, and say so in ADR-046's Status;
-          where the merge meets 4.5.b's edit to ADR-044's Status line, keep both supersessions
-        - c. The Library pages: in the signed-in smoke spec (`library.spec.ts`), replace step 4, which removed the first
-          fixture film from its card on `/watchlist`, with the dialog's steps: log that film from its card with today's
-          date, a rating and a review, which takes it off the watchlist since it is logged on the day it joined, and see
-          it leave the page; find the entry on the film's page; find the film in Films, `/library`, and History,
-          `/library/history`. Step 1's add from a card, and the Watchlist page's test of a removal from a card, move to
-          the new controls ("Merges of `main`"). Add a dated note to ADR-050 recording the dialog's steps. Add "Log a
-          film" to the Films view's and History's empty states, calling `useEntryDialog().open({ dateOn: true,
-          returnFocus })` with the current view's link in the Library's navigation, with tests that it opens the dialog
-          on the picker and that focus lands on that link once the empty state has gone. Add Log to the bar items
-          `phone-width.spec.ts` checks at 1024px (the Library's R1). Remove the Library's `button-name` entries where
-          3.1.e didn't already. Tests this work adds that name the bar's catalog link call it Explore
-        - d. The backend unit: the like rule changes nothing; the rewritten `saveMutationOptions` keeps filling
-          `time_zone` on record saves and its test stays; every record-save body this work's tests assert exactly gains
-          it, as "Merges of `main`" says, and the watchlist tests keep the expected bodies `main` gives them (1.1.b)
-        - Record in this task which cases held; a case that doesn't hold is noted as such
-
-    - [ ] **5.1.c Run the tests and specs the applied cases touch**
+    - [x] **5.1.a Confirm the carried `main`**
+        - Fetched `main` is still `46ae700b`, already an ancestor through the explicitly approved merge `ab48e577`.
+          No new merge was required or performed. Recheck if `main` advances before the eventual pull request.
+    - [x] **5.1.b Check each conditional integration case**
+        - The backend and both generated API files match `main`; no schema regeneration applies. The later backend
+          rule/time-zone case is absent: the record PATCH schema has no `time_zone` field.
+        - Neither ADR-046/the landing page nor ADR-050/the Library pages is on this `main`. Their conditional copy,
+          routing, smoke, empty-state and supersession edits do not apply. ADR-048 records signed-out cards directly.
+    - [x] **5.1.c Check the applied footprint**
+        - No conditional code changes were needed; this task records the ancestry and case audit. Markdown lint
+          passes. Task 5.3 runs the journey and covering browser specs on this integrated head.
 
 - [ ] **5.2 The tracking journey runs as one integration test — R2, R3, R16, R19, R21, R22, R29, R32**
 

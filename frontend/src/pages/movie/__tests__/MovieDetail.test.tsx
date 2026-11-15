@@ -14,7 +14,7 @@ import { infiniteMoviesKey, movieDetailQuery } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { browseMovies } from "@/services/movieService";
 import { siteOrigin } from "@/config/baseUrls";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { act, screen, waitFor } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 import MovieDetail from "../MovieDetail";
@@ -701,6 +701,16 @@ function CachedDetailCards() {
 }
 it("shows a card save over a previously cached detail after the next list page lands", async () => {
   setAuthTokens(token());
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: query === "(hover: hover)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
   const next = gate();
   let firstReads = 0;
   let nextReads = 0;
@@ -768,7 +778,7 @@ it("shows a card save over a previously cached detail after the next list page l
   await waitFor(() => expect(firstReads).toBe(2));
   await user.click(screen.getByRole("button", { name: "Load next page" }));
   await waitFor(() => expect(nextReads).toBe(1));
-  await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+  await user.click(screen.getByRole("button", { name: "Watchlist" }));
   await waitFor(() =>
     expect(screen.getByText("Added to watchlist")).toBeVisible(),
   );

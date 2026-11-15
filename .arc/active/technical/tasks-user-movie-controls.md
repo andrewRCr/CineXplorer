@@ -230,73 +230,39 @@ the film page.
 
 ### **Phase 3:** Cards carry the controls
 
-- [ ] **3.1 Signed-in visitors act from a card by pointer, keyboard or touch — R3, R4, R5, R8, R9, R19, R39**
+- [x] **3.1 Signed-in visitors act from a card by pointer, keyboard or touch — R3, R4, R5, R8, R9, R19, R39**
 
     **Goal:** On a hover-capable pointer a signed-in visitor reveals a named group of four controls by hovering the
     card or tabbing into it, on touch a visible "⋯" menu holds the same actions, a locked Watched explains itself and
     sends nothing, and no one else sees a control.
 
-    **Note:** Check `main` for the landing page first, as 2.1.a does: it changes `MovieCard.tsx` and `axe-baseline.ts`,
-    and its tests press today's card buttons. A merge here applies only what an early merge can (Implementation Notes,
-    "Merges of `main`").
-
-    - [ ] **3.1.a Write the hover group's cases in `src/components/movie/__tests__/MovieCard.test.tsx`**
-        - Stub `matchMedia` to answer yes for `(hover: hover)` and render signed in: a group named "Your actions for
-          {title}" after the poster's link and before the title, with Watched, Like, Watchlist and "Review or log" in
-          order, each with its tooltip; the toggles named "Watched", "Like" and "Watchlist" with `aria-pressed`
-        - Activating a toggle saves the opposite of its shown state; "Review or log" opens the dialog (inside
-          `EntryDialogHost`) showing the card's film without "Change", with the date on; no activation follows the
-          poster's link
-        - The lock (criterion 3): a rated film and a film with entries show Watched with `aria-disabled="true"`, the
-          lock icon and the explanation as tooltip and accessible description, and activating it sends no request; a
-          film only liked shows Watched unlocked
-        - Signed out and while sign-in resolves: no controls (criterion 7); `GridSkeletonLoader`'s placeholder cards
-          render none signed in
-        - R8: a rerender with a changed `user_watched`, `user_liked`, `user_on_watchlist`, `user_rating` or
-          `has_entries` updates the controls
-        - Expect tests to FAIL initially
-
-    - [ ] **3.1.b Write the menu's cases in `MovieCard.test.tsx`** (criterion 2)
-        - With `(hover: none)`: the "⋯" button named "Actions for {title}" and no hover group; checkbox items checked
-          by the film's state; choosing one saves or opens the dialog and closes the menu
-        - A locked Watched item is `aria-disabled`, reached with the arrow keys, changes nothing when chosen, leaves the
-          menu open and shows the explanation as a second line
-        - A dialog opened from the menu (inside `EntryDialogHost`) returns focus to the "⋯" button when it closes
-        - Expect tests to FAIL initially
-
-    - [ ] **3.1.c Move the tests that click today's footer to the new controls**
-        - In `MovieCard.test.tsx`, render each case signed in (a stored token, `authHandlers()` and
-          `AuthContextProvider`) with `(hover: hover)` stubbed, and press "Watchlist": "queues two quick toggles while
-          keeping the control enabled", "keeps a %s save when its card remounts", "rolls back a failed save (%s)",
-          "keeps a save when the next page lands and the cards remount…", "shows a save toast and refetches the
-          Library after its card unmounts" and "runs Undo from a toast whose card is gone"
-        - `MovieDetail.test.tsx`'s "shows a card save over a previously cached detail…": its card step uses the card's
-          new control; its film-page step changes in 4.1.b
-        - If the branch carries the landing page or the Library by now, move their card tests too, as "Merges of
-          `main`" in the Implementation Notes lists them; a later merge moves them then
-
-    - [ ] **3.1.d Replace the card's footer with the group and the menu, shown only while signed in**
-        - The footer's three icon buttons go. `useMediaQuery(["(hover: hover)"], { ssr: false })` chooses one set of
-          controls (D1), so the first paint already has the right set, as `NavDrawer` and `AccountControl` read theirs;
-          `useAuthContext()?.status` gates both; a `MovieCard` prop the skeleton sets withholds them from placeholder
-          cards
-        - The memo comparison covers `user_watched`, `user_liked`, `user_on_watchlist`, `user_rating` and
-          `has_entries` (R8)
-        - The group: 28px icon buttons 6px apart, centered 8px above the poster's bottom edge, each on a solid backing
-          surface from a token pair the contrast check covers; hidden at rest, shown on the card's hover or focus
-          within the group; pressed state in `tertiary`
-        - The menu: Chakra `Menu` with the menu recipe's highlight; the "⋯" button 32px, 6px in from the poster's
-          top-right corner, on a solid backing surface, visible at rest; "Review or log" passes `returnFocus` with the
-          "⋯" button
-        - The lock's rule and its explanation in one shared module the panel (4.1) also uses
-        - Tests should now PASS
-
-    - [ ] **3.1.e Clear the cards' allowance from the accessibility baseline**
-        - Remove the `button-name` entries for `/browse` and `/search` from `e2e/axe-baseline.ts`, and the landing
-          page's `/` entry and the Library's entries if the branch carries them by now; the reporter only logs an
-          unmatched entry, so the removal is what proves the names
-        - Run `e2e/phone-width.spec.ts`, which scans both routes signed in, against the browsable stack, with
-          `e2e/sign-in.spec.ts` when the `/` entry goes and `e2e/library.spec.ts` when the Library's go
+    - [x] **3.1.a Cover pointer controls, the lock, authentication and refreshes**
+        - Added `MovieCardControls.test.tsx` beside the existing large card suite: stable names and order outside the
+          poster link, opposite-state saves, fixed-film logging, rating/entry locks, liked-only unlocking, all five
+          refreshed record fields, anonymous/resolving visitors and hidden skeleton descendants.
+    - [x] **3.1.b Cover touch actions and focus return**
+        - All three checkbox actions save, close the menu and show the returned checked state when reopened. Keyboard
+          navigation reaches locked Watched, whose activation saves nothing and keeps the explanation visible. Closing
+          the logging dialog returns focus to the surviving menu trigger.
+        - The behavior slices failed before implementation. Seven additional guard/refresh/menu reconstructions failed
+          as expected (run `3030e802824f42fe9c91f6370cea401b`), then the source was restored.
+    - [x] **3.1.c Move existing card-save composition cases to the new controls**
+        - The queue, remount, rollback, page extension, post-unmount toast, Library invalidation and Undo cases now run
+          authenticated on a hover-capable input. Stable Watchlist names are scoped to their film where needed. The
+          detail-cache integration uses the same control.
+    - [x] **3.1.d Replace footer actions with reusable pointer and touch controls**
+        - `MovieCardActions` chooses controls through `useMediaQuery` without a server fallback. Pointer controls are
+          28px with 6px gaps, revealed on card hover or group focus; touch uses a visible 32px menu trigger. Solid
+          backing surfaces and pressed colors use existing checked token pairs, including an opaque locked control.
+        - `watchedLock` shares the rule and explanation; the card memo compares all shown record fields. Skeleton cards
+          suppress controls explicitly.
+    - [x] **3.1.e Remove the cards' accessibility allowances and check the merged surface**
+        - Removed `/browse` and `/search` button-name allowances. This exposed pre-existing unnamed browse selects;
+          their separate fix merged through PR #206 and was integrated from main in `ab48e577`.
+        - Both phone and browse smoke specs pass without the button-name allowances (run
+          `dc013d535f044723aad9458f463a8ce1`). All 178 related tests passed after integration; the final fixture/opacity
+          refinement passed all 125 related cases, lint, type-check and formatting. The unsupported Testing Library
+          `exact` option was corrected mechanically after type-check reported it.
 
 - [ ] **3.2 Every card has one height and shows the visitor's rating and watched mark — R1, R2, R5, R6, R7**
 

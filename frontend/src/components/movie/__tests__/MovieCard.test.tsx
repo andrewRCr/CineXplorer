@@ -10,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   act,
-  render,
+  render as renderBase,
   screen,
   isInaccessible,
   within,
@@ -25,7 +25,36 @@ import { Toaster, toaster } from "@/components/core/chakra/toaster";
 import MovieCard from "../MovieCard";
 import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
 
-// Mock the COLORS constant since it's used in the component
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { setAuthTokens } from "@/utilities/tokenUtils";
+
+const render: typeof renderBase = (ui, options) => {
+  const view = renderBase(
+    <AuthContextProvider>{ui}</AuthContextProvider>,
+    options,
+  );
+  return {
+    ...view,
+    rerender: (next) =>
+      view.rerender(<AuthContextProvider>{next}</AuthContextProvider>),
+  };
+};
+beforeEach(() => {
+  clearBrowserAuth();
+  authHandlers();
+  setAuthTokens(token());
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: query === "(hover: hover)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+});
 
 describe("MovieCard Component", () => {
   const defaultProps = {
@@ -659,16 +688,14 @@ describe("MovieCard watchlist saves", () => {
       </>,
     );
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     await waitFor(() => expect(requests).toHaveLength(1));
     const remove = screen.getByRole("button", {
-      name: "Remove from watchlist",
+      name: "Watchlist",
     });
     expect(remove).toBeEnabled();
     await user.click(remove);
-    expect(
-      screen.getByRole("button", { name: "Add to watchlist" }),
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled();
     expect(requests).toEqual([{ user_on_watchlist: true }]);
     first.release();
     await screen.findByText("Removed from watchlist");
@@ -676,9 +703,10 @@ describe("MovieCard watchlist saves", () => {
       { user_on_watchlist: true },
       { user_on_watchlist: false },
     ]);
-    expect(
-      screen.getByRole("button", { name: "Add to watchlist" }),
-    ).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it.each(["pending", "settled"])(
@@ -705,7 +733,7 @@ describe("MovieCard watchlist saves", () => {
         </>,
       );
       await user.click(
-        screen.getByRole("button", { name: "Add to watchlist" }),
+        await screen.findByRole("button", { name: "Watchlist" }),
       );
       if (when === "settled") {
         release.release();
@@ -718,9 +746,10 @@ describe("MovieCard watchlist saves", () => {
           <Toaster key="toasts" />
         </>,
       );
-      expect(
-        screen.getByRole("button", { name: "Remove from watchlist" }),
-      ).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
       release.release();
       await screen.findByText("Added to watchlist");
     },
@@ -744,19 +773,18 @@ describe("MovieCard watchlist saves", () => {
       );
       await userEvent
         .setup()
-        .click(screen.getByRole("button", { name: "Add to watchlist" }));
+        .click(await screen.findByRole("button", { name: "Watchlist" }));
       expect(
         await screen.findByText("Failed to update watchlist"),
       ).toBeInTheDocument();
       expect(screen.getByText("Please try again.")).toBeInTheDocument();
       await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "Add to watchlist" }),
-        ).toBeEnabled(),
+        expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled(),
       );
-      expect(
-        screen.getByRole("button", { name: "Add to watchlist" }),
-      ).toHaveAttribute("aria-pressed", "false");
+      expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
     },
   );
 });
@@ -837,22 +865,28 @@ describe("MovieCard shared-save composition", () => {
     await screen.findByText("First movie");
     await user.click(screen.getByRole("button", { name: "Load more" }));
     await waitFor(() => expect(nextReads).toBe(1));
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     await screen.findByText("Added to watchlist");
     expect(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
+      within(
+        screen.getByRole("group", { name: "Your actions for First movie" }),
+      ).getByRole("button", { name: "Watchlist" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(firstReads).toBe(1);
     next.release();
     await screen.findByText("Second movie");
     expect(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
+      within(
+        screen.getByRole("group", { name: "Your actions for First movie" }),
+      ).getByRole("button", { name: "Watchlist" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(firstReads).toBe(1);
     await user.click(screen.getByRole("button", { name: "Toggle cards" }));
     await user.click(screen.getByRole("button", { name: "Toggle cards" }));
     expect(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
+      within(
+        screen.getByRole("group", { name: "Your actions for First movie" }),
+      ).getByRole("button", { name: "Watchlist" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(firstReads).toBe(1);
   });
@@ -885,7 +919,7 @@ describe("MovieCard shared-save composition", () => {
     await waitFor(() =>
       expect(screen.getByLabelText("Library reads")).toHaveTextContent("1"),
     );
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     view.rerender(
       <>
         <CardLibraryProbe key="library" />
@@ -926,7 +960,7 @@ describe("MovieCard shared-save composition", () => {
         <Toaster key="toasts" />
       </>,
     );
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     await screen.findByText("Added to watchlist");
     view.rerender(<Toaster key="toasts" />);
     await user.click(screen.getByRole("button", { name: "Undo" }));

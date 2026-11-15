@@ -6,19 +6,9 @@ export interface BaselineEntry {
 
 export const axeBaseline: BaselineEntry[] = [
     {
-        route: "/search",
-        rule: "button-name",
-        reason: "Movie cards' icon buttons lack accessible names, as in the catalog.",
-    },
-    {
         route: "/browse",
         rule: "aria-hidden-focus",
         reason: "The collapsed browse sub-navigation drawer retains focusable controls while aria-hidden.",
-    },
-    {
-        route: "/browse",
-        rule: "button-name",
-        reason: "Movie cards' icon buttons lack accessible names.",
     },
 ];
 

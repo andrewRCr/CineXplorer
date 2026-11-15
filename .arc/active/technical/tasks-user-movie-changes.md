@@ -168,37 +168,23 @@ layer's test shows the browser's zone on a plain save and on an Undo.
           The new entry's day and its change rows use the locked-save time.
         - All 380 app tests, pinned Ruff lint/format and app Pyright passed.
 
-- [ ] **3.2 An Undo deletes the row it undoes — D7**
+- [x] **3.2 An Undo deletes the row it undoes — D7**
 
     **Goal:** An Undo records nothing for the fields it supplied and changed, and deletes each such field's latest row
     when that row's value differs from the one it restores, so History shows what it would have shown had the undone
     change never happened.
 
-    - [ ] **3.2.a Write the Undo cases in `test_movie_changes.py`**
-        - Each case D7 lists: undoing an addition deletes it; undoing a removal deletes it, leaving the addition
-          latest; undoing a rule's removal deletes nothing; undoing a like that marked the film watched (the controls'
-          body: `user_liked: false`, `user_watched: false`, `user_on_watchlist: true`) deletes the like's row and keeps
-          the addition; undoing a logging that changed the rating (the entry deleted, then the Undo with the earlier
-          rating) deletes the logging's `rating` row
-        - An Undo writes no row for the fields it supplied and changed
-        - A field an Undo supplies at its current value keeps its rows
-        - An Undo un-marking Watched without supplying Liked records the like's removal
-        - Expect tests to FAIL initially; the cases that delete nothing, and the like's removal, pass early (see the
-          notes)
-
-    - [ ] **3.2.b Write criterion 1's test in `test_movie_changes.py`, through the API**
-        - At a frozen time whose UTC day differs from Auckland's: add a film to the watchlist, like it with
-          `time_zone: "Pacific/Auckland"`, then send the Undo; check the record and the rows after each, as criterion 1
-          states
-        - Sign in inside the frozen clock, as `test_readding_with_undo_preserves_watchlist_place` does: `ninja_jwt`
-          checks the access token's issue and expiry times, so a fixture's token, issued at real time, is refused at the
-          frozen time. The token lasts 5 minutes (`SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]`), so sign in again after each
-          clock advance, or keep every save within 5 minutes of signing in
-        - Expect it to FAIL until 3.2.c
-
-    - [ ] **3.2.c Delete instead of record for an Undo's supplied fields, in 2.3.b's function**
-        - A field's latest row is its last by `created_at`, then ID
-        - Tests should now PASS, with the app's other tests
+    - [x] **3.2.a Test Undo row deletion and preservation**
+        - Covered additions, explicit and derived removals, the like/unwatch/watchlist restore, logging with and
+          without an earlier rating, unchanged fields, omitted like reversal, and timestamp/ID ordering.
+        - Eight original cases and both ordering cases failed before implementation; preservation tests failed
+          with unconditional deletion including unchanged supplied values, then passed restored.
+    - [x] **3.2.b Test a like and its Undo through the authenticated API**
+        - The Auckland save writes only the like beside the original addition; Undo restores the record and
+          leaves only that addition. The test failed before Undo deletion.
+    - [x] **3.2.c Delete differing latest rows for supplied changed Undo fields**
+        - Omitted reversals still record normally. The recorder keeps fields already at the supplied value.
+        - All 391 app tests, pinned Ruff lint/format and app Pyright passed.
 
 - [ ] **3.3 ADR-051 records the like rule, the record of changes and date added — D11**
 

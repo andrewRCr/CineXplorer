@@ -62,7 +62,14 @@ class UserMovieDataService:
             record.save()
             zone_name = fields.get("time_zone")
             zone = ZoneInfo(zone_name) if isinstance(zone_name, str) else ZoneInfo("UTC")
-            record_changes(record, previous, set(changes), now, now.astimezone(zone).date())
+            record_changes(
+                record,
+                previous,
+                set(changes),
+                now,
+                now.astimezone(zone).date(),
+                undo=fields.get("undo") is True,
+            )
             return self.get_by_tmdb_id(user, tmdb_id), created
 
     def delete(self, user: AbstractBaseUser, tmdb_id: int) -> None:

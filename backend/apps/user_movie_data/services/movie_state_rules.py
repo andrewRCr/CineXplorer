@@ -87,12 +87,24 @@ def record_changes(
     made_on: date,
     *,
     from_entry: bool = False,
+    undo: bool = False,
 ) -> None:
-    """Record explicit changes and reversals, excluding derived watchlist removals."""
+    """Record changes and reversals; Undo erases a supplied field's differing latest row."""
     changes: list[UserMovieChange] = []
     for field, attribute in CHANGE_FIELDS:
         current: bool | int | None = getattr(record, attribute)
         if current == previous[attribute]:
+            continue
+        if undo and attribute in supplied:
+            latest = (
+                UserMovieChange.objects.filter(record=record, field=field)
+                .order_by("-created_at", "-pk")
+                .first()
+            )
+            if latest is not None:
+                value = latest.rating if field == "rating" else latest.turned_on
+                if value != current:
+                    latest.delete()
             continue
         if attribute in supplied or (not current and field != "watchlist"):
             changes.append(

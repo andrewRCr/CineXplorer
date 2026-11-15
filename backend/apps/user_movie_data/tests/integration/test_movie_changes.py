@@ -260,3 +260,186 @@ def test_entry_review_edit_or_delete_records_nothing(
     else:
         service.delete(user, 550, entry.pk)
     assert rows() == []
+
+
+@pytest.mark.parametrize("removal", [False, True])
+def test_undo_watchlist_change_erases_only_its_latest_row(
+    service: UserMovieDataService, user: User, removal: bool
+) -> None:
+    with freeze_time("2020-01-01 12:00:00") as clock:
+        service.save(user, 550, {"user_on_watchlist": True})
+        original = UserMovieChange.objects.get()
+        clock.tick(1)
+        if removal:
+            service.save(user, 550, {"user_on_watchlist": False})
+            clock.tick(1)
+        service.save(user, 550, {"user_on_watchlist": removal, "undo": True})
+    assert list(UserMovieChange.objects.values_list("pk", flat=True)) == (
+        [original.pk] if removal else []
+    )
+
+
+def test_undo_rule_removal_keeps_the_original_addition(
+    service: UserMovieDataService, user: User
+) -> None:
+    with freeze_time("2020-01-01 12:00:00") as clock:
+        service.save(user, 550, {"user_on_watchlist": True})
+        clock.tick(1)
+        service.save(user, 550, {"user_rating": 8})
+        before = list(UserMovieChange.objects.order_by("pk").values())
+        clock.tick(1)
+        service.save(user, 550, {"user_on_watchlist": True, "undo": True})
+    assert list(UserMovieChange.objects.order_by("pk").values()) == before
+
+
+def test_undo_like_keeps_watchlist_addition(service: UserMovieDataService, user: User) -> None:
+    with freeze_time("2020-01-01 12:00:00") as clock:
+        service.save(user, 550, {"user_on_watchlist": True})
+        original = UserMovieChange.objects.get().pk
+        clock.tick(1)
+        service.save(user, 550, {"user_liked": True})
+        clock.tick(1)
+        record, _ = service.save(
+            user,
+            550,
+            {
+                "user_liked": False,
+                "user_watched": False,
+                "user_on_watchlist": True,
+                "undo": True,
+            },
+        )
+    assert not record.user_liked
+    assert not record.user_watched
+    assert record.user_on_watchlist
+    assert list(UserMovieChange.objects.values_list("pk", flat=True)) == [original]
+
+
+@pytest.mark.parametrize("earlier_rating", [None, 7])
+def test_undo_logging_erases_entry_rating_change(
+    service: UserMovieDataService, user: User, tmdb: TMDBStub, earlier_rating: int | None
+) -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+    from apps.user_movie_data.services.user_movie_entry_service import UserMovieEntryService
+
+    entries = UserMovieEntryService(tmdb_client=tmdb)
+    with freeze_time("2020-01-01 12:00:00") as clock:
+        service.save(user, 550, {"user_rating": earlier_rating})
+        before = list(UserMovieChange.objects.values())
+        clock.tick(1)
+        result = entries.create(
+            user,
+            550,
+            UserMovieEntryWriteSchema(
+                rating=8,
+                review="Seen",
+                liked=False,
+                time_zone="UTC",
+            ),
+        )
+        assert UserMovieChange.objects.filter(field="rating", from_entry=True).exists()
+        entries.delete(user, 550, result.entry.id)
+        clock.tick(1)
+        record, _ = service.save(user, 550, {"user_rating": earlier_rating, "undo": True})
+    assert record.user_rating == earlier_rating
+    assert list(UserMovieChange.objects.values()) == before
+
+
+def test_undo_unchanged_field_keeps_its_rows(service: UserMovieDataService, user: User) -> None:
+    with freeze_time("2020-01-01 12:00:00") as clock:
+        service.save(user, 550, {"user_on_watchlist": True})
+        clock.tick(1)
+        service.save(user, 550, {"user_on_watchlist": False})
+        before = list(UserMovieChange.objects.order_by("pk").values())
+        clock.tick(1)
+        service.save(user, 550, {"user_on_watchlist": False, "undo": True})
+    assert list(UserMovieChange.objects.order_by("pk").values()) == before
+
+
+def test_undo_unwatch_records_omitted_like_removal(
+    service: UserMovieDataService, user: User
+) -> None:
+    create_user_movie_data(user, user_watched=True, user_liked=True)
+    service.save(user, 550, {"user_watched": False, "undo": True})
+    assert rows() == [("liked", False, None, False)]
+
+
+def test_like_and_undo_through_api_keep_only_original_addition(user: User) -> None:
+    from django.test import Client
+
+    from apps.core.tests.test_helpers import authenticate_client, get_csrf_token
+    from apps.user_movie_data.models import UserMovieData
+
+    create_movie()
+    client = Client()
+    with freeze_time("2020-01-01 12:00:00") as clock:
+        authenticate_client(client, user.username, "testpass123")
+        client.defaults["HTTP_X_CSRFTOKEN"] = get_csrf_token(client)
+        url = "/api/user-movie-data/550"
+        response = client.patch(url, {"user_on_watchlist": True}, content_type="application/json")
+        assert response.status_code == 201
+        addition = UserMovieChange.objects.get()
+        clock.tick(1)
+        response = client.patch(
+            url,
+            {"user_liked": True, "time_zone": "Pacific/Auckland"},
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        assert response.json()["user_watched"] is True
+        assert response.json()["user_liked"] is True
+        assert response.json()["user_on_watchlist"] is False
+        assert rows() == [("liked", True, None, False), ("watchlist", True, None, False)]
+        assert UserMovieChange.objects.get(field="liked").made_on == date(2020, 1, 2)
+        clock.tick(1)
+        response = client.patch(
+            url,
+            {
+                "user_liked": False,
+                "user_watched": False,
+                "user_on_watchlist": True,
+                "undo": True,
+                "time_zone": "Pacific/Auckland",
+            },
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+    record = UserMovieData.objects.get(user=user)
+    for value in [
+        response.json(),
+        {
+            "user_watched": record.user_watched,
+            "user_liked": record.user_liked,
+            "user_on_watchlist": record.user_on_watchlist,
+        },
+    ]:
+        assert value["user_watched"] is False
+        assert value["user_liked"] is False
+        assert value["user_on_watchlist"] is True
+    assert list(UserMovieChange.objects.values_list("pk", flat=True)) == [addition.pk]
+
+
+@pytest.mark.parametrize("tied", [False, True])
+def test_undo_selects_latest_by_time_then_id(
+    service: UserMovieDataService, user: User, tied: bool
+) -> None:
+    from datetime import UTC, datetime
+
+    record = create_user_movie_data(user, user_on_watchlist=True)
+    fields: dict[str, object] = {
+        "record": record,
+        "field": "watchlist",
+        "from_entry": False,
+        "made_on": date(2020, 1, 1),
+    }
+    first = datetime(2020, 1, 1, tzinfo=UTC)
+    last = datetime(2020, 1, 2, tzinfo=UTC)
+    if tied:
+        older = UserMovieChange.objects.create(**fields, created_at=first, turned_on=False)
+        latest = UserMovieChange.objects.create(**fields, created_at=first, turned_on=True)
+    else:
+        latest = UserMovieChange.objects.create(**fields, created_at=last, turned_on=True)
+        older = UserMovieChange.objects.create(**fields, created_at=first, turned_on=False)
+    service.save(user, 550, {"user_on_watchlist": False, "undo": True})
+    assert not UserMovieChange.objects.filter(pk=latest.pk).exists()
+    assert list(UserMovieChange.objects.values_list("pk", flat=True)) == [older.pk]

@@ -12,6 +12,7 @@ import {
 import { isCancel } from "axios";
 import { http, HttpResponse } from "msw/http";
 import { Toaster, toaster } from "@/components/core/chakra/toaster";
+import type { EntryWriteResponse } from "@/services/userMovieDataService";
 import { apiBaseUrl } from "@/config/baseUrls";
 import { activityQuery, libraryQuery, movieEntriesQuery } from "@/lib/queries";
 import { beginUserChange, changeOfUser, getChangeCount } from "@/lib/session";
@@ -404,7 +405,10 @@ it("deletes through shared options without a mounted hook, queues behind saves a
     http.delete(`${apiBaseUrl}/user-movie-data/1/entries/7`, async () => {
       events.push("delete");
       await deleteHeld.wait;
-      return HttpResponse.json({ entry: null, record: deletedRecord });
+      return HttpResponse.json({
+        entry,
+        record: deletedRecord,
+      } satisfies EntryWriteResponse);
     }),
     http.get(`${apiBaseUrl}/user-movie-data/movies`, () => {
       counts.library++;
@@ -466,7 +470,7 @@ it("deletes through shared options without a mounted hook, queues behind saves a
     await waitFor(() => expect(counts.library).toBe(2));
     deleteHeld.release();
     await expect(deletion).resolves.toEqual({
-      entry: null,
+      entry,
       record: deletedRecord,
     });
     await waitFor(() =>
@@ -494,7 +498,7 @@ it("shared entry options reject a write belonging to an earlier user", async () 
   server.use(
     http.delete(`${apiBaseUrl}/user-movie-data/1/entries/7`, () => {
       requests++;
-      return HttpResponse.json({ entry: null, record });
+      return HttpResponse.json({ entry, record } satisfies EntryWriteResponse);
     }),
   );
   const change = getChangeCount();

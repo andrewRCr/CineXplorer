@@ -101,7 +101,8 @@ Undo bodies, the 409 message, and `useMovieEntries`' tests passing on the expose
         - Without a mounted hook, a deletion queues behind a record save, updates the returned record, and refreshes
           Library, the film's entries and activity. An earlier user's write is refused before transport.
         - Narrow reconstructions without standalone deletion and without the ownership signal each failed their
-          corresponding behavioral case; restoring both passed the new cases and the unchanged entry suite.
+          corresponding behavioral case; restoring both passed the new cases and the unchanged entry suite. Delete
+          response fixtures include the deleted entry, checked against the generated response type.
     - [x] **1.3.b Export `entryMutationOptions(tmdbId)` and build the hook on it**
         - Extracted the shared write, invalidation and error options; the hook retains time-zone filling, retirement
           handling and its public interface. The related frontend run passed 268 tests across 14 files; ESLint,

@@ -29,6 +29,8 @@ import { Toaster, toaster } from "@/components/core/chakra/toaster";
 import MovieCard from "../MovieCard";
 import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
 
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 // Mock the COLORS constant since it's used in the component
 
 describe("MovieCard Component", () => {
@@ -689,12 +691,14 @@ describe("MovieCard watchlist saves", () => {
     expect(
       screen.getByRole("button", { name: "Add to watchlist" }),
     ).toBeEnabled();
-    expect(requests).toEqual([{ user_on_watchlist: true }]);
+    expect(requests).toEqual([
+      { user_on_watchlist: true, time_zone: timeZone },
+    ]);
     first.release();
     await screen.findByText("Removed from watchlist");
     expect(requests).toEqual([
-      { user_on_watchlist: true },
-      { user_on_watchlist: false },
+      { user_on_watchlist: true, time_zone: timeZone },
+      { user_on_watchlist: false, time_zone: timeZone },
     ]);
     expect(
       screen.getByRole("button", { name: "Add to watchlist" }),
@@ -957,8 +961,8 @@ describe("MovieCard shared-save composition", () => {
       expect(screen.getByText("Removed from watchlist")).toBeVisible(),
     );
     expect(requests).toEqual([
-      { user_on_watchlist: true },
-      { user_on_watchlist: false, undo: true },
+      { user_on_watchlist: true, time_zone: timeZone },
+      { user_on_watchlist: false, undo: true, time_zone: timeZone },
     ]);
   });
 });

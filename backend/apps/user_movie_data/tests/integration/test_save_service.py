@@ -176,6 +176,7 @@ def test_operations_preserve_other_users_data(service: UserMovieDataService, use
 
 @pytest.mark.django_db(transaction=True)
 def test_concurrent_first_saves_merge_fields() -> None:
+    """Watched and liked merge in either order: neither clears the other flag."""
     barrier = Barrier(2)
 
     class OverlappingTMDB(TMDBStub):
@@ -196,7 +197,7 @@ def test_concurrent_first_saves_merge_fields() -> None:
             connection.close()
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        payloads: list[dict[str, object]] = [{"user_liked": True}, {"user_on_watchlist": True}]
+        payloads: list[dict[str, object]] = [{"user_liked": True}, {"user_watched": True}]
         futures = [pool.submit(save, fields) for fields in payloads]
         created = [future.result(timeout=20) for future in futures]
     assert sorted(created) == [False, True]
@@ -204,7 +205,7 @@ def test_concurrent_first_saves_merge_fields() -> None:
     assert UserMovieData.objects.count() == 1
     record = UserMovieData.objects.get()
     assert record.user_liked is True
-    assert record.user_on_watchlist is True
+    assert record.user_watched is True
 
 
 @pytest.mark.parametrize("field", ["title", "poster_path"])
@@ -260,7 +261,7 @@ def test_unwatch_rated_record_changes_nothing(service: UserMovieDataService, use
 
     record = create_user_movie_data(user, user_watched=True, user_rating=7)
     with pytest.raises(ConflictError, match="Clear the rating before marking this film unwatched"):
-        service.save(user, 550, {"user_watched": False, "user_liked": True})
+        service.save(user, 550, {"user_watched": False, "user_liked": False})
     record.refresh_from_db()
     assert record.user_watched
     assert not record.user_liked
@@ -348,7 +349,7 @@ def test_entries_lock_watched_and_roll_back_save(
     record = create_user_movie_data(user, user_watched=True, user_rating=rating)
     UserMovieEntry.objects.create(record=record, review="Review", made_on=date(2020, 1, 1))
     before = UserMovieData.objects.values().get(pk=record.pk)
-    fields: dict[str, object] = {"user_watched": False, "user_liked": True, "undo": undo}
+    fields: dict[str, object] = {"user_watched": False, "user_liked": False, "undo": undo}
     if clear:
         fields["user_rating"] = None
     with pytest.raises(ConflictError, match=detail):
@@ -370,7 +371,7 @@ def test_undo_keeps_existing_join_time(
     from freezegun import freeze_time
 
     with freeze_time("2020-01-01 10:00:00"):
-        record = create_user_movie_data(user)
+        record = create_user_movie_data(user, user_watched=flag == "user_liked")
         setattr(record, flag, True)
         setattr(record, stamp, timezone.now())
         record.save()
@@ -394,3 +395,58 @@ def test_undo_first_join_stamps_and_applies_rules(
         assert record.user_watched
         assert not record.user_on_watchlist
         assert record.watched_added_at == timezone.now()
+
+
+@pytest.mark.parametrize("keep_watchlist", [False, True])
+def test_like_marks_watched_and_stamps_join(
+    service: UserMovieDataService, user: User, keep_watchlist: bool
+) -> None:
+    from freezegun import freeze_time
+
+    record = create_user_movie_data(user, user_on_watchlist=True)
+    fields: dict[str, object] = {"user_liked": True}
+    if keep_watchlist:
+        fields["user_on_watchlist"] = True
+    with freeze_time("2020-01-01 10:00:00"):
+        service.save(user, 550, fields)
+        record.refresh_from_db()
+        assert record.user_watched
+        assert record.user_liked
+        assert record.user_on_watchlist is keep_watchlist
+        assert record.watched_added_at == timezone.now()
+
+
+def test_first_like_creates_watched_record(service: UserMovieDataService, user: User) -> None:
+    record, created = service.save(user, 550, {"user_liked": True})
+    assert created
+    assert record.user_watched
+    assert record.user_liked
+
+
+def test_unwatch_clears_like(service: UserMovieDataService, user: User) -> None:
+    record = create_user_movie_data(user, user_watched=True, user_liked=True)
+    service.save(user, 550, {"user_watched": False})
+    record.refresh_from_db()
+    assert not record.user_watched
+    assert not record.user_liked
+
+
+def test_contradictory_like_precedes_tmdb(
+    service: UserMovieDataService, user: User, tmdb: TMDBStub
+) -> None:
+    with pytest.raises(InvalidInputError, match="A like requires a watched movie"):
+        service.save(user, 550, {"user_liked": True, "user_watched": False})
+    assert tmdb.requested_ids == []
+    assert not Movie.objects.exists()
+    assert not UserMovieData.objects.exists()
+
+
+def test_entry_like_keeps_watched(user: User, tmdb: TMDBStub) -> None:
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+    from apps.user_movie_data.services.user_movie_entry_service import UserMovieEntryService
+
+    result = UserMovieEntryService(tmdb_client=tmdb).create(
+        user, 550, UserMovieEntryWriteSchema(review="Seen", liked=True, time_zone="UTC")
+    )
+    assert result.record.user_watched
+    assert result.record.user_liked

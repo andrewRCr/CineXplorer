@@ -21,6 +21,8 @@ import { server } from "@tests/mocks/server";
 import { beginUserChange, changeOfUser, sessionKey } from "../session";
 import { movieEntriesQuery, activityQuery } from "../queries";
 
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 beforeEach(() => {
   clearBrowserAuth();
   document.cookie = "csrftoken=change-test; path=/";
@@ -129,7 +131,9 @@ it.each([200, 429])(
     release.release();
     await waitFor(() => expect(running?.state.status).toBe("error"));
     expect(isCancel(running?.state.error)).toBe(true);
-    expect(requests).toEqual([{ user_on_watchlist: true }]);
+    expect(requests).toEqual([
+      { user_on_watchlist: true, time_zone: timeZone },
+    ]);
     expect(counts.library).toBe(before);
     expect(screen.queryByText("Added to watchlist")).not.toBeInTheDocument();
     expect(

@@ -1925,6 +1925,8 @@ export interface components {
              * @default false
              */
             undo: boolean;
+            /** Time Zone */
+            time_zone?: string | null;
         };
         /**
          * UserMovieEntrySchema

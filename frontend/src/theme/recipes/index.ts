@@ -23,3 +23,5 @@ export { dialogRecipe } from "./dialog";
 export { drawerRecipe } from "./drawer";
 
 export { comboboxRecipe } from "./combobox";
+
+export { ratingGroupRecipe } from "./rating-group";

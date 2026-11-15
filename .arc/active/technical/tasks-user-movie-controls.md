@@ -163,59 +163,29 @@ the film page.
         - The related run passed 16 tests across three files. Full ESLint, formatting and frontend type checking
           passed; the focus callback explicitly returns null when no fallback exists.
 
-- [ ] **2.3 The dialog starts from the film's log and saves what R22 says — R20, R21, R22, R23, R24, R40**
+- [x] **2.3 The dialog starts from the film's log and saves what R22 says — R20, R21, R22, R23, R24, R40**
 
     **Goal:** Each row of R22 sends its request from a form prefilled per R21, Save enables only as R23 says, and
     changing the film re-reads its log and resets the rating, Liked and Rewatch while keeping the date and review.
 
-    - [ ] **2.3.a Add `react-hook-form` 7 to `frontend/package.json` and its lockfile**
-
-    - [ ] **2.3.b Write the form's tests in `src/components/movie/entry/__tests__/EntryForm.test.tsx`**
-        - Fields in order (Film, Watched on with Rewatch beside the date while on, Rating with Clear, Review, Liked),
-          then Cancel and Save; the film's poster, title and year with "Change" when changeable, otherwise
-          `MoviePicker`
-        - Prefill (R21): rating and Liked from the log's record with the film's saves on top; a new entry's empty
-          review; Rewatch on for a dated entry on or before the chosen date (same day included), following the date
-          until the visitor sets it; an edit from the entry's date (or the switch off), rating, review and mark, Liked
-          from the record; fields inert while the log loads; "Couldn't load this film's log." with Retry, Save disabled
-        - Each row of R22 sends its request (criterion 5); Rewatch sent only with a date; emptying the rating on the
-          third path sends `user_rating: null`; Liked alone on an unwatched film sends the third path's save
-        - R23: Save disabled until a film is chosen and its log read, and then, for a new entry, until the switch is
-          on, a review is written, or the rating or Liked differs from the record; for an edit, until a field differs
-          and the entry keeps a date or a review; "An entry needs a date or a review." for an edit with the switch off
-          and no review; "Enter a date no later than today, or turn off Watched on." for an empty or future date; a
-          review of spaces counts as empty; zero stars counts as no rating
-        - The date input defaults to today in the visitor's time zone and allows no later day; the review stops at
-          10,000 characters and shows its count past 9,000
-        - R24: choosing another film re-reads its log and resets the rating, Liked and Rewatch, keeping the date and
-          review
-        - A successful Save calls `onSaved` once with its result, `sent` included; a failed one doesn't, and leaves the
-          fields as typed
-        - Cancel calls `onCancel` and nothing else; typing or changing the review reports `onReviewDirtyChange(true)`,
-          and returning it to its starting text reports `false`
-        - Expect tests to FAIL initially
-
-    - [ ] **2.3.c Build `src/components/movie/entry/EntryForm.tsx` with React Hook Form's built-in validation**
-        - Reads `movieEntriesQuery` and shows the record through `useUserMovieState`; the rating is Chakra's half-star
-          `RatingGroup` labelled "Rating", its stars times two the `rating` sent, filled stars in `imdb-gold`; a native
-          `type="date"` input
-        - Entry creates and edits await `useMovieEntries`' `createEntry` and `editEntry`; the third path awaits
-          `saveMutationOptions`' `mutateAsync` (1.1.c), marked `silent`, with `shown` the state when Save was pressed
-        - `EntryForm`'s props: R19's `film`, `dateOn`, `filmChangeable` and `entry`, as `open()` received them, and
-          three callbacks. `onSaved(result)` is called once the awaited write answers, with `{ kind: "create" | "edit" |
-          "save", dateOn, shown, record, entryId, sent }` (`entryId` for a create; `sent` the record fields whose change
-          the title names: `user_liked` on every kind, `user_rating` on the third path, and `user_watched` with the date
-          on, since a log says it already). `onCancel()` is called by Cancel. `onReviewDirtyChange(dirty)` reports
-          whether the review differs from its starting text
-        - The form owns R25's progress, inert fields and failure state; the host owns closing, the discard prompt and
-          the toast (2.4)
-        - Tests should now PASS
-
-    - [ ] **2.3.d Write ADR-049 (`Proposed`): React Hook Form for new and rewritten forms**
-        - From the ADR template: Formik's last release (2.4.9, November 2025), built-in validation over a schema
-          library, and Formik staying in the sign-in, registration and password forms until they are rewritten
-        - TECHNICAL-OVERVIEW's forms line names React Hook Form for new and rewritten forms, with Formik remaining in
-          those three forms
+    - [x] **2.3.a Add React Hook Form 7 and its lock entry**
+        - Installed 7.92.0; npm reported no vulnerabilities. Existing authentication forms retain Formik.
+    - [x] **2.3.b Cover prefill, validation, four save paths and draft retention through MSW**
+        - Twelve coupled form cases failed before implementation. Additional cases prove review counting and length,
+          zero-star clearing, progress, newer-save prefill and whitespace-only no-op edits. Narrow reconstructions
+          without counting, zero normalization, progress and the save overlay failed their corresponding cases.
+        - Covers local calendar dates, same-day rewatch defaults and visitor override, undated edits, read retry,
+          changing films while retaining date/review, typed fields after a write failure and Cancel without a write.
+    - [x] **2.3.c Build `EntryForm` with built-in validation and shared writes**
+        - `EntryFormFields` separates widget bindings from prefill and submission; `entryFormValues` holds date and
+          rewatch helpers. Record saves are silent, results include the shown state and title-owned fields, and writes
+          remain bound to their invoking user. A semantic rating recipe fills whole and half stars in `imdb-gold`.
+        - All 18 focused form/recipe tests and all 3,253 frontend tests across 107 files passed. Full ESLint,
+          formatting, frontend type checking and documentation lint passed; theme types were regenerated.
+    - [x] **2.3.d Write ADR-049 (`Proposed`) and update the forms overview**
+        - Records React Hook Form for new and rewritten forms, built-in validation, and retaining Formik in existing
+          sign-in, registration and password-recovery forms. The release source confirms Formik 2.4.9 in November
+          2025; TECHNICAL-OVERVIEW names both libraries and their scope.
 
 - [ ] **2.4 Saving closes the dialog with one toast, and its Undo restores the film — R25, R31, R32, R34, R37**
 

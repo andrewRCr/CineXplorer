@@ -38,6 +38,7 @@ import {
     buttonRecipe,
     selectRecipe,
     comboboxRecipe,
+    ratingGroupRecipe,
     alertRecipe,
     badgeRecipe,
     checkboxRecipe,
@@ -215,6 +216,7 @@ const baseConfig = defineConfig({
             // Select recipe (trigger, content, item slots)
             select: selectRecipe,
             combobox: comboboxRecipe,
+            ratingGroup: ratingGroupRecipe,
             // Alert recipe (root, icon, title, description slots)
             alert: alertRecipe,
             // Switch recipe (control, thumb slots)

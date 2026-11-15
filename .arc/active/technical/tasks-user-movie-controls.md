@@ -147,31 +147,21 @@ the film page.
         - Pagination and service-layer strategies distinguish catalog and picker contexts and optional read options.
           The styling strategy extends keyboard/pointer highlight and check-mark selection rules to comboboxes.
 
-- [ ] **2.2 One dialog opens over any page and gives focus back — R19, R20, R39**
+- [x] **2.2 One dialog opens over any page and gives focus back — R19, R20, R39**
 
     **Goal:** Any component under the app's layout, the bar included, can call `useEntryDialog().open(options)` to show
     one "Review or log" dialog over the current page, and closing it returns focus to the control that opened it, or to
     the nearest that remains.
 
-    - [ ] **2.2.a Write the host's tests in `src/components/movie/entry/__tests__/EntryDialogHost.test.tsx`**
-        - A test opener inside `EntryDialogHost` calling `open()` shows a dialog titled "Review or log", or "Edit entry"
-          with `entry`, with no change of URL (what the options do to the form is tested in 2.3)
-        - Closing returns focus to the opener; when the opener has unmounted, to the `returnFocus` it passed (the
-          menu's and the drawer's own cases come in 3.1 and 2.5)
-        - `useEntryDialog()` outside a host renders without error, and its `open` throws when called
-        - Expect tests to FAIL initially
-    - [ ] **2.2.b Add the context, `useEntryDialog()` and `EntryDialogHost`, mounted once in `BaseLayout`**
-        - `src/contexts/EntryDialogContext.ts`, `src/hooks/movie/useEntryDialog.ts`,
-          `src/components/movie/entry/EntryDialogHost.tsx`
-        - `BaseLayout` holds the bar for both `AppLayout` and `AuthLayout` (sign-in, registration, password), so the
-          provider wraps its `NavBar` and content there, and Log works on every page that shows it
-        - `useEntryDialog()` reads a context whose default `open` throws when called; `EntryDialogHost` is the provider,
-          taking `children` (see Implementation Notes on tests that open the dialog)
-        - `open(options)` takes R19's `film`, `dateOn`, `filmChangeable` and `entry`, and the optional `returnFocus`, a
-          function returning the element, read through Ark's `finalFocusEl` when the dialog closes
-        - Chakra `Dialog`: full screen below `md`, centered and at most 560px wide from `md` up, from the dialog
-          recipe or props, never inline colors
-        - Tests should now PASS
+    - [x] **2.2.a Cover host opening and focus return in `EntryDialogHost.test.tsx`**
+        - Six cases failed before implementation: create/edit titles without navigation, focus to the opener or a
+          surviving fallback, Escape, and a missing host reported only when `open` is called.
+    - [x] **2.2.b Add the context, hook and shared host to `BaseLayout`**
+        - The host wraps the bar and content on app and auth pages. It retains opener/fallback references through
+          closing and uses Chakra's final-focus callback. Responsive dialog sizing is full screen below `md`,
+          centered with a 560px maximum above it; surfaces use semantic colors.
+        - The related run passed 16 tests across three files. Full ESLint, formatting and frontend type checking
+          passed; the focus callback explicitly returns null when no fallback exists.
 
 - [ ] **2.3 The dialog starts from the film's log and saves what R22 says — R20, R21, R22, R23, R24, R40**
 

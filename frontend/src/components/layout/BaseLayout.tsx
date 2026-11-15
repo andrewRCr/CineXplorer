@@ -4,6 +4,7 @@ import { Box } from "@chakra-ui/react";
 import GoogleLogo from "@/assets/GoogleLogo";
 import GitHubLogo from "@/assets/GitHubLogo";
 import ErrorBoundary from "@/components/core/ErrorBoundary";
+import { EntryDialogHost } from "@/components/movie/entry/EntryDialogHost";
 import NavBar from "./navbar/NavBar";
 import Footer from "./Footer";
 import LoadingContent from "./LoadingContent";
@@ -36,17 +37,19 @@ function ContentLoading() {
 export default function BaseLayout({ children }: BaseLayoutProps) {
   const location = useLocation();
   return (
-    <Box minH="100vh" display="flex" flexDirection="column" bg="background">
-      <NavBar />
-      <Box flex="1" minW="0" display="flex" flexDirection="column">
-        <ErrorBoundary
-          resetKey={`${location.pathname}${location.search}`}
-          showErrorDetails={import.meta.env.MODE === "development"}
-        >
-          <Suspense fallback={<ContentLoading />}>{children}</Suspense>
-        </ErrorBoundary>
+    <EntryDialogHost>
+      <Box minH="100vh" display="flex" flexDirection="column" bg="background">
+        <NavBar />
+        <Box flex="1" minW="0" display="flex" flexDirection="column">
+          <ErrorBoundary
+            resetKey={`${location.pathname}${location.search}`}
+            showErrorDetails={import.meta.env.MODE === "development"}
+          >
+            <Suspense fallback={<ContentLoading />}>{children}</Suspense>
+          </ErrorBoundary>
+        </Box>
+        <Footer />
       </Box>
-      <Footer />
-    </Box>
+    </EntryDialogHost>
   );
 }

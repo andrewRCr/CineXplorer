@@ -58,6 +58,7 @@ function homeCatalogueResponse(url: URL): object | undefined {
             backdrop_path: null,
             tagline: null,
             focus_point: null,
+            mirrored: false,
             directors: [],
         } satisfies components["schemas"]["FeaturedMovieSchema"];
     if (url.pathname === "/api/movies/now-playing")

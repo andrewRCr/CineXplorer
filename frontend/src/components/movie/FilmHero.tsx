@@ -37,6 +37,7 @@ function textPanel(outer: "left" | "right") {
 export function FilmHero({
   film,
   focusPoint,
+  mirrored,
   directors = [],
   creditHref,
   heading,
@@ -45,6 +46,7 @@ export function FilmHero({
 }: {
   film?: HeroFilm;
   focusPoint?: FeaturedMovie["focus_point"];
+  mirrored?: boolean;
   directors?: readonly string[];
   creditHref?: string;
   heading: ReactNode;
@@ -65,6 +67,7 @@ export function FilmHero({
       path={backdrop}
       contained={stacked}
       focusPoint={focusPoint}
+      mirrored={mirrored}
       onError={() => {
         if (film) setFailedFilm(film.tmdb_id);
       }}

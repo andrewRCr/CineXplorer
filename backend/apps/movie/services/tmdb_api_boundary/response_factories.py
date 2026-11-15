@@ -254,6 +254,7 @@ def create_featured_movie_from_tmdb(
     focus_point: FilmFocusPoint | None = None,
     backdrop_path: str | None = None,
     title: str | None = None,
+    mirrored: bool = False,
 ) -> FeaturedMovieSchema:
     """Validate a TMDB detail response and retain only the homepage's fields."""
     movie = TMDBMovieDetail.model_validate(movie_data)
@@ -274,6 +275,7 @@ def create_featured_movie_from_tmdb(
             "backdrop_path": backdrop_path if backdrop_path is not None else movie.backdrop_path,
             "tagline": empty_str_to_none(movie.tagline),
             "focus_point": focus_point,
+            "mirrored": mirrored,
             "directors": directors,
         }
     )

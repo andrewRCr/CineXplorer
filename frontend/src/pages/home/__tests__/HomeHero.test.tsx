@@ -31,6 +31,7 @@ const film = {
   backdrop_path: "/still.jpg",
   tagline: "An epic.",
   focus_point: null,
+  mirrored: false,
   directors: ["David Lean"],
 };
 it("shows the pitch before the film read, then a title link and noninteractive tagline", async () => {
@@ -210,6 +211,22 @@ it("uses the featured film's configured focus without another read", async () =>
   const image = await screen.findByAltText("");
   expect(getComputedStyle(image).objectPosition).toBe("33% 61%");
   expect(reads).toBe(1);
+});
+
+it("flips the featured film's mirrored artwork around its configured point", async () => {
+  server.use(
+    http.get(`${apiBaseUrl}/movies/featured`, () =>
+      HttpResponse.json({
+        ...film,
+        focus_point: { x: 33, y: 61 },
+        mirrored: true,
+      }),
+    ),
+  );
+  render(<HomeHero />);
+  const image = await screen.findByAltText("");
+  expect(getComputedStyle(image).transform).toBe("scaleX(-1)");
+  expect(getComputedStyle(image).objectPosition).toBe("67% 61%");
 });
 
 it("uses director names from the featured response without a second read", async () => {

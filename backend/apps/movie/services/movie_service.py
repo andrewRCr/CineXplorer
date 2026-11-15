@@ -106,7 +106,11 @@ class MovieService(BaseTMDBService):
             raise UpstreamError("Invalid movie data from external API")
         try:
             return create_featured_movie_from_tmdb(
-                data, selected.focus_point, selected.backdrop_path, selected.title
+                data,
+                selected.focus_point,
+                selected.backdrop_path,
+                selected.title,
+                selected.mirrored,
             )
         except ValidationError as error:
             raise UpstreamError("Invalid movie data from external API") from error

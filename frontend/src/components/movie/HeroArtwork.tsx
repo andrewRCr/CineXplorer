@@ -5,13 +5,18 @@ export function HeroArtwork({
   path,
   contained,
   focusPoint,
+  mirrored = false,
   onError,
 }: {
   path: string;
   contained: boolean;
   focusPoint?: FeaturedMovie["focus_point"];
+  mirrored?: boolean;
   onError: () => void;
 }) {
+  // A mirrored film's point is given in the flipped frame, so the unflipped source sits at its mirror.
+  const flipped = mirrored && !contained;
+  const x = focusPoint?.x ?? 50;
   return (
     <Box as="picture" position="absolute" inset={0}>
       {!contained && (
@@ -30,8 +35,9 @@ export function HeroArtwork({
         objectPosition={
           contained
             ? "center"
-            : `${focusPoint?.x ?? 50}% ${focusPoint?.y ?? 28}%`
+            : `${flipped ? 100 - x : x}% ${focusPoint?.y ?? 28}%`
         }
+        transform={flipped ? "scaleX(-1)" : undefined}
         onError={onError}
       />
     </Box>

@@ -42,6 +42,7 @@ def test_public_featured_contract(api_client: Client, debug: bool) -> None:
     ):
         response = api_client.get(
             f"/api/movies/featured?film={override}&title=Injected&backdrop_path=/injected.jpg"
+            "&mirrored=true"
         )
     assert response.status_code == 200
     body = response.json()
@@ -49,7 +50,7 @@ def test_public_featured_contract(api_client: Client, debug: bool) -> None:
     assert (
         movie_id == override if debug else movie_id in {entry.tmdb_id for entry in FEATURED_FILMS}
     )
-    # Only the list entry, never the request, supplies a point, checked path or short title.
+    # Only the list entry, never the request, supplies a point, path, short title or mirroring.
     entry = next((entry for entry in FEATURED_FILMS if entry.tmdb_id == movie_id), None)
     assert body == {
         "tmdb_id": movie_id,
@@ -59,6 +60,7 @@ def test_public_featured_contract(api_client: Client, debug: bool) -> None:
         "tagline": "An epic.",
         "directors": ["Director"],
         "focus_point": entry.focus_point.model_dump() if entry and entry.focus_point else None,
+        "mirrored": bool(entry and entry.mirrored),
     }
 
 

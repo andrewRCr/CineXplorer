@@ -182,6 +182,7 @@ class FeaturedMovieSchema(Schema):
     backdrop_path: str | None = None
     tagline: str | None = None
     focus_point: FilmFocusPoint | None = None
+    mirrored: bool = False
     directors: list[str] = Field(default_factory=_empty_director_names)
 
 

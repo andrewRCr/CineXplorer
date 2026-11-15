@@ -5109,6 +5109,11 @@
               }
             ]
           },
+          "mirrored": {
+            "default": false,
+            "title": "Mirrored",
+            "type": "boolean"
+          },
           "directors": {
             "items": {
               "type": "string"

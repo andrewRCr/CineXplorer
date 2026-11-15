@@ -16,6 +16,7 @@ export function HomeHero() {
     <FilmHero
       film={film}
       focusPoint={film?.focus_point}
+      mirrored={film?.mirrored}
       directors={film?.directors}
       creditHref={film ? homeFilmPath(film.tmdb_id) : undefined}
       heading={

@@ -21,6 +21,7 @@ export function homeHandlers() {
                 backdrop_path: null,
                 tagline: null,
                 focus_point: null,
+                mirrored: false,
                 directors: [],
             }),
         ),

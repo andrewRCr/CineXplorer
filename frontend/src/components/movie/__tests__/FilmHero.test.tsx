@@ -18,6 +18,41 @@ const pitch = {
 afterEach(() => vi.restoreAllMocks());
 
 it.each([
+  [2000, 1000, false],
+  [1024, 1000, false],
+  [900, 700, false],
+  [390, 844, true],
+  [768, 1024, true],
+] as const)(
+  "flips only a mirrored film's full-bleed image at %s×%s",
+  (width, height, stacked) => {
+    viewport(width, height);
+    render(
+      <FilmHero
+        film={film}
+        focusPoint={{ x: 12, y: 86 }}
+        mirrored
+        creditHref="/movie/62?from=home"
+        {...pitch}
+      />,
+    );
+    const image = screen.getByAltText("");
+    expect(getComputedStyle(image).transform).toBe(
+      stacked ? "none" : "scaleX(-1)",
+    );
+    // The point is given in the flipped frame, so the unflipped source is positioned at its mirror.
+    expect(getComputedStyle(image).objectPosition).toBe(
+      stacked ? "50% 50%" : "88% 86%",
+    );
+    for (const text of [
+      screen.getByRole("heading", { level: 1, name: "Pitch" }),
+      screen.getByRole("link", { name: /A film/ }),
+    ])
+      expect(getComputedStyle(text).transform).toBe("none");
+  },
+);
+
+it.each([
   [390, 844, true, false, true],
   [768, 1024, true, true, true],
   [900, 700, false, false, true],
@@ -48,6 +83,7 @@ it.each([
     expect(getComputedStyle(image).objectPosition).toBe(
       stacked ? "50% 50%" : "12% 86%",
     );
+    expect(getComputedStyle(image).transform).toBe("none");
     const title = screen.getByRole("link", { name: /A film/ });
     const action = screen.getByRole("link", { name: "Create account" });
     expect(screen.getAllByRole("link")[0]).toBe(compact ? title : action);

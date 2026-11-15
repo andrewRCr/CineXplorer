@@ -14,15 +14,18 @@ class FilmFocusPoint(BaseModel):
 
 @dataclass(frozen=True)
 class FeaturedFilm:
-    """A curated film with its optional image anchor, checked artwork and short title.
+    """A curated film with its optional image anchor, checked artwork, short title and mirroring.
 
     A short title replaces TMDB's only where the full title cannot fit the hero's credit space.
+    A mirrored film's full-bleed image is flipped horizontally when shown, and its anchor is
+    given in the flipped frame.
     """
 
     tmdb_id: int
     focus_point: FilmFocusPoint | None = None
     backdrop_path: str | None = None
     title: str | None = None
+    mirrored: bool = False
 
 
 # Add only films approved through artwork and credit review.

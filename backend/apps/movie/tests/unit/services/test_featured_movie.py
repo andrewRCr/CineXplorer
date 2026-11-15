@@ -39,6 +39,7 @@ def test_selected_film_uses_one_detail_request() -> None:
         "backdrop_path": "/still.jpg",
         "tagline": "An epic.",
         "focus_point": None,
+        "mirrored": False,
         "directors": [],
     }
     assert stub.requested_endpoints == [f"movie/{selected}"]
@@ -161,6 +162,22 @@ def test_selected_entry_uses_its_short_title(debug: bool, candidate: int | None)
         ).get_featured_movie(candidate)
     assert result.tmdb_id == selected_id
     assert result.title == ("Dr. Strangelove" if selected_id == 301 else full_title)
+    assert stub.requested_endpoints == [f"movie/{selected_id}"]
+
+
+@pytest.mark.parametrize("debug", [False, True])
+@pytest.mark.parametrize("candidate", [None, 401, 402, 403])
+def test_selected_entry_carries_its_mirroring(debug: bool, candidate: int | None) -> None:
+    films = (FeaturedFilm(401, mirrored=True), FeaturedFilm(402))
+    selected_id = candidate if debug and candidate is not None else 401
+    stub = TMDBStub()
+    stub.add_movie(create_tmdb_movie_detail(selected_id, "Selected film", "1968-04-02", 8.0))
+    with override_settings(DEBUG=debug):
+        result = MovieService(
+            stub, choose_film=lambda entries: entries[0], featured_films=films
+        ).get_featured_movie(candidate)
+    assert result.tmdb_id == selected_id
+    assert result.mirrored is (selected_id == 401)
     assert stub.requested_endpoints == [f"movie/{selected_id}"]
 
 

@@ -781,27 +781,38 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     - Movie-app Docker tests pass (607) with and without the local film preview; Ruff, format and movie-app
       Pyright pass; regenerating the API types leaves no diff.
 
-- [ ] **4.15 A film entry's optional mirrored backdrop — R3, R4, R7**
+- [x] **4.15 A film entry's optional mirrored backdrop — R3, R4, R7**
 
     **Goal:** A film whose subject would sit under the pitch panel can ship with its full-bleed image flipped.
 
-    - [ ] **4.15.a Write the tests**
-        - Service: an entry's `mirrored` kept for the listed DEBUG candidate and the production pick, and `false` for
-          an unlisted candidate and an entry without it, with one detail call each. The endpoint contract test sends
-          a `mirrored` query parameter and expects the entry's value. Component tests: a mirrored film's full-bleed
-          image flipped with its position at `100 − x`, its stacked image unflipped, an unmirrored film's image
-          unchanged, no text flipped, and Home passing the response's value; expect them to FAIL
-    - [ ] **4.15.b Add `mirrored` to `FeaturedFilm` and the featured response, regenerate the API types, and flip the
+    - [x] **4.15.a Write the tests**
+    - [x] **4.15.b Add `mirrored` to `FeaturedFilm` and the featured response, regenerate the API types, and flip the
       full-bleed image in the presentation**
-        - The tests should now PASS; an unmirrored hero's markup and styles stay as they are, so the sheet's
-          snapshots still match the app
-    - [ ] **4.15.c Add the flip to the external sheet**
-        - A key and a toggle flip the two full-bleed views and the full frame, not the phone view; a set point moves
-          with its subject, an approved film returns to pending, and a change of identity or artwork clears the flip.
-          The export and the saved JSON carry it, and a restore accepts earlier saves without it
-        - Template-only, so the snapshot and the Owner's progress are kept. Build and check on a staging copy:
-          an in-place upgrade over saved progress, and the flipped sheet against the built app at 1024×1000 with an
-          off-centre point. Replace the live sheet only when the checks pass
+    - [x] **4.15.c Add the flip to the external sheet**
+
+    - Tests first: the service test shows an entry's `mirrored` for the listed DEBUG candidate and the production
+      pick, and `false` for an unlisted candidate and an entry without it, with one detail call each; the endpoint
+      contract test sends `mirrored=true` and expects the entry's value. Component tests cover the flipped full-bleed
+      image at 2000×1000, 1024×1000 and 900×700 with its position at `100 − x`, the unflipped stack at 390×844 and
+      768×1024, unflipped text, an unmirrored image without a transform, and Home passing the response's value. The
+      new cases failed before the field existed.
+    - `FeaturedFilm` and `FeaturedMovieSchema` gain `mirrored: bool = False`; the regenerated API types, the smoke
+      stub and the test fixtures carry it, and the service test that pins the response shape gains it. `HeroArtwork`
+      flips only in full bleed (`transform: scaleX(-1)`, `object-position` at `100 − x`); an unmirrored hero's markup
+      is unchanged.
+    - The sheet: F and a "Flip image" checkbox flip the two full-bleed previews and the full frame, not the phone. A
+      flip mirrors the point so it stays on its subject and returns an approved film to pending; a change of
+      identity clears it; a "Flipped" filter lists flipped films. The export adds `mirrored=True`, the saved JSON
+      carries it, and a restore rejects a non-boolean. The change is template-only, so the snapshot and saved
+      progress are kept. The point inputs are no longer overwritten while focused, which a late image load could do
+      between typing X and Y.
+    - Checks: movie-app Docker tests (615), Ruff, format and Pyright; frontend related tests (49), ESLint, Prettier
+      and type-check; `background.spec.ts` (10) against the browsable stack. On a staging copy of the sheet: its
+      existing checks, the migration check with flip cases, and a new flip check covering behaviour, export and
+      saved JSON, keys in a preview and in notes, the identity reset, reload, and an in-place upgrade at the live
+      address over saved approvals, an exclusion, a point and a note. With a temporary flipped 8½ entry at x 20, the
+      sheet matches the app's image size, position, transform and source at 2000×1000 and 1024×1000, and the
+      unflipped comparison still matches. The live sheet was replaced only after these passed.
 
 ### **Phase 5:** Home is ready to merge
 

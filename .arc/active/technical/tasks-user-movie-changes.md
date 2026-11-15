@@ -49,45 +49,21 @@ _Exit criterion:_ `user_movie_data`'s tests pass under the new rules: a like mar
 un-marking Watched clears the like, the database refuses a liked, unwatched record, the migration converts one going
 forward and leaves it watched going back, and date added sorts by the first filtered list.
 
-- [ ] **1.1 Liking marks a film watched, and un-marking Watched clears the like — D1**
+- [x] **1.1 Liking marks a film watched, and un-marking Watched clears the like — D1**
 
     **Goal:** A record save that likes an unwatched film leaves it watched, and off the watchlist unless the save keeps
     it there; un-marking Watched clears the like once the lock allows it; and a save that likes a film while un-marking
     Watched is refused with 400 before the film's card is read or its record locked.
 
-    - [ ] **1.1.a Write the like rule's tests in `test_save_service.py` and `test_user_movie_data_api.py`**
-        - Liking an unwatched film on the watchlist: watched, liked, off the watchlist, `watched_added_at` stamped;
-          with `user_on_watchlist: true` supplied as well, it stays on
-        - Liking a film with no record creates it watched and liked
-        - Un-marking Watched on a liked, unrated film without entries leaves it unwatched and unliked
-        - With a current rating, and again with an entry, that un-mark answers 409 and the film stays watched and liked
-          (this holds today: `apply_record_save`'s lock checks refuse the un-mark before the record is saved; see the
-          notes on cases that pass early)
-        - `user_liked: true` with `user_watched: false` answers 400 with "A like requires a watched movie", changes
-          nothing and asks TMDB for nothing, as `test_contradictory_rating_precedes_tmdb` and
-          `test_invalid_body_semantics_are_400_without_writes` show for the rating's contradiction
-        - An entry created with Liked on an unwatched film leaves it watched and liked. This holds today through
-          `apply_entry_create`: show it failing against a narrow reconstruction that skips the mark, then restore
-        - Expect tests to FAIL initially; the 409 cases (see the notes) and the entry create pass early
-
-    - [ ] **1.1.b Rewrite the existing tests that send a like with the un-mark, or rely on a like leaving the
-      watchlist**
-        - `test_save_service.py`'s `test_unwatch_rated_record_changes_nothing` and
-          `test_entries_lock_watched_and_roll_back_save`, and `test_user_movie_data_api.py`'s
-          `test_entries_prevent_unwatching`: send the un-mark without a like (for example `user_liked: false` on a liked
-          film), keeping each test's check that a refused save changes nothing
-        - `test_save_service.py`'s `test_concurrent_first_saves_merge_fields`: keep proving that two first saves of one
-          film merge, with fields whose rules don't interact in either order (reason through both orders in the test's
-          docstring)
-        - They pass before and after 1.1.c
-
-    - [ ] **1.1.c Apply the like rule in `apply_record_save` and its contradiction in `UserMovieDataService.save`**
-        - The like marks watched beside the rating's rule, only when the save leaves out `user_watched`, so the
-          existing watchlist rule follows it
-        - The un-mark clears Liked when the save leaves out `user_liked`, after the lock's checks pass
-        - The contradiction joins the rating's, before `get_or_fetch_card`
-        - `apply_record_save`'s docstring states the like's rules
-        - Tests should now PASS, with the app's other tests
+    - [x] **1.1.a Write the like rule's tests in `test_save_service.py` and `test_user_movie_data_api.py`**
+        - Covered first likes, watchlist removal or retention, join stamps, un-marking, locked liked films,
+          contradictions before TMDB, and entry likes. Six new cases failed on the old rules. The three early-pass
+          cases failed with the lock skipped for liked films and entry marking disabled, then passed restored.
+    - [x] **1.1.b Rewrite the existing lock and concurrent-first-save tests**
+        - Lock tests omit a contradictory like; concurrent watched and liked writes merge in either order.
+    - [x] **1.1.c Apply the like rule and reject its contradiction before TMDB**
+        - Likes mark watched; an allowed un-mark clears an omitted like; explicit watchlist choices stay in force.
+        - All 328 app tests passed; pinned Ruff lint and format and app Pyright passed.
 
 - [ ] **1.2 The database refuses a liked, unwatched record, and existing ones become watched — D2**
 

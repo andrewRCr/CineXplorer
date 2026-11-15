@@ -281,7 +281,7 @@ def test_entries_prevent_unwatching(signed_in: tuple[Client, User], rating: int 
     )
     before = UserMovieData.objects.values().get(pk=record.pk)
     response = client.patch(
-        URL, {"user_watched": False, "user_liked": True}, content_type="application/json"
+        URL, {"user_watched": False, "user_liked": False}, content_type="application/json"
     )
     assert response.status_code == 409
     assert response.json() == {
@@ -326,3 +326,38 @@ def test_undo_alone_is_not_a_save(signed_in: tuple[Client, User]) -> None:
     assert response.status_code == 400
     assert not UserMovieData.objects.exists()
     assert not Movie.objects.exists()
+
+
+@pytest.mark.parametrize("with_entry", [False, True])
+def test_unwatch_locked_liked_film_preserves_all_state(
+    signed_in: tuple[Client, User], with_entry: bool
+) -> None:
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+
+    client, user = signed_in
+    record = create_user_movie_data(
+        user, user_watched=True, user_liked=True, user_rating=None if with_entry else 8
+    )
+    if with_entry:
+        UserMovieEntry.objects.create(record=record, review="Seen", made_on=date(2020, 1, 1))
+    before = UserMovieData.objects.values().get(pk=record.pk)
+    response = client.patch(URL, {"user_watched": False}, content_type="application/json")
+    assert response.status_code == 409
+    assert UserMovieData.objects.values().get(pk=record.pk) == before
+
+
+def test_contradictory_like_is_400_without_tmdb_or_writes(signed_in: tuple[Client, User]) -> None:
+    client, _ = signed_in
+    with patch(
+        TMDB_CLIENT_GET_MOVIE_DETAILS, return_value=create_mock_error_response(404)
+    ) as tmdb:
+        response = client.patch(
+            URL, {"user_liked": True, "user_watched": False}, content_type="application/json"
+        )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "A like requires a watched movie"}
+    tmdb.assert_not_called()
+    assert not Movie.objects.exists()
+    assert not UserMovieData.objects.exists()

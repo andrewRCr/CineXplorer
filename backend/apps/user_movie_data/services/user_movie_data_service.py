@@ -42,6 +42,9 @@ class UserMovieDataService:
         if changes.get("user_watched") is False and changes.get("user_rating") is not None:
             raise InvalidInputError("A rating requires a watched movie")
 
+        if changes.get("user_watched") is False and changes.get("user_liked") is True:
+            raise InvalidInputError("A like requires a watched movie")
+
         movie = get_or_fetch_card(self._tmdb_client, tmdb_id)
 
         with transaction.atomic():

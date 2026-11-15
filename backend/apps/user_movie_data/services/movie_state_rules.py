@@ -8,7 +8,7 @@ from apps.user_movie_data.models import UserMovieData, UserMovieEntry
 
 
 def apply_record_save(record: UserMovieData, changes: dict[str, object]) -> None:
-    """Apply supplied fields first, then derive only fields the request omitted."""
+    """Likes and ratings mark watched; an allowed un-mark clears an omitted like."""
     was_watched = record.user_watched
     for field, value in changes.items():
         setattr(record, field, value)
@@ -24,8 +24,12 @@ def apply_record_save(record: UserMovieData, changes: dict[str, object]) -> None
             raise ConflictError("Clear the rating before marking this film unwatched")
         if has_entries:
             raise ConflictError("Delete this film's entries before marking it unwatched")
-    if "user_watched" not in changes and changes.get("user_rating") is not None:
+    if "user_watched" not in changes and (
+        changes.get("user_rating") is not None or changes.get("user_liked") is True
+    ):
         record.user_watched = True
+    if changes.get("user_watched") is False and "user_liked" not in changes:
+        record.user_liked = False
     if not was_watched and record.user_watched and "user_on_watchlist" not in changes:
         record.user_on_watchlist = False
 

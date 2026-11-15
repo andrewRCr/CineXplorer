@@ -8,6 +8,8 @@ import type {
 export type SaveVariables = {
     kind: "save";
     changes: UserMovieDataPatchSchema;
+    shown: UserMovieDataSchema;
+    silent?: boolean;
     undo?: boolean;
     change: number;
 };

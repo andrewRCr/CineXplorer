@@ -18,6 +18,7 @@ import {
 } from "@/lib/session";
 import { libraryKey } from "@/lib/queries";
 import { toaster } from "@/components/core/chakra/toaster";
+import { saveFeedback } from "./saveFeedback";
 
 import {
     movieWriteKey,
@@ -46,35 +47,49 @@ export const saveMutationOptions = (
         onSuccess: (record, variables, change, { client }) => {
             if (change !== getChangeCount()) return;
             void client.invalidateQueries({ queryKey: libraryKey });
-            if ("user_on_watchlist" in variables.changes) {
+            const feedback = saveFeedback(
+                variables.shown,
+                record,
+                variables.changes,
+            );
+            const watchlistChanged =
+                variables.shown.user_on_watchlist !== record.user_on_watchlist;
+            if (
+                !variables.silent &&
+                (variables.undo ? watchlistChanged : feedback.shouldToast)
+            ) {
                 toaster.success({
                     id: createSaveToastId(),
-                    action: variables.undo
-                        ? undefined
-                        : {
-                              label: "Undo",
-                              onClick: () => {
-                                  if (change !== getChangeCount()) return;
-                                  const observer = new MutationObserver(
-                                      client,
-                                      saveMutationOptions(tmdbId),
-                                  );
-                                  void observer
-                                      .mutate({
-                                          changes: {
-                                              user_on_watchlist:
-                                                  !record.user_on_watchlist,
-                                          },
-                                          kind: "save",
-                                          undo: true,
-                                          change,
-                                      })
-                                      .catch(() => {});
+                    action:
+                        variables.undo || !feedback.undo
+                            ? undefined
+                            : {
+                                  label: "Undo",
+                                  onClick: () => {
+                                      if (change !== getChangeCount()) return;
+                                      const observer = new MutationObserver(
+                                          client,
+                                          saveMutationOptions(tmdbId),
+                                      );
+                                      void observer
+                                          .mutate({
+                                              changes: feedback.undo ?? {},
+                                              shown: record,
+                                              kind: "save",
+                                              undo: true,
+                                              change,
+                                          })
+                                          .catch(() => {});
+                                  },
                               },
-                          },
-                    title: record.user_on_watchlist
-                        ? "Added to watchlist"
-                        : "Removed from watchlist",
+                    title: variables.undo
+                        ? record.user_on_watchlist
+                            ? "Added to watchlist"
+                            : "Removed from watchlist"
+                        : feedback.title,
+                    description: variables.undo
+                        ? undefined
+                        : feedback.description,
                 });
             }
         },
@@ -132,6 +147,7 @@ export function useUserMovieState(
                 mutation.mutate({
                     kind: "save",
                     changes,
+                    shown: state,
                     change: getChangeCount(),
                 });
         },

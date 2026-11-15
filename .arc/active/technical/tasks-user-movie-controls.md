@@ -56,63 +56,29 @@ returned record, a refused un-mark's message, and entry writes that run without 
 _Exit criterion:_ the save layer's tests show each save row of R32 with its description and Undo, criterion 15's save
 Undo bodies, the 409 message, and `useMovieEntries`' tests passing on the exposed options.
 
-- [ ] **1.1 A save's toast names what the visitor did and what the rules did, and offers Undo — R31, R32, R33, R35,
+- [x] **1.1 A save's toast names what the visitor did and what the rules did, and offers Undo — R31, R32, R33, R35,
   R37**
 
     **Goal:** Watchlist toggles, saves whose answer shows a rule changed the watchlist or cleared a like, and Clear
     rating each toast with R32's title and description and an Undo that restores R33's fields, while plain watched,
     like and rating saves stay silent and a dialog's saves show no success toast of their own.
 
-    - [ ] **1.1.a Write the feedback cases in `src/hooks/movie/__tests__/useUserMovieState.feedback.test.tsx`**
-        - Render a probe over `useUserMovieState` with `<Toaster />`, answering each `PATCH` through MSW with the
-          record its case needs (no default handler exists)
-        - Test each save row of R32 and R31's rules: watchlist on and off titled from the returned record; marking an
-          unwatched film on the watchlist watched ("Marked as watched", "Also removed from your watchlist."); liking
-          and rating an unwatched film on the watchlist ("Also marked as watched and removed from your watchlist.");
-          Clear rating ("Rating cleared"); un-marking Watched on a liked film ("Marked as not watched", "Your like was
-          removed."); a log or a watched mark never adding "Also marked as watched."
-        - Test silence: marking watched, liking and rating with no watchlist change show no toast, including liking and
-          rating an unwatched film that isn't on the watchlist, which the rule marks watched; un-liking a liked film,
-          and un-marking Watched on a film that isn't liked, show none; a save marked `silent` shows no success toast,
-          and its failure still shows the shared error toast
-        - Test that a toast never describes the visitor's own change: removing a film from the watchlist shows "Removed
-          from watchlist" with no description
-        - Test Undo bodies (criterion 15): liking an unwatched film on the watchlist sends
-          `{ user_liked: false, user_watched: false, user_on_watchlist: true, undo: true }`; un-marking Watched on a
-          liked film on the watchlist sends `{ user_watched: true, user_liked: true, user_on_watchlist: true, undo:
-          true }`; Clear rating sends `{ user_rating: <earlier rating>, undo: true }`; a toast whose save changed no
-          field offers no Undo
-        - Test R35: an Undo's save offers no Undo, and toasts only when its record has the film on or off the
-          watchlist where the undone record did not, titled by the watchlist's new state; after a change of user, Undo
-          sends nothing
-        - Expect tests to FAIL initially
+    - [x] **1.1.a Cover feedback, silence and Undo in `useUserMovieState.feedback.test.tsx`**
+        - MSW responses exercise watched, like, rating, Clear rating and cleared-like feedback; Undo restores the
+          differing fields with watched-rule companions. Watchlist titles follow the returned record, and unchanged
+          saves offer no Undo. Silent saves retain error feedback; retired users cannot send Undo.
+        - Six new behavior cases failed before implementation. A narrow reconstruction removing the silence and
+          no-change guards failed seven further cases; restoring the guards passed all 42 save/ownership tests.
 
-    - [ ] **1.1.b Keep the shipped watchlist tests' assertions with whole-record answers**
-        - In `useUserMovieState.test.tsx`, change the watchlist cases' mock answers to keep the probe payload's
-          `user_watched: true` (`createMockUserMovieData` defaults it to `false`); their assertions stay unchanged, and
-          if an earlier merge of `main` brought the backend unit's `time_zone` on record saves, their expected bodies
-          keep it as `main` has them (R41d)
+    - [x] **1.1.b Preserve the shipped watchlist assertions with whole-record answers**
+        - The watchlist title and Undo fixtures retain the probe's watched state; assertions and request bodies stay
+          unchanged.
 
-    - [ ] **1.1.c Carry the shown state into every save and build the feedback from it**
-        - `SaveVariables` (`movieWriteOptions.ts`) gains `shown` (the state the save started from) and `silent` (a
-          dialog's save: no success toast of its own); `useUserMovieState`'s `save` passes its current `state` as
-          `shown`
-        - Add `src/hooks/movie/saveFeedback.ts`, taking `shown`, the returned record and `sent` (the record fields
-          whose change the title already names; for a save, the fields it sent): the R32 title from the fields sent (a
-          watchlist toggle's from the returned record's `user_on_watchlist`, as today); R31's toast decision from its
-          list (a watchlist toggle, Clear rating, or a watchlist change or a cleared like outside `sent`); R32's
-          description from the fields outside `sent` that differ between `shown` and the returned record; and R33's
-          Undo body from every field that differs, `sent` included (at their shown values; with `user_watched`, also
-          `user_on_watchlist` and `user_liked` at their returned values where not already supplied). Exported so the
-          dialog host (2.4) composes the same comparison
-        - `saveMutationOptions`' `onSuccess` toasts per R31 through `createSaveToastId()`, and its Undo sends R33's body
-          through a `MutationObserver` as today, guarded by the change count; the Undo's own success follows R35
-        - `save(changes)` keeps its signature for the card and the panel. A caller that needs the result (the dialog,
-          2.3 and 2.4) runs `saveMutationOptions` through its own `useMutation` and awaits `mutateAsync` with `shown`
-          and `silent`; it shares the film's mutation key, so `useUserMovieState` still shows the pending fields
-        - If an earlier merge of `main` brought the backend unit's `time_zone` on record saves, `saveMutationOptions`
-          keeps filling it and its test stays (R41d)
-        - Tests should now PASS, with `useUserMovieState.test.tsx` and `useUserMovieState.ownership.test.tsx`
+    - [x] **1.1.c Compare the shown state with the returned record for feedback and Undo**
+        - Saves carry `shown` and optional `silent`; `saveFeedback.ts` computes titles, rule descriptions, toast
+          eligibility and the minimal restoration body. Undo runs through an independent mutation observer and
+          remains guarded by user ownership. Its own feedback only reports changed watchlist membership.
+        - Focused save/ownership tests, ESLint, Prettier and the frontend type check passed.
 
 - [ ] **1.2 A refused un-mark says why — R36**
 

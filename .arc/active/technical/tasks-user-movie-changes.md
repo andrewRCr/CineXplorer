@@ -167,6 +167,9 @@ layer's test shows the browser's zone on a plain save and on an Undo.
         - Both snapshot the four fields under the lock and use the shared helper; only rating is supplied.
           The new entry's day and its change rows use the locked-save time.
         - All 380 app tests, pinned Ruff lint/format and app Pyright passed.
+        - Added an advancing-clock entry-create regression across Auckland midnight after the advisor's source
+          inspection. It fails with a second join clock read and with the validation day's date, then passes
+          restored. The full app run is now 392 passing tests; pinned Ruff and app Pyright also pass.
 
 - [x] **3.2 An Undo deletes the row it undoes — D7**
 

@@ -443,3 +443,31 @@ def test_undo_selects_latest_by_time_then_id(
     service.save(user, 550, {"user_on_watchlist": False, "undo": True})
     assert not UserMovieChange.objects.filter(pk=latest.pk).exists()
     assert list(UserMovieChange.objects.values_list("pk", flat=True)) == [older.pk]
+
+
+def test_entry_save_shares_one_time_across_local_midnight(user: User, tmdb: TMDBStub) -> None:
+    from apps.user_movie_data.models import UserMovieData, UserMovieEntry
+    from apps.user_movie_data.schemas import UserMovieEntryWriteSchema
+    from apps.user_movie_data.services.user_movie_entry_service import UserMovieEntryService
+
+    create_movie()
+    # Validation starts before midnight in Auckland; the locked write is after it.
+    with freeze_time("2020-01-01 10:59:59", auto_tick_seconds=1):
+        UserMovieEntryService(tmdb_client=tmdb).create(
+            user,
+            550,
+            UserMovieEntryWriteSchema(
+                review="Seen",
+                rating=8,
+                liked=True,
+                time_zone="Pacific/Auckland",
+            ),
+        )
+    record = UserMovieData.objects.get(user=user)
+    change = UserMovieChange.objects.get()
+    assert change.field == "rating"
+    assert change.from_entry
+    assert change.created_at == record.watched_added_at
+    assert change.created_at == record.liked_added_at
+    assert change.made_on == date(2020, 1, 2)
+    assert UserMovieEntry.objects.get(record=record).made_on == date(2020, 1, 2)

@@ -430,20 +430,23 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
         - No conditional code changes were needed; this task records the ancestry and case audit. Markdown lint
           passes. Task 5.3 runs the journey and covering browser specs on this integrated head.
 
-- [ ] **5.2 The tracking journey runs as one integration test — R2, R3, R16, R19, R21, R22, R29, R32**
+- [x] **5.2 The tracking journey runs as one integration test — R2, R3, R16, R19, R21, R22, R29, R32**
 
     **Goal:** One test walks criterion 1's journey through the app's real routes, signed in, from a card's watchlist
     control to two logged entries on the film's page.
 
-    - Write `frontend/tests/integration/tracking-journey.test.tsx`: render `<App />` at `/browse` as
-      `src/__tests__/App.test.tsx` does (`ThemeSelectProvider`, `TestProviders`, the location aligned with history),
-      with `<Toaster />`, signed in, MSW answering each step in turn with the records and lists the server returns
-    - A probe on this branch showed that under `<App />` in jsdom the real grid draws cards at `/browse` without
-      mocking the virtualizer, and role queries reach `WideNavBar` but not the phone bar, so the journey presses the
-      wide bar's Log; stub `matchMedia` to answer yes for `(hover: hover)` for the card's hover group
-    - The steps and checks are criterion 1's, in its order
-    - It passes on arrival; show it failing against a narrow break (for example the watchlist rule's description
-      dropped), then passing restored
+    - Added `frontend/tests/integration/tracking-journey.test.tsx`, rendering the real App, grid, navigation and shared
+      dialog under the theme/query providers. MSW supplies each completed record and ordered entry list.
+    - The visitor watchlists a hover card, logs today's 3.5-star viewing and review, sees its watched mark and rating,
+      the Logged/removed-from-watchlist feedback and Undo, an empty Watchlist, then the entry on the film page. They
+      requeue from the panel and use the bar's Log for a same-day rewatch at five stars with another review. Both
+      entries retain their own reviews and ratings; the Watchlist is empty and the card shows five stars.
+    - Native history updates align the test environment's writable location. A local geometry adapter supplies layout
+      boxes only inside the open, visibly rendered dialog, enabling its real focus trap and keyboard rating; jsdom
+      otherwise supplies zero boxes. No component, virtualizer, hook or router is mocked.
+    - The complete journey passes; suppressing only watchlist-removal feedback fails at its description (run
+      `935c92cc3ee54e259b2f013e7e01a040`), then passes restored. All related tests, lint, formatting and type-check pass.
+      The journey also exposed the sibling-key correction recorded in 4.3.R.
 
 - [ ] **5.3 Check the journey and the signed-in scans**
 

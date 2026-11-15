@@ -840,25 +840,37 @@ import { createMockUser } from '@/test/helpers/mocks';
 
 ### E2E Test Coordination
 
-The seven specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
+The specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
 Back to Results after reloading detail, and the phone shell's drawer, search and account menu, and
 `background.spec.ts` checks the page background: the first frame before React loads, the CSS fallback with JavaScript
-disabled, and mode and palette changes without reloading. They run in Chromium with no retries: six at 1280×800, and
-`phone-width.spec.ts` at 360×800, signed out and signed in. Sign-up stops at the
-check-your-email notice; email-link verification, OAuth, watchlist contents and other browsers are outside this tier.
+disabled, and mode and palette changes without reloading. They run in Chromium without test retries; navigation
+and account scenarios use 1280×800, and `phone-width.spec.ts` uses 360×800, signed out and signed in.
+`tracking-journey.spec.ts` runs two logged viewings with mouse and keyboard at 1280px, and touch at 390px, checking
+watchlist contents, separate entry reviews/ratings, focus restoration and persisted current rating.
+`rating-selection.spec.ts` covers first-click/tap half-star selection, whole stars, cancelled touch and persistence.
+`card-layout.spec.ts` checks metadata and rating alignment at controlled 194px and 138px component widths using local
+catalogue fixtures; the browse columns retain their fixed width. This geometry case skips staging.
+Sign-up stops at the check-your-email notice; email-link verification, OAuth and other browsers are outside this tier.
 
 - **`local`** (default): the real development backend, PostgreSQL, Redis, registration, and session cookies. Browser
   fixtures answer catalogue paths beginning `/api/movies`, `/api/genres`, `/api/keywords`, and `/api/people`. An
   unhandled catalogue method/path aborts and fails the spec with its method and path; requests to another origin are
   aborted. Synthetic fixtures use generated API types and cover all score badge variants. Worktrees and CI discard
-  mail through Django's dummy backend; the primary checkout's stack sends real verification mail.
+  mail through Django's dummy backend; the primary checkout's stack sends real verification mail. Tracking and rating
+  specs create a temporary verified user and stored movie transactionally through the development backend container,
+  inheriting the checkout's Compose project and CI overrides. They clean up only after successful setup. Their
+  synthetic catalogue responses hydrate tracking fields from the real record endpoint; authentication, record/entry
+  writes and watchlist reads remain real. Backend integration tests cover the catalogue-enrichment boundary separately.
+  Login setup may wait for one reported Retry-After window after a 429, recording that retry without clearing cache
+  or changing the throttle.
 - **`staging`**: live catalogue data and an existing verified, non-staff account. Registration is skipped. The Back to
   Results reload scenario supplies its own browse/detail fixtures in both targets to control page height.
   `background.spec.ts` supplies Home's three reads in both targets so its console checks never depend on live TMDB.
-  Both overrides serve only same-origin GETs. The specs change none of the staging account's saved data.
+  Both overrides serve only same-origin GETs. Tracking and rating specs skip before database setup on staging. The
+  specs change none of the staging account's saved data.
 
-A PATCH of an unstored movie at `/api/user-movie-data/{tmdb_id}` also reaches TMDB, but these specs never call it.
-A future spec that does supplies its own fixtures. Assertions read titles from the browse responses the page received
+A PATCH of an unstored movie at `/api/user-movie-data/{tmdb_id}` reaches TMDB; the tracking fixtures seed their stored
+movie first so real writes stay deterministic. Assertions read titles from the browse responses the page received
 rather than assuming synthetic data;
 each movie card's link must be named by its title. Since two card links share that name, use an exact name and
 `first()`.
@@ -879,7 +891,10 @@ only by `filter`, `first`, `last`, or `nth`. CSS and XPath selector strings, `ge
 `evaluate()` are prohibited. Reading a found element's state or `boundingBox()` is allowed.
 
 Each journey spec scans each distinct reached page with axe after its ready check: a heading or result count, or the
-first labelled field on the auth forms. `background.spec.ts` scans the pages its rendered-app tests reach. Scans use
+first labelled field on the auth forms. Tracking also scans the entry dialog and phone rating sheet. `scanPage`
+waits up to five seconds for pending/running finite animations inside dialogs, alert dialogs and notification regions,
+including their descendants, then performs one audit. Infinite motion continues; a timeout reports the active motion.
+`background.spec.ts` scans the pages its rendered-app tests reach. Scans use
 WCAG 2.0 and 2.1 A/AA rules. `axe-baseline.ts` excuses only explicit route patterns and rule IDs, each with a reason; a
 new violation of that same rule on that route is also excused until the entry is removed. Other violations fail with the
 route, rule, and affected elements. The reporter lists unmatched entries without failing, so focused runs and staging
@@ -889,7 +904,7 @@ local fixture data does not show.
 ### E2E Best Practices
 
 Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
-its address. From `frontend/`, one command runs the seven specs:
+its address. From `frontend/`, one command runs the suite:
 
 ```bash
 # Worktree root

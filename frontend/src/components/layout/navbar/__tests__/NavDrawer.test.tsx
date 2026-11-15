@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw/http";
 import { siteOrigin } from "@/config/baseUrls";
+import { EntryDialogHost } from "@/components/movie/entry/EntryDialogHost";
 import AuthContextProvider from "@/components/auth/AuthContextProvider";
 import { setAuthTokens } from "@/utilities/tokenUtils";
 import { TestProviders } from "@tests/helpers/test-providers";
@@ -22,8 +23,10 @@ function renderDrawer() {
     <TestProviders system={styleSystem}>
       <MemoryRouter initialEntries={["/browse/upcoming"]}>
         <AuthContextProvider>
-          <NavDrawer />
-          <Location />
+          <EntryDialogHost>
+            <NavDrawer />
+            <Location />
+          </EntryDialogHost>
         </AuthContextProvider>
       </MemoryRouter>
     </TestProviders>,
@@ -155,3 +158,53 @@ it("draws the panel, header, backdrop and keyboard link in theme roles", async (
   expect(films).toHaveFocus();
   expectResolvedColor(films, "outline-color", "var(--chakra-colors-ring)");
 });
+
+it("opens Log a film above the links, closes the drawer and restores focus to Open menu", async () => {
+  setAuthTokens(token());
+  const user = userEvent.setup();
+  renderDrawer();
+  const trigger = screen.getByRole("button", { name: "Open menu" });
+  await user.click(trigger);
+  const log = await screen.findByRole("button", { name: "Log a film" });
+  const films = screen.getByRole("link", { name: "Films" });
+  expect(
+    log.compareDocumentPosition(films) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  await user.click(log);
+  expect(
+    await screen.findByRole("dialog", { name: "Review or log" }),
+  ).toBeVisible();
+  expect(
+    screen.queryByRole("dialog", { name: "Menu" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("combobox", { name: "Film" })).toBeVisible();
+  expect(screen.getByRole("switch", { name: "Watched on" })).toBeChecked();
+  await user.click(screen.getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(trigger).toHaveFocus());
+});
+
+it.each(["anonymous", "resolving"])(
+  "does not offer Log a film while %s",
+  async (status) => {
+    const held = gate();
+    if (status === "resolving")
+      server.use(
+        http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+          await held.wait;
+          return HttpResponse.json({ status: 401 }, { status: 401 });
+        }),
+      );
+    const user = userEvent.setup();
+    const view = renderDrawer();
+    try {
+      await user.click(screen.getByRole("button", { name: "Open menu" }));
+      await screen.findByRole("dialog", { name: "Menu" });
+      expect(
+        screen.queryByRole("button", { name: "Log a film" }),
+      ).not.toBeInTheDocument();
+    } finally {
+      held.release();
+      view.unmount();
+    }
+  },
+);

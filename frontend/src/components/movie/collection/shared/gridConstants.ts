@@ -10,6 +10,9 @@ import { type MovieListItem } from "@/types/movie";
 /** Card width in pixels. Used for column count calculation and grid template. */
 export const CARD_WIDTH = 194;
 
+/** Fixed text block: two title lines, year and score, and a reserved stars line. */
+export const CARD_TEXT_HEIGHT = 128;
+
 /** Gap between grid items in pixels. */
 export const GAP = 16;
 

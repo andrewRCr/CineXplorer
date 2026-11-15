@@ -12,12 +12,14 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 import {
     fetchMovieDetail,
+    searchMovies,
     getFeaturedMovie,
     getNowPlayingMovies,
     getUpcomingMovies,
 } from "@/services/movieService";
 import { homeReadOptions, homeSectionOptions } from "@/services/homeRequests";
-import type { MovieDetail } from "@/types/movie";
+import { getMoviePickerPaginationContextId } from "@/services/paginationContext";
+import type { MovieDetail, MoviePickerItem } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 
 export const virtualizedMoviesKey = (
@@ -112,4 +114,29 @@ export const activityQuery = (params: ActivityParams) =>
     queryOptions({
         queryKey: [...entriesKey, "activity", params] as const,
         queryFn: ({ signal }) => readWithSignal(signal, getActivity(params)),
+    });
+
+export const moviePickerQuery = (text: string) =>
+    queryOptions({
+        queryKey: ["movies", "picker", text] as const,
+        queryFn: async ({ signal }): Promise<MoviePickerItem[]> => {
+            const page = await readWithSignal(
+                signal,
+                searchMovies(
+                    { query: text, page: 1 },
+                    {
+                        headers: {
+                            "X-Pagination-Context":
+                                getMoviePickerPaginationContextId(),
+                        },
+                    },
+                ),
+            );
+            return (page.results ?? []).slice(0, 10).map((film) => ({
+                tmdbId: film.tmdb_id,
+                title: film.title,
+                year: film.release_date?.slice(0, 4) || null,
+                posterPath: film.poster_path ?? null,
+            }));
+        },
     });

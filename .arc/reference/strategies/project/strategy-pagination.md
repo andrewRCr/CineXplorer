@@ -201,9 +201,12 @@ export function getPaginationContextId(): string {
 }
 ```
 
-The catalog’s movie list requests share the tab’s context. Home’s section requests use a second ID,
-`getHomePaginationContextId()`, generated once per page load. Their first-page reads therefore never clear the
-catalog’s pagination record. A caller-supplied header is preserved; the interceptor adds the tab’s only when absent:
+The catalog's movie lists share the tab context. Home's section requests and the film picker each generate a
+separate UUID once per page load (`getHomePaginationContextId` and `getMoviePickerPaginationContextId`). Home's
+first-page reads and picker searches must not clear the catalog's returned-ID record. The picker sends its context
+through `searchMovies`' optional request options.
+
+The interceptor preserves an explicit `X-Pagination-Context` and adds the tab's context only when none is supplied:
 
 ```typescript
 // frontend/src/services/apiClient.ts

@@ -153,8 +153,11 @@ export const browseMovies = (params?: MovieQueryParams) => {
 /**
  * Search movies by query
  */
-export const searchMovies = (params?: MovieQueryParams) => {
-    return fetchPaginatedMovies(fetchSearchMoviesService, params);
+export const searchMovies = (
+    params?: MovieQueryParams,
+    options?: ReadOptions,
+) => {
+    return fetchPaginatedMovies(fetchSearchMoviesService, params, options);
 };
 
 /**

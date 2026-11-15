@@ -14,8 +14,8 @@ import { infiniteMoviesKey, movieDetailQuery } from "@/lib/queries";
 import { useQueryClient } from "@tanstack/react-query";
 import { browseMovies } from "@/services/movieService";
 import { siteOrigin } from "@/config/baseUrls";
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { act, screen, waitFor } from "@tests/helpers/test-renderer";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { act, screen, waitFor, within } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 import MovieDetail from "../MovieDetail";
 import { createMockMovieDetail } from "@tests/mocks/movieData";
@@ -27,14 +27,27 @@ import { apiBaseUrl } from "@/config/baseUrls";
 import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
 import { gate } from "@tests/helpers/web-locks";
 import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import useAuthContext from "@/hooks/auth/useAuthContext";
 import { toaster } from "@/components/core/chakra/toaster";
 
 beforeEach(() => {
   clearBrowserAuth();
   authHandlers();
+  server.use(
+    http.get(`${apiBaseUrl}/user-movie-data/:id/entries`, ({ params }) =>
+      HttpResponse.json({
+        record: createMockUserMovieData({ tmdb_id: Number(params.id) }),
+        entries: [],
+      }),
+    ),
+  );
   act(() => toaster.remove());
 });
 afterEach(() => act(() => toaster.remove()));
+
+function AuthStatus() {
+  return <output aria-label="Session">{useAuthContext()?.status}</output>;
+}
 
 // Helper to render MovieDetail with router and URL params
 const renderMovieDetailWithRoute = (
@@ -47,6 +60,7 @@ const renderMovieDetailWithRoute = (
     "/movie/:id",
     <>
       <AuthContextProvider>
+        <AuthStatus />
         <MovieDetail />
       </AuthContextProvider>
       <Toaster />
@@ -503,9 +517,7 @@ describe("MovieDetail query and shared saves", () => {
     );
     await screen.findByRole("heading", { name: "Cached movie" });
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Add to Watchlist" }),
-      ).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled(),
     );
     await userEvent
       .setup()
@@ -515,7 +527,7 @@ describe("MovieDetail query and shared saves", () => {
       screen.queryByRole("heading", { name: "Cached movie" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /to Watchlist/ }),
+      screen.queryByRole("button", { name: "Watchlist" }),
     ).not.toBeInTheDocument();
     expect(reads).toBe(2);
   });
@@ -553,9 +565,7 @@ describe("MovieDetail query and shared saves", () => {
     renderMovieDetailWithRoute("550");
     await screen.findByRole("heading", { name: "Test Movie" });
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Add to Watchlist" }),
-      ).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled(),
     );
     expect(movies).toBe(1);
     expect(userReads).toBe(0);
@@ -580,9 +590,10 @@ describe("MovieDetail query and shared saves", () => {
     );
     renderMovieDetailWithRoute("550");
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Remove from Watchlist" }),
-      ).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      ),
     );
   });
   it("keeps its save enabled and shows save toasts with Undo", async () => {
@@ -612,15 +623,11 @@ describe("MovieDetail query and shared saves", () => {
     const user = userEvent.setup();
     renderMovieDetailWithRoute("550");
     await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: "Add to Watchlist" }),
-      ).toBeEnabled(),
+      expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled(),
     );
-    await user.click(screen.getByRole("button", { name: "Add to Watchlist" }));
+    await user.click(screen.getByRole("button", { name: "Watchlist" }));
     await waitFor(() => expect(saves).toBe(1));
-    expect(
-      screen.getByRole("button", { name: "Remove from Watchlist" }),
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled();
     release.release();
     await waitFor(() =>
       expect(screen.getByText("Added to watchlist")).toBeVisible(),
@@ -630,12 +637,10 @@ describe("MovieDetail query and shared saves", () => {
       expect(screen.getByText("Removed from watchlist")).toBeVisible(),
     );
     expect(saves).toBe(2);
-    expect(
-      screen.getByRole("button", { name: "Add to Watchlist" }),
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled();
   });
   it.each(["resolving", "anonymous"])(
-    "disables saves while %s",
+    "keeps saves inert while %s and explains anonymous sign-in",
     async (status) => {
       const release = gate();
       if (status === "resolving")
@@ -656,9 +661,19 @@ describe("MovieDetail query and shared saves", () => {
         ),
       );
       renderMovieDetailWithRoute("550");
-      expect(
-        await screen.findByRole("button", { name: "Add to Watchlist" }),
-      ).toBeDisabled();
+      await screen.findByRole("button", { name: "Watchlist" });
+      await waitFor(() =>
+        expect(screen.getByLabelText("Session")).toHaveTextContent(status),
+      );
+      const control = screen.getByRole("button", { name: "Watchlist" });
+      expect(control).toHaveAttribute("aria-disabled", "true");
+      await userEvent.setup().click(control);
+      if (status === "anonymous")
+        expect(screen.getByRole("link", { name: "Sign in" })).toBeVisible();
+      else
+        expect(
+          screen.queryByRole("link", { name: "Sign in" }),
+        ).not.toBeInTheDocument();
       act(() => release.release());
     },
   );
@@ -701,6 +716,16 @@ function CachedDetailCards() {
 }
 it("shows a card save over a previously cached detail after the next list page lands", async () => {
   setAuthTokens(token());
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: query === "(hover: hover)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
   const next = gate();
   let firstReads = 0;
   let nextReads = 0;
@@ -768,7 +793,7 @@ it("shows a card save over a previously cached detail after the next list page l
   await waitFor(() => expect(firstReads).toBe(2));
   await user.click(screen.getByRole("button", { name: "Load next page" }));
   await waitFor(() => expect(nextReads).toBe(1));
-  await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+  await user.click(screen.getByRole("button", { name: "Watchlist" }));
   await waitFor(() =>
     expect(screen.getByText("Added to watchlist")).toBeVisible(),
   );
@@ -778,8 +803,107 @@ it("shows a card save over a previously cached detail after the next list page l
   await user.click(screen.getByText("First movie", { selector: "a" }));
   await screen.findByRole("heading", { name: "First movie" });
   await waitFor(() => expect(detailReads).toBe(2));
-  expect(
-    screen.getByRole("button", { name: "Remove from Watchlist" }),
-  ).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled();
   expect(firstReads).toBe(2);
+});
+
+it("shows the signed-in film log beneath its tracking panel", async () => {
+  setAuthTokens(token());
+  const record = createMockUserMovieData({
+    tmdb_id: 550,
+    user_watched: true,
+    has_entries: true,
+    last_logged_on: "2026-11-14",
+  });
+  server.use(
+    http.get(`${apiBaseUrl}/movies/550`, () =>
+      HttpResponse.json(
+        createMockMovieDetail({ tmdb_id: 550, user_movie_data: record }),
+      ),
+    ),
+    http.get(`${apiBaseUrl}/user-movie-data/550/entries`, () =>
+      HttpResponse.json({
+        record,
+        entries: [
+          {
+            id: 8,
+            tmdb_id: 550,
+            watched_on: "2026-11-14",
+            rating: 7,
+            review: "A private film log",
+            rewatch: false,
+          },
+        ],
+      }),
+    ),
+  );
+  renderMovieDetailWithRoute("550");
+  const panel = await screen.findByRole("region", { name: "Your film" });
+  const log = await screen.findByRole("region", { name: "Your log" });
+  expect(await within(log).findByText("A private film log")).toBeVisible();
+  expect(
+    panel.compareDocumentPosition(log) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+it("deleting the film's only entry updates the panel and returns focus to Review", async () => {
+  setAuthTokens(token());
+  const entry = {
+    id: 8,
+    tmdb_id: 550,
+    watched_on: "2026-11-14",
+    rating: 7,
+    review: "Last viewing",
+    rewatch: false,
+  };
+  const record = createMockUserMovieData({
+    tmdb_id: 550,
+    user_watched: true,
+    user_rating: null,
+    has_entries: true,
+    last_logged_on: entry.watched_on,
+  });
+  const returned = { ...record, has_entries: false, last_logged_on: null };
+  let deleted = false;
+  server.use(
+    http.get(`${apiBaseUrl}/movies/550`, () =>
+      HttpResponse.json(
+        createMockMovieDetail({ tmdb_id: 550, user_movie_data: record }),
+      ),
+    ),
+    http.get(`${apiBaseUrl}/user-movie-data/550/entries`, () =>
+      HttpResponse.json({
+        record: deleted ? returned : record,
+        entries: deleted ? [] : [entry],
+      }),
+    ),
+    http.delete(`${apiBaseUrl}/user-movie-data/550/entries/8`, () => {
+      deleted = true;
+      return HttpResponse.json({ entry, record: returned });
+    }),
+  );
+  renderMovieDetailWithRoute("550");
+  const user = userEvent.setup();
+  await user.click(
+    await screen.findByRole("button", { name: "Delete entry 1, Nov 14, 2026" }),
+  );
+  await user.click(
+    within(
+      await screen.findByRole("alertdialog", { name: "Delete this entry?" }),
+    ).getByRole("button", { name: "Delete" }),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Review" })).toHaveFocus(),
+  );
+  expect(
+    screen.queryByRole("region", { name: "Your log" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Watched" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: "Watched" })).not.toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
 });

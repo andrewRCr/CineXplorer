@@ -239,7 +239,7 @@ services/
 ├── authService.ts        # Authentication operations
 ├── userMovieDataService.ts  # User movie data operations
 ├── userMovieService.ts   # User-specific movie operations
-├── paginationContext.ts  # Catalog and Home pagination isolation
+├── paginationContext.ts  # Catalog, Home and picker pagination isolation
 ├── homeRequests.ts       # Home’s quiet reads and separate section context
 ├── consoleCapture.ts     # Development logging
 └── logger.ts             # Application logging
@@ -270,7 +270,7 @@ apiClient.interceptors.request.use((config) => {
         config.headers["X-CSRFToken"] = getCsrfToken();
     }
 
-    // Catalog lists share the tab’s context; Home supplies its own.
+    // Catalog lists share the tab context; Home and the picker supply their own.
     if (isMovieEndpoint(config.url) && !config.headers.has("X-Pagination-Context")) {
         config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
@@ -299,9 +299,13 @@ Other readers keep the tab’s context and the global toast.
 - Centralized auth header injection
 - Automatic CSRF token attachment
 - Token refresh with request queuing
-- Pagination context for deduplication
+- Pagination context for deduplication: catalog lists share the tab context; Home and the film picker each carry their own
 
 ### httpService Pattern
+
+Paginated reads accept optional `ReadOptions` (`headers` and `shouldReportServerError`) alongside query parameters.
+`fetchPaginatedMovies` and `searchMovies` carry those options through unchanged; the service still owns its abort
+controller. Home and the picker use them for their pagination contexts, independently of the catalog's lists.
 
 Generic HTTP service factory for RESTful resources.
 

@@ -33,8 +33,8 @@ export function HomeHero() {
       }
       description={
         <Text mb={6} fontSize="lg" textWrap="balance">
-          New releases, all-time classics, <Box as="br" hideBelow="lg" />
-          and everything in between.
+          See what's in theaters and coming soon, keep a watchlist, and log,
+          rate and like what you've seen. Film data from TMDB.
         </Text>
       }
       actions={

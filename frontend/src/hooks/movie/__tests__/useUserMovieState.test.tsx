@@ -90,6 +90,7 @@ describe("shared movie saves", () => {
           return HttpResponse.json(
             createMockUserMovieData({
               user_on_watchlist: requests.length === 1,
+              user_watched: true,
             }),
           );
         }),
@@ -132,7 +133,10 @@ describe("shared movie saves", () => {
       server.use(
         http.patch(`${apiBaseUrl}/user-movie-data/1`, () =>
           HttpResponse.json(
-            createMockUserMovieData({ user_on_watchlist: onWatchlist }),
+            createMockUserMovieData({
+              user_on_watchlist: onWatchlist,
+              user_watched: true,
+            }),
           ),
         ),
       );

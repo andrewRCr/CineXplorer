@@ -93,7 +93,8 @@ The frontend is a single-page application (SPA) built with React.
   queries, it also applies custom client-side filtering to correct data inconsistencies from the API
   (e.g., movies with incorrect release dates). To prevent empty spaces in the UI from these removals,
   the application dynamically fills gaps using a pre-fetched buffer of results from subsequent pages.
-- **Forms**: `formik` is used to manage form state and validation.
+- **Forms**: React Hook Form 7 manages new and rewritten forms with built-in validation. Formik remains in the
+  sign-in, registration and password-recovery forms until those forms are rewritten.
 - **Testing**: `vitest` is the testing framework, used for unit and component testing.
   `react-testing-library` is used for rendering components in tests.
 - **Directory Structure**: The `frontend/src/` directory is organized by feature and function:

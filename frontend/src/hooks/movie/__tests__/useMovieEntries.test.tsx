@@ -1,20 +1,28 @@
 import { useEffect } from "react";
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it } from "vitest";
-import { onlineManager, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  MutationObserver,
+  QueryClient,
+  QueryObserver,
+  onlineManager,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { isCancel } from "axios";
 import { http, HttpResponse } from "msw/http";
 import { Toaster, toaster } from "@/components/core/chakra/toaster";
+import type { EntryWriteResponse } from "@/services/userMovieDataService";
 import { apiBaseUrl } from "@/config/baseUrls";
 import { activityQuery, libraryQuery, movieEntriesQuery } from "@/lib/queries";
-import { beginUserChange, changeOfUser } from "@/lib/session";
+import { beginUserChange, changeOfUser, getChangeCount } from "@/lib/session";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { clearBrowserAuth } from "@tests/helpers/auth";
 import { createMockUserMovieData } from "@tests/mocks/movieData";
 import { gate } from "@tests/helpers/web-locks";
 import { server } from "@tests/mocks/server";
-import { useUserMovieState } from "../useUserMovieState";
-import { useMovieEntries } from "../useMovieEntries";
+import { saveMutationOptions, useUserMovieState } from "../useUserMovieState";
+import { entryMutationOptions, useMovieEntries } from "../useMovieEntries";
 
 const entry = {
   id: 7,
@@ -377,4 +385,128 @@ it("aborts an entry already in transport and ignores its obsolete response", asy
     release.release();
     view.unmount();
   }
+});
+
+it("deletes through shared options without a mounted hook, queues behind saves and refreshes the lists", async () => {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const held = gate();
+  const deleteHeld = gate();
+  const events: string[] = [];
+  const counts = { library: 0, film: 0, activity: 0 };
+  const deletedRecord = { ...record, has_entries: false, last_logged_on: null };
+  server.use(
+    http.patch(`${apiBaseUrl}/user-movie-data/1`, async () => {
+      events.push("save");
+      await held.wait;
+      return HttpResponse.json(record);
+    }),
+    http.delete(`${apiBaseUrl}/user-movie-data/1/entries/7`, async () => {
+      events.push("delete");
+      await deleteHeld.wait;
+      return HttpResponse.json({
+        entry,
+        record: deletedRecord,
+      } satisfies EntryWriteResponse);
+    }),
+    http.get(`${apiBaseUrl}/user-movie-data/movies`, () => {
+      counts.library++;
+      return HttpResponse.json({
+        page: 1,
+        total_pages: 0,
+        total_results: 0,
+        results: [],
+        next_tmdb_page_start: null,
+      });
+    }),
+    http.get(`${apiBaseUrl}/user-movie-data/1/entries`, () => {
+      counts.film++;
+      return HttpResponse.json({
+        record: events.includes("delete") ? deletedRecord : record,
+        entries: events.includes("delete") ? [] : [entry],
+      });
+    }),
+    http.get(`${apiBaseUrl}/user-movie-data/entries`, () => {
+      counts.activity++;
+      return HttpResponse.json({
+        page: 1,
+        total_pages: 0,
+        total_results: 0,
+        results: [],
+      });
+    }),
+  );
+  const reads = [
+    new QueryObserver(client, libraryQuery({})).subscribe(() => {}),
+    new QueryObserver(client, movieEntriesQuery(1)).subscribe(() => {}),
+    new QueryObserver(client, activityQuery({})).subscribe(() => {}),
+  ];
+  try {
+    await waitFor(() =>
+      expect(counts).toEqual({ library: 1, film: 1, activity: 1 }),
+    );
+    const change = getChangeCount();
+    const save = new MutationObserver(client, saveMutationOptions(1)).mutate({
+      kind: "save",
+      changes: { user_liked: true },
+      shown: record,
+      change,
+    });
+    await waitFor(() => expect(events).toEqual(["save"]));
+    const observer = new MutationObserver(client, entryMutationOptions(1));
+    const deletion = observer.mutate({
+      kind: "entry",
+      operation: "delete",
+      entryId: 7,
+      change,
+    });
+    await waitFor(() =>
+      expect(observer.getCurrentResult().isPaused).toBe(true),
+    );
+    expect(events).toEqual(["save"]);
+    held.release();
+    await save;
+    await waitFor(() => expect(counts.library).toBe(2));
+    deleteHeld.release();
+    await expect(deletion).resolves.toEqual({
+      entry,
+      record: deletedRecord,
+    });
+    await waitFor(() =>
+      expect(counts).toEqual({ library: 3, film: 2, activity: 2 }),
+    );
+    expect(events).toEqual(["save", "delete"]);
+    expect(client.getQueryData(movieEntriesQuery(1).queryKey)).toEqual({
+      record: deletedRecord,
+      entries: [],
+    });
+  } finally {
+    held.release();
+    deleteHeld.release();
+    reads.forEach((unsubscribe) => unsubscribe());
+    beginUserChange(client);
+    client.clear();
+  }
+});
+
+it("shared entry options reject a write belonging to an earlier user", async () => {
+  const client = new QueryClient({
+    defaultOptions: { mutations: { retry: false } },
+  });
+  let requests = 0;
+  server.use(
+    http.delete(`${apiBaseUrl}/user-movie-data/1/entries/7`, () => {
+      requests++;
+      return HttpResponse.json({ entry, record } satisfies EntryWriteResponse);
+    }),
+  );
+  const change = getChangeCount();
+  beginUserChange(client);
+  const observer = new MutationObserver(client, entryMutationOptions(1));
+  await expect(
+    observer.mutate({ kind: "entry", operation: "delete", entryId: 7, change }),
+  ).rejects.toSatisfy(isCancel);
+  expect(requests).toBe(0);
+  client.clear();
 });

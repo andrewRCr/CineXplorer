@@ -12,7 +12,7 @@ it("explains the three things a visitor can do under a hidden section heading", 
   ).toBeInTheDocument();
   for (const title of [
     "Browse every film",
-    "Keep a watchlist",
+    "Track your films",
     "Know before you watch",
   ])
     expect(
@@ -25,7 +25,7 @@ it("explains the three things a visitor can do under a hidden section heading", 
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Save films from any poster and find them waiting on Home.",
+      "Keep a watchlist, and mark films watched, rate and like them from any poster.",
     ),
   ).toBeInTheDocument();
   expect(

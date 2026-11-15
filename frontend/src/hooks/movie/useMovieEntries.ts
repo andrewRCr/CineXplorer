@@ -1,4 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import {
+    mutationOptions,
+    useMutation,
+    type UseMutationOptions,
+} from "@tanstack/react-query";
 import { useRef } from "react";
 import { CanceledError } from "axios";
 import {
@@ -8,7 +12,7 @@ import {
     type EntryInput,
     type EntryWriteResponse,
 } from "@/services/userMovieDataService";
-import { entriesKey, libraryKey } from "@/lib/queries";
+import { entriesKey, libraryKey, movieEntriesQuery } from "@/lib/queries";
 import {
     createSaveToastId,
     getChangeCount,
@@ -17,9 +21,10 @@ import {
 import { toaster } from "@/components/core/chakra/toaster";
 import { movieWriteOptions, type EntryVariables } from "./movieWriteOptions";
 
-export function useMovieEntries(tmdbId: number) {
-    const observerOwner = useRef<number | undefined>(undefined);
-    const mutation = useMutation({
+export const entryMutationOptions = (
+    tmdbId: number,
+): UseMutationOptions<EntryWriteResponse, Error, EntryVariables, number> =>
+    mutationOptions({
         ...movieWriteOptions(tmdbId),
         mutationFn: (variables: EntryVariables) => {
             const config = {
@@ -43,8 +48,22 @@ export function useMovieEntries(tmdbId: number) {
             );
         },
         onMutate: (variables) => variables.change,
-        onSuccess: (_data, variables, _context, { client }) => {
+        onSuccess: (data, variables, _context, { client }) => {
             if (variables.change !== getChangeCount()) return;
+            if (variables.operation === "delete") {
+                // Keep the confirmed removal visible while the invalidated list refreshes.
+                client.setQueryData(
+                    movieEntriesQuery(tmdbId).queryKey,
+                    (current) =>
+                        current && {
+                            ...current,
+                            record: data.record,
+                            entries: current.entries.filter(
+                                (entry) => entry.id !== variables.entryId,
+                            ),
+                        },
+                );
+            }
             void client.invalidateQueries({ queryKey: libraryKey });
             void client.invalidateQueries({ queryKey: entriesKey });
         },
@@ -57,6 +76,10 @@ export function useMovieEntries(tmdbId: number) {
             });
         },
     });
+
+export function useMovieEntries(tmdbId: number) {
+    const observerOwner = useRef<number | undefined>(undefined);
+    const mutation = useMutation(entryMutationOptions(tmdbId));
     const withTimeZone = (data: EntryInput) => ({
         ...data,
         time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,

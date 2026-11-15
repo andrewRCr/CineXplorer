@@ -132,3 +132,23 @@ describe("HTTP service responses", () => {
         expect(response.data).toBe("");
     });
 });
+
+it("paginated reads carry caller request headers", async () => {
+    const page = { page: 1, results: [], total_pages: 0, total_results: 0 };
+    server.use(
+        http.get(`${apiBaseUrl}/service-test-items`, ({ request }) =>
+            request.headers.get("X-Pagination-Context") === "picker-context"
+                ? HttpResponse.json(page)
+                : HttpResponse.json(
+                      { detail: "Wrong context" },
+                      { status: 400 },
+                  ),
+        ),
+    );
+    expect(
+        await service.getPaginated(
+            {},
+            { headers: { "X-Pagination-Context": "picker-context" } },
+        ).request,
+    ).toEqual({ data: page });
+});

@@ -64,3 +64,11 @@ export type PersonListResponse =
 export interface GenresResponse {
     genres: Genre[];
 }
+
+/** The compact film identity shown by a picker and an entry form. */
+export interface MoviePickerItem {
+    tmdbId: number;
+    title: string;
+    year: string | null;
+    posterPath: string | null;
+}

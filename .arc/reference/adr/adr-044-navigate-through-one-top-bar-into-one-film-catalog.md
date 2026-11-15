@@ -3,6 +3,7 @@
 ## Status
 
 Accepted (2026-11-12); Superseded in part by ADR-046 (the home page’s Films section offering the three windows)
+and ADR-048 (adds Log to the wide bar and "Log a film" to the phone drawer).
 
 ## Context
 

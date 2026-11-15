@@ -71,3 +71,11 @@ def test_admin_deletes_record_and_keeps_movie(admin_record: tuple[Client, UserMo
     assert not UserMovieData.objects.filter(pk=record.pk).exists()
     assert Movie.objects.filter(pk=movie_id).exists()
     assert not UserMovieEntry.objects.exists()
+
+
+def test_changes_are_not_registered_with_admin() -> None:
+    from django.contrib import admin
+
+    from apps.user_movie_data.models import UserMovieChange
+
+    assert not admin.site.is_registered(UserMovieChange)

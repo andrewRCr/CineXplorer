@@ -124,3 +124,34 @@ def test_record_rating_range(rating: int) -> None:
 def test_database_like_requires_watched_record() -> None:
     with pytest.raises(IntegrityError, match="user_movie_liked_watched"), transaction.atomic():
         create_user_movie_data(create_user(), user_liked=True)
+
+
+@pytest.mark.parametrize(
+    ("field", "turned_on", "rating", "constraint"),
+    [
+        ("other", True, None, "user_movie_change_field"),
+        ("rating", True, 0, "user_movie_change_rating_range"),
+        ("rating", True, 11, "user_movie_change_rating_range"),
+        ("rating", True, None, "user_movie_change_value"),
+        ("rating", False, 8, "user_movie_change_value"),
+        ("watchlist", True, 8, "user_movie_change_value"),
+        ("watched", False, 8, "user_movie_change_value"),
+        ("liked", True, 8, "user_movie_change_value"),
+    ],
+)
+def test_change_constraints(
+    field: str, turned_on: bool, rating: int | None, constraint: str
+) -> None:
+    from apps.user_movie_data.models import UserMovieChange
+
+    record = create_user_movie_data(create_user())
+    with pytest.raises(IntegrityError, match=constraint), transaction.atomic():
+        UserMovieChange.objects.create(
+            record=record,
+            field=field,
+            turned_on=turned_on,
+            rating=rating,
+            from_entry=False,
+            created_at=timezone.now(),
+            made_on=date(2020, 1, 1),
+        )

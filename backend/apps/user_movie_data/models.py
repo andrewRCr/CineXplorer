@@ -230,3 +230,50 @@ class UserMovieEntry(models.Model):
 
     def __str__(self) -> str:
         return f"Entry {self.pk} for record {self.record_id}"
+
+
+class UserMovieChange(models.Model):
+    """Write-once changes: created_at is creation time; rows are never updated."""
+
+    if TYPE_CHECKING:
+        id: int
+        record_id: int
+
+    class Field(models.TextChoices):
+        WATCHLIST = "watchlist"
+        WATCHED = "watched"
+        LIKED = "liked"
+        RATING = "rating"
+
+    record: models.ForeignKey[UserMovieData] = models.ForeignKey(
+        UserMovieData, on_delete=models.CASCADE, related_name="changes"
+    )
+    field = models.CharField(max_length=9, choices=Field.choices)
+    turned_on = models.BooleanField()
+    rating = models.SmallIntegerField(null=True, blank=True)
+    from_entry = models.BooleanField()
+    created_at = models.DateTimeField()
+    made_on = models.DateField()
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(field__in=["watchlist", "watched", "liked", "rating"]),
+                name="user_movie_change_field",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(rating__isnull=True) | models.Q(rating__range=(1, 10)),
+                name="user_movie_change_rating_range",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(field="rating", turned_on=True, rating__isnull=False)
+                    | models.Q(field="rating", turned_on=False, rating__isnull=True)
+                    | (~models.Q(field="rating") & models.Q(rating__isnull=True))
+                ),
+                name="user_movie_change_value",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"Record {self.record_id}: {self.field} at {self.created_at}"

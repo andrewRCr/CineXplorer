@@ -110,29 +110,17 @@ its Undo.
         - Both schemas use the same annotated validator; the patch zone stays outside the four record fields.
         - All 342 app tests, pinned Ruff lint/format and app Pyright passed.
 
-- [ ] **2.2 The record of changes keeps one write-once row per change — D4, D8**
+- [x] **2.2 The record of changes keeps one write-once row per change — D4, D8**
 
     **Goal:** `UserMovieChange` holds each change's field, new value, whether an entry write made it, its save's time
     and its day; the database refuses a row that breaks its rules; and rows go with their record or account.
 
-    - [ ] **2.2.a Write the model's tests**
-        - `test_models.py`: each constraint refuses a bad row: a `field` outside the four; a rating outside 1–10; a
-          `rating` row turned on without a rating, or off with one; another field's row with a rating
-        - `test_user_movie_data_api.py`: `DELETE /user-movie-data/{tmdb_id}` deletes the film's rows and keeps another
-          film's; deleting the user deletes its rows and keeps another user's
-        - `test_admin.py`: the admin site doesn't register the model
-        - Expect tests to FAIL initially, though not only on the new model's import: once 2.2.b lands, see each fail
-          against a narrow reconstruction, then restore: each constraint removed in turn, the `record` key set to
-          `PROTECT`, and the model registered with the admin. A changed migration needs `--create-db` (see the notes)
-
-    - [ ] **2.2.b Add `UserMovieChange` and migration `0005`**
-        - D4's columns: `record` cascading with `related_name="changes"`; `field` with text choices `watchlist`,
-          `watched`, `liked`, `rating`; `turned_on`; `rating`, a nullable small integer; `from_entry`; `created_at`,
-          set by the save rather than `auto_now_add`; `made_on`
-        - The model's docstring says rows are write-once, so `created_at` is their creation time and there is no
-          `updated_at`
-        - Tests should now PASS; `makemigrations --check` shows no drift; the app's migration tests, 1.2.a's
-          included, still pass
+    - [x] **2.2.a Test change constraints, cascades and admin exclusion**
+        - Eight invalid-row cases failed with each relevant constraint removed individually; both corrected
+          cascade cases failed with `PROTECT`; admin exclusion failed with the model registered. Restored all.
+    - [x] **2.2.b Add `UserMovieChange` and reversible migration `0005`**
+        - Stores the four fields, value, source, save time and day; rows are write-once and cascade with records.
+        - All 353 app tests (before recording tests), pinned Ruff lint/format and app Pyright passed; no drift.
 
 - [ ] **2.3 A record save records what the visitor changed — D4, D5**
 

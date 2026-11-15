@@ -398,3 +398,38 @@ def test_time_zone_alone_is_not_a_save(signed_in: tuple[Client, User]) -> None:
     assert response.status_code == 400
     assert response.json() == {"detail": "Provide at least one movie data field"}
     assert not UserMovieData.objects.exists()
+
+
+@pytest.mark.parametrize("delete_user", [False, True])
+def test_changes_cascade_with_record_or_user(
+    signed_in: tuple[Client, User], delete_user: bool
+) -> None:
+    from django.utils import timezone
+
+    from apps.user_movie_data.models import UserMovieChange
+
+    client, user = signed_in
+    records = [
+        create_user_movie_data(user),
+        create_user_movie_data(user, create_movie(551)),
+        create_user_movie_data(create_user(username="other"), Movie.objects.get(pk=550)),
+    ]
+    changes = [
+        UserMovieChange.objects.create(
+            record=record,
+            field="watchlist",
+            turned_on=True,
+            rating=None,
+            from_entry=False,
+            created_at=timezone.now(),
+            made_on=timezone.now().date(),
+        )
+        for record in records
+    ]
+    if delete_user:
+        user.delete()
+    else:
+        assert client.delete(URL).status_code == 204
+    assert set(UserMovieChange.objects.values_list("pk", flat=True)) == {
+        change.pk for change in changes[2 if delete_user else 1 :]
+    }

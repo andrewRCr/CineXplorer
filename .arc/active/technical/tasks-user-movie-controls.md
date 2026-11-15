@@ -208,35 +208,25 @@ the film page.
         - All 24 host tests and all 51 related tests across four files passed; full ESLint, formatting and frontend
           type checking passed.
 
-- [ ] **2.5 The bar's Log and the drawer's "Log a film" open the dialog — R29, R30**
+- [x] **2.5 The bar's Log and the drawer's "Log a film" open the dialog — R29, R30**
 
     **Goal:** A signed-in visitor opens the dialog from the bar on any page, on the film when they are on its loaded
     page, and the bar holds no Log button for anyone else.
 
-    - [ ] **2.5.a Write the bar's cases in `src/components/layout/navbar/__tests__/`**
-        - `WideNavBar`: "Log" between the search field and the account control while signed in, none while signed out
-          or resolving; it opens the dialog on the picker with the date on; on `/movie/:id` with the film loaded, on
-          that film, changeable; on a film page still loading, failed or not found, including a refetch that answered
-          404 over cached data, on the picker
-        - `NavDrawer.test.tsx`: a full-width "Log a film" above the links while signed in, none otherwise; it closes the
-          drawer, opens the dialog as Log does, and closing the dialog returns focus to "Open menu"
-        - Both render inside `EntryDialogHost` and assert what the dialog shows: the "Film" picker, or the film's title
-          with "Change"
-        - Expect tests to FAIL initially
-
-    - [ ] **2.5.b Add the buttons to `WideNavBar.tsx` and `NavDrawer.tsx`**
-        - `size="sm"`, a plus icon and "Log"; `SearchField` unchanged; "Log a film" passes `returnFocus` with the
-          drawer's "Open menu"
-        - On `/movie/:id`, Log opens on the film only when `getQueryState` on `movieDetailQuery`'s key reports
-          `success`
-        - Tests should now PASS
-
-    - [ ] **2.5.c Run `e2e/phone-width.spec.ts` and `e2e/sign-in.spec.ts` against the browsable stack**
-        - `phone-width.spec.ts` signs in, opens the drawer with its new first button, and crosses to the wide bar at
-          1024px; `sign-in.spec.ts` scans signed-in `/` at 1280px with Log in the bar, and tabs through the bar to the
-          account menu
-        - Also look at the wide bar at 1024px signed in, since neither spec measures it, and confirm Log fits without
-          overflow
+    - [x] **2.5.a Cover navigation logging entry points through the dialog**
+        - Added cases for authenticated, anonymous and resolving visitors, ordering, picker defaults and focus return.
+          Film-page cases cover success, pending, failure, 404 and failed refetch over cached data without another read.
+        - Observed the new entry-point cases fail before implementation; visibility guards were narrowly reconstructed
+          to show the negative cases failing, then restored.
+    - [x] **2.5.b Add the wide bar and drawer buttons**
+        - Shared opening logic reads the film query's current success state at activation. The drawer closes before
+          opening the dialog and returns focus to its surviving trigger.
+    - [x] **2.5.c Verify navigation in the browser**
+        - All seven phone-width and sign-in smoke cases pass (run `a9979b69dd9a4619bcdc599636fefbab`). The signed-in
+          1024px bar fits without overflow. All 53 related component tests, lint, type-check and formatting pass.
+        - The first phone run failed contrast during the drawer's fade; a paused-animation diagnostic reproduced
+          transient contrast failures and cleared them on completion. The approved fix waits for opacity 1 before
+          scanning, retaining the contrast check without an exception.
 
 ### **Phase 3:** Cards carry the controls
 

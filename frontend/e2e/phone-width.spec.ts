@@ -78,6 +78,7 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     await expect(
         drawer.getByRole("link", { name: "Watchlist", exact: true }),
     ).toBeVisible();
+    await expect(drawer).toHaveCSS("opacity", "1");
     await scanPage(page, info);
     await page.keyboard.press("Escape");
     await expect(drawer).toBeHidden();

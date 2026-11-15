@@ -179,26 +179,18 @@ scanned, and `sign-in.spec.ts` and `phone-width.spec.ts` pass with their Explore
         - Starting the list at the top on a sort change comes with the scroll persistence in 3.3
         - Tests should now PASS
 
-- [ ] **2.3 The development seed stores two fixture films — R29**
+- [x] **2.3 The development seed stores two fixture films — R29**
 
     **Goal:** Every seeded development database holds the two fixture cards, created when missing and left as they are
     when present, with no user data, and a save of either never asks TMDB.
 
-    - [ ] **2.3.a Write the cases in `apps/core/tests/integration/test_seed_dev_data.py`**
-        - In a database without them, `Movie` rows 2000000001 and 2000000002 exist after a run, each with a title, a
-          release date and no poster
-        - A second run leaves them as they are, including a card whose title was changed between the runs
-        - No `UserMovieData` exists for either film
-        - A record save of either film through the `PATCH` route makes no TMDB call: the client's movie-details read
-          is replaced at its boundary (`TMDB_CLIENT_GET_MOVIE_DETAILS` in `apps.movie.tests.mock_paths`) with one that
-          fails the test if called
-        - Expect tests to FAIL initially
-
-    - [ ] **2.3.b Add the fixture cards to `seed_dev_data`**
-        - `Movie.objects.get_or_create(tmdb_id=…, defaults={…})` for each; `Movie`'s other fields are nullable or
-          defaulted
-        - The IDs live in one place the command reads; the spec repeats them as its own constants
-        - Tests should now PASS
+    - [x] **2.3.a Cover fixture creation, repeat seeding and saving without TMDB**
+        - The coupled seed cases first failed on missing cards and unexpected TMDB reads. They cover both IDs,
+          titles, dates, absent posters, preserving an edited card and creating no user data.
+    - [x] **2.3.b Seed the fixture cards**
+        - The command's single fixture table feeds `get_or_create`, preserving existing cards and seeding no records.
+        - All 305 core tests, pinned Ruff lint/format and core Pyright passed. Completed independently while the
+          grid's frontend checks ran; no backend API contract changed.
 
 - [ ] **2.4 The signed-in spec adds a film from a card, finds it on the Watchlist page and removes it — R30, R32,
   R33**

@@ -100,3 +100,43 @@ def test_syncs_the_blacklist_from_the_tracked_file_and_resyncs_on_repeat() -> No
     BlacklistedMovie.objects.filter(tmdb_id=min(expected)).update(reason="Stale reason")
     call_command("seed_dev_data", stdout=StringIO())
     assert dict(BlacklistedMovie.objects.values_list("tmdb_id", "reason")) == expected
+
+
+@override_settings(ENVIRONMENT="development")
+def test_seeds_fixture_cards_without_user_records_and_preserves_existing_cards() -> None:
+    from apps.core.models import Movie
+    from apps.user_movie_data.models import UserMovieData
+
+    ids = (2000000001, 2000000002)
+    call_command("seed_dev_data", stdout=StringIO())
+    for tmdb_id in ids:
+        film = Movie.objects.get(tmdb_id=tmdb_id)
+        assert film.title
+        assert film.release_date
+        assert film.poster_path is None
+    Movie.objects.filter(tmdb_id=ids[0]).update(title="Preserve my title")
+    call_command("seed_dev_data", stdout=StringIO())
+    assert Movie.objects.get(tmdb_id=ids[0]).title == "Preserve my title"
+    assert not UserMovieData.objects.filter(movie_id__in=ids).exists()
+
+
+@override_settings(ENVIRONMENT="development")
+@pytest.mark.parametrize("tmdb_id", [2000000001, 2000000002])
+def test_saving_fixture_cards_never_reads_tmdb(api_client: Client, tmdb_id: int) -> None:
+    from unittest.mock import patch
+
+    from apps.core.tests.test_helpers import authenticate_client, get_csrf_token, json_patch
+    from apps.movie.tests.mock_paths import TMDB_CLIENT_GET_MOVIE_DETAILS
+
+    call_command("seed_dev_data", stdout=StringIO())
+    authenticate_client(api_client, "dev", "cinexplorer-dev")
+    csrf = get_csrf_token(api_client)
+    with patch(TMDB_CLIENT_GET_MOVIE_DETAILS, side_effect=AssertionError("Unexpected TMDB read")):
+        response = json_patch(
+            api_client,
+            f"/api/user-movie-data/{tmdb_id}",
+            {"user_on_watchlist": True},
+            HTTP_X_CSRFTOKEN=csrf,
+        )
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json()["user_on_watchlist"] is True

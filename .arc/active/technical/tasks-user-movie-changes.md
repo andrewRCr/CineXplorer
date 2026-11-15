@@ -98,25 +98,17 @@ forward and leaves it watched going back, and date added sorts by the first filt
 _Mode:_ `slice` — closes on a change recorded from the browser's save to its row on the visitor's day, and erased by
 its Undo.
 
-- [ ] **2.1 Record saves accept the visitor's time zone — D3**
+- [x] **2.1 Record saves accept the visitor's time zone — D3**
 
     **Goal:** A record save may carry an IANA zone, checked exactly as an entry write's is, without counting as a field
     to save, and the service receives it for dating the save's changes; a save without one still works.
 
-    - [ ] **2.1.a Write the time zone's API tests in `test_user_movie_data_api.py`**
-        - A save with a known `time_zone` succeeds; an unknown zone, and an over-long name, answers 422 and changes
-          nothing; a save with `time_zone` absent or null succeeds
-        - `time_zone` alone answers 400 with "Provide at least one movie data field" (this holds today: show it failing
-          against a reconstruction that counts the zone as a field, then restore)
-        - Expect tests to FAIL initially; the known and missing zones pass early (see the notes)
-
-    - [ ] **2.1.b Share the zone validator and add `time_zone` to `UserMovieDataPatchSchema`**
-        - One function in `schemas.py` checks a zone name for both schemas, keeping `UserMovieEntryWriteSchema`'s
-          behavior, its over-long name included
-        - The zone reaches `UserMovieDataService.save` in `fields`, as `undo` does, from the route's
-          `model_dump(exclude_unset=True)`; `allowed` stays the four record fields, so the zone alone is still refused.
-          An absent zone and an explicit null both read as no zone
-        - Tests should now PASS, with the entry API's zone tests
+    - [x] **2.1.a Test record-save time zone validation**
+        - Unknown, empty and over-long zones failed before validation. Known, absent and null cases failed
+          against required/rejecting validation; zone-only failed when counted as a record field. Restored all.
+    - [x] **2.1.b Share the zone validator and accept an optional patch zone**
+        - Both schemas use the same annotated validator; the patch zone stays outside the four record fields.
+        - All 342 app tests, pinned Ruff lint/format and app Pyright passed.
 
 - [ ] **2.2 The record of changes keeps one write-once row per change — D4, D8**
 

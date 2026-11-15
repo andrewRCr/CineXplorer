@@ -361,3 +361,40 @@ def test_contradictory_like_is_400_without_tmdb_or_writes(signed_in: tuple[Clien
     tmdb.assert_not_called()
     assert not Movie.objects.exists()
     assert not UserMovieData.objects.exists()
+
+
+@pytest.mark.parametrize("zone", ["Mars/Base", "", "x" * 500])
+def test_unknown_save_zone_is_422_without_writes(
+    signed_in: tuple[Client, User], zone: str
+) -> None:
+    client, _ = signed_in
+    response = client.patch(
+        URL, {"user_on_watchlist": True, "time_zone": zone}, content_type="application/json"
+    )
+    assert response.status_code == 422
+    assert not Movie.objects.exists()
+    assert not UserMovieData.objects.exists()
+
+
+@pytest.mark.parametrize(
+    "fields", [{}, {"time_zone": None}, {"time_zone": "UTC"}, {"time_zone": "Pacific/Auckland"}]
+)
+def test_save_zone_is_optional_and_accepts_known_names(
+    signed_in: tuple[Client, User], fields: dict[str, object]
+) -> None:
+    client, _ = signed_in
+    create_movie()
+    response = client.patch(
+        URL, {"user_on_watchlist": True, **fields}, content_type="application/json"
+    )
+    assert response.status_code == 201
+    assert response.json()["user_on_watchlist"] is True
+
+
+def test_time_zone_alone_is_not_a_save(signed_in: tuple[Client, User]) -> None:
+    client, _ = signed_in
+    create_movie()
+    response = client.patch(URL, {"time_zone": "UTC"}, content_type="application/json")
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Provide at least one movie data field"}
+    assert not UserMovieData.objects.exists()

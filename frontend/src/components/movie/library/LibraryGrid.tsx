@@ -126,7 +126,7 @@ export default function LibraryGrid({
                   <Box role="gridcell" key={movie.tmdb_id} minW={0}>
                     <MovieCard movie={movie} source={source} />
                     {cellFooter && (
-                      <Box h="6" mt={1}>
+                      <Box h="6" mt={1} data-testid="film-date-slot">
                         {cellFooter(movie)}
                       </Box>
                     )}

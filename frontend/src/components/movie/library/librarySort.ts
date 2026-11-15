@@ -13,3 +13,12 @@ export const watchlistSorts: LibrarySortOption[] = [
     { label: "Release date: newest", sort: "release", direction: "desc" },
     { label: "Release date: oldest", sort: "release", direction: "asc" },
 ];
+
+export const filmSorts: LibrarySortOption[] = [
+    ...watchlistSorts.slice(0, 2),
+    { label: "Last watched: newest", sort: "watched", direction: "desc" },
+    { label: "Last watched: oldest", sort: "watched", direction: "asc" },
+    { label: "Your rating: highest", sort: "rating", direction: "desc" },
+    { label: "Your rating: lowest", sort: "rating", direction: "asc" },
+    ...watchlistSorts.slice(2),
+];

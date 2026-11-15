@@ -89,6 +89,17 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
         page.getByRole("link", { name: firstTitle, exact: true }).first(),
     ).toBeVisible();
     await scanPage(page, info);
+    await banner.getByRole("link", { name: "Library", exact: true }).click();
+    await expect(page).toHaveURL(new URL("/library", target.baseURL).href);
+    await expect(
+        page.getByRole("heading", { level: 1, name: "Library", exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByRole("link", { name: secondTitle, exact: true }).first(),
+    ).toBeVisible();
+    await scanPage(page, info);
+    await banner.getByRole("link", { name: "Watchlist", exact: true }).click();
+    await expect(page).toHaveURL(new URL("/watchlist", target.baseURL).href);
     await page
         .getByRole("button", { name: "Remove from watchlist", exact: true })
         .click();

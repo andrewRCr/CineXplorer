@@ -15,6 +15,11 @@ export interface BaselineEntry {
 
 export const axeBaseline: BaselineEntry[] = [
     {
+        route: "/library",
+        rule: "button-name",
+        reason: "Movie cards' icon buttons lack accessible names.",
+    },
+    {
         route: "/watchlist",
         rule: "button-name",
         reason: "Movie cards' icon buttons lack accessible names.",

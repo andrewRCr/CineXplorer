@@ -178,42 +178,24 @@ scanned, and `sign-in.spec.ts` and `phone-width.spec.ts` pass with their Explore
 _Mode:_ `slice` — closes on the Library's two views listing the visitor's films and timeline, each returning a film's
 back link to the place the visitor left.
 
-- [ ] **3.1 The Films view lists watched films, with Liked and Rated filters, ten sorts and the date line — R12, R13,
+- [x] **3.1 The Films view lists watched films, with Liked and Rated filters, ten sorts and the date line — R12, R13,
   R14, R15, R16, R30, R32**
 
     **Goal:** `/library` reads the visitor's watched films into the grid with the toggles and the sort in the address,
     each surviving the other's change, a "Last watched" line under each film with a dated viewing, and an empty view
     that tells "Your Library is empty" from "No films match" by its filters alone.
 
-    - [ ] **3.1.a Write the cases in `pages/user/__tests__/LibraryFilms.test.tsx`**
-        - It reads `watched: true` with `page_size: 100`
-        - Liked and Rated each expose `aria-pressed`, add `liked: true` or `rated: true` to the read, combine, join the
-          address as `liked=true` or `rated=true` while on (any other value reads as off), and replace the history
-          entry; a toggle survives a sort change and the sort survives a toggle
-        - Each of R13's ten options sends its pair and sets the address as R10 says; an unknown value falls back with
-          the address corrected in place
-        - "Last watched Nov 14, 2026" beneath a film whose record has `last_logged_on` 2026-11-14, read as a calendar
-          date (no shift to UTC); none beneath a film without one; every cell renders the line's slot
-        - Neither filter on and no films: "Your Library is empty" with "Explore films" to `/browse`
-        - A filter on and no films: "No films match" with "Clear filters", which turns both filters off and keeps the
-          sort; with no watched films the view then says "Your Library is empty"; no read beyond the view's own
-          tells the two apart
-        - A first-page failure: "Couldn't load your films." with Retry
-        - Expect tests to FAIL initially
-
-    - [ ] **3.1.b Build the Films view**
-        - `pages/user/LibraryFilms.tsx`, the Library's index view: the toggles as Chakra `Button`s with the button
-          recipe's `subtle` variant and its `selected` state for the pressed look (§ 7), the select over R13's table
-          through `useLibrarySort`, and `LibraryGrid` with `{ watched: true, liked, rated, sort, direction }` and a
-          `cellFooter` for the date line
-        - The filters' address handling sits beside the sort's in the view, with the same replace
-        - Tests should now PASS
-
-    - [ ] **3.1.c Extend `library.spec.ts` and the baseline**
-        - Step 3's first part: follow the bar's Library link, find the second fixture film in the Films view, and
-          `scanPage`
-        - The `/library` `button-name` entry, with the catalog's reason (R32; not if `main` names the cards' buttons)
-        - Run the spec against the browsable stack
+    - [x] **3.1.a Cover the Films view through MSW**
+        - Seventeen cases first failed against the empty region, then passed for all ten sorts, filter combinations
+          and query preservation, calendar dates and fixed date slots, distinct empty states, invalid sorts and Retry.
+        - A further source/query case failed with MovieCard's source omitted and passed restored (18 cases total).
+    - [x] **3.1.b Build the Films view**
+        - The protected Library index uses the shared grid and labelled select, selected subtle filter buttons,
+          query replacement and a calendar-date line. Every cell reserves the same footer height.
+    - [x] **3.1.c Extend the signed-in journey**
+        - The spec finds the second seeded film through Library and scans the view; the baseline includes its card
+          buttons. Replacing the index with its old empty region failed the new assertion; restoring it passed.
+        - Frontend lint, type-check and formatting passed; the shared App and Watchlist tests also pass.
 
 - [ ] **3.2 Films opened from the Watchlist page and the Films view lead back there — R27**
 

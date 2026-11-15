@@ -56,14 +56,13 @@ so saves refresh the timeline and existing entries retain their measured heights
 The three personal views extend the existing back-link and scroll persistence: a return restores only with its
 explicit signal, measured heights and a position saved during the loaded app. A reload or user change clears memory.
 
-We will add `library.spec.ts` to the signed-in browser smoke tier. The development seed stores two fixture film cards,
-without user data. Setup clears their prior personal state and marks the second watched, then the journey adds the first from a
-catalog card,
-finds it through Watchlist, opens and scans the Library's Films and History views, and removes the first from the
-Watchlist. Once recorded changes are available it finds the setup's watched change for the second film in History.
-The spec is skipped on staging, where the tier does not change account data. The tier now has eight specs covering
-seven journeys, including the background render budget, with phone navigation at its own viewport. Existing fixture,
-accessibility, credential and artifact policies stand.
+We will add `library.spec.ts` to the signed-in browser smoke tier. The development seed stores two fixture film
+cards, without user data. Setup clears their prior personal state and marks the second watched, then the journey
+adds the first from a catalog card, finds it through Watchlist, opens and scans the Library's Films and History
+views, and removes the first from the Watchlist. Once recorded changes are available it finds the setup's
+watched change for the second film in History. The spec is skipped on staging, where the tier does not change
+account data. The tier now has eight specs: seven journeys and a background render budget check, with phone
+navigation at its own viewport. Existing fixture, accessibility, credential and artifact policies stand.
 
 ## Consequences
 

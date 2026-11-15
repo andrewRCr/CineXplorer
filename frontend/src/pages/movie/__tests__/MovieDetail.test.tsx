@@ -845,3 +845,65 @@ it("shows the signed-in film log beneath its tracking panel", async () => {
     panel.compareDocumentPosition(log) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
 });
+
+it("deleting the film's only entry updates the panel and returns focus to Review", async () => {
+  setAuthTokens(token());
+  const entry = {
+    id: 8,
+    tmdb_id: 550,
+    watched_on: "2026-11-14",
+    rating: 7,
+    review: "Last viewing",
+    rewatch: false,
+  };
+  const record = createMockUserMovieData({
+    tmdb_id: 550,
+    user_watched: true,
+    user_rating: null,
+    has_entries: true,
+    last_logged_on: entry.watched_on,
+  });
+  const returned = { ...record, has_entries: false, last_logged_on: null };
+  let deleted = false;
+  server.use(
+    http.get(`${apiBaseUrl}/movies/550`, () =>
+      HttpResponse.json(
+        createMockMovieDetail({ tmdb_id: 550, user_movie_data: record }),
+      ),
+    ),
+    http.get(`${apiBaseUrl}/user-movie-data/550/entries`, () =>
+      HttpResponse.json({
+        record: deleted ? returned : record,
+        entries: deleted ? [] : [entry],
+      }),
+    ),
+    http.delete(`${apiBaseUrl}/user-movie-data/550/entries/8`, () => {
+      deleted = true;
+      return HttpResponse.json({ entry, record: returned });
+    }),
+  );
+  renderMovieDetailWithRoute("550");
+  const user = userEvent.setup();
+  await user.click(
+    await screen.findByRole("button", { name: "Delete entry 1, Nov 14, 2026" }),
+  );
+  await user.click(
+    within(
+      await screen.findByRole("alertdialog", { name: "Delete this entry?" }),
+    ).getByRole("button", { name: "Delete" }),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Review" })).toHaveFocus(),
+  );
+  expect(
+    screen.queryByRole("region", { name: "Your log" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Watched" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  expect(screen.getByRole("button", { name: "Watched" })).not.toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+});

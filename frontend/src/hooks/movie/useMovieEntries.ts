@@ -12,7 +12,7 @@ import {
     type EntryInput,
     type EntryWriteResponse,
 } from "@/services/userMovieDataService";
-import { entriesKey, libraryKey } from "@/lib/queries";
+import { entriesKey, libraryKey, movieEntriesQuery } from "@/lib/queries";
 import {
     createSaveToastId,
     getChangeCount,
@@ -48,8 +48,22 @@ export const entryMutationOptions = (
             );
         },
         onMutate: (variables) => variables.change,
-        onSuccess: (_data, variables, _context, { client }) => {
+        onSuccess: (data, variables, _context, { client }) => {
             if (variables.change !== getChangeCount()) return;
+            if (variables.operation === "delete") {
+                // Keep the confirmed removal visible while the invalidated list refreshes.
+                client.setQueryData(
+                    movieEntriesQuery(tmdbId).queryKey,
+                    (current) =>
+                        current && {
+                            ...current,
+                            record: data.record,
+                            entries: current.entries.filter(
+                                (entry) => entry.id !== variables.entryId,
+                            ),
+                        },
+                );
+            }
             void client.invalidateQueries({ queryKey: libraryKey });
             void client.invalidateQueries({ queryKey: entriesKey });
         },

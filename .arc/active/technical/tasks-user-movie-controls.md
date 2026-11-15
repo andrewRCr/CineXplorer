@@ -360,23 +360,31 @@ the film page.
           related tests, touched-file lint, format and type-check passed; the film-detail smoke passed (run
           `875368ec71844cc58e3f0073a4af5067`). A lint correction replaced a direct DOM query in the plain-text test.
 
-- [ ] **4.4 An entry is edited or deleted from the log — R18**
+- [x] **4.4 An entry is edited or deleted from the log — R18**
 
     **Goal:** Edit opens the dialog on that entry, and Delete asks first, removes the entry only on confirmation, updates
     the list and panel from the server's answer without a toast, and leaves focus on a sensible control.
 
-    - [ ] **4.4.a Write the cases in `FilmLog.test.tsx`** (criterion 9)
-        - Edit opens the dialog (inside `EntryDialogHost`) titled "Edit entry", with the entry's date, rating and
-          review; Delete opens "Delete this entry?" with its text, Cancel and Delete, and sends the `DELETE` only on
-          confirmation; no success toast
-        - Focus moves to the next entry's Edit (the one above when the last was deleted), or, when none remain, to the
-          element `fallbackFocus` returns (a stand-in button in this file)
-        - In `MovieDetail.test.tsx`, deleting a film's only entry moves focus to the panel's Review
-        - Expect tests to FAIL initially
-    - [ ] **4.4.b Add Edit and Delete through `useEntryDialog` and `useMovieEntries().deleteEntry`**
-        - `FilmLog` takes `fallbackFocus: () => HTMLElement | null`; `MovieDetail` passes one that reads the panel's
-          `reviewRef` (4.1.c)
-        - Tests should now PASS
+    - [x] **4.4.a Cover editing, confirmed deletion and focus through the real dialog and MSW**
+        - Ten new log cases cover Edit's date/rating/review/rewatch prefill, fixed film, confirmation copy, Cancel,
+          next/previous/newly visible row focus, empty-log fallback, no success toast and a failed DELETE's retry.
+          Held refreshes prove deletion and focus finish without waiting for GET; read failure keeps Retry usable;
+          an older read is cancelled; a retired user's response cannot patch the next log or move focus.
+        - Edit and all six initial delete cases failed before their controls were wired. Three held-refresh cases
+          then failed until the successful response updated the entry cache. Narrow regressions failed all three
+          refresh/cancellation/retirement cases (run `f9d9fd0d23ba4b6b90ebb0f95e63b3ed`), then were restored.
+        - The detail-page only-entry case proves the panel takes the returned record and focus reaches Review. It
+          failed with that fallback disconnected (run `8113f4f778604500a573f2e6d4789663`), then passed restored.
+    - [x] **4.4.b Connect Edit and Delete to the shared entry hooks**
+        - Edit calls `useEntryDialog`; `DeleteEntryConfirmation` uses the prescribed copy, Cancel and Delete.
+          `useMovieEntries` applies a confirmed deletion and returned record to an existing film-log cache before
+          its normal invalidations, under its ownership guard. It neither invents an absent list nor adds a fetch.
+        - Deletion phases derive dialog closure from the rendered removal. The root survives an empty list;
+          connected Edit refs select the next/previous row, otherwise `fallbackFocus` supplies Review. Ownership and
+          mount guards protect asynchronous completion and focus. Cancel restores its opener; failure permits retry.
+        - All 169 related tests, touched-file lint, format and type-check passed. Film-detail and phone smokes passed
+          (run `8486f058264f45ed80046cfb43d83943`). Lint corrections replaced effect-driven closure and render-time
+          ref reads with derived state; type corrections removed an unsupported role-query option.
 
 - [ ] **4.5 ADR-048 records the controls, and the ADRs it supersedes say so — R40, R41b**
 

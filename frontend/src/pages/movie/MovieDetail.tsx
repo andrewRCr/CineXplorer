@@ -236,7 +236,11 @@ const MovieDetail = () => {
       </Flex>
 
       <FilmPanel key={movie.tmdb_id} movie={movie} reviewRef={reviewRef} />
-      <FilmLog key={movie.tmdb_id} movie={movie} />
+      <FilmLog
+        key={movie.tmdb_id}
+        movie={movie}
+        fallbackFocus={() => reviewRef.current}
+      />
       <Separator mb={6} borderColor="border-subtle-01" />
 
       {/* Overview Section */}

@@ -796,6 +796,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-movie-data/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Activity */
+        get: operations["apps_user_movie_data_api_get_activity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-movie-data/{tmdb_id}": {
         parameters: {
             query?: never;
@@ -813,6 +830,42 @@ export interface paths {
         head?: never;
         /** Save User Movie Data */
         patch: operations["apps_user_movie_data_api_save_user_movie_data"];
+        trace?: never;
+    };
+    "/api/user-movie-data/{tmdb_id}/entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Movie Entries */
+        get: operations["apps_user_movie_data_api_get_movie_entries"];
+        put?: never;
+        /** Create Movie Entry */
+        post: operations["apps_user_movie_data_api_create_movie_entry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data/{tmdb_id}/entries/{entry_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Edit Movie Entry */
+        put: operations["apps_user_movie_data_api_edit_movie_entry"];
+        post?: never;
+        /** Delete Movie Entry */
+        delete: operations["apps_user_movie_data_api_delete_movie_entry"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
 }
@@ -1455,10 +1508,10 @@ export interface components {
             user_liked: boolean;
             /** User Rating */
             user_rating: number | null;
-            /** User Review */
-            user_review: string | null;
-            /** Watched At */
-            watched_at: string | null;
+            /** Has Entries */
+            has_entries: boolean;
+            /** Last Logged On */
+            last_logged_on: string | null;
         };
         /**
          * MovieSearchParamsSchema
@@ -1730,9 +1783,66 @@ export interface components {
             detail: string;
             code?: components["schemas"]["ErrorCode"] | null;
         };
+        /** ActivityQuerySchema */
+        ActivityQuerySchema: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @default 20
+             */
+            page_size: number;
+        };
+        /** ActivityEntrySchema */
+        ActivityEntrySchema: {
+            /** Id */
+            id: number;
+            /** Tmdb Id */
+            tmdb_id: number;
+            /** Watched On */
+            watched_on: string | null;
+            /** Rating */
+            rating: number | null;
+            /** Review */
+            review: string | null;
+            /** Rewatch */
+            rewatch: boolean;
+            /** Title */
+            title: string;
+            /** Release Date */
+            release_date: string | null;
+            /** Poster Path */
+            poster_path: string | null;
+        };
+        /** PaginatedResponse[ActivityEntrySchema] */
+        PaginatedResponse_ActivityEntrySchema_: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Total Pages
+             * @default 0
+             */
+            total_pages: number;
+            /**
+             * Total Results
+             * @default 0
+             */
+            total_results: number;
+            /**
+             * Results
+             * @default []
+             */
+            results: components["schemas"]["ActivityEntrySchema"][];
+        };
         /**
          * UserMovieDataPatchSchema
-         * @description Omitted fields stay unchanged; nullable fields can be explicitly cleared.
+         * @description An absent field stays unchanged except where data rules change it; null clears it.
          */
         UserMovieDataPatchSchema: {
             /**
@@ -1752,10 +1862,61 @@ export interface components {
             user_liked: boolean;
             /** User Rating */
             user_rating?: number | null;
-            /** User Review */
-            user_review?: string | null;
-            /** Watched At */
-            watched_at?: string | null;
+            /**
+             * Undo
+             * @default false
+             */
+            undo: boolean;
+        };
+        /**
+         * UserMovieEntrySchema
+         * @description A private viewing or review, without its internal ordering timestamps.
+         */
+        UserMovieEntrySchema: {
+            /** Id */
+            id: number;
+            /** Tmdb Id */
+            tmdb_id: number;
+            /** Watched On */
+            watched_on: string | null;
+            /** Rating */
+            rating: number | null;
+            /** Review */
+            review: string | null;
+            /** Rewatch */
+            rewatch: boolean;
+        };
+        /** UserMovieEntryWriteResponseSchema */
+        UserMovieEntryWriteResponseSchema: {
+            entry: components["schemas"]["UserMovieEntrySchema"];
+            record: components["schemas"]["UserMovieDataSchema"];
+        };
+        /**
+         * UserMovieEntryWriteSchema
+         * @description A complete viewing or review write in the user's time zone.
+         */
+        UserMovieEntryWriteSchema: {
+            /** Watched On */
+            watched_on?: string | null;
+            /** Rating */
+            rating?: number | null;
+            /** Review */
+            review?: string | null;
+            /**
+             * Rewatch
+             * @default false
+             */
+            rewatch: boolean;
+            /** Liked */
+            liked: boolean;
+            /** Time Zone */
+            time_zone: string;
+        };
+        /** MovieEntriesSchema */
+        MovieEntriesSchema: {
+            record: components["schemas"]["UserMovieDataSchema"];
+            /** Entries */
+            entries: components["schemas"]["UserMovieEntrySchema"][];
         };
     };
     responses: never;
@@ -2681,6 +2842,47 @@ export interface operations {
             };
         };
     };
+    apps_user_movie_data_api_get_activity: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_ActivityEntrySchema_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
     apps_user_movie_data_api_get_user_movie_data: {
         parameters: {
             query?: never;
@@ -2855,6 +3057,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponseSchema"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
             /** @description Unprocessable Content */
             422: {
                 headers: {
@@ -2893,6 +3104,293 @@ export interface operations {
             };
             /** @description Gateway Timeout */
             504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_movie_entries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdb_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovieEntriesSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_create_movie_entry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdb_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserMovieEntryWriteSchema"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieEntryWriteResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_edit_movie_entry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdb_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserMovieEntryWriteSchema"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieEntryWriteResponseSchema"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_delete_movie_entry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tmdb_id: number;
+                entry_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserMovieEntryWriteResponseSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -16,7 +16,8 @@ from apps.core.services.api_response import ApiResponse
 from apps.core.tests.test_helpers import HTTPStatus
 from apps.movie.tests.mock_paths import TMDB_CLIENT_GET, TMDB_CLIENT_GET_MOVIE_DETAILS
 from apps.movie.tests.test_helpers import create_mock_movie_detail_response
-from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.tests.test_helpers import create_user_movie_data
+from apps.users.models import User
 
 pytestmark = pytest.mark.django_db
 
@@ -47,18 +48,26 @@ def test_get_movie_detail_authenticated(
     mock_get_movie_details: Mock,
     mock_tmdb_get: Mock,
     api_client: Client,
-    user: object,
+    user: User,
 ) -> None:
     """Test retrieving movie details with user_movie_data for an authenticated user."""
     # Arrange: Create the local movie stub and user data
     movie_stub = create_movie_stub(78, title="Blade Runner")
-    UserMovieData.objects.create(
+    record = create_user_movie_data(
         user=user,
         movie=movie_stub,
+        user_watched=True,
         user_rating=9,
-        user_review="Great movie!",
     )
 
+    from datetime import date
+
+    from apps.user_movie_data.models import UserMovieEntry
+
+    UserMovieEntry.objects.create(
+        record=record, watched_on=date(2020, 1, 2), made_on=date(2020, 1, 3)
+    )
+    UserMovieEntry.objects.create(record=record, review="Undated", made_on=date(2020, 1, 3))
     # Arrange: Mock the TMDB client API responses for movie info and credits
     mock_info_response = create_mock_movie_detail_response(
         tmdb_id=78,
@@ -95,7 +104,8 @@ def test_get_movie_detail_authenticated(
     # Movie detail endpoint enriches response with user-specific data
     assert user_data is not None
     assert user_data["user_rating"] == 9
-    assert user_data["user_review"] == "Great movie!"
+    assert user_data["has_entries"] is True
+    assert user_data["last_logged_on"] == "2020-01-02"
 
 
 @patch(TMDB_CLIENT_GET)

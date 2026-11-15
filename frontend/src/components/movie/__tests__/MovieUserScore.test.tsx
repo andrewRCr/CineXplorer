@@ -247,155 +247,6 @@ describe("MovieUserScore Component", () => {
     });
   });
 
-  describe("User rating beside a below-threshold TMDB score", () => {
-    it("shows a user dot chip beside the TMDB placeholder", () => {
-      renderWithBadgeStyles(
-        <MovieUserScore score={6.2} voteCount={4} userRating={9} />,
-      );
-
-      const tmdbBadge = screen.getByText("—");
-      expectScoreStyle(tmdbBadge, "neutral");
-      expect(tmdbBadge).toHaveAttribute("title", "Fewer than 10 TMDB votes");
-
-      const userBadge = screen.getByText("★ 9");
-      expectScoreStyle(userBadge, "success");
-      expect(userBadge).toHaveAttribute("title", "Your Rating");
-    });
-
-    it("applies the detailed presentation to the TMDB badge beside a user rating", () => {
-      renderWithBadgeStyles(
-        <MovieUserScore
-          score={0}
-          voteCount={0}
-          userRating={4}
-          presentation="detailed"
-        />,
-      );
-
-      expectScoreStyle(screen.getByText("Not yet rated"), "neutral");
-      expectScoreStyle(screen.getByText("★ 4"), "destructive");
-    });
-
-    it("still hides the TMDB badge in user-rating-only mode", () => {
-      renderWithBadgeStyles(
-        <MovieUserScore
-          score={6.2}
-          voteCount={4}
-          userRating={7}
-          userRatingOnly={true}
-        />,
-      );
-
-      const userBadge = screen.getByText("★ 7/10");
-      expectScoreStyle(userBadge, "foreground");
-      expect(userBadge).toHaveAttribute("title", "Your Rating");
-      expect(screen.queryByText("—")).not.toBeInTheDocument();
-    });
-  });
-
-  describe.each(["compact", "detailed"] as const)(
-    "user chips in %s presentation",
-    (presentation) => {
-      it.each([8, 7, 5, 4])(
-        "colors user rating %s in combined and user-only layouts",
-        (rating) => {
-          const tier =
-            rating >= 8
-              ? "success"
-              : rating >= 5
-                ? "foreground"
-                : "destructive";
-          const { unmount } = renderWithBadgeStyles(
-            <MovieUserScore
-              score={7.5}
-              voteCount={10}
-              userRating={rating}
-              presentation={presentation}
-            />,
-          );
-          const chip = screen.getByTitle("Your Rating");
-          expect(chip).toHaveTextContent(`Your Rating: ★ ${rating}`);
-          expectScoreStyle(chip, tier);
-          unmount();
-          renderWithBadgeStyles(
-            <MovieUserScore
-              score={7.5}
-              voteCount={10}
-              userRating={rating}
-              presentation={presentation}
-              userRatingOnly
-            />,
-          );
-          expect(screen.getByTitle("Your Rating")).toHaveTextContent(
-            `Your Rating: ★ ${rating}/10`,
-          );
-          expectScoreStyle(screen.getByTitle("Your Rating"), tier);
-        },
-      );
-    },
-  );
-
-  describe("User rating only mode", () => {
-    it("shows only user rating when userRatingOnly is true", () => {
-      render(
-        <MovieUserScore
-          score={7.5}
-          voteCount={1500}
-          userRating={9}
-          userRatingOnly={true}
-        />,
-      );
-
-      // Should show user rating
-      expect(screen.getByText("★ 9/10")).toBeInTheDocument();
-      // Should NOT show TMDB rating
-      expect(screen.queryByText("7.5")).not.toBeInTheDocument();
-    });
-
-    it("shows correct tooltip for user rating only", () => {
-      render(
-        <MovieUserScore
-          score={6.0}
-          voteCount={1500}
-          userRating={8}
-          userRatingOnly={true}
-        />,
-      );
-
-      const badge = screen.getByText("★ 8/10");
-      expect(badge).toHaveAttribute("title", "Your Rating");
-    });
-
-    it("falls back to TMDB when userRatingOnly is true but no userRating provided", () => {
-      render(
-        <MovieUserScore score={6.7} voteCount={1500} userRatingOnly={true} />,
-      );
-
-      // Should show TMDB rating since no user rating provided
-      expect(screen.getByText("6.7")).toBeInTheDocument();
-    });
-  });
-
-  describe("Both TMDB and user ratings", () => {
-    it("displays both ratings when user rating is provided", () => {
-      render(<MovieUserScore score={8.1} voteCount={1500} userRating={7} />);
-
-      // Both should be visible
-      expect(screen.getByText("8.1")).toBeInTheDocument();
-      expect(screen.getByText("★ 7")).toBeInTheDocument();
-    });
-
-    it("shows correct tooltips for both ratings", () => {
-      render(<MovieUserScore score={6.5} voteCount={1500} userRating={8} />);
-
-      const tmdbBadge = screen.getByText("6.5");
-      const userBadge = screen.getByText("★ 8");
-
-      expect(tmdbBadge).toHaveAttribute("title", "TMDB Rating");
-      expect(userBadge).toHaveAttribute("title", "Your Rating");
-    });
-  });
-
   describe("Accessibility", () => {
     const tmdbStates = [
       {
@@ -442,20 +293,14 @@ describe("MovieUserScore Component", () => {
       },
     ];
 
-    const tmdbCases = tmdbStates.flatMap((state) => [
-      { ...state, mode: "alone", userRating: undefined },
-      { ...state, mode: "beside a user rating", userRating: 9 },
-    ]);
-
-    it.each(tmdbCases)(
-      'exposes "$explanation" for "$label" in the $presentation presentation $mode',
-      ({ presentation, score, voteCount, label, explanation, userRating }) => {
+    it.each(tmdbStates)(
+      'exposes "$explanation" for "$label" in the $presentation presentation',
+      ({ presentation, score, voteCount, label, explanation }) => {
         renderWithBadgeStyles(
           <MovieUserScore
             score={score}
             voteCount={voteCount}
             presentation={presentation}
-            userRating={userRating}
           />,
         );
 
@@ -471,43 +316,9 @@ describe("MovieUserScore Component", () => {
         expect(badge).toHaveTextContent(`${explanation}: ${label}`);
       },
     );
-
-    it.each([false, true])(
-      "exposes the user-rating explanation (userRatingOnly=%s)",
-      (userRatingOnly) => {
-        renderWithBadgeStyles(
-          <MovieUserScore
-            score={7.8}
-            voteCount={1500}
-            userRating={9}
-            userRatingOnly={userRatingOnly}
-          />,
-        );
-
-        const badge = screen.getByTitle("Your Rating");
-        const explanationText = within(badge).getByText("Your Rating:");
-        expect(isInaccessible(explanationText)).toBe(false);
-        expect(explanationText).toHaveStyle({
-          position: "absolute",
-          width: "1px",
-          height: "1px",
-          overflow: "hidden",
-        });
-        expect(badge).toHaveTextContent(
-          userRatingOnly ? "Your Rating: ★ 9/10" : "Your Rating: ★ 9",
-        );
-      },
-    );
   });
 
   describe("Edge cases and error handling", () => {
-    it("handles decimal user ratings", () => {
-      // Even though interface expects number, test robustness
-      render(<MovieUserScore score={7.0} voteCount={1500} userRating={8.5} />);
-
-      expect(screen.getByText("★ 8.5")).toBeInTheDocument();
-    });
-
     it("handles very low scores", () => {
       render(<MovieUserScore score={0.1} voteCount={1500} />);
       expect(screen.getByText("0.1")).toBeInTheDocument();

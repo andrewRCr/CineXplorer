@@ -3198,6 +3198,78 @@
         ]
       }
     },
+    "/api/user-movie-data/entries": {
+      "get": {
+        "operationId": "apps_user_movie_data_api_get_activity",
+        "summary": "Get Activity",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "maximum": 1000000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_ActivityEntrySchema_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "user-movie-data"
+        ],
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/user-movie-data/{tmdb_id}": {
       "get": {
         "operationId": "apps_user_movie_data_api_get_user_movie_data",
@@ -3351,6 +3423,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
           "429": {
             "description": "Too Many Requests",
             "content": {
@@ -3429,6 +3511,404 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "user-movie-data"
+        ],
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user-movie-data/{tmdb_id}/entries": {
+      "post": {
+        "operationId": "apps_user_movie_data_api_create_movie_entry",
+        "summary": "Create Movie Entry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tmdb_id",
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Tmdb Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMovieEntryWriteResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "user-movie-data"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserMovieEntryWriteSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "apps_user_movie_data_api_get_movie_entries",
+        "summary": "Get Movie Entries",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tmdb_id",
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Tmdb Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovieEntriesSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "user-movie-data"
+        ],
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user-movie-data/{tmdb_id}/entries/{entry_id}": {
+      "put": {
+        "operationId": "apps_user_movie_data_api_edit_movie_entry",
+        "summary": "Edit Movie Entry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tmdb_id",
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Tmdb Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Entry Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMovieEntryWriteResponseSchema"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "user-movie-data"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserMovieEntryWriteSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "apps_user_movie_data_api_delete_movie_entry",
+        "summary": "Delete Movie Entry",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tmdb_id",
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Tmdb Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "entry_id",
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Entry Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserMovieEntryWriteResponseSchema"
+                }
+              }
+            }
           },
           "401": {
             "description": "Unauthorized",
@@ -4935,18 +5415,11 @@
             ],
             "title": "User Rating"
           },
-          "user_review": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Review"
+          "has_entries": {
+            "title": "Has Entries",
+            "type": "boolean"
           },
-          "watched_at": {
+          "last_logged_on": {
             "anyOf": [
               {
                 "format": "date",
@@ -4956,7 +5429,7 @@
                 "type": "null"
               }
             ],
-            "title": "Watched At"
+            "title": "Last Logged On"
           }
         },
         "required": [
@@ -4965,8 +5438,8 @@
           "user_on_watchlist",
           "user_liked",
           "user_rating",
-          "user_review",
-          "watched_at"
+          "has_entries",
+          "last_logged_on"
         ],
         "title": "UserMovieDataSchema",
         "type": "object"
@@ -5622,8 +6095,149 @@
         "title": "ErrorResponseSchema",
         "type": "object"
       },
+      "ActivityQuerySchema": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "maximum": 1000000,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          }
+        },
+        "title": "ActivityQuerySchema",
+        "type": "object"
+      },
+      "ActivityEntrySchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "watched_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watched On"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review"
+          },
+          "rewatch": {
+            "title": "Rewatch",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "poster_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Path"
+          }
+        },
+        "required": [
+          "id",
+          "tmdb_id",
+          "watched_on",
+          "rating",
+          "review",
+          "rewatch",
+          "title",
+          "release_date",
+          "poster_path"
+        ],
+        "title": "ActivityEntrySchema",
+        "type": "object"
+      },
+      "PaginatedResponse_ActivityEntrySchema_": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          },
+          "total_results": {
+            "default": 0,
+            "title": "Total Results",
+            "type": "integer"
+          },
+          "results": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ActivityEntrySchema"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "title": "PaginatedResponse[ActivityEntrySchema]",
+        "type": "object"
+      },
       "UserMovieDataPatchSchema": {
-        "description": "Omitted fields stay unchanged; nullable fields can be explicitly cleared.",
+        "description": "An absent field stays unchanged except where data rules change it; null clears it.",
         "properties": {
           "user_watched": {
             "default": false,
@@ -5653,19 +6267,27 @@
             ],
             "title": "User Rating"
           },
-          "user_review": {
-            "anyOf": [
-              {
-                "maxLength": 10000,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User Review"
+          "undo": {
+            "default": false,
+            "title": "Undo",
+            "type": "boolean"
+          }
+        },
+        "title": "UserMovieDataPatchSchema",
+        "type": "object"
+      },
+      "UserMovieEntrySchema": {
+        "description": "A private viewing or review, without its internal ordering timestamps.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
           },
-          "watched_at": {
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "watched_on": {
             "anyOf": [
               {
                 "format": "date",
@@ -5675,10 +6297,143 @@
                 "type": "null"
               }
             ],
-            "title": "Watched At"
+            "title": "Watched On"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review"
+          },
+          "rewatch": {
+            "title": "Rewatch",
+            "type": "boolean"
           }
         },
-        "title": "UserMovieDataPatchSchema",
+        "required": [
+          "id",
+          "tmdb_id",
+          "watched_on",
+          "rating",
+          "review",
+          "rewatch"
+        ],
+        "title": "UserMovieEntrySchema",
+        "type": "object"
+      },
+      "UserMovieEntryWriteResponseSchema": {
+        "properties": {
+          "entry": {
+            "$ref": "#/components/schemas/UserMovieEntrySchema"
+          },
+          "record": {
+            "$ref": "#/components/schemas/UserMovieDataSchema"
+          }
+        },
+        "required": [
+          "entry",
+          "record"
+        ],
+        "title": "UserMovieEntryWriteResponseSchema",
+        "type": "object"
+      },
+      "UserMovieEntryWriteSchema": {
+        "description": "A complete viewing or review write in the user's time zone.",
+        "properties": {
+          "watched_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watched On"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review"
+          },
+          "rewatch": {
+            "default": false,
+            "title": "Rewatch",
+            "type": "boolean"
+          },
+          "liked": {
+            "title": "Liked",
+            "type": "boolean"
+          },
+          "time_zone": {
+            "title": "Time Zone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "liked",
+          "time_zone"
+        ],
+        "title": "UserMovieEntryWriteSchema",
+        "type": "object"
+      },
+      "MovieEntriesSchema": {
+        "properties": {
+          "record": {
+            "$ref": "#/components/schemas/UserMovieDataSchema"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/UserMovieEntrySchema"
+            },
+            "title": "Entries",
+            "type": "array"
+          }
+        },
+        "required": [
+          "record",
+          "entries"
+        ],
+        "title": "MovieEntriesSchema",
         "type": "object"
       }
     },

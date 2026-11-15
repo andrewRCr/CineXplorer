@@ -80,7 +80,7 @@ What am I styling?
 │
 └─ Movie rating/badge? → [Movie UI](#building-movie-specific-ui)
    ├─ TMDB scores: Outlined dot chips; filled neutral below 10 votes
-   ├─ User ratings: Dot chips for numbers; imdb-gold for star icons
+   ├─ User ratings: RatingStars in imdb-gold
    └─ Genre tags: Badge variant="neutral"
 ```
 
@@ -1123,16 +1123,18 @@ the chip retains its title and visually hidden explanation.
 
 **User Personal Ratings:**
 
-A numeric rating uses the same dot chip: 8–10 `success`, 5–7 `foreground`, 1–4 `destructive`.
-Its label keeps a neutral star: "★ 8" beside TMDB, "★ 8/10" alone.
-
-Star icons, such as a row of rating stars, use the active theme's `imdb-gold`:
+`RatingStars` shows a user's 1–10 rating as earned gold half stars on a five-star scale. A rating of 7 shows
+3.5 stars, with no empty outlines. It uses `imdb-gold`, with small (`sm`, default) and large (`lg`) sizes.
+It is one non-interactive image named "Rated 3.5 out of 5 stars", takes no focus, and renders nothing without a rating.
+`RewatchIcon` is a circular-arrow image named "Rewatch", inheriting the surrounding text color.
 
 ```tsx
-<Text color="imdb-gold" fontSize="xl">★★★★☆</Text>
+<RatingStars rating={7} />
+<RatingStars rating={8} size="lg" />
+<RewatchIcon />
 ```
 
-`imdb-gold` is an icon color, never a chip fill or numeric score color.
+`MovieUserScore` displays TMDB scores; user ratings use `RatingStars`.
 
 ### Genre Tags and Badges
 

@@ -235,9 +235,13 @@ const MovieDetail = () => {
         </Stack>
       </Flex>
 
-      <FilmPanel key={movie.tmdb_id} movie={movie} reviewRef={reviewRef} />
+      <FilmPanel
+        key={`panel:${movie.tmdb_id}`}
+        movie={movie}
+        reviewRef={reviewRef}
+      />
       <FilmLog
-        key={movie.tmdb_id}
+        key={`log:${movie.tmdb_id}`}
         movie={movie}
         fallbackFocus={() => reviewRef.current}
       />

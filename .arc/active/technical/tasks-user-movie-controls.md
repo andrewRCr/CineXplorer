@@ -360,6 +360,13 @@ the film page.
           related tests, touched-file lint, format and type-check passed; the film-detail smoke passed (run
           `875368ec71844cc58e3f0073a4af5067`). A lint correction replaced a direct DOM query in the plain-text test.
 
+- [x] **4.3.R Keep the film panel and log identities distinct**
+    - The App journey exposed a duplicate sibling key (`550`) on the two components (run
+      `0013437022dc46e5abe7578203b80f5b`). Prefix each component's film key so film changes still reset their state
+      independently and React can distinguish the siblings.
+    - All 42 related tests passed without that warning, including the App journey. Touched-file lint, formatting,
+      type-check and the film-detail smoke passed (run `6f8ee20c25d942158cfd34a095177f88`).
+
 - [x] **4.4 An entry is edited or deleted from the log — R18**
 
     **Goal:** Edit opens the dialog on that entry, and Delete asks first, removes the entry only on confirmation, updates

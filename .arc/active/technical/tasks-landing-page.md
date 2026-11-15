@@ -1018,7 +1018,8 @@ recorded, and the three changed smoke specs pass.
       unique. Only ADR-046's Status changed. Its decision text remains the reviewed text.
     - The approved proof-timing amendment replaces criterion 30 with 33 (all original conditional clauses and local
       regeneration with no diff) and 34 (actual PR CI type-drift proof). Fresh regeneration leaves no diff, so 33 is
-      met and pre-PR verification closes. Criteria 34 and 17 remain open for PR and post-merge proof. The amendment's
+      met and pre-PR verification closes. Criteria 34 and 17 were then proven on the pull request and after merge,
+      with their evidence under Success Criteria. The amendment's
       author coherence/grounding checks pass; the independent pass is omitted for this wording-level change.
     - Every pre-PR criterion is met or explicitly superseded. The PRD and task list read Complete. Application and
       test source are unchanged by the amendment; the completed criteria verification evidence remains applicable.
@@ -1420,10 +1421,23 @@ recorded, and the three changed smoke specs pass.
 
 ### Proven on the pull request
 
-- [ ] 34. The pull request's API type-drift check passes before merge.
+- [x] 34. The pull request's API type-drift check passes before merge.
+
+  _Verification evidence:_ PR #207's API-type job passes on `d32042b6` before merge, in CI run `43679094514`
+  (job `132705613651`). The required `ci-ok` gate also passes before merge.
 
 ### Proven after merge
 
-- [ ] 17. The pull request's end-to-end smoke job passes with the seven specs, and after merge the staging smoke run
+- [x] 17. The pull request's end-to-end smoke job passes with the seven specs, and after merge the staging smoke run
   passes the six it runs (it skips sign-up), `background.spec.ts` with its stubbed reads. Staging serves `/` to a
   signed-out browser without a redirect: the address stays `/` and the page shows the headline.
+
+  _Verification evidence:_ PR #207's smoke job passes in CI run `43679094514` (job `132705613509`): 21 tests
+  across all seven specs. After merge `40a2c7b4`, CI run `43679662429` passes `ci-ok`, deployment (job
+  `132708406462`) and staging smoke (job `132708572105`): 20 tests pass across six specs, with sign-up skipped and
+  the stubbed background checks included. A fresh signed-out browser opens
+  `https://staging.cinexplorer.andrewcreekmore.dev/` with status 200 and no redirect; the address stays `/` and the
+  headline is visible. Root-probe run `a48c6a7b012945adbc790ba20f042fc0` passes after deployment, with `main` still
+  at the merge commit before and after the probe, and the closing session's own signed-out check at
+  2026-11-15T05:24:17Z, with `main` still at the merge commit, gives the same result. Raw evidence is retained with
+  `REVIEW-LOG.md`.

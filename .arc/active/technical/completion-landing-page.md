@@ -46,10 +46,8 @@ catalog's grid.
 
 ## Follow-Up Work
 
-- Before merge, obtain the pull request's API type-drift and end-to-end smoke results. After merge, run staging
-  smoke checks and confirm that signed-out `/` serves Home without redirecting.
-- Recheck the conditional integrations if `main` moves before merge. Later Library History, card-control and
-  queue work owns the corresponding Home integrations described in the PRD.
+- Later Library History, card-control and queue work owns the corresponding Home integrations described in the
+  PRD.
 - The separately captured film-refresh errand covers further removals and additions using the retained review
   tooling.
 - Demo sign-in, the Films hub, the movie-page redesign and privacy/terms content remain separate work as scoped

@@ -3,7 +3,7 @@
 **Type:** Technical
 **Form:** detailed · PRD
 **Class:** Heavy
-**Status:** Ready for Implementation
+**Status:** Complete
 **Created:** 2026-11-14
 
 ---
@@ -99,12 +99,13 @@ poster:
 
 - **Watched** (eye), **Like** (heart), **Watchlist** (today's watchlist icons) and **Review or log** (pen), in that
   order, each a 28px icon button with 6px between them (130px in all), centered along the poster's bottom edge 8px
-  above it, each on its own solid backing surface so it reads over any poster;
+  above it, sharing one continuous solid `popover` backing bar so the controls read as one group over any poster;
 - the group is a `role="group"` named "Your actions for {title}", placed in reading order after the poster's link and
   before the title, and outside the link;
 - it is hidden at rest and shows while the pointer is over the card or focus is within the group, so Tab reaches each
   control and reveals the group;
-- each control has a tooltip with its name. Watched, Like and Watchlist have the stable accessible names "Watched",
+- each control has a tooltip above it with its name. Hovering a control colors its icon `tertiary`; pressed icons
+  keep their `tertiary` state at rest. Watched, Like and Watchlist have the stable accessible names "Watched",
   "Like" and "Watchlist" with `aria-pressed` for their state, and show the pressed state in `tertiary`; "Review or
   log" has that name;
 - activating Watched, Like or Watchlist saves the opposite of its shown state (`user_watched`, `user_liked`,
@@ -619,6 +620,14 @@ code and tests stay under the 10,000-line mark.
   film page whose film hasn't loaded, over a disabled Log; and Save refusing an empty or future date with its message,
   over leaving the server's 400 to the error toast. _ADR:_ `none`, tactical choices.
 
+- **D26: browser coverage for the tracking journey** replaces repeated manual interaction checks with three
+  Playwright cases using real local authentication and writes and deterministic catalogue content. Isolated test
+  records keep the development account's history intact; staging does not run fixture-mutating cases. Geometry is
+  measured in the browser, and poster readability remains a visual check. _ADR:_ `none`, a tactical testing choice.
+- **D27: one continuous backing bar for pointer actions** groups the four icons visually; hover colors the icon
+  with `tertiary`, and tooltips appear above the controls. This improves readability over posters while preserving
+  pressed states, action order and touch behavior. _ADR:_ ADR-048 records the card controls.
+
 **ADRs this work delivers:** ADR-048 (new), superseding ADR-044 in part, and ADR-049 (new); and, if the Library's
 pages are on `main` when this work merges it, a dated note on ADR-050 (R41c).
 
@@ -679,7 +688,8 @@ pages are on `main` when this work merges it, a dated note on ADR-050 (R41c).
 
 ### Proven in the browser before review
 
-14. **The journey by hand.** On the branch's local stack, signed in, criterion 1's journey runs at 1280px wide with a
+14. **The journey by hand.** _Superseded by criteria 16 and 17 (amendment, 2026-11-14)._
+    On the branch's local stack, signed in, criterion 1's journey runs at 1280px wide with a
     mouse and with the keyboard alone, and at 390px with touch emulation, with `/watchlist` dropping the film after each
     log; a rendered card's height equals `CARD_WIDTH × 1.5 + CARD_TEXT_HEIGHT`; and the card's controls read clearly
     over a light and a dark poster in each palette.
@@ -696,6 +706,22 @@ pages are on `main` when this work merges it, a dated note on ADR-050 (R41c).
     change show no toast. After a change of user, Undo sends nothing. `useUserMovieState`'s watchlist tests pass with
     their assertions unchanged by this work, their mock answers keeping the payload's `user_watched`.
 
+16. **The tracking journey in a browser.** Playwright runs criterion 1's complete two-log journey against the local
+    development stack at 1280px with a mouse, 1280px with the keyboard alone, and 390px with touch emulation.
+    Authentication, film saves, entry writes and watchlist reads use the real backend and database; catalogue content
+    is deterministic. Each case owns isolated temporary records and cleans them up without changing the development
+    account's records. Each log removes the film from `/watchlist`; the film page shows both entries with their own
+    reviews and ratings, and returning to browse shows the second rating. The keyboard case reaches and operates the
+    controls through keyboard input; closing the dialog restores focus to the entry point, including the touch-menu
+    and phone-drawer fallbacks. A rendered card measures `CARD_WIDTH × 1.5 + CARD_TEXT_HEIGHT`. On pointers the four
+    actions share one continuous backing bar, each icon highlights on hover, and its tooltip appears above it.
+    These cases run in local CI; they do not create or delete fixture records on staging.
+
+### Proven visually before review, added by amendment
+
+17. **Poster readability.** On the branch's local stack, the card's shared action bar and icons read clearly over
+    a light and a dark poster in each palette.
+
 ## 10. Open Questions
 
 None.
@@ -710,3 +736,9 @@ None.
   criterion 4 is superseded by criterion 15, whose watchlist tests keep the assertions `main` gives them and whose
   Undo bodies carry `time_zone` once R41d applies (the Library's draft, decisions 6, 10 and 11, and its PRD's R34c
   set these meeting points after this PRD was written).
+
+- **2026-11-14, during verification.** Criterion 14 is superseded by criteria 16 (a three-input Playwright journey
+  with real local authentication and writes, isolated fixture records, focus checks and measured card geometry) and
+  17 (manual poster readability). R3 groups pointer actions on one continuous backdrop, highlights each icon on hover
+  and places tooltips above; criterion 16 covers those changes. The browser journey closes the gap between jsdom
+  integration coverage and real keyboard/touch behavior; the visual change follows the local mouse inspection.

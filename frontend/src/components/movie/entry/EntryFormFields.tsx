@@ -10,6 +10,7 @@ import {
   Text,
   Textarea,
 } from "@chakra-ui/react";
+import { HalfStarRatingItem } from "@/components/movie/HalfStarRatingItem";
 import type { FormValues } from "./entryFormValues";
 
 interface EntryFormFieldsProps {
@@ -116,7 +117,20 @@ export function EntryFormFields({
               }
             >
               <RatingGroup.Label>Rating</RatingGroup.Label>
-              <RatingGroup.Control />
+              <RatingGroup.Control>
+                {[1, 2, 3, 4, 5].map((index) => (
+                  <HalfStarRatingItem
+                    key={index}
+                    index={index}
+                    disabled={inert}
+                    onPointerValue={(value) => {
+                      if (!inert) field.onChange(value * 2);
+                    }}
+                  >
+                    <RatingGroup.ItemIndicator />
+                  </HalfStarRatingItem>
+                ))}
+              </RatingGroup.Control>
               <RatingGroup.HiddenInput name={field.name} />
             </RatingGroup.Root>
           )}

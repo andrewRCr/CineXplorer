@@ -137,6 +137,8 @@ export function MovieCardActions({
       left="50%"
       transform="translateX(-50%)"
       gap="6px"
+      bg="popover"
+      borderRadius="md"
       opacity="0"
       _groupHover={{ opacity: 1 }}
       _focusWithin={{ opacity: 1 }}
@@ -144,6 +146,7 @@ export function MovieCardActions({
       {actions.map(({ name, field, icon }) => (
         <Tooltip
           key={name}
+          positioning={{ placement: "top" }}
           content={
             field === "user_watched" && locked ? WATCHED_LOCK_EXPLANATION : name
           }
@@ -159,9 +162,9 @@ export function MovieCardActions({
             variant="ghost"
             boxSize="28px"
             minW="28px"
-            bg="popover"
+            bg="transparent"
             color={state[field] ? "tertiary" : "foreground"}
-            _hover={{ bg: "popover" }}
+            _hover={{ bg: "transparent", color: "tertiary" }}
             onClick={() => {
               if (field !== "user_watched" || !locked)
                 save({ [field]: !state[field] });
@@ -171,15 +174,15 @@ export function MovieCardActions({
           </IconButton>
         </Tooltip>
       ))}
-      <Tooltip content="Review or log">
+      <Tooltip content="Review or log" positioning={{ placement: "top" }}>
         <IconButton
           aria-label="Review or log"
           variant="ghost"
           boxSize="28px"
           minW="28px"
-          bg="popover"
+          bg="transparent"
           color="foreground"
-          _hover={{ bg: "popover" }}
+          _hover={{ bg: "transparent", color: "tertiary" }}
           onClick={review}
         >
           <LuPenLine />

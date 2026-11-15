@@ -4,7 +4,8 @@
 **Created:** 2026-11-14
 **Branch:** `technical/user-movie-controls`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
+**Completed:** 2026-11-15
 
 ## Overview
 
@@ -406,7 +407,7 @@ the film page.
           ADR-048 records signed-out card behavior directly; no landing-page supersession applies at this head.
     - [x] **4.5.b Add the partial supersession to ADR-044's Status**
         - Names only Log in the wide bar and "Log a film" in the phone drawer. Navigation links and the original
-          decision body stay intact. ADR-048 and ADR-049 remain Proposed for verification. Markdown lint passed.
+          decision body stay intact. Markdown lint passed.
 
 ### **Phase 5:** The journey holds with `main` merged
 
@@ -420,7 +421,7 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
 
     - [x] **5.1.a Confirm the carried `main`**
         - Fetched `main` is still `46ae700b`, already an ancestor through the explicitly approved merge `ab48e577`.
-          No new merge was required or performed. Recheck if `main` advances before the eventual pull request.
+          No new merge was required or performed.
     - [x] **5.1.b Check each conditional integration case**
         - The backend and both generated API files match `main`; no schema regeneration applies. The later backend
           rule/time-zone case is absent: the record PATCH schema has no `time_zone` field.
@@ -428,7 +429,7 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
           routing, smoke, empty-state and supersession edits do not apply. ADR-048 records signed-out cards directly.
     - [x] **5.1.c Check the applied footprint**
         - No conditional code changes were needed; this task records the ancestry and case audit. Markdown lint
-          passes. Task 5.3 runs the journey and covering browser specs on this integrated head.
+          passed.
 
 - [x] **5.2 The tracking journey runs as one integration test — R2, R3, R16, R19, R21, R22, R29, R32**
 
@@ -459,14 +460,46 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
       additional spec was required by the conditional integration audit.
     - The phone spec scans signed-in browse and search. Their `button-name` baseline allowances are absent; the
       existing browse `aria-hidden-focus` baseline is unchanged. Markdown lint passes for this result record.
-    - Phases 1–5 are complete. Full-suite verification, criterion check-off, browser proof and verification/code review
-      remain in Phase 6; no success criterion was marked here.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; ADR-048 and
-  ADR-049 set `Accepted` before merge; criterion 14 proven in the browser before review; after any later merge of
-  `main`, R41 rechecked and the API types regenerated if its schema changed)
+- [x] **6.1 Verify the work**
+
+    - Validated all 15 active criteria against the complete change and resulting tree; two criteria are superseded by
+      approved amendments. The full verification checks and live browser/visual evidence passed.
+    - Independent criteria verification covered the same complete subject, found no issues and left no unresolved
+      evidence. Its fresh criterion-related and browser checks passed. Evidence for each criterion is recorded below.
+    - ADR-048 and ADR-049 read Accepted (2026-11-15). PRD and task-list statuses are Complete.
+
+    - [x] **6.1.a Cover the tracking journey in Chromium with mouse, keyboard and touch**
+        - Added three two-log browser journeys at 1280px with mouse and keyboard, and 390px with touch. Real local
+          authentication, record/entry writes and watchlist reads run with temporary verified users and stored movie
+          fixtures; catalogue responses read persisted tracking state. Cleanup preserves the development account.
+        - The journeys check watchlist removal, separate reviews and ratings, rewatch defaults, opener/fallback focus,
+          measured card geometry and current rating after reload. Staging skips these fixture-mutating cases.
+        - Full Chromium suite passes all 26 cases; the staging-target check skips all five new journey/rating cases.
+          The initial touch journey failed on the half-star defect, then passed after its approved correction.
+    - [x] **6.1.b Group pointer actions on a continuous backdrop and move tooltips above**
+        - One solid `popover` bar backs transparent buttons; icons use `tertiary` on hover and retain pressed states.
+          Tooltips open above the controls. ADR-048 records the grouping.
+        - The original transparent group failed the browser surface assertion; the updated mouse journey checks the
+          shared surface, all four hover colors and upper tooltip. Visual inspection covers both poster extremes in
+          all five palettes and both color modes; related tests, lint, formatting and type checks pass.
+    - [x] **6.1.c Correct half-star selection on the first pointer activation**
+        - Shared `HalfStarRatingItem` resolves a completed click/tap against the item's midpoint, prevents the
+          widget's whole-star overwrite and preserves focus, native keyboard stepping and disabled guards. The film
+          panel discards its pending keyboard preview before an immediate pointer save; the dialog updates its form.
+        - First-pointer mouse and touch regressions failed at 4 rather than 3.5 stars before the correction. The
+          corrected panel/sheet persists half and whole stars after reload; the complete dialog journeys pass too.
+          A cancelled touch is observed beyond the save debounce and remains unrated after reload. A narrow
+          pointer-down-save reconstruction fails that cancellation assertion; restoring completed activation passes.
+        - Full browser suite, related component/integration tests, type checks, ESLint and formatting pass.
+
+    - [x] **6.1.d Resolve the independent verification companion and close verification**
+        - Independent verification considered every active criterion and the complete 81-file subject, including
+          required failure/recovery behavior and visual evidence. It found no issues or unresolved evidence.
+        - Fresh checks passed 264 tests across 20 criterion-related files and 15 browser cases. The reviewed file
+          hashes matched before and after the pass. No findings required a fix, deferral or further verification pass.
 
 ## Implementation Notes
 
@@ -477,32 +510,18 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
 - **Signed in, in tests.** Store a token from `tests/helpers/auth.ts` and call `authHandlers()`, as
   `MovieDetail.test.tsx` does, then render under `AuthContextProvider`. No default MSW handler serves record saves or
   entry routes; each test answers with the records its case needs.
-- **The landing page's overlap.** `technical/landing-page` has committed the same read-path change R27 asks for:
-  `!config.headers.has("X-Pagination-Context")` in the interceptor, and `ReadOptions = Pick<AxiosRequestConfig,
-  "headers" | "shouldReportServerError">` passed through `getPaginated` and `fetchPaginatedMovies`, with a second
-  context in `paginationContext.ts`. It also renders `MovieCard`'s footer only while signed in, adds a `/`
-  `button-name` baseline entry and keeps Home's row cards at `minW="138px"`. If it hasn't merged when 2.1 starts, write
-  the same form so the second merge keeps one. It touches `MovieCard.tsx` and `axe-baseline.ts` too, and its
-  `Home.test.tsx` and `WatchlistSection.test.tsx` press today's card buttons, so 3.1 checks `main` again.
-- **Merges of `main`.** A merge of `main` before 5.1 (at 2.1.a, 3.1 or 4.5) keeps the branch's tests green and applies
-  only what its inputs allow then: the API types if the schema changed (5.1.b's case a), one form of the read path (case
-  b), the `time_zone` below (case d), and the card tests below. The `/` and the Library's `button-name` entries cover
-  today's unnamed card buttons, so 3.1.e removes those the branch carries by then; everything else 5.1.b lists waits for
-  5.1.b, which applies each case that holds. Two reach tests this work writes before 5.1:
-    - **Card tests elsewhere.** After the merge, `git grep -inE "add to watchlist|remove from watchlist" -- frontend/src
-      frontend/e2e frontend/tests` and move every hit that presses or looks for a card's control (the film page's own
-      hits are 4.1.b's). Before 3.1 they still pass and 3.1.c moves them; after it, the merge moves them. The landing
-      page's: `Home.test.tsx`'s "holds the nothing-saved set after a first save and shows the watchlist on the next
-      visit" and `WatchlistSection.test.tsx`'s "updates the leading film and removes saved films through real card
-      saves" stub `(hover: hover)` and press "Watchlist" in the card's "Your actions for {title}" group, telling adding
-      from removing by `aria-pressed`; `Home.test.tsx`'s "composes signed-out Home in order with named sections and no
-      card actions" asserts the row has no "Your actions for {title}" group and no "Actions for {title}" button. The
-      Library's: `library.spec.ts`'s step 1, its step 4 until 5.1.b(c) replaces it, and its Watchlist page test of a
-      removal from a card.
-    - **The backend unit's `time_zone`.** The save layer fills it on every record save, so it joins every record-save
-      body this work's tests assert exactly (1.1.a, 2.3.b, 2.4.a, 3.1, 4.1, 4.2, the moved `MovieCard` and
-      `MovieDetail` cases, and 5.2), asserted as `main`'s own test asserts it. Where the merge conflicts in a test 3.1.c
-      or 4.1.b moved, keep this branch's side and add the field.
+- **Independent pagination contexts.** `apiClient` preserves a caller's `X-Pagination-Context`;
+  `ReadOptions = Pick<AxiosRequestConfig, "headers" | "shouldReportServerError">` passes through `getPaginated`,
+  `fetchPaginatedMovies` and `searchMovies`. The picker supplies its own context, independently of the catalog lists.
+- **Conditional integration boundaries.** The audit at `46ae700b` found no landing page, Library pages or later
+  record-save time-zone field. The integration cases are defined in the PRD's R41. The test adaptation map identifies
+  the affected cases without making their presence part of this delivery:
+    - **Card controls.** `Home.test.tsx`'s first-save composition and `WatchlistSection.test.tsx`'s real-card saves use
+      `(hover: hover)`, scope Watchlist to the film's action group and distinguish state with `aria-pressed`.
+      Signed-out Home asserts neither a named action group nor a touch trigger. Library coverage includes the
+      Watchlist page's removal case and the card actions in `library.spec.ts`.
+    - **Record-save time zone.** The conditional field belongs beside the exact save-body assertions in feedback,
+      dialog, card, panel/rating, detail and journey tests. Entry writes already supply the visitor's time zone.
 - **Undo after unmount.** `saveMutationOptions`' watchlist Undo builds a `MutationObserver` from the options, so it
   runs after the card or dialog that saved has gone; the dialog's Undo does the same with `entryMutationOptions`. Each
   checks `getChangeCount()` first, and toasts take their IDs from `createSaveToastId()` so a change of user removes
@@ -520,24 +539,20 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
   falls back to the picker.
 - **Dates.** Today in the visitor's time zone is the local calendar date, never `toISOString()`, which is UTC; entry
   writes already carry the time zone through `useMovieEntries`.
-- **Ratings.** `RatingGroup` with `allowHalf` holds stars (0.5 to 5); the saved `user_rating` and an entry's `rating`
-  are stars × 2. Zero stars counts as no rating everywhere.
-- **Contrast.** The card controls' backing surfaces and pressed state use pairs `src/theme/color/contrast-checks.ts`
-  already checks (for example `foreground` and `tertiary` over `popover`); a new pair is added there, and
-  `npm run verify-contrast` covers every palette.
-- **Tests that pass on arrival** are shown failing against a narrow break of the behavior, then passing restored, and
-  the completion notes say so.
-- **E2E runs** use the worktree's browsable stack (`node scripts/worktree.mjs browse`, `SITE_PORT` from
-  `infrastructure/.env`) through `arc-offload`, as QUICK-REFERENCE shows.
+- **Ratings.** `RatingGroup` supplies half-step keyboard input; `HalfStarRatingItem` resolves completed pointer
+  activation from the item's midpoint. Displayed stars (0.5 to 5) convert to stored points by multiplying by two.
+  Zero stars counts as no rating. Pointer selection cancels the panel's pending keyboard preview before saving.
+- **Contrast.** Card controls use existing checked token pairs (`foreground` and `tertiary` over `popover`).
+  The palette contrast check and visual poster inspection cover the shared backing surface and pressed colors.
 
 ## Success Criteria
 
-**Implemented** criteria are checked locally and in CI. **Proven in the browser before review** is checked by hand on
-the branch's local stack before the code review.
+**Implemented** criteria are checked locally and in CI. Criterion 16 supplies browser interaction and geometry
+proof; criterion 17 is checked visually on the branch's local stack before code review.
 
 ### Implemented
 
-- [ ] 1. **The tracking journey.** An integration test renders the app's routes signed in, with MSW answering each step
+- [x] 1. **The tracking journey.** An integration test renders the app's routes signed in, with MSW answering each step
   with the records and lists the server returns for it, and shows: adding a film to the watchlist from a card's hover
   control; logging it from the card's "Review or log" with today's date, three and a half stars and a review; the card
   then showing "Rated 3.5 out of 5 stars" and the watched mark, a "Logged" toast saying "Also removed from your
@@ -545,10 +560,10 @@ the branch's local stack before the code review.
   the watchlist again from the panel; logging it from the bar's Log on the film page, with Rewatch on by default, a new
   rating and a new review; and then `/watchlist` no longer listing the film, the page listing two entries, each with
   its own rating and review, and the card showing the new rating.
-- [ ] 2. **Touch.** With `(hover: none)`, a card shows the "⋯" button and no hover group; its menu's items save or open
+- [x] 2. **Touch.** With `(hover: none)`, a card shows the "⋯" button and no hover group; its menu's items save or open
   the dialog; a locked Watched item is `aria-disabled`, reachable with the arrow keys, changes nothing when chosen, and
   shows the lock's explanation. Closing a dialog opened from the menu returns focus to the "⋯" button.
-- [ ] 3. **The lock.** A rated film, and a film with entries, show Watched locked on the card, in the menu and on the
+- [x] 3. **The lock.** A rated film, and a film with entries, show Watched locked on the card, in the menu and on the
   panel, with the explanation, and activating it sends no request. A film that is only liked shows Watched unlocked. A
   409 from an un-mark shows "Couldn't change Watched" with the server's reason.
 - [~] 4. **Toasts and Undo.** _Superseded by criterion 15 (amendment, 2026-11-14)._ Tests show, for each row of R32, the
@@ -560,43 +575,44 @@ the branch's local stack before the code review.
   including after the dialog has closed. Marking watched, liking and rating without a watchlist change show no toast.
   After a change of user, Undo sends nothing. `useUserMovieState`'s watchlist tests pass with their assertions
   unchanged, their mock answers keeping the payload's `user_watched`.
-- [ ] 5. **The dialog.** Tests show each row of R22 sending its request; Save disabled until R23 holds; an edit with the
+- [x] 5. **The dialog.** Tests show each row of R22 sending its request; Save disabled until R23 holds; an edit with the
   switch off and no review refused with its message; an emptied rating on the third path sending `user_rating: null`;
   changing the film re-reading its list; Rewatch on by default for a same-day or earlier viewing and following the date
   for a new entry, and an edit keeping the entry's mark; a future or empty date refused with its message; with a review
   typed, closing asking to discard; and a change of page closing the dialog.
-- [ ] 6. **The picker.** Tests show no request below two characters, one request after typing pauses, items with
+- [x] 6. **The picker.** Tests show no request below two characters, one request after typing pauses, items with
   poster, title and year, each list state's text, and a choice reaching `onSelect`; a picker search carrying its own
   `X-Pagination-Context`, not the tab's, and `apiClient` keeping a caller's context; the combobox recipe's highlighted
   item has the solid `tertiary` fill.
-- [ ] 7. **Signed out and resolving.** Cards render no controls while signed out or resolving; the panel's controls
+- [x] 7. **Signed out and resolving.** Cards render no controls while signed out or resolving; the panel's controls
   save nothing signed out and show the sign-in note with a link back to the page; while resolving they are inert with
   no note.
-- [ ] 8. **The bar.** Log shows signed in on wide screens and opens the dialog on the picker, or on the film on a film
+- [x] 8. **The bar.** Log shows signed in on wide screens and opens the dialog on the picker, or on the film on a film
   page; the drawer's "Log a film" does the same on phones; neither shows signed out.
-- [ ] 9. **The entries list.** Tests show the order, "No date", the rewatch icon, an excerpt with "Read more", "Show
+- [x] 9. **The entries list.** Tests show the order, "No date", the rewatch icon, an excerpt with "Read more", "Show
   all", Edit opening the dialog on the entry, Delete asking first and sending the `DELETE` only on confirmation, unique
   button names for two entries on one date, and focus moving to the next entry's Edit after a delete.
-- [ ] 10. **The rating control.** A pointer selection sends one save; arrowing across the stars sends one save after
+- [x] 10. **The rating control.** A pointer selection sends one save; arrowing across the stars sends one save after
   the pause; arrowing down to zero stars, like Clear rating, sends `user_rating: null`; on phones, Rate opens the sheet.
-- [ ] 11. **The row height.** The browse grid's tests assert its row estimate equals `CARD_WIDTH × 1.5 +
+- [x] 11. **The row height.** The browse grid's tests assert its row estimate equals `CARD_WIDTH × 1.5 +
   CARD_TEXT_HEIGHT` and its gap equals `GAP`.
-- [ ] 12. **Accessibility.** `e2e/axe-baseline.ts` has no `button-name` entry for `/browse` or `/search`, and the smoke
+- [x] 12. **Accessibility.** `e2e/axe-baseline.ts` has no `button-name` entry for `/browse` or `/search`, and the smoke
   specs, which scan both routes signed in, pass.
-- [ ] 13. **The documents.** ADR-048 and ADR-049 read `Accepted` with their dates; ADR-044's Status names what ADR-048
+- [x] 13. **The documents.** ADR-048 and ADR-049 read `Accepted` with their dates; ADR-044's Status names what ADR-048
   supersedes; TECHNICAL-OVERVIEW's forms line and the component-styling strategy's highlight rule read as R40 says;
   `react-hook-form` 7 is in `frontend/package.json` and its lockfile.
 
 ### Proven in the browser before review
 
-- [ ] 14. **The journey by hand.** On the branch's local stack, signed in, criterion 1's journey runs at 1280px wide
+- [~] 14. **The journey by hand.** _Superseded by criteria 16 and 17 (amendment, 2026-11-14)._
+  On the branch's local stack, signed in, criterion 1's journey runs at 1280px wide
   with a mouse and with the keyboard alone, and at 390px with touch emulation, with `/watchlist` dropping the film after
   each log; a rendered card's height equals `CARD_WIDTH × 1.5 + CARD_TEXT_HEIGHT`; and the card's controls read
   clearly over a light and a dark poster in each palette.
 
 ### Implemented, added by amendment
 
-- [ ] 15. **Toasts and Undo.** Tests show, for each row of R32, the title, the description and whether Undo is
+- [x] 15. **Toasts and Undo.** Tests show, for each row of R32, the title, the description and whether Undo is
   offered, and the Undo's request: liking an unwatched film on the watchlist sends `{ user_liked: false, user_watched:
   false, user_on_watchlist: true, undo: true }`; un-marking Watched on a liked film on the watchlist sends `{
   user_watched: true, user_liked: true, user_on_watchlist: true, undo: true }`; Clear rating sends `{ user_rating:
@@ -605,3 +621,45 @@ the branch's local stack before the code review.
   save when the `DELETE` fails, including after the dialog has closed. Marking watched, liking and rating without a
   watchlist change show no toast. After a change of user, Undo sends nothing. `useUserMovieState`'s watchlist tests
   pass with their assertions unchanged by this work, their mock answers keeping the payload's `user_watched`.
+
+- [x] 16. **The tracking journey in a browser.** Playwright runs criterion 1's complete two-log journey against the local
+    development stack at 1280px with a mouse, 1280px with the keyboard alone, and 390px with touch emulation.
+    Authentication, film saves, entry writes and watchlist reads use the real backend and database; catalogue content
+    is deterministic. Each case owns isolated temporary records and cleans them up without changing the development
+    account's records. Each log removes the film from `/watchlist`; the film page shows both entries with their own
+    reviews and ratings, and returning to browse shows the second rating. The keyboard case reaches and operates the
+    controls through keyboard input; closing the dialog restores focus to the entry point, including the touch-menu
+    and phone-drawer fallbacks. A rendered card measures `CARD_WIDTH × 1.5 + CARD_TEXT_HEIGHT`. On pointers the four
+    actions share one continuous backing bar, each icon highlights on hover, and its tooltip appears above it.
+    These cases run in local CI; they do not create or delete fixture records on staging.
+
+### Proven visually before review, added by amendment
+
+- [x] 17. **Poster readability.** On the branch's local stack, the card's shared action bar and icons read clearly over
+    a light and a dark poster in each palette.
+
+### Verification evidence
+
+Verification covered the complete work unit, including the browser journeys and rating corrections recorded in
+Task 6.1. Fresh checks and source inspection supplied the evidence below. Independent verification covered the same
+subject and all active criteria without findings.
+
+| Criterion | Evidence                                                                                                                                                                                                                                                                                            |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1         | The App/MSW tracking integration runs both same-day viewings, list changes and distinct reviews/ratings; the full frontend suite passed.                                                                                                                                                            |
+| 2         | Card-control tests cover touch actions, reachable locked Watched and surviving-trigger focus; the touch browser journey restores focus after both entry points.                                                                                                                                     |
+| 3         | Card/panel tests cover rating and entry locks, no save on activation and liked-only unlocking; the feedback test verifies the server's 409 reason and retained state.                                                                                                                               |
+| 4         | Superseded by criterion 15 in the approved amendment.                                                                                                                                                                                                                                               |
+| 5         | Form/host tests verify all four save paths, validity, date errors, prefill, film changes, rewatch defaults, discard confirmation and history closure.                                                                                                                                               |
+| 6         | Picker/hook tests verify the minimum, debounce, states, compact items and selection; HTTP tests preserve explicit context; the recipe test verifies highlighted fill.                                                                                                                               |
+| 7         | Card/panel tests exercise anonymous and resolving sessions, inert writes and the return-to-page sign-in link.                                                                                                                                                                                       |
+| 8         | Bar/drawer tests verify picker and loaded-film entry points and signed-out absence; browser journeys operate both wide Log and the phone drawer.                                                                                                                                                    |
+| 9         | Log tests cover server order, undated entries, excerpts, expansion, positional names, edit, confirmation, deletion failure and focus after confirmed removal.                                                                                                                                       |
+| 10        | Rating tests retain one pointer save, debounced keyboard save, zero/Clear behavior and the phone sheet; browser regressions persist first-click/tap halves and whole stars.                                                                                                                         |
+| 11        | The virtualizer test asserts the computed estimate and separate gap; Chromium measures the 194-by-419 card in every journey mode.                                                                                                                                                                   |
+| 12        | Browse/search have no button-name baseline entries; the full Chromium suite passes, including signed-in phone scans on both routes.                                                                                                                                                                 |
+| 13        | ADR-048/049 are Accepted (2026-11-15), ADR-044 names the partial supersession, the forms/highlight guidance agrees, and both dependency files contain React Hook Form 7.                                                                                                                            |
+| 14        | Superseded by criteria 16 and 17 in the approved verification amendment.                                                                                                                                                                                                                            |
+| 15        | Feedback and dialog tests cover title/description/silence, minimal Undo bodies, deletion-before-save, failure stopping and user-change guards; watchlist assertions are unchanged apart from whole-record answers. The conditional record-save time-zone change is absent from the integrated base. |
+| 16        | All three local browser journeys pass with real writes and reads, isolated records, focus and reload checks; all five new cases skip on the staging target.                                                                                                                                         |
+| 17        | Visually inspected five palette contact sheets, each showing light/dark modes over light/dark poster fixtures, with neutral and pressed icons. The solid shared bar keeps the icons readable in all 20 combinations.                                                                                |

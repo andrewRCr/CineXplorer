@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-15)
 
 Supersedes ADR-044 in part (adds Log to the wide bar and "Log a film" to the phone drawer).
 
@@ -31,7 +31,9 @@ of unusable controls, while the film page can explain what an account adds in on
 We will expose one set of tracking controls per card, chosen by the primary input's hover capability. Pointers that
 can hover reveal Watched, Like, Watchlist and Review or log over the poster on hover or keyboard focus. Touch input
 uses a visible menu trigger with the same actions. Cards show these actions only to authenticated visitors. The
-controls overlay the poster, so their presence does not change the card's text height.
+pointer controls share one continuous solid backing bar, highlight each icon on hover, retain pressed icon colors,
+and place tooltips above the controls. The controls overlay the poster, so their presence does not change the card's
+text height.
 
 We will mount one entry-dialog host over the current page and open it through `useEntryDialog`. Card actions, the
 film panel, the wide bar's Log and the phone drawer's "Log a film" share that host, form and feedback. Card and

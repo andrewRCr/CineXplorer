@@ -10,6 +10,7 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { RatingStars } from "@/components/movie/RatingStars";
+import { HalfStarRatingItem } from "@/components/movie/HalfStarRatingItem";
 import type { AuthStatus } from "@/types/auth-state";
 import { getChangeCount } from "@/lib/session";
 
@@ -119,9 +120,10 @@ function RatingControl(props: FilmRatingProps) {
             onClick={() => queueMicrotask(flush)}
           >
             {[1, 2, 3, 4, 5].map((index) => (
-              <RatingGroup.Item
+              <HalfStarRatingItem
                 key={index}
                 index={index}
+                disabled={!authenticated}
                 aria-disabled={!authenticated || undefined}
                 boxSize={wide ? undefined : "48px"}
                 fontSize={wide ? undefined : "48px"}
@@ -141,9 +143,13 @@ function RatingControl(props: FilmRatingProps) {
                   }
                   mode.current = "pointer";
                 }}
+                onPointerValue={(value) => {
+                  discard();
+                  props.onSave(value * 2);
+                }}
               >
                 <RatingGroup.ItemIndicator />
-              </RatingGroup.Item>
+              </HalfStarRatingItem>
             ))}
           </RatingGroup.Control>
           <RatingGroup.HiddenInput />

@@ -2840,6 +2840,46 @@
         ]
       }
     },
+    "/api/movies/featured": {
+      "get": {
+        "operationId": "apps_movie_api_get_featured_movie",
+        "summary": "Get Featured Movie",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "film",
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Film"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturedMovieSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Serve one classic film for the homepage.",
+        "tags": [
+          "movies"
+        ]
+      }
+    },
     "/api/movies/{tmdb_id}": {
       "get": {
         "operationId": "apps_movie_api_get_movie_detail",
@@ -5487,6 +5527,104 @@
         "title": "MovieSearchParamsSchema",
         "type": "object"
       },
+      "FeaturedMovieSchema": {
+        "description": "The film credit and backdrop shown on the homepage.",
+        "properties": {
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "backdrop_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backdrop Path"
+          },
+          "tagline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tagline"
+          },
+          "focus_point": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FilmFocusPoint"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mirrored": {
+            "default": false,
+            "title": "Mirrored",
+            "type": "boolean"
+          },
+          "directors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Directors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title"
+        ],
+        "title": "FeaturedMovieSchema",
+        "type": "object"
+      },
+      "FilmFocusPoint": {
+        "description": "An image anchor expressed as paired percentages.",
+        "properties": {
+          "x": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "FilmFocusPoint",
+        "type": "object"
+      },
       "CastMemberSchema": {
         "properties": {
           "id": {
@@ -5679,6 +5817,28 @@
                 "type": "null"
               }
             ]
+          },
+          "backdrop_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Backdrop Path"
+          },
+          "tagline": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tagline"
           },
           "genres": {
             "items": {
@@ -6271,6 +6431,17 @@
             "default": false,
             "title": "Undo",
             "type": "boolean"
+          },
+          "time_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Zone"
           }
         },
         "title": "UserMovieDataPatchSchema",

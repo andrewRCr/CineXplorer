@@ -109,7 +109,14 @@ async function advance(ms: number) {
   await act(async () => vi.advanceTimersByTimeAsync(ms));
 }
 async function saved(value: number | null) {
-  await waitFor(() => expect(requests).toEqual([{ user_rating: value }]));
+  await waitFor(() =>
+    expect(requests).toEqual([
+      {
+        user_rating: value,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+    ]),
+  );
 }
 beforeEach(() => {
   clearBrowserAuth();
@@ -155,7 +162,14 @@ it("saves a pointer selection once at once, with two points per star", async () 
   await userEvent
     .setup()
     .click(within(group()).getByRole("radio", { name: "4 stars" }));
-  await waitFor(() => expect(requests).toEqual([{ user_rating: 8 }]));
+  await waitFor(() =>
+    expect(requests).toEqual([
+      {
+        user_rating: 8,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+    ]),
+  );
   expect(
     within(group()).getByRole("radio", { checked: true }),
   ).toHaveAccessibleName("4 stars");
@@ -253,7 +267,12 @@ it.each([null, 7])(
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
     await waitFor(() => expect(rate).toHaveFocus());
-    expect(requests).toEqual([{ user_rating: 10 }]);
+    expect(requests).toEqual([
+      {
+        user_rating: 10,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+    ]);
   },
 );
 
@@ -358,7 +377,12 @@ it("a refused rating restores the confirmed stars and shows the save error", asy
   expect(
     within(group()).getByRole("radio", { checked: true }),
   ).toHaveAccessibleName("3.5 stars");
-  expect(requests).toEqual([{ user_rating: 10 }]);
+  expect(requests).toEqual([
+    {
+      user_rating: 10,
+      time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
+  ]);
 });
 
 it("Done closes an unchanged phone rating without a save; Clear saves null", async () => {

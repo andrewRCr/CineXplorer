@@ -642,6 +642,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/movies/featured": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Featured Movie
+         * @description Serve one classic film for the homepage.
+         */
+        get: operations["apps_movie_api_get_featured_movie"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/movies/{tmdb_id}": {
         parameters: {
             query?: never;
@@ -1537,6 +1557,40 @@ export interface components {
              */
             tmdb_page_start?: number | null;
         };
+        /**
+         * FeaturedMovieSchema
+         * @description The film credit and backdrop shown on the homepage.
+         */
+        FeaturedMovieSchema: {
+            /** Tmdb Id */
+            tmdb_id: number;
+            /** Title */
+            title: string;
+            /** Release Date */
+            release_date?: string | null;
+            /** Backdrop Path */
+            backdrop_path?: string | null;
+            /** Tagline */
+            tagline?: string | null;
+            focus_point?: components["schemas"]["FilmFocusPoint"] | null;
+            /**
+             * Mirrored
+             * @default false
+             */
+            mirrored: boolean;
+            /** Directors */
+            directors?: string[];
+        };
+        /**
+         * FilmFocusPoint
+         * @description An image anchor expressed as paired percentages.
+         */
+        FilmFocusPoint: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+        };
         /** CastMemberSchema */
         CastMemberSchema: {
             /** Id */
@@ -1597,6 +1651,10 @@ export interface components {
             /** Overview */
             overview?: string | null;
             user_movie_data?: components["schemas"]["UserMovieDataSchema"] | null;
+            /** Backdrop Path */
+            backdrop_path?: string | null;
+            /** Tagline */
+            tagline?: string | null;
             /** Genres */
             genres?: components["schemas"]["GenreSchema"][];
             /** Production Companies */
@@ -1867,6 +1925,8 @@ export interface components {
              * @default false
              */
             undo: boolean;
+            /** Time Zone */
+            time_zone?: string | null;
         };
         /**
          * UserMovieEntrySchema
@@ -2659,6 +2719,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MovieListResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_movie_api_get_featured_movie: {
+        parameters: {
+            query?: {
+                film?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeaturedMovieSchema"];
                 };
             };
         };

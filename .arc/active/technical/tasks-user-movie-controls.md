@@ -540,6 +540,23 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
         - All 131 related tests across seven files, frontend type checking, touched-file lint/format checks and
           documentation checks pass. Reference guidance records the geometry fixture and scoped motion readiness.
 
+- [x] **6.4 Integrate current Home and movie-change contracts**
+
+    **Goal:** Preserve Home and the tracking journey together with current record-save contracts and regenerated
+    API types, applying the PRD's conditional integration requirements.
+
+    - Integrated main at `1f7416f5`, retaining independent Home and picker contexts, shared controls, feedback and
+      ownership. Resolved eleven textual conflicts without changing main's backend implementation.
+    - Applied the specified Home copy, accessibility baseline and ADR supersession. Saves and Undo retain the browser
+      time zone; exact request assertions and Home's card interactions follow the combined contract. Main's explicit
+      time-zone and anonymous/resolving card tests remain covered; browser sign-in waits for settled Home content.
+    - Applied the isolated local database migrations and regenerated API types, which match main's schema artifacts.
+      The affected backend suites pass 1,007 tests, the full frontend suite passes 3,452 tests, and all 27 Chromium
+      cases pass, including Home audits and the three real-write journeys. Type checking, frontend lint and formatting
+      pass. Home-copy regressions failed before implementation; initial save-body and duplicate-import integration
+      mismatches were corrected before the full green run. Library UI is absent, so its conditional changes do not
+      apply.
+
 ## Implementation Notes
 
 - **Pointer kind and breakpoints in tests.** `tests/setup.ts` stubs `window.matchMedia` to answer no to every query,
@@ -552,9 +569,9 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
 - **Independent pagination contexts.** `apiClient` preserves a caller's `X-Pagination-Context`;
   `ReadOptions = Pick<AxiosRequestConfig, "headers" | "shouldReportServerError">` passes through `getPaginated`,
   `fetchPaginatedMovies` and `searchMovies`. The picker supplies its own context, independently of the catalog lists.
-- **Conditional integration boundaries.** The audit at `46ae700b` found no landing page, Library pages or later
-  record-save time-zone field. The integration cases are defined in the PRD's R41. The test adaptation map identifies
-  the affected cases without making their presence part of this delivery:
+- **Conditional integration boundaries.** The initial audit at `46ae700b` found none of the conditional
+  additions. The integration at `1f7416f5` brings Home and record-save time zones, applying R41a/b/d; Library UI is
+  absent, so R41c does not apply. The integrated tests follow these boundaries:
     - **Card controls.** `Home.test.tsx`'s first-save composition and `WatchlistSection.test.tsx`'s real-card saves use
       `(hover: hover)`, scope Watchlist to the film's action group and distinguish state with `aria-pressed`.
       Signed-out Home asserts neither a named action group nor a touch trigger. Library coverage includes the
@@ -683,22 +700,22 @@ Verification covered the complete work unit, including the browser journeys and 
 Task 6.1. Fresh checks and source inspection supplied the evidence below. Independent verification covered the same
 subject and all active criteria without findings.
 
-| Criterion | Evidence                                                                                                                                                                                                                                                                                            |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1         | The App/MSW tracking integration runs both same-day viewings, list changes and distinct reviews/ratings; the full frontend suite passed.                                                                                                                                                            |
-| 2         | Card-control tests cover touch actions, reachable locked Watched and surviving-trigger focus; the touch browser journey restores focus after both entry points.                                                                                                                                     |
-| 3         | Card/panel tests cover rating and entry locks, no save on activation and liked-only unlocking; the feedback test verifies the server's 409 reason and retained state.                                                                                                                               |
-| 4         | Superseded by criterion 15 in the approved amendment.                                                                                                                                                                                                                                               |
-| 5         | Form/host tests verify all four save paths, validity, date errors, prefill, film changes, rewatch defaults, discard confirmation and history closure.                                                                                                                                               |
-| 6         | Picker/hook tests verify the minimum, debounce, states, compact items and selection; HTTP tests preserve explicit context; the recipe test verifies highlighted fill.                                                                                                                               |
-| 7         | Card/panel tests exercise anonymous and resolving sessions, inert writes and the return-to-page sign-in link.                                                                                                                                                                                       |
-| 8         | Bar/drawer tests verify picker and loaded-film entry points and signed-out absence; browser journeys operate both wide Log and the phone drawer.                                                                                                                                                    |
-| 9         | Log tests cover server order, undated entries, excerpts, expansion, positional names, edit, confirmation, deletion failure and focus after confirmed removal.                                                                                                                                       |
-| 10        | Rating tests retain one pointer save, debounced keyboard save, zero/Clear behavior and the phone sheet; browser regressions persist first-click/tap halves and whole stars.                                                                                                                         |
-| 11        | The virtualizer test asserts the computed estimate and separate gap; Chromium measures the 194-by-419 card in every journey mode.                                                                                                                                                                   |
-| 12        | Browse/search have no button-name baseline entries; the full Chromium suite passes, including signed-in phone scans on both routes.                                                                                                                                                                 |
-| 13        | ADR-048/049 are Accepted (2026-11-15), ADR-044 names the partial supersession, the forms/highlight guidance agrees, and both dependency files contain React Hook Form 7.                                                                                                                            |
-| 14        | Superseded by criteria 16 and 17 in the approved verification amendment.                                                                                                                                                                                                                            |
-| 15        | Feedback and dialog tests cover title/description/silence, minimal Undo bodies, deletion-before-save, failure stopping and user-change guards; watchlist assertions are unchanged apart from whole-record answers. The conditional record-save time-zone change is absent from the integrated base. |
-| 16        | All three local browser journeys pass with real writes and reads, isolated records, focus and reload checks; all five new cases skip on the staging target.                                                                                                                                         |
-| 17        | Visually inspected five palette contact sheets, each showing light/dark modes over light/dark poster fixtures, with neutral and pressed icons. The solid shared bar keeps the icons readable in all 20 combinations.                                                                                |
+| Criterion | Evidence                                                                                                                                                                                                                                                                                                              |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1         | The App/MSW tracking integration runs both same-day viewings, list changes and distinct reviews/ratings; the full frontend suite passed.                                                                                                                                                                              |
+| 2         | Card-control tests cover touch actions, reachable locked Watched and surviving-trigger focus; the touch browser journey restores focus after both entry points.                                                                                                                                                       |
+| 3         | Card/panel tests cover rating and entry locks, no save on activation and liked-only unlocking; the feedback test verifies the server's 409 reason and retained state.                                                                                                                                                 |
+| 4         | Superseded by criterion 15 in the approved amendment.                                                                                                                                                                                                                                                                 |
+| 5         | Form/host tests verify all four save paths, validity, date errors, prefill, film changes, rewatch defaults, discard confirmation and history closure.                                                                                                                                                                 |
+| 6         | Picker/hook tests verify the minimum, debounce, states, compact items and selection; HTTP tests preserve explicit context; the recipe test verifies highlighted fill.                                                                                                                                                 |
+| 7         | Card/panel tests exercise anonymous and resolving sessions, inert writes and the return-to-page sign-in link.                                                                                                                                                                                                         |
+| 8         | Bar/drawer tests verify picker and loaded-film entry points and signed-out absence; browser journeys operate both wide Log and the phone drawer.                                                                                                                                                                      |
+| 9         | Log tests cover server order, undated entries, excerpts, expansion, positional names, edit, confirmation, deletion failure and focus after confirmed removal.                                                                                                                                                         |
+| 10        | Rating tests retain one pointer save, debounced keyboard save, zero/Clear behavior and the phone sheet; browser regressions persist first-click/tap halves and whole stars.                                                                                                                                           |
+| 11        | The virtualizer test asserts the computed estimate and separate gap; Chromium measures the 194-by-419 card in every journey mode.                                                                                                                                                                                     |
+| 12        | Browse/search have no button-name baseline entries; the full Chromium suite passes, including signed-in phone scans on both routes.                                                                                                                                                                                   |
+| 13        | ADR-048/049 are Accepted (2026-11-15), ADR-044 names the partial supersession, the forms/highlight guidance agrees, and both dependency files contain React Hook Form 7.                                                                                                                                              |
+| 14        | Superseded by criteria 16 and 17 in the approved verification amendment.                                                                                                                                                                                                                                              |
+| 15        | Feedback and dialog tests cover title/description/silence, minimal Undo bodies, deletion-before-save, failure stopping and user-change guards; watchlist assertions are unchanged apart from whole-record answers. Record saves and Undo include the browser time zone, with main’s explicit time-zone test retained. |
+| 16        | All three local browser journeys pass with real writes and reads, isolated records, focus and reload checks; all five new cases skip on the staging target.                                                                                                                                                           |
+| 17        | Visually inspected five palette contact sheets, each showing light/dark modes over light/dark poster fixtures, with neutral and pressed icons. The solid shared bar keeps the icons readable in all 20 combinations.                                                                                                  |

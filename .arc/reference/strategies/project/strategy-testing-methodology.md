@@ -864,9 +864,10 @@ Sign-up stops at the check-your-email notice; email-link verification, OAuth and
   Login setup may wait for one reported Retry-After window after a 429, recording that retry without clearing cache
   or changing the throttle.
 - **`staging`**: live catalogue data and an existing verified, non-staff account. Registration is skipped. The Back to
-  Results reload scenario supplies its own browse/detail fixtures in both targets to control page height; those
-  overrides serve only same-origin GETs. Tracking and rating specs skip before database setup on staging. The specs
-  change none of the staging account's saved data.
+  Results reload scenario supplies its own browse/detail fixtures in both targets to control page height.
+  `background.spec.ts` supplies Home's three reads in both targets so its console checks never depend on live TMDB.
+  Both overrides serve only same-origin GETs. Tracking and rating specs skip before database setup on staging. The
+  specs change none of the staging account's saved data.
 
 A PATCH of an unstored movie at `/api/user-movie-data/{tmdb_id}` reaches TMDB; the tracking fixtures seed their stored
 movie first so real writes stay deterministic. Assertions read titles from the browse responses the page received

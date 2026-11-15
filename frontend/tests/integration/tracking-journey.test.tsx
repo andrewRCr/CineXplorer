@@ -355,8 +355,14 @@ it("tracks a film from discovery through two same-day viewings", async () => {
       },
     ]);
     expect(patches).toEqual([
-      { user_on_watchlist: true },
-      { user_on_watchlist: true },
+      {
+        user_on_watchlist: true,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+      {
+        user_on_watchlist: true,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
     ]);
     await user.click(within(nav()).getByRole("link", { name: "Watchlist" }));
     expect(await screen.findByText("No movies on watchlist")).toBeVisible();

@@ -127,9 +127,6 @@ const Login = () => {
       if (response.success) {
         clearAlert();
         priorityToaster.dismiss(toastId);
-        priorityToaster.success({
-          title: `Welcome back, ${response.data.displayName}!`,
-        });
         void navigate(returnPathFrom(location.search));
       } else {
         priorityToaster.dismiss(toastId);

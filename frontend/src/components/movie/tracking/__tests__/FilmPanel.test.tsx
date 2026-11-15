@@ -93,7 +93,14 @@ it.each([
     const control = screen.getByRole("button", { name });
     expect(control).toHaveAttribute("aria-pressed", String(initial));
     await user.click(control);
-    await waitFor(() => expect(requests).toEqual([{ [field]: !initial }]));
+    await waitFor(() =>
+      expect(requests).toEqual([
+        {
+          [field]: !initial,
+          time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+      ]),
+    );
     expect(control).toHaveAttribute("aria-pressed", String(!initial));
   },
 );

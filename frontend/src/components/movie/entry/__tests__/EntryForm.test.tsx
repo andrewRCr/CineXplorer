@@ -188,7 +188,11 @@ it.each(["dated", "review", "save", "edit"] as const)(
     const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     expect(received).toEqual([
       kind === "save"
-        ? { user_rating: null, user_liked: true }
+        ? {
+            user_rating: null,
+            user_liked: true,
+            time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }
         : {
             watched_on:
               kind === "review"
@@ -239,7 +243,11 @@ it("Liked alone on an unwatched film uses a record save", async () => {
   await user.click(screen.getByRole("checkbox", { name: "Liked" }));
   await user.click(saveButton());
   await waitFor(() => expect(savedResults()[0]?.record).toEqual(returned));
-  expect(received).toEqual({ user_rating: null, user_liked: true });
+  expect(received).toEqual({
+    user_rating: null,
+    user_liked: true,
+    time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
 });
 
 it("validates dates, treats whitespace as empty and keeps an edited entry's date or review", async () => {
@@ -473,7 +481,11 @@ it("zero stars reached by keyboard clears the rating", async () => {
   ).not.toBeInTheDocument();
   await user.click(saveButton());
   await waitFor(() => expect(savedResults()).toHaveLength(1));
-  expect(received).toEqual({ user_rating: null, user_liked: true });
+  expect(received).toEqual({
+    user_rating: null,
+    user_liked: true,
+    time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
 });
 
 it("shows progress and makes fields inert until the save answers", async () => {

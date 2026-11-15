@@ -15,6 +15,7 @@ from pydantic import Field, field_validator
 
 from apps.core.models import Movie
 from apps.movie.constants import TMDB_MAX_PAGE
+from apps.movie.featured import FilmFocusPoint
 from apps.user_movie_data.schemas import UserMovieDataSchema
 
 
@@ -168,6 +169,23 @@ class CastMemberSchema(Schema):
     profile_path: str | None = None
 
 
+def _empty_director_names() -> list[str]:
+    return []
+
+
+class FeaturedMovieSchema(Schema):
+    """The film credit and backdrop shown on the homepage."""
+
+    tmdb_id: int
+    title: str
+    release_date: date | None = None
+    backdrop_path: str | None = None
+    tagline: str | None = None
+    focus_point: FilmFocusPoint | None = None
+    mirrored: bool = False
+    directors: list[str] = Field(default_factory=_empty_director_names)
+
+
 class MovieDetailSchema(MovieListItemSchema):
     """Full movie representation for detail page endpoints.
 
@@ -179,6 +197,8 @@ class MovieDetailSchema(MovieListItemSchema):
     MovieListItemSchema has, plus the additional detail-specific fields.
     """
 
+    backdrop_path: str | None = None
+    tagline: str | None = None
     overview: str | None = None
     genres: list[GenreSchema] = Field(default_factory=_empty_genre_list)
     production_companies: list[ProductionCompanySchema] = Field(

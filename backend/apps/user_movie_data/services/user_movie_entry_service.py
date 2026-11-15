@@ -23,8 +23,9 @@ from apps.user_movie_data.schemas import (
 )
 from apps.user_movie_data.services.movie_card import get_or_fetch_card
 from apps.user_movie_data.services.movie_state_rules import (
-    LIST_TIMES,
+    CHANGE_FIELDS,
     apply_entry_create,
+    record_changes,
     stamp_list_joins,
 )
 from apps.user_movie_data.services.user_movie_data_service import UserMovieDataService
@@ -60,20 +61,21 @@ class UserMovieEntryService:
     def create(
         self, user: AbstractBaseUser, tmdb_id: int, payload: UserMovieEntryWriteSchema
     ) -> UserMovieEntryWriteResponseSchema:
-        zone, today = self._validate(payload)
+        zone, _ = self._validate(payload)
         movie = get_or_fetch_card(self._tmdb_client, tmdb_id)
         with transaction.atomic():
             record, _ = UserMovieData.objects.select_for_update().get_or_create(
                 user=user, movie=movie
             )
-            previous = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
+            now = timezone.now()
+            previous = {attribute: getattr(record, attribute) for _, attribute in CHANGE_FIELDS}
             entry = UserMovieEntry.objects.create(
                 record=record,
                 watched_on=payload.watched_on,
                 rating=payload.rating,
                 review=payload.review,
                 rewatch=payload.rewatch,
-                made_on=today,
+                made_on=now.astimezone(zone).date(),
             )
             record.user_liked = payload.liked
             latest = (
@@ -85,8 +87,16 @@ class UserMovieEntryService:
             if payload.rating is not None and latest is not None and latest.pk == entry.pk:
                 record.user_rating = payload.rating
             apply_entry_create(record, payload.watched_on, zone)
-            stamp_list_joins(record, previous)
+            stamp_list_joins(record, previous, now)
             record.save()
+            record_changes(
+                record,
+                previous,
+                {"user_rating"},
+                now,
+                now.astimezone(zone).date(),
+                from_entry=True,
+            )
             return self._response(user, tmdb_id, entry)
 
     @staticmethod
@@ -110,10 +120,11 @@ class UserMovieEntryService:
         entry_id: int,
         payload: UserMovieEntryWriteSchema,
     ) -> UserMovieEntryWriteResponseSchema:
-        self._validate(payload)
+        zone, _ = self._validate(payload)
         with transaction.atomic():
             record, entry = self._locked_entry(user, tmdb_id, entry_id)
-            previous_flags = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
+            now = timezone.now()
+            previous = {attribute: getattr(record, attribute) for _, attribute in CHANGE_FIELDS}
             history = UserMovieEntry.objects.get_queryset().filter(record=record)
             previous_latest = history.ordered_for_history().first()
             previous_rating = entry.rating
@@ -135,8 +146,16 @@ class UserMovieEntryService:
             ):
                 record.user_rating = entry.rating
             record.user_liked = payload.liked
-            stamp_list_joins(record, previous_flags)
+            stamp_list_joins(record, previous, now)
             record.save()
+            record_changes(
+                record,
+                previous,
+                {"user_rating"},
+                now,
+                now.astimezone(zone).date(),
+                from_entry=True,
+            )
             return self._response(user, tmdb_id, entry)
 
     def delete(

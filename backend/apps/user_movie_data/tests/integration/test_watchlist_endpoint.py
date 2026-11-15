@@ -46,7 +46,7 @@ def signed_in() -> tuple[Client, User]:
     [
         ({}, {111, 222, 333, 444, 777}),
         ({"watchlist": True}, {111, 777}),
-        ({"watched": True}, {222, 444, 777}),
+        ({"watched": True}, {222, 333, 444, 777}),
         ({"liked": True}, {333, 777}),
         ({"rated": True}, {444, 777}),
         ({"watchlist": True, "watched": True, "liked": True, "rated": True}, {777}),
@@ -60,7 +60,7 @@ def test_filters_and_default_state_selection(
     for movie_id, fields in [
         (111, {"user_on_watchlist": True}),
         (222, {"user_watched": True}),
-        (333, {"user_liked": True}),
+        (333, {"user_liked": True, "user_watched": True}),
         (444, {"user_watched": True, "user_rating": 8}),
         (666, {}),
         (
@@ -156,7 +156,7 @@ def test_page_envelope_stored_card_and_empty_page(signed_in: tuple[Client, User]
         overview="Stored overview",
     )
     create_user_movie_data(user, movie, user_on_watchlist=True, user_watched=True, user_rating=9)
-    create_user_movie_data(user, create_movie(551), user_liked=True)
+    create_user_movie_data(user, create_movie(551), user_liked=True, user_watched=True)
     first = client.get(URL, {"page": 1, "page_size": 1, "direction": "asc"}).json()
     assert (
         first["page"],
@@ -256,23 +256,29 @@ def test_openapi_declares_library_responses() -> None:
 
 
 @pytest.mark.parametrize(
-    ("query", "join_sort"),
+    ("query", "ascending"),
     [
-        ({"watchlist": True}, True),
-        ({"watched": True}, True),
-        ({"liked": True}, True),
-        ({"watchlist": True, "rated": True}, True),
-        ({}, False),
-        ({"watchlist": True, "watched": True}, False),
-        ({"rated": True}, False),
+        ({"watchlist": True}, [222, 333, 111]),
+        ({"watched": True}, [333, 111, 222]),
+        ({"liked": True}, [111, 333, 222]),
+        ({"watchlist": True, "rated": True}, [222, 333, 111]),
+        ({"watchlist": True, "watched": True}, [222, 333, 111]),
+        ({"watched": True, "liked": True}, [333, 111, 222]),
+        ({"watched": True, "liked": True, "rated": True}, [333, 111, 222]),
+        ({}, [111, 222, 333]),
+        ({"rated": True}, [111, 222, 333]),
     ],
 )
 @pytest.mark.parametrize("direction", ["asc", "desc"])
-def test_added_sort_uses_one_filtered_list(
-    signed_in: tuple[Client, User], query: dict[str, object], join_sort: bool, direction: str
+def test_added_sort_uses_first_filtered_list(
+    signed_in: tuple[Client, User], query: dict[str, object], ascending: list[int], direction: str
 ) -> None:
     client, user = signed_in
-    for movie_id, created_month, joined_month in [(111, 1, 3), (222, 2, 1)]:
+    for movie_id, created, watchlist, watched, liked in [
+        (111, 1, 3, 2, 1),
+        (222, 2, 1, 3, 3),
+        (333, 3, 2, 1, 2),
+    ]:
         record = create_user_movie_data(
             user,
             create_movie(movie_id),
@@ -281,27 +287,15 @@ def test_added_sort_uses_one_filtered_list(
             user_liked=True,
             user_rating=7,
         )
-        join_times = {
-            stamp: datetime(
-                2020,
-                joined_month if not join_sort or query.get(flag) else created_month,
-                1,
-                tzinfo=UTC,
-            )
-            for flag, stamp in [
-                ("watchlist", "watchlist_added_at"),
-                ("watched", "watched_added_at"),
-                ("liked", "liked_added_at"),
-            ]
-        }
         UserMovieData.objects.filter(pk=record.pk).update(
-            created_at=datetime(2020, created_month, 1, tzinfo=UTC), **join_times
+            created_at=datetime(2020, 1, created, tzinfo=UTC),
+            watchlist_added_at=datetime(2020, 1, watchlist, tzinfo=UTC),
+            watched_added_at=datetime(2020, 1, watched, tzinfo=UTC),
+            liked_added_at=datetime(2020, 1, liked, tzinfo=UTC),
         )
     response = client.get(URL, {**query, "sort": "added", "direction": direction})
     assert response.status_code == 200
-    expected = [222, 111] if join_sort else [111, 222]
-    if direction == "desc":
-        expected.reverse()
+    expected = ascending if direction == "asc" else list(reversed(ascending))
     assert [movie["tmdb_id"] for movie in response.json()["results"]] == expected
 
 

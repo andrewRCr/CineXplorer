@@ -77,7 +77,7 @@ export async function signIn(
             expect(response.ok()).toBe(true);
             await expect(
                 page.getByRole("heading", {
-                    name: "Welcome to CineXplorer",
+                    name: "Popular in theaters",
                     exact: true,
                 }),
             ).toBeVisible();

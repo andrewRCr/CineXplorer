@@ -9,7 +9,7 @@ import {
   createMockMovieListItem,
   createMockUserMovieData,
 } from "@tests/mocks/movieData";
-import { toaster } from "@/components/core/chakra/toaster";
+import { toaster, Toaster } from "@/components/core/chakra/toaster";
 import { HttpResponse, http } from "msw/http";
 import { beforeEach, afterEach, describe, expect, it } from "vitest";
 import { act, render, screen, waitFor } from "@tests/helpers/test-renderer";
@@ -132,12 +132,13 @@ describe("Watchlist Page", () => {
         HttpResponse.json({ detail: "Service unavailable" }, { status: 503 }),
       ),
     );
-    renderWatchlist();
+    renderWatchlist(<Toaster />);
 
     expect(
       await screen.findByText("Error: Request failed with status code 503"),
     ).toBeInTheDocument();
     expectPageTitle();
+    await waitFor(() => expect(screen.getByText("Server error")).toBeVisible());
   });
 });
 

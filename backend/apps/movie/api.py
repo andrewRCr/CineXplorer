@@ -22,6 +22,7 @@ from .helpers import (
     enrich_single_movie_with_user_movie_data,
 )
 from .schemas import (
+    FeaturedMovieSchema,
     GenreSchema,
     KeywordListResponseSchema,
     MovieDetailSchema,
@@ -311,6 +312,12 @@ def browse_movies(
 
     # Enrich with user data if authenticated
     return enrich_response_with_user_movie_data(response, user)
+
+
+@movies_router.get("/featured", response=FeaturedMovieSchema, auth=None)
+def get_featured_movie(request: HttpRequest, film: int | None = None) -> FeaturedMovieSchema:
+    """Serve one classic film for the homepage."""
+    return _movie_service.get_featured_movie(film)
 
 
 @movies_router.get("/{tmdb_id}", response=MovieDetailSchema, auth=None)

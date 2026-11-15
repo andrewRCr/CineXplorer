@@ -201,9 +201,10 @@ export function getPaginationContextId(): string {
 }
 ```
 
-The catalog's movie lists share that tab context. The film picker generates a separate UUID once per page load
-(`getMoviePickerPaginationContextId`) and sends it through `searchMovies`' optional request options. A picker search
-must not clear the catalog search's returned-ID record for the same text.
+The catalog's movie lists share the tab context. Home's section requests and the film picker each generate a
+separate UUID once per page load (`getHomePaginationContextId` and `getMoviePickerPaginationContextId`). Home's
+first-page reads and picker searches must not clear the catalog's returned-ID record. The picker sends its context
+through `searchMovies`' optional request options.
 
 The interceptor preserves an explicit `X-Pagination-Context` and adds the tab's context only when none is supplied:
 

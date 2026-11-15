@@ -141,7 +141,12 @@ it.each(cases)("$name", async (testCase) => {
   expect(screen.queryByText("Also marked as watched.")).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Undo" }));
   await waitFor(() =>
-    expect(requests).toEqual([testCase.changes, testCase.undo]),
+    expect(requests).toEqual(
+      [testCase.changes, testCase.undo].map((body) => ({
+        ...body,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      })),
+    ),
   );
   await waitFor(() =>
     expect(

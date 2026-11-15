@@ -4,7 +4,8 @@
 
 Accepted (2026-11-15)
 
-Supersedes ADR-044 in part (adds Log to the wide bar and "Log a film" to the phone drawer).
+Supersedes ADR-044 in part (adds Log to the wide bar and "Log a film" to the phone drawer), and ADR-046 in part
+(computed catalog row height and equal card heights for signed-in and signed-out visitors).
 
 ## Context
 
@@ -30,8 +31,11 @@ of unusable controls, while the film page can explain what an account adds in on
 
 We will expose one set of tracking controls per card, chosen by the primary input's hover capability. Pointers that
 can hover reveal Watched, Like, Watchlist and Review or log over the poster on hover or keyboard focus. Touch input
-uses a visible menu trigger with the same actions. Cards show these actions only to authenticated visitors. The
-pointer controls share one continuous solid backing bar, highlight each icon on hover, retain pressed icon colors,
+uses a visible menu trigger with the same actions. Cards show these actions only to authenticated visitors, as
+[ADR-046](adr-046-open-home-on-a-classic-film-and-sections-of-films.md) establishes. All cards share the same fixed
+text height, and catalog rows compute their height from the poster and text heights rather than retaining the
+earlier row spacing. The pointer controls share one continuous solid backing bar, highlight each icon on hover,
+retain pressed icon colors,
 and place tooltips above the controls. The controls overlay the poster, so their presence does not change the card's
 text height.
 

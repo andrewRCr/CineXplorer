@@ -32,7 +32,9 @@ the film page lists entries with editing and confirmed deletion.
   invalidation, so deletion and focus movement finish while the refreshed read is pending.
 - Drafts retain their opening's user ownership. Session retirement clears private draft and discard state, and
   a submission already in progress cannot assign the draft to a later user.
-- The picker carries an independent pagination context, and the HTTP layer preserves a caller-supplied context.
+- Home and the picker each carry an independent pagination context; the HTTP layer preserves caller-supplied
+  contexts. Home describes the shared tracking controls, while every record save and Undo carries the browser's
+  time zone.
 - Card text height and virtualized row estimates share constants, with the row gap kept separate.
 - Cards expose named article semantics; metadata keeps one line at the supported minimum width while preserving
   its accessible text. Browser journeys locate cards and controls through their semantic interface.

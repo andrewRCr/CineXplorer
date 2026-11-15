@@ -359,7 +359,7 @@ describe("sign-in and sign-out", () => {
       await act(async () => {
         expect(
           await result.current.login("viewer", "password", rememberMe),
-        ).toEqual({ success: true, data: { displayName: profile.username } });
+        ).toEqual({ success: true, data: undefined });
       });
       expect(requestBody).toEqual({
         login: "viewer",
@@ -1087,9 +1087,7 @@ describe("the first session read on a provider return", () => {
       );
       expect(sessionStorage.getItem("oauth_in_progress")).toBeNull();
       expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
-      await waitFor(() =>
-        expect(screen.getByText("Welcome back, Provider!")).toBeVisible(),
-      );
+      expect(screen.queryByText(/Welcome back/)).not.toBeInTheDocument();
       expect(reads).toBe(1);
     },
   );
@@ -1148,9 +1146,7 @@ describe("the first session read on a provider return", () => {
         result.current.location.pathname + result.current.location.search,
       ).toBe("/watchlist?sort=added"),
     );
-    await waitFor(() =>
-      expect(screen.getByText("Welcome back, Provider!")).toBeVisible(),
-    );
+    expect(screen.queryByText(/Welcome back/)).not.toBeInTheDocument();
     expect(sessionStorage.getItem("oauth_in_progress")).toBeNull();
     expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
     expect(reads).toBe(1);

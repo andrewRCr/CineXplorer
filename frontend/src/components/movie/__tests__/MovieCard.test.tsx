@@ -4,7 +4,7 @@ import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
 import { infiniteMoviesKey } from "@/lib/queries";
 import { browseMovies } from "@/services/movieService";
 import apiClient from "@/services/apiClient";
-import { apiBaseUrl } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { gate } from "@tests/helpers/web-locks";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -55,6 +55,8 @@ beforeEach(() => {
     dispatchEvent: vi.fn(),
   }));
 });
+
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 describe("MovieCard Component", () => {
   const defaultProps = {
@@ -669,12 +671,14 @@ describe("MovieCard watchlist saves", () => {
     expect(remove).toBeEnabled();
     await user.click(remove);
     expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled();
-    expect(requests).toEqual([{ user_on_watchlist: true }]);
+    expect(requests).toEqual([
+      { user_on_watchlist: true, time_zone: timeZone },
+    ]);
     first.release();
     await screen.findByText("Removed from watchlist");
     expect(requests).toEqual([
-      { user_on_watchlist: true },
-      { user_on_watchlist: false },
+      { user_on_watchlist: true, time_zone: timeZone },
+      { user_on_watchlist: false, time_zone: timeZone },
     ]);
     expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
       "aria-pressed",
@@ -941,8 +945,35 @@ describe("MovieCard shared-save composition", () => {
       expect(screen.getByText("Removed from watchlist")).toBeVisible(),
     );
     expect(requests).toEqual([
-      { user_on_watchlist: true },
-      { user_on_watchlist: false, undo: true },
+      { user_on_watchlist: true, time_zone: timeZone },
+      { user_on_watchlist: false, undo: true, time_zone: timeZone },
     ]);
   });
 });
+
+it.each(["anonymous", "resolving"])(
+  "shows no card actions while %s",
+  async (status) => {
+    clearBrowserAuth();
+    authHandlers();
+    const pending = gate();
+    if (status === "resolving")
+      server.use(
+        http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+          await pending.wait;
+          return HttpResponse.json({}, { status: 401 });
+        }),
+      );
+    renderBase(
+      <AuthContextProvider>
+        <MovieCard movie={createMockMovieListItem()} />
+      </AuthContextProvider>,
+    );
+    if (status === "anonymous")
+      await waitFor(() =>
+        expect(screen.queryAllByRole("button")).toHaveLength(0),
+      );
+    else expect(screen.queryAllByRole("button")).toHaveLength(0);
+    pending.release();
+  },
+);

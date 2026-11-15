@@ -114,7 +114,14 @@ it.each([
     </Harness>,
   );
   await userEvent.setup().click(await screen.findByRole("button", { name }));
-  await waitFor(() => expect(requests).toEqual([{ [field]: true }]));
+  await waitFor(() =>
+    expect(requests).toEqual([
+      {
+        [field]: true,
+        time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
+    ]),
+  );
   expect(screen.getByRole("button", { name })).toHaveAttribute(
     "aria-pressed",
     "true",
@@ -222,7 +229,14 @@ it.each([
         .map((item) => item.textContent),
     ).toEqual(["Watched", "Like", "Watchlist"]);
     await user.click(within(menu).getByRole("menuitemcheckbox", { name }));
-    await waitFor(() => expect(requests).toEqual([{ [field]: true }]));
+    await waitFor(() =>
+      expect(requests).toEqual([
+        {
+          [field]: true,
+          time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+      ]),
+    );
     await waitFor(() =>
       expect(screen.queryByRole("menu")).not.toBeInTheDocument(),
     );

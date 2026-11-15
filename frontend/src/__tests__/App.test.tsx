@@ -8,6 +8,7 @@ import { TestProviders } from "@tests/helpers/test-providers";
 import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
 import { server } from "@tests/mocks/server";
 import App from "../App";
+import { homeHandlers } from "@/pages/home/__tests__/homeFixtures";
 
 beforeEach(() => {
   clearBrowserAuth();
@@ -59,5 +60,16 @@ it("loads the protected development page with a page-level fallback", async () =
   expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
   expect(
     await screen.findByRole("button", { name: "Get User Details" }),
+  ).toBeVisible();
+});
+
+it("serves Home's pitch at the root route", async () => {
+  homeHandlers();
+  startAt("/");
+  expect(
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "Track what you watch. Find what's next.",
+    }),
   ).toBeVisible();
 });

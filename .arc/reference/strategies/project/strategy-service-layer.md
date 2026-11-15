@@ -239,7 +239,8 @@ services/
 ├── authService.ts        # Authentication operations
 ├── userMovieDataService.ts  # User movie data operations
 ├── userMovieService.ts   # User-specific movie operations
-├── paginationContext.ts  # Multi-tab pagination isolation
+├── paginationContext.ts  # Catalog, Home and picker pagination isolation
+├── homeRequests.ts       # Home’s quiet reads and separate section context
 ├── consoleCapture.ts     # Development logging
 └── logger.ts             # Application logging
 ```
@@ -269,7 +270,7 @@ apiClient.interceptors.request.use((config) => {
         config.headers["X-CSRFToken"] = getCsrfToken();
     }
 
-    // Catalog lists share the tab context; preserve a picker-supplied context.
+    // Catalog lists share the tab context; Home and the picker supply their own.
     if (isMovieEndpoint(config.url) && !config.headers.has("X-Pagination-Context")) {
         config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
@@ -289,18 +290,22 @@ apiClient.interceptors.response.use(
 );
 ```
 
+Home’s section reads pass `homeSectionOptions`: no global server-error toast and a second pagination context,
+so they never reset the catalog’s record. Its Library read passes `homeReadOptions`, the toast opt-out alone.
+Other readers keep the tab’s context and the global toast.
+
 **Key features:**
 
 - Centralized auth header injection
 - Automatic CSRF token attachment
 - Token refresh with request queuing
-- Pagination context for deduplication: catalog lists share the tab context; the film picker carries its own
+- Pagination context for deduplication: catalog lists share the tab context; Home and the film picker each carry their own
 
 ### httpService Pattern
 
 Paginated reads accept optional `ReadOptions` (`headers` and `shouldReportServerError`) alongside query parameters.
 `fetchPaginatedMovies` and `searchMovies` carry those options through unchanged; the service still owns its abort
-controller. The picker uses them for its pagination context, independently of the catalog's lists.
+controller. Home and the picker use them for their pagination contexts, independently of the catalog's lists.
 
 Generic HTTP service factory for RESTful resources.
 
@@ -322,7 +327,7 @@ class HttpService {
         return { request, cancel: () => controller.abort() };
     }
 
-    getPaginated<T>(params?: Record<string, unknown>) {
+    getPaginated<T>(params?: Record<string, unknown>, options?: ReadOptions) {
         // Paginated resource fetch with cancellation
     }
 

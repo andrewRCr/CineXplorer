@@ -306,12 +306,17 @@ it.each(["dated", "review", "save", "edit"] as const)(
     );
     expect(events.at(-1)?.body).toEqual(
       kind === "save"
-        ? { user_rating: 7, undo: true }
+        ? {
+            user_rating: 7,
+            undo: true,
+            time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          }
         : {
             user_watched: false,
             user_on_watchlist: true,
             user_liked: false,
             undo: true,
+            time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
     );
     await waitFor(() =>

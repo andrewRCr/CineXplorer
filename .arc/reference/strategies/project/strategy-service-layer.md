@@ -269,8 +269,8 @@ apiClient.interceptors.request.use((config) => {
         config.headers["X-CSRFToken"] = getCsrfToken();
     }
 
-    // Pagination context for movie endpoints
-    if (isMovieEndpoint(config.url)) {
+    // Catalog lists share the tab context; preserve a picker-supplied context.
+    if (isMovieEndpoint(config.url) && !config.headers.has("X-Pagination-Context")) {
         config.headers["X-Pagination-Context"] = getPaginationContextId();
     }
 
@@ -294,9 +294,13 @@ apiClient.interceptors.response.use(
 - Centralized auth header injection
 - Automatic CSRF token attachment
 - Token refresh with request queuing
-- Pagination context for deduplication
+- Pagination context for deduplication: catalog lists share the tab context; the film picker carries its own
 
 ### httpService Pattern
+
+Paginated reads accept optional `ReadOptions` (`headers` and `shouldReportServerError`) alongside query parameters.
+`fetchPaginatedMovies` and `searchMovies` carry those options through unchanged; the service still owns its abort
+controller. The picker uses them for its pagination context, independently of the catalog's lists.
 
 Generic HTTP service factory for RESTful resources.
 

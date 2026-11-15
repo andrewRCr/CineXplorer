@@ -112,63 +112,39 @@ Undo bodies, the 409 message, and `useMovieEntries`' tests passing on the expose
 _Mode:_ `slice` — closes on the tracking journey running end to end (criterion 1), from the bar and the cards through
 the film page.
 
-- [ ] **2.1 The picker finds films as the visitor types, under its own pagination context — R26, R27, R28, R40**
+- [x] **2.1 The picker finds films as the visitor types, under its own pagination context — R26, R27, R28, R40**
 
     **Goal:** Typing two or more characters in the "Film" combobox lists up to ten films with poster, title and year
     after a 300ms pause, reports a choice through `onSelect`, and never clears the search page's record of films shown.
 
-    - [ ] **2.1.a Check `main` for the landing page before starting**
-        - Fetch, and run `node scripts/worktree.mjs overlap frontend/src/services/apiClient.ts
-          frontend/src/services/httpService.ts frontend/src/services/movieService.ts`
-        - If the landing page is on `main`, propose merging `main` first (the Owner approves the merge), apply what an
-          early merge can ("Merges of `main`" in the Implementation Notes), then build on its interceptor check and
-          `ReadOptions`; otherwise make 2.1.c's change in the landing page's form (see Implementation Notes), so
-          whichever merges second keeps one form
-
-    - [ ] **2.1.b Write the read path's tests**
-        - `src/services/__tests__/apiClient.test.ts`: the interceptor keeps a caller's `X-Pagination-Context` on the
-          movie list endpoints and adds the tab's only when the request has none; the existing one-context case is
-          renamed to the catalog's lists sharing the tab's context
-        - `src/services/__tests__/httpService.test.ts`: `getPaginated` sends the request options it is given
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.c Let the read path carry a caller's context**
-        - The interceptor in `apiClient.ts` sets the tab's context only when none is set; `HttpService.getPaginated`,
-          `fetchPaginatedMovies` and `searchMovies` take optional request options; `paginationContext.ts` gains the
-          picker's context, one per page load
-        - Tests should now PASS
-
-    - [ ] **2.1.d Write the query entry's tests in `src/hooks/movie/__tests__/useMoviePickerItems.test.tsx`**
-        - Fake timers: no request below two characters (trimmed); one request after typing pauses for 300ms; the first
-          page of `GET /movies/search` for the trimmed text; results mapped to `{ tmdbId, title, year, posterPath }`
-          and cut to ten; the previous items kept while the next search loads; the request carrying the picker's
-          context, not the tab's (criterion 6)
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.e Add `moviePickerQuery(text)` to `src/lib/queries.ts` and its hook in `useMoviePickerItems.ts`**
-        - The entry owns the fetch, the hook the debounce and the minimum, so a suggestions endpoint replaces the
-          search in this one place
-        - Tests should now PASS
-
-    - [ ] **2.1.f Write `MoviePicker`'s tests in `src/components/movie/__tests__/MoviePicker.test.tsx`**
-        - Labelled "Film"; closed under two characters; "Searching…"; `No films match "{text}".`; "Search failed. Keep
-          typing to try again."; items with a poster (or `PosterPlaceholder`), title and year; choosing an item calls
-          `onSelect` with it, by keyboard and pointer; the chosen item shows a check mark
-        - In `src/theme/recipes/__tests__/`, the combobox recipe gives the highlighted item a solid `tertiary` fill with
-          `on-tertiary` text (criterion 6)
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.g Build `src/components/movie/MoviePicker.tsx` and `src/theme/recipes/combobox.ts`**
-        - Chakra `Combobox` fed by `useMoviePickerItems`; `Combobox.ItemIndicator` for the chosen item, never a fill;
-          export it from `recipes/index.ts`, register it under `slotRecipes` in `src/theme/index.ts`, and run
-          `npm run typegen`
-        - Tests should now PASS
-
-    - [ ] **2.1.h State the two contexts and the combobox highlight where the rules are written**
-        - `strategy-pagination.md` § Multi-Tab Isolation and the interceptor example in `strategy-service-layer.md`:
-          the catalog's lists share the tab's context, and the picker carries its own (with Home's too, if the landing
-          page is on `main`)
-        - `strategy-component-styling.md`: the highlight rule for the menu and select recipes names the combobox recipe
+    - [x] **2.1.a Fetch and check `main` and read-path overlap**
+        - The landing page is not on `main`; no merge was needed. The shared interceptor and `ReadOptions` changes
+          use its committed form, so whichever merges second keeps one implementation.
+    - [x] **2.1.b Cover explicit pagination contexts and paginated request options**
+        - Both new cases failed with rejected requests before implementation; all 33 API-client/HTTP-service cases
+          passed afterward. The existing context case now names the catalog lists sharing the tab context.
+    - [x] **2.1.c Carry caller options through the movie search read path**
+        - `ReadOptions` carries headers and the error-reporting predicate. The interceptor preserves a caller's
+          pagination context; paginated services and search forward it. The picker has its own per-page UUID.
+    - [x] **2.1.d Cover the picker query through MSW and fake timers**
+        - Covers the two-character minimum, trimming, 300ms debounce, first-page mapping to ten items, retained
+          results and an independent stable context. A clear-and-retype case exposed an obsolete-query retry before
+          the new debounce; it failed before the query's enable guard was corrected.
+    - [x] **2.1.e Add `moviePickerQuery` and `useMoviePickerItems`**
+        - The query owns search and mapping; the hook owns debounce, minimum and previous items. Fetching requires
+          current trimmed text to match the debounced key, preventing obsolete requests after clearing and retyping.
+    - [x] **2.1.f Cover picker selection, status messages and the highlight recipe**
+        - Behavioral failures preceded the component and theme implementation. Keyboard and pointer choose a film;
+          loading, empty and error states render and recover, posters have a placeholder and choices show a check.
+          The recipe test compares computed highlight colors with independently resolved theme roles.
+    - [x] **2.1.g Build `MoviePicker` and register the combobox recipe**
+        - Uses Chakra's combobox and empty/loading contracts with named options, item indicators and semantic colors;
+          generated the theme types. Corrected the new selection test to await popup closure.
+        - The frontend suite passed 3,228 tests across 104 files. After the final debounce guard, all eight focused
+          picker/recipe tests, full ESLint and frontend type checking passed; formatting and markdown lint passed.
+    - [x] **2.1.h Document contexts and the combobox highlight**
+        - Pagination and service-layer strategies distinguish catalog and picker contexts and optional read options.
+          The styling strategy extends keyboard/pointer highlight and check-mark selection rules to comboboxes.
 
 - [ ] **2.2 One dialog opens over any page and gives focus back — R19, R20, R39**
 

@@ -252,10 +252,11 @@ Tokens](./strategy-color-tokens.md#chakras-own-tokens)); name the role directly.
 
 ### Interaction States on Surfaces
 
-The menu and select recipes give the highlighted item a solid `tertiary` fill with `on-tertiary` text. Menu and
-Select keep focus on their list, so this highlight is the item's focus indicator and marks both keyboard and pointer
-navigation. A chosen option shows its check mark (`Menu.ItemIndicator` inside a `Menu.RadioItem`, or
-`Select.ItemIndicator`), never a fill, so the choice stays distinguishable from the highlight.
+The menu, select and combobox recipes give the highlighted item a solid `tertiary` fill with `on-tertiary` text.
+Menu and Select keep focus on their list; Combobox keeps input focus and identifies the active option. The highlight
+marks keyboard and pointer navigation. A chosen option shows its check mark (`Menu.ItemIndicator` inside a
+`Menu.RadioItem`, `Select.ItemIndicator` or `Combobox.ItemIndicator`), never a fill, so the choice stays distinguishable
+from the highlight.
 
 **For interactive surfaces** (cards with hover and selectable list items):
 

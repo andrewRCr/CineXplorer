@@ -37,6 +37,7 @@ import { zIndexSemanticTokens } from "./layout/z-index";
 import {
     buttonRecipe,
     selectRecipe,
+    comboboxRecipe,
     alertRecipe,
     badgeRecipe,
     checkboxRecipe,
@@ -213,6 +214,7 @@ const baseConfig = defineConfig({
             radioGroup: radioRecipe,
             // Select recipe (trigger, content, item slots)
             select: selectRecipe,
+            combobox: comboboxRecipe,
             // Alert recipe (root, icon, title, description slots)
             alert: alertRecipe,
             // Switch recipe (control, thumb slots)

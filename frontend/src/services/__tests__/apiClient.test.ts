@@ -404,7 +404,7 @@ describe("authorization and pagination responses", () => {
         expect(refreshes).toBe(0);
     });
 
-    it("uses one pagination context for movie collections and omits it elsewhere", async () => {
+    it("catalog lists share the tab pagination context and omit it elsewhere", async () => {
         const endpoints = [
             "/movies/browse",
             "/movies/now-playing",
@@ -450,4 +450,22 @@ describe("authorization and pagination responses", () => {
             });
         expect((await apiClient.get("/profile/")).data).toEqual({ id: 7 });
     });
+});
+
+it("preserves a caller's pagination context on movie list requests", async () => {
+    const page = { page: 1, results: [], total_pages: 0, total_results: 0 };
+    server.use(
+        http.get(`${apiBaseUrl}/movies/search`, ({ request }) =>
+            request.headers.get("X-Pagination-Context") === "picker-context"
+                ? HttpResponse.json(page)
+                : HttpResponse.json(
+                      { detail: "Wrong context" },
+                      { status: 400 },
+                  ),
+        ),
+    );
+    const response = await apiClient.get("/movies/search", {
+        headers: { "X-Pagination-Context": "picker-context" },
+    });
+    expect(response.data).toEqual(page);
 });

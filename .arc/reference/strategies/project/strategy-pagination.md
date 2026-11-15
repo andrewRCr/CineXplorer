@@ -201,11 +201,17 @@ export function getPaginationContextId(): string {
 }
 ```
 
-Sent via header on every movie endpoint request:
+The catalog's movie lists share that tab context. The film picker generates a separate UUID once per page load
+(`getMoviePickerPaginationContextId`) and sends it through `searchMovies`' optional request options. A picker search
+must not clear the catalog search's returned-ID record for the same text.
+
+The interceptor preserves an explicit `X-Pagination-Context` and adds the tab's context only when none is supplied:
 
 ```typescript
 // frontend/src/services/apiClient.ts
-config.headers["X-Pagination-Context"] = getPaginationContextId();
+if (!config.headers.has("X-Pagination-Context")) {
+    config.headers["X-Pagination-Context"] = getPaginationContextId();
+}
 ```
 
 ---

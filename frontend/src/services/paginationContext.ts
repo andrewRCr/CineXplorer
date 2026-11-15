@@ -20,3 +20,10 @@ const paginationContextId = crypto.randomUUID();
 export function getPaginationContextId(): string {
     return paginationContextId;
 }
+
+const moviePickerPaginationContextId = crypto.randomUUID();
+
+/** Picker first-page reads never reset a catalog search's pagination record. */
+export function getMoviePickerPaginationContextId(): string {
+    return moviePickerPaginationContextId;
+}

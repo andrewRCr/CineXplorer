@@ -1,4 +1,4 @@
-import create from "./httpService";
+import create, { type ReadOptions } from "./httpService";
 import type {
     MovieListItem,
     MovieDetail,
@@ -69,8 +69,9 @@ export const fetchSearchPeopleService = create("/people/search");
 export const fetchPaginatedMovies = (
     service: ReturnType<typeof create>,
     params?: MovieQueryParams,
+    options?: ReadOptions,
 ) => {
-    return service.getPaginated<MovieListResponse>(params);
+    return service.getPaginated<MovieListResponse>(params, options);
 };
 
 /**
@@ -143,8 +144,11 @@ export const browseMovies = (params?: MovieQueryParams) => {
 /**
  * Search movies by query
  */
-export const searchMovies = (params?: MovieQueryParams) => {
-    return fetchPaginatedMovies(fetchSearchMoviesService, params);
+export const searchMovies = (
+    params?: MovieQueryParams,
+    options?: ReadOptions,
+) => {
+    return fetchPaginatedMovies(fetchSearchMoviesService, params, options);
 };
 
 /**

@@ -1,5 +1,5 @@
 /** Partially save the signed-in user's movie state by TMDB ID. */
-import create from "./httpService";
+import create, { type ReadOptions } from "./httpService";
 import apiClient from "./apiClient";
 import type { AxiosRequestConfig } from "axios";
 import type { components } from "@/types/api";
@@ -34,8 +34,11 @@ export type ActivityParams = Partial<
 export const getMovieEntries = (tmdbId: number) =>
     userMovieDataService.get<MovieEntries>(`${tmdbId}/entries`);
 
-export const getActivity = (params: ActivityParams) =>
-    create("/user-movie-data/entries").getPaginated<ActivityPage>(params);
+export const getActivity = (params: ActivityParams, options?: ReadOptions) =>
+    create("/user-movie-data/entries").getPaginated<ActivityPage>(
+        params,
+        options,
+    );
 
 export type HistoryPage =
     components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];

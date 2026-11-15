@@ -446,60 +446,32 @@ History, with each case of R34 that holds applied.
         - The local journey finds the second fixture's Marked watched row, expanding its day's watched group when
           present, then scans History. Hiding change rows made the assertion fail; restoring them passed the spec.
 
-- [ ] **5.5 Apply what `main` holds of the neighbouring work — R34, R35**
+- [x] **5.5 Apply what `main` holds of the neighbouring work — R34, R35**
 
     **Goal:** Each case of R34c and R34d that holds at the merge is in place with its tests, and a case that doesn't is
     recorded as such here.
 
-    - [ ] **5.5.a If `main` has the card controls' log dialog (R34c)**
-        - The Films view's and History's empty states add "Log a film", calling `useEntryDialog().open({ dateOn: true,
-          returnFocus })` with the current view's link in the Library navigation; tests that it opens the dialog on its
-          picker with the date on, and that focus lands on that link once the empty state has gone
-        - In `library.spec.ts`, the dialog's steps replace step 4, as R34c lists them; step 1 and `Watchlist.test.tsx`'s
-          removal from a card press the card's Watchlist toggle
-        - The spec serves the first fixture film's detail from its own `page.route`, titled as the seed titles it (R29),
-          since the dialog's steps open its page and `fixtures.ts` would answer it as "Movie 2000000001"; it scans that
-          page
-        - `phone-width.spec.ts`'s 1024px step adds Log to the bar items it checks (R1); the controls' task list adds it
-          only when the controls merge second
-        - ADR-050 records the dialog's steps; no `button-name` baseline entry stays for `/watchlist` or `/library` if
-          the cards name their icon buttons
-        - The controls' own task list applies the same case if it merges second; only one of the two lands it
-
-    - [ ] **5.5.b If `main`'s signed-in Home lacks "Recently watched" (R34d)**
-
-        **Note:** Planned against `technical/landing-page`'s Home (`pages/home/SignedInHome.tsx`, `WatchlistSection.tsx`,
-        `WhatsOn.tsx`, `services/homeRequests.ts`); after 5.1's merge, check it against `main`'s Home and correct these
-        subtasks in place before building. If Home already has the section, nothing changes.
-
-        - [ ] **5.5.b.1 Write the cases in `pages/home/__tests__/Home.test.tsx` and `RecentlyWatched.test.tsx`**
-            - Signed-in Home shows a section headed "Recently watched" after the watchlist's section and before what's
-              on
-            - It reads `/user-movie-data/entries` with `page: 1` and `page_size: 5` and lists those viewings newest
-              first, one per viewing (a film seen twice appears twice), each with its date, `RewatchIcon` when a
-              rewatch, a small poster, the title and release year, and `RatingStars` at `sm`; each links to its film
-              with `from=home`
-            - "See all" opens `/library/history`; the watchlist section's "See all" still opens `/watchlist`
-            - Home's first render waits for this read with the watchlist's; a visitor with no watchlist films and some
-              viewings sees the section, not the nothing-saved set; a visitor with neither sees the nothing-saved set; a
-              visitor with no viewings sees no section
-            - A failed read shows the section's failed state with Retry, which reads again, as the watchlist's section
-              does
-            - Expect tests to FAIL initially
-
-        - [ ] **5.5.b.2 Build the section**
-            - `getActivity` and `activityQuery` take an optional `ReadOptions`, as the landing page's `getUserMovies`
-              and `libraryQuery` do; `homeActivityQuery()` beside `homeWatchlistQuery()` reads page 1 with `page_size`
-              5 and `homeReadOptions`
-            - `SignedInHome` chooses its set once both reads settle: nothing-saved only when the watchlist is empty and
-              there are no viewings, an error in either counting as having something, as the watchlist's does today
-            - `RecentlyWatched` in `pages/home/`, between `WatchlistSection` and `WhatsOn`, on the shared `FilmSection`
-              (`components/movie/sections/`) as `WatchlistSection` is: it gives the `h2`, "See all", the failed state
-              ("Couldn't load these films." with Retry) and no section when the read returns none
-            - Each viewing's row is keyed by its entry's ID, since one film can appear twice
-            - Tests should now PASS
-
-    - [ ] **5.5.c Record here which cases held, and run the tests and specs they touched**
+    - [~] **5.5.a Card controls' log dialog case**
+        - The approved merge of `main` at `1f7416f5` had no log dialog or `useEntryDialog`; R34c did not apply.
+          Existing empty states, card actions and browser removal remain appropriate to that merge. Any later merge
+          must recheck R34 before verification.
+    - [x] **5.5.b Add Recently watched to signed-in Home — R34d**
+        - The merged Home matched the planned paths and lacked this section; its implementation needed no task-plan
+          correction.
+        - [x] **5.5.b.1 Cover Home's viewing read and rows**
+            - Added `RecentlyWatched.test.tsx`: five newest viewings, duplicate films as separate entries, calendar
+              dates, rewatch, posters, year, stars and Home links, section order and both See all destinations.
+              Viewings alone and a read error choose the visitor set; Retry recovers; an empty result hides the section.
+            - Extended Home's first-read cases to wait for viewings alongside session and watchlist. New behaviors
+              failed before implementation; forcing an empty section visible also failed the empty-state assertion.
+        - [x] **5.5.b.2 Build the section and combined first-read gate**
+            - Activity reads accept optional read options; the shared factory reads five for Home with its error
+              policy. Home chooses its first set after both personal reads settle, counting either error as content.
+            - Reused FilmSection with generic result data and a read-only list whose length controls its empty state.
+              Viewing rows use entry IDs, semantic colors, local calendar formatting and native time elements.
+    - [x] **5.5.c Check the applicable integration**
+        - All 518 related cases across 37 files, frontend lint, formatting and type-check pass. Chakra's time-element
+          prop type error was corrected through `asChild`. All seven sign-in and phone-width browser cases pass.
 
 - [ ] **5.6 History's read meets its timing on a heavy account — criterion 15**
 

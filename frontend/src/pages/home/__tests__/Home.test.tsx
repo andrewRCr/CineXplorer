@@ -190,7 +190,7 @@ it.each(["Ada", ""])(
     ).not.toBeInTheDocument();
   },
 );
-it.each(["session", "watchlist"])(
+it.each(["session", "watchlist", "viewings"])(
   "waits for the first %s read before choosing signed-in Home",
   async (kind) => {
     setAuthTokens(token());
@@ -205,6 +205,15 @@ it.each(["session", "watchlist"])(
         if (kind === "watchlist") await pending.wait;
         return HttpResponse.json(createMockMoviePage([savedFilm]));
       }),
+      http.get(`${apiBaseUrl}/user-movie-data/entries`, async () => {
+        if (kind === "viewings") await pending.wait;
+        return HttpResponse.json({
+          page: 1,
+          total_pages: 0,
+          total_results: 0,
+          results: [],
+        });
+      }),
     );
     render(
       <AuthContextProvider>
@@ -213,6 +222,10 @@ it.each(["session", "watchlist"])(
     );
     expect(screen.getByText("Loading...")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 30));
+    });
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
     pending.release();
     expect(
       await screen.findByRole("heading", { name: "Welcome back, Movie" }),

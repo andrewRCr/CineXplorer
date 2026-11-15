@@ -40,6 +40,14 @@ export function homeHandlers() {
                 ]),
             ),
         ),
+        http.get(`${apiBaseUrl}/user-movie-data/entries`, () =>
+            HttpResponse.json({
+                page: 1,
+                total_pages: 0,
+                total_results: 0,
+                results: [],
+            }),
+        ),
         http.get(`${apiBaseUrl}/user-movie-data/movies`, () =>
             HttpResponse.json(createMockMoviePage([])),
         ),

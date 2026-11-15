@@ -14,7 +14,7 @@ import type {
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
-import type { MovieListItem, MovieListResponse } from "@/types/movie";
+import type { MovieListResponse } from "@/types/movie";
 
 export type FilmQuery<Key extends QueryKey> = UseQueryOptions<
   MovieListResponse,
@@ -22,20 +22,20 @@ export type FilmQuery<Key extends QueryKey> = UseQueryOptions<
   MovieListResponse,
   Key
 >;
-interface FilmSectionProps {
+interface FilmSectionProps<TData> {
   title: string;
   seeAll?: string;
   controls?: ReactNode;
   placeholder?: ReactNode;
   result: Pick<
-    UseQueryResult<MovieListResponse>,
+    UseQueryResult<TData>,
     "isPending" | "isError" | "isFetching" | "refetch"
   >;
-  films: MovieListItem[];
+  films: readonly unknown[];
   children: ReactNode;
 }
 
-export function FilmSection({
+export function FilmSection<TData>({
   title,
   seeAll,
   controls,
@@ -43,7 +43,7 @@ export function FilmSection({
   result,
   films,
   children,
-}: FilmSectionProps) {
+}: FilmSectionProps<TData>) {
   const heading = useId();
   if (!result.isPending && !result.isError && films.length === 0) return null;
   return (

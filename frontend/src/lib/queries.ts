@@ -126,10 +126,11 @@ export const movieEntriesQuery = (tmdbId: number) =>
         queryFn: ({ signal }) =>
             readWithSignal(signal, getMovieEntries(tmdbId)),
     });
-export const activityQuery = (params: ActivityParams) =>
+export const activityQuery = (params: ActivityParams, options?: ReadOptions) =>
     queryOptions({
         queryKey: [...entriesKey, "activity", params] as const,
-        queryFn: ({ signal }) => readWithSignal(signal, getActivity(params)),
+        queryFn: ({ signal }) =>
+            readWithSignal(signal, getActivity(params, options)),
     });
 
 export const historyPagesQuery = () =>
@@ -165,3 +166,6 @@ export const historyChangesQuery = (group: HistoryGroupKey) =>
                 ? lastPage.page + 1
                 : undefined,
     });
+
+export const homeActivityQuery = () =>
+    activityQuery({ page: 1, page_size: 5 }, homeReadOptions);

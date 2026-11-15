@@ -264,35 +264,28 @@ the film page.
           refinement passed all 125 related cases, lint, type-check and formatting. The unsupported Testing Library
           `exact` option was corrected mechanically after type-check reported it.
 
-- [ ] **3.2 Every card has one height and shows the visitor's rating and watched mark — R1, R2, R5, R6, R7**
+- [x] **3.2 Every card has one height and shows the visitor's rating and watched mark — R1, R2, R5, R6, R7**
 
     **Goal:** Cards draw the poster first with no border and a fixed text block (title, year and score, stars line), so
     every card in a row is the same height signed in or out, and the browse grid's row estimate is computed from that
     height.
 
-    - [ ] **3.2.a Write the layout cases in `MovieCard.test.tsx`**
-        - The year ("Year unknown" without a date) replaces the long date; the stars line shows `RatingStars` ("Rated
-          3.5 out of 5 stars" for 7) or nothing; the watched mark is one image named "Watched" when watched; neither
-          shows with no record; the poster's link, the title's link and the score stay
-        - A rerender with a changed `user_rating` or `user_watched` updates the stars line and the watched mark
-        - Rewrite the date-formatting cases, and "memoizes expensive calculations" (it asserts the long date's month),
-          to the year
-        - Expect tests to FAIL initially
-
-    - [ ] **3.2.b Write the row height cases in `collection/__tests__/grids/VirtualizedMovieGrid.test.tsx`**
-        - `estimateSize` equals `CARD_WIDTH × 1.5 + CARD_TEXT_HEIGHT` (criterion 11); the gap assertion stays at `GAP`;
-          the mocked rows take the new height
-        - Expect tests to FAIL initially
-
-    - [ ] **3.2.c Rebuild the card's text block and compute the row height**
-        - `CARD_TEXT_HEIGHT` in `gridConstants.ts`, sized for the two-line title, the year line and the stars line;
-          `ROW_HEIGHT` in `VirtualizedMovieGrid.tsx` computed from it; the borders of `MovieCard` and
-          `MovieCardContainer` go; the shadow, the poster's scale and the accent line stay
-        - `GridSkeletonLoader`'s placeholder cards take the new height
-        - Every page that draws `MovieCard` keeps it at 138px or wider (R6)
-        - Tests should now PASS
-
-    - [ ] **3.2.d Run `e2e/browse.spec.ts` and `e2e/back-to-results.spec.ts` against the browsable stack**
+    - [x] **3.2.a Cover the year, rating and watched display**
+        - Replaced long-date cases with exact year and unknown-year cases, preserving the title links and score.
+          Added record presence/absence and refreshed rating/Watched cases; the display tests failed before the change.
+        - The Watched image explicitly overrides Chakra's decorative icon default so its accessible name is exposed.
+    - [x] **3.2.b Assert the computed row height and retain the separate gap**
+        - The virtualizer's item-size assertion failed at 449px against the new 419px contract. Its mocked rows use the
+          computed height and `GAP`; the gap assertion remains independent.
+    - [x] **3.2.c Fix the text block and share its height with the virtualizer**
+        - `CARD_TEXT_HEIGHT` is 128px, reserving two title lines, year/score/Watched and the stars line. With the 194px
+          poster width, the row estimate is `CARD_WIDTH × 1.5 + CARD_TEXT_HEIGHT` (419px), excluding the gap.
+        - Removed both card borders; retained shadows, poster scale and the accent line. Cards have a 138px minimum;
+          current collection grids keep their 194px columns. Skeletons inherit the same geometry.
+    - [x] **3.2.d Check browse and restored navigation in the browser**
+        - Both browse and back-to-results smokes pass (run `eb0faed15c3a4fa29943f3a061246ef2`). Rendered cards measure
+          194×419px at 1280px and 390px viewports (run `7577d5eec6ed428dbce52f600bdab89f`).
+        - All 163 related tests, touched-file lint, frontend type-check and formatting pass.
 
 ### **Phase 4:** The film page tracks the film and lists its log
 

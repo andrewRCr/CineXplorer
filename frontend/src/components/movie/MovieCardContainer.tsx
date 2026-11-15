@@ -7,13 +7,7 @@ interface MovieCardContainerProps {
 
 const MovieCardContainer = ({ children }: MovieCardContainerProps) => {
   return (
-    <Box
-      borderRadius={10}
-      boxShadow="shadow-sm"
-      border="1px solid"
-      borderColor="border-strong-01"
-      overflow="hidden"
-    >
+    <Box borderRadius={10} boxShadow="shadow-sm" overflow="hidden">
       {children}
     </Box>
   );

@@ -247,98 +247,71 @@ describe("MovieCard Component", () => {
     });
   });
 
-  describe("Date Formatting", () => {
-    it("formats release date correctly", () => {
-      const testMovie = createMockMovieListItem({
-        release_date: "2023-12-25",
-      });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Date formatting can vary by locale/timezone - test for presence of year
-      // More reliable than exact string matching
-      const dateText = screen.getByText(/2023/);
-      expect(dateText).toBeInTheDocument();
-      expect(dateText.textContent).toMatch(/December|Dec/);
+  describe("Release year and record display", () => {
+    it.each([
+      ["2023-12-25", "2023"],
+      ["1980-01-01", "1980"],
+      ["1999-12-31", "1999"],
+      [null, "Year unknown"],
+      ["", "Year unknown"],
+      ["invalid-date", "Year unknown"],
+    ])("shows the year for %j as %s", (release_date, expected) => {
+      render(
+        <MovieCard
+          {...defaultProps}
+          movie={createMockMovieListItem({ release_date })}
+        />,
+      );
+      expect(screen.getByText(expected, { exact: true })).toBeVisible();
     });
 
-    it("handles different date formats", () => {
-      const testMovie = createMockMovieListItem({
-        release_date: "2020-01-01",
+    it("shows the current rating and watched mark, then clears them without a record", () => {
+      const movie = createMockMovieListItem({
+        user_movie_data: createMockUserMovieData({
+          user_rating: 7,
+          user_watched: true,
+        }),
       });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Date formatting can be affected by timezone in test environment
-      // Look for any date content that indicates the date was processed
-      const dateElements = screen.getAllByText(/\d{4}/); // Find elements with 4 digits (year)
-      expect(dateElements.length).toBeGreaterThan(0);
-
-      // Verify that a formatted date is displayed (month name + year)
-      const hasFormattedDate =
-        screen.queryByText(
-          /\b(January|February|March|April|May|June|July|August|September|October|November|December)\b.*\d{4}/,
-        ) ||
-        screen.queryByText(
-          /\d{4}.*\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/,
-        );
-      expect(hasFormattedDate).toBeInTheDocument();
+      const view = render(<MovieCard movie={movie} />);
+      expect(
+        screen.getByRole("img", { name: "Rated 3.5 out of 5 stars" }),
+      ).toBeVisible();
+      expect(screen.getAllByRole("img", { name: "Watched" })).toHaveLength(1);
+      expect(screen.getAllByRole("link", { name: movie.title })).toHaveLength(
+        2,
+      );
+      expect(screen.getByText("8.2")).toBeVisible();
+      view.rerender(<MovieCard movie={{ ...movie, user_movie_data: null }} />);
+      expect(
+        screen.queryByRole("img", { name: /Rated/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("img", { name: "Watched" }),
+      ).not.toBeInTheDocument();
     });
 
-    it("displays ISO date without timezone shifting", () => {
-      // Critical test: ISO date "1980-01-01" should display as January 1, 1980
-      // NOT December 31, 1979 (which happens when new Date() converts UTC to local)
-      //
-      // This test validates the fix even in UTC environments by checking exact date values
-      const testMovie = createMockMovieListItem({
-        release_date: "1980-01-01",
+    it("updates rating and watched displays from a refreshed record", () => {
+      const record = createMockUserMovieData({
+        user_rating: null,
+        user_watched: false,
       });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Should display exactly January 1, 1980
-      const dateText = screen.getByText(/January 1, 1980/);
-      expect(dateText).toBeInTheDocument();
-
-      // Verify the WRONG parsing would give us wrong results
-      // If we used: new Date('1980-01-01') in US Eastern (UTC-5):
-      // - It interprets as 1980-01-01 00:00 UTC
-      // - Converts to local: 1979-12-31 19:00 EST
-      // - getMonth() returns 11 (December), getDate() returns 31, getFullYear() returns 1979
-      // Our fix parses the string components directly to avoid this
-    });
-
-    it("handles year boundary dates correctly without timezone conversion", () => {
-      // Another boundary case: December 31 should stay December 31
-      const testMovie = createMockMovieListItem({
-        release_date: "1999-12-31",
-      });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Should display exactly December 31, 1999 (not shift to January 1, 2000)
-      const dateText = screen.getByText(/December 31, 1999/);
-      expect(dateText).toBeInTheDocument();
-    });
-
-    it("parses ISO date components directly without Date() constructor timezone conversion", () => {
-      // This test explicitly validates that we parse "YYYY-MM-DD" components
-      // rather than using new Date(iso_string) which triggers timezone conversion
-      const testCases = [
-        { release_date: "2020-01-01", expected: "January 1, 2020" },
-        { release_date: "2020-12-31", expected: "December 31, 2020" },
-        { release_date: "1988-06-15", expected: "June 15, 1988" },
-      ];
-
-      testCases.forEach(({ release_date, expected }) => {
-        const testMovie = createMockMovieListItem({ release_date });
-        const { unmount } = render(
-          <MovieCard {...defaultProps} movie={testMovie} />,
-        );
-
-        expect(screen.getByText(expected)).toBeInTheDocument();
-        unmount();
-      });
+      const movie = createMockMovieListItem({ user_movie_data: record });
+      const view = render(<MovieCard movie={movie} />);
+      expect(
+        screen.queryByRole("img", { name: /Rated/ }),
+      ).not.toBeInTheDocument();
+      view.rerender(
+        <MovieCard
+          movie={{
+            ...movie,
+            user_movie_data: { ...record, user_rating: 7, user_watched: true },
+          }}
+        />,
+      );
+      expect(
+        screen.getByRole("img", { name: "Rated 3.5 out of 5 stars" }),
+      ).toBeVisible();
+      expect(screen.getByRole("img", { name: "Watched" })).toBeVisible();
     });
   });
 
@@ -405,7 +378,7 @@ describe("MovieCard Component", () => {
   });
 
   describe("Performance Optimizations", () => {
-    it("memoizes expensive calculations", () => {
+    it("keeps the release year across an unchanged rerender", () => {
       const testMovie = createMockMovieListItem({
         release_date: "2023-06-15",
         poster_path: "/test.jpg",
@@ -419,7 +392,7 @@ describe("MovieCard Component", () => {
       // Test that date is rendered (exact format may vary)
       const dateElement = screen.getByText(/2023/);
       expect(dateElement).toBeInTheDocument();
-      expect(dateElement.textContent).toMatch(/June|Jun/);
+      expect(dateElement).toHaveTextContent(/^2023$/);
 
       // Re-render with same props - should work without errors
       rerender(<MovieCard {...defaultProps} movie={testMovie} />);

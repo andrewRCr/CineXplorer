@@ -1,8 +1,11 @@
-import { Card, Image, Box, Text } from "@chakra-ui/react";
+import { Card, Image, Box, Text, Icon } from "@chakra-ui/react";
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router";
 import { type MovieListItem } from "@/types/movie";
 import { MovieCardActions } from "./MovieCardActions";
+import { RatingStars } from "./RatingStars";
+import { LuEye } from "react-icons/lu";
+import { CARD_TEXT_HEIGHT } from "@/components/movie/collection/shared/gridConstants";
 import MovieUserScore from "./MovieUserScore";
 import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
 import PosterPlaceholder from "@/assets/PosterPlaceholder";
@@ -14,8 +17,8 @@ import PosterPlaceholder from "@/assets/PosterPlaceholder";
 // Displays a movie poster card with:
 // - Poster image with hover zoom effect
 // - Title (with tooltip for truncated titles)
-// - Release date and user score
-// - Action buttons (watched, liked, watchlist)
+// - Release year, score, watched mark and current rating
+// - Signed-in pointer controls or touch actions
 //
 // ============================================================================
 
@@ -56,33 +59,8 @@ const MovieCard = ({
   // Computed Values
   // ==========================================================================
 
-  // Format release date for display
-  // CRITICAL: Parse ISO date without timezone conversion to avoid date shift
-  // (e.g., "1980-01-01" displaying as "December 31, 1979" in US timezones)
-  const formattedDate = useMemo(() => {
-    if (!movie.release_date) return "Release date unknown";
-
-    const dateParts = movie.release_date.split("-");
-    if (dateParts.length !== 3) return "Release date unknown";
-
-    const year = Number.parseInt(dateParts[0] ?? "", 10);
-    const month = Number.parseInt(dateParts[1] ?? "", 10);
-    const day = Number.parseInt(dateParts[2] ?? "", 10);
-
-    if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
-      return "Release date unknown";
-    }
-
-    // Create date in local timezone (month is 0-indexed in Date constructor)
-    const date = new Date(year, month - 1, day);
-    if (Number.isNaN(date.getTime())) return "Release date unknown";
-
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }, [movie.release_date]);
+  const releaseYear =
+    movie.release_date?.match(/^(\d{4})-\d{2}-\d{2}$/)?.[1] ?? "Year unknown";
 
   // Build query string preserving filter parameters (not pagination)
   const queryString = useMemo(() => {
@@ -152,10 +130,6 @@ const MovieCard = ({
   }, [movie.title, checkTruncation]);
 
   // ==========================================================================
-  // Event Handlers
-  // ==========================================================================
-
-  // ==========================================================================
   // Render
   // ==========================================================================
 
@@ -163,6 +137,7 @@ const MovieCard = ({
     <Box
       className="group"
       width="100%"
+      minW="138px"
       height="100%"
       position="relative"
       onMouseEnter={() => setIsCardHovered(true)}
@@ -177,8 +152,7 @@ const MovieCard = ({
         position="relative"
         overflow="hidden"
         borderRadius={10}
-        border="1px solid"
-        borderColor="border-subtle-00"
+        borderWidth="0"
         boxShadow={isCardHovered ? "shadow-md" : "shadow-sm"}
         transition="all 0.3s ease-in-out"
         _hover={{ bg: "layer-hover-01" }}
@@ -223,9 +197,15 @@ const MovieCard = ({
           )}
         </Box>
 
-        {/* Card Body: Title, Date, Score */}
+        {/* Fixed title, year, score and stars block */}
         <Box flex="1" display="flex" flexDirection="column">
-          <Card.Body display="flex" flexDirection="column" p={3} height="100px">
+          <Card.Body
+            display="flex"
+            flexDirection="column"
+            p={3}
+            height={`${CARD_TEXT_HEIGHT}px`}
+            flex="none"
+          >
             {/* Title with Tooltip */}
             <Box mb={2} position="relative">
               <Text
@@ -234,6 +214,7 @@ const MovieCard = ({
                 fontWeight="semibold"
                 fontFamily="heading"
                 lineHeight="1.2"
+                minH="2.4em"
                 cursor="pointer"
                 overflow="hidden"
                 textOverflow="ellipsis"
@@ -303,21 +284,35 @@ const MovieCard = ({
               )}
             </Box>
 
-            {/* Date and Score Row */}
+            {/* Year, score and watched mark */}
             <Box>
               <Box
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
+                gap={1}
               >
                 <Text fontSize="sm" fontFamily="body" color="on-muted">
-                  {formattedDate}
+                  {releaseYear}
                 </Text>
                 <MovieUserScore
                   score={movie.vote_average}
                   voteCount={movie.vote_count}
                 />
+                {state.user_watched && (
+                  <Icon
+                    as={LuEye}
+                    role="img"
+                    aria-label="Watched"
+                    aria-hidden={false}
+                    boxSize="14px"
+                    flexShrink={0}
+                  />
+                )}
               </Box>
+            </Box>
+            <Box minH="5" mt="1">
+              <RatingStars rating={state.user_rating} />
             </Box>
           </Card.Body>
         </Box>

@@ -121,57 +121,58 @@ for merge. With N entries an immediate repeat has probability 1/N, which is acce
   _The Godfather_, _Chinatown_, _Jaws_, _Alien_ and _Blade Runner_. A test asserts unique IDs without naming any
   particular ID. At merge, only films the Owner has signed off ship; additional approved films can follow in later
   pull requests. The full candidate list need not block the first merge.
-- **Focus, checked artwork and short title.** Each entry contains its TMDB ID, optional `focus_point`, optional
-  `backdrop_path` and optional `title`. A point has paired finite `x` and `y` percentages from 0 to 100 inclusive,
-  used as CSS `object-position`, not a TMDB crop. An unset point is returned as `null`, and the full-bleed hero uses
-  `50% 28%`. Focus applies only to the full-bleed layout; the stacked portrait image
-  is shown whole without a focus point. A stored backdrop path is the exact TMDB image path the Owner checked; when
-  unset the current primary
-  backdrop is used. A stored title is a shorter form of the film's title that the Owner chose, such as
-  _Dr. Strangelove_, set only for a film whose full title cannot fit the credit space R8 reserves; when unset,
-  TMDB's title is used. A listed development candidate retains all three fields; an unlisted candidate has no
-  configured point, backdrop or title override. No request parameter supplies any of them. No focus editor is built
-  into the app.
-- **The check.** First screen the candidates by script through the DEBUG server's
-  `GET /api/movies/featured?film={id}`: flag 404s, absent backdrops, unresolved title/year matches and credits
-  (title, directors, year and any visible tagline) that may not fit R7's position. Other failed reads or image loads
-  remain unresolved,
-  never a passing screen. Flags advise; the Owner decides on each film.
-  An external review sheet, kept in the landing run folder outside the repository and app, uses those responses
-  without an API key. For each film it shows the same backdrop at the hero's wide, near-1024px and phone proportions,
-  using the hero's actual layouts: cover fit, focus, pitch and text panels in the wide and near-1024px views; the
-  whole image with its credit in the phone view. Points start at `50% 28%`; a click changes the two full-bleed views
-  while the phone frame and credit stay unchanged. It exports `FeaturedFilm(...)` lines containing the backdrop path
-  shown, optional custom focus, any short title and a title-and-year comment. The Owner reviews each film in one
-  page mode, settling its flags (an identity or year flag by explicit confirmation) and choosing its point in the
-  sheet; no film needs a built-hero check before approval. The component's dark full-bleed and page-mode stacked
-  treatments are checked in both modes once, rather than twice for every film.
-  Approved entries are then applied to the list together. A script confirms that the DEBUG endpoint returns each
-  applied entry's point, path and title, reruns the credit-fit screen over every applied entry with the title it
-  ships at each width where the credit has a reserved space, and captures the built hero through
-  `/?film={tmdb_id}` at 2000×1000,
-  1024×1000 and 390×844, in one page mode, for every film with a custom point or a flag. The Owner reviews those
-  captures together: the subject survives the two full-bleed crops, and at phone width the whole frame shows with
-  its credit fitting, not a focus-dependent crop. A film that fails is reframed, given a short title where its credit
-  does not fit, or excluded before it ships. Credits
-  must fit their reserved space and remain legible before an entry ships. A point exchanges visible edges; it cannot
-  recover the full cover-cropped frame. Unapproved candidates stay out of the shipped list.
-  A development Home passes its address's `film` parameter to the endpoint; a DEBUG server serves any candidate,
-  listed or not. A production build never sends it and a production server ignores it for the random choice.
+- **Focus, checked artwork, short title and mirroring.** Each entry contains its TMDB ID, optional `focus_point`,
+  optional `backdrop_path`, optional `title` and `mirrored`, false unless set. A point has paired finite `x` and `y`
+  percentages from 0 to 100 inclusive, used as CSS `object-position`, not a TMDB crop. An unset point is returned as
+  `null`, and the full-bleed hero uses `50% 28%`. Focus applies only to the full-bleed layout; the stacked portrait
+  image is shown whole without a focus point. A stored backdrop path is the exact TMDB image path the Owner checked;
+  when unset the current primary backdrop is used. A stored title is a shorter form of the film's title that the Owner
+  chose, such as _Dr. Strangelove_, set only for a film whose full title cannot fit the credit space R8 reserves; when
+  unset, TMDB's title is used. A mirrored entry's full-bleed image is flipped horizontally by a CSS transform when it is
+  shown, for a frame whose subject would otherwise sit under the pitch panel: in a wide window the cover crop fills the
+  hero's width, so a point can move the frame only vertically. Its point is given in the flipped frame, as the sheet
+  shows it. The stacked image stays unflipped, and no flipped copy of an image is stored or served. The Owner flips only
+  frames without legible writing or a well-known detail the flip would reverse. A listed development candidate retains
+  all four fields; an unlisted candidate has no configured point, backdrop, title or mirroring. No request parameter
+  supplies any of them. No focus editor is built into the app.
+- **The check.** First screen the candidates by script through the DEBUG server's `GET /api/movies/featured?film={id}`:
+  flag 404s, absent backdrops, unresolved title/year matches and credits (title, directors, year and any visible
+  tagline) that may not fit R7's position. Other failed reads or image loads remain unresolved, never a passing screen.
+  Flags advise; the Owner decides on each film. An external review sheet, kept in the landing run folder outside the
+  repository and app, uses those responses without an API key. For each film it shows the same backdrop at the hero's
+  wide, near-1024px and phone proportions, using the hero's actual layouts: cover fit, focus, pitch and text panels in
+  the wide and near-1024px views; the whole image with its credit in the phone view. Points start at `50% 28%`; a click
+  changes the two full-bleed views while the phone frame and credit stay unchanged. A toggle flips the two full-bleed
+  views and the full frame, moving any point with its subject, while the phone view stays unflipped. It exports
+  `FeaturedFilm(...)` lines containing the backdrop path shown, optional custom focus, any short title, any mirroring
+  and a title-and-year comment. The Owner reviews each film in one page mode, settling its flags (an identity or year
+  flag by explicit confirmation) and choosing its point and any flip in the sheet; no film needs a built-hero check
+  before approval. The component's dark full-bleed and page-mode stacked treatments are checked in both modes once,
+  rather than twice for every film. Approved entries are then applied to the list together. A script confirms that the
+  DEBUG endpoint returns each applied entry's point, path, title and mirroring, reruns the credit-fit screen over every
+  applied entry with the title it ships at each width where the credit has a reserved space, and captures the built hero
+  through `/?film={tmdb_id}` at 2000×1000, 1024×1000 and 390×844, in one page mode, for every film with a custom point,
+  mirroring or a flag. The Owner reviews those captures together: the subject survives the two full-bleed crops, and at
+  phone width the whole frame shows with its credit fitting, not a focus-dependent crop. A film that fails is reframed,
+  given a short title where its credit does not fit, or excluded before it ships. Credits must fit their reserved space
+  and remain legible before an entry ships. A point exchanges visible edges; it cannot recover the full cover-cropped
+  frame. Unapproved candidates stay out of the shipped list. A development Home passes its address's `film` parameter to
+  the endpoint; a DEBUG server serves any candidate, listed or not. A production build never sends it and a production
+  server ignores it for the random choice.
 
 **R4.** `GET /movies/featured` serves the hero's film:
 
 - public (no authentication), and registered before the detail route `/movies/{tmdb_id}`, as the list routes are;
-- it returns a schema of its own, `FeaturedMovieSchema`: `tmdb_id`, `title`, `release_date`, `backdrop_path`,
-  `tagline`, `directors` and `focus_point`. `directors` is a list of director names from TMDB's appended credits:
-  crew entries whose job is `Director`, in crew order, once per person; blank names are omitted. Missing credits or
-  no named director returns `[]`. Backdrop and tagline are nullable, and an empty tagline from TMDB is returned as
-  `null`. `focus_point` is either `null` or an object with required numeric `x` and `y` in the inclusive range 0–100,
-  taken from the selected list entry (R3), not from TMDB. `backdrop_path` returns the entry’s checked path when
-  present, otherwise TMDB’s current primary backdrop path. `title` returns the entry's short title when present,
-  otherwise TMDB's title;
+- it returns a schema of its own, `FeaturedMovieSchema`: `tmdb_id`, `title`, `release_date`, `backdrop_path`, `tagline`,
+  `directors`, `focus_point` and `mirrored`. `directors` is a list of director names from TMDB's appended credits: crew
+  entries whose job is `Director`, in crew order, once per person; blank names are omitted. Missing credits or no named
+  director returns `[]`. Backdrop and tagline are nullable, and an empty tagline from TMDB is returned as `null`.
+  `focus_point` is either `null` or an object with required numeric `x` and `y` in the inclusive range 0–100, taken from
+  the selected list entry (R3), not from TMDB. `backdrop_path` returns the entry’s checked path when present, otherwise
+  TMDB’s current primary backdrop path. `title` returns the entry's short title when present, otherwise TMDB's title.
+  `mirrored` returns the entry's flag: `false` when unset and for an unlisted candidate;
 - it takes one optional query parameter, `film`, honored only as R3 gives it; no request parameter supplies a
-  focus point, a backdrop path or a title;
+  focus point, a backdrop path, a title or mirroring;
 - a `MovieService` method picks the film (R3), through a choice that tests can replace, and reads it with one TMDB
   detail call through the client's `get_movie_details` with `append_to_response=credits`. This is one HTTP request,
   not a separate credits call; release dates are not appended. Only director names reach this response, not the full
@@ -206,13 +207,14 @@ TMDB detail response it already reads, with an empty tagline returned as `null`.
 **R7.** The hero has two arrangements, selected by the window rather than device identity:
 
 - **Stacked:** below 1024px when the window is portrait (height at least width). The entire backdrop is shown at the
-  top, without a fade or focus point, using `object-fit: contain` in R8's full-width 16:9 area. Its aspect ratio is
-  preserved; a non-16:9 image letterboxes rather than being cropped. A dark background remains under the image.
+  top, without a fade, focus point or mirroring, using `object-fit: contain` in R8's full-width 16:9 area. Its aspect
+  ratio is preserved; a non-16:9 image letterboxes rather than being cropped. A dark background remains under the image.
   Directly beneath it, the credit is left-aligned to the shared content edge, above the headline and actions.
   The text block, credit and controls follow the page's selected palette and mode through existing roles; the
   stacked hero is not forced dark. No text sits on the image.
 - **Full bleed:** at 1024px and wider, and in landscape windows below 1024px. The backdrop covers the hero and uses
-  the input focus point, defaulting to `50% 28%`. The hero alone scopes the selected theme's dark palette in either
+  the input focus point, defaulting to `50% 28%`; a mirrored film's backdrop is flipped horizontally, with the point
+  given in the flipped frame. The hero alone scopes the selected theme's dark palette in either
   page mode. The pitch sits lower left on its own text panel. At 1024px and wider the credit stays
   on the right, right-aligned to the shared container edge, its bottom level with the actions row. In compact
   landscape windows below 1024px, the credit is above the pitch and right-aligned to that same container's right
@@ -255,7 +257,7 @@ page. All colors use existing semantic roles. The bar, rows and footer continue 
 
 Images are decorative (`alt=""`). Responsive TMDB sources include `original` when rendered image width exceeds 1280
 device pixels; do not upscale `w1280` in that case or use site-only `*_multi_faces` or `*_face` crops.
-The presentation takes film data and optional focus as inputs, using focus only in full bleed. Home owns the
+The presentation takes film data, optional focus and mirroring as inputs, using both only in full bleed. Home owns the
 featured read and development film parameter. The presentation does not pick a film or read its own route/query;
 its inputs remain reusable for a later movie-page design without implementing that page here.
 
@@ -658,9 +660,13 @@ further changes, each checked against `main`'s code at that merge:
    it, was dropped as costing most of the review's time while repeating what the sheet already shows. Phone
    review checks the whole frame and credit fit, not focus cropping.
    Checked backdrop paths preserve the reviewed image, and a stored short title keeps a film whose full title cannot
-   fit its credit space, rather than truncating titles for every film. _ADR: revise this work's Proposed ADR-046 for
-   curated artwork metadata, the short title and the review method; sheet controls are temporary review tooling and
-   need no separate ADR._
+   fit its credit space, rather than truncating titles for every film. A mirrored entry keeps a frame whose subject
+   would sit under the pitch panel: a wide hero's cover crop fills its width, so a point cannot move the subject
+   sideways, and the frame would otherwise be excluded. TMDB's API terms forbid making derivatives of its content and
+   say nothing specific about how images are displayed; the flip, like the crop and the panels, is applied only when
+   the image is shown, and no flipped copy is stored or served. The stacked image stays unflipped, since no text
+   covers it. _ADR: revise this work's Proposed ADR-046 for curated artwork metadata, the short title, mirroring and
+   the review method; sheet controls are temporary review tooling and need no separate ADR._
 3. **A small hero endpoint reads the hero's film from TMDB** (R4, R5): one TMDB detail call, a schema with only what the
    hero shows, and no stored state. Having the frontend pick the film and call the detail endpoint was rejected:
    the list would live in the frontend and every page load would pay its two TMDB calls. The hero now needs director
@@ -1025,33 +1031,37 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
 
     _Superseded by the label-panel amendment of 2026-11-14; replacement: criterion 29._
 
-28. Backend tests retain criterion 26's featured-film coverage, and also show an entry's optional short title
+28. [~] Backend tests retain criterion 26's featured-film coverage, and also show an entry's optional short title
     returned as `title` in place of TMDB's: kept for a listed DEBUG candidate and for the random entry in
     production, while an unlisted candidate and an entry without one return TMDB's title. The response shape, the
     one TMDB detail call and the generated OpenAPI and frontend types are unchanged, and no request parameter
     supplies a title.
 
-29. Browser checks in both page modes retain criterion 27's rows, calendar, band, shared widths, overflow, interaction,
-    arrangement, reserved-space, hover and focus checks, with these changes. In full bleed at 2000×1000, 1500×900,
-    1450×900, 1280×800, 1024×1000, 900×700 and 768×600, the pitch and the credit sit on separate hard-edged panels that
-    fit their text and never overlap, with at least 16px of image between them. A panel runs flush to the window's edge
-    exactly where its padding would leave less than 16px of image there, and otherwise stands at least 16px from it;
-    flush at 1450×900 and below, inset at 1500×900 and wider. At 1024px and wider the headline's sentences and the
-    line's two phrases take their own lines, and the pitch panel is no wider than its longest line plus its padding. A
-    credit panel is no wider than its longest row plus its padding, or its column plus its padding when a row wraps; on
-    a side where a panel runs flush, that limit extends to the window's edge. Long titles wrap without truncation.
-    Outside the panels the image keeps only its bottom fade. Measured over bright frames, panel text reaches 4.5:1 for
-    normal text, including director/year and the muted tagline, and 3:1 for large text. The film title shows in capitals
-    while the browser's accessibility tree names its link with the title in its own case, and the director/year
-    separator is muted and hidden from assistive technology. The hero shows R6's line and the band R14's points. With
-    capitalized titles, every shipped film's credit fits its reservation at 360×800, 390×844, 768×1024, 900×700 and
-    768×600. All films shipped at merge have Owner approval through the external sheet in one mode, retaining the exact
-    shown backdrop path and any short title. Script flags failed reads/artwork, identity/year mismatches and credit-fit
-    problems for decisions. A script confirms each applied entry's point, path and title through the DEBUG endpoint, and
-    the Owner has reviewed built-hero captures of every custom-point or flagged film at 2000×1000, 1024×1000 and 390×844
-    in one mode. The sheet uses actual layout snapshots, preserves focus for full bleed only, exports approved entry
-    lines with title/year comments, checked paths and short titles, and remains outside the repository/app without an
-    API key. Pending candidates can follow in later pull requests.
+    _Superseded by the mirrored-backdrop amendment of 2026-11-14; replacement: criterion 31._
+
+29. [~] Browser checks in both page modes retain criterion 27's rows, calendar, band, shared widths, overflow,
+    interaction, arrangement, reserved-space, hover and focus checks, with these changes. In full bleed at 2000×1000,
+    1500×900, 1450×900, 1280×800, 1024×1000, 900×700 and 768×600, the pitch and the credit sit on separate hard-edged
+    panels that fit their text and never overlap, with at least 16px of image between them. A panel runs flush to the
+    window's edge exactly where its padding would leave less than 16px of image there, and otherwise stands at least
+    16px from it; flush at 1450×900 and below, inset at 1500×900 and wider. At 1024px and wider the headline's sentences
+    and the line's two phrases take their own lines, and the pitch panel is no wider than its longest line plus its
+    padding. A credit panel is no wider than its longest row plus its padding, or its column plus its padding when a row
+    wraps; on a side where a panel runs flush, that limit extends to the window's edge. Long titles wrap without
+    truncation. Outside the panels the image keeps only its bottom fade. Measured over bright frames, panel text reaches
+    4.5:1 for normal text, including director/year and the muted tagline, and 3:1 for large text. The film title shows
+    in capitals while the browser's accessibility tree names its link with the title in its own case, and the
+    director/year separator is muted and hidden from assistive technology. The hero shows R6's line and the band R14's
+    points. With capitalized titles, every shipped film's credit fits its reservation at 360×800, 390×844, 768×1024,
+    900×700 and 768×600. All films shipped at merge have Owner approval through the external sheet in one mode,
+    retaining the exact shown backdrop path and any short title. Script flags failed reads/artwork, identity/year
+    mismatches and credit-fit problems for decisions. A script confirms each applied entry's point, path and title
+    through the DEBUG endpoint, and the Owner has reviewed built-hero captures of every custom-point or flagged film at
+    2000×1000, 1024×1000 and 390×844 in one mode. The sheet uses actual layout snapshots, preserves focus for full bleed
+    only, exports approved entry lines with title/year comments, checked paths and short titles, and remains outside the
+    repository/app without an API key. Pending candidates can follow in later pull requests.
+
+    _Superseded by the mirrored-backdrop amendment of 2026-11-14; replacement: criterion 32._
 
 30. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
     backend (CI's type-drift check passes); with the Library's History and the viewing source on `main`, component
@@ -1060,6 +1070,20 @@ ADR-046 is written reading `Proposed` with the implementation and set to `Accept
     and with the queue on `main`, component tests show the watchlist read sending its sort and direction, Up next
     leading with its first film, and the large card's Reorder link opening `/watchlist`. The approved R6 pitch and
     R14 band copy are retained; this merge condition does not expand them.
+
+31. Backend tests retain criterion 28's featured-film coverage, except that the response and the generated OpenAPI
+    and frontend types gain `mirrored`, and also show an entry's `mirrored` returned as configured: kept for a listed
+    DEBUG candidate and for the random entry in production, and `false` for an entry without it and for an unlisted
+    candidate. The one TMDB detail call is unchanged, and no request parameter supplies mirroring.
+
+32. Browser checks retain criterion 29's checks, with these changes. Component tests show a mirrored film's
+    full-bleed image flipped horizontally with its position the mirror of its point (`100 − x`), so a point given in
+    the flipped frame holds; its stacked image unflipped; an unmirrored film's image unchanged; and no text flipped.
+    Home passes the featured response's `mirrored` to the presentation. The script confirms each applied entry's
+    mirroring with its point, path and title through the DEBUG endpoint, and the Owner's built-hero captures cover
+    every mirrored film as well as every custom-point or flagged one. The sheet flips its two full-bleed views and its
+    full frame, but not its phone view; moves a set point with its subject when the flip changes, returning an
+    approved film to pending; and exports and saves the flip with each approved entry.
 
 ### Proven after merge
 
@@ -1126,3 +1150,13 @@ None.
   ADRs this work delivers, and in the task list Tasks 5.2 and 5.4. Criterion 22 is superseded by 30. ADR disposition:
   revise this work's Proposed ADR-046 so ordering stays on the watchlist's own page rather than in the Library; no
   new ADR. Home's design is unchanged.
+
+- **2026-11-14 — Mirrored backdrops (Owner).** In a wide window the cover crop fills the hero's width, so a point
+  can't move a subject out from under the pitch panel, and during review the Owner found frames that would work
+  flipped. An entry may set `mirrored`: its full-bleed image is flipped horizontally by a CSS transform when shown,
+  with its point given in the flipped frame; the stacked image stays unflipped (Owner), and no flipped copy is stored
+  or served. The Owner accepted that TMDB's terms, which forbid derivatives of its content without addressing
+  display, allow this display treatment. The endpoint returns `mirrored`; the sheet gains a flip toggle; the batch
+  check and captures cover mirrored films. Updates R3, R4 and R7, decision 2 and ADR-046, and in the task list a new
+  Task 4.15, Tasks 5.1.b and 5.1.c and the Phase 4 exit criterion. Criteria 28 and 29 are superseded by 31 and 32.
+  ADR disposition: revise this work's Proposed ADR-046 for the mirroring metadata; no new ADR.

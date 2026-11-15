@@ -34,13 +34,16 @@ soon, then a band explaining its capabilities. Signed-in Home shows the visitor'
 what's-on sections. A later list of logged viewings can supply a recently-watched section when that source exists.
 
 We will choose the hero's film randomly from a hand-selected list of classic TMDB IDs with optional percentage
-focus points, checked backdrop paths and short titles on each page load. A public endpoint returns its ID, title,
-release date, backdrop, director names, tagline and nullable focus point through one TMDB detail request with credits
-appended, without a separate credits call or server caching. Focus, an optional checked backdrop
-path and an optional short title are local list metadata; a stored path replaces TMDB’s primary, and a stored title
-replaces TMDB's for a film whose full title cannot fit the credit space. An input point anchors the reusable full-bleed
-presentation, defaulting to 50% across and 28% down when unset;
-the whole-frame portrait arrangement ignores focus. The browser
+focus points, checked backdrop paths, short titles and mirroring on each page load. A public endpoint returns its ID,
+title, release date, backdrop, director names, tagline, nullable focus point and mirroring flag through one TMDB
+detail request with credits appended, without a separate credits call or server caching. Focus, an optional checked
+backdrop path, an optional short title and mirroring are local list metadata; a stored path replaces TMDB’s primary,
+and a stored title replaces TMDB's for a film whose full title cannot fit the credit space. An input point anchors
+the reusable full-bleed presentation, defaulting to 50% across and 28% down when unset; the whole-frame portrait
+arrangement ignores focus. A mirrored entry's full-bleed image is flipped
+horizontally when shown, with its point given in the flipped frame, so a subject that would sit under the pitch can
+move clear where a wide crop leaves the point no sideways room; the portrait arrangement shows the original frame,
+and no flipped copy is stored or served. The browser
 retains that result for the loaded application's lifetime, until reload or a change of signed-in user. Development
 builds can request a particular film for visual checks; production servers ignore
 that override. Candidates are screened and reviewed in an external two-crop/whole-frame sheet in one page mode,
@@ -107,6 +110,8 @@ never depend on live TMDB. Other staging journeys continue using live catalog da
 - The curated list requires visual checks. A checked path protects it from primary-backdrop changes, but a pinned
   image can still disappear and require replacement or removal.
 - The text panels all but hide the image beneath them, so a film's focus point must keep its subject clear of both.
+- A mirrored frame reverses any writing and asymmetric detail in it, so each flip needs the Owner's judgment, and
+  TMDB's terms, which forbid derivatives of its content, are read as allowing a flip applied only at display.
 - Consecutive page loads can pick the same film, and a user change selects a new one.
 - A second saved film can introduce a row; removing films can remove the row or whole section.
 - Signed-out catalog cards are shorter while their fixed row spacing still accommodates signed-in controls.

@@ -412,7 +412,7 @@ selected portrait/full-bleed hero, director credit and whole-card rows before th
 
 _Exit criterion:_ in the browsable stack, signing in lands on Home greeting the account by name with its watchlist's
 newest film as the large card; navigating away and back shows no greeting; an account with an empty watchlist sees the
-nothing-saved line; the amended featured focus metadata, hero and row checks in 4.7–4.14 pass; and
+nothing-saved line; the amended featured focus metadata, hero and row checks in 4.7–4.15 pass; and
 `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts` pass.
 
 - [x] **4.1 A large card shows one film at one height — R13, R27**
@@ -781,6 +781,28 @@ nothing-saved line; the amended featured focus metadata, hero and row checks in 
     - Movie-app Docker tests pass (607) with and without the local film preview; Ruff, format and movie-app
       Pyright pass; regenerating the API types leaves no diff.
 
+- [ ] **4.15 A film entry's optional mirrored backdrop — R3, R4, R7**
+
+    **Goal:** A film whose subject would sit under the pitch panel can ship with its full-bleed image flipped.
+
+    - [ ] **4.15.a Write the tests**
+        - Service: an entry's `mirrored` kept for the listed DEBUG candidate and the production pick, and `false` for
+          an unlisted candidate and an entry without it, with one detail call each. The endpoint contract test sends
+          a `mirrored` query parameter and expects the entry's value. Component tests: a mirrored film's full-bleed
+          image flipped with its position at `100 − x`, its stacked image unflipped, an unmirrored film's image
+          unchanged, no text flipped, and Home passing the response's value; expect them to FAIL
+    - [ ] **4.15.b Add `mirrored` to `FeaturedFilm` and the featured response, regenerate the API types, and flip the
+      full-bleed image in the presentation**
+        - The tests should now PASS; an unmirrored hero's markup and styles stay as they are, so the sheet's
+          snapshots still match the app
+    - [ ] **4.15.c Add the flip to the external sheet**
+        - A key and a toggle flip the two full-bleed views and the full frame, not the phone view; a set point moves
+          with its subject, an approved film returns to pending, and a change of identity or artwork clears the flip.
+          The export and the saved JSON carry it, and a restore accepts earlier saves without it
+        - Template-only, so the snapshot and the Owner's progress are kept. Build and check on a staging copy:
+          an in-place upgrade over saved progress, and the flipped sheet against the built app at 1024×1000 with an
+          off-centre point. Replace the live sheet only when the checks pass
+
 ### **Phase 5:** Home is ready to merge
 
 _Mode:_ `slice` — closes on Home composing with what `main` holds at merge, and showing the Owner's films.
@@ -845,17 +867,18 @@ recorded, and the three changed smoke specs pass.
           panel edges match at 2000×1000 and 1024×1000. The sheet's browser checks pass, including keys with focus
           in a preview, a restore in a fresh browser, and exported lines parsed as real `FeaturedFilm` entries.
     - [ ] **5.1.b The Owner reviews the sheet in one page mode**
-        - The Owner settles flags, sets full-bleed points (unset uses `50% 28%`) and approves or excludes each film,
+        - The Owner settles flags, sets full-bleed points (unset uses `50% 28%`), flips a frame where that clears the
+          pitch panel, and approves or excludes each film,
           then supplies the saved review JSON. Component mode/shape checks are covered by 4.12 and 4.13, not
           repeated for each film. Owner choices are never inferred from simulated browser state
     - [ ] **5.1.c Import the approved entries and check them as one batch**
-        - The Owner chooses the final size; 200–250 is a possible pool, not a merge minimum. Import only approved
-          films, with explicit title/year identity, checked backdrop paths, chosen points and short titles. The
+        - The Owner chooses the final size; 200–250 is a possible pool, not a merge minimum. Import only approved films,
+          with explicit title/year identity, checked backdrop paths, chosen points, short titles and mirroring. The
           uniqueness test stays independent of which IDs ship
-        - By script, confirm each applied entry's point, path and title through the DEBUG endpoint; rerun the
+        - By script, confirm each applied entry's point, path, title and mirroring through the DEBUG endpoint; rerun the
           credit-fit screen over every applied entry with its shipped title at 360×800, 390×844, 768×1024, 900×700
           and 768×600; and capture the built hero at 2000×1000, 1024×1000 and 390×844 in one mode for every
-          custom-point or flagged film
+          custom-point, mirrored or flagged film
         - The Owner reviews the captures; reframe, give a short title to a credit that does not fit, or exclude any
           failure. Unapproved candidates do not ship;
           remaining candidates can be reviewed and added by later pull request
@@ -1180,13 +1203,15 @@ recorded, and the three changed smoke specs pass.
 
   _Superseded by the label-panel amendment of 2026-11-14; replacement: criterion 29._
 
-- [ ] 28. Backend tests retain criterion 26's featured-film coverage, and also show an entry's optional short title
+- [~] 28. Backend tests retain criterion 26's featured-film coverage, and also show an entry's optional short title
   returned as `title` in place of TMDB's: kept for a listed DEBUG candidate and for the random entry in
   production, while an unlisted candidate and an entry without one return TMDB's title. The response shape, the
   one TMDB detail call and the generated OpenAPI and frontend types are unchanged, and no request parameter
   supplies a title.
 
-- [ ] 29. Browser checks in both page modes retain criterion 27's rows, calendar, band, shared widths, overflow,
+  _Superseded by the mirrored-backdrop amendment of 2026-11-14; replacement: criterion 31._
+
+- [~] 29. Browser checks in both page modes retain criterion 27's rows, calendar, band, shared widths, overflow,
   interaction, arrangement, reserved-space, hover and focus checks, with these changes. In full bleed at 2000×1000,
   1500×900, 1450×900, 1280×800, 1024×1000, 900×700 and 768×600, the pitch and the credit sit on separate hard-edged
   panels that fit their text and never overlap, with at least 16px of image between them. A panel runs flush to the
@@ -1208,6 +1233,8 @@ recorded, and the three changed smoke specs pass.
   title/year comments, checked paths and short titles, and remains outside the repository/app without an API key.
   Pending candidates can follow in later pull requests.
 
+  _Superseded by the mirrored-backdrop amendment of 2026-11-14; replacement: criterion 32._
+
 - [ ] 30. R30's changes, each where its condition held at the final merge of `main`: the API types match the merged
   backend (CI's type-drift check passes); with the Library's History and the viewing source on `main`, component tests
   show Recently watched as R15 gives it, its See all opening `/library/history`, and the nothing-saved set counting
@@ -1215,6 +1242,20 @@ recorded, and the three changed smoke specs pass.
   queue on `main`, component tests show the watchlist read sending its sort and direction, Up next leading with its
   first film, and the large card's Reorder link opening `/watchlist`. The approved R6 pitch and R14 band copy are
   retained; this merge condition does not expand them.
+
+- [ ] 31. Backend tests retain criterion 28's featured-film coverage, except that the response and the generated
+  OpenAPI and frontend types gain `mirrored`, and also show an entry's `mirrored` returned as configured: kept for a
+  listed DEBUG candidate and for the random entry in production, and `false` for an entry without it and for an
+  unlisted candidate. The one TMDB detail call is unchanged, and no request parameter supplies mirroring.
+
+- [ ] 32. Browser checks retain criterion 29's checks, with these changes. Component tests show a mirrored film's
+  full-bleed image flipped horizontally with its position the mirror of its point (`100 − x`), so a point given in
+  the flipped frame holds; its stacked image unflipped; an unmirrored film's image unchanged; and no text flipped.
+  Home passes the featured response's `mirrored` to the presentation. The script confirms each applied entry's
+  mirroring with its point, path and title through the DEBUG endpoint, and the Owner's built-hero captures cover
+  every mirrored film as well as every custom-point or flagged one. The sheet flips its two full-bleed views and its
+  full frame, but not its phone view; moves a set point with its subject when the flip changes, returning an
+  approved film to pending; and exports and saves the flip with each approved entry.
 
 ### Proven after merge
 

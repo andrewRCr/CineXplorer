@@ -314,24 +314,30 @@ the film page.
         - All 50 related tests, touched-file lint, frontend type-check and formatting pass. The movie-detail smoke
           passes (run `b696a7b419c84a4d9e1d6816bf7a1545`).
 
-- [ ] **4.2 The visitor rates the film from the panel, with the stars or a sheet — R12, R13**
+- [x] **4.2 The visitor rates the film from the panel, with the stars or a sheet — R12, R13**
 
     **Goal:** A pointer selection saves at once, keyboard changes save once after a 500ms pause or on leaving the stars,
     zero stars clears the rating as Clear rating does, and phones rate in a bottom sheet with touch-sized stars.
 
-    - [ ] **4.2.a Write the rating's cases in `src/components/movie/tracking/__tests__/FilmRating.test.tsx`**
-        - Criterion 10. At `md` and up: `RatingGroup` labelled "Your rating"; a pointer selection sends one save of
-          stars × 2; arrowing across the stars sends one save after 500ms still, or on blur; arrowing to zero stars,
-          like Clear rating, sends `user_rating: null` with the "Rating cleared" toast; Clear rating shows only while
-          rated
-        - Below `md`: `RatingStars` or "Not rated" with "Rate", which opens a bottom sheet titled "Your rating" holding
-          the stars, Clear rating while rated, and Done, which only closes it; the sheet returns focus to "Rate"
-        - Signed out, the stars take no value and show the panel's sign-in note (R15)
-        - Expect tests to FAIL initially
-    - [ ] **4.2.b Build `src/components/movie/tracking/FilmRating.tsx` inside the panel**
-        - The wide and phone forms chosen by a breakpoint hook, not CSS, so one set renders; the sheet a Chakra
-          `Drawer` placed at the bottom, each half-star at least 24px wide; filled stars in `imdb-gold`
-        - Tests should now PASS
+    - [x] **4.2.a Cover rating interaction, ownership and rollback through the panel**
+        - Seventeen MSW cases cover pointer conversion, the 500ms keyboard pause, internal and external blur, zero
+          and Clear with feedback, mixed pointer/keyboard input, pending Clear, both phone states, focus return,
+          unchanged Done, anonymous/resolving input, film/user/unmount retirement and refused-save rollback.
+        - Coupled keyboard cases were written together. Phone cases failed before the sheet existed; mixed-input
+          cases caught duplicate/stale saves from click/value-change ordering. A narrow reconstruction failed all
+          seven auth, ownership, rollback and Done cases (run `8e096f116580429d9d788daa3f751daf`), then was restored.
+          Both inert-star ARIA cases also failed before their explicit disabled state was added.
+        - Fake clocks replace timeout functions only, keep the animation clock running, await focus transitions,
+          and retain the fake clock through request settlement.
+    - [x] **4.2.b Add `FilmRating` to the panel**
+        - A breakpoint hook renders one form: inline stars at `md`, or the rating/Not rated with Rate below it.
+          The bottom Drawer has 48px stars, Clear while rated and Done, returning focus to Rate.
+        - One consuming flush serves timer, blur, sheet close and click; click flush waits until Chakra's value
+          change settles. Preview resets when handed to the save layer, so rejected saves restore confirmed stars.
+          Ownership/film guards and cleanup discard retired input. Inert controls show the panel's sign-in guidance
+          only for anonymous visitors; whole and half stars use the existing gold recipe.
+        - All 67 related tests, touched-file ESLint, formatting and type-check passed. Film-detail and phone smokes
+          passed (run `7a20f757b22c41d398509b98daed6cf5`).
 
 - [ ] **4.3 The film's log lists the visitor's entries — R16, R17**
 

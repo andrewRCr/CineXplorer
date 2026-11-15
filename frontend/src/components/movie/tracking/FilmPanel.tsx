@@ -20,6 +20,8 @@ import {
   WATCHED_LOCK_EXPLANATION,
 } from "@/components/movie/watchedLock";
 
+import { FilmRating } from "./FilmRating";
+
 interface FilmPanelProps {
   movie: MovieDetail;
   direction?: "row" | "column";
@@ -98,6 +100,13 @@ export function FilmPanel({
             </Button>
           );
         })}
+        <FilmRating
+          tmdbId={movie.tmdb_id}
+          rating={state.user_rating}
+          status={status}
+          allowAction={allowAction}
+          onSave={(rating) => save({ user_rating: rating })}
+        />
         <Button
           ref={reviewRef}
           variant="outline"

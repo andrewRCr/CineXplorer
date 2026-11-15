@@ -403,25 +403,39 @@ describe("measured History returns", () => {
       transform: "translateY(6000px)",
     });
   });
-  it("keeps an entry's measured height when a saved film adds a row before it", async () => {
+  it("keeps an entry's measured height when a logged viewing adds a row before it", async () => {
     let changed = false;
     server.use(
       http.get(url, () =>
         HttpResponse.json(
           historyPage([
-            ...(changed ? [historyEntry(1001)] : []),
+            ...(changed
+              ? [historyEntry(1001, { tmdb_id: 1, title: "Entry 1" })]
+              : []),
             ...Array.from({ length: 99 }, (_, i) => historyEntry(i + 1)),
           ]),
         ),
       ),
-      http.patch(`${apiBaseUrl}/user-movie-data/1`, () => {
+      http.post(`${apiBaseUrl}/user-movie-data/1/entries`, () => {
         changed = true;
         return HttpResponse.json(
-          createMockUserMovieData({
-            tmdb_id: 1,
-            user_watched: true,
-            user_liked: true,
-          }),
+          {
+            entry: {
+              id: 1001,
+              tmdb_id: 1,
+              watched_on: "2026-11-14",
+              rating: null,
+              review: null,
+              rewatch: false,
+            },
+            record: createMockUserMovieData({
+              tmdb_id: 1,
+              user_watched: true,
+              has_entries: true,
+              last_logged_on: "2026-11-14",
+            }),
+          },
+          { status: 201 },
         );
       }),
     );
@@ -429,7 +443,7 @@ describe("measured History returns", () => {
     await openDeep();
     await userEvent
       .setup()
-      .click(screen.getByRole("button", { name: "Save film" }));
+      .click(screen.getByRole("button", { name: "Log viewing" }));
     await userEvent
       .setup()
       .click(screen.getByRole("link", { name: "Back to History" }));

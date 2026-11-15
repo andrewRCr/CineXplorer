@@ -290,7 +290,7 @@ the same rows.
     each row shows, so a row keeps its height whatever loads before it, under the same condition as the grid pages.
 
     - [x] **4.3.a Cover measured History returns**
-        - Five cases use the real History view, back link and virtualizer: deep return, a saved film inserting an
+        - Five cases use the real History view, back link and virtualizer: deep return, a logged viewing inserting an
           entry above the measured rows, fresh arrival, simulated reload (including a second return without scrolling)
           and a change of user. The shared geometry fixture preserves native viewport coordinates and scroll events.
         - The deep-return case failed before persistence; narrow index-key, ungated-memory, uncleared-user and

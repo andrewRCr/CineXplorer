@@ -213,9 +213,9 @@ Settled by the Owner, 2026-11-14, after the Library Study design reference.
      only the History read, since they are entries already. The quiet rows need the backend unit's record of changes
      on `main`, which this unit merges before building them.
    - **Launch scope:** this brings the ROADMAP's Cut Journal (the features plan's § 12, a timeline of watchlist
-     additions, viewings, ratings and likes) into launch scope as History. The ROADMAP's Cut line becomes Favorites
-     alone, and the features plan's status line, its summary's Journal item and § 12 follow; the project's planning
-     records that once this draft is approved.
+     additions, viewings, ratings and likes) into launch scope as History. With Favorites committed (decision 12), the
+     ROADMAP's Cut line "Journal and Favorites" goes, and the features plan's status line, its summary's Journal and
+     Favorites items, § 12 and Favorites' sections follow.
 
    ADR disposition: ADR-050 records History as the Library's timeline and its read: the history endpoint, its row
    kinds and its grouping by day and field, beside the unchanged dated-only entry list. The threshold of 3, the sample
@@ -389,8 +389,8 @@ Settled by the Owner, 2026-11-14, after the Library Study design reference.
 
     ADR disposition: `none`; it orders delivery and decides nothing about the system.
 
-12. **Next Up and Favorites are reserved, not built here.** Both are designed in Next Up's unit. Favorites stays on the
-    ROADMAP's Cut list until its build is decided; Next Up's draft designs it so that decision has something to size.
+12. **Next Up and Favorites are reserved, not built here.** Both are designed and built in Next Up's unit. Favorites is
+    committed (Owner, 2026-11-14), at about 1 to 1.5 days in that unit.
     - **Next Up:** the head of the watchlist's own order, in a row above the Watchlist grid.
     - **Favorites:** a short, hand-ordered pick of films seen, in a row above the Library grid. The Owner's direction
       for that design:

@@ -3,12 +3,11 @@
 **Document Purpose:** Track user-facing feature work for the UserMovieData domain. These features have complete backend
 APIs but need frontend implementation or enhancement.
 
-**Status:** Partly in the launch scope (2026-11-06). Launch builds watched, liked, rating and review controls on cards
-and the detail page, the Library, the watchlist as a poster grid, Log (§ 8) as the rating screen and the movie detail
-redesign (§ 9), on consolidated user-movie data. Deferred: the watchlist's drag-and-drop and Next Up (§ 2), the first
-to come back if time opens up before launch, since managing the watchlist is the app's main use; and until after
-launch, Favorites (§§ 3 and 10), lists and collections (§ 11) and the Journal (§ 12). `ROADMAP.md` lists the launch
-order.
+**Status:** Mostly in the launch scope (2026-11-06; updated 2026-11-14). Launch builds watched, liked, rating and
+review controls on cards and the detail page, the Library with its History (the Journal, § 12), the watchlist as a
+poster grid, Log (§ 8) as the rating screen and the movie detail redesign (§ 9), on consolidated user-movie data, then
+the watchlist's drag-and-drop and Next Up (§ 2) with Favorites (§§ 3 and 10). Deferred until after launch: lists and
+collections (§ 11). `ROADMAP.md` lists the launch order.
 
 ---
 
@@ -39,9 +38,9 @@ ensuring we're building on solid technical foundations (service layer patterns, 
 
 **Not Yet Started** (3 features):
 
-8. **Favorites Subset** - add `user_favorited` field, cap enforcement, reorderable display
+8. **Favorites Subset** - in launch scope, designed and built with the watchlist's Next Up queue
 9. **Movie Lists/Collections** - user-created custom lists with backend models + API + frontend (has existing PRD)
-10. **Journal Timeline View** - user action timeline (decision pending on implementation)
+10. **Journal Timeline View** - in launch scope as the Library's History (§ 12)
 
 ---
 
@@ -110,10 +109,8 @@ those patterns, preventing ad-hoc implementations that would need refactoring la
 **What Needs Building:**
 
 - **Movie Grid Display**: Replace text list with visual movie cards (posters, titles, user data)
-- **Drag-and-Drop Reordering** (deferred; the first to come back if time opens up before launch): Allow users to
-  reorder watchlist priority
-- **"Next Up" Queue** (deferred; the first to come back if time opens up before launch): Feature top N watchlist items
-  as prioritized viewing queue
+- **Drag-and-Drop Reordering** (in launch scope, with the Next Up queue): Allow users to reorder watchlist priority
+- **"Next Up" Queue** (in launch scope): Feature top N watchlist items as prioritized viewing queue
 - **Integration with Pagination**: Use pagination from Feature #1
 
 **Technical Considerations:**
@@ -131,9 +128,10 @@ those patterns, preventing ad-hoc implementations that would need refactoring la
 
 ---
 
-### 3. Favorites System - DEFERRED UNTIL AFTER LAUNCH
+### 3. Favorites System - IN LAUNCH SCOPE
 
-**Status:** Not yet started (backend field doesn't exist)
+**Status:** In launch scope (2026-11-14), designed and built with the watchlist's Next Up queue; that design replaces
+the notes below.
 
 **What Needs Building:**
 
@@ -357,9 +355,9 @@ Modal provides fastest path from "I heard about a movie" to "it's tracked in my 
 
 ---
 
-### 10. Favorites Subset (Backend + Frontend) - DEFERRED UNTIL AFTER LAUNCH
+### 10. Favorites Subset (Backend + Frontend) - IN LAUNCH SCOPE
 
-**Status:** Not yet started
+**Status:** In launch scope (2026-11-14), with the watchlist's Next Up queue
 
 See Feature #3 (Favorites System) above for full details. This is the same feature listed twice for clarity
 in the status summary.
@@ -490,36 +488,20 @@ because it's more complex and benefits from having established patterns for:
 
 ---
 
-### 12. Journal Timeline View (Decision Pending) - DEFERRED UNTIL AFTER LAUNCH
+### 12. Journal Timeline View - IN LAUNCH SCOPE AS HISTORY
 
-**Status:** Decision pending on whether to implement
+**Status:** In launch scope (2026-11-14) as the Library's History (`prd-user-movie-library.md`)
 
-**Context:**
+**What It Is:**
 
-Backend data exists (all user actions have timestamps), but unclear if timeline view provides enough value
-to justify implementation effort.
+A private timeline at `/library/history`, newest first by day:
 
-**What It Would Be:**
+- every viewing and review, as logged;
+- the visitor's own changes outside logging (added to the watchlist, marked watched, liked, rated), each film once
+  per kind per day, from a record of changes kept from the day it ships;
+- a day's bulk changes of one kind collapsed into one row ("Marked 87 films watched").
 
-Chronological timeline of all user actions:
-
-- "Added Inception to watchlist" - 2 days ago
-- "Watched The Matrix, rated 9/10" - 1 week ago
-- "Liked Interstellar" - 2 weeks ago
-
-**Questions:**
-
-- Is this a valuable feature or just "nice to have"?
-- Would users actually use it or is Library page sufficient?
-- Social features (sharing timeline) out of scope, so limited use case
-
-**If Implemented:**
-
-- Timeline component with infinite scroll
-- Filter by action type (watchlist adds, watches, ratings, likes)
-- Export functionality (download as JSON/CSV)
-
-**Effort Estimate:** 8-10 hours (if decision is made to implement)
+**Not Included:** filtering by action type, export, removals, and backfilling changes made before the record existed.
 
 ---
 

@@ -37,7 +37,8 @@ under combined filters uses the first filtered list's join time.
 
 The full local backend, frontend and browser suites passed, along with lint, formatting, type checks, contrast,
 production build and markdown checks. Migration state and regenerated API types have no drift. Criteria 1–11 are
-met; the independent criteria verification found no gaps. Criterion 12 requires staging evidence after merge.
+met; the independent criteria verification found no gaps. Criterion 12 is proven on merge commit `22bfc7ed`:
+CI run `43733367679` deployed both migrations successfully and its following staging smoke passed.
 
 ## Related Documentation
 
@@ -51,5 +52,3 @@ met; the independent criteria verification found no gaps. Criterion 12 requires 
 - The card controls retain the shared save layer's time-zone fill and request-body tests when integrating.
 - Before publication, the privacy policy must describe retained watchlist, watched, liked and rating changes with
   their time and day, erased with the film's data or account.
-- Record criterion 12's proof from the merge commit's staging deploy log and the following passing smoke run before
-  archiving the work.

@@ -236,12 +236,12 @@ layer's test shows the browser's zone on a plain save and on an Undo.
 - [x] **4.1 Verify the work** (load `archive-completed.md` § 1, with the Verification note below)
 
     - Author criteria walk: criteria 1–11 met against the complete change at `b3fbace3` and the ADR acceptance;
-      evidence is recorded below. Criterion 12 remains for the staging deploy after merge.
+      evidence is recorded below. Criterion 12 was reserved for the staging deploy after merge.
     - Full checks passed: 1,620 backend tests, 3,294 frontend tests across 112 files, all 21 E2E cases, pinned
       backend lint/format, full Pyright (zero errors or warnings), frontend lint/type-check, contrast validation,
       production build and markdown lint. Migration and regenerated API types have no drift.
     - Independent criteria verification pass 1 returned no findings over the same target. Criteria 1–11 are met;
-      the explicitly post-merge criterion 12 stays open for staging proof. No implementation fixes were needed.
+      the explicitly post-merge criterion 12 was left for staging proof. No implementation fixes were needed.
 
 ## Implementation Notes
 
@@ -325,7 +325,7 @@ so it is checked once the change has merged, with its evidence recorded before t
 
 ### Proven after merge
 
-- [ ] 12. **The migrations run on staging.** The deploy job for the merge commit applies this work's migrations on
+- [x] 12. **The migrations run on staging.** The deploy job for the merge commit applies this work's migrations on
   staging (its log lists them applied), and the staging smoke run that follows the deploy passes. (D2, D4)
 
 ### Verification evidence
@@ -358,4 +358,11 @@ checks. Independent verification is recorded separately in the work unit's revie
     leaves `openapi.json` and `api.ts` unchanged, with the optional patch zone present.
 11. ADR-051 reads `Accepted (2026-11-15)`; ADR-047 retains its acceptance date and the required partial-supersession
     Status. TECHNICAL-OVERVIEW names `UserMovieChange`; both decision texts stand without planning history.
-12. Not yet provable: requires the merge commit's staging deploy log and following staging smoke result.
+12. Proven on merge commit `22bfc7ed` by CI run `43733367679`. The deploy job `132871735861` shows the six step
+    markers and names the deploy's full log on the server,
+    /opt/cinexplorer/deploy-logs/20261115T160827Z-22bfc7e.B8IWK1, which lists
+    `Applying user_movie_data.0004_liked_requires_watched... OK` and
+    `Applying user_movie_data.0005_movie_changes... OK` and ends `Deploy succeeded (exit 0)`; its status file holds
+    `0`, and `deploy-history.log` gained the `ci` line `40a2c7b4… sha-40a2c7b → 22bfc7ed… sha-22bfc7e` at
+    2026-11-15T16:08:59Z. The following staging smoke job `132871938911` passed: 20 tests passed, and the sign-up
+    case was skipped for the staging target.

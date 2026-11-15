@@ -899,26 +899,32 @@ recorded, and the three changed smoke specs pass.
           were rerun with them, for 14 flipped films. Removals and about two dozen further films follow as a later
           errand, captured in the inbox, with the review tooling kept outside the repository for it
 
-- [ ] **5.2 Checkpoint on the user-movie tracking model before merging `main` — R30**
+- [x] **5.2 Checkpoint on the user-movie tracking model before merging `main` — R30**
 
     **Goal:** The Owner decides whether to wait for `technical/user-movie-tracking` before this work takes `main`.
 
-    - Check its state: its pull request (`gh pr list --head technical/user-movie-tracking --state all`) and its
-      session notes; ask `project-manager.CX` when it is expected to merge
-    - Bring the Owner what it changes here: the API schema (R30a), the Library's `added` order (R20 reads it with no
-      change) and the shared frontend layer its draft says Home draws; R30b also needs the Library's History,
-      which the Library's unit delivers, so the tracking model alone doesn't bring "Recently watched"
-    - Stop for the Owner's decision; record it here
+    - The tracking model had already merged (#205) and its unit was archived, so there was no merge date to ask
+      `project-manager.CX` about. It adds viewing entries and an activity feed to the API (R30a). The Library's
+      `added` order now follows each film's join to the watchlist, as R20 expects, so Home's watchlist read is
+      unchanged. It also adds the read-only star rating, the rewatch icon and a cross-film viewings read. R30b
+      still needs the Library's History, and neither the Library nor the card controls had a pull request.
+    - The Owner decided to merge `main` now rather than wait.
 
-- [ ] **5.3 Merge `main` and regenerate the API types — R30**
+- [x] **5.3 Merge `main` and regenerate the API types — R30**
 
     **Goal:** The branch holds `main`, and the frontend's API types match the merged backend.
 
-    - [ ] **5.3.a Merge `origin/main` into the branch**
-        - Fetch first; resolve conflicts in shared files (`MovieCard.tsx`, `queries.ts`, `userMovieService.ts`, the
-          API types) keeping both sides' behavior, R26's rule included
-    - [ ] **5.3.b Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts` from the merged backend**
-        - The movie and Library tests run against the merged code
+    - [x] **5.3.a Merge `origin/main` into the branch**
+        - `origin/main` merged at `0e029c0c`. The only conflict was in `queries.ts`, where both sides had only added
+          code, so the merge keeps both: Home's window, featured-film and watchlist queries, and the tracking
+          model's entry and activity queries. `MovieCard.tsx` and `userMovieService.ts` merged cleanly. The type
+          check passed before the merge commit.
+    - [x] **5.3.b Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts` from the merged backend**
+        - On the stack, the tracking model's migration applied, and regenerating `openapi.json` and `api.ts` from
+          the merged backend leaves no diff. The movie and user-movie-data Docker tests pass (934), as do all 3288
+          frontend unit tests, the frontend lint and Ruff on both apps. CI's Pyright command reports no errors with
+          the locked django-types 0.24.0. The host's shared environment still has 0.22.0, whose older stubs report
+          20 errors in the tracking model's constraints. Aligning those host tools is already an inbox errand.
 
 - [ ] **5.4 Apply what `main` holds — R15, R30**
 

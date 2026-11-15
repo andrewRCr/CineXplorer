@@ -220,15 +220,15 @@ layer's test shows the browser's zone on a plain save and on an Undo.
         - Pinned backend Ruff lint/format, app Pyright, frontend lint/type-check after type generation,
           migration drift and markdown checks passed.
 
-- [ ] **3.5 Check a like and its Undo from the save layer to the record of changes**
+- [x] **3.5 Check a like and its Undo from the save layer to the record of changes**
 
     **Goal:** The segment's exit criterion is shown on this branch after `main`'s merge, with what ran and the result
     recorded here.
 
-    - Parked until 3.4's merge and integration are complete. Before that merge, all 39 change-recording cases and
-      the two browser-zone save/Undo cases pass; this is not the required post-merge result.
-    - Run `test_movie_changes.py` in this worktree's test stack, and the save layer's time zone test
-      (`useUserMovieState.test.tsx`, unless 3.4.b moved it) through `arc-offload`
+    - Checked the merged code at `9461d9db`: all 39 cases in `test_movie_changes.py` passed in this worktree's
+      test stack, and both browser-zone save/Undo cases in `useUserMovieState.test.tsx` passed through `arc-offload`.
+    - The like and Undo API scenario retains only the original watchlist addition, on the approved row contract;
+      plain browser saves and Undo both carry the browser's time zone.
 
 ### **Phase 4:** Verification
 

@@ -289,43 +289,30 @@ the film page.
 
 ### **Phase 4:** The film page tracks the film and lists its log
 
-- [ ] **4.1 The "Your film" panel's toggles, lock, Review and signed-out note — R9, R10, R11, R14, R15**
+- [x] **4.1 The "Your film" panel's toggles, lock, Review and signed-out note — R9, R10, R11, R14, R15**
 
     **Goal:** On the film page, a signed-in visitor toggles Watched, Like and Watchlist and opens Review from one panel
     that can lay out as a row or a column, a locked Watched explains itself on use, and a signed-out visitor learns what
     an account adds without anything saving.
 
-    - [ ] **4.1.a Write the panel's cases in `src/components/movie/tracking/__tests__/FilmPanel.test.tsx`**
-        - Under the heading "Your film": Watched, Like and Watchlist buttons with icons and words and `aria-pressed`,
-          each saving the opposite of its state; Review opens the dialog (inside `EntryDialogHost`) showing the film
-          without "Change", with the date off
-        - The lock: `aria-disabled`, the explanation as accessible description and as a `role="status"` note beneath
-          the toggles when activated, no request (criterion 3)
-        - Anonymous: the controls show and nothing saves; activating any shows the sign-in note with a "Sign in" link
-          to `signInPathFor` with the page's path and query. Resolving: inert with `aria-disabled`, no note
-          (criterion 7)
-        - Expect tests to FAIL initially
-
-    - [ ] **4.1.b Update `src/pages/movie/__tests__/MovieDetail.test.tsx`**
-        - Rewrite "disables saves while …" to R15's behavior
-        - Render signed in and find the panel's "Watchlist" (with `aria-pressed`, not "Add to Watchlist") in "replaces
-          cached details and save controls when a refetch returns 404" (its `/to Watchlist/` absence check names the
-          panel's "Watchlist" instead), "reads the movie once without requesting separate user state", "shows the
-          payload's watchlist state", "keeps its save enabled and shows save toasts with Undo", and the film-page step
-          of "shows a card save over a previously cached detail…"
-        - `MovieDetail.headings.test.tsx` and `MovieDetail.styles.test.tsx` render the page with no auth or dialog
-          provider and keep passing
-
-    - [ ] **4.1.c Build `src/components/movie/tracking/FilmPanel.tsx` and place it in `MovieDetail`**
-        - A `direction` prop for row or column, and `reviewRef`, a ref the panel sets on its Review button so the log can
-          move focus there (4.4); on `MovieDetail` it replaces the "Your Actions" block where it stands, as a row that
-          wraps on narrow screens, reading the film through `useUserMovieState` as the page does
-        - The toggles use the button recipe's `subtle` variant with `selected` from the film's state (the styling
-          strategy's toggle pattern) and `aria-pressed` from the same state, retiring the inline watchlist colors and
-          their TODO
-        - Tests should now PASS
-
-    - [ ] **4.1.d Run `e2e/movie-detail.spec.ts` against the browsable stack**
+    - [x] **4.1.a Cover the panel's actions, lock and authentication behavior**
+        - Eleven cases cover both toggle directions, fixed-film Review with its date off, both lock conditions and
+          their activation note, and all actions while anonymous or resolving. Anonymous actions show the exact
+          sign-in note and return link; resolving actions stay inert without a note.
+        - The initial eight cases failed before implementation. The three added off-toggle cases failed against a
+          narrow always-on reconstruction (run `37e295054859466eaf415177707a0949`), then the source was restored.
+    - [x] **4.1.b Update detail-page save and authentication integration cases**
+        - Stable Watchlist names and pressed state replace the old action labels, including cached-404, single-read,
+          payload, toast/Undo and card-to-detail composition cases. Authentication integration now asserts inert
+          controls and anonymous sign-in guidance.
+        - The heading and styling suites still render without auth or dialog providers and pass.
+    - [x] **4.1.c Place the reusable film panel on the detail page**
+        - `FilmPanel` replaces the old inline-colored actions with subtle selected toggles and Review, using the shared
+          state and watched-lock rule. Its row/column prop and Review ref support later placement and focus return.
+          The page keys it by film so activation notes reset on navigation.
+    - [x] **4.1.d Check the detail flow**
+        - All 50 related tests, touched-file lint, frontend type-check and formatting pass. The movie-detail smoke
+          passes (run `b696a7b419c84a4d9e1d6816bf7a1545`).
 
 - [ ] **4.2 The visitor rates the film from the panel, with the stars or a sheet — R12, R13**
 

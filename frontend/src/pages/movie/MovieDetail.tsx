@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { movieDetailQuery } from "@/lib/queries";
-import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
+import { useRef } from "react";
+import { FilmPanel } from "@/components/movie/tracking/FilmPanel";
 import { getErrorStatus } from "@/utilities/axiosErrorUtils";
 import { useParams, useSearchParams } from "react-router";
 import type {
@@ -14,7 +15,6 @@ import CertificationBadge from "@/components/movie/CertificationBadge";
 import { BackToCollectionLink } from "@/components/navigation";
 import {
   Box,
-  Button,
   Flex,
   Heading,
   Text,
@@ -25,7 +25,6 @@ import {
   Tag,
 } from "@chakra-ui/react";
 import MovieUserScore from "@/components/movie/MovieUserScore";
-import useAuthContext from "@/hooks/auth/useAuthContext";
 
 /* ============================================================
    MovieDetail Component
@@ -37,12 +36,7 @@ const MovieDetail = () => {
     error,
     isPending: isLoading,
   } = useQuery(movieDetailQuery(Number(id)));
-  const { status } = useAuthContext() ?? {};
-  const isAuthenticated = status === "authenticated";
-  const { state, save } = useUserMovieState(
-    movie?.tmdb_id,
-    movie?.user_movie_data,
-  );
+  const reviewRef = useRef<HTMLButtonElement>(null);
 
   const [searchParams] = useSearchParams();
 
@@ -240,41 +234,7 @@ const MovieDetail = () => {
         </Stack>
       </Flex>
 
-      {/* User Actions Section */}
-      <Box mb={6}>
-        <Heading size="md" mb={2}>
-          Your Actions
-        </Heading>
-        <Flex gap={4} justify="center">
-          {/* <Button bg="primary" color="on-primary">Add to Watchlist</Button> */}
-          {/* TODO: Refactor to variant-based styling when MovieDetail page styling is finalized.
-               Replace inline bg/color/_hover with conditional variant="solid"/"outline" (or custom recipe).
-               This is deferred until comprehensive MovieDetail redesign. */}
-          <Button
-            bg={state.user_on_watchlist ? "secondary" : "primary"}
-            color={state.user_on_watchlist ? "on-secondary" : "on-primary"}
-            _hover={{
-              bg: state.user_on_watchlist ? "secondary-hover" : "primary-hover",
-            }}
-            onClick={() =>
-              save({
-                user_on_watchlist: !state.user_on_watchlist,
-              })
-            }
-            disabled={!isAuthenticated}
-          >
-            {state.user_on_watchlist
-              ? "Remove from Watchlist"
-              : "Add to Watchlist"}
-          </Button>
-          <Button variant="solid" disabled={!isAuthenticated}>
-            Mark as Watched
-          </Button>
-          <Button variant="solid" disabled={!isAuthenticated}>
-            Rate Movie
-          </Button>
-        </Flex>
-      </Box>
+      <FilmPanel key={movie.tmdb_id} movie={movie} reviewRef={reviewRef} />
       <Separator mb={6} borderColor="border-subtle-01" />
 
       {/* Overview Section */}

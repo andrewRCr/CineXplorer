@@ -136,23 +136,18 @@ its Undo.
           reversals. Entry writes now pass their locked-save time to the join stamper too.
         - All 372 app tests, pinned Ruff lint/format and app Pyright passed.
 
-- [ ] **2.4 The save layer sends the browser's time zone — D10**
+- [x] **2.4 The save layer sends the browser's time zone — D10**
 
     **Goal:** Every record save the frontend sends, Undo included, carries the browser's IANA zone, and a test fails if
     a later change drops it.
 
-    - [ ] **2.4.a Regenerate the API types** (`npm run generate-types` in `frontend/`, from this worktree's own stack),
-      so the record save's body type carries `time_zone`
-
-    - [ ] **2.4.b Write the save layer's test in `useUserMovieState.test.tsx`**
-        - A plain save and its toast's Undo each send `time_zone` equal to the browser's zone
-        - Every test that asserts a record save's exact body expects it, among them `useUserMovieState.test.tsx`,
-          `MovieCard.test.tsx` and `session.test.tsx`
-        - Expect tests to FAIL initially
-
-    - [ ] **2.4.c Fill `time_zone` in `saveMutationOptions`' `mutationFn`**
-        - Read the zone as `useMovieEntries` does for entry writes
-        - Tests should now PASS
+    - [x] **2.4.a Regenerate the API schema and types** from this worktree's own backend.
+    - [x] **2.4.b Test the browser zone on plain saves and toast Undo**
+        - Both mounted and unmounted cases failed without the zone; `Pacific/Auckland` is supplied by the browser
+          boundary. Updated every exact save-body assertion in the shared hook, movie card and session tests.
+    - [x] **2.4.c Fill `time_zone` in the shared save mutation**
+        - Every execution reads the browser's current zone. Related tests: 250 passed across 13 files;
+          frontend lint and type-check passed after Chakra type generation.
 
 ### **Phase 3:** Entry writes and Undo keep the record of changes true
 

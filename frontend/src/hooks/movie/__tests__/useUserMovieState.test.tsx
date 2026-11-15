@@ -13,6 +13,8 @@ import { Toaster, toaster } from "@/components/core/chakra/toaster";
 import type { UserMovieDataSchema } from "@/services/userMovieDataService";
 import { useUserMovieState } from "../useUserMovieState";
 
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 const payload = createMockUserMovieData({
   user_watched: true,
   has_entries: false,
@@ -62,12 +64,22 @@ beforeEach(() => {
 afterEach(() => {
   act(() => toaster.remove());
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe("shared movie saves", () => {
   it.each([false, true])(
-    "Undo sends one opposite save without offering another Undo; unmounted: %s",
+    "sends the browser time zone on saves and Undo; unmounted: %s",
     async (unmounted) => {
+      const timeZone = "Pacific/Auckland";
+      const options = Intl.DateTimeFormat().resolvedOptions();
+      vi.spyOn(
+        Intl.DateTimeFormat.prototype,
+        "resolvedOptions",
+      ).mockReturnValue({
+        ...options,
+        timeZone,
+      });
       const requests: unknown[] = [];
       const undo = gate();
       server.use(
@@ -107,8 +119,8 @@ describe("shared movie saves", () => {
         ).not.toBeInTheDocument(),
       );
       expect(requests).toEqual([
-        { user_on_watchlist: true },
-        { user_on_watchlist: false, undo: true },
+        { user_on_watchlist: true, time_zone: timeZone },
+        { user_on_watchlist: false, undo: true, time_zone: timeZone },
       ]);
       if (!unmounted) expect(shown()).not.toHaveProperty("undo");
     },
@@ -203,12 +215,14 @@ describe("shared movie saves", () => {
       await waitFor(() => expect(requests).toHaveLength(1));
       await user.click(screen.getByRole("button", { name: "Watchlist" }));
       expect(shown().user_on_watchlist).toBe(false);
-      expect(requests).toEqual([{ user_on_watchlist: true }]);
+      expect(requests).toEqual([
+        { user_on_watchlist: true, time_zone: timeZone },
+      ]);
       first.release();
       await waitFor(() =>
         expect(requests).toEqual([
-          { user_on_watchlist: true },
-          { user_on_watchlist: false },
+          { user_on_watchlist: true, time_zone: timeZone },
+          { user_on_watchlist: false, time_zone: timeZone },
         ]),
       );
       second.release();

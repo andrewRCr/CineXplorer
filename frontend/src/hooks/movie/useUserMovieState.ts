@@ -35,7 +35,11 @@ export const saveMutationOptions = (
         mutationFn: ({ changes, change, undo }: SaveVariables) => {
             return saveUserMovieData(
                 tmdbId,
-                undo ? { ...changes, undo: true } : changes,
+                {
+                    ...changes,
+                    ...(undo ? { undo: true } : {}),
+                    time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                },
                 {
                     signal: getSaveSignal(change),
                     shouldReportServerError: () => change === getChangeCount(),

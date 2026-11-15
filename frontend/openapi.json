@@ -6271,6 +6271,17 @@
             "default": false,
             "title": "Undo",
             "type": "boolean"
+          },
+          "time_zone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Zone"
           }
         },
         "title": "UserMovieDataPatchSchema",

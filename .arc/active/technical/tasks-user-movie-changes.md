@@ -122,33 +122,19 @@ its Undo.
         - Stores the four fields, value, source, save time and day; rows are write-once and cascade with records.
         - All 353 app tests (before recording tests), pinned Ruff lint/format and app Pyright passed; no drift.
 
-- [ ] **2.3 A record save records what the visitor changed — D4, D5**
+- [x] **2.3 A record save records what the visitor changed — D4, D5**
 
     **Goal:** Each record save writes, in its transaction under the record's lock, one row for each field the visitor
     changed and for a like a rule removed, sharing one time with the join times it stamps, on the visitor's day.
 
-    - [ ] **2.3.a Write the recording tests in a new `tests/integration/test_movie_changes.py`**
-        - Each row of D5's table, through `UserMovieDataService.save`, checking each row's `field`, `turned_on`,
-          `rating` and `from_entry`
-        - A rule's turn-on records nothing (rating or liking an unwatched film records no `watched` row), and neither
-          does a rule's watchlist removal
-        - A field supplied at its current value, and a save that changes nothing, record nothing; a refused save (400
-          or 409) records nothing
-        - One save's rows share one `created_at`, equal to the join times it stamps (a save marking watched and adding
-          to the watchlist together). Write it under `freeze_time(..., auto_tick_seconds=1)`, so every clock read
-          differs: under a plain frozen clock a second read returns the same instant and the case can't fail
-        - `made_on` is the save's day in its zone, at a frozen time whose UTC day differs from the zone's, and the UTC
-          day with the zone absent or null
-        - Expect tests to FAIL initially; the cases that record nothing pass early, and the shared time fails first
-          only for want of rows (see the notes)
-
-    - [ ] **2.3.b Take one time per save and record its changes**
-        - `UserMovieDataService.save` takes the time once the lock is held and passes it to `stamp_list_joins`, which
-          stops taking its own; entry writes pass theirs too
-        - One function in `movie_state_rules.py` records a save's changes from the four fields' values before it, the
-          fields it supplied, its time and day, and whether an entry write made it: a field records when the save
-          supplied it and it changed, or when it is a reversal other than the watchlist's. 3.1 and 3.2 build on it
-        - Tests should now PASS, with the app's other tests
+    - [x] **2.3.a Test record-save recording in `test_movie_changes.py`**
+        - Covered all ten save-table cases, no-ops, refused saves, shared row/join time and zoned/UTC days.
+          Fourteen cases failed without recording. Six cases failed with unchanged-value recording, history written
+          before rejection, or a separate clock read for joins, then passed restored.
+    - [x] **2.3.b Take one locked-save time and record changes in its transaction**
+        - Extended the before-state to rating; the shared helper records supplied changes and non-watchlist
+          reversals. Entry writes now pass their locked-save time to the join stamper too.
+        - All 372 app tests, pinned Ruff lint/format and app Pyright passed.
 
 - [ ] **2.4 The save layer sends the browser's time zone — D10**
 

@@ -1,10 +1,11 @@
 """Keep a film's facts consistent while its record is locked by the caller."""
 
-from datetime import date
+from collections.abc import Mapping
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from apps.core.exceptions import ConflictError
-from apps.user_movie_data.models import UserMovieData, UserMovieEntry
+from apps.user_movie_data.models import UserMovieChange, UserMovieData, UserMovieEntry
 
 
 def apply_record_save(record: UserMovieData, changes: dict[str, object]) -> None:
@@ -42,12 +43,9 @@ LIST_TIMES = (
 
 
 def stamp_list_joins(
-    record: UserMovieData, previous: dict[str, bool], *, undo: bool = False
+    record: UserMovieData, previous: Mapping[str, object], now: datetime, *, undo: bool = False
 ) -> None:
     """Keep departure times and stamp only transitions into a list."""
-    from django.utils import timezone
-
-    now = timezone.now()
     for flag, stamp in LIST_TIMES:
         if (
             getattr(record, flag)
@@ -71,3 +69,41 @@ def apply_entry_create(record: UserMovieData, watched_on: date | None, zone: Zon
         and watched_on >= record.watchlist_added_at.astimezone(zone).date()
     ):
         record.user_on_watchlist = False
+
+
+CHANGE_FIELDS = (
+    ("watchlist", "user_on_watchlist"),
+    ("watched", "user_watched"),
+    ("liked", "user_liked"),
+    ("rating", "user_rating"),
+)
+
+
+def record_changes(
+    record: UserMovieData,
+    previous: Mapping[str, object],
+    supplied: set[str],
+    now: datetime,
+    made_on: date,
+    *,
+    from_entry: bool = False,
+) -> None:
+    """Record explicit changes and reversals, excluding derived watchlist removals."""
+    changes: list[UserMovieChange] = []
+    for field, attribute in CHANGE_FIELDS:
+        current: bool | int | None = getattr(record, attribute)
+        if current == previous[attribute]:
+            continue
+        if attribute in supplied or (not current and field != "watchlist"):
+            changes.append(
+                UserMovieChange(
+                    record=record,
+                    field=field,
+                    turned_on=bool(current),
+                    rating=record.user_rating if field == "rating" else None,
+                    from_entry=from_entry,
+                    created_at=now,
+                    made_on=made_on,
+                )
+            )
+    UserMovieChange.objects.bulk_create(changes)

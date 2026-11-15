@@ -66,6 +66,7 @@ class UserMovieEntryService:
             record, _ = UserMovieData.objects.select_for_update().get_or_create(
                 user=user, movie=movie
             )
+            now = timezone.now()
             previous = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
             entry = UserMovieEntry.objects.create(
                 record=record,
@@ -85,7 +86,7 @@ class UserMovieEntryService:
             if payload.rating is not None and latest is not None and latest.pk == entry.pk:
                 record.user_rating = payload.rating
             apply_entry_create(record, payload.watched_on, zone)
-            stamp_list_joins(record, previous)
+            stamp_list_joins(record, previous, now)
             record.save()
             return self._response(user, tmdb_id, entry)
 
@@ -113,6 +114,7 @@ class UserMovieEntryService:
         self._validate(payload)
         with transaction.atomic():
             record, entry = self._locked_entry(user, tmdb_id, entry_id)
+            now = timezone.now()
             previous_flags = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
             history = UserMovieEntry.objects.get_queryset().filter(record=record)
             previous_latest = history.ordered_for_history().first()
@@ -135,7 +137,7 @@ class UserMovieEntryService:
             ):
                 record.user_rating = entry.rating
             record.user_liked = payload.liked
-            stamp_list_joins(record, previous_flags)
+            stamp_list_joins(record, previous_flags, now)
             record.save()
             return self._response(user, tmdb_id, entry)
 

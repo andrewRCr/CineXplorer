@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+from zoneinfo import ZoneInfo
+
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import transaction
 from django.db.models import QuerySet
+from django.utils import timezone
 
 from apps.core.exceptions import InvalidInputError, NotFoundError
 from apps.core.pagination import paginate_queryset
@@ -14,8 +17,9 @@ from apps.user_movie_data.models import UserMovieData
 from apps.user_movie_data.schemas import LibraryQuerySchema, UserMovieDataSchema
 from apps.user_movie_data.services.movie_card import get_or_fetch_card
 from apps.user_movie_data.services.movie_state_rules import (
-    LIST_TIMES,
+    CHANGE_FIELDS,
     apply_record_save,
+    record_changes,
     stamp_list_joins,
 )
 
@@ -51,10 +55,14 @@ class UserMovieDataService:
             record, created = UserMovieData.objects.select_for_update().get_or_create(
                 user=user, movie=movie
             )
-            previous = {flag: getattr(record, flag) for flag, _ in LIST_TIMES}
+            now = timezone.now()
+            previous = {attribute: getattr(record, attribute) for _, attribute in CHANGE_FIELDS}
             apply_record_save(record, changes)
-            stamp_list_joins(record, previous, undo=fields.get("undo") is True)
+            stamp_list_joins(record, previous, now, undo=fields.get("undo") is True)
             record.save()
+            zone_name = fields.get("time_zone")
+            zone = ZoneInfo(zone_name) if isinstance(zone_name, str) else ZoneInfo("UTC")
+            record_changes(record, previous, set(changes), now, now.astimezone(zone).date())
             return self.get_by_tmdb_id(user, tmdb_id), created
 
     def delete(self, user: AbstractBaseUser, tmdb_id: int) -> None:

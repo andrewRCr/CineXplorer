@@ -10,6 +10,9 @@ pending and confirmed saves stands.
 Implemented by: Frontend Server State (`prd-frontend-server-state.md`), including the movie detail query. The
 end-to-end watchlist test remains deferred.
 
+Implementation note (2026-11-15): the deferred end-to-end watchlist test is now `library.spec.ts`, the signed-in
+Watchlist and Library journey described by ADR-050.
+
 ## Context
 
 [ADR-020](adr-020-adopt-virtualized-infinite-scroll.md) brought in TanStack Query for the browse grids, and

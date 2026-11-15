@@ -301,28 +301,22 @@ the same rows.
         - All 69 related cases pass, including both grid pages' measured returns. Frontend lint/type-check and all
           three Library, browse and catalog-return browser specs pass. New test queries were corrected for lint.
 
-- [ ] **4.4 ADR-050 records the Library, and the documents say what it changes — R33**
+- [x] **4.4 ADR-050 records the Library, and the documents say what it changes — R33**
 
     **Goal:** ADR-050 reads `Proposed` with the Library's decisions, ADR-044's and ADR-039's Status sections name what
     it supersedes, and the README describes the pages as they are.
 
-    - [ ] **4.4.a Write ADR-050**
-        - `.arc/reference/adr/adr-050-…md` from `adr-template.md`, following `strategy-adr-methodology.md`, Status
-          `Proposed`
-        - It records what R33's first bullet lists: the two pages and their addresses with no redirect; the bar's
-          Explore, Watchlist and Library; the Films and History views; the Library's own grid; History as the
-          Library's timeline and its read (row kinds, the selection of shown changes, the grouping by day and field,
-          the changes route) beside the unchanged list of dated entries; and the signed-in smoke spec
-        - It supersedes ADR-044 in part (the one personal link reading Watchlist and current only on `/watchlist`, the
-          catalog's link reading Films, the sentence that Films can later open a Films hub, and its list of the
-          smoke tier's specs) and ADR-039 in part (watchlists outside the smoke tier)
-
-    - [ ] **4.4.b Update the Status sections and the README**
-        - ADR-044's and ADR-039's Status say what ADR-050 supersedes, keeping every supersession already there;
-          ADR-046 and ADR-048, on other branches, also supersede parts of ADR-044, and a merge keeps all of them
-        - `README.md`'s "Built" list says Explore for Films and names the Watchlist page and the Library with its
-          History; its "In development" list no longer names the library
-        - Markdown lint the changed files
+    - [x] **4.4.a Write ADR-050**
+        - Added the Proposed record from the template: separate destinations, Explore and the personal navigation,
+          fluid measured grid, the Library timeline and private reads beside the unchanged dated-entry list, shown
+          changes and grouped expansion, and the deterministic signed-in smoke journey.
+        - The record distinguishes the current viewing/review read from the later recorded-change integration.
+    - [x] **4.4.b Update the Status sections and the README**
+        - Added the precise partial supersessions to ADR-044 and ADR-039, keeping existing statuses and supersessions.
+          Added R33's dated realization note to ADR-027's Status without changing its decision.
+        - README names Explore, Watchlist and the Library's Films/History views among built features; Library is no
+          longer in the development list. Changed ADRs and task documentation pass Markdown lint; README is excluded
+          by repository lint configuration and was checked manually.
 
 - [ ] **4.5 Check the Library's views and their returns**
 

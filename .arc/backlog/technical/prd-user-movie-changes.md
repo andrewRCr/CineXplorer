@@ -6,14 +6,6 @@
 **Status:** Ready for Implementation
 **Created:** 2026-11-14
 
-**Related Work:**
-
-- ✅ Complete: User movie tracking (`prd-user-movie-tracking.md`) - the record, entries, the rules layer and the
-  Library endpoint this work changes.
-- ⏳ Meets: the Library (`prd-user-movie-library.md`), whose History reads the record of changes and whose pull
-  request merges after this one; and the card controls (`prd-user-movie-controls.md`), which rewrite the save layer
-  this work adds a time zone to (§ 6, Migration and rollout).
-
 ---
 
 ## 1. Introduction / Context

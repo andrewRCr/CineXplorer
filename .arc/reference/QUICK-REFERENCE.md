@@ -216,8 +216,9 @@ E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e
 E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e -- e2e/browse.spec.ts
 ```
 
-The eight Chromium specs use catalogue fixtures locally and have no retries. The seven journey specs scan each page
-they reach with axe; `background.spec.ts` checks the page background in the first frame before React loads, the CSS
+The eight Chromium specs use catalogue fixtures locally and have no retries. `library.spec.ts` covers the signed-in
+Watchlist and Library journey. The seven journey specs scan each page they reach with axe; `background.spec.ts`
+checks the page background in the first frame before React loads, the CSS
 fallback with JavaScript off, and mode and palette changes, scanning the pages it renders. Seven specs use 1280×800;
 `phone-width.spec.ts` drives the shell at 360×800, signed out and signed in. CI requires them through `ci-ok`; its
 staging target skips registration and the saved-film journey and runs after deployment. See the

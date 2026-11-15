@@ -142,7 +142,8 @@ Not naming the broader checks that have not run. The report says what ran and wh
 
 **❌ The full E2E suite for one component:**
 Run the files that drive the change against the worktree's browsable stack; CI and verification run all eight specs,
-including the 360×800 phone shell alongside the six at 1280×800.
+including the 360×800 phone shell alongside the seven at 1280×800.
+`library.spec.ts` covers the signed-in Watchlist and Library journey.
 
 **❌ Merging on red:**
 A failing CI check is resolved before merge, never overridden.

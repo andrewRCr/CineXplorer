@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-15)
 
 Supersedes ADR-044 in part (the personal and catalog links, the future Films hub entrance, and the smoke-spec list)
 and ADR-039 in part (excluding watchlists from the smoke tier).

@@ -4,7 +4,8 @@
 **Created:** 2026-11-14
 **Branch:** `technical/user-movie-library`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
+**Completed:** 2026-11-15
 
 ## Overview
 
@@ -17,8 +18,8 @@ left, and a signed-in smoke spec covers the journey.
 stays in the backlog until whichever of the card controls and the Library archives last, which moves it into its
 archive folder.
 
-**Waits on:** the like rule and the record of changes, a separate backend change (ADR-051). Phase 5 builds History's
-change rows once it is on `main`, and this work's pull request waits for it (R34b); Phases 1 to 4 do not.
+**Integration:** the like rule and record of changes (ADR-051) landed on `main` and joined this branch in merge
+`516150cb`; History reads that contract. The same merge supplied Home, whose Recently watched section was added here.
 
 ## Scope
 
@@ -90,8 +91,7 @@ link, and removed there, in the browser.
           also failed against a temporary wildcard child and passed once it was removed.
         - App tests use jsdom's real location so browser history updates are visible to BrowserRouter.
     - [x] **1.2.b Add the protected Library routes and page**
-        - Added the shared heading, themed Library navigation and child outlet; the two child regions await their
-          later tasks. Watchlist's heading now reads Watchlist.
+        - Added the shared heading, themed Library navigation and child outlet. Watchlist's heading reads Watchlist.
         - All 15 App/Watchlist tests, frontend lint, type-check and formatting passed.
 
 ### **Phase 2:** The watchlist shows as a grid of cards, sorted by the address
@@ -336,8 +336,7 @@ the same rows.
       only its first fixture while the second stays queued.
     - All 92 cases pass across `LibraryGrid.test.tsx`, `LibraryScrollReturn.test.tsx`, `LibraryFilms.test.tsx`,
       `Watchlist.test.tsx`, `LibraryHistory.test.tsx` and `BackToCollectionLink.test.tsx`.
-    - Frontend lint/type-check and changed Markdown pass. Full-project verification and CI remain for the later
-      verification phase; success criteria are untouched.
+    - Frontend lint/type-check and changed Markdown passed.
 
 ### **Phase 5:** History shows the visitor's changes, with `main` merged
 
@@ -398,14 +397,13 @@ History, with each case of R34 that holds applied.
           parameters. One further query samples every group on the page; schemas validate the typed query boundary.
         - Astra recommended these explicit stages over nested correlated ORM selections. Documented the timeline's
           direct pagination metadata as the QuerySet-helper exception in the pagination strategy and Proposed ADR.
-        - Regenerated the required-tag union and client types. The current client narrows to entry rows until 5.4's
-          change rendering; its existing behavior remains covered. All 420 user-movie tests, 501 related frontend tests,
+        - Regenerated the required-tag union and client types. All 420 user-movie tests, 501 related frontend tests,
           the Library browser journey, Ruff lint/format, Python and TypeScript checking, frontend lint and Markdown
           pass. SQL parameter typing and test/line formatting corrections were mechanical.
         - Prepared 5.6's separate retained heavy account early to check this approach: 2,500 viewings, 500 undated
           reviews, 10,000 changes, 420 watched films and 70 queued films. Through the signed-in route, warmed pages 1
-          and 30 returned in 94.107–103.977 ms across five runs each. Raw evidence is retained; 5.6 repeats the final
-          measurement after the backend is complete, and no success criterion is checked here.
+          and 30 returned in 94.107–103.977 ms across five runs each. Raw evidence is retained; Task 5.6 records the
+          final measurement.
 
 - [x] **5.3 A group's films page from their own route — R21, R24**
 
@@ -453,8 +451,7 @@ History, with each case of R34 that holds applied.
 
     - [~] **5.5.a Card controls' log dialog case**
         - The approved merge of `main` at `1f7416f5` had no log dialog or `useEntryDialog`; R34c did not apply.
-          Existing empty states, card actions and browser removal remain appropriate to that merge. Any later merge
-          must recheck R34 before verification.
+          Existing empty states, card actions and browser removal match that merge.
     - [x] **5.5.b Add Recently watched to signed-in Home — R34d**
         - The merged Home matched the planned paths and lacked this section; its implementation needed no task-plan
           correction.
@@ -479,7 +476,7 @@ History, with each case of R34 that holds applied.
     criterion 15's account, with the measurement recorded here before review.
 
     - Retained the idempotent seed, private credentials, account audit, measurement scripts and all raw logs outside
-      the repository for reuse through verification. The dedicated verified account has 2,500 viewings, 500 undated
+      the repository. The dedicated verified account has 2,500 viewings, 500 undated
       reviews and 10,000 changes on 400 distinct days spanning 400 days; 4,830 changes are reversals or entry ratings.
       It has 420 watched films, 70 queued films, synthetic film IDs starting at 2,100,000,000 and a shown watched group
       of 200 on 2025-10-12. The development spec's account is separate.
@@ -488,7 +485,7 @@ History, with each case of R34 that holds applied.
         - Page 1: **99.447, 95.112, 95.990, 99.255, 95.495 ms**.
         - Page 30: **95.109, 94.427, 94.771, 94.150, 95.175 ms**.
         - Slowest: **99.447 ms**, below the unchanged 300 ms bound. Warm-ups, each sample, audit and source hashes
-          are retained. No success criterion is checked here; verification remains separate.
+          are retained.
     - Preserved the earlier approach measurements and an incomplete run whose result serialization lacked a JSON
       import. Corrected instrumentation records each sample immediately; the complete run above used that script.
       No application setting, logging level or bound changed for measurement.
@@ -505,47 +502,39 @@ History, with each case of R34 that holds applied.
       integration against both parents, requirements and all six review dimensions: **no material findings**.
       The review assessed test source; it did not rerun the suites or measurements. The completion advisory found
       no demonstrated blocker.
-    - Phase 5 is complete. The full verification run, manual browser criteria, criterion checkoffs and final code
-      review remain in Phase 6 and completion; no success criteria were checked in this range.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work** (load `archive-completed.md` § 1: criteria validation and verification review; ADR-050 set
-  `Accepted` before merge; criteria 13 and 14 proven in the browser and criterion 15's measurement recorded before
-  review; after any later merge of `main`, R34 rechecked and the API types regenerated if its schema changed)
+- [x] **6.1 Verify the work**
 
-## Implementation Notes
+    - All 14 applicable Success Criteria are met, with source and run evidence below; criterion 14 is not applicable
+      because the card controls were absent at the recorded merge. The live heavy-account checks and retained
+      route timings were assessed before review. ADR-050 reads Accepted with its date.
+    - The full verification run passed: backend and frontend suites, lint, formatting, type checks, contrast,
+      production build, API regeneration without drift, and all eight Chromium specs. Application source did not
+      change during verification; CI and the separate code review remain for completion.
+    - Independent criteria verification covered the complete change and reported one minor documentation gap.
+      The approved corrections below close it; the wording-only fix check was skipped on the approved
+      recommendation. No further complete criteria pass was needed.
+    - [x] **6.1.a Complete the smoke-tier documentation references**
+        - Corrected the desktop-spec count to seven, then named library.spec.ts and its signed-in Watchlist and
+          Library journey in QUICK-REFERENCE and the quality-gates strategy. A source sweep confirmed all four
+          required reference sites name the spec and count eight specs. Markdown lint and whitespace checks passed.
 
-- **Signed in, in tests.** Store a token from `tests/helpers/auth.ts` and call `authHandlers()`, then render under
-  `AuthContextProvider`, as `Watchlist.test.tsx` does. The default `userMoviesHandler` reads only `watchlist` and
-  always answers one page, and no default handler serves History's routes, so each test answers with its own handlers
-  and asserts the parameters each read sends.
-- **The virtualizer under jsdom.** `VirtualizedMovieGrid.test.tsx` mocks `useWindowVirtualizer`; these tests use the
-  real one. A probe during planning showed it, under jsdom, measuring rows from a stubbed `offsetHeight` on elements
-  carrying `data-index` (`tests/setup.ts`' `ResizeObserver` is a no-op, so `measureElement` falls back to
-  `offsetHeight`): with a 100px estimate and 300px rows, row 2 started at 600px. Remounted with `takeSnapshot()`'s
-  items as `initialMeasurementsCache` and nothing measurable, row 2 still started at 600px. So 2.1, 3.3 and 4.3 assert
-  row positions (each row's offset) against measured sizes that differ from the estimate.
-- **Page padding.** `AppLayout` pads `px={{ base: 2, md: 6, lg: 8 }}`, which R5's column counts assume. Today's
-  `Watchlist.tsx` adds `p={8}`; a page that adds horizontal padding changes the counts.
-- **Calendar dates.** `last_logged_on`, `watched_on`, `made_on` and a change's `day` are calendar dates: format them
-  without passing through `Date`'s UTC parse, which shifts a date a day back west of UTC.
-- **The record of changes.** Task 5.1.b records the landed `UserMovieChange` fields and recording helper; 5.2 to 5.4
-  use that contract.
-- **Merges of `main`.** A merge before 5.1, the Owner approving each, keeps the branch's tests green and applies only
-  the API types and what R34e asks; 5.1 and 5.5 apply the rest. Overlaps known today:
-    - `technical/landing-page` changes `BackToCollectionLink.tsx` (`from=home` returning to `/`, the label read from
-      `from`), `getUserMovies` (a `ReadOptions` argument), `MovieCard.tsx` (its footer only while signed in),
-      `axe-baseline.ts` (a `/` entry), `App.tsx`, `routes.ts`, `queries.ts`, `sign-in.spec.ts` and
-      `phone-width.spec.ts` (the heading they wait for after signing in, "Popular in theaters" in place of "Welcome to
-      CineXplorer"; `library.spec.ts` waits for neither, 2.4.b)
-    - `technical/user-movie-controls` changes `queries.ts` and the card itself; its R41c puts the log dialog's steps
-      in `library.spec.ts` if the Library merges first
-- **Tests that pass on arrival** are shown failing against a narrow break of the behavior, then passing restored, and
-  the completion notes say so.
-- **E2E runs** use the worktree's browsable stack (`node scripts/worktree.mjs browse`, `SITE_PORT` from
-  `infrastructure/.env`) through `arc-offload`, as QUICK-REFERENCE shows. `browse` reruns `seed_dev_data`, so an
-  existing worktree database gains the fixture films.
+---
+
+## Implementation Findings
+
+- **The virtualizer under jsdom.** These tests use the real window virtualizer, measuring rows from a stubbed
+  `offsetHeight` on elements carrying `data-index`. The test setup's `ResizeObserver` is a no-op, so
+  `measureElement` falls back to `offsetHeight`: with a 100px estimate and 300px measured rows, row 2 started at
+  600px. Remounted with `takeSnapshot()`'s items as `initialMeasurementsCache` and nothing measurable, row 2
+  still started at 600px. The grid and return tests assert offsets against measured sizes that differ from the
+  estimate, rather than merely checking that scrolling happened.
+- **Page padding.** The shared page container uses `px={{ base: 2, md: 6, lg: 8 }}`. The personal pages add no
+  horizontal padding of their own, preserving the required column counts.
+- **Calendar dates.** `last_logged_on`, `watched_on`, `made_on` and a change's `day` are calendar dates. Formatting
+  them without `Date`'s UTC parse avoids shifting them a day back west of UTC.
 
 ## Success Criteria
 
@@ -554,32 +543,54 @@ the branch's local stack, and **Measured before review** on it, before the code 
 
 ### Implemented
 
-- [ ] 1. **The smoke spec.** `library.spec.ts` passes against a worktree's browsable stack: the film added from a card
+- [x] 1. **The smoke spec.** `library.spec.ts` passes against a worktree's browsable stack: the film added from a card
   is found through the bar's Watchlist link and removed (under R34c, logged off the watchlist); the Films view and
   History show the film the setup marked watched, with History's "Marked watched" change; and the scans of `/watchlist`,
   `/library` and `/library/history` pass. Run against staging, it is skipped. (R29, R30, R32)
-- [ ] 2. **The bar.** Component tests show Explore, Watchlist and Library signed in, and Explore alone signed out, in
+
+    **Evidence:** Verified at bbb1502d: the full local Chromium run passed all 22 cases across eight specs,
+    including library.spec.ts and its three personal-page accessibility scans. The staging skip is explicit in the
+    spec; staging was not contacted.
+- [x] 2. **The bar.** Component tests show Explore, Watchlist and Library signed in, and Explore alone signed out, in
   the bar and the drawer, each current exactly on its addresses (R1). `phone-width.spec.ts`'s 1024px step finds every
   bar item fully visible, none overlapping another, and no sideways scroll. `sign-in.spec.ts` and `phone-width.spec.ts`
   pass with their Explore and Library assertions. (R1, R31)
-- [ ] 3. **Addresses and headings.** Tests show `/library/anything` shows Not Found; a signed-out visitor at
+
+    **Evidence:** Verified at bbb1502d: NavBar, NavDrawer and BaseLayout coverage passed in the 119-file frontend
+    suite; sign-in and phone-width passed in Chromium, including the signed-in 1024px bounds and overlap check.
+- [x] 3. **Addresses and headings.** Tests show `/library/anything` shows Not Found; a signed-out visitor at
   `/library?liked=true` is sent to sign in and returned there; `/watchlist` shows the Watchlist page with no redirect.
   The Library's `h1` reads "Library" on both views and the Watchlist page's reads "Watchlist"; the "Library" navigation
   landmark holds Films and History, the current one marked as the current page, and neither link carries a query string.
   (R2 to R4)
-- [ ] 4. **The Watchlist page.** Component tests show it reads `watchlist: true` with `page_size: 100`; each sort option
+
+    **Evidence:** Verified at bbb1502d: App.test.tsx covers the unknown child, sign-in return with filters, exact
+    addresses, one heading and query-free current Library navigation; all cases passed in the full frontend run.
+- [x] 4. **The Watchlist page.** Component tests show it reads `watchlist: true` with `page_size: 100`; each sort option
   sends its pair and sets the address as R10 says; an unknown sort falls back with the address corrected; the empty
   state; and a removal from a card refetching the loaded pages and dropping the film. (R7 to R11)
-- [ ] 5. **The Films view.** Component tests show it reads `watched: true`; each toggle exposes `aria-pressed`, adds its
+
+    **Evidence:** Verified at bbb1502d: Watchlist.test.tsx and LibraryGrid.test.tsx passed their network assertions
+    for six sort pairs, canonical addresses, replace navigation, empty/error states, card removal and sequential
+    loaded-page refetches.
+- [x] 5. **The Films view.** Component tests show it reads `watched: true`; each toggle exposes `aria-pressed`, adds its
   filter, joins the address and survives a sort change; each sort option's pair; the "Last watched" line on a film with
   a dated viewing only, with the line's height kept on the others; the empty state with no filter on; and "No films
   match" whenever a filter is on and nothing matches, with Clear filters keeping the sort. (R12 to R16)
-- [ ] 6. **The grid.** Tests show the column count is 2 for a 390px screen's content width and 7 for a 1280px screen's,
+
+    **Evidence:** Verified at bbb1502d: LibraryFilms.test.tsx passed all ten sort pairs, combined toggles and
+    preserved parameters, dated-only Last watched with a reserved 24px slot, both empty states and sort-preserving
+    Clear filters.
+- [x] 6. **The grid.** Tests show the column count is 2 for a 390px screen's content width and 7 for a 1280px screen's,
   with no column under 150px at any width; a next page is not requested while the list is fetching, nor once the last
   page read is not below `total_pages`, an empty list's included; a film repeated across two pages is drawn once;
   placeholder cards while the first page loads; each page's failure message with Retry; and Retry beneath the grid when
   a later page fails. (R5 to R7)
-- [ ] 7. **History's read.** API tests with stored films, entries and recorded changes show: each row kind with its day
+
+    **Evidence:** Verified at bbb1502d: LibraryGrid.test.tsx and libraryGrid.test.ts passed measured rows, paging
+    guards, terminal and empty pages, duplicate removal, placeholders and first/later-page retries. The live stack
+    also drew 7 desktop columns at 160px and 2 phone columns at 179px.
+- [x] 7. **History's read.** API tests with stored films, entries and recorded changes show: each row kind with its day
   and fields; days newest first, and within a day the most recently made first; an undated review on its `made_on` day;
   a change row only for a record save's turn-on, never for an entry write's rating change or a reversal; a change hidden
   when the film's next save reverses it, and shown when a save of another field came between; re-liking after an unlike
@@ -590,42 +601,87 @@ the branch's local stack, and **Measured before review** on it, before the code 
   another user's entries and changes never returned; 401 with no user; 422 for a page size over 100, an unknown field or
   a malformed day; and a page taking the same number of queries with 10 rows as with 500. The committed OpenAPI schema
   lists these statuses for both routes. (R22 to R24)
-- [ ] 8. **History in the frontend.** Component tests show month headings; a day's date once; a viewing's stars, rewatch
+
+    **Evidence:** Verified at bbb1502d: the complete 1,660-test backend run includes test_history_api.py covering
+    owned row kinds, stable order, shown-change selection, grouping and sampling, whole-group pagination, group
+    reads, bounds, privacy and fixed query counts at 10/500 rows. Both generated route contracts include
+    200/401/422; regeneration produced no diff.
+- [x] 8. **History in the frontend.** Component tests show month headings; a day's date once; a viewing's stars, rewatch
   icon and review lines; a review's "Review" tag; 3 changes of a kind drawn as single rows and 4 as a group with "Show
   all 4"; expanding reading the changes route, "Show more" reading its next page, and "Show fewer"; a group still
   expanded after leaving for a film and returning, and collapsed after a change of user; rows joined without duplicates;
   the loading, failed and empty states; and a record save refetching History. (R17 to R21, R25, R26)
-- [ ] 9. **Back links.** Tests show a film opened from each page carries R27's `from` and query, the film page's back
+
+    **Evidence:** Verified at bbb1502d: LibraryHistory.test.tsx and LibraryHistoryChanges.test.tsx passed display,
+    deduplication, three/four-film boundaries, failed-page retries, expansion paging, save refetch and user-change
+    reset cases. Live expansion loaded all 200 films over two group pages and survived a film return.
+- [x] 9. **Back links.** Tests show a film opened from each page carries R27's `from` and query, the film page's back
   link reads and opens R27's label and address with its scroll signal, and returning on that signal restores the saved
   position and gives the page's virtualizer back the row heights it measured, keyed as R28 says, while arriving without
   it starts at the top with none; a return on the signal to a page holding no heights, or no position saved since the
   app loaded, starts at the top, as does a second return after a reload with no scrolling between; and choosing a sort,
   or turning a filter on or off, starts at the top and replaces the history entry. (R10, R12, R27, R28)
-- [ ] 10. **The seed.** The seed's tests show the two fixture cards created in a database without them, left unchanged
+
+    **Evidence:** Verified at bbb1502d: BackToCollectionLink, LibraryScrollReturn, LibraryHistory and
+    useScrollPersistence cases passed destinations, query preservation, restore signals, measured heights, reset
+    guards and replace navigation. Live Films and History returns restored the same visible links at 10,500px and
+    321,300px; detail reload and the subsequent no-scroll return both opened Films at zero.
+- [x] 10. **The seed.** The seed's tests show the two fixture cards created in a database without them, left unchanged
   on a second run, and no user data created for them. (R29)
-- [ ] 11. **The documents.** ADR-050 reads `Accepted` with its date; ADR-044's, ADR-039's and ADR-027's Status sections
+
+    **Evidence:** Verified at bbb1502d: test_seed_dev_data.py passed creation and repeat-seeding preservation,
+    absence of user records and both fixture saves with TMDB forbidden.
+- [x] 11. **The documents.** ADR-050 reads `Accepted` with its date; ADR-044's, ADR-039's and ADR-027's Status sections
   say what R33 says; the documents R33 names read as it says, and a search for the smoke specs' file names and counts
   finds every living site naming the new spec. (R33)
-- [ ] 12. **The neighbouring work.** Whichever of R34c and R34d applies at the merge is in place, with its tests: the
+
+    **Evidence:** Verified at bbb1502d plus the approved local documentation corrections: QUICK-REFERENCE,
+    the quality-gates strategy, the technical overview and the testing strategy name library.spec.ts and count
+    eight specs. ADR-050 reads Accepted (2026-11-15); ADR-044, ADR-039 and ADR-027 carry the required Status notes.
+    The README, pagination strategy and styling example match R33. Both corrections from the author and independent
+    criteria passes passed markdown lint and a final source sweep.
+- [x] 12. **The neighbouring work.** Whichever of R34c and R34d applies at the merge is in place, with its tests: the
   empty states' "Log a film" opening the dialog with the date on, the spec's dialog steps passing in place of step 4,
   and its step 1 and the Watchlist page's removal test pressing the card's Watchlist toggle; or Home's "Recently
   watched" listing five viewings as R35 says, its "See all" opening `/library/history`, and a visitor with only viewings
   not seeing the nothing-saved set. (R34, R35)
 
+    **Evidence:** Verified at bbb1502d against the main merge in 516150cb: Home is present and the card-controls log
+    dialog is absent, so R34d applies and R34c does not. RecentlyWatched.test.tsx passed the five-viewing read,
+    repeated films, row fields, destination, first-read settling, retry, empty-section omission and viewings-only
+    visitor state.
+
 ### Proven in the browser before review
 
-- [ ] 13. **The pages by hand.** On the branch's local stack, signed in, with at least 300 watched films and a group of
+- [x] 13. **The pages by hand.** On the branch's local stack, signed in, with at least 300 watched films and a group of
   more than 100 changes on one day: the Watchlist page and Films view show 7 columns at 1280px and 2 at 390px; scrolling
   deep into the Films view, opening a film and following "Back to Library" returns to the same rows, as does "Back to
   History" from below an expanded group, while reloading the film page before following "Back to Library" opens the
   Films view at the top, and so does a second return from a film opened there without scrolling; and the bar fits at
   1024px with the longest link set it can show.
-- [ ] 14. **Changes from cards,** if the card controls are on `main` at the merge: liking a film from a card adds a
+
+    **Evidence:** Verified on the local stack at bbb1502d with 420 watched films, 70 queued films and a 200-film
+    watched group. A live Chromium walk and screenshot inspection confirmed both grid widths, identical visible rows
+    after deep returns, zero after reload and second return, and the complete signed-in bar fitting at 1024px
+    without overlap or overflow. History was traversed through all 32 pages, the group expanded over two pages, and
+    a viewing below it opened and returned at 321,300px with expansion retained. Only synthetic films' external
+    catalogue detail responses were supplied as fixtures; authentication, personal reads and History used the live
+    backend.
+- [~] 14. **Changes from cards,** if the card controls are on `main` at the merge: liking a film from a card adds a
   "Liked" row to History, and marking 5 films watched from cards on one day shows one "Marked 5 films watched" row.
+
+    **Evidence:** Not applicable under R34c at the main merge in 516150cb: the card controls and their log dialog
+    had not landed. This conditional criterion adds no card-control implementation to this work.
 
 ### Measured before review
 
-- [ ] 15. **History's timing.** On the local stack, for an account holding 2,500 viewings, 500 reviews saved without a
+- [x] 15. **History's timing.** On the local stack, for an account holding 2,500 viewings, 500 reviews saved without a
   date and 10,000 recorded changes over 400 days, at least a quarter of them reversals or rating changes an entry write
   made, and some days with more than 100 films of one kind: the history route at `page_size` 100 answers page 1 and page
   30 (rows 2,901 to 3,000) each in under 300 ms, timed at the backend, with the measurement recorded before review.
+
+    **Evidence:** Verified against retained measurement source ed41e827: current history query and service hashes
+    match the measured source. A fresh account audit confirmed 2,500 viewings, 500 undated reviews, 10,000 changes
+    across 400 days, 4,830 qualifying reversals/entry ratings and a shown 200-film group. Page 1 samples were
+    99.447, 95.112, 95.990, 99.255 and 95.495ms; page 30 samples were 95.109, 94.427, 94.771, 94.150 and 95.175ms,
+    all below 300ms. Original raw measurements were preserved.

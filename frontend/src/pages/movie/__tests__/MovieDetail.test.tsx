@@ -15,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { browseMovies } from "@/services/movieService";
 import { siteOrigin } from "@/config/baseUrls";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { act, screen, waitFor } from "@tests/helpers/test-renderer";
+import { act, screen, waitFor, within } from "@tests/helpers/test-renderer";
 import { renderWithRoute } from "@tests/helpers/test-renderer-with-routes";
 import MovieDetail from "../MovieDetail";
 import { createMockMovieDetail } from "@tests/mocks/movieData";
@@ -33,6 +33,14 @@ import { toaster } from "@/components/core/chakra/toaster";
 beforeEach(() => {
   clearBrowserAuth();
   authHandlers();
+  server.use(
+    http.get(`${apiBaseUrl}/user-movie-data/:id/entries`, ({ params }) =>
+      HttpResponse.json({
+        record: createMockUserMovieData({ tmdb_id: Number(params.id) }),
+        entries: [],
+      }),
+    ),
+  );
   act(() => toaster.remove());
 });
 afterEach(() => act(() => toaster.remove()));
@@ -797,4 +805,43 @@ it("shows a card save over a previously cached detail after the next list page l
   await waitFor(() => expect(detailReads).toBe(2));
   expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled();
   expect(firstReads).toBe(2);
+});
+
+it("shows the signed-in film log beneath its tracking panel", async () => {
+  setAuthTokens(token());
+  const record = createMockUserMovieData({
+    tmdb_id: 550,
+    user_watched: true,
+    has_entries: true,
+    last_logged_on: "2026-11-14",
+  });
+  server.use(
+    http.get(`${apiBaseUrl}/movies/550`, () =>
+      HttpResponse.json(
+        createMockMovieDetail({ tmdb_id: 550, user_movie_data: record }),
+      ),
+    ),
+    http.get(`${apiBaseUrl}/user-movie-data/550/entries`, () =>
+      HttpResponse.json({
+        record,
+        entries: [
+          {
+            id: 8,
+            tmdb_id: 550,
+            watched_on: "2026-11-14",
+            rating: 7,
+            review: "A private film log",
+            rewatch: false,
+          },
+        ],
+      }),
+    ),
+  );
+  renderMovieDetailWithRoute("550");
+  const panel = await screen.findByRole("region", { name: "Your film" });
+  const log = await screen.findByRole("region", { name: "Your log" });
+  expect(await within(log).findByText("A private film log")).toBeVisible();
+  expect(
+    panel.compareDocumentPosition(log) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
 });

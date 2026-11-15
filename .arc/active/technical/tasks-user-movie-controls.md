@@ -339,23 +339,26 @@ the film page.
         - All 67 related tests, touched-file ESLint, formatting and type-check passed. Film-detail and phone smokes
           passed (run `7a20f757b22c41d398509b98daed6cf5`).
 
-- [ ] **4.3 The film's log lists the visitor's entries — R16, R17**
+- [x] **4.3 The film's log lists the visitor's entries — R16, R17**
 
     **Goal:** Beneath the panel, a signed-in visitor sees their entries for the film in the server's order, each with its
     date, rewatch mark, rating and the start of its review, with the latest three shown first.
 
-    - [ ] **4.3.a Write the list's cases in `src/components/movie/tracking/__tests__/FilmLog.test.tsx`** (criterion 9)
-        - Under "Your log": the server's order; "Nov 14, 2026" or "No date"; `RewatchIcon` for a rewatch; `RatingStars`
-          at the small size; Edit and Delete named by position and date ("Edit entry 1, Nov 14, 2026", "Delete entry 3,
-          undated"), unique for two entries on one date
-        - Excerpts: a review over 280 characters cut back to its last space with an ellipsis and "Read more", which
-          shows the whole review in place and becomes "Show less"; line breaks kept, plain text
-        - The latest three, then "Show all ({count})" in place; no list without entries or signed out; placeholder rows
-          while loading; "Couldn't load your log." with Retry
-        - Expect tests to FAIL initially
-    - [ ] **4.3.b Build `src/components/movie/tracking/FilmLog.tsx` and place it beneath the panel**
-        - Reads `movieEntriesQuery` only for a signed-in visitor
-        - Tests should now PASS
+    - [x] **4.3.a Cover the log list and its placement through MSW**
+        - Seven list cases cover server order, same-day and undated control names, dates, rewatch and rating display,
+          three rows then Show all, word-boundary and unbroken-word excerpts, plain text with line breaks, expansion,
+          the 280-character boundary, placeholders, an empty log, signed-out reads and Retry.
+        - The initial list and page-placement cases failed before implementation. Four excerpt/loading/retry cases
+          failed before those views existed. A narrow reconstruction failed all three boundary/empty/auth cases
+          (run `fd7da4c306384404aeb63239058ff02c`), then was restored.
+    - [x] **4.3.b Add `FilmLog` beneath the panel**
+        - Uses `movieEntriesQuery` only while authenticated, preserves server order, and shows date, small rating
+          stars, rewatch, a plain-text excerpt and positional Edit/Delete controls. Reviews expand independently;
+          Show all reveals the remaining entries. Loading shows three placeholders; failure offers Retry; no entries
+          or no signed-in visitor renders no log.
+        - Added a detail-page placement case and empty-log responses for its existing signed-in fixtures. All 47
+          related tests, touched-file lint, format and type-check passed; the film-detail smoke passed (run
+          `875368ec71844cc58e3f0073a4af5067`). A lint correction replaced a direct DOM query in the plain-text test.
 
 - [ ] **4.4 An entry is edited or deleted from the log — R18**
 

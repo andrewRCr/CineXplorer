@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { movieDetailQuery } from "@/lib/queries";
 import { useRef } from "react";
+import { FilmLog } from "@/components/movie/tracking/FilmLog";
 import { FilmPanel } from "@/components/movie/tracking/FilmPanel";
 import { getErrorStatus } from "@/utilities/axiosErrorUtils";
 import { useParams, useSearchParams } from "react-router";
@@ -235,6 +236,7 @@ const MovieDetail = () => {
       </Flex>
 
       <FilmPanel key={movie.tmdb_id} movie={movie} reviewRef={reviewRef} />
+      <FilmLog key={movie.tmdb_id} movie={movie} />
       <Separator mb={6} borderColor="border-subtle-01" />
 
       {/* Overview Section */}

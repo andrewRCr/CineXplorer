@@ -5,6 +5,8 @@ export const ROUTES = {
     FEATURED: "/featured", // Alias that redirects to HOME
     PROFILE: "/profile",
     WATCHLIST: "/watchlist",
+    LIBRARY: "/library",
+    LIBRARY_HISTORY: "/library/history",
     SETTINGS: "/settings",
     BROWSE: "/browse",
     BROWSE_SEQUENTIAL: "/browse/sequential", // Reference implementation for sequential pagination

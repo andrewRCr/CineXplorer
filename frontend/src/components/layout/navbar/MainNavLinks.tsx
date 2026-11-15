@@ -11,20 +11,30 @@ interface Props {
 export default function MainNavLinks({ direction = "row", onNavigate }: Props) {
   const { pathname } = useLocation();
   const onWatchlist = useMatch(ROUTES.WATCHLIST) !== null;
+  const onLibrary = useMatch(ROUTES.LIBRARY) !== null;
+  const onHistory = useMatch(ROUTES.LIBRARY_HISTORY) !== null;
   const { status } = useAuthContext() ?? {};
   const links = [
     {
       path: ROUTES.BROWSE,
-      label: "Films",
+      label: "Explore",
       current: catalogWindow(pathname) !== null,
     },
   ];
-  if (status === "authenticated")
-    links.push({
-      path: ROUTES.WATCHLIST,
-      label: "Watchlist",
-      current: onWatchlist,
-    });
+  if (status === "authenticated") {
+    links.push(
+      {
+        path: ROUTES.WATCHLIST,
+        label: "Watchlist",
+        current: onWatchlist,
+      },
+      {
+        path: ROUTES.LIBRARY,
+        label: "Library",
+        current: onLibrary || onHistory,
+      },
+    );
+  }
   return (
     <Flex
       as="nav"

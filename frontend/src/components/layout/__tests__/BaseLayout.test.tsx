@@ -85,7 +85,7 @@ it("contains a page error between a working bar and footer", async () => {
   expect(
     heading.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();
-  await user.click(screen.getByRole("link", { name: "Films" }));
+  await user.click(screen.getByRole("link", { name: "Explore" }));
   expect(
     await screen.findByRole("heading", { name: "Film catalog" }),
   ).toBeVisible();

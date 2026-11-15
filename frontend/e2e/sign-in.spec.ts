@@ -151,7 +151,7 @@ for (const rememberMe of [false, true]) {
         ).toBeVisible();
         const banner = page.getByRole("banner");
         await expect(
-            banner.getByRole("link", { name: "Films", exact: true }),
+            banner.getByRole("link", { name: "Explore", exact: true }),
         ).toBeVisible();
         await expect(
             banner.getByRole("textbox", { name: "Search films", exact: true }),
@@ -193,6 +193,10 @@ for (const rememberMe of [false, true]) {
                 exact: true,
             }),
         ).toBeVisible();
+        for (const name of ["Watchlist", "Library"])
+            await expect(
+                banner.getByRole("link", { name, exact: true }),
+            ).toBeVisible();
         await scanPage(page, info);
         const assertPersistence = async () => {
             const cookie = (await page.context().cookies()).find(

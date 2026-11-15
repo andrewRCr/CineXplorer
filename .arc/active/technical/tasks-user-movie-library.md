@@ -58,40 +58,23 @@ change rows once it is on `main`, and this work's pull request waits for it (R34
 _Mode:_ `slice` — closes on a film added from a catalog card, found on the Watchlist page through the bar's Watchlist
 link, and removed there, in the browser.
 
-- [ ] **1.1 The bar reads Explore, Watchlist and Library, each current on its own addresses — R1, R31, R33**
+- [x] **1.1 The bar reads Explore, Watchlist and Library, each current on its own addresses — R1, R31, R33**
 
     **Goal:** A signed-in visitor sees Explore, Watchlist and Library in the bar and the drawer and a signed-out
     visitor Explore alone, each link marked current exactly on its addresses, and the bar fits at 1024px.
 
-    - [ ] **1.1.a Write the cases in `NavBar.test.tsx`, `NavDrawer.test.tsx` and `BaseLayout.test.tsx`**
-        - `NavBar.test.tsx`: the link list is Explore (`/browse`), Watchlist (`/watchlist`) and Library (`/library`)
-          signed in, and Explore alone signed out and while resolving
-        - `aria-current="page"`: Explore on `/browse`, `/browse/now-playing` and `/browse/upcoming`; Watchlist on
-          `/watchlist`; Library on `/library` and `/library/history` and not on `/library/anything`; the
-          case-encoded paths as today (`/br%6Fwse/upcoming`, `/wa%74chlist`) plus `/libr%61ry/history`
-        - `NavDrawer.test.tsx`: the same lists signed in and signed out
-        - `BaseLayout.test.tsx` and the other cases that click or find "Films" find "Explore"
-        - Expect tests to FAIL initially
-
-    - [ ] **1.1.b Change `MainNavLinks.tsx`**
-        - Explore keeps today's `catalogWindow(pathname)` rule; Library joins after Watchlist while signed in, current
-          when `useMatch(ROUTES.LIBRARY)` or `useMatch(ROUTES.LIBRARY_HISTORY)` matches (the constants come from 1.2.b;
-          add them here if 1.1 lands first)
-        - The component-styling strategy's top-bar example (`strategy-component-styling.md`, its `RouterLink` to
-          `/browse`) reads Explore
-        - Tests should now PASS
-
-    - [ ] **1.1.c Update `sign-in.spec.ts` and `phone-width.spec.ts`, and run them against the browsable stack**
-        - `sign-in.spec.ts`: the signed-out bar's "Films" assertion asserts Explore; signed in, it keeps asserting
-          Watchlist and asserts Library
-        - `phone-width.spec.ts`: the drawer's "Films" asserts Explore, and the signed-in drawer asserts Library; the
-          1024px step clicks Explore
-        - `phone-width.spec.ts`'s 1024px step, signed in, checks R1's fit: the wordmark, the three links, the search
-          field and the account control (and Log, when `main` has it) each lie fully inside the viewport, no two
-          bounding boxes overlap, and `document.documentElement.scrollWidth` does not exceed its `clientWidth`. Today
-          `expectBarFits` runs only at phone width and checks no overlap, so this is a check of its own
-        - See it fail first against a narrow break (for example a fixed `minW` on the search field wide enough to
-          push the account control out), then pass restored
+    - [x] **1.1.a Cover the navigation links and their current state**
+        - Updated the bar, drawer and layout cases for Explore and Library, including exact Library addresses,
+          an unknown child and encoded paths. The coupled navigation cases ran together: 25 failed against the old
+          links, then all 37 cases passed with the new links.
+    - [x] **1.1.b Change the shared navigation links**
+        - Added the two Library route constants, retained the catalog current-link rule, and matched Library and
+          History exactly. Updated the styling strategy's top-bar example.
+    - [x] **1.1.c Cover the links and the full-width bar in the browser**
+        - Updated sign-in and phone navigation assertions; the 1024px check covers every bar control's bounds,
+          adjacent overlap and document overflow. A temporary 900px search minimum made it fail at 1482px against
+          the 1024px viewport; restoring the flexible search passed. Both specs passed (7 tests).
+        - Frontend lint, type-check after typegen, and the strategy document's markdown lint passed.
 
 - [ ] **1.2 `/library` and `/library/history` show the Library under one heading, and `/watchlist` its own — R2, R3,
   R4**

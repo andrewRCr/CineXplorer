@@ -473,21 +473,25 @@ History, with each case of R34 that holds applied.
         - All 518 related cases across 37 files, frontend lint, formatting and type-check pass. Chakra's time-element
           prop type error was corrected through `asChild`. All seven sign-in and phone-width browser cases pass.
 
-- [ ] **5.6 History's read meets its timing on a heavy account — criterion 15**
+- [x] **5.6 History's read meets its timing on a heavy account — criterion 15**
 
     **Goal:** The history route answers page 1 and page 30 at `page_size` 100 each in under 300 ms at the backend for
     criterion 15's account, with the measurement recorded here before review.
 
-    - Build an account of its own, so the spec's development account stays as it is, through `manage.py shell` on the
-      worktree's stack with a script that is not committed but kept outside the repository until the work unit
-      archives, since verification reuses the account and may run in a later session
-    - The account holds 2,500 viewings, 500 undated reviews and 10,000 recorded changes over 400 days, at least a
-      quarter of them reversals or entry writes' rating changes, and some days with more than 100 films of one kind, on
-      cards with IDs above TMDB's range; and, for criterion 13's browser proof in verification, at least 300 watched
-      films, at least 20 films on the watchlist, a password, and a verified primary `EmailAddress`, as `seed_dev_data`
-      gives the development account (an unverified address can't sign in)
-    - Time each page inside the backend container through the route, signed in as the account, after one warm-up
-      request: five runs per page, each recorded here; criterion 15 holds when the slowest is under 300 ms
+    - Retained the idempotent seed, private credentials, account audit, measurement scripts and all raw logs outside
+      the repository for reuse through verification. The dedicated verified account has 2,500 viewings, 500 undated
+      reviews and 10,000 changes on 400 distinct days spanning 400 days; 4,830 changes are reversals or entry ratings.
+      It has 420 watched films, 70 queued films, synthetic film IDs starting at 2,100,000,000 and a shown watched group
+      of 200 on 2025-10-12. The development spec's account is separate.
+    - Measured source `ed41e827`, in this checkout's backend container through the authenticated Django route client,
+      one warm-up then five requests per page, `page_size: 100`, each returning 100 rows from 3,111 total rows:
+        - Page 1: **99.447, 95.112, 95.990, 99.255, 95.495 ms**.
+        - Page 30: **95.109, 94.427, 94.771, 94.150, 95.175 ms**.
+        - Slowest: **99.447 ms**, below the unchanged 300 ms bound. Warm-ups, each sample, audit and source hashes
+          are retained. No success criterion is checked here; verification remains separate.
+    - Preserved the earlier approach measurements and an incomplete run whose result serialization lacked a JSON
+      import. Corrected instrumentation records each sample immediately; the complete run above used that script.
+      No application setting, logging level or bound changed for measurement.
 
 - [ ] **5.7 Check the full journey**
 

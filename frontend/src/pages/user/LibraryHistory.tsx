@@ -8,7 +8,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { useMeasuredLibrary } from "@/components/movie/library/useMeasuredLibrary";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { historyPagesQuery } from "@/lib/queries";
 import { TextLink } from "@/components/common";
@@ -43,7 +43,12 @@ export default function LibraryHistory() {
     (index: number) => items[index]?.key ?? index,
     [items],
   );
-  const virtualizer = useWindowVirtualizer({
+  const virtualizer = useMeasuredLibrary({
+    source: "history",
+    params: {},
+    isLoading: query.isLoading,
+    hasContent: items.length > 0,
+    isError: query.isError,
     count: items.length,
     estimateSize: () => 100,
     getItemKey,

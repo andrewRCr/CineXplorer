@@ -1,4 +1,11 @@
-import { beforeEach, expect, it } from "vitest";
+import { useState } from "react";
+import { Route, Routes, useNavigate, useSearchParams } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { BackToCollectionLink } from "@/components/navigation/BackToCollectionLink";
+import { clearLibraryScrollMemory } from "@/components/movie/library/libraryScrollMemory";
+import { beginUserChange } from "@/lib/session";
+import { measuredCollectionGeometry } from "@tests/helpers/measuredCollectionGeometry";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw/http";
@@ -300,4 +307,174 @@ it("does not read a further page while loaded History pages are refetching", asy
   expect(reads).toEqual([1, 2, 1]);
   pending.release();
   await waitFor(() => expect(reads.slice(0, 4)).toEqual([1, 2, 1, 2]));
+});
+
+function HistoryDetail() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const client = useQueryClient();
+  const [status, setStatus] = useState("");
+  return (
+    <>
+      <h1>Film detail</h1>
+      <SaveProbe />
+      <BackToCollectionLink searchParams={params} />
+      <button onClick={() => void navigate("/library/history")}>
+        Open History fresh
+      </button>
+      <button
+        onClick={() => {
+          clearLibraryScrollMemory();
+          setStatus("Reloaded");
+        }}
+      >
+        Simulate reload
+      </button>
+      <button
+        onClick={() => {
+          beginUserChange(client);
+          setStatus("User changed");
+        }}
+      >
+        Change user
+      </button>
+      <output>{status}</output>
+    </>
+  );
+}
+
+describe("measured History returns", () => {
+  let geometry: ReturnType<typeof measuredCollectionGeometry>;
+  beforeEach(() => {
+    clearLibraryScrollMemory();
+    geometry = measuredCollectionGeometry();
+    server.use(
+      http.get(url, () =>
+        HttpResponse.json(
+          historyPage(
+            Array.from({ length: 99 }, (_, i) => historyEntry(i + 1)),
+          ),
+        ),
+      ),
+    );
+  });
+  afterEach(() => vi.unstubAllGlobals());
+  function journey() {
+    return renderLibrary(
+      <Routes>
+        <Route path="/library/history" element={<LibraryHistory />} />
+        <Route path="/movie/:id" element={<HistoryDetail />} />
+      </Routes>,
+      "/library/history",
+    );
+  }
+  function entryRow(name: string) {
+    const row = screen
+      .getAllByTestId("history-row")
+      .find((row) => within(row).queryByRole("article", { name }));
+    if (!row) throw new Error(`Missing history row for ${name}`);
+    return row;
+  }
+  async function openDeep() {
+    await screen.findByRole("link", { name: "Entry 1" });
+    for (let offset = 500; offset <= 6500; offset += 500)
+      await scrollLibrary(offset);
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    });
+    expect(entryRow("Entry 20")).toHaveStyle({
+      transform: "translateY(6000px)",
+    });
+    await userEvent
+      .setup()
+      .click(screen.getByRole("link", { name: "Entry 20" }));
+    await screen.findByRole("heading", { name: "Film detail" });
+    await scrollLibrary(0);
+    geometry.stopMeasuring();
+  }
+  it("restores a deep position over the measured timeline rows", async () => {
+    journey();
+    await openDeep();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("link", { name: "Back to History" }));
+    await waitFor(() => expect(window.scrollY).toBe(6500));
+    expect(entryRow("Entry 20")).toHaveStyle({
+      transform: "translateY(6000px)",
+    });
+  });
+  it("keeps an entry's measured height when a saved film adds a row before it", async () => {
+    let changed = false;
+    server.use(
+      http.get(url, () =>
+        HttpResponse.json(
+          historyPage([
+            ...(changed ? [historyEntry(1001)] : []),
+            ...Array.from({ length: 99 }, (_, i) => historyEntry(i + 1)),
+          ]),
+        ),
+      ),
+      http.patch(`${apiBaseUrl}/user-movie-data/1`, () => {
+        changed = true;
+        return HttpResponse.json(
+          createMockUserMovieData({
+            tmdb_id: 1,
+            user_watched: true,
+            user_liked: true,
+          }),
+        );
+      }),
+    );
+    journey();
+    await openDeep();
+    await userEvent
+      .setup()
+      .click(screen.getByRole("button", { name: "Save film" }));
+    await userEvent
+      .setup()
+      .click(screen.getByRole("link", { name: "Back to History" }));
+    await waitFor(() => {
+      const row = entryRow("Entry 20");
+      expect(row).toHaveStyle({ transform: "translateY(6100px)" });
+    });
+    expect(entryRow("Entry 21")).toHaveStyle({
+      transform: "translateY(6400px)",
+    });
+    expect(window.scrollY).toBe(6500);
+  });
+  it.each(["fresh", "reload", "user"])(
+    "starts without old heights after %s",
+    async (mode) => {
+      journey();
+      await openDeep();
+      const user = userEvent.setup();
+      if (mode === "reload")
+        await user.click(
+          screen.getByRole("button", { name: "Simulate reload" }),
+        );
+      if (mode === "user")
+        await user.click(screen.getByRole("button", { name: "Change user" }));
+      await user.click(
+        screen.getByRole(mode === "fresh" ? "button" : "link", {
+          name: mode === "fresh" ? "Open History fresh" : "Back to History",
+        }),
+      );
+      await waitFor(() => expect(window.scrollY).toBe(0));
+      // Unmeasurable rows have zero height here; their offsets expose any old cache.
+      await waitFor(() =>
+        expect(screen.getAllByTestId("history-row")[0]).toHaveStyle({
+          transform: "translateY(0px)",
+        }),
+      );
+      if (mode === "reload") {
+        const firstLink = screen
+          .getAllByRole("link")
+          .find((link) => link.getAttribute("href")?.includes("from=history"));
+        if (!firstLink) throw new Error("Missing returned history entry");
+        await user.click(firstLink);
+        await user.click(screen.getByRole("link", { name: "Back to History" }));
+        await waitFor(() => expect(window.scrollY).toBe(0));
+      }
+    },
+  );
 });

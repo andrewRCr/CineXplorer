@@ -284,22 +284,22 @@ the same rows.
           the route with its old placeholder made that read assertion fail; restored, the browser spec passes.
         - The pagination strategy names the private History list; Markdown lint passes.
 
-- [ ] **4.3 A film opened from History returns to the same rows — R27, R28**
+- [x] **4.3 A film opened from History returns to the same rows — R27, R28**
 
     **Goal:** Following "Back to History" restores History's position with its rows' measured heights keyed by what
     each row shows, so a row keeps its height whatever loads before it, under the same condition as the grid pages.
 
-    - [ ] **4.3.a Write the cases in `LibraryHistory.test.tsx`**
-        - A return on the back link's signal restores the position and the rows' measured heights (Implementation
-          Notes, "The virtualizer under jsdom"), and a row keeps its measured height whatever loads before it; arriving
-          without it starts at the top; a return after a simulated reload, or after a change of user, starts at the top
-        - Expect tests to FAIL initially
-
-    - [ ] **4.3.b Use the scroll memory in History**
-        - `LibraryHistory` calls `useScrollPersistence` with source `history`, building `canRestore` and `onSave` from
-          the memory as 3.3.b's grid does; its virtualizer's `takeSnapshot()` is kept under `scrollStorageKey` and
-          handed back as `initialMeasurementsCache`
-        - Tests should now PASS
+    - [x] **4.3.a Cover measured History returns**
+        - Five cases use the real History view, back link and virtualizer: deep return, a saved film inserting an
+          entry above the measured rows, fresh arrival, simulated reload (including a second return without scrolling)
+          and a change of user. The shared geometry fixture preserves native viewport coordinates and scroll events.
+        - The deep-return case failed before persistence; narrow index-key, ungated-memory, uncleared-user and
+          unconditional-offset reconstructions failed the corresponding cases. All twelve History cases pass restored.
+    - [x] **4.3.b Share measured scroll restoration**
+        - Extracted the grid's memory/persistence composition into `useMeasuredLibrary`, now used by grid and History.
+          Both keep fresh snapshots under their position key and restore only with the signal, heights and saved flag.
+        - All 69 related cases pass, including both grid pages' measured returns. Frontend lint/type-check and all
+          three Library, browse and catalog-return browser specs pass. New test queries were corrected for lint.
 
 - [ ] **4.4 ADR-050 records the Library, and the documents say what it changes — R33**
 

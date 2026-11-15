@@ -1,19 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { useLocation } from "react-router";
-import { isRecord } from "@/utilities/typeGuards";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Box, Button, Spinner, Text } from "@chakra-ui/react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import {
-  useWindowVirtualizer,
-  type Virtualizer,
-} from "@tanstack/react-virtual";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { libraryPagesQuery } from "@/lib/queries";
 import type { MovieListItem } from "@/types/movie";
@@ -21,13 +8,7 @@ import type { UserMoviesQueryParams } from "@/services/userMovieService";
 import MovieCard from "@/components/movie/MovieCard";
 import { GAP } from "@/components/movie/collection/shared/gridConstants";
 import { GridSkeletonLoader } from "@/components/movie/collection/shared/GridSkeletonLoader";
-import { useScrollPersistence } from "@/hooks/movie/useScrollPersistence";
-import {
-  canRestoreLibrary,
-  libraryMeasurements,
-  keepLibraryMeasurements,
-  markLibraryPositionSaved,
-} from "./libraryScrollMemory";
+import { useMeasuredLibrary } from "./useMeasuredLibrary";
 import { libraryColumnCount } from "./libraryGrid";
 
 export interface LibraryGridProps {
@@ -72,54 +53,19 @@ export default function LibraryGrid({
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
-  const instance = useRef<{
-    key: string;
-    value: Virtualizer<Window, Element>;
-  } | null>(null);
-  const onSave = useCallback((key: string) => {
-    if (instance.current?.key === key)
-      markLibraryPositionSaved(key, instance.current.value.takeSnapshot());
-  }, []);
-  const { initialOffset, scrollStorageKey } = useScrollPersistence({
+  const rowCount = Math.ceil(movies.length / columns);
+  const virtualizer = useMeasuredLibrary({
     source,
-    browseParams: params,
+    params,
     isLoading: query.isLoading,
     hasContent: movies.length > 0,
     isError: query.isError,
-    canRestore: canRestoreLibrary,
-    onSave,
-  });
-  const navigationState: unknown = useLocation().state;
-  const [restore] = useState(() => ({
-    key: scrollStorageKey,
-    measurements:
-      isRecord(navigationState) &&
-      navigationState.restoreScroll === true &&
-      canRestoreLibrary(scrollStorageKey)
-        ? libraryMeasurements(scrollStorageKey)
-        : undefined,
-  }));
-  const rowCount = Math.ceil(movies.length / columns);
-  const virtualizer = useWindowVirtualizer({
     count: rowCount,
-    initialOffset,
-    initialMeasurementsCache:
-      restore.key === scrollStorageKey ? restore.measurements : undefined,
     estimateSize: () => 449,
     gap: GAP,
     scrollMargin,
     overscan: 2,
   });
-  useLayoutEffect(() => {
-    instance.current = { key: scrollStorageKey, value: virtualizer };
-  });
-  useEffect(
-    () => () => {
-      const last = instance.current;
-      if (last) keepLibraryMeasurements(last.key, last.value.takeSnapshot());
-    },
-    [],
-  );
   const rows = virtualizer.getVirtualItems();
   const lastVisible = rows.at(-1)?.index ?? -1;
   const { hasNextPage, isFetching, isError, fetchNextPage } = query;

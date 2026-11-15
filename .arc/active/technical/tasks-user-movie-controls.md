@@ -448,14 +448,19 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
       `935c92cc3ee54e259b2f013e7e01a040`), then passes restored. All related tests, lint, formatting and type-check pass.
       The journey also exposed the sibling-key correction recorded in 4.3.R.
 
-- [ ] **5.3 Check the journey and the signed-in scans**
+- [x] **5.3 Check the journey and the signed-in scans**
 
     **Goal:** The segment's exit criterion is shown on this branch after `main`'s merge, with what ran and the result
     recorded here.
 
-    - Run `tests/integration/tracking-journey.test.tsx`
-    - Run `e2e/phone-width.spec.ts`, `e2e/sign-in.spec.ts`, `e2e/browse.spec.ts`, `e2e/back-to-results.spec.ts` and
-      `e2e/movie-detail.spec.ts` against the worktree's browsable stack, with any spec 5.1 added
+    - On source head `658cb7b7`, the tracking-journey repeat passed (run `ca13e70b28174f169a5c2700d1f93154`).
+    - All 10 tests across `phone-width.spec.ts`, `sign-in.spec.ts`, `browse.spec.ts`, `back-to-results.spec.ts` and
+      `movie-detail.spec.ts` passed against the isolated browsable stack (run `ade247e80777401db1c9e9dab11c9179`). No
+      additional spec was required by the conditional integration audit.
+    - The phone spec scans signed-in browse and search. Their `button-name` baseline allowances are absent; the
+      existing browse `aria-hidden-focus` baseline is unchanged. Markdown lint passes for this result record.
+    - Phases 1–5 are complete. Full-suite verification, criterion check-off, browser proof and verification/code review
+      remain in Phase 6; no success criterion was marked here.
 
 ### **Phase 6:** Verification
 

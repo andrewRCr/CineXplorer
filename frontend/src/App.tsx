@@ -26,6 +26,7 @@ const TestLogin = import.meta.env.DEV
 const Register = lazy(() => import("./pages/user/Register"));
 const ForgotPassword = lazy(() => import("./pages/user/ForgotPassword"));
 const Profile = lazy(() => import("./pages/user/Profile"));
+const Library = lazy(() => import("./pages/user/Library"));
 const Watchlist = lazy(() => import("./pages/user/Watchlist"));
 const Settings = lazy(() => import("./pages/user/Settings"));
 const MovieDetail = lazy(() => import("./pages/movie/MovieDetail"));
@@ -88,6 +89,13 @@ const App: React.FC = () => {
                 <Route element={<ProtectedRoute />}>
                   <Route path={ROUTES.PROFILE} element={<Profile />} />
                   <Route path={ROUTES.WATCHLIST} element={<Watchlist />} />
+                  <Route path={ROUTES.LIBRARY} element={<Library />}>
+                    <Route index element={<section aria-label="Films" />} />
+                    <Route
+                      path="history"
+                      element={<section aria-label="History" />}
+                    />
+                  </Route>
                   <Route path={ROUTES.SETTINGS} element={<Settings />} />
                 </Route>
 

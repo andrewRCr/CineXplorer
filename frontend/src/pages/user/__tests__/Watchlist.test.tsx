@@ -63,7 +63,7 @@ function RemoveMovie() {
 
 function expectPageTitle() {
   expect(
-    screen.getByRole("heading", { level: 1, name: "My Watchlist" }),
+    screen.getByRole("heading", { level: 1, name: "Watchlist" }),
   ).toBeVisible();
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 }

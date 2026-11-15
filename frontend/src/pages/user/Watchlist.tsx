@@ -30,7 +30,7 @@ const Watchlist = () => {
   return (
     <Box p={8}>
       <Text as="h1" fontSize="2xl" fontWeight="bold" mb={4}>
-        My Watchlist
+        Watchlist
       </Text>
       {content}
     </Box>

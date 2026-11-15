@@ -76,38 +76,23 @@ link, and removed there, in the browser.
           the 1024px viewport; restoring the flexible search passed. Both specs passed (7 tests).
         - Frontend lint, type-check after typegen, and the strategy document's markdown lint passed.
 
-- [ ] **1.2 `/library` and `/library/history` show the Library under one heading, and `/watchlist` its own — R2, R3,
+- [x] **1.2 `/library` and `/library/history` show the Library under one heading, and `/watchlist` its own — R2, R3,
   R4**
 
     **Goal:** The three addresses render only for a signed-in visitor, any other `/library/…` address shows Not Found,
     and both Library views sit under one "Library" `h1` with a "Library" navigation whose current link is marked and
     carries no query.
 
-    - [ ] **1.2.a Write the cases**
-        - `src/__tests__/App.test.tsx`, rendering the app's routes as its cases do: `/library/anything` shows Not
-          Found; a signed-out visitor at `/library?liked=true` is sent to `/login?next=%2Flibrary%3Fliked%3Dtrue`, and
-          signing in there through the form, with the token request answered as `Login.test.tsx` answers it, lands on
-          `/library?liked=true`; `/watchlist` shows the Watchlist page with no redirect
-        - `startAt` in `App.test.tsx` clears `window.location.search`; it changes to set the path's query instead, so a
-          case can start at an address with one
-        - `src/pages/user/__tests__/Library.test.tsx`: one `h1` reading "Library" on `/library` and on
-          `/library/history`; a navigation landmark named "Library" holding Films (`/library`) and History
-          (`/library/history`), the current one with `aria-current="page"`; rendered at
-          `/library?liked=true&sort=title`, each link's `href` is exactly its address
-        - `Watchlist.test.tsx`: the page's one `h1` reads "Watchlist"
-        - Expect tests to FAIL initially
-
-    - [ ] **1.2.b Add the routes and the Library page**
-        - `ROUTES.LIBRARY` (`/library`) and `ROUTES.LIBRARY_HISTORY` (`/library/history`) in `constants/routes.ts`
-        - In `App.tsx`, under the existing `ProtectedRoute`, a `/library` route rendering `Library` with an index
-          child (the Films view) and a `history` child (History); another `/library/…` address matches no child and
-          falls to the root `*` route's `NotFound`. `ProtectedRoute` already sends a signed-out visitor to sign in with
-          the path and query as `next` (`loginPathFor`), and Login returns there
-        - `pages/user/Library.tsx`: the `h1`, the "Library" navigation drawn as `CatalogWindowTabs` draws its links
-          (accent underline on the current one) but without `location.search`, and an `Outlet` for the view. The
-          Films view and History render nothing more than their region until 3.1 and 4.2 fill them
-        - `Watchlist.tsx`'s heading reads "Watchlist"
-        - Tests should now PASS
+    - [x] **1.2.a Cover addresses, sign-in return, headings and navigation**
+        - App route tests cover the unknown child, the sign-in round trip with `liked=true`, Watchlist at its own
+          address, and both Library views with one heading and query-free current links. Watchlist's existing
+          heading assertions now expect Watchlist. The cases ran red before implementation; the unknown-child case
+          also failed against a temporary wildcard child and passed once it was removed.
+        - App tests use jsdom's real location so browser history updates are visible to BrowserRouter.
+    - [x] **1.2.b Add the protected Library routes and page**
+        - Added the shared heading, themed Library navigation and child outlet; the two child regions await their
+          later tasks. Watchlist's heading now reads Watchlist.
+        - All 15 App/Watchlist tests, frontend lint, type-check and formatting passed.
 
 ### **Phase 2:** The watchlist shows as a grid of cards, sorted by the address
 

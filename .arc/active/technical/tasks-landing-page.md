@@ -926,12 +926,12 @@ recorded, and the three changed smoke specs pass.
           the locked django-types 0.24.0. The host's shared environment still has 0.22.0, whose older stubs report
           20 errors in the tracking model's constraints. Aligning those host tools is already an inbox errand.
 
-- [ ] **5.4 Apply what `main` holds — R15, R30**
+- [x] **5.4 Apply what `main` holds — R15, R30**
 
     **Goal:** Each of R30's conditions is checked against `main`'s code at the merge, and its change is made only when
     it holds.
 
-    - [ ] **5.4.a Recently watched, if `main` has the Library's History (`/library/history`) and the tracking
+    - [~] **5.4.a Recently watched, if `main` has the Library's History (`/library/history`) and the tracking
       model's list of viewings**
         - Check both against `main`'s code, then ground R15 in them: the viewings list and its read, the rewatch icon
           and the read-only star display
@@ -940,20 +940,29 @@ recorded, and the three changed smoke specs pass.
           toast, a `Toaster` mounted; expect them to FAIL initially
         - Build the diary form and the section; the viewings read takes `homeReadOptions` through request options on
           its fetcher, as 1.3 gives `getUserMovies`; the tests should now PASS
-        - Mark `[~]` with what `main` lacked when the condition fails
-    - [ ] **5.4.b Named card buttons, if `main`'s `MovieCard` names and wires its watched and liked buttons**
+        - Not built: at `0e029c0c`, `main` has the tracking model's list of viewings (its activity read and query)
+          but not the Library's History, with no `/library/history` route or Library page, so "Recently watched"
+          waits for the Library's work
+    - [~] **5.4.b Named card buttons, if `main`'s `MovieCard` names and wires its watched and liked buttons**
         - Remove the three `button-name` entries (R28); keep `main`'s form of the signed-out rule where it differs,
           and run the covering tests and scans. Retain R6's pitch and R14's band; copy expansion belongs with the
           controls' work, not this condition
-        - Mark `[~]` when the condition fails
-    - [ ] **5.4.c The queue, if `main` orders the watchlist as a queue on the Watchlist page**
+        - Not applied: at `0e029c0c`, `main`'s `MovieCard` gives its watched and liked buttons only tooltips, with
+          no accessible name or click handler, and the baseline still excuses `button-name` on `/browse` and
+          `/search`, so R28's three entries stay
+    - [~] **5.4.c The queue, if `main` orders the watchlist as a queue on the Watchlist page**
         - Tests first, per criterion 30: the watchlist read sends the queue's sort value and direction as the
           Watchlist page does, the section reads "Up next" and leads with the queue's first film, and the large card
           links "Reorder" to `/watchlist`; expect them to FAIL
         - Add `sort` and `direction` to `UserMoviesQueryParams` unless `main`'s already carries them, and make the
           change; the tests should now PASS
-        - Mark `[~]` when the condition fails
+        - Not applied: at `0e029c0c`, `main`'s Watchlist page reads the watchlist in the default order, newest
+          addition first, and the watchlist's sort values are added, watched, rating, title and release, with no
+          queue, so the section stays "Your watchlist" on R20's defaults
     - Repeat 5.3 and this task if `main` moves before the pull request merges (criterion 30 reads the final merge)
+
+    - All three conditions fail against `main` at the merge, so Home is unchanged by them. No pull request was open
+      for the Library, the card controls or the queue when they were checked.
 
 - [ ] **5.5 Check Home over the merged code** (generate the API types, then run `background.spec.ts`,
   `sign-in.spec.ts` and `phone-width.spec.ts`)

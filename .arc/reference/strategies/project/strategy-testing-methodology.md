@@ -848,6 +848,8 @@ and account scenarios use 1280×800, and `phone-width.spec.ts` uses 360×800, si
 `tracking-journey.spec.ts` runs two logged viewings with mouse and keyboard at 1280px, and touch at 390px, checking
 watchlist contents, separate entry reviews/ratings, focus restoration and persisted current rating.
 `rating-selection.spec.ts` covers first-click/tap half-star selection, whole stars, cancelled touch and persistence.
+`card-layout.spec.ts` checks metadata and rating alignment at controlled 194px and 138px component widths using local
+catalogue fixtures; the browse columns retain their fixed width. This geometry case skips staging.
 Sign-up stops at the check-your-email notice; email-link verification, OAuth and other browsers are outside this tier.
 
 - **`local`** (default): the real development backend, PostgreSQL, Redis, registration, and session cookies. Browser
@@ -888,7 +890,10 @@ only by `filter`, `first`, `last`, or `nth`. CSS and XPath selector strings, `ge
 `evaluate()` are prohibited. Reading a found element's state or `boundingBox()` is allowed.
 
 Each journey spec scans each distinct reached page with axe after its ready check: a heading or result count, or the
-first labelled field on the auth forms. `background.spec.ts` scans the pages its rendered-app tests reach. Scans use
+first labelled field on the auth forms. Tracking also scans the entry dialog and phone rating sheet. `scanPage`
+waits up to five seconds for pending/running finite animations inside dialogs, alert dialogs and notification regions,
+including their descendants, then performs one audit. Infinite motion continues; a timeout reports the active motion.
+`background.spec.ts` scans the pages its rendered-app tests reach. Scans use
 WCAG 2.0 and 2.1 A/AA rules. `axe-baseline.ts` excuses only explicit route patterns and rule IDs, each with a reason; a
 new violation of that same rule on that route is also excused until the entry is removed. Other violations fail with the
 route, rule, and affected elements. The reporter lists unmatched entries without failing, so focused runs and staging

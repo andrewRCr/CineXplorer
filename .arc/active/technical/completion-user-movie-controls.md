@@ -34,6 +34,8 @@ the film page lists entries with editing and confirmed deletion.
   a submission already in progress cannot assign the draft to a later user.
 - The picker carries an independent pagination context, and the HTTP layer preserves a caller-supplied context.
 - Card text height and virtualized row estimates share constants, with the row gap kept separate.
+- Cards expose named article semantics; metadata keeps one line at the supported minimum width while preserving
+  its accessible text. Browser journeys locate cards and controls through their semantic interface.
 - Completed pointer activation resolves half-star selection without relying on hover movement. Keyboard changes keep
   their debounce, and cancelled touch gestures do not select or save.
 
@@ -47,6 +49,8 @@ Catalogue responses use deterministic content with tracking fields read from per
 Local verification passed the backend and frontend suites, lint, formatting, type checks, semantic-token contrast
 checks and the complete browser suite. Poster readability was visually inspected in every palette and color mode.
 All active criteria were checked; private draft retirement and late submissions have additional regression coverage.
+Browser accessibility audits include the tracking dialog and phone rating sheet after finite motion inside those
+surfaces and notifications settles. A controlled-width browser fixture checks card metadata and rating alignment.
 
 ## Related Documentation
 

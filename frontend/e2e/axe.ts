@@ -6,6 +6,46 @@ export async function scanPage(page: Page, info: TestInfo): Promise<void> {
     await expect(
         page.getByRole("heading", { level: 1, includeHidden: true }),
     ).toHaveCount(1);
+    // A visible overlay can still be fading in; audit its settled colors, without disabling motion.
+    const surfaces = page
+        .getByRole("dialog")
+        .or(page.getByRole("alertdialog"))
+        .or(page.getByRole("region", { name: /^Notifications/ }));
+    await expect
+        .poll(
+            () =>
+                surfaces.evaluateAll(async (elements) => {
+                    await new Promise(requestAnimationFrame);
+                    return [
+                        ...new Set(
+                            elements.flatMap((element) =>
+                                element.getAnimations({ subtree: true }),
+                            ),
+                        ),
+                    ]
+                        .filter(
+                            (animation) =>
+                                (animation.pending ||
+                                    animation.playState === "running") &&
+                                animation.effect?.getComputedTiming()
+                                    .iterations !== Infinity,
+                        )
+                        .map((animation) => ({
+                            name:
+                                animation instanceof CSSAnimation
+                                    ? animation.animationName
+                                    : "transition",
+                            state: animation.playState,
+                            time: animation.currentTime,
+                        }));
+                }),
+            {
+                timeout: 5000,
+                message:
+                    "Dialog and notification motion must settle before the accessibility scan",
+            },
+        )
+        .toEqual([]);
     const path = new URL(page.url()).pathname;
     const route = /^\/movie\/\d+$/.test(path) ? "/movie/:id" : path;
     const { violations } = await new AxeBuilder({ page })

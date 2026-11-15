@@ -1,6 +1,7 @@
 import { test, expect } from "./tracking-fixture";
 import { signIn } from "./tracking-input";
 import { setTimeout as delay } from "node:timers/promises";
+import { scanPage } from "./axe";
 
 for (const touch of [false, true]) {
     test.describe(touch ? "touch rating" : "mouse rating", () => {
@@ -31,11 +32,15 @@ for (const touch of [false, true]) {
                 name: "Rate",
                 exact: true,
             });
+            await expect(panel).toBeVisible();
+            await scanPage(page, info);
             if (touch) await rate.tap();
             const group = page.getByRole("radiogroup", {
                 name: "Your rating",
                 exact: true,
             });
+            await expect(group).toBeVisible();
+            if (touch) await scanPage(page, info);
             let saves = 0;
             page.on("request", (request) => {
                 if (
@@ -111,6 +116,7 @@ for (const touch of [false, true]) {
                 await expect(
                     group.getByRole("radio", { checked: true }),
                 ).toHaveAccessibleName(half ? "3.5 stars" : "4 stars");
+                await scanPage(page, info);
                 if (touch)
                     await page
                         .getByRole("dialog", {
@@ -132,6 +138,7 @@ for (const touch of [false, true]) {
                 await expect(
                     group.getByRole("radio", { checked: true }),
                 ).toHaveAccessibleName(half ? "3.5 stars" : "4 stars");
+                await scanPage(page, info);
             }
         });
     });

@@ -516,6 +516,30 @@ _Exit criterion:_ criterion 1's journey test passes, and on the browsable stack 
       affected browser cases pass, including the mouse/keyboard/touch journeys; frontend type checks, touched-file
       lint/format checks and documentation checks pass.
 
+- [x] **6.3 Close card and browser verification gaps**
+
+    **Goal:** Cards preserve their text-line layout throughout the supported width range, and tracking browser
+    checks use semantic locators and accessibility audits at settled page, dialog and sheet states.
+
+    - [x] **6.3.a Preserve minimum-width metadata and rating alignment**
+        - The year can shrink and truncate on one line while retaining its full accessible text. A local-only
+          controlled-width browser fixture compares unknown/known-year cards with score, watched and rating at
+          138px and 194px. It failed on the unknown year's 42px versus 21px height before the fix, then passed.
+          The fixture measures component geometry; the browse columns retain their fixed width.
+    - [x] **6.3.b Audit tracking pages, entry dialogs and rating sheets**
+        - The shared scanner runs after ready checks on login/home, the tracking pages, the entry dialog and phone
+          rating-sheet states. Measured entrance-opacity failures led to a bounded wait for finite motion inside
+          dialogs, alert dialogs and notification regions before one audit; motion, rules and baselines stay intact.
+        - Before/after diagnostics show the rating dialog at opacity 0.08–0.17 during its entrance, then opacity 1
+          with passing audits after settling. The complete 27-case Chromium suite and six local-fixture staging-skip
+          cases pass; the latter uses the local URL and performs no staging-service access.
+    - [x] **6.3.c Locate cards, radios and notification focus semantically**
+        - Cards expose named article semantics. Journeys locate their card by role/name, select the checked or first
+          radio by role, and read focus within a semantically located notification region. Keyboard-only traversal,
+          opener/fallback focus, both logs, persistence and geometry assertions remain covered by the browser run.
+        - All 131 related tests across seven files, frontend type checking, touched-file lint/format checks and
+          documentation checks pass. Reference guidance records the geometry fixture and scoped motion readiness.
+
 ## Implementation Notes
 
 - **Pointer kind and breakpoints in tests.** `tests/setup.ts` stubs `window.matchMedia` to answer no to every query,

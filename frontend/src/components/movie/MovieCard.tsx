@@ -144,6 +144,8 @@ const MovieCard = ({
       onMouseLeave={() => setIsCardHovered(false)}
     >
       <Card.Root
+        as="article"
+        aria-label={movie.title}
         color="foreground"
         bg="layer-01"
         height="100%"
@@ -292,7 +294,13 @@ const MovieCard = ({
                 alignItems="center"
                 gap={1}
               >
-                <Text fontSize="sm" fontFamily="body" color="on-muted">
+                <Text
+                  fontSize="sm"
+                  fontFamily="body"
+                  color="on-muted"
+                  minW="0"
+                  truncate
+                >
                   {releaseYear}
                 </Text>
                 <MovieUserScore

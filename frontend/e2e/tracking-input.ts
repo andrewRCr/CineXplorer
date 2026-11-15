@@ -1,6 +1,7 @@
 import { setTimeout as delay } from "node:timers/promises";
 import type { Locator, Page, TestInfo } from "@playwright/test";
 import { expect } from "./tracking-fixture";
+import { scanPage } from "./axe";
 
 export type InputMode = "mouse" | "keyboard" | "touch";
 
@@ -15,12 +16,10 @@ export async function tabTo(page: Page, control: Locator) {
         // Toast keyboard focus returns to its entry point on blur; Escape dismisses it before continuing.
         if (
             await page
-                .locator(":focus")
-                .evaluateAll((elements) =>
-                    elements.some((element) =>
-                        element.closest(
-                            '[role="region"][aria-label^="Notifications"]',
-                        ),
+                .getByRole("region", { name: /^Notifications/ })
+                .evaluateAll((regions) =>
+                    regions.some((region) =>
+                        region.contains(document.activeElement),
                     ),
                 )
         )
@@ -57,10 +56,12 @@ export async function signIn(
 ) {
     const input = controls(page, mode);
     await page.goto("/login");
-    await input.type(
-        page.getByLabel("Username or Email Address", { exact: true }),
-        username,
-    );
+    const usernameField = page.getByLabel("Username or Email Address", {
+        exact: true,
+    });
+    await expect(usernameField).toBeVisible();
+    await scanPage(page, info);
+    await input.type(usernameField, username);
     await input.type(page.getByLabel("Password", { exact: true }), password);
     for (let attempt = 0; attempt < 2; attempt++) {
         const answer = page.waitForResponse(
@@ -80,6 +81,7 @@ export async function signIn(
                     exact: true,
                 }),
             ).toBeVisible();
+            await scanPage(page, info);
             return;
         }
         // Other smoke specs and manual checks share the IP-based login window.

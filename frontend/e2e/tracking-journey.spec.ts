@@ -1,5 +1,6 @@
 import { test, expect } from "./tracking-fixture";
 import { color, controls, signIn, tabTo } from "./tracking-input";
+import { scanPage } from "./axe";
 
 for (const mode of ["mouse", "keyboard", "touch"] as const) {
     test.describe(mode, () => {
@@ -46,6 +47,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                 .getByRole("link", { name: tracking.title, exact: true })
                 .first();
             await expect(title).toBeVisible();
+            await scanPage(page, info);
             const actionGroup = page.getByRole("group", {
                 name: `Your actions for ${tracking.title}`,
             });
@@ -77,9 +79,10 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                     );
                 }
             };
-            const card = title.locator(
-                "xpath=ancestor::*[contains(concat(' ', normalize-space(@class), ' '), ' group ')]",
-            );
+            const card = page.getByRole("article", {
+                name: tracking.title,
+                exact: true,
+            });
             const box = await card.boundingBox();
             expect(box?.width).toBe(194);
             expect(box?.height).toBe(194 * 1.5 + 128);
@@ -146,6 +149,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                         exact: true,
                     }),
                 ).toBeEnabled();
+                await scanPage(page, info);
                 await expect(
                     dialog.getByRole("checkbox", { name: "Rewatch" }),
                 ).toBeChecked({ checked: rewatch });
@@ -162,7 +166,12 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                 });
                 if (mode === "keyboard") {
                     // Tab enters the radio group at its currently selected star (the first item when unrated).
-                    const radio = stars.locator('[role="radio"][tabindex="0"]');
+                    const selected = stars.getByRole("radio", {
+                        checked: true,
+                    });
+                    const radio = (await selected.count())
+                        ? selected
+                        : stars.getByRole("radio").first();
                     await tabTo(page, radio);
                     for (let step = 0; step < (rating === 7 ? 7 : 3); step++)
                         await page.keyboard.press("ArrowRight");
@@ -242,6 +251,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                             exact: true,
                         }),
                     ).toBeVisible();
+                await scanPage(page, info);
             };
             await checkWatchlist(false);
             await navigate("Films");
@@ -254,6 +264,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                 log.getByText("First browser viewing", { exact: true }),
             ).toBeVisible();
             await expect(log.getByRole("listitem")).toHaveCount(1);
+            await scanPage(page, info);
             const panel = page.getByRole("region", {
                 name: "Your film",
                 exact: true,
@@ -312,6 +323,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                     exact: true,
                 }),
             ).toBeVisible();
+            await scanPage(page, info);
             await checkWatchlist(false);
             await navigate("Films");
             await expect(
@@ -327,6 +339,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                     exact: true,
                 }),
             ).toBeVisible();
+            await scanPage(page, info);
         });
     });
 }

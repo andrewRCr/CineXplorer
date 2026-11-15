@@ -853,8 +853,9 @@ check-your-email notice; email-link verification, OAuth, watchlist contents and 
   aborted. Synthetic fixtures use generated API types and cover all score badge variants. Worktrees and CI discard
   mail through Django's dummy backend; the primary checkout's stack sends real verification mail.
 - **`staging`**: live catalogue data and an existing verified, non-staff account. Registration is skipped. The Back to
-  Results reload scenario supplies its own browse/detail fixtures in both targets to control page height; those
-  overrides serve only same-origin GETs. The specs change none of the staging account's saved data.
+  Results reload scenario supplies its own browse/detail fixtures in both targets to control page height.
+  `background.spec.ts` supplies Home's three reads in both targets so its console checks never depend on live TMDB.
+  Both overrides serve only same-origin GETs. The specs change none of the staging account's saved data.
 
 A PATCH of an unstored movie at `/api/user-movie-data/{tmdb_id}` also reaches TMDB, but these specs never call it.
 A future spec that does supplies its own fixtures. Assertions read titles from the browse responses the page received

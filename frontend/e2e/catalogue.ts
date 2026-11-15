@@ -49,7 +49,41 @@ export function movieDetail(id: number): Detail {
     };
 }
 
+function homeCatalogueResponse(url: URL): object | undefined {
+    if (url.pathname === "/api/movies/featured")
+        return {
+            tmdb_id: 947,
+            title: "Lawrence of Arabia",
+            release_date: "1962-12-11",
+            backdrop_path: null,
+            tagline: null,
+            focus_point: null,
+            mirrored: false,
+            directors: [],
+        } satisfies components["schemas"]["FeaturedMovieSchema"];
+    if (url.pathname === "/api/movies/now-playing")
+        return moviePage(1, 20, null);
+    if (url.pathname === "/api/movies/upcoming") {
+        const response = moviePage(21, 20, null);
+        return {
+            ...response,
+            results: response.results?.map((film, index) => {
+                const date = new Date();
+                date.setUTCDate(
+                    date.getUTCDate() + 7 + Math.floor(index / 5) * 7,
+                );
+                return {
+                    ...film,
+                    release_date: date.toISOString().slice(0, 10),
+                };
+            }),
+        };
+    }
+}
+
 export function catalogueResponse(url: URL): object | undefined {
+    const home = homeCatalogueResponse(url);
+    if (home) return home;
     if (url.pathname === "/api/movies/search") return moviePage(1, 39, null);
     if (url.pathname === "/api/movies/browse") {
         const cursor = url.searchParams.get("tmdb_page_start");
@@ -108,5 +142,22 @@ export async function useRestoreCatalogue(
         } else {
             await route.fallback();
         }
+    });
+}
+
+/** Home's color-mode checks use the same deterministic reads on every target. */
+export async function useHomeCatalogue(
+    page: import("@playwright/test").Page,
+    baseURL: string,
+): Promise<void> {
+    const origin = new URL(baseURL).origin;
+    await page.route("**/api/movies/**", async (route) => {
+        const url = new URL(route.request().url());
+        const response =
+            url.origin === origin && route.request().method() === "GET"
+                ? homeCatalogueResponse(url)
+                : undefined;
+        if (response) await route.fulfill({ json: response });
+        else await route.fallback();
     });
 }

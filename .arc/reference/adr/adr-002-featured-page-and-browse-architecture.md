@@ -3,7 +3,8 @@
 ## Status
 
 Accepted; Superseded in part by ADR-044 (Navigation Structure, landing entries in Routing Structure and matching
-Frontend Implementation items)
+Frontend Implementation items); Superseded in part by ADR-046 (the four remaining Future Featured-page
+Frontend Implementation items and the Consequences that depend on a trending Featured page)
 
 ## Context
 

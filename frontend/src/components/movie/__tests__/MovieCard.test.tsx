@@ -1,10 +1,14 @@
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { setAuthTokens } from "@/utilities/tokenUtils";
+import type { ReactElement } from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
 import { infiniteMoviesKey } from "@/lib/queries";
 import { browseMovies } from "@/services/movieService";
 import apiClient from "@/services/apiClient";
-import { apiBaseUrl } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { gate } from "@tests/helpers/web-locks";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -625,8 +629,24 @@ describe("MovieCard Component", () => {
   });
 });
 
+function renderSignedIn(ui: ReactElement) {
+  function SignedIn({ children }: { children: React.ReactNode }) {
+    return <AuthContextProvider>{children}</AuthContextProvider>;
+  }
+  // The shared render supplies routing and query state; this wrapper adds real auth.
+  const view = render(<SignedIn>{ui}</SignedIn>);
+  return {
+    ...view,
+    rerender: (next: ReactElement) =>
+      view.rerender(<SignedIn>{next}</SignedIn>),
+  };
+}
+
 describe("MovieCard watchlist saves", () => {
   beforeEach(() => {
+    clearBrowserAuth();
+    authHandlers();
+    setAuthTokens(token());
     act(() => toaster.remove());
     document.cookie = "csrftoken=movie-save-csrf; path=/";
   });
@@ -647,7 +667,7 @@ describe("MovieCard watchlist saves", () => {
         );
       }),
     );
-    render(
+    renderSignedIn(
       <>
         <MovieCard
           movie={createMockMovieListItem({
@@ -698,7 +718,7 @@ describe("MovieCard watchlist saves", () => {
         user_movie_data: null,
       });
       const user = userEvent.setup();
-      const view = render(
+      const view = renderSignedIn(
         <>
           <MovieCard key="card" movie={movie} />
           <Toaster key="toasts" />
@@ -734,7 +754,7 @@ describe("MovieCard watchlist saves", () => {
           HttpResponse.json({ detail: "Save unavailable" }, { status }),
         ),
       );
-      render(
+      renderSignedIn(
         <>
           <MovieCard
             movie={createMockMovieListItem({ user_movie_data: null })}
@@ -792,6 +812,9 @@ function PagedCards() {
 
 describe("MovieCard shared-save composition", () => {
   beforeEach(() => {
+    clearBrowserAuth();
+    authHandlers();
+    setAuthTokens(token());
     act(() => toaster.remove());
     document.cookie = "csrftoken=card-save; path=/";
   });
@@ -828,7 +851,7 @@ describe("MovieCard shared-save composition", () => {
       ),
     );
     const user = userEvent.setup();
-    render(
+    renderSignedIn(
       <>
         <PagedCards />
         <Toaster />
@@ -869,7 +892,7 @@ describe("MovieCard shared-save composition", () => {
       }),
     );
     const user = userEvent.setup();
-    const view = render(
+    const view = renderSignedIn(
       <>
         <MovieCard
           key="card"
@@ -914,7 +937,7 @@ describe("MovieCard shared-save composition", () => {
       }),
     );
     const user = userEvent.setup();
-    const view = render(
+    const view = renderSignedIn(
       <>
         <MovieCard
           key="card"
@@ -939,3 +962,30 @@ describe("MovieCard shared-save composition", () => {
     ]);
   });
 });
+
+it.each(["anonymous", "resolving"])(
+  "shows no card actions while %s",
+  async (status) => {
+    clearBrowserAuth();
+    authHandlers();
+    const pending = gate();
+    if (status === "resolving")
+      server.use(
+        http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+          await pending.wait;
+          return HttpResponse.json({}, { status: 401 });
+        }),
+      );
+    render(
+      <AuthContextProvider>
+        <MovieCard movie={createMockMovieListItem()} />
+      </AuthContextProvider>,
+    );
+    if (status === "anonymous")
+      await waitFor(() =>
+        expect(screen.queryAllByRole("button")).toHaveLength(0),
+      );
+    else expect(screen.queryAllByRole("button")).toHaveLength(0);
+    pending.release();
+  },
+);

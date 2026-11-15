@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import logging
+import random
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import cast
 
+from django.conf import settings
 from django.utils import timezone
 from pydantic import ValidationError
 
 from apps.core.exceptions import UpstreamError
 from apps.core.models import Movie
+from apps.core.services.tmdb_api_client import TMDBApiClient
 from apps.core.services.validators import (
     validate_tmdb_paginated_response,
     validate_tmdb_response,
@@ -20,12 +24,14 @@ from apps.core.tmdb_models.tmdb_responses import (
 )
 from apps.core.types.api_types import TMDBParams
 
+from ..featured import FEATURED_FILMS, FeaturedFilm
 from ..helpers import (
     NOW_PLAYING_PROTECTED_KEYS,
     UPCOMING_PROTECTED_KEYS,
     merge_with_preset,
 )
 from ..schemas import (
+    FeaturedMovieSchema,
     GenreSchema,
     MovieDetailSchema,
     MovieListResponseSchema,
@@ -37,6 +43,7 @@ from .deduplication_tracker import DeduplicationTracker
 from .pipelines.paginated import fetch_with_filters_and_buffer
 from .tmdb_api_boundary.query_params import build_tmdb_params
 from .tmdb_api_boundary.response_factories import (
+    create_featured_movie_from_tmdb,
     create_genre_list_from_tmdb,
     create_movie_detail_from_tmdb,
     handle_tmdb_api_error,
@@ -67,6 +74,46 @@ class MovieService(BaseTMDBService):
         service = MovieService(tmdb_client=mock_client)
         movies = service.search_movies("test")
     """
+
+    def __init__(
+        self,
+        tmdb_client: TMDBApiClient | None = None,
+        choose_film: Callable[[Sequence[FeaturedFilm]], FeaturedFilm] = random.choice,
+        featured_films: Sequence[FeaturedFilm] = FEATURED_FILMS,
+    ) -> None:
+        super().__init__(tmdb_client)
+        self._choose_film = choose_film
+        self._featured_films = featured_films
+
+    def get_featured_movie(self, film: int | None = None) -> FeaturedMovieSchema:
+        """Read the homepage film and director names in one TMDB request."""
+        selected = (
+            next(
+                (entry for entry in self._featured_films if entry.tmdb_id == film),
+                FeaturedFilm(film),
+            )
+            if settings.DEBUG and film is not None
+            else self._choose_film(self._featured_films)
+        )
+        movie_id = selected.tmdb_id
+        response = self._tmdb_client.get_movie_details(movie_id, append_to_response="credits")
+        if not response.is_success():
+            handle_tmdb_api_error(
+                response, operation="get_featured_movie", lookup=True, movie_id=movie_id
+            )
+        data = response.get_json_data()
+        if data is None:
+            raise UpstreamError("Invalid movie data from external API")
+        try:
+            return create_featured_movie_from_tmdb(
+                data,
+                selected.focus_point,
+                selected.backdrop_path,
+                selected.title,
+                selected.mirrored,
+            )
+        except ValidationError as error:
+            raise UpstreamError("Invalid movie data from external API") from error
 
     # ========================================================================
     # Core Discovery Methods

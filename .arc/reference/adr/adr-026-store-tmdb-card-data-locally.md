@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted; Superseded in part by ADR-043 (the PUT save)
+Accepted; Superseded in part by ADR-043 (the PUT save); Superseded in part by ADR-046 (the landing page’s
+trending-list cache)
 
 Realized (2026-11-10): `tasks-user-movie-data.md`.
 

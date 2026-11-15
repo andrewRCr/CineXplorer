@@ -185,7 +185,8 @@ The project checks backend behavior, frontend components, and complete browser j
   1280×800; `phone-width.spec.ts` uses 360×800, signed out and signed in
 - **Targets**: `local` uses real authentication with synthetic catalogue fixtures and discarded mail in a worktree's
   browsable stack; `staging` uses live data and a verified test account, skips sign-up, disables traces/screenshots,
-  and uploads no artifacts. The reload scenario supplies its own catalogue fixtures in both targets
+  and uploads no artifacts. The reload scenario supplies its own catalogue fixtures in both targets;
+  `background.spec.ts` supplies Home's three reads in both targets so its console checks never depend on live TMDB
 - **Command**: With the worktree's browsable stack running (`node scripts/worktree.mjs browse`), run
   `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e` from `frontend/`
 - **CI**: Required on pull requests through `ci-ok`; the staging target runs after deployment

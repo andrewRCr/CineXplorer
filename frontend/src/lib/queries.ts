@@ -1,3 +1,4 @@
+import type { ReadOptions } from "@/services/httpService";
 import { readSession, sessionKey, type FirstReadContext } from "@/lib/session";
 import {
     getUserMovies,
@@ -9,7 +10,13 @@ import {
     type ActivityParams,
 } from "@/services/userMovieDataService";
 import { queryOptions } from "@tanstack/react-query";
-import { fetchMovieDetail } from "@/services/movieService";
+import {
+    fetchMovieDetail,
+    getFeaturedMovie,
+    getNowPlayingMovies,
+    getUpcomingMovies,
+} from "@/services/movieService";
+import { homeReadOptions, homeSectionOptions } from "@/services/homeRequests";
 import type { MovieDetail } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
 
@@ -47,10 +54,14 @@ export const movieDetailQuery = (tmdbId: number) =>
             readWithSignal(signal, fetchMovieDetail().get<MovieDetail>(tmdbId)),
     });
 
-export const libraryQuery = (params: UserMoviesQueryParams) =>
+export const libraryQuery = (
+    params: UserMoviesQueryParams,
+    options?: ReadOptions,
+) =>
     queryOptions({
         queryKey: [...libraryKey, params] as const,
-        queryFn: ({ signal }) => readWithSignal(signal, getUserMovies(params)),
+        queryFn: ({ signal }) =>
+            readWithSignal(signal, getUserMovies(params, options)),
     });
 
 export const sessionQuery = (firstRead?: FirstReadContext) =>
@@ -63,6 +74,32 @@ export const sessionQuery = (firstRead?: FirstReadContext) =>
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
     });
+
+export const homeWindowQuery = (window: "now-playing" | "upcoming") =>
+    queryOptions({
+        queryKey: ["movies", "home", window] as const,
+        queryFn: ({ signal }) =>
+            readWithSignal(
+                signal,
+                (window === "now-playing"
+                    ? getNowPlayingMovies
+                    : getUpcomingMovies)({ page: 1 }, homeSectionOptions),
+            ),
+    });
+
+export const featuredFilmQuery = (film?: number) =>
+    queryOptions({
+        queryKey: ["featured", film ?? null] as const,
+        staleTime: Infinity,
+        gcTime: Infinity,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        queryFn: ({ signal }) => readWithSignal(signal, getFeaturedMovie(film)),
+    });
+
+export const homeWatchlistQuery = () =>
+    libraryQuery({ watchlist: true, page: 1, page_size: 20 }, homeReadOptions);
 
 export const entriesKey = ["entries"] as const;
 export const movieEntriesQuery = (tmdbId: number) =>

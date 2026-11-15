@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted; Superseded in part by ADR-044 (five-spec list and mobile-viewport exclusion)
+Accepted; Superseded in part by ADR-044 (five-spec list and mobile-viewport exclusion); Superseded in part by
+ADR-046 (Back to Results as the only spec supplying its own responses in both targets)
 
 ## Context
 

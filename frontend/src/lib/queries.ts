@@ -8,7 +8,7 @@ import {
     getActivity,
     type ActivityParams,
 } from "@/services/userMovieDataService";
-import { queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { fetchMovieDetail } from "@/services/movieService";
 import type { MovieDetail } from "@/types/movie";
 import type { BrowseParams } from "@/types/browseTypes";
@@ -51,6 +51,21 @@ export const libraryQuery = (params: UserMoviesQueryParams) =>
     queryOptions({
         queryKey: [...libraryKey, params] as const,
         queryFn: ({ signal }) => readWithSignal(signal, getUserMovies(params)),
+    });
+
+export const libraryPagesQuery = (params: UserMoviesQueryParams) =>
+    infiniteQueryOptions({
+        queryKey: [...libraryKey, "pages", params] as const,
+        initialPageParam: 1,
+        queryFn: ({ signal, pageParam }) =>
+            readWithSignal(
+                signal,
+                getUserMovies({ ...params, page: pageParam, page_size: 100 }),
+            ),
+        getNextPageParam: (lastPage) =>
+            lastPage.page < lastPage.total_pages
+                ? lastPage.page + 1
+                : undefined,
     });
 
 export const sessionQuery = (firstRead?: FirstReadContext) =>

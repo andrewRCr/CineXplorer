@@ -99,52 +99,26 @@ link, and removed there, in the browser.
 _Exit criterion:_ `library.spec.ts`'s setup and steps 1, 2 and 4 pass against the browsable stack with `/watchlist`
 scanned, and `sign-in.spec.ts` and `phone-width.spec.ts` pass with their Explore and Library assertions.
 
-- [ ] **2.1 The Library's grid draws films in columns of at least 150px and pages by 100 — R5, R6, R7, R8**
+- [x] **2.1 The Library's grid draws films in columns of at least 150px and pages by 100 — R5, R6, R7, R8**
 
     **Goal:** Any list of the visitor's films draws as a virtualized grid of as many 150px-or-wider columns as fit,
     loads the next 100 as the visitor nears the end only while no fetch runs and another page exists, shows each film
     once, and refetches every loaded page after a save.
 
-    - [ ] **2.1.a Write the column cases in `components/movie/library/__tests__/libraryGrid.test.ts`**
-        - 374px (a 390px screen less `AppLayout`'s base padding, `px={2}`) gives 2 columns; 1216px (1280px less its
-          `lg` padding, `px={8}`) gives 7
-        - No column is narrower than 150px at any width from 150px to 2,560px, and a width under 150px gives 1
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.b Write the grid's cases in `components/movie/library/__tests__/LibraryGrid.test.tsx`**
-        - MSW answers `/user-movie-data/movies` per requested page and records each read's parameters; the real
-          virtualizer measures stubbed row sizes (Implementation Notes, "The virtualizer under jsdom")
-        - The first read sends `page: 1`, `page_size: 100` and the filters and sort the grid was given
-        - Placeholder cards while the first page loads; a first-page failure shows the message the page passes with
-          Retry, which reads again; a later page's failure shows Retry beneath the grid, which reads that page again
-        - Nearing the end of what has loaded reads the next page while the last page read is below `total_pages`;
-          none once it is not, including an empty list (`total_pages: 0`), which ends at its first page
-        - No next page is read while a fetch of the list runs: with a refetch held pending, reaching the end reads
-          nothing until it settles
-        - A film returned on two pages is drawn once
-        - A record save through `useUserMovieState` refetches every loaded page in order; a film the refetch no
-          longer returns leaves the grid and one it adds appears
-        - Expect tests to FAIL initially
-
-    - [ ] **2.1.c Build the read and the grid**
-        - `UserMoviesQueryParams` (`services/userMovieService.ts`) gains `watched`, `liked`, `rated`, `sort` and
-          `direction`, typed from `LibraryQuerySchema` in `@/types/api` (R34e: if `main` already carries `sort` and
-          `direction`, keep its form)
-        - `libraryPagesQuery(params)` in `lib/queries.ts`: `infiniteQueryOptions` keyed `[...libraryKey, "pages",
-          params]`, `initialPageParam: 1`, and a next page while `lastPage.page < lastPage.total_pages`
-          (`strategy-pagination.md`); the existing `useInfiniteMovies` follows the TMDB cursor and doesn't fit
-        - `libraryColumnCount(width)` in `components/movie/library/libraryGrid.ts`: `max(1, floor((width + GAP) /
-          (150 + GAP)))`, with `GAP` from `gridConstants.ts`; `CARD_WIDTH` and the catalog's grids are unchanged
-        - `LibraryGrid` in `components/movie/library/`: a `ResizeObserver` on its container sets the column count;
-          rows of that many films under `useWindowVirtualizer` with `measureElement` on each row and the row index
-          as its key; `gridTemplateColumns` of equal fractions with `GAP`, so each `MovieCard` (already
-          `width="100%"`) fills its column; the near-end read as `VirtualizedMovieGrid` guards it (no read while
-          `isFetching`); pages joined with repeats dropped by `tmdb_id`; `GridSkeletonLoader` while the first page
-          loads
-        - Its props, which 2.2, 3.1, 3.2 and 3.3 consume: `params` (the read's filters and sort), `source` (passed to
-          each `MovieCard`), `errorMessage`, `empty` (the page's empty state), and an optional `cellFooter(movie)`
-          that the grid renders in a fixed-height slot beneath every card
-        - Tests should now PASS
+    - [x] **2.1.a Cover column widths**
+        - Covered phone and desktop counts, every integer width from 150px to 2,560px, and widths below the minimum;
+          both cases failed against a one-column stand-in before the fluid calculation passed.
+    - [x] **2.1.b Cover the grid through MSW and the real virtualizer**
+        - Eight cases cover page parameters, measured 300px rows against a 449px estimate, placeholders, empty and
+          final-page termination, retries for first/later pages and failed save refetches, repeats, and every loaded
+          page refreshing after a save. Narrow breaks proved existing mechanisms fail their cases before restoration;
+          removing the fetch guard specifically read page 3 during a held refetch.
+    - [x] **2.1.c Build the read and the grid**
+        - Added typed collection filters and sorts, the Library infinite-query factory, fluid columns, measured
+          window rows, guarded paging, per-page errors and Retry, and a fixed footer slot when provided.
+        - Retry distinguishes a failed next page from a failed refetch, so saves can recover at the final page.
+        - Eight focused cases, 402 tests affected by the query/service changes, frontend lint, type-check and
+          formatting passed. Astra's bounded advice led to the reproduced refetch-Retry correction before completion.
 
 - [ ] **2.2 The Watchlist page lists the watchlist in the grid, sorted by the address — R9, R10, R11**
 

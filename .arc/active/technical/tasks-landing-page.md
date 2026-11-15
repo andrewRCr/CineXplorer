@@ -964,10 +964,15 @@ recorded, and the three changed smoke specs pass.
     - All three conditions fail against `main` at the merge, so Home is unchanged by them. No pull request was open
       for the Library, the card controls or the queue when they were checked.
 
-- [ ] **5.5 Check Home over the merged code** (generate the API types, then run `background.spec.ts`,
+- [x] **5.5 Check Home over the merged code** (generate the API types, then run `background.spec.ts`,
   `sign-in.spec.ts` and `phone-width.spec.ts`)
 
     **Goal:** The phase's exit criterion is shown on the merged branch, with what ran and each R30 result recorded.
+
+    - On the worktree's browsable stack serving the merged branch, regenerating the API types again leaves no diff,
+      and `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts` pass: 17 tests, with no retries. R30's
+      results are recorded in 5.3 (a: the API types) and 5.4 (b to d: none holds on `main`), so the exit criterion
+      holds.
 
 ### **Phase 6:** Verification
 

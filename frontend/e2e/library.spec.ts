@@ -63,7 +63,14 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
     );
     const watched = await page.request.patch(
         `/api/user-movie-data/${SECOND_FILM}`,
-        { headers, data: { user_watched: true, time_zone: timeZone } },
+        {
+            headers,
+            data: {
+                user_watched: true,
+                user_on_watchlist: true,
+                time_zone: timeZone,
+            },
+        },
     );
     expect([200, 201]).toContain(watched.status());
     const firstCard = page.locator(".chakra-card__root").filter({
@@ -137,13 +144,13 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
     await scanPage(page, info);
     await banner.getByRole("link", { name: "Watchlist", exact: true }).click();
     await expect(page).toHaveURL(new URL("/watchlist", target.baseURL).href);
-    await page
+    await firstCard
         .getByRole("button", { name: "Remove from watchlist", exact: true })
         .click();
     await expect(
         page.getByRole("link", { name: firstTitle, exact: true }),
     ).toHaveCount(0);
     await expect(
-        page.getByText("Your watchlist is empty", { exact: true }),
+        page.getByRole("link", { name: secondTitle, exact: true }).first(),
     ).toBeVisible();
 });

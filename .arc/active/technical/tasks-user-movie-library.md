@@ -159,9 +159,12 @@ scanned, and `sign-in.spec.ts` and `phone-width.spec.ts` pass with their Explore
         - Added the three personal routes and the Watchlist card button-name baseline with the catalog's reason.
     - [x] **2.4.b Add the local signed-in journey**
         - Signs in directly toward Explore, resets both seeded films' records with Bearer and CSRF headers, marks the
-          second watched, adds the first through a catalog card, finds it through Watchlist and removes it there.
+          second watched and queued, adds the first through a catalog card, finds it through Watchlist and removes it
+          there. Removal is scoped to its fixture card; the second remains, so no empty-account assumption is needed.
         - Own catalog fixtures use the seed's titles; the spec skips staging and scans sign-in, Explore and Watchlist.
           Reconstructing the text-only Watchlist failed on its missing removal control; restoring the grid passed.
+        - Review fix: queuing the second fixture made the old global removal locator fail with two matches. The scoped
+          locator and retained-film assertion pass without clearing or modifying unrelated account films.
     - [x] **2.4.c Describe the new smoke spec**
         - Updated the technical overview, quick reference, testing strategy and quality-gates strategy for eight
           specs, seven journeys and staging's skipped saved-film journey. Markdown lint, spec lint and type-check pass.
@@ -324,13 +327,17 @@ the same rows.
           longer in the development list. Changed ADRs and task documentation pass Markdown lint; README is excluded
           by repository lint configuration and was checked manually.
 
-- [ ] **4.5 Check the Library's views and their returns**
+- [x] **4.5 Check the Library's views and their returns**
 
     **Goal:** The segment's exit criterion is shown on this branch, with what ran and the result recorded here.
 
-    - Run `e2e/library.spec.ts`, `e2e/back-to-results.spec.ts` and `e2e/browse.spec.ts` against the browsable stack
-    - Run `LibraryGrid.test.tsx`, `LibraryFilms.test.tsx`, `Watchlist.test.tsx`, `LibraryHistory.test.tsx` and
-      `BackToCollectionLink.test.tsx`
+    - After the review corrections, all three browser specs passed: `library.spec.ts`, `back-to-results.spec.ts` and
+      `browse.spec.ts`, against this branch's browsable stack. The Library spec checks real footer bounds and removes
+      only its first fixture while the second stays queued.
+    - All 92 cases pass across `LibraryGrid.test.tsx`, `LibraryScrollReturn.test.tsx`, `LibraryFilms.test.tsx`,
+      `Watchlist.test.tsx`, `LibraryHistory.test.tsx` and `BackToCollectionLink.test.tsx`.
+    - Frontend lint/type-check and changed Markdown pass. Full-project verification and CI remain for the later
+      verification phase; success criteria are untouched.
 
 ### **Phase 5:** History shows the visitor's changes, with `main` merged
 

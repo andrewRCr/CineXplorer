@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-15)
 
 Supersedes ADR-047 in part (which facts mark a film watched, and the date-added sort under combined filters).
 

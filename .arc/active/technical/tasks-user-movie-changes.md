@@ -2,9 +2,10 @@
 
 **PRD:** `prd-user-movie-changes.md`
 **Created:** 2026-11-14
+**Completed:** 2026-11-15
 **Branch:** `technical/user-movie-changes`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
 
 ## Overview
 
@@ -169,7 +170,7 @@ layer's test shows the browser's zone on a plain save and on an Undo.
         - All 380 app tests, pinned Ruff lint/format and app Pyright passed.
         - Added an advancing-clock entry-create regression across Auckland midnight after the advisor's source
           inspection. It fails with a second join clock read and with the validation day's date, then passes
-          restored. The full app run is now 392 passing tests; pinned Ruff and app Pyright also pass.
+          restored. The full app run passed 392 tests; pinned Ruff and app Pyright also passed.
 
 - [x] **3.2 An Undo deletes the row it undoes — D7**
 
@@ -232,7 +233,15 @@ layer's test shows the browser's zone on a plain save and on an Undo.
 
 ### **Phase 4:** Verification
 
-- [ ] **4.1 Verify the work** (load `archive-completed.md` § 1, with the Verification note below)
+- [x] **4.1 Verify the work** (load `archive-completed.md` § 1, with the Verification note below)
+
+    - Author criteria walk: criteria 1–11 met against the complete change at `b3fbace3` and the ADR acceptance;
+      evidence is recorded below. Criterion 12 remains for the staging deploy after merge.
+    - Full checks passed: 1,620 backend tests, 3,294 frontend tests across 112 files, all 21 E2E cases, pinned
+      backend lint/format, full Pyright (zero errors or warnings), frontend lint/type-check, contrast validation,
+      production build and markdown lint. Migration and regenerated API types have no drift.
+    - Independent criteria verification pass 1 returned no findings over the same target. Criteria 1–11 are met;
+      the explicitly post-merge criterion 12 stays open for staging proof. No implementation fixes were needed.
 
 ## Implementation Notes
 
@@ -253,8 +262,6 @@ layer's test shows the browser's zone on a plain save and on an Undo.
 - **Migrations.** `test_migrations.py` drives `MigrationExecutor` back to earlier states and forward to the latest,
   so `0004` and `0005` must both reverse. `0003_movie_entries` flushes deferred constraints before later schema
   operations; follow it if `0004`'s data step and constraint meet the same error.
-- **The card controls' branch** has rewritten `saveMutationOptions` and is still in progress, so 3.4's first case is
-  likely to hold if the controls merge first.
 - **Cases that pass early.** Some cases hold before the code they pin: 1.1.a's 409 cases, 2.1.a's known and missing
   zones, the cases in 2.3.a, 3.1.a and 3.2.a where a write records or deletes nothing, and 3.2.a's like removal by an
   Undo's un-mark once 2.3.b lands. 2.3.a's shared time fails first only because no rows exist. See each fail against a
@@ -262,8 +269,8 @@ layer's test shows the browser's zone on a plain save and on an Undo.
   zone or one refusing every name, recording every changed field, a second clock read for the join times, an Undo
   deleting a field's latest row whatever its value, or an Undo recording nothing), then restore; an import error isn't
   that failure.
-- **Verification.** ADR-051 is set `Accepted` before merge. If `main` is merged again after 3.4, recheck 3.4.b's cases
-  and the API types. Criterion 12 is proven after merge, from the staging deploy.
+- **Release checks.** If `main` is merged again after 3.4, recheck 3.4.b's cases and the API types. Criterion 12
+  requires the staging deploy and following smoke result after merge.
 - **Code review.** The code review before the push (`archive-completed.md` § 5) is the PRD's one migration review:
   brief it to cover `0004` and `0005` together, forward and back.
 
@@ -274,45 +281,45 @@ so it is checked once the change has merged, with its evidence recorded before t
 
 ### Implemented
 
-- [ ] 1. **A like, then its Undo, through the API.** One backend test, at a time whose UTC day differs from
+- [x] 1. **A like, then its Undo, through the API.** One backend test, at a time whose UTC day differs from
   Auckland's, adds a film to the watchlist with a PATCH, then likes it with `time_zone: "Pacific/Auckland"`. The film
   comes back watched, liked and off the watchlist; its rows are the addition and one `liked` row, turned on, not from
   an entry, on Auckland's day, with no `watched` or watchlist-removal row. An Undo PATCH supplying `user_liked: false`,
   `user_watched: false` and `user_on_watchlist: true` returns the film unwatched, unliked and on the watchlist, deletes
   the `liked` row, keeps the addition and records nothing. (D1, D3, D4, D5, D7)
-- [ ] 2. **The like rule.** Tests show: liking an unwatched film on the watchlist marks it watched and takes it off,
+- [x] 2. **The like rule.** Tests show: liking an unwatched film on the watchlist marks it watched and takes it off,
   and keeps it on when the save supplies the watchlist; un-marking Watched on a liked film clears the like; with a
   current rating or an entry, that un-mark answers 409 and the film stays watched and liked; `user_liked: true` with
   `user_watched: false` answers 400 and changes nothing; an entry created with Liked on an unwatched film leaves it
   watched and liked. (D1)
-- [ ] 3. **The database and the migration.** Written through the ORM, a liked, unwatched record is refused. Migrated
+- [x] 3. **The database and the migration.** Written through the ORM, a liked, unwatched record is refused. Migrated
   forward, a liked, unwatched record is watched with `watched_added_at` equal to its `liked_added_at` and its
   watchlist unchanged, and other records are unchanged; migrated back, the constraint is gone and that record stays
   watched. The app's existing migration test passes. (D2)
-- [ ] 4. **What a record save records.** Tests show each row of D5's table, and that a field supplied at its current
+- [x] 4. **What a record save records.** Tests show each row of D5's table, and that a field supplied at its current
   value and a save that changes nothing record nothing. One save's rows share one `created_at`, equal to the join time
   it stamps. (D4, D5)
-- [ ] 5. **What an entry write records.** Tests show: a create that becomes the latest entry with a rating records one
+- [x] 5. **What an entry write records.** Tests show: a create that becomes the latest entry with a rating records one
   `rating` row from the entry; a backdated create that isn't the latest records none; a create that marks the film
   watched, likes it and takes it off the watchlist records no row for those; a create or an edit with Liked off on a
   liked film records the like's removal from the entry; an edit that changes the latest entry's rating records it, and
   one that changes only its review records nothing; an entry delete records nothing. Each row's `made_on` is the
   write's day in its time zone. (D6)
-- [ ] 6. **Undo.** Tests show each case D7 lists, that a field an Undo supplies at its current value keeps its rows,
+- [x] 6. **Undo.** Tests show each case D7 lists, that a field an Undo supplies at its current value keeps its rows,
   that an Undo records nothing for the fields it supplied and changed, and that an Undo un-marking Watched without
   supplying Liked records the like's removal. (D7)
-- [ ] 7. **The time zone on saves.** A save's rows are on its zone's day, and on the UTC day when `time_zone` is
+- [x] 7. **The time zone on saves.** A save's rows are on its zone's day, and on the UTC day when `time_zone` is
   absent or null; an unknown zone answers 422 and changes nothing; a save supplying only `time_zone` answers 400. (D3,
   D4)
-- [ ] 8. **Rows stay with their record.** Deleting the film's record through the API, and deleting the user, delete
+- [x] 8. **Rows stay with their record.** Deleting the film's record through the API, and deleting the user, delete
   its rows; the admin doesn't list them. (D8)
-- [ ] 9. **Date added.** Tests show the Library's `added` sort, each direction, by `watched_added_at` when filtering
+- [x] 9. **Date added.** Tests show the Library's `added` sort, each direction, by `watched_added_at` when filtering
   watched and liked, by `watchlist_added_at` when filtering the watchlist and watched, and by creation time when
   filtering rated alone, over records whose times order differently in each. (D9)
-- [ ] 10. **The save layer.** A frontend test shows a plain record save and an Undo each sending the browser's time
+- [x] 10. **The save layer.** A frontend test shows a plain record save and an Undo each sending the browser's time
   zone, and the tests that assert a record save's body expect it. `openapi.json` and `api.ts` carry `time_zone` on the
   record save. (D10)
-- [ ] 11. **The documents.** ADR-051 reads `Accepted` with its date; ADR-047's Status first line reads "Accepted;
+- [x] 11. **The documents.** ADR-051 reads `Accepted` with its date; ADR-047's Status first line reads "Accepted;
   Superseded in part by ADR-051 (...)", naming the parts D11 names; TECHNICAL-OVERVIEW names the record of changes.
   (D11)
 
@@ -320,3 +327,35 @@ so it is checked once the change has merged, with its evidence recorded before t
 
 - [ ] 12. **The migrations run on staging.** The deploy job for the merge commit applies this work's migrations on
   staging (its log lists them applied), and the staging smoke run that follows the deploy passes. (D2, D4)
+
+### Verification evidence
+
+The author walk covers the complete diff from `9962f991` through `b3fbace3`, the resulting tree and ADR-051's
+acceptance. The full app run includes all backend checks named below; the full frontend run includes the save-layer
+checks. Independent verification is recorded separately in the work unit's review log.
+
+1. `test_movie_changes.py::test_like_and_undo_through_api_keep_only_original_addition` checks the returned and
+   persisted flags, exact surviving rows and Auckland's day with the UTC day different.
+2. `test_save_service.py` checks first likes, watchlist removal/retention, join stamps, unwatch clearing, entry likes
+   and contradiction before TMDB. `test_user_movie_data_api.py` checks 400 and both locked 409 cases without writes.
+3. `test_models.py::test_database_like_requires_watched_record` exercises the database constraint.
+   `test_migrations.py` checks conversion, unchanged records and reverse behavior, and the existing full migration
+   round trip. Both migrations also applied successfully to the worktree's development database.
+4. `test_movie_changes.py` covers all ten save-table cases, unchanged fields, refused saves and a shared row/join
+   time under an advancing clock. `record_changes` runs in the record save's locked transaction.
+5. The same file checks entry create/edit rating and like-removal rows with Auckland days, backdated creates,
+   derived marks, review-only edits and deletion; its advancing-clock test crosses Auckland midnight.
+6. Its Undo tests check additions, explicit and derived removals, liking, logging with/without an earlier rating,
+   unchanged supplied values, omitted like removal and timestamp/ID ordering.
+7. It checks absent/null UTC fallback and Auckland's day; API tests check valid/optional zones, invalid, empty and
+   over-long zones refused with 422, and a zone-only save refused with 400.
+8. `test_user_movie_data_api.py::test_changes_cascade_with_record_or_user` checks API record deletion and account
+   deletion while preserving unrelated rows. `test_admin.py::test_changes_are_not_registered_with_admin` passes.
+9. `test_watchlist_endpoint.py::test_added_sort_uses_first_filtered_list` checks nine filter combinations in both
+   directions, with distinct record, watchlist, watched and liked orders.
+10. `useUserMovieState.test.tsx` observes `Pacific/Auckland` on a plain save and toast Undo, both mounted and
+    unmounted. Movie-card/session request assertions include the zone. Regeneration from this worktree's backend
+    leaves `openapi.json` and `api.ts` unchanged, with the optional patch zone present.
+11. ADR-051 reads `Accepted (2026-11-15)`; ADR-047 retains its acceptance date and the required partial-supersession
+    Status. TECHNICAL-OVERVIEW names `UserMovieChange`; both decision texts stand without planning history.
+12. Not yet provable: requires the merge commit's staging deploy log and following staging smoke result.

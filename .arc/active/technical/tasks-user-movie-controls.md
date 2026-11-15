@@ -386,25 +386,20 @@ the film page.
           (run `8486f058264f45ed80046cfb43d83943`). Lint corrections replaced effect-driven closure and render-time
           ref reads with derived state; type corrections removed an unsupported role-query option.
 
-- [ ] **4.5 ADR-048 records the controls, and the ADRs it supersedes say so — R40, R41b**
+- [x] **4.5 ADR-048 records the controls, and the ADRs it supersedes say so — R40, R41b**
 
     **Goal:** ADR-048 (`Proposed`) records the decisions the PRD assigns it, and each ADR it supersedes in part names
     what in its Status.
 
-    **Note:** Check `main` for the landing page first, as 2.1.a does, so ADR-046 is on the branch before it's cited; a
-    merge here applies only what an early merge can (Implementation Notes, "Merges of `main`"). The landing page also
-    rewrites ADR-044's Status line; whichever of the two merges second keeps both supersessions.
-
-    - [ ] **4.5.a Write ADR-048 from the ADR template**
-        - The card's controls on hover, focus and touch (D1); the dialog over the current page and its entry points
-          (D7); feedback and Undo (D11 to D14); the film page's explanation for signed-out visitors (D18); the bar's
-          Log and the drawer's "Log a film" (D20); cards without actions for signed-out visitors (D19), cited to
-          ADR-046 if the branch carries it by then, recorded here otherwise (5.1.b re-cites it when the merge brings
-          ADR-046)
-        - Supersedes ADR-044 in part, only to add Log to the wide bar and "Log a film" to the drawer; with ADR-046 on
-          the branch, also ADR-046's statements that the catalog's row spacing stays unchanged and that signed-out
-          cards are shorter
-    - [ ] **4.5.b Add the supersession to ADR-044's Status** (and ADR-046's, when it applies)
+    - [x] **4.5.a Write ADR-048 from the ADR template**
+        - Records capability-selected card actions, one dialog host and its entry points, server-derived feedback and
+          selective Undo, the signed-out panel's explanation, cards without signed-out actions, and navigation's Log.
+          Context and consequences explain the alternatives and costs without planning-history dependencies.
+        - Fetched `main` remains `46ae700b`, already carried by the approved merge `ab48e577`. It has no ADR-046, so
+          ADR-048 records signed-out card behavior directly; no landing-page supersession applies at this head.
+    - [x] **4.5.b Add the partial supersession to ADR-044's Status**
+        - Names only Log in the wide bar and "Log a film" in the phone drawer. Navigation links and the original
+          decision body stay intact. ADR-048 and ADR-049 remain Proposed for verification. Markdown lint passed.
 
 ### **Phase 5:** The journey holds with `main` merged
 

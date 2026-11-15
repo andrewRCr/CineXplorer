@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-11-12)
+Accepted (2026-11-12); Superseded in part by ADR-048 (adds Log to the wide bar and "Log a film" to the phone drawer).
 
 ## Context
 

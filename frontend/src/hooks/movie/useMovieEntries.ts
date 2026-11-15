@@ -1,4 +1,8 @@
-import { useMutation } from "@tanstack/react-query";
+import {
+    mutationOptions,
+    useMutation,
+    type UseMutationOptions,
+} from "@tanstack/react-query";
 import { useRef } from "react";
 import { CanceledError } from "axios";
 import {
@@ -17,9 +21,10 @@ import {
 import { toaster } from "@/components/core/chakra/toaster";
 import { movieWriteOptions, type EntryVariables } from "./movieWriteOptions";
 
-export function useMovieEntries(tmdbId: number) {
-    const observerOwner = useRef<number | undefined>(undefined);
-    const mutation = useMutation({
+export const entryMutationOptions = (
+    tmdbId: number,
+): UseMutationOptions<EntryWriteResponse, Error, EntryVariables, number> =>
+    mutationOptions({
         ...movieWriteOptions(tmdbId),
         mutationFn: (variables: EntryVariables) => {
             const config = {
@@ -57,6 +62,10 @@ export function useMovieEntries(tmdbId: number) {
             });
         },
     });
+
+export function useMovieEntries(tmdbId: number) {
+    const observerOwner = useRef<number | undefined>(undefined);
+    const mutation = useMutation(entryMutationOptions(tmdbId));
     const withTimeZone = (data: EntryInput) => ({
         ...data,
         time_zone: Intl.DateTimeFormat().resolvedOptions().timeZone,

@@ -92,19 +92,20 @@ Undo bodies, the 409 message, and `useMovieEntries`' tests passing on the expose
         - Only a 409 while un-marking Watched uses "Couldn't change Watched" and the server reason. Other failures
           keep their shared titles and retry message. All 43 save/ownership tests, ESLint, format and type checks pass.
 
-- [ ] **1.3 Entry writes expose their mutation options — R38**
+- [x] **1.3 Entry writes expose their mutation options — R38**
 
     **Goal:** An entry delete can run from a toast's Undo after the component that started it has unmounted, while
     `useMovieEntries` keeps its interface and its tests.
 
-    - [ ] **1.3.a Write the unmounted delete case in `src/hooks/movie/__tests__/useMovieEntries.test.tsx`**
-        - A `MutationObserver` built from the exposed options deletes an entry with no hook mounted, joins the film's
-          write queue, and invalidates the entries and Library keys; a write from an earlier user is refused
-        - Expect tests to FAIL initially
-    - [ ] **1.3.b Export `entryMutationOptions(tmdbId)` from `useMovieEntries.ts`, and build the hook on it**
-        - As `useUserMovieState.ts` exports `saveMutationOptions`: move `mutationFn`, `onMutate`, `onSuccess` and
-          `onError` out of the hook, which keeps its time zone and ownership handling and its returned interface
-        - Tests should now PASS, with the existing `useMovieEntries.test.tsx` cases unchanged
+    - [x] **1.3.a Cover standalone deletion and ownership in `useMovieEntries.test.tsx`**
+        - Without a mounted hook, a deletion queues behind a record save, updates the returned record, and refreshes
+          Library, the film's entries and activity. An earlier user's write is refused before transport.
+        - Narrow reconstructions without standalone deletion and without the ownership signal each failed their
+          corresponding behavioral case; restoring both passed the new cases and the unchanged entry suite.
+    - [x] **1.3.b Export `entryMutationOptions(tmdbId)` and build the hook on it**
+        - Extracted the shared write, invalidation and error options; the hook retains time-zone filling, retirement
+          handling and its public interface. The related frontend run passed 268 tests across 14 files; ESLint,
+          formatting and frontend type checking passed.
 
 ### **Phase 2:** A film is logged or reviewed from the bar
 

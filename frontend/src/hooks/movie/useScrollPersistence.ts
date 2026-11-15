@@ -42,7 +42,6 @@ import {
     getSavedScrollPosition,
     saveScrollPosition,
 } from "@/components/movie/collection/shared/scrollStorage";
-import { type BrowseParams } from "@/types/browseTypes";
 
 /** Debounce delay for scroll position saves (ms). */
 const SCROLL_SAVE_DEBOUNCE = 200;
@@ -51,7 +50,7 @@ interface UseScrollPersistenceOptions {
     /** The source/route identifier (e.g., "discover", "search", "top-rated"). */
     source: string;
     /** Current browse filter parameters. */
-    browseParams: Partial<BrowseParams>;
+    browseParams: object;
     /** Search query (optional, for search routes). */
     query?: string;
     /** Whether initial data is loading. */
@@ -60,11 +59,16 @@ interface UseScrollPersistenceOptions {
     hasContent: boolean;
     /** Whether an error occurred. */
     isError: boolean;
+    /** Optional memory condition for restoring a measured collection. */
+    canRestore?: (key: string) => boolean;
+    /** Called only after a position save passes the restoration guard. */
+    onSave?: (key: string) => void;
 }
 
 interface UseScrollPersistenceReturn {
     /** Initial scroll offset for virtualizer. Only non-zero for back-navigation. */
     initialOffset: number;
+    scrollStorageKey: string;
 }
 
 /**
@@ -84,6 +88,8 @@ export const useScrollPersistence = ({
     isLoading,
     hasContent,
     isError,
+    canRestore,
+    onSave,
 }: UseScrollPersistenceOptions): UseScrollPersistenceReturn => {
     // --------------------------------------------------------------------------
     // Scroll Storage Key
@@ -208,7 +214,8 @@ export const useScrollPersistence = ({
             shouldRestoreScrollRef.current &&
             !hasRestoredScrollRef.current &&
             !isLoading &&
-            hasContent
+            hasContent &&
+            (canRestore?.(scrollStorageKey) ?? true)
         ) {
             const savedPosition = getSavedScrollPosition(scrollStorageKey);
             if (savedPosition > 0) {
@@ -238,7 +245,7 @@ export const useScrollPersistence = ({
             }
             hasRestoredScrollRef.current = true;
         }
-    }, [isLoading, hasContent, scrollStorageKey]);
+    }, [isLoading, hasContent, scrollStorageKey, canRestore]);
 
     // Scroll to top on error (reset position when data fetch fails)
     useLayoutEffect(() => {
@@ -256,7 +263,10 @@ export const useScrollPersistence = ({
     // Only use saved position for back-navigation (explicit signal), not refresh
     const [initialRestoration, setInitialRestoration] = useState(() => ({
         key: scrollStorageKey,
-        offset: restoreScroll ? getSavedScrollPosition(scrollStorageKey) : 0,
+        offset:
+            restoreScroll && (canRestore?.(scrollStorageKey) ?? true)
+                ? getSavedScrollPosition(scrollStorageKey)
+                : 0,
     }));
     const keyChanged = initialRestoration.key !== scrollStorageKey;
     if (keyChanged) setInitialRestoration({ key: scrollStorageKey, offset: 0 });
@@ -285,8 +295,9 @@ export const useScrollPersistence = ({
                 return;
             }
             saveScrollPosition(scrollStorageKey, window.scrollY);
+            onSave?.(scrollStorageKey);
         }, SCROLL_SAVE_DEBOUNCE);
-    }, [scrollStorageKey]);
+    }, [scrollStorageKey, onSave]);
 
     // Attach scroll listener for position saving
     useEffect(() => {
@@ -303,7 +314,7 @@ export const useScrollPersistence = ({
     // Return Values
     // --------------------------------------------------------------------------
 
-    return { initialOffset };
+    return { initialOffset, scrollStorageKey };
 };
 
 export default useScrollPersistence;

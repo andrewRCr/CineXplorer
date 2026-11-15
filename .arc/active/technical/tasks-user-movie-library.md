@@ -213,49 +213,30 @@ back link to the place the visitor left.
           catalog fallback behavior. Both grids already pass their sources from their page tasks.
         - Frontend lint, type-check and formatting passed.
 
-- [ ] **3.3 Returning to the Watchlist page or the Films view restores the scroll over the rows measured before — R10,
+- [x] **3.3 Returning to the Watchlist page or the Films view restores the scroll over the rows measured before — R10,
   R12, R28**
 
     **Goal:** The back link's signal returns the visitor to the saved position with the virtualizer given back the row
     heights it measured, only while the page holds both a position saved since the app loaded and those heights; any
     other arrival, a reload, a change of user, and any sort or filter change start at the top.
 
-    - [ ] **3.3.a Write the cases**
-        - `useScrollPersistence.test.tsx`: with `canRestore` answering no for the key, the signal gives an initial
-          offset of 0 and no scroll; `onSave` receives the key after each save the restore guard lets through, and
-          none while it holds; callers that pass neither option (the catalog's grids) keep today's behavior, with the
-          existing cases unchanged
-        - `LibraryFilms.test.tsx`, whose cells carry the date line, and `Watchlist.test.tsx`: scroll deep, open a film,
-          follow the back link: the position is restored and rows lie where their measured heights put them, not at
-          the estimate (Implementation Notes, "The virtualizer under jsdom"); arriving without the signal starts at
-          the top with none; after a simulated reload (the in-memory store emptied, `sessionStorage` kept), a return
-          starts at the top, as does a second return with no scrolling between; after a change of user, none
-        - `Watchlist.test.tsx` and `LibraryFilms.test.tsx`: choosing a sort, or turning a filter on or off, scrolls to
-          the top and replaces the history entry
-        - Expect tests to FAIL initially
-
-    - [ ] **3.3.b Keep the heights and gate the restore**
-        - A Library scroll memory in `components/movie/library/`: measured rows by scroll key (from the virtualizer's
-          `takeSnapshot()`, taken with each position save and when the page unmounts), the keys whose position was
-          saved since the app loaded (`sessionStorage` keeps positions across a reload, so it can't tell), and a
-          `clear()` that `beginUserChange` (`lib/session.ts`) calls, since every sign-in, sign-out and change of user
-          runs it (`useAuth`, `changeOfUser`)
-        - `useScrollPersistence` gains two optional options and returns its key: `canRestore(key)`, checked for both
-          the restore and the initial offset (absent, it is always met); `onSave(key)`, called after each debounced save
-          the restore guard lets through; and `{ initialOffset, scrollStorageKey }` as its result. The catalog's grids
-          pass neither
-        - `LibraryGrid` calls `useScrollPersistence`, as `VirtualizedMovieGrid` does, keyed by its `source` and
-          `params`, with its query state, and builds `canRestore` (the memory holds both a save since the app loaded
-          and heights for the key) and `onSave` (mark the key saved since the app loaded and store its virtualizer's
-          `takeSnapshot()` under it); it stores a last snapshot under `scrollStorageKey` when it unmounts. The pages
-          pass nothing beyond 2.1.c's props
-        - `getScrollStorageKey`'s parameter widens from `Partial<BrowseParams>` to the string values the Library's
-          pages key by (`sort`, `direction`, `liked`, `rated`), with the catalog's keys unchanged
-        - `LibraryGrid` passes `initialMeasurementsCache` from the memory when it restores, and nothing otherwise
-        - Tests should now PASS
-
-    - [ ] **3.3.c Run `e2e/back-to-results.spec.ts` and `e2e/browse.spec.ts` against the browsable stack**
-        - Both drive the catalog's scroll restoration, which the widened key and the new condition must leave as it is
+    - [x] **3.3.a Cover the hook and real-page returns**
+        - Three new hook cases failed first and pass for restore denial, the returned key and save notifications
+          outside the restore guard; existing catalog cases remain unchanged (19 total).
+        - Shared `LibraryScrollReturn.test.tsx` renders each real page and its back link: deep return with measured
+          heights, fresh arrival, a reload and a second return without scrolling, user change, sort/filter reset and
+          history replacement. Native scroll coordinates and row ResizeObserver entries model the browser boundary.
+        - Narrow reconstructions failed when measurements were omitted, fresh arrivals received old heights, the
+          saved-since-load condition was removed, or filter reset was removed; the intended implementation passes.
+    - [x] **3.3.b Keep measured heights and gate restoration**
+        - Added app-memory measurements and saved-position keys, cleared by `beginUserChange`. The grid captures
+          snapshots on permitted saves and unmount; only a signalled return with both kinds of memory receives them.
+        - Extended the existing hook with optional restore/save callbacks and its key; collection parameters now
+          share the existing deterministic key formatter without changing catalog keys.
+        - All 499 affected frontend tests, frontend lint, type-check and formatting passed. Generic fixture records
+          now consistently satisfy the watched, liked and rated filters used by these reads.
+    - [x] **3.3.c Preserve catalog navigation**
+        - The browsable stack's Back to Results and browse specs both passed (2 tests).
 
 ### **Phase 4:** History lists the visitor's viewings and reviews
 

@@ -138,6 +138,8 @@ it("formats Last watched as a calendar date and reserves its slot on other cards
             user_movie_data: createMockUserMovieData({
               tmdb_id: 1,
               last_logged_on: "2026-11-14",
+              has_entries: true,
+              user_watched: true,
             }),
           },
           storedFilm(2),

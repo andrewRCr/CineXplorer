@@ -148,6 +148,69 @@ describe("useScrollPersistence", () => {
     isError: false,
   };
 
+  it("withholds both the restore and initial offset when memory does not allow it", () => {
+    mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
+    const { result } = renderHook(
+      () =>
+        useScrollPersistence({ ...defaultOptions, canRestore: () => false }),
+      { wrapper: createWrapper(["/browse"], { restoreScroll: true }) },
+    );
+    expect(result.current.initialOffset).toBe(0);
+    expect(result.current.scrollStorageKey).toBe("scroll-discover-");
+    expect(mockScrollTo).not.toHaveBeenCalled();
+  });
+
+  it("reports the key after a debounced position save", () => {
+    const saved: string[] = [];
+    renderHook(
+      () =>
+        useScrollPersistence({
+          ...defaultOptions,
+          onSave: (key) => saved.push(key),
+        }),
+      { wrapper: createWrapper() },
+    );
+    mockScrollY = 375;
+    act(() => {
+      scrollListeners.forEach((listener) => listener());
+      vi.advanceTimersByTime(200);
+    });
+    expect(
+      JSON.parse(mockSessionStorage.getItem("scroll-discover-") ?? "{}"),
+    ).toMatchObject({ position: 375 });
+    expect(saved).toEqual(["scroll-discover-"]);
+  });
+
+  it("reports no position save while the restoration guard holds", () => {
+    mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
+    const saved: string[] = [];
+    renderHook(
+      () =>
+        useScrollPersistence({
+          ...defaultOptions,
+          onSave: (key) => saved.push(key),
+        }),
+      { wrapper: createWrapper(["/browse"], { restoreScroll: true }) },
+    );
+    act(() => {
+      scrollListeners.forEach((listener) => listener());
+    });
+    expect(saved).toEqual([]);
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+    expect(saved).toEqual([]);
+    mockScrollY = 650;
+    act(() => {
+      scrollListeners.forEach((listener) => listener());
+      vi.advanceTimersByTime(200);
+    });
+    expect(
+      JSON.parse(mockSessionStorage.getItem("scroll-discover-") ?? "{}"),
+    ).toMatchObject({ position: 650 });
+    expect(saved).toEqual(["scroll-discover-"]);
+  });
+
   describe("initial offset behavior", () => {
     it("returns 0 when no saved position exists", () => {
       const { result } = renderHook(

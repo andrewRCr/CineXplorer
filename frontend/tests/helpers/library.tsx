@@ -46,6 +46,9 @@ export const storedFilm = (id: number) =>
     user_movie_data: createMockUserMovieData({
       tmdb_id: id,
       user_on_watchlist: true,
+      user_watched: true,
+      user_liked: true,
+      user_rating: 8,
     }),
   });
 export function filmPage(

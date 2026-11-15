@@ -1,3 +1,4 @@
+import { clearLibraryScrollMemory } from "@/components/movie/library/libraryScrollMemory";
 import { isCancel, CanceledError } from "axios";
 import { siteOrigin } from "@/config/baseUrls";
 import { isRecord } from "@/utilities/typeGuards";
@@ -41,6 +42,7 @@ export const sessionKey = ["session"] as const;
 
 export function beginUserChange(client: QueryClient) {
     changeCount++;
+    clearLibraryScrollMemory();
     const previousController = saveController;
     saveController = null;
     previousController?.abort();

@@ -154,25 +154,19 @@ its Undo.
 _Exit criterion:_ with `main` merged, criterion 1's test (a like, then its Undo, through the API) passes, and the save
 layer's test shows the browser's zone on a plain save and on an Undo.
 
-- [ ] **3.1 An entry write records its rating changes and a like it turned off — D6**
+- [x] **3.1 An entry write records its rating changes and a like it turned off — D6**
 
     **Goal:** Entry creates and edits record, from the entry and on the write's day, exactly the changes they make to
     the current rating and a like they turn off, so a rating's latest row always holds the current rating.
 
-    - [ ] **3.1.a Write the entry-write cases in `test_movie_changes.py`**
-        - A create that becomes the latest entry with a rating records one `rating` row, turned on, from the entry
-        - A backdated create that isn't the latest records nothing
-        - A create that marks the film watched, likes it and takes it off the watchlist records no row for those
-        - A create, and an edit, with Liked off on a liked film records the like's removal, from the entry
-        - An edit that changes the latest entry's rating records it; one that changes only its review records nothing
-        - An entry delete records nothing
-        - Each row's `made_on` is the write's day in its zone
-        - Expect tests to FAIL initially; the cases that record nothing pass early (see the notes)
-
-    - [ ] **3.1.b Record from `UserMovieEntryService.create` and `edit`**
-        - Each keeps the four fields' values before the write and records through 2.3.b's function, passing the rating
-          as supplied and marking the rows as the entry's
-        - Tests should now PASS, with the app's other tests
+    - [x] **3.1.a Test entry-write recording**
+        - Current-rating and like-removal cases failed before recording. Backdated creates, derived marks,
+          review-only edits and deletion failed under narrow reconstructions, then passed restored.
+        - Both create and edit retain Auckland's day and mark their rows as from the entry.
+    - [x] **3.1.b Record from entry creates and edits**
+        - Both snapshot the four fields under the lock and use the shared helper; only rating is supplied.
+          The new entry's day and its change rows use the locked-save time.
+        - All 380 app tests, pinned Ruff lint/format and app Pyright passed.
 
 - [ ] **3.2 An Undo deletes the row it undoes — D7**
 

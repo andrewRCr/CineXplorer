@@ -12,7 +12,8 @@ from django.test import Client, override_settings
 
 from apps.core.models import Movie
 from apps.core.tests.test_helpers import create_user, get_csrf_token
-from apps.user_movie_data.models import UserMovieData
+from apps.user_movie_data.models import UserMovieData, UserMovieEntry
+from apps.user_movie_data.tests.test_helpers import create_user_movie_data
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -31,6 +32,9 @@ CASES = [
     "password_request",
     "session_patch",
     "session_delete",
+    "session_entry_create",
+    "session_entry_edit",
+    "session_entry_delete",
 ]
 
 
@@ -38,7 +42,7 @@ CASES = [
 def entry() -> UserMovieData:
     user = create_user(username="csrfviewer")
     movie = Movie.objects.create(tmdb_id=12345, title="Blade Runner")
-    return UserMovieData.objects.create(user=user, movie=movie, user_rating=5)
+    return create_user_movie_data(user=user, movie=movie, user_watched=True, user_rating=5)
 
 
 def request_data(case: str, entry: UserMovieData) -> tuple[str, str, dict[str, object]]:
@@ -50,6 +54,17 @@ def request_data(case: str, entry: UserMovieData) -> tuple[str, str, dict[str, o
             user=user, email=user.email, verified=False, primary=True
         )
         return "post", "/api/verify-email/", {"key": EmailConfirmationHMAC(address).key}
+    if case in {"session_entry_edit", "session_entry_delete"}:
+        from datetime import date
+
+        child = UserMovieEntry.objects.create(
+            record=entry, watched_on=date(2020, 1, 1), rating=5, made_on=date(2020, 1, 1)
+        )
+        return (
+            "put" if case == "session_entry_edit" else "delete",
+            f"/api/user-movie-data/{entry.movie.tmdb_id}/entries/{child.pk}",
+            {"review": "Review", "rating": 8, "liked": False, "time_zone": "UTC"},
+        )
     cases: dict[str, tuple[str, str, dict[str, object]]] = {
         "login": (
             "post",
@@ -75,8 +90,30 @@ def request_data(case: str, entry: UserMovieData) -> tuple[str, str, dict[str, o
             {"user_rating": 8},
         ),
         "session_delete": ("delete", f"/api/user-movie-data/{entry.movie.tmdb_id}", {}),
+        "session_entry_create": (
+            "post",
+            f"/api/user-movie-data/{entry.movie.tmdb_id}/entries",
+            {"review": "Review", "liked": False, "time_zone": "UTC"},
+        ),
     }
     return cases[case]
+
+
+def assert_session_movie_write(case: str, entry: UserMovieData) -> None:
+    """Pin persisted results for the session-signed movie writes in the matrix."""
+    if case == "session_patch":
+        entry.refresh_from_db()
+        assert entry.user_rating == 8
+    if case == "session_delete":
+        assert not UserMovieData.objects.filter(pk=entry.pk).exists()
+    if case == "session_entry_create":
+        assert UserMovieEntry.objects.filter(record=entry).count() == 1
+    if case == "session_entry_edit":
+        entry.refresh_from_db()
+        assert entry.user_rating == 8
+        assert UserMovieEntry.objects.get(record=entry).rating == 8
+    if case == "session_entry_delete":
+        assert not UserMovieEntry.objects.filter(record=entry).exists()
 
 
 @pytest.mark.parametrize("case", CASES)
@@ -104,11 +141,7 @@ def test_unsafe_requests_require_matching_csrf(
         assert response.status_code < 500
         if response.status_code != 204:
             assert response.json() != CSRF_ERROR
-        if case == "session_patch":
-            entry.refresh_from_db()
-            assert entry.user_rating == 8
-        if case == "session_delete":
-            assert not UserMovieData.objects.filter(pk=entry.pk).exists()
+        assert_session_movie_write(case, entry)
         return
     assert response.status_code == 403
     assert response.json() == CSRF_ERROR

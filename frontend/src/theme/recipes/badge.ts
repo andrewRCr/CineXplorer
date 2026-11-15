@@ -16,7 +16,7 @@ import { defineRecipe } from "@chakra-ui/react";
  * - Status badges use semantic colors (success, warning, destructive, info)
  * - Neutral badges use badge token for genre tags, content ratings, etc.
  *
- * Scores use MovieUserScore's outlined dot chip; only fewer than 10 TMDB votes
+ * TMDB scores use MovieUserScore's outlined dot chip; only fewer than 10 TMDB votes
  * use the filled neutral badge, with a placeholder or vote-counted average.
  */
 export const badgeRecipe = defineRecipe({

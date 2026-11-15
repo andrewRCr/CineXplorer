@@ -4,6 +4,11 @@ import {
     getUserMovies,
     type UserMoviesQueryParams,
 } from "@/services/userMovieService";
+import {
+    getMovieEntries,
+    getActivity,
+    type ActivityParams,
+} from "@/services/userMovieDataService";
 import { queryOptions } from "@tanstack/react-query";
 import {
     fetchMovieDetail,
@@ -95,3 +100,16 @@ export const featuredFilmQuery = (film?: number) =>
 
 export const homeWatchlistQuery = () =>
     libraryQuery({ watchlist: true, page: 1, page_size: 20 }, homeReadOptions);
+
+export const entriesKey = ["entries"] as const;
+export const movieEntriesQuery = (tmdbId: number) =>
+    queryOptions({
+        queryKey: [...entriesKey, "movie", tmdbId] as const,
+        queryFn: ({ signal }) =>
+            readWithSignal(signal, getMovieEntries(tmdbId)),
+    });
+export const activityQuery = (params: ActivityParams) =>
+    queryOptions({
+        queryKey: [...entriesKey, "activity", params] as const,
+        queryFn: ({ signal }) => readWithSignal(signal, getActivity(params)),
+    });

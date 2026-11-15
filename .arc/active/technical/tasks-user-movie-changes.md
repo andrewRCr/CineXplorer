@@ -189,27 +189,19 @@ layer's test shows the browser's zone on a plain save and on an Undo.
         - Omitted reversals still record normally. The recorder keeps fields already at the supplied value.
         - All 391 app tests, pinned Ruff lint/format and app Pyright passed.
 
-- [ ] **3.3 ADR-051 records the like rule, the record of changes and date added — D11**
+- [x] **3.3 ADR-051 records the like rule, the record of changes and date added — D11**
 
     **Goal:** A reader of the decision records finds the like rule, the record of changes and the date-added rule in
     ADR-051, and ADR-047 says which of its parts ADR-051 replaces.
 
-    - [ ] **3.3.a Write ADR-051 reading `Proposed`**
-        - The number is reserved for this work, not the next free one; start from `adr-template.md`
-        - D11's contents: the like rule, its constraint and conversion; the record of changes, its stored day and
-          record saves' optional zone with the UTC fallback, what each write records, how Undo erases rows, the
-          older-Undo edge it accepts, why there is no backfill, and that rows are write-once; date added under
-          combined filters
-        - In its context, that ADR-047 declined membership-history rows for want of a reader, which History now is
-
-    - [ ] **3.3.b Change ADR-047's Status**
-        - First line: "Accepted; Superseded in part by ADR-051 (which facts mark a film watched, and the date-added
-          sort under combined filters)"
-        - The paragraph after it keeps the acceptance date, 2026-11-14; the existing paragraph on what ADR-047
-          supersedes stays
-
-    - [ ] **3.3.c Name the record of changes in TECHNICAL-OVERVIEW's `user_movie_data` entry**, and check that the
-      docstrings of the changed rules, `get_library` and the new model state the new behavior
+    - [x] **3.3.a Write ADR-051 reading `Proposed`**
+        - Records the like invariant and conversion, private write-once rows and local days, save/entry/Undo
+          recording, accepted older-Undo edge, cascade and rollback, no backfill, and combined-filter date added.
+    - [x] **3.3.b Add ADR-047's partial-supersession Status**
+        - Names the replaced watched facts and combined-filter date-added rule; retains its acceptance date and
+          earlier supersessions.
+    - [x] **3.3.c Name the record of changes in TECHNICAL-OVERVIEW and check changed docstrings**
+        - The rules, library sort and write-once model docstrings describe the new behavior. Markdown lint passed.
 
 - [ ] **3.4 Merge `main` and apply what it holds — D10**
 
@@ -217,6 +209,8 @@ layer's test shows the browser's zone on a plain save and on an Undo.
     save layer then lives, and the API types matching the merged backend.
 
     - [ ] **3.4.a Merge `main` into the branch** (the Owner approves the merge)
+        - Parked under away mode, which prohibits merges. The Owner must release this step on return; 3.4.b–c
+          depend on it.
 
     - [ ] **3.4.b Apply each case that holds**
         - If `main` has the card controls' rewrite of `saveMutationOptions`, the fill and its test go into it, and
@@ -232,6 +226,8 @@ layer's test shows the browser's zone on a plain save and on an Undo.
     **Goal:** The segment's exit criterion is shown on this branch after `main`'s merge, with what ran and the result
     recorded here.
 
+    - Parked until 3.4's merge and integration are complete. Before that merge, all 39 change-recording cases and
+      the two browser-zone save/Undo cases pass; this is not the required post-merge result.
     - Run `test_movie_changes.py` in this worktree's test stack, and the save layer's time zone test
       (`useUserMovieState.test.tsx`, unless 3.4.b moved it) through `arc-offload`
 

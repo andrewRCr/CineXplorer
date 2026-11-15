@@ -60,7 +60,7 @@ The backend is a REST API built with Django and Django Ninja.
     - `movie`: Movie-related functionality and API endpoints
         - `movie/helpers.py`: Movie enrichment helpers for UserMovieData integration
     - `user_movie_data`: Film facts and list join times (`UserMovieData`), viewing/review history
-      (`UserMovieEntry`), and their authenticated API
+      (`UserMovieEntry`), the private record of changes (`UserMovieChange`), and their authenticated API
 
 ## 3. Frontend
 

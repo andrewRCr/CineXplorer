@@ -921,12 +921,16 @@ recorded, and the three changed smoke specs pass.
           code, so the merge keeps both: Home's window, featured-film and watchlist queries, and the tracking
           model's entry and activity queries. `MovieCard.tsx` and `userMovieService.ts` merged cleanly. The type
           check passed before the merge commit.
+        - Refreshed from `origin/main` at `46ae700b` after its browse-selector accessibility fix (#206). The
+          seven incoming files merge without conflicts and match `main` exactly; none overlaps Home's changes.
     - [x] **5.3.b Regenerate `frontend/openapi.json` and `frontend/src/types/api.ts` from the merged backend**
         - On the stack, the tracking model's migration applied, and regenerating `openapi.json` and `api.ts` from
           the merged backend leaves no diff. The movie and user-movie-data Docker tests pass (934), as do all 3288
           frontend unit tests, the frontend lint and Ruff on both apps. CI's Pyright command reports no errors with
           the locked django-types 0.24.0. The host's shared environment still has 0.22.0, whose older stubs report
           20 errors in the tracking model's constraints. Aligning those host tools is already an inbox errand.
+        - After the `46ae700b` refresh, API regeneration again leaves no diff. The incoming change has no backend
+          or API-schema changes; the History, card-control and queue integration sources are unchanged.
 
 - [x] **5.4 Apply what `main` holds — R15, R30**
 
@@ -965,6 +969,9 @@ recorded, and the three changed smoke specs pass.
 
     - All three conditions fail against `main` at the merge, so Home is unchanged by them. No pull request was open
       for the Library, the card controls or the queue when they were checked.
+    - Rechecked all three conditions against `46ae700b`: no History route, named/wired watched and liked controls,
+      or queue order was added, so the same decisions hold. The browse-selector labels do not change these card
+      controls or their accessibility baselines.
 
 - [x] **5.5 Check Home over the merged code** (generate the API types, then run `background.spec.ts`,
   `sign-in.spec.ts` and `phone-width.spec.ts`)
@@ -975,6 +982,10 @@ recorded, and the three changed smoke specs pass.
       and `background.spec.ts`, `sign-in.spec.ts` and `phone-width.spec.ts` pass: 17 tests, with no retries. R30's
       results are recorded in 5.3 (a: the API types) and 5.4 (b to d: none holds on `main`), so the exit criterion
       holds.
+    - After the `46ae700b` refresh: all 21 smoke tests across seven specs pass with no retries, including the new
+      browse-selector assertions and Home's three covering specs. All 46 related frontend tests across six files,
+      frontend lint and type-check pass. API regeneration leaves no diff. The backend and hero implementation are
+      unchanged, so their completed verification remains applicable.
 
 ### **Phase 6:** Verification
 
@@ -1403,8 +1414,9 @@ recorded, and the three changed smoke specs pass.
   does not expand them.
 
   _Verification evidence:_ Regenerating the schema and TypeScript types from this worktree's merged backend leaves no
-  local diff. The conditional History, named-control and queue clauses were checked against `0e029c0c` and do not
-  apply; their source and execution evidence remain recorded in 5.4 and `REVIEW-LOG.md`.
+  local diff. The conditional History, named-control and queue clauses were checked against `0e029c0c` and
+  rechecked against `46ae700b`; they do not apply. Their source and execution evidence remain recorded in 5.4 and
+  `REVIEW-LOG.md`.
 
 ### Proven on the pull request
 

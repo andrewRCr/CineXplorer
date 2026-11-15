@@ -245,6 +245,7 @@ const ConnectedDropdowns = ({
           disabled={genreDisplayData.isGenreDisabled}
           positioning={{ placement: "bottom-start", gutter: 2 }}
         >
+          <Select.Label srOnly>Genre</Select.Label>
           <Select.Trigger
             w={GENRE_WIDTH}
             {...BROWSE_SELECT_TRIGGER_BASE_PROPS}
@@ -312,6 +313,7 @@ const ConnectedDropdowns = ({
           }
           positioning={{ placement: "bottom-start", gutter: 2 }}
         >
+          <Select.Label srOnly>Year</Select.Label>
           <Select.Trigger
             w={yearWidth}
             {...BROWSE_SELECT_TRIGGER_BASE_PROPS}

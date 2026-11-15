@@ -161,3 +161,19 @@ it("removes a card after its watchlist save refetches the list", async () => {
   expect(await screen.findByText("Your watchlist is empty")).toBeVisible();
   expect(screen.queryAllByRole("link", { name: "Film 1" })).toHaveLength(0);
 });
+
+it("opens films with the Watchlist source and sort", async () => {
+  server.use(http.get(url, () => HttpResponse.json(filmPage([1]))));
+  page("/watchlist?sort=title");
+  for (const link of await screen.findAllByRole("link", { name: "Film 1" })) {
+    const destination = new URL(
+      link.getAttribute("href") ?? "",
+      "http://localhost",
+    );
+    expect(destination.pathname).toBe("/movie/1");
+    expect(Object.fromEntries(destination.searchParams)).toEqual({
+      from: "watchlist",
+      sort: "title",
+    });
+  }
+});

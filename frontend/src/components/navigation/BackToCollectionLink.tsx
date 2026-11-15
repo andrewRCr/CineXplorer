@@ -20,6 +20,7 @@
 
 import { Link } from "react-router";
 import { Box, Button } from "@chakra-ui/react";
+import { ROUTES } from "@/constants/routes";
 import { LuArrowLeft } from "react-icons/lu";
 
 export interface BackToCollectionLinkProps {
@@ -78,17 +79,33 @@ function buildBackUrl(searchParams: URLSearchParams): string {
   if (from === "browse") {
     return `/browse${queryString ? `?${queryString}` : ""}`;
   }
+  if (from === "watchlist" || from === "library" || from === "history") {
+    const route =
+      from === "watchlist"
+        ? ROUTES.WATCHLIST
+        : from === "library"
+          ? ROUTES.LIBRARY
+          : ROUTES.LIBRARY_HISTORY;
+    return `${route}${queryString ? `?${queryString}` : ""}`;
+  }
   // Preset routes: now-playing, upcoming, etc.
   return `/browse/${from}${queryString ? `?${queryString}` : ""}`;
 }
 
 export function BackToCollectionLink({
   searchParams,
-  label = "Back to Results",
+  label,
   variant = "outline",
   mb = 4,
 }: BackToCollectionLinkProps) {
   const backUrl = buildBackUrl(searchParams);
+  const labels: Record<string, string> = {
+    watchlist: "Back to Watchlist",
+    library: "Back to Library",
+    history: "Back to History",
+  };
+  const text =
+    label ?? labels[searchParams.get("from") ?? ""] ?? "Back to Results";
 
   return (
     <Box mb={mb}>
@@ -99,7 +116,7 @@ export function BackToCollectionLink({
       >
         <Button variant={variant}>
           <LuArrowLeft data-testid="back-to-results-icon" />
-          {label}
+          {text}
         </Button>
       </Link>
     </Box>

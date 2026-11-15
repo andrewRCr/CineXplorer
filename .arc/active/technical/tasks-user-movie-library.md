@@ -197,26 +197,21 @@ back link to the place the visitor left.
           buttons. Replacing the index with its old empty region failed the new assertion; restoring it passed.
         - Frontend lint, type-check and formatting passed; the shared App and Watchlist tests also pass.
 
-- [ ] **3.2 Films opened from the Watchlist page and the Films view lead back there — R27**
+- [x] **3.2 Films opened from the Watchlist page and the Films view lead back there — R27**
 
     **Goal:** A card on either page opens its film with `from=watchlist` or `from=library` and the page's query, and
     the film page's back link reads "Back to Watchlist" or "Back to Library" and opens that page with that query and
     its scroll signal; `from=history` reads "Back to History" and opens `/library/history`.
 
-    - [ ] **3.2.a Write the cases**
-        - `BackToCollectionLink.test.tsx`: `from=watchlist&sort=title` reads "Back to Watchlist" and opens
-          `/watchlist?sort=title`; `from=library&liked=true&sort=rating&direction=asc` reads "Back to Library" and opens
-          `/library?liked=true&sort=rating&direction=asc`; `from=history` reads "Back to History" and opens
-          `/library/history`; each carries `restoreScroll: true`; the existing cases keep "Back to Results"
-        - `Watchlist.test.tsx` and `LibraryFilms.test.tsx`: a card's link carries `from` and the page's query
-        - Expect tests to FAIL initially
-
-    - [ ] **3.2.b Extend the back link and pass the source**
-        - `buildBackUrl` gains `watchlist`, `library` and `history`; the label follows `from` (R34e: if `main`'s back
-          link already knows `from=home`, these cases join it and its label rule)
-        - The two pages pass `source` (`watchlist`, `library`) to `LibraryGrid`, which gives it to `MovieCard`; the card
-          already sets `from` and keeps the page's own query
-        - Tests should now PASS
+    - [x] **3.2.a Cover personal sources and return links**
+        - The three new back-link cases failed against the old catalog-only routes, then passed with their correct
+          labels, addresses and restore signals. Existing catalog and custom-label cases remain unchanged (31 total).
+        - Watchlist and Films card-link cases failed with their source omitted and passed restored. The Films case
+          landed with its page; Watchlist's lands here. All 22 App/Watchlist and 18 Films cases pass.
+    - [x] **3.2.b Extend the return destinations**
+        - Added Watchlist, Library and History destinations and default labels while preserving explicit labels and
+          catalog fallback behavior. Both grids already pass their sources from their page tasks.
+        - Frontend lint, type-check and formatting passed.
 
 - [ ] **3.3 Returning to the Watchlist page or the Films view restores the scroll over the rows measured before — R10,
   R12, R28**

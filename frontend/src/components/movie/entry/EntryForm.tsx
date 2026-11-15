@@ -20,14 +20,12 @@ import type {
   UserMovieDataSchema,
 } from "@/services/userMovieDataService";
 
-export interface EntrySavedResult {
-  kind: "create" | "edit" | "save";
+export type EntrySavedResult = {
   dateOn: boolean;
   shown: UserMovieDataSchema;
   record: UserMovieDataSchema;
-  entryId?: number;
   sent: UserMovieDataPatchSchema;
-}
+} & ({ kind: "create"; entryId: number } | { kind: "edit" | "save" });
 export interface EntryFormProps extends EntryDialogOptions {
   onSaved: (result: EntrySavedResult) => void;
   onCancel: () => void;
@@ -159,15 +157,16 @@ export function EntryForm({
       const result = entry
         ? await writes.editEntry(entry.id, data)
         : await writes.createEntry(data);
-      if (owner === getChangeCount())
-        onSaved({
-          kind: entry ? "edit" : "create",
+      if (owner === getChangeCount()) {
+        const saved = {
           dateOn: values.dateOn,
           shown,
           record: result.record,
-          ...(entry ? {} : { entryId: result.entry.id }),
           sent,
-        });
+        };
+        if (entry) onSaved({ kind: "edit", ...saved });
+        else onSaved({ kind: "create", entryId: result.entry.id, ...saved });
+      }
     } catch {
       // Shared mutations own error feedback; retain the draft for retry.
     }

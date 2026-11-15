@@ -187,38 +187,26 @@ the film page.
           sign-in, registration and password-recovery forms. The release source confirms Formik 2.4.9 in November
           2025; TECHNICAL-OVERVIEW names both libraries and their scope.
 
-- [ ] **2.4 Saving closes the dialog with one toast, and its Undo restores the film — R25, R31, R32, R34, R37**
+- [x] **2.4 Saving closes the dialog with one toast, and its Undo restores the film — R25, R31, R32, R34, R37**
 
     **Goal:** A dialog save shows its progress, closes on success with exactly one toast titled per R32, offers an Undo
     that deletes a created entry before restoring the film's fields, and leaves everything as typed on failure.
 
-    - [ ] **2.4.a Write the save and Undo cases in `EntryDialogHost.test.tsx`**
-        - While saving, Save shows its progress and the fields are inert; on success the dialog closes and one toast
-          shows: "Logged", "Review saved", "Saved" or "Entry updated", with R32's descriptions from comparing the shown
-          state at Save with the returned record outside `sent`: no "Also marked as watched." after a log, and no "Your
-          like was removed." when the visitor turned Liked off
-        - Undo (criterion 15): a create's toast always offers Undo, which sends the `DELETE` and then R33's save only if
-          a field differs, and no save when the `DELETE` fails, including after the dialog has closed; the third
-          path's Undo sends R33's save alone; an entry edit's toast offers none; after a change of user, Undo sends
-          nothing
-        - A failed save keeps the dialog open with everything as typed and shows the shared error toast
-        - The picker inside the dialog: opened with no film, choosing a film in the "Film" picker by keyboard, and by
-          pointer, keeps the dialog open and shows that film; Save then sends the chosen film's write
-        - P1: Cancel, Escape or the close button with a review typed or changed asks "Discard your review?" with Keep
-          editing and Discard; Keep editing leaves the dialog open as typed, Discard closes it; with no review change,
-          each closes at once, including on the next opening after a typed review was saved or discarded; Back or
-          Forward closes the dialog without saving or asking
-        - Expect tests to FAIL initially
-    - [ ] **2.4.b Render the form, show the host's toasts and run R34's Undo**
-        - The host renders `EntryForm` (2.3.c) in the dialog's body with the options `open` received. The form's
-          `onCancel` and the Dialog's own close (`onOpenChange`: Escape, the close button, a click outside) make one
-          close request, which asks "Discard your review?" while `onReviewDirtyChange` last reported `true`; the host
-          clears that flag on each `open()`. A successful save and a change of location close without it
-        - Close, toast and build Undo from `onSaved`'s result; compose `saveFeedback.ts` (1.1.c) with its `shown`,
-          `record` and `sent` for the description and save body; Undo deletes through `entryMutationOptions` (1.3.b)
-          with a `MutationObserver`, then saves through `saveMutationOptions`, guarded by the change count; the host
-          closes on the router's location change
-        - Tests should now PASS
+    - [x] **2.4.a Cover integrated save feedback, Undo and closing in `EntryDialogHost.test.tsx`**
+        - Eighteen new behavior cases failed before integration. Covers all four titles with one toast, descriptions
+          outside the title-owned fields, deletion before restoration, deletion-only Undo, failure stopping restoration,
+          stale-user Undo, readied fields and drafts after failure, picker keyboard/pointer selection, discard choices
+          for Cancel/Close/Escape, reopening after save or discard, and Back/Forward without a prompt.
+        - A held save also proves progress and inert fields, then cancellation/reopening without its eventual answer
+          closing or replacing the newer draft.
+    - [x] **2.4.b Compose the form, feedback and shared mutation options in the host**
+        - `entryDialogFeedback` compares shown/returned fields for descriptions and minimal Undo, deletes created
+          entries through standalone options before restoration, and checks ownership between its asynchronous steps.
+          Creation results require an entry ID in their type.
+        - The host resets dirty state on each opening, asks before discarding a changed review, and closes on location
+          changes. Opening IDs bind asynchronous completion to its own dialog while feedback still reports the save.
+        - All 24 host tests and all 51 related tests across four files passed; full ESLint, formatting and frontend
+          type checking passed.
 
 - [ ] **2.5 The bar's Log and the drawer's "Log a film" open the dialog — R29, R30**
 

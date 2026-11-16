@@ -28,7 +28,8 @@ opening a film from a personal page preserves its return destination and positio
 - Personal lists and History read numbered pages under the Library query key. Record saves and entry writes refresh
   every loaded page so membership and ordering stay current.
 - Measured row heights, saved-position eligibility and expanded groups live in app memory. An explicit back-link
-  signal restores the position over those heights; reloads and user changes clear that memory.
+  signal restores the position over those heights; reloads and user changes clear that memory. A fresh visit retires
+  the active page/query key's old return eligibility, including same-address navigation without remounting.
 - History uses parameterized PostgreSQL stages to select each film's next save, suppress immediate reversals,
   retain the latest shown change per film/day/field, and combine grouped changes with entries. A batched sample read
   keeps query counts independent of collection size.

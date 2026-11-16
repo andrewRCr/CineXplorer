@@ -15,6 +15,7 @@ import { isRecord } from "@/utilities/typeGuards";
 import { useScrollPersistence } from "@/hooks/movie/useScrollPersistence";
 import {
     canRestoreLibrary,
+    invalidateLibraryRestoration,
     libraryMeasurements,
     keepLibraryMeasurements,
     markLibraryPositionSaved,
@@ -64,6 +65,7 @@ export function useMeasuredLibrary({
         isError,
         canRestore: canRestoreLibrary,
         onSave,
+        onFreshVisit: invalidateLibraryRestoration,
     });
     const navigationState: unknown = useLocation().state;
     const [restore] = useState(() => ({

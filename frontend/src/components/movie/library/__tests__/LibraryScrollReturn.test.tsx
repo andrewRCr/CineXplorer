@@ -2,6 +2,7 @@ import { useState } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import {
+  Link,
   MemoryRouter,
   Route,
   Routes,
@@ -80,6 +81,7 @@ function page(path: string) {
             <Route path="/library" element={<LibraryFilms />} />
             <Route path="/movie/:id" element={<Detail path={path} />} />
           </Routes>
+          <Link to={path}>Open current collection fresh</Link>
           <BrowserBack />
         </AuthContextProvider>
       </MemoryRouter>
@@ -178,6 +180,50 @@ for (const path of ["/watchlist", "/library"]) {
       }
     },
   );
+  it(`${path} uses the fresh visit's position on the next film return`, async () => {
+    page(path);
+    await openFromDeep();
+    const user = userEvent.setup();
+    await user.click(
+      screen.getByRole("button", { name: "Open collection fresh" }),
+    );
+    await waitFor(() => expect(window.scrollY).toBe(0));
+    const firstFilm = (
+      await screen.findAllByRole("link", { name: "Film 1" })
+    )[0];
+    if (!firstFilm) throw new Error("Missing first film on fresh visit");
+    await user.click(firstFilm);
+    await screen.findByRole("heading", { name: "Film detail" });
+    await user.click(
+      screen.getByRole("link", {
+        name: path === "/watchlist" ? "Back to Watchlist" : "Back to Library",
+      }),
+    );
+    await waitFor(() => expect(window.scrollY).toBe(0));
+  });
+  it(`${path} starts fresh when its current address is opened again`, async () => {
+    page(path);
+    await openFromDeep();
+    const user = userEvent.setup();
+    const backLabel =
+      path === "/watchlist" ? "Back to Watchlist" : "Back to Library";
+    await user.click(screen.getByRole("link", { name: backLabel }));
+    await waitFor(() => expect(window.scrollY).toBe(6500));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    });
+    await user.click(
+      screen.getByRole("link", { name: "Open current collection fresh" }),
+    );
+    await waitFor(() => expect(window.scrollY).toBe(0));
+    const firstFilm = (
+      await screen.findAllByRole("link", { name: "Film 1" })
+    )[0];
+    if (!firstFilm) throw new Error("Missing first film on fresh visit");
+    await user.click(firstFilm);
+    await user.click(screen.getByRole("link", { name: backLabel }));
+    await waitFor(() => expect(window.scrollY).toBe(0));
+  });
 }
 
 it.each([

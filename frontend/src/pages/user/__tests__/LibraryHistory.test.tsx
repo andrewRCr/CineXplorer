@@ -493,7 +493,8 @@ describe("measured History returns", () => {
           transform: "translateY(0px)",
         }),
       );
-      if (mode === "reload") {
+      if (mode === "reload" || mode === "fresh") {
+        // Opening a film without scrolling must not revive the previous visit's position.
         const firstLink = screen
           .getAllByRole("link")
           .find((link) => link.getAttribute("href")?.includes("from=history"));

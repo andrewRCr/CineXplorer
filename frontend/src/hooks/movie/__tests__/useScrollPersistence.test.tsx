@@ -24,8 +24,8 @@ import {
   beforeEach,
   afterEach,
 } from "vitest";
-import { MemoryRouter } from "react-router";
-import type { ReactNode } from "react";
+import { MemoryRouter, useLocation } from "react-router";
+import { StrictMode, type ReactNode } from "react";
 import { useScrollPersistence } from "../useScrollPersistence";
 
 /** Helper to create JSON storage entry format */
@@ -147,6 +147,49 @@ describe("useScrollPersistence", () => {
     hasContent: true,
     isError: false,
   };
+
+  it("keeps a pending return eligible when its signal is consumed", () => {
+    mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
+    let eligible = true;
+    const Router = createWrapper(["/browse"], { restoreScroll: true });
+    function Wrapper({ children }: { children: ReactNode }) {
+      return (
+        <StrictMode>
+          <Router>{children}</Router>
+        </StrictMode>
+      );
+    }
+    mockScrollTo.withImplementation(
+      (_x: number, y: number) => {
+        mockScrollY = y;
+      },
+      () => {
+        const { result, rerender, unmount } = renderHook(
+          (props) => {
+            useScrollPersistence({
+              ...defaultOptions,
+              ...props,
+              canRestore: () => eligible,
+              onFreshVisit: () => {
+                eligible = false;
+              },
+            });
+            const state: unknown = useLocation().state;
+            return state;
+          },
+          {
+            wrapper: Wrapper,
+            initialProps: { isLoading: true, hasContent: false },
+          },
+        );
+        expect(result.current).toBeNull();
+        expect(window.scrollY).toBe(0);
+        rerender({ isLoading: false, hasContent: true });
+        expect(window.scrollY).toBe(500);
+        unmount();
+      },
+    );
+  });
 
   it("withholds both the restore and initial offset when memory does not allow it", () => {
     mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));

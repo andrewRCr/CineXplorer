@@ -507,9 +507,10 @@ History, with each case of R34 that holds applied.
 
 - [x] **6.1 Verify the work**
 
-    - All 14 applicable Success Criteria are met, with source and run evidence below; criterion 14 is not applicable
-      because the card controls were absent at the recorded merge. The live heavy-account checks and retained
-      route timings were assessed before review. ADR-050 reads Accepted with its date.
+    - All 14 applicable Success Criteria are met, with source and run evidence below. Code review exposed a missing
+      fresh-visit sequence in criterion 9; Task 6.3 corrected and reverified it. Criterion 14 is not applicable because
+      the card controls were absent at the recorded merge. The heavy-account checks and retained route timings were
+      assessed before review. ADR-050 reads Accepted with its date.
     - The full verification run passed: backend and frontend suites, lint, formatting, type checks, contrast,
       production build, API regeneration without drift, and all eight Chromium specs. Application source did not
       change during verification; CI and the separate code review remain for completion.
@@ -531,6 +532,29 @@ History, with each case of R34 that holds applied.
     - Confirmed each alias resolves to the original module. All 80 affected tests across eight files passed;
       frontend lint, TypeScript checking, single-file formatting and whitespace checks passed.
     - This is a mechanical import correction; no behavior or test assertions changed.
+
+- [x] **6.3 Retire old restoration state when a personal collection opens fresh**
+
+    **Goal:** A fresh Watchlist, Films or History visit starts at the top and its next film/back round trip cannot
+    restore a previous visit's position; eligible deep returns and History expansion remain intact.
+
+    - Added the missing fresh-visit/film-return cases for both grids, extended History's fresh-arrival case, and
+      covered same-address navigation without remounting. These five coupled behaviors share one lifecycle rule;
+      they ran together before implementation and all failed at the old 6,500px position, then passed with the fix.
+    - Added an optional fresh-visit callback to the existing scroll-persistence hook. Visit classification runs
+      before restoration; consuming its signal remains passive so the router is subscribed. Fresh personal visits
+      invalidate only the active key's eligibility, leaving other keys, measurements and expanded groups intact.
+    - A StrictMode case proves that the signal is consumed during loading and the valid return restores once content
+      arrives. Narrow in-memory reconstructions failed for misclassified signal clearing and for consuming the
+      signal before router subscription; the intended source passes without modifying production files for the runs.
+    - All 3,389 frontend tests across 119 files, frontend lint and types, single-file formatting, production build
+      and whitespace checks passed. The covering Library, browse and Back to Results browser cases passed. Backend
+      source and
+      API contracts were unchanged, so their existing verification evidence remains applicable.
+    - Live fresh visits and same-address links returned to zero on all three personal pages. Deep Films returned
+      to 10,500px with identical visible links; History returned to 321,300px with its 200-film group expanded.
+      Reload/second-return, both required grid widths and the complete 1024px bar also passed. The independent
+      material fix check remains a separate code-review step.
 
 ---
 
@@ -637,6 +661,13 @@ the branch's local stack, and **Measured before review** on it, before the code 
     useScrollPersistence cases passed destinations, query preservation, restore signals, measured heights, reset
     guards and replace navigation. Live Films and History returns restored the same visible links at 10,500px and
     321,300px; detail reload and the subsequent no-scroll return both opened Films at zero.
+
+    **Correction evidence:** Independent code review exposed stale eligibility after a fresh visit. Task 6.3's
+    regressions failed first for Watchlist, Films and History and same-address navigation, then passed with
+    key-specific invalidation. The full frontend suite and covering browser cases passed. Live fresh visits at
+    zero remained at zero after another film/back round trip on all three pages; valid deep returns, group expansion,
+    signal consumption during delayed loading and reload behavior were retained. The initial verification had not
+    covered this repeated-visit sequence.
 - [x] 10. **The seed.** The seed's tests show the two fixture cards created in a database without them, left unchanged
   on a second run, and no user data created for them. (R29)
 

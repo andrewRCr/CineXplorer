@@ -18,6 +18,10 @@ export function setHistoryGroupExpanded(key: string, expanded: boolean) {
 const savedPositions = new Set<string>();
 export const canRestoreLibrary = (key: string) =>
     savedPositions.has(key) && (rows.get(key)?.length ?? 0) > 0;
+/** A fresh visit supersedes the previous visit until another position is saved. */
+export function invalidateLibraryRestoration(key: string) {
+    savedPositions.delete(key);
+}
 export const libraryMeasurements = (key: string) => rows.get(key);
 export function keepLibraryMeasurements(
     key: string,

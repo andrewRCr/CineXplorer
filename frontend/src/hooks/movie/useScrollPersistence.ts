@@ -63,6 +63,8 @@ interface UseScrollPersistenceOptions {
     canRestore?: (key: string) => boolean;
     /** Called only after a position save passes the restoration guard. */
     onSave?: (key: string) => void;
+    /** Retire a previous visit's restoration state on a fresh arrival or filter change. */
+    onFreshVisit?: (key: string) => void;
 }
 
 interface UseScrollPersistenceReturn {
@@ -90,6 +92,7 @@ export const useScrollPersistence = ({
     isError,
     canRestore,
     onSave,
+    onFreshVisit,
 }: UseScrollPersistenceOptions): UseScrollPersistenceReturn => {
     // --------------------------------------------------------------------------
     // Scroll Storage Key
@@ -125,41 +128,10 @@ export const useScrollPersistence = ({
     // navigations (React Router v6 doesn't remount on navigation).
     const shouldRestoreScrollRef = useRef(restoreScroll);
     const hasRestoredScrollRef = useRef(false);
-    const prevLocationKeyRef = useRef(location.key);
+    const prevLocationKeyRef = useRef<string | undefined>(undefined);
     // Set while the replace below clears the signal; that replace changes the
     // location key, but isn't a new navigation
     const clearingRestoreStateRef = useRef(false);
-
-    // Update restore signal on subsequent navigations (non-remount case).
-    // Skip on initial mount since useRef already captured the correct value.
-    useEffect(() => {
-        if (prevLocationKeyRef.current !== location.key) {
-            prevLocationKeyRef.current = location.key;
-            if (clearingRestoreStateRef.current) {
-                // Keep a pending restore until the content it waits for arrives
-                clearingRestoreStateRef.current = false;
-            } else {
-                // New navigation - update refs for this navigation
-                shouldRestoreScrollRef.current = restoreScroll;
-                hasRestoredScrollRef.current = false;
-            }
-        }
-
-        // Clear location state after capturing it, so refresh won't restore scroll
-        if (restoreScroll) {
-            clearingRestoreStateRef.current = true;
-            void navigate(location.pathname + location.search, {
-                replace: true,
-                state: null,
-            });
-        }
-    }, [
-        location.key,
-        location.pathname,
-        location.search,
-        restoreScroll,
-        navigate,
-    ]);
 
     // --------------------------------------------------------------------------
     // Restoration Guards
@@ -197,16 +169,42 @@ export const useScrollPersistence = ({
     // Scroll Position Management
     // --------------------------------------------------------------------------
 
-    // Handle scroll position on filter changes
-    // Note: Browser scroll restoration disabled in main.tsx (must happen before React mounts)
+    // Classify the visit before restoration, including navigation that keeps this component mounted.
     useLayoutEffect(() => {
-        // On filter change, reset to top
-        if (prevScrollKeyRef.current !== scrollStorageKey) {
-            window.scrollTo(0, 0);
-            hasRestoredScrollRef.current = true; // Don't restore after filter change
-            prevScrollKeyRef.current = scrollStorageKey;
+        const keyChanged = prevScrollKeyRef.current !== scrollStorageKey;
+        const locationChanged = prevLocationKeyRef.current !== location.key;
+        const clearingSignal =
+            locationChanged && clearingRestoreStateRef.current;
+        prevLocationKeyRef.current = location.key;
+        prevScrollKeyRef.current = scrollStorageKey;
+        if (clearingSignal) clearingRestoreStateRef.current = false;
+
+        if (keyChanged || (locationChanged && !clearingSignal)) {
+            shouldRestoreScrollRef.current = !keyChanged && restoreScroll;
+            hasRestoredScrollRef.current = keyChanged;
+            isRestoringScrollRef.current = false;
+            if (restorationTimeoutRef.current)
+                clearTimeout(restorationTimeoutRef.current);
+            if (restorationGuardTimeoutRef.current)
+                clearTimeout(restorationGuardTimeoutRef.current);
+            if (keyChanged || !restoreScroll) {
+                onFreshVisit?.(scrollStorageKey);
+                if (keyChanged || onFreshVisit) window.scrollTo(0, 0);
+            }
         }
-    }, [scrollStorageKey]);
+    }, [location.key, restoreScroll, scrollStorageKey, onFreshVisit]);
+
+    // Consume the signal after the router has subscribed to navigation updates.
+    // The resulting replace does not begin a fresh visit.
+    useEffect(() => {
+        if (restoreScroll && !clearingRestoreStateRef.current) {
+            clearingRestoreStateRef.current = true;
+            void navigate(location.pathname + location.search, {
+                replace: true,
+                state: null,
+            });
+        }
+    }, [restoreScroll, location.pathname, location.search, navigate]);
 
     // Restore scroll position for back-navigation (when explicitly signaled via location state)
     useLayoutEffect(() => {
@@ -232,7 +230,11 @@ export const useScrollPersistence = ({
                 // position and measured correct heights. The rAF ensures layout is complete,
                 // then the 50ms allows virtualizer to update its measurements.
                 requestAnimationFrame(() => {
-                    if (!isMountedRef.current) return;
+                    if (
+                        !isMountedRef.current ||
+                        !shouldRestoreScrollRef.current
+                    )
+                        return;
                     restorationTimeoutRef.current = setTimeout(() => {
                         window.scrollTo(0, savedPosition);
                         // Step 3: Guard removal - wait for content to stabilize before allowing
@@ -245,7 +247,7 @@ export const useScrollPersistence = ({
             }
             hasRestoredScrollRef.current = true;
         }
-    }, [isLoading, hasContent, scrollStorageKey, canRestore]);
+    }, [isLoading, hasContent, scrollStorageKey, canRestore, location.key]);
 
     // Scroll to top on error (reset position when data fetch fails)
     useLayoutEffect(() => {

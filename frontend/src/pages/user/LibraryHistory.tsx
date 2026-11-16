@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Heading,
+  HStack,
   Skeleton,
   Spinner,
   Text,
@@ -16,6 +17,7 @@ import { calendarDate } from "@/components/movie/library/calendarDate";
 import { historyTimeline } from "@/components/movie/library/historyTimeline";
 import HistoryChangesRow from "@/components/movie/library/HistoryChangesRow";
 import HistoryEntryRow from "@/components/movie/library/HistoryEntryRow";
+import { LibraryLogButton } from "@/components/movie/library/LibraryLogButton";
 
 export default function LibraryHistory() {
   const { status } = useAuthContext() ?? {};
@@ -106,7 +108,10 @@ export default function LibraryHistory() {
       {!query.isLoading && !query.isError && !items.length && (
         <Box>
           <Text>Your history is empty</Text>
-          <TextLink to="/browse">Explore films</TextLink>
+          <HStack gap={3} mt={2}>
+            <TextLink to="/browse">Explore films</TextLink>
+            <LibraryLogButton />
+          </HStack>
         </Box>
       )}
       {!!items.length && (

@@ -191,11 +191,9 @@ it("refetches loaded pages in order after a save without reading ahead during th
   await scrollLibrary(22000);
   await screen.findAllByRole("link", { name: "Film 101" });
   await scrollLibrary(0);
-  const remove = screen.getAllByRole("button", {
-    name: "Remove from watchlist",
-  })[0];
-  if (!remove) throw new Error("Missing removal button");
-  await userEvent.setup().click(remove);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "Actions for Film 1" }));
+  await user.click(screen.getByRole("menuitemcheckbox", { name: "Watchlist" }));
   await act(async () => {
     await entered.wait;
   });
@@ -239,9 +237,9 @@ it("retries a save refetch on a complete list instead of reading a next page", a
   );
   grid();
   await screen.findAllByRole("link", { name: "Film 1" });
-  await userEvent
-    .setup()
-    .click(screen.getByRole("button", { name: "Remove from watchlist" }));
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "Actions for Film 1" }));
+  await user.click(screen.getByRole("menuitemcheckbox", { name: "Watchlist" }));
   await screen.findByText("Couldn't load your watchlist.");
   fail = false;
   await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));

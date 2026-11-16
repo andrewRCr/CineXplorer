@@ -170,7 +170,7 @@ it("opens Log a film above the links, closes the drawer and restores focus to Op
   const trigger = screen.getByRole("button", { name: "Open menu" });
   await user.click(trigger);
   const log = await screen.findByRole("button", { name: "Log a film" });
-  const films = screen.getByRole("link", { name: "Films" });
+  const films = screen.getByRole("link", { name: "Explore" });
   expect(
     log.compareDocumentPosition(films) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();

@@ -45,6 +45,7 @@ async function expectWideBarFits(page: Page) {
             banner.getByRole("link", { name, exact: true }),
         ),
         banner.getByRole("search"),
+        banner.getByRole("button", { name: "Log", exact: true }),
         banner.getByRole("button", { name: target.username, exact: true }),
     ];
     const viewport = page.viewportSize();

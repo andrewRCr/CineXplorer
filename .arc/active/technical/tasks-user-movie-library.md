@@ -4,7 +4,8 @@
 **Created:** 2026-11-14
 **Branch:** `technical/user-movie-library`
 **Base Branch:** `main`
-**Status:** In Progress
+**Status:** Complete
+**Completed:** 2026-11-15
 
 ## Overview
 
@@ -504,20 +505,22 @@ History, with each case of R34 that holds applied.
 
 ### **Phase 6:** Verification
 
-- [ ] **6.1 Verify the work**
+- [x] **6.1 Verify the work**
 
     - Earlier verification met the 14 criteria applicable at its recorded merge. The latest main integration makes
-      criterion 14 applicable too; affected frontend/document criteria are reopened for Task 6.5. Backend, seed and
-      timing evidence remains applicable where source is unchanged. Code review exposed a missing
-      fresh-visit sequence in criterion 9; Task 6.3 corrected and reverified it. The heavy-account checks and retained
-      route timings were assessed before review. ADR-050 reads Accepted with its date.
+      criterion 14 applicable too; Task 6.5 revalidated every affected frontend/document criterion and proved the
+      newly applicable card changes. All 15 criteria are met. Backend, seed and timing evidence remains applicable
+      because backend and generated contract files are unchanged since the original verification. Code review exposed
+      a missing fresh-visit sequence in criterion 9; Task 6.3 corrected and reverified it. The heavy-account checks
+      and retained route timings were assessed before review. ADR-050 reads Accepted with its date.
     - Before this integration, the full verification run passed: backend and frontend suites, lint, formatting,
       type checks, contrast,
       production build, API regeneration without drift, and all eight Chromium specs. Application source did not
       change during verification; CI and the separate code review remain for completion.
     - Independent criteria verification covered the complete change and reported one minor documentation gap.
       The approved corrections below close it; the wording-only fix check was skipped on the approved
-      recommendation. No further complete criteria pass was needed.
+      recommendation. That pass covers its original target; the main/logging integration forms a new target for
+      the separately offered independent companion.
     - [x] **6.1.a Complete the smoke-tier documentation references**
         - Corrected the desktop-spec count to seven, then named library.spec.ts and its signed-in Watchlist and
           Library journey in QUICK-REFERENCE and the quality-gates strategy. A source sweep confirmed all four
@@ -575,7 +578,7 @@ History, with each case of R34 that holds applied.
     - The covering Chromium journey, single-file ESLint and formatting, frontend TypeScript and whitespace checks
       passed. Application source did not change; existing component, backend, build and timing evidence was retained.
 
-- [ ] **6.5 Integrate current main and the shared film-log controls**
+- [x] **6.5 Integrate current main and the shared film-log controls**
 
     **Goal:** The merged Library uses the shared Watchlist toggle and log dialog, offers logging from both empty
     views with stable focus return, and proves every newly applicable R34c behavior without losing existing returns.
@@ -586,19 +589,35 @@ History, with each case of R34 that holds applied.
         - Regenerated the API artifacts without drift, installed the merged form dependency and generated theme
           typings. Frontend lint/types, 18 focused query-consumer tests and the changed documents' lint passed.
           One mechanical markdown line wrap was corrected. Runtime logging composition follows below.
-    - [ ] **6.5.b Cover the logging integration before implementation**
-        - Exercise each empty view's film picker, enabled date and persistent navigation focus after saving;
-          update removal for the shared toggle and cover card-origin likes and grouped watched changes in History.
-        - Adapt the signed-in journey to log the stored film from Watchlist and find its entry on detail, Films
-          and History. Observe the missing integration fail before implementation.
-    - [ ] **6.5.c Implement the specified shared-dialog composition**
-        - Use the existing entry-dialog API and persistent current-view navigation element for focus return;
-          preserve empty/filter states, query invalidation and scroll lifecycle. Record the actual behavior in
-          ADR-050 and the completion document.
-    - [ ] **6.5.d Verify the merged behavior and applicable criteria**
-        - Run affected checks and broader frontend/browser coverage warranted by shared controls, navigation,
-          query factories and form integration. Recheck live grid widths, deep returns, expanded History and the
-          longest bar; keep heavy-account data and existing timing evidence intact.
+    - [x] **6.5.b Cover the logging integration before implementation**
+        - Four coupled empty-view cases failed first for the missing Log a film button. They now cover both views'
+          film picker, today's enabled date and persistent navigation focus after immediate or held list refreshes.
+          An in-memory reconstruction without the explicit focus preference made both delayed cases fail again.
+        - A host cancellation case failed before the opt-in preference existed; all 29 host cases then passed,
+          retaining ordinary opener/fallback and ownership behavior. Updated shared-toggle removal assertions and
+          the signed-in journey's queued-film logging, detail entry, Films and History checks.
+    - [x] **6.5.c Implement the specified shared-dialog composition**
+        - Added one shared empty-state Log button using the existing film picker/date options. The Library outlet
+          supplies a persistent current-navigation ref; an optional preference makes that connected target win even
+          when a delayed refresh leaves the opener mounted after closure. Existing callers retain opener-first focus.
+        - Preserved filtered-empty behavior, shared query invalidation and scroll lifecycle. ADR-050 and the
+          completion document record the actual dialog composition and browser journey.
+    - [x] **6.5.d Verify the merged behavior and applicable criteria**
+        - The full frontend suite passed all 3,553 cases across 133 files. All 28 Chromium cases across eleven
+          specs passed, including the Library log journey, full-width Log control and mouse/keyboard/touch tracking.
+          Frontend lint, types, touched-file formatting, contrast and production build passed; schema regeneration
+          produced no drift. Corrected one remaining old removal label and unsupported component-query options.
+        - Live isolated users proved both empty-view picker/date/save/focus outcomes, a card-origin Liked row and
+          five films marked watched in one expandable group. The initial group proof toggled off a film that liking
+          had already marked watched; isolating those actions corrected the fixture. Both users and six reference
+          films were removed afterward. The heavy performance account received no writes.
+        - Both grids drew seven 160px columns at 1280px and two 179px columns at 390px. Films returned to identical
+          rows at 10,500px; reload and a second no-scroll return started at zero. From the viewing below the expanded
+          200-film group, History returned to identical links at 321,300px with expansion retained. The full bar,
+          including Log and account controls, fitted at 1024px. Screenshots were inspected.
+        - Backend and generated contract files match the original verification tree; both measured History source
+          hashes match the retained timing source. Existing backend, seed and performance results remain applicable.
+          Astra's bounded completion advice found no concrete focus-contract gap; independent review remains separate.
 
 ---
 
@@ -622,7 +641,7 @@ the branch's local stack, and **Measured before review** on it, before the code 
 
 ### Implemented
 
-- [ ] 1. **The smoke spec.** `library.spec.ts` passes against a worktree's browsable stack: the film added from a card
+- [x] 1. **The smoke spec.** `library.spec.ts` passes against a worktree's browsable stack: the film added from a card
   is found through the bar's Watchlist link and removed (under R34c, logged off the watchlist); the Films view and
   History show the film the setup marked watched, with History's "Marked watched" change; and the scans of `/watchlist`,
   `/library` and `/library/history` pass. Run against staging, it is skipped. (R29, R30, R32)
@@ -630,14 +649,23 @@ the branch's local stack, and **Measured before review** on it, before the code 
     **Evidence:** Verified at bbb1502d: the full local Chromium run passed all 22 cases across eight specs,
     including library.spec.ts and its three personal-page accessibility scans. The staging skip is explicit in the
     spec; staging was not contacted.
-- [ ] 2. **The bar.** Component tests show Explore, Watchlist and Library signed in, and Explore alone signed out, in
+
+    **Integration evidence:** All 28 Chromium cases across eleven specs passed on the merged controls, including
+    the queued-film log, detail entry, Films/History checks and personal-page scans. The explicit staging skip
+    remains; staging was not contacted.
+
+- [x] 2. **The bar.** Component tests show Explore, Watchlist and Library signed in, and Explore alone signed out, in
   the bar and the drawer, each current exactly on its addresses (R1). `phone-width.spec.ts`'s 1024px step finds every
   bar item fully visible, none overlapping another, and no sideways scroll. `sign-in.spec.ts` and `phone-width.spec.ts`
   pass with their Explore and Library assertions. (R1, R31)
 
     **Evidence:** Verified at bbb1502d: NavBar, NavDrawer and BaseLayout coverage passed in the 119-file frontend
     suite; sign-in and phone-width passed in Chromium, including the signed-in 1024px bounds and overlap check.
-- [ ] 3. **Addresses and headings.** Tests show `/library/anything` shows Not Found; a signed-out visitor at
+
+    **Integration evidence:** The 3,553-case frontend run passed navigation coverage. The full Chromium run
+    passed sign-in and phone-width, whose signed-in 1024px assertions now include Log.
+
+- [x] 3. **Addresses and headings.** Tests show `/library/anything` shows Not Found; a signed-out visitor at
   `/library?liked=true` is sent to sign in and returned there; `/watchlist` shows the Watchlist page with no redirect.
   The Library's `h1` reads "Library" on both views and the Watchlist page's reads "Watchlist"; the "Library" navigation
   landmark holds Films and History, the current one marked as the current page, and neither link carries a query string.
@@ -645,14 +673,22 @@ the branch's local stack, and **Measured before review** on it, before the code 
 
     **Evidence:** Verified at bbb1502d: App.test.tsx covers the unknown child, sign-in return with filters, exact
     addresses, one heading and query-free current Library navigation; all cases passed in the full frontend run.
-- [ ] 4. **The Watchlist page.** Component tests show it reads `watchlist: true` with `page_size: 100`; each sort option
+
+    **Integration evidence:** The complete frontend run passed App and Library routing, heading and current
+    navigation cases with the new outlet context.
+
+- [x] 4. **The Watchlist page.** Component tests show it reads `watchlist: true` with `page_size: 100`; each sort option
   sends its pair and sets the address as R10 says; an unknown sort falls back with the address corrected; the empty
   state; and a removal from a card refetching the loaded pages and dropping the film. (R7 to R11)
 
     **Evidence:** Verified at bbb1502d: Watchlist.test.tsx and LibraryGrid.test.tsx passed their network assertions
     for six sort pairs, canonical addresses, replace navigation, empty/error states, card removal and sequential
     loaded-page refetches.
-- [ ] 5. **The Films view.** Component tests show it reads `watched: true`; each toggle exposes `aria-pressed`, adds its
+
+    **Integration evidence:** The complete frontend run passed six-sort reads and removal/refetch cases using
+    the shared card Watchlist toggle.
+
+- [x] 5. **The Films view.** Component tests show it reads `watched: true`; each toggle exposes `aria-pressed`, adds its
   filter, joins the address and survives a sort change; each sort option's pair; the "Last watched" line on a film with
   a dated viewing only, with the line's height kept on the others; the empty state with no filter on; and "No films
   match" whenever a filter is on and nothing matches, with Clear filters keeping the sort. (R12 to R16)
@@ -660,7 +696,11 @@ the branch's local stack, and **Measured before review** on it, before the code 
     **Evidence:** Verified at bbb1502d: LibraryFilms.test.tsx passed all ten sort pairs, combined toggles and
     preserved parameters, dated-only Last watched with a reserved 24px slot, both empty states and sort-preserving
     Clear filters.
-- [ ] 6. **The grid.** Tests show the column count is 2 for a 390px screen's content width and 7 for a 1280px screen's,
+
+    **Integration evidence:** The complete frontend run passed Films sorts, filters, date slots and empty
+    states; new empty-view cases also prove picker/date/save/focus behavior.
+
+- [x] 6. **The grid.** Tests show the column count is 2 for a 390px screen's content width and 7 for a 1280px screen's,
   with no column under 150px at any width; a next page is not requested while the list is fetching, nor once the last
   page read is not below `total_pages`, an empty list's included; a film repeated across two pages is drawn once;
   placeholder cards while the first page loads; each page's failure message with Retry; and Retry beneath the grid when
@@ -669,6 +709,10 @@ the branch's local stack, and **Measured before review** on it, before the code 
     **Evidence:** Verified at bbb1502d: LibraryGrid.test.tsx and libraryGrid.test.ts passed measured rows, paging
     guards, terminal and empty pages, duplicate removal, placeholders and first/later-page retries. The live stack
     also drew 7 desktop columns at 160px and 2 phone columns at 179px.
+
+    **Integration evidence:** The complete frontend run retained paging, duplicate, failure and measurement
+    coverage. Live merged cards draw seven 160px columns at 1280px and two 179px columns at 390px on both grids.
+
 - [x] 7. **History's read.** API tests with stored films, entries and recorded changes show: each row kind with its day
   and fields; days newest first, and within a day the most recently made first; an undated review on its `made_on` day;
   a change row only for a record save's turn-on, never for an entry write's rating change or a reversal; a change hidden
@@ -685,7 +729,7 @@ the branch's local stack, and **Measured before review** on it, before the code 
     owned row kinds, stable order, shown-change selection, grouping and sampling, whole-group pagination, group
     reads, bounds, privacy and fixed query counts at 10/500 rows. Both generated route contracts include
     200/401/422; regeneration produced no diff.
-- [ ] 8. **History in the frontend.** Component tests show month headings; a day's date once; a viewing's stars, rewatch
+- [x] 8. **History in the frontend.** Component tests show month headings; a day's date once; a viewing's stars, rewatch
   icon and review lines; a review's "Review" tag; 3 changes of a kind drawn as single rows and 4 as a group with "Show
   all 4"; expanding reading the changes route, "Show more" reading its next page, and "Show fewer"; a group still
   expanded after leaving for a film and returning, and collapsed after a change of user; rows joined without duplicates;
@@ -694,7 +738,12 @@ the branch's local stack, and **Measured before review** on it, before the code 
     **Evidence:** Verified at bbb1502d: LibraryHistory.test.tsx and LibraryHistoryChanges.test.tsx passed display,
     deduplication, three/four-film boundaries, failed-page retries, expansion paging, save refetch and user-change
     reset cases. Live expansion loaded all 200 films over two group pages and survived a film return.
-- [ ] 9. **Back links.** Tests show a film opened from each page carries R27's `from` and query, the film page's back
+
+    **Integration evidence:** The complete frontend run passed History display, paging, invalidation, expansion
+    and failure cases. Live return retained all 200 expanded films; isolated live card actions produced the new
+    History changes.
+
+- [x] 9. **Back links.** Tests show a film opened from each page carries R27's `from` and query, the film page's back
   link reads and opens R27's label and address with its scroll signal, and returning on that signal restores the saved
   position and gives the page's virtualizer back the row heights it measured, keyed as R28 says, while arriving without
   it starts at the top with none; a return on the signal to a page holding no heights, or no position saved since the
@@ -712,12 +761,17 @@ the branch's local stack, and **Measured before review** on it, before the code 
     zero remained at zero after another film/back round trip on all three pages; valid deep returns, group expansion,
     signal consumption during delayed loading and reload behavior were retained. The initial verification had not
     covered this repeated-visit sequence.
+
+    **Integration evidence:** The complete frontend run passed return lifecycle coverage. Live Films restored
+    identical links at 10,500px; a viewing below the expanded History group returned to identical links at
+    321,300px. Reload and second return opened Films at zero.
+
 - [x] 10. **The seed.** The seed's tests show the two fixture cards created in a database without them, left unchanged
   on a second run, and no user data created for them. (R29)
 
     **Evidence:** Verified at bbb1502d: test_seed_dev_data.py passed creation and repeat-seeding preservation,
     absence of user records and both fixture saves with TMDB forbidden.
-- [ ] 11. **The documents.** ADR-050 reads `Accepted` with its date; ADR-044's, ADR-039's and ADR-027's Status sections
+- [x] 11. **The documents.** ADR-050 reads `Accepted` with its date; ADR-044's, ADR-039's and ADR-027's Status sections
   say what R33 says; the documents R33 names read as it says, and a search for the smoke specs' file names and counts
   finds every living site naming the new spec. (R33)
 
@@ -726,7 +780,12 @@ the branch's local stack, and **Measured before review** on it, before the code 
     eight specs. ADR-050 reads Accepted (2026-11-15); ADR-044, ADR-039 and ADR-027 carry the required Status notes.
     The README, pagination strategy and styling example match R33. Both corrections from the author and independent
     criteria passes passed markdown lint and a final source sweep.
-- [ ] 12. **The neighbouring work.** Whichever of R34c and R34d applies at the merge is in place, with its tests: the
+
+    **Integration evidence:** Living smoke references now count eleven specs; ADR-050 records the shared-dialog
+    integration and current journey. Required related ADR Status notes remain intact. Documentation lint and the
+    final reference sweep passed.
+
+- [x] 12. **The neighbouring work.** Whichever of R34c and R34d applies at the merge is in place, with its tests: the
   empty states' "Log a film" opening the dialog with the date on, the spec's dialog steps passing in place of step 4,
   and its step 1 and the Watchlist page's removal test pressing the card's Watchlist toggle; or Home's "Recently
   watched" listing five viewings as R35 says, its "See all" opening `/library/history`, and a visitor with only viewings
@@ -737,9 +796,14 @@ the branch's local stack, and **Measured before review** on it, before the code 
     repeated films, row fields, destination, first-read settling, retry, empty-section omission and viewings-only
     visitor state.
 
+    **Integration evidence:** Main at 95381be7 includes the shared dialog. Both empty views now offer date
+    enabled film-picker logging with persistent navigation focus, proven with immediate and held refreshes and
+    the live backend. The Chromium journey logs off Watchlist and finds the entry on detail and in both Library
+    views; toggle-removal and Recently watched coverage passed.
+
 ### Proven in the browser before review
 
-- [ ] 13. **The pages by hand.** On the branch's local stack, signed in, with at least 300 watched films and a group of
+- [x] 13. **The pages by hand.** On the branch's local stack, signed in, with at least 300 watched films and a group of
   more than 100 changes on one day: the Watchlist page and Films view show 7 columns at 1280px and 2 at 390px; scrolling
   deep into the Films view, opening a film and following "Back to Library" returns to the same rows, as does "Back to
   History" from below an expanded group, while reloading the film page before following "Back to Library" opens the
@@ -753,11 +817,18 @@ the branch's local stack, and **Measured before review** on it, before the code 
     a viewing below it opened and returned at 321,300px with expansion retained. Only synthetic films' external
     catalogue detail responses were supplied as fixtures; authentication, personal reads and History used the live
     backend.
-- [ ] 14. **Changes from cards,** if the card controls are on `main` at the merge: liking a film from a card adds a
+
+    **Integration evidence:** On the merged controls, both grid widths, deep Films return, reload/second return,
+    and a viewing below the expanded 200-film History group passed again. The complete 1024px bar includes Log,
+    search and account controls without overlap or overflow. The heavy account was read only; screenshots were
+    inspected.
+
+- [x] 14. **Changes from cards,** if the card controls are on `main` at the merge: liking a film from a card adds a
   "Liked" row to History, and marking 5 films watched from cards on one day shows one "Marked 5 films watched" row.
 
-    **Evidence:** Previously not applicable at merge 516150cb. Main at 95381be7 includes the shared controls and
-    log dialog, so this criterion is now applicable and awaits the integrated card-to-History checks.
+    **Integration evidence:** The live isolated-user proof observed a Liked row after a card Like action, then
+    one Marked 5 films watched group after five separate card Watched actions. Expanding it showed all five
+    films. Temporary users and film fixtures were removed afterward.
 
 ### Measured before review
 

@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, HStack, Text } from "@chakra-ui/react";
 import { useSearchParams } from "react-router";
 import { TextLink } from "@/components/common";
 import LibraryGrid from "@/components/movie/library/LibraryGrid";
@@ -6,6 +6,7 @@ import LibrarySortSelect from "@/components/movie/library/LibrarySortSelect";
 import { filmSorts } from "@/components/movie/library/librarySort";
 import { calendarDate } from "@/components/movie/library/calendarDate";
 import { useLibrarySort } from "@/hooks/movie/useLibrarySort";
+import { LibraryLogButton } from "@/components/movie/library/LibraryLogButton";
 
 export default function LibraryFilms() {
   const [params, setParams] = useSearchParams();
@@ -70,7 +71,10 @@ export default function LibraryFilms() {
           ) : (
             <Box>
               <Text>Your Library is empty</Text>
-              <TextLink to="/browse">Explore films</TextLink>
+              <HStack gap={3} mt={2}>
+                <TextLink to="/browse">Explore films</TextLink>
+                <LibraryLogButton />
+              </HStack>
             </Box>
           )
         }

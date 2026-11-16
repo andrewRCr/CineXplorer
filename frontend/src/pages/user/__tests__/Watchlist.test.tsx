@@ -170,9 +170,9 @@ it("removes a card after its watchlist save refetches the list", async () => {
   );
   page();
   await screen.findAllByRole("link", { name: "Film 1" });
-  await userEvent
-    .setup()
-    .click(screen.getByRole("button", { name: "Remove from watchlist" }));
+  const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "Actions for Film 1" }));
+  await user.click(screen.getByRole("menuitemcheckbox", { name: "Watchlist" }));
   expect(await screen.findByText("Your watchlist is empty")).toBeVisible();
   expect(screen.queryAllByRole("link", { name: "Film 1" })).toHaveLength(0);
 });

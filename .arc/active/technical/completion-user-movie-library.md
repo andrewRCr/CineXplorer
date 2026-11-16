@@ -19,6 +19,8 @@ opening a film from a personal page preserves its return destination and positio
 - Private History and group-film reads with stable pagination, selected turn-ons, immediate reversal suppression,
   per-day grouping and expandable groups.
 - Recently watched on signed-in Home, listing viewings rather than distinct films and linking to History.
+- Empty-view logging through the shared film picker with the date enabled and focus returning to the persistent
+  Library navigation; card Watchlist toggles and a browser journey from queued film to logged entry.
 - Seeded film cards and a signed-in browser journey covering persistence and accessibility across the personal
   pages, alongside component and backend integration coverage.
 - Accepted ADR-050, related decision-record Status notes, and updated navigation, pagination and testing guidance.
@@ -43,8 +45,8 @@ opening a film from a personal page preserves its return destination and positio
 - Detailed work and criterion evidence: `tasks-user-movie-library.md`
 - Decisions: ADR-050; related Status notes on ADR-027, ADR-039 and ADR-044.
 
-## Follow-Up Work
+## Integration
 
-The recorded merge of `main` did not contain the card-controls log dialog. If another merge brings it in before
-delivery, apply the conditional integration in R34c of `prd-user-movie-library.md`: empty-state logging with stable
-focus return, the card's Watchlist toggle, the logging steps in the signed-in journey and its accessibility baseline.
+The merged shared card controls and log dialog are composed into both empty Library views. The signed-in journey
+logs a queued film, checks its removal from Watchlist and finds its entry on detail, Films and History. Named card
+controls need no button-name accessibility exception. Existing signed-in Home behavior remains covered.

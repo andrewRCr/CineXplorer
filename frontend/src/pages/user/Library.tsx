@@ -1,9 +1,11 @@
+import { useRef } from "react";
 import { Box, Flex, Heading, Link as ChakraLink } from "@chakra-ui/react";
 import { Link, Outlet, useMatch } from "react-router";
 import { ROUTES } from "@/constants/routes";
 
 export default function Library() {
   const history = useMatch(ROUTES.LIBRARY_HISTORY) !== null;
+  const currentLink = useRef<HTMLAnchorElement>(null);
   return (
     <Box py={4}>
       <Heading as="h1" mb={4}>
@@ -30,6 +32,7 @@ export default function Library() {
             }}
           >
             <Link
+              ref={link.current ? currentLink : undefined}
               to={link.path}
               aria-current={link.current ? "page" : undefined}
             >
@@ -38,7 +41,7 @@ export default function Library() {
           </ChakraLink>
         ))}
       </Flex>
-      <Outlet />
+      <Outlet context={currentLink} />
     </Box>
   );
 }

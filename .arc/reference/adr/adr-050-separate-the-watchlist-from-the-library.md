@@ -55,19 +55,25 @@ saves before selecting each next save, suppress reversals before deduplicating f
 One count and ordered page plus one batched sample query keep the number of queries independent of collection size
 and avoid nested correlated selections. It returns the same bounded pagination envelope as database QuerySets.
 
-Until the record of changes is available, History returns viewings and reviews; the changes member and group route
-are added with it. The frontend reads History under the Library query key and measures rows keyed by their content,
+The frontend reads History under the Library query key and measures rows keyed by their content,
 so saves refresh the timeline and existing entries retain their measured heights when other rows move before them.
 The three personal views extend the existing back-link and scroll persistence: a return restores only with its
 explicit signal, measured heights and a position saved during the loaded app. A reload or user change clears memory.
 
+Both empty Library views offer Explore films and Log a film. Logging opens the shared dialog with its film picker
+and the date enabled. Closing it returns focus to the current Library navigation link, which survives the empty
+state disappearing after a save. An opt-in preference selects that connected focus target even while the empty-state
+opener remains during a pending refresh; existing dialog callers retain their opener-first behavior.
+
 We will add `library.spec.ts` to the signed-in browser smoke tier. The development seed stores two fixture film
 cards, without user data. Setup clears their prior personal state and marks the second watched, then the journey
-adds the first from a catalog card, finds it through Watchlist, opens and scans the Library's Films and History
-views, and removes the first from the Watchlist. Once recorded changes are available it finds the setup's
-watched change for the second film in History. The spec is skipped on staging, where the tier does not change
-account data. The tier has eleven specs, including tracking, rating and card-layout checks, with phone navigation
-and touch interactions at their own viewports. Existing fixture, accessibility, credential and artifact policies stand.
+adds the first with the catalog card's Watchlist toggle, finds it through Watchlist, opens and scans the Library's
+Films and History views, and finds the setup's watched change for the second film. Back on Watchlist, it logs the
+first film with today's date, a rating and a review, sees it leave the watchlist, then finds its entry on the film
+page and the film in both Library views. The journey scans the log dialog and film page too. The spec is skipped on
+staging, where the tier does not change account data. The tier has eleven specs, including tracking, rating and
+card-layout checks, with phone navigation and touch interactions at their own viewports. Existing fixture,
+accessibility, credential and artifact policies stand.
 
 ## Consequences
 

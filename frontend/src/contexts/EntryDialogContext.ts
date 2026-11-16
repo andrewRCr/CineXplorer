@@ -8,6 +8,8 @@ export interface EntryDialogOptions {
     filmChangeable: boolean;
     entry?: MovieEntries["entries"][number];
     returnFocus?: () => HTMLElement | null;
+    /** Prefer the connected target when the opener may disappear after closing. */
+    preferReturnFocus?: boolean;
 }
 
 export const EntryDialogContext = createContext<{

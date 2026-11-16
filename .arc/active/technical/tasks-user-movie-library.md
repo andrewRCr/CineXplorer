@@ -521,6 +521,17 @@ History, with each case of R34 that holds applied.
           Library journey in QUICK-REFERENCE and the quality-gates strategy. A source sweep confirmed all four
           required reference sites name the spec and count eight specs. Markdown lint and whitespace checks passed.
 
+- [x] **6.2 Align the new tests with the frontend import standard**
+
+    **Goal:** New test and helper imports use the configured aliases across directories while resolving to the same
+    modules and preserving the covered behavior.
+
+    - Replaced eight cross-directory relative imports in the Library grid/page tests, Recently watched test and
+      shared Library helper with source or test aliases. Same-directory relative imports were preserved.
+    - Confirmed each alias resolves to the original module. All 80 affected tests across eight files passed;
+      frontend lint, TypeScript checking, single-file formatting and whitespace checks passed.
+    - This is a mechanical import correction; no behavior or test assertions changed.
+
 ---
 
 ## Implementation Findings

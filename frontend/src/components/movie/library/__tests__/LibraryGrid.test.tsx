@@ -12,7 +12,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { gate } from "@tests/helpers/web-locks";
 import { scrollLibrary, storedFilm } from "@tests/helpers/library";
-import LibraryGrid from "../LibraryGrid";
+import LibraryGrid from "@/components/movie/library/LibraryGrid";
 
 const url = `${apiBaseUrl}/user-movie-data/movies`;
 beforeEach(prepareLibrary);

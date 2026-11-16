@@ -12,7 +12,7 @@ import {
 } from "@tests/helpers/library";
 import { server } from "@tests/mocks/server";
 import { createMockUserMovieData } from "@tests/mocks/movieData";
-import LibraryFilms from "../LibraryFilms";
+import LibraryFilms from "@/pages/user/LibraryFilms";
 
 const url = `${apiBaseUrl}/user-movie-data/movies`;
 beforeEach(prepareLibrary);

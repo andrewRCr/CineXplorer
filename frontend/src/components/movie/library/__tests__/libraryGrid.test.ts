@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { libraryColumnCount } from "../libraryGrid";
+import { libraryColumnCount } from "@/components/movie/library/libraryGrid";
 
 it("fills phone and desktop widths with fluid columns", () => {
     expect(libraryColumnCount(374)).toBe(2);

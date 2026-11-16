@@ -9,7 +9,7 @@ import { TestProviders } from "./test-providers";
 import {
   createMockMovieListItem,
   createMockUserMovieData,
-} from "../mocks/movieData";
+} from "@tests/mocks/movieData";
 import type { MovieListResponseSchema } from "@/services/userMovieService";
 
 export function prepareLibrary() {

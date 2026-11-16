@@ -14,7 +14,7 @@ import {
   createMockUserMovieData,
 } from "@tests/mocks/movieData";
 import type { components } from "@/types/api";
-import Home from "../Home";
+import Home from "@/pages/home/Home";
 import { homeHandlers, homeFilm } from "./homeFixtures";
 
 const url = `${apiBaseUrl}/user-movie-data/entries`;

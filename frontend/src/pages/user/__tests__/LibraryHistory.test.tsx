@@ -21,7 +21,7 @@ import { historyEntry, historyPage } from "@tests/helpers/history";
 import { createMockUserMovieData } from "@tests/mocks/movieData";
 import { gate } from "@tests/helpers/web-locks";
 import { server } from "@tests/mocks/server";
-import LibraryHistory from "../LibraryHistory";
+import LibraryHistory from "@/pages/user/LibraryHistory";
 
 const url = `${apiBaseUrl}/user-movie-data/history`;
 beforeEach(prepareLibrary);

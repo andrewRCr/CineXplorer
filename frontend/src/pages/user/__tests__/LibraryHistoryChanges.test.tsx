@@ -21,7 +21,7 @@ import {
   historyEntry,
 } from "@tests/helpers/history";
 import { server } from "@tests/mocks/server";
-import LibraryHistory from "../LibraryHistory";
+import LibraryHistory from "@/pages/user/LibraryHistory";
 
 const url = `${apiBaseUrl}/user-movie-data/history`;
 beforeEach(() => {

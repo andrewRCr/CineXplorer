@@ -25,7 +25,7 @@ import {
 } from "@tests/helpers/library";
 import { server } from "@tests/mocks/server";
 import { measuredCollectionGeometry } from "@tests/helpers/measuredCollectionGeometry";
-import { clearLibraryScrollMemory } from "../libraryScrollMemory";
+import { clearLibraryScrollMemory } from "@/components/movie/library/libraryScrollMemory";
 
 let geometry: ReturnType<typeof measuredCollectionGeometry>;
 afterEach(() => vi.unstubAllGlobals());

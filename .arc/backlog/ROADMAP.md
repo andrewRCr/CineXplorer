@@ -3,7 +3,7 @@
 **Purpose:** The order of the work remaining before launch, and what is in and out of launch scope. Subject to change
 as we learn.
 
-**Last Updated:** 2026-11-14
+**Last Updated:** 2026-11-15
 
 ---
 
@@ -119,10 +119,14 @@ later work unit keeps them green.
 
 - **Movie detail redesign:** backdrop, one action bar, a cast rail and a responsive layout; cast and crew link to
   their TMDB pages
-- **Core user-movie UIs:** watched, liked, rating and review controls on cards and the detail page, the Library with
-  its History (a private timeline of viewings, reviews and the visitor's own changes), and the watchlist as a poster
-  grid. **Log** is their rating screen: one form for watched, the date, rating and review, opened from cards, the
-  detail page and the navigation's Log button
+- **Core user-movie UIs** ✅ (2026-11-15): watched, liked, rating and review controls on cards and the detail page,
+  the Library with its History (a private timeline of viewings, reviews and the visitor's own changes), and the
+  watchlist as a poster grid. **Log** is their rating screen: one form for watched, the date, rating and review,
+  opened from cards, the detail page and the navigation's Log button.
+  Archives: `reference/archive/2026-q4/technical/14_user-movie-tracking/`,
+  `reference/archive/2026-q4/technical/16_user-movie-changes/`,
+  `reference/archive/2026-q4/technical/17_user-movie-controls/` and
+  `reference/archive/2026-q4/technical/18_user-movie-library/`
 - **Watchlist queue:** drag-and-drop ordering with a Next Up queue, and Favorites, a short, hand-ordered pick of films
   seen
 - **Responsive and global finish:** a mobile pass, page titles, Open Graph tags, a favicon, the footer and an

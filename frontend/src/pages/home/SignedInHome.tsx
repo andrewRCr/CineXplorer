@@ -1,9 +1,11 @@
+import type { ActivityPage } from "@/services/userMovieDataService";
+import { RecentlyWatched } from "./RecentlyWatched";
 import type { MovieListResponse } from "@/types/movie";
 import { useEffect, useState } from "react";
 import { Container, Heading, Text, VisuallyHidden } from "@chakra-ui/react";
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import useAuthContext from "@/hooks/auth/useAuthContext";
-import { homeWatchlistQuery } from "@/lib/queries";
+import { homeWatchlistQuery, homeActivityQuery } from "@/lib/queries";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { pageContainerProps } from "@/components/layout/pageContainer";
 import type { AuthStateProps } from "@/types/auth-state";
@@ -18,11 +20,13 @@ function SettledHome({
   set,
   generation,
   watchlist,
+  activity,
 }: {
   user: NonNullable<AuthStateProps["user"]>;
   set: HomeSet;
   generation: number;
   watchlist: UseQueryResult<MovieListResponse>;
+  activity: UseQueryResult<ActivityPage>;
 }) {
   const [greet] = useState(() => greetedAt !== generation);
   useEffect(() => {
@@ -45,6 +49,7 @@ function SettledHome({
       ) : (
         <WatchlistSection result={watchlist} />
       )}
+      <RecentlyWatched result={activity} />
       <WhatsOn />
     </Container>
   );
@@ -54,11 +59,21 @@ function SettledHome({
 export function SignedInHome({ generation }: { generation: number }) {
   const user = useAuthContext()?.user;
   const watchlist = useQuery(homeWatchlistQuery());
+  const activity = useQuery(homeActivityQuery());
   const [set, chooseSet] = useState<HomeSet | null>(null);
   if (set === null) {
-    if (user && !watchlist.isPending && !watchlist.isFetching)
+    if (
+      user &&
+      !watchlist.isPending &&
+      !watchlist.isFetching &&
+      !activity.isPending &&
+      !activity.isFetching
+    )
       chooseSet(
-        watchlist.isError || (watchlist.data?.results?.length ?? 0) > 0
+        watchlist.isError ||
+          activity.isError ||
+          (watchlist.data?.results?.length ?? 0) > 0 ||
+          (activity.data?.results.length ?? 0) > 0
           ? "visitor"
           : "nothing-saved",
       );
@@ -70,6 +85,7 @@ export function SignedInHome({ generation }: { generation: number }) {
       user={user}
       set={set}
       generation={generation}
+      activity={activity}
       watchlist={watchlist}
     />
   );

@@ -15,6 +15,10 @@ from apps.movie.schemas import MovieListResponseSchema
 from apps.user_movie_data.schemas import (
     ActivityEntrySchema,
     ActivityQuerySchema,
+    HistoryChangeFilmSchema,
+    HistoryChangesQuerySchema,
+    HistoryQuerySchema,
+    HistoryRowSchema,
     LibraryQuerySchema,
     MovieEntriesSchema,
     UserMovieDataPatchSchema,
@@ -25,12 +29,14 @@ from apps.user_movie_data.schemas import (
 from apps.user_movie_data.services.service_factory import (
     get_user_movie_data_service,
     get_user_movie_entry_service,
+    get_user_movie_history_service,
 )
 from apps.user_movie_data.throttles import SaveThrottle
 
 user_movie_data_router = Router(tags=["user-movie-data"], auth=JWTSessionAuth())
 _service = get_user_movie_data_service()
 _entry_service = get_user_movie_entry_service()
+_history_service = get_user_movie_history_service()
 PositiveTMDBId = Annotated[int, Field(gt=0)]
 
 
@@ -57,6 +63,35 @@ def get_activity(
     request: HttpRequest, query: Query[ActivityQuerySchema]
 ) -> PaginatedResponse[ActivityEntrySchema]:
     return _entry_service.get_activity(get_current_user(request), query)
+
+
+@user_movie_data_router.get(
+    "/history",
+    response={
+        200: PaginatedResponse[HistoryRowSchema],
+        401: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+    },
+)
+def get_history(
+    request: HttpRequest, query: Query[HistoryQuerySchema]
+) -> PaginatedResponse[HistoryRowSchema]:
+    return _history_service.get_history(get_current_user(request), query)
+
+
+@user_movie_data_router.get(
+    "/history/changes",
+    response={
+        200: PaginatedResponse[HistoryChangeFilmSchema],
+        401: ErrorResponseSchema,
+        422: ErrorResponseSchema,
+    },
+)
+def get_history_changes(
+    request: HttpRequest, query: Query[HistoryChangesQuerySchema]
+) -> PaginatedResponse[HistoryChangeFilmSchema]:
+    """Read one day and field's shown films from the authenticated user's history."""
+    return _history_service.get_changes(get_current_user(request), query)
 
 
 @user_movie_data_router.get(

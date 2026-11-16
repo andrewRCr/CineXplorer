@@ -136,3 +136,47 @@ class ActivityEntrySchema(UserMovieEntrySchema):
     title: str
     release_date: date | None
     poster_path: str | None
+
+
+class HistoryQuerySchema(ActivityQuerySchema):
+    """The private timeline uses the same validated database paging bounds."""
+
+
+HistoryChangeField = Literal["watchlist", "watched", "liked", "rating"]
+
+
+class HistoryChangesQuerySchema(HistoryQuerySchema):
+    """Select one private day and field before paging its shown films."""
+
+    day: date
+    field: HistoryChangeField
+
+
+class HistoryEntrySchema(ActivityEntrySchema):
+    """A dated viewing or an undated review on its own calendar day."""
+
+    kind: Literal["viewing", "review"]
+    day: date
+
+
+class HistoryChangeFilmSchema(Schema):
+    """A stored film's latest shown change within one day and field."""
+
+    tmdb_id: int
+    title: str
+    release_date: date | None
+    poster_path: str | None
+    rating: int | None
+
+
+class HistoryChangesSchema(Schema):
+    """One indivisible day and field in the private timeline."""
+
+    kind: Literal["changes"]
+    day: date
+    field: HistoryChangeField
+    count: int
+    films: list[HistoryChangeFilmSchema]
+
+
+HistoryRowSchema = HistoryEntrySchema | HistoryChangesSchema

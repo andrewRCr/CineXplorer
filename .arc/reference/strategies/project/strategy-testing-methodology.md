@@ -161,6 +161,7 @@ frontend/
 ├── playwright.config.ts
 └── e2e/
     ├── sign-up.spec.ts
+    ├── library.spec.ts
     ├── sign-in.spec.ts
     ├── browse.spec.ts
     ├── movie-detail.spec.ts
@@ -840,8 +841,9 @@ import { createMockUser } from '@/test/helpers/mocks';
 
 ### E2E Test Coordination
 
-The specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
-Back to Results after reloading detail, and the phone shell's drawer, search and account menu, and
+The eleven specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
+Back to Results after reloading detail, the phone shell's drawer, search and account menu, and the signed-in
+Watchlist and Library journey in `library.spec.ts`.
 `background.spec.ts` checks the page background: the first frame before React loads, the CSS fallback with JavaScript
 disabled, and mode and palette changes without reloading. They run in Chromium without test retries; navigation
 and account scenarios use 1280×800, and `phone-width.spec.ts` uses 360×800, signed out and signed in.
@@ -863,14 +865,17 @@ Sign-up stops at the check-your-email notice; email-link verification, OAuth and
   writes and watchlist reads remain real. Backend integration tests cover the catalogue-enrichment boundary separately.
   Login setup may wait for one reported Retry-After window after a 429, recording that retry without clearing cache
   or changing the throttle.
-- **`staging`**: live catalogue data and an existing verified, non-staff account. Registration is skipped. The Back to
+- **`staging`**: live catalogue data and an existing verified, non-staff account. Registration and the saved-film
+  journey are skipped. The Back to
   Results reload scenario supplies its own browse/detail fixtures in both targets to control page height.
   `background.spec.ts` supplies Home's three reads in both targets so its console checks never depend on live TMDB.
   Both overrides serve only same-origin GETs. Tracking and rating specs skip before database setup on staging. The
   specs change none of the staging account's saved data.
 
 A PATCH of an unstored movie at `/api/user-movie-data/{tmdb_id}` reaches TMDB; the tracking fixtures seed their stored
-movie first so real writes stay deterministic. Assertions read titles from the browse responses the page received
+movie first so real writes stay deterministic. The Library journey uses the two cards stored by `seed_dev_data`,
+resets their records before each run, and serves its own catalogue fixtures. Assertions read titles from the browse
+responses the page received
 rather than assuming synthetic data;
 each movie card's link must be named by its title. Since two card links share that name, use an exact name and
 `first()`.
@@ -904,7 +909,7 @@ local fixture data does not show.
 ### E2E Best Practices
 
 Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
-its address. From `frontend/`, one command runs the suite:
+its address. From `frontend/`, one command runs the eleven specs:
 
 ```bash
 # Worktree root
@@ -933,7 +938,8 @@ docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-com
 For staging, export `E2E_BASE_URL`, `E2E_USERNAME`, and `E2E_PASSWORD` in your own terminal without putting credential
 values in shell history, then run `E2E_TARGET=staging npm run test:e2e` from `frontend/`. All three settings are
 required. Staging validates its HTTPS certificate. CI reads the URL variable and credential secrets from the
-`staging` GitHub environment. Confirm a manual staging run before merge; registration is skipped, and its local
+`staging` GitHub environment. Confirm a manual staging run before merge; registration and the saved-film journey are skipped,
+and its local
 confirmation-notice baseline can therefore be listed as unmatched.
 
 Keep the tier small and its run under five minutes. Backend and frontend integration tests cover detailed error and

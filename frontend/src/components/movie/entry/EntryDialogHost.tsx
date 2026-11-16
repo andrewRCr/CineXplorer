@@ -121,13 +121,20 @@ export function EntryDialogHost({ children }: { children: ReactNode }) {
         size={{ mdDown: "full", md: "md" }}
         scrollBehavior="inside"
         restoreFocus={request !== null && request.owner === getChangeCount()}
-        finalFocusEl={() =>
-          owns(request)
-            ? opener.current?.isConnected
-              ? opener.current
-              : (fallback.current?.() ?? null)
-            : null
-        }
+        finalFocusEl={() => {
+          if (!owns(request)) return null;
+          if (request?.options.preferReturnFocus) {
+            const target = fallback.current?.();
+            return target?.isConnected
+              ? target
+              : opener.current?.isConnected
+                ? opener.current
+                : null;
+          }
+          return opener.current?.isConnected
+            ? opener.current
+            : (fallback.current?.() ?? null);
+        }}
       >
         <Portal>
           <Dialog.Backdrop />

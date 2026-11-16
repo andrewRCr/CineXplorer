@@ -5,6 +5,10 @@
 Accepted (2026-11-12); Superseded in part by ADR-046 (the home page’s Films section offering the three windows)
 and ADR-048 (adds Log to the wide bar and "Log a film" to the phone drawer).
 
+Superseded in part by ADR-050: the one personal link reading Watchlist and current only on `/watchlist`, the catalog
+link reading Films, the sentence allowing Films to open a later Films hub without changing the bar, and the smoke
+tier's spec list. Explore becomes the catalog entrance; Watchlist and Library are separate personal destinations.
+
 ## Context
 
 The two-row navigation bar and sidebar gave Browse, Now Playing and Upcoming separate entries even though they

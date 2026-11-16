@@ -119,9 +119,12 @@ later work unit keeps them green.
 
 - **Movie detail redesign:** backdrop, one action bar, a cast rail and a responsive layout; cast and crew link to
   their TMDB pages
-- **Core user-movie UIs:** watched, liked, rating and review controls on cards and the detail page, the Library, and
-  the watchlist as a poster grid. **Log** is their rating screen: one form for watched, the date, rating and review,
-  opened from cards, the detail page and the navigation's Log button
+- **Core user-movie UIs:** watched, liked, rating and review controls on cards and the detail page, the Library with
+  its History (a private timeline of viewings, reviews and the visitor's own changes), and the watchlist as a poster
+  grid. **Log** is their rating screen: one form for watched, the date, rating and review, opened from cards, the
+  detail page and the navigation's Log button
+- **Watchlist queue:** drag-and-drop ordering with a Next Up queue, and Favorites, a short, hand-ordered pick of films
+  seen
 - **Responsive and global finish:** a mobile pass, page titles, Open Graph tags, a favicon, the footer and an
   accessibility spot-check
 - **Profile and Settings:** Profile made minimal, Settings removed
@@ -152,20 +155,18 @@ Everything in Stage 4 above.
 
 Each goes back in, in this order, as progress shows room:
 
-1. Watchlist drag-and-drop ordering and a Next Up queue
-2. Similar movies on the detail page
-3. Person pages (until then, cast and crew link to TMDB)
-4. Password feedback on the sign-up form
-5. Search-page filters
-6. Error reporting
-7. Two more palettes: Gruvbox and Rouge
+1. Similar movies on the detail page
+2. Person pages (until then, cast and crew link to TMDB)
+3. Password feedback on the sign-up form
+4. Search-page filters
+5. Error reporting
+6. Two more palettes: Gruvbox and Rouge
 
 ### Cut
 
 - Recommendations
 - Celery (its one use was async email)
 - Movie lists and collections
-- Journal and Favorites
 - The full E2E testing foundation (replaced by the smoke tier)
 - Routing modernization (already on React Router 7, working)
 - Observability beyond logs, health checks and outage alerts
@@ -177,6 +178,8 @@ Each goes back in, in this order, as progress shows room:
 
 ## Change Log
 
+- **2026-11-14**: The Journal joins launch scope as the Library's History; the watchlist queue (drag-and-drop ordering
+  and Next Up, from the top of Not Committed) joins Stage 4 with Favorites, leaving Cut
 - **2026-11-07**: E2E smoke tier marked complete with its archive
 - **2026-11-06**: Watchlist drag-and-drop ordering and Next Up move from Cut to the top of Not Committed
 - **2026-11-06**: The smoke tier's watchlist spec follows the user-movie data work

@@ -5,6 +5,9 @@
 Accepted; Superseded in part by ADR-044 (five-spec list and mobile-viewport exclusion); Superseded in part by
 ADR-046 (Back to Results as the only spec supplying its own responses in both targets)
 
+Superseded in part by ADR-050: watchlists are no longer excluded from the smoke tier; the signed-in Library journey
+covers saving and removing fixture films on the development stack.
+
 ## Context
 
 Backend tests exercise the database and service boundaries; frontend tests render in jsdom with a replaced network.

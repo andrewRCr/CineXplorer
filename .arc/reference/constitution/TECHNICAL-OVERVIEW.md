@@ -179,13 +179,18 @@ The project checks backend behavior, frontend components, and complete browser j
 
 - **Framework**: Playwright in Chromium, with axe scans on every distinct page each journey spec reaches; no retries
 - **Structure**: `frontend/e2e/`, configured by `frontend/playwright.config.ts`
-- **Coverage**: Seven specs. Six journeys: sign-up to the verification notice, sign-in/sign-out, browse pagination,
+- **Coverage**: Eleven specs. Journeys cover sign-up to the verification notice, sign-in/sign-out, browse pagination,
   filtered movie detail, Back to Results scroll restoration after reloading detail, and the phone shell's drawer,
-  search and account menu. `background.spec.ts` checks the page background in the first frame before React loads, the
-  CSS fallback with JavaScript disabled, and mode and palette changes, scanning the pages it renders. Six specs use
-  1280×800; `phone-width.spec.ts` uses 360×800, signed out and signed in
+  search and account menu, plus `library.spec.ts` for the signed-in Watchlist and Library. `background.spec.ts`
+  checks the page background in the first frame before React loads, the
+  CSS fallback with JavaScript disabled, and mode and palette changes, scanning the pages it renders.
+  `tracking-journey.spec.ts` checks logged viewings and focus return with mouse/keyboard at 1280px and touch at 390px;
+  `rating-selection.spec.ts` checks half-star selection and persistence. `card-layout.spec.ts` checks metadata and
+  rating alignment at controlled card widths. Navigation/catalogue scenarios use 1280×800;
+  `phone-width.spec.ts` uses 360×800, signed out and signed in
 - **Targets**: `local` uses real authentication with synthetic catalogue fixtures and discarded mail in a worktree's
-  browsable stack; `staging` uses live data and a verified test account, skips sign-up, disables traces/screenshots,
+  browsable stack; `staging` uses live data and a verified test account, skips sign-up and the saved-film journey,
+  disables traces/screenshots; tracking, rating and card-layout fixtures also skip staging,
   and uploads no artifacts. The reload scenario supplies its own catalogue fixtures in both targets;
   `background.spec.ts` supplies Home's three reads in both targets so its console checks never depend on live TMDB
 - **Command**: With the worktree's browsable stack running (`node scripts/worktree.mjs browse`), run

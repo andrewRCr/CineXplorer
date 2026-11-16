@@ -1,40 +1,35 @@
-/** The first watchlist page, refreshed by successful movie saves. */
-import type { ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Box, Text, VStack } from "@chakra-ui/react";
-import { libraryQuery } from "@/lib/queries";
-import useAuthContext from "@/hooks/auth/useAuthContext";
+import { Box, Heading, Text } from "@chakra-ui/react";
+import { TextLink } from "@/components/common";
+import LibraryGrid from "@/components/movie/library/LibraryGrid";
+import LibrarySortSelect from "@/components/movie/library/LibrarySortSelect";
+import { watchlistSorts } from "@/components/movie/library/librarySort";
+import { useLibrarySort } from "@/hooks/movie/useLibrarySort";
 
-const Watchlist = () => {
-  const { status } = useAuthContext() ?? {};
-  const { data, error, isLoading } = useQuery({
-    ...libraryQuery({ watchlist: true, page_size: 100 }),
-    enabled: status === "authenticated",
-  });
-  const movies = data?.results ?? [];
-
-  let content: ReactNode;
-  if (isLoading) content = <Text>Loading watchlist...</Text>;
-  else if (error)
-    content = <Text color="on-destructive">Error: {error.message}</Text>;
-  else if (movies.length === 0) content = <Text>No movies on watchlist</Text>;
-  else
-    content = (
-      <VStack align="stretch" gap={2}>
-        {movies.map((movie) => (
-          <Text key={movie.tmdb_id}>{movie.title}</Text>
-        ))}
-      </VStack>
-    );
-
+export default function Watchlist() {
+  const { sort, direction, value, onChange } = useLibrarySort(watchlistSorts);
   return (
-    <Box p={8}>
-      <Text as="h1" fontSize="2xl" fontWeight="bold" mb={4}>
-        My Watchlist
-      </Text>
-      {content}
+    <Box py={4}>
+      <Heading as="h1" mb={4}>
+        Watchlist
+      </Heading>
+      <Box mb={4}>
+        <LibrarySortSelect
+          options={watchlistSorts}
+          value={value}
+          onChange={onChange}
+        />
+      </Box>
+      <LibraryGrid
+        params={{ watchlist: true, sort, direction }}
+        source="watchlist"
+        errorMessage="Couldn't load your watchlist."
+        empty={
+          <Box>
+            <Text>Your watchlist is empty</Text>
+            <TextLink to="/browse">Explore films</TextLink>
+          </Box>
+        }
+      />
     </Box>
   );
-};
-
-export default Watchlist;
+}

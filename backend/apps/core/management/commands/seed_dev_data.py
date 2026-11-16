@@ -1,11 +1,17 @@
 """Create the development sign-in and sync the tracked movie blacklist."""
 
+from datetime import date
+
 from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+
+from apps.core.models import Movie
+
+FIXTURE_FILMS = ((2000000001, "Library fixture one"), (2000000002, "Library fixture two"))
 
 
 class Command(BaseCommand):
@@ -36,6 +42,11 @@ class Command(BaseCommand):
                 EmailAddress.objects.create(
                     user=user, email="dev@example.com", verified=True, primary=True
                 )
+
+        for tmdb_id, title in FIXTURE_FILMS:
+            Movie.objects.get_or_create(
+                tmdb_id=tmdb_id, defaults={"title": title, "release_date": date(2020, 1, 1)}
+            )
 
         self.stdout.write(
             "Created dev account." if created else "Dev account already exists; unchanged."

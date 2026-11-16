@@ -34,11 +34,13 @@ function Opener({
   unmount = false,
   dateOn = true,
   picker = false,
+  preferReturnFocus = false,
 }: {
   edit?: boolean;
   unmount?: boolean;
   dateOn?: boolean;
   picker?: boolean;
+  preferReturnFocus?: boolean;
 }) {
   const { open } = useEntryDialog();
   const client = useQueryClient();
@@ -63,6 +65,7 @@ function Opener({
               filmChangeable: false,
               entry: edit ? entry : undefined,
               returnFocus: () => fallback.current,
+              preferReturnFocus,
             });
             if (unmount) setVisible(false);
           }}
@@ -126,6 +129,22 @@ it("Escape closes and returns focus", async () => {
   await screen.findByRole("dialog", { name: "Review or log" });
   await user.keyboard("{Escape}");
   await waitFor(() => expect(opener).toHaveFocus());
+});
+
+it("prefers an explicit focus target when the opener remains", async () => {
+  const user = userEvent.setup();
+  render(
+    <EntryDialogHost>
+      <Opener preferReturnFocus />
+    </EntryDialogHost>,
+  );
+  const opener = screen.getByRole("button", { name: "Open entry" });
+  const target = screen.getByRole("button", { name: "Surviving control" });
+  await user.click(opener);
+  await screen.findByRole("dialog", { name: "Review or log" });
+  await user.click(screen.getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(target).toHaveFocus());
+  expect(opener).toBeInTheDocument();
 });
 
 it("renders outside a host and reports a missing host only when open is called", async () => {

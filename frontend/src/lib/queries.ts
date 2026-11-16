@@ -7,9 +7,12 @@ import {
 import {
     getMovieEntries,
     getActivity,
+    getHistory,
+    getHistoryChanges,
+    type HistoryGroupKey,
     type ActivityParams,
 } from "@/services/userMovieDataService";
-import { queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import {
     fetchMovieDetail,
     searchMovies,
@@ -66,6 +69,21 @@ export const libraryQuery = (
             readWithSignal(signal, getUserMovies(params, options)),
     });
 
+export const libraryPagesQuery = (params: UserMoviesQueryParams) =>
+    infiniteQueryOptions({
+        queryKey: [...libraryKey, "pages", params] as const,
+        initialPageParam: 1,
+        queryFn: ({ signal, pageParam }) =>
+            readWithSignal(
+                signal,
+                getUserMovies({ ...params, page: pageParam, page_size: 100 }),
+            ),
+        getNextPageParam: (lastPage) =>
+            lastPage.page < lastPage.total_pages
+                ? lastPage.page + 1
+                : undefined,
+    });
+
 export const sessionQuery = (firstRead?: FirstReadContext) =>
     queryOptions({
         queryKey: sessionKey,
@@ -110,11 +128,49 @@ export const movieEntriesQuery = (tmdbId: number) =>
         queryFn: ({ signal }) =>
             readWithSignal(signal, getMovieEntries(tmdbId)),
     });
-export const activityQuery = (params: ActivityParams) =>
+export const activityQuery = (params: ActivityParams, options?: ReadOptions) =>
     queryOptions({
         queryKey: [...entriesKey, "activity", params] as const,
-        queryFn: ({ signal }) => readWithSignal(signal, getActivity(params)),
+        queryFn: ({ signal }) =>
+            readWithSignal(signal, getActivity(params, options)),
     });
+
+export const historyPagesQuery = () =>
+    infiniteQueryOptions({
+        queryKey: [...libraryKey, "history"] as const,
+        initialPageParam: 1,
+        queryFn: ({ signal, pageParam }) =>
+            readWithSignal(
+                signal,
+                getHistory({ page: pageParam, page_size: 100 }),
+            ),
+        getNextPageParam: (lastPage) =>
+            lastPage.page < lastPage.total_pages
+                ? lastPage.page + 1
+                : undefined,
+    });
+
+export const historyChangesQuery = (group: HistoryGroupKey) =>
+    infiniteQueryOptions({
+        queryKey: [...libraryKey, "history", "changes", group] as const,
+        initialPageParam: 1,
+        queryFn: ({ signal, pageParam }) =>
+            readWithSignal(
+                signal,
+                getHistoryChanges({
+                    ...group,
+                    page: pageParam,
+                    page_size: 100,
+                }),
+            ),
+        getNextPageParam: (lastPage) =>
+            lastPage.page < lastPage.total_pages
+                ? lastPage.page + 1
+                : undefined,
+    });
+
+export const homeActivityQuery = () =>
+    activityQuery({ page: 1, page_size: 5 }, homeReadOptions);
 
 export const moviePickerQuery = (text: string) =>
     queryOptions({

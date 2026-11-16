@@ -6,18 +6,9 @@ import type { components } from "@/types/api";
 type MovieListResponseSchema = components["schemas"]["MovieListResponseSchema"];
 
 // Query parameter types for type-safe API calls
-export interface UserMoviesQueryParams {
-    /**
-     * Filter to only watchlist movies
-     * When true, only returns movies where user_on_watchlist is true
-     */
-    watchlist?: boolean;
-    /**
-     * Page number for pagination
-     */
-    page?: number;
-    page_size?: number;
-}
+export type UserMoviesQueryParams = Partial<
+    components["schemas"]["LibraryQuerySchema"]
+>;
 
 // Re-export commonly used types for external consumers
 export type { MovieListResponseSchema };

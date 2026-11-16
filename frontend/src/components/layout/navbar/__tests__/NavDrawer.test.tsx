@@ -60,8 +60,12 @@ it.each(["anonymous", "resolving", "authenticated"])(
       within(nav)
         .getAllByRole("link")
         .map((link) => link.textContent),
-    ).toEqual(status === "authenticated" ? ["Films", "Watchlist"] : ["Films"]);
-    expect(within(nav).getByRole("link", { name: "Films" })).toHaveAttribute(
+    ).toEqual(
+      status === "authenticated"
+        ? ["Explore", "Watchlist", "Library"]
+        : ["Explore"],
+    );
+    expect(within(nav).getByRole("link", { name: "Explore" })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -91,7 +95,7 @@ it("closes after a link opens its page", async () => {
   const user = userEvent.setup();
   renderDrawer();
   await user.click(screen.getByRole("button", { name: "Open menu" }));
-  await user.click(await screen.findByRole("link", { name: "Films" }));
+  await user.click(await screen.findByRole("link", { name: "Explore" }));
   expect(screen.getByLabelText("Location")).toHaveTextContent("/browse");
   await waitFor(() =>
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
@@ -136,7 +140,7 @@ it("draws the panel, header, backdrop and keyboard link in theme roles", async (
     "background-color",
     "var(--chakra-colors-backdrop)",
   );
-  const films = within(dialog).getByRole("link", { name: "Films" });
+  const films = within(dialog).getByRole("link", { name: "Explore" });
   expectResolvedColor(films, "color", "var(--chakra-colors-foreground)");
   await waitFor(() => expect(dialog).toHaveFocus());
   // jsdom has no layout. Supply rectangles for these rendered controls so the real focus trap sees them.
@@ -166,7 +170,7 @@ it("opens Log a film above the links, closes the drawer and restores focus to Op
   const trigger = screen.getByRole("button", { name: "Open menu" });
   await user.click(trigger);
   const log = await screen.findByRole("button", { name: "Log a film" });
-  const films = screen.getByRole("link", { name: "Films" });
+  const films = screen.getByRole("link", { name: "Explore" });
   expect(
     log.compareDocumentPosition(films) & Node.DOCUMENT_POSITION_FOLLOWING,
   ).toBeTruthy();

@@ -88,19 +88,16 @@ it.each(["anonymous", "resolving", "authenticated"])(
     ).toEqual(
       status === "authenticated"
         ? [
-            ["Films", "/browse"],
+            ["Explore", "/browse"],
             ["Watchlist", "/watchlist"],
+            ["Library", "/library"],
           ]
-        : [["Films", "/browse"]],
+        : [["Explore", "/browse"]],
     );
     for (const link of screen.getAllByRole("link"))
-      expect([
-        "/journal",
-        "/library",
-        "/log",
-        "/settings",
-        "/featured",
-      ]).not.toContain(link.getAttribute("href"));
+      expect(["/journal", "/log", "/settings", "/featured"]).not.toContain(
+        link.getAttribute("href"),
+      );
     held.release();
   },
 );
@@ -116,13 +113,20 @@ it.each([
   "/login",
   "/watchlist",
   "/browse/sequential",
+  "/library",
+  "/library/history",
+  "/library/anything",
 ])("marks the current place on %s", async (entry) => {
   setAuthTokens(token());
   const user = userEvent.setup();
   renderBar(entry);
   await screen.findByRole("button", { name: profile.username });
-  const films = screen.getByRole("link", { name: "Films" });
+  const films = screen.getByRole("link", { name: "Explore" });
   const watchlist = screen.getByRole("link", { name: "Watchlist" });
+  const library = screen.getByRole("link", { name: "Library" });
+  if (["/library", "/library/history"].includes(entry))
+    expect(library).toHaveAttribute("aria-current", "page");
+  else expect(library).not.toHaveAttribute("aria-current");
   const isFilms = [
     "/browse",
     "/browse/now-playing",
@@ -151,8 +155,9 @@ it.each([
 });
 
 it.each([
-  ["/br%6Fwse/upcoming", "Films"],
+  ["/br%6Fwse/upcoming", "Explore"],
   ["/wa%74chlist", "Watchlist"],
+  ["/libr%61ry/history", "Library"],
 ])("marks the routed link on %s", async (entry, name) => {
   setAuthTokens(token());
   renderBar(entry);
@@ -175,6 +180,6 @@ it("notifies the drawer when a navigation link is chosen", async () => {
   }
   const user = userEvent.setup();
   renderBar("/", <Example />);
-  await user.click(screen.getByRole("link", { name: "Films" }));
+  await user.click(screen.getByRole("link", { name: "Explore" }));
   expect(screen.getByText("Navigation closed")).toBeVisible();
 });

@@ -42,7 +42,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                         banner.getByRole("link", { name, exact: true }),
                     );
             };
-            await navigate("Films");
+            await navigate("Explore");
             const title = page
                 .getByRole("link", { name: tracking.title, exact: true })
                 .first();
@@ -237,7 +237,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                 await navigate("Watchlist");
                 await expect(
                     page.getByRole("heading", {
-                        name: "My Watchlist",
+                        name: "Watchlist",
                         exact: true,
                     }),
                 ).toBeVisible();
@@ -247,14 +247,14 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                     ).toBeVisible();
                 else
                     await expect(
-                        page.getByText("No movies on watchlist", {
+                        page.getByText("Your watchlist is empty", {
                             exact: true,
                         }),
                     ).toBeVisible();
                 await scanPage(page, info);
             };
             await checkWatchlist(false);
-            await navigate("Films");
+            await navigate("Explore");
             await input.activate(title);
             const log = page.getByRole("region", {
                 name: "Your log",
@@ -276,7 +276,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                 panel.getByRole("button", { name: "Watchlist", exact: true }),
             ).toHaveAttribute("aria-pressed", "true");
             await checkWatchlist(true);
-            await navigate("Films");
+            await navigate("Explore");
             await input.activate(title);
             await expect(
                 page.getByRole("heading", {
@@ -335,7 +335,7 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
             ).toBeVisible();
             await scanPage(page, info);
             await checkWatchlist(false);
-            await navigate("Films");
+            await navigate("Explore");
             await expect(
                 page.getByRole("img", {
                     name: "Rated 5 out of 5 stars",

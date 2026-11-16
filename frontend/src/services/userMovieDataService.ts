@@ -1,5 +1,5 @@
 /** Partially save the signed-in user's movie state by TMDB ID. */
-import create from "./httpService";
+import create, { type ReadOptions } from "./httpService";
 import apiClient from "./apiClient";
 import type { AxiosRequestConfig } from "axios";
 import type { components } from "@/types/api";
@@ -34,8 +34,24 @@ export type ActivityParams = Partial<
 export const getMovieEntries = (tmdbId: number) =>
     userMovieDataService.get<MovieEntries>(`${tmdbId}/entries`);
 
-export const getActivity = (params: ActivityParams) =>
-    create("/user-movie-data/entries").getPaginated<ActivityPage>(params);
+export const getActivity = (params: ActivityParams, options?: ReadOptions) =>
+    create("/user-movie-data/entries").getPaginated<ActivityPage>(
+        params,
+        options,
+    );
+
+export type HistoryPage =
+    components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];
+export type HistoryChanges = components["schemas"]["HistoryChangesSchema"];
+export type HistoryChangeFilm =
+    components["schemas"]["HistoryChangeFilmSchema"];
+export type HistoryRow = HistoryPage["results"][number];
+export type HistoryEntry = components["schemas"]["HistoryEntrySchema"];
+export type HistoryParams = Partial<
+    components["schemas"]["HistoryQuerySchema"]
+>;
+export const getHistory = (params: HistoryParams) =>
+    create("/user-movie-data/history").getPaginated<HistoryPage>(params);
 
 export type EntryWriteResponse =
     components["schemas"]["UserMovieEntryWriteResponseSchema"];
@@ -80,4 +96,12 @@ export const deleteMovieEntry = (
     apiClient.delete<EntryWriteResponse>(
         `/user-movie-data/${tmdbId}/entries/${entryId}`,
         config,
+    );
+
+export type HistoryChangesPage =
+    components["schemas"]["PaginatedResponse_HistoryChangeFilmSchema_"];
+export type HistoryGroupKey = Pick<HistoryChanges, "day" | "field">;
+export const getHistoryChanges = (params: HistoryGroupKey & HistoryParams) =>
+    create("/user-movie-data/history/changes").getPaginated<HistoryChangesPage>(
+        params,
     );

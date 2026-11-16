@@ -733,7 +733,7 @@ import { TextLink } from "@/components/common";
   textDecorationColor="tertiary" textDecorationThickness="2px"
   textUnderlineOffset="6px"
   _focusVisible={{ outlineWidth: "2px", outlineStyle: "solid", outlineColor: "ring", outlineOffset: "2px" }}>
-  <RouterLink to="/browse" aria-current={isCurrent ? "page" : undefined}>Films</RouterLink>
+  <RouterLink to="/browse" aria-current={isCurrent ? "page" : undefined}>Explore</RouterLink>
 </ChakraLink>
 ```
 

@@ -3310,6 +3310,176 @@
         ]
       }
     },
+    "/api/user-movie-data/history": {
+      "get": {
+        "operationId": "apps_user_movie_data_api_get_history",
+        "summary": "Get History",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "maximum": 1000000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "user-movie-data"
+        ],
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      }
+    },
+    "/api/user-movie-data/history/changes": {
+      "get": {
+        "operationId": "apps_user_movie_data_api_get_history_changes",
+        "summary": "Get History Changes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "default": 1,
+              "maximum": 1000000,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "day",
+            "schema": {
+              "format": "date",
+              "title": "Day",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "field",
+            "schema": {
+              "enum": [
+                "watchlist",
+                "watched",
+                "liked",
+                "rating"
+              ],
+              "title": "Field",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedResponse_HistoryChangeFilmSchema_"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Read one day and field's shown films from the authenticated user's history.",
+        "tags": [
+          "user-movie-data"
+        ],
+        "security": [
+          {
+            "JWTSessionAuth": []
+          }
+        ]
+      }
+    },
     "/api/user-movie-data/{tmdb_id}": {
       "get": {
         "operationId": "apps_user_movie_data_api_get_user_movie_data",
@@ -6394,6 +6564,341 @@
           }
         },
         "title": "PaginatedResponse[ActivityEntrySchema]",
+        "type": "object"
+      },
+      "HistoryQuerySchema": {
+        "description": "The private timeline uses the same validated database paging bounds.",
+        "properties": {
+          "page": {
+            "default": 1,
+            "maximum": 1000000,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          }
+        },
+        "title": "HistoryQuerySchema",
+        "type": "object"
+      },
+      "HistoryChangeFilmSchema": {
+        "description": "A stored film's latest shown change within one day and field.",
+        "properties": {
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "poster_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Path"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          }
+        },
+        "required": [
+          "tmdb_id",
+          "title",
+          "release_date",
+          "poster_path",
+          "rating"
+        ],
+        "title": "HistoryChangeFilmSchema",
+        "type": "object"
+      },
+      "HistoryChangesSchema": {
+        "description": "One indivisible day and field in the private timeline.",
+        "properties": {
+          "kind": {
+            "const": "changes",
+            "title": "Kind",
+            "type": "string"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "watchlist",
+              "watched",
+              "liked",
+              "rating"
+            ],
+            "title": "Field",
+            "type": "string"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "films": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryChangeFilmSchema"
+            },
+            "title": "Films",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "day",
+          "field",
+          "count",
+          "films"
+        ],
+        "title": "HistoryChangesSchema",
+        "type": "object"
+      },
+      "HistoryEntrySchema": {
+        "description": "A dated viewing or an undated review on its own calendar day.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "tmdb_id": {
+            "title": "Tmdb Id",
+            "type": "integer"
+          },
+          "watched_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watched On"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "maximum": 10,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "review": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review"
+          },
+          "rewatch": {
+            "title": "Rewatch",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "release_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Release Date"
+          },
+          "poster_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poster Path"
+          },
+          "kind": {
+            "enum": [
+              "viewing",
+              "review"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "tmdb_id",
+          "watched_on",
+          "rating",
+          "review",
+          "rewatch",
+          "title",
+          "release_date",
+          "poster_path",
+          "kind",
+          "day"
+        ],
+        "title": "HistoryEntrySchema",
+        "type": "object"
+      },
+      "PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          },
+          "total_results": {
+            "default": 0,
+            "title": "Total Results",
+            "type": "integer"
+          },
+          "results": {
+            "default": [],
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/HistoryEntrySchema"
+                },
+                {
+                  "$ref": "#/components/schemas/HistoryChangesSchema"
+                }
+              ]
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "title": "PaginatedResponse[Union[HistoryEntrySchema, HistoryChangesSchema]]",
+        "type": "object"
+      },
+      "HistoryChangesQuerySchema": {
+        "description": "Select one private day and field before paging its shown films.",
+        "properties": {
+          "page": {
+            "default": 1,
+            "maximum": 1000000,
+            "minimum": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "page_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "day": {
+            "format": "date",
+            "title": "Day",
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "watchlist",
+              "watched",
+              "liked",
+              "rating"
+            ],
+            "title": "Field",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "field"
+        ],
+        "title": "HistoryChangesQuerySchema",
+        "type": "object"
+      },
+      "PaginatedResponse_HistoryChangeFilmSchema_": {
+        "properties": {
+          "page": {
+            "default": 1,
+            "title": "Page",
+            "type": "integer"
+          },
+          "total_pages": {
+            "default": 0,
+            "title": "Total Pages",
+            "type": "integer"
+          },
+          "total_results": {
+            "default": 0,
+            "title": "Total Results",
+            "type": "integer"
+          },
+          "results": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/HistoryChangeFilmSchema"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "title": "PaginatedResponse[HistoryChangeFilmSchema]",
         "type": "object"
       },
       "UserMovieDataPatchSchema": {

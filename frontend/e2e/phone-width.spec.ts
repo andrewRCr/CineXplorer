@@ -37,6 +37,44 @@ async function expectBarFits(page: Page, signedIn: boolean) {
         await expectInsideViewport(control);
 }
 
+async function expectWideBarFits(page: Page) {
+    const banner = page.getByRole("banner");
+    const controls = [
+        banner.getByRole("link", { name: "CineXplorer", exact: true }),
+        ...["Explore", "Watchlist", "Library"].map((name) =>
+            banner.getByRole("link", { name, exact: true }),
+        ),
+        banner.getByRole("search"),
+        banner.getByRole("button", { name: "Log", exact: true }),
+        banner.getByRole("button", { name: target.username, exact: true }),
+    ];
+    const viewport = page.viewportSize();
+    if (!viewport) throw new Error("Missing viewport");
+    const boxes = [];
+    for (const control of controls) {
+        await expect(control).toBeVisible();
+        const box = await control.boundingBox();
+        if (!box) throw new Error("Missing bar control bounds");
+        expect(box.x).toBeGreaterThanOrEqual(0);
+        expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
+        expect(box.y).toBeGreaterThanOrEqual(0);
+        expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
+        boxes.push(box);
+    }
+    for (let index = 1; index < boxes.length; index++) {
+        expect(boxes[index - 1].x + boxes[index - 1].width).toBeLessThanOrEqual(
+            boxes[index].x,
+        );
+    }
+    expect(
+        await page.evaluate(
+            () =>
+                document.documentElement.scrollWidth <=
+                document.documentElement.clientWidth,
+        ),
+    ).toBe(true);
+}
+
 test("phone navigation fits and opens the drawer, search and account menu", async ({
     page,
 }, info) => {
@@ -73,11 +111,15 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     await menuButton.click();
     const drawer = page.getByRole("dialog", { name: "Menu", exact: true });
     await expect(
-        drawer.getByRole("link", { name: "Films", exact: true }),
+        drawer.getByRole("link", { name: "Explore", exact: true }),
     ).toBeVisible();
     await expect(
         drawer.getByRole("link", { name: "Watchlist", exact: true }),
     ).toBeVisible();
+    await expect(
+        drawer.getByRole("link", { name: "Library", exact: true }),
+    ).toBeVisible();
+
     await expect(drawer).toHaveCSS("opacity", "1");
     await scanPage(page, info);
     await page.keyboard.press("Escape");
@@ -86,14 +128,15 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
     await menuButton.click();
     await page.setViewportSize({ width: 1024, height: 800 });
     await expect(drawer).toBeHidden();
+    await expectWideBarFits(page);
     await page.keyboard.press("Tab");
     await expect(page.locator(":focus")).toBeVisible();
-    await banner.getByRole("link", { name: "Films", exact: true }).click();
+    await banner.getByRole("link", { name: "Explore", exact: true }).click();
     await page.setViewportSize({ width: 1023, height: 800 });
     await expect(drawer).toBeHidden();
     await page.setViewportSize({ width: 360, height: 800 });
     await menuButton.click();
-    await drawer.getByRole("link", { name: "Films", exact: true }).click();
+    await drawer.getByRole("link", { name: "Explore", exact: true }).click();
     await expect(drawer).toBeHidden();
     await expect(page).toHaveURL(new URL("/browse", target.baseURL).href);
     await expect(page.getByText(/^\d[\d,]*\+? results$/)).toBeVisible();

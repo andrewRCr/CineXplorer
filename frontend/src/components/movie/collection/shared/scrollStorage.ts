@@ -14,8 +14,6 @@
  * Failing gracefully (return default, skip save) is better than crashing.
  */
 
-import { type BrowseParams } from "@/types/browseTypes";
-
 /** Storage key prefix for scroll positions. */
 const SCROLL_STORAGE_PREFIX = "scroll-";
 
@@ -58,7 +56,7 @@ const parseScrollEntry = (value: string | null): ScrollStorageEntry | null => {
  */
 export const getScrollStorageKey = (
     source: string,
-    browseParams: Partial<BrowseParams>,
+    browseParams: object,
 ): string => {
     // Create deterministic key from source and filter params
     const entries = Object.entries(browseParams) as [string, unknown][];

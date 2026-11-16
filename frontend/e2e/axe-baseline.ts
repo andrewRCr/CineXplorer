@@ -1,5 +1,14 @@
 export interface BaselineEntry {
-    route: "/" | "/login" | "/register" | "/browse" | "/movie/:id" | "/search";
+    route:
+        | "/"
+        | "/login"
+        | "/register"
+        | "/browse"
+        | "/movie/:id"
+        | "/search"
+        | "/watchlist"
+        | "/library"
+        | "/library/history";
     rule: string;
     reason: string;
 }

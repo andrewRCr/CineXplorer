@@ -103,7 +103,7 @@ const actions = () =>
   screen.getByRole("group", { name: `Your actions for ${title}` });
 const nav = () => screen.getByRole("navigation", { name: "Main" });
 async function visitFilm(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(within(nav()).getByRole("link", { name: "Films" }));
+  await user.click(within(nav()).getByRole("link", { name: "Explore" }));
   const links = await screen.findAllByRole("link", { name: title });
   const link = links[0];
   if (!link) throw new Error("Expected a film link");
@@ -296,7 +296,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
       },
     ]);
     await user.click(within(nav()).getByRole("link", { name: "Watchlist" }));
-    expect(await screen.findByText("No movies on watchlist")).toBeVisible();
+    expect(await screen.findByText("Your watchlist is empty")).toBeVisible();
     await visitFilm(user);
     const log = await screen.findByRole("region", { name: "Your log" });
     expect(await within(log).findByText(firstEntry.review)).toBeVisible();
@@ -376,8 +376,8 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
       },
     ]);
     await user.click(within(nav()).getByRole("link", { name: "Watchlist" }));
-    expect(await screen.findByText("No movies on watchlist")).toBeVisible();
-    await user.click(within(nav()).getByRole("link", { name: "Films" }));
+    expect(await screen.findByText("Your watchlist is empty")).toBeVisible();
+    await user.click(within(nav()).getByRole("link", { name: "Explore" }));
     expect(
       await screen.findByRole("img", { name: "Rated 5 out of 5 stars" }),
     ).toBeVisible();

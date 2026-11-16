@@ -3,6 +3,7 @@
 from apps.user_movie_data.services.movie_enrichment_service import MovieEnrichmentService
 from apps.user_movie_data.services.user_movie_data_service import UserMovieDataService
 from apps.user_movie_data.services.user_movie_entry_service import UserMovieEntryService
+from apps.user_movie_data.services.user_movie_history_service import UserMovieHistoryService
 
 
 def get_movie_enrichment_service() -> MovieEnrichmentService:
@@ -15,3 +16,7 @@ def get_user_movie_data_service() -> UserMovieDataService:
 
 def get_user_movie_entry_service() -> UserMovieEntryService:
     return UserMovieEntryService()
+
+
+def get_user_movie_history_service() -> UserMovieHistoryService:
+    return UserMovieHistoryService()

@@ -216,7 +216,8 @@ E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e
 E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e -- e2e/browse.spec.ts
 ```
 
-The Chromium suite uses catalogue fixtures locally and has no test retries. Journeys scan reached pages with axe;
+The eleven Chromium specs use catalogue fixtures locally and have no test retries. `library.spec.ts` covers the
+signed-in Watchlist and Library journey. Journeys scan reached pages with axe;
 tracking also scans entry-dialog and rating-sheet states. `scanPage` waits for finite motion inside dialogs and
 notification regions before its audit. `background.spec.ts` checks startup backgrounds, the CSS fallback without
 JavaScript, and mode and palette changes. The phone shell runs at 360×800. Tracking journeys run at 1280px with mouse
@@ -225,7 +226,7 @@ and clean up isolated development records, keeping authentication and writes rea
 persisted tracking state. They inherit the checkout's Compose project and CI's overrides, and skip staging.
 The local-only card-layout fixture checks metadata and rating alignment at controlled 194px and 138px card widths.
 CI requires the suite through
-`ci-ok`; staging skips registration and runs after deployment. See the
+`ci-ok`; staging skips registration and the saved-film journey and runs after deployment. See the
 [testing strategy](strategies/project/strategy-testing-methodology.md#e2e-best-practices) for staging credentials,
 artifacts, the accessibility baseline, and resetting the local registration limit.
 

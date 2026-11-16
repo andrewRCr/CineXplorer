@@ -833,6 +833,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/user-movie-data/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get History */
+        get: operations["apps_user_movie_data_api_get_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/user-movie-data/history/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get History Changes
+         * @description Read one day and field's shown films from the authenticated user's history.
+         */
+        get: operations["apps_user_movie_data_api_get_history_changes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/user-movie-data/{tmdb_id}": {
         parameters: {
             query?: never;
@@ -1899,6 +1936,169 @@ export interface components {
             results: components["schemas"]["ActivityEntrySchema"][];
         };
         /**
+         * HistoryQuerySchema
+         * @description The private timeline uses the same validated database paging bounds.
+         */
+        HistoryQuerySchema: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @default 20
+             */
+            page_size: number;
+        };
+        /**
+         * HistoryChangeFilmSchema
+         * @description A stored film's latest shown change within one day and field.
+         */
+        HistoryChangeFilmSchema: {
+            /** Tmdb Id */
+            tmdb_id: number;
+            /** Title */
+            title: string;
+            /** Release Date */
+            release_date: string | null;
+            /** Poster Path */
+            poster_path: string | null;
+            /** Rating */
+            rating: number | null;
+        };
+        /**
+         * HistoryChangesSchema
+         * @description One indivisible day and field in the private timeline.
+         */
+        HistoryChangesSchema: {
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "changes";
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "watchlist" | "watched" | "liked" | "rating";
+            /** Count */
+            count: number;
+            /** Films */
+            films: components["schemas"]["HistoryChangeFilmSchema"][];
+        };
+        /**
+         * HistoryEntrySchema
+         * @description A dated viewing or an undated review on its own calendar day.
+         */
+        HistoryEntrySchema: {
+            /** Id */
+            id: number;
+            /** Tmdb Id */
+            tmdb_id: number;
+            /** Watched On */
+            watched_on: string | null;
+            /** Rating */
+            rating: number | null;
+            /** Review */
+            review: string | null;
+            /** Rewatch */
+            rewatch: boolean;
+            /** Title */
+            title: string;
+            /** Release Date */
+            release_date: string | null;
+            /** Poster Path */
+            poster_path: string | null;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "viewing" | "review";
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+        };
+        /** PaginatedResponse[Union[HistoryEntrySchema, HistoryChangesSchema]] */
+        PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Total Pages
+             * @default 0
+             */
+            total_pages: number;
+            /**
+             * Total Results
+             * @default 0
+             */
+            total_results: number;
+            /**
+             * Results
+             * @default []
+             */
+            results: (components["schemas"]["HistoryEntrySchema"] | components["schemas"]["HistoryChangesSchema"])[];
+        };
+        /**
+         * HistoryChangesQuerySchema
+         * @description Select one private day and field before paging its shown films.
+         */
+        HistoryChangesQuerySchema: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @default 20
+             */
+            page_size: number;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /**
+             * Field
+             * @enum {string}
+             */
+            field: "watchlist" | "watched" | "liked" | "rating";
+        };
+        /** PaginatedResponse[HistoryChangeFilmSchema] */
+        PaginatedResponse_HistoryChangeFilmSchema_: {
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Total Pages
+             * @default 0
+             */
+            total_pages: number;
+            /**
+             * Total Results
+             * @default 0
+             */
+            total_results: number;
+            /**
+             * Results
+             * @default []
+             */
+            results: components["schemas"]["HistoryChangeFilmSchema"][];
+        };
+        /**
          * UserMovieDataPatchSchema
          * @description An absent field stays unchanged except where data rules change it; null clears it.
          */
@@ -2943,6 +3143,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PaginatedResponse_ActivityEntrySchema_"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_history: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_Union_HistoryEntrySchema__HistoryChangesSchema__"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseSchema"];
+                };
+            };
+        };
+    };
+    apps_user_movie_data_api_get_history_changes: {
+        parameters: {
+            query: {
+                page?: number;
+                page_size?: number;
+                day: string;
+                field: "watchlist" | "watched" | "liked" | "rating";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedResponse_HistoryChangeFilmSchema_"];
                 };
             };
             /** @description Unauthorized */

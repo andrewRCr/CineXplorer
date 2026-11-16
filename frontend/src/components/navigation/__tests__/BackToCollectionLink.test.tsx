@@ -1,3 +1,6 @@
+import userEvent from "@testing-library/user-event";
+import { useLocation } from "react-router";
+import { renderWithRoutes } from "@tests/helpers/test-renderer-with-routes";
 import { within } from "@testing-library/react";
 /**
  * Tests for BackToCollectionLink component
@@ -398,6 +401,55 @@ describe("BackToCollectionLink", () => {
     });
   });
 });
+
+it.each([
+  ["from=watchlist&sort=title", "Back to Watchlist", "/watchlist?sort=title"],
+  [
+    "from=library&liked=true&sort=rating&direction=asc",
+    "Back to Library",
+    "/library?liked=true&sort=rating&direction=asc",
+  ],
+  ["from=history", "Back to History", "/library/history"],
+])("returns to the personal collection for %s", async (query, name, path) => {
+  const user = userEvent.setup();
+  renderWithRoutes(
+    [
+      {
+        path: "/movie/:id",
+        element: (
+          <BackToCollectionLink searchParams={new URLSearchParams(query)} />
+        ),
+      },
+      { path: "*", element: <ReturnLocation /> },
+    ],
+    { initialRoute: `/movie/1?${query}` },
+  );
+  const link = screen.getByRole("link", { name });
+  expect(link).toHaveAttribute("href", path);
+  await user.click(link);
+  expect(screen.getByLabelText("Returned address")).toHaveTextContent(path);
+  expect(screen.getByLabelText("Restore scroll")).toHaveTextContent("true");
+});
+function ReturnLocation() {
+  const location = useLocation();
+  const state: unknown = location.state;
+  return (
+    <>
+      <output aria-label="Returned address">
+        {location.pathname}
+        {location.search}
+      </output>
+      <output aria-label="Restore scroll">
+        {String(
+          typeof state === "object" &&
+            state !== null &&
+            "restoreScroll" in state &&
+            state.restoreScroll,
+        )}
+      </output>
+    </>
+  );
+}
 
 it("returns directly to Home without collection parameters", () => {
   render(

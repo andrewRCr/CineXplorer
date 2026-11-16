@@ -56,6 +56,13 @@ surfaces and notifications settles. A controlled-width browser fixture checks ca
 The App journey covers immediate and delayed initial catalogue delivery with a bounded startup wait, while browser
 navigation waits for the destination film and its tracking panel before using Log.
 
+Main run 43769778747 on the merge `7f96d37f` passed every acceptance job and deployed staging, but its staging smoke
+run failed: signing out after a remembered sign-in returned HTTP 502 (19 passed, 1 failed, 7 skipped). The proxy
+could reuse an idle backend connection as Gunicorn's two-second keep-alive closed it; #210 retires Caddy's idle
+backend connections after one second and checks that relationship in CI. Main run 43773193867 on its merge
+`b363c7f1` passed CI, the staging deployment and the staging smoke run (20 passed; sign-up and the six tracking cases
+that write fixtures skipped on staging): the first passing staging smoke run to include this work.
+
 ## Related Documentation
 
 - Shared design: `draft-user-movie-uis.md`

@@ -40,7 +40,7 @@ export const GridSkeletonLoader = ({
       data-testid={`skeleton-loader-${i}`}
     >
       <MovieCardContainer>
-        <MovieCard movie={placeholderMovie} />
+        <MovieCard movie={placeholderMovie} showControls={false} />
       </MovieCardContainer>
     </Skeleton>
   ));

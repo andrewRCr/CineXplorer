@@ -66,8 +66,8 @@ cards, without user data. Setup clears their prior personal state and marks the 
 adds the first from a catalog card, finds it through Watchlist, opens and scans the Library's Films and History
 views, and removes the first from the Watchlist. Once recorded changes are available it finds the setup's
 watched change for the second film in History. The spec is skipped on staging, where the tier does not change
-account data. The tier now has eight specs: seven journeys and a background render budget check, with phone
-navigation at its own viewport. Existing fixture, accessibility, credential and artifact policies stand.
+account data. The tier has eleven specs, including tracking, rating and card-layout checks, with phone navigation
+and touch interactions at their own viewports. Existing fixture, accessibility, credential and artifact policies stand.
 
 ## Consequences
 

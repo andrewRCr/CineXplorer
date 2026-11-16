@@ -50,10 +50,9 @@ it("shows the pitch before the film read, then a title link and noninteractive t
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "New releases, all-time classics, and everything in between.",
+      "See what's in theaters and coming soon, keep a watchlist, and log, rate and like what you've seen. Film data from TMDB.",
     ),
   ).toBeInTheDocument();
-  expect(screen.queryByText(/TMDB/)).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Create account" })).toHaveAttribute(
     "href",
     "/register",

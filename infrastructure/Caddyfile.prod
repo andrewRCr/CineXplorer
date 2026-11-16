@@ -2,6 +2,10 @@
 # A repeated Cross-Origin-Opener-Policy does not parse, and browsers then ignore it.
 (backend) {
 	reverse_proxy backend:8000 {
+		transport http {
+			# Retire idle connections before Gunicorn's two-second keepalive closes them.
+			keepalive 1s
+		}
 		header_down -X-Content-Type-Options
 		header_down -X-Frame-Options
 		header_down -Referrer-Policy

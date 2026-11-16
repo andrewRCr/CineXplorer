@@ -5,6 +5,7 @@
 // Constants and utilities
 export {
     CARD_WIDTH,
+    CARD_TEXT_HEIGHT,
     GAP,
     SKELETON_COUNT,
     placeholderMovie,

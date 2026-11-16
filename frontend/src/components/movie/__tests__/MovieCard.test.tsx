@@ -1,7 +1,3 @@
-import AuthContextProvider from "@/components/auth/AuthContextProvider";
-import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
-import { setAuthTokens } from "@/utilities/tokenUtils";
-import type { ReactElement } from "react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
@@ -14,7 +10,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   act,
-  render,
+  render as renderBase,
   screen,
   isInaccessible,
   within,
@@ -29,9 +25,38 @@ import { Toaster, toaster } from "@/components/core/chakra/toaster";
 import MovieCard from "../MovieCard";
 import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
 
-const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+import AuthContextProvider from "@/components/auth/AuthContextProvider";
+import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { setAuthTokens } from "@/utilities/tokenUtils";
 
-// Mock the COLORS constant since it's used in the component
+const render: typeof renderBase = (ui, options) => {
+  const view = renderBase(
+    <AuthContextProvider>{ui}</AuthContextProvider>,
+    options,
+  );
+  return {
+    ...view,
+    rerender: (next) =>
+      view.rerender(<AuthContextProvider>{next}</AuthContextProvider>),
+  };
+};
+beforeEach(() => {
+  clearBrowserAuth();
+  authHandlers();
+  setAuthTokens(token());
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: query === "(hover: hover)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+});
+
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 describe("MovieCard Component", () => {
   const defaultProps = {
@@ -224,98 +249,71 @@ describe("MovieCard Component", () => {
     });
   });
 
-  describe("Date Formatting", () => {
-    it("formats release date correctly", () => {
-      const testMovie = createMockMovieListItem({
-        release_date: "2023-12-25",
-      });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Date formatting can vary by locale/timezone - test for presence of year
-      // More reliable than exact string matching
-      const dateText = screen.getByText(/2023/);
-      expect(dateText).toBeInTheDocument();
-      expect(dateText.textContent).toMatch(/December|Dec/);
+  describe("Release year and record display", () => {
+    it.each([
+      ["2023-12-25", "2023"],
+      ["1980-01-01", "1980"],
+      ["1999-12-31", "1999"],
+      [null, "Year unknown"],
+      ["", "Year unknown"],
+      ["invalid-date", "Year unknown"],
+    ])("shows the year for %j as %s", (release_date, expected) => {
+      render(
+        <MovieCard
+          {...defaultProps}
+          movie={createMockMovieListItem({ release_date })}
+        />,
+      );
+      expect(screen.getByText(expected, { exact: true })).toBeVisible();
     });
 
-    it("handles different date formats", () => {
-      const testMovie = createMockMovieListItem({
-        release_date: "2020-01-01",
+    it("shows the current rating and watched mark, then clears them without a record", () => {
+      const movie = createMockMovieListItem({
+        user_movie_data: createMockUserMovieData({
+          user_rating: 7,
+          user_watched: true,
+        }),
       });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Date formatting can be affected by timezone in test environment
-      // Look for any date content that indicates the date was processed
-      const dateElements = screen.getAllByText(/\d{4}/); // Find elements with 4 digits (year)
-      expect(dateElements.length).toBeGreaterThan(0);
-
-      // Verify that a formatted date is displayed (month name + year)
-      const hasFormattedDate =
-        screen.queryByText(
-          /\b(January|February|March|April|May|June|July|August|September|October|November|December)\b.*\d{4}/,
-        ) ||
-        screen.queryByText(
-          /\d{4}.*\b(January|February|March|April|May|June|July|August|September|October|November|December)\b/,
-        );
-      expect(hasFormattedDate).toBeInTheDocument();
+      const view = render(<MovieCard movie={movie} />);
+      expect(
+        screen.getByRole("img", { name: "Rated 3.5 out of 5 stars" }),
+      ).toBeVisible();
+      expect(screen.getAllByRole("img", { name: "Watched" })).toHaveLength(1);
+      expect(screen.getAllByRole("link", { name: movie.title })).toHaveLength(
+        2,
+      );
+      expect(screen.getByText("8.2")).toBeVisible();
+      view.rerender(<MovieCard movie={{ ...movie, user_movie_data: null }} />);
+      expect(
+        screen.queryByRole("img", { name: /Rated/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("img", { name: "Watched" }),
+      ).not.toBeInTheDocument();
     });
 
-    it("displays ISO date without timezone shifting", () => {
-      // Critical test: ISO date "1980-01-01" should display as January 1, 1980
-      // NOT December 31, 1979 (which happens when new Date() converts UTC to local)
-      //
-      // This test validates the fix even in UTC environments by checking exact date values
-      const testMovie = createMockMovieListItem({
-        release_date: "1980-01-01",
+    it("updates rating and watched displays from a refreshed record", () => {
+      const record = createMockUserMovieData({
+        user_rating: null,
+        user_watched: false,
       });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Should display exactly January 1, 1980
-      const dateText = screen.getByText(/January 1, 1980/);
-      expect(dateText).toBeInTheDocument();
-
-      // Verify the WRONG parsing would give us wrong results
-      // If we used: new Date('1980-01-01') in US Eastern (UTC-5):
-      // - It interprets as 1980-01-01 00:00 UTC
-      // - Converts to local: 1979-12-31 19:00 EST
-      // - getMonth() returns 11 (December), getDate() returns 31, getFullYear() returns 1979
-      // Our fix parses the string components directly to avoid this
-    });
-
-    it("handles year boundary dates correctly without timezone conversion", () => {
-      // Another boundary case: December 31 should stay December 31
-      const testMovie = createMockMovieListItem({
-        release_date: "1999-12-31",
-      });
-
-      render(<MovieCard {...defaultProps} movie={testMovie} />);
-
-      // Should display exactly December 31, 1999 (not shift to January 1, 2000)
-      const dateText = screen.getByText(/December 31, 1999/);
-      expect(dateText).toBeInTheDocument();
-    });
-
-    it("parses ISO date components directly without Date() constructor timezone conversion", () => {
-      // This test explicitly validates that we parse "YYYY-MM-DD" components
-      // rather than using new Date(iso_string) which triggers timezone conversion
-      const testCases = [
-        { release_date: "2020-01-01", expected: "January 1, 2020" },
-        { release_date: "2020-12-31", expected: "December 31, 2020" },
-        { release_date: "1988-06-15", expected: "June 15, 1988" },
-      ];
-
-      testCases.forEach(({ release_date, expected }) => {
-        const testMovie = createMockMovieListItem({ release_date });
-        const { unmount } = render(
-          <MovieCard {...defaultProps} movie={testMovie} />,
-        );
-
-        expect(screen.getByText(expected)).toBeInTheDocument();
-        unmount();
-      });
+      const movie = createMockMovieListItem({ user_movie_data: record });
+      const view = render(<MovieCard movie={movie} />);
+      expect(
+        screen.queryByRole("img", { name: /Rated/ }),
+      ).not.toBeInTheDocument();
+      view.rerender(
+        <MovieCard
+          movie={{
+            ...movie,
+            user_movie_data: { ...record, user_rating: 7, user_watched: true },
+          }}
+        />,
+      );
+      expect(
+        screen.getByRole("img", { name: "Rated 3.5 out of 5 stars" }),
+      ).toBeVisible();
+      expect(screen.getByRole("img", { name: "Watched" })).toBeVisible();
     });
   });
 
@@ -382,7 +380,7 @@ describe("MovieCard Component", () => {
   });
 
   describe("Performance Optimizations", () => {
-    it("memoizes expensive calculations", () => {
+    it("keeps the release year across an unchanged rerender", () => {
       const testMovie = createMockMovieListItem({
         release_date: "2023-06-15",
         poster_path: "/test.jpg",
@@ -396,7 +394,7 @@ describe("MovieCard Component", () => {
       // Test that date is rendered (exact format may vary)
       const dateElement = screen.getByText(/2023/);
       expect(dateElement).toBeInTheDocument();
-      expect(dateElement.textContent).toMatch(/June|Jun/);
+      expect(dateElement).toHaveTextContent(/^2023$/);
 
       // Re-render with same props - should work without errors
       rerender(<MovieCard {...defaultProps} movie={testMovie} />);
@@ -631,24 +629,8 @@ describe("MovieCard Component", () => {
   });
 });
 
-function renderSignedIn(ui: ReactElement) {
-  function SignedIn({ children }: { children: React.ReactNode }) {
-    return <AuthContextProvider>{children}</AuthContextProvider>;
-  }
-  // The shared render supplies routing and query state; this wrapper adds real auth.
-  const view = render(<SignedIn>{ui}</SignedIn>);
-  return {
-    ...view,
-    rerender: (next: ReactElement) =>
-      view.rerender(<SignedIn>{next}</SignedIn>),
-  };
-}
-
 describe("MovieCard watchlist saves", () => {
   beforeEach(() => {
-    clearBrowserAuth();
-    authHandlers();
-    setAuthTokens(token());
     act(() => toaster.remove());
     document.cookie = "csrftoken=movie-save-csrf; path=/";
   });
@@ -669,7 +651,7 @@ describe("MovieCard watchlist saves", () => {
         );
       }),
     );
-    renderSignedIn(
+    render(
       <>
         <MovieCard
           movie={createMockMovieListItem({
@@ -681,16 +663,14 @@ describe("MovieCard watchlist saves", () => {
       </>,
     );
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     await waitFor(() => expect(requests).toHaveLength(1));
     const remove = screen.getByRole("button", {
-      name: "Remove from watchlist",
+      name: "Watchlist",
     });
     expect(remove).toBeEnabled();
     await user.click(remove);
-    expect(
-      screen.getByRole("button", { name: "Add to watchlist" }),
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled();
     expect(requests).toEqual([
       { user_on_watchlist: true, time_zone: timeZone },
     ]);
@@ -700,9 +680,10 @@ describe("MovieCard watchlist saves", () => {
       { user_on_watchlist: true, time_zone: timeZone },
       { user_on_watchlist: false, time_zone: timeZone },
     ]);
-    expect(
-      screen.getByRole("button", { name: "Add to watchlist" }),
-    ).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it.each(["pending", "settled"])(
@@ -722,14 +703,14 @@ describe("MovieCard watchlist saves", () => {
         user_movie_data: null,
       });
       const user = userEvent.setup();
-      const view = renderSignedIn(
+      const view = render(
         <>
           <MovieCard key="card" movie={movie} />
           <Toaster key="toasts" />
         </>,
       );
       await user.click(
-        screen.getByRole("button", { name: "Add to watchlist" }),
+        await screen.findByRole("button", { name: "Watchlist" }),
       );
       if (when === "settled") {
         release.release();
@@ -742,9 +723,10 @@ describe("MovieCard watchlist saves", () => {
           <Toaster key="toasts" />
         </>,
       );
-      expect(
-        screen.getByRole("button", { name: "Remove from watchlist" }),
-      ).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
       release.release();
       await screen.findByText("Added to watchlist");
     },
@@ -758,7 +740,7 @@ describe("MovieCard watchlist saves", () => {
           HttpResponse.json({ detail: "Save unavailable" }, { status }),
         ),
       );
-      renderSignedIn(
+      render(
         <>
           <MovieCard
             movie={createMockMovieListItem({ user_movie_data: null })}
@@ -768,19 +750,18 @@ describe("MovieCard watchlist saves", () => {
       );
       await userEvent
         .setup()
-        .click(screen.getByRole("button", { name: "Add to watchlist" }));
+        .click(await screen.findByRole("button", { name: "Watchlist" }));
       expect(
         await screen.findByText("Failed to update watchlist"),
       ).toBeInTheDocument();
       expect(screen.getByText("Please try again.")).toBeInTheDocument();
       await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "Add to watchlist" }),
-        ).toBeEnabled(),
+        expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled(),
       );
-      expect(
-        screen.getByRole("button", { name: "Add to watchlist" }),
-      ).toHaveAttribute("aria-pressed", "false");
+      expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
     },
   );
 });
@@ -816,9 +797,6 @@ function PagedCards() {
 
 describe("MovieCard shared-save composition", () => {
   beforeEach(() => {
-    clearBrowserAuth();
-    authHandlers();
-    setAuthTokens(token());
     act(() => toaster.remove());
     document.cookie = "csrftoken=card-save; path=/";
   });
@@ -855,7 +833,7 @@ describe("MovieCard shared-save composition", () => {
       ),
     );
     const user = userEvent.setup();
-    renderSignedIn(
+    render(
       <>
         <PagedCards />
         <Toaster />
@@ -864,22 +842,28 @@ describe("MovieCard shared-save composition", () => {
     await screen.findByText("First movie");
     await user.click(screen.getByRole("button", { name: "Load more" }));
     await waitFor(() => expect(nextReads).toBe(1));
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     await screen.findByText("Added to watchlist");
     expect(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
+      within(
+        screen.getByRole("group", { name: "Your actions for First movie" }),
+      ).getByRole("button", { name: "Watchlist" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(firstReads).toBe(1);
     next.release();
     await screen.findByText("Second movie");
     expect(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
+      within(
+        screen.getByRole("group", { name: "Your actions for First movie" }),
+      ).getByRole("button", { name: "Watchlist" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(firstReads).toBe(1);
     await user.click(screen.getByRole("button", { name: "Toggle cards" }));
     await user.click(screen.getByRole("button", { name: "Toggle cards" }));
     expect(
-      screen.getByRole("button", { name: "Remove from watchlist" }),
+      within(
+        screen.getByRole("group", { name: "Your actions for First movie" }),
+      ).getByRole("button", { name: "Watchlist" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(firstReads).toBe(1);
   });
@@ -896,7 +880,7 @@ describe("MovieCard shared-save composition", () => {
       }),
     );
     const user = userEvent.setup();
-    const view = renderSignedIn(
+    const view = render(
       <>
         <MovieCard
           key="card"
@@ -912,7 +896,7 @@ describe("MovieCard shared-save composition", () => {
     await waitFor(() =>
       expect(screen.getByLabelText("Library reads")).toHaveTextContent("1"),
     );
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     view.rerender(
       <>
         <CardLibraryProbe key="library" />
@@ -941,7 +925,7 @@ describe("MovieCard shared-save composition", () => {
       }),
     );
     const user = userEvent.setup();
-    const view = renderSignedIn(
+    const view = render(
       <>
         <MovieCard
           key="card"
@@ -953,7 +937,7 @@ describe("MovieCard shared-save composition", () => {
         <Toaster key="toasts" />
       </>,
     );
-    await user.click(screen.getByRole("button", { name: "Add to watchlist" }));
+    await user.click(await screen.findByRole("button", { name: "Watchlist" }));
     await screen.findByText("Added to watchlist");
     view.rerender(<Toaster key="toasts" />);
     await user.click(screen.getByRole("button", { name: "Undo" }));
@@ -980,7 +964,7 @@ it.each(["anonymous", "resolving"])(
           return HttpResponse.json({}, { status: 401 });
         }),
       );
-    render(
+    renderBase(
       <AuthContextProvider>
         <MovieCard movie={createMockMovieListItem()} />
       </AuthContextProvider>,

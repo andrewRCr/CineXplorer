@@ -8,6 +8,7 @@ import CatalogWindowTabs from "./CatalogWindowTabs";
 import { GridHeader } from "./GridHeader";
 import {
   CARD_WIDTH,
+  CARD_TEXT_HEIGHT,
   GAP,
   calculateColumnCount,
   GridErrorState,
@@ -24,8 +25,8 @@ import { type MovieListItem } from "@/types/movie";
 // Virtualization-Specific Constants
 // ============================================================================
 
-/** Fixed height per row (card height + padding). Used for virtualizer sizing. */
-const ROW_HEIGHT = 449;
+/** Poster plus fixed text block; the virtualizer accounts for GAP separately. */
+const ROW_HEIGHT = CARD_WIDTH * 1.5 + CARD_TEXT_HEIGHT;
 
 /** Debounce delay for fetchNextPage calls (ms). */
 const FETCH_DEBOUNCE = 150;

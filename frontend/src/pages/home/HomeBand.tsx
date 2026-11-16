@@ -15,8 +15,8 @@ const points = [
     "What's in theaters, what's coming, or the whole catalog by genre, year and rating.",
   ],
   [
-    "Keep a watchlist",
-    "Save films from any poster and find them waiting on Home.",
+    "Track your films",
+    "Keep a watchlist, and mark films watched, rate and like them from any poster.",
   ],
   [
     "Know before you watch",

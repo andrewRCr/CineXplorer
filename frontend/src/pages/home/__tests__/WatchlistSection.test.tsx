@@ -42,6 +42,16 @@ beforeEach(() => {
   clearBrowserAuth();
   authHandlers();
   setAuthTokens(token());
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: query === "(hover: hover)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
   act(() => {
     toaster.remove();
     priorityToaster.remove();
@@ -134,17 +144,22 @@ it("updates the leading film and removes saved films through real card saves", a
   const theaters = screen.getByRole("region", { name: "Theaters" });
   const user = userEvent.setup();
   await user.click(
-    await within(theaters).findByRole("button", { name: "Add to watchlist" }),
+    within(
+      await within(theaters).findByRole("group", {
+        name: "Your actions for Film 2",
+      }),
+    ).getByRole("button", { name: "Watchlist", pressed: false }),
   );
   await screen.findByRole("heading", { level: 3, name: "Film 2" });
-  const second = within(theaters).getAllByRole("button", {
-    name: "Remove from watchlist",
-  })[0];
-  if (!second) throw new Error("Saved card missing");
+  const second = within(
+    within(theaters).getByRole("group", { name: "Your actions for Film 2" }),
+  ).getByRole("button", { name: "Watchlist", pressed: true });
   await user.click(second);
   await screen.findByRole("heading", { level: 3, name: "Film 1" });
   await user.click(
-    within(theaters).getByRole("button", { name: "Remove from watchlist" }),
+    within(
+      within(theaters).getByRole("group", { name: "Your actions for Film 1" }),
+    ).getByRole("button", { name: "Watchlist", pressed: true }),
   );
   await waitFor(() =>
     expect(

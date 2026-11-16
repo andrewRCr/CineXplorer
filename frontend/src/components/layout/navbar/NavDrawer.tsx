@@ -1,22 +1,30 @@
+import { useRef } from "react";
+import useAuthContext from "@/hooks/auth/useAuthContext";
+import { useLogDialog } from "./useLogDialog";
 import {
+  Button,
   Drawer,
   IconButton,
   Portal,
   useBreakpointValue,
 } from "@chakra-ui/react";
-import { LuMenu, LuX } from "react-icons/lu";
+import { LuMenu, LuPlus, LuX } from "react-icons/lu";
 import MainNavLinks from "./MainNavLinks";
 
 export default function NavDrawer() {
+  const auth = useAuthContext();
+  const openLog = useLogDialog();
+  const trigger = useRef<HTMLButtonElement>(null);
   // Reset portalled interaction state when its CSS-controlled row changes layout.
   const layout = useBreakpointValue(
     { base: "phone", lg: "wide" },
     { ssr: false },
   );
   return (
-    <Drawer.Root key={layout} placement="start">
+    <Drawer.Root key={layout} placement="start" unmountOnExit>
       <Drawer.Trigger asChild>
         <IconButton
+          ref={trigger}
           aria-label="Open menu"
           size="sm"
           variant="ghost"
@@ -59,10 +67,25 @@ export default function NavDrawer() {
             <Drawer.Body>
               <Drawer.Context>
                 {(drawer) => (
-                  <MainNavLinks
-                    direction="column"
-                    onNavigate={() => drawer.setOpen(false)}
-                  />
+                  <>
+                    {auth?.status === "authenticated" && (
+                      <Button
+                        w="full"
+                        mb="4"
+                        onClick={() => {
+                          drawer.setOpen(false);
+                          openLog(() => trigger.current);
+                        }}
+                      >
+                        <LuPlus />
+                        Log a film
+                      </Button>
+                    )}
+                    <MainNavLinks
+                      direction="column"
+                      onNavigate={() => drawer.setOpen(false)}
+                    />
+                  </>
                 )}
               </Drawer.Context>
             </Drawer.Body>

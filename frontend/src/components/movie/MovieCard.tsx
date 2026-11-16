@@ -1,22 +1,14 @@
-import {
-  Card,
-  Image,
-  Box,
-  ButtonGroup,
-  IconButton,
-  Center,
-  Text,
-} from "@chakra-ui/react";
+import { Card, Image, Box, Text, Icon } from "@chakra-ui/react";
 import { useState, useRef, useEffect, memo, useMemo, useCallback } from "react";
 import { Link, useSearchParams } from "react-router";
 import { type MovieListItem } from "@/types/movie";
-import { Tooltip } from "../core/chakra/tooltip";
-import { LuEye, LuHeart } from "react-icons/lu";
-import { RiPlayListAddLine, RiPlayListFill } from "react-icons/ri";
+import { MovieCardActions } from "./MovieCardActions";
+import { RatingStars } from "./RatingStars";
+import { LuEye } from "react-icons/lu";
+import { CARD_TEXT_HEIGHT } from "@/components/movie/collection/shared/gridConstants";
 import MovieUserScore from "./MovieUserScore";
 import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
 import PosterPlaceholder from "@/assets/PosterPlaceholder";
-import useAuthContext from "@/hooks/auth/useAuthContext";
 
 // ============================================================================
 // MovieCard Component
@@ -25,8 +17,8 @@ import useAuthContext from "@/hooks/auth/useAuthContext";
 // Displays a movie poster card with:
 // - Poster image with hover zoom effect
 // - Title (with tooltip for truncated titles)
-// - Release date and user score
-// - Action buttons (watched, liked, watchlist)
+// - Release year, score, watched mark and current rating
+// - Signed-in pointer controls or touch actions
 //
 // ============================================================================
 
@@ -39,15 +31,20 @@ interface MovieCardProps {
   movie: MovieListItem;
   source?: string;
   query?: string;
+  showControls?: boolean;
 }
 
-const MovieCard = ({ movie, source, query }: MovieCardProps) => {
+const MovieCard = ({
+  movie,
+  source,
+  query,
+  showControls = true,
+}: MovieCardProps) => {
   // ==========================================================================
   // State & Hooks
   // ==========================================================================
 
   const [searchParams] = useSearchParams();
-  const signedIn = useAuthContext()?.status === "authenticated";
   const [isTitleTooltipOpen, setIsTitleTooltipOpen] = useState(false);
   const [isTitleTruncated, setIsTitleTruncated] = useState(false);
   const [isCardHovered, setIsCardHovered] = useState(false);
@@ -62,35 +59,8 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   // Computed Values
   // ==========================================================================
 
-  const isOnWatchlist = state.user_on_watchlist;
-
-  // Format release date for display
-  // CRITICAL: Parse ISO date without timezone conversion to avoid date shift
-  // (e.g., "1980-01-01" displaying as "December 31, 1979" in US timezones)
-  const formattedDate = useMemo(() => {
-    if (!movie.release_date) return "Release date unknown";
-
-    const dateParts = movie.release_date.split("-");
-    if (dateParts.length !== 3) return "Release date unknown";
-
-    const year = Number.parseInt(dateParts[0] ?? "", 10);
-    const month = Number.parseInt(dateParts[1] ?? "", 10);
-    const day = Number.parseInt(dateParts[2] ?? "", 10);
-
-    if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
-      return "Release date unknown";
-    }
-
-    // Create date in local timezone (month is 0-indexed in Date constructor)
-    const date = new Date(year, month - 1, day);
-    if (Number.isNaN(date.getTime())) return "Release date unknown";
-
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  }, [movie.release_date]);
+  const releaseYear =
+    movie.release_date?.match(/^(\d{4})-\d{2}-\d{2}$/)?.[1] ?? "Year unknown";
 
   // Build query string preserving filter parameters (not pagination)
   const queryString = useMemo(() => {
@@ -160,28 +130,22 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
   }, [movie.title, checkTruncation]);
 
   // ==========================================================================
-  // Event Handlers
-  // ==========================================================================
-
-  const handleWatchlistToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    save({ user_on_watchlist: !state.user_on_watchlist });
-  };
-
-  // ==========================================================================
   // Render
   // ==========================================================================
 
   return (
     <Box
+      className="group"
       width="100%"
+      minW="138px"
       height="100%"
       position="relative"
       onMouseEnter={() => setIsCardHovered(true)}
       onMouseLeave={() => setIsCardHovered(false)}
     >
       <Card.Root
+        as="article"
+        aria-label={movie.title}
         color="foreground"
         bg="layer-01"
         height="100%"
@@ -190,50 +154,60 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
         position="relative"
         overflow="hidden"
         borderRadius={10}
-        border="1px solid"
-        borderColor="border-subtle-00"
+        borderWidth="0"
         boxShadow={isCardHovered ? "shadow-md" : "shadow-sm"}
         transition="all 0.3s ease-in-out"
         _hover={{ bg: "layer-hover-01" }}
       >
         {/* Poster Image */}
-        <Link
-          to={`/movie/${movie.tmdb_id}${queryString}`}
-          style={{ display: "block", textDecoration: "none" }}
-        >
-          <Box position="relative" paddingBottom="150%" overflow="hidden">
-            <Box
-              position="absolute"
-              top="0"
-              left="0"
-              width="100%"
-              height="100%"
-              transform={isCardHovered ? "scale(1.05)" : "scale(1)"}
-              transition="transform 0.3s ease-in-out"
-              transformOrigin="center center"
-            >
-              {posterUrl ? (
-                <Image
-                  width="100%"
-                  height="100%"
-                  objectFit="cover"
-                  src={posterUrl}
-                  alt={movie.title}
-                />
-              ) : (
-                <PosterPlaceholder
-                  width="100%"
-                  height="100%"
-                  aria-label={movie.title}
-                />
-              )}
+        <Box position="relative">
+          <Link
+            to={`/movie/${movie.tmdb_id}${queryString}`}
+            style={{ display: "block", textDecoration: "none" }}
+          >
+            <Box position="relative" paddingBottom="150%" overflow="hidden">
+              <Box
+                position="absolute"
+                top="0"
+                left="0"
+                width="100%"
+                height="100%"
+                transform={isCardHovered ? "scale(1.05)" : "scale(1)"}
+                transition="transform 0.3s ease-in-out"
+                transformOrigin="center center"
+              >
+                {posterUrl ? (
+                  <Image
+                    width="100%"
+                    height="100%"
+                    objectFit="cover"
+                    src={posterUrl}
+                    alt={movie.title}
+                  />
+                ) : (
+                  <PosterPlaceholder
+                    width="100%"
+                    height="100%"
+                    aria-label={movie.title}
+                  />
+                )}
+              </Box>
             </Box>
-          </Box>
-        </Link>
+          </Link>
+          {showControls && (
+            <MovieCardActions movie={movie} state={state} save={save} />
+          )}
+        </Box>
 
-        {/* Card Body: Title, Date, Score */}
+        {/* Fixed title, year, score and stars block */}
         <Box flex="1" display="flex" flexDirection="column">
-          <Card.Body display="flex" flexDirection="column" p={3} height="100px">
+          <Card.Body
+            display="flex"
+            flexDirection="column"
+            p={3}
+            height={`${CARD_TEXT_HEIGHT}px`}
+            flex="none"
+          >
             {/* Title with Tooltip */}
             <Box mb={2} position="relative">
               <Text
@@ -242,6 +216,7 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
                 fontWeight="semibold"
                 fontFamily="heading"
                 lineHeight="1.2"
+                minH="2.4em"
                 cursor="pointer"
                 overflow="hidden"
                 textOverflow="ellipsis"
@@ -311,70 +286,43 @@ const MovieCard = ({ movie, source, query }: MovieCardProps) => {
               )}
             </Box>
 
-            {/* Date and Score Row */}
+            {/* Year, score and watched mark */}
             <Box>
               <Box
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
+                gap={1}
               >
-                <Text fontSize="sm" fontFamily="body" color="on-muted">
-                  {formattedDate}
+                <Text
+                  fontSize="sm"
+                  fontFamily="body"
+                  color="on-muted"
+                  minW="0"
+                  truncate
+                >
+                  {releaseYear}
                 </Text>
                 <MovieUserScore
                   score={movie.vote_average}
                   voteCount={movie.vote_count}
                 />
+                {state.user_watched && (
+                  <Icon
+                    as={LuEye}
+                    role="img"
+                    aria-label="Watched"
+                    aria-hidden={false}
+                    boxSize="14px"
+                    flexShrink={0}
+                  />
+                )}
               </Box>
             </Box>
+            <Box minH="5" mt="1">
+              <RatingStars rating={state.user_rating} />
+            </Box>
           </Card.Body>
-
-          {/* Action Buttons */}
-          {signedIn && (
-            <Card.Footer p={3} pt={0}>
-              <Center width="100%">
-                <ButtonGroup size="sm" spaceX={1}>
-                  <Tooltip content="Watched" openDelay={500}>
-                    <IconButton variant="ghost" size="sm">
-                      <LuEye />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip content="Liked" openDelay={500}>
-                    <IconButton variant="ghost" size="sm">
-                      <LuHeart />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip
-                    content={
-                      isOnWatchlist
-                        ? "Remove from watchlist"
-                        : "Add to watchlist"
-                    }
-                    openDelay={500}
-                  >
-                    <IconButton
-                      variant="ghost"
-                      color={isOnWatchlist ? "tertiary" : undefined}
-                      size="sm"
-                      aria-label={
-                        isOnWatchlist
-                          ? "Remove from watchlist"
-                          : "Add to watchlist"
-                      }
-                      aria-pressed={isOnWatchlist}
-                      onClick={(event) => void handleWatchlistToggle(event)}
-                    >
-                      {isOnWatchlist ? (
-                        <RiPlayListFill />
-                      ) : (
-                        <RiPlayListAddLine />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                </ButtonGroup>
-              </Center>
-            </Card.Footer>
-          )}
         </Box>
 
         {/* Animated Accent Line */}
@@ -402,6 +350,15 @@ const MemoizedMovieCard = memo(MovieCard, (prevProps, nextProps) => {
     prevProps.movie.tmdb_id === nextProps.movie.tmdb_id &&
     prevProps.movie.user_movie_data?.user_on_watchlist ===
       nextProps.movie.user_movie_data?.user_on_watchlist &&
+    prevProps.movie.user_movie_data?.user_watched ===
+      nextProps.movie.user_movie_data?.user_watched &&
+    prevProps.movie.user_movie_data?.user_liked ===
+      nextProps.movie.user_movie_data?.user_liked &&
+    prevProps.movie.user_movie_data?.user_rating ===
+      nextProps.movie.user_movie_data?.user_rating &&
+    prevProps.movie.user_movie_data?.has_entries ===
+      nextProps.movie.user_movie_data?.has_entries &&
+    prevProps.showControls === nextProps.showControls &&
     prevProps.source === nextProps.source &&
     prevProps.query === nextProps.query
   );

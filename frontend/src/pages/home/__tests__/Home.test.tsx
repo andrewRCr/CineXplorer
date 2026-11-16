@@ -17,7 +17,7 @@ import {
 } from "@tests/mocks/movieData";
 import { homeFilm } from "./homeFixtures";
 import useAuthContext from "@/hooks/auth/useAuthContext";
-import { beforeEach, it, expect, onTestFinished } from "vitest";
+import { beforeEach, it, expect, onTestFinished, vi } from "vitest";
 import { render, screen, within } from "@tests/helpers/test-renderer";
 import { http, HttpResponse } from "msw/http";
 import { server } from "@tests/mocks/server";
@@ -38,6 +38,16 @@ beforeEach(() => {
   clearBrowserAuth();
   authHandlers();
   homeHandlers();
+  vi.spyOn(window, "matchMedia").mockImplementation((query) => ({
+    matches: query === "(hover: hover)",
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
 });
 it("holds the loading state without a headline while the session resolves", () => {
   const pending = gate();
@@ -78,7 +88,10 @@ it("composes signed-out Home in order with named sections and no card actions", 
   ).toEqual(["/browse/now-playing", "/browse/upcoming"]);
   const row = screen.getByRole("region", { name: "Popular in theaters" });
   expect(
-    within(row).queryByRole("button", { name: "Add to watchlist" }),
+    within(row).queryByRole("group", { name: /^Your actions for / }),
+  ).not.toBeInTheDocument();
+  expect(
+    within(row).queryByRole("button", { name: /^Actions for / }),
   ).not.toBeInTheDocument();
 });
 it("shows signed-in Home without the hero", async () => {
@@ -310,7 +323,11 @@ it("holds the nothing-saved set after a first save and shows the watchlist on th
   await screen.findByRole("heading", { name: "Welcome, Movie" });
   const user = userEvent.setup();
   await user.click(
-    await screen.findByRole("button", { name: "Add to watchlist" }),
+    within(
+      await screen.findByRole("group", {
+        name: `Your actions for ${homeFilm.title}`,
+      }),
+    ).getByRole("button", { name: "Watchlist", pressed: false }),
   );
   await screen.findByText("Added to watchlist");
   expect(

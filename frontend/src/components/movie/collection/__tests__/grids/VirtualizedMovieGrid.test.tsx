@@ -46,7 +46,14 @@ import {
 
 // Component under test
 import VirtualizedMovieGrid from "../../VirtualizedMovieGrid";
-import { SKELETON_COUNT } from "../../shared/gridConstants";
+import {
+  CARD_WIDTH,
+  CARD_TEXT_HEIGHT,
+  GAP,
+  SKELETON_COUNT,
+} from "../../shared/gridConstants";
+
+const ROW_HEIGHT = CARD_WIDTH * 1.5 + CARD_TEXT_HEIGHT;
 
 // Mocked dependencies
 import { useInfiniteMovies } from "@/hooks/movie/useInfiniteMovies";
@@ -113,13 +120,13 @@ describe("VirtualizedMovieGrid", () => {
     const [start, end] = visibleRange;
     mockVirtualItems = Array.from({ length: end - start }, (_, i) => ({
       index: start + i,
-      start: (start + i) * 449, // Fixed row height
-      size: 449,
+      start: (start + i) * ROW_HEIGHT, // Fixed row height
+      size: ROW_HEIGHT,
     }));
 
     return {
       getVirtualItems: () => mockVirtualItems,
-      getTotalSize: () => itemCount * 449,
+      getTotalSize: () => itemCount * ROW_HEIGHT,
       scrollToOffset: mockScrollToOffset,
       scrollOffset: 0,
       // Range for detecting "near bottom"
@@ -744,7 +751,7 @@ describe("VirtualizedMovieGrid", () => {
       const [firstCall] = vi.mocked(useWindowVirtualizer).mock.calls;
       assert.isDefined(firstCall);
       const config = firstCall[0];
-      expect(config.estimateSize(0)).toBe(449); // Fixed card height
+      expect(config.estimateSize(0)).toBe(CARD_WIDTH * 1.5 + CARD_TEXT_HEIGHT);
     });
 
     /**
@@ -767,7 +774,7 @@ describe("VirtualizedMovieGrid", () => {
 
       expect(useWindowVirtualizer).toHaveBeenCalledWith(
         expect.objectContaining({
-          gap: 16, // Standard spacing between cards
+          gap: GAP, // Standard spacing between cards
         }),
       );
     });
@@ -840,11 +847,11 @@ describe("VirtualizedMovieGrid", () => {
       // Return all 3 rows as visible
       const mockVirtualizer = {
         getVirtualItems: () => [
-          { index: 0, start: 0, size: 449 },
-          { index: 1, start: 465, size: 449 },
-          { index: 2, start: 930, size: 449 },
+          { index: 0, start: 0, size: ROW_HEIGHT },
+          { index: 1, start: ROW_HEIGHT + GAP, size: ROW_HEIGHT },
+          { index: 2, start: 2 * (ROW_HEIGHT + GAP), size: ROW_HEIGHT },
         ],
-        getTotalSize: () => 449 * 3,
+        getTotalSize: () => ROW_HEIGHT * 3,
         scrollToOffset: mockScrollToOffset,
         scrollOffset: 0,
         range: { startIndex: 0, endIndex: 3 },
@@ -882,8 +889,8 @@ describe("VirtualizedMovieGrid", () => {
       const movies = createMockMovies(1); // Just 1 movie
 
       const mockVirtualizer = {
-        getVirtualItems: () => [{ index: 0, start: 0, size: 449 }],
-        getTotalSize: () => 449,
+        getVirtualItems: () => [{ index: 0, start: 0, size: ROW_HEIGHT }],
+        getTotalSize: () => ROW_HEIGHT,
         scrollToOffset: mockScrollToOffset,
         scrollOffset: 0,
         range: { startIndex: 0, endIndex: 1 },
@@ -927,13 +934,13 @@ describe("VirtualizedMovieGrid", () => {
       // Simulate all rows visible (small content)
       const mockVirtualizer = {
         getVirtualItems: () => [
-          { index: 0, start: 0, size: 449 },
-          { index: 1, start: 465, size: 449 },
-          { index: 2, start: 930, size: 449 },
-          { index: 3, start: 1395, size: 449 },
-          { index: 4, start: 1860, size: 449 }, // Last row, index 4
+          { index: 0, start: 0, size: ROW_HEIGHT },
+          { index: 1, start: ROW_HEIGHT + GAP, size: ROW_HEIGHT },
+          { index: 2, start: 2 * (ROW_HEIGHT + GAP), size: ROW_HEIGHT },
+          { index: 3, start: 3 * (ROW_HEIGHT + GAP), size: ROW_HEIGHT },
+          { index: 4, start: 4 * (ROW_HEIGHT + GAP), size: ROW_HEIGHT }, // Last row, index 4
         ],
-        getTotalSize: () => 449 * 5,
+        getTotalSize: () => ROW_HEIGHT * 5,
         scrollToOffset: mockScrollToOffset,
         scrollOffset: 0,
         range: { startIndex: 0, endIndex: 5 },

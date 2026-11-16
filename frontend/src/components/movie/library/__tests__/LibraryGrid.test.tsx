@@ -16,7 +16,10 @@ import LibraryGrid from "@/components/movie/library/LibraryGrid";
 
 const url = `${apiBaseUrl}/user-movie-data/movies`;
 beforeEach(prepareLibrary);
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
 function grid() {
   return renderLibrary(
     <LibraryGrid
@@ -94,7 +97,19 @@ it("ends an empty collection at the first page", async () => {
 });
 
 it("retries a later page, drops repeats and stops at the last page", async () => {
-  measuredCollectionGeometry();
+  vi.useFakeTimers({
+    toFake: ["requestAnimationFrame", "cancelAnimationFrame"],
+  });
+  measuredCollectionGeometry((deliver) => requestAnimationFrame(deliver));
+  async function settleMeasurements() {
+    for (let frame = 0; frame < 20; frame++) {
+      await act(async () => {
+        await vi.runOnlyPendingTimersAsync();
+      });
+      if (vi.getTimerCount() === 0) return;
+    }
+    throw new Error("Row measurements did not settle");
+  }
   const entered = gate();
   const failure = gate();
   let fail = true;
@@ -126,12 +141,16 @@ it("retries a later page, drops repeats and stops at the last page", async () =>
   await act(async () => {
     await entered.wait;
   });
+  // Finish measurement compensation while the failed response is still held.
+  await settleMeasurements();
   const beforeFailure = window.scrollY;
   expect(beforeFailure).toBeGreaterThan(0);
   failure.release();
   expect(
     await screen.findByText("Couldn't load your watchlist."),
   ).toBeVisible();
+  expect(window.scrollY).toBe(beforeFailure);
+  await settleMeasurements();
   expect(window.scrollY).toBe(beforeFailure);
   fail = false;
   await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));

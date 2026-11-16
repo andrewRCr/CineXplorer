@@ -11,6 +11,12 @@ The Watchlist is a sortable poster grid, and the Library separates films seen fr
 undated reviews and selected personal changes. Explore, Watchlist and Library lead to distinct destinations, and
 opening a film from a personal page preserves its return destination and position while the app stays loaded.
 
+Main run 43796483399 on the merge `1bf420c2` failed one frontend test: a Library grid scroll check captured its
+baseline before the rows' measurements settled, so `ci-ok` failed and staging was not deployed. #212 made the test
+wait for the measurements before taking its baseline. Main run 43800907241 on its merge `dfa15bf7` passed CI, the
+staging deployment and the staging smoke run (20 passed; sign-up and the seven cases that write fixtures skipped on
+staging): the first deployment to include this work.
+
 ## Key Deliverables
 
 - Protected Library Films and History views, with combinable Liked and Rated filters, address-based sorting and
@@ -41,6 +47,8 @@ opening a film from a personal page preserves its return destination and positio
 ## Related Documentation
 
 - Design: `draft-user-movie-library.md`
+- Shared design: `draft-user-movie-uis.md`, moved here from the backlog, since the Library archived after the card
+  controls
 - PRD: `prd-user-movie-library.md`
 - Detailed work and criterion evidence: `tasks-user-movie-library.md`
 - Decisions: ADR-050; related Status notes on ADR-027, ADR-039 and ADR-044.

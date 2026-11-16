@@ -1,7 +1,10 @@
 import { vi } from "vitest";
 
 /** Native-like geometry with row measurements that can be unavailable on return. */
-export function measuredCollectionGeometry() {
+export function measuredCollectionGeometry(
+    // A controllable delivery boundary lets tests finish measuring before observing scroll.
+    scheduleMeasurement: (deliver: () => void) => void = queueMicrotask,
+) {
     let measurable = true;
     class MeasuredRowsObserver implements ResizeObserver {
         private targets = new Set<Element>();
@@ -14,7 +17,7 @@ export function measuredCollectionGeometry() {
                 !target.hasAttribute("data-index")
             )
                 return;
-            queueMicrotask(() => {
+            scheduleMeasurement(() => {
                 if (!this.targets.has(target) || !measurable) return;
                 const size = { blockSize: 300, inlineSize: 374 };
                 this.callback(

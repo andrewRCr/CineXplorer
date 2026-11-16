@@ -556,6 +556,24 @@ History, with each case of R34 that holds applied.
       Reload/second-return, both required grid widths and the complete 1024px bar also passed. The independent
       material fix check remains a separate code-review step.
 
+- [x] **6.4 Use semantic element queries in the Library browser journey**
+
+    **Goal:** The signed-in journey uses the permitted role, label and visible-text queries while retaining
+    film-specific save/removal checks and row containment of the complete film cells, including empty date slots.
+
+    - Replaced the card-class query with a named button in the controlled catalogue's fixture order. The journey
+      still finds the exact first film on Watchlist afterward, and removes it through its title-scoped grid cell
+      while checking that the second film remains.
+    - Replaced the date-slot test-ID query with semantic grid cells. Each cell must fit within its measured row,
+      and its scrollable content height must fit within the cell, so descendants such as the empty date slot cannot
+      overflow unnoticed. Explicit visible-row and visible-cell checks prevent an empty loop from passing.
+    - A retained browser proof executes the assertion block directly from the spec. With the original card/footer
+      structure reconstructed in that browser's DOM, the prior cell-bounds assertion accepts the broken layout and
+      the revised assertion rejects it. Reloading the intact application makes the revised assertion pass. No
+      application source or film records change for that reconstruction.
+    - The covering Chromium journey, single-file ESLint and formatting, frontend TypeScript and whitespace checks
+      passed. Application source did not change; existing component, backend, build and timing evidence was retained.
+
 ---
 
 ## Implementation Findings

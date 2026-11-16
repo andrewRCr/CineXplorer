@@ -73,18 +73,18 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
         },
     );
     expect([200, 201]).toContain(watched.status());
-    const firstCard = page.locator(".chakra-card__root").filter({
-        has: page.getByRole("link", { name: firstTitle, exact: true }),
-    });
-    await expect(firstCard).toHaveCount(1);
-    await firstCard
+    await expect(
+        page.getByRole("link", { name: firstTitle, exact: true }).first(),
+    ).toBeVisible();
+    // The controlled catalogue puts the first fixture before the second.
+    await page
         .getByRole("button", { name: "Add to watchlist", exact: true })
+        .first()
         .click();
     await expect(
-        firstCard.getByRole("button", {
-            name: "Remove from watchlist",
-            exact: true,
-        }),
+        page
+            .getByRole("button", { name: "Remove from watchlist", exact: true })
+            .first(),
     ).toHaveAttribute("aria-pressed", "true");
     await scanPage(page, info);
     await banner.getByRole("link", { name: "Watchlist", exact: true }).click();
@@ -108,14 +108,25 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
     const filmRows = page
         .getByRole("grid", { name: "Films", exact: true })
         .getByRole("row");
+    await expect(filmRows.first()).toBeVisible();
     for (const row of await filmRows.all()) {
         const rowBox = await row.boundingBox();
         if (!rowBox) throw new Error("Missing film row bounds");
-        for (const slot of await row.getByTestId("film-date-slot").all()) {
-            const slotBox = await slot.boundingBox();
-            if (!slotBox) throw new Error("Missing film date bounds");
-            expect(slotBox.y + slotBox.height).toBeLessThanOrEqual(
+        const cells = row.getByRole("gridcell");
+        await expect(cells.first()).toBeVisible();
+        for (const cell of await cells.all()) {
+            const cellBox = await cell.boundingBox();
+            if (!cellBox) throw new Error("Missing film cell bounds");
+            expect(cellBox.y + cellBox.height).toBeLessThanOrEqual(
                 rowBox.y + rowBox.height + 1,
+            );
+            // Include descendants that overflow an otherwise correctly sized cell.
+            const content = await cell.evaluate((element) => ({
+                height: element.clientHeight,
+                scrollHeight: element.scrollHeight,
+            }));
+            expect(content.scrollHeight).toBeLessThanOrEqual(
+                content.height + 1,
             );
         }
     }
@@ -164,7 +175,14 @@ test("save a film from Explore, find it on Watchlist and remove it", async ({
     await scanPage(page, info);
     await banner.getByRole("link", { name: "Watchlist", exact: true }).click();
     await expect(page).toHaveURL(new URL("/watchlist", target.baseURL).href);
-    await firstCard
+    const firstFilm = page
+        .getByRole("grid", { name: "Films", exact: true })
+        .getByRole("gridcell")
+        .filter({
+            has: page.getByRole("link", { name: firstTitle, exact: true }),
+        });
+    await expect(firstFilm).toHaveCount(1);
+    await firstFilm
         .getByRole("button", { name: "Remove from watchlist", exact: true })
         .click();
     await expect(

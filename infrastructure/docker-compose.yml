@@ -1,6 +1,9 @@
 services:
   backend:
     mem_limit: 1024m
+    # Empty on Docker. Rootless podman sets keep-id in infrastructure/.env, so the container user keeps the
+    # host user's ID and can read the owner-only dev key and env files.
+    userns_mode: ${USERNS_MODE:-}
     build:
       context: ../backend
       target: dev
@@ -46,6 +49,7 @@ services:
 
   frontend:
     mem_limit: 2048m
+    userns_mode: ${USERNS_MODE:-}
     build:
       context: ../frontend
       target: dev

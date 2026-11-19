@@ -370,6 +370,18 @@ function checkRemoval(main, name, keepBranch) {
     return { path, branch: entry.branch, project };
 }
 
+// Compose names the images it builds {project}-{service}. Podman's Docker-compatible API builds them without Compose's
+// project label, so teardown also matches these exact names; podman lists them under docker.io/library/.
+const BUILT_SERVICES = ["backend", "frontend"];
+
+function builtImages(main, project) {
+    const names = new Set(BUILT_SERVICES.map((service) => `${project}-${service}`));
+    return run(main, "docker", ["image", "ls", "--format", "{{.ID}} {{.Repository}}"]).split("\n")
+        .map((line) => line.trim().split(/\s+/))
+        .filter(([id, repository]) => id && repository && names.has(repository.split("/").at(-1)))
+        .map(([id]) => id);
+}
+
 function tearDown(main, { path, branch, project }, keepBranch, noStack) {
     if (noStack) {
         console.log(`Skipped Docker teardown for ${project ?? `cinexplorer-${nameOf(path, main)}`} (--no-stack). ` +
@@ -379,7 +391,8 @@ function tearDown(main, { path, branch, project }, keepBranch, noStack) {
         const filter = ["--filter", `label=com.docker.compose.project=${project}`, "-q"];
         for (const kind of ["container", "volume", "network", "image"]) {
             const listing = run(main, "docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), ...filter]);
-            const ids = [...new Set(listing.split(/\s+/).filter(Boolean))];
+            const named = kind === "image" ? builtImages(main, project) : [];
+            const ids = [...new Set([...listing.split(/\s+/).filter(Boolean), ...named])];
             if (!ids.length) continue;
             if (kind === "container") console.log(run(main, "docker", [kind, "stop", ...ids]));
             console.log(run(main, "docker", [kind, "rm", ...ids]));

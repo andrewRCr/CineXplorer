@@ -128,7 +128,9 @@ The entire application is designed to be run and deployed using containers.
   `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
 - **Development Environment (WSL2)**: The development environment runs on WSL2 with Docker.
   Both development images run as non-root users. Set `USER_UID` and `USER_GID` in `infrastructure/.env` to the
-  checkout owner's IDs (each defaults to 1000) so bind-mounted files stay writable. The frontend reuses the Node
+  checkout owner's IDs (each defaults to 1000) so bind-mounted files stay writable. On rootless podman, also set
+  `USERNS_MODE=keep-id` there: the backend and frontend containers then keep the host user's ID and can read the
+  owner-only dev key and environment files. Docker leaves it unset. The frontend reuses the Node
   image's `node` account and gives a fresh `frontend-node-modules` volume that user's ownership. Existing volumes
   retain their ownership and need separate migration before adopting a changed user. Create `frontend/logs` on the
   host before starting Compose; the worktree browser helper and CI do this automatically.

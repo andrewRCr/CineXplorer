@@ -89,7 +89,9 @@ if (command === 'docker' && args.includes('config')) {
     const project = process.env.CX_PROJECT ?? process.env.COMPOSE_PROJECT_NAME ?? env.match(/^COMPOSE_PROJECT_NAME=(.*)$/m)?.[1];
     console.log('name: ' + project + '\\nservices:\\n  backend:\\n    environment:\\n      SECRET: hidden-marker');
 }
-if (command === 'docker' && args.includes('ls')) console.log(process.env.CX_IDS || '');
+if (command === 'docker' && args.includes('ls')) {
+    console.log((args.includes('--format') ? process.env.CX_IMAGES : process.env.CX_IDS) || '');
+}
 `;
     for (const command of ["docker", "npm"]) {
         writeFileSync(join(bin, command), stub, { mode: 0o755 });
@@ -948,16 +950,50 @@ test("remove tears down all labelled resource kinds before removing a merged wor
         { command: "docker", args: ["container", "ls", "-a", "--filter", label, "-q"], cwd: f.main },
         { command: "docker", args: ["container", "stop", "first", "second"], cwd: f.main },
         { command: "docker", args: ["container", "rm", "first", "second"], cwd: f.main },
-        ...["volume", "network", "image"].flatMap((kind) => [
+        ...["volume", "network"].flatMap((kind) => [
             { command: "docker", args: [kind, "ls", "--filter", label, "-q"], cwd: f.main },
             { command: "docker", args: [kind, "rm", "first", "second"], cwd: f.main },
         ]),
+        { command: "docker", args: ["image", "ls", "--filter", label, "-q"], cwd: f.main },
+        { command: "docker", args: ["image", "ls", "--format", IMAGE_FORMAT], cwd: f.main },
+        { command: "docker", args: ["image", "rm", "first", "second"], cwd: f.main },
     ]);
     assert.equal(existsSync(path), false);
     assert.doesNotMatch(git(f.main, "worktree", "list", "--porcelain"), /primary\.sample/);
     assert.equal(git(f.main, "branch", "--list", "fix/sample"), "");
     assert.equal(git(f.main, "branch", "--show-current"), "chore/elsewhere");
     assert.match(readFileSync(trace, "utf8"), /git fetch --prune/);
+});
+
+const IMAGE_FORMAT = "{{.ID}} {{.Repository}}";
+
+test("remove also deletes the stack's built images by name, which some runtimes leave unlabelled", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    const images = [
+        "aaa docker.io/library/cinexplorer-sample-backend",
+        "bbb cinexplorer-sample-frontend",
+        "ccc docker.io/library/cinexplorer-sample-extra-backend",
+        "ddd cinexplorer-sample-extra-frontend",
+        "eee docker.io/library/postgres",
+        "fff <none>",
+    ].join("\n");
+    success(f.invoke(f.main, ["remove", "sample"], { CX_IMAGES: images }));
+    const removals = f.calls().filter((call) => call.args[1] === "rm");
+    assert.deepEqual(removals.map((call) => call.args), [["image", "rm", "aaa", "bbb"]]);
+    assert.equal(existsSync(path), false);
+});
+
+test("remove deletes an image once when it is both labelled and named for the stack", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    success(f.invoke(f.main, ["remove", "sample"], {
+        CX_IDS: "aaa", CX_IMAGES: "aaa cinexplorer-sample-backend\nbbb cinexplorer-other-backend",
+    }));
+    const removals = f.calls().filter((call) => call.args[0] === "image" && call.args[1] === "rm");
+    assert.deepEqual(removals.map((call) => call.args), [["image", "rm", "aaa"]]);
 });
 
 for (const flags of [["--no-stack"], ["--keep-branch", "--no-stack"], ["--no-stack", "--keep-branch"]]) {
@@ -1007,7 +1043,7 @@ test("remove skips empty resource listings", (t) => {
     success(f.invoke(f.main, ["remove", "sample"]));
     assert.equal(existsSync(path), false);
     assert.deepEqual(f.calls().map((call) => call.args.slice(0, 2)), [
-        ["container", "ls"], ["volume", "ls"], ["network", "ls"], ["image", "ls"],
+        ["container", "ls"], ["volume", "ls"], ["network", "ls"], ["image", "ls"], ["image", "ls"],
     ]);
 });
 
@@ -1078,7 +1114,8 @@ test("finish updates main, runs the closing steps around removal and deletes the
     success(result);
     const closing = (phase, present) => ({ command: "closing", args: [phase, "sample"], cwd: f.main, present });
     assert.deepEqual(f.calls().map((call) => (call.command === "docker" ? call.args[0] : call)), [
-        closing("before-remove", true), "container", "volume", "network", "image", closing("after-remove", false),
+        closing("before-remove", true), "container", "volume", "network", "image", "image",
+        closing("after-remove", false),
     ]);
     assert.equal(git(f.main, "rev-parse", "HEAD"), git(f.main, "rev-parse", "origin/main"));
     assert.equal(git(f.main, "ls-remote", "--heads", "origin", "fix/sample"), "");

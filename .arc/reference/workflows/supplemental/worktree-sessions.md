@@ -156,7 +156,9 @@ node scripts/worktree.mjs browse
 This validates the effective Compose project name, including environment overrides, before starting the stack or
 changing its database. It creates `frontend/logs` as the host user before Docker mounts it, so a fresh checkout
 gets writable logs rather than a root-owned bind source. Both development images take `USER_UID` and `USER_GID`
-from `infrastructure/.env` (default 1000); set them to the checkout owner's IDs before building. It then starts all
+from `infrastructure/.env` (default 1000); set them to the checkout owner's IDs before building. On rootless podman,
+also set `USERNS_MODE=keep-id` in the main checkout's `infrastructure/.env`, which provisioning copies into each
+worktree. It then starts all
 five services with the `browser` profile, waits for them to run and for
 health checks to pass, then applies migrations and runs `seed_dev_data`. The printed address is
 `https://localhost:{SITE_PORT}`; sign in
@@ -197,8 +199,9 @@ session home and confirms that home is active before removal; the conversation c
 `remove` fetches `origin` and refuses an unmerged branch, a locked worktree, uncommitted or untracked work, or an
 unexpected Compose project name before deleting anything. It stops and removes containers and removes volumes,
 networks and built images carrying the worktree's project label, even if the containers were already stopped or
-removed. It then removes the checkout, deletes the merged local branch and prunes remote-tracking refs. An env file
-that names no project skips Docker teardown.
+removed, and the backend and frontend images Compose built for the project, matched by name, since podman builds them
+without the label. It then removes the checkout, deletes the merged local branch and prunes remote-tracking refs. An
+env file that names no project skips Docker teardown.
 
 For a review checkout or abandoned work whose branch must stay:
 

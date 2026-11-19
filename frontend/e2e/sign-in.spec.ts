@@ -1,5 +1,6 @@
 import { scanPage } from "./axe";
 import { test, expect } from "./fixtures";
+import { submitLogin } from "./login";
 import { target } from "./target";
 import type { Locator, Page } from "@playwright/test";
 
@@ -182,10 +183,12 @@ for (const rememberMe of [false, true]) {
         if (rememberMe)
             await page.getByText("Remember Me", { exact: true }).click();
         await expect(checkbox).toBeChecked({ checked: rememberMe });
-        await page
-            .getByRole("button", { name: "Login", exact: true })
-            .last()
-            .click();
+        await submitLogin(page, info, () =>
+            page
+                .getByRole("button", { name: "Login", exact: true })
+                .last()
+                .click(),
+        );
         await expect(page).toHaveURL(new URL("/", target.baseURL).href);
         await expect(
             page.getByRole("heading", {

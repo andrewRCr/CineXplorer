@@ -1,7 +1,7 @@
-import { setTimeout as delay } from "node:timers/promises";
 import type { Locator, Page, TestInfo } from "@playwright/test";
 import { expect } from "./tracking-fixture";
 import { scanPage } from "./axe";
+import { submitLogin } from "./login";
 
 export type InputMode = "mouse" | "keyboard" | "touch";
 
@@ -63,40 +63,18 @@ export async function signIn(
     await scanPage(page, info);
     await input.type(usernameField, username);
     await input.type(page.getByLabel("Password", { exact: true }), password);
-    for (let attempt = 0; attempt < 2; attempt++) {
-        const answer = page.waitForResponse(
-            (response) =>
-                new URL(response.url()).pathname === "/api/token/" &&
-                response.request().method() === "POST",
-        );
-        await input.activate(
+    await submitLogin(page, info, () =>
+        input.activate(
             page.getByRole("button", { name: "Login", exact: true }),
-        );
-        const response = await answer;
-        if (response.status() !== 429) {
-            expect(response.ok()).toBe(true);
-            await expect(
-                page.getByRole("heading", {
-                    name: "Popular in theaters",
-                    exact: true,
-                }),
-            ).toBeVisible();
-            await scanPage(page, info);
-            return;
-        }
-        // Other smoke specs and manual checks share the IP-based login window.
-        const seconds = Number(response.headers()["retry-after"] ?? 60);
-        expect(seconds).toBeGreaterThanOrEqual(0);
-        expect(seconds).toBeLessThanOrEqual(60);
-        info.annotations.push({
-            type: "login-throttle",
-            description: `HTTP 429; waiting ${seconds + 1}s before one retry`,
-        });
-        if (attempt === 0) await delay((seconds + 1) * 1000);
-    }
-    throw new Error(
-        "Local sign-in remained rate-limited after its retry window",
+        ),
     );
+    await expect(
+        page.getByRole("heading", {
+            name: "Popular in theaters",
+            exact: true,
+        }),
+    ).toBeVisible();
+    await scanPage(page, info);
 }
 
 export async function color(control: Locator, token: string) {

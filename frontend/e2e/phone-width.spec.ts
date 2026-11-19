@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { scanPage } from "./axe";
 import { test, expect } from "./fixtures";
+import { submitLogin } from "./login";
 import { target } from "./target";
 
 test.use({ viewport: { width: 360, height: 800 } });
@@ -88,7 +89,9 @@ test("phone navigation fits and opens the drawer, search and account menu", asyn
         .getByLabel("Username or Email Address", { exact: true })
         .fill(target.username);
     await page.getByLabel("Password", { exact: true }).fill(target.password);
-    await page.getByRole("button", { name: "Login", exact: true }).click();
+    await submitLogin(page, info, () =>
+        page.getByRole("button", { name: "Login", exact: true }).click(),
+    );
     await expect(
         page.getByRole("heading", {
             name: "Popular in theaters",

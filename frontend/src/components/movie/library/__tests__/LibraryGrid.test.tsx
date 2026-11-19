@@ -101,12 +101,19 @@ it("retries a later page, drops repeats and stops at the last page", async () =>
     toFake: ["requestAnimationFrame", "cancelAnimationFrame"],
   });
   measuredCollectionGeometry((deliver) => requestAnimationFrame(deliver));
+  // The virtualizer defers row measurements while it counts the page as scrolling, and stops counting 150 ms of real
+  // time after the last scroll event. Settled means no frame is pending and the position held through a longer wait.
   async function settleMeasurements() {
-    for (let frame = 0; frame < 20; frame++) {
+    for (let round = 0; round < 20; round++) {
       await act(async () => {
         await vi.runOnlyPendingTimersAsync();
       });
-      if (vi.getTimerCount() === 0) return;
+      if (vi.getTimerCount() > 0) continue;
+      const position = window.scrollY;
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      });
+      if (vi.getTimerCount() === 0 && window.scrollY === position) return;
     }
     throw new Error("Row measurements did not settle");
   }

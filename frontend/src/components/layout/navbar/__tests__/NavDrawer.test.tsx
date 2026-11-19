@@ -9,6 +9,7 @@ import AuthContextProvider from "@/components/auth/AuthContextProvider";
 import { setAuthTokens } from "@/utilities/tokenUtils";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { waitForFocusWithin } from "@tests/helpers/focus";
 import { gate } from "@tests/helpers/web-locks";
 import { server } from "@tests/mocks/server";
 import { styleSystem, expectResolvedColor } from "@tests/helpers/theme-styles";
@@ -81,7 +82,8 @@ it.each(["Escape", "close button"])(
     renderDrawer();
     const trigger = screen.getByRole("button", { name: "Open menu" });
     await user.click(trigger);
-    await screen.findByRole("dialog", { name: "Menu" });
+    const drawer = await screen.findByRole("dialog", { name: "Menu" });
+    await waitForFocusWithin(drawer);
     if (method === "Escape") await user.keyboard("{Escape}");
     else await user.click(screen.getByRole("button", { name: "Close menu" }));
     await waitFor(() =>
@@ -178,9 +180,11 @@ it("opens Log a film above the links, closes the drawer and restores focus to Op
   expect(
     await screen.findByRole("dialog", { name: "Review or log" }),
   ).toBeVisible();
-  expect(
-    screen.queryByRole("dialog", { name: "Menu" }),
-  ).not.toBeInTheDocument();
+  await waitFor(() =>
+    expect(
+      screen.queryByRole("dialog", { name: "Menu" }),
+    ).not.toBeInTheDocument(),
+  );
   expect(screen.getByRole("combobox", { name: "Film" })).toBeVisible();
   expect(screen.getByRole("switch", { name: "Watched on" })).toBeChecked();
   await user.click(screen.getByRole("button", { name: "Cancel" }));

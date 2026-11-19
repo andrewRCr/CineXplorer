@@ -11,6 +11,7 @@ import { setAuthTokens } from "@/utilities/tokenUtils";
 import type { MovieEntries } from "@/services/userMovieDataService";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { waitForFocusWithin } from "@tests/helpers/focus";
 import {
   createMockMovieDetail,
   createMockMovieListItem,
@@ -102,13 +103,27 @@ function start() {
 const actions = () =>
   screen.getByRole("group", { name: `Your actions for ${title}` });
 const nav = () => screen.getByRole("navigation", { name: "Main" });
+// A route's first visit loads its module, which alone can outlast the default second on a slow runner.
+const coldRoute = { timeout: 5000 };
+// The journey takes 6 to 8 s on CI before any of its waits run long, so it needs more than the 10 s default.
+vi.setConfig({ testTimeout: 30000 });
+// Choosing a star moves focus to it on the next animation frame; let that frame pass before typing elsewhere, or
+// the keys typed after it go to the star.
+async function nextFrame() {
+  await act(async () => {
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+  });
+}
+
 async function visitFilm(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(nav()).getByRole("link", { name: "Explore" }));
   const links = await screen.findAllByRole("link", { name: title });
   const link = links[0];
   if (!link) throw new Error("Expected a film link");
   await user.click(link);
-  await screen.findByRole("heading", { name: title });
+  await screen.findByRole("heading", { name: title }, coldRoute);
 }
 
 beforeEach(() => {
@@ -245,6 +260,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
     const firstDialog = await screen.findByRole("dialog", {
       name: "Review or log",
     });
+    await waitForFocusWithin(firstDialog);
     await waitFor(() =>
       expect(
         within(firstDialog).getByRole("textbox", { name: "Review" }),
@@ -268,6 +284,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
     expect(
       within(stars).getByRole("radio", { checked: true }),
     ).toHaveAccessibleName("3.5 stars");
+    await nextFrame();
     await user.type(
       within(firstDialog).getByRole("textbox", { name: "Review" }),
       firstEntry.review,
@@ -296,7 +313,9 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
       },
     ]);
     await user.click(within(nav()).getByRole("link", { name: "Watchlist" }));
-    expect(await screen.findByText("Your watchlist is empty")).toBeVisible();
+    expect(
+      await screen.findByText("Your watchlist is empty", {}, coldRoute),
+    ).toBeVisible();
     await visitFilm(user);
     const log = await screen.findByRole("region", { name: "Your log" });
     expect(await within(log).findByText(firstEntry.review)).toBeVisible();
@@ -311,6 +330,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
     const secondDialog = await screen.findByRole("dialog", {
       name: "Review or log",
     });
+    await waitForFocusWithin(secondDialog);
     expect(
       within(secondDialog).getByRole("checkbox", { name: "Rewatch" }),
     ).toBeChecked();
@@ -322,6 +342,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
         within(secondDialog).getByRole("radiogroup", { name: "Rating" }),
       ).getByRole("radio", { name: "5 stars" }),
     );
+    await nextFrame();
     await user.type(
       within(secondDialog).getByRole("textbox", { name: "Review" }),
       secondEntry.review,

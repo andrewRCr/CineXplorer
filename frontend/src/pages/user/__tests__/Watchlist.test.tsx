@@ -147,7 +147,8 @@ it("offers Retry after its first page fails", async () => {
   expect(
     await screen.findByText("Couldn't load your watchlist."),
   ).toBeVisible();
-  expect(await screen.findByText("Server error")).toBeVisible();
+  // The toast mounts hidden and shows a frame later.
+  await waitFor(() => expect(screen.getByText("Server error")).toBeVisible());
   failed = false;
   await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
   expect(

@@ -11,6 +11,7 @@ import { setAuthTokens } from "@/utilities/tokenUtils";
 import type { MovieEntries } from "@/services/userMovieDataService";
 import { TestProviders } from "@tests/helpers/test-providers";
 import { authHandlers, clearBrowserAuth, token } from "@tests/helpers/auth";
+import { waitForFocusWithin } from "@tests/helpers/focus";
 import {
   createMockMovieDetail,
   createMockMovieListItem,
@@ -102,13 +103,16 @@ function start() {
 const actions = () =>
   screen.getByRole("group", { name: `Your actions for ${title}` });
 const nav = () => screen.getByRole("navigation", { name: "Main" });
+// A route's first visit loads its module, which alone can outlast the default second on a slow runner.
+const coldRoute = { timeout: 5000 };
+
 async function visitFilm(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(nav()).getByRole("link", { name: "Explore" }));
   const links = await screen.findAllByRole("link", { name: title });
   const link = links[0];
   if (!link) throw new Error("Expected a film link");
   await user.click(link);
-  await screen.findByRole("heading", { name: title });
+  await screen.findByRole("heading", { name: title }, coldRoute);
 }
 
 beforeEach(() => {
@@ -245,6 +249,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
     const firstDialog = await screen.findByRole("dialog", {
       name: "Review or log",
     });
+    await waitForFocusWithin(firstDialog);
     await waitFor(() =>
       expect(
         within(firstDialog).getByRole("textbox", { name: "Review" }),
@@ -296,7 +301,9 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
       },
     ]);
     await user.click(within(nav()).getByRole("link", { name: "Watchlist" }));
-    expect(await screen.findByText("Your watchlist is empty")).toBeVisible();
+    expect(
+      await screen.findByText("Your watchlist is empty", {}, coldRoute),
+    ).toBeVisible();
     await visitFilm(user);
     const log = await screen.findByRole("region", { name: "Your log" });
     expect(await within(log).findByText(firstEntry.review)).toBeVisible();
@@ -311,6 +318,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
     const secondDialog = await screen.findByRole("dialog", {
       name: "Review or log",
     });
+    await waitForFocusWithin(secondDialog);
     expect(
       within(secondDialog).getByRole("checkbox", { name: "Rewatch" }),
     ).toBeChecked();

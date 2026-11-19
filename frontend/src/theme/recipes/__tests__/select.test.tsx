@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { Select, createListCollection } from "@chakra-ui/react";
 import userEvent from "@testing-library/user-event";
 import { expect, it } from "vitest";
-import { render, screen, within } from "@tests/helpers/test-renderer";
+import { render, screen, waitFor, within } from "@tests/helpers/test-renderer";
 import {
   expectResolvedColor,
   resolveTokenColor,
@@ -100,6 +100,8 @@ async function openPicker({ dark = false } = {}) {
   const trigger = screen.getByRole("combobox", { name: "Pick" });
   await user.click(trigger);
   const list = await screen.findByRole("listbox");
+  // The open list takes focus a frame later; keys pressed before then reach the trigger instead.
+  await waitFor(() => expect(list).toHaveFocus());
   return { user, trigger, list };
 }
 

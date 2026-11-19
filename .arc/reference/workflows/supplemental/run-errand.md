@@ -37,9 +37,8 @@ local harness and the primary inbox are intentional shared destinations.
 
 ## Approval Routes
 
-An errand stops five times for the Owner: to commit, to push and open the pull request with its text, to choose the
-review route, to approve the review dispositions, and to merge. By default each stop takes its own approval, as the
-steps below describe.
+By default an errand stops for the Owner's approval before it commits, pushes and opens the pull request (§ 3), to
+choose the review route (§ 4), to approve the review dispositions, and to merge (§ 5).
 
 Instead, the Owner may approve the errand's plan once
 ([DEVELOPMENT-RULES § Manual Commit Control](../../constitution/DEVELOPMENT-RULES.md#manual-commit-control)), recorded
@@ -50,20 +49,26 @@ as the Owner directs. Present the plan before making the change:
 - the pull request's title and what its body will say;
 - the review route (§ 4), and the conditions the plan runs to, such as CI green and a clean review.
 
+End it with one approval question naming what the plan releases (the commit, the push and pull request, and the
+named review with its one re-run) and what keeps its own approval (the dispositions and the merge).
+
 The approved plan covers the commit, the push and the pull request, CI monitoring, and the review route it names, up
-to a merge-ready pull request: the work runs through those steps without stopping and reports at the result. A check
-that fails mechanically inside the change
-([Quality Gate Failure Protocol](../../constitution/DEVELOPMENT-RULES.md#quality-gate-failure-protocol)) is fixed
-under the plan, its commit and push included. The plan stops anyway, and asks, when the work would:
+to a merge-ready pull request: the work runs through those steps without stopping and reports at the result. It
+covers that one commit: a mechanical fix made before it rides it
+([Quality Gate Failure Protocol](../../constitution/DEVELOPMENT-RULES.md#quality-gate-failure-protocol)), and any
+later commit needs its own approval. The plan stops anyway, and asks, when the work would:
 
 - leave the plan's scope or change the plan;
 - do anything irreversible;
 - spend beyond the plan, such as a hosted review it didn't name;
-- go past any other failing check.
+- go past a failing check.
 
-It never covers the review dispositions or the merge. Any review finding ends the plan: the findings follow
-[agent-pre-merge-review.md](agent-pre-merge-review.md), whose approvals govern what comes after. The merge stays one
-short ask for the exact head (§ 5).
+Review findings keep their own approval: the Owner approves the dispositions and the fix batch they release
+([agent-pre-merge-review.md § 3](agent-pre-merge-review.md#3-present-the-complete-set-then-edit)). The plan then runs
+its named route once more on the repaired head, in place of asking for the next pass, and a hosted request posts
+after the fix push. If that second round finds anything, the plan ends and
+[agent-pre-merge-review.md](agent-pre-merge-review.md) governs what follows. The plan never covers the merge, which
+stays one short ask for the exact head (§ 5).
 
 ## Steps
 

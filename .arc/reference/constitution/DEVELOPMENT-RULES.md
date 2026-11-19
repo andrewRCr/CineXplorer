@@ -22,7 +22,7 @@ by all contributors, including AI assistants.
   (parent task marked `[x]` if all subtasks complete)
 - **Never commit stale task docs**: Task list updates must be saved and included in commits for completed work
 - AI reports completion, then awaits commit instructions
-- **An errand's plan can carry these approvals**: the Owner may approve an errand's plan once, in place of separate
+- **An errand's plan can carry these approvals**: the Owner may approve an errand's plan once, in place of the
   approvals for its commit, its push with the pull request text, and its review route. The plan runs to a merge-ready
   pull request and stops early on the conditions in
   [run-errand.md § Approval Routes](../workflows/supplemental/run-errand.md#approval-routes). Review dispositions and

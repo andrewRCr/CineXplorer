@@ -371,15 +371,18 @@ function checkRemoval(main, name, keepBranch) {
 }
 
 // Compose names the images it builds {project}-{service}. Podman's Docker-compatible API builds them without Compose's
-// project label, so teardown also matches these exact names; podman lists them under docker.io/library/.
+// project label, so teardown also matches these exact names; podman lists them under docker.io/library/. A build
+// identical to the primary's shares its image ID under a second name, and an image with two names can't be removed by
+// ID without force, which would take the primary's too. So each is removed by its name, which deletes the image only
+// when no other name is left on it.
 const BUILT_SERVICES = ["backend", "frontend"];
 
 function builtImages(main, project) {
     const names = new Set(BUILT_SERVICES.map((service) => `${project}-${service}`));
-    return run(main, "docker", ["image", "ls", "--format", "{{.ID}} {{.Repository}}"]).split("\n")
+    return run(main, "docker", ["image", "ls", "--format", "{{.ID}} {{.Repository}} {{.Tag}}"]).split("\n")
         .map((line) => line.trim().split(/\s+/))
         .filter(([id, repository]) => id && repository && names.has(repository.split("/").at(-1)))
-        .map(([id]) => id);
+        .map(([id, repository, tag]) => ({ id, name: tag && tag !== "<none>" ? `${repository}:${tag}` : id }));
 }
 
 function tearDown(main, { path, branch, project }, keepBranch, noStack) {
@@ -390,12 +393,15 @@ function tearDown(main, { path, branch, project }, keepBranch, noStack) {
     if (project && !noStack) {
         const filter = ["--filter", `label=com.docker.compose.project=${project}`, "-q"];
         for (const kind of ["container", "volume", "network", "image"]) {
-            const listing = run(main, "docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), ...filter]);
-            const named = kind === "image" ? builtImages(main, project) : [];
-            const ids = [...new Set([...listing.split(/\s+/).filter(Boolean), ...named])];
-            if (!ids.length) continue;
-            if (kind === "container") console.log(run(main, "docker", [kind, "stop", ...ids]));
-            console.log(run(main, "docker", [kind, "rm", ...ids]));
+            const labelled = run(main, "docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), ...filter])
+                .split(/\s+/).filter(Boolean);
+            const named = kind === "image"
+                ? builtImages(main, project).filter(({ id }) => !labelled.includes(id)).map(({ name }) => name)
+                : [];
+            const targets = [...new Set([...labelled, ...named])];
+            if (!targets.length) continue;
+            if (kind === "container") console.log(run(main, "docker", [kind, "stop", ...targets]));
+            console.log(run(main, "docker", [kind, "rm", ...targets]));
         }
     }
     git(main, "worktree", "remove", path);

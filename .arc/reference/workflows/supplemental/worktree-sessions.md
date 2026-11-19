@@ -200,8 +200,9 @@ session home and confirms that home is active before removal; the conversation c
 unexpected Compose project name before deleting anything. It stops and removes containers and removes volumes,
 networks and built images carrying the worktree's project label, even if the containers were already stopped or
 removed, and the backend and frontend images Compose built for the project, matched by name, since podman builds them
-without the label. It then removes the checkout, deletes the merged local branch and prunes remote-tracking refs. An
-env file that names no project skips Docker teardown.
+without the label. It removes those by name too: a worktree build identical to the primary's shares its image, which
+then keeps the primary's name. It then removes the checkout, deletes the merged local branch and prunes
+remote-tracking refs. An env file that names no project skips Docker teardown.
 
 For a review checkout or abandoned work whose branch must stay:
 

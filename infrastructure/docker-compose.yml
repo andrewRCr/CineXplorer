@@ -1,3 +1,4 @@
+# Every published port binds 127.0.0.1, so the development database, Redis and dev servers stay off the network.
 services:
   backend:
     mem_limit: 1024m
@@ -11,7 +12,7 @@ services:
         USER_UID: ${USER_UID:-1000}
         USER_GID: ${USER_GID:-1000}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ../backend:/backend:cached
       - ../backend/logs:/backend/logs:cached
@@ -58,7 +59,7 @@ services:
         USER_UID: ${USER_UID:-1000}
         USER_GID: ${USER_GID:-1000}
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
     volumes:
       - ../frontend:/frontend:cached
       - ../frontend/logs:/frontend/logs:cached
@@ -76,7 +77,7 @@ services:
     mem_limit: 512m
     image: postgres:17-alpine3.24
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - dev-db-data:/var/lib/postgresql/data
     environment:
@@ -95,7 +96,7 @@ services:
     mem_limit: 128m
     image: redis:7.4-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     command: redis-server --appendonly yes
@@ -112,7 +113,7 @@ services:
     mem_limit: 128m
     image: caddy:latest
     ports:
-      - "8444:8444"
+      - "127.0.0.1:8444:8444"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./dev-certs/cert.pem:/etc/caddy/cert.pem:ro

@@ -50,7 +50,8 @@ demonstrating disciplined software engineering practices, comprehensive testing,
 - **Stop on anomalies** - Treat unexpected filesystem diffs as a stop signal and request guidance
 - **Limit scope** - Avoid global mutations or widespread changes without explicit approval
 - **One task at a time** - Stop for approval after each task, unless the Owner has opened a deferred-review scope
-- **Manual commit control** - AI NEVER initiates commits without explicit user approval or instruction
+- **Manual commit control** - AI NEVER initiates commits without explicit user approval or instruction; for an
+  errand, an approved plan gives it (see DEVELOPMENT-RULES § Manual Commit Control)
 - **Verify before asserting** - Never guess file paths, implementation details, or content. Use Grep/Glob/Read
   to verify, or ask clarifying questions when uncertain. See DEVELOPMENT-RULES Verification Protocol.
 - **Check strategy guidance** - Before implementing in codified domains (theming, auth, testing, layout), grep

@@ -105,6 +105,17 @@ const actions = () =>
 const nav = () => screen.getByRole("navigation", { name: "Main" });
 // A route's first visit loads its module, which alone can outlast the default second on a slow runner.
 const coldRoute = { timeout: 5000 };
+// The journey takes 6 to 8 s on CI before any of its waits run long, so it needs more than the 10 s default.
+vi.setConfig({ testTimeout: 30000 });
+// Choosing a star moves focus to it on the next animation frame; let that frame pass before typing elsewhere, or
+// the keys typed after it go to the star.
+async function nextFrame() {
+  await act(async () => {
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve()),
+    );
+  });
+}
 
 async function visitFilm(user: ReturnType<typeof userEvent.setup>) {
   await user.click(within(nav()).getByRole("link", { name: "Explore" }));
@@ -273,6 +284,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
     expect(
       within(stars).getByRole("radio", { checked: true }),
     ).toHaveAccessibleName("3.5 stars");
+    await nextFrame();
     await user.type(
       within(firstDialog).getByRole("textbox", { name: "Review" }),
       firstEntry.review,
@@ -330,6 +342,7 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
         within(secondDialog).getByRole("radiogroup", { name: "Rating" }),
       ).getByRole("radio", { name: "5 stars" }),
     );
+    await nextFrame();
     await user.type(
       within(secondDialog).getByRole("textbox", { name: "Review" }),
       secondEntry.review,

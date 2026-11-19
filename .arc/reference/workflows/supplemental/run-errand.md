@@ -64,11 +64,12 @@ later commit needs its own approval. The plan stops anyway, and asks, when the w
 - go past a failing check.
 
 Review findings keep their own approval: the Owner approves the dispositions and the fix batch they release
-([agent-pre-merge-review.md § 3](agent-pre-merge-review.md#3-present-the-complete-set-then-edit)), and any fix check
-the Owner chooses runs and converges first. The plan then runs its named route once more on the resulting head, in
-place of asking for the next pass; a hosted request posts after that head's last push. If that pass finds anything,
-the plan ends and [agent-pre-merge-review.md](agent-pre-merge-review.md) governs what follows. The plan never covers
-the merge, which stays one short ask for the exact head (§ 5).
+([agent-pre-merge-review.md § 3](agent-pre-merge-review.md#3-present-the-complete-set-then-edit)). When that set
+lands fixes, any fix check the Owner chooses runs and converges first, and the plan then runs its named route once
+more on the repaired head, in place of asking for the next pass; a hosted request posts after that head's last push.
+If that pass finds anything, the plan ends and [agent-pre-merge-review.md](agent-pre-merge-review.md) governs what
+follows. When the set lands no fixes, the plan goes on to merge readiness. The plan never covers the merge, which
+stays one short ask for the exact head (§ 5).
 
 ## Steps
 

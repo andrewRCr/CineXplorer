@@ -2,6 +2,7 @@ import { scanPage } from "./axe";
 import { movieDetail, moviePage } from "./catalogue";
 import type { components } from "@/types/api";
 import { test, expect } from "./fixtures";
+import { submitLogin } from "./login";
 import { target } from "./target";
 
 const FIRST_FILM = 2000000001;
@@ -51,7 +52,9 @@ test("save from Explore and log from Watchlist across the Library", async ({
         .fill(target.username);
     await scanPage(page, info);
     await page.getByLabel("Password", { exact: true }).fill(target.password);
-    await page.getByRole("button", { name: "Login", exact: true }).click();
+    await submitLogin(page, info, () =>
+        page.getByRole("button", { name: "Login", exact: true }).click(),
+    );
     const banner = page.getByRole("banner");
     await expect(
         banner.getByRole("button", { name: target.username, exact: true }),

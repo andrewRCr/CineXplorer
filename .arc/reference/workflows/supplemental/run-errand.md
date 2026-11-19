@@ -35,6 +35,36 @@ installation. Explicit errand entry selects this workflow before session initial
 notes. Keep the primary's branch, tracked files, notes and containers as they are. Shared Git metadata, the installed
 local harness and the primary inbox are intentional shared destinations.
 
+## Approval Routes
+
+An errand stops five times for the Owner: to commit, to push and open the pull request with its text, to choose the
+review route, to approve the review dispositions, and to merge. By default each stop takes its own approval, as the
+steps below describe.
+
+Instead, the Owner may approve the errand's plan once
+([DEVELOPMENT-RULES § Manual Commit Control](../../constitution/DEVELOPMENT-RULES.md#manual-commit-control)), recorded
+as the Owner directs. Present the plan before making the change:
+
+- the change, and the checks it will run;
+- the commit message's subject and Context footer;
+- the pull request's title and what its body will say;
+- the review route (§ 4), and the conditions the plan runs to, such as CI green and a clean review.
+
+The approved plan covers the commit, the push and the pull request, CI monitoring, and the review route it names, up
+to a merge-ready pull request: the work runs through those steps without stopping and reports at the result. A check
+that fails mechanically inside the change
+([Quality Gate Failure Protocol](../../constitution/DEVELOPMENT-RULES.md#quality-gate-failure-protocol)) is fixed
+under the plan, its commit and push included. The plan stops anyway, and asks, when the work would:
+
+- leave the plan's scope or change the plan;
+- do anything irreversible;
+- spend beyond the plan, such as a hosted review it didn't name;
+- go past any other failing check.
+
+It never covers the review dispositions or the merge. Any review finding ends the plan: the findings follow
+[agent-pre-merge-review.md](agent-pre-merge-review.md), whose approvals govern what comes after. The merge stays one
+short ask for the exact head (§ 5).
+
 ## Steps
 
 ### 1. Branch from `origin/main`
@@ -83,16 +113,21 @@ git push -u origin {type}/{name}
 gh pr create --base main --title "<title>" --body-file <body file>
 ```
 
+Under an approved plan ([Approval Routes](#approval-routes)), this stop is already passed: commit, push and open the
+pull request as the plan describes, and give the diff summary, the checks and the pull request's link in the next
+report.
+
 After publication, enter [monitor-pull-request.md](monitor-pull-request.md) for CI in this same turn. If the Owner
-already approved a hosted request at this point, post it once and monitor CI and review together. Otherwise, when
-CI settles, recommend the review route below. Continue until a defined result or bounded stop; a pending first
-observation alone is not a completion report.
+already approved a hosted request at this point, as a plan naming one does, post it once and monitor CI and review
+together. Otherwise, when CI settles, recommend the review route below. Continue until a defined result or bounded
+stop; a pending first observation alone is not a completion report.
 
 ### 4. Review
 
 Recommend a review route with a one-line reason: none (a small, mechanical change), a local fresh-context subagent, or
-a hosted review (`@codex review`, `@coderabbitai review`). The Owner chooses; never start one unasked. Findings follow
-[agent-pre-merge-review.md](agent-pre-merge-review.md).
+a hosted review (`@codex review`, `@coderabbitai review`). The Owner chooses; never start one unasked. An approved
+plan has already chosen: run its route once CI settles (a hosted request posts at publication, as § 3 says), and ask
+before any other. Findings follow [agent-pre-merge-review.md](agent-pre-merge-review.md).
 
 After an authorized hosted request, retain its comment URL/time and exact head, then enter
 [monitor-pull-request.md](monitor-pull-request.md) without ending the turn merely because review is pending.

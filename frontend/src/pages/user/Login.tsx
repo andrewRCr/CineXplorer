@@ -9,11 +9,7 @@ import {
   Button,
   VisuallyHidden,
 } from "@chakra-ui/react";
-import {
-  TextLink,
-  FloatingAlert,
-  FloatingAlertContainer,
-} from "@/components/common";
+import { TextLink, FloatingAlert } from "@/components/common";
 import {
   AuthFormCard,
   FormField,
@@ -63,13 +59,12 @@ const Login = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Alert state (general errors, email verification, registration success, session expired)
+  // Alert state (general errors, email verification, notices), shown in the card above the form
   const {
     alert,
     showGeneralError,
     showEmailVerificationError,
-    showRegistrationSuccess,
-    showSessionExpired,
+    showNotice,
     clearAlert,
     handleResendVerification,
   } = useLoginAlerts();
@@ -113,10 +108,8 @@ const Login = () => {
       const { username, password } = values;
       if (!login) return;
 
+      // The submit button shows the sign-in's progress (formik.isSubmitting)
       setIsLoggingIn(true);
-      const toastId = "login-toast";
-      priorityToaster.loading({ id: toastId, title: "Logging in..." });
-
       const response = await login(
         username,
         password,
@@ -126,10 +119,8 @@ const Login = () => {
 
       if (response.success) {
         clearAlert();
-        priorityToaster.dismiss(toastId);
         void navigate(returnPathFrom(location.search));
       } else {
-        priorityToaster.dismiss(toastId);
         handleLoginError(response.error);
       }
     },
@@ -211,11 +202,7 @@ const Login = () => {
       // Clear the token from URL to prevent re-verification attempts
       window.history.replaceState({}, "", ROUTES.LOGIN);
 
-      priorityToaster.success({
-        title: "Email verified!",
-        description: "You can now log in with your account.",
-        duration: 6000,
-      });
+      showNotice("Email verified. You can now log in.");
 
       // Clear verification UI after short delay to let user see success
       verificationTimeoutRef.current = setTimeout(() => {
@@ -252,6 +239,7 @@ const Login = () => {
     window.history.replaceState({}, "", ROUTES.LOGIN);
 
     if (autoLoggedIn) {
+      // A toast fits here: the visitor lands on Home, where nothing else shows the reset happened
       priorityToaster.success({
         title: "Password reset successfully!",
         description: "You are now logged in.",
@@ -259,11 +247,7 @@ const Login = () => {
       });
       void navigate(ROUTES.HOME);
     } else {
-      priorityToaster.success({
-        title: "Password reset successfully!",
-        description: "You can now log in with your new password.",
-        duration: 6000,
-      });
+      showNotice("Password reset. You can now log in with your new password.");
     }
   };
 
@@ -286,17 +270,13 @@ const Login = () => {
 
     // Email verified redirect (from verification link)
     if (state.emailVerified === true) {
-      priorityToaster.success({
-        title: "Email verified!",
-        description: message || "You can now log in.",
-        duration: 6000,
-      });
+      showNotice(message || "Email verified. You can now log in.");
       void navigate(location.pathname, { replace: true, state: {} });
     }
 
     // Registration success redirect
     if (state.registrationSuccess === true) {
-      showRegistrationSuccess(
+      showNotice(
         message ||
           "Account created! Please check your email to verify your account before logging in.",
       );
@@ -313,26 +293,26 @@ const Login = () => {
         state: {},
       });
     }
-  }, [location, navigate, showGeneralError, showRegistrationSuccess]);
+  }, [location, navigate, showGeneralError, showNotice]);
 
   // Session expired redirect (from 401 interceptor)
   useEffect(() => {
     if (searchParams.get("session_expired") === "true") {
-      showSessionExpired();
+      showNotice("Session expired. Please log in again.", "info");
       // Clear the param from URL to prevent re-showing on refresh
       window.history.replaceState({}, "", ROUTES.LOGIN);
     }
-  }, [searchParams, showSessionExpired]);
+  }, [searchParams, showNotice]);
 
   useEffect(() => {
     if (
       searchParams.get("signed_out") === "true" &&
       authContext?.status === "anonymous"
     ) {
-      priorityToaster.success({ title: "You've been logged out" });
+      showNotice("You've been logged out.");
       window.history.replaceState({}, "", ROUTES.LOGIN);
     }
-  }, [authContext?.status, searchParams]);
+  }, [authContext?.status, searchParams, showNotice]);
 
   // ==========================================================================
   // Auth Redirect (already authenticated users)
@@ -402,33 +382,37 @@ const Login = () => {
         <h1>Sign in</h1>
       </VisuallyHidden>
       <AuthFormCard>
-        {alert &&
-          (alert.type === "general" || alert.type === "emailVerification") && (
-            <Box w="full" mb={6}>
-              {alert.type === "emailVerification" && (
-                <FloatingAlert
-                  status="info"
-                  onDismiss={clearAlert}
-                  action={
-                    alert.resendToken
-                      ? {
-                          label: "Resend verification",
-                          onClick: () =>
-                            void handleResendVerification(alert.resendToken),
-                        }
-                      : undefined
-                  }
-                >
-                  {alert.message}
-                </FloatingAlert>
-              )}
-              {alert.type === "general" && (
-                <FloatingAlert status="error" onDismiss={clearAlert}>
-                  {alert.message}
-                </FloatingAlert>
-              )}
-            </Box>
-          )}
+        {alert && (
+          <Box w="full" mb={6}>
+            {alert.type === "emailVerification" && (
+              <FloatingAlert
+                status={alert.failed ? "error" : "info"}
+                onDismiss={clearAlert}
+                action={
+                  alert.resendToken
+                    ? {
+                        label: "Resend verification",
+                        onClick: () =>
+                          void handleResendVerification(alert.resendToken),
+                      }
+                    : undefined
+                }
+              >
+                {alert.message}
+              </FloatingAlert>
+            )}
+            {alert.type === "general" && (
+              <FloatingAlert status="error" onDismiss={clearAlert}>
+                {alert.message}
+              </FloatingAlert>
+            )}
+            {alert.type === "notice" && (
+              <FloatingAlert status={alert.status} onDismiss={clearAlert}>
+                {alert.message}
+              </FloatingAlert>
+            )}
+          </Box>
+        )}
 
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">
@@ -562,27 +546,6 @@ const Login = () => {
           </VStack>
         </form>
       </AuthFormCard>
-
-      {/* ====================================================================
-          Alerts
-          ==================================================================== */}
-
-      {/* Non-blocking alerts (top-right) - success CTAs and session state that persist but don't block */}
-      {(alert?.type === "registrationSuccess" ||
-        alert?.type === "sessionExpired") && (
-        <FloatingAlertContainer position="top-right">
-          {alert?.type === "registrationSuccess" && (
-            <FloatingAlert status="success" onDismiss={clearAlert}>
-              {alert.message}
-            </FloatingAlert>
-          )}
-          {alert?.type === "sessionExpired" && (
-            <FloatingAlert status="info" onDismiss={clearAlert}>
-              Session expired. Please log in again.
-            </FloatingAlert>
-          )}
-        </FloatingAlertContainer>
-      )}
 
       {/* ====================================================================
           Dialogs

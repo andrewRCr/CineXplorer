@@ -496,6 +496,18 @@ Badges use recipes with 5 variants for status and categorization.
 Toasts provide temporary, non-blocking feedback for user actions and system events. Unlike inline Alerts,
 toasts overlay UI content and use solid backgrounds with colored left accent borders for readability.
 
+**When a toast fits:** a toast vanishes on a timer and is easy to miss, especially with a screen reader, so use one
+only to:
+
+- confirm an action whose result isn't visible where the visitor is, ideally with one action such as Undo (the
+  watchlist toast);
+- report a background save that failed after an optimistic update;
+- report a failure no component on screen owns (the global server-error toast).
+
+Greetings, progress for an action on the same screen, form errors and notices the visitor must act on don't use
+toasts: progress goes to the control's loading state (a button's `loading` and `loadingText`), and errors and notices
+go to an Alert next to the form (see [Alert Positioning](#alert-positioning)).
+
 ```tsx
 import { toaster, priorityToaster } from "@/components/core/chakra/toaster";
 
@@ -507,9 +519,7 @@ toaster.info({ title: "New feature", description: "Check out our new search filt
 toaster.loading({ title: "Saving...", description: "Please wait." });
 
 // Priority toaster (top-right) - important notifications
-priorityToaster.success({ title: "Welcome back, John!", duration: 4000 });
-priorityToaster.loading({ id: "login", title: "Logging in..." });
-priorityToaster.dismiss("login"); // Dismiss by ID
+priorityToaster.success({ title: "Password reset successfully!", description: "You are now logged in." });
 
 // Toast with action (e.g., undo)
 toaster.success({
@@ -523,11 +533,11 @@ toaster.success({
 | Toaster           | Position     | Use Cases                                                |
 |-------------------|--------------|----------------------------------------------------------|
 | `toaster`         | bottom-right | Routine feedback (save, update, background actions)      |
-| `priorityToaster` | top-right    | Auth success, important confirmations, critical feedback |
+| `priorityToaster` | top-right    | Important confirmations, critical feedback               |
 
 **When to use priority position:**
 
-- Auth flow toasts (login success, registration, email verified)
+- A confirmation the visitor would miss after an auth flow moves them (a password reset that signs them in)
 - Critical action confirmations (account changes, destructive actions)
 - Time-sensitive notifications that warrant immediate attention
 
@@ -539,7 +549,7 @@ toaster.success({
 | `warning` | Validation warnings, caution states        | Amber  |
 | `error`   | Errors, failed operations (closable: true) | Red    |
 | `info`    | Informational messages, tips               | Blue   |
-| `loading` | Async operations in progress               | Blue   |
+| `loading` | Background operations in progress          | Blue   |
 
 **What the composition provides:**
 
@@ -580,13 +590,15 @@ Toasts float over varied backgrounds and need solid fills for consistent readabi
 
 | Scenario                                    | Use                  | Status  | Rationale                                                |
 |---------------------------------------------|----------------------|---------|----------------------------------------------------------|
-| Success after action (save, submit)         | Toast                | success | Ephemeral confirmation, user continues workflow          |
+| Success not visible on screen (save, Undo)  | Toast                | success | Ephemeral confirmation, user continues workflow          |
 | Success that redirects away                 | Toast                | success | Page is changing anyway                                  |
+| Progress of an action on this screen        | Loading state        | —       | The control the visitor used shows it                    |
 | Auth error (wrong credentials)              | Alert (blocking)     | error   | User needs to read and correct their input               |
 | Email verification needed                   | Alert with action    | info    | Workflow requirement, not user mistake; resend action    |
 | Session expired                             | Alert (blocking)     | info    | Expected behavior, not error; redirect to login          |
-| Registration success with CTA               | Alert (non-blocking) | success | Persistent "check email" message, user may look away     |
-| Network/transient error                     | Toast                | error   | Retry is immediate, no correction needed                 |
+| Registration success with CTA               | Alert                | success | Persistent "check email" message, user may look away     |
+| Error no component on screen owns           | Toast                | error   | Global server error; nothing on screen can show it       |
+| A form's request failed (email not sent)    | Alert                | error   | The visitor retries from the same form                   |
 | Blocking state (rate limited, locked)       | Alert (blocking)     | warning | User must wait/address before proceeding                 |
 | Page-level warning (unsaved changes)        | Alert (blocking)     | warning | Contextual to current page state                         |
 | Informational banner (maintenance, feature) | Alert (blocking)     | info    | Persistent awareness needed                              |
@@ -598,49 +610,50 @@ Toasts float over varied backgrounds and need solid fills for consistent readabi
 
 **Alert status selection:**
 
-- `error` (red) = User made a mistake that needs correction (wrong input, invalid action)
+- `error` (red) = User made a mistake that needs correction, or the form's request failed (wrong input, email not
+  sent)
 - `warning` (yellow) = User action is blocked by external factor (rate limit, locked)
 - `info` (blue) = Workflow requirement or expected state (verification needed, session expired)
-- `success` (green) = Positive outcome with persistent CTA (registration success)
+- `success` (green) = Positive outcome the visitor should see (account created, email verified, signed out)
 
-### Alert Positioning Hierarchy
+### Alert Positioning
 
-Alerts support two positions via `FloatingAlertContainer`:
-
-| Position    | Visual Location | Blocking? | Use Cases                                         |
-|-------------|-----------------|-----------|---------------------------------------------------|
-| `center`    | Top-center      | Yes       | Auth errors, verification needed, blocking states |
-| `top-right` | Top-right       | No        | Registration success CTA, informational CTAs      |
+A form's alerts sit in its card, above the form, as the card's first child (sign-in, forgot password).
+`FloatingAlertContainer` floats an alert top-center over the page instead, without shifting the layout
+(registration's errors).
 
 **Code example:**
 
 ```tsx
-// Blocking alert (center, default) - demands immediate attention
+// In the form's card, above the form
+<AuthFormCard>
+  {notice && (
+    <Box w="full" mb={6}>
+      <FloatingAlert status="success" onDismiss={...}>
+        Account created! Check your email to verify.
+      </FloatingAlert>
+    </Box>
+  )}
+  <form>...</form>
+</AuthFormCard>
+
+// Floating top-center over the page
 <FloatingAlertContainer>
   <FloatingAlert status="error" onDismiss={...}>
-    Invalid username or password.
-  </FloatingAlert>
-</FloatingAlertContainer>
-
-// Non-blocking alert (top-right) - persistent but doesn't block workflow
-<FloatingAlertContainer position="top-right">
-  <FloatingAlert status="success" onDismiss={...}>
-    Account created! Check your email to verify.
+    That username is taken.
   </FloatingAlert>
 </FloatingAlertContainer>
 ```
 
-**Why non-blocking alerts exist:**
-Registration success needs persistence (user may look away during redirect) but shouldn't block the login form.
-Non-blocking alerts share top-right space with priority toasts - both are "important but not stopping you".
-
 **Auth-specific guidance:**
 
-- Auth errors use `FloatingAlert` with center position (blocking)
-- WCAG: `role="alert"`, `aria-live="assertive"` for errors, dismissible via close button
+- The sign-in card shows one alert at a time: errors, email verification with its resend action (which reports its
+  result in place), and the notices a visitor arrives with (account created, email verified, signed out, session
+  expired, password reset)
+- WCAG: `FloatingAlert` gives errors `role="alert"` (assertive) and other statuses `role="status"` (polite);
+  dismissible via close button
 - Auto-clear when user starts typing (correcting the error)
-- Login/email verified success uses toasts (ephemeral, page context is clear)
-- Registration success uses non-blocking alert (persistent CTA, user may look away)
+- A password reset that signs the visitor in confirms with a toast: they land on Home, where nothing else shows it
 
 **Edge cases:**
 

@@ -1,15 +1,15 @@
 import { ROUTES } from "@/constants/routes";
 import { Box, Button, VStack, Text } from "@chakra-ui/react";
-import { TextLink } from "@/components/common";
+import { TextLink, FloatingAlert } from "@/components/common";
 import { AuthFormCard, FormField } from "@/components/auth";
 import { useFormik } from "formik";
 import { useState } from "react";
 import * as authService from "@/services/authService";
 import { getErrorMessage, hasErrorStatus } from "@/utilities/axiosErrorUtils";
-import { priorityToaster } from "@/components/core/chakra/toaster";
 
 const ForgotPassword = () => {
   const [success, setSuccess] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   const formik = useFormik({
     initialValues: {
@@ -25,15 +25,16 @@ const ForgotPassword = () => {
       return errors;
     },
     onSubmit: async (values) => {
+      setSendError("");
       try {
         await authService.requestPasswordReset(values.email);
         setSuccess(true);
       } catch (error) {
         if (hasErrorStatus(error, 503)) {
-          priorityToaster.error({
-            title: "Failed to send email",
-            description: getErrorMessage(error) || "Please try again later.",
-          });
+          setSendError(
+            getErrorMessage(error) ||
+              "Failed to send the email. Please try again later.",
+          );
         } else {
           // Keep the confirmation independent of whether an account exists.
           setSuccess(true);
@@ -78,6 +79,13 @@ const ForgotPassword = () => {
       paddingY="32px"
     >
       <AuthFormCard>
+        {sendError && (
+          <Box w="full" mb={6}>
+            <FloatingAlert status="error" onDismiss={() => setSendError("")}>
+              {sendError}
+            </FloatingAlert>
+          </Box>
+        )}
         <form onSubmit={formik.handleSubmit}>
           <VStack gap="24px" align="flex-start">
             <Text as="h1" fontSize="20px" fontWeight="semibold">

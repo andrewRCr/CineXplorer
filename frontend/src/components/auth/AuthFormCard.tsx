@@ -8,15 +8,15 @@ import type { ReactNode } from "react";
  * Provides consistent width, padding, background, and shadow.
  *
  * Use inside a centering container - this component handles the card only,
- * not page-level positioning (which pages need to control for alert placement).
+ * not page-level positioning. A form's alerts go first inside the card, above the form.
  *
  * @example
  * ```tsx
  * <Box position="relative" minH="100%" display="flex" alignItems="center" justifyContent="center" paddingY="32px">
  *   <AuthFormCard>
+ *     {error && <Box w="full" mb={6}><FloatingAlert status="error">...</FloatingAlert></Box>}
  *     <form>...</form>
  *   </AuthFormCard>
- *   {error && <FloatingAlertContainer>...</FloatingAlertContainer>}
  * </Box>
  * ```
  */

@@ -91,7 +91,8 @@ export const toaster = wrapWithDurationDefaults(rawToaster);
 
 /**
  * Priority toaster - top-right positioning for important notifications.
- * Use for: auth success (login, registration, email verified), critical confirmations.
+ * Use for: confirmations a visitor would miss after an auth flow moves them (a password reset that signs them in),
+ * critical confirmations. Notices on the sign-in page itself are alerts in its card.
  * Duration defaults applied per status type (see statusDurations).
  */
 export const priorityToaster = wrapWithDurationDefaults(rawPriorityToaster);

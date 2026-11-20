@@ -57,9 +57,11 @@ describe("password-reset request outcomes", () => {
       );
       await user.click(screen.getByRole("button", { name: "Send reset link" }));
       if (outcome === 503) {
+        // The failure sits in the form's card, announced as an alert, not in a toast.
         await waitFor(() => {
-          expect(screen.getByText(failureMessage)).toBeVisible();
+          expect(screen.getByRole("alert")).toHaveTextContent(failureMessage);
         });
+        expect(priorityToaster.getVisibleToasts()).toHaveLength(0);
         expect(screen.queryByText("Check your email")).not.toBeInTheDocument();
         expect(screen.queryByText("Server error")).not.toBeInTheDocument();
       } else {

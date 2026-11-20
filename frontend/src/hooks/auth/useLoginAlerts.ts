@@ -1,7 +1,6 @@
 import logger from "@/services/logger";
 import { useState, useCallback } from "react";
 import * as authService from "@/services/authService";
-import { priorityToaster } from "@/components/core/chakra/toaster";
 import { getErrorMessage, hasErrorStatus } from "@/utilities/axiosErrorUtils";
 
 // ============================================================================
@@ -9,14 +8,19 @@ import { getErrorMessage, hasErrorStatus } from "@/utilities/axiosErrorUtils";
 // ============================================================================
 
 /**
- * Discriminated union for login page alert states.
+ * Discriminated union for the login page's alert, shown in the sign-in card above the form.
  * Only one alert can be active at a time.
  */
 export type LoginAlert =
     | { type: "general"; message: string }
-    | { type: "emailVerification"; message: string; resendToken: string }
-    | { type: "registrationSuccess"; message: string }
-    | { type: "sessionExpired" };
+    | {
+          type: "emailVerification";
+          message: string;
+          resendToken: string;
+          /** The last resend failed; the alert keeps its resend action so the visitor can retry. */
+          failed?: boolean;
+      }
+    | { type: "notice"; status: "success" | "info"; message: string };
 
 // ============================================================================
 // Hook
@@ -25,10 +29,11 @@ export type LoginAlert =
 /**
  * Manages alert state for the Login page.
  *
- * Consolidates three alert types into a single discriminated union:
+ * Consolidates the page's messages into a single discriminated union:
  * - general: Auth errors (wrong password, etc.)
- * - emailVerification: Email not verified (with optional resend action)
- * - registrationSuccess: Post-registration CTA
+ * - emailVerification: Email not verified, with a resend action that reports its result in place
+ * - notice: A confirmation or state the visitor arrives with (account created, email verified, signed out, session
+ *   expired, password reset)
  */
 export function useLoginAlerts() {
     const [alert, setAlert] = useState<LoginAlert | null>(null);
@@ -48,13 +53,12 @@ export function useLoginAlerts() {
         [],
     );
 
-    const showRegistrationSuccess = useCallback((message: string) => {
-        setAlert({ type: "registrationSuccess", message });
-    }, []);
-
-    const showSessionExpired = useCallback(() => {
-        setAlert({ type: "sessionExpired" });
-    }, []);
+    const showNotice = useCallback(
+        (message: string, status: "success" | "info" = "success") => {
+            setAlert({ type: "notice", status, message });
+        },
+        [],
+    );
 
     const clearAlert = useCallback(() => {
         setAlert(null);
@@ -66,12 +70,18 @@ export function useLoginAlerts() {
 
     const handleResendVerification = useCallback(
         async (resendToken: string) => {
+            const report = (message: string, failed = false) =>
+                setAlert({
+                    type: "emailVerification",
+                    message,
+                    resendToken,
+                    failed,
+                });
             try {
                 await authService.resendVerificationEmail(resendToken);
-                priorityToaster.success({
-                    title: "Verification email sent!",
-                    description: "Check your inbox for the verification link.",
-                });
+                report(
+                    "Verification email sent. Check your inbox for the link.",
+                );
             } catch (error: unknown) {
                 // The resend link has expired or was already used, and only signing in again
                 // issues a new one, so the alert gives up its resend action.
@@ -89,24 +99,22 @@ export function useLoginAlerts() {
                     errorType: error instanceof Error ? error.name : "unknown",
                 });
 
-                // Check for rate limiting (429)
                 if (hasErrorStatus(error, 429)) {
-                    priorityToaster.error({
-                        title: "Too many requests",
-                        description:
-                            "Please wait a moment before trying again.",
-                    });
+                    report(
+                        "Too many requests. Please wait a moment before trying again.",
+                        true,
+                    );
                 } else if (hasErrorStatus(error, 503)) {
-                    priorityToaster.error({
-                        title: "Failed to send email",
-                        description:
-                            getErrorMessage(error) || "Please try again later.",
-                    });
+                    report(
+                        getErrorMessage(error) ||
+                            "Failed to send the email. Please try again later.",
+                        true,
+                    );
                 } else {
-                    priorityToaster.error({
-                        title: "Failed to send email",
-                        description: "Please try again later.",
-                    });
+                    report(
+                        "Failed to send the email. Please try again later.",
+                        true,
+                    );
                 }
             }
         },
@@ -117,8 +125,7 @@ export function useLoginAlerts() {
         alert,
         showGeneralError,
         showEmailVerificationError,
-        showRegistrationSuccess,
-        showSessionExpired,
+        showNotice,
         clearAlert,
         handleResendVerification,
     };

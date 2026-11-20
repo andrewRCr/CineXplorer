@@ -28,7 +28,7 @@ import { FormField } from "./FormField";
  * <PasswordResetDialog
  *   resetKey={resetKey}
  *   onSuccess={() => {
- *     // Show success toast, clear URL
+ *     // Confirm the reset (inline on the sign-in page, or a toast after signing in), clear URL
  *     setResetKey(null);
  *   }}
  *   onDismiss={() => {

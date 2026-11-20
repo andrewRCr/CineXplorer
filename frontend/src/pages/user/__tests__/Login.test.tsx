@@ -64,11 +64,15 @@ afterEach(() => {
 });
 
 /**
- * Asserts the notice is the sign-in card's one alert or status, announced by its role, and that no priority toast
- * carries a message alongside it.
+ * Asserts the notice is in the sign-in card's polite notice region (role="status", on the page from the first render)
+ * or is its one error (role="alert"), and that no priority toast carries a message alongside it.
  */
 function expectNoticeInCard(text: string, role: "status" | "alert") {
-  expect(screen.getByRole(role)).toHaveTextContent(text);
+  // The app's own toast regions are statuses too, so find the one region holding the text
+  const holders = screen
+    .getAllByRole(role)
+    .filter((region) => within(region).queryByText(text));
+  expect(holders).toHaveLength(1);
   expect(priorityToaster.getVisibleToasts()).toHaveLength(0);
 }
 
@@ -176,7 +180,7 @@ describe("resending from an unverified sign-in", () => {
           : outcome === 429
             ? "Too many requests. Please wait a moment before trying again."
             : "Failed to send the email. Please try again later.";
-      await waitFor(() => expectNoticeInCard(expected, "alert"));
+      await waitFor(() => expectNoticeInCard(expected, "status"));
       expect(
         screen.getByRole("button", { name: "Resend verification" }),
       ).toBeVisible();
@@ -185,6 +189,42 @@ describe("resending from an unverified sign-in", () => {
       else expect(screen.queryByText("Server error")).not.toBeInTheDocument();
     },
   );
+
+  it("drops a resend result once its alert is dismissed", async () => {
+    const held = gate();
+    server.use(
+      http.post(`${apiBaseUrl}/resend-verification/`, async () => {
+        await held.wait;
+        return HttpResponse.json({ message: "Verification email sent" });
+      }),
+    );
+    const user = userEvent.setup();
+    render(
+      <>
+        <AuthContextProvider>
+          <Login />
+        </AuthContextProvider>
+        <PriorityToaster />
+      </>,
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Username or Email Address" }),
+      "viewer",
+    );
+    await user.type(screen.getByLabelText("Password"), "testpass123");
+    await user.click(screen.getByRole("button", { name: "Login" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Resend verification" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(
+      screen.queryByRole("button", { name: "Resend verification" }),
+    ).not.toBeInTheDocument();
+    held.release();
+    await expect(
+      screen.findByText(sent, {}, { timeout: 500 }),
+    ).rejects.toThrow();
+  });
 });
 
 describe("signing in with a password", () => {
@@ -264,6 +304,20 @@ describe("notices the sign-in page opens with", () => {
     await waitFor(() =>
       expectNoticeInCard("Session expired. Please log in again.", "status"),
     );
+  });
+
+  it("keeps a notice when focus leaves an empty field", async () => {
+    const expired = "Session expired. Please log in again.";
+    window.history.replaceState({}, "", "/login?session_expired=true");
+    renderLoginWith("/login?session_expired=true");
+    await waitFor(() => expectNoticeInCard(expired, "status"));
+    expect(
+      screen.getByRole("textbox", { name: "Username or Email Address" }),
+    ).toHaveFocus();
+    const user = userEvent.setup();
+    await user.tab({ shift: true });
+    expect(screen.getByRole("button", { name: "Dismiss" })).toHaveFocus();
+    expectNoticeInCard(expired, "status");
   });
 
   it("shows a verified email in the card", async () => {
@@ -446,7 +500,8 @@ describe("signed-out notice", () => {
     );
     renderSignedOut();
     await entered.wait;
-    expect(screen.queryByText(signedOut)).not.toBeInTheDocument();
+    // The notice region is on the page, empty, before the notice arrives, so screen readers announce the arrival
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
     held.release();
     await waitFor(() => expectNoticeInCard(signedOut, "status"));
     expect(new URL(document.URL).search).toBe("");

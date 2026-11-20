@@ -514,9 +514,9 @@ import { toaster, priorityToaster } from "@/components/core/chakra/toaster";
 // Default toaster (bottom-right) - routine feedback
 toaster.success({ title: "Changes saved", description: "Your settings have been updated." });
 toaster.error({ title: "Save failed", description: "Please try again.", closable: true });
-toaster.warning({ title: "Missing fields", description: "Please complete all required fields." });
-toaster.info({ title: "New feature", description: "Check out our new search filters." });
-toaster.loading({ title: "Saving...", description: "Please wait." });
+toaster.warning({ title: "You're offline", description: "Changes will save when you reconnect." });
+toaster.info({ title: "Link copied" });
+toaster.loading({ title: "Importing ratings...", description: "You can keep browsing." });
 
 // Priority toaster (top-right) - important notifications
 priorityToaster.success({ title: "Password reset successfully!", description: "You are now logged in." });
@@ -546,9 +546,9 @@ toaster.success({
 | Type      | Use Cases                                  | Accent |
 |-----------|--------------------------------------------|--------|
 | `success` | Confirmations, completed actions           | Green  |
-| `warning` | Validation warnings, caution states        | Amber  |
+| `warning` | Caution states (offline, retrying)         | Amber  |
 | `error`   | Errors, failed operations (closable: true) | Red    |
-| `info`    | Informational messages, tips               | Blue   |
+| `info`    | Informational confirmations (link copied)  | Blue   |
 | `loading` | Background operations in progress          | Blue   |
 
 **What the composition provides:**
@@ -593,15 +593,15 @@ Toasts float over varied backgrounds and need solid fills for consistent readabi
 | Success not visible on screen (save, Undo)  | Toast                | success | Ephemeral confirmation, user continues workflow          |
 | Success that redirects away                 | Toast                | success | Page is changing anyway                                  |
 | Progress of an action on this screen        | Loading state        | —       | The control the visitor used shows it                    |
-| Auth error (wrong credentials)              | Alert (blocking)     | error   | User needs to read and correct their input               |
+| Auth error (wrong credentials)              | Alert                | error   | User needs to read and correct their input               |
 | Email verification needed                   | Alert with action    | info    | Workflow requirement, not user mistake; resend action    |
-| Session expired                             | Alert (blocking)     | info    | Expected behavior, not error; redirect to login          |
+| Session expired                             | Alert                | info    | Expected behavior, not error; redirect to login          |
 | Registration success with CTA               | Alert                | success | Persistent "check email" message, user may look away     |
 | Error no component on screen owns           | Toast                | error   | Global server error; nothing on screen can show it       |
 | A form's request failed (email not sent)    | Alert                | error   | The visitor retries from the same form                   |
-| Blocking state (rate limited, locked)       | Alert (blocking)     | warning | User must wait/address before proceeding                 |
-| Page-level warning (unsaved changes)        | Alert (blocking)     | warning | Contextual to current page state                         |
-| Informational banner (maintenance, feature) | Alert (blocking)     | info    | Persistent awareness needed                              |
+| Blocking state (rate limited, locked)       | Alert                | warning | User must wait/address before proceeding                 |
+| Page-level warning (unsaved changes)        | Alert                | warning | Contextual to current page state                         |
+| Informational banner (maintenance, feature) | Alert                | info    | Persistent awareness needed                              |
 
 **General principles:**
 
@@ -612,7 +612,8 @@ Toasts float over varied backgrounds and need solid fills for consistent readabi
 
 - `error` (red) = User made a mistake that needs correction, or the form's request failed (wrong input, email not
   sent)
-- `warning` (yellow) = User action is blocked by external factor (rate limit, locked)
+- `warning` (yellow) = User action is blocked by external factor (rate limit, locked, a verification email that
+  couldn't be sent)
 - `info` (blue) = Workflow requirement or expected state (verification needed, session expired)
 - `success` (green) = Positive outcome the visitor should see (account created, email verified, signed out)
 
@@ -650,9 +651,11 @@ A form's alerts sit in its card, above the form, as the card's first child (sign
 - The sign-in card shows one alert at a time: errors, email verification with its resend action (which reports its
   result in place), and the notices a visitor arrives with (account created, email verified, signed out, session
   expired, password reset)
-- WCAG: `FloatingAlert` gives errors `role="alert"` (assertive) and other statuses `role="status"` (polite);
-  dismissible via close button
-- Auto-clear when user starts typing (correcting the error)
+- WCAG: `FloatingAlert` gives errors `role="alert"` (assertive). The sign-in card keeps a polite `role="status"`
+  region on the page from the first render and puts its notices and verification alert in it, since a live region
+  inserted with its text isn't reliably announced; errors render outside it. Alerts are dismissible via close button
+- Notices clear when the visitor types or dismisses them; field validation clears only an error alert
+- A resend result replaces the verification alert only while that alert still shows
 - A password reset that signs the visitor in confirms with a toast: they land on Home, where nothing else shows it
 
 **Edge cases:**

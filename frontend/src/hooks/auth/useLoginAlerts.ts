@@ -64,14 +64,28 @@ export function useLoginAlerts() {
         setAlert(null);
     }, []);
 
+    /** Clears an error, keeping a notice: notices clear only when the visitor types or dismisses them. */
+    const clearErrorAlert = useCallback(() => {
+        setAlert((current) => (current?.type === "notice" ? current : null));
+    }, []);
+
     // ---------------------------------------------------------------------------
     // Actions
     // ---------------------------------------------------------------------------
 
     const handleResendVerification = useCallback(
         async (resendToken: string) => {
+            // A result lands only while its verification alert still shows: the visitor may have dismissed it, typed or
+            // signed in again while the request ran.
+            const replace = (next: LoginAlert) =>
+                setAlert((current) =>
+                    current?.type === "emailVerification" &&
+                    current.resendToken === resendToken
+                        ? next
+                        : current,
+                );
             const report = (message: string, failed = false) =>
-                setAlert({
+                replace({
                     type: "emailVerification",
                     message,
                     resendToken,
@@ -86,7 +100,7 @@ export function useLoginAlerts() {
                 // The resend link has expired or was already used, and only signing in again
                 // issues a new one, so the alert gives up its resend action.
                 if (hasErrorStatus(error, 400)) {
-                    setAlert({
+                    replace({
                         type: "general",
                         message:
                             getErrorMessage(error) ||
@@ -127,6 +141,7 @@ export function useLoginAlerts() {
         showEmailVerificationError,
         showNotice,
         clearAlert,
+        clearErrorAlert,
         handleResendVerification,
     };
 }

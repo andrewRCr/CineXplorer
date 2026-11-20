@@ -66,6 +66,7 @@ const Login = () => {
     showEmailVerificationError,
     showNotice,
     clearAlert,
+    clearErrorAlert,
     handleResendVerification,
   } = useLoginAlerts();
 
@@ -98,9 +99,9 @@ const Login = () => {
       if (!values.password) {
         errors.password = "Required";
       }
-      // Clear alerts when there are field validation errors
+      // Field validation errors replace an alert error; a notice stays until the visitor types or dismisses it
       if (Object.keys(errors).length > 0) {
-        clearAlert();
+        clearErrorAlert();
       }
       return errors;
     },
@@ -382,35 +383,41 @@ const Login = () => {
         <h1>Sign in</h1>
       </VisuallyHidden>
       <AuthFormCard>
-        {alert && (
+        {/* Notices and the verification alert share a polite live region that's on the page from the first render,
+            so screen readers announce what arrives in it; errors announce themselves (role="alert") */}
+        <Box role="status" aria-live="polite">
+          {alert && alert.type !== "general" && (
+            <Box w="full" mb={6}>
+              {alert.type === "emailVerification" && (
+                <FloatingAlert
+                  status={alert.failed ? "warning" : "info"}
+                  onDismiss={clearAlert}
+                  action={
+                    alert.resendToken
+                      ? {
+                          label: "Resend verification",
+                          onClick: () =>
+                            void handleResendVerification(alert.resendToken),
+                        }
+                      : undefined
+                  }
+                >
+                  {alert.message}
+                </FloatingAlert>
+              )}
+              {alert.type === "notice" && (
+                <FloatingAlert status={alert.status} onDismiss={clearAlert}>
+                  {alert.message}
+                </FloatingAlert>
+              )}
+            </Box>
+          )}
+        </Box>
+        {alert?.type === "general" && (
           <Box w="full" mb={6}>
-            {alert.type === "emailVerification" && (
-              <FloatingAlert
-                status={alert.failed ? "error" : "info"}
-                onDismiss={clearAlert}
-                action={
-                  alert.resendToken
-                    ? {
-                        label: "Resend verification",
-                        onClick: () =>
-                          void handleResendVerification(alert.resendToken),
-                      }
-                    : undefined
-                }
-              >
-                {alert.message}
-              </FloatingAlert>
-            )}
-            {alert.type === "general" && (
-              <FloatingAlert status="error" onDismiss={clearAlert}>
-                {alert.message}
-              </FloatingAlert>
-            )}
-            {alert.type === "notice" && (
-              <FloatingAlert status={alert.status} onDismiss={clearAlert}>
-                {alert.message}
-              </FloatingAlert>
-            )}
+            <FloatingAlert status="error" onDismiss={clearAlert}>
+              {alert.message}
+            </FloatingAlert>
           </Box>
         )}
 

@@ -20,7 +20,9 @@ import type { ReactNode } from "react";
  *
  * **Pattern:**
  * - Dismissible via close button (optional) or auto-clears on user action
- * - WCAG compliant: `role="alert"` (assertive) for errors, `role="status"` (polite) otherwise
+ * - WCAG compliant: `role="alert"`, `aria-live="assertive"` for errors. Other statuses carry no live role: place
+ *   them in a polite live region that's on the page before they arrive (the sign-in card keeps one), since a region
+ *   inserted with its text isn't reliably announced
  * - Uses Alert recipe (no inline style overrides)
  *
  * **Do NOT use for:**
@@ -95,7 +97,7 @@ export const FloatingAlertContainer = ({
 };
 
 /**
- * Individual floating alert - use inside FloatingAlertContainer
+ * Individual alert - place it in a form's card or inside FloatingAlertContainer
  */
 export const FloatingAlert = ({
   status,
@@ -103,7 +105,7 @@ export const FloatingAlert = ({
   onDismiss,
   action,
 }: Omit<FloatingAlertProps, "width">) => {
-  // Screen readers announce errors at once, and other alerts when they finish speaking
+  // Error alerts get assertive ARIA for screen readers; other alerts rely on the polite region they're placed in
   const isError = status === "error";
 
   return (
@@ -111,8 +113,10 @@ export const FloatingAlert = ({
       status={status}
       boxShadow="lg"
       position="relative"
-      role={isError ? "alert" : "status"}
-      aria-live={isError ? "assertive" : "polite"}
+      {...(isError && {
+        role: "alert",
+        "aria-live": "assertive",
+      })}
     >
       {onDismiss && (
         <IconButton

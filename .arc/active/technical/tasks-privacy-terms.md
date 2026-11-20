@@ -72,20 +72,19 @@ handles your data" lands below the top bar from the in-page link and on a direct
         Compared the rendered policy paragraph by paragraph against Appendix A, including heading levels, list items,
         table cells, bold and code spans, and link destinations. All matched.
 
-- [ ] **1.2 Every page's footer links both texts — R8, R13**
+- [x] **1.2 Every page's footer links both texts — R8, R13**
 
     **Goal:** The footer under every page of `AppLayout` and `AuthLayout` carries "Privacy Policy" and "Terms of
     Service", each opening its page inside the app.
 
-    - [ ] **1.2.a Cover the footer's links** (`Footer.test.tsx`)
-        - Test: the footer shows both links, each opening its route
-        - Expect tests to FAIL initially
+    - [x] **1.2.a Cover the footer's links** (`Footer.test.tsx`)
 
-    - [ ] **1.2.b Add the footer row**
-        - One row under the copyright line, in the footer's small muted text, with `TextLink`s to `ROUTES.PRIVACY` and
-          `ROUTES.TERMS`; add `ROUTES.TERMS` (`/terms`) here, and its route in Task 2.1
-        - Tests should now PASS
-        - Run `sign-in.spec.ts` against the worktree's browsable stack; its scans cover the footer
+        Both navigation tests failed before the links were added and passed afterwards.
+
+    - [x] **1.2.b Add the footer row**
+
+        Added the two in-app links below the copyright line and named the terms path in `ROUTES`.
+        The 42 footer and layout tests passed, as did all six scenarios in `sign-in.spec.ts`.
 
 - [ ] **1.3 The policy opens at its top, or at its fragment's heading below the top bar — R1, R3, R5, R14**
 

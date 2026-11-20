@@ -4,6 +4,7 @@ export const ROUTES = {
     HOME: "/", // Home (canonical URL)
     FEATURED: "/featured", // Alias that redirects to HOME
     PRIVACY: "/privacy",
+    TERMS: "/terms",
     PROFILE: "/profile",
     WATCHLIST: "/watchlist",
     LIBRARY: "/library",

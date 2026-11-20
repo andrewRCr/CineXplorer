@@ -243,6 +243,9 @@ const Login = () => {
   const [passwordResetKey, setPasswordResetKey] = useState<string | null>(
     resetKey,
   );
+  // Whether the reset dialog has fully closed. A success that arrives after the visitor dismissed the dialog shows its
+  // notice at once, since no dialog hides the page any more and none will close to show it.
+  const resetDialogClosedRef = useRef(resetKey === null);
 
   const handlePasswordResetSuccess = (autoLoggedIn: boolean) => {
     setPasswordResetKey(null);
@@ -258,8 +261,10 @@ const Login = () => {
       void navigate(ROUTES.HOME);
     } else {
       // Shown once the dialog has closed: until then the page is hidden from screen readers
-      pendingNoticeRef.current =
+      const message =
         "Password reset. You can now log in with your new password.";
+      if (resetDialogClosedRef.current) showNotice(message);
+      else pendingNoticeRef.current = message;
     }
   };
 
@@ -587,7 +592,10 @@ const Login = () => {
         onSubmit={authService.resetPassword}
         onSuccess={handlePasswordResetSuccess}
         onDismiss={handlePasswordResetDismiss}
-        onExitComplete={showPendingNotice}
+        onExitComplete={() => {
+          resetDialogClosedRef.current = true;
+          showPendingNotice();
+        }}
       />
     </Box>
   );

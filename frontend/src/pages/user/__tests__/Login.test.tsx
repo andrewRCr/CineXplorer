@@ -383,7 +383,10 @@ describe("notices the sign-in page opens with", () => {
     ).toHaveValue("viewer@example.com");
   });
 
-  it("shows a reset password in the card when it doesn't sign the visitor in", async () => {
+  const reset = "Password reset. You can now log in with your new password.";
+
+  /** Opens the reset dialog, submits a new password the server accepts without signing in, and returns the dialog. */
+  async function submitPasswordReset(user: ReturnType<typeof userEvent.setup>) {
     server.use(
       http.post(`${siteOrigin}/_allauth/browser/v1/auth/password/reset`, () =>
         HttpResponse.json({}, { status: 401 }),
@@ -391,7 +394,6 @@ describe("notices the sign-in page opens with", () => {
     );
     window.history.replaceState({}, "", "/login?reset=reset-key");
     renderLoginWith("/login?reset=reset-key");
-    const user = userEvent.setup();
     const dialog = await screen.findByRole("dialog", {
       name: "Set New Password",
     });
@@ -404,10 +406,26 @@ describe("notices the sign-in page opens with", () => {
     await user.click(
       within(dialog).getByRole("button", { name: "Reset Password" }),
     );
+    return dialog;
+  }
+
+  it("shows a reset password in the card when it doesn't sign the visitor in", async () => {
+    await submitPasswordReset(userEvent.setup());
     // Readable by screen readers the moment it appears: an open dialog hides the rest of the page from them
-    const reset = "Password reset. You can now log in with your new password.";
     await screen.findByText(reset, {}, { timeout: 4000 });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expectNoticeInCard(reset, "status");
+  });
+
+  it("shows a reset password in the card after the dialog is dismissed early", async () => {
+    const user = userEvent.setup();
+    const dialog = await submitPasswordReset(user);
+    await within(dialog).findByText("Password reset successfully!");
+    await user.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    await screen.findByText(reset, {}, { timeout: 4000 });
     expectNoticeInCard(reset, "status");
   });
 });

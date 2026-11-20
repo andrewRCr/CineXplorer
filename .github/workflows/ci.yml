@@ -21,6 +21,7 @@ jobs:
   backend:
     name: Backend
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     env:
       COMPOSE_FILE: infrastructure/docker-compose.yml:infrastructure/docker-compose.ci.yml
       COMPOSE_PROJECT_NAME: cinexplorer-ci
@@ -92,6 +93,7 @@ jobs:
   backend-checks:
     name: Backend checks
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -144,6 +146,7 @@ jobs:
   images:
     name: Images
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: read
       packages: write
@@ -273,6 +276,7 @@ jobs:
   frontend:
     name: Frontend
     runs-on: ubuntu-24.04
+    timeout-minutes: 16
     defaults:
       run:
         working-directory: frontend
@@ -330,6 +334,7 @@ jobs:
   type-generation:
     name: API types
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     env:
       COMPOSE_FILE: infrastructure/docker-compose.yml:infrastructure/docker-compose.ci.yml
       COMPOSE_PROJECT_NAME: cinexplorer-typegen-${{ github.run_id }}
@@ -526,6 +531,7 @@ jobs:
   e2e:
     name: End-to-end smoke
     runs-on: ubuntu-24.04
+    timeout-minutes: 28
     env:
       COMPOSE_FILE: infrastructure/docker-compose.yml
       COMPOSE_PROJECT_NAME: cinexplorer-e2e
@@ -559,6 +565,7 @@ jobs:
           key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
 
       - name: Install Chromium and system dependencies
+        timeout-minutes: 12
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
@@ -626,6 +633,7 @@ jobs:
     needs: [ci-ok]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     environment: staging
     permissions:
       contents: read
@@ -657,6 +665,7 @@ jobs:
     needs: [deploy]
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 27
     environment: staging
     steps:
       - name: Checkout
@@ -676,6 +685,7 @@ jobs:
         run: npm ci
 
       - name: Install Chromium and system dependencies
+        timeout-minutes: 12
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
@@ -694,6 +704,7 @@ jobs:
     needs: [backend, backend-checks, images, markdown, frontend, type-generation, e2e]
     if: ${{ always() && !cancelled() }}
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - name: Roll up required jobs
         env:

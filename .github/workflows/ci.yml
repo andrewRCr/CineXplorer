@@ -564,8 +564,8 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
 
-      # The runner image already carries Chromium's system libraries. Installing them too (--with-deps) fetched them
-      # from Ubuntu's package mirrors, which stalled for minutes in about one run in ten.
+      # The runner image already carries the libraries Chromium needs. --with-deps also installed extra fonts and
+      # graphics-library upgrades from Ubuntu's package mirrors, which stalled for minutes in about one run in ten.
       - name: Install Chromium
         timeout-minutes: 12
         working-directory: frontend

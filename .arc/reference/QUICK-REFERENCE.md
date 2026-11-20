@@ -235,14 +235,22 @@ artifacts, the accessibility baseline, and resetting the local registration limi
 ```bash
 # On host Node (any checkout)
 (cd frontend && arc-offload npm run lint)
-(cd frontend && arc-offload npm run lint -- --fix)   # with auto-fix
+
+# Single-file fixes (from frontend/)
+npx eslint --fix <file>
+npx prettier --write <file>
+npx vitest run -u <file>
 
 # Via Docker (the primary's frontend container)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint
 
-# With auto-fix
+# Whole-repository autofix (about 1.5 GB)
 docker compose -f infrastructure/docker-compose.yml exec frontend nice -n 15 npm run lint -- --fix
 ```
+
+Run single-file fixers directly so they write to the current checkout. Follow local memory rules for
+whole-repository autofix, whether it runs on host Node or in Docker. When local capacity is limited, run the lint
+check through `arc-offload` and fix the files it reports one at a time.
 
 ### Type Checking (Frontend)
 
@@ -337,8 +345,9 @@ npx --yes markdown-table-prettify < input.md > output.md
 The full command set: the verification run, and the wider run when the affected surface calls for one
 (DEVELOPMENT-RULES § Quality Gates). A task runs only its own checks; CI runs the full set on every pull request.
 
-Host-side frontend checks run through `arc-offload` from `frontend/`. Its shared pool admits them locally and
-sets CPU priority, reserved CPUs, the Node heap cap and `VITEST_MAX_WORKERS`; do not add ad hoc worker caps.
+Run frontend checks through `arc-offload` from `frontend/`. The pool places eligible checks locally or on a
+registered runner and applies that location's resource policy, including CPU priority, Node heap and
+`VITEST_MAX_WORKERS` limits. Keep the pool's worker settings. End-to-end tests run locally against the worktree's stack.
 The registered script names are `test` (test class), `type-check` and `lint` (build class), and
 `verify-contrast` (light class). npm's `-s` and `--silent` options and trailing script arguments retain those
 classes. Other scripts, such as `test:coverage` and `test:e2e`, use the catch-all without a recorded peak and run
@@ -349,7 +358,7 @@ alone through `arc-offload`.
 arc-offload npm run test              # npm test is also accepted
 npm run typegen
 arc-offload npm run type-check
-arc-offload npm run lint              # append -- --fix for auto-fix
+arc-offload npm run lint
 arc-offload npm run verify-contrast
 ```
 

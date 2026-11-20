@@ -185,25 +185,22 @@ the worktree's browsable stack with Home's line and the notices in place.
 
         Added a shared, centred notice below the relevant buttons. The focused sign-in and registration tests passed.
 
-- [ ] **3.3 `DEVELOPMENT-RULES.md` carries the rule that keeps the texts true — R11**
+- [x] **3.3 `DEVELOPMENT-RULES.md` carries the rule that keeps the texts true — R11**
 
     **Goal:** A developer whose change touches what the texts describe finds, in Code Quality Principles, what the
     change must update, which areas and provider facts prompt a read, and the hold on new uses of personal data.
 
-    - R11's rule as the PRD states it: the update in the same pull request with new effective dates, Home's line
-      kept in agreement, the hold on a new use of personal data, the list of areas and provider facts, and the
-      expected additions
-    - The document's version header stays as it is
+    - Added the same-pull-request and effective-date rule, the notice and consent requirement, and the code and
+      provider changes that require checking the texts. Kept the document's version header.
 
-- [ ] **3.4 The new ADR records how the texts live in the app — R12**
+- [x] **3.4 The new ADR records how the texts live in the app — R12**
 
     **Goal:** The ADR, reading `Proposed`, records the two routes and why their paths hold, the texts written into
     source, Home's line agreeing with the policy, the rule, and Google's requirements as its context, and names
     Appendix C of `prd-privacy-terms.md` as the map at publication.
 
-    - The next free number on `origin/main` when it's written, from `adr-template.md`, reading `Proposed`;
-      verification sets it `Accepted` (Task 4.1), and the records check (`check-adr-records.mjs`), which refuses a new
-      ADR reading `Proposed`, runs before merging (`archive-completed.md` § 8)
+    - Added Proposed ADR-052 covering the public routes, why URLs stay stable, JSX text, the signed-out Home
+      disclosure, and the rule for keeping the documents current. The status names the map used at publication.
 
 - [ ] **3.5 Trace again what `main` changed since the map was read — R16**
 

@@ -1,3 +1,5 @@
+import { actUntil } from "@tests/helpers/act-until";
+import { settleToastSubscriptions } from "@tests/helpers/toast";
 import { useEffect } from "react";
 import { useQueryClient, useIsFetching, useQuery } from "@tanstack/react-query";
 import { useUserMovieState } from "@/hooks/movie/useUserMovieState";
@@ -65,7 +67,19 @@ function AuthStatusProbe() {
 }
 
 function mountAuth() {
-  return renderHook(() => useAuth(), { wrapper: AuthTestProviders });
+  return renderHook(() => ({ ...useAuth(), client: useQueryClient() }), {
+    wrapper: AuthTestProviders,
+  });
+}
+
+async function finishProfileRead(client: ReturnType<typeof useQueryClient>) {
+  await act(async () => {
+    await vi.waitFor(() =>
+      expect(client.getQueryData(sessionQuery().queryKey)).toEqual(profile),
+    );
+    // TanStack delivers the cached result to React on the next timer task.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  });
 }
 
 beforeEach(() => {
@@ -528,12 +542,8 @@ describe("password session renewal", () => {
       }),
     );
     const { result } = mountAuth();
-    await vi.waitFor(async () => {
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(10);
-      });
-      expect(result.current.user).toEqual(profile);
-    });
+    await finishProfileRead(result.current.client);
+    expect(result.current.user).toEqual(profile);
     setAuthTokens(token(1));
     await act(async () => {
       await vi.advanceTimersByTimeAsync(60000);
@@ -725,12 +735,8 @@ describe("sign-out during idle renewal", () => {
       vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
       setAuthTokens(token(), storage);
       const { result } = mountAuth();
-      await vi.waitFor(async () => {
-        await act(async () => {
-          await vi.advanceTimersByTimeAsync(10);
-        });
-        expect(result.current.user).toEqual(profile);
-      });
+      await finishProfileRead(result.current.client);
+      expect(result.current.user).toEqual(profile);
       const release = gate();
       const entered = gate();
       let refreshes = 0;
@@ -781,6 +787,7 @@ describe("sign-out during idle renewal", () => {
               "password",
               storage === "localStorage",
             );
+            await new Promise<void>((resolve) => setTimeout(resolve, 0));
           });
         }
       } finally {
@@ -1013,15 +1020,19 @@ describe("password sign-in completion", () => {
       screen.getByLabelText("Password", { exact: true }),
       "password",
     );
-    await user.click(screen.getByRole("button", { name: "Login" }));
-    await entered.wait;
-    await waitFor(() =>
-      expect(screen.getByLabelText("Session reads")).toHaveTextContent("1"),
-    );
-    expect(locations).toEqual(["/login?next=%2Fprivate"]);
-    await act(async () => release.release());
-    await screen.findByRole("heading", { name: "Protected film list" });
-    expect(locations).toEqual(["/login?next=%2Fprivate", "/private"]);
+    try {
+      await user.click(screen.getByRole("button", { name: "Login" }));
+      await actUntil("the password profile request", () => entered.wait);
+      await waitFor(() =>
+        expect(screen.getByLabelText("Session reads")).toHaveTextContent("1"),
+      );
+      expect(locations).toEqual(["/login?next=%2Fprivate"]);
+      await act(async () => release.release());
+      await screen.findByRole("heading", { name: "Protected film list" });
+      expect(locations).toEqual(["/login?next=%2Fprivate", "/private"]);
+    } finally {
+      release.release();
+    }
   });
 });
 
@@ -1033,8 +1044,10 @@ describe("the first session read on a provider return", () => {
     username: "provider",
     first_name: "Provider",
   };
-  function mountReturn(entry = "/login?next=%2Fwatchlist%3Fsort%3Dadded") {
-    return renderHook(
+  async function mountReturn(
+    entry = "/login?next=%2Fwatchlist%3Fsort%3Dadded",
+  ) {
+    const view = renderHook(
       () => ({
         auth: useAuth(),
         location: useLocation(),
@@ -1051,6 +1064,8 @@ describe("the first session read on a provider return", () => {
         ),
       },
     );
+    await settleToastSubscriptions();
+    return view;
   }
   beforeEach(() => {
     sessionStorage.setItem("oauth_in_progress", "google");
@@ -1076,7 +1091,7 @@ describe("the first session read on a provider return", () => {
           HttpResponse.json({ access_token: token() }),
         ),
       );
-      const { result } = mountReturn();
+      const { result } = await mountReturn();
       await waitFor(() => expect(result.current.auth.user).toEqual(provider));
       expect(localStorage.getItem("access_token")).toBeNull();
       expect(sessionStorage.getItem("access_token")).toBeNull();
@@ -1106,7 +1121,7 @@ describe("the first session read on a provider return", () => {
           HttpResponse.json({ access_token: renewed }),
         ),
       );
-      const { result } = mountReturn();
+      const { result } = await mountReturn();
       await waitFor(() =>
         expect(result.current.auth.status).toBe(
           stored ? "authenticated" : "anonymous",
@@ -1137,7 +1152,7 @@ describe("the first session read on a provider return", () => {
         });
       }),
     );
-    const { result } = mountReturn();
+    const { result } = await mountReturn();
     await entered.wait;
     await act(async () => result.current.navigate("/browse?next=%2Fwrong"));
     release.release();
@@ -1159,7 +1174,7 @@ describe("the first session read on a provider return", () => {
         return HttpResponse.json({ status: 401 }, { status: 401 });
       }),
     );
-    const { result } = mountReturn("/browse");
+    const { result } = await mountReturn("/browse");
     await waitFor(() => expect(result.current.auth.status).toBe("anonymous"));
     await act(async () => result.current.navigate("/login"));
     await waitFor(() =>
@@ -1171,7 +1186,7 @@ describe("the first session read on a provider return", () => {
 });
 
 // Observe lists and saves beside the real session hook, with only HTTP held.
-function mountUserChange(path = "/browse", saveStatus = 200) {
+async function mountUserChange(path = "/browse", saveStatus = 200) {
   const headers: (string | null)[] = [];
   let libraries = 0;
   const saved = gate();
@@ -1224,6 +1239,7 @@ function mountUserChange(path = "/browse", saveStatus = 200) {
       ),
     },
   );
+  await settleToastSubscriptions();
   return {
     ...view,
     headers,
@@ -1236,11 +1252,20 @@ function mountUserChange(path = "/browse", saveStatus = 200) {
     },
   };
 }
-type ChangeView = ReturnType<typeof mountUserChange>;
+type ChangeView = Awaited<ReturnType<typeof mountUserChange>>;
 async function startHeldSave(view: ChangeView) {
-  await vi.waitFor(() => expect(view.result.current.library.data).toBe(1));
-  act(() => view.result.current.save({ user_on_watchlist: true }));
-  await vi.waitFor(() => expect(view.patches).toBe(1));
+  await act(async () => {
+    await vi.waitFor(() =>
+      expect(
+        view.result.current.client.getQueryData(["library", "ownership"]),
+      ).toBe(1),
+    );
+  });
+  await waitFor(() => expect(view.result.current.library.data).toBe(1));
+  await act(async () => {
+    view.result.current.save({ user_on_watchlist: true });
+    await vi.waitFor(() => expect(view.patches).toBe(1));
+  });
   expect(view.result.current.state.user_on_watchlist).toBe(true);
   const running = view.result.current.client.getMutationCache().getAll()[0];
   if (!running) throw new Error("The save did not start");
@@ -1290,7 +1315,7 @@ describe("user ownership changes", () => {
           return HttpResponse.json({}, { status: 403 });
         }),
       );
-      const view = mountUserChange("/browse", saveStatus);
+      const view = await mountUserChange("/browse", saveStatus);
       const running = await startHeldSave(view);
       held.release();
       await waitFor(() =>
@@ -1321,7 +1346,7 @@ describe("user ownership changes", () => {
         }),
       ),
     );
-    const view = mountUserChange();
+    const view = await mountUserChange();
     const running = await startHeldSave(view);
     await entered.wait;
     await act(async () => {
@@ -1350,31 +1375,37 @@ describe("user ownership changes", () => {
         return HttpResponse.json({}, { status: 403 });
       }),
     );
-    const view = mountUserChange();
-    const running = await startHeldSave(view);
-    let login: ReturnType<typeof view.result.current.auth.login>;
-    act(() => {
-      login = view.result.current.auth.login("viewer", "password");
-    });
-    await entered.wait;
-    await waitFor(() =>
-      expect(view.result.current.state.user_on_watchlist).toBe(false),
-    );
-    expect(view.headers).toEqual([null]);
-    expect(view.libraries).toBe(1);
-    await act(async () => {
+    const view = await mountUserChange();
+    try {
+      const running = await startHeldSave(view);
+      let login: ReturnType<typeof view.result.current.auth.login>;
+      await actUntil("the held password profile request", () => {
+        login = view.result.current.auth.login("viewer", "password");
+        return entered.wait;
+      });
+      await waitFor(() =>
+        expect(view.result.current.state.user_on_watchlist).toBe(false),
+      );
+      expect(view.headers).toEqual([null]);
+      expect(view.libraries).toBe(1);
+      await act(async () => {
+        held.release();
+        await login;
+      });
+      await expectRetiredSave(view, running);
+      expect(view.headers).toEqual([null, null]);
+    } finally {
       held.release();
-      await login;
-    });
-    await expectRetiredSave(view, running);
-    expect(view.headers).toEqual([null, null]);
+      view.saved.release();
+      view.unmount();
+    }
   });
 
   it("retires saves when the idle renewal fails", async () => {
     installWebLocks();
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
     setAuthTokens(token());
-    const view = mountUserChange();
+    const view = await mountUserChange();
     const running = await startHeldSave(view);
     await vi.waitFor(async () => {
       await act(async () => {
@@ -1412,7 +1443,7 @@ describe("user ownership changes", () => {
         });
       }),
     );
-    const view = mountUserChange("/login");
+    const view = await mountUserChange("/login");
     const running = await startHeldSave(view);
     held.release();
     await waitFor(() => expect(view.result.current.auth.user).toEqual(profile));
@@ -1437,7 +1468,7 @@ describe("user ownership changes", () => {
           return HttpResponse.json({}, { status: 401 });
         }),
       );
-      const view = mountUserChange();
+      const view = await mountUserChange();
       const running = await startHeldSave(view);
       held.release();
       await waitFor(() =>
@@ -1469,7 +1500,7 @@ describe("user ownership changes", () => {
           return HttpResponse.json({}, { status });
         }),
       );
-      const view = mountUserChange();
+      const view = await mountUserChange();
       const running = await startHeldSave(view);
       view.saved.release();
       await waitFor(() => expect(running.state.status).toBe("success"));
@@ -1529,35 +1560,41 @@ describe("settled sign-out reload", () => {
           ? http.post(`${apiBaseUrl}/logout/`, respond)
           : http.delete(sessionUrl, respond),
       );
-      const view = mountUserChange("/browse", saveStatus);
-      await waitFor(() =>
-        expect(view.result.current.auth.user).toEqual(profile),
-      );
-      const running = await startHeldSave(view);
-      let logout: Promise<void>;
-      act(() => {
-        logout = view.result.current.auth.logout();
-      });
-      await entered.wait;
-      await waitFor(() =>
-        expect(view.result.current.auth.status).toBe("anonymous"),
-      );
-      expect(view.result.current.location.pathname).toBe("/login");
-      expect(window.location.href).toBe("http://localhost:3000/browse");
-      expect(localStorage.getItem("access_token")).toBeNull();
-      expect(sessionStorage.getItem("access_token")).toBeNull();
-      await expectRetiredSave(view, running);
-      expect(
-        screen.queryByText("You've been logged out."),
-      ).not.toBeInTheDocument();
-      await act(async () => {
+      const view = await mountUserChange("/browse", saveStatus);
+      try {
+        await waitFor(() =>
+          expect(view.result.current.auth.user).toEqual(profile),
+        );
+        const running = await startHeldSave(view);
+        let logout: Promise<void>;
+        await actUntil("the held sign-out request", () => {
+          logout = view.result.current.auth.logout();
+          return entered.wait;
+        });
+        await waitFor(() =>
+          expect(view.result.current.auth.status).toBe("anonymous"),
+        );
+        expect(view.result.current.location.pathname).toBe("/login");
+        expect(window.location.href).toBe("http://localhost:3000/browse");
+        expect(localStorage.getItem("access_token")).toBeNull();
+        expect(sessionStorage.getItem("access_token")).toBeNull();
+        await expectRetiredSave(view, running);
+        expect(
+          screen.queryByText("You've been logged out."),
+        ).not.toBeInTheDocument();
+        await act(async () => {
+          held.release();
+          await logout;
+        });
+        expect(window.location.href).toBe("/login?signed_out=true");
+        expect(
+          screen.queryByText("You've been logged out."),
+        ).not.toBeInTheDocument();
+      } finally {
         held.release();
-        await logout;
-      });
-      expect(window.location.href).toBe("/login?signed_out=true");
-      expect(
-        screen.queryByText("You've been logged out."),
-      ).not.toBeInTheDocument();
+        view.saved.release();
+        view.unmount();
+      }
     },
   );
 
@@ -1580,7 +1617,7 @@ describe("settled sign-out reload", () => {
           }),
         ),
       );
-      const view = mountUserChange();
+      const view = await mountUserChange();
       await waitFor(() =>
         expect(view.result.current.auth.user).toEqual(profile),
       );

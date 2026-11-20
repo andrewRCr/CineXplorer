@@ -202,22 +202,26 @@ the worktree's browsable stack with Home's line and the notices in place.
     - Added Proposed ADR-052 covering the public routes, why URLs stay stable, JSX text, the signed-out Home
       disclosure, and the rule for keeping the documents current. The status names the map used at publication.
 
-- [ ] **3.5 Trace again what `main` changed since the map was read — R16**
+- [x] **3.5 Trace again what `main` changed since the map was read — R16**
 
     **Goal:** Before verification, the texts and Appendix C hold for every change `main` took after `099a75df`, so
     verification can walk Success Criterion 3 on this branch.
 
-    - Merge `origin/main` into the branch, then trace each change merged after `099a75df` that touches a path
-      Appendix C names to where its code path ends; record what was traced and the result here
-    - A correction amends the PRD's appendices with the Owner (`1_create-prd.md` § Amending a PRD), then lands on the
-      pages; a page whose text changes is compared with its appendix again
+    - Brought in `origin/main` at `d39b39d1`. The changes since `099a75df` were test coverage (#227 and #229),
+      CI Chromium installation (#228), and the authentication field ID fix (#231).
+    - Traced #231's generated IDs through the label and input in `FormField` and `StyledInput`, then the field values
+      through Login, Register, ForgotPassword and PasswordResetDialog to the auth requests and their Django/allauth
+      handlers. The fix makes labels select the correct inputs. Field names, request bodies, password hashing,
+      token handling, email delivery and persistence follow the same paths. The terms, policy and Appendix C
+      required no edits.
 
-- [ ] **3.6 Check where visitors meet the texts in the browser**
+- [x] **3.6 Check where visitors meet the texts in the browser**
 
     **Goal:** The segment's exit criterion is shown on this branch, with what ran and the result recorded here.
 
-    - Run `sign-up.spec.ts`, `sign-in.spec.ts`, `phone-width.spec.ts` and `background.spec.ts` against the
-      worktree's browsable stack
+    - After bringing in `main`, all 23 scenarios across `sign-up.spec.ts`, `sign-in.spec.ts`, `phone-width.spec.ts`,
+      `background.spec.ts` and `legal-pages.spec.ts` passed on this worktree's browsable stack. All 127 focused frontend
+      tests passed.
 
 ### **Phase 4:** Verification
 

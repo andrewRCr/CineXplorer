@@ -254,6 +254,119 @@ describe("useScrollPersistence", () => {
     expect(saved).toEqual(["scroll-discover-"]);
   });
 
+  describe("returning past the results loaded so far", () => {
+    // Each page of results makes the document 1900 px taller; the browser clamps a scroll to what exists
+    let maxScroll = 0;
+    const scrollWithinContent = (_x: number, y: number) => {
+      mockScrollY = Math.min(y, maxScroll);
+    };
+    const pageHeight = 1900;
+
+    function returnTo(position: number, initialProps: object) {
+      mockSessionStorage.setItem(
+        "scroll-discover-",
+        createStorageEntry(position),
+      );
+      return renderHook(
+        (props: { loadedCount: number; hasMore: boolean }) =>
+          useScrollPersistence({ ...defaultOptions, ...props }),
+        {
+          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+          initialProps: { loadedCount: 20, hasMore: true, ...initialProps },
+        },
+      );
+    }
+
+    function visitorScrollsTo(position: number) {
+      mockScrollY = position;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(200);
+      });
+    }
+
+    const savedPosition = () =>
+      (
+        JSON.parse(mockSessionStorage.getItem("scroll-discover-") ?? "{}") as {
+          position?: number;
+        }
+      ).position;
+
+    beforeEach(() => {
+      maxScroll = pageHeight;
+      mockScrollTo.mockImplementation(scrollWithinContent);
+    });
+
+    afterEach(() => {
+      mockScrollTo.mockImplementation(() => {});
+    });
+
+    it("keeps restoring as later pages load, until the saved position is reached", () => {
+      const { rerender } = returnTo(6000, {});
+      expect(window.scrollY).toBe(1900);
+      for (const loadedCount of [40, 60]) {
+        maxScroll += pageHeight;
+        rerender({ loadedCount, hasMore: true });
+        expect(window.scrollY).toBe(maxScroll);
+        // A position the restore passes through is never saved
+        act(() => {
+          scrollListeners.forEach((listener) => listener());
+          vi.advanceTimersByTime(300);
+        });
+        expect(savedPosition()).toBe(6000);
+      }
+      maxScroll += pageHeight;
+      rerender({ loadedCount: 80, hasMore: true });
+      expect(window.scrollY).toBe(6000);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(6100);
+      expect(savedPosition()).toBe(6100);
+    });
+
+    it("stops following once the visitor scrolls", () => {
+      const { rerender } = returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+        window.dispatchEvent(new WheelEvent("wheel"));
+      });
+      maxScroll += pageHeight;
+      rerender({ loadedCount: 40, hasMore: true });
+      expect(window.scrollY).toBe(1900);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(1500);
+      expect(savedPosition()).toBe(1500);
+    });
+
+    it("stops when no more results can load", () => {
+      returnTo(6000, { hasMore: false });
+      expect(window.scrollY).toBe(1900);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(1200);
+      expect(savedPosition()).toBe(1200);
+    });
+
+    it("stops after ten more pages", () => {
+      const { rerender } = returnTo(100000, {});
+      for (let page = 2; page <= 12; page++) {
+        maxScroll += pageHeight;
+        rerender({ loadedCount: page * 20, hasMore: true });
+      }
+      // Pages 2 to 11 were followed; the twelfth loaded without moving the visitor
+      expect(window.scrollY).toBe(11 * pageHeight);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(20000);
+      expect(savedPosition()).toBe(20000);
+    });
+  });
+
   describe("initial offset behavior", () => {
     it("returns 0 when no saved position exists", () => {
       const { result } = renderHook(

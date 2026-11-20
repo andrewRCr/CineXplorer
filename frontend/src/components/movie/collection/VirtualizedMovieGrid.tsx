@@ -133,6 +133,8 @@ const VirtualizedMovieGrid = () => {
     isLoading,
     hasContent: movies.length > 0,
     isError,
+    loadedCount: movies.length,
+    hasMore: hasNextPage,
   });
 
   // --------------------------------------------------------------------------

@@ -118,68 +118,76 @@ async function openFromDeep() {
   geometry.stopMeasuring();
 }
 for (const path of ["/watchlist", "/library"]) {
-  it.each(["restore", "fresh", "reload", "user"])(
-    `${path} returns with measured rows only when allowed (%s)`,
-    async (mode) => {
-      page(path);
-      await openFromDeep();
-      const user = userEvent.setup();
-      if (mode === "reload")
-        await user.click(
-          screen.getByRole("button", { name: "Simulate reload" }),
-        );
-      if (mode === "user")
-        await user.click(screen.getByRole("button", { name: "Change user" }));
-      await user.click(
-        screen.getByRole("link", {
-          name: path === "/watchlist" ? "Back to Watchlist" : "Back to Library",
-        }),
-      );
-      if (mode === "fresh") {
-        // Repeat the arrival through a link without a restore signal.
-        const link = (
-          await screen.findAllByRole("link", { name: "Film 41" })
-        )[0];
-        if (!link) throw new Error("Missing restored film");
-        await user.click(link);
-        await user.click(
-          screen.getByRole("button", { name: "Open collection fresh" }),
-        );
-      }
-      if (mode === "restore") {
-        await waitFor(() => expect(window.scrollY).toBe(6500));
-        await waitFor(() => {
-          const rows = screen.getAllByRole("row");
-          const row = rows.find(
-            (row) => row.getAttribute("data-index") === "20",
+  for (const mode of ["restore", "fresh", "reload", "user"]) {
+    it(
+      `${path} returns with measured rows only when allowed (${mode})`,
+      // Reload exercises a second film return to catch stale scroll state.
+      // Leave extra time for that second navigation under coverage.
+      { timeout: mode === "reload" ? 20_000 : undefined },
+      async () => {
+        page(path);
+        await openFromDeep();
+        const user = userEvent.setup();
+        if (mode === "reload")
+          await user.click(
+            screen.getByRole("button", { name: "Simulate reload" }),
           );
-          if (!row) throw new Error("Missing returned row 20");
-          expect(row).toHaveStyle({ transform: "translateY(6320px)" });
-        });
-      } else {
-        await waitFor(() => expect(window.scrollY).toBe(0));
-        expect(
-          (await screen.findAllByRole("link", { name: "Film 1" }))[0],
-        ).toBeVisible();
-        const nextRow = screen
-          .getAllByRole("row")
-          .find((row) => row.getAttribute("data-index") === "1");
-        expect(nextRow).toHaveStyle({ transform: "translateY(16px)" });
-        if (mode === "reload") {
-          const link = screen.getAllByRole("link", { name: "Film 1" })[0];
-          if (!link) throw new Error("Missing first film");
+        if (mode === "user")
+          await user.click(screen.getByRole("button", { name: "Change user" }));
+        await user.click(
+          screen.getByRole("link", {
+            name:
+              path === "/watchlist" ? "Back to Watchlist" : "Back to Library",
+          }),
+        );
+        if (mode === "fresh") {
+          // Repeat the arrival through a link without a restore signal.
+          const link = (
+            await screen.findAllByRole("link", { name: "Film 41" })
+          )[0];
+          if (!link) throw new Error("Missing restored film");
           await user.click(link);
           await user.click(
-            screen.getByRole("link", {
-              name:
-                path === "/watchlist" ? "Back to Watchlist" : "Back to Library",
-            }),
+            screen.getByRole("button", { name: "Open collection fresh" }),
           );
-          await waitFor(() => expect(window.scrollY).toBe(0));
         }
-      }
-    },
-  );
+        if (mode === "restore") {
+          await waitFor(() => expect(window.scrollY).toBe(6500));
+          await waitFor(() => {
+            const rows = screen.getAllByRole("row");
+            const row = rows.find(
+              (row) => row.getAttribute("data-index") === "20",
+            );
+            if (!row) throw new Error("Missing returned row 20");
+            expect(row).toHaveStyle({ transform: "translateY(6320px)" });
+          });
+        } else {
+          await waitFor(() => expect(window.scrollY).toBe(0));
+          expect(
+            (await screen.findAllByRole("link", { name: "Film 1" }))[0],
+          ).toBeVisible();
+          const nextRow = screen
+            .getAllByRole("row")
+            .find((row) => row.getAttribute("data-index") === "1");
+          expect(nextRow).toHaveStyle({ transform: "translateY(16px)" });
+          if (mode === "reload") {
+            const link = screen.getAllByRole("link", { name: "Film 1" })[0];
+            if (!link) throw new Error("Missing first film");
+            await user.click(link);
+            await user.click(
+              screen.getByRole("link", {
+                name:
+                  path === "/watchlist"
+                    ? "Back to Watchlist"
+                    : "Back to Library",
+              }),
+            );
+            await waitFor(() => expect(window.scrollY).toBe(0));
+          }
+        }
+      },
+    );
+  }
   it(`${path} uses the fresh visit's position on the next film return`, async () => {
     page(path);
     await openFromDeep();

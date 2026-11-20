@@ -17,21 +17,27 @@ const browsePage = (
   titles: string[],
   firstId: number,
   nextCursor: number | null,
+  totals = { total_pages: 13, total_results: 260 },
 ): MovieListResponse => ({
   page: 1,
   results: titles.map((title, index) =>
-    createMockMovieListItem({ tmdb_id: firstId + index, title }),
+    createMockMovieListItem({
+      tmdb_id: firstId + index,
+      title,
+      runtime: 0,
+      user_movie_data: null,
+    }),
   ),
-  total_pages: 10,
-  total_results: 200,
+  ...totals,
   next_tmdb_page_start: nextCursor,
 });
 
-// Responses keyed by the cursor the request carries; the first request has none
+// Each short page with a continuation reads six TMDB pages. The third request
+// reaches the end of the upstream results on page 13.
 const pagesByCursor = new Map<string | null, MovieListResponse>([
-  [null, browsePage(["Alpha One", "Alpha Two", "Alpha Three"], 1, 6)],
-  ["6", browsePage(["Bravo One", "Bravo Two"], 4, 9)],
-  ["9", browsePage(["Charlie One", "Charlie Two"], 6, null)],
+  [null, browsePage(["Alpha One", "Alpha Two", "Alpha Three"], 1, 7)],
+  ["7", browsePage(["Bravo One", "Bravo Two"], 4, 13)],
+  ["13", browsePage(["Charlie One", "Charlie Two"], 6, null)],
 ]);
 
 const renderSequentialBrowse = () =>
@@ -68,7 +74,7 @@ describe("BrowseSequential", () => {
 
     expect(await screen.findByText("Alpha Three")).toBeInTheDocument();
     expect(
-      screen.getAllByText("Showing 1-3 of 200 results").length,
+      screen.getAllByText("Showing 1-3 of 260 results").length,
     ).toBeGreaterThan(0);
 
     const showNextPage = async () => {
@@ -80,14 +86,14 @@ describe("BrowseSequential", () => {
     await showNextPage();
     expect(await screen.findByText("Bravo Two")).toBeInTheDocument();
     expect(
-      screen.getAllByText("Showing 4-5 of 200 results").length,
+      screen.getAllByText("Showing 4-5 of 260 results").length,
     ).toBeGreaterThan(0);
 
     // Pages of 3 and 2 come before, so the third page holds results 6-7
     await showNextPage();
     expect(await screen.findByText("Charlie Two")).toBeInTheDocument();
     expect(
-      screen.getAllByText("Showing 6-7 of 200 results").length,
+      screen.getAllByText("Showing 6-7 of 260 results").length,
     ).toBeGreaterThan(0);
   });
 });
@@ -95,7 +101,12 @@ describe("BrowseSequential", () => {
 it("keeps its Browse title without release-window tabs", async () => {
   server.use(
     http.get(browseUrl, () =>
-      HttpResponse.json(browsePage(["Alpha One"], 1, null)),
+      HttpResponse.json(
+        browsePage(["Alpha One"], 1, null, {
+          total_pages: 1,
+          total_results: 1,
+        }),
+      ),
     ),
   );
   renderSequentialBrowse();

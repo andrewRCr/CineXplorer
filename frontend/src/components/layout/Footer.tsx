@@ -43,7 +43,7 @@ const Footer = () => {
         {/* Copyright Row */}
         <Box display="inline-flex" alignItems="center" gap={2}>
           <Text fontSize="sm" color="on-muted" fontWeight="light">
-            © 2025 CineXplorer. All rights reserved.
+            © {new Date().getFullYear()} CineXplorer. All rights reserved.
           </Text>
         </Box>
 

@@ -29,6 +29,7 @@ import {
 } from "@/components/core/chakra/toaster";
 import logger from "@/services/logger";
 import { gate } from "@tests/helpers/web-locks";
+import { LiveAnnouncer } from "@/components/core/LiveAnnouncer";
 import Login from "../Login";
 
 const originalConfig = logger.getEnvironmentInfo().config;
@@ -64,15 +65,22 @@ afterEach(() => {
 });
 
 /**
- * Asserts the notice is in the sign-in card's polite notice region (role="status", on the page from the first render)
- * or is its one error (role="alert"), and that no priority toast carries a message alongside it.
+ * Asserts the card shows the notice and screen readers hear it through the app's live region (the one status region
+ * holding it), with no priority toast alongside.
  */
-function expectNoticeInCard(text: string, role: "status" | "alert") {
-  // The app's own toast regions are statuses too, so find the one region holding the text
-  const holders = screen
-    .getAllByRole(role)
+function expectNotice(text: string) {
+  const regions = screen
+    .getAllByRole("status")
     .filter((region) => within(region).queryByText(text));
-  expect(holders).toHaveLength(1);
+  expect(regions).toHaveLength(1);
+  // One copy in the card, one in the live region
+  expect(screen.getAllByText(text)).toHaveLength(2);
+  expect(priorityToaster.getVisibleToasts()).toHaveLength(0);
+}
+
+/** Asserts the card shows the error as its one alert, with no priority toast alongside. */
+function expectErrorInCard(text: string) {
+  expect(screen.getByRole("alert")).toHaveTextContent(text);
   expect(priorityToaster.getVisibleToasts()).toHaveLength(0);
 }
 
@@ -93,6 +101,7 @@ describe("resending from an unverified sign-in", () => {
         </AuthContextProvider>
         <Toaster />
         <PriorityToaster />
+        <LiveAnnouncer />
       </>,
     );
     await user.type(
@@ -125,6 +134,7 @@ describe("resending from an unverified sign-in", () => {
         </AuthContextProvider>
         <Toaster />
         <PriorityToaster />
+        <LiveAnnouncer />
       </>,
     );
     await user.type(
@@ -136,7 +146,7 @@ describe("resending from an unverified sign-in", () => {
     await user.click(
       await screen.findByRole("button", { name: "Resend verification" }),
     );
-    await waitFor(() => expectNoticeInCard(sent, "status"));
+    await waitFor(() => expectNotice(sent));
     expect(
       screen.getByRole("button", { name: "Resend verification" }),
     ).toBeVisible();
@@ -163,6 +173,7 @@ describe("resending from an unverified sign-in", () => {
           </AuthContextProvider>
           <Toaster />
           <PriorityToaster />
+          <LiveAnnouncer />
         </>,
       );
       await user.type(
@@ -180,7 +191,7 @@ describe("resending from an unverified sign-in", () => {
           : outcome === 429
             ? "Too many requests. Please wait a moment before trying again."
             : "Failed to send the email. Please try again later.";
-      await waitFor(() => expectNoticeInCard(expected, "status"));
+      await waitFor(() => expectNotice(expected));
       expect(
         screen.getByRole("button", { name: "Resend verification" }),
       ).toBeVisible();
@@ -209,6 +220,7 @@ describe("resending from an unverified sign-in", () => {
           <Login />
         </AuthContextProvider>
         <PriorityToaster />
+        <LiveAnnouncer />
       </>,
     );
     await user.type(
@@ -221,9 +233,9 @@ describe("resending from an unverified sign-in", () => {
       await user.click(
         await screen.findByRole("button", { name: "Resend verification" }),
       );
-      await waitFor(() => expectNoticeInCard(sending, "status"));
+      await waitFor(() => expectNotice(sending));
       gateFor.release();
-      await waitFor(() => expectNoticeInCard(limited, "status"));
+      await waitFor(() => expectNotice(limited));
     }
     expect(attempt).toBe(2);
   });
@@ -243,6 +255,7 @@ describe("resending from an unverified sign-in", () => {
           <Login />
         </AuthContextProvider>
         <PriorityToaster />
+        <LiveAnnouncer />
       </>,
     );
     await user.type(
@@ -285,6 +298,7 @@ describe("signing in with a password", () => {
         </AuthContextProvider>
         <Toaster />
         <PriorityToaster />
+        <LiveAnnouncer />
       </>,
     );
     await user.type(
@@ -301,9 +315,7 @@ describe("signing in with a password", () => {
     expect(screen.getAllByText("Logging in...")).toHaveLength(1);
     expect(priorityToaster.getVisibleToasts()).toHaveLength(0);
     held.release();
-    await waitFor(() =>
-      expectNoticeInCard("Invalid username or password.", "alert"),
-    );
+    await waitFor(() => expectErrorInCard("Invalid username or password."));
   });
 });
 
@@ -320,6 +332,7 @@ describe("notices the sign-in page opens with", () => {
               <Route path="/" element={<h1>Home after sign-in</h1>} />
             </Routes>
             <PriorityToaster />
+            <LiveAnnouncer />
           </AuthContextProvider>
         </MemoryRouter>
       </TestProviders>,
@@ -333,29 +346,34 @@ describe("notices the sign-in page opens with", () => {
       pathname: "/login",
       state: { registrationSuccess: true, message: created },
     });
-    await waitFor(() => expectNoticeInCard(created, "status"));
+    // The card shows it at once; the live region, new with the page, waits until screen readers track it
+    await screen.findByText(created);
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    await waitFor(() => expectNotice(created));
   });
 
   it("shows an expired session in the card", async () => {
     window.history.replaceState({}, "", "/login?session_expired=true");
     renderLoginWith("/login?session_expired=true");
-    await waitFor(() =>
-      expectNoticeInCard("Session expired. Please log in again.", "status"),
-    );
+    const expired = "Session expired. Please log in again.";
+    // The card shows it at once; the live region, new with the page, waits until screen readers track it
+    await screen.findByText(expired);
+    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    await waitFor(() => expectNotice(expired));
   });
 
   it("keeps a notice when focus leaves an empty field", async () => {
     const expired = "Session expired. Please log in again.";
     window.history.replaceState({}, "", "/login?session_expired=true");
     renderLoginWith("/login?session_expired=true");
-    await waitFor(() => expectNoticeInCard(expired, "status"));
+    await waitFor(() => expectNotice(expired));
     expect(
       screen.getByRole("textbox", { name: "Username or Email Address" }),
     ).toHaveFocus();
     const user = userEvent.setup();
     await user.tab({ shift: true });
     expect(screen.getByRole("button", { name: "Dismiss" })).toHaveFocus();
-    expectNoticeInCard(expired, "status");
+    expectNotice(expired);
   });
 
   it("shows a verified email in the card", async () => {
@@ -373,11 +391,14 @@ describe("notices the sign-in page opens with", () => {
     await user.click(
       await screen.findByRole("button", { name: "Complete Verification" }),
     );
-    // Readable by screen readers the moment it appears: an open dialog hides the rest of the page from them
+    // Heard while the dialog still shows its success: the live region sits outside the dialog's page hiding
     const verified = "Email verified. You can now log in.";
-    await screen.findByText(verified, {}, { timeout: 4000 });
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expectNoticeInCard(verified, "status");
+    await waitFor(() => expectNotice(verified));
+    expect(screen.getByRole("dialog")).toBeVisible();
+    await waitFor(
+      () => expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      { timeout: 3000 },
+    );
     expect(
       screen.getByRole("textbox", { name: "Username or Email Address" }),
     ).toHaveValue("viewer@example.com");
@@ -411,10 +432,7 @@ describe("notices the sign-in page opens with", () => {
 
   it("shows a reset password in the card when it doesn't sign the visitor in", async () => {
     await submitPasswordReset(userEvent.setup());
-    // Readable by screen readers the moment it appears: an open dialog hides the rest of the page from them
-    await screen.findByText(reset, {}, { timeout: 4000 });
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expectNoticeInCard(reset, "status");
+    await waitFor(() => expectNotice(reset), { timeout: 4000 });
   });
 
   it("shows a reset password in the card after the dialog is dismissed early", async () => {
@@ -425,8 +443,7 @@ describe("notices the sign-in page opens with", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
-    await screen.findByText(reset, {}, { timeout: 4000 });
-    expectNoticeInCard(reset, "status");
+    await waitFor(() => expectNotice(reset), { timeout: 4000 });
   });
 });
 
@@ -454,6 +471,7 @@ describe("returning to the requested page", () => {
         </MemoryRouter>
         <Toaster />
         <PriorityToaster />
+        <LiveAnnouncer />
       </TestProviders>,
     );
   }
@@ -537,6 +555,7 @@ describe("signed-out notice", () => {
               <Route path="/" element={<h1>Home after sign-in</h1>} />
             </Routes>
             <PriorityToaster />
+            <LiveAnnouncer />
           </AuthContextProvider>
         </MemoryRouter>
       </TestProviders>,
@@ -557,7 +576,7 @@ describe("signed-out notice", () => {
     // The notice region is on the page, empty, before the notice arrives, so screen readers announce the arrival
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
     held.release();
-    await waitFor(() => expectNoticeInCard(signedOut, "status"));
+    await waitFor(() => expectNotice(signedOut));
     expect(new URL(document.URL).search).toBe("");
   });
   it.each(["stored token", "provider session"])(

@@ -27,11 +27,14 @@ test("sign up and reach the email verification notice", async ({
         .fill(`Smoke-${randomUUID()}!`);
     await page.getByRole("button", { name: "Register", exact: true }).click();
     await expect(page).toHaveURL(new URL("/login", target.baseURL).href);
+    const created =
+        "Account created! Check your email to verify your account before logging in.";
+    // Shown in the sign-in card, and announced through the app's live region
     await expect(
-        page.getByText(
-            "Account created! Check your email to verify your account before logging in.",
-            { exact: true },
-        ),
+        page.getByText(created, { exact: true }).filter({ visible: true }),
     ).toBeVisible();
+    await expect(
+        page.getByRole("status").filter({ hasText: created }),
+    ).toHaveText(created);
     await scanPage(page, info);
 });

@@ -47,11 +47,6 @@ interface EmailVerificationDialogProps {
   onVerify: () => void;
   /** Handler for dialog dismiss (cancel, close, or after success) */
   onDismiss: () => void;
-  /**
-   * Called once the dialog has fully closed. While it's open the rest of the page is hidden from screen readers, so a
-   * notice meant to be announced is shown from here.
-   */
-  onExitComplete?: () => void;
 }
 
 export const EmailVerificationDialog = ({
@@ -59,12 +54,10 @@ export const EmailVerificationDialog = ({
   verificationMessage,
   onVerify,
   onDismiss,
-  onExitComplete,
 }: EmailVerificationDialogProps) => {
   return (
     <Dialog.Root
       open={verificationState !== null}
-      onExitComplete={onExitComplete}
       onOpenChange={(details) => {
         if (!details.open) {
           onDismiss();

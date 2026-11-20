@@ -1,6 +1,7 @@
 import logger from "@/services/logger";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import * as authService from "@/services/authService";
+import { announce } from "@/lib/announcer";
 import { getErrorMessage, hasErrorStatus } from "@/utilities/axiosErrorUtils";
 
 // ============================================================================
@@ -37,6 +38,12 @@ export type LoginAlert =
  */
 export function useLoginAlerts() {
     const [alert, setAlert] = useState<LoginAlert | null>(null);
+
+    // Screen readers hear each notice and verification message as it shows, through the app's live region; errors
+    // announce themselves (role="alert").
+    useEffect(() => {
+        if (alert && alert.type !== "general") announce(alert.message);
+    }, [alert]);
 
     // ---------------------------------------------------------------------------
     // Alert Setters
@@ -91,7 +98,7 @@ export function useLoginAlerts() {
                     resendToken,
                     failed,
                 });
-            // Each attempt changes the alert twice, so a repeated result is still seen and announced
+            // Each attempt changes the alert twice, so a repeated result is still seen and heard
             report("Sending a new verification email...");
             try {
                 await authService.resendVerificationEmail(resendToken);

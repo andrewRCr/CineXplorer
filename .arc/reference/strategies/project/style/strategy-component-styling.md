@@ -620,26 +620,30 @@ A form's alerts sit in its card, above the form, as the card's first child (sign
 `FloatingAlertContainer` floats an alert top-center over the page instead, without shifting the layout
 (registration's errors).
 
-Screen readers announce a change inside a live region that's already on the page, not one inserted together with its
-text (`role="alert"` excepted), so a non-error alert goes in a polite `role="status"` region rendered from the first
-render, empty until the notice arrives. Errors announce themselves (`FloatingAlert` gives them `role="alert"`) and go
-outside that region. While a modal dialog is open, the rest of the page is hidden from screen readers, so show a
-notice that follows a dialog only once it has fully closed (its `onExitComplete`).
+**Announcing notices:** a non-error notice carries no live role of its own. Show it where it belongs and pass its
+text to `announce` (`@/lib/announcer`), which writes it into the app's one polite live region, `LiveAnnouncer`. That
+region mounts once at app start beside the toasters, renders straight into `<body>` where a modal dialog's page hiding
+skips it, waits until screen readers track it before its first message, and clears before each message so a repeat is
+heard again. A page-level live region can't promise any of that: one inserted with its text, one hidden behind a
+dialog, or one only a frame old when its notice arrives goes unannounced. Errors announce themselves (`FloatingAlert`
+gives them `role="alert"`).
 
 **Code example:**
 
 ```tsx
-// In the form's card, above the form: the polite region is always rendered, so its notice is announced
+// In the form's card, above the form; screen readers hear it through the app's live region
+useEffect(() => {
+  if (notice) announce(notice);
+}, [notice]);
+
 <AuthFormCard>
-  <Box role="status" aria-live="polite">
-    {notice && (
-      <Box w="full" mb={6}>
-        <FloatingAlert status="success" onDismiss={...}>
-          Account created! Check your email to verify.
-        </FloatingAlert>
-      </Box>
-    )}
-  </Box>
+  {notice && (
+    <Box w="full" mb={6}>
+      <FloatingAlert status="success" onDismiss={...}>
+        {notice}
+      </FloatingAlert>
+    </Box>
+  )}
   <form>...</form>
 </AuthFormCard>
 
@@ -656,13 +660,13 @@ notice that follows a dialog only once it has fully closed (its `onExitComplete`
 - The sign-in card shows one alert at a time: errors, email verification with its resend action (which reports its
   result in place), and the notices a visitor arrives with (account created, email verified, signed out, session
   expired, password reset)
-- WCAG: `FloatingAlert` gives errors `role="alert"` (assertive). The sign-in card keeps a polite `role="status"`
-  region on the page from the first render and puts its notices and verification alert in it, since a live region
-  inserted with its text isn't reliably announced; errors render outside it. Alerts are dismissible via close button
+- WCAG: `FloatingAlert` gives errors `role="alert"` (assertive); each notice and verification message is announced
+  through the app's live region as it shows. Alerts are dismissible via close button
 - Notices clear when the visitor types or dismisses them; field validation clears only an error alert
 - Resending shows "Sending a new verification email..." until its result, which replaces the verification alert only
   while that alert still shows
-- The email-verified and password-reset notices appear once their dialog has fully closed
+- The email-verified and password-reset notices are heard while their dialog is still open, since the live region
+  sits outside the dialog's page hiding
 - A password reset that signs the visitor in confirms with a toast: they land on Home, where nothing else shows it
 
 **Edge cases:**

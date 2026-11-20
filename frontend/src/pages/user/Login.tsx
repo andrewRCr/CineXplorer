@@ -163,14 +163,6 @@ const Login = () => {
   // Email Verification Flow (?verify=TOKEN)
   // ==========================================================================
 
-  // A notice from a dialog's success, held until the dialog has fully closed
-  const pendingNoticeRef = useRef<string | null>(null);
-  const showPendingNotice = () => {
-    const message = pendingNoticeRef.current;
-    pendingNoticeRef.current = null;
-    if (message) showNotice(message);
-  };
-
   const verifyToken = searchParams.get("verify");
   const [verificationState, setVerificationState] = useState<VerificationState>(
     verifyToken ? "pending" : null,
@@ -211,8 +203,7 @@ const Login = () => {
       // Clear the token from URL to prevent re-verification attempts
       window.history.replaceState({}, "", ROUTES.LOGIN);
 
-      // Shown once the dialog has closed: until then the page is hidden from screen readers
-      pendingNoticeRef.current = "Email verified. You can now log in.";
+      showNotice("Email verified. You can now log in.");
 
       // Clear verification UI after short delay to let user see success
       verificationTimeoutRef.current = setTimeout(() => {
@@ -243,9 +234,6 @@ const Login = () => {
   const [passwordResetKey, setPasswordResetKey] = useState<string | null>(
     resetKey,
   );
-  // Whether the reset dialog has fully closed. A success that arrives after the visitor dismissed the dialog shows its
-  // notice at once, since no dialog hides the page any more and none will close to show it.
-  const resetDialogClosedRef = useRef(resetKey === null);
 
   const handlePasswordResetSuccess = (autoLoggedIn: boolean) => {
     setPasswordResetKey(null);
@@ -260,11 +248,7 @@ const Login = () => {
       });
       void navigate(ROUTES.HOME);
     } else {
-      // Shown once the dialog has closed: until then the page is hidden from screen readers
-      const message =
-        "Password reset. You can now log in with your new password.";
-      if (resetDialogClosedRef.current) showNotice(message);
-      else pendingNoticeRef.current = message;
+      showNotice("Password reset. You can now log in with your new password.");
     }
   };
 
@@ -399,41 +383,37 @@ const Login = () => {
         <h1>Sign in</h1>
       </VisuallyHidden>
       <AuthFormCard>
-        {/* Notices and the verification alert share a polite live region that's on the page from the first render,
-            so screen readers announce what arrives in it; errors announce themselves (role="alert") */}
-        <Box role="status" aria-live="polite">
-          {alert && alert.type !== "general" && (
-            <Box w="full" mb={6}>
-              {alert.type === "emailVerification" && (
-                <FloatingAlert
-                  status={alert.failed ? "warning" : "info"}
-                  onDismiss={clearAlert}
-                  action={
-                    alert.resendToken
-                      ? {
-                          label: "Resend verification",
-                          onClick: () =>
-                            void handleResendVerification(alert.resendToken),
-                        }
-                      : undefined
-                  }
-                >
-                  {alert.message}
-                </FloatingAlert>
-              )}
-              {alert.type === "notice" && (
-                <FloatingAlert status={alert.status} onDismiss={clearAlert}>
-                  {alert.message}
-                </FloatingAlert>
-              )}
-            </Box>
-          )}
-        </Box>
-        {alert?.type === "general" && (
+        {/* The card's one alert. Screen readers hear notices through the app's live region (useLoginAlerts) and errors
+            through their own role="alert" */}
+        {alert && (
           <Box w="full" mb={6}>
-            <FloatingAlert status="error" onDismiss={clearAlert}>
-              {alert.message}
-            </FloatingAlert>
+            {alert.type === "emailVerification" && (
+              <FloatingAlert
+                status={alert.failed ? "warning" : "info"}
+                onDismiss={clearAlert}
+                action={
+                  alert.resendToken
+                    ? {
+                        label: "Resend verification",
+                        onClick: () =>
+                          void handleResendVerification(alert.resendToken),
+                      }
+                    : undefined
+                }
+              >
+                {alert.message}
+              </FloatingAlert>
+            )}
+            {alert.type === "general" && (
+              <FloatingAlert status="error" onDismiss={clearAlert}>
+                {alert.message}
+              </FloatingAlert>
+            )}
+            {alert.type === "notice" && (
+              <FloatingAlert status={alert.status} onDismiss={clearAlert}>
+                {alert.message}
+              </FloatingAlert>
+            )}
           </Box>
         )}
 
@@ -583,7 +563,6 @@ const Login = () => {
           setVerificationState(null);
           window.history.replaceState({}, "", ROUTES.LOGIN);
         }}
-        onExitComplete={showPendingNotice}
       />
 
       {/* Password reset dialog - shown when ?reset=KEY in URL */}
@@ -592,10 +571,6 @@ const Login = () => {
         onSubmit={authService.resetPassword}
         onSuccess={handlePasswordResetSuccess}
         onDismiss={handlePasswordResetDismiss}
-        onExitComplete={() => {
-          resetDialogClosedRef.current = true;
-          showPendingNotice();
-        }}
       />
     </Box>
   );

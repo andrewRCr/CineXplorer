@@ -20,9 +20,8 @@ import type { ReactNode } from "react";
  *
  * **Pattern:**
  * - Dismissible via close button (optional) or auto-clears on user action
- * - WCAG compliant: `role="alert"`, `aria-live="assertive"` for errors. Other statuses carry no live role: place
- *   them in a polite live region that's on the page before they arrive (the sign-in card keeps one), since a region
- *   inserted with its text isn't reliably announced
+ * - WCAG compliant: `role="alert"`, `aria-live="assertive"` for errors. Other statuses carry no live role: pass the
+ *   notice's text to `announce` (`@/lib/announcer`), which screen readers hear through the app's `LiveAnnouncer`
  * - Uses Alert recipe (no inline style overrides)
  *
  * **Do NOT use for:**
@@ -32,16 +31,14 @@ import type { ReactNode } from "react";
  *
  * @example
  * ```tsx
- * // In a form's card, above the form, inside a polite region that's always rendered
- * <Box role="status" aria-live="polite">
- *   {notice && (
- *     <Box w="full" mb={6}>
- *       <FloatingAlert status="success" onDismiss={() => setNotice(null)}>
- *         Account created! Check your email to verify.
- *       </FloatingAlert>
- *     </Box>
- *   )}
- * </Box>
+ * // In a form's card, above the form, with announce(notice) called as it shows
+ * {notice && (
+ *   <Box w="full" mb={6}>
+ *     <FloatingAlert status="success" onDismiss={() => setNotice(null)}>
+ *       {notice}
+ *     </FloatingAlert>
+ *   </Box>
+ * )}
  *
  * // Floating top-center over the page
  * <FloatingAlertContainer>
@@ -109,7 +106,7 @@ export const FloatingAlert = ({
   onDismiss,
   action,
 }: Omit<FloatingAlertProps, "width">) => {
-  // Error alerts get assertive ARIA for screen readers; other alerts rely on the polite region they're placed in
+  // Error alerts get assertive ARIA for screen readers; other alerts are announced through the app's live region
   const isError = status === "error";
 
   return (

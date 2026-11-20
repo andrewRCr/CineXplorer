@@ -2,7 +2,15 @@ import { act, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
 import { Link } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  assert,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { measuredCollectionGeometry } from "@tests/helpers/measuredCollectionGeometry";
 import { server } from "@tests/mocks/server";
 import VirtualizedMovieGrid from "../../VirtualizedMovieGrid";
@@ -93,11 +101,11 @@ describe("VirtualizedMovieGrid", () => {
     await screen.findByRole("article", movie(1));
 
     // 194px-wide 2:3 poster + 128px text + 16px gap = 435px per row.
-    // The first row is still in the overscan before the third row starts.
-    await scrollTo(850);
+    // The first row leaves the overscan when the third row starts at 870px.
+    await scrollTo(869);
     expect(screen.getByRole("article", movie(1))).toBeVisible();
 
-    await scrollTo(875);
+    await scrollTo(871);
     expect(screen.queryByRole("article", movie(1))).not.toBeInTheDocument();
     expect(screen.getByRole("article", movie(9))).toBeVisible();
   });
@@ -236,14 +244,29 @@ describe("VirtualizedMovieGrid", () => {
   });
 
   it("starts a newly filtered result set at the top", async () => {
+    const actionGenre = 28;
+    assert.isDefined(firstPage.results);
+    const catalog = firstPage.results.map((entry, index) => ({
+      ...entry,
+      genre_ids: [index === 0 ? 35 : actionGenre],
+    }));
+    const actionMovies = catalog.filter((entry) =>
+      entry.genre_ids.includes(actionGenre),
+    );
+    const allMovies = { ...firstPage, results: catalog };
+    const filteredMovies = {
+      ...firstPage,
+      results: actionMovies,
+      total_results: actionMovies.length,
+    };
     serveBrowse((_, params) =>
-      params.get("genres") === "28" ? browsePage(101, 20) : firstPage,
+      params.get("genres") === String(actionGenre) ? filteredMovies : allMovies,
     );
     const user = userEvent.setup();
     renderBrowseGrid(
       "/browse",
       <>
-        <Link to="?genres=28" state={{ restoreScroll: true }}>
+        <Link to={`?genres=${actionGenre}`} state={{ restoreScroll: true }}>
           Action only
         </Link>
         <VirtualizedMovieGrid />
@@ -254,8 +277,10 @@ describe("VirtualizedMovieGrid", () => {
     expect(screen.getByRole("article", movie(20))).toBeVisible();
 
     await user.click(screen.getByRole("link", { name: "Action only" }));
-    expect(await screen.findByRole("article", movie(101))).toBeVisible();
+    expect(await screen.findByText("19 results")).toBeVisible();
+    expect(screen.getByRole("article", movie(2))).toBeVisible();
     expect(window.scrollY).toBe(0);
-    expect(screen.queryByRole("article", movie(120))).not.toBeInTheDocument();
+    expect(screen.queryByRole("article", movie(1))).not.toBeInTheDocument();
+    expect(screen.queryByRole("article", movie(20))).not.toBeInTheDocument();
   });
 });

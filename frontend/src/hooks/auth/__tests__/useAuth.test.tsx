@@ -1,3 +1,4 @@
+import { actUntil } from "@tests/helpers/act-until";
 import { settleToastSubscriptions } from "@tests/helpers/toast";
 import { useEffect } from "react";
 import { useQueryClient, useIsFetching, useQuery } from "@tanstack/react-query";
@@ -1019,15 +1020,19 @@ describe("password sign-in completion", () => {
       screen.getByLabelText("Password", { exact: true }),
       "password",
     );
-    await user.click(screen.getByRole("button", { name: "Login" }));
-    await act(async () => entered.wait);
-    await waitFor(() =>
-      expect(screen.getByLabelText("Session reads")).toHaveTextContent("1"),
-    );
-    expect(locations).toEqual(["/login?next=%2Fprivate"]);
-    await act(async () => release.release());
-    await screen.findByRole("heading", { name: "Protected film list" });
-    expect(locations).toEqual(["/login?next=%2Fprivate", "/private"]);
+    try {
+      await user.click(screen.getByRole("button", { name: "Login" }));
+      await actUntil("the password profile request", () => entered.wait);
+      await waitFor(() =>
+        expect(screen.getByLabelText("Session reads")).toHaveTextContent("1"),
+      );
+      expect(locations).toEqual(["/login?next=%2Fprivate"]);
+      await act(async () => release.release());
+      await screen.findByRole("heading", { name: "Protected film list" });
+      expect(locations).toEqual(["/login?next=%2Fprivate", "/private"]);
+    } finally {
+      release.release();
+    }
   });
 });
 
@@ -1371,23 +1376,29 @@ describe("user ownership changes", () => {
       }),
     );
     const view = await mountUserChange();
-    const running = await startHeldSave(view);
-    let login: ReturnType<typeof view.result.current.auth.login>;
-    await act(async () => {
-      login = view.result.current.auth.login("viewer", "password");
-      await entered.wait;
-    });
-    await waitFor(() =>
-      expect(view.result.current.state.user_on_watchlist).toBe(false),
-    );
-    expect(view.headers).toEqual([null]);
-    expect(view.libraries).toBe(1);
-    await act(async () => {
+    try {
+      const running = await startHeldSave(view);
+      let login: ReturnType<typeof view.result.current.auth.login>;
+      await actUntil("the held password profile request", () => {
+        login = view.result.current.auth.login("viewer", "password");
+        return entered.wait;
+      });
+      await waitFor(() =>
+        expect(view.result.current.state.user_on_watchlist).toBe(false),
+      );
+      expect(view.headers).toEqual([null]);
+      expect(view.libraries).toBe(1);
+      await act(async () => {
+        held.release();
+        await login;
+      });
+      await expectRetiredSave(view, running);
+      expect(view.headers).toEqual([null, null]);
+    } finally {
       held.release();
-      await login;
-    });
-    await expectRetiredSave(view, running);
-    expect(view.headers).toEqual([null, null]);
+      view.saved.release();
+      view.unmount();
+    }
   });
 
   it("retires saves when the idle renewal fails", async () => {
@@ -1550,34 +1561,40 @@ describe("settled sign-out reload", () => {
           : http.delete(sessionUrl, respond),
       );
       const view = await mountUserChange("/browse", saveStatus);
-      await waitFor(() =>
-        expect(view.result.current.auth.user).toEqual(profile),
-      );
-      const running = await startHeldSave(view);
-      let logout: Promise<void>;
-      await act(async () => {
-        logout = view.result.current.auth.logout();
-        await entered.wait;
-      });
-      await waitFor(() =>
-        expect(view.result.current.auth.status).toBe("anonymous"),
-      );
-      expect(view.result.current.location.pathname).toBe("/login");
-      expect(window.location.href).toBe("http://localhost:3000/browse");
-      expect(localStorage.getItem("access_token")).toBeNull();
-      expect(sessionStorage.getItem("access_token")).toBeNull();
-      await expectRetiredSave(view, running);
-      expect(
-        screen.queryByText("You've been logged out."),
-      ).not.toBeInTheDocument();
-      await act(async () => {
+      try {
+        await waitFor(() =>
+          expect(view.result.current.auth.user).toEqual(profile),
+        );
+        const running = await startHeldSave(view);
+        let logout: Promise<void>;
+        await actUntil("the held sign-out request", () => {
+          logout = view.result.current.auth.logout();
+          return entered.wait;
+        });
+        await waitFor(() =>
+          expect(view.result.current.auth.status).toBe("anonymous"),
+        );
+        expect(view.result.current.location.pathname).toBe("/login");
+        expect(window.location.href).toBe("http://localhost:3000/browse");
+        expect(localStorage.getItem("access_token")).toBeNull();
+        expect(sessionStorage.getItem("access_token")).toBeNull();
+        await expectRetiredSave(view, running);
+        expect(
+          screen.queryByText("You've been logged out."),
+        ).not.toBeInTheDocument();
+        await act(async () => {
+          held.release();
+          await logout;
+        });
+        expect(window.location.href).toBe("/login?signed_out=true");
+        expect(
+          screen.queryByText("You've been logged out."),
+        ).not.toBeInTheDocument();
+      } finally {
         held.release();
-        await logout;
-      });
-      expect(window.location.href).toBe("/login?signed_out=true");
-      expect(
-        screen.queryByText("You've been logged out."),
-      ).not.toBeInTheDocument();
+        view.saved.release();
+        view.unmount();
+      }
     },
   );
 

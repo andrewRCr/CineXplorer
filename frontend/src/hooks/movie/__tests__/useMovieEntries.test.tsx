@@ -1,3 +1,4 @@
+import { actUntil } from "@tests/helpers/act-until";
 import { settleToastSubscriptions } from "@tests/helpers/toast";
 import { useEffect } from "react";
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
@@ -284,9 +285,9 @@ it.each(["mounted", "multiple", "unmounted", "offline"] as const)(
     const view = await mount(mode !== "unmounted");
     const client = view.result.current.client;
     try {
-      await act(async () => {
+      await actUntil("the held movie save request", () => {
         view.result.current.save({ user_liked: true });
-        await entered.wait;
+        return entered.wait;
       });
       if (mode === "offline") onlineManager.setOnline(false);
       act(() => {
@@ -374,9 +375,9 @@ it("aborts an entry already in transport and ignores its obsolete response", asy
   const view = await mount();
   try {
     let result: Promise<unknown>;
-    await act(async () => {
+    await actUntil("the entry request", () => {
       result = view.result.current.createEntry(body).catch(() => {});
-      await entered.wait;
+      return entered.wait;
     });
     await act(async () => {
       await changeOfUser(view.result.current.client);

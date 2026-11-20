@@ -1,3 +1,4 @@
+import { actUntil } from "@tests/helpers/act-until";
 import { settleToastSubscriptions } from "@tests/helpers/toast";
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -784,12 +785,13 @@ it.each([
       setAuthTokens(stored);
       const request = Promise.allSettled([apiClient.get("/profile/")]);
       await renewalEntered.wait;
-      await act(async () => {
+      const result = await actUntil("the failed renewal to settle", () => {
         renewal.release();
-        expect((await request)[0]).toMatchObject({
-          status: "rejected",
-          reason: { response: { status: renewalStatus } },
-        });
+        return request;
+      });
+      expect(result[0]).toMatchObject({
+        status: "rejected",
+        reason: { response: { status: renewalStatus } },
       });
       expect(localStorage.getItem("access_token")).toBe(stored);
       expect(window.location.href).toBe("http://localhost:3000/browse");

@@ -1,3 +1,4 @@
+import { actUntil } from "@tests/helpers/act-until";
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
@@ -247,9 +248,9 @@ it.each([
       await waitFor(() => expect(view.result.current.library).toBe(1));
       const stored = path === "expired request" ? token(1) : token();
       setAuthTokens(stored);
-      await act(async () => {
+      await actUntil("the shared renewal request", () => {
         view.result.current.save({ user_on_watchlist: true });
-        await entered.wait;
+        return entered.wait;
       });
       const running = view.result.current.client.getMutationCache().getAll()[0];
       const live =

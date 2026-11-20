@@ -157,36 +157,33 @@ ADR recorded.
 _Exit criterion:_ `sign-up.spec.ts`, `sign-in.spec.ts`, `phone-width.spec.ts` and `background.spec.ts` pass against
 the worktree's browsable stack with Home's line and the notices in place.
 
-- [ ] **3.1 Signed-out Home says why the app asks for sign-in data — R9, R13**
+- [x] **3.1 Signed-out Home says why the app asks for sign-in data — R9, R13**
 
     **Goal:** A signed-out visitor reads R9's line under the band's three points, with its Privacy Policy link, and a
     signed-in visitor doesn't see it.
 
-    - [ ] **3.1.a Cover the line** (`HomeBand.test.tsx`, `Home.test.tsx`)
-        - Test: the band shows the line, word for word, and its Privacy Policy link opens `/privacy`
-        - Test: signed-in Home doesn't show the line; a guard, it passes from the start, since no Home shows the line
-          yet: see it fail once by showing the line whether or not the visitor is signed in, for one run
-        - Expect the first test to FAIL initially
+    - [x] **3.1.a Cover the line**
 
-    - [ ] **3.1.b Add the line to `HomeBand`**
-        - Under the band's three points, in its body text, at the width of its container
-        - Tests should now PASS
+        The signed-out band's copy and link test failed before implementation. The signed-in guard failed when the
+        band was temporarily added to signed-in Home and passed when it was removed.
 
-- [ ] **3.2 Accounts are made under a notice of the terms and the policy — R10, R13**
+    - [x] **3.1.b Add the line to `HomeBand`**
+
+        Added the disclosure and in-app privacy link below the three points. The focused Home tests passed.
+
+- [x] **3.2 Accounts are made under a notice of the terms and the policy — R10, R13**
 
     **Goal:** `Register` under its submit button, and `Login` under the Google and GitHub buttons, show "By creating an
     account, you agree to the Terms of Service and acknowledge the Privacy Policy." with both links.
 
-    - [ ] **3.2.a Cover the notice** (`Register.test.tsx`, `Login.test.tsx`)
-        - Test: each page shows the notice, its Terms of Service link opening `/terms` and its Privacy Policy link
-          opening `/privacy`
-        - Test: on `Login` the notice follows the provider buttons
-        - Expect tests to FAIL initially
+    - [x] **3.2.a Cover the notice**
 
-    - [ ] **3.2.b Add the notice to both pages**
-        - One small component the two pages share, beside `AuthFormCard` in `frontend/src/components/auth/`, in small
-          muted text centred under the button it follows
-        - Tests should now PASS
+        Both tests failed before the notice appeared. They cover the exact copy, the two route destinations and
+        the placement after Register's submit button and Login's provider buttons.
+
+    - [x] **3.2.b Add the notice to both pages**
+
+        Added a shared, centred notice below the relevant buttons. The focused sign-in and registration tests passed.
 
 - [ ] **3.3 `DEVELOPMENT-RULES.md` carries the rule that keeps the texts true — R11**
 

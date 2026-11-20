@@ -660,3 +660,25 @@ describe("the sign-in page heading", () => {
     },
   );
 });
+
+it("shows the account creation notice after the sign-in provider buttons", () => {
+  render(<Login />);
+
+  const notice = screen.getByText(/^By creating an account, you agree to/);
+  expect(notice).toHaveTextContent(
+    /^By creating an account, you agree to the Terms of Service and acknowledge the Privacy Policy\.$/,
+  );
+  expect(
+    screen.getByRole("link", { name: "Terms of Service" }),
+  ).toHaveAttribute("href", "/terms");
+  expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+    "href",
+    "/privacy",
+  );
+  for (const name of ["Google", "GitHub"]) {
+    const button = screen.getByRole("button", { name });
+    expect(
+      button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  }
+});

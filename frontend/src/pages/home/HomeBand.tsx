@@ -7,6 +7,8 @@ import {
   VisuallyHidden,
 } from "@chakra-ui/react";
 import { useId } from "react";
+import { TextLink } from "@/components/common";
+import { ROUTES } from "@/constants/routes";
 import { pageContainerProps } from "@/components/layout/pageContainer";
 
 const points = [
@@ -48,6 +50,12 @@ export function HomeBand() {
             </Box>
           ))}
         </SimpleGrid>
+        <Text mt={8}>
+          An account keeps your lists. If you sign in with Google or GitHub,
+          CineXplorer receives your name, email address and basic profile, and
+          uses them only for your account, never for advertising.{" "}
+          <TextLink to={ROUTES.PRIVACY}>Privacy Policy</TextLink>
+        </Text>
       </Container>
     </Box>
   );

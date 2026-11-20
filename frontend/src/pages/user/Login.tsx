@@ -1,3 +1,4 @@
+import { SignUpNotice } from "@/components/auth/SignUpNotice";
 import { isRecord } from "@/utilities/typeGuards";
 import { ROUTES } from "@/constants/routes";
 import {
@@ -535,6 +536,8 @@ const Login = () => {
                 GitHub
               </Button>
             </HStack>
+
+            <SignUpNotice />
 
             <Text
               mt="4px"

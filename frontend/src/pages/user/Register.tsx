@@ -1,3 +1,4 @@
+import { SignUpNotice } from "@/components/auth/SignUpNotice";
 import { ROUTES } from "@/constants/routes";
 import { Box, Button, VStack, Text, VisuallyHidden } from "@chakra-ui/react";
 import {
@@ -125,6 +126,7 @@ const Register = () => {
             >
               Register
             </Button>
+            <SignUpNotice />
             <Text mt="16px" textAlign="center" w="100%" fontSize="16px">
               Already have an account?{" "}
               <TextLink to={ROUTES.LOGIN}>Sign In</TextLink>

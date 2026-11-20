@@ -353,8 +353,8 @@ arc-offload npm run lint              # append -- --fix for auto-fix
 arc-offload npm run verify-contrast
 ```
 
-Backend pytest stays in the container with `nice -n 15`. Heavy container commands carry that priority inside the
-container: Docker Desktop runs them outside this WSL distro, so a host wrapper reaches only the Docker client.
+Backend pytest stays in the container with `nice -n 15`. Set the priority on the command passed to
+`docker compose exec`. The runtime starts the container process independently of the Compose client.
 Container memory limits come from the Compose `mem_limit` settings in `infrastructure/docker-compose.yml` and
 `infrastructure/docker-compose.worktree.yml`.
 
@@ -472,12 +472,12 @@ The volume is named for the Compose project: `infrastructure_dev-db-data` in the
 ```bash
 # Single movie details
 docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
-from core.services.tmdb_api_client import TMDBApiClient
+from apps.core.services.tmdb_api_client import TMDBApiClient
 
 client = TMDBApiClient()
-response = client.get_movie_details(123456)  # TMDB movie ID
+response = client.get_movie_details(550)  # TMDB movie ID
 
-if response.is_success:
+if response.is_success():
     data = response.data
     print(f"Title: {data.get('title')}")
     print(f"Release: {data.get('release_date')}")
@@ -489,26 +489,26 @@ EOF
 
 # Batch movie details
 docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
-from core.services.tmdb_api_client import TMDBApiClient
+from apps.core.services.tmdb_api_client import TMDBApiClient
 
 client = TMDBApiClient()
-movie_ids = [123, 456, 789]
+movie_ids = [13, 603, 27205]
 
 for movie_id in movie_ids:
     response = client.get_movie_details(movie_id)
-    if response.is_success:
+    if response.is_success():
         data = response.data
         print(f"{movie_id}: {data.get('title')} ({data.get('release_date', '')[:4]})")
 EOF
 
 # Discover movies by production company
 docker compose -f infrastructure/docker-compose.yml exec -T backend python manage.py shell <<'EOF'
-from core.services.tmdb_api_client import TMDBApiClient
+from apps.core.services.tmdb_api_client import TMDBApiClient
 
 client = TMDBApiClient()
 response = client.get("discover/movie", params={"with_companies": 12782})  # Company ID
 
-if response.is_success:
+if response.is_success():
     print(f"Total: {response.data.get('total_results')} movies")
     for m in response.data.get('results', [])[:10]:
         print(f"  {m.get('title')} ({m.get('release_date', '')[:4]})")

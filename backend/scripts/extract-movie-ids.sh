@@ -2,9 +2,10 @@
 # extract-movie-ids.sh - Extract movie IDs from URLs, output as comma-separated list
 #
 # Usage:
-#   ./extract-movie-ids.sh urls.txt              # From file
-#   powershell.exe Get-Clipboard | ./extract-movie-ids.sh  # From clipboard (WSL)
-#   ./extract-movie-ids.sh                       # Paste directly, Ctrl+D when done
+#   bash extract-movie-ids.sh urls.txt           # From file
+#   bash extract-movie-ids.sh                    # Paste directly, Ctrl+D when done
+#   printf '%s\n' 'https://localhost:8444/movie/197644' | bash extract-movie-ids.sh
+# To read from a clipboard, pipe the output of your clipboard reader into the script.
 #
 # Example:
 #   Input:  https://localhost:8444/movie/197644?from=browse

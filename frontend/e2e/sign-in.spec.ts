@@ -117,9 +117,12 @@ test("email-verification guidance and resend action fit above the form on a phon
         .fill("browser-viewer");
     await page.getByLabel("Password", { exact: true }).fill("correct-password");
     await page.getByRole("button", { name: "Login", exact: true }).click();
-    const message = page.getByText(
-        "We've sent a verification link to v***@example.com. Please check your inbox.",
-    );
+    // The card's copy: the app's live region, outside the app root, repeats it for screen readers
+    const message = page
+        .locator("#root")
+        .getByText(
+            "We've sent a verification link to v***@example.com. Please check your inbox.",
+        );
     await expect(message).toBeVisible();
     const resend = page.getByRole("button", {
         name: "Resend verification",

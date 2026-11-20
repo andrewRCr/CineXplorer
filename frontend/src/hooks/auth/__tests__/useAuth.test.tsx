@@ -1548,7 +1548,7 @@ describe("settled sign-out reload", () => {
       expect(sessionStorage.getItem("access_token")).toBeNull();
       await expectRetiredSave(view, running);
       expect(
-        screen.queryByText("You've been logged out"),
+        screen.queryByText("You've been logged out."),
       ).not.toBeInTheDocument();
       await act(async () => {
         held.release();
@@ -1556,7 +1556,7 @@ describe("settled sign-out reload", () => {
       });
       expect(window.location.href).toBe("/login?signed_out=true");
       expect(
-        screen.queryByText("You've been logged out"),
+        screen.queryByText("You've been logged out."),
       ).not.toBeInTheDocument();
     },
   );

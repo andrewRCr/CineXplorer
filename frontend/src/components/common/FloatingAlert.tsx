@@ -9,18 +9,19 @@ import type { ReactNode } from "react";
  * Uses the Alert recipe for styling - this wrapper handles positioning,
  * dismiss button, and WCAG accessibility attributes.
  *
- * **Positioning hierarchy:**
- * - `center` (default): Top-center, blocking - for auth errors, critical states
- * - `top-right`: Non-blocking, shares space with priority toasts - for success CTAs
+ * **Placement:**
+ * - In a form's card, above the form (sign-in, forgot password): the card's first child
+ * - In `FloatingAlertContainer`: top-center over the page, without shifting its layout (registration)
  *
  * **Use for:**
- * - Auth errors requiring user action (center position)
- * - Registration success with CTA (top-right position)
+ * - Auth errors requiring user action
+ * - Notices the visitor arrives with or must act on (account created, email verified, signed out)
  * - Messages requiring user acknowledgment before proceeding
  *
  * **Pattern:**
  * - Dismissible via close button (optional) or auto-clears on user action
- * - WCAG compliant: `role="alert"`, `aria-live="assertive"` for errors
+ * - WCAG compliant: `role="alert"`, `aria-live="assertive"` for errors. Other statuses carry no live role: pass the
+ *   notice's text to `announce` (`@/lib/announcer`), which screen readers hear through the app's `LiveAnnouncer`
  * - Uses Alert recipe (no inline style overrides)
  *
  * **Do NOT use for:**
@@ -30,17 +31,19 @@ import type { ReactNode } from "react";
  *
  * @example
  * ```tsx
- * // Blocking error alert (center, default)
+ * // In a form's card, above the form, with announce(notice) called as it shows
+ * {notice && (
+ *   <Box w="full" mb={6}>
+ *     <FloatingAlert status="success" onDismiss={() => setNotice(null)}>
+ *       {notice}
+ *     </FloatingAlert>
+ *   </Box>
+ * )}
+ *
+ * // Floating top-center over the page
  * <FloatingAlertContainer>
  *   <FloatingAlert status="error" onDismiss={() => setError("")}>
- *     Invalid username or password.
- *   </FloatingAlert>
- * </FloatingAlertContainer>
- *
- * // Non-blocking success CTA (top-right)
- * <FloatingAlertContainer position="top-right">
- *   <FloatingAlert status="success" onDismiss={() => setSuccess(null)}>
- *     Account created! Check your email to verify.
+ *     That username is taken.
  *   </FloatingAlert>
  * </FloatingAlertContainer>
  * ```
@@ -66,40 +69,26 @@ interface FloatingAlertProps {
   width?: string;
 }
 
-type AlertPosition = "center" | "top-right";
-
 /**
- * Container for floating alerts - positions alerts above form content
+ * Container for floating alerts - positions alerts top-center, above form content
  *
- * @param position - "center" (default, blocking) or "top-right" (non-blocking, shares with priority toasts)
- * @param width - Container width, defaults to 480px for center, 320px for top-right
+ * @param width - Container width, defaults to 480px (matches the auth forms)
  */
 export const FloatingAlertContainer = ({
   children,
-  position = "center",
   width,
 }: {
   children: ReactNode;
-  position?: AlertPosition;
   width?: string;
 }) => {
-  const isTopRight = position === "top-right";
-  const defaultWidth = isTopRight ? "320px" : "480px";
-
-  // Top-right uses layout token to position below navbar
-  const topValue = isTopRight
-    ? "calc(var(--chakra-sizes-layout-navbar) + var(--chakra-spacing-4))"
-    : "4";
-
   return (
     <Box
-      position={isTopRight ? "fixed" : "absolute"}
-      top={topValue}
-      {...(isTopRight
-        ? { right: "4" }
-        : { left: "50%", transform: "translateX(-50%)" })}
-      w={width ?? defaultWidth}
-      zIndex={isTopRight ? "dropdown" : 2} // Fixed position uses overlay layer
+      position="absolute"
+      top="4"
+      left="50%"
+      transform="translateX(-50%)"
+      w={width ?? "480px"}
+      zIndex={2}
     >
       <VStack gap={3} align="stretch">
         {children}
@@ -109,7 +98,7 @@ export const FloatingAlertContainer = ({
 };
 
 /**
- * Individual floating alert - use inside FloatingAlertContainer
+ * Individual alert - place it in a form's card or inside FloatingAlertContainer
  */
 export const FloatingAlert = ({
   status,
@@ -117,7 +106,7 @@ export const FloatingAlert = ({
   onDismiss,
   action,
 }: Omit<FloatingAlertProps, "width">) => {
-  // Error alerts get assertive ARIA for screen readers
+  // Error alerts get assertive ARIA for screen readers; other alerts are announced through the app's live region
   const isError = status === "error";
 
   return (

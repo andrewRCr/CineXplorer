@@ -33,8 +33,9 @@ hosted request remains the Owner's decision under [agent-pre-merge-review.md](ag
 3. **Back off:** wait 15 seconds after the first pending observation, then 30 seconds, then at most 60 seconds between
    observations. Clip command timeouts and sleeps to the remaining budget. Bound each network command to at most
    30 seconds through the shell tool's timeout or the host's timeout command. A tool's yield interval is not a
-   process deadline. On this WSL host, `timeout -k 5s 25s gh ...` bounds the command plus kill grace to 30 seconds;
-   shorten both near the deadline. Never leave an unbounded `--watch` or a live watcher after reporting a stop.
+   process deadline. With GNU `timeout`, `timeout -k 5s 25s gh ...` sends TERM after 25 seconds and sends KILL
+   five seconds later if the command is still running. Shorten both intervals near the deadline.
+   Never leave an unbounded `--watch` or a live watcher after reporting a stop.
 4. **Keep reads small.** Fetch a compact status snapshot; fetch full review content when a review event changes or
    completion needs checking. Retain fetched evidence and paginate when collecting the complete finding set.
    Re-read an edited summary by its update time; a comment's unchanged creation time does not mean its body is stale.

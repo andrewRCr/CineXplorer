@@ -965,23 +965,29 @@ test("remove tears down all labelled resource kinds before removing a merged wor
     assert.match(readFileSync(trace, "utf8"), /git fetch --prune/);
 });
 
-const IMAGE_FORMAT = "{{.ID}} {{.Repository}}";
+const IMAGE_FORMAT = "{{.ID}} {{.Repository}} {{.Tag}}";
 
 test("remove also deletes the stack's built images by name, which some runtimes leave unlabelled", (t) => {
     const f = fixture(t);
     const path = f.worktree();
     write(path, "infrastructure/.env", BROWSE_ENV);
     const images = [
-        "aaa docker.io/library/cinexplorer-sample-backend",
-        "bbb cinexplorer-sample-frontend",
-        "ccc docker.io/library/cinexplorer-sample-extra-backend",
-        "ddd cinexplorer-sample-extra-frontend",
-        "eee docker.io/library/postgres",
-        "fff <none>",
+        "aaa docker.io/library/cinexplorer-sample-backend latest",
+        "bbb cinexplorer-sample-frontend latest",
+        "ccc docker.io/library/cinexplorer-sample-extra-backend latest",
+        "ddd cinexplorer-sample-extra-frontend latest",
+        "eee docker.io/library/postgres 17-alpine3.24",
+        "fff <none> <none>",
+        "ggg cinexplorer-sample-backend <none>",
     ].join("\n");
     success(f.invoke(f.main, ["remove", "sample"], { CX_IMAGES: images }));
     const removals = f.calls().filter((call) => call.args[1] === "rm");
-    assert.deepEqual(removals.map((call) => call.args), [["image", "rm", "aaa", "bbb"]]);
+    assert.deepEqual(removals.map((call) => call.args), [[
+        "image", "rm",
+        "docker.io/library/cinexplorer-sample-backend:latest",
+        "cinexplorer-sample-frontend:latest",
+        "ggg",
+    ]]);
     assert.equal(existsSync(path), false);
 });
 
@@ -990,10 +996,30 @@ test("remove deletes an image once when it is both labelled and named for the st
     const path = f.worktree();
     write(path, "infrastructure/.env", BROWSE_ENV);
     success(f.invoke(f.main, ["remove", "sample"], {
-        CX_IDS: "aaa", CX_IMAGES: "aaa cinexplorer-sample-backend\nbbb cinexplorer-other-backend",
+        CX_IDS: "aaa", CX_IMAGES: "aaa cinexplorer-sample-backend latest\nbbb cinexplorer-other-backend latest",
     }));
     const removals = f.calls().filter((call) => call.args[0] === "image" && call.args[1] === "rm");
     assert.deepEqual(removals.map((call) => call.args), [["image", "rm", "aaa"]]);
+});
+
+test("remove takes only the stack's name off a built image another stack shares", (t) => {
+    const f = fixture(t);
+    const path = f.worktree();
+    write(path, "infrastructure/.env", BROWSE_ENV);
+    const images = [
+        "aaa docker.io/library/cinexplorer-sample-backend latest",
+        "aaa docker.io/library/infrastructure-backend latest",
+        "bbb docker.io/library/cinexplorer-sample-frontend latest",
+        "bbb docker.io/library/infrastructure-frontend latest",
+    ].join("\n");
+    success(f.invoke(f.main, ["remove", "sample"], { CX_IMAGES: images }));
+    const removals = f.calls().filter((call) => call.args[0] === "image" && call.args[1] === "rm");
+    assert.deepEqual(removals.map((call) => call.args), [[
+        "image", "rm",
+        "docker.io/library/cinexplorer-sample-backend:latest",
+        "docker.io/library/cinexplorer-sample-frontend:latest",
+    ]]);
+    assert.equal(existsSync(path), false);
 });
 
 for (const flags of [["--no-stack"], ["--keep-branch", "--no-stack"], ["--no-stack", "--keep-branch"]]) {

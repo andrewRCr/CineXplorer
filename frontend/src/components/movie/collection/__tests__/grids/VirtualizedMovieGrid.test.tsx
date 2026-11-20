@@ -69,6 +69,20 @@ describe("VirtualizedMovieGrid", () => {
     expect(screen.queryByRole("article", movie(1))).not.toBeInTheDocument();
   });
 
+  it("renders one column when the container fits one card", async () => {
+    vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(194);
+    serveBrowse(() => firstPage);
+    renderGrid();
+
+    expect(await screen.findByRole("article", movie(1))).toBeVisible();
+    expect(screen.getByRole("article", movie(3))).toBeVisible();
+    expect(screen.getAllByRole("article")).toHaveLength(3);
+
+    await scrollTo(1200);
+    expect(screen.getByRole("article", movie(5))).toBeVisible();
+    expect(screen.queryByRole("article", movie(1))).not.toBeInTheDocument();
+  });
+
   it("includes the poster, text and gap in the distance between rows", async () => {
     vi.stubGlobal("innerHeight", 1);
     serveBrowse(() => firstPage);
@@ -118,15 +132,16 @@ describe("VirtualizedMovieGrid", () => {
 
   it("loads the next page automatically when the first page fits in the viewport", async () => {
     const cursors = serveBrowse((cursor) => {
-      if (cursor === null) return browsePage(1, 3, 200, 6);
-      if (cursor === "6") return browsePage(4, 1, 200);
+      // Each short response consumes six of the twelve upstream pages.
+      if (cursor === null) return browsePage(1, 3, 240, 7);
+      if (cursor === "7") return browsePage(4, 1, 240);
       return undefined;
     });
     renderGrid();
 
     expect(await screen.findByRole("article", movie(4))).toBeVisible();
     expect(screen.getAllByRole("article")).toHaveLength(4);
-    expect(cursors).toEqual([null, "6"]);
+    expect(cursors).toEqual([null, "7"]);
     expect(screen.getByText("No more results")).toBeVisible();
   });
 

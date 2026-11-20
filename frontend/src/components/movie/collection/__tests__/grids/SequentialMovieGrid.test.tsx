@@ -15,8 +15,11 @@ import {
 const renderGrid = () =>
   renderBrowseGrid("/browse/sequential", <SequentialMovieGrid />);
 
-const firstPage = browsePage(1, 2, 200, 6);
-const secondPage = browsePage(3, 15, 200, 9);
+// These short responses each consume six upstream pages: 1–6, 7–12, 13–18.
+const totalResults = 360;
+const firstPage = browsePage(1, 2, totalResults, 7);
+const secondPage = browsePage(3, 15, totalResults, 13);
+const lastPage = browsePage(18, 3, totalResults);
 
 const buttons = (direction: "Next" | "Previous") =>
   screen.getAllByRole("button", { name: `${direction} page` });
@@ -47,15 +50,15 @@ describe("SequentialMovieGrid", () => {
     expect(screen.getByRole("article", { name: "Movie 2" })).toBeVisible();
     expect(screen.getAllByRole("article")).toHaveLength(2);
     expect(screen.queryAllByTestId(/^skeleton-loader-/)).toHaveLength(0);
-    expect(screen.getByText("Showing 1-2 of 200 results")).toBeVisible();
+    expect(screen.getByText("Showing 1-2 of 360 results")).toBeVisible();
     for (const previous of buttons("Previous")) expect(previous).toBeDisabled();
   });
 
   it("uses the next cursor, shows a different-sized page, and revisits both pages from cache", async () => {
     const pages = new Map([
       [null, firstPage],
-      ["6", secondPage],
-      ["9", browsePage(18, 3, 200)],
+      ["7", secondPage],
+      ["13", lastPage],
     ]);
     const cursors = serveBrowse((cursor) => pages.get(cursor));
     const user = userEvent.setup();
@@ -67,7 +70,7 @@ describe("SequentialMovieGrid", () => {
       await screen.findByRole("article", { name: "Movie 17" }),
     ).toBeVisible();
     expect(screen.getAllByRole("article")).toHaveLength(15);
-    expect(screen.getByText("Showing 3-17 of 200 results")).toBeVisible();
+    expect(screen.getByText("Showing 3-17 of 360 results")).toBeVisible();
     expect(
       screen.queryByRole("article", { name: "Movie 1" }),
     ).not.toBeInTheDocument();
@@ -80,15 +83,15 @@ describe("SequentialMovieGrid", () => {
 
     await user.click(button("Next"));
     expect(screen.getByRole("article", { name: "Movie 17" })).toBeVisible();
-    expect(cursors).toEqual([null, "6"]);
+    expect(cursors).toEqual([null, "7"]);
   });
 
   it("disables both navigation directions while waiting for a later page", async () => {
-    const pending = holdBrowsePage(browsePage(18, 3, 200));
+    const pending = holdBrowsePage(lastPage);
     serveBrowse((cursor) => {
       if (cursor === null) return firstPage;
-      if (cursor === "6") return secondPage;
-      if (cursor === "9") return pending.response;
+      if (cursor === "7") return secondPage;
+      if (cursor === "13") return pending.response;
       return undefined;
     });
     const user = userEvent.setup();
@@ -140,7 +143,7 @@ describe("SequentialMovieGrid", () => {
   });
 
   it("displays large result totals as 10,000+", async () => {
-    serveBrowse(() => browsePage(1, 2, 12_000, 6));
+    serveBrowse(() => browsePage(1, 2, 12_000, 7));
     renderGrid();
 
     expect(

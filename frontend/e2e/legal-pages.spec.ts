@@ -22,32 +22,37 @@ async function expectSectionBelowTopBar(page: Page) {
         .toBe(true);
 }
 
-test("the Home footer opens the privacy policy at the top", async ({
-    page,
-}, info) => {
-    await page.goto("/");
-    await expect(
-        page.getByRole("region", { name: "What you can do" }),
-    ).toBeVisible();
-    const footerLink = page
-        .getByRole("contentinfo")
-        .getByRole("link", { name: "Privacy Policy" });
-    await footerLink.scrollIntoViewIfNeeded();
-    await expect
-        .poll(() => page.evaluate(() => window.scrollY))
-        .toBeGreaterThan(0);
-    await footerLink.click();
+for (const [label, path] of [
+    ["Privacy Policy", "/privacy"],
+    ["Terms of Service", "/terms"],
+]) {
+    test(`the Home footer opens the ${label} at the top`, async ({
+        page,
+    }, info) => {
+        await page.goto("/");
+        await expect(
+            page.getByRole("region", { name: "What you can do" }),
+        ).toBeVisible();
+        const footerLink = page
+            .getByRole("contentinfo")
+            .getByRole("link", { name: label });
+        await footerLink.scrollIntoViewIfNeeded();
+        await expect
+            .poll(() => page.evaluate(() => window.scrollY))
+            .toBeGreaterThan(0);
+        await footerLink.click();
 
-    await expect(page).toHaveURL(/\/privacy$/);
-    await expect(
-        page.getByRole("heading", {
-            level: 1,
-            name: "CineXplorer Privacy Policy",
-        }),
-    ).toBeInViewport();
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
-    await scanPage(page, info);
-});
+        await expect(page).toHaveURL(path);
+        await expect(
+            page.getByRole("heading", {
+                level: 1,
+                name: `CineXplorer ${label}`,
+            }),
+        ).toBeInViewport();
+        await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+        await scanPage(page, info);
+    });
+}
 
 test.describe("privacy policy at phone width", () => {
     test.use({ viewport: { width: 360, height: 800 } });

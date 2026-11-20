@@ -175,3 +175,28 @@ it("opens the privacy policy in the app layout while signed out", async () => {
   expect(screen.getByRole("contentinfo")).toBeVisible();
   expect(new URL(document.URL).pathname).toBe("/privacy");
 });
+
+it("opens the terms while signed out and follows its privacy link", async () => {
+  const user = userEvent.setup();
+  startAt("/terms");
+
+  expect(
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "CineXplorer Terms of Service",
+    }),
+  ).toBeVisible();
+  expect(new URL(document.URL).pathname).toBe("/terms");
+  await user.click(
+    within(screen.getByRole("main")).getByRole("link", {
+      name: "Privacy Policy",
+    }),
+  );
+  expect(
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "CineXplorer Privacy Policy",
+    }),
+  ).toBeVisible();
+  expect(new URL(document.URL).pathname).toBe("/privacy");
+});

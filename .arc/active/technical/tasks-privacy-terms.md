@@ -116,42 +116,38 @@ _Mode:_ `replication` — closes on the second text published through the policy
 _Exit criterion:_ `legal-pages.spec.ts` passes in full against the worktree's browsable stack, its terms steps
 included.
 
-- [ ] **2.1 `/terms` shows the terms' text, word for word — R1, R2, R3, R4, R6, R7, R13, R14**
+- [x] **2.1 `/terms` shows the terms' text, word for word — R1, R2, R3, R4, R6, R7, R13, R14**
 
     **Goal:** A visitor, signed in or not, reads Appendix B's text at `/terms` from the footer's link, and its Privacy
     Policy link opens `/privacy` inside the app.
 
-    - [ ] **2.1.a Cover the terms page** (beside the policy's tests, and the route in `App.test.tsx`)
-        - Test: at `/terms`, signed out, one `h1`, the terms' title, with the effective date beneath it
-        - Test: once the title has rendered, no bracketed review marker, `[publication date]` or `{{`; every `h2`
-          carries an id made from its text (`1. The service` gives `1-the-service`)
-        - Test: the Privacy Policy link opens `/privacy`, and the contact address is a `mailto:` link
-        - Spec: from Home's footer, follows Terms of Service to `/terms`, checks the title is in the viewport, and
-          scans the page
-        - Expect tests to FAIL initially
+    - [x] **2.1.a Cover the terms page**
 
-    - [ ] **2.1.b Add the route and the page**
-        - A lazy `TermsOfService` route at `ROUTES.TERMS`, beside the policy's
-        - `TermsOfService.tsx` carries Appendix B as JSX on the shared pieces, which open it at its top (Task 1.3),
-          its effective date a provisional constant like the policy's
-        - Tests should now PASS
+        Four new unit and route tests and the terms footer scenario failed before the terms were added. They cover
+        the title, date, numbered fragments, email links and navigation to the privacy policy.
 
-    - [ ] **2.1.c Compare the rendered page with Appendix B**
-        - Read the page's text against Appendix B paragraph by paragraph and record the result here
+    - [x] **2.1.b Add the route and the page**
 
-- [ ] **2.2 The smoke documents count and describe the new spec — R15**
+        Added the public lazy route and rendered Appendix B using the shared document and headings. All 18 focused
+        app and legal-page tests passed.
+
+    - [x] **2.1.c Compare the rendered page with Appendix B**
+
+        Compared the rendered terms against Appendix B in Chromium, including every paragraph, heading level,
+        list item and link destination. All matched.
+
+- [x] **2.2 The smoke documents count and describe the new spec — R15**
 
     **Goal:** Every document that counts the smoke specs counts twelve, and those that describe each spec describe
     `legal-pages.spec.ts`; ADR-050's count stays as it was.
 
-    - `QUICK-REFERENCE.md`, `TECHNICAL-OVERVIEW.md`, `strategy-quality-gates.md` and
-      `strategy-testing-methodology.md` (two places); markdown lint passes on each
+    - Updated the count and legal smoke coverage in all four named documents. Markdown lint passed.
 
-- [ ] **2.3 Check both pages in the browser**
+- [x] **2.3 Check both pages in the browser**
 
     **Goal:** The segment's exit criterion is shown on this branch, with what ran and the result recorded here.
 
-    - Run `legal-pages.spec.ts` in full against the worktree's browsable stack
+    - All five scenarios in `legal-pages.spec.ts` passed on this worktree's browsable stack, including both axe scans.
 
 ### **Phase 3:** Visitors meet the texts where they share data, and the repository keeps them true
 

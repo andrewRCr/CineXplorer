@@ -86,39 +86,28 @@ handles your data" lands below the top bar from the in-page link and on a direct
         Added the two in-app links below the copyright line and named the terms path in `ROUTES`.
         The 42 footer and layout tests passed, as did all six scenarios in `sign-in.spec.ts`.
 
-- [ ] **1.3 The policy opens at its top, or at its fragment's heading below the top bar — R1, R3, R5, R14**
+- [x] **1.3 The policy opens at its top, or at its fragment's heading below the top bar — R1, R3, R5, R14**
 
     **Goal:** Arriving from any scroll position, the policy shows its title; arriving at or following a section's
     fragment, that heading sits fully below the sticky top bar; at 360px only the cookie table scrolls sideways.
 
-    - [ ] **1.3.a Write the smoke spec's policy steps**
-        - New `frontend/e2e/legal-pages.spec.ts`, with `test` and `expect` from `./fixtures` and `scanPage` from
-          `./axe`; no account and no data changed, so it runs unchanged against staging
-        - Opens signed-out Home, scrolls to its footer, follows Privacy Policy to `/privacy`, checks the title is in
-          the viewport, and scans the page; find the link inside the footer (`contentinfo`), since Task 3.1 adds a
-          second Privacy Policy link to Home
-        - At 360×800 opens `/privacy` and checks the document doesn't scroll sideways; a guard, it passes from the
-          start, since Task 1.1 builds the table's wrapper: see it fail once by taking the wrapper's sideways
-          scrolling off and stopping the cells from wrapping, for one run (with cells wrapping, the table fits the
-          page's padding at 360px)
-        - On `/privacy`, follows "Who else handles your data" and checks the heading is in the viewport with its top
-          at the top bar's bottom or no more than a few pixels below it (measured from the `banner`'s box); then
-          opens `/privacy#who-else-handles-your-data` directly and checks the same
-        - Expect the opening-position and landing steps to FAIL initially
+    - [x] **1.3.a Write the smoke spec's policy steps**
 
-    - [ ] **1.3.b Position the pages**
-        - In the shared document pieces, so the terms page gets it too: once the page's content has rendered, scroll
-          to the top, or to the fragment's heading when the address has one, and again whenever the fragment changes;
-          the app sets `history.scrollRestoration` to `manual` and has no route-wide scroll handling, and React
-          Router's `Link` doesn't scroll to a fragment by itself
-        - Headings keep a scroll margin of the `layout-navbar` size token, so in-page links land below the top bar
-        - Spec steps should now PASS
+        Added four signed-out Chromium scenarios for footer navigation, phone overflow, in-page links and direct
+        fragments. The three opening-position checks failed before the scroll effect. The phone guard failed at
+        2,535px with the wrapper's overflow removed and cells set to nowrap, then passed at 360px with the original CSS.
 
-- [ ] **1.4 Check the policy page in the browser**
+    - [x] **1.3.b Position the pages**
+
+        The shared document scrolls on route or fragment navigation after the content mounts. The heading uses the
+        top bar's size token for its scroll margin and takes focus when reached through an anchor.
+
+- [x] **1.4 Check the policy page in the browser**
 
     **Goal:** The segment's exit criterion is shown on this branch, with what ran and the result recorded here.
 
-    - Run `legal-pages.spec.ts` against the worktree's browsable stack
+    - All four scenarios in `legal-pages.spec.ts` passed against this worktree's browsable stack, including the
+      privacy page's axe scan.
 
 ### **Phase 2:** The terms open from the footer the same way
 

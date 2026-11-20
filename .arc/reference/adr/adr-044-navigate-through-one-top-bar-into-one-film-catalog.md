@@ -89,3 +89,9 @@ five-spec list and the mobile-viewport exclusion in its Consequences.
 - Titles require composition rules that must stay aligned with available filters and sort values.
 - The default Films destination is a result grid until a separate hub has its own purpose and content.
 - The smoke tier takes another browser journey; it still does not cover every mobile page or browser engine.
+
+### Current smoke coverage
+
+**Amendment (2026-11-19):** The testing strategy's
+[E2E Test Coordination](../strategies/project/strategy-testing-methodology.md#e2e-test-coordination) section
+lists the current browser smoke specs and describes the local and staging targets.

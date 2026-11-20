@@ -14,7 +14,9 @@ import { connectAnnouncer } from "@/lib/announcer";
  * - renders straight into `<body>`, outside the app root, where a modal dialog's page hiding skips it as a live
  *   region;
  * - clears itself before each message and writes the message after a short delay, so a repeated message is announced
- *   again and a message sent just after the region mounts waits until screen readers track it.
+ *   again and a message sent just after the region mounts waits until screen readers track it;
+ * - empties once a message has had time to be read, so a notice the visitor dismissed or left behind isn't still
+ *   there for a screen reader to find later.
  *
  * Visible notices carry no live role of their own: show the notice where it belongs and call `announce` with its
  * text. Errors use `role="alert"` instead (see `FloatingAlert`).
@@ -23,6 +25,8 @@ import { connectAnnouncer } from "@/lib/announcer";
 // The same settle times as the UI library's own live region (@zag-js/live-region)
 const SETTLE_AFTER_MOUNT_MS = 200;
 const GAP_AFTER_CLEAR_MS = 100;
+// Long enough for a screen reader to reach and speak a short notice; emptying the region doesn't cut speech short
+const READ_TIME_MS = 7000;
 
 export const LiveAnnouncer = () => {
   const [text, setText] = useState("");
@@ -34,7 +38,10 @@ export const LiveAnnouncer = () => {
       clearTimeout(timer);
       setText("");
       timer = setTimeout(
-        () => setText(message),
+        () => {
+          setText(message);
+          timer = setTimeout(() => setText(""), READ_TIME_MS);
+        },
         Math.max(GAP_AFTER_CLEAR_MS, readyAt - Date.now()),
       );
     });

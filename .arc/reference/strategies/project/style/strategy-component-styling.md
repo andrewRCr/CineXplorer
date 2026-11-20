@@ -623,10 +623,11 @@ A form's alerts sit in its card, above the form, as the card's first child (sign
 **Announcing notices:** a non-error notice carries no live role of its own. Show it where it belongs and pass its
 text to `announce` (`@/lib/announcer`), which writes it into the app's one polite live region, `LiveAnnouncer`. That
 region mounts once at app start beside the toasters, renders straight into `<body>` where a modal dialog's page hiding
-skips it, waits until screen readers track it before its first message, and clears before each message so a repeat is
-heard again. A page-level live region can't promise any of that: one inserted with its text, one hidden behind a
-dialog, or one only a frame old when its notice arrives goes unannounced. Errors announce themselves (`FloatingAlert`
-gives them `role="alert"`).
+skips it, waits until screen readers track it before its first message, clears before each message so a repeat is
+heard again, and empties seven seconds after each message so a dismissed notice doesn't linger for screen readers. A
+page-level live region can't promise any of that: one inserted with its text, one hidden behind a dialog, or one only
+a frame old when its notice arrives goes unannounced. Errors announce themselves (`FloatingAlert` gives them
+`role="alert"`).
 
 **Code example:**
 

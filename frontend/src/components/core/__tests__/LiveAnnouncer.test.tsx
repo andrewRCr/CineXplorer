@@ -34,6 +34,36 @@ describe("the app's live region", () => {
     expect(region).toHaveTextContent("Too many requests.");
   });
 
+  it("empties once a message has had time to be read, so a dismissed notice doesn't linger", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    render(<LiveAnnouncer />);
+    act(() => vi.advanceTimersByTime(300));
+    const region = screen.getByRole("status");
+    act(() => announce("Session expired."));
+    act(() => vi.advanceTimersByTime(100));
+    expect(region).toHaveTextContent("Session expired.");
+    act(() => vi.advanceTimersByTime(6999));
+    expect(region).toHaveTextContent("Session expired.");
+    act(() => vi.advanceTimersByTime(1));
+    expect(region).toBeEmptyDOMElement();
+  });
+
+  it("gives a newer message its full time before emptying", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    render(<LiveAnnouncer />);
+    act(() => vi.advanceTimersByTime(300));
+    const region = screen.getByRole("status");
+    act(() => announce("Sending a new verification email..."));
+    act(() => vi.advanceTimersByTime(6000));
+    act(() => announce("Verification email sent."));
+    act(() => vi.advanceTimersByTime(100));
+    // Past when the first message would have emptied
+    act(() => vi.advanceTimersByTime(6000));
+    expect(region).toHaveTextContent("Verification email sent.");
+    act(() => vi.advanceTimersByTime(1000));
+    expect(region).toBeEmptyDOMElement();
+  });
+
   it("stays readable while a modal dialog hides the rest of the page", async () => {
     render(
       <>

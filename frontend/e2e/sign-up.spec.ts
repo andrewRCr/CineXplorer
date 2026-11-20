@@ -29,9 +29,9 @@ test("sign up and reach the email verification notice", async ({
     await expect(page).toHaveURL(new URL("/login", target.baseURL).href);
     const created =
         "Account created! Check your email to verify your account before logging in.";
-    // Shown in the sign-in card, and announced through the app's live region
+    // Shown in the sign-in card, and announced through the app's live region outside the app root
     await expect(
-        page.getByText(created, { exact: true }).filter({ visible: true }),
+        page.locator("#root").getByText(created, { exact: true }),
     ).toBeVisible();
     await expect(
         page.getByRole("status").filter({ hasText: created }),

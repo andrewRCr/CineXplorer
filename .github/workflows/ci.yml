@@ -564,10 +564,12 @@ jobs:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
 
-      - name: Install Chromium and system dependencies
+      # The runner image already carries Chromium's system libraries. Installing them too (--with-deps) fetched them
+      # from Ubuntu's package mirrors, which stalled for minutes in about one run in ten.
+      - name: Install Chromium
         timeout-minutes: 12
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Check browser renewal and sign-out
         working-directory: frontend
@@ -684,10 +686,11 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Install Chromium and system dependencies
+      # Without system packages, as in the end-to-end smoke job
+      - name: Install Chromium
         timeout-minutes: 12
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Check deployed user journeys
         working-directory: frontend

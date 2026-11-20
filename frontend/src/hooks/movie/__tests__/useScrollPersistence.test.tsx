@@ -262,17 +262,28 @@ describe("useScrollPersistence", () => {
     };
     const pageHeight = 1900;
 
-    function returnTo(position: number, initialProps: object) {
+    interface ReturnProps {
+      loadedCount: number;
+      hasMore: boolean;
+      isError?: boolean;
+    }
+
+    function returnTo(position: number, initialProps: Partial<ReturnProps>) {
       mockSessionStorage.setItem(
         "scroll-discover-",
         createStorageEntry(position),
       );
+      const props: ReturnProps = {
+        loadedCount: 20,
+        hasMore: true,
+        ...initialProps,
+      };
       return renderHook(
-        (props: { loadedCount: number; hasMore: boolean }) =>
-          useScrollPersistence({ ...defaultOptions, ...props }),
+        (current: ReturnProps) =>
+          useScrollPersistence({ ...defaultOptions, ...current }),
         {
           wrapper: createWrapper(["/browse"], { restoreScroll: true }),
-          initialProps: { loadedCount: 20, hasMore: true, ...initialProps },
+          initialProps: props,
         },
       );
     }
@@ -349,6 +360,37 @@ describe("useScrollPersistence", () => {
       });
       visitorScrollsTo(1200);
       expect(savedPosition()).toBe(1200);
+    });
+
+    it("stops when a page fails to load", () => {
+      const { rerender } = returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      rerender({ loadedCount: 20, hasMore: true, isError: true });
+      const afterFailure = window.scrollY;
+      // A later page doesn't pull the visitor back toward the saved position
+      maxScroll += pageHeight;
+      rerender({ loadedCount: 40, hasMore: true, isError: false });
+      expect(window.scrollY).toBe(afterFailure);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(500);
+      expect(savedPosition()).toBe(500);
+    });
+
+    it("finishes when the second scroll reaches the position without a new page", () => {
+      returnTo(3000, {});
+      expect(window.scrollY).toBe(1900);
+      // The document grows before the second scroll, without more results
+      maxScroll = 3800;
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(window.scrollY).toBe(3000);
+      visitorScrollsTo(3200);
+      expect(savedPosition()).toBe(3200);
     });
 
     it("stops after ten more pages", () => {

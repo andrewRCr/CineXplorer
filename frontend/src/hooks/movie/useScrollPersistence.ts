@@ -317,8 +317,13 @@ export const useScrollPersistence = ({
                         window.scrollTo(0, savedPosition);
                         initialRestoreDoneRef.current = true;
                         // Step 3: Guard removal - wait for content to stabilize before allowing
-                        // scroll position saves, unless the return is still following pages in
-                        if (followingRef.current === null) releaseGuard();
+                        // scroll position saves, unless the return is still following pages in.
+                        // This re-scroll can itself reach the position, which ends the following.
+                        const following = followingRef.current;
+                        if (following === null) releaseGuard();
+                        else if (window.scrollY >= following.target - 1) {
+                            stopFollowing();
+                        }
                     }, 50);
                 });
             }

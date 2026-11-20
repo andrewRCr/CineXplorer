@@ -353,8 +353,8 @@ arc-offload npm run lint              # append -- --fix for auto-fix
 arc-offload npm run verify-contrast
 ```
 
-Backend pytest stays in the container with `nice -n 15`. Heavy container commands carry that priority inside the
-container: Docker Desktop runs them outside this WSL distro, so a host wrapper reaches only the Docker client.
+Backend pytest stays in the container with `nice -n 15`. Set the priority on the command passed to
+`docker compose exec`. The runtime starts the container process independently of the Compose client.
 Container memory limits come from the Compose `mem_limit` settings in `infrastructure/docker-compose.yml` and
 `infrastructure/docker-compose.worktree.yml`.
 

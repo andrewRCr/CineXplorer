@@ -52,44 +52,25 @@ _Exit criterion:_ `legal-pages.spec.ts`'s policy steps pass against the worktree
 `/privacy` with its title in view and an axe scan passing, the page doesn't scroll sideways at 360×800, and "Who else
 handles your data" lands below the top bar from the in-page link and on a direct load of its fragment.
 
-- [ ] **1.1 `/privacy` shows the policy's text, word for word — R1, R2, R3, R4, R5, R6, R7, R13**
+- [x] **1.1 `/privacy` shows the policy's text, word for word — R1, R2, R3, R4, R5, R6, R7, R13**
 
     **Goal:** A visitor, signed in or not, reads Appendix A's text at `/privacy` in one column under the top bar, with
     every heading carrying its id and every link going where the appendix says.
 
-    - [ ] **1.1.a Cover the policy page** (`frontend/src/pages/legal/__tests__/`, and the route in `App.test.tsx`)
-        - Test: at `/privacy`, signed out, the page shows one `h1`, the policy's title, with the effective date beneath
-          it written as month, day and year (the page reads no session state, so a signed-in visitor sees the same)
-        - Test: once the page's title has rendered, its text contains no bracketed review marker (such as `[C1]`),
-          no `[publication date]` and no `{{`; checked on the rendered page, so it fails while the page doesn't exist
-        - Test: every `h2` and `h3` carries an id made from its text (lowercase, words joined by hyphens, punctuation
-          dropped), and the three in-page links ("Who else handles your data", "Your choices", "Security") point at
-          ids the headings carry
-        - Test: the Google policy link points at Google's API Services User Data Policy page, and each email address
-          is a `mailto:` link
-        - Test: the cookie table has a header row and four rows
-        - Expect tests to FAIL initially
+    - [x] **1.1.a Cover the policy page** (`frontend/src/pages/legal/__tests__/`, and the route in `App.test.tsx`)
 
-    - [ ] **1.1.b Build the document pieces, the route and the page**
-        - Shared pieces under `frontend/src/pages/legal/` for both pages: the one column at most `3xl` wide inside the
-          page container, the title with its effective date, headings that make their ids from their text, and the
-          sideways-scrolling wrapper for a table; headings use the app's heading styles, colors the semantic tokens
-        - `ROUTES.PRIVACY` (`/privacy`) and a lazy `PrivacyPolicy` route in `App`, inside `AppLayout`, outside
-          `ProtectedRoute`
-        - `PrivacyPolicy.tsx` carries Appendix A as JSX: the same headings at the same levels, paragraphs, lists,
-          table and links, in the same order, with bold and code-styled names where the appendix marks them
-        - The table's wrapper scrolls sideways only when the table is wider than the column, with cells wrapping as
-          usual (Chakra's `Table.ScrollArea` stops wrapping, so not that one); it takes keyboard focus and has a name
-          (`tabIndex={0}`, `role="region"`, an `aria-label`), so a keyboard user can scroll it, and axe's
-          `scrollable-region-focusable` rule holds
-        - The effective date is a constant in the page, set to a provisional date until the pull request's last commit
-          sets it (Task 4.1); keep it a calendar date shown without a time-zone shift (a date-only string parses as
-          UTC midnight, the day before in US time)
-        - Tests should now PASS
+        Added five page and route tests for the title, date, anchors, links, table and signed-out app layout. All five
+        failed before the page and route were built.
 
-    - [ ] **1.1.c Compare the rendered page with Appendix A**
-        - Read the page's text against Appendix A paragraph by paragraph and record the result here; Success
-          Criterion 2 repeats this comparison at verification
+    - [x] **1.1.b Build the document pieces, the route and the page**
+
+        Added the lazy public policy route and shared Chakra document, heading and table-region components. The page
+        carries the provisional date and Appendix A as JSX. All 14 focused tests passed.
+
+    - [x] **1.1.c Compare the rendered page with Appendix A**
+
+        Compared the rendered policy paragraph by paragraph against Appendix A, including heading levels, list items,
+        table cells, bold and code spans, and link destinations. All matched.
 
 - [ ] **1.2 Every page's footer links both texts — R8, R13**
 

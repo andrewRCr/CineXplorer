@@ -161,3 +161,17 @@ it("serves Home's pitch at the root route", async () => {
     }),
   ).toBeVisible();
 });
+
+it("opens the privacy policy in the app layout while signed out", async () => {
+  startAt("/privacy");
+
+  expect(
+    await screen.findByRole("heading", {
+      level: 1,
+      name: "CineXplorer Privacy Policy",
+    }),
+  ).toBeVisible();
+  expect(screen.getByRole("banner")).toBeVisible();
+  expect(screen.getByRole("contentinfo")).toBeVisible();
+  expect(new URL(document.URL).pathname).toBe("/privacy");
+});

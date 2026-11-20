@@ -36,6 +36,7 @@
  */
 import { apiBaseUrl } from "@/config/baseUrls";
 import { getAuthTokens } from "@/utilities/tokenUtils";
+import apiClient from "./apiClient";
 
 export enum LogLevel {
     DEBUG = 0,
@@ -485,7 +486,8 @@ class Logger {
         entry: LogEntry,
         signal: AbortSignal,
     ): Promise<void> {
-        const { default: apiClient } = await import("./apiClient");
+        // Let the caller arm the timeout before preparing the request.
+        await Promise.resolve();
         const payload = {
             level: LogLevel[entry.level],
             message: entry.message,
@@ -1302,6 +1304,8 @@ class Logger {
 
 // Create singleton instance
 const logger = new Logger();
+// Log the API configuration after the logger singleton is initialized.
+logger.debug("[apiClient] BASE_URL configured", { BASE_URL: apiBaseUrl });
 
 export default logger;
 export { Logger };

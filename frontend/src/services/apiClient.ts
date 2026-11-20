@@ -17,7 +17,6 @@ import {
     ensureCsrfTokenCookie,
     getCsrfToken,
 } from "@/utilities/csrfTokenFetcher";
-import logger from "./logger";
 import { getPaginationContextId } from "./paginationContext";
 import { toaster } from "@/components/core/chakra/toaster";
 
@@ -31,9 +30,6 @@ declare module "axios" {
         skipAuthRefresh?: boolean;
     }
 }
-
-// Debug: Log the base URL being used
-logger.debug("[apiClient] BASE_URL configured", { BASE_URL });
 
 /**
  * Axios client configured for two-pattern authentication.

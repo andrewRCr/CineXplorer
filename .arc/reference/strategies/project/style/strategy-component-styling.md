@@ -516,7 +516,6 @@ toaster.success({ title: "Changes saved", description: "Your settings have been 
 toaster.error({ title: "Save failed", description: "Please try again.", closable: true });
 toaster.warning({ title: "You're offline", description: "Changes will save when you reconnect." });
 toaster.info({ title: "Link copied" });
-toaster.loading({ title: "Importing ratings...", description: "You can keep browsing." });
 
 // Priority toaster (top-right) - important notifications
 priorityToaster.success({ title: "Password reset successfully!", description: "You are now logged in." });
@@ -539,7 +538,6 @@ toaster.success({
 
 - A confirmation the visitor would miss after an auth flow moves them (a password reset that signs them in)
 - Critical action confirmations (account changes, destructive actions)
-- Time-sensitive notifications that warrant immediate attention
 
 **Available status types:**
 
@@ -549,7 +547,6 @@ toaster.success({
 | `warning` | Caution states (offline, retrying)         | Amber  |
 | `error`   | Errors, failed operations (closable: true) | Red    |
 | `info`    | Informational confirmations (link copied)  | Blue   |
-| `loading` | Background operations in progress          | Blue   |
 
 **What the composition provides:**
 
@@ -623,18 +620,26 @@ A form's alerts sit in its card, above the form, as the card's first child (sign
 `FloatingAlertContainer` floats an alert top-center over the page instead, without shifting the layout
 (registration's errors).
 
+Screen readers announce a change inside a live region that's already on the page, not one inserted together with its
+text (`role="alert"` excepted), so a non-error alert goes in a polite `role="status"` region rendered from the first
+render, empty until the notice arrives. Errors announce themselves (`FloatingAlert` gives them `role="alert"`) and go
+outside that region. While a modal dialog is open, the rest of the page is hidden from screen readers, so show a
+notice that follows a dialog only once it has fully closed (its `onExitComplete`).
+
 **Code example:**
 
 ```tsx
-// In the form's card, above the form
+// In the form's card, above the form: the polite region is always rendered, so its notice is announced
 <AuthFormCard>
-  {notice && (
-    <Box w="full" mb={6}>
-      <FloatingAlert status="success" onDismiss={...}>
-        Account created! Check your email to verify.
-      </FloatingAlert>
-    </Box>
-  )}
+  <Box role="status" aria-live="polite">
+    {notice && (
+      <Box w="full" mb={6}>
+        <FloatingAlert status="success" onDismiss={...}>
+          Account created! Check your email to verify.
+        </FloatingAlert>
+      </Box>
+    )}
+  </Box>
   <form>...</form>
 </AuthFormCard>
 
@@ -655,7 +660,9 @@ A form's alerts sit in its card, above the form, as the card's first child (sign
   region on the page from the first render and puts its notices and verification alert in it, since a live region
   inserted with its text isn't reliably announced; errors render outside it. Alerts are dismissible via close button
 - Notices clear when the visitor types or dismisses them; field validation clears only an error alert
-- A resend result replaces the verification alert only while that alert still shows
+- Resending shows "Sending a new verification email..." until its result, which replaces the verification alert only
+  while that alert still shows
+- The email-verified and password-reset notices appear once their dialog has fully closed
 - A password reset that signs the visitor in confirms with a toast: they land on Home, where nothing else shows it
 
 **Edge cases:**

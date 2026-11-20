@@ -163,6 +163,14 @@ const Login = () => {
   // Email Verification Flow (?verify=TOKEN)
   // ==========================================================================
 
+  // A notice from a dialog's success, held until the dialog has fully closed
+  const pendingNoticeRef = useRef<string | null>(null);
+  const showPendingNotice = () => {
+    const message = pendingNoticeRef.current;
+    pendingNoticeRef.current = null;
+    if (message) showNotice(message);
+  };
+
   const verifyToken = searchParams.get("verify");
   const [verificationState, setVerificationState] = useState<VerificationState>(
     verifyToken ? "pending" : null,
@@ -203,7 +211,8 @@ const Login = () => {
       // Clear the token from URL to prevent re-verification attempts
       window.history.replaceState({}, "", ROUTES.LOGIN);
 
-      showNotice("Email verified. You can now log in.");
+      // Shown once the dialog has closed: until then the page is hidden from screen readers
+      pendingNoticeRef.current = "Email verified. You can now log in.";
 
       // Clear verification UI after short delay to let user see success
       verificationTimeoutRef.current = setTimeout(() => {
@@ -248,7 +257,9 @@ const Login = () => {
       });
       void navigate(ROUTES.HOME);
     } else {
-      showNotice("Password reset. You can now log in with your new password.");
+      // Shown once the dialog has closed: until then the page is hidden from screen readers
+      pendingNoticeRef.current =
+        "Password reset. You can now log in with your new password.";
     }
   };
 
@@ -567,6 +578,7 @@ const Login = () => {
           setVerificationState(null);
           window.history.replaceState({}, "", ROUTES.LOGIN);
         }}
+        onExitComplete={showPendingNotice}
       />
 
       {/* Password reset dialog - shown when ?reset=KEY in URL */}
@@ -575,6 +587,7 @@ const Login = () => {
         onSubmit={authService.resetPassword}
         onSuccess={handlePasswordResetSuccess}
         onDismiss={handlePasswordResetDismiss}
+        onExitComplete={showPendingNotice}
       />
     </Box>
   );

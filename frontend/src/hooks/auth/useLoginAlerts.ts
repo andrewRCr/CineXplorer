@@ -91,6 +91,8 @@ export function useLoginAlerts() {
                     resendToken,
                     failed,
                 });
+            // Each attempt changes the alert twice, so a repeated result is still seen and announced
+            report("Sending a new verification email...");
             try {
                 await authService.resendVerificationEmail(resendToken);
                 report(

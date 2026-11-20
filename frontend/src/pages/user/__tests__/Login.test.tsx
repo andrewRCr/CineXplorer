@@ -190,6 +190,44 @@ describe("resending from an unverified sign-in", () => {
     },
   );
 
+  it("shows each resend attempt, even one that ends like the last", async () => {
+    const held = [gate(), gate()];
+    let attempt = 0;
+    server.use(
+      http.post(`${apiBaseUrl}/resend-verification/`, async () => {
+        await held[attempt++]?.wait;
+        return HttpResponse.json({ detail: "Slow down" }, { status: 429 });
+      }),
+    );
+    const sending = "Sending a new verification email...";
+    const limited =
+      "Too many requests. Please wait a moment before trying again.";
+    const user = userEvent.setup();
+    render(
+      <>
+        <AuthContextProvider>
+          <Login />
+        </AuthContextProvider>
+        <PriorityToaster />
+      </>,
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: "Username or Email Address" }),
+      "viewer",
+    );
+    await user.type(screen.getByLabelText("Password"), "testpass123");
+    await user.click(screen.getByRole("button", { name: "Login" }));
+    for (const gateFor of held) {
+      await user.click(
+        await screen.findByRole("button", { name: "Resend verification" }),
+      );
+      await waitFor(() => expectNoticeInCard(sending, "status"));
+      gateFor.release();
+      await waitFor(() => expectNoticeInCard(limited, "status"));
+    }
+    expect(attempt).toBe(2);
+  });
+
   it("drops a resend result once its alert is dismissed", async () => {
     const held = gate();
     server.use(
@@ -335,10 +373,11 @@ describe("notices the sign-in page opens with", () => {
     await user.click(
       await screen.findByRole("button", { name: "Complete Verification" }),
     );
-    await waitFor(
-      () => expectNoticeInCard("Email verified. You can now log in.", "status"),
-      { timeout: 4000 },
-    );
+    // Readable by screen readers the moment it appears: an open dialog hides the rest of the page from them
+    const verified = "Email verified. You can now log in.";
+    await screen.findByText(verified, {}, { timeout: 4000 });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expectNoticeInCard(verified, "status");
     expect(
       screen.getByRole("textbox", { name: "Username or Email Address" }),
     ).toHaveValue("viewer@example.com");
@@ -365,14 +404,11 @@ describe("notices the sign-in page opens with", () => {
     await user.click(
       within(dialog).getByRole("button", { name: "Reset Password" }),
     );
-    await waitFor(
-      () =>
-        expectNoticeInCard(
-          "Password reset. You can now log in with your new password.",
-          "status",
-        ),
-      { timeout: 4000 },
-    );
+    // Readable by screen readers the moment it appears: an open dialog hides the rest of the page from them
+    const reset = "Password reset. You can now log in with your new password.";
+    await screen.findByText(reset, {}, { timeout: 4000 });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expectNoticeInCard(reset, "status");
   });
 });
 

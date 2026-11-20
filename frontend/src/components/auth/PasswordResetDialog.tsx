@@ -48,6 +48,11 @@ interface PasswordResetDialogProps {
   onSuccess: (autoLoggedIn: boolean) => void;
   /** Handler for dialog dismiss */
   onDismiss: () => void;
+  /**
+   * Called once the dialog has fully closed. While it's open the rest of the page is hidden from screen readers, so a
+   * notice meant to be announced is shown from here.
+   */
+  onExitComplete?: () => void;
   /** Function to submit the password reset */
   onSubmit: (
     key: string,
@@ -59,6 +64,7 @@ export const PasswordResetDialog = ({
   resetKey,
   onSuccess,
   onDismiss,
+  onExitComplete,
   onSubmit,
 }: PasswordResetDialogProps) => {
   const [submissionState, setResetState] = useState<ResetState>(null);
@@ -134,6 +140,7 @@ export const PasswordResetDialog = ({
   return (
     <Dialog.Root
       open={resetKey !== null}
+      onExitComplete={onExitComplete}
       onOpenChange={(details) => {
         if (!details.open) {
           handleDismiss();

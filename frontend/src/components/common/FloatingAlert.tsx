@@ -32,11 +32,15 @@ import type { ReactNode } from "react";
  *
  * @example
  * ```tsx
- * // In a form's card, above the form
- * <Box w="full" mb={6}>
- *   <FloatingAlert status="success" onDismiss={() => setNotice(null)}>
- *     Account created! Check your email to verify.
- *   </FloatingAlert>
+ * // In a form's card, above the form, inside a polite region that's always rendered
+ * <Box role="status" aria-live="polite">
+ *   {notice && (
+ *     <Box w="full" mb={6}>
+ *       <FloatingAlert status="success" onDismiss={() => setNotice(null)}>
+ *         Account created! Check your email to verify.
+ *       </FloatingAlert>
+ *     </Box>
+ *   )}
  * </Box>
  *
  * // Floating top-center over the page

@@ -1,3 +1,4 @@
+import { settleToastSubscriptions } from "@tests/helpers/toast";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { HttpResponse, http } from "msw/http";
@@ -544,9 +545,9 @@ describe("returning to the requested page", () => {
 });
 
 describe("signed-out notice", () => {
-  function renderSignedOut() {
+  async function renderSignedOut() {
     window.history.replaceState({}, "", "/login?signed_out=true");
-    return renderWithoutRouter(
+    const view = renderWithoutRouter(
       <TestProviders>
         <MemoryRouter initialEntries={["/login?signed_out=true"]}>
           <AuthContextProvider>
@@ -560,6 +561,8 @@ describe("signed-out notice", () => {
         </MemoryRouter>
       </TestProviders>,
     );
+    await settleToastSubscriptions();
+    return view;
   }
   it("shows the notice once the reloaded page knows nobody is signed in", async () => {
     const held = gate();
@@ -571,7 +574,7 @@ describe("signed-out notice", () => {
         return HttpResponse.json({}, { status: 401 });
       }),
     );
-    renderSignedOut();
+    await renderSignedOut();
     await entered.wait;
     // The notice region is on the page, empty, before the notice arrives, so screen readers announce the arrival
     expect(screen.getByRole("status")).toBeEmptyDOMElement();
@@ -599,7 +602,7 @@ describe("signed-out notice", () => {
             },
           ),
         );
-      renderSignedOut();
+      await renderSignedOut();
       if (kind === "provider session") {
         await entered.wait;
         expect(screen.queryByText(signedOut)).not.toBeInTheDocument();

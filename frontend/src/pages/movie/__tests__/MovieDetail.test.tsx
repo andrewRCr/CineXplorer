@@ -1,3 +1,4 @@
+import { settleToastSubscriptions } from "@tests/helpers/toast";
 import userEvent from "@testing-library/user-event";
 import { render as renderWithoutRouter } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router";
@@ -50,13 +51,13 @@ function AuthStatus() {
 }
 
 // Helper to render MovieDetail with router and URL params
-const renderMovieDetailWithRoute = (
+const renderMovieDetailWithRoute = async (
   movieId: string,
   searchParams: string = "",
 ) => {
   const initialRoute = `/movie/${movieId}${searchParams}`;
 
-  return renderWithRoute(
+  const view = renderWithRoute(
     "/movie/:id",
     <>
       <AuthContextProvider>
@@ -67,6 +68,8 @@ const renderMovieDetailWithRoute = (
     </>,
     { initialRoute },
   );
+  await settleToastSubscriptions();
+  return view;
 };
 
 describe("MovieDetail - Back Button URL Construction", () => {
@@ -84,9 +87,9 @@ describe("MovieDetail - Back Button URL Construction", () => {
   });
 
   describe("Basic Back URL Construction", () => {
-    it("reads all params from URL correctly", () => {
+    it("reads all params from URL correctly", async () => {
       const searchParams = "?page=2&from=popular&query=action";
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backButton = screen.getByText("Back to Results");
       expect(backButton).toBeInTheDocument();
@@ -97,7 +100,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       const searchParams =
         "?page=3&tmdb_page_start=9&from=browse&minYear=1980&maxYear=1990&genres=28,12&minRating=7.0&maxRating=10.0&sortBy=vote_average.desc";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -131,7 +134,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       // Genres come as comma-separated string: "28,12,35"
       const searchParams = "?page=1&from=popular&genres=28,12,35";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -150,7 +153,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       const originalURL =
         "?page=2&from=browse&minYear=1990&maxYear=2000&minRating=8.0";
 
-      renderMovieDetailWithRoute("550", originalURL);
+      await renderMovieDetailWithRoute("550", originalURL);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -175,7 +178,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
     it("constructs search back URL correctly without page", async () => {
       const searchParams = "?page=1&from=search&query=inception";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -194,7 +197,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
     it("constructs browse back URL correctly", async () => {
       const searchParams = "?page=2&from=browse";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -211,7 +214,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
     it("constructs now-playing back URL correctly", async () => {
       const searchParams = "?page=3&from=now-playing";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -227,7 +230,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
     it("constructs upcoming back URL correctly", async () => {
       const searchParams = "?page=1&from=upcoming";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -245,7 +248,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
     it("handles year range filters", async () => {
       const searchParams = "?page=1&from=browse&minYear=1980&maxYear=1983";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -263,7 +266,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
     it("handles rating filters", async () => {
       const searchParams = "?page=1&from=browse&minRating=7.0&maxRating=10.0";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -283,7 +286,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       const searchParams =
         "?page=2&from=browse&minYear=1990&maxYear=2000&genres=28,12&minRating=8.0&maxRating=10.0&sortBy=vote_count.desc";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -312,7 +315,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       const searchParams =
         "?page=1&from=search&query=action&minYear=2000&genres=28&minRating=7.0";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -340,7 +343,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       // Minimal params: just from
       const searchParams = "?from=browse";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -362,7 +365,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       // No 'from' param in URL
       const searchParams = "?page=1";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -379,7 +382,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
     it("URL-encodes special characters in params", async () => {
       const searchParams = "?page=1&from=search&query=action%20%26%20adventure";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -397,7 +400,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
       // Empty query param
       const searchParams = "?page=1&from=browse&query=";
 
-      renderMovieDetailWithRoute("550", searchParams);
+      await renderMovieDetailWithRoute("550", searchParams);
 
       const backLink = await screen.findByRole("link", {
         name: "Back to Results",
@@ -413,7 +416,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
   });
 
   describe("Loading and Error States", () => {
-    it("shows back button even while loading", () => {
+    it("shows back button even while loading", async () => {
       const release = gate();
       server.use(
         http.get(`${apiBaseUrl}/movies/550`, async () => {
@@ -422,7 +425,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
         }),
       );
 
-      renderMovieDetailWithRoute("550", "?page=2&from=browse");
+      await renderMovieDetailWithRoute("550", "?page=2&from=browse");
 
       // Back button should be visible immediately
       expect(screen.getByText("Back to Results")).toBeInTheDocument();
@@ -436,7 +439,7 @@ describe("MovieDetail - Back Button URL Construction", () => {
         ),
       );
 
-      renderMovieDetailWithRoute("550", "?page=2&from=browse");
+      await renderMovieDetailWithRoute("550", "?page=2&from=browse");
 
       await screen.findByRole("heading", { name: "Error Loading Movie" });
       // Back button should still work on error
@@ -457,7 +460,7 @@ describe("MovieDetail - TMDB Score", () => {
   it('shows "Not yet rated" for a movie with no votes', async () => {
     mockMovieDetail({ vote_average: 0, vote_count: 0 });
 
-    renderMovieDetailWithRoute("1");
+    await renderMovieDetailWithRoute("1");
 
     expect(await screen.findByText("Not yet rated")).toBeInTheDocument();
   });
@@ -465,7 +468,7 @@ describe("MovieDetail - TMDB Score", () => {
   it("shows the average with its vote count below 10 votes", async () => {
     mockMovieDetail({ vote_average: 6.8, vote_count: 4 });
 
-    renderMovieDetailWithRoute("1");
+    await renderMovieDetailWithRoute("1");
 
     expect(await screen.findByText("6.8 · 4 votes")).toBeInTheDocument();
   });
@@ -473,7 +476,7 @@ describe("MovieDetail - TMDB Score", () => {
   it("shows the score for a movie with 10 or more votes", async () => {
     mockMovieDetail({});
 
-    renderMovieDetailWithRoute("1");
+    await renderMovieDetailWithRoute("1");
 
     expect(await screen.findByText("8.2")).toBeInTheDocument();
   });
@@ -540,7 +543,7 @@ describe("MovieDetail query and shared saves", () => {
           HttpResponse.json({ detail: "Unavailable" }, { status }),
         ),
       );
-      renderMovieDetailWithRoute("550");
+      await renderMovieDetailWithRoute("550");
       await screen.findByRole("heading", {
         name: status === 404 ? "Movie Not Found" : "Error Loading Movie",
       });
@@ -562,7 +565,7 @@ describe("MovieDetail query and shared saves", () => {
         return HttpResponse.json(createMockUserMovieData({ tmdb_id: 550 }));
       }),
     );
-    renderMovieDetailWithRoute("550");
+    await renderMovieDetailWithRoute("550");
     await screen.findByRole("heading", { name: "Test Movie" });
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled(),
@@ -588,7 +591,7 @@ describe("MovieDetail query and shared saves", () => {
         HttpResponse.json(createMockUserMovieData({ tmdb_id: 550 })),
       ),
     );
-    renderMovieDetailWithRoute("550");
+    await renderMovieDetailWithRoute("550");
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Watchlist" })).toHaveAttribute(
         "aria-pressed",
@@ -621,7 +624,7 @@ describe("MovieDetail query and shared saves", () => {
       }),
     );
     const user = userEvent.setup();
-    renderMovieDetailWithRoute("550");
+    await renderMovieDetailWithRoute("550");
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Watchlist" })).toBeEnabled(),
     );
@@ -660,7 +663,7 @@ describe("MovieDetail query and shared saves", () => {
           ),
         ),
       );
-      renderMovieDetailWithRoute("550");
+      await renderMovieDetailWithRoute("550");
       await screen.findByRole("button", { name: "Watchlist" });
       await waitFor(() =>
         expect(screen.getByLabelText("Session")).toHaveTextContent(status),
@@ -689,7 +692,7 @@ describe("MovieDetail query and shared saves", () => {
         return HttpResponse.json(createMockMovieDetail());
       }),
     );
-    const view = renderMovieDetailWithRoute("550");
+    const view = await renderMovieDetailWithRoute("550");
     await entered.wait;
     view.unmount();
     await waitFor(() => expect(incoming?.signal.aborted).toBe(true));
@@ -837,7 +840,7 @@ it("shows the signed-in film log beneath its tracking panel", async () => {
       }),
     ),
   );
-  renderMovieDetailWithRoute("550");
+  await renderMovieDetailWithRoute("550");
   const panel = await screen.findByRole("region", { name: "Your film" });
   const log = await screen.findByRole("region", { name: "Your log" });
   expect(await within(log).findByText("A private film log")).toBeVisible();
@@ -882,7 +885,7 @@ it("deleting the film's only entry updates the panel and returns focus to Review
       return HttpResponse.json({ entry, record: returned });
     }),
   );
-  renderMovieDetailWithRoute("550");
+  await renderMovieDetailWithRoute("550");
   const user = userEvent.setup();
   await user.click(
     await screen.findByRole("button", { name: "Delete entry 1, Nov 14, 2026" }),

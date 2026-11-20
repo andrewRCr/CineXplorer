@@ -1,3 +1,4 @@
+import { settleToastSubscriptions } from "@tests/helpers/toast";
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -58,8 +59,8 @@ function holdSession(
   };
 }
 
-function mountResolution(path = "/login") {
-  return renderHook(() => ({ ...useAuth(), client: useQueryClient() }), {
+async function mountResolution(path = "/login") {
+  const view = renderHook(() => ({ ...useAuth(), client: useQueryClient() }), {
     wrapper: ({ children }) => (
       <TestProviders>
         <MemoryRouter initialEntries={[path]}>
@@ -70,6 +71,8 @@ function mountResolution(path = "/login") {
       </TestProviders>
     ),
   });
+  await settleToastSubscriptions();
+  return view;
 }
 
 beforeEach(() => {
@@ -111,13 +114,18 @@ it.each([401, 500])(
         );
       }),
     );
-    const view = mountResolution("/browse");
+    const view = await mountResolution("/browse");
     let provider: ReturnType<typeof holdSession> | undefined;
     try {
-      await vi.waitFor(async () => {
-        await act(async () => vi.advanceTimersByTimeAsync(10));
-        expect(view.result.current.user).toEqual(profile);
+      await act(async () => {
+        await vi.waitFor(() =>
+          expect(view.result.current.client.getQueryData(sessionKey)).toEqual(
+            profile,
+          ),
+        );
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
       });
+      expect(view.result.current.user).toEqual(profile);
       setAuthTokens(token(1));
       await act(async () => vi.advanceTimersByTimeAsync(60000));
       await entered.wait;
@@ -169,7 +177,7 @@ it.each([403, 500])(
         return HttpResponse.json({ detail: "Profile refused" }, { status });
       }),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     try {
       await entered.wait;
       await act(async () => fallback.release());
@@ -211,7 +219,7 @@ it("protects held password fallback, then restores ordinary renewal failure hand
       return HttpResponse.json({ detail: "Unavailable" }, { status: 500 });
     }),
   );
-  const view = mountResolution();
+  const view = await mountResolution();
   try {
     await entered.wait;
     const expired = token(1);
@@ -274,7 +282,7 @@ it("cancels a fallback caller while another caller completes their shared renewa
       return HttpResponse.json({ access_token: fresh });
     }),
   );
-  const view = mountResolution();
+  const view = await mountResolution();
   try {
     await entered.wait;
     const pending = Promise.allSettled([
@@ -318,7 +326,7 @@ it("keeps a newer resolution owned when canceled fallback finally settles", asyn
       return HttpResponse.json({ detail: "Unavailable" }, { status: 500 });
     }),
   );
-  const view = mountResolution();
+  const view = await mountResolution();
   let nextProvider: ReturnType<typeof holdSession> | undefined;
   try {
     await entered.wait;
@@ -401,7 +409,7 @@ it.each([
         }),
       ),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     try {
       await entered.wait;
       await act(async () => {
@@ -462,7 +470,7 @@ it.each([401, 500])(
         );
       }),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     try {
       await provider.entered;
       expect(view.result.current.status).toBe("authenticated");
@@ -521,7 +529,7 @@ it.each([
         );
       }),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     const startRequest = () =>
       Promise.allSettled([apiClient.get<unknown>("/user-movie-data/movies")]);
     let pending = Promise.resolve<PromiseSettledResult<unknown>[]>([]);
@@ -578,7 +586,7 @@ it("cancels provider discovery without letting its late response change the pass
   const stored = token();
   setAuthTokens(stored);
   const provider = holdSession();
-  const view = mountResolution();
+  const view = await mountResolution();
   try {
     await provider.entered;
     await act(async () =>
@@ -621,7 +629,7 @@ it.each([401, 500])(
         );
       }),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     try {
       await entered.wait;
       const settled = refreshAccessToken().catch(() => undefined);
@@ -674,7 +682,7 @@ it.each(["expired request", "401 response"])(
           : HttpResponse.json({ access_token: token() });
       }),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     try {
       await provider.entered;
       if (path === "expired request") setAuthTokens(token(1));
@@ -710,7 +718,7 @@ it.each([
         return HttpResponse.json({ detail: "Unavailable" }, { status: 500 });
       }),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     try {
       await provider.entered;
       setAuthTokens(token(1));
@@ -769,17 +777,19 @@ it.each([
         );
       }),
     );
-    const view = mountResolution();
+    const view = await mountResolution();
     try {
       await provider.entered;
       const stored = path === "expired request" ? token(1) : token();
       setAuthTokens(stored);
       const request = Promise.allSettled([apiClient.get("/profile/")]);
       await renewalEntered.wait;
-      renewal.release();
-      expect((await request)[0]).toMatchObject({
-        status: "rejected",
-        reason: { response: { status: renewalStatus } },
+      await act(async () => {
+        renewal.release();
+        expect((await request)[0]).toMatchObject({
+          status: "rejected",
+          reason: { response: { status: renewalStatus } },
+        });
       });
       expect(localStorage.getItem("access_token")).toBe(stored);
       expect(window.location.href).toBe("http://localhost:3000/browse");

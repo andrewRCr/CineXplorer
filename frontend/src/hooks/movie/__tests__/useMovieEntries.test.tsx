@@ -1,3 +1,4 @@
+import { settleToastSubscriptions } from "@tests/helpers/toast";
 import { useEffect } from "react";
 import { act, renderHook, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it } from "vitest";
@@ -46,8 +47,8 @@ const record = createMockUserMovieData({
   has_entries: true,
   last_logged_on: entry.watched_on,
 });
-function mount(retireOnUnmount = true) {
-  return renderHook(
+async function mount(retireOnUnmount = true) {
+  const view = renderHook(
     () => {
       const client = useQueryClient();
       useEffect(
@@ -67,6 +68,8 @@ function mount(retireOnUnmount = true) {
       ),
     },
   );
+  await settleToastSubscriptions();
+  return view;
 }
 beforeEach(() => {
   clearBrowserAuth();
@@ -96,7 +99,7 @@ it("queues entry writes with saves in both directions and overlays only confirme
       return HttpResponse.json({ entry, record });
     }),
   );
-  const view = mount();
+  const view = await mount();
   try {
     act(() => view.result.current.save({ user_liked: true }));
     await waitFor(() => expect(events).toEqual(["save"]));
@@ -249,7 +252,7 @@ it("reports an entry failure and keeps the prior record", async () => {
       HttpResponse.json({ detail: "Entry refused" }, { status: 409 }),
     ),
   );
-  const view = mount();
+  const view = await mount();
   await act(async () => {
     await view.result.current.createEntry(body).catch(() => {});
   });
@@ -278,11 +281,13 @@ it.each(["mounted", "multiple", "unmounted", "offline"] as const)(
         return HttpResponse.json({ entry, record });
       }),
     );
-    const view = mount(mode !== "unmounted");
+    const view = await mount(mode !== "unmounted");
     const client = view.result.current.client;
     try {
-      act(() => view.result.current.save({ user_liked: true }));
-      await entered.wait;
+      await act(async () => {
+        view.result.current.save({ user_liked: true });
+        await entered.wait;
+      });
       if (mode === "offline") onlineManager.setOnline(false);
       act(() => {
         const writes = [() => view.result.current.createEntry(body)];
@@ -366,13 +371,13 @@ it("aborts an entry already in transport and ignores its obsolete response", asy
       },
     ),
   );
-  const view = mount();
+  const view = await mount();
   try {
     let result: Promise<unknown>;
-    act(() => {
+    await act(async () => {
       result = view.result.current.createEntry(body).catch(() => {});
+      await entered.wait;
     });
-    await entered.wait;
     await act(async () => {
       await changeOfUser(view.result.current.client);
       release.release();

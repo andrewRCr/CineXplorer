@@ -247,9 +247,11 @@ it.each([
       await waitFor(() => expect(view.result.current.library).toBe(1));
       const stored = path === "expired request" ? token(1) : token();
       setAuthTokens(stored);
-      act(() => view.result.current.save({ user_on_watchlist: true }));
+      await act(async () => {
+        view.result.current.save({ user_on_watchlist: true });
+        await entered.wait;
+      });
       const running = view.result.current.client.getMutationCache().getAll()[0];
-      await entered.wait;
       const live =
         status === 200
           ? Promise.allSettled([apiClient.get("/live-renewal")])

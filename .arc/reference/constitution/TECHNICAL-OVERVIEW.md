@@ -126,7 +126,8 @@ The entire application is designed to be run and deployed using containers.
   automatic HTTPS for secure connections.
 - **CI/CD**: Continuous integration is set up using **GitHub Actions**. The workflow, defined in
   `.github/workflows/ci.yml`, runs linters and tests on every push and pull request to ensure code quality.
-- **Development Environment (WSL2)**: The development environment runs on WSL2 with Docker.
+- The **development environment** runs on Linux with a Docker-compatible runtime such as Docker Engine
+  or rootless Podman.
   Both development images run as non-root users. Set `USER_UID` and `USER_GID` in `infrastructure/.env` to the
   checkout owner's IDs (each defaults to 1000) so bind-mounted files stay writable. On rootless podman, also set
   `USERNS_MODE=keep-id` there: the backend and frontend containers then keep the host user's ID and can read the

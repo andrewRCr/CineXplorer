@@ -24,6 +24,8 @@ export function browsePage(
       createMockMovieListItem({
         tmdb_id: firstId + index,
         title: `Movie ${firstId + index}`,
+        runtime: 0,
+        user_movie_data: null,
       }),
     ),
     total_pages: Math.ceil(totalResults / 20),

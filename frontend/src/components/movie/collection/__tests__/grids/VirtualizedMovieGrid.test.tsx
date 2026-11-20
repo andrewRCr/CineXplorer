@@ -21,6 +21,9 @@ const scrollTo = (position: number) =>
     window.scrollTo(0, position);
   });
 const movie = (id: number) => ({ name: `Movie ${id}` });
+// Allow the 150 ms debounce and the request to reach MSW.
+const waitForFetchDebounce = () =>
+  act(() => new Promise<void>((resolve) => setTimeout(resolve, 200)));
 
 describe("VirtualizedMovieGrid", () => {
   beforeEach(async () => {
@@ -107,19 +110,19 @@ describe("VirtualizedMovieGrid", () => {
       return undefined;
     });
     renderGrid();
-    await screen.findByRole("article", movie(1));
-    expect(cursors).toEqual([null]);
 
     try {
+      await screen.findByRole("article", movie(1));
+      await waitForFetchDebounce();
+      expect(cursors).toEqual([null]);
+
       await scrollTo(1200);
       expect(await screen.findByText("Loading more...")).toBeVisible();
       expect(screen.getByRole("article", movie(20))).toBeVisible();
       await scrollTo(1450);
       await waitFor(() => expect(cursors).toEqual([null, "6"]));
       // Allow another near-bottom debounce while the first response is held.
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 175));
-      });
+      await waitForFetchDebounce();
       expect(cursors).toEqual([null, "6"]);
     } finally {
       pending.release();
@@ -159,9 +162,7 @@ describe("VirtualizedMovieGrid", () => {
       expect(
         screen.queryByText("No movies found matching your filters."),
       ).not.toBeInTheDocument();
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 175));
-      });
+      await waitForFetchDebounce();
       expect(cursors).toEqual([null]);
     },
   );

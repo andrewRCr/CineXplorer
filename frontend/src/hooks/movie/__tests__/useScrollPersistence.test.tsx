@@ -357,10 +357,11 @@ describe("useScrollPersistence", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      // A key press and the scroll it causes, finished well within the old guard window
-      mockScrollY = 1700;
+      // A key press, then the scroll it causes, finished well within 100 ms of the input
       act(() => {
         window.dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp" }));
+        vi.advanceTimersByTime(30);
+        mockScrollY = 1700;
         scrollListeners.forEach((listener) => listener());
         vi.advanceTimersByTime(250);
       });

@@ -7,6 +7,7 @@ import { isRecord } from "@/utilities/typeGuards";
  * - Location state detection for explicit back-navigation signals
  * - Filter change detection (reset to top on param changes)
  * - Restoration guard timing (prevents saving during restoration)
+ * - Following later pages in, for a return past the results loaded so far
  * - Debounced scroll position saving
  * - Scroll listener lifecycle management
  *
@@ -286,7 +287,21 @@ export const useScrollPersistence = ({
                         pagesLeft: MAX_PAGES_FOLLOWED,
                         lastCount: loadedCount,
                     };
-                    const visitorTookOver = () => stopFollowing();
+                    // The visitor has taken over: the return ends here, and where they are is saved
+                    // now and as they scroll, even a scroll that ends at once
+                    const visitorTookOver = () => {
+                        stopFollowing(false);
+                        shouldRestoreScrollRef.current = false;
+                        if (restorationTimeoutRef.current) {
+                            clearTimeout(restorationTimeoutRef.current);
+                        }
+                        if (restorationGuardTimeoutRef.current) {
+                            clearTimeout(restorationGuardTimeoutRef.current);
+                        }
+                        isRestoringScrollRef.current = false;
+                        saveScrollPosition(scrollStorageKey, window.scrollY);
+                        onSave?.(scrollStorageKey);
+                    };
                     for (const type of VISITOR_INPUT_EVENTS) {
                         window.addEventListener(type, visitorTookOver, {
                             passive: true,
@@ -336,6 +351,7 @@ export const useScrollPersistence = ({
         canRestore,
         location.key,
         loadedCount,
+        onSave,
         releaseGuard,
         stopFollowing,
     ]);

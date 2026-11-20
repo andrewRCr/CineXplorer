@@ -352,6 +352,30 @@ describe("useScrollPersistence", () => {
       expect(savedPosition()).toBe(1500);
     });
 
+    it("saves a takeover scroll that ends at once", () => {
+      returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      // A key press and the scroll it causes, finished well within the old guard window
+      mockScrollY = 1700;
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp" }));
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(250);
+      });
+      expect(savedPosition()).toBe(1700);
+    });
+
+    it("replaces the old target when the visitor clicks without scrolling", () => {
+      returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+        window.dispatchEvent(new PointerEvent("pointerdown"));
+      });
+      expect(savedPosition()).toBe(1900);
+    });
+
     it("stops when no more results can load", () => {
       returnTo(6000, { hasMore: false });
       expect(window.scrollY).toBe(1900);

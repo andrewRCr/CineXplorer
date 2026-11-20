@@ -254,6 +254,186 @@ describe("useScrollPersistence", () => {
     expect(saved).toEqual(["scroll-discover-"]);
   });
 
+  describe("returning past the results loaded so far", () => {
+    // Each page of results makes the document 1900 px taller; the browser clamps a scroll to what exists
+    let maxScroll = 0;
+    const scrollWithinContent = (_x: number, y: number) => {
+      mockScrollY = Math.min(y, maxScroll);
+    };
+    const pageHeight = 1900;
+
+    interface ReturnProps {
+      loadedCount: number;
+      hasMore: boolean;
+      isError?: boolean;
+    }
+
+    function returnTo(position: number, initialProps: Partial<ReturnProps>) {
+      mockSessionStorage.setItem(
+        "scroll-discover-",
+        createStorageEntry(position),
+      );
+      const props: ReturnProps = {
+        loadedCount: 20,
+        hasMore: true,
+        ...initialProps,
+      };
+      return renderHook(
+        (current: ReturnProps) =>
+          useScrollPersistence({ ...defaultOptions, ...current }),
+        {
+          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+          initialProps: props,
+        },
+      );
+    }
+
+    function visitorScrollsTo(position: number) {
+      mockScrollY = position;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(200);
+      });
+    }
+
+    const savedPosition = () =>
+      (
+        JSON.parse(mockSessionStorage.getItem("scroll-discover-") ?? "{}") as {
+          position?: number;
+        }
+      ).position;
+
+    beforeEach(() => {
+      maxScroll = pageHeight;
+      mockScrollTo.mockImplementation(scrollWithinContent);
+    });
+
+    afterEach(() => {
+      mockScrollTo.mockImplementation(() => {});
+    });
+
+    it("keeps restoring as later pages load, until the saved position is reached", () => {
+      const { rerender } = returnTo(6000, {});
+      expect(window.scrollY).toBe(1900);
+      for (const loadedCount of [40, 60]) {
+        maxScroll += pageHeight;
+        rerender({ loadedCount, hasMore: true });
+        expect(window.scrollY).toBe(maxScroll);
+        // A position the restore passes through is never saved
+        act(() => {
+          scrollListeners.forEach((listener) => listener());
+          vi.advanceTimersByTime(300);
+        });
+        expect(savedPosition()).toBe(6000);
+      }
+      maxScroll += pageHeight;
+      rerender({ loadedCount: 80, hasMore: true });
+      expect(window.scrollY).toBe(6000);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(6100);
+      expect(savedPosition()).toBe(6100);
+    });
+
+    it("stops following once the visitor scrolls", () => {
+      const { rerender } = returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+        window.dispatchEvent(new WheelEvent("wheel"));
+      });
+      maxScroll += pageHeight;
+      rerender({ loadedCount: 40, hasMore: true });
+      expect(window.scrollY).toBe(1900);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(1500);
+      expect(savedPosition()).toBe(1500);
+    });
+
+    it("saves a takeover scroll that ends at once", () => {
+      returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      // A key press, then the scroll it causes, finished well within 100 ms of the input
+      act(() => {
+        window.dispatchEvent(new KeyboardEvent("keydown", { key: "PageUp" }));
+        vi.advanceTimersByTime(30);
+        mockScrollY = 1700;
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(250);
+      });
+      expect(savedPosition()).toBe(1700);
+    });
+
+    it("replaces the old target when the visitor clicks without scrolling", () => {
+      returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+        window.dispatchEvent(new PointerEvent("pointerdown"));
+      });
+      expect(savedPosition()).toBe(1900);
+    });
+
+    it("stops when no more results can load", () => {
+      returnTo(6000, { hasMore: false });
+      expect(window.scrollY).toBe(1900);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(1200);
+      expect(savedPosition()).toBe(1200);
+    });
+
+    it("stops when a page fails to load", () => {
+      const { rerender } = returnTo(6000, {});
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      rerender({ loadedCount: 20, hasMore: true, isError: true });
+      const afterFailure = window.scrollY;
+      // A later page doesn't pull the visitor back toward the saved position
+      maxScroll += pageHeight;
+      rerender({ loadedCount: 40, hasMore: true, isError: false });
+      expect(window.scrollY).toBe(afterFailure);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(500);
+      expect(savedPosition()).toBe(500);
+    });
+
+    it("finishes when the second scroll reaches the position without a new page", () => {
+      returnTo(3000, {});
+      expect(window.scrollY).toBe(1900);
+      // The document grows before the second scroll, without more results
+      maxScroll = 3800;
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(window.scrollY).toBe(3000);
+      visitorScrollsTo(3200);
+      expect(savedPosition()).toBe(3200);
+    });
+
+    it("stops after ten more pages", () => {
+      const { rerender } = returnTo(100000, {});
+      for (let page = 2; page <= 12; page++) {
+        maxScroll += pageHeight;
+        rerender({ loadedCount: page * 20, hasMore: true });
+      }
+      // Pages 2 to 11 were followed; the twelfth loaded without moving the visitor
+      expect(window.scrollY).toBe(11 * pageHeight);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      visitorScrollsTo(20000);
+      expect(savedPosition()).toBe(20000);
+    });
+  });
+
   describe("initial offset behavior", () => {
     it("returns 0 when no saved position exists", () => {
       const { result } = renderHook(

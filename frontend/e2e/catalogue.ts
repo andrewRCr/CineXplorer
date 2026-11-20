@@ -119,10 +119,11 @@ export function catalogueResponse(url: URL): object | undefined {
     }
 }
 
-/** Keep the layout scenario deterministic even when the rest of staging uses live data. */
-export async function useRestoreCatalogue(
+/** Serves browse pages from `browse` and film details, leaving every other request to the site. */
+async function routeRestoreCatalogue(
     page: import("@playwright/test").Page,
     baseURL: string,
+    browse: (url: URL) => Promise<MoviePage>,
 ): Promise<void> {
     const siteOrigin = new URL(baseURL).origin;
     await page.route("**/api/movies/**", async (route) => {
@@ -133,15 +134,40 @@ export async function useRestoreCatalogue(
             return;
         }
         if (url.pathname === "/api/movies/browse") {
-            // Results must arrive after the shorter loading grid has mounted.
-            await new Promise((resolve) => setTimeout(resolve, 400));
-            await route.fulfill({ json: moviePage(1, 39, null) });
+            await route.fulfill({ json: await browse(url) });
         } else if (/^\/api\/movies\/\d+$/.test(url.pathname)) {
             const id = Number(url.pathname.split("/").at(-1));
             await route.fulfill({ json: movieDetail(id) });
         } else {
             await route.fallback();
         }
+    });
+}
+
+/** Keep the layout scenario deterministic even when the rest of staging uses live data. */
+export async function useRestoreCatalogue(
+    page: import("@playwright/test").Page,
+    baseURL: string,
+): Promise<void> {
+    await routeRestoreCatalogue(page, baseURL, async () => {
+        // Results must arrive after the shorter loading grid has mounted.
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        return moviePage(1, 39, null);
+    });
+}
+
+/** Several pages of 20 films, so a position can sit past the first page. */
+export async function useDeepRestoreCatalogue(
+    page: import("@playwright/test").Page,
+    baseURL: string,
+    total = 120,
+): Promise<void> {
+    const pageSize = 20;
+    await routeRestoreCatalogue(page, baseURL, async (url) => {
+        const start = Number(url.searchParams.get("tmdb_page_start") ?? "1");
+        const count = Math.min(pageSize, total - start + 1);
+        const next = start + count <= total ? start + count : null;
+        return moviePage(start, count, next, total);
     });
 }
 

@@ -7,6 +7,7 @@ import { isRecord } from "@/utilities/typeGuards";
  * - Location state detection for explicit back-navigation signals
  * - Filter change detection (reset to top on param changes)
  * - Restoration guard timing (prevents saving during restoration)
+ * - Following later pages in, for a return past the results loaded so far
  * - Debounced scroll position saving
  * - Scroll listener lifecycle management
  *
@@ -46,6 +47,12 @@ import {
 /** Debounce delay for scroll position saves (ms). */
 const SCROLL_SAVE_DEBOUNCE = 200;
 
+/** How many more pages a return follows before leaving the visitor where the results end. */
+const MAX_PAGES_FOLLOWED = 10;
+
+/** Input that means the visitor has taken over scrolling. */
+const VISITOR_INPUT_EVENTS = ["wheel", "touchstart", "keydown", "pointerdown"];
+
 interface UseScrollPersistenceOptions {
     /** The source/route identifier (e.g., "discover", "search", "top-rated"). */
     source: string;
@@ -65,6 +72,13 @@ interface UseScrollPersistenceOptions {
     onSave?: (key: string) => void;
     /** Retire a previous visit's restoration state on a fresh arrival or filter change. */
     onFreshVisit?: (key: string) => void;
+    /**
+     * How many results have loaded. A grid that loads more as the visitor nears its end passes this and `hasMore`,
+     * so a return past the loaded results keeps restoring as each page arrives.
+     */
+    loadedCount?: number;
+    /** Whether more results can load. */
+    hasMore?: boolean;
 }
 
 interface UseScrollPersistenceReturn {
@@ -93,6 +107,8 @@ export const useScrollPersistence = ({
     canRestore,
     onSave,
     onFreshVisit,
+    loadedCount,
+    hasMore = false,
 }: UseScrollPersistenceOptions): UseScrollPersistenceReturn => {
     // --------------------------------------------------------------------------
     // Scroll Storage Key
@@ -150,6 +166,37 @@ export const useScrollPersistence = ({
     // The delayed re-scroll checks this, so it never scrolls a page shown after unmount
     const isMountedRef = useRef(false);
 
+    // A return past the loaded results: the position it is still making for, how many more pages it may follow, the
+    // result count it last scrolled at, and whether the initial re-scroll has finished (the guard lifts after both)
+    const followingRef = useRef<{
+        target: number;
+        pagesLeft: number;
+        lastCount: number;
+    } | null>(null);
+    const initialRestoreDoneRef = useRef(false);
+
+    const releaseGuard = useCallback(() => {
+        if (restorationGuardTimeoutRef.current) {
+            clearTimeout(restorationGuardTimeoutRef.current);
+        }
+        restorationGuardTimeoutRef.current = setTimeout(() => {
+            isRestoringScrollRef.current = false;
+        }, 100);
+    }, []);
+
+    const stopFollowingRef = useRef<(() => void) | null>(null);
+    const stopFollowing = useCallback(
+        (releaseWhenDone = true) => {
+            stopFollowingRef.current?.();
+            stopFollowingRef.current = null;
+            if (followingRef.current === null) return;
+            followingRef.current = null;
+            if (releaseWhenDone && initialRestoreDoneRef.current)
+                releaseGuard();
+        },
+        [releaseGuard],
+    );
+
     // Clean up restoration timeouts on unmount
     useEffect(() => {
         isMountedRef.current = true;
@@ -161,6 +208,9 @@ export const useScrollPersistence = ({
             if (restorationGuardTimeoutRef.current) {
                 clearTimeout(restorationGuardTimeoutRef.current);
             }
+            stopFollowingRef.current?.();
+            stopFollowingRef.current = null;
+            followingRef.current = null;
             isRestoringScrollRef.current = false;
         };
     }, []);
@@ -182,6 +232,7 @@ export const useScrollPersistence = ({
         if (keyChanged || (locationChanged && !clearingSignal)) {
             shouldRestoreScrollRef.current = !keyChanged && restoreScroll;
             hasRestoredScrollRef.current = keyChanged;
+            stopFollowing(false);
             isRestoringScrollRef.current = false;
             if (restorationTimeoutRef.current)
                 clearTimeout(restorationTimeoutRef.current);
@@ -192,7 +243,13 @@ export const useScrollPersistence = ({
                 if (keyChanged || onFreshVisit) window.scrollTo(0, 0);
             }
         }
-    }, [location.key, restoreScroll, scrollStorageKey, onFreshVisit]);
+    }, [
+        location.key,
+        restoreScroll,
+        scrollStorageKey,
+        onFreshVisit,
+        stopFollowing,
+    ]);
 
     // Consume the signal after the router has subscribed to navigation updates.
     // The resulting replace does not begin a fresh visit.
@@ -220,6 +277,42 @@ export const useScrollPersistence = ({
                 // Set guard before restoring to prevent immediate save of wrong position
                 // (virtualizer may not have full content height yet on first scroll attempt)
                 isRestoringScrollRef.current = true;
+                initialRestoreDoneRef.current = false;
+
+                // A grid that loads more near its end can hold the position past what has loaded: follow each page
+                // that arrives until the position is reached (see the effect below)
+                if (loadedCount !== undefined) {
+                    followingRef.current = {
+                        target: savedPosition,
+                        pagesLeft: MAX_PAGES_FOLLOWED,
+                        lastCount: loadedCount,
+                    };
+                    // The visitor has taken over: the return ends here, and where they are is saved
+                    // now and as they scroll, even a scroll that ends at once
+                    const visitorTookOver = () => {
+                        stopFollowing(false);
+                        shouldRestoreScrollRef.current = false;
+                        if (restorationTimeoutRef.current) {
+                            clearTimeout(restorationTimeoutRef.current);
+                        }
+                        if (restorationGuardTimeoutRef.current) {
+                            clearTimeout(restorationGuardTimeoutRef.current);
+                        }
+                        isRestoringScrollRef.current = false;
+                        saveScrollPosition(scrollStorageKey, window.scrollY);
+                        onSave?.(scrollStorageKey);
+                    };
+                    for (const type of VISITOR_INPUT_EVENTS) {
+                        window.addEventListener(type, visitorTookOver, {
+                            passive: true,
+                        });
+                    }
+                    stopFollowingRef.current = () => {
+                        for (const type of VISITOR_INPUT_EVENTS) {
+                            window.removeEventListener(type, visitorTookOver);
+                        }
+                    };
+                }
 
                 // Three-step scroll restoration for virtualized content:
                 // Step 1: Immediate scroll - positions viewport to trigger virtualizer to
@@ -237,17 +330,54 @@ export const useScrollPersistence = ({
                         return;
                     restorationTimeoutRef.current = setTimeout(() => {
                         window.scrollTo(0, savedPosition);
+                        initialRestoreDoneRef.current = true;
                         // Step 3: Guard removal - wait for content to stabilize before allowing
-                        // scroll position saves. Uses separate ref for independent cleanup.
-                        restorationGuardTimeoutRef.current = setTimeout(() => {
-                            isRestoringScrollRef.current = false;
-                        }, 100);
+                        // scroll position saves, unless the return is still following pages in.
+                        // This re-scroll can itself reach the position, which ends the following.
+                        const following = followingRef.current;
+                        if (following === null) releaseGuard();
+                        else if (window.scrollY >= following.target - 1) {
+                            stopFollowing();
+                        }
                     }, 50);
                 });
             }
             hasRestoredScrollRef.current = true;
         }
-    }, [isLoading, hasContent, scrollStorageKey, canRestore, location.key]);
+    }, [
+        isLoading,
+        hasContent,
+        scrollStorageKey,
+        canRestore,
+        location.key,
+        loadedCount,
+        onSave,
+        releaseGuard,
+        stopFollowing,
+    ]);
+
+    // Follow a return past the loaded results: each page that arrives makes the document taller, so scroll again. At
+    // the end of what has loaded, the grid loads the next page itself. Stops once the position is reached, no more can
+    // load, a load fails, the visitor takes over, or the page allowance runs out.
+    useLayoutEffect(() => {
+        const following = followingRef.current;
+        if (following === null) return;
+        const reached = () => window.scrollY >= following.target - 1;
+        if (isError || reached()) {
+            stopFollowing();
+            return;
+        }
+        if (loadedCount !== undefined && loadedCount > following.lastCount) {
+            following.lastCount = loadedCount;
+            following.pagesLeft -= 1;
+            window.scrollTo(0, following.target);
+            if (reached() || following.pagesLeft <= 0) {
+                stopFollowing();
+                return;
+            }
+        }
+        if (!hasMore) stopFollowing();
+    }, [loadedCount, hasMore, isError, stopFollowing]);
 
     // Scroll to top on error (reset position when data fetch fails)
     useLayoutEffect(() => {

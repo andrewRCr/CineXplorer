@@ -1,3 +1,4 @@
+import { actUntil } from "@tests/helpers/act-until";
 import { Route, Routes, useSearchParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { libraryKey } from "@/lib/queries";
@@ -250,7 +251,7 @@ it("draws a group only once when a later timeline page repeats its day and field
   await screen.findByRole("button", { name: "Show all 4" });
   for (let position = 500; position <= 29500; position += 500)
     await scrollLibrary(position);
-  await second.wait;
+  await actUntil("the second history page request", () => second.wait);
   await waitFor(() =>
     expect(
       screen.queryByLabelText("Loading more history"),

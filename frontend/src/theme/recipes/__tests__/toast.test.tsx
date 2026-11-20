@@ -14,7 +14,7 @@ it.each(["success", "warning", "error", "info"] as const)(
   "draws %s toasts and their action in the toast's own roles",
   async (type) => {
     render(<Toaster />, { system: styleSystem });
-    act(() => {
+    await act(async () => {
       toaster[type]({
         title: "Saved",
         action: { label: "Undo", onClick: () => undefined },
@@ -25,14 +25,20 @@ it.each(["success", "warning", "error", "info"] as const)(
     // eslint-disable-next-line testing-library/no-node-access
     const toast = undo.closest("[data-part=root]");
     if (!(toast instanceof HTMLElement)) throw new Error("Missing toast root");
-    expectResolvedColor(toast, "color", "var(--chakra-colors-foreground)");
-    expect(getComputedStyle(undo).borderTopColor).toBe(
-      getComputedStyle(toast).borderTopColor,
-    );
-    expect(
-      resolveTokenColor(undo, "background-color", "var(--toast-trigger-bg)"),
-    ).toBe(
-      resolveTokenColor(undo, "background-color", "var(--chakra-colors-muted)"),
-    );
+    await act(async () => {
+      expectResolvedColor(toast, "color", "var(--chakra-colors-foreground)");
+      expect(getComputedStyle(undo).borderTopColor).toBe(
+        getComputedStyle(toast).borderTopColor,
+      );
+      expect(
+        resolveTokenColor(undo, "background-color", "var(--toast-trigger-bg)"),
+      ).toBe(
+        resolveTokenColor(
+          undo,
+          "background-color",
+          "var(--chakra-colors-muted)",
+        ),
+      );
+    });
   },
 );

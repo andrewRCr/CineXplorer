@@ -22,6 +22,9 @@ vi.mock("@/components/core/chakra/color-mode", () => ({
   ),
 }));
 
+const copyrightNotice = (year = new Date().getFullYear()) =>
+  `© ${year} CineXplorer. All rights reserved.`;
+
 describe("Footer Component", () => {
   describe("Basic Rendering", () => {
     it("renders footer with correct semantic structure", () => {
@@ -38,9 +41,7 @@ describe("Footer Component", () => {
     it("renders copyright text", () => {
       render(<Footer />);
 
-      expect(
-        screen.getByText("© 2025 CineXplorer. All rights reserved."),
-      ).toBeInTheDocument();
+      expect(screen.getByText(copyrightNotice())).toBeInTheDocument();
     });
 
     it("renders TMDB attribution text", () => {
@@ -143,9 +144,7 @@ describe("Footer Component", () => {
       expect(footer).toBeInTheDocument();
 
       // Check that content is organized properly
-      const copyrightText = screen.getByText(
-        "© 2025 CineXplorer. All rights reserved.",
-      );
+      const copyrightText = screen.getByText(copyrightNotice());
       const attributionText = screen.getByText(
         /This product uses the TMDB API/,
       );
@@ -158,9 +157,7 @@ describe("Footer Component", () => {
       render(<Footer />);
 
       // Both text sections should be present and structured properly
-      expect(
-        screen.getByText("© 2025 CineXplorer. All rights reserved."),
-      ).toBeInTheDocument();
+      expect(screen.getByText(copyrightNotice())).toBeInTheDocument();
       expect(
         screen.getByText(/This product uses the TMDB API/),
       ).toBeInTheDocument();
@@ -209,9 +206,7 @@ describe("Footer Component", () => {
       render(<Footer />);
 
       // All text should be accessible
-      expect(
-        screen.getByText("© 2025 CineXplorer. All rights reserved."),
-      ).toBeInTheDocument();
+      expect(screen.getByText(copyrightNotice())).toBeInTheDocument();
       expect(
         screen.getByText(/This product uses the TMDB API/),
       ).toBeInTheDocument();
@@ -234,13 +229,16 @@ describe("Footer Component", () => {
   });
 
   describe("Content Accuracy", () => {
-    it("displays current year in copyright", () => {
-      render(<Footer />);
+    it.each([2030, 2031])("displays %i in the copyright notice", (year) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      try {
+        vi.setSystemTime(new Date(year, 5, 15, 12));
+        render(<Footer />);
 
-      const copyrightText = screen.getByText(
-        "© 2025 CineXplorer. All rights reserved.",
-      );
-      expect(copyrightText).toBeInTheDocument();
+        expect(screen.getByText(copyrightNotice(year))).toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("includes accurate TMDB disclaimer", () => {
@@ -276,9 +274,7 @@ describe("Footer Component", () => {
 
       // Should have all expected elements
       expect(screen.getByRole("contentinfo")).toBeInTheDocument();
-      expect(
-        screen.getByText("© 2025 CineXplorer. All rights reserved."),
-      ).toBeInTheDocument();
+      expect(screen.getByText(copyrightNotice())).toBeInTheDocument();
       expect(
         screen.getByText(/This product uses the TMDB API/),
       ).toBeInTheDocument();
@@ -340,9 +336,7 @@ describe("Footer Component", () => {
       expect(screen.getByRole("contentinfo")).toBeInTheDocument();
 
       // Essential content should still be present
-      expect(
-        screen.getByText("© 2025 CineXplorer. All rights reserved."),
-      ).toBeInTheDocument();
+      expect(screen.getByText(copyrightNotice())).toBeInTheDocument();
     });
   });
 

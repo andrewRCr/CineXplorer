@@ -10,7 +10,6 @@ import { useFormik } from "formik";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import useAuthContext from "@/hooks/auth/useAuthContext";
-import { priorityToaster } from "@/components/core/chakra/toaster";
 
 const Register = () => {
   const authContext = useAuthContext();
@@ -40,18 +39,14 @@ const Register = () => {
     onSubmit: async (values) => {
       const { username, email, password } = values;
       if (register) {
-        const toastId = "register-toast";
-        priorityToaster.loading({ id: toastId, title: "Creating account..." });
-
+        // The submit button shows registration's progress (formik.isSubmitting)
         const response = await register(username, email, password);
 
         if (response.success) {
           // Clear any error state on success
           setRegistrationError("");
 
-          // Dismiss loading toast and navigate to login
-          // Login page will show persistent success alert (non-blocking, top-right)
-          priorityToaster.dismiss(toastId);
+          // The sign-in page shows the next step in its card
           void navigate(ROUTES.LOGIN, {
             state: {
               registrationSuccess: true,
@@ -60,8 +55,6 @@ const Register = () => {
             },
           });
         } else {
-          // Dismiss loading toast and show error as FloatingAlert
-          priorityToaster.dismiss(toastId);
           setRegistrationError(response.error.message);
         }
       }

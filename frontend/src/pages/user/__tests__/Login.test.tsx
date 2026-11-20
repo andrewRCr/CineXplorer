@@ -419,11 +419,10 @@ describe("notices the sign-in page opens with", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Set New Password",
     });
-    // The new-password field takes focus as the dialog opens; its label can't find it, since the sign-in form's
-    // password field shares its id.
+    const password = within(dialog).getByLabelText("New Password");
     const confirm = within(dialog).getByLabelText("Confirm Password");
     await waitFor(() => expect(confirm).toBeVisible());
-    await user.keyboard("Fresh-pass-42");
+    await user.type(password, "Fresh-pass-42");
     await user.type(confirm, "Fresh-pass-42");
     await user.click(
       within(dialog).getByRole("button", { name: "Reset Password" }),

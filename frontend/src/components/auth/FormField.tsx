@@ -1,5 +1,6 @@
 import { Box, Field } from "@chakra-ui/react";
 import { StyledInput } from "@/components/common";
+import { useId } from "react";
 import type { ReactNode, ChangeEvent, FocusEvent } from "react";
 
 /**
@@ -44,7 +45,7 @@ import type { ReactNode, ChangeEvent, FocusEvent } from "react";
  */
 
 interface FormFieldProps {
-  /** Field name - used for id, name, and htmlFor attributes */
+  /** Field name used by the form */
   name: string;
   /** Label text displayed above the input */
   label: string;
@@ -99,6 +100,7 @@ export const FormField = ({
   disabled,
   children,
 }: FormFieldProps) => {
+  const inputId = useId();
   const isInvalid = !!error && touched;
 
   return (
@@ -109,12 +111,17 @@ export const FormField = ({
         w="100%"
         position="relative"
       >
-        <Field.Label htmlFor={name} fontSize="16px" fontWeight="medium" mb={2}>
+        <Field.Label
+          htmlFor={inputId}
+          fontSize="16px"
+          fontWeight="medium"
+          mb={2}
+        >
           {label}
         </Field.Label>
         <StyledInput
           autoFocus={autoFocus}
-          id={name}
+          id={inputId}
           name={name}
           type={type}
           value={value}

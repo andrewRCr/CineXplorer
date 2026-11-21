@@ -280,7 +280,14 @@ it.each([0, 1250])("tracks two viewings (%ims startup)", async (ms) => {
     );
     await user.tab({ shift: true });
     expect(within(stars).getByRole("radio", { name: "1 stars" })).toHaveFocus();
-    await user.keyboard("{ArrowRight>7/}");
+    for (let step = 1; step <= 7; step += 1) {
+      await user.keyboard("{ArrowRight}");
+      await waitFor(() =>
+        expect(
+          within(stars).getByRole("radio", { checked: true }),
+        ).toHaveAccessibleName(`${step / 2} stars`),
+      );
+    }
     expect(
       within(stars).getByRole("radio", { checked: true }),
     ).toHaveAccessibleName("3.5 stars");

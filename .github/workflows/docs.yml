@@ -35,6 +35,7 @@ jobs:
           .arc/reference/harness-hooks/finish-work.test.mjs
           .arc/reference/harness-hooks/pre-commit.test.mjs
           scripts/worktree.test.mjs
+          scripts/stack-check.test.mjs
 
       - name: Test the ADR record check
         run: node --test .arc/reference/scripts/check-adr-records.test.mjs

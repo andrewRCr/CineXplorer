@@ -1,0 +1,61 @@
+# A throwaway stack for one backend or end-to-end check, layered on docker-compose.yml and
+# docker-compose.worktree.yml. scripts/stack-check.mjs sets every variable below, runs the check and removes the stack;
+# run that script rather than this file:
+#   node scripts/stack-check.mjs backend [pytest argument...]
+#   node scripts/stack-check.mjs e2e [Playwright argument...]
+#
+# The backend takes its settings from a throwaway env file, and the services mount throwaway certificates and log
+# folders, so a check never writes the checkout's .env files, certificates or logs. The backend and Vite still read any
+# other keys from the checkout's own env files, as a worktree stack does; the throwaway values take precedence, and a
+# runner's checkout has no such files. Every container, volume, network and built image carries its run's owner and
+# project, so a later run can remove what a killed run left behind.
+
+x-run: &run
+  cinexplorer.stack-check.owner: ${STACK_CHECK_OWNER:?run node scripts/stack-check.mjs}
+  cinexplorer.stack-check.project: ${COMPOSE_PROJECT_NAME:?run node scripts/stack-check.mjs}
+
+services:
+  backend:
+    build:
+      labels: *run
+    labels: *run
+    env_file: !override
+      - ${STACK_CHECK_DIR:?run node scripts/stack-check.mjs}/backend.env
+    volumes:
+      - ${STACK_CHECK_DIR}/logs/backend:/backend/logs
+      - ${STACK_CHECK_DIR}/key.pem:/certs/backend/key.pem:ro
+      - ${STACK_CHECK_DIR}/cert.pem:/certs/backend/cert.pem:ro
+
+  frontend:
+    build:
+      labels: *run
+    labels: *run
+    volumes:
+      - ${STACK_CHECK_DIR}/logs/frontend:/frontend/logs
+      - ${STACK_CHECK_DIR}/key.pem:/certs/frontend/key.pem:ro
+      - ${STACK_CHECK_DIR}/cert.pem:/certs/frontend/cert.pem:ro
+
+  dev-db:
+    labels: *run
+
+  redis:
+    labels: *run
+
+  caddy:
+    labels: *run
+    volumes:
+      - ${STACK_CHECK_DIR}/cert.pem:/etc/caddy/cert.pem:ro
+      - ${STACK_CHECK_DIR}/key.pem:/etc/caddy/key.pem:ro
+      - ${STACK_CHECK_DIR}/cert.pem:/usr/local/share/ca-certificates/dev-backend.crt:ro
+
+volumes:
+  dev-db-data:
+    labels: *run
+  redis-data:
+    labels: *run
+  frontend-node-modules:
+    labels: *run
+
+networks:
+  default:
+    labels: *run

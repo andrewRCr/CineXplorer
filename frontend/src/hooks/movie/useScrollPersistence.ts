@@ -213,15 +213,22 @@ export const useScrollPersistence = ({
         onSave?.(scrollStorageKey);
     }, [stopFollowing, scrollStorageKey, onSave]);
 
+    // Read through a ref, so the scroll listener isn't replaced when loading ends: replacing it would cancel a save
+    // still waiting out its delay
+    const isLoadingRef = useRef(isLoading);
+    useLayoutEffect(() => {
+        isLoadingRef.current = isLoading;
+    }, [isLoading]);
+
     // A return still waiting for its results. The page can scroll by itself meanwhile: the grid places itself at the
     // position, and the browser stops at the end of the shorter loading grid. No such scroll replaces the position.
     const returnPending = useCallback(
         () =>
             shouldRestoreScrollRef.current &&
             !hasRestoredScrollRef.current &&
-            isLoading &&
+            isLoadingRef.current &&
             (canRestore?.(scrollStorageKey) ?? true),
-        [isLoading, canRestore, scrollStorageKey],
+        [canRestore, scrollStorageKey],
     );
 
     // Clean up restoration timeouts on unmount
@@ -290,7 +297,9 @@ export const useScrollPersistence = ({
         }
     }, [restoreScroll, location.pathname, location.search, navigate]);
 
-    // While a return waits for its results, input from the visitor ends it, as it does once they show
+    // While a return waits for its results, input from the visitor ends it; the listeners come off when the results
+    // arrive. A grid that follows later pages goes on ending the return on input after that (see the restore below);
+    // for other grids the return ends at the restore.
     useLayoutEffect(() => {
         if (!returnPending()) return;
         function stopListening() {
@@ -306,7 +315,7 @@ export const useScrollPersistence = ({
             window.addEventListener(type, endReturn, { passive: true });
         }
         return stopListening;
-    }, [location.key, returnPending, visitorTookOver]);
+    }, [isLoading, location.key, returnPending, visitorTookOver]);
 
     // Restore scroll position for back-navigation (when explicitly signaled via location state)
     useLayoutEffect(() => {

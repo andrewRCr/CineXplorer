@@ -226,7 +226,7 @@ the worktree's browsable stack with Home's line and the notices in place.
 
 ### **Phase 4:** Verification
 
-- [ ] **4.1 Verify the work** (load `archive-completed.md` § 1; the new ADR set `Accepted` before merge; Success
+- [x] **4.1 Verify the work** (load `archive-completed.md` § 1; the new ADR set `Accepted` before merge; Success
   Criterion 1's CI half and Success Criterion 3 stay open with a note through § 1's criteria walk, and this task is
   checked with them before asking to merge (§ 8); the proven-live criteria are proven after merge, § 9)
 
@@ -332,7 +332,21 @@ the worktree's browsable stack with Home's line and the notices in place.
 
     - Local verification is complete. The full frontend test and Chromium suites passed during verification.
       The focused runs in 4.1.a through 4.1.n cover the subsequent changes. The criteria below record the local
-      results and the remaining merge checks. The branch changes no backend API or generated frontend API files.
+      results and the first green PR run. The branch changes no backend API or generated frontend API files.
+
+    - The final trace covered `d39b39d1..bb071beb` on `origin/main`. The frontend and backend image changes
+      (#237) cache package downloads in build mounts. The production stack uses the pinned Caddy image, production
+      Caddyfile, npm lock and hashed Python requirements. The build still places the frontend in Caddy's site root
+      and runs the same Gunicorn entry point.
+    - The browse return changes (#230 and #236) restore later result pages through the catalog's existing cursor
+      requests. Both normal scrolling and interrupted restoration save through the same tab-local helper, which
+      keeps up to 20 positions and uses the search text in the key. Appendix C now names the hook that builds the
+      key and calls that helper. The remaining changes cover test fixtures and timing, the temporary development
+      stack for checks, and check documentation.
+    - The ADR records check passed against `bb071beb`. ADR-052 is accepted and its number is free on `main`.
+      Both documents carry November 20, 2026, the intended merge date. Both rendered texts matched their
+      appendices. All 26 related tests and 17 local Chromium scenarios passed, along with lint, formatting and
+      type checking.
 
 - [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
   the links on Google's Branding page, and the console's response is recorded here)
@@ -357,13 +371,14 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
 
 ### Implemented
 
-- [ ] 1. **The smoke spec passes** against a worktree's browsable stack and in CI's smoke job: from the bottom of
+- [x] 1. **The smoke spec passes** against a worktree's browsable stack and in CI's smoke job: from the bottom of
   signed-out Home, the footer's links open `/privacy` and `/terms` with each title in view; both pages pass the axe
   scan; `/privacy` at 360×800 doesn't scroll sideways; and its "Who else handles your data" heading lands below the top
   bar from the in-page link and on a direct load of its fragment. (R1, R3, R5, R8, R14)
 
     All 17 local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
-    Home and both legal pages. The CI smoke result is pending.
+    Home and both legal pages. PR #240's first green CI run, 44867926518 at `7448f225`, passed all 46 scenarios,
+    including all 17 in `legal-pages.spec.ts`.
 
 - [x] 2. **The texts are the appendices'.** A reviewer comparing each page's rendered text with Appendix A and Appendix
   B finds the same headings, paragraphs, lists, table and links, and unit tests find no review marker, placeholder date
@@ -372,7 +387,7 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
     Compared the Chromium-rendered document blocks, table cells, link destinations, and inline formatting with both
     appendices, substituting each rendered date for its publication placeholder. Both page unit tests passed.
 
-- [ ] 3. **The texts are true at merge.** Every statement in Appendix A and Appendix B about what the site does holds at
+- [x] 3. **The texts are true at merge.** Every statement in Appendix A and Appendix B about what the site does holds at
   source on the merge commit, by Appendix C's map; any code merged after this PRD that touches a mapped path has been
   traced again. (R2, R16, D6)
 
@@ -383,7 +398,7 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
     traced pending Google sign-in storage, both Google profile intake paths and tracking-data deletion. Task 4.1.m
     traced which change Undo can remove and aligned the sign-in disclosure on Home. Task 4.1.n traced the API docs'
     external assets, admin email audit records, provider session fields, return addresses and Django asset logging.
-    The final trace against the merge commit is pending.
+    The final trace in Task 4.1 confirms both texts against `origin/main` at `bb071beb`.
 
 - [x] 4. **The links are in place.** Unit tests show the footer's two links, signed-out Home's line and its link (and
   its absence signed in), and the sign-up notice with both links on `Register` and `Login`. (R8 to R10, R13)

@@ -3,13 +3,11 @@ import { TextLink } from "@/components/common";
 import { ROUTES } from "@/constants/routes";
 import { LegalDocument, LegalHeading } from "./LegalDocument";
 
-const effectiveDate = "November 20, 2026";
-
 export default function TermsOfService() {
   return (
     <LegalDocument
       title="CineXplorer Terms of Service"
-      effectiveDate={effectiveDate}
+      effectiveDate="November 20, 2026"
     >
       <Text>
         These terms cover your use of CineXplorer, a free movie-discovery

@@ -2,13 +2,11 @@ import { Code, Link, List, Table, Text } from "@chakra-ui/react";
 import { TextLink } from "@/components/common";
 import { LegalDocument, LegalHeading, LegalTableRegion } from "./LegalDocument";
 
-const effectiveDate = "November 20, 2026";
-
 export default function PrivacyPolicy() {
   return (
     <LegalDocument
       title="CineXplorer Privacy Policy"
-      effectiveDate={effectiveDate}
+      effectiveDate="November 20, 2026"
     >
       <Text>
         CineXplorer is a free movie-discovery website run as a personal project

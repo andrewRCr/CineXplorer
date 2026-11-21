@@ -33,22 +33,32 @@ const LAUNCH = 'import { chromium } from "@playwright/test"; const browser = awa
 
 // Every run by this account on a machine shares this folder, whatever its shell's environment: port claims, and each
 // run's own folder of throwaway files, named for its project and holding its owner. It sits under /tmp, which every
-// shell can write, sandboxed agent shells included; STACK_CHECK_SHARED moves it, for tests.
-const SHARED = process.env.STACK_CHECK_SHARED || join("/tmp", `cinexplorer-stack-check-${process.getuid()}`);
+// shell can write, sandboxed agent shells included; STACK_CHECK_SHARED moves it, for tests. (Windows has no getuid; the
+// script refuses to run there before using the folder.)
+const SHARED = process.env.STACK_CHECK_SHARED || join("/tmp", `cinexplorer-stack-check-${process.getuid?.()}`);
 const CLAIMS = join(SHARED, "claims");
 const RUNS = join(SHARED, "runs");
 
 class NotRun extends Error {}
 
 // The shared folder must be this account's own directory: one that is another account's, or a link to somewhere else,
-// could hand a run someone else's claims or steer its teardown at their files.
+// could hand a run someone else's claims or steer its teardown at their files. Runs on Linux only, since telling live
+// runs from stale ones needs /proc.
 function useSharedFolder() {
+    if (!existsSync("/proc/self/stat")) throw new NotRun("needs Linux's /proc to tell live runs from stale ones");
+    let failure;
     try {
         mkdirSync(SHARED, { recursive: true, mode: 0o700 });
     } catch (error) {
-        if (error.code !== "EEXIST") throw error;
+        // Whatever is in the way, such as a file or a broken link, is judged below
+        failure = error;
     }
-    const folder = lstatSync(SHARED);
+    let folder;
+    try {
+        folder = lstatSync(SHARED);
+    } catch (error) {
+        throw new NotRun(`couldn't create ${SHARED}: ${(failure ?? error).message}`);
+    }
     if (!folder.isDirectory() || folder.uid !== process.getuid()) {
         throw new NotRun(`${SHARED} must be a directory this account owns`);
     }
@@ -130,7 +140,6 @@ function cleanEnv() {
 }
 
 async function preflight(mode, env) {
-    if (!existsSync("/proc/self/stat")) throw new NotRun("needs Linux's /proc to tell live runs from stale ones");
     const compose = await run("docker", ["compose", "version"], { env });
     if (compose.status !== 0) throw new NotRun(`no container engine: docker compose version failed: ${lastLine(compose.output)}`);
     const version = await run("docker", ["version"], { env });

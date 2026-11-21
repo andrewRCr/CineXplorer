@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+    chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, statSync,
+    symlinkSync, writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -149,7 +152,7 @@ function fixture(t) {
     write(root, "frontend/node_modules/.bin/playwright", STUB);
     spawnSync("chmod", ["755", join(root, "frontend/node_modules/.bin/playwright")]);
     const log = join(parent, "calls.jsonl");
-    // The folder every run shares, moved out of /tmp for the test; XDG_RUNTIME_DIR is set to show it plays no part.
+    // The folder every run shares, moved out of /tmp so tests never touch real runs' claims
     const shared = join(parent, "shared");
     const claims = join(shared, "claims");
     const runs = join(shared, "runs");
@@ -297,13 +300,16 @@ test("refuses a shared folder that isn't this account's own directory, before ru
     symlinkSync(target, link);
     const file = join(f.parent, "file");
     writeFileSync(file, "");
-    for (const shared of [link, file]) {
+    const broken = join(f.parent, "broken");
+    symlinkSync(join(f.parent, "missing"), broken);
+    for (const shared of [link, file, broken]) {
         const result = f.invoke(["backend"], { STACK_CHECK_SHARED: shared });
         assert.equal(result.status, 75, result.stdout + result.stderr);
         assert.equal(lastLine(result.stderr), `stack-check: ${shared} must be a directory this account owns`);
     }
     assert.deepEqual(f.calls().filter((call) => call.command === "docker"), []);
     assert.deepEqual(readdirSync(target), []);
+    assert.equal(existsSync(join(f.parent, "missing")), false);
 });
 
 test("won't tear down through a shared folder that isn't this account's own directory", (t) => {
@@ -313,10 +319,40 @@ test("won't tear down through a shared folder that isn't this account's own dire
     write(target, `runs/${project}/owner`, DEAD);
     const link = join(f.parent, "link");
     symlinkSync(target, link);
-    const result = f.invoke(["--tear-down", project], { STACK_CHECK_SHARED: link });
-    assert.equal(result.status, 75, result.stdout + result.stderr);
+    const broken = join(f.parent, "broken");
+    symlinkSync(join(f.parent, "missing"), broken);
+    for (const shared of [link, broken]) {
+        const result = f.invoke(["--tear-down", project], { STACK_CHECK_SHARED: shared });
+        assert.equal(result.status, 75, result.stdout + result.stderr);
+        assert.equal(lastLine(result.stderr), `stack-check: ${shared} must be a directory this account owns`);
+    }
     assert.ok(existsSync(join(target, "runs", project, "owner")));
+    assert.equal(existsSync(join(f.parent, "missing")), false);
     assert.deepEqual(f.calls().filter((call) => call.command === "docker"), []);
+});
+
+test("keeps the shared folder private, closing one left open", (t) => {
+    const f = fixture(t);
+    const mode = () => statSync(f.shared).mode & 0o777;
+    assert.equal(f.invoke(["backend"]).status, 0);
+    assert.equal(mode(), 0o700);
+    chmodSync(f.shared, 0o755);
+    assert.equal(f.invoke(["backend"]).status, 0);
+    assert.equal(mode(), 0o700);
+});
+
+test("keeps the shared folder under /tmp for the account, whatever XDG_RUNTIME_DIR and TMPDIR say", (t) => {
+    const f = fixture(t);
+    // The real folder, which any run on this machine uses: a teardown of a project no run can have touches only that
+    // project's own folder there, and the stand-in engine has nothing to remove.
+    const result = f.invoke(["--tear-down", "cinexplorer-run-0000-000000"], { STACK_CHECK_SHARED: undefined });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const shared = lstatSync(join("/tmp", `cinexplorer-stack-check-${process.getuid()}`));
+    assert.ok(shared.isDirectory());
+    assert.equal(shared.uid, process.getuid());
+    assert.equal(shared.mode & 0o777, 0o700);
+    assert.deepEqual(readdirSync(f.runtime), []);
+    assert.deepEqual(readdirSync(f.temp), []);
 });
 
 test("reports that nothing ran when every port is claimed", (t) => {

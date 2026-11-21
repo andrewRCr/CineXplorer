@@ -197,6 +197,33 @@ export const useScrollPersistence = ({
         [releaseGuard],
     );
 
+    // The visitor has taken over a return: it ends here, and where they are is saved now and as they scroll, even a
+    // scroll that ends at once
+    const visitorTookOver = useCallback(() => {
+        stopFollowing(false);
+        shouldRestoreScrollRef.current = false;
+        if (restorationTimeoutRef.current) {
+            clearTimeout(restorationTimeoutRef.current);
+        }
+        if (restorationGuardTimeoutRef.current) {
+            clearTimeout(restorationGuardTimeoutRef.current);
+        }
+        isRestoringScrollRef.current = false;
+        saveScrollPosition(scrollStorageKey, window.scrollY);
+        onSave?.(scrollStorageKey);
+    }, [stopFollowing, scrollStorageKey, onSave]);
+
+    // A return still waiting for its results. The page can scroll by itself meanwhile: the grid places itself at the
+    // position, and the browser stops at the end of the shorter loading grid. No such scroll replaces the position.
+    const returnPending = useCallback(
+        () =>
+            shouldRestoreScrollRef.current &&
+            !hasRestoredScrollRef.current &&
+            isLoading &&
+            (canRestore?.(scrollStorageKey) ?? true),
+        [isLoading, canRestore, scrollStorageKey],
+    );
+
     // Clean up restoration timeouts on unmount
     useEffect(() => {
         isMountedRef.current = true;
@@ -263,6 +290,24 @@ export const useScrollPersistence = ({
         }
     }, [restoreScroll, location.pathname, location.search, navigate]);
 
+    // While a return waits for its results, input from the visitor ends it, as it does once they show
+    useLayoutEffect(() => {
+        if (!returnPending()) return;
+        function stopListening() {
+            for (const type of VISITOR_INPUT_EVENTS) {
+                window.removeEventListener(type, endReturn);
+            }
+        }
+        function endReturn() {
+            stopListening();
+            visitorTookOver();
+        }
+        for (const type of VISITOR_INPUT_EVENTS) {
+            window.addEventListener(type, endReturn, { passive: true });
+        }
+        return stopListening;
+    }, [location.key, returnPending, visitorTookOver]);
+
     // Restore scroll position for back-navigation (when explicitly signaled via location state)
     useLayoutEffect(() => {
         if (
@@ -286,21 +331,6 @@ export const useScrollPersistence = ({
                         target: savedPosition,
                         pagesLeft: MAX_PAGES_FOLLOWED,
                         lastCount: loadedCount,
-                    };
-                    // The visitor has taken over: the return ends here, and where they are is saved
-                    // now and as they scroll, even a scroll that ends at once
-                    const visitorTookOver = () => {
-                        stopFollowing(false);
-                        shouldRestoreScrollRef.current = false;
-                        if (restorationTimeoutRef.current) {
-                            clearTimeout(restorationTimeoutRef.current);
-                        }
-                        if (restorationGuardTimeoutRef.current) {
-                            clearTimeout(restorationGuardTimeoutRef.current);
-                        }
-                        isRestoringScrollRef.current = false;
-                        saveScrollPosition(scrollStorageKey, window.scrollY);
-                        onSave?.(scrollStorageKey);
                     };
                     for (const type of VISITOR_INPUT_EVENTS) {
                         window.addEventListener(type, visitorTookOver, {
@@ -351,9 +381,9 @@ export const useScrollPersistence = ({
         canRestore,
         location.key,
         loadedCount,
-        onSave,
         releaseGuard,
         stopFollowing,
+        visitorTookOver,
     ]);
 
     // Follow a return past the loaded results: each page that arrives makes the document taller, so scroll again. At
@@ -414,8 +444,8 @@ export const useScrollPersistence = ({
     );
 
     const handleScroll = useCallback(() => {
-        // Skip saving if we're in the middle of restoring scroll position
-        if (isRestoringScrollRef.current) {
+        // Skip saving if we're in the middle of restoring scroll position, or a return is waiting for its results
+        if (isRestoringScrollRef.current || returnPending()) {
             return;
         }
         if (scrollSaveTimeoutRef.current) {
@@ -423,13 +453,13 @@ export const useScrollPersistence = ({
         }
         scrollSaveTimeoutRef.current = setTimeout(() => {
             // Double-check guard in case restoration started during debounce
-            if (isRestoringScrollRef.current) {
+            if (isRestoringScrollRef.current || returnPending()) {
                 return;
             }
             saveScrollPosition(scrollStorageKey, window.scrollY);
             onSave?.(scrollStorageKey);
         }, SCROLL_SAVE_DEBOUNCE);
-    }, [scrollStorageKey, onSave]);
+    }, [scrollStorageKey, onSave, returnPending]);
 
     // Attach scroll listener for position saving
     useEffect(() => {

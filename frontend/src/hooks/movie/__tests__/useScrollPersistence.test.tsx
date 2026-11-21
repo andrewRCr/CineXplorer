@@ -254,6 +254,101 @@ describe("useScrollPersistence", () => {
     expect(saved).toEqual(["scroll-discover-"]);
   });
 
+  describe("a return waiting for its results", () => {
+    const savedPosition = () =>
+      (
+        JSON.parse(mockSessionStorage.getItem("scroll-discover-") ?? "{}") as {
+          position?: number;
+        }
+      ).position;
+
+    function scrollTo(position: number) {
+      mockScrollY = position;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(300);
+      });
+    }
+
+    beforeEach(() => {
+      mockScrollTo.mockImplementation((_x: number, y: number) => {
+        mockScrollY = y;
+      });
+    });
+
+    afterEach(() => {
+      mockScrollTo.mockImplementation(() => {});
+    });
+
+    // A grid that follows later pages reports how many results have loaded; one that doesn't, reports none
+    it.each([
+      ["a grid that follows later pages", { loadedCount: 0, hasMore: true }],
+      ["a grid that doesn't", {}],
+    ])(
+      "keeps the saved position through a scroll the page makes while loading, in %s",
+      (_grid, counts) => {
+        mockSessionStorage.setItem(
+          "scroll-discover-",
+          createStorageEntry(2600),
+        );
+        const { rerender } = renderHook(
+          (props: { isLoading: boolean; hasContent: boolean }) =>
+            useScrollPersistence({ ...defaultOptions, ...counts, ...props }),
+          {
+            wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+            initialProps: { isLoading: true, hasContent: false },
+          },
+        );
+        // The grid places itself at the position, and the browser stops at the end of the shorter loading grid
+        scrollTo(1353);
+        expect(savedPosition()).toBe(2600);
+        rerender({ isLoading: false, hasContent: true });
+        expect(window.scrollY).toBe(2600);
+      },
+    );
+
+    it("ends the return when the visitor scrolls while it loads", () => {
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(2600));
+      const { rerender } = renderHook(
+        (props: { isLoading: boolean; hasContent: boolean }) =>
+          useScrollPersistence({
+            ...defaultOptions,
+            loadedCount: 0,
+            hasMore: true,
+            ...props,
+          }),
+        {
+          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+          initialProps: { isLoading: true, hasContent: false },
+        },
+      );
+      act(() => {
+        window.dispatchEvent(new WheelEvent("wheel"));
+      });
+      scrollTo(400);
+      expect(savedPosition()).toBe(400);
+      rerender({ isLoading: false, hasContent: true });
+      expect(window.scrollY).toBe(400);
+      expect(mockScrollTo).not.toHaveBeenCalledWith(0, 2600);
+    });
+
+    it("saves while loading when memory does not allow the return", () => {
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(2600));
+      renderHook(
+        () =>
+          useScrollPersistence({
+            ...defaultOptions,
+            isLoading: true,
+            hasContent: false,
+            canRestore: () => false,
+          }),
+        { wrapper: createWrapper(["/browse"], { restoreScroll: true }) },
+      );
+      scrollTo(300);
+      expect(savedPosition()).toBe(300);
+    });
+  });
+
   describe("returning past the results loaded so far", () => {
     // Each page of results makes the document 1900 px taller; the browser clamps a scroll to what exists
     let maxScroll = 0;

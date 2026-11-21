@@ -148,6 +148,23 @@ describe("useScrollPersistence", () => {
     isError: false,
   };
 
+  const savedPosition = (key = "scroll-discover-") =>
+    // The hook stores each position as JSON of { position, timestamp }
+    (
+      JSON.parse(mockSessionStorage.getItem(key) ?? "{}") as {
+        position?: number;
+      }
+    ).position;
+
+  /** The window is at `position` and the browser delivers a scroll event; time passes past the save debounce. */
+  function deliverScrollAt(position: number) {
+    mockScrollY = position;
+    act(() => {
+      scrollListeners.forEach((listener) => listener());
+      vi.advanceTimersByTime(200);
+    });
+  }
+
   it("keeps a pending return eligible when its signal is consumed", () => {
     mockSessionStorage.setItem("scroll-discover-", createStorageEntry(500));
     let eligible = true;
@@ -254,6 +271,133 @@ describe("useScrollPersistence", () => {
     expect(saved).toEqual(["scroll-discover-"]);
   });
 
+  describe("a return waiting for its results", () => {
+    beforeEach(() => {
+      mockScrollTo.mockImplementation((_x: number, y: number) => {
+        mockScrollY = y;
+      });
+    });
+
+    afterEach(() => {
+      mockScrollTo.mockImplementation(() => {});
+    });
+
+    interface LoadProps {
+      isLoading: boolean;
+      hasContent: boolean;
+      loadedCount?: number;
+      hasMore?: boolean;
+    }
+    const loading: LoadProps = { isLoading: true, hasContent: false };
+    const loaded: LoadProps = { isLoading: false, hasContent: true };
+
+    // A grid that follows later pages reports how many results have loaded and whether more can; one that doesn't,
+    // reports neither
+    it.each([
+      [
+        "a grid that follows later pages",
+        { ...loading, loadedCount: 0, hasMore: false },
+        { ...loaded, loadedCount: 39, hasMore: false },
+      ],
+      ["a grid that doesn't", loading, loaded],
+    ])(
+      "keeps the saved position through a scroll the page makes while loading, in %s",
+      (_grid, before, after) => {
+        mockSessionStorage.setItem(
+          "scroll-discover-",
+          createStorageEntry(2600),
+        );
+        const { rerender } = renderHook(
+          (props: LoadProps) =>
+            useScrollPersistence({ ...defaultOptions, ...props }),
+          {
+            wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+            initialProps: before,
+          },
+        );
+        // The grid places itself at the position, and the browser stops at the end of the shorter loading grid
+        deliverScrollAt(1353);
+        expect(savedPosition()).toBe(2600);
+        rerender(after);
+        expect(window.scrollY).toBe(2600);
+      },
+    );
+
+    // While the results load, the page sits at the end of the loading grid, so input there must not end the return
+    it.each([
+      ["a click", () => window.dispatchEvent(new PointerEvent("pointerdown"))],
+      [
+        "a key press",
+        () =>
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "Meta" })),
+      ],
+      [
+        "a scroll",
+        () => {
+          window.dispatchEvent(new WheelEvent("wheel"));
+          mockScrollY = 400;
+          scrollListeners.forEach((listener) => listener());
+        },
+      ],
+    ])(
+      "still lands at its position after %s during the wait",
+      (_input, input) => {
+        mockSessionStorage.setItem(
+          "scroll-discover-",
+          createStorageEntry(2600),
+        );
+        const { rerender } = renderHook(
+          (props: LoadProps) =>
+            useScrollPersistence({ ...defaultOptions, ...props }),
+          {
+            wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+            initialProps: { ...loading, loadedCount: 0, hasMore: false },
+          },
+        );
+        mockScrollY = 1353;
+        act(() => {
+          input();
+          vi.advanceTimersByTime(300);
+        });
+        expect(savedPosition()).toBe(2600);
+        rerender({ ...loaded, loadedCount: 20, hasMore: true });
+        expect(window.scrollY).toBe(2600);
+      },
+    );
+
+    it("saves under the new filters when they change while a return waits", () => {
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(2600));
+      const { rerender } = renderHook(
+        (props: { browseParams: Record<string, string> }) =>
+          useScrollPersistence({ ...defaultOptions, ...loading, ...props }),
+        {
+          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+          initialProps: { browseParams: {} },
+        },
+      );
+      rerender({ browseParams: { genre: "18" } });
+      deliverScrollAt(700);
+      expect(savedPosition()).toBe(2600);
+      expect(savedPosition("scroll-discover-genre=18")).toBe(700);
+    });
+
+    it("saves while loading when memory does not allow the return", () => {
+      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(2600));
+      renderHook(
+        () =>
+          useScrollPersistence({
+            ...defaultOptions,
+            isLoading: true,
+            hasContent: false,
+            canRestore: () => false,
+          }),
+        { wrapper: createWrapper(["/browse"], { restoreScroll: true }) },
+      );
+      deliverScrollAt(300);
+      expect(savedPosition()).toBe(300);
+    });
+  });
+
   describe("returning past the results loaded so far", () => {
     // Each page of results makes the document 1900 px taller; the browser clamps a scroll to what exists
     let maxScroll = 0;
@@ -288,21 +432,6 @@ describe("useScrollPersistence", () => {
       );
     }
 
-    function visitorScrollsTo(position: number) {
-      mockScrollY = position;
-      act(() => {
-        scrollListeners.forEach((listener) => listener());
-        vi.advanceTimersByTime(200);
-      });
-    }
-
-    const savedPosition = () =>
-      (
-        JSON.parse(mockSessionStorage.getItem("scroll-discover-") ?? "{}") as {
-          position?: number;
-        }
-      ).position;
-
     beforeEach(() => {
       maxScroll = pageHeight;
       mockScrollTo.mockImplementation(scrollWithinContent);
@@ -332,7 +461,7 @@ describe("useScrollPersistence", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      visitorScrollsTo(6100);
+      deliverScrollAt(6100);
       expect(savedPosition()).toBe(6100);
     });
 
@@ -348,7 +477,7 @@ describe("useScrollPersistence", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      visitorScrollsTo(1500);
+      deliverScrollAt(1500);
       expect(savedPosition()).toBe(1500);
     });
 
@@ -383,7 +512,7 @@ describe("useScrollPersistence", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      visitorScrollsTo(1200);
+      deliverScrollAt(1200);
       expect(savedPosition()).toBe(1200);
     });
 
@@ -401,7 +530,7 @@ describe("useScrollPersistence", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      visitorScrollsTo(500);
+      deliverScrollAt(500);
       expect(savedPosition()).toBe(500);
     });
 
@@ -414,7 +543,7 @@ describe("useScrollPersistence", () => {
         vi.advanceTimersByTime(300);
       });
       expect(window.scrollY).toBe(3000);
-      visitorScrollsTo(3200);
+      deliverScrollAt(3200);
       expect(savedPosition()).toBe(3200);
     });
 
@@ -429,7 +558,7 @@ describe("useScrollPersistence", () => {
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      visitorScrollsTo(20000);
+      deliverScrollAt(20000);
       expect(savedPosition()).toBe(20000);
     });
   });
@@ -500,6 +629,27 @@ describe("useScrollPersistence", () => {
   });
 
   describe("scroll position saving", () => {
+    it("keeps a save on a fresh visit that is still waiting out its delay when the first results arrive", () => {
+      const { rerender } = renderHook(
+        (props: { isLoading: boolean; hasContent: boolean }) =>
+          useScrollPersistence({ ...defaultOptions, ...props }),
+        {
+          wrapper: createWrapper(),
+          initialProps: { isLoading: true, hasContent: false },
+        },
+      );
+      mockScrollY = 500;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(100);
+      });
+      rerender({ isLoading: false, hasContent: true });
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(savedPosition()).toBe(500);
+    });
+
     it("saves scroll position on scroll event (debounced)", () => {
       renderHook(() => useScrollPersistence(defaultOptions), {
         wrapper: createWrapper(),

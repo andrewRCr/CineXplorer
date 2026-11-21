@@ -197,6 +197,25 @@ export const useScrollPersistence = ({
         [releaseGuard],
     );
 
+    // Read through a ref, so the scroll listener isn't replaced when loading ends: replacing it would cancel a save
+    // still waiting out its delay
+    const isLoadingRef = useRef(isLoading);
+    useLayoutEffect(() => {
+        isLoadingRef.current = isLoading;
+    }, [isLoading]);
+
+    // A return still waiting for its results. The page sits at the end of the shorter loading grid meanwhile (the grid
+    // places itself at the position, and the browser stops there), so nothing saved then replaces the position, and
+    // nothing ends the return: it lands at the position once the results arrive.
+    const returnPending = useCallback(
+        () =>
+            shouldRestoreScrollRef.current &&
+            !hasRestoredScrollRef.current &&
+            isLoadingRef.current &&
+            (canRestore?.(scrollStorageKey) ?? true),
+        [canRestore, scrollStorageKey],
+    );
+
     // Clean up restoration timeouts on unmount
     useEffect(() => {
         isMountedRef.current = true;
@@ -414,8 +433,8 @@ export const useScrollPersistence = ({
     );
 
     const handleScroll = useCallback(() => {
-        // Skip saving if we're in the middle of restoring scroll position
-        if (isRestoringScrollRef.current) {
+        // Skip saving if we're in the middle of restoring scroll position, or a return is waiting for its results
+        if (isRestoringScrollRef.current || returnPending()) {
             return;
         }
         if (scrollSaveTimeoutRef.current) {
@@ -423,13 +442,13 @@ export const useScrollPersistence = ({
         }
         scrollSaveTimeoutRef.current = setTimeout(() => {
             // Double-check guard in case restoration started during debounce
-            if (isRestoringScrollRef.current) {
+            if (isRestoringScrollRef.current || returnPending()) {
                 return;
             }
             saveScrollPosition(scrollStorageKey, window.scrollY);
             onSave?.(scrollStorageKey);
         }, SCROLL_SAVE_DEBOUNCE);
-    }, [scrollStorageKey, onSave]);
+    }, [scrollStorageKey, onSave, returnPending]);
 
     // Attach scroll listener for position saving
     useEffect(() => {

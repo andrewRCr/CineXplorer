@@ -287,9 +287,11 @@ class Logger {
         error?: unknown,
         requestData?: unknown,
     ): void {
+        const reportEndpoint = this.sanitizeReportUrl(endpoint);
+        const httpMethod = method.toUpperCase();
         const apiErrorData = {
-            endpoint,
-            method: method.toUpperCase(),
+            endpoint: reportEndpoint,
+            method: httpMethod,
             status,
             error,
             requestData,
@@ -297,7 +299,7 @@ class Logger {
         };
 
         this.error(
-            `API Error: ${method.toUpperCase()} ${endpoint}${status ? ` (${status})` : ""}`,
+            `API Error: ${httpMethod} ${reportEndpoint}${status ? ` (${status})` : ""}`,
             apiErrorData,
         );
     }
@@ -1263,6 +1265,9 @@ class Logger {
             // Limit size to prevent large payloads
             const serialized = JSON.stringify(sanitized);
             if (sanitized && serialized.length > REPORT_LIMITS.data) {
+                const nestedError = isRecord(sanitized.error)
+                    ? sanitized.error
+                    : undefined;
                 const summary: Record<string, unknown> = {
                     _truncated: true,
                     _originalSize: serialized.length,
@@ -1270,7 +1275,7 @@ class Logger {
                 for (const [field, length] of Object.entries(
                     REPORT_EXCERPT_LENGTHS,
                 )) {
-                    const value = sanitized[field];
+                    const value = sanitized[field] ?? nestedError?.[field];
                     if (typeof value === "string") {
                         summary[field] = clipReportText(value, length);
                     } else if (typeof value === "number") {

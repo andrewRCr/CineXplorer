@@ -339,16 +339,46 @@ describe("returning after a provider sign-in", () => {
     await waitFor(() => expect(result.current.location.pathname).toBe("/"));
   });
 
-  it("keeps the requested page when the provider reports an error", async () => {
-    const { result } = mountAt("/login?next=%2Fwatchlist&error=oauth");
-    await waitFor(() =>
-      expect(result.current.location.state).toMatchObject({
-        oauthError: true,
+  it("keeps the requested page and reports a fixed provider error code", async () => {
+    const reports: unknown[] = [];
+    const previousConfig = logger.getEnvironmentInfo().config;
+    server.use(
+      http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+        reports.push(await request.json());
+        return HttpResponse.json({ success: true }, { status: 201 });
       }),
     );
-    expect(
-      `${result.current.location.pathname}${result.current.location.search}`,
-    ).toBe("/login?next=%2Fwatchlist");
+    logger.updateConfig({
+      level: LogLevel.ERROR,
+      backendReportingThreshold: LogLevel.ERROR,
+      enableBackendReporting: true,
+      enableConsole: false,
+      enableStorage: false,
+    });
+
+    try {
+      const { result } = mountAt(
+        "/login?next=%2Fwatchlist&error=fixture-provider-error",
+      );
+      await waitFor(() =>
+        expect(result.current.location.state).toMatchObject({
+          oauthError: true,
+        }),
+      );
+      expect(
+        `${result.current.location.pathname}${result.current.location.search}`,
+      ).toBe("/login?next=%2Fwatchlist");
+      await waitFor(() => expect(reports).toHaveLength(1));
+      expect(reports[0]).toMatchObject({
+        message: "OAuth authentication failed",
+        data: { error: "oauth" },
+      });
+      expect(JSON.stringify(reports[0])).not.toContain(
+        "fixture-provider-error",
+      );
+    } finally {
+      logger.updateConfig(previousConfig);
+    }
   });
 });
 

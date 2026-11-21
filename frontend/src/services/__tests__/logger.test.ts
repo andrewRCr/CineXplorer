@@ -8,6 +8,7 @@ import {
     vi,
 } from "vitest";
 import { waitFor } from "@testing-library/react";
+import { AxiosError, AxiosHeaders } from "axios";
 import { http, HttpResponse } from "msw/http";
 import { server } from "@tests/mocks/server";
 import { apiBaseUrl } from "@/config/baseUrls";
@@ -644,6 +645,85 @@ describe("persisted critical reports", () => {
                 ? replayed.data
                 : undefined;
         expect(JSON.stringify(data ?? null).length).toBeLessThanOrEqual(10000);
+    });
+
+    it("keeps bounded status and stack excerpts for a nested Axios error on submission and replay", async () => {
+        const message = "Failed sign-in report";
+        const config = { headers: new AxiosHeaders() };
+        const error = new AxiosError(
+            "Request failed with status code 401",
+            AxiosError.ERR_BAD_REQUEST,
+            config,
+            undefined,
+            {
+                status: 401,
+                statusText: "Unauthorized",
+                data: { detail: "Invalid credentials" },
+                headers: {},
+                config,
+            },
+        );
+        const stack = "    at login (app.js:7:2)\n".repeat(500);
+        error.stack = stack;
+
+        const reports: unknown[] = [];
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+                reports.push(await request.json());
+                return reports.length === 1
+                    ? HttpResponse.error()
+                    : succeeded();
+            }),
+        );
+        await expect(
+            reportingLogger().reportCriticalError(message, { error }),
+        ).resolves.toBe(false);
+        const saved: unknown = JSON.parse(
+            localStorage.getItem("cinexplorer_critical_logs") ?? "[]",
+        );
+        await expect(
+            reportingLogger().reportCriticalError("Recovery trigger"),
+        ).resolves.toBe(true);
+
+        const diagnostic = expect.objectContaining({
+            message,
+            data: expect.objectContaining({
+                _truncated: true,
+                status: 401,
+                stack: stack.slice(0, 600),
+            }),
+        });
+        expect(reports).toEqual([
+            diagnostic,
+            expect.objectContaining({ message: "Recovery trigger" }),
+            diagnostic,
+        ]);
+        expect(saved).toEqual([diagnostic]);
+        expect(localStorage.getItem("cinexplorer_critical_logs")).toBeNull();
+    });
+
+    it("reports only the site and path of an API error endpoint", async () => {
+        const reports: unknown[] = [];
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+                reports.push(await request.json());
+                return succeeded();
+            }),
+        );
+        reportingLogger().logApiError(
+            "https://api.example.test/films?view=fixture-view#fixture-section",
+            "get",
+            404,
+        );
+        await waitFor(() => expect(reports).toHaveLength(1));
+        expect(reports[0]).toMatchObject({
+            message: "API Error: GET https://api.example.test/films (404)",
+            data: {
+                endpoint: "https://api.example.test/films",
+                method: "GET",
+                status: 404,
+            },
+        });
     });
 
     it("keeps an oversized legacy report from blocking later reports", async () => {

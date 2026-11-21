@@ -365,24 +365,6 @@ describe("useScrollPersistence", () => {
       },
     );
 
-    it("keeps a save that is still waiting out its delay when the results arrive", () => {
-      const { rerender } = renderHook(
-        (props: LoadProps) =>
-          useScrollPersistence({ ...defaultOptions, ...props }),
-        { wrapper: createWrapper(), initialProps: loading },
-      );
-      mockScrollY = 500;
-      act(() => {
-        scrollListeners.forEach((listener) => listener());
-        vi.advanceTimersByTime(100);
-      });
-      rerender(loaded);
-      act(() => {
-        vi.advanceTimersByTime(200);
-      });
-      expect(savedPosition()).toBe(500);
-    });
-
     it("saves under the new filters when they change while a return waits", () => {
       mockSessionStorage.setItem("scroll-discover-", createStorageEntry(2600));
       const { rerender } = renderHook(
@@ -647,6 +629,27 @@ describe("useScrollPersistence", () => {
   });
 
   describe("scroll position saving", () => {
+    it("keeps a save on a fresh visit that is still waiting out its delay when the first results arrive", () => {
+      const { rerender } = renderHook(
+        (props: { isLoading: boolean; hasContent: boolean }) =>
+          useScrollPersistence({ ...defaultOptions, ...props }),
+        {
+          wrapper: createWrapper(),
+          initialProps: { isLoading: true, hasContent: false },
+        },
+      );
+      mockScrollY = 500;
+      act(() => {
+        scrollListeners.forEach((listener) => listener());
+        vi.advanceTimersByTime(100);
+      });
+      rerender({ isLoading: false, hasContent: true });
+      act(() => {
+        vi.advanceTimersByTime(200);
+      });
+      expect(savedPosition()).toBe(500);
+    });
+
     it("saves scroll position on scroll event (debounced)", () => {
       renderHook(() => useScrollPersistence(defaultOptions), {
         wrapper: createWrapper(),

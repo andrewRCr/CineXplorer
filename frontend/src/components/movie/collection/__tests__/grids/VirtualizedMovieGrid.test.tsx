@@ -231,6 +231,47 @@ describe("VirtualizedMovieGrid", () => {
     expect(screen.queryByRole("article", movie(1))).not.toBeInTheDocument();
   });
 
+  it("returns past the loading grid's end once results held back arrive", async () => {
+    serveBrowse(() => firstPage);
+    const visit = renderGrid();
+    await screen.findByRole("article", movie(1));
+    await scrollTo(1200);
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, 250)));
+    expect(Object.values(sessionStorage)).toContainEqual(
+      expect.stringContaining('"position":1200'),
+    );
+    visit.unmount();
+    await scrollTo(0);
+
+    // The loading grid is shorter than the saved position, so the browser stops a scroll at its end
+    const placeScroll = vi.mocked(window.scrollTo).getMockImplementation();
+    assert.isDefined(placeScroll);
+    vi.mocked(window.scrollTo).mockImplementation(
+      (value: number | ScrollToOptions, y?: number) => {
+        const top = typeof value === "number" ? (y ?? 0) : (value.top ?? 0);
+        const loading = screen.queryAllByTestId(/^skeleton-loader-/).length > 0;
+        placeScroll(0, loading ? Math.min(top, 600) : top);
+      },
+    );
+    const pending = holdBrowsePage(firstPage);
+    serveBrowse(() => pending.response);
+    renderBrowseGrid("/browse", <VirtualizedMovieGrid />, {
+      pathname: "/browse",
+      state: { restoreScroll: true },
+    });
+    // The grid has placed itself at the position, and stopped short of it
+    expect(window.scrollY).toBe(600);
+
+    // Results held back for longer than the save delay
+    await act(() => new Promise<void>((resolve) => setTimeout(resolve, 300)));
+    expect(Object.values(sessionStorage)).toContainEqual(
+      expect.stringContaining('"position":1200'),
+    );
+    pending.release();
+    expect(await screen.findByRole("article", movie(20))).toBeVisible();
+    expect(window.scrollY).toBe(1200);
+  });
+
   it("starts at the top when returning with no saved position", async () => {
     serveBrowse(() => firstPage);
     renderBrowseGrid("/browse", <VirtualizedMovieGrid />, {

@@ -109,6 +109,19 @@ const REPORT_LIMITS = {
     browserField: 64,
 };
 
+const REPORT_TRUNCATION_MARKER = "…[truncated]";
+
+function clipReportText(text: string, limit: number): string {
+    if (text.length <= limit) return text;
+
+    // Keep the UTF-16 budget without splitting a surrogate pair.
+    const last = text.charCodeAt(limit - 1);
+    const next = text.charCodeAt(limit);
+    const splitsPair =
+        last >= 0xd800 && last <= 0xdbff && next >= 0xdc00 && next <= 0xdfff;
+    return text.slice(0, splitsPair ? limit - 1 : limit);
+}
+
 // These excerpts fit the report limit even when each character needs escaping.
 const REPORT_EXCERPT_LENGTHS = {
     name: 80,
@@ -557,13 +570,19 @@ class Logger {
         return {
             message:
                 message.length > REPORT_LIMITS.message
-                    ? `${message.slice(0, REPORT_LIMITS.message)}…[truncated]`
+                    ? clipReportText(
+                          message,
+                          REPORT_LIMITS.message -
+                              REPORT_TRUNCATION_MARKER.length,
+                      ) + REPORT_TRUNCATION_MARKER
                     : message,
             data: this.sanitizeDataForBackend(data),
-            correlation_id: correlation_id?.slice(0, REPORT_LIMITS.id),
-            user_agent: user_agent.slice(0, REPORT_LIMITS.userAgent),
-            url: this.sanitizeReportUrl(url).slice(0, REPORT_LIMITS.url),
-            session_id: session_id.slice(0, REPORT_LIMITS.id),
+            correlation_id:
+                correlation_id &&
+                clipReportText(correlation_id, REPORT_LIMITS.id),
+            user_agent: clipReportText(user_agent, REPORT_LIMITS.userAgent),
+            url: clipReportText(this.sanitizeReportUrl(url), REPORT_LIMITS.url),
+            session_id: clipReportText(session_id, REPORT_LIMITS.id),
         };
     }
 
@@ -1253,7 +1272,7 @@ class Logger {
                 )) {
                     const value = sanitized[field];
                     if (typeof value === "string") {
-                        summary[field] = value.slice(0, length);
+                        summary[field] = clipReportText(value, length);
                     } else if (typeof value === "number") {
                         summary[field] = value;
                     }
@@ -1332,15 +1351,24 @@ class Logger {
         return {
             user_agent:
                 typeof navigator !== "undefined"
-                    ? navigator.userAgent.slice(0, REPORT_LIMITS.userAgent)
+                    ? clipReportText(
+                          navigator.userAgent,
+                          REPORT_LIMITS.userAgent,
+                      )
                     : "test-environment",
             language:
                 typeof navigator !== "undefined"
-                    ? navigator.language.slice(0, REPORT_LIMITS.browserField)
+                    ? clipReportText(
+                          navigator.language,
+                          REPORT_LIMITS.browserField,
+                      )
                     : "en-US",
             platform:
                 typeof navigator !== "undefined"
-                    ? navigator.platform.slice(0, REPORT_LIMITS.browserField)
+                    ? clipReportText(
+                          navigator.platform,
+                          REPORT_LIMITS.browserField,
+                      )
                     : "test-environment",
             viewport: {
                 width: typeof window !== "undefined" ? window.innerWidth : 1920,

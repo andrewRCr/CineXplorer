@@ -731,6 +731,51 @@ describe("persisted critical reports", () => {
         ]);
     });
 
+    it("preserves whole Unicode characters when clipping and replaying a saved report", async () => {
+        const emoji = "🎬";
+        const message = emoji + "m".repeat(985);
+        const stack = emoji + "s".repeat(597);
+        const correlationId = emoji + "c".repeat(125);
+        localStorage.setItem(
+            "cinexplorer_critical_logs",
+            JSON.stringify([
+                {
+                    ...legacyReport(message + emoji + "m".repeat(10) + emoji),
+                    data: { stack: stack + emoji + "s".repeat(10000) },
+                    correlation_id: correlationId + emoji,
+                },
+            ]),
+        );
+
+        const logger = reportingLogger();
+        const saved: unknown = JSON.parse(
+            localStorage.getItem("cinexplorer_critical_logs") ?? "[]",
+        );
+        const clipped = expect.objectContaining({
+            message: message + "…[truncated]",
+            data: expect.objectContaining({ stack }),
+            correlation_id: correlationId,
+        });
+
+        const attempts: unknown[] = [];
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+                attempts.push(await request.json());
+                return succeeded();
+            }),
+        );
+        await expect(
+            logger.reportCriticalError("Recovery trigger"),
+        ).resolves.toBe(true);
+
+        expect(saved).toEqual([clipped]);
+        expect(attempts).toEqual([
+            expect.objectContaining({ message: "Recovery trigger" }),
+            clipped,
+        ]);
+        expect(localStorage.getItem("cinexplorer_critical_logs")).toBeNull();
+    });
+
     const contextCases: {
         name: string;
         data: unknown;

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import {
-    chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, statSync,
+    chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmdirSync, rmSync, statSync,
     symlinkSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -278,19 +278,12 @@ test("takes a port no live run holds and clears claims whose run is gone", (t) =
     assert.deepEqual(readdirSync(f.claims).sort(), [live, elsewhere]);
 });
 
-test("shares one set of claims with runs started under any XDG_RUNTIME_DIR", (t) => {
-    const f = fixture(t);
-    mkdirSync(f.claims, { recursive: true });
-    writeFileSync(join(f.claims, claimName(8500, LIVE)), "");
-    // A shell with another runtime folder, or none, as sandboxed agent shells have
-    const elsewhere = join(f.parent, "elsewhere");
-    mkdirSync(elsewhere);
-    const result = f.invoke(["backend"], { XDG_RUNTIME_DIR: elsewhere });
-    assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.match(projectOf(compose(f.calls(), "up")[0]), /^cinexplorer-run-8501-/);
-    assert.deepEqual(readdirSync(elsewhere), []);
-    assert.deepEqual(readdirSync(f.runtime), []);
-});
+// A directory another account owns: root's, unless the tests run as root
+function othersFolder(t) {
+    if (statSync("/").uid !== process.getuid()) return ["/"];
+    t.diagnostic("no directory another account owns, so that case is skipped");
+    return [];
+}
 
 test("refuses a shared folder that isn't this account's own directory, before running anything", (t) => {
     const f = fixture(t);
@@ -302,7 +295,7 @@ test("refuses a shared folder that isn't this account's own directory, before ru
     writeFileSync(file, "");
     const broken = join(f.parent, "broken");
     symlinkSync(join(f.parent, "missing"), broken);
-    for (const shared of [link, file, broken]) {
+    for (const shared of [link, file, broken, ...othersFolder(t)]) {
         const result = f.invoke(["backend"], { STACK_CHECK_SHARED: shared });
         assert.equal(result.status, 75, result.stdout + result.stderr);
         assert.equal(lastLine(result.stderr), `stack-check: ${shared} must be a directory this account owns`);
@@ -321,7 +314,7 @@ test("won't tear down through a shared folder that isn't this account's own dire
     symlinkSync(target, link);
     const broken = join(f.parent, "broken");
     symlinkSync(join(f.parent, "missing"), broken);
-    for (const shared of [link, broken]) {
+    for (const shared of [link, broken, ...othersFolder(t)]) {
         const result = f.invoke(["--tear-down", project], { STACK_CHECK_SHARED: shared });
         assert.equal(result.status, 75, result.stdout + result.stderr);
         assert.equal(lastLine(result.stderr), `stack-check: ${shared} must be a directory this account owns`);
@@ -341,16 +334,29 @@ test("keeps the shared folder private, closing one left open", (t) => {
     assert.equal(mode(), 0o700);
 });
 
-test("keeps the shared folder under /tmp for the account, whatever XDG_RUNTIME_DIR and TMPDIR say", (t) => {
+test("keeps the shared folder under /tmp for the account, with XDG_RUNTIME_DIR set elsewhere or unset", (t) => {
     const f = fixture(t);
-    // The real folder, which any run on this machine uses: a teardown of a project no run can have touches only that
-    // project's own folder there, and the stand-in engine has nothing to remove.
-    const result = f.invoke(["--tear-down", "cinexplorer-run-0000-000000"], { STACK_CHECK_SHARED: undefined });
-    assert.equal(result.status, 0, result.stdout + result.stderr);
-    const shared = lstatSync(join("/tmp", `cinexplorer-stack-check-${process.getuid()}`));
-    assert.ok(shared.isDirectory());
-    assert.equal(shared.uid, process.getuid());
-    assert.equal(shared.mode & 0o777, 0o700);
+    // The real folder every run on this machine uses. The test works there only on a project no run can have (ports
+    // start at 8500), and afterward removes only the empty folders it created.
+    const shared = join("/tmp", `cinexplorer-stack-check-${process.getuid()}`);
+    const runs = join(shared, "runs");
+    const project = "cinexplorer-run-0000-000000";
+    const created = [shared, runs].filter((folder) => !existsSync(folder));
+    t.after(() => {
+        for (const folder of [join(runs, project), ...created.reverse()]) {
+            try {
+                rmdirSync(folder);
+            } catch {
+                // Gone already, or holding a real run's files
+            }
+        }
+    });
+    for (const runtime of [f.runtime, undefined]) {
+        mkdirSync(join(runs, project), { recursive: true, mode: 0o700 });
+        const result = f.invoke(["--tear-down", project], { STACK_CHECK_SHARED: undefined, XDG_RUNTIME_DIR: runtime });
+        assert.equal(result.status, 0, result.stdout + result.stderr);
+        assert.equal(existsSync(join(runs, project)), false);
+    }
     assert.deepEqual(readdirSync(f.runtime), []);
     assert.deepEqual(readdirSync(f.temp), []);
 });

@@ -3,9 +3,9 @@
 // these checks beside other work: each run has its own project and port, and leaves nothing behind.
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
-import { constants, tmpdir } from "node:os";
+import { constants } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,6 +20,7 @@ const USAGE = 64;
 const FILES = ["infrastructure/docker-compose.yml", "infrastructure/docker-compose.worktree.yml", "infrastructure/docker-compose.run.yml"];
 const OWNER_LABEL = "cinexplorer.stack-check.owner";
 const PROJECT_LABEL = "cinexplorer.stack-check.project";
+const RUN_PROJECT = /^cinexplorer-run-\d{4}-[0-9a-f]{6}$/;
 const FIRST_PORT = 8500;
 const LAST_PORT = 8599;
 const BUILT_SERVICES = ["backend", "frontend"];
@@ -30,17 +31,33 @@ const STACK_VARIABLES = ["SITE_PORT", "WORKTREE_SECRET_KEY", "STACK_CHECK_OWNER"
 const PLAYWRIGHT = "frontend/node_modules/.bin/playwright";
 const LAUNCH = 'import { chromium } from "@playwright/test"; const browser = await chromium.launch(); await browser.close();';
 
+// Every run on a machine shares this folder, whatever its temp directory: port claims, and each run's own folder of
+// throwaway files, named for its project and holding its owner.
+const SHARED = join(process.env.XDG_RUNTIME_DIR || "/tmp", "cinexplorer-stack-check");
+const CLAIMS = join(SHARED, "claims");
+const RUNS = join(SHARED, "runs");
+
 class NotRun extends Error {}
+
+const children = new Set();
 
 function run(command, args, { cwd, env, inherit = false } = {}) {
     const child = spawn(command, args, { cwd, env, stdio: inherit ? "inherit" : ["ignore", "pipe", "pipe"] });
+    children.add(child);
+    let stdout = "";
     let output = "";
-    const keep = (chunk) => { output = (output + chunk).slice(-100000); };
-    child.stdout?.on("data", keep);
-    child.stderr?.on("data", keep);
+    child.stdout?.on("data", (chunk) => {
+        stdout += chunk;
+        output = (output + chunk).slice(-100000);
+    });
+    child.stderr?.on("data", (chunk) => { output = (output + chunk).slice(-100000); });
     const done = new Promise((resolve) => {
-        child.on("error", (error) => resolve({ status: 127, output: `${command}: ${error.message}` }));
-        child.on("close", (code, signal) => resolve({ status: code ?? 128 + (constants.signals[signal] ?? 0), output }));
+        const finish = (result) => {
+            children.delete(child);
+            resolve(result);
+        };
+        child.on("error", (error) => finish({ status: 127, stdout, output: `${command}: ${error.message}` }));
+        child.on("close", (code, signal) => finish({ status: code ?? 128 + (constants.signals[signal] ?? 0), stdout, output }));
     });
     return Object.assign(done, { child });
 }
@@ -63,9 +80,27 @@ function startTime(pid) {
     }
 }
 
+// A pid means something only in its own boot and PID namespace, so an owner records both.
+function machine() {
+    const boot = readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim().replaceAll("-", "").slice(0, 12);
+    const namespace = /\[(\d+)\]/.exec(readlinkSync("/proc/self/ns/pid"))?.[1];
+    return { boot, namespace };
+}
+
+function ownerOf(pid) {
+    const { boot, namespace } = machine();
+    return `${boot}:${namespace}:${pid}:${startTime(pid)}`;
+}
+
+// Whether a run may still be going. An owner this process can't check, from another PID namespace or in an unknown
+// form, counts as live, so a run is only ever removed once its end is certain.
 function alive(owner) {
-    const match = /^(\d+):(\d+)$/.exec(owner ?? "");
-    return Boolean(match) && startTime(match[1]) === match[2];
+    const match = /^([0-9a-f]+):(\d+):(\d+):(\d+)$/.exec(owner ?? "");
+    if (!match) return true;
+    const { boot, namespace } = machine();
+    if (match[1] !== boot) return false;
+    if (match[2] !== namespace) return true;
+    return startTime(match[3]) === match[4];
 }
 
 // The caller's environment, less what would steer the stack or the specs: Compose's own settings, the stack's
@@ -99,51 +134,81 @@ async function preflight(mode, env) {
                 : `Chromium can't start: ${lastLine(launch.output)}`);
         }
     }
-    return /podman/i.test(version.output) ? "podman" : "docker";
+    return /podman/i.test(version.stdout) ? "podman" : "docker";
 }
 
-// Containers, volumes and networks go by Compose's project label; images by this run's label and by the names Compose
-// gives them, since podman's builds can lack Compose's labels.
+async function listIds(kind, filter, env) {
+    const listed = await run("docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), "-q", "--filter", filter], { env });
+    return { ids: words(listed.stdout), problem: listed.status === 0 ? undefined : `${kind}s: ${lastLine(listed.output)}` };
+}
+
+// Removes one run's stack: containers, volumes and networks by Compose's project label; images by this run's label and
+// by the names Compose gives them, since podman's builds can lack Compose's labels; then the run's folder. Returns
+// what it couldn't remove. Only this script's project names are accepted, so it can't reach another stack.
 async function tearDown(project, env) {
+    if (!RUN_PROJECT.test(project)) throw new Error(`refusing to remove ${project}: not a stack-check project`);
+    const problems = [];
     for (const kind of ["container", "volume", "network"]) {
-        const listed = await run("docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), "-q",
-            "--filter", `label=com.docker.compose.project=${project}`], { env });
-        const ids = listed.status === 0 ? words(listed.output) : [];
+        const { ids, problem } = await listIds(kind, `label=com.docker.compose.project=${project}`, env);
+        if (problem) problems.push(problem);
         if (!ids.length) continue;
         if (kind === "container") await run("docker", ["container", "stop", "-t", "5", ...ids], { env });
-        await run("docker", [kind, "rm", ...(kind === "container" ? ["-f"] : []), ...ids], { env });
+        const removed = await run("docker", [kind, "rm", ...(kind === "container" ? ["-f"] : []), ...ids], { env });
+        if (removed.status !== 0) problems.push(`${kind}s: ${lastLine(removed.output)}`);
     }
-    const labelled = await run("docker", ["image", "ls", "-q", "--filter", `label=${PROJECT_LABEL}=${project}`], { env });
+    const labelled = await listIds("image", `label=${PROJECT_LABEL}=${project}`, env);
+    if (labelled.problem) problems.push(labelled.problem);
     const names = new Set(BUILT_SERVICES.map((service) => `${project}-${service}`));
     const listed = await run("docker", ["image", "ls", "--format", "{{.ID}} {{.Repository}} {{.Tag}}"], { env });
-    const named = (listed.status === 0 ? listed.output : "").split("\n").map((line) => line.trim().split(/\s+/))
+    if (listed.status !== 0) problems.push(`images: ${lastLine(listed.output)}`);
+    const named = listed.stdout.split("\n").map((line) => line.trim().split(/\s+/))
         .filter(([id, repository]) => id && repository && names.has(repository.split("/").at(-1)))
         .map(([id, repository, tag]) => (tag && tag !== "<none>" ? `${repository}:${tag}` : id));
-    const images = words([...(labelled.status === 0 ? words(labelled.output) : []), ...named].join(" "));
-    if (images.length) await run("docker", ["image", "rm", ...images], { env });
+    const images = words([...labelled.ids, ...named].join(" "));
+    if (images.length) {
+        const removed = await run("docker", ["image", "rm", ...images], { env });
+        if (removed.status !== 0) problems.push(`images: ${lastLine(removed.output)}`);
+    }
+    rmSync(join(RUNS, project), { recursive: true, force: true });
+    return problems;
 }
 
-// Removes every stack whose run has ended without removing it. Only this script's labels are read, so worktree and
-// primary stacks are never touched.
+function report(project, problems, done) {
+    console.log(problems.length ? `stack-check: couldn't remove all of ${project}: ${problems.join("; ")}` : done);
+}
+
+// The owner and project labels on each resource, one inspection per resource where a batch fails, since a resource can
+// go between listing and inspecting it.
+async function labelsOf(kind, ids, env) {
+    const labels = kind === "container" || kind === "image" ? ".Config.Labels" : ".Labels";
+    const inspect = (batch) => run("docker", [kind, "inspect", "--format",
+        `{{index ${labels} "${OWNER_LABEL}"}} {{index ${labels} "${PROJECT_LABEL}"}}`, ...batch], { env });
+    const all = await inspect(ids);
+    const outputs = all.status === 0 ? [all.stdout] : await Promise.all(ids.map(async (id) => (await inspect([id])).stdout));
+    return outputs.join("\n").split("\n").map((line) => line.trim().split(/\s+/)).filter(([, project]) => project);
+}
+
+// Removes every stack whose run has ended without removing it, found by this script's labels and run folders only, so
+// worktree and main stacks are never touched.
 async function sweep(env) {
     const owners = new Map();
+    const record = (project, owner) => {
+        if (RUN_PROJECT.test(project ?? "")) owners.set(project, [...(owners.get(project) ?? []), owner]);
+    };
     for (const kind of ["container", "volume", "network", "image"]) {
-        const listed = await run("docker", [kind, "ls", ...(kind === "container" ? ["-a"] : []), "-q",
-            "--filter", `label=${OWNER_LABEL}`], { env });
-        const ids = listed.status === 0 ? words(listed.output) : [];
-        if (!ids.length) continue;
-        const labels = kind === "container" || kind === "image" ? ".Config.Labels" : ".Labels";
-        const inspected = await run("docker", [kind, "inspect", "--format",
-            `{{index ${labels} "${OWNER_LABEL}"}} {{index ${labels} "${PROJECT_LABEL}"}}`, ...ids], { env });
-        if (inspected.status !== 0) continue;
-        for (const [owner, project] of inspected.output.split("\n").map((line) => line.trim().split(/\s+/))) {
-            if (project?.startsWith("cinexplorer-run-")) owners.set(project, [...(owners.get(project) ?? []), owner]);
+        const { ids } = await listIds(kind, `label=${OWNER_LABEL}`, env);
+        if (ids.length) for (const [owner, project] of await labelsOf(kind, ids, env)) record(project, owner);
+    }
+    for (const project of existsSync(RUNS) ? readdirSync(RUNS) : []) {
+        try {
+            record(project, readFileSync(join(RUNS, project, "owner"), "utf8").trim());
+        } catch {
+            // A folder without its owner can't be checked, so it stays.
         }
     }
     for (const [project, found] of owners) {
         if (found.some(alive)) continue;
-        await tearDown(project, env);
-        console.log(`stack-check: removed ${project}, left by a run that ended`);
+        report(project, await tearDown(project, env), `stack-check: removed ${project}, left by a run that ended`);
     }
 }
 
@@ -158,19 +223,18 @@ function portFree(port) {
 // Each run writes its own claim file, named for its port and owner, then keeps the port only if no other live run
 // claims it. Two runs racing for one port both see each other and move on, so neither can share it.
 async function claimPort(owner) {
-    const folder = join(process.env.XDG_RUNTIME_DIR || "/tmp", "cinexplorer-stack-check");
-    mkdirSync(folder, { recursive: true });
-    const tag = owner.replace(":", "-");
+    mkdirSync(CLAIMS, { recursive: true });
+    const tag = owner.replaceAll(":", "_");
     for (let port = FIRST_PORT; port <= LAST_PORT; port++) {
-        const mine = `${port}-${tag}`;
-        writeFileSync(join(folder, mine), "");
-        const rivals = readdirSync(folder).filter((name) => name.startsWith(`${port}-`) && name !== mine).filter((name) => {
-            if (alive(name.slice(`${port}-`.length).replace("-", ":"))) return true;
-            rmSync(join(folder, name), { force: true });
+        const mine = `${port}_${tag}`;
+        writeFileSync(join(CLAIMS, mine), "");
+        const rivals = readdirSync(CLAIMS).filter((name) => name.startsWith(`${port}_`) && name !== mine).filter((name) => {
+            if (alive(name.slice(`${port}_`.length).replaceAll("_", ":"))) return true;
+            rmSync(join(CLAIMS, name), { force: true });
             return false;
         });
-        if (!rivals.length && await portFree(port)) return { port, claim: join(folder, mine) };
-        rmSync(join(folder, mine), { force: true });
+        if (!rivals.length && await portFree(port)) return { port, claim: join(CLAIMS, mine) };
+        rmSync(join(CLAIMS, mine), { force: true });
     }
     throw new NotRun(`no free port from ${FIRST_PORT} to ${LAST_PORT}`);
 }
@@ -184,11 +248,11 @@ function toBytes(text) {
 
 // Resident memory of a process and everything it started, from /proc.
 function treeBytes(root) {
-    const children = new Map();
+    const parents = new Map();
     for (const pid of readdirSync("/proc").filter((entry) => /^\d+$/.test(entry))) {
         const stat = (() => { try { return readFileSync(`/proc/${pid}/stat`, "utf8"); } catch { return ""; } })();
         const parent = stat.slice(stat.lastIndexOf(")") + 2).split(" ")[1];
-        if (parent) children.set(parent, [...(children.get(parent) ?? []), pid]);
+        if (parent) parents.set(parent, [...(parents.get(parent) ?? []), pid]);
     }
     let total = 0;
     for (const pending = [String(root)]; pending.length;) {
@@ -198,13 +262,13 @@ function treeBytes(root) {
         } catch {
             continue;
         }
-        pending.push(...(children.get(pid) ?? []));
+        pending.push(...(parents.get(pid) ?? []));
     }
     return total;
 }
 
-// Samples the stack's containers, plus the specs' Playwright and Chromium processes, until stopped.
-function sampleMemory(project, env, browserRoot) {
+// Samples the stack's containers, plus the specs' Playwright and Chromium processes once they start, until stopped.
+function sampleMemory(project, env, { browser, browserRoot }) {
     const peak = { total: 0, stack: 0, browser: 0, seen: false };
     let stopped = false;
     let wake = () => {};
@@ -212,16 +276,16 @@ function sampleMemory(project, env, browserRoot) {
         while (!stopped) {
             const stats = await run("docker", ["stats", "--no-stream", "--format", "{{.Name}}\t{{.MemUsage}}"], { env });
             let stack = 0;
-            for (const [name, usage] of stats.output.split("\n").map((line) => line.split("\t"))) {
+            for (const [name, usage] of stats.stdout.split("\n").map((line) => line.split("\t"))) {
                 const bytes = name?.startsWith(`${project}-`) ? toBytes(usage?.split("/")[0]) : undefined;
                 if (bytes === undefined) continue;
                 stack += bytes;
                 peak.seen = true;
             }
-            const browser = browserRoot ? treeBytes(browserRoot) : 0;
+            const used = browserRoot() ? treeBytes(browserRoot()) : 0;
             peak.stack = Math.max(peak.stack, stack);
-            peak.browser = Math.max(peak.browser, browser);
-            peak.total = Math.max(peak.total, stack + browser);
+            peak.browser = Math.max(peak.browser, used);
+            peak.total = Math.max(peak.total, stack + used);
             if (!stopped) await new Promise((resolve) => { wake = resolve; setTimeout(resolve, SAMPLE_MS); });
         }
     })();
@@ -231,7 +295,7 @@ function sampleMemory(project, env, browserRoot) {
         await loop;
         const mib = (bytes) => `${Math.round(bytes / 1024 ** 2).toLocaleString("en-US")} MiB`;
         const parts = [peak.seen ? `stack ${mib(peak.stack)}` : "stack unavailable"];
-        if (browserRoot) parts.push(`Playwright and Chromium ${mib(peak.browser)}`);
+        if (browser) parts.push(`Playwright and Chromium ${mib(peak.browser)}`);
         return `stack-check: peak memory ${mib(peak.total)} (${parts.join(", ")})`;
     };
 }
@@ -245,7 +309,8 @@ async function writeStackFiles(folder, { project, port, owner, engine, env }) {
         `USER_UID=${process.getuid()}`, `USER_GID=${process.getgid()}`,
         ...(engine === "podman" ? ["USERNS_MODE=keep-id"] : []), "",
     ].join("\n"));
-    // Throwaway values only: tests replace TMDB, and mail goes nowhere.
+    // Throwaway values, which take precedence over any the backend finds in the checkout: tests replace TMDB, and mail
+    // goes nowhere.
     writeFileSync(join(folder, "backend.env"), [
         "ENVIRONMENT=development", "DEBUG=False",
         "POSTGRES_DB=cinexplorer_dev", "POSTGRES_USER=cinexplorer_user", "POSTGRES_PASSWORD=cinexplorer_dev_pass",
@@ -266,14 +331,17 @@ async function check(mode, extra) {
     const env = cleanEnv();
     const engine = await preflight(mode, env);
     await sweep(env);
-    const owner = `${process.pid}:${startTime(process.pid)}`;
+    const owner = ownerOf(process.pid);
     const { port, claim } = await claimPort(owner);
     const project = `cinexplorer-run-${port}-${randomBytes(3).toString("hex")}`;
-    const folder = mkdtempSync(join(tmpdir(), "cinexplorer-stack-check-"));
+    const folder = join(RUNS, project);
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(join(folder, "owner"), owner);
     const compose = ["compose", "-p", project, "--env-file", join(folder, "compose.env"), ...FILES.flatMap((file) => ["-f", file])];
-    // On cancel, the stack comes down in a detached process so this one can exit at once.
+    // On cancel: stop this run's own processes, and take the stack down in a detached process so this one exits at once.
     const onSignal = (signal) => {
-        spawn(process.execPath, [SCRIPT, "--tear-down", project, folder], { detached: true, stdio: "ignore", env }).unref();
+        for (const child of children) child.kill("SIGTERM");
+        spawn(process.execPath, [SCRIPT, "--tear-down", project], { detached: true, stdio: "ignore", env }).unref();
         rmSync(claim, { force: true });
         process.exit(128 + constants.signals[signal]);
     };
@@ -281,12 +349,13 @@ async function check(mode, extra) {
     const started = Date.now();
     const seconds = (since) => `${Math.round((Date.now() - since) / 1000)} s`;
     console.log(`stack-check: ${mode} in ${project} (${engine})`);
-    let status = 1;
-    let summary;
+    let stopSampling;
+    let browserRoot;
     try {
         await writeStackFiles(folder, { project, port, owner, engine, env });
-        const browser = mode === "e2e" ? ["--profile", "browser"] : [];
-        const up = await run("docker", [...compose, ...browser, "up", "-d", "--build", "--wait", "--quiet-pull",
+        stopSampling = sampleMemory(project, env, { browser: mode === "e2e", browserRoot: () => browserRoot });
+        const profile = mode === "e2e" ? ["--profile", "browser"] : [];
+        const up = await run("docker", [...compose, ...profile, "up", "-d", "--build", "--wait", "--quiet-pull",
             ...(mode === "e2e" ? [] : ["dev-db", "redis", "backend"])], { env });
         const setup = [up];
         if (up.status === 0 && mode === "e2e") {
@@ -318,24 +387,25 @@ async function check(mode, extra) {
                 inherit: true,
             })
             : run("docker", [...compose, "exec", "-T", "backend", "pytest", "-p", "no:cacheprovider", ...extra], { env, inherit: true });
-        const stopSampling = sampleMemory(project, env, mode === "e2e" ? test.child.pid : undefined);
-        status = (await test).status;
-        summary = await stopSampling();
-        return status;
+        if (mode === "e2e") browserRoot = test.child.pid;
+        return (await test).status;
     } finally {
+        const summary = stopSampling && await stopSampling();
         const removing = Date.now();
-        await tearDown(project, env);
-        rmSync(folder, { recursive: true, force: true });
+        const problems = await tearDown(project, env);
         rmSync(claim, { force: true });
-        console.log(`stack-check: removed the stack in ${seconds(removing)}`);
+        report(project, problems, `stack-check: removed the stack in ${seconds(removing)}`);
         if (summary) console.log(summary);
     }
 }
 
 async function main(args) {
     if (args[0] === "--tear-down") {
-        await tearDown(args[1], process.env);
-        if (args[2]) rmSync(args[2], { recursive: true, force: true });
+        if (!RUN_PROJECT.test(args[1] ?? "")) {
+            console.error(`stack-check: --tear-down takes a stack-check project, not ${args[1] ?? "nothing"}`);
+            return USAGE;
+        }
+        report(args[1], await tearDown(args[1], process.env), `stack-check: removed ${args[1]}`);
         return 0;
     }
     const [mode, ...extra] = args;

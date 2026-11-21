@@ -4,9 +4,11 @@
 #   node scripts/stack-check.mjs backend [pytest argument...]
 #   node scripts/stack-check.mjs e2e [Playwright argument...]
 #
-# The backend reads a throwaway env file, and the services mount throwaway certificates and log folders, so a check
-# never reads or writes the checkout's own .env files, certificates or logs. Every container, volume, network and
-# built image carries its run's owner and project, so a later run can remove what a killed run left behind.
+# The backend takes its settings from a throwaway env file, and the services mount throwaway certificates and log
+# folders, so a check never writes the checkout's .env files, certificates or logs. The backend and Vite still read any
+# other keys from the checkout's own env files, as a worktree stack does; the throwaway values take precedence, and a
+# runner's checkout has no such files. Every container, volume, network and built image carries its run's owner and
+# project, so a later run can remove what a killed run left behind.
 
 x-run: &run
   cinexplorer.stack-check.owner: ${STACK_CHECK_OWNER:?run node scripts/stack-check.mjs}

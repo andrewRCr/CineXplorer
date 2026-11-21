@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
@@ -14,9 +14,15 @@ function startTime(pid) {
     return stat.slice(stat.lastIndexOf(")") + 2).split(" ")[19];
 }
 
+const BOOT = readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim().replaceAll("-", "").slice(0, 12);
+const NAMESPACE = /\[(\d+)\]/.exec(readlinkSync("/proc/self/ns/pid"))[1];
 // This test process stands in for a run that is still going.
-const LIVE = `${process.pid}:${startTime(process.pid)}`;
-const DEAD = "999999999:1";
+const LIVE = `${BOOT}:${NAMESPACE}:${process.pid}:${startTime(process.pid)}`;
+const DEAD = `${BOOT}:${NAMESPACE}:999999999:1`;
+// Owners this process can't check count as live; owners from an earlier boot have ended.
+const OTHER_NAMESPACE = `${BOOT}:1:999999999:1`;
+const OTHER_BOOT = `000000000000:${NAMESPACE}:${process.pid}:${startTime(process.pid)}`;
+const NOISE = "Emulate Docker CLI using podman. Create /etc/containers/nodocker to quiet msg.";
 
 function write(root, path, contents) {
     const target = join(root, path);
@@ -25,9 +31,10 @@ function write(root, path, contents) {
 }
 
 // Stand-ins for docker, openssl, curl and npm record each call, with the Compose env file's contents, and answer
-// from CX_* settings. docker remembers the last Compose project so its stats can name that project's containers.
+// from CX_* settings. docker remembers the last Compose project so its image list can name it, and with
+// CX_NOISE writes a podman-style notice to stderr on every call.
 const STUB = `#!${process.execPath}
-import { appendFileSync, existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, readFileSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 const command = basename(process.argv[1]);
 const args = process.argv.slice(2);
@@ -47,6 +54,7 @@ appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({
         .filter((key) => key in process.env).map((key) => [key, process.env[key]])),
 }) + '\\n');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+if (command === 'docker' && process.env.CX_NOISE) console.error('${NOISE}');
 if (process.env.CX_FAIL && [command, ...args].includes(process.env.CX_FAIL)) {
     console.error('stub command failed: ' + process.env.CX_FAIL);
     process.exit(9);
@@ -60,17 +68,33 @@ if (command === 'docker' && args[0] === 'version') {
 }
 if (command === 'docker' && args.includes('ls') && args.includes('-q')) {
     const filter = at('--filter');
-    const listed = filter === '${OWNER_FILTER}' ? JSON.parse(process.env.CX_OWNED ?? '{}')[args[0]] : undefined;
+    const listed = filter === '${OWNER_FILTER}' ? JSON.parse(process.env.CX_OWNED ?? '{}')[args[0]]
+        : filter.startsWith('label=cinexplorer.stack-check.project=') ? process.env.CX_LABELLED_IMAGES?.split(' ')
+        : filter.startsWith('label=com.docker.compose.project=') && args[0] === 'container'
+            ? process.env.CX_PROJECT_CONTAINERS?.split(' ') : undefined;
     if (listed) console.log(listed.join('\\n'));
+}
+if (command === 'docker' && args.includes('ls') && args.includes('--format') && args[0] === 'image') {
+    console.log((process.env.CX_IMAGES ?? '').replaceAll('{project}', project));
 }
 if (command === 'docker' && args.includes('inspect')) {
     const labels = JSON.parse(process.env.CX_LABELS ?? '{}');
-    for (const id of args.slice(args.indexOf('--format') + 2)) console.log(labels[id] ?? '');
+    const gone = (process.env.CX_GONE ?? '').split(' ');
+    const ids = args.slice(args.indexOf('--format') + 2);
+    for (const id of ids.filter((id) => !gone.includes(id))) console.log(labels[id] ?? '');
+    if (ids.some((id) => gone.includes(id))) {
+        console.error('Error: no such object');
+        process.exit(1);
+    }
 }
 if (command === 'docker' && args[0] === 'stats') {
-    console.log((process.env.CX_STATS ?? '').replaceAll('{project}', project));
+    // Sampling starts before the stack does, so the run's name comes from its folder.
+    const runs = join(process.env.XDG_RUNTIME_DIR, 'cinexplorer-stack-check/runs');
+    const run = existsSync(runs) ? readdirSync(runs)[0] ?? '' : '';
+    console.log((process.env.CX_STATS ?? '').replaceAll('{project}', run));
 }
 if (command === 'docker' && args.includes('exec') && args.includes('pytest')) {
+    writeFileSync(join(process.env.CX_STATE, 'pytest.pid'), String(process.pid));
     await sleep(Number(process.env.CX_PYTEST_SLEEP ?? 300));
     process.exit(Number(process.env.CX_PYTEST_EXIT ?? 0));
 }
@@ -111,7 +135,8 @@ function fixture(t) {
     write(root, "frontend/node_modules/.bin/playwright", STUB);
     spawnSync("chmod", ["755", join(root, "frontend/node_modules/.bin/playwright")]);
     const log = join(parent, "calls.jsonl");
-    const locks = join(runtime, "cinexplorer-stack-check");
+    const claims = join(runtime, "cinexplorer-stack-check/claims");
+    const runs = join(runtime, "cinexplorer-stack-check/runs");
     function environment(env) {
         return {
             ...process.env, PATH: `${bin}:${process.env.PATH}`, CX_TEST_LOG: log, CX_STATE: stateDir,
@@ -127,7 +152,7 @@ function fixture(t) {
     function calls() {
         return existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse) : [];
     }
-    return { root, temp, locks, invoke, launch, calls };
+    return { root, temp, stateDir, claims, runs, invoke, launch, calls };
 }
 
 function compose(calls, verb) {
@@ -136,6 +161,14 @@ function compose(calls, verb) {
 
 function projectOf(call) {
     return call.args[call.args.indexOf("-p") + 1];
+}
+
+function claimName(port, owner) {
+    return `${port}_${owner.replaceAll(":", "_")}`;
+}
+
+function lastLine(text) {
+    return text.trim().split("\n").at(-1);
 }
 
 function removals(calls) {
@@ -178,11 +211,11 @@ test("runs pytest in a throwaway stack, removes the stack and returns pytest's s
         ["exec", "-T", "backend", "pytest", "-p", "no:cacheprovider", "apps/users/", "-x"]);
     assert.ok(calls.indexOf(exec) > calls.indexOf(up));
     assert.deepEqual(removals(calls), [project, project, project]);
-    assert.deepEqual(readdirSync(f.locks), []);
-    assert.deepEqual(readdirSync(f.temp), []);
+    assert.deepEqual(readdirSync(f.claims), []);
+    assert.deepEqual(readdirSync(f.runs), []);
 });
 
-test("keeps the checkout's env files and shell settings out of the stack", (t) => {
+test("never writes the checkout's env files, and keeps them and shell settings out of Compose's settings", (t) => {
     const f = fixture(t);
     const files = ["infrastructure/.env", "backend/config/.env"];
     const before = files.map((file) => [readFileSync(join(f.root, file), "utf8"), statSync(join(f.root, file)).mtimeMs]);
@@ -191,7 +224,7 @@ test("keeps the checkout's env files and shell settings out of the stack", (t) =
     assert.deepEqual(files.map((file) => [readFileSync(join(f.root, file), "utf8"), statSync(join(f.root, file)).mtimeMs]), before);
     const [up] = compose(f.calls(), "up");
     const envFile = up.args[up.args.indexOf("--env-file") + 1];
-    assert.ok(envFile.startsWith(`${f.temp}/`), envFile);
+    assert.equal(envFile, join(f.runs, projectOf(up), "compose.env"));
     assert.match(up.envFile, new RegExp(`^COMPOSE_PROJECT_NAME=${projectOf(up)}$`, "m"));
     assert.match(up.envFile, /^STACK_CHECK_DIR=.+$/m);
     assert.doesNotMatch(up.envFile, /LEAK|cinexplorer-dev/);
@@ -213,24 +246,42 @@ test("runs podman's containers as the host user", (t) => {
 
 test("takes a port no live run holds and clears claims whose run is gone", (t) => {
     const f = fixture(t);
-    mkdirSync(f.locks);
-    const live = `8500-${LIVE.replace(":", "-")}`;
-    writeFileSync(join(f.locks, live), "");
-    writeFileSync(join(f.locks, `8501-${DEAD.replace(":", "-")}`), "");
+    mkdirSync(f.claims, { recursive: true });
+    const live = claimName(8500, LIVE);
+    const elsewhere = claimName(8501, OTHER_NAMESPACE);
+    writeFileSync(join(f.claims, live), "");
+    writeFileSync(join(f.claims, elsewhere), "");
+    writeFileSync(join(f.claims, claimName(8502, DEAD)), "");
     const result = f.invoke(["backend"]);
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.match(projectOf(compose(f.calls(), "up")[0]), /^cinexplorer-run-8501-/);
-    assert.deepEqual(readdirSync(f.locks), [live]);
+    assert.match(projectOf(compose(f.calls(), "up")[0]), /^cinexplorer-run-8502-/);
+    assert.deepEqual(readdirSync(f.claims).sort(), [live, elsewhere]);
+});
+
+test("reports that nothing ran when every port is claimed", (t) => {
+    const f = fixture(t);
+    mkdirSync(f.claims, { recursive: true });
+    for (let port = 8500; port <= 8599; port++) writeFileSync(join(f.claims, claimName(port, LIVE)), "");
+    const result = f.invoke(["backend"]);
+    assert.equal(result.status, 75, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stderr), "stack-check: no free port from 8500 to 8599");
+    assert.equal(compose(f.calls(), "up").length, 0);
 });
 
 test("removes stacks whose run is gone and leaves live runs and other stacks alone", (t) => {
     const f = fixture(t);
+    const folder = (project, owner) => write(f.runs, `${project}/owner`, owner);
+    folder("cinexplorer-run-8594-dead03", DEAD);
+    folder("cinexplorer-run-8595-e15e00", OTHER_NAMESPACE);
     const result = f.invoke(["backend"], {
-        CX_OWNED: JSON.stringify({ container: ["dead1", "live1"], volume: ["deadvolume"], image: ["deadimage"] }),
+        CX_NOISE: "1",
+        CX_OWNED: JSON.stringify({ container: ["dead1", "live1", "gone1", "away1"], volume: ["deadvolume"], image: ["deadimage"] }),
+        CX_GONE: "gone1",
         CX_LABELS: JSON.stringify({
             dead1: `${DEAD} cinexplorer-run-8590-dead00`,
-            live1: `${LIVE} cinexplorer-run-8591-live00`,
-            deadvolume: `${DEAD} cinexplorer-run-8592-dead01`,
+            live1: `${LIVE} cinexplorer-run-8591-11fe00`,
+            away1: `${OTHER_NAMESPACE} cinexplorer-run-8596-a0a000`,
+            deadvolume: `${OTHER_BOOT} cinexplorer-run-8592-dead01`,
             deadimage: `${DEAD} cinexplorer-run-8593-dead02`,
         }),
     });
@@ -238,10 +289,49 @@ test("removes stacks whose run is gone and leaves live runs and other stacks alo
     const calls = f.calls();
     const listings = calls.filter((call) => call.args.includes("ls") && call.args.includes(OWNER_FILTER));
     assert.deepEqual(listings.map((call) => call.args[0]).sort(), ["container", "image", "network", "volume"]);
-    const swept = removals(calls).filter((project) => project !== projectOf(compose(calls, "up")[0]));
-    assert.deepEqual([...new Set(swept)].sort(),
-        ["cinexplorer-run-8590-dead00", "cinexplorer-run-8592-dead01", "cinexplorer-run-8593-dead02"]);
+    const own = projectOf(compose(calls, "up")[0]);
+    const swept = [...new Set(removals(calls).filter((project) => project !== own))].sort();
+    assert.deepEqual(swept, ["cinexplorer-run-8590-dead00", "cinexplorer-run-8592-dead01", "cinexplorer-run-8593-dead02",
+        "cinexplorer-run-8594-dead03"]);
     assert.ok(calls.indexOf(compose(calls, "up")[0]) > calls.findLastIndex((call) => swept.includes(call.args.at(-1).split("=").at(-1))));
+    assert.ok(!calls.some((call) => call.args.join(" ").includes("Emulate")), "engine notices taken for resources");
+    assert.deepEqual(readdirSync(f.runs), ["cinexplorer-run-8595-e15e00"]);
+});
+
+test("removes the run's built images by its label and by the names Compose gives them", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["backend"], {
+        CX_LABELLED_IMAGES: "labelled1",
+        CX_IMAGES: "id1 docker.io/library/{project}-backend latest\nid2 localhost/{project}-frontend latest\n" +
+            "id3 docker.io/library/cinexplorer-main-backend latest\nid4 docker.io/library/{project}-backend-extra latest",
+    });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const calls = f.calls();
+    const project = projectOf(compose(calls, "up")[0]);
+    const removed = calls.filter((call) => call.command === "docker" && call.args[0] === "image" && call.args[1] === "rm");
+    assert.equal(removed.length, 1);
+    assert.deepEqual(removed[0].args.slice(2).sort(),
+        ["docker.io/library/" + project + "-backend:latest", "labelled1", "localhost/" + project + "-frontend:latest"]);
+});
+
+test("says what it couldn't remove, and still returns the check's status", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["backend"], { CX_PROJECT_CONTAINERS: "c1", CX_FAIL: "rm" });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const project = projectOf(compose(f.calls(), "up")[0]);
+    assert.match(result.stdout, new RegExp(`^stack-check: couldn't remove all of ${project}: containers: stub command failed: rm$`, "m"));
+    assert.doesNotMatch(result.stdout, /removed the stack/);
+    assert.match(lastLine(result.stdout), /^stack-check: peak memory /);
+});
+
+test("refuses to tear down anything but a stack-check project", (t) => {
+    const f = fixture(t);
+    for (const project of ["cinexplorer-dev", "cinexplorer-browse-restore-depth", "/"]) {
+        const result = f.invoke(["--tear-down", project]);
+        assert.equal(result.status, 64, project);
+        assert.match(result.stderr, /--tear-down takes a stack-check project/);
+    }
+    assert.deepEqual(f.calls(), []);
 });
 
 test("tears the stack down in the background when cancelled", async (t) => {
@@ -255,8 +345,18 @@ test("tears the stack down in the background when cancelled", async (t) => {
     const { code } = await exited;
     assert.equal(code, 143);
     assert.ok(Date.now() - sent < 2000, `exit took ${Date.now() - sent} ms`);
-    assert.deepEqual(readdirSync(f.locks), []);
-    await until(() => removals(f.calls()).length === 3 && readdirSync(f.temp).length === 0);
+    assert.deepEqual(readdirSync(f.claims), []);
+    // The run's own processes stop with it.
+    const pytest = Number(readFileSync(join(f.stateDir, "pytest.pid"), "utf8"));
+    await until(() => {
+        try {
+            process.kill(pytest, 0);
+            return false;
+        } catch {
+            return true;
+        }
+    }, 3000);
+    await until(() => removals(f.calls()).length === 3 && readdirSync(f.runs).length === 0);
     assert.deepEqual(removals(f.calls()), [project, project, project]);
 });
 
@@ -313,6 +413,7 @@ test("fails when the stack doesn't start, showing why, and still removes it", (t
     assert.equal(compose(f.calls(), "logs").length, 1);
     assert.equal(compose(f.calls(), "exec").length, 0);
     assert.equal(removals(f.calls()).length, 3);
+    assert.match(lastLine(result.stdout), /^stack-check: peak memory /);
 });
 
 test("refuses an unknown check", (t) => {

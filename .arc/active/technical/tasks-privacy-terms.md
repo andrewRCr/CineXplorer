@@ -5,6 +5,7 @@
 **Branch:** `technical/privacy-terms`
 **Base Branch:** `main`
 **Status:** In Progress
+**Local verification completed:** 2026-11-20
 
 ## Overview
 
@@ -238,6 +239,53 @@ the worktree's browsable stack with Home's line and the notices in place.
       path Appendix C names since the last trace, anything needs a commit after the dating commit, or the merge
       slips a day, run the order again from the trace, ending with a new dating commit
 
+    - [x] **4.1.a Correct the disclosures found during verification.** Updated the approved appendices and both
+      pages to describe admin access, the GitHub email response and account linking after password removal.
+      Compared both rendered pages with the amended appendices. All 18 focused unit tests and all five legal-page
+      Chromium scenarios passed, along with lint and type checking.
+
+    - [x] **4.1.b Apply the independent verification corrections.** The policy and its map describe admin deletion
+      previews, admin activity records that can remain after account deletion, token lifetimes and nightly cleanup.
+      Removed the account-exists email promise after tracing the missing reset request URL. Both rendered pages
+      matched their appendices. All 18 focused unit tests and five legal-page Chromium scenarios passed, along with
+      lint and type checking.
+
+    - [x] **4.1.c Clarify session expiry and the admin audit details.** Updated the policy and its map to distinguish
+      account access from session and refresh-token record retention, identify the recorded action time and changed
+      field names, and disclose that a Google-derived username can remain in an admin record. The rendered texts,
+      focused tests and Chromium rerun passed with the later corrections in 4.1.e.
+
+    - [x] **4.1.d Apply the expiry rule to pending GitHub sign-in.** Described expiry measured from the last session
+      save and nightly removal of expired sessions. Task 4.1.e qualifies when a later callback clears the pending
+      sign-in and records the browser rerun.
+
+    - [x] **4.1.e Apply the second verification pass corrections.** Updated the policy and source map for pending
+      GitHub data after a callback fails, admin search text in logs, when the account timestamp changes, and which
+      sign-ups send verification and welcome emails. Captured admin search redaction in the inbox. Both legal pages
+      stay open on an OAuth error query or failed credential renewal. All four regressions failed before the fix and
+      passed afterwards. Added an axe scan of signed-out Home. All 238 focused tests and 26 Chromium scenarios passed,
+      including all five legal-page scenarios. Both rendered texts matched the appendices. Lint, formatting and type
+      checking passed.
+
+    - [x] **4.1.f Check sign-in completion and refine the grounding.** Either document stays open when a provider
+      sign-in finishes after the visitor follows a footer link from Login. Both new tests failed before the fix and
+      passed afterwards. Confirmed both transitions in Chromium with a delayed session response. The privacy policy
+      now names cancellation as a case where earlier pending GitHub data can remain and explains what has to happen
+      to clear it. Added the deferred admin log redaction to the PRD and traced the password-reset send call in
+      Appendix C. Both rendered texts matched the appendices. All 247 focused tests and 12 Chromium scenarios
+      passed, along with lint, formatting and type checking.
+
+    - [x] **4.1.g Keep the destination during the route transition.** Login and the shared auth hook check the
+      current browser URL when provider sign-in finishes. Both regression cases reproduced the redirect to
+      Watchlist before the fix and passed after it. A Chromium probe released a provider response during the
+      history update for each footer link and verified the URL and signed-in state. The focused suite passed
+      all 276 tests on rerun after an existing auth test timed out waiting for Library data. All 12 Chromium
+      scenarios passed, along with lint, formatting and type checking.
+
+    - Local verification is complete. The full frontend test and Chromium suites passed during verification.
+      The focused runs in 4.1.a through 4.1.g cover the subsequent changes. The criteria below record the local
+      results and the remaining merge checks. The branch changes no backend API or generated frontend API files.
+
 - [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
   the links on Google's Branding page, and the console's response is recorded here)
 
@@ -253,8 +301,6 @@ the worktree's browsable stack with Home's line and the notices in place.
   (`who-else-handles-your-data`, `your-choices`, `security`); the terms' numbered headings keep their numbers.
 - **The texts are fixed.** Appendices A and B are the source; a wording change found while building goes to the
   PRD's appendices first.
-- **New links on shared pages.** The footer's two links appear on every page, and the notice adds two to `Register`
-  and `Login`: existing unit tests or specs that count links, or find one by a name these share, may need scoping.
 
 ## Success Criteria
 
@@ -267,17 +313,42 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
   signed-out Home, the footer's links open `/privacy` and `/terms` with each title in view; both pages pass the axe
   scan; `/privacy` at 360×800 doesn't scroll sideways; and its "Who else handles your data" heading lands below the top
   bar from the in-page link and on a direct load of its fragment. (R1, R3, R5, R8, R14)
-- [ ] 2. **The texts are the appendices'.** A reviewer comparing each page's rendered text with Appendix A and Appendix
+
+    All five scenarios in `legal-pages.spec.ts` passed in the worktree after the latest repairs, including
+    the axe scans on Home and both legal pages. The CI smoke result is pending.
+
+- [x] 2. **The texts are the appendices'.** A reviewer comparing each page's rendered text with Appendix A and Appendix
   B finds the same headings, paragraphs, lists, table and links, and unit tests find no review marker, placeholder date
   or `{{` on either page. (R2, R13)
+
+    Compared the Chromium-rendered document blocks, table cells, link destinations, and inline formatting with both
+    appendices, substituting each rendered date for its publication placeholder. Both page unit tests passed.
+
 - [ ] 3. **The texts are true at merge.** Every statement in Appendix A and Appendix B about what the site does holds at
   source on the merge commit, by Appendix C's map; any code merged after this PRD that touches a mapped path has been
   traced again. (R2, R16, D6)
-- [ ] 4. **The links are in place.** Unit tests show the footer's two links, signed-out Home's line and its link (and
+
+    Tasks 4.1.a through 4.1.f corrected the disclosures and their grounding records. The policy covers admin detail,
+    deletion previews, audit records and search logging, GitHub email lookup and pending sign-in, linking after
+    password removal, and session and token lifetimes. It distinguishes the account record's update timestamp from
+    linked email verification and identifies which sign-ups send verification and welcome messages. The final trace
+    against the merge commit is pending.
+
+- [x] 4. **The links are in place.** Unit tests show the footer's two links, signed-out Home's line and its link (and
   its absence signed in), and the sign-up notice with both links on `Register` and `Login`. (R8 to R10, R13)
-- [ ] 5. **The rule and the ADR are in the repository.** `DEVELOPMENT-RULES.md` carries R11's rule; the new ADR reads
+
+    The `Footer`, `HomeBand`, `Home`, `Register` and `Login` unit tests passed in the full frontend run.
+
+- [x] 5. **The rule and the ADR are in the repository.** `DEVELOPMENT-RULES.md` carries R11's rule; the new ADR reads
   `Accepted` with its date. (R11, R12)
-- [ ] 6. **The smoke documents count the new spec.** (R15)
+
+    The maintenance rule covers changes to the app and provider settings, and specifies when to give notice and
+    obtain consent. ADR-052 reads `Accepted (2026-11-20)` and identifies Appendix C as the publication source map.
+
+- [x] 6. **The smoke documents count the new spec.** (R15)
+
+    Counted 12 Chromium spec files and checked each of the four documents named in R15 for the count and the
+    description of `legal-pages.spec.ts`.
 
 ### Proven live
 

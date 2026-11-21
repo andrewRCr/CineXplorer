@@ -12,9 +12,16 @@ const signInRoutes = [
     ROUTES.REGISTER,
     ROUTES.FORGOT_PASSWORD,
 ].map((path) => ({ path }));
+const legalDocumentRoutes = [ROUTES.PRIVACY, ROUTES.TERMS].map((path) => ({
+    path,
+}));
 
 function signInRoute(pathname: string): string | undefined {
     return matchRoutes(signInRoutes, { pathname })?.[0]?.route.path;
+}
+
+export function isLegalDocumentPath(pathname: string): boolean {
+    return matchRoutes(legalDocumentRoutes, { pathname }) !== null;
 }
 
 /** The value as a path on this site, or null when it is missing, leaves the site or is a sign-in page. */

@@ -159,11 +159,11 @@ Otherwise the function sends `POST /api/auth/refresh` with credentials and CSRF,
 refresh cookie. A valid response replaces the access token in the original browser storage; a session-storage
 sign-in stays in session storage. Without Web Locks, the pending promise still coordinates callers in one tab.
 
-Only this function posts a refresh. On current-session renewal failure, the interceptors redirect to sign-in
-with `session_expired=true` and the safe current path, query and fragment in `next`, using `loginPathFor`.
-Sign-in pages are excluded from the return path. The session read and idle check instead land anonymous and run
-the change-of-user step described below. A failed retry
-of the original API request does not invalidate a successful refresh.
+Only this function posts a refresh. On current-session renewal failure, the interceptors clear the credentials and
+keep the privacy policy and terms open. On other routes they redirect to sign-in with `session_expired=true` and
+the safe current path, query and fragment in `next`, using `loginPathFor`. Sign-in pages are excluded from the
+return path. The session read and idle check land anonymous and run the change-of-user step described below. A
+failed retry of the original API request does not invalidate a successful refresh.
 
 A provider-return session read owns resolution from before allauth discovery through any password fallback. The idle
 check starts no renewal while this identity is active. API requests continue using credentials and shared renewal;
@@ -496,8 +496,10 @@ version cannot land or clear credentials.
 The status derives from the query: a profile is `authenticated`, `null` is `anonymous`. While its data is still
 undefined, it is `authenticated` only with a current stored token and sign-in flag, and `resolving` otherwise.
 `isAuthenticated` and the hook's public commands retain their shapes for context consumers. The OAuth callback
-effect reacts to this first result, clears provider-flow flags and handles feedback and navigation; it fetches
-nothing. Only the 60-second credential-renewal effect makes a network request.
+effect reacts to this first result, clears provider-flow flags and handles feedback and navigation. While the privacy
+policy or terms are open, OAuth errors and provider sign-in completion leave the document open. The OAuth callback
+effect and Login's signed-in redirect check the browser destination when a legal URL is ahead of React Router's
+committed location. Only the 60-second credential-renewal effect makes a network request.
 
 Session writers cancel any in-flight session read before replacing it:
 

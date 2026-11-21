@@ -33,8 +33,9 @@ export default function PrivacyPolicy() {
         </List.Item>
         <List.Item>
           If you sign in with Google or GitHub, we receive your name, email
-          address and basic profile (from GitHub, every email address on your
-          account, of which we keep one), and nothing else from those accounts.
+          address and basic profile. We read the first page of email addresses
+          GitHub returns and keep your primary, verified address if it appears
+          there.
         </List.Item>
       </List.Root>
       <LegalHeading as="h2">What we collect</LegalHeading>
@@ -43,7 +44,8 @@ export default function PrivacyPolicy() {
         If you sign up with an email address, we store your email address, the
         username you choose, and your password as a one-way hash (never in
         readable form). We also record whether you've verified your email
-        address, when you joined, and when your account last changed.
+        address, when you joined, and a timestamp that updates when we save your
+        full account record.
       </Text>
       <LegalHeading as="h3">Signing in with Google</LegalHeading>
       <Text>
@@ -67,8 +69,10 @@ export default function PrivacyPolicy() {
           in with Google. If your Google email address is verified by Google and
           matches an existing CineXplorer account, Google sign-in is linked to
           that account. If that account's email address had never been verified,
-          its password is removed, so that only Google sign-in, or a password
-          reset sent to that address, reaches it.
+          its password is removed. You can sign in with Google or reset your
+          password using that email address. GitHub sign-in can also link to the
+          account if GitHub returns the same address as your verified primary
+          address.
         </List.Item>
         <List.Item>
           <strong>How we store it:</strong> in the site's database on our
@@ -93,14 +97,15 @@ export default function PrivacyPolicy() {
           <TextLink to="#security">Security</TextLink>.
         </List.Item>
         <List.Item>
-          <strong>Keeping and deleting it:</strong> we keep it while you have an
-          account and delete it with your account (see{" "}
+          <strong>Keeping and deleting it:</strong> we keep your linked Google
+          profile while you have an account and delete it with your account.
+          Admin activity records can retain your CineXplorer username, including
+          one made from your Google name or email address (see{" "}
           <TextLink to="#your-choices">Your choices</TextLink>). You can also
           remove CineXplorer from the linked apps in your Google Account, under
-          Sign in with Google. Because we don't keep Google's tokens, that
-          changes nothing here: signing in with Google again signs you in to the
-          same account, and your account and what we keep from Google stay until
-          you ask us to delete them.
+          Sign in with Google. If you remove the link at Google, you can still
+          sign in to the same CineXplorer account the next time you choose Sign
+          in with Google.
         </List.Item>
       </List.Root>
       <Text>
@@ -123,26 +128,32 @@ export default function PrivacyPolicy() {
         <List.Item>
           <strong>What we receive:</strong> your GitHub user ID and username,
           your name and avatar link, the other public profile details GitHub
-          includes (such as bio, location, company and website), and the email
-          addresses on your GitHub account with whether each is verified.
+          includes (such as bio, location, company and website), and the first
+          page of email addresses GitHub returns, with whether each is primary
+          and verified.
         </List.Item>
         <List.Item>
           <strong>How we use it:</strong> to create your account or sign you in,
           with your GitHub username as your CineXplorer username where it's
           available (otherwise one made from your name or email address), and
-          your GitHub name as your name. We keep only your primary, verified
-          email address and don't save the others. As with Google, a matching
-          email address links GitHub sign-in to an existing account.
+          your GitHub name as your name. We keep only the primary, verified
+          address from that page, if one appears. As with Google, a matching
+          verified email address can link GitHub sign-in to an existing account.
         </List.Item>
         <List.Item>
           <strong>How we store it:</strong> in the site's database, with a copy
           of the profile GitHub sent, updated at each sign-in, and when you
           first and last signed in with GitHub. We don't keep GitHub's access
           token with your account, and we have no access to your repositories.
-          If GitHub has no verified primary email address for you, sign-up can't
-          finish: what GitHub sent, its access token included, then waits in
-          your browser's session on our server until you next sign in with
-          Google or GitHub, or the session expires after two weeks.
+          Sign-up requires GitHub to return a verified primary email address. If
+          that address is missing, we keep the pending sign-in in your browser's
+          session on our server, including the profile GitHub sent and its
+          access token. We clear the earlier pending sign-in if a later Google
+          or GitHub sign-in in that browser reaches our account checks and the
+          server saves the removal. If you cancel the later attempt or it fails,
+          those details can remain in your session. The session expires two
+          weeks after the server last saves it. Starting another sign-in can
+          extend that expiry, and expired sessions are removed nightly.
         </List.Item>
         <List.Item>
           You can revoke CineXplorer's access in your GitHub settings, under
@@ -174,11 +185,15 @@ export default function PrivacyPolicy() {
       </List.Root>
       <Text>
         Your Library shows your lists, and its History shows your viewings,
-        reviews and additions from the record. All of this is visible only to
-        you, and it's deleted with your account. To link your entries to the
-        right film, the site also saves each film's details from TMDB (its TMDB
-        ID, title, poster, release date, score, vote count, runtime, overview
-        and genres), which say nothing about you.
+        reviews and additions from the record. The site limits access to your
+        Library and History to your account. The site operator can view the
+        films you track, their watchlist, watched and liked marks and associated
+        dates, and your current ratings in the admin area. Admin deletion
+        previews also show viewing entry IDs and which tracking fields changed
+        and when. Your tracking records are deleted with your account. To link
+        your entries to the right film, the site also saves each film's details
+        from TMDB (its TMDB ID, title, poster, release date, score, vote count,
+        runtime, overview and genres), which say nothing about you.
       </Text>
       <LegalHeading as="h3">When you use the site</LegalHeading>
       <Text>This applies whether or not you have an account.</Text>
@@ -187,8 +202,10 @@ export default function PrivacyPolicy() {
           <strong>Server logs.</strong> Our server records each request the site
           sends it as you use it (loading the site's own files isn't recorded):
           your IP address, your browser's identification string (user agent),
-          the time, the address requested with any search text and credentials
-          removed, the page you came from without its query, and the result.
+          the time, the address requested, the page you came from without its
+          query, and the result. We remove movie search text and credentials in
+          recognized fields from the logged address. Admin searches can leave
+          search text in the request logs, such as a username or email address.
           Account events (signing up, signing in, renewing your session,
           verifying your email address and emails sent to you), including failed
           attempts, are also logged with your username or user ID where known,
@@ -220,16 +237,14 @@ export default function PrivacyPolicy() {
       </List.Root>
       <LegalHeading as="h3">Email</LegalHeading>
       <Text>
-        The site sends email only when it's part of using an account: a
-        verification email when you sign up (and again if you ask), a welcome
-        email once you've verified, and password-reset emails. If someone asks
-        for a password reset for an address that has no account, we email that
-        address to say so. If a Google sign-in brings an email address that
-        Google hasn't verified and that already belongs to an account here, we
-        email that address to say the account exists. Beyond these, we'd write
-        to you only about the service itself, such as a change to this policy or
-        the site closing, through the same email provider. We don't send
-        newsletters or marketing.
+        The site sends email only when it's part of using an account. If you
+        sign up with an email address and password, we send a verification email
+        when you sign up (and again if you ask) and a welcome email once you've
+        verified. We also send password-reset emails. If someone asks for a
+        password reset for an address that has no account, we email that address
+        to say so. Beyond these, we'd write to you only about the service
+        itself, such as a change to this policy or the site closing, through the
+        same email provider. We don't send newsletters or marketing.
       </Text>
       <LegalHeading as="h2">Cookies and browser storage</LegalHeading>
       <Text>
@@ -381,14 +396,23 @@ export default function PrivacyPolicy() {
           until deleted on request.
         </List.Item>
         <List.Item>
-          <strong>Sign-in sessions and tokens:</strong> they expire after 2
-          weeks (sessions) or 14 days (tokens), and expired ones are removed
-          nightly.
+          <strong>Sign-in sessions and tokens:</strong> sessions expire two
+          weeks after the server last saved them. Access tokens expire after
+          five minutes and refresh tokens after 14 days. The server removes
+          expired sessions and refresh-token records nightly.
         </List.Item>
         <List.Item>
           <strong>Server logs:</strong> each service keeps about its most recent
           30 MB of logs, and older entries are overwritten. There's no fixed
           time limit.
+        </List.Item>
+        <List.Item>
+          <strong>Admin activity records:</strong> when we add, change or delete
+          an account in the admin area, or delete a movie tracking record there,
+          the database records the action and when it occurred. It can also
+          include the affected record's ID, your username, the film's title for
+          a tracking record, and the names of fields changed in an account edit.
+          These records have no scheduled expiry.
         </List.Item>
         <List.Item>
           <strong>Backups:</strong> copies of the database, taken nightly and
@@ -432,8 +456,12 @@ export default function PrivacyPolicy() {
           email addresses, its linked Google or GitHub sign-ins, and your movie
           lists and their record of changes within 30 days. Copies remain in
           backups for up to 30 days, except a copy left on our server as
-          described above, and in server logs until they're overwritten, and any
-          open sign-in sessions and tokens expire within two weeks.
+          described above, and in server logs until they're overwritten. Admin
+          activity records can remain after your account is deleted. Deleting
+          your account ends access to it. Existing session and refresh-token
+          records can remain on our server until the nightly cleanup after they
+          expire. Starting another Google or GitHub sign-in in the same browser
+          can extend the session record's expiry.
         </List.Item>
         <List.Item>
           <strong>Google and GitHub sign-in.</strong> You can remove

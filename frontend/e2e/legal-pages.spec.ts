@@ -33,6 +33,7 @@ for (const [label, path] of [
         await expect(
             page.getByRole("region", { name: "What you can do" }),
         ).toBeVisible();
+        await scanPage(page, info);
         const footerLink = page
             .getByRole("contentinfo")
             .getByRole("link", { name: label });

@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-11-20)
 
 Appendix C of `prd-privacy-terms.md` maps each statement at publication to the code or provider setting behind it,
 or identifies it as a commitment.

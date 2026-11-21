@@ -32,7 +32,11 @@ import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { priorityToaster } from "@/components/core/chakra/toaster";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
-import { returnPathFrom, safeReturnPath } from "@/utilities/returnPath";
+import {
+  isLegalDocumentPath,
+  returnPathFrom,
+  safeReturnPath,
+} from "@/utilities/returnPath";
 import logger from "@/services/logger";
 
 // ============================================================================
@@ -321,11 +325,12 @@ const Login = () => {
   // ==========================================================================
 
   useEffect(() => {
-    // Redirect if:
-    // 1. User is authenticated
-    // 2. Not in active login process
-    // 3. OAuth timing gate allows navigation (for fast OAuth UX)
-    if (authContext?.isAuthenticated && !isLoggingIn && oauthCanNavigate) {
+    if (
+      authContext?.isAuthenticated &&
+      !isLoggingIn &&
+      oauthCanNavigate &&
+      !isLegalDocumentPath(window.location.pathname)
+    ) {
       logger.debug("User already authenticated, redirecting");
       void navigate(returnPathFrom(location.search), { replace: true });
     }

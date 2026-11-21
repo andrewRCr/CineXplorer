@@ -75,8 +75,10 @@ export default function TermsOfService() {
       <LegalHeading as="h2">5. What you add</LegalHeading>
       <Text>
         What you add, such as your lists, ratings and reviews, stays yours. You
-        let us store it and show it back to you so the site can work. It's
-        private to you.
+        let us store it and show it back to you so the site can work. Access to
+        your lists, ratings and reviews in the app is limited to your account.
+        The Privacy Policy explains what the site operator can see in the admin
+        area.
       </Text>
       <LegalHeading as="h2">6. Film information and images</LegalHeading>
       <Text>

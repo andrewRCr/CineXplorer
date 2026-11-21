@@ -39,6 +39,7 @@ import type {
     AuthError,
 } from "@/types/auth-state";
 import {
+    isLegalDocumentPath,
     loginPathFor,
     returnPathFrom,
     safeReturnPath,
@@ -144,7 +145,11 @@ export function useAuth(): AuthStateProps {
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const oauthError = params.get("error");
-        if (oauthError) {
+        // Browser history can change before React Router commits the location.
+        const canNavigate =
+            !isLegalDocumentPath(location.pathname) &&
+            !isLegalDocumentPath(window.location.pathname);
+        if (oauthError && canNavigate) {
             logger.error("OAuth authentication failed", { error: oauthError });
             void navigate(loginPathFor(safeReturnPath(params.get("next"))), {
                 state: {
@@ -162,7 +167,7 @@ export function useAuth(): AuthStateProps {
             if (session.data === undefined) return;
             hasHandledOAuthRef.current = true;
             clearProviderFlags();
-            if (session.data && !getAuthTokens().access_token) {
+            if (canNavigate && session.data && !getAuthTokens().access_token) {
                 void navigate(firstRead.returnPath);
             }
         } else if (

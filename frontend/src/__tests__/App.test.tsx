@@ -1,8 +1,8 @@
 import userEvent from "@testing-library/user-event";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw/http";
-import { apiBaseUrl } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";
 import { ThemeSelectProvider } from "@/components/core/chakra/theme-provider";
 import { TestProviders } from "@tests/helpers/test-providers";
@@ -12,6 +12,7 @@ import {
   profile,
   token,
 } from "@tests/helpers/auth";
+import { gate } from "@tests/helpers/web-locks";
 import { server } from "@tests/mocks/server";
 import App from "../App";
 import { homeHandlers } from "@/pages/home/__tests__/homeFixtures";
@@ -52,6 +53,22 @@ function startAt(path: string) {
       </TestProviders>
     </ThemeSelectProvider>,
   );
+}
+
+function startPendingProviderReturn() {
+  const response = gate();
+  sessionStorage.setItem("oauth_in_progress", "google");
+  server.use(
+    http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+      await response.wait;
+      return HttpResponse.json({
+        meta: { is_authenticated: true },
+        data: { user: profile },
+      });
+    }),
+  );
+  startAt("/login?next=%2Fwatchlist");
+  return response;
 }
 
 it("contains a shell failure in the last-resort full-page display", async () => {
@@ -151,6 +168,74 @@ it.each(["/library", "/library/history", "/library?liked=true&sort=title"])(
   },
 );
 
+it.each([
+  ["/privacy", "Privacy Policy"],
+  ["/terms", "Terms of Service"],
+])(
+  "keeps the footer destination %s open when provider sign-in finishes",
+  async (path, label) => {
+    const user = userEvent.setup();
+    sessionStorage.setItem("oauth_start_time", String(Date.now()));
+    const response = startPendingProviderReturn();
+    const title = `CineXplorer ${label}`;
+
+    try {
+      const footer = await screen.findByRole("contentinfo");
+      await user.click(within(footer).getByRole("link", { name: label }));
+      expect(
+        await screen.findByRole("heading", { level: 1, name: title }),
+      ).toBeVisible();
+    } finally {
+      response.release();
+    }
+
+    expect(
+      await screen.findByRole("button", { name: profile.username }),
+    ).toBeVisible();
+    expect(window.location.pathname).toBe(path);
+    expect(
+      screen.getByRole("heading", { level: 1, name: title }),
+    ).toBeVisible();
+  },
+);
+
+it.each([
+  ["/privacy", "Privacy Policy"],
+  ["/terms", "Terms of Service"],
+])(
+  "keeps the browser at %s when provider sign-in finishes before the route commits",
+  async (path, label) => {
+    const response = startPendingProviderReturn();
+
+    try {
+      const footer = await screen.findByRole("contentinfo");
+      expect(within(footer).getByRole("link", { name: label })).toHaveAttribute(
+        "href",
+        path,
+      );
+      // Advance browser history and let the provider reply before the router sees it.
+      window.history.pushState(window.history.state, "", path);
+    } finally {
+      response.release();
+    }
+
+    expect(
+      await screen.findByRole("button", { name: profile.username }),
+    ).toBeVisible();
+    expect(window.location.pathname).toBe(path);
+
+    act(() => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: `CineXplorer ${label}`,
+      }),
+    ).toBeVisible();
+  },
+);
+
 it("serves Home's pitch at the root route", async () => {
   homeHandlers();
   startAt("/");
@@ -200,3 +285,19 @@ it("opens the terms while signed out and follows its privacy link", async () => 
   ).toBeVisible();
   expect(new URL(document.URL).pathname).toBe("/privacy");
 });
+
+it.each([
+  ["/privacy", "CineXplorer Privacy Policy"],
+  ["/Terms/", "CineXplorer Terms of Service"],
+])(
+  "keeps the legal page at %s open with an OAuth error query",
+  async (path, title) => {
+    const address = `${path}?error=oauth`;
+    startAt(address);
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: title }),
+    ).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe(address);
+  },
+);

@@ -3,7 +3,7 @@
 // these checks beside other work: each run has its own project and port, and leaves nothing behind.
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { constants } from "node:os";
 import { join } from "node:path";
@@ -31,13 +31,29 @@ const STACK_VARIABLES = ["SITE_PORT", "WORKTREE_SECRET_KEY", "STACK_CHECK_OWNER"
 const PLAYWRIGHT = "frontend/node_modules/.bin/playwright";
 const LAUNCH = 'import { chromium } from "@playwright/test"; const browser = await chromium.launch(); await browser.close();';
 
-// Every run on a machine shares this folder, whatever its temp directory: port claims, and each run's own folder of
-// throwaway files, named for its project and holding its owner.
-const SHARED = join(process.env.XDG_RUNTIME_DIR || "/tmp", "cinexplorer-stack-check");
+// Every run by this account on a machine shares this folder, whatever its shell's environment: port claims, and each
+// run's own folder of throwaway files, named for its project and holding its owner. It sits under /tmp, which every
+// shell can write, sandboxed agent shells included; STACK_CHECK_SHARED moves it, for tests.
+const SHARED = process.env.STACK_CHECK_SHARED || join("/tmp", `cinexplorer-stack-check-${process.getuid()}`);
 const CLAIMS = join(SHARED, "claims");
 const RUNS = join(SHARED, "runs");
 
 class NotRun extends Error {}
+
+// The shared folder must be this account's own directory: one that is another account's, or a link to somewhere else,
+// could hand a run someone else's claims or steer its teardown at their files.
+function useSharedFolder() {
+    try {
+        mkdirSync(SHARED, { recursive: true, mode: 0o700 });
+    } catch (error) {
+        if (error.code !== "EEXIST") throw error;
+    }
+    const folder = lstatSync(SHARED);
+    if (!folder.isDirectory() || folder.uid !== process.getuid()) {
+        throw new NotRun(`${SHARED} must be a directory this account owns`);
+    }
+    chmodSync(SHARED, 0o700);
+}
 
 const children = new Set();
 
@@ -330,6 +346,7 @@ async function writeStackFiles(folder, { project, port, owner, engine, env }) {
 }
 
 async function check(mode, extra) {
+    useSharedFolder();
     const env = cleanEnv();
     const engine = await preflight(mode, env);
     await sweep(env);
@@ -407,6 +424,7 @@ async function main(args) {
             console.error(`stack-check: --tear-down takes a stack-check project, not ${args[1] ?? "nothing"}`);
             return USAGE;
         }
+        useSharedFolder();
         report(args[1], await tearDown(args[1], process.env), `stack-check: removed ${args[1]}`);
         return 0;
     }

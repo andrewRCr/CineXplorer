@@ -86,12 +86,12 @@ no marker and no placeholder.
    sign-up and password reset, so one row of two links ("Privacy Policy", "Terms of Service") puts them in the app's
    interface everywhere. ADR disposition: `none`, a tactical choice.
 4. **Signed-out Home says why the app asks for sign-in data.** One line under the band's three points, linking the
-   policy, in the wording the Owner approved:
+   policy, in the wording the Owner originally approved:
 
    > An account keeps your lists. If you sign in with Google or GitHub, CineXplorer receives your name, email address
    > and basic profile, and uses them only for your account, never for advertising. [Privacy Policy]
 
-   It repeats what the policy's short version says sign-in receives ("your name, email address and basic profile").
+   The final Home wording in R9 of `prd-privacy-terms.md` reflects that the provider can omit some details.
    "Basic profile" covers what differs by provider: Google's profile picture and language; GitHub's username, which
    becomes the CineXplorer username, and its public profile details. "Only for your account" covers signing in and
    the account's own use of the name, such as signed-in Home's greeting (`SignedInHome`). The line changes when the
@@ -155,7 +155,8 @@ no marker and no placeholder.
      watchlist, watched, liked and rating marks, removals as well as additions, each with its time and the day in your
      own time zone (`record_changes`, `backend/apps/user_movie_data/services/movie_state_rules.py`). Logging a viewing
      that changes the film's rating records that too. The Library's History shows a part of the record, your additions
-     (`history_queries.py`); undoing a change erases it from the record. All of it stays visible only to its owner:
+     (`history_queries.py`). Undo can remove the film's latest recorded change to the mark or rating it restores.
+     All of it stays visible only to its owner:
      every endpoint on the `user_movie_data` router authenticates (`JWTSessionAuth`) and reads the requesting user's
      rows, and nothing in `backend/apps/*/api.py` shows one person's data to another. The saved film details (`Movie`,
      `backend/apps/core/models.py`) are TMDB's: ID, title, poster, release date, score, vote count, runtime, overview

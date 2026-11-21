@@ -1,6 +1,6 @@
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
 import { useLayoutEffect, useRef, type ReactNode } from "react";
-import { useLocation } from "react-router";
+import { NavigationType, useLocation, useNavigationType } from "react-router";
 
 interface LegalDocumentProps {
   title: string;
@@ -14,7 +14,9 @@ export function LegalDocument({
   children,
 }: LegalDocumentProps) {
   const { hash, key } = useLocation();
+  const navigationType = useNavigationType();
   const content = useRef<HTMLElement>(null);
+  const titleHeading = useRef<HTMLHeadingElement>(null);
 
   useLayoutEffect(() => {
     let id = "";
@@ -33,13 +35,16 @@ export function LegalDocument({
       heading.focus({ preventScroll: true });
     } else {
       window.scrollTo(0, 0);
+      if (!hash && navigationType !== NavigationType.Pop) {
+        titleHeading.current?.focus({ preventScroll: true });
+      }
     }
-  }, [hash, key]);
+  }, [hash, key, navigationType]);
 
   return (
     <Stack asChild gap={4} py={8} mx="auto" w="full" maxW="3xl" minW="0">
       <main ref={content}>
-        <Heading as="h1" size="2xl">
+        <Heading as="h1" size="2xl" ref={titleHeading} tabIndex={-1}>
           {title}
         </Heading>
         <Text color="on-muted">

@@ -52,8 +52,9 @@ export function HomeBand() {
         </SimpleGrid>
         <Text mt={8}>
           An account keeps your lists. If you sign in with Google or GitHub,
-          CineXplorer receives your name, email address and basic profile, and
-          uses them only for your account, never for advertising.{" "}
+          CineXplorer receives the name, email address and basic profile the
+          provider sends. We use that information only for your account, never
+          for advertising.{" "}
           <TextLink to={ROUTES.PRIVACY}>Privacy Policy</TextLink>
         </Text>
       </Container>

@@ -45,7 +45,7 @@ it("explains what sign-in shares and opens the privacy policy", async () => {
   ]);
 
   expect(screen.getByText(/^An account keeps your lists\./)).toHaveTextContent(
-    "An account keeps your lists. If you sign in with Google or GitHub, CineXplorer receives your name, email address and basic profile, and uses them only for your account, never for advertising. Privacy Policy",
+    "An account keeps your lists. If you sign in with Google or GitHub, CineXplorer receives the name, email address and basic profile the provider sends. We use that information only for your account, never for advertising. Privacy Policy",
   );
   const privacyLink = screen.getByRole("link", { name: "Privacy Policy" });
   expect(privacyLink).toHaveAttribute("href", "/privacy");

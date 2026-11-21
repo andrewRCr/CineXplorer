@@ -32,10 +32,10 @@ export default function PrivacyPolicy() {
           tracking scripts, and we don't sell or rent anyone's data.
         </List.Item>
         <List.Item>
-          If you sign in with Google or GitHub, we receive your name, email
-          address and basic profile. We read the first page of email addresses
-          GitHub returns and keep your primary, verified address if it appears
-          there.
+          If you sign in with Google or GitHub, we receive the name, email
+          address and basic profile the provider sends us. We read the first
+          page of email addresses GitHub returns and keep your primary, verified
+          address if it appears there.
         </List.Item>
       </List.Root>
       <LegalHeading as="h2">What we collect</LegalHeading>
@@ -57,10 +57,10 @@ export default function PrivacyPolicy() {
       <List.Root ps={6} gap={2}>
         <List.Item>
           <strong>What we receive:</strong> your Google account ID, your email
-          address and whether Google has verified it, your name (full, given and
-          family), a link to your profile picture, and your language setting if
-          Google includes it, along with technical details of the sign-in
-          itself.
+          address and its verification status if Google sends an address, your
+          name (full, given and family), a link to your profile picture, and
+          your language setting if Google includes it, along with technical
+          details of the sign-in itself.
         </List.Item>
         <List.Item>
           <strong>How we use it:</strong> to create your CineXplorer account or
@@ -78,8 +78,12 @@ export default function PrivacyPolicy() {
           <strong>How we store it:</strong> in the site's database on our
           server, together with a copy of the profile Google sent, which is
           updated each time you sign in, and when you first and last signed in
-          with Google. We don't keep Google's access or refresh tokens, so the
-          site can't act on your Google account after you've signed in.
+          with Google. We don't keep Google's access or refresh tokens with your
+          account. If Google sends no email address for a new account, we keep
+          the pending sign-in in your browser's session on our server, including
+          the profile Google sent, its access token and any refresh token it
+          sends. The session rules under "How long we keep things" explain when
+          pending sign-ins are cleared.
         </List.Item>
         <List.Item>
           <strong>Sharing:</strong> we don't sell Google user data or use it for
@@ -148,12 +152,8 @@ export default function PrivacyPolicy() {
           Sign-up requires GitHub to return a verified primary email address. If
           that address is missing, we keep the pending sign-in in your browser's
           session on our server, including the profile GitHub sent and its
-          access token. We clear the earlier pending sign-in if a later Google
-          or GitHub sign-in in that browser reaches our account checks and the
-          server saves the removal. If you cancel the later attempt or it fails,
-          those details can remain in your session. The session expires two
-          weeks after the server last saves it. Starting another sign-in can
-          extend that expiry, and expired sessions are removed nightly.
+          access token. The session rules under "How long we keep things"
+          explain when pending sign-ins are cleared.
         </List.Item>
         <List.Item>
           You can revoke CineXplorer's access in your GitHub settings, under
@@ -179,8 +179,8 @@ export default function PrivacyPolicy() {
           a record of the changes you make to a film's watchlist, watched, liked
           and rating marks, removals as well as additions, each with its time
           and the day in your own time zone. Logging a viewing that changes a
-          film's rating is recorded too, and undoing a change erases it from the
-          record.
+          film's rating is recorded too. Undo can remove the film's latest
+          recorded change to the mark or rating you restore.
         </List.Item>
       </List.Root>
       <Text>
@@ -388,10 +388,13 @@ export default function PrivacyPolicy() {
       <List.Root ps={6} gap={2}>
         <List.Item>
           <strong>
-            Your account, its linked Google or GitHub profile, your movie lists
-            and their record of changes:
+            Your account, its linked Google or GitHub profile, and your
+            remaining movie lists, viewings, reviews and change history:
           </strong>{" "}
-          until your account is deleted.
+          until your account is deleted. Viewing and review entries can be
+          deleted sooner. Deleting a film's tracking record also deletes its
+          entries and change history. Undo can remove the film's latest recorded
+          change to the mark or rating you restore.
         </List.Item>
         <List.Item>
           <strong>Accounts whose email address is never verified:</strong> kept
@@ -399,9 +402,18 @@ export default function PrivacyPolicy() {
         </List.Item>
         <List.Item>
           <strong>Sign-in sessions and tokens:</strong> sessions expire two
-          weeks after the server last saved them. Access tokens expire after
-          five minutes and refresh tokens after 14 days. The server removes
-          expired sessions and refresh-token records nightly.
+          weeks after the server last saved them. CineXplorer access tokens
+          expire after five minutes and its refresh tokens after 14 days. The
+          server removes expired sessions and CineXplorer refresh-token records
+          nightly.
+        </List.Item>
+        <List.Item>
+          <strong>Pending Google or GitHub sign-ins:</strong> we clear an
+          earlier pending sign-in if a later Google or GitHub sign-in in that
+          browser reaches our account checks and the server saves the removal.
+          If you cancel the later attempt or it fails, those details can remain
+          in your session. Starting another sign-in can extend the session's
+          expiry.
         </List.Item>
         <List.Item>
           <strong>Server logs:</strong> each service keeps about its most recent

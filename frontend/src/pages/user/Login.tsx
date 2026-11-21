@@ -329,14 +329,18 @@ const Login = () => {
   }, [searchParams, showNotice]);
 
   useEffect(() => {
+    const current = window.location;
     if (
       searchParams.get("signed_out") === "true" &&
-      authContext?.status === "anonymous"
+      authContext?.status === "anonymous" &&
+      current.pathname === location.pathname &&
+      current.search === location.search &&
+      current.hash === location.hash
     ) {
       showNotice("You've been logged out.");
-      window.history.replaceState({}, "", ROUTES.LOGIN);
+      window.history.replaceState(window.history.state, "", ROUTES.LOGIN);
     }
-  }, [authContext?.status, searchParams, showNotice]);
+  }, [authContext?.status, location, searchParams, showNotice]);
 
   // ==========================================================================
   // Auth Redirect (already authenticated users)

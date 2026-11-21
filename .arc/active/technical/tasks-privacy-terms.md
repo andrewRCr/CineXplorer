@@ -307,8 +307,23 @@ the worktree's browsable stack with Home's line and the notices in place.
       summary states which page reloads at settlement, and the OAuth guidance uses the existing guarded hook example.
       All 26 related tests and 15 legal-page Chromium scenarios passed, along with lint, formatting and type checking.
 
+    - [x] **4.1.l Correct pending sign-in and tracking disclosures and protect legal navigation.** The policy
+      describes pending Google data held in sessions, the shared session rules and earlier deletions of tracking
+      data. Appendix C records both Google profile intake paths and covers the deletion paths. `Login` clears
+      its signed-out notice only from its own URL, and `LegalDocument` focuses the title after in-app navigation
+      without a fragment. All four browser regressions failed before the fixes and passed afterward.
+      Both rendered documents matched their appendices. All 143 related tests and 24 Chromium scenarios passed,
+      along with lint, formatting and type checking.
+
+    - [x] **4.1.m Align the Home and Undo disclosures and strengthen the sign-out regression.** `HomeBand`
+      describes the details the provider sends. The privacy policy and its map describe the latest tracking
+      change Undo can remove. Both Chromium cases keep `Login` mounted through the anonymous session update
+      before committing the destination, and failed with the URL guard removed. Both rendered documents matched
+      their appendices, and signed-out Home matched R9. All 160 related tests and 17 legal-page Chromium scenarios
+      passed, along with lint, formatting and type checking.
+
     - Local verification is complete. The full frontend test and Chromium suites passed during verification.
-      The focused runs in 4.1.a through 4.1.k cover the subsequent changes. The criteria below record the local
+      The focused runs in 4.1.a through 4.1.m cover the subsequent changes. The criteria below record the local
       results and the remaining merge checks. The branch changes no backend API or generated frontend API files.
 
 - [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
@@ -339,7 +354,7 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
   scan; `/privacy` at 360×800 doesn't scroll sideways; and its "Who else handles your data" heading lands below the top
   bar from the in-page link and on a direct load of its fragment. (R1, R3, R5, R8, R14)
 
-    All 15 local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
+    All 17 local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
     Home and both legal pages. The CI smoke result is pending.
 
 - [x] 2. **The texts are the appendices'.** A reviewer comparing each page's rendered text with Appendix A and Appendix
@@ -356,8 +371,10 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
     Tasks 4.1.a through 4.1.f corrected the disclosures and their grounding records. The policy covers admin detail,
     deletion previews, audit records and search logging, GitHub email lookup and pending sign-in, linking after
     password removal, and session and token lifetimes. It distinguishes the account record's update timestamp from
-    linked email verification and identifies which sign-ups send verification and welcome messages. The final trace
-    against the merge commit is pending.
+    linked email verification and identifies which sign-ups send verification and welcome messages. Task 4.1.l
+    traced pending Google sign-in storage, both Google profile intake paths and tracking-data deletion. Task 4.1.m
+    traced which change Undo can remove and aligned the sign-in disclosure on Home. The final trace against the
+    merge commit is pending.
 
 - [x] 4. **The links are in place.** Unit tests show the footer's two links, signed-out Home's line and its link (and
   its absence signed in), and the sign-up notice with both links on `Register` and `Login`. (R8 to R10, R13)

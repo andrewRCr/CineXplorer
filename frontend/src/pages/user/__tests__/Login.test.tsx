@@ -544,11 +544,22 @@ describe("returning to the requested page", () => {
 });
 
 describe("signed-out notice", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   async function renderSignedOut() {
-    window.history.replaceState({}, "", "/login?signed_out=true");
+    const signedOutUrl = "/login?signed_out=true";
+    window.history.replaceState({}, "", signedOutUrl);
+    const { href, pathname, search, hash } = new URL(document.URL);
+    vi.stubGlobal("location", {
+      ...window.location,
+      href,
+      pathname,
+      search,
+      hash,
+    });
     const view = renderWithoutRouter(
       <TestProviders>
-        <MemoryRouter initialEntries={["/login?signed_out=true"]}>
+        <MemoryRouter initialEntries={[signedOutUrl]}>
           <AuthContextProvider>
             <Routes>
               <Route path="/login" element={<Login />} />

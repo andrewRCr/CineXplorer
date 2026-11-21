@@ -6,6 +6,10 @@ import { gate } from "../tests/helpers/web-locks";
 
 const section = "Who else handles your data";
 const privacyFragment = "/privacy#who-else-handles-your-data";
+const legalPages = [
+    ["Privacy Policy", "/privacy"],
+    ["Terms of Service", "/terms"],
+];
 
 async function expectSectionBelowTopBar(page: Page, name = section) {
     const heading = page.getByRole("heading", { level: 2, name, exact: true });
@@ -24,11 +28,8 @@ async function expectSectionBelowTopBar(page: Page, name = section) {
         .toBe(true);
 }
 
-for (const [label, path] of [
-    ["Privacy Policy", "/privacy"],
-    ["Terms of Service", "/terms"],
-]) {
-    test(`the Home footer opens the ${label} at the top`, async ({
+for (const [label, path] of legalPages) {
+    test(`keyboard activation of the Home footer opens the ${label} at the top`, async ({
         page,
     }, info) => {
         await page.goto("/");
@@ -39,19 +40,19 @@ for (const [label, path] of [
         const footerLink = page
             .getByRole("contentinfo")
             .getByRole("link", { name: label });
-        await footerLink.scrollIntoViewIfNeeded();
+        await footerLink.focus();
         await expect
             .poll(() => page.evaluate(() => window.scrollY))
             .toBeGreaterThan(0);
-        await footerLink.click();
+        await footerLink.press("Enter");
 
         await expect(page).toHaveURL(path);
-        await expect(
-            page.getByRole("heading", {
-                level: 1,
-                name: `CineXplorer ${label}`,
-            }),
-        ).toBeInViewport();
+        const title = page.getByRole("heading", {
+            level: 1,
+            name: `CineXplorer ${label}`,
+        });
+        await expect(title).toBeInViewport();
+        await expect(title).toBeFocused();
         await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
         await scanPage(page, info);
     });
@@ -364,10 +365,72 @@ test.describe("account actions completing on a legal page", () => {
         await scanPage(page, info);
     });
 
-    for (const [label, path] of [
-        ["Privacy Policy", "/privacy"],
-        ["Terms of Service", "/terms"],
-    ]) {
+    for (const [label, path] of legalPages) {
+        test(`the signed-out notice leaves the ${label} address intact during navigation`, async ({
+            page,
+        }, info) => {
+            const session = await holdResponse(
+                page,
+                "/_allauth/browser/v1/auth/session",
+                { status: 401 },
+                401,
+            );
+            await page.goto("/login?signed_out=true");
+            const loginTitle = page.getByRole("heading", {
+                level: 1,
+                name: "Sign in",
+                exact: true,
+            });
+            try {
+                await session.requested;
+                await expect(loginTitle).toBeVisible();
+                const footerLink = page
+                    .getByRole("contentinfo")
+                    .getByRole("link", { name: label });
+                // Update history first to hold the router commit across the session reply.
+                await footerLink.evaluate((link) => {
+                    history.pushState(
+                        {
+                            key: "legal-destination",
+                            idx: history.state.idx + 1,
+                        },
+                        "",
+                        link.getAttribute("href"),
+                    );
+                });
+                await expect(page).toHaveURL(path);
+            } finally {
+                session.release();
+            }
+            await expect(
+                page
+                    .getByRole("banner")
+                    .getByRole("link", { name: "Sign in", exact: true }),
+            ).toBeVisible();
+            await page.evaluate(
+                () =>
+                    new Promise<void>((resolve) => {
+                        requestAnimationFrame(() =>
+                            requestAnimationFrame(() => resolve()),
+                        );
+                    }),
+            );
+            await expect(loginTitle).toBeVisible();
+            await expect(page).toHaveURL(path);
+            await page.evaluate(() => {
+                window.dispatchEvent(
+                    new PopStateEvent("popstate", { state: history.state }),
+                );
+            });
+            await expect(
+                page.getByRole("heading", {
+                    level: 1,
+                    name: `CineXplorer ${label}`,
+                }),
+            ).toBeVisible();
+            await scanPage(page, info);
+        });
+
         test(`a rejected renewal reconciles the session on ${path}`, async ({
             page,
         }, info) => {

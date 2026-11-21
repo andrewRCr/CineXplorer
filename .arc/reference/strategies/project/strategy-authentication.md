@@ -515,8 +515,8 @@ Session writers cancel any in-flight session read before replacing it:
   immediately. It sends the password logout request or allauth's CSRF-protected session DELETE. After success or
   failure it reloads the current legal URL if one is open or loads `/login?signed_out=true` for other routes.
   A fresh load drops data fetched with a provider cookie while the request was pending.
-  A newer password sign-in's token survives that reload. Login shows the signed-out notice only after the fresh
-  session reads `anonymous`, then clears the parameter.
+  A newer password sign-in's token survives that reload. `Login` shows the signed-out notice and clears the
+  parameter when the fresh session reads `anonymous` and the browser still shows the Login URL that owns the notice.
 - Failed idle renewal writes `null` and runs the change-of-user step only while its original authentication version
   and user ownership remain current, checked before and after canceling the session read. An older renewal cannot
   clear a provider session that landed while it was pending.

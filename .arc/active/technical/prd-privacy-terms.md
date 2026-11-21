@@ -108,8 +108,8 @@ in, sign up, forgot password), so both links are in the app's interface everywhe
 
 **R9. Signed-out Home's line.** Signed-out Home shows one line under `HomeBand`'s three points:
 
-> An account keeps your lists. If you sign in with Google or GitHub, CineXplorer receives your name, email address
-> and basic profile, and uses them only for your account, never for advertising. [Privacy Policy]
+> An account keeps your lists. If you sign in with Google or GitHub, CineXplorer receives the name, email address and
+> basic profile the provider sends. We use that information only for your account, never for advertising. [Privacy Policy]
 
 "Privacy Policy" links `/privacy`. Signed-in Home (`SignedInHome`) doesn't show the line.
 
@@ -206,10 +206,10 @@ for it, with the effective dates of R7.
   deletion, data export, and changing an email address, username or password in the app; removing accounts that never
   verify; pruning a failed backup's local copy; shortening the two-week catalog session; stopping the `messages`
   cookie the app never shows; logging the visitor's address rather than the proxy's on account events; keeping
-  search text and the full referring address out of the web server's error log; redacting admin search text from
-  routine request logs; and refusing a GitHub sign-up that brings no verified primary address, which today leaves
-  the pending sign-in, GitHub's token included, in the session all stay as they are, each disclosed. When one of
-  them changes, the rule in R11 updates the texts with it.
+  search text and the full referring address out of the web server's error log; and redacting admin search text from
+  routine request logs are separate changes. Refusing to keep pending sign-ins and tokens when Google supplies no
+  email address or GitHub supplies no verified primary address is also separate work. R11 pairs changes in this
+  behavior with changes to the published texts.
 - **A cookie banner.** The site sets no advertising, analytics or tracking cookies. Three of its four cookies are
   needed for it to work; the fourth, `messages`, lasts only the browser session, holds a notice of the visitor's own
   sign-up, verification or sign-in, and is to be removed by its own errand.
@@ -296,7 +296,7 @@ for it, with the effective dates of R7.
   under sign in, sign up and forgot password. _ADR:_ `none`, a tactical choice.
 - **D4: signed-out Home says why the app asks for sign-in data** (R9), under the band's three points, over the hero,
   whose composition is settled and where a sentence of terms would compete with the headline, and over a section of
-  its own for one sentence. The band already explains what an account is for ("Track your films"). The line agrees
+  its own for the notice. The band already explains what an account is for ("Track your films"). The line agrees
   with what the policy's short version says sign-in receives. The policy gives the details of GitHub's email
   response and which address the site keeps. "Basic profile" covers what differs by provider: Google's
   profile picture and language; GitHub's username, which becomes the CineXplorer username where it's available, and
@@ -341,9 +341,10 @@ for it, with the effective dates of R7.
       times, the current rating, logged viewings and reviews, and the record of changes, which Library and History
       show for the signed-in account. The operator can view tracked films, their list marks and associated dates,
       and current ratings in Django admin. Deletion previews show viewing entry IDs and the fields and times of
-      tracking changes. The tracking records are deleted with the account. The film details saved from TMDB add the
-      score, vote count, runtime, overview and genres (`Movie`). The short version says an account keeps this record
-      beside the watchlist.
+      tracking changes. The remaining tracking records are deleted with the account. Viewing and review entries,
+      whole tracking records and their dependent rows, and undone changes can be deleted earlier. The film details
+      saved from TMDB add the score, vote count, runtime, overview and genres (`Movie`). The short version says an
+      account keeps this record beside the watchlist.
     - **Your account** drops "plus your first and last name if you give them": the sign-up form asks for none.
       A timestamp updates when the full account record is saved. Email verification is recorded on the address.
     - **Google and GitHub** add when you first and last signed in with each (`SocialAccount.date_joined` and
@@ -356,9 +357,10 @@ for it, with the effective dates of R7.
       After revoking access at Google or GitHub, signing in again finds the same account (`_lookup_by_socialaccount`).
       Unlinking on CineXplorer is by request.
       GitHub keeps only the primary, verified address (`CustomSocialAccountAdapter.populate_user`), and the GitHub
-      username becomes the CineXplorer username only where it's available. A GitHub sign-in with no verified
-      primary address leaves its pending sign-in, token included, in the session (§ 5). The policy gives its
-      last-save expiry, clearance when a subsequent callback reaches the account checks and saves the removal,
+      username becomes the CineXplorer username only where it's available. For a new account, a Google response
+      without an email address or a GitHub response without a verified primary address leaves a pending sign-in and
+      its provider tokens in the session (§ 5). The policy gives the pending data's last-save expiry, clearance when
+      a subsequent callback reaches the account checks and saves the removal,
       possible retention after a cancellation or other failure, and nightly cleanup. A password removed when Google
       links an unverified account can be reset by email (allauth's reset request doesn't need a usable password).
       A sign-in with a matching verified primary address from GitHub can link to the same account. Google's page
@@ -487,6 +489,11 @@ None.
   Considerations, and named the password-reset email send call in Appendix C.
 - **2026-11-20.** Clarified when the renewal rate limit uses the signed-in account or the IP address. On either
   legal route, failed renewal reloads that address for a fresh session read.
+- **2026-11-20.** Disclosed pending Google sign-in storage, traced Google profile data received through userinfo,
+  and explained which tracking records can be deleted before account deletion. These wording corrections fall
+  under D6's `none` ADR disposition.
+- **2026-11-20.** Aligned R9 with the providers' optional profile data and clarified which change Undo can remove
+  from the tracking record. These wording corrections fall under D6's `none` ADR disposition.
 
 ## Appendix A: Privacy Policy
 
@@ -505,8 +512,8 @@ the site collects, why, who else handles it, how long it's kept, and what you ca
   rate and review.
 - We collect what's needed to run accounts and keep the site working, and nothing for advertising. There are no ads,
   no analytics or tracking scripts, and we don't sell or rent anyone's data.
-- If you sign in with Google or GitHub, we receive your name, email address and basic profile. We read the first page
-  of email addresses GitHub returns and keep your primary, verified address if it appears there.
+- If you sign in with Google or GitHub, we receive the name, email address and basic profile the provider sends us.
+  We read the first page of email addresses GitHub returns and keep your primary, verified address if it appears there.
 
 ## What we collect
 
@@ -522,9 +529,9 @@ When you sign in with Google, Google asks you to share your basic profile and em
 That's all the site requests: it can't see your Gmail, Drive, contacts, calendar or anything else in your Google
 account.
 
-- **What we receive:** your Google account ID, your email address and whether Google has verified it, your name (full,
-  given and family), a link to your profile picture, and your language setting if Google includes it, along with
-  technical details of the sign-in itself.
+- **What we receive:** your Google account ID, your email address and its verification status if Google sends an
+  address, your name (full, given and family), a link to your profile picture, and your language setting if Google
+  includes it, along with technical details of the sign-in itself.
 - **How we use it:** to create your CineXplorer account or sign you in to it, to fill in your email address and name
   and make your username from them, and to recognize you the next time you sign in with Google. If your Google email
   address is verified by Google and matches an existing CineXplorer account, Google sign-in is linked to that account.
@@ -533,7 +540,9 @@ account.
   same address as your verified primary address.
 - **How we store it:** in the site's database on our server, together with a copy of the profile Google sent, which is
   updated each time you sign in, and when you first and last signed in with Google. We don't keep Google's access or
-  refresh tokens, so the site can't act on your Google account after you've signed in.
+  refresh tokens with your account. If Google sends no email address for a new account, we keep the pending sign-in
+  in your browser's session on our server, including the profile Google sent, its access token and any refresh token
+  it sends. The session rules under "How long we keep things" explain when pending sign-ins are cleared.
 - **Sharing:** we don't sell Google user data or use it for advertising, and we share it only with the providers that
   run the site: it's stored with the rest of the database at our hosting and backup providers, and when we email you,
   your email address and username go to our email provider (see
@@ -563,10 +572,7 @@ When you sign in with GitHub, GitHub asks you to share your public profile and y
   when you first and last signed in with GitHub. We don't keep GitHub's access token with your account, and we have no
   access to your repositories. Sign-up requires GitHub to return a verified primary email address. If that address is
   missing, we keep the pending sign-in in your browser's session on our server, including the profile GitHub sent and
-  its access token. We clear the earlier pending sign-in if a later Google or GitHub sign-in in that browser reaches
-  our account checks and the server saves the removal. If you cancel the later attempt or it fails, those details can
-  remain in your session. The session expires two weeks after the server last saves it. Starting another sign-in can
-  extend that expiry, and expired sessions are removed nightly.
+  its access token. The session rules under "How long we keep things" explain when pending sign-ins are cleared.
 - You can revoke CineXplorer's access in your GitHub settings, under authorized OAuth apps. As with Google, that
   changes nothing here: signing in with GitHub again signs you in to the same account.
 
@@ -582,7 +588,7 @@ When you're signed in, the site stores what you track:
   it;
 - a record of the changes you make to a film's watchlist, watched, liked and rating marks, removals as well as
   additions, each with its time and the day in your own time zone. Logging a viewing that changes a film's rating is
-  recorded too, and undoing a change erases it from the record.
+  recorded too. Undo can remove the film's latest recorded change to the mark or rating you restore.
 
 Your Library shows your lists, and its History shows your viewings, reviews and additions from the record. The site
 limits access to your Library and History to your account. The site operator can view the films you track, their
@@ -669,12 +675,17 @@ if the law required it.
 
 ## How long we keep things
 
-- **Your account, its linked Google or GitHub profile, your movie lists and their record of changes:** until your
-  account is deleted.
+- **Your account, its linked Google or GitHub profile, and your remaining movie lists, viewings, reviews and change
+  history:** until your account is deleted. Viewing and review entries can be deleted sooner. Deleting a film's
+  tracking record also deletes its entries and change history. Undo can remove the film's latest recorded change
+  to the mark or rating you restore.
 - **Accounts whose email address is never verified:** kept until deleted on request.
-- **Sign-in sessions and tokens:** sessions expire two weeks after the server last saved them. Access tokens expire
-  after five minutes and refresh tokens after 14 days. The server removes expired sessions and refresh-token records
-  nightly.
+- **Sign-in sessions and tokens:** sessions expire two weeks after the server last saved them. CineXplorer access
+  tokens expire after five minutes and its refresh tokens after 14 days. The server removes expired sessions and
+  CineXplorer refresh-token records nightly.
+- **Pending Google or GitHub sign-ins:** we clear an earlier pending sign-in if a later Google or GitHub sign-in in
+  that browser reaches our account checks and the server saves the removal. If you cancel the later attempt or it
+  fails, those details can remain in your session. Starting another sign-in can extend the session's expiry.
 - **Server logs:** each service keeps about its most recent 30 MB of logs, and older entries are overwritten. There's
   no fixed time limit.
 - **Admin activity records:** when we add, change or delete an account in the admin area, or delete a movie tracking
@@ -858,7 +869,7 @@ installed packages of those names.
 | "We collect what's needed to run accounts and keep the site working, and nothing for advertising." | Every collection below serves an account, the logs or the limits; no advertising code | as below |
 | "There are no ads, no analytics or tracking scripts" | No analytics or advertising package; `index.html` loads the app and two inline scripts (startup background, sign-in marker); the browser loads nothing from another host but TMDB's images | `frontend/package.json`, `frontend/index.html`, image URLs under `frontend/src/components/movie/` |
 | "we don't sell or rent anyone's data" | _commitment_ | — |
-| "we receive your name, email address and basic profile" | Google: scopes `profile` and `email`, read from the ID token; GitHub: `/user` and `/user/emails` under scope `user:email` | allauth `socialaccount/providers/google/`, `socialaccount/providers/github/` |
+| "we receive the name, email address and basic profile the provider sends us" | Google: scopes `profile` and `email`, read from the ID token or userinfo. GitHub: `/user` and `/user/emails` under scope `user:email` | allauth `socialaccount/providers/google/`, `socialaccount/providers/github/` |
 | "We read the first page of email addresses GitHub returns and keep your primary, verified address if it appears there" | `get_emails` makes one GET request to `/user/emails`; GitHub defaults to page 1 _(provider)_. `populate_user` keeps the verified primary address from that response | allauth `github/views.py`, `docs.github.com/en/rest/users/emails`, `backend/apps/authentication/adapters.py` |
 
 #### Your account
@@ -873,9 +884,9 @@ installed packages of those names.
 | Sentence | What makes it true | Where |
 | --- | --- | --- |
 | "Google asks you to share your basic profile and email address" | No scope configured, so allauth's default `profile` and `email` | `backend/config/settings.py` (`SOCIALACCOUNT_PROVIDERS`), allauth `google/provider.py` |
-| "That's all the site requests: it can't see your Gmail…" | Those two scopes only; no token kept to use later | as above; `SOCIALACCOUNT_STORE_TOKENS` unset |
-| "What we receive" | `complete_login` decodes the ID token, and its claims become `extra_data`: ID, address and its verified flag, names, picture, `locale` when sent, and the token's own fields (issuer, audience, times). `FETCH_USERINFO` is off | allauth `google/views.py` |
-| "to create your CineXplorer account or sign you in to it" | Auto sign-up (`SOCIALACCOUNT_AUTO_SIGNUP`), or the lookup below | `settings.py`, allauth `socialaccount/internal/flows/signup.py`, `login.py` |
+| "That's all the site requests: it can't see your Gmail…" | Those two scopes limit access to the profile and email | as above |
+| "What we receive" | `GoogleOAuth2Adapter.complete_login` decodes the ID token when present and fetches userinfo when it is absent, even with `FETCH_USERINFO` off. The returned ID, names, picture, locale and other data become `extra_data`, including issuer, audience and times on the ID-token path. `GoogleProvider.extract_email_addresses` returns an address and verified flag when Google supplies an email | allauth `google/views.py`, `google/provider.py`, `socialaccount/providers/base/provider.py` |
+| "to create your CineXplorer account or sign you in to it" | Auto sign-up (`SOCIALACCOUNT_AUTO_SIGNUP`), or the lookup below. For an unverified match, the account-exists email path stops before sending because the headless reset request URL is missing | `backend/config/settings.py`, allauth `socialaccount/internal/flows/signup.py`, `login.py`, `account/adapter.py` (`send_account_already_exists_mail`), `account/internal/flows/password_reset.py` (`get_reset_password_url`), `core/internal/httpkit.py` |
 | "to fill in your email address and name and make your username from them" | `populate_user` sets the address and names; `save_user` calls `populate_username`, which builds the username from first name, last name and address | allauth `socialaccount/adapter.py`, `account/adapter.py` |
 | "to recognize you the next time you sign in with Google" | `_lookup_by_socialaccount` finds the account by provider and ID | allauth `socialaccount/models.py` |
 | "If your Google email address is verified by Google and matches an existing CineXplorer account, Google sign-in is linked" | `authenticate_by_email` matches verified addresses only; `SOCIALACCOUNT_EMAIL_AUTHENTICATION` and `_AUTO_CONNECT` connect the account (`_accept_login`) | allauth `socialaccount/adapter.py`, `models.py`; `settings.py` |
@@ -883,7 +894,10 @@ installed packages of those names.
 | "You can sign in with Google or reset your password using that email address" | `_lookup_by_socialaccount` finds the linked Google account. `ResetPasswordForm`, which the headless input extends, finds the user by address without asking for a usable password and mails the reset link there | allauth `socialaccount/models.py`, `account/forms.py`, `account/internal/flows/password_reset.py` |
 | "GitHub sign-in can also link to the account if GitHub returns the same address as your verified primary address" | The GitHub adapter keeps the verified primary address. `authenticate_by_email` looks it up regardless of whether the local account has a usable password; `_accept_login` connects the GitHub account | `backend/apps/authentication/adapters.py`, `backend/config/settings.py`, allauth `socialaccount/adapter.py`, `socialaccount/models.py` |
 | "in the site's database on our server…, a copy of the profile Google sent, updated each time you sign in, and when you first and last signed in" | The database runs in the server's `db` container; `SocialAccount.extra_data`, saved again at each lookup; `date_joined`; `last_login` (`auto_now`) | `infrastructure/docker-compose.prod.yml`, allauth `socialaccount/models.py` |
-| "We don't keep Google's access or refresh tokens" | `SOCIALACCOUNT_STORE_TOKENS` unset (default `False`). A new Google address can sign up and a verified match can link. For an unverified match, the account-exists email path stops before sending because the headless reset request URL is missing | `backend/config/settings.py`, allauth `socialaccount/app_settings.py`, `socialaccount/internal/flows/signup.py`, `account/adapter.py` (`send_account_already_exists_mail`), `account/internal/flows/password_reset.py` (`get_reset_password_url`), `core/internal/httpkit.py` |
+| "We don't keep Google's access or refresh tokens with your account" | `SOCIALACCOUNT_STORE_TOKENS` is unset (default `False`), so `SocialLogin.save` and `_store_token` skip linked-account token writes | `backend/config/settings.py`, allauth `socialaccount/app_settings.py`, `socialaccount/models.py` |
+| "If Google sends no email address for a new account, we keep the pending sign-in in your browser's session on our server" | `GoogleProvider.extract_email_addresses` returns no address. Email is required, so `process_signup` calls `redirect_to_signup`. It puts the serialized login in the session. The headless callback returns a redirect and `SessionMiddleware.process_response` saves the modified database session | `backend/config/settings.py`, allauth `google/provider.py`, `socialaccount/internal/flows/signup.py`, `headless/socialaccount/internal.py`; Django `contrib/sessions/middleware.py` |
+| "including the profile Google sent, its access token and any refresh token it sends" | `OAuth2Adapter.parse_token` sets the access token and optional refresh token. The callback attaches the token before `SocialLogin.serialize` includes it with the account and its `extra_data` in the pending sign-in | allauth `socialaccount/providers/oauth2/views.py`, `socialaccount/models.py` |
+| "The session rules under … explain when pending sign-ins are cleared" | Both providers use the shared pending sign-in and session rules below | allauth `socialaccount/internal/flows/signup.py`, `socialaccount/internal/flows/login.py` |
 | "we don't sell Google user data or use it for advertising" | _commitment_ | — |
 | "we share it only with the providers that run the site: it's stored with the rest of the database at our hosting and backup providers" | The database runs on the server, and its backups go to R2. The server's other outbound requests go to the email API, to TMDB with no visitor detail, and to Google and GitHub during their own sign-ins | `infrastructure/docker-compose.prod.yml`, `infrastructure/deploy/backup.sh`, `backend/apps/core/email_backend.py`, `backend/apps/core/services/base_api_client.py`, allauth `socialaccount/providers/` |
 | "when we email you, your email address and username go to our email provider" | Password-reset emails can go to a Google address through the ZeptoMail backend. The reset email names the username in both its HTML and text parts; a Google sign-up builds the username from the Google profile (`populate_username`) | `backend/apps/core/email_backend.py`, allauth `account/internal/flows/password_reset.py`, `templates/account/email/password_reset_key_message.txt`; `backend/templates/account/email/password_reset_key_message.html` |
@@ -909,9 +923,7 @@ installed packages of those names.
 | "We don't keep GitHub's access token with your account" | `SOCIALACCOUNT_STORE_TOKENS` unset | allauth `socialaccount/app_settings.py` |
 | "we have no access to your repositories" | Scope `user:email` grants none | allauth `github/provider.py` |
 | "Sign-up requires GitHub to return a verified primary email address"; if missing, "we keep the pending sign-in in your browser's session on our server, including the profile GitHub sent and its access token" | The adapter clears the email when no verified primary address is returned. With email required, `redirect_to_signup` stores the serialized sign-in, including the profile and token, in the database-backed session. The headless callback redirects back to the app and lets Django save the session | `backend/apps/authentication/adapters.py`, `backend/config/settings.py`, allauth `socialaccount/internal/flows/signup.py`, `socialaccount/models.py`, `headless/socialaccount/internal.py`; Django `contrib/sessions/middleware.py` |
-| "We clear the earlier pending sign-in if a later Google or GitHub sign-in in that browser reaches our account checks and the server saves the removal" | `pre_social_login` calls `clear_pending_signup` before looking up the account. Django persists the removal when it saves the session | allauth `socialaccount/internal/flows/login.py`, `socialaccount/internal/flows/signup.py`; Django `contrib/sessions/middleware.py` |
-| "If you cancel the later attempt or it fails, those details can remain in your session" | The callback's `_get_state` calls `unstash_state`, saving the session with the earlier details still present. A provider cancellation redirects before `pre_social_login`. If clearance occurs in memory and the response is 5xx, Django skips the subsequent save | allauth `socialaccount/providers/oauth2/views.py`, `socialaccount/internal/statekit.py`, `headless/socialaccount/internal.py`; Django `contrib/sessions/middleware.py` |
-| "The session expires two weeks after the server last saves it. Starting another sign-in can extend that expiry, and expired sessions are removed nightly" | `stash_state` saves the current session when redirecting to a provider, giving the row a new expiry before the callback can clear the pending sign-in. The database backend sets expiry from the last save, and `clearsessions` removes expired rows nightly | allauth `socialaccount/internal/statekit.py`; Django `contrib/sessions/backends/db.py`, `contrib/sessions/backends/base.py`; `infrastructure/deploy/maintenance.sh` |
+| "The session rules under … explain when pending sign-ins are cleared" | Both providers use the shared pending sign-in and session rules below | allauth `socialaccount/internal/flows/signup.py`, `socialaccount/internal/flows/login.py` |
 | "You can revoke CineXplorer's access in your GitHub settings, under authorized OAuth apps." | The Authorized OAuth Apps tab, under Settings and Applications, offers "Revoke" _(provider)_ | `docs.github.com/en/apps/oauth-apps/using-oauth-apps/reviewing-your-authorized-oauth-apps` |
 | "As with Google, that changes nothing here: signing in with GitHub again signs you in to the same account." | As Google | as Google |
 
@@ -926,7 +938,7 @@ installed packages of those names.
 | "the viewings and reviews you log, as many per film as you like…" | `UserMovieEntry`: `watched_on`, `rating`, `review` (10,000 characters), `rewatch`, `made_on`, `created_at`, `updated_at` | as above |
 | "a record of the changes… removals as well as additions, each with its time and the day in your own time zone" | `UserMovieChange`: `field`, `turned_on`, `rating`, `created_at`, `made_on`, written by `record_changes` | `models.py`, `services/movie_state_rules.py` |
 | "Logging a viewing that changes a film's rating is recorded too" | `from_entry` changes | `services/movie_state_rules.py`, `services/user_movie_entry_service.py` |
-| "undoing a change erases it from the record" | `record_changes(undo=True)` deletes the latest differing row | `services/movie_state_rules.py` |
+| "Undo can remove the film's latest recorded change to the mark or rating you restore" | `useUserMovieState` sends prior field values with `undo: true`. If a supplied field changes on Undo, `record_changes` deletes the latest row for that film and field when its stored value differs from the restored value | `frontend/src/hooks/movie/useUserMovieState.ts`, `services/movie_state_rules.py` |
 | "Your Library shows your lists, and its History shows your viewings, reviews and additions" | Library and History routes; `SHOWN_CHANGES` keeps turned-on changes not made by an entry | `api.py`, `services/history_queries.py`, `frontend/src/pages/user/` |
 | "The site limits access to your Library and History to your account" | Every tracking route authenticates (`JWTSessionAuth`) and reads the requesting user's rows | `backend/apps/user_movie_data/api.py` |
 | "The site operator can view the films you track, their watchlist, watched and liked marks and associated dates, and your current ratings in the admin area" | `UserMovieDataAdmin` lists user, movie, watchlist, watched, liked and current rating in Django admin. Its read-only detail also includes the list timestamps | `backend/apps/user_movie_data/admin.py`, `backend/apps/user_movie_data/models.py`, `backend/apps/user_movie_data/tests/integration/test_admin.py` |
@@ -1000,11 +1012,17 @@ installed packages of those names.
 
 | Sentence | What makes it true | Where |
 | --- | --- | --- |
-| Account, profile, lists and change record "until your account is deleted" | No code deletes them; deletion is by request and cascades | models above |
+| Account, linked profile and remaining movie tracking data "until your account is deleted" | Account deletion is by request. The user foreign keys cascade to `SocialAccount` and `UserMovieData`. The latter also cascades to its entries and changes | allauth `socialaccount/models.py`, `backend/apps/user_movie_data/models.py` |
+| "Viewing and review entries can be deleted sooner" | The entry DELETE route calls `UserMovieEntryService.delete`, which locks and deletes the owned entry | `backend/apps/user_movie_data/api.py`, `services/user_movie_entry_service.py` |
+| "Deleting a film's tracking record also deletes its entries and change history" | The record DELETE route calls `UserMovieDataService.delete`, which deletes the owned tracking record. The `UserMovieEntry` and `UserMovieChange` foreign keys cascade | `backend/apps/user_movie_data/api.py`, `services/user_movie_data_service.py`, `models.py` |
+| "Undo can remove the film's latest recorded change to the mark or rating you restore" | `record_changes(undo=True)` checks the latest row for that film and field when Undo changes its value. It deletes the row if the recorded value differs from the restored value | `backend/apps/user_movie_data/services/movie_state_rules.py` |
 | "Accounts whose email address is never verified: kept until deleted on request" | No job removes them | `infrastructure/deploy/maintenance.sh` |
 | "sessions expire two weeks after the server last saved them" | The database session backend sets `expire_date` when it saves the row. `get_expiry_date` uses the default two-week `SESSION_COOKIE_AGE` from the save time | `backend/config/settings.py`, Django `contrib/sessions/backends/db.py`, `contrib/sessions/backends/base.py` |
-| "Access tokens expire after five minutes and refresh tokens after 14 days" | Ninja JWT's configured `ACCESS_TOKEN_LIFETIME` and `REFRESH_TOKEN_LIFETIME` | `backend/config/settings.py` |
-| "The server removes expired sessions and refresh-token records nightly" | `clearsessions` removes expired database sessions and `flushexpiredtokens` removes expired `OutstandingToken` rows | `infrastructure/deploy/maintenance.sh`, Ninja JWT `token_blacklist/management/commands/flushexpiredtokens.py` |
+| "CineXplorer access tokens expire after five minutes and its refresh tokens after 14 days" | Ninja JWT's configured `ACCESS_TOKEN_LIFETIME` and `REFRESH_TOKEN_LIFETIME` | `backend/config/settings.py` |
+| "The server removes expired sessions and CineXplorer refresh-token records nightly" | `clearsessions` removes expired database sessions and `flushexpiredtokens` removes expired `OutstandingToken` rows | `infrastructure/deploy/maintenance.sh`, Ninja JWT `token_blacklist/management/commands/flushexpiredtokens.py` |
+| "we clear an earlier pending sign-in if a later Google or GitHub sign-in in that browser reaches our account checks and the server saves the removal" | `pre_social_login` calls `clear_pending_signup` before looking up the account. Django persists the removal when it saves the session | allauth `socialaccount/internal/flows/login.py`, `socialaccount/internal/flows/signup.py`; Django `contrib/sessions/middleware.py` |
+| "If you cancel the later attempt or it fails, those details can remain in your session" | The callback's `_get_state` calls `unstash_state`, saving the session with the earlier details still present. A provider cancellation redirects before `pre_social_login`. If clearance occurs in memory and the response is 5xx, Django skips the subsequent save | allauth `socialaccount/providers/oauth2/views.py`, `socialaccount/internal/statekit.py`, `headless/socialaccount/internal.py`; Django `contrib/sessions/middleware.py` |
+| "Starting another sign-in can extend the session's expiry" | `stash_state` saves the session when redirecting to a provider, giving it a new expiry before a callback can clear the pending sign-in | allauth `socialaccount/internal/statekit.py`; Django `contrib/sessions/backends/db.py`, `contrib/sessions/backends/base.py` |
 | "each service keeps about its most recent 30 MB of logs, and older entries are overwritten. There's no fixed time limit." | `json-file`, 10 MB × 3, on every service; it rotates by size only | `infrastructure/docker-compose.prod.yml` |
 | "when we add, change or delete an account in the admin area, or delete a movie tracking record there, the database records the action and when it occurred" | `UserAdmin` and `UserMovieDataAdmin` use Django's `log_addition`, `log_change` and `log_deletions` for their allowed operations. `LogEntry` records `action_flag` and `action_time` | `backend/apps/users/admin.py`, `backend/apps/user_movie_data/admin.py`, Django `contrib/admin/options.py`, `contrib/admin/models.py` |
 | "It can also include the affected record's ID, your username, the film's title for a tracking record, and the names of fields changed in an account edit" | `LogEntry` stores the target's ID and up to 200 characters of `str(obj)`, the username for `User` and the username and film title for `UserMovieData`. `construct_change_message` stores labels for changed account fields in `change_message` | `backend/apps/user_movie_data/models.py`, Django `contrib/admin/models.py`, `contrib/admin/options.py`, `contrib/admin/utils.py`, `contrib/auth/base_user.py` |

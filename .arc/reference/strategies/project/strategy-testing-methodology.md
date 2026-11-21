@@ -168,6 +168,7 @@ frontend/
     ├── back-to-results.spec.ts
     ├── phone-width.spec.ts
     ├── background.spec.ts
+    ├── axe-motion.spec.ts
     ├── legal-pages.spec.ts
     ├── fixtures.ts
     ├── catalogue.ts
@@ -842,7 +843,7 @@ import { createMockUser } from '@/test/helpers/mocks';
 
 ### E2E Test Coordination
 
-The twelve specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
+The browser suite in `frontend/e2e/` covers sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
 Back to Results after reloading detail, the phone shell's drawer, search and account menu, and the signed-in
 Watchlist and Library journey in `library.spec.ts`.
 `background.spec.ts` checks the page background: the first frame before React loads, the CSS fallback with JavaScript
@@ -853,6 +854,7 @@ watchlist contents, separate entry reviews/ratings, focus restoration and persis
 `rating-selection.spec.ts` covers first-click/tap half-star selection, whole stars, cancelled touch and persistence.
 `card-layout.spec.ts` checks metadata and rating alignment at controlled 194px and 138px component widths using local
 catalogue fixtures; the browse columns retain their fixed width. This geometry case skips staging.
+`axe-motion.spec.ts` checks that finite motion after the readiness check triggers a settled accessibility re-audit.
 `legal-pages.spec.ts` follows both legal links from the signed-out Home footer and scans both documents with axe.
 It also checks the privacy page for horizontal overflow at 360×800 and the sticky-bar offset of its section links.
 Its local fixtures hold account responses until a visitor opens a legal document, then check the address and outcome.
@@ -901,8 +903,9 @@ only by `filter`, `first`, `last`, or `nth`. CSS and XPath selector strings, `ge
 
 Each journey spec scans each distinct reached page with axe after its ready check: a heading or result count, or the
 first labelled field on the auth forms. Tracking also scans the entry dialog and phone rating sheet. `scanPage`
-waits up to five seconds for pending/running finite animations inside dialogs, alert dialogs and notification regions,
-including their descendants, then performs one audit. Infinite motion continues; a timeout reports the active motion.
+observes finite animations across the document and waits up to five seconds for them to settle before each audit.
+If finite motion resumes before the frame after the audit, the helper discards that result and waits again. It fails
+after three interrupted attempts. Infinite motion continues, and a settling timeout reports the active motion.
 `background.spec.ts` scans the pages its rendered-app tests reach. Scans use
 WCAG 2.0 and 2.1 A/AA rules. `axe-baseline.ts` excuses only explicit route patterns and rule IDs, each with a reason; a
 new violation of that same rule on that route is also excused until the entry is removed. Other violations fail with the
@@ -913,7 +916,7 @@ local fixture data does not show.
 ### E2E Best Practices
 
 Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
-its address. From `frontend/`, one command runs the twelve specs:
+its address. From `frontend/`, one command runs the browser suite:
 
 ```bash
 # Worktree root

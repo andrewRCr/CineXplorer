@@ -317,14 +317,15 @@ for it, with the effective dates of R7.
 
     - **The short version** says the site reads the first page of addresses GitHub returns and keeps the primary,
       verified address if it appears there (allauth's GitHub login reads `/user/emails` once).
-    - **Server logs.** Gunicorn's access log is off (`accesslog = None`) and Caddy keeps none, so the sentence covers
-      the requests that reach the app's server, not the page's own files. The request middleware logs each request's
-      method, address with movie search text and recognized credential fields redacted, the visitor's address, user
-      agent, the referring page cut to its origin and path, the time and the result. Admin searches keep their search
-      text in the logged address. Account events are logged on more events than signing up and signing in, with a
-      username or user ID but no visitor IP (§ 6), so the sentence lists them, drops "with your IP address", and says
-      the browser's identification string is logged only on some. A sentence is added for requests that fail on the
-      server, which the web server's and app's error logs can record in full.
+    - **Server logs.** Gunicorn's access log is off (`accesslog = None`) and Caddy keeps no routine access log.
+      `RequestLoggingMiddleware` produces entries for requests that reach Django, including assets under
+      `/static/`. The production console handler's `HealthCheckFilter` can suppress routine health-check entries.
+      It records the method, address with movie search text and recognized credential fields redacted, the visitor's
+      address, user agent, the referring page cut to its origin and path, the time and the result. Admin searches
+      keep their search text in the logged address. Account events are logged on more events than signing up and
+      signing in, with a username or user ID but no visitor IP (§ 6), so the sentence lists them, drops "with your IP
+      address", and says the browser's identification string is logged only on some. The web server's and app's
+      error logs can record requests that fail on the server in full.
     - **Error reports.** The report carries the window size, not the screen size; a user ID only after a password
       sign-in (it's read from the stored access token); the page's address, which the server keeps without its query;
       and credential-labelled details are "removed before the report is kept", where the approved text said "filtered
@@ -365,8 +366,9 @@ for it, with the effective dates of R7.
       links an unverified account can be reset by email (allauth's reset request doesn't need a usable password).
       A sign-in with a matching verified primary address from GitHub can link to the same account. Google's page
       for removing an app is now its linked apps under Sign in with Google (§ 6).
-      The linked profile is deleted with the account. Admin activity records can retain a CineXplorer username
-      generated from the Google name or email address.
+      The linked profile is deleted with the account. Allauth's `record_authentication` keeps the provider, its
+      account ID, the local user ID and the sign-in time in the session. Admin activity records can retain the email
+      address itself and a CineXplorer username generated from the Google name or email address.
     - **Email** names the sender of password-reset emails and explains that password registration sends the
       verification email, its resend and the welcome email after verification. The Owner writes only about the
       service itself, such as a policy change or the site closing (the notices the policy's "Changes" section and
@@ -383,23 +385,26 @@ for it, with the effective dates of R7.
       or, once the sign-in has run out, until the next visit, when the site finds its renewal refused and removes them;
       scroll positions are kept for up to 20 lists, with any search text; and the sign-in-in-progress marker lasts
       until the tab closes.
-    - **Who else handles your data.** The `placehold.co` bullet goes (the site loads images from no host but
-      TMDB's); TMDB's bullet names backdrops beside posters. Cloudflare's bullet drops "nightly" from the backups it
-      stores, since a deploy takes one too. ZeptoMail is now Zoho CPaaS, and its bullet says what it keeps: a log and
-      a copy of each email for 60 days (§ 6).
+    - **Who else handles your data.** The app uses a local placeholder, and TMDB's bullet names backdrops beside
+      posters. Django Ninja's API documentation uses scripts and styles hosted by jsDelivr and declares a favicon
+      hosted by Django Ninja. Cloudflare stores nightly backups and those taken during deployment. Zoho CPaaS keeps
+      a log and a copy of each email for 60 days (§ 6).
     - **How long we keep things.** Abuse-limit counts last up to a day after the last request they count; the change
       record is kept with the lists; backups are taken before each deploy as well as nightly (`deploy.sh`), so
       "nightly" no longer limits them; a backup that fails, at whichever step (`backup.sh` makes the dump file before
       `pg_dump` runs and removes it only after its upload), and a copy the deploy runbook makes or downloads to repair
       or restore the site stay on the server until removed by hand, and "Your choices" excepts them from its 30 days;
       email records last 60 days. The policy gives the session expiry from its last save, the access and refresh
-      token lifetimes and the records nightly maintenance clears. The database's admin activity records include
-      action times and can include the fields changed in an account edit. They have no scheduled expiry.
+      token lifetimes and the records nightly maintenance clears. Allauth stores the return address during provider
+      sign-in, which can contain search text. The policy explains the ten-minute limit for using the attempt and
+      how long its stored address can remain. Django's admin activity records include action times and can include
+      the email address from standard admin add, edit and delete actions and the fields changed in an account edit.
+      They have no scheduled expiry.
     - **Your choices.** "Your profile shows your username, email address and name" goes (`Profile` is a
       placeholder). Deletion names the change record and the admin activity records that can remain. Deleting the
-      account ends access to it. The existing session record can stay until it expires, and a new OAuth sign-in
-      attempt in the same browser can extend that expiry. "Disconnect Google or GitHub" becomes what removing access
-      there does, and how to have a sign-in unlinked.
+      account ends access to it. An existing session can retain the provider account ID until cleanup, and a new
+      OAuth sign-in attempt in the same browser can extend that session's expiry. "Disconnect Google or GitHub"
+      becomes what removing access there does, and how to have a sign-in unlinked.
     - **Where your data is processed** adds the backups, stored in western North America (§ 6).
     - **The opening** names the site without an address (D7). The terms' opening follows D11; its § 1 and § 5 name
       the lists, ratings and reviews the site now keeps. Section 5 points to the policy's disclosure about admin
@@ -494,6 +499,9 @@ None.
   under D6's `none` ADR disposition.
 - **2026-11-20.** Aligned R9 with the providers' optional profile data and clarified which change Undo can remove
   from the tracking record. These wording corrections fall under D6's `none` ADR disposition.
+- **2026-11-20.** Disclosed API documentation assets, retained admin email records, provider identifiers and
+  return addresses in sessions, and logging for assets Django serves. These wording corrections fall under
+  D6's `none` ADR disposition.
 
 ## Appendix A: Privacy Policy
 
@@ -549,9 +557,10 @@ account.
   [Who else handles your data](#who-else-handles-your-data)).
 - **Protection:** see [Security](#security).
 - **Keeping and deleting it:** we keep your linked Google profile while you have an account and delete it with your
-  account. Admin activity records can retain your CineXplorer username, including one made from your Google name or
-  email address (see [Your choices](#your-choices)). You can also remove CineXplorer from the linked apps in your
-  Google Account, under Sign in with Google. If you remove the link at Google, you can still sign in to the same
+  account. Your session can retain your Google account ID after account deletion. Admin activity records can
+  retain your email address and your CineXplorer username, including one made from your Google name or email
+  address (see [Your choices](#your-choices)). You can also remove CineXplorer from the linked apps in your Google
+  Account, under Sign in with Google. If you remove the link at Google, you can still sign in to the same
   CineXplorer account the next time you choose Sign in with Google.
 
 CineXplorer's use of information received from Google APIs adheres to the
@@ -573,6 +582,7 @@ When you sign in with GitHub, GitHub asks you to share your public profile and y
   access to your repositories. Sign-up requires GitHub to return a verified primary email address. If that address is
   missing, we keep the pending sign-in in your browser's session on our server, including the profile GitHub sent and
   its access token. The session rules under "How long we keep things" explain when pending sign-ins are cleared.
+  Your session can retain your GitHub user ID after account deletion.
 - You can revoke CineXplorer's access in your GitHub settings, under authorized OAuth apps. As with Google, that
   changes nothing here: signing in with GitHub again signs you in to the same account.
 
@@ -601,9 +611,10 @@ TMDB ID, title, poster, release date, score, vote count, runtime, overview and g
 
 This applies whether or not you have an account.
 
-- **Server logs.** Our server records each request the site sends it as you use it (loading the site's own files isn't
-  recorded): your IP address, your browser's identification string (user agent), the time, the address requested, the
-  page you came from without its query, and the result. We remove movie search text and credentials in recognized
+- **Server logs.** We log requests handled by the application server, including requests for admin styles and
+  scripts. We record your IP address, your browser's identification string (user agent), the time, the address
+  requested, the page you came from without its query, and the result. The web server serves app files such as
+  JavaScript and styles without keeping a routine access log. We remove movie search text and credentials in recognized
   fields from the logged address. Admin searches can leave search text in the request logs, such as a username or
   email address. Account events (signing up, signing in, renewing your session, verifying your email address and
   emails sent to you), including failed attempts, are also logged with your username or user ID where known, and
@@ -669,6 +680,9 @@ which goes with each request, and saved error reports, which are sent to us once
   including the text you search for, but sends nothing that identifies you. Your browser loads posters and backdrops
   directly from TMDB's image servers, so TMDB receives your IP address and browser details, as any website hosting an
   image does.
+- **API documentation.** If you open the site's API documentation, your browser loads its scripts and styles
+  from jsDelivr and can request its icon from the Django Ninja website. These requests give those hosts your
+  IP address and browser details.
 
 We don't sell, rent or trade personal data, or share it for advertising. We'd disclose information to anyone else only
 if the law required it.
@@ -680,17 +694,25 @@ if the law required it.
   tracking record also deletes its entries and change history. Undo can remove the film's latest recorded change
   to the mark or rating you restore.
 - **Accounts whose email address is never verified:** kept until deleted on request.
-- **Sign-in sessions and tokens:** sessions expire two weeks after the server last saved them. CineXplorer access
-  tokens expire after five minutes and its refresh tokens after 14 days. The server removes expired sessions and
-  CineXplorer refresh-token records nightly.
+- **Sign-in sessions and tokens:** when you sign in with Google or GitHub, the server records the provider, your
+  account ID with that provider, your CineXplorer user ID and the sign-in time in your session. Sessions expire
+  two weeks after the server last saved them. CineXplorer access tokens expire after five minutes and its refresh
+  tokens after 14 days. The server removes expired sessions and CineXplorer refresh-token records nightly.
+- **Return address during provider sign-in:** when you start signing in with Google or GitHub, we save a return
+  address in your session so we can bring you back to the site. It can include your movie search text. The sign-in
+  attempt can be used for up to ten minutes. A response from the provider that matches the attempt clears that
+  copy of the return address. If you leave before that response, the stored address can remain until a later
+  sign-in clears the old attempt or the server removes the expired session. An incomplete sign-up can also keep
+  the return address with the pending sign-in.
 - **Pending Google or GitHub sign-ins:** we clear an earlier pending sign-in if a later Google or GitHub sign-in in
   that browser reaches our account checks and the server saves the removal. If you cancel the later attempt or it
   fails, those details can remain in your session. Starting another sign-in can extend the session's expiry.
 - **Server logs:** each service keeps about its most recent 30 MB of logs, and older entries are overwritten. There's
   no fixed time limit.
-- **Admin activity records:** when we add, change or delete an account in the admin area, or delete a movie tracking
-  record there, the database records the action and when it occurred. It can also include the affected record's ID,
-  your username, the film's title for a tracking record, and the names of fields changed in an account edit. These
+- **Admin activity records:** the database records the action and time when we use the admin forms to add or edit
+  an account or email record, or the admin delete action to remove an account, email record or movie tracking
+  record. An audit entry can also include the affected record's ID, your username, the email address for an email
+  record, the film's title for a tracking record, and the names of fields changed in an account edit. These
   records have no scheduled expiry.
 - **Backups:** copies of the database, taken nightly and before each update of the site, are kept for 30 days.
   Anything deleted from the site stays in backups until they expire. A copy can also stay on our server until it's
@@ -706,10 +728,11 @@ if the law required it.
   [cinexplorer@andrewcreekmore.dev](mailto:cinexplorer@andrewcreekmore.dev) from your account's email address, and
   we'll delete your account, its email addresses, its linked Google or GitHub sign-ins, and your movie lists and their
   record of changes within 30 days. Copies remain in backups for up to 30 days, except a copy left on our server as
-  described above, and in server logs until they're overwritten. Admin activity records can remain after your account
-  is deleted. Deleting your account ends access to it. Existing session and refresh-token records can remain on our
-  server until the nightly cleanup after they expire. Starting another Google or GitHub sign-in in the same browser
-  can extend the session record's expiry.
+  described above, and in server logs until they're overwritten. Admin activity records, including records with
+  your email address, can remain after your account is deleted. Deleting your account ends access to it. Existing
+  sessions can retain the sign-in details described above, including your provider account ID. Session and
+  refresh-token records can remain on our server until the nightly cleanup after they expire. Starting another
+  Google or GitHub sign-in in the same browser can extend the session record's expiry.
 - **Google and GitHub sign-in.** You can remove CineXplorer's access in your Google or GitHub settings, as described
   above. To unlink a Google or GitHub sign-in from your account, or delete what we keep from it, write to
   [cinexplorer@andrewcreekmore.dev](mailto:cinexplorer@andrewcreekmore.dev).
@@ -867,7 +890,7 @@ installed packages of those names.
 | "You can browse movies without an account." | Catalog pages sit outside `ProtectedRoute`; catalog routes take `auth=None` | `frontend/src/App.tsx`, `backend/apps/movie/api.py` |
 | "An account lets you keep a watchlist and a record of the films you watch, rate and review." | Tracking routes require sign-in and store the lists below | `backend/apps/user_movie_data/api.py`, `models.py` |
 | "We collect what's needed to run accounts and keep the site working, and nothing for advertising." | Every collection below serves an account, the logs or the limits; no advertising code | as below |
-| "There are no ads, no analytics or tracking scripts" | No analytics or advertising package; `index.html` loads the app and two inline scripts (startup background, sign-in marker); the browser loads nothing from another host but TMDB's images | `frontend/package.json`, `frontend/index.html`, image URLs under `frontend/src/components/movie/` |
+| "There are no ads, no analytics or tracking scripts" | The app's packages contain no analytics or advertising package. `index.html` loads the app and its startup background and sign-in scripts. The app's film images come from TMDB. The API documentation's external assets are mapped below | `frontend/package.json`, `frontend/index.html`, image URLs under `frontend/src/components/movie/`, `backend/config/api.py` |
 | "we don't sell or rent anyone's data" | _commitment_ | — |
 | "we receive the name, email address and basic profile the provider sends us" | Google: scopes `profile` and `email`, read from the ID token or userinfo. GitHub: `/user` and `/user/emails` under scope `user:email` | allauth `socialaccount/providers/google/`, `socialaccount/providers/github/` |
 | "We read the first page of email addresses GitHub returns and keep your primary, verified address if it appears there" | `get_emails` makes one GET request to `/user/emails`; GitHub defaults to page 1 _(provider)_. `populate_user` keeps the verified primary address from that response | allauth `github/views.py`, `docs.github.com/en/rest/users/emails`, `backend/apps/authentication/adapters.py` |
@@ -903,7 +926,8 @@ installed packages of those names.
 | "when we email you, your email address and username go to our email provider" | Password-reset emails can go to a Google address through the ZeptoMail backend. The reset email names the username in both its HTML and text parts; a Google sign-up builds the username from the Google profile (`populate_username`) | `backend/apps/core/email_backend.py`, allauth `account/internal/flows/password_reset.py`, `templates/account/email/password_reset_key_message.txt`; `backend/templates/account/email/password_reset_key_message.html` |
 | "Protection: see Security" | As Security | — |
 | "we keep your linked Google profile while you have an account and delete it with your account" | `SocialAccount` cascades from the user; deletion is by request | allauth `socialaccount/models.py` |
-| "Admin activity records can retain your CineXplorer username, including one made from your Google name or email address" | `populate_username` can generate the username from the name or address supplied at Google sign-up. `LogEntry` stores the username in `object_repr` and can remain after account deletion as described under "Your choices" | allauth `account/adapter.py`, `socialaccount/adapter.py`; Django `contrib/admin/models.py`, `contrib/auth/base_user.py`; `backend/apps/user_movie_data/models.py` |
+| "Your session can retain your Google account ID after account deletion" | Allauth's social `record_authentication` supplies the Google account ID in `uid` and the provider name in `provider`. Deleting the user leaves independently stored session rows until they are cleared | allauth `socialaccount/internal/flows/login.py`, `account/internal/flows/login.py`; Django `contrib/sessions/base_session.py`, `contrib/auth/__init__.py` |
+| "Admin activity records can retain your email address and your CineXplorer username, including one made from your Google name or email address" | `populate_username` can generate a username from the Google name or address. Django's `LogEntryManager.log_actions` stores a target's string representation. That can contain the username for account or tracking events and the email address itself after a standard add, edit or delete in `EmailAddressAdmin` | allauth `account/adapter.py`, `socialaccount/adapter.py`, `account/admin.py`, `account/models.py`; Django `contrib/admin/models.py`, `contrib/auth/base_user.py`; `backend/apps/user_movie_data/models.py` |
 | "remove CineXplorer from the linked apps in your Google Account, under Sign in with Google" | Google's linked apps page offers "Stop using Sign in with Google" _(provider)_ | `support.google.com/accounts/answer/13533235` |
 | "If you remove the link at Google, you can still sign in to the same CineXplorer account the next time you choose Sign in with Google" | The next sign-in finds the existing `SocialAccount` by provider and ID | allauth `socialaccount/models.py` (`_lookup_by_socialaccount`) |
 | "adheres to the Google API Services User Data Policy" | _commitment_ | — |
@@ -924,6 +948,7 @@ installed packages of those names.
 | "we have no access to your repositories" | Scope `user:email` grants none | allauth `github/provider.py` |
 | "Sign-up requires GitHub to return a verified primary email address"; if missing, "we keep the pending sign-in in your browser's session on our server, including the profile GitHub sent and its access token" | The adapter clears the email when no verified primary address is returned. With email required, `redirect_to_signup` stores the serialized sign-in, including the profile and token, in the database-backed session. The headless callback redirects back to the app and lets Django save the session | `backend/apps/authentication/adapters.py`, `backend/config/settings.py`, allauth `socialaccount/internal/flows/signup.py`, `socialaccount/models.py`, `headless/socialaccount/internal.py`; Django `contrib/sessions/middleware.py` |
 | "The session rules under … explain when pending sign-ins are cleared" | Both providers use the shared pending sign-in and session rules below | allauth `socialaccount/internal/flows/signup.py`, `socialaccount/internal/flows/login.py` |
+| "Your session can retain your GitHub user ID after account deletion" | Allauth's social `record_authentication` stores the provider user ID in the browser's server-side session, which is stored independently of the user account | allauth `socialaccount/internal/flows/login.py`, `account/internal/flows/login.py`; Django `contrib/sessions/base_session.py`, `contrib/auth/__init__.py` |
 | "You can revoke CineXplorer's access in your GitHub settings, under authorized OAuth apps." | The Authorized OAuth Apps tab, under Settings and Applications, offers "Revoke" _(provider)_ | `docs.github.com/en/apps/oauth-apps/using-oauth-apps/reviewing-your-authorized-oauth-apps` |
 | "As with Google, that changes nothing here: signing in with GitHub again signs you in to the same account." | As Google | as Google |
 
@@ -950,9 +975,10 @@ installed packages of those names.
 
 | Sentence | What makes it true | Where |
 | --- | --- | --- |
-| "This applies whether or not you have an account." | The request log covers every request Django serves, signed in or not; the error-report route takes `auth=None`; the IP-keyed limits count any visitor | `backend/middleware/logging.py`, `backend/apps/core/api.py`, `backend/apps/authentication/api.py` |
-| "records each request the site sends it… (loading the site's own files isn't recorded)" | `RequestLoggingMiddleware` logs every request Django serves; Caddy serves the app's files and keeps no access log; Gunicorn's access log is off | `backend/middleware/logging.py`, `infrastructure/Caddyfile.prod`, `frontend/Dockerfile` (Caddy 2.11), `backend/gunicorn.conf.py` |
+| "This applies whether or not you have an account." | The request logger covers both signed-in and signed-out requests handled by Django. The production console handler's `HealthCheckFilter` can suppress routine health-check entries. The error-report route takes `auth=None`, and the IP-keyed limits count any visitor | `backend/middleware/logging.py`, `backend/config/logging.py`, `backend/apps/core/api.py`, `backend/apps/authentication/api.py` |
+| "We log requests handled by the application server, including requests for admin styles and scripts" | Caddy forwards `/static/*` to Django. `RequestLoggingMiddleware.process_request` logs the request before `WhiteNoiseMiddleware` serves those assets | `infrastructure/Caddyfile.prod`, `backend/config/settings.py`, `backend/middleware/logging.py` |
 | "your IP address, your browser's identification string, the time, the address requested, the page you came from without its query, and the result" | First `X-Forwarded-For` address, which Caddy sets to the connecting address and won't take from a client (no `trusted_proxies`); user agent (first 100 characters); referrer through `sanitize_log_url`; status and duration; the JSON formatter adds the time | `backend/middleware/logging.py`, `backend/apps/core/utils/logging.py`, `backend/config/logging.py`, `infrastructure/Caddyfile.prod`, `frontend/Dockerfile` (Caddy 2.11) |
+| "The web server serves app files such as JavaScript and styles without keeping a routine access log" | Caddy's `file_server` serves the built app and its `/assets/*` files directly. The site block has no `log` directive. Gunicorn's own access log is off | `infrastructure/Caddyfile.prod`, `frontend/Dockerfile`, `backend/gunicorn.conf.py` |
 | "We remove movie search text and credentials in recognized fields from the logged address. Admin searches can leave search text in the request logs, such as a username or email address" | `SENSITIVE_PARAMS` contains `query`, the catalogue's search parameter, and named credential fields. Django admin searches use `q`, which is preserved. `UserAdmin` and `UserMovieDataAdmin` support searches by username and email | `backend/middleware/logging.py`, `backend/apps/movie/schemas.py`, `backend/apps/users/admin.py`, `backend/apps/user_movie_data/admin.py`; Django `contrib/admin/views/main.py`, `contrib/auth/admin.py` |
 | "Account events…, including failed attempts, … with your username or user ID where known, and sometimes your browser's identification string" | `AuthenticationService`'s log lines: `register_user` logs each refusal (forbidden or taken username, taken address, weak password, a race lost to another sign-up) and the success, with the username; `obtain_token` logs wrong credentials with the user agent, an unverified address with the user ID, and the success with both; `hybrid_refresh_token` logs a renewal with the user ID and a revoked token's reuse with the user ID and user agent; `verify_email` and `resend_verification` log their outcomes with the user ID. Their `ip` is `REMOTE_ADDR`, the proxy's address (`get_client_info`). The welcome email logs the user ID, and the email backend logs each message the provider accepts or refuses, by its status | `backend/apps/authentication/services/authentication_service.py`, `backend/apps/core/utils/http.py`, `backend/apps/core/services/email_service.py`, `backend/apps/core/email_backend.py` |
 | "If a request fails on the server… the logs can also record it in full" | Caddy's default error log writes a failed proxied request's URI, `Referer` and user agent; the API's unhandled-error handler logs the traceback | `infrastructure/Caddyfile.prod` (no `log` directive), `frontend/Dockerfile` (Caddy 2.11), `backend/apps/core/api_errors.py` |
@@ -1006,6 +1032,8 @@ installed packages of those names.
 | "The Movie Database (TMDB) provides the film information and images." | The catalog's film data comes from TMDB's API, and its images from `image.tmdb.org` | `backend/apps/core/services/tmdb_api_client.py`, `frontend/src/components/movie/` |
 | "Our server asks TMDB for movie data, including the text you search for, but sends nothing that identifies you" | The server-side client sends the site's token and the query; no visitor detail; its logs redact `query` | `backend/apps/core/services/tmdb_api_client.py`, `base_api_client.py` |
 | "Your browser loads posters and backdrops directly from TMDB's image servers, so TMDB receives your IP address and browser details" | Image URLs on `image.tmdb.org`: posters and `HeroArtwork`'s backdrops, no other kind. The browser requests each from TMDB's host itself, with no proxy, so the request carries its address and user agent | `frontend/src/components/movie/`, `frontend/src/pages/` |
+| "If you open the site's API documentation, your browser loads its scripts and styles from jsDelivr and can request its icon from the Django Ninja website" | Caddy forwards `/api/docs` to `NinjaAPI`. With `ninja` absent from `INSTALLED_APPS`, `render_template` uses `swagger_cdn.html`, which uses `cdn.jsdelivr.net` for scripts and styles and names `django-ninja.dev` for favicons | `backend/config/api.py`, `backend/config/urls.py`, `backend/config/settings.py`, `infrastructure/Caddyfile.prod`; Ninja `openapi/docs.py`, `templates/ninja/swagger_cdn.html` |
+| "These requests give those hosts your IP address and browser details" | The CDN and icon URLs in the Ninja template are requested directly by the browser. Those requests expose the connection address and user agent to their recipients | Ninja `templates/ninja/swagger_cdn.html` |
 | "We don't sell, rent or trade personal data… only if the law required it" | _commitment_ | — |
 
 #### How long we keep things
@@ -1017,15 +1045,20 @@ installed packages of those names.
 | "Deleting a film's tracking record also deletes its entries and change history" | The record DELETE route calls `UserMovieDataService.delete`, which deletes the owned tracking record. The `UserMovieEntry` and `UserMovieChange` foreign keys cascade | `backend/apps/user_movie_data/api.py`, `services/user_movie_data_service.py`, `models.py` |
 | "Undo can remove the film's latest recorded change to the mark or rating you restore" | `record_changes(undo=True)` checks the latest row for that film and field when Undo changes its value. It deletes the row if the recorded value differs from the restored value | `backend/apps/user_movie_data/services/movie_state_rules.py` |
 | "Accounts whose email address is never verified: kept until deleted on request" | No job removes them | `infrastructure/deploy/maintenance.sh` |
+| "when you sign in with Google or GitHub, the server records the provider, your account ID with that provider, your CineXplorer user ID and the sign-in time in your session" | Allauth's social `record_authentication` passes `provider` and `uid` to the account flow, which writes those fields and the time to `account_authentication_methods` and the local ID to `account_authentication_methods_user`. Both sign-in and completed sign-up call it | allauth `socialaccount/internal/flows/login.py`, `socialaccount/internal/flows/signup.py`, `account/internal/flows/login.py` |
 | "sessions expire two weeks after the server last saved them" | The database session backend sets `expire_date` when it saves the row. `get_expiry_date` uses the default two-week `SESSION_COOKIE_AGE` from the save time | `backend/config/settings.py`, Django `contrib/sessions/backends/db.py`, `contrib/sessions/backends/base.py` |
 | "CineXplorer access tokens expire after five minutes and its refresh tokens after 14 days" | Ninja JWT's configured `ACCESS_TOKEN_LIFETIME` and `REFRESH_TOKEN_LIFETIME` | `backend/config/settings.py` |
 | "The server removes expired sessions and CineXplorer refresh-token records nightly" | `clearsessions` removes expired database sessions and `flushexpiredtokens` removes expired `OutstandingToken` rows | `infrastructure/deploy/maintenance.sh`, Ninja JWT `token_blacklist/management/commands/flushexpiredtokens.py` |
+| "when you start signing in with Google or GitHub, we save a return address in your session so we can bring you back to the site. It can include your movie search text" | `SearchField` puts text in `query`. `AccountControl` calls `signInPathFor` with the current path and query, and `initializeOAuth` includes that return path in its `callback_url`. `RedirectToProviderView.post` passes the URL as `next_url`. `stash_redirect_state` saves it as `next` through `stash_state` | `frontend/src/components/layout/navbar/SearchField.tsx`, `frontend/src/components/layout/navbar/AccountControl.tsx`, `frontend/src/utilities/returnPath.ts`, `frontend/src/hooks/auth/useOAuthFlow.ts`; allauth `headless/socialaccount/views.py`, `socialaccount/providers/base/provider.py`, `socialaccount/internal/statekit.py` |
+| "The sign-in attempt can be used for up to ten minutes. A response from the provider that matches the attempt clears that copy of the return address" | `STATE_TTL` is 600 seconds. `unstash_state` checks the state ID and provider, declines expired state, and saves deletion of the matched entry | allauth `socialaccount/internal/statekit.py`, `socialaccount/providers/oauth2/views.py` |
+| "If you leave before that response, the stored address can remain until a later sign-in clears the old attempt or the server removes the expired session" | `stash_state` calls `gc_states` to remove expired entries and limit the stored states. The timeout alone leaves the database row intact. `clearsessions` deletes expired sessions | allauth `socialaccount/internal/statekit.py`; Django `contrib/sessions/backends/db.py`; `infrastructure/deploy/maintenance.sh` |
+| "An incomplete sign-up can also keep the return address with the pending sign-in" | `OAuth2CallbackView` sets `login.state` to the consumed redirect state. `SocialLogin.serialize` includes it when `redirect_to_signup` saves pending sign-in data | allauth `socialaccount/providers/oauth2/views.py`, `socialaccount/models.py`, `socialaccount/internal/flows/signup.py` |
 | "we clear an earlier pending sign-in if a later Google or GitHub sign-in in that browser reaches our account checks and the server saves the removal" | `pre_social_login` calls `clear_pending_signup` before looking up the account. Django persists the removal when it saves the session | allauth `socialaccount/internal/flows/login.py`, `socialaccount/internal/flows/signup.py`; Django `contrib/sessions/middleware.py` |
 | "If you cancel the later attempt or it fails, those details can remain in your session" | The callback's `_get_state` calls `unstash_state`, saving the session with the earlier details still present. A provider cancellation redirects before `pre_social_login`. If clearance occurs in memory and the response is 5xx, Django skips the subsequent save | allauth `socialaccount/providers/oauth2/views.py`, `socialaccount/internal/statekit.py`, `headless/socialaccount/internal.py`; Django `contrib/sessions/middleware.py` |
 | "Starting another sign-in can extend the session's expiry" | `stash_state` saves the session when redirecting to a provider, giving it a new expiry before a callback can clear the pending sign-in | allauth `socialaccount/internal/statekit.py`; Django `contrib/sessions/backends/db.py`, `contrib/sessions/backends/base.py` |
 | "each service keeps about its most recent 30 MB of logs, and older entries are overwritten. There's no fixed time limit." | `json-file`, 10 MB × 3, on every service; it rotates by size only | `infrastructure/docker-compose.prod.yml` |
-| "when we add, change or delete an account in the admin area, or delete a movie tracking record there, the database records the action and when it occurred" | `UserAdmin` and `UserMovieDataAdmin` use Django's `log_addition`, `log_change` and `log_deletions` for their allowed operations. `LogEntry` records `action_flag` and `action_time` | `backend/apps/users/admin.py`, `backend/apps/user_movie_data/admin.py`, Django `contrib/admin/options.py`, `contrib/admin/models.py` |
-| "It can also include the affected record's ID, your username, the film's title for a tracking record, and the names of fields changed in an account edit" | `LogEntry` stores the target's ID and up to 200 characters of `str(obj)`, the username for `User` and the username and film title for `UserMovieData`. `construct_change_message` stores labels for changed account fields in `change_message` | `backend/apps/user_movie_data/models.py`, Django `contrib/admin/models.py`, `contrib/admin/options.py`, `contrib/admin/utils.py`, `contrib/auth/base_user.py` |
+| "the database records the action and time when we use the admin forms to add or edit an account or email record, or the admin delete action to remove an account, email record or movie tracking record" | Django's standard admin forms and delete actions call `log_addition`, `log_change` or `log_deletions`. `LogEntry` records `action_flag` and `action_time`. Allauth's separate bulk action `EmailAddressAdmin.make_verified` calls `EmailAddress.set_verified` to write the verified flag without creating a `LogEntry` | `backend/apps/users/admin.py`, `backend/apps/user_movie_data/admin.py`; allauth `account/admin.py`, `account/models.py`; Django `contrib/admin/options.py`, `contrib/admin/models.py` |
+| "An audit entry can also include the affected record's ID, your username, the email address for an email record, the film's title for a tracking record, and the names of fields changed in an account edit" | `LogEntryManager.log_actions` stores the target ID and up to 200 characters of its string representation. That is the username for `User`, the email address for `EmailAddress`, and the username and film title for `UserMovieData`. `construct_change_message` stores labels for changed account fields in `change_message` | `backend/apps/user_movie_data/models.py`; allauth `account/models.py`; Django `contrib/admin/models.py`, `contrib/admin/options.py`, `contrib/admin/utils.py`, `contrib/auth/base_user.py` |
 | "These records have no scheduled expiry" | `LogEntry` has no expiry field. Nightly maintenance clears sessions and refresh-token records and refreshes movie cards | Django `contrib/admin/models.py`, `infrastructure/deploy/maintenance.sh` |
 | "copies of the database, taken nightly and before each update of the site, are kept for 30 days" | The nightly timer and each deploy run `backup.sh`; R2 lifecycle rule _(provider)_ | `infrastructure/deploy/bootstrap.sh`, `deploy.sh`, `backup.sh` |
 | "Anything deleted from the site stays in backups until they expire." | Each backup uploads a new full dump under its own name (`copyto`); nothing changes an uploaded dump, and the lifecycle rule removes it _(provider)_ | `backup.sh` |
@@ -1041,9 +1074,10 @@ installed packages of those names.
 | "The site has no delete button yet." | No delete route | as above |
 | "we'll delete your account, its email addresses, its linked Google or GitHub sign-ins, and your movie lists and their record of changes within 30 days" | Deleting the user removes its `EmailAddress` and `SocialAccount` rows and its `UserMovieData`, with their entries and changes, by cascade; _commitment_ for the request and the 30 days | allauth `account/models.py`, `socialaccount/models.py`, `backend/apps/user_movie_data/models.py` |
 | "Copies remain in backups for up to 30 days, except a copy left on our server as described above, and in server logs until they're overwritten" | As retention | as above |
-| "Admin activity records can remain after your account is deleted" | `LogEntry.user` is the administrator who acted. The target's ID is a text field, so deletion of the target account leaves the activity record linked to the administrator | Django `contrib/admin/models.py`, `contrib/admin/options.py` |
+| "Admin activity records, including records with your email address, can remain after your account is deleted" | `LogEntry.user` is the administrator who acted. The target ID and `object_repr` are stored as text. An audit entry from a standard add, edit or delete of an email record keeps the address after `EmailAddress` is deleted with the account | allauth `account/admin.py`, `account/models.py`; Django `contrib/admin/models.py`, `contrib/admin/options.py` |
 | "Deleting your account ends access to it" | `JWTSessionAuth` requires an existing user for an access token. Django's `get_user` resolves a session for a deleted user as anonymous. Refresh also requires an existing user | `backend/apps/authentication/auth_ninja.py`, `backend/apps/authentication/services/authentication_service.py`, Django `contrib/auth/__init__.py` |
-| "Existing session and refresh-token records can remain on our server until the nightly cleanup after they expire" | Django's session row has no user foreign key and `get_user` leaves it when the user is missing. A deleted user's `OutstandingToken.user` is set to null. `clearsessions` and `flushexpiredtokens` remove expired rows nightly | Django `contrib/auth/__init__.py`, `contrib/sessions/base_session.py`; Ninja JWT `token_blacklist/models.py`; `infrastructure/deploy/maintenance.sh` |
+| "Existing sessions can retain the sign-in details described above, including your provider account ID" | The allauth fields mapped under retention stay in `AbstractBaseSession.session_data` independently of the account. Deleting the user does not cascade to the session | allauth `account/internal/flows/login.py`, `socialaccount/internal/flows/login.py`; Django `contrib/sessions/base_session.py` |
+| "Session and refresh-token records can remain on our server until the nightly cleanup after they expire" | Django's session row has no user foreign key and `get_user` leaves it when the user is missing. A deleted user's `OutstandingToken.user` is set to null. `clearsessions` and `flushexpiredtokens` remove expired rows nightly | Django `contrib/auth/__init__.py`, `contrib/sessions/base_session.py`; Ninja JWT `token_blacklist/models.py`; `infrastructure/deploy/maintenance.sh` |
 | "Starting another Google or GitHub sign-in in the same browser can extend the session record's expiry" | On provider redirect, allauth's `stash_state` saves the current session. The database session backend gives the row a new `expire_date` | allauth `headless/socialaccount/views.py`, `socialaccount/internal/statekit.py`; Django `contrib/sessions/backends/db.py`, `contrib/sessions/backends/base.py` |
 | "You can remove CineXplorer's access in your Google or GitHub settings, as described above." | As the Google and GitHub entries _(provider)_ | as above |
 | "To unlink a Google or GitHub sign-in from your account, or delete what we keep from it, write to" | No unlink route: the project's API has none, and `AllauthEndpointMiddleware` answers allauth's own provider routes with 404; by request | `backend/apps/authentication/api.py`, `backend/apps/authentication/middleware.py` |

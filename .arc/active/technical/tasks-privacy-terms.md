@@ -322,8 +322,16 @@ the worktree's browsable stack with Home's line and the notices in place.
       their appendices, and signed-out Home matched R9. All 160 related tests and 17 legal-page Chromium scenarios
       passed, along with lint, formatting and type checking.
 
+    - [x] **4.1.n Describe the API documentation, admin email records and provider session data.** The policy
+      names the hosts used by the API documentation and the assets Django logs. It describes when an admin audit
+      record can retain an email address, which provider identifiers can remain in a session, and how a return
+      address can hold search text. The audit disclosure covers standard admin add, edit and delete actions.
+      Appendix C traces the revised passages, including the production health-check log filter and Google's
+      account identifier in the allauth session. Both rendered documents matched their appendices. All 23 related
+      tests and 17 legal-page Chromium scenarios passed, along with lint, formatting and type checking.
+
     - Local verification is complete. The full frontend test and Chromium suites passed during verification.
-      The focused runs in 4.1.a through 4.1.m cover the subsequent changes. The criteria below record the local
+      The focused runs in 4.1.a through 4.1.n cover the subsequent changes. The criteria below record the local
       results and the remaining merge checks. The branch changes no backend API or generated frontend API files.
 
 - [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
@@ -373,8 +381,9 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
     password removal, and session and token lifetimes. It distinguishes the account record's update timestamp from
     linked email verification and identifies which sign-ups send verification and welcome messages. Task 4.1.l
     traced pending Google sign-in storage, both Google profile intake paths and tracking-data deletion. Task 4.1.m
-    traced which change Undo can remove and aligned the sign-in disclosure on Home. The final trace against the
-    merge commit is pending.
+    traced which change Undo can remove and aligned the sign-in disclosure on Home. Task 4.1.n traced the API docs'
+    external assets, admin email audit records, provider session fields, return addresses and Django asset logging.
+    The final trace against the merge commit is pending.
 
 - [x] 4. **The links are in place.** Unit tests show the footer's two links, signed-out Home's line and its link (and
   its absence signed in), and the sign-up notice with both links on `Register` and `Login`. (R8 to R10, R13)

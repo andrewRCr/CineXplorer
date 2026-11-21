@@ -103,8 +103,10 @@ export default function PrivacyPolicy() {
         <List.Item>
           <strong>Keeping and deleting it:</strong> we keep your linked Google
           profile while you have an account and delete it with your account.
-          Admin activity records can retain your CineXplorer username, including
-          one made from your Google name or email address (see{" "}
+          Your session can retain your Google account ID after account deletion.
+          Admin activity records can retain your email address and your
+          CineXplorer username, including one made from your Google name or
+          email address (see{" "}
           <TextLink to="#your-choices">Your choices</TextLink>). You can also
           remove CineXplorer from the linked apps in your Google Account, under
           Sign in with Google. If you remove the link at Google, you can still
@@ -153,7 +155,8 @@ export default function PrivacyPolicy() {
           that address is missing, we keep the pending sign-in in your browser's
           session on our server, including the profile GitHub sent and its
           access token. The session rules under "How long we keep things"
-          explain when pending sign-ins are cleared.
+          explain when pending sign-ins are cleared. Your session can retain
+          your GitHub user ID after account deletion.
         </List.Item>
         <List.Item>
           You can revoke CineXplorer's access in your GitHub settings, under
@@ -199,20 +202,22 @@ export default function PrivacyPolicy() {
       <Text>This applies whether or not you have an account.</Text>
       <List.Root ps={6} gap={2}>
         <List.Item>
-          <strong>Server logs.</strong> Our server records each request the site
-          sends it as you use it (loading the site's own files isn't recorded):
-          your IP address, your browser's identification string (user agent),
-          the time, the address requested, the page you came from without its
-          query, and the result. We remove movie search text and credentials in
-          recognized fields from the logged address. Admin searches can leave
-          search text in the request logs, such as a username or email address.
-          Account events (signing up, signing in, renewing your session,
-          verifying your email address and emails sent to you), including failed
-          attempts, are also logged with your username or user ID where known,
-          and sometimes your browser's identification string. If a request fails
-          on the server, for example while the site restarts, the logs can also
-          record it in full, including any search text and the full address of
-          the page you came from.
+          <strong>Server logs.</strong> We log requests handled by the
+          application server, including requests for admin styles and scripts.
+          We record your IP address, your browser's identification string (user
+          agent), the time, the address requested, the page you came from
+          without its query, and the result. The web server serves app files
+          such as JavaScript and styles without keeping a routine access log. We
+          remove movie search text and credentials in recognized fields from the
+          logged address. Admin searches can leave search text in the request
+          logs, such as a username or email address. Account events (signing up,
+          signing in, renewing your session, verifying your email address and
+          emails sent to you), including failed attempts, are also logged with
+          your username or user ID where known, and sometimes your browser's
+          identification string. If a request fails on the server, for example
+          while the site restarts, the logs can also record it in full,
+          including any search text and the full address of the page you came
+          from.
         </List.Item>
         <List.Item>
           <strong>Error reports.</strong> If something breaks in your browser,
@@ -379,6 +384,12 @@ export default function PrivacyPolicy() {
           servers, so TMDB receives your IP address and browser details, as any
           website hosting an image does.
         </List.Item>
+        <List.Item>
+          <strong>API documentation.</strong> If you open the site's API
+          documentation, your browser loads its scripts and styles from jsDelivr
+          and can request its icon from the Django Ninja website. These requests
+          give those hosts your IP address and browser details.
+        </List.Item>
       </List.Root>
       <Text>
         We don't sell, rent or trade personal data, or share it for advertising.
@@ -401,11 +412,24 @@ export default function PrivacyPolicy() {
           until deleted on request.
         </List.Item>
         <List.Item>
-          <strong>Sign-in sessions and tokens:</strong> sessions expire two
-          weeks after the server last saved them. CineXplorer access tokens
-          expire after five minutes and its refresh tokens after 14 days. The
-          server removes expired sessions and CineXplorer refresh-token records
-          nightly.
+          <strong>Sign-in sessions and tokens:</strong> when you sign in with
+          Google or GitHub, the server records the provider, your account ID
+          with that provider, your CineXplorer user ID and the sign-in time in
+          your session. Sessions expire two weeks after the server last saved
+          them. CineXplorer access tokens expire after five minutes and its
+          refresh tokens after 14 days. The server removes expired sessions and
+          CineXplorer refresh-token records nightly.
+        </List.Item>
+        <List.Item>
+          <strong>Return address during provider sign-in:</strong> when you
+          start signing in with Google or GitHub, we save a return address in
+          your session so we can bring you back to the site. It can include your
+          movie search text. The sign-in attempt can be used for up to ten
+          minutes. A response from the provider that matches the attempt clears
+          that copy of the return address. If you leave before that response,
+          the stored address can remain until a later sign-in clears the old
+          attempt or the server removes the expired session. An incomplete
+          sign-up can also keep the return address with the pending sign-in.
         </List.Item>
         <List.Item>
           <strong>Pending Google or GitHub sign-ins:</strong> we clear an
@@ -421,12 +445,14 @@ export default function PrivacyPolicy() {
           time limit.
         </List.Item>
         <List.Item>
-          <strong>Admin activity records:</strong> when we add, change or delete
-          an account in the admin area, or delete a movie tracking record there,
-          the database records the action and when it occurred. It can also
-          include the affected record's ID, your username, the film's title for
-          a tracking record, and the names of fields changed in an account edit.
-          These records have no scheduled expiry.
+          <strong>Admin activity records:</strong> the database records the
+          action and time when we use the admin forms to add or edit an account
+          or email record, or the admin delete action to remove an account,
+          email record or movie tracking record. An audit entry can also include
+          the affected record's ID, your username, the email address for an
+          email record, the film's title for a tracking record, and the names of
+          fields changed in an account edit. These records have no scheduled
+          expiry.
         </List.Item>
         <List.Item>
           <strong>Backups:</strong> copies of the database, taken nightly and
@@ -471,11 +497,13 @@ export default function PrivacyPolicy() {
           lists and their record of changes within 30 days. Copies remain in
           backups for up to 30 days, except a copy left on our server as
           described above, and in server logs until they're overwritten. Admin
-          activity records can remain after your account is deleted. Deleting
-          your account ends access to it. Existing session and refresh-token
-          records can remain on our server until the nightly cleanup after they
-          expire. Starting another Google or GitHub sign-in in the same browser
-          can extend the session record's expiry.
+          activity records, including records with your email address, can
+          remain after your account is deleted. Deleting your account ends
+          access to it. Existing sessions can retain the sign-in details
+          described above, including your provider account ID. Session and
+          refresh-token records can remain on our server until the nightly
+          cleanup after they expire. Starting another Google or GitHub sign-in
+          in the same browser can extend the session record's expiry.
         </List.Item>
         <List.Item>
           <strong>Google and GitHub sign-in.</strong> You can remove

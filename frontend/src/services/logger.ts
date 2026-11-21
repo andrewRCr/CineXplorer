@@ -79,6 +79,14 @@ type StoredCriticalReport = Omit<
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     value !== null && typeof value === "object" && !Array.isArray(value);
 
+const REQUEST_CONTENT_FIELDS = new Set([
+    "config",
+    "request",
+    "headers",
+    "body",
+    "requestdata",
+]);
+
 interface FailedReport {
     id: string;
     entry: LogEntry;
@@ -1222,6 +1230,13 @@ class Logger {
         const cleaned: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
             const lowerKey = key.toLowerCase();
+            // Serialized request bodies can hide credentials inside strings.
+            if (
+                REQUEST_CONTENT_FIELDS.has(lowerKey) ||
+                (lowerKey === "data" && typeof value === "string")
+            ) {
+                continue;
+            }
             if (sensitiveFields.some((field) => lowerKey.includes(field))) {
                 cleaned[key] = "[FILTERED]";
             } else {

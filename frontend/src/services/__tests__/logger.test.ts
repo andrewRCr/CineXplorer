@@ -617,6 +617,27 @@ describe("persisted critical reports", () => {
                 ],
             },
         },
+        {
+            name: "request transport fields",
+            data: {
+                errors: [
+                    {
+                        status: 401,
+                        config: { data: '{"password":"fixture-password"}' },
+                        request: { data: "fixture-request" },
+                        Headers: { "X-Payload": "fixture-header" },
+                        body: "fixture-body",
+                        requestData: { login: "fixture-login" },
+                        data: "fixture-raw-payload",
+                    },
+                ],
+                details: { data: { operation: "sign-in" } },
+            },
+            expected: {
+                errors: [{ status: 401 }],
+                details: { data: { operation: "sign-in" } },
+            },
+        },
         { name: "zero", data: 0, expected: { originalData: 0 } },
         { name: "false", data: false, expected: { originalData: false } },
         { name: "empty string", data: "", expected: { originalData: "" } },

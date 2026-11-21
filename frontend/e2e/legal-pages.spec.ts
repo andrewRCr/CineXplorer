@@ -89,6 +89,71 @@ test("a direct privacy fragment lands below the top bar", async ({ page }) => {
     await expectSectionBelowTopBar(page);
 });
 
+const accountSection = "3. Your account";
+
+async function openTermsWithFontsHeld(
+    page: Page,
+    fonts: ReturnType<typeof gate>,
+) {
+    await page.route(/\.ttf(?:\?|$)/, async (route) => {
+        await fonts.wait;
+        await route.continue();
+    });
+    await page.goto("/terms#3-your%2Daccount", {
+        waitUntil: "domcontentloaded",
+    });
+    const heading = page.getByRole("heading", {
+        level: 2,
+        name: accountSection,
+        exact: true,
+    });
+    await expect(heading).toBeFocused();
+    expect(await page.evaluate(() => document.fonts.status)).toBe("loading");
+    return heading;
+}
+
+test("a direct terms fragment stays below the top bar after fonts load", async ({
+    page,
+}) => {
+    const fonts = gate();
+    try {
+        const heading = await openTermsWithFontsHeld(page, fonts);
+        await expectSectionBelowTopBar(page, accountSection);
+        fonts.release();
+        await page.evaluate(async () => {
+            await document.fonts.ready;
+        });
+        await expectSectionBelowTopBar(page, accountSection);
+        await expect(heading).toBeFocused();
+    } finally {
+        fonts.release();
+    }
+});
+
+test("manual scrolling away from a legal fragment survives font loading", async ({
+    page,
+}) => {
+    const fonts = gate();
+    try {
+        const heading = await openTermsWithFontsHeld(page, fonts);
+        const readScroll = () => page.evaluate(() => window.scrollY);
+        const initialScroll = await readScroll();
+        await page.mouse.wheel(0, 650);
+        await expect.poll(readScroll).toBeGreaterThan(initialScroll + 400);
+        await expect(heading).toBeFocused();
+
+        fonts.release();
+        await page.evaluate(async () => {
+            await document.fonts.ready;
+            await new Promise(requestAnimationFrame);
+            await new Promise(requestAnimationFrame);
+        });
+        expect(await readScroll()).toBeGreaterThan(initialScroll + 400);
+    } finally {
+        fonts.release();
+    }
+});
+
 for (const [path, heading] of [
     ["/privacy#who%2Delse-handles-your-data", section],
     ["/terms#3-your%2Daccount", "3. Your account"],

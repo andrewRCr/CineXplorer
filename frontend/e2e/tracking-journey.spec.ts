@@ -37,10 +37,21 @@ for (const mode of ["mouse", "keyboard", "touch"] as const) {
                             .getByRole("dialog", { name: "Menu", exact: true })
                             .getByRole("link", { name, exact: true }),
                     );
-                } else
+                } else {
                     await input.activate(
                         banner.getByRole("link", { name, exact: true }),
                     );
+                }
+                if (name === "Explore") {
+                    // The outgoing Watchlist can still show a link to the same film.
+                    await expect(
+                        page.getByRole("heading", {
+                            name: "Popular films",
+                            level: 1,
+                            exact: true,
+                        }),
+                    ).toBeVisible();
+                }
             };
             await navigate("Explore");
             const title = page

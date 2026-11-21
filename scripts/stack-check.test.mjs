@@ -117,16 +117,18 @@ const save = (file, text) => {
     renameSync(file + '.tmp', file);
 };
 // podman's build containers: CX_BUILD_IDS, CX_BUILD_IDS_LATER from the second listing on, and any a build added,
-// less those removed
+// less those removed or gone since the first listing. A marker file can hold back the later IDs until a build ends.
 const buildState = join(process.env.CX_STATE, 'builds.json');
 const builds = () => existsSync(buildState) ? JSON.parse(readFileSync(buildState, 'utf8')) : { listings: 0, added: [], removed: [] };
 if (command === 'docker' && args[0] === 'ps' && args.includes('--external')) {
     const known = builds();
     known.listings += 1;
     save(buildState, JSON.stringify(known));
-    const later = known.listings > 1 ? process.env.CX_BUILD_IDS_LATER ?? '' : '';
+    const ready = process.env.CX_BUILD_LATER_READY;
+    const later = known.listings > 1 && (!ready || existsSync(ready)) ? process.env.CX_BUILD_IDS_LATER ?? '' : '';
+    const gone = known.listings > 1 ? (process.env.CX_BUILD_IDS_GONE ?? '').split(' ') : [];
     const ids = [...(process.env.CX_BUILD_IDS ?? '').split(' '), ...later.split(' '), ...known.added]
-        .filter((id) => id && !known.removed.includes(id));
+        .filter((id) => id && !known.removed.includes(id) && !gone.includes(id));
     if (ids.length) console.log((args.includes('--no-trunc') ? ids : ids.map((id) => id.slice(0, 12))).join('\\n'));
 }
 if (command === 'docker' && args[0] === 'rm' && args.includes('--ignore')) {
@@ -626,6 +628,28 @@ test("says when podman's storage isn't on this machine", (t) => {
     assert.deepEqual(removedBuilds(f), []);
 });
 
+test("a container gone by the next listing gives no storage warning", (t) => {
+    const f = fixture(t);
+    const gone = "a".repeat(64);
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: gone, CX_BUILD_IDS_GONE: gone });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
+    assert.deepEqual(f.buildsLeft().removed, []);
+});
+
+test("keeps a build record warning when its container is gone by the next listing", (t) => {
+    const f = fixture(t);
+    const unreadable = "a".repeat(64);
+    // A symlink loop makes the folder unreadable even when the tests run as root.
+    symlinkSync(unreadable, join(f.storage, "overlay-containers", unreadable));
+    const result = f.invoke(["--tear-down", RUN], {
+        CX_ENGINE: "podman", CX_BUILD_IDS: unreadable, CX_BUILD_IDS_GONE: unreadable,
+    });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: ` +
+        `build containers: couldn't read the record of ${unreadable.slice(0, 12)}`);
+});
+
 test("a check removes builds left by runs that ended, and leaves live runs' builds", (t) => {
     const f = fixture(t);
     const ended = buildContainer(f, "a", { STACK_CHECK_PROJECT: "cinexplorer-run-8597-dead04", STACK_CHECK_OWNER: DEAD });
@@ -659,11 +683,13 @@ test("a teardown ends the run's Compose processes that outlived it, and no one e
     // The shell keeps its sleep as a child, so the process keeps the stand-in's arguments.
     const start = (...args) => startDetached(t, "bash", ["-c", "sleep 600; :", ...args]);
     const composers = [start("docker-compose", "-p", RUN, "up"), start("docker-compose", "--project-name", RUN, "up"),
-        start("docker-compose", `--project-name=${RUN}`, "up")];
+        start("docker-compose", `--project-name=${RUN}`, "up"), start("docker", "compose", "-p", RUN, "up"),
+        start("python", "/usr/bin/podman-compose", "-p", RUN, "up")];
     const theirs = start("docker-compose", "-p", other, "up");
     const teardown = start("stack-check", "--tear-down", RUN);
     const observer = start("journalctl", "--grep", RUN);
-    await until(() => [...composers, theirs, teardown, observer].every((pid) =>
+    const optionObserver = start("journalctl", "--grep", `--project-name=${RUN}`);
+    await until(() => [...composers, theirs, teardown, observer, optionObserver].every((pid) =>
         readFileSync(`/proc/${pid}/cmdline`, "utf8").includes("-c")));
     const result = f.invoke(["--tear-down", RUN]);
     assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
@@ -671,6 +697,7 @@ test("a teardown ends the run's Compose processes that outlived it, and no one e
     assert.ok(composers.every((pid) => !running(pid)), "the run's Compose processes should be gone");
     assert.ok(running(theirs), "another project's Compose process should survive");
     assert.ok(running(teardown), "another teardown should survive");
+    assert.ok(running(optionObserver), "a non-Compose command passing the project option should survive");
 });
 
 test("a teardown waits for Compose and reports a process still running after SIGTERM", async (t) => {
@@ -684,6 +711,40 @@ test("a teardown waits for Compose and reports a process still running after SIG
     assert.equal(result.status, 0, result.error ?? (result.stdout + result.stderr));
     assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: compose: 1 still running`);
     assert.ok(performance.now() - start >= 2900, "teardown should give the process time to exit");
+    assert.ok(running(composer));
+});
+
+test("podman teardown waits for Compose before listing builds again and clears the earlier warning", async (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const late = buildContainer(f, "b", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const ready = join(f.stateDir, "compose-ready");
+    const lateReady = join(f.stateDir, "late-build-ready");
+    // Ignore the first signal. After the second, finish the last build step before exiting.
+    const composer = startDetached(t, "bash", ["-c",
+        "trap 'if (( ++signals == 2 )); then sleep 1; touch \"$5\"; exit; fi' TERM; " +
+        "touch \"$4\"; while :; do sleep 0.1; done", "docker-compose", "-p", RUN, "up", ready, lateReady]);
+    await until(() => existsSync(ready));
+    const result = f.invoke(["--tear-down", RUN], {
+        CX_ENGINE: "podman", CX_BUILD_IDS: building.id, CX_BUILD_IDS_LATER: late.id, CX_BUILD_LATER_READY: lateReady,
+    }, 15000);
+    assert.equal(result.status, 0, result.error ?? (result.stdout + result.stderr));
+    assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
+    assert.deepEqual(f.buildsLeft().removed, [building.id, late.id]);
+    assert.ok(!running(composer), "Compose should have exited");
+});
+
+test("podman teardown reports a Compose process that outlasts both waits once", async (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const ready = join(f.stateDir, "compose-ready");
+    const composer = startDetached(t, "bash", ["-c", "trap '' TERM; touch \"$4\"; while :; do sleep 1; done",
+        "docker-compose", "-p", RUN, "up", ready]);
+    await until(() => existsSync(ready));
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: building.id }, 15000);
+    assert.equal(result.status, 0, result.error ?? (result.stdout + result.stderr));
+    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: compose: 1 still running`);
+    assert.deepEqual(f.buildsLeft().removed, [building.id]);
     assert.ok(running(composer));
 });
 

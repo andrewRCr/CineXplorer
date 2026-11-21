@@ -8,7 +8,7 @@ import {
 } from "node:fs";
 import { createServer } from "node:net";
 import { constants } from "node:os";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HELP = `Usage: node scripts/stack-check.mjs backend|e2e [argument...]
@@ -40,10 +40,6 @@ const LAUNCH = 'import { chromium } from "@playwright/test"; const browser = awa
 const SHARED = process.env.STACK_CHECK_SHARED || join("/tmp", `cinexplorer-stack-check-${process.getuid?.()}`);
 const CLAIMS = join(SHARED, "claims");
 const RUNS = join(SHARED, "runs");
-
-// Where a build runtime's mount table is read from: /proc/<pid>/mountinfo, or <STACK_CHECK_MOUNTS>/<pid>/mountinfo in
-// tests, which can't mount layers. Everything else about processes, and every signal, uses the real /proc.
-const MOUNTS = process.env.STACK_CHECK_MOUNTS || "/proc";
 
 class NotRun extends Error {}
 
@@ -140,16 +136,6 @@ function statOf(pid) {
     return stat.slice(stat.lastIndexOf(")") + 2).split(" ");
 }
 
-// A process that has ended, or that only waits for its parent to collect its exit status, is gone. A process this
-// account can't read isn't counted as gone.
-function gone(pid) {
-    try {
-        return statOf(pid)[0] === "Z";
-    } catch (error) {
-        return error.code === "ENOENT" || error.code === "ESRCH";
-    }
-}
-
 // Every process under these, read from /proc before any is signalled, so none is missed when its parent exits.
 function descendantsOf(roots) {
     const parents = new Map();
@@ -173,11 +159,13 @@ function descendantsOf(roots) {
     return [...found].filter((pid) => !roots.includes(pid));
 }
 
-// The engine behind the docker command: podman through its own command, podman's service through another client such
-// as Docker's, which lacks the podman commands that find podman's builds, or Docker.
+// The engine behind the docker command, from the products its version output names: podman through its own command,
+// podman's service through another client such as Docker's, which lacks the podman commands that find podman's
+// builds, or Docker. Other lines, such as a Docker context's name, don't count.
 function engineOf(version) {
-    if (!/podman/i.test(version.stdout)) return "docker";
-    return /podman/i.test(version.stdout.split(/^Server:/m)[0]) ? "podman" : "podman-service";
+    const product = (part) => new RegExp(`^${part}:[ \\t]*(.*)$`, "m").exec(version.stdout)?.[1] ?? "";
+    if (/podman/i.test(product("Client"))) return "podman";
+    return /podman/i.test(product("Server")) ? "podman-service" : "docker";
 }
 
 // The caller's environment, less what would steer the stack or the specs: Compose's own settings, the stack's
@@ -218,11 +206,10 @@ async function listIds(kind, filter, env) {
     return { ids: words(listed.stdout), problem: listed.status === 0 ? undefined : `${kind}s: ${lastLine(listed.output)}` };
 }
 
-// podman builds images inside its API service, so a run that ends during a build leaves the step it was running going
-// there (the service starts no further step once the run's Compose client has gone), and every build leaves its
-// working containers behind. Each run names itself to its builds in build arguments, its project and its owner, which
-// buildah records with each working container. Returns the build containers whose record names a run, each with the
-// layer podman's container store mounts it on, the storage driver, and what couldn't be read.
+// podman builds images inside its API service, and every build leaves its working containers behind, even one whose
+// run was cancelled. Each run names itself to its builds in build arguments, its project and its owner, which buildah
+// records with each working container. Returns the build containers whose record names a run, and what couldn't be
+// read.
 async function buildsOf(env) {
     const listed = await run("docker", ["ps", "--external", "--all", "--no-trunc", "--format", "{{.ID}}"], { env });
     if (listed.status !== 0) return { builds: [], problems: [`build containers: ${lastLine(listed.output)}`] };
@@ -233,19 +220,14 @@ async function buildsOf(env) {
     try {
         store = JSON.parse(info.stdout);
     } catch {
+        // Reported below
+    }
+    if (typeof store?.graphRoot !== "string" || typeof store.graphDriverName !== "string") {
         return { builds: [], problems: [`build containers: no storage details: ${lastLine(info.output)}`] };
     }
-    // A transient store keeps its container records under the run root
-    const folder = join(store.transientStore ? store.runRoot : store.graphRoot, `${store.graphDriverName}-containers`);
-    // Build containers are in the volatile container store, others in the main one
-    const layers = new Map();
-    for (const file of ["containers.json", "volatile-containers.json"]) {
-        try {
-            for (const { id, layer } of JSON.parse(readFileSync(join(folder, file), "utf8"))) layers.set(id, layer);
-        } catch {
-            // A store podman hasn't written yet; a build container it should list is reported where it matters
-        }
-    }
+    // buildah keeps its records under the graph root, whichever store podman lists the container in
+    const folder = join(store.graphRoot, `${store.graphDriverName}-containers`);
+    if (!existsSync(folder)) return { builds: [], problems: ["build containers: podman's storage isn't on this machine"] };
     const builds = [];
     const problems = [];
     for (const id of ids) {
@@ -257,97 +239,53 @@ async function buildsOf(env) {
             if (error.code !== "ENOENT") problems.push(`build containers: couldn't read the record of ${id.slice(0, 12)}`);
             continue;
         }
-        const { STACK_CHECK_PROJECT: project, STACK_CHECK_OWNER: owner } = record.Args ?? {};
-        if (project) builds.push({ id, project, owner, layer: layers.get(id) });
+        const args = record?.Args;
+        if (typeof args !== "object" || args === null) {
+            problems.push(`build containers: couldn't read the record of ${id.slice(0, 12)}`);
+            continue;
+        }
+        const { STACK_CHECK_PROJECT: project, STACK_CHECK_OWNER: owner } = args;
+        if (typeof project === "string") builds.push({ id, project, owner: typeof owner === "string" ? owner : undefined });
     }
-    return { builds, driver: store.graphDriverName, problems };
+    return { builds, problems };
 }
 
-// The build steps running on these layers. A step runs under buildah's OCI runtime, which runs as this account in the
-// step's bundle folder, with the build container's layer mounted at mnt/rootfs as the step's root; the bundle's pid
-// file names the step's first process. A layer belongs to one container only, so no other build's step can match.
-function stepsOn(layers) {
-    const steps = [];
-    const problems = [];
+// Ends this account's processes given the run's project as an argument, other than teardowns: the run's Compose
+// commands and, on podman, the Compose process podman's compose command starts, which can outlive that command when a
+// cancel comes as it starts, and stay connected to podman's service, building.
+function endComposeOf(project) {
     for (const pid of readdirSync("/proc").filter((name) => /^\d+$/.test(name))) {
-        let bundle;
+        if (Number(pid) === process.pid) continue;
         try {
-            if (basename(readFileSync(`/proc/${pid}/cmdline`, "utf8").split("\0")[0]) !== "buildah-oci-runtime") continue;
             if (statSync(`/proc/${pid}`).uid !== process.getuid()) continue;
-            bundle = readlinkSync(`/proc/${pid}/cwd`);
+            const args = readFileSync(`/proc/${pid}/cmdline`, "utf8").split("\0");
+            if (args.includes(project) && !args.includes("--tear-down")) process.kill(Number(pid), "SIGTERM");
         } catch {
-            continue;
-        }
-        let mounts;
-        try {
-            mounts = readFileSync(join(MOUNTS, pid, "mountinfo"), "utf8");
-        } catch (error) {
-            if (error.code !== "ENOENT") problems.push(`build steps: couldn't read the mounts of build runtime ${pid}`);
-            continue;
-        }
-        const rootfs = join(bundle, "mnt", "rootfs");
-        const mount = mounts.split("\n").map((line) => line.split(" ")).find((fields) => fields[4] === rootfs);
-        const layer = /(?:^|,)upperdir=[^,]*\/([^/,]+)\/diff(?:,|$)/.exec(mount?.at(-1) ?? "")?.[1];
-        // A runtime that hasn't mounted its step's root yet is found by the next look
-        if (!layers.has(layer)) continue;
-        try {
-            const step = Number(readFileSync(join(bundle, "pid"), "utf8").trim());
-            if (Number(statOf(step)[1]) === Number(pid)) steps.push({ pid: step, runtime: Number(pid), start: statOf(step)[19] });
-        } catch {
-            // The step's first process hasn't started yet, or has ended
+            // Ended meanwhile
         }
     }
-    return { steps, problems };
 }
 
-// Ends build steps. A step's first process is the first of its own PID namespace, which ignores SIGTERM, so SIGKILL,
-// which ends the namespace's other processes with it. Each is checked again just before its signal: still its
-// runtime's child, and the same process. Returns what couldn't be ended.
-async function endSteps(steps) {
-    const signalled = [];
-    const problems = [];
-    for (const { pid, runtime, start } of steps) {
-        try {
-            const stat = statOf(pid);
-            if (Number(stat[1]) !== runtime || stat[19] !== start) continue;
-            process.kill(pid, "SIGKILL");
-            signalled.push(pid);
-        } catch (error) {
-            if (error.code === "EPERM") problems.push(`build steps: not allowed to end ${pid}`);
-        }
-    }
-    const until = Date.now() + 5000;
-    while (signalled.some((pid) => !gone(pid)) && Date.now() < until) await new Promise((resolve) => setTimeout(resolve, 100));
-    const running = signalled.filter((pid) => !gone(pid));
-    if (running.length) problems.push(`build steps: ${running.length} still running`);
-    return problems;
-}
-
-// Stops one run's image builds on podman: ends their running steps, then removes their working containers. A build
-// counts as the run's only when its record names the run's project and owner, or, with no owner given, an owner that
-// has ended. It looks again a second later, since a step's runtime starts a moment before it mounts the step's root
-// and a build can add a container as it stops; after a cancel it always looks twice, since the build may not have
-// added its first container yet.
-async function stopBuilds(project, owner, env, { always }) {
+// Removes one run's image builds on podman: their working containers. A build counts as the run's only when its
+// record names the run's project and owner, or, with no owner given, an owner that has ended. A step already running
+// in podman's service runs to its end, and the service starts no further one once the run's Compose processes have
+// gone. It looks again a second later, since a build can add a container as it stops; after a cancel it always looks
+// twice, since the build may not have added its first container yet.
+async function removeBuilds(project, owner, env, { always }) {
     const problems = new Set();
     const containers = new Set();
     for (const look of [1, 2]) {
         if (look === 2) {
             if (!always && !containers.size) break;
             await new Promise((resolve) => setTimeout(resolve, 1000));
+            endComposeOf(project);
         }
         const found = await buildsOf(env);
         for (const problem of found.problems) problems.add(problem);
-        const mine = found.builds.filter((build) => build.project === project
-            && (owner ? build.owner === owner : build.owner && !alive(build.owner)));
-        if (!mine.length) continue;
-        if (found.driver !== "overlay") problems.add(`build steps: can't find steps on ${found.driver} storage`);
-        for (const { id, layer } of mine) {
-            containers.add(id);
-            if (!layer) problems.add(`build steps: couldn't tell which are ${id.slice(0, 12)}'s`);
+        for (const build of found.builds) {
+            const mine = owner ? build.owner === owner : build.owner && !alive(build.owner);
+            if (build.project === project && mine) containers.add(build.id);
         }
-        const { steps, problems: unread } = stepsOn(new Set(mine.map((build) => build.layer).filter(Boolean)));
-        for (const problem of [...unread, ...await endSteps(steps)]) problems.add(problem);
     }
     if (containers.size) {
         const removed = await run("docker", ["rm", "--force", "--ignore", ...containers], { env });
@@ -358,12 +296,13 @@ async function stopBuilds(project, owner, env, { always }) {
 
 // Removes one run's stack: containers, volumes and networks by Compose's project label; images by this run's label and
 // by the names Compose gives them, since podman's builds can lack Compose's labels; then the run's folder. Returns
-// what it couldn't remove. Only this script's project names are accepted, so it can't reach another stack. On podman,
-// its image builds go first, so a build can't finish into an image after the images are removed; owner and always are
-// stopBuilds' own.
+// what it couldn't remove. Only this script's project names are accepted, so it can't reach another stack. The run's
+// Compose processes end first, and on podman its image builds go next, so a build can't finish into an image after
+// the images are removed; owner and always are removeBuilds' own.
 async function tearDown(project, env, engine, { owner, always = false } = {}) {
     if (!RUN_PROJECT.test(project)) throw new Error(`refusing to remove ${project}: not a stack-check project`);
-    const problems = engine === "podman" ? await stopBuilds(project, owner, env, { always })
+    endComposeOf(project);
+    const problems = engine === "podman" ? await removeBuilds(project, owner, env, { always })
         : engine === "podman-service" ? ["builds: only podman's own command can find podman's builds"] : [];
     for (const kind of ["container", "volume", "network"]) {
         const { ids, problem } = await listIds(kind, `label=com.docker.compose.project=${project}`, env);

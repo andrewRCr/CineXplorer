@@ -646,6 +646,91 @@ describe("persisted critical reports", () => {
         expect(JSON.stringify(data ?? null).length).toBeLessThanOrEqual(10000);
     });
 
+    it("keeps an oversized legacy report from blocking later reports", async () => {
+        const incident = "Large rendering incident";
+        localStorage.setItem(
+            "cinexplorer_critical_logs",
+            JSON.stringify([
+                {
+                    ...legacyReport(incident + "é".repeat(30000)),
+                    data: {
+                        stack: "render fixture",
+                        details: "界".repeat(9000),
+                    },
+                    user_agent: "\u0000".repeat(2000),
+                    url: "https://cinexplorer.example/" + "p".repeat(9000),
+                    correlation_id: "c".repeat(4000),
+                    session_id: "s".repeat(4000),
+                },
+                legacyReport("Later report"),
+            ]),
+        );
+        const attempts: { message: unknown; oversized: boolean }[] = [];
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+                const body = await request.text();
+                const bytes = new TextEncoder().encode(body).byteLength;
+                const message = messageOf(JSON.parse(body));
+                const oversized = bytes > 50 * 1024;
+                attempts.push({
+                    message:
+                        typeof message === "string" &&
+                        message.startsWith(incident)
+                            ? incident
+                            : message,
+                    oversized,
+                });
+                if (oversized) {
+                    return HttpResponse.json(
+                        {
+                            success: false,
+                            error: "Payload too large",
+                            max_size_bytes: 50 * 1024,
+                        },
+                        { status: 413 },
+                    );
+                }
+                return succeeded();
+            }),
+        );
+        await expect(
+            reportingLogger().reportCriticalError("Recovery trigger"),
+        ).resolves.toBe(true);
+        expect(attempts).toEqual([
+            { message: "Recovery trigger", oversized: false },
+            { message: incident, oversized: false },
+            { message: "Later report", oversized: false },
+        ]);
+        expect(localStorage.getItem("cinexplorer_critical_logs")).toBeNull();
+    });
+
+    it("bounds legacy diagnostic context on the first storage rewrite", () => {
+        localStorage.setItem(
+            "cinexplorer_critical_logs",
+            JSON.stringify([
+                {
+                    ...legacyReport("Legacy rendering incident"),
+                    data: { stack: "fixture frame\n".repeat(850) },
+                },
+            ]),
+        );
+        reportingLogger();
+
+        const rewritten =
+            localStorage.getItem("cinexplorer_critical_logs") ?? "";
+        expect(rewritten.length).toBeLessThan(10000);
+        expect(JSON.parse(rewritten)).toEqual([
+            expect.objectContaining({
+                message: "Legacy rendering incident",
+                data: {
+                    _truncated: true,
+                    _originalSize: expect.any(Number),
+                    stack: expect.stringContaining("fixture frame"),
+                },
+            }),
+        ]);
+    });
+
     const contextCases: {
         name: string;
         data: unknown;

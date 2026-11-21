@@ -76,6 +76,8 @@ type StoredCriticalReport = Omit<
     timestamp: string;
 };
 
+type ReportFields = Omit<StoredCriticalReport, "id" | "level" | "timestamp">;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     value !== null && typeof value === "object" && !Array.isArray(value);
 
@@ -95,6 +97,17 @@ const REPORT_URL_FIELDS = new Set([
     "referrer",
     "action",
 ]);
+
+// These caps leave room under the API's 50 KiB limit after JSON escaping
+// and UTF-8 encoding, including both copies of the browser's user agent.
+const REPORT_LIMITS = {
+    data: 10000,
+    message: 1000,
+    url: 1000,
+    userAgent: 256,
+    id: 128,
+    browserField: 64,
+};
 
 // These excerpts fit the report limit even when each character needs escaping.
 const REPORT_EXCERPT_LENGTHS = {
@@ -518,14 +531,13 @@ class Logger {
         await Promise.resolve();
         const payload = {
             level: LogLevel[entry.level],
-            message: entry.message,
             timestamp: entry.timestamp.toISOString(),
-            data: this.sanitizeDataForBackend(entry.data),
-            correlation_id: entry.correlation_id,
-            user_agent: entry.user_agent,
-            url: this.sanitizeReportUrl(entry.url),
-            user_id: entry.user_id,
-            session_id: entry.session_id,
+            ...this.prepareReportFields(entry),
+            user_id:
+                typeof entry.user_id === "string" &&
+                entry.user_id.length > REPORT_LIMITS.id
+                    ? undefined
+                    : entry.user_id,
             source: "frontend",
             environment: this.detectEnvironment(),
             browser_info: this.getBrowserInfo(),
@@ -537,6 +549,22 @@ class Logger {
             signal,
             timeout: 5000,
         });
+    }
+
+    private prepareReportFields(entry: ReportFields): ReportFields {
+        const { message, data, correlation_id, user_agent, url, session_id } =
+            entry;
+        return {
+            message:
+                message.length > REPORT_LIMITS.message
+                    ? `${message.slice(0, REPORT_LIMITS.message)}…[truncated]`
+                    : message,
+            data: this.sanitizeDataForBackend(data),
+            correlation_id: correlation_id?.slice(0, REPORT_LIMITS.id),
+            user_agent: user_agent.slice(0, REPORT_LIMITS.userAgent),
+            url: this.sanitizeReportUrl(url).slice(0, REPORT_LIMITS.url),
+            session_id: session_id.slice(0, REPORT_LIMITS.id),
+        };
     }
 
     private recoverStoredCriticalReports(): Promise<void> {
@@ -586,8 +614,13 @@ class Logger {
             error instanceof Error ? error.message : "Unknown error";
 
         const id = crypto.randomUUID();
+        const fields = this.prepareReportFields(entry);
         // Use the same identity in memory and persistent recovery.
-        this.storeFailedBackendReport(entry, errorMessage, id);
+        this.storeFailedBackendReport(
+            { ...entry, ...fields },
+            errorMessage,
+            id,
+        );
 
         // Log to console in development, suppress in production
         if (this.detectEnvironment() === "development") {
@@ -607,13 +640,8 @@ class Logger {
             reports.push({
                 id,
                 level: LogLevel.CRITICAL,
-                message: entry.message,
                 timestamp: entry.timestamp.toISOString(),
-                data: this.sanitizeDataForBackend(entry.data),
-                correlation_id: entry.correlation_id,
-                user_agent: entry.user_agent,
-                url: this.sanitizeReportUrl(entry.url),
-                session_id: entry.session_id,
+                ...fields,
             });
             this.writeStoredCriticalReports(reports);
         }
@@ -835,22 +863,24 @@ class Logger {
                         continue;
                     reports.push({
                         id:
-                            typeof value.id === "string" && value.id
+                            typeof value.id === "string" &&
+                            value.id &&
+                            value.id.length <= REPORT_LIMITS.id
                                 ? value.id
                                 : crypto.randomUUID(),
                         level: LogLevel.CRITICAL,
-                        message: value.message,
                         timestamp: new Date(value.timestamp).toISOString(),
-                        data: this.normalizeReportData(
-                            this.removeSensitiveFields(value.data),
-                        ),
-                        correlation_id:
-                            typeof value.correlation_id === "string"
-                                ? value.correlation_id
-                                : undefined,
-                        user_agent: value.user_agent,
-                        url: this.sanitizeReportUrl(value.url),
-                        session_id: value.session_id,
+                        ...this.prepareReportFields({
+                            message: value.message,
+                            data: value.data,
+                            correlation_id:
+                                typeof value.correlation_id === "string"
+                                    ? value.correlation_id
+                                    : undefined,
+                            user_agent: value.user_agent,
+                            url: value.url,
+                            session_id: value.session_id,
+                        }),
                     });
                 }
             }
@@ -1213,7 +1243,7 @@ class Logger {
 
             // Limit size to prevent large payloads
             const serialized = JSON.stringify(sanitized);
-            if (sanitized && serialized.length > 10000) {
+            if (sanitized && serialized.length > REPORT_LIMITS.data) {
                 const summary: Record<string, unknown> = {
                     _truncated: true,
                     _originalSize: serialized.length,
@@ -1302,13 +1332,15 @@ class Logger {
         return {
             user_agent:
                 typeof navigator !== "undefined"
-                    ? navigator.userAgent
+                    ? navigator.userAgent.slice(0, REPORT_LIMITS.userAgent)
                     : "test-environment",
             language:
-                typeof navigator !== "undefined" ? navigator.language : "en-US",
+                typeof navigator !== "undefined"
+                    ? navigator.language.slice(0, REPORT_LIMITS.browserField)
+                    : "en-US",
             platform:
                 typeof navigator !== "undefined"
-                    ? navigator.platform
+                    ? navigator.platform.slice(0, REPORT_LIMITS.browserField)
                     : "test-environment",
             viewport: {
                 width: typeof window !== "undefined" ? window.innerWidth : 1920,

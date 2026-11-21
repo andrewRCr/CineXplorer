@@ -323,25 +323,47 @@ describe("useScrollPersistence", () => {
       },
     );
 
-    it("ends the return when the visitor scrolls while it loads", () => {
-      mockSessionStorage.setItem("scroll-discover-", createStorageEntry(2600));
-      const { rerender } = renderHook(
-        (props: LoadProps) =>
-          useScrollPersistence({ ...defaultOptions, ...props }),
-        {
-          wrapper: createWrapper(["/browse"], { restoreScroll: true }),
-          initialProps: { ...loading, loadedCount: 0, hasMore: false },
+    // While the results load, the page sits at the end of the loading grid, so input there must not end the return
+    it.each([
+      ["a click", () => window.dispatchEvent(new PointerEvent("pointerdown"))],
+      [
+        "a key press",
+        () =>
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "Meta" })),
+      ],
+      [
+        "a scroll",
+        () => {
+          window.dispatchEvent(new WheelEvent("wheel"));
+          mockScrollY = 400;
+          scrollListeners.forEach((listener) => listener());
         },
-      );
-      act(() => {
-        window.dispatchEvent(new WheelEvent("wheel"));
-      });
-      deliverScrollAt(400);
-      expect(savedPosition()).toBe(400);
-      rerender({ ...loaded, loadedCount: 20, hasMore: true });
-      expect(window.scrollY).toBe(400);
-      expect(mockScrollTo).not.toHaveBeenCalledWith(0, 2600);
-    });
+      ],
+    ])(
+      "still lands at its position after %s during the wait",
+      (_input, input) => {
+        mockSessionStorage.setItem(
+          "scroll-discover-",
+          createStorageEntry(2600),
+        );
+        const { rerender } = renderHook(
+          (props: LoadProps) =>
+            useScrollPersistence({ ...defaultOptions, ...props }),
+          {
+            wrapper: createWrapper(["/browse"], { restoreScroll: true }),
+            initialProps: { ...loading, loadedCount: 0, hasMore: false },
+          },
+        );
+        mockScrollY = 1353;
+        act(() => {
+          input();
+          vi.advanceTimersByTime(300);
+        });
+        expect(savedPosition()).toBe(2600);
+        rerender({ ...loaded, loadedCount: 20, hasMore: true });
+        expect(window.scrollY).toBe(2600);
+      },
+    );
 
     it("keeps a save that is still waiting out its delay when the results arrive", () => {
       const { rerender } = renderHook(
@@ -372,9 +394,6 @@ describe("useScrollPersistence", () => {
         },
       );
       rerender({ browseParams: { genre: "18" } });
-      act(() => {
-        window.dispatchEvent(new WheelEvent("wheel"));
-      });
       deliverScrollAt(700);
       expect(savedPosition()).toBe(2600);
       expect(savedPosition("scroll-discover-genre=18")).toBe(700);

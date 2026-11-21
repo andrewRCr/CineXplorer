@@ -597,6 +597,55 @@ describe("persisted critical reports", () => {
         expect(received.map(messageOf)).toEqual(["Healthy deadline"]);
     });
 
+    it("keeps bounded stack excerpts when an oversized report replays", async () => {
+        const incident = "Oversized rendering incident";
+        const stack = "at RenderFixture (app.js:1:1)";
+        const componentStack = "at RenderFixture";
+        const escaped = "\u0000".repeat(6000);
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, () => HttpResponse.error()),
+        );
+        await expect(
+            reportingLogger().reportCriticalError(incident, {
+                name: "Error",
+                stack: stack + escaped,
+                componentStack: componentStack + escaped,
+            }),
+        ).resolves.toBe(false);
+
+        const reports: unknown[] = [];
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+                reports.push(await request.json());
+                return succeeded();
+            }),
+        );
+        await expect(
+            reportingLogger().reportCriticalError("Recovery trigger"),
+        ).resolves.toBe(true);
+        expect(reports).toEqual([
+            expect.objectContaining({ message: "Recovery trigger" }),
+            expect.objectContaining({
+                message: incident,
+                data: {
+                    _truncated: true,
+                    _originalSize: expect.any(Number),
+                    name: "Error",
+                    stack: expect.stringContaining(stack),
+                    componentStack: expect.stringContaining(componentStack),
+                },
+            }),
+        ]);
+        const replayed = reports[1];
+        const data =
+            replayed !== null &&
+            typeof replayed === "object" &&
+            "data" in replayed
+                ? replayed.data
+                : undefined;
+        expect(JSON.stringify(data ?? null).length).toBeLessThanOrEqual(10000);
+    });
+
     const contextCases: {
         name: string;
         data: unknown;
@@ -636,6 +685,30 @@ describe("persisted critical reports", () => {
             expected: {
                 errors: [{ status: 401 }],
                 details: { data: { operation: "sign-in" } },
+            },
+        },
+        {
+            name: "address context",
+            data: {
+                details: [
+                    {
+                        URL: "https://viewer:fixture@cinexplorer.example/login?verify=fixture#fragment",
+                        previous:
+                            "https://cinexplorer.example/login?reset=fixture",
+                        action: "/forgot-password?key=fixture#form",
+                        href: "//unexpected.example/?key=fixture",
+                    },
+                ],
+            },
+            expected: {
+                details: [
+                    {
+                        URL: "https://cinexplorer.example/login",
+                        previous: "https://cinexplorer.example/login",
+                        action: "/forgot-password",
+                        href: "unknown",
+                    },
+                ],
             },
         },
         { name: "zero", data: 0, expected: { originalData: 0 } },

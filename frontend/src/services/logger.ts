@@ -87,6 +87,26 @@ const REQUEST_CONTENT_FIELDS = new Set([
     "requestdata",
 ]);
 
+const REPORT_URL_FIELDS = new Set([
+    "url",
+    "href",
+    "previous",
+    "referer",
+    "referrer",
+    "action",
+]);
+
+// These excerpts fit the report limit even when each character needs escaping.
+const REPORT_EXCERPT_LENGTHS = {
+    name: 80,
+    code: 80,
+    errorId: 80,
+    message: 80,
+    status: 80,
+    stack: 600,
+    componentStack: 600,
+};
+
 interface FailedReport {
     id: string;
     entry: LogEntry;
@@ -503,7 +523,7 @@ class Logger {
             data: this.sanitizeDataForBackend(entry.data),
             correlation_id: entry.correlation_id,
             user_agent: entry.user_agent,
-            url: entry.url,
+            url: this.sanitizeReportUrl(entry.url),
             user_id: entry.user_id,
             session_id: entry.session_id,
             source: "frontend",
@@ -511,6 +531,8 @@ class Logger {
             browser_info: this.getBrowserInfo(),
         };
         await apiClient.post("/logs/", payload, {
+            adapter: "fetch",
+            fetchOptions: { referrerPolicy: "no-referrer" },
             skipAuthRefresh: true,
             signal,
             timeout: 5000,
@@ -590,7 +612,7 @@ class Logger {
                 data: this.sanitizeDataForBackend(entry.data),
                 correlation_id: entry.correlation_id,
                 user_agent: entry.user_agent,
-                url: this.sanitizeStoredUrl(entry.url),
+                url: this.sanitizeReportUrl(entry.url),
                 session_id: entry.session_id,
             });
             this.writeStoredCriticalReports(reports);
@@ -766,7 +788,15 @@ class Logger {
         return this.readStoredCriticalReports() ?? [];
     }
 
-    private sanitizeStoredUrl(value: string): string {
+    private sanitizeReportUrl(value: unknown): string {
+        if (typeof value !== "string") return "unknown";
+        if (
+            value.startsWith("/") &&
+            !value.startsWith("//") &&
+            !value.startsWith("/\\")
+        ) {
+            return value.split(/[?#]/, 1)[0] ?? "unknown";
+        }
         try {
             const url = new URL(value);
             return url.protocol === "https:" || url.protocol === "http:"
@@ -819,7 +849,7 @@ class Logger {
                                 ? value.correlation_id
                                 : undefined,
                         user_agent: value.user_agent,
-                        url: this.sanitizeStoredUrl(value.url),
+                        url: this.sanitizeReportUrl(value.url),
                         session_id: value.session_id,
                     });
                 }
@@ -1183,12 +1213,22 @@ class Logger {
 
             // Limit size to prevent large payloads
             const serialized = JSON.stringify(sanitized);
-            if (serialized.length > 10000) {
-                return {
+            if (sanitized && serialized.length > 10000) {
+                const summary: Record<string, unknown> = {
                     _truncated: true,
                     _originalSize: serialized.length,
-                    data: serialized.substring(0, 10000) + "...[truncated]",
                 };
+                for (const [field, length] of Object.entries(
+                    REPORT_EXCERPT_LENGTHS,
+                )) {
+                    const value = sanitized[field];
+                    if (typeof value === "string") {
+                        summary[field] = value.slice(0, length);
+                    } else if (typeof value === "number") {
+                        summary[field] = value;
+                    }
+                }
+                return summary;
             }
 
             return sanitized;
@@ -1239,6 +1279,8 @@ class Logger {
             }
             if (sensitiveFields.some((field) => lowerKey.includes(field))) {
                 cleaned[key] = "[FILTERED]";
+            } else if (REPORT_URL_FIELDS.has(lowerKey)) {
+                cleaned[key] = this.sanitizeReportUrl(value);
             } else {
                 cleaned[key] = this.removeSensitiveFields(value);
             }

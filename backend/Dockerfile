@@ -14,7 +14,8 @@ ARG USER_GID=$USER_UID
 # This layer is cached and only re-run if the base image or this RUN command changes.
 RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
     python -m venv /py && \
-    apk --update-cache add postgresql-client postgresql-dev shadow curl su-exec git bash binutils && \
+    apk update && \
+    apk add postgresql-client postgresql-dev shadow curl su-exec git bash binutils && \
     groupadd --gid $USER_GID $USERNAME && \
     useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
@@ -25,10 +26,12 @@ COPY ./requirements ./requirements
 
 # Install Python dependencies into the virtual environment from the hashed development lock,
 # which holds the shared runtime dependencies too. pip checks every package's hash.
+# Cache HTTP downloads and build wheels with the current system libraries.
 # This layer is cached and only re-run if the requirements files change.
 RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
-    --mount=type=cache,id=cinexplorer-pip-dev,target=/root/.cache/pip \
-    apk --update-cache add --virtual .tmp-build-deps \
+    --mount=type=cache,id=cinexplorer-pip-dev-http,target=/root/.cache/pip/http-v2 \
+    apk update && \
+    apk add --virtual .tmp-build-deps \
         build-base musl-dev python3-dev gcc libc-dev linux-headers && \
     /py/bin/pip install --upgrade pip && \
     /py/bin/pip install -r ./requirements/req.dev.txt && \
@@ -49,16 +52,18 @@ EXPOSE 8000
 
 FROM base AS build
 RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
-    apk --update-cache add build-base libpq-dev && \
+    apk update && \
+    apk add build-base libpq-dev && \
     python -m venv /py
 WORKDIR /build
 COPY ./requirements ./requirements
-RUN --mount=type=cache,id=cinexplorer-pip-prod,target=/root/.cache/pip \
+RUN --mount=type=cache,id=cinexplorer-pip-prod-http,target=/root/.cache/pip/http-v2 \
     /py/bin/pip install -r ./requirements/req.prod.txt
 
 FROM base AS production
 RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
-    apk --update-cache add libpq && \
+    apk update && \
+    apk add libpq && \
     addgroup -S django-user && \
     adduser -S -G django-user django-user
 WORKDIR /backend

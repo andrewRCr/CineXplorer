@@ -897,8 +897,9 @@ only by `filter`, `first`, `last`, or `nth`. CSS and XPath selector strings, `ge
 
 Each journey spec scans each distinct reached page with axe after its ready check: a heading or result count, or the
 first labelled field on the auth forms. Tracking also scans the entry dialog and phone rating sheet. `scanPage`
-waits up to five seconds for pending/running finite animations inside dialogs, alert dialogs and notification regions,
-including their descendants, then performs one audit. Infinite motion continues; a timeout reports the active motion.
+observes finite animations across the document and waits up to five seconds for them to settle before each audit.
+If finite motion resumes before the frame after the audit, the helper discards that result and waits again. It fails
+after three interrupted attempts. Infinite motion continues, and a settling timeout reports the active motion.
 `background.spec.ts` scans the pages its rendered-app tests reach. Scans use
 WCAG 2.0 and 2.1 A/AA rules. `axe-baseline.ts` excuses only explicit route patterns and rule IDs, each with a reason; a
 new violation of that same rule on that route is also excused until the entry is removed. Other violations fail with the

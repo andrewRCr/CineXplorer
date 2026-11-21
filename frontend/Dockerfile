@@ -5,8 +5,10 @@ ARG USER_UID=1000
 ARG USER_GID=1000
 
 # Reuse the base image's node account, matching the bind-mount owner.
-RUN if [ "$(id -u node)" != "$USER_UID" ] || [ "$(id -g node)" != "$USER_GID" ]; then \
-        apk add --no-cache --virtual .user-tools shadow && \
+RUN --mount=type=cache,id=cinexplorer-apk-frontend,target=/etc/apk/cache,sharing=locked \
+    if [ "$(id -u node)" != "$USER_UID" ] || [ "$(id -g node)" != "$USER_GID" ]; then \
+        rm -f /etc/apk/cache/APKINDEX.*.tar.gz && \
+        apk --update-cache add --virtual .user-tools shadow && \
         groupmod --gid "$USER_GID" node && \
         usermod --uid "$USER_UID" --gid "$USER_GID" node && \
         apk del .user-tools; \
@@ -21,7 +23,8 @@ EXPOSE 5173
 
 # install dependencies
 COPY --chown=node:node package*.json .
-RUN npm ci
+RUN --mount=type=cache,id=cinexplorer-npm-dev-${USER_UID}-${USER_GID},target=/home/node/.npm,uid=${USER_UID},gid=${USER_GID} \
+    npm ci
 
 # copy frontend source code
 COPY --chown=node:node . .
@@ -32,7 +35,8 @@ CMD ["npm", "run", "dev"]
 FROM node:26-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS build
 WORKDIR /frontend
 COPY package*.json ./
-RUN npm ci
+RUN --mount=type=cache,id=cinexplorer-npm-prod,target=/root/.npm \
+    npm ci
 COPY . .
 RUN npm run typegen && npm run build
 

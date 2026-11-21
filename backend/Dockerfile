@@ -10,10 +10,13 @@ ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
 # Create a virtual environment, install system-level dependencies, and add a non-root user.
+# The APK cache keeps package archives while each install fetches fresh indexes.
 # binutils lets pure-Python psycopg discover libpq after temporary compilers are removed.
 # This layer is cached and only re-run if the base image or this RUN command changes.
-RUN python -m venv /py && \
-    apk add --update --no-cache postgresql-client postgresql-dev shadow curl su-exec git bash binutils && \
+RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
+    python -m venv /py && \
+    rm -f /etc/apk/cache/APKINDEX.*.tar.gz && \
+    apk --update-cache add postgresql-client postgresql-dev shadow curl su-exec git bash binutils && \
     groupadd --gid $USER_GID $USERNAME && \
     useradd --uid $USER_UID --gid $USER_GID -m $USERNAME
 
@@ -24,8 +27,12 @@ COPY ./requirements ./requirements
 
 # Install Python dependencies into the virtual environment from the hashed development lock,
 # which holds the shared runtime dependencies too. pip checks every package's hash.
+# Cache HTTP downloads and build wheels with the current system libraries.
 # This layer is cached and only re-run if the requirements files change.
-RUN apk add --update --no-cache --virtual .tmp-build-deps \
+RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
+    --mount=type=cache,id=cinexplorer-pip-dev-http,target=/root/.cache/pip/http-v2 \
+    rm -f /etc/apk/cache/APKINDEX.*.tar.gz && \
+    apk --update-cache add --virtual .tmp-build-deps \
         build-base musl-dev python3-dev gcc libc-dev linux-headers && \
     /py/bin/pip install --upgrade pip && \
     /py/bin/pip install -r ./requirements/req.dev.txt && \
@@ -45,14 +52,19 @@ USER $USERNAME
 EXPOSE 8000
 
 FROM base AS build
-RUN apk add --no-cache build-base libpq-dev && \
+RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
+    rm -f /etc/apk/cache/APKINDEX.*.tar.gz && \
+    apk --update-cache add build-base libpq-dev && \
     python -m venv /py
 WORKDIR /build
 COPY ./requirements ./requirements
-RUN /py/bin/pip install --no-cache-dir -r ./requirements/req.prod.txt
+RUN --mount=type=cache,id=cinexplorer-pip-prod-http,target=/root/.cache/pip/http-v2 \
+    /py/bin/pip install -r ./requirements/req.prod.txt
 
 FROM base AS production
-RUN apk add --no-cache libpq && \
+RUN --mount=type=cache,id=cinexplorer-apk-backend,target=/etc/apk/cache,sharing=locked \
+    rm -f /etc/apk/cache/APKINDEX.*.tar.gz && \
+    apk --update-cache add libpq && \
     addgroup -S django-user && \
     adduser -S -G django-user django-user
 WORKDIR /backend

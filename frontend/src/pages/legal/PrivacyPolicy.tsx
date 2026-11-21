@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
   return (
     <LegalDocument
       title="CineXplorer Privacy Policy"
-      effectiveDate="November 20, 2026"
+      effectiveDate="November 21, 2026"
     >
       <Text>
         CineXplorer is a free movie-discovery website run as a personal project
@@ -212,10 +212,12 @@ export default function PrivacyPolicy() {
           signing in, renewing your session, verifying your email address and
           emails sent to you), including failed attempts, are also logged with
           your username or user ID where known, and sometimes your browser's
-          identification string. If a request fails on the server, for example
-          while the site restarts, the logs can also record it in full,
-          including any search text and the full address of the page you came
-          from.
+          identification string. If the web server cannot complete a request to
+          the application server, for example while the site restarts, it can
+          log the requested path, your IP address, your browser's identification
+          string and the result. It leaves out the query, such as search text,
+          and the address of the page you came from. Unexpected application
+          errors can also leave technical details in the logs.
         </List.Item>
         <List.Item>
           <strong>Error reports.</strong> If something breaks in your browser,

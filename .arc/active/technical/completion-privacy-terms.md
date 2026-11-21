@@ -25,7 +25,8 @@ it. The pages provide the stable legal URLs required for Google OAuth branding.
 - The pages share the app theme and document layout. Each opens at the title or places the selected section below
   the sticky navigation.
 - OAuth errors, failed credential renewal, and pending account actions preserve the chosen legal URL.
-  Sign-out refreshes the session on the same document.
+  In `useAuth`, `logout` opens Login immediately. If a legal document is open when sign-out settles, `logout`
+  reloads that URL to refresh the session.
 - Unit tests cover the public routes and notices. A Chromium journey follows the footer links from signed-out
   Home, checks axe on Home and both documents, and exercises narrow-screen overflow and section links.
 

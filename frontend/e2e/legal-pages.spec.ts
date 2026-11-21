@@ -7,8 +7,8 @@ import { gate } from "../tests/helpers/web-locks";
 const section = "Who else handles your data";
 const privacyFragment = "/privacy#who-else-handles-your-data";
 
-async function expectSectionBelowTopBar(page: Page) {
-    const heading = page.getByRole("heading", { level: 2, name: section });
+async function expectSectionBelowTopBar(page: Page, name = section) {
+    const heading = page.getByRole("heading", { level: 2, name, exact: true });
     const topBar = page.getByRole("banner");
     await expect(heading).toBeInViewport({ ratio: 1 });
     await expect
@@ -86,6 +86,66 @@ test("a direct privacy fragment lands below the top bar", async ({ page }) => {
     await page.goto(privacyFragment);
 
     await expectSectionBelowTopBar(page);
+});
+
+for (const [path, heading] of [
+    ["/privacy#who%2Delse-handles-your-data", section],
+    ["/terms#3-your%2Daccount", "3. Your account"],
+]) {
+    test(`an encoded legal fragment focuses the section at ${path}`, async ({
+        page,
+    }) => {
+        await page.goto(path);
+        await expectSectionBelowTopBar(page, heading);
+        await expect(
+            page.getByRole("heading", { level: 2, name: heading, exact: true }),
+        ).toBeFocused();
+    });
+}
+
+test("an encoded fragment for the navbar opens the legal document at the top", async ({
+    page,
+}) => {
+    await page.goto(privacyFragment);
+    await expectSectionBelowTopBar(page);
+    await expect
+        .poll(() => page.evaluate(() => window.scrollY))
+        .toBeGreaterThan(0);
+
+    const search = page.getByRole("textbox", {
+        name: "Search films",
+        exact: true,
+    });
+    const id = await search.getAttribute("id");
+    expect(id).toBeTruthy();
+    const fragment = Array.from(
+        id ?? "",
+        (character) =>
+            `%${character.charCodeAt(0).toString(16).padStart(2, "0")}`,
+    ).join("");
+    const path = `/privacy#${fragment}`;
+
+    // Keep the initial scroll position until the app handles the history update.
+    await page.evaluate((url) => {
+        history.replaceState(
+            { ...history.state, key: "navbar-fragment" },
+            "",
+            url,
+        );
+        window.dispatchEvent(
+            new PopStateEvent("popstate", { state: history.state }),
+        );
+    }, path);
+
+    await expect(page).toHaveURL(path);
+    await expect
+        .poll(() =>
+            search.evaluate((input) => ({
+                scrollY: window.scrollY,
+                searchFocused: document.activeElement === input,
+            })),
+        )
+        .toEqual({ scrollY: 0, searchFocused: false });
 });
 
 const viewer = { id: 123, username: "legal-reader", email_verified: true };

@@ -1,5 +1,5 @@
 import { Box, Heading, Stack, Text } from "@chakra-ui/react";
-import { useLayoutEffect, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { useLocation } from "react-router";
 
 interface LegalDocumentProps {
@@ -14,9 +14,20 @@ export function LegalDocument({
   children,
 }: LegalDocumentProps) {
   const { hash, key } = useLocation();
+  const content = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
-    const heading = hash && document.getElementById(hash.slice(1));
+    let id = "";
+    try {
+      id = decodeURIComponent(hash.slice(1));
+    } catch (error) {
+      if (!(error instanceof URIError)) throw error;
+    }
+    const heading = id
+      ? content.current?.querySelector<HTMLHeadingElement>(
+          `:is(h2, h3)#${CSS.escape(id)}`,
+        )
+      : null;
     if (heading) {
       heading.scrollIntoView();
       heading.focus({ preventScroll: true });
@@ -26,14 +37,16 @@ export function LegalDocument({
   }, [hash, key]);
 
   return (
-    <Stack as="main" gap={4} py={8} mx="auto" w="full" maxW="3xl" minW="0">
-      <Heading as="h1" size="2xl">
-        {title}
-      </Heading>
-      <Text color="on-muted">
-        <strong>Effective:</strong> {effectiveDate}
-      </Text>
-      {children}
+    <Stack asChild gap={4} py={8} mx="auto" w="full" maxW="3xl" minW="0">
+      <main ref={content}>
+        <Heading as="h1" size="2xl">
+          {title}
+        </Heading>
+        <Text color="on-muted">
+          <strong>Effective:</strong> {effectiveDate}
+        </Text>
+        {children}
+      </main>
     </Stack>
   );
 }

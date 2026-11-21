@@ -15,7 +15,7 @@ import {
 } from "@/utilities/csrfTokenFetcher";
 import { useState, useEffect, useCallback } from "react";
 import logger from "@/services/logger";
-import { loginPathFor } from "@/utilities/returnPath";
+import { isLegalDocumentPath, loginPathFor } from "@/utilities/returnPath";
 
 // Constants for OAuth timing UX
 const FAST_OAUTH_THRESHOLD = 3000; // 3 seconds
@@ -169,6 +169,7 @@ export function useOAuthFlow(
                 logger.debug(`[OAuth] Initializing ${provider} OAuth login`);
 
                 if (!getCsrfToken()) await ensureCsrfTokenCookie(apiBaseUrl);
+                if (isLegalDocumentPath(window.location.pathname)) return;
                 const csrfToken = getCsrfToken();
 
                 // Create form and submit through Caddy proxy

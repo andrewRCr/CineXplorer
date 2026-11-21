@@ -295,8 +295,20 @@ the worktree's browsable stack with Home's line and the notices in place.
       The rendered policy describes renewal limits by account or IP address and matches Appendix A.
       All 249 focused tests and 19 Chromium scenarios passed. Lint, formatting and type checking passed.
 
+    - [x] **4.1.j Preserve legal pages during OAuth setup and resolve encoded section links.** If either legal
+      page is open after CSRF setup, `initializeOAuth` skips the provider form and OAuth markers.
+      `LegalDocument` scrolls to and focuses headings below the top bar for encoded section links. The completion
+      summary describes the sign-out timing. All four new cases failed before the fixes and passed afterward.
+      All 152 related tests, 232 focused tests on rerun, and 21 Chromium scenarios passed. Lint, formatting and
+      type checking passed. Two earlier focused runs hit the known idle-renewal test timeout.
+
+    - [x] **4.1.k Limit fragment navigation to legal section headings.** An encoded navbar ID took focus and left
+      the document scrolled down before the fix. `LegalDocument` now scrolls to the top for that fragment. The sign-out
+      summary states which page reloads at settlement, and the OAuth guidance uses the existing guarded hook example.
+      All 26 related tests and 15 legal-page Chromium scenarios passed, along with lint, formatting and type checking.
+
     - Local verification is complete. The full frontend test and Chromium suites passed during verification.
-      The focused runs in 4.1.a through 4.1.i cover the subsequent changes. The criteria below record the local
+      The focused runs in 4.1.a through 4.1.k cover the subsequent changes. The criteria below record the local
       results and the remaining merge checks. The branch changes no backend API or generated frontend API files.
 
 - [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
@@ -327,7 +339,7 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
   scan; `/privacy` at 360×800 doesn't scroll sideways; and its "Who else handles your data" heading lands below the top
   bar from the in-page link and on a direct load of its fragment. (R1, R3, R5, R8, R14)
 
-    All twelve local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
+    All 15 local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
     Home and both legal pages. The CI smoke result is pending.
 
 - [x] 2. **The texts are the appendices'.** A reviewer comparing each page's rendered text with Appendix A and Appendix

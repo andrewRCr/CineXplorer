@@ -633,34 +633,7 @@ Unsafe methods require CSRF even before sign-in. Provider callbacks are outside 
 | `/_allauth/browser/v1/auth/password/reset`    | POST   | No            | Complete password reset   | `{key, password}`                                        | `200` or `401` on success                           |
 | `/accounts/{provider}/login/callback/`        | GET    | No            | OAuth callback (internal) | N/A                                                      | 302 redirect to callback_url                        |
 
-**Example: Initiate Google OAuth**:
-
-```javascript
-// Initialize the required token before constructing the OAuth form.
-if (!getCsrfToken()) await ensureCsrfTokenCookie(apiBaseUrl);
-const csrfToken = getCsrfToken();
-const form = document.createElement("form");
-form.method = "POST";
-form.action = "https://localhost:8444/_allauth/browser/v1/auth/provider/redirect";
-
-const fields = {
-  provider: "google",
-  callback_url: "https://localhost:8444/login",  // Where to send user after OAuth
-  process: "login",
-  csrfmiddlewaretoken: csrfToken
-};
-
-Object.entries(fields).forEach(([key, value]) => {
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = key;
-  input.value = value;
-  form.appendChild(input);
-});
-
-document.body.appendChild(form);
-form.submit();  // Browser redirects to Google OAuth
-```
+To start provider sign-in from the app, use the [OAuth hook example](#oauth-flow-implementation).
 
 **Example: Check OAuth Session**:
 
@@ -711,9 +684,11 @@ All endpoints authenticated by `JWTSessionAuth` support both authentication patt
 
 **OAuth hook** (`frontend/src/hooks/auth/useOAuthFlow.ts`):
 
-`initializeOAuth` ensures the CSRF cookie, builds the provider form with `csrfmiddlewaretoken`, records the provider
-and start time in session storage, and submits the form through the site's origin. The browser follows the provider
-redirect. Errors are reported to the caller's error callback; a throwing callback rejects the completion promise.
+`initializeOAuth` ensures the CSRF cookie and then checks the current browser URL. If a legal page is open at
+that check, the hook returns before building the provider form or recording OAuth state. On other routes, the hook
+builds the form with `csrfmiddlewaretoken`, records the provider and start time in session storage, and submits
+the form through the site's origin. The browser follows the provider redirect. The hook reports errors to the
+caller's callback. If that callback throws, the completion promise rejects.
 
 ```typescript
 const { initializeOAuth } = useOAuthFlow(setGeneralError);

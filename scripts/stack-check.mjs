@@ -159,13 +159,15 @@ function descendantsOf(roots) {
     return [...found].filter((pid) => !roots.includes(pid));
 }
 
-// The engine behind the docker command, from the products its version output names: podman through its own command,
-// podman's service through another client such as Docker's, which lacks the podman commands that find podman's
-// builds, or Docker. Other lines, such as a Docker context's name, don't count.
+// The engine behind the docker command: podman when podman's own command names itself on the Client line; podman's
+// service when only the server section names podman, as Docker's CLI shows it in a component below the Server line
+// (Docker's CLI lacks the podman commands that find podman's builds); otherwise Docker. A client's context name, in
+// the client section, never counts.
 function engineOf(version) {
-    const product = (part) => new RegExp(`^${part}:[ \\t]*(.*)$`, "m").exec(version.stdout)?.[1] ?? "";
-    if (/podman/i.test(product("Client"))) return "podman";
-    return /podman/i.test(product("Server")) ? "podman-service" : "docker";
+    const client = /^Client:[^\n]*/m.exec(version.stdout)?.[0] ?? "";
+    if (/podman/i.test(client)) return "podman";
+    const server = version.stdout.search(/^Server:/m);
+    return server !== -1 && /podman/i.test(version.stdout.slice(server)) ? "podman-service" : "docker";
 }
 
 // The caller's environment, less what would steer the stack or the specs: Compose's own settings, the stack's
@@ -211,6 +213,7 @@ async function listIds(kind, filter, env) {
 // records with each working container. Returns the build containers whose record names a run, and what couldn't be
 // read.
 async function buildsOf(env) {
+    // Buildah's container folders use full IDs, while podman lists short IDs by default.
     const listed = await run("docker", ["ps", "--external", "--all", "--no-trunc", "--format", "{{.ID}}"], { env });
     if (listed.status !== 0) return { builds: [], problems: [`build containers: ${lastLine(listed.output)}`] };
     const ids = words(listed.stdout);
@@ -227,50 +230,77 @@ async function buildsOf(env) {
     }
     // buildah keeps its records under the graph root, whichever store podman lists the container in
     const folder = join(store.graphRoot, `${store.graphDriverName}-containers`);
-    if (!existsSync(folder)) return { builds: [], problems: ["build containers: podman's storage isn't on this machine"] };
+    let local = false;
     const builds = [];
     const problems = [];
     for (const id of ids) {
+        const container = join(folder, id);
+        const problem = `build containers: couldn't read the record of ${id.slice(0, 12)}`;
         let record;
         try {
-            record = JSON.parse(readFileSync(join(folder, id, "userdata", "buildah.json"), "utf8"));
+            if (!statSync(container, { throwIfNoEntry: false })?.isDirectory()) continue;
+            local = true;
+            record = JSON.parse(readFileSync(join(container, "userdata", "buildah.json"), "utf8"));
         } catch (error) {
-            // Only a build's containers have a record, and one removed since the listing has none either
-            if (error.code !== "ENOENT") problems.push(`build containers: couldn't read the record of ${id.slice(0, 12)}`);
+            // Only a build has a record, and its folder can disappear between the listing and the read.
+            if (error.code !== "ENOENT") problems.push(problem);
             continue;
         }
-        const args = record?.Args;
-        if (typeof args !== "object" || args === null) {
-            problems.push(`build containers: couldn't read the record of ${id.slice(0, 12)}`);
+        // A build made without arguments has no project or owner tags.
+        const args = record?.Args ?? {};
+        if (!record || typeof record !== "object" || Array.isArray(record) ||
+            typeof args !== "object" || Array.isArray(args)) {
+            problems.push(problem);
             continue;
         }
         const { STACK_CHECK_PROJECT: project, STACK_CHECK_OWNER: owner } = args;
         if (typeof project === "string") builds.push({ id, project, owner: typeof owner === "string" ? owner : undefined });
     }
+    // A local store can have the same path as the service's store. Check the listed containers themselves.
+    if (!local) return { builds: [], problems: ["build containers: podman's storage isn't on this machine"] };
     return { builds, problems };
 }
 
-// Ends this account's processes given the run's project as an argument, other than teardowns: the run's Compose
-// commands and, on podman, the Compose process podman's compose command starts, which can outlive that command when a
-// cancel comes as it starts, and stay connected to podman's service, building.
-function endComposeOf(project) {
+// Signal this account's processes passing the run's project as a Compose option. Podman's Compose provider can
+// outlive the command that started it. Give the provider time to exit and close its connection before listing builds.
+async function endComposeOf(project) {
+    let signalled = [];
     for (const pid of readdirSync("/proc").filter((name) => /^\d+$/.test(name))) {
         if (Number(pid) === process.pid) continue;
         try {
             if (statSync(`/proc/${pid}`).uid !== process.getuid()) continue;
             const args = readFileSync(`/proc/${pid}/cmdline`, "utf8").split("\0");
-            if (args.includes(project) && !args.includes("--tear-down")) process.kill(Number(pid), "SIGTERM");
+            const matches = args.some((arg, i) => arg === `--project-name=${project}` ||
+                ((arg === "-p" || arg === "--project-name") && args[i + 1] === project));
+            if (!matches) continue;
+            const started = statOf(pid)[19];
+            process.kill(Number(pid), "SIGTERM");
+            signalled.push({ pid, started });
         } catch {
             // Ended meanwhile
         }
     }
+    for (const deadline = performance.now() + 3000; signalled.length;) {
+        signalled = signalled.filter(({ pid, started }) => {
+            try {
+                const stat = statOf(pid);
+                return stat[0] !== "Z" && stat[19] === started;
+            } catch {
+                return false;
+            }
+        });
+        const remaining = deadline - performance.now();
+        if (!signalled.length || remaining <= 0) break;
+        await new Promise((resolve) => setTimeout(resolve, Math.min(100, remaining)));
+    }
+    if (signalled.length) return `compose: ${signalled.length} still running`;
 }
 
 // Removes one run's image builds on podman: their working containers. A build counts as the run's only when its
 // record names the run's project and owner, or, with no owner given, an owner that has ended. A step already running
 // in podman's service runs to its end, and the service starts no further one once the run's Compose processes have
-// gone. It looks again a second later, since a build can add a container as it stops; after a cancel it always looks
-// twice, since the build may not have added its first container yet.
+// gone. It waits a second and checks again for lingering Compose processes before listing a second time, since a
+// build can add a container as it stops. After a cancel it always looks twice, even if the first listing found none.
 async function removeBuilds(project, owner, env, { always }) {
     const problems = new Set();
     const containers = new Set();
@@ -278,7 +308,8 @@ async function removeBuilds(project, owner, env, { always }) {
         if (look === 2) {
             if (!always && !containers.size) break;
             await new Promise((resolve) => setTimeout(resolve, 1000));
-            endComposeOf(project);
+            const problem = await endComposeOf(project);
+            if (problem) problems.add(problem);
         }
         const found = await buildsOf(env);
         for (const problem of found.problems) problems.add(problem);
@@ -297,13 +328,14 @@ async function removeBuilds(project, owner, env, { always }) {
 // Removes one run's stack: containers, volumes and networks by Compose's project label; images by this run's label and
 // by the names Compose gives them, since podman's builds can lack Compose's labels; then the run's folder. Returns
 // what it couldn't remove. Only this script's project names are accepted, so it can't reach another stack. The run's
-// Compose processes end first, and on podman its image builds go next, so a build can't finish into an image after
-// the images are removed; owner and always are removeBuilds' own.
+// Compose processes end first, given time to exit, so podman's service starts no further build step; on podman the
+// run's builds go next, before its images. owner and always are removeBuilds' own.
 async function tearDown(project, env, engine, { owner, always = false } = {}) {
     if (!RUN_PROJECT.test(project)) throw new Error(`refusing to remove ${project}: not a stack-check project`);
-    endComposeOf(project);
+    const composeProblem = await endComposeOf(project);
     const problems = engine === "podman" ? await removeBuilds(project, owner, env, { always })
         : engine === "podman-service" ? ["builds: only podman's own command can find podman's builds"] : [];
+    if (composeProblem && !problems.includes(composeProblem)) problems.unshift(composeProblem);
     for (const kind of ["container", "volume", "network"]) {
         const { ids, problem } = await listIds(kind, `label=com.docker.compose.project=${project}`, env);
         if (problem) problems.push(problem);
@@ -503,11 +535,15 @@ async function check(mode, extra) {
     writeFileSync(join(folder, "owner"), owner);
     const compose = ["compose", "-p", project, "--env-file", join(folder, "compose.env"), ...FILES.flatMap((file) => ["-f", file])];
     // On cancel: stop this run's own processes, each with everything under it (podman's compose command runs Compose as
-    // its own child, which would otherwise stay connected and keep a build going), and take the stack down in a
-    // detached process so this one exits at once.
+    // its own child, which would otherwise stay connected and keep a build going). Node can know a child has exited
+    // before its pipes close, so use its child handle and look for descendants only under live children. Take the
+    // stack down in a detached process so this one exits at once.
     const onSignal = (signal) => {
-        const roots = [...children].map((child) => child.pid).filter(Boolean);
-        for (const pid of [...roots, ...descendantsOf(roots)]) {
+        const roots = [...children].filter((child) => child.exitCode === null && child.signalCode === null)
+            .map((child) => child.pid).filter(Boolean);
+        const descendants = descendantsOf(roots);
+        for (const child of children) child.kill("SIGTERM");
+        for (const pid of descendants) {
             try {
                 process.kill(pid, "SIGTERM");
             } catch {

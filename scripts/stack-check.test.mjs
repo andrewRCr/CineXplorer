@@ -72,6 +72,9 @@ if (command === 'docker' && args[0] === 'version') {
     console.log('Client:       ' + (process.env.CX_ENGINE === 'podman' ? 'Podman' : 'Docker') + ' Engine');
     if (process.env.CX_CONTEXT) console.log(' Context:     ' + process.env.CX_CONTEXT);
     if (process.env.CX_SERVER) console.log('\\nServer:       ' + process.env.CX_SERVER);
+    for (const name of (process.env.CX_SERVER_COMPONENTS ?? '').split('|').filter(Boolean)) {
+        console.log(' ' + name + ':');
+    }
 }
 if (command === 'docker' && args.includes('ls') && args.includes('-q')) {
     const filter = at('--filter');
@@ -124,7 +127,7 @@ if (command === 'docker' && args[0] === 'ps' && args.includes('--external')) {
     const later = known.listings > 1 ? process.env.CX_BUILD_IDS_LATER ?? '' : '';
     const ids = [...(process.env.CX_BUILD_IDS ?? '').split(' '), ...later.split(' '), ...known.added]
         .filter((id) => id && !known.removed.includes(id));
-    if (ids.length) console.log(ids.join('\\n'));
+    if (ids.length) console.log((args.includes('--no-trunc') ? ids : ids.map((id) => id.slice(0, 12))).join('\\n'));
 }
 if (command === 'docker' && args[0] === 'rm' && args.includes('--ignore')) {
     const known = builds();
@@ -213,8 +216,10 @@ function fixture(t) {
             LEAK: "shell-value", CX_STORAGE: storage, ...env,
         };
     }
-    function invoke(args, env = {}) {
-        return spawnSync(process.execPath, [SCRIPT, ...args], { cwd: root, env: environment(env), encoding: "utf8" });
+    function invoke(args, env = {}, timeout) {
+        return spawnSync(process.execPath, [SCRIPT, ...args], {
+            cwd: root, env: environment(env), encoding: "utf8", timeout,
+        });
     }
     function launch(args, env = {}) {
         return spawn(process.execPath, [SCRIPT, ...args], { cwd: root, env: environment(env), stdio: ["ignore", "pipe", "pipe"] });
@@ -306,6 +311,8 @@ test("never writes the checkout's env files, and keeps them and shell settings o
     assert.deepEqual(up.env, { LEAK: "shell-value" });
 });
 
+const PODMAN_SERVICE = { CX_SERVER: "linux/amd64/fedora-42", CX_SERVER_COMPONENTS: "Podman Engine|Conmon|OCI Runtime" };
+
 test("runs podman's containers as the host user", (t) => {
     const f = fixture(t);
     assert.equal(f.invoke(["backend"], { CX_ENGINE: "podman" }).status, 0);
@@ -313,7 +320,7 @@ test("runs podman's containers as the host user", (t) => {
     assert.match(podman.envFile, /^USERNS_MODE=keep-id$/m);
     assert.match(podman.envFile, new RegExp(`^USER_UID=${process.getuid()}$`, "m"));
     const s = fixture(t);
-    assert.equal(s.invoke(["backend"], { CX_ENGINE: "docker", CX_SERVER: "Podman Engine" }).status, 0);
+    assert.equal(s.invoke(["backend"], PODMAN_SERVICE).status, 0);
     assert.match(compose(s.calls(), "up")[0].envFile, /^USERNS_MODE=keep-id$/m);
     const c = fixture(t);
     assert.equal(c.invoke(["backend"], { CX_ENGINE: "docker", CX_CONTEXT: "podman", CX_SERVER: "Docker Engine" }).status, 0);
@@ -511,6 +518,18 @@ function running(pid) {
     }
 }
 
+function startDetached(t, command, args) {
+    const child = spawn(command, args, { stdio: "ignore", detached: true });
+    t.after(() => {
+        try {
+            process.kill(-child.pid, "SIGKILL");
+        } catch {
+            // Ended already
+        }
+    });
+    return child.pid;
+}
+
 function removedBuilds(f) {
     return f.calls().filter((call) => call.command === "docker" && call.args[0] === "rm").map((call) => call.args.slice(3));
 }
@@ -527,12 +546,14 @@ test("removes only its run's build containers", (t) => {
     const borrowed = buildContainer(f, "c", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: LIVE });
     const theirs = buildContainer(f, "d", { STACK_CHECK_PROJECT: "cinexplorer-run-8501-0f0f0f", STACK_CHECK_OWNER: DEAD });
     const unnamed = buildContainer(f, "e", { USER_UID: "1000" });
-    // A container that isn't a build's has no record
-    const ids = [building, stage, borrowed, theirs, unnamed].map(({ id }) => id).concat("f".repeat(64));
+    // A non-build container has a folder but no record. A container removed after listing has neither.
+    const nonBuild = "f".repeat(64);
+    mkdirSync(join(f.storage, "overlay-containers", nonBuild));
+    const ids = [building, stage, borrowed, theirs, unnamed].map(({ id }) => id).concat(nonBuild, "0".repeat(64));
     const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: ids.join(" ") });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
-    assert.deepEqual(removedBuilds(f), [[building.id, stage.id]]);
+    assert.deepEqual(f.buildsLeft().removed, [building.id, stage.id]);
 });
 
 test("takes the run's owner from its folder", (t) => {
@@ -565,13 +586,21 @@ test("a teardown after a cancel looks again for a build that hadn't added a cont
 test("says which build records it couldn't read, and still removes the run's", (t) => {
     const f = fixture(t);
     const unreadable = buildContainer(f, "a", {}, { record: "{" });
-    const empty = buildContainer(f, "b", {}, { record: "null" });
+    const invalid = buildContainer(f, "b", {}, { record: "null" });
     const building = buildContainer(f, "c", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const noArgs = buildContainer(f, "d", null);
+    const absentArgs = buildContainer(f, "e", {}, { record: "{}" });
+    const emptyArgs = buildContainer(f, "f", {});
+    const invalidArgs = buildContainer(f, "0", "not an object");
+    const arrayArgs = buildContainer(f, "1", []);
+    const arrayRecord = buildContainer(f, "2", {}, { record: "[]" });
+    const listed = [unreadable, invalid, building, noArgs, absentArgs, emptyArgs, invalidArgs, arrayArgs, arrayRecord];
     const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman",
-        CX_BUILD_IDS: [unreadable, empty, building].map(({ id }) => id).join(" ") });
+        CX_BUILD_IDS: listed.map(({ id }) => id).join(" ") });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: ` +
-        "build containers: couldn't read the record of aaaaaaaaaaaa; build containers: couldn't read the record of bbbbbbbbbbbb");
+    const unreadableIds = [unreadable, invalid, invalidArgs, arrayArgs, arrayRecord].map(({ id }) =>
+        `build containers: couldn't read the record of ${id.slice(0, 12)}`);
+    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: ${unreadableIds.join("; ")}`);
     assert.deepEqual(removedBuilds(f), [[building.id]]);
 });
 
@@ -585,9 +614,15 @@ test("finds a transient store's build records under the graph root", (t) => {
 
 test("says when podman's storage isn't on this machine", (t) => {
     const f = fixture(t);
-    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_STORAGE: join(f.parent, "elsewhere"),
-        CX_BUILD_IDS: "a".repeat(64) });
-    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: build containers: podman's storage isn't on this machine`);
+    // The store's containers directory exists, but the containers listed by podman are elsewhere.
+    const missing = "a".repeat(64);
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: missing });
+    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: ` +
+        "build containers: podman's storage isn't on this machine");
+    const nonBuild = "b".repeat(64);
+    mkdirSync(join(f.storage, "overlay-containers", nonBuild));
+    const local = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: `${missing} ${nonBuild}` });
+    assert.equal(lastLine(local.stdout), `stack-check: removed ${RUN}`);
     assert.deepEqual(removedBuilds(f), []);
 });
 
@@ -621,27 +656,35 @@ test("a cancel during a podman build ends the Compose process under podman's com
 test("a teardown ends the run's Compose processes that outlived it, and no one else's", async (t) => {
     const f = fixture(t);
     const other = "cinexplorer-run-8501-0f0f0f";
-    // As Compose would be, given the project as an argument; the shell keeps its sleep as a child, so it stays itself
-    const start = (...args) => {
-        const child = spawn("bash", ["-c", "sleep 600; :", ...args], { stdio: "ignore", detached: true });
-        t.after(() => {
-            try {
-                process.kill(-child.pid, "SIGKILL");
-            } catch {
-                // Ended already
-            }
-        });
-        return child.pid;
-    };
-    const composer = start("docker-compose", "-p", RUN, "up");
+    // The shell keeps its sleep as a child, so the process keeps the stand-in's arguments.
+    const start = (...args) => startDetached(t, "bash", ["-c", "sleep 600; :", ...args]);
+    const composers = [start("docker-compose", "-p", RUN, "up"), start("docker-compose", "--project-name", RUN, "up"),
+        start("docker-compose", `--project-name=${RUN}`, "up")];
     const theirs = start("docker-compose", "-p", other, "up");
     const teardown = start("stack-check", "--tear-down", RUN);
-    await until(() => [composer, theirs, teardown].every((pid) => readFileSync(`/proc/${pid}/cmdline`, "utf8").includes("-c")));
+    const observer = start("journalctl", "--grep", RUN);
+    await until(() => [...composers, theirs, teardown, observer].every((pid) =>
+        readFileSync(`/proc/${pid}/cmdline`, "utf8").includes("-c")));
     const result = f.invoke(["--tear-down", RUN]);
     assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
-    await until(() => !running(composer));
-    assert.ok(running(theirs));
-    assert.ok(running(teardown));
+    assert.ok(running(observer), "a process merely mentioning the project should survive");
+    assert.ok(composers.every((pid) => !running(pid)), "the run's Compose processes should be gone");
+    assert.ok(running(theirs), "another project's Compose process should survive");
+    assert.ok(running(teardown), "another teardown should survive");
+});
+
+test("a teardown waits for Compose and reports a process still running after SIGTERM", async (t) => {
+    const f = fixture(t);
+    const ready = join(f.stateDir, "compose-ready");
+    const composer = startDetached(t, "bash", ["-c", "trap '' TERM; touch \"$4\"; while :; do sleep 1; done",
+        "docker-compose", "-p", RUN, "up", ready]);
+    await until(() => existsSync(ready));
+    const start = performance.now();
+    const result = f.invoke(["--tear-down", RUN], {}, 10000);
+    assert.equal(result.status, 0, result.error ?? (result.stdout + result.stderr));
+    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: compose: 1 still running`);
+    assert.ok(performance.now() - start >= 2900, "teardown should give the process time to exit");
+    assert.ok(running(composer));
 });
 
 test("leaves image builds to Docker, and says a Docker client on podman's service can't remove podman's", (t) => {
@@ -651,8 +694,9 @@ test("leaves image builds to Docker, and says a Docker client on podman's servic
         const docker = f.invoke(["--tear-down", RUN], { CX_BUILD_IDS: building.id, ...env });
         assert.equal(lastLine(docker.stdout), `stack-check: removed ${RUN}`);
     }
-    const service = f.invoke(["--tear-down", RUN], { CX_BUILD_IDS: building.id, CX_SERVER: "Podman Engine" });
-    assert.equal(lastLine(service.stdout), `stack-check: couldn't remove all of ${RUN}: builds: only podman's own command can find podman's builds`);
+    const service = f.invoke(["--tear-down", RUN], { CX_BUILD_IDS: building.id, ...PODMAN_SERVICE });
+    assert.equal(lastLine(service.stdout), `stack-check: couldn't remove all of ${RUN}: ` +
+        "builds: only podman's own command can find podman's builds");
     assert.equal(f.calls().filter((call) => call.args.includes("--external")).length, 0);
 });
 

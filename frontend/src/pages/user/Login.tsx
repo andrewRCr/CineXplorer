@@ -1,3 +1,4 @@
+import { SignUpNotice } from "@/components/auth/SignUpNotice";
 import { isRecord } from "@/utilities/typeGuards";
 import { ROUTES } from "@/constants/routes";
 import {
@@ -31,7 +32,11 @@ import GitHubLogo from "@/assets/GitHubLogo";
 import LoadingContent from "@/components/layout/LoadingContent";
 import { priorityToaster } from "@/components/core/chakra/toaster";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
-import { returnPathFrom, safeReturnPath } from "@/utilities/returnPath";
+import {
+  isLegalDocumentPath,
+  returnPathFrom,
+  safeReturnPath,
+} from "@/utilities/returnPath";
 import logger from "@/services/logger";
 
 // ============================================================================
@@ -120,7 +125,9 @@ const Login = () => {
 
       if (response.success) {
         clearAlert();
-        void navigate(returnPathFrom(location.search));
+        if (!isLegalDocumentPath(window.location.pathname)) {
+          void navigate(returnPathFrom(location.search));
+        }
       } else {
         handleLoginError(response.error);
       }
@@ -190,6 +197,11 @@ const Login = () => {
 
     try {
       const response = await authService.verifyEmail(verifyToken);
+      const notice = "Email verified. You can now log in.";
+      if (isLegalDocumentPath(window.location.pathname)) {
+        priorityToaster.success({ title: notice });
+        return;
+      }
       setVerificationState("success");
       setVerificationMessage(
         response.message || "Email verified successfully!",
@@ -203,7 +215,7 @@ const Login = () => {
       // Clear the token from URL to prevent re-verification attempts
       window.history.replaceState({}, "", ROUTES.LOGIN);
 
-      showNotice("Email verified. You can now log in.");
+      showNotice(notice);
 
       // Clear verification UI after short delay to let user see success
       verificationTimeoutRef.current = setTimeout(() => {
@@ -211,7 +223,6 @@ const Login = () => {
       }, 1500);
     } catch (error: unknown) {
       logger.error("Email verification error:", error);
-      setVerificationState("error");
       hasVerifiedRef.current = false; // Allow retry
 
       // Extract error message
@@ -221,6 +232,11 @@ const Login = () => {
         const data = error.response?.data;
         if (data?.error) errorMessage = data.error;
       }
+      if (isLegalDocumentPath(window.location.pathname)) {
+        priorityToaster.error({ title: errorMessage });
+        return;
+      }
+      setVerificationState("error");
       setVerificationMessage(errorMessage);
       window.history.replaceState({}, "", ROUTES.LOGIN);
     }
@@ -237,18 +253,25 @@ const Login = () => {
 
   const handlePasswordResetSuccess = (autoLoggedIn: boolean) => {
     setPasswordResetKey(null);
-    window.history.replaceState({}, "", ROUTES.LOGIN);
+    const legalPageOpen = isLegalDocumentPath(window.location.pathname);
+    const notice = "Password reset. You can now log in with your new password.";
+    if (!legalPageOpen) {
+      window.history.replaceState({}, "", ROUTES.LOGIN);
+    }
 
     if (autoLoggedIn) {
-      // A toast fits here: the visitor lands on Home, where nothing else shows the reset happened
       priorityToaster.success({
         title: "Password reset successfully!",
         description: "You are now logged in.",
         duration: 4000,
       });
-      void navigate(ROUTES.HOME);
+      if (!legalPageOpen) {
+        void navigate(ROUTES.HOME);
+      }
+    } else if (legalPageOpen) {
+      priorityToaster.success({ title: notice });
     } else {
-      showNotice("Password reset. You can now log in with your new password.");
+      showNotice(notice);
     }
   };
 
@@ -306,25 +329,30 @@ const Login = () => {
   }, [searchParams, showNotice]);
 
   useEffect(() => {
+    const current = window.location;
     if (
       searchParams.get("signed_out") === "true" &&
-      authContext?.status === "anonymous"
+      authContext?.status === "anonymous" &&
+      current.pathname === location.pathname &&
+      current.search === location.search &&
+      current.hash === location.hash
     ) {
       showNotice("You've been logged out.");
-      window.history.replaceState({}, "", ROUTES.LOGIN);
+      window.history.replaceState(window.history.state, "", ROUTES.LOGIN);
     }
-  }, [authContext?.status, searchParams, showNotice]);
+  }, [authContext?.status, location, searchParams, showNotice]);
 
   // ==========================================================================
   // Auth Redirect (already authenticated users)
   // ==========================================================================
 
   useEffect(() => {
-    // Redirect if:
-    // 1. User is authenticated
-    // 2. Not in active login process
-    // 3. OAuth timing gate allows navigation (for fast OAuth UX)
-    if (authContext?.isAuthenticated && !isLoggingIn && oauthCanNavigate) {
+    if (
+      authContext?.isAuthenticated &&
+      !isLoggingIn &&
+      oauthCanNavigate &&
+      !isLegalDocumentPath(window.location.pathname)
+    ) {
       logger.debug("User already authenticated, redirecting");
       void navigate(returnPathFrom(location.search), { replace: true });
     }
@@ -535,6 +563,8 @@ const Login = () => {
                 GitHub
               </Button>
             </HStack>
+
+            <SignUpNotice />
 
             <Text
               mt="4px"

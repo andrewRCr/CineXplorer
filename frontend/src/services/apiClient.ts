@@ -1,5 +1,5 @@
 import { isRecord } from "@/utilities/typeGuards";
-import { loginPathFor } from "@/utilities/returnPath";
+import { isLegalDocumentPath, loginPathFor } from "@/utilities/returnPath";
 import { apiBaseUrl as BASE_URL } from "@/config/baseUrls";
 import axios, {
     AxiosError,
@@ -218,6 +218,11 @@ async function refreshRequestToken(
         if (!canHandlePasswordFailure(sessionVersion, request.signal))
             throw failure;
         clearAuthTokens();
+        if (isLegalDocumentPath(window.location.pathname)) {
+            // Re-read the session and discard the old account's in-memory data.
+            window.location.reload();
+            throw failure;
+        }
         const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
         const loginUrl = new URL(
             loginPathFor(returnTo),

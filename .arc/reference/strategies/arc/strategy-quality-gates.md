@@ -141,9 +141,10 @@ They take seconds. Skipping them lets type errors and lint violations accumulate
 Not naming the broader checks that have not run. The report says what ran and what did not.
 
 **❌ The full E2E suite for one component:**
-Run the files that drive the change against the worktree's browsable stack; CI and verification run all eleven specs,
+Run the files that drive the change against the worktree's browsable stack; CI and verification run all twelve specs,
 including the 360×800 phone shell and tracking/rating cases at desktop and touch widths.
-`library.spec.ts` covers the signed-in Watchlist and Library journey.
+`library.spec.ts` covers the signed-in Watchlist and Library journey. `legal-pages.spec.ts` covers the public legal
+pages from Home, privacy section links, and phone-width overflow.
 
 **❌ Merging on red:**
 A failing CI check is resolved before merge, never overridden.

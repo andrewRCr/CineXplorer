@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@tests/helpers/test-renderer";
+import userEvent from "@testing-library/user-event";
+import { renderWithRoutes } from "@tests/helpers/test-renderer-with-routes";
+import { render, screen, within } from "@tests/helpers/test-renderer";
 import Footer from "../Footer";
 
 // Mock the TMDB logo import
@@ -9,10 +11,8 @@ vi.mock("../../../assets/tmdb_logo_alt_short.svg", () => ({
 
 // Mock components that require context providers
 // Note: Using inline factories to avoid hoisting issues with imported helpers
-vi.mock("@/components/common", () => ({
-  TextLink: ({ to, children }: { to: string; children: React.ReactNode }) => (
-    <a href={to}>{children}</a>
-  ),
+vi.mock("@/components/common", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/common")>()),
   ThemeSelector: () => <div data-testid="theme-selector">Theme Selector</div>,
 }));
 
@@ -357,4 +357,21 @@ describe("Footer Component", () => {
       expect(container1.innerHTML).toBe(container2.innerHTML);
     });
   });
+});
+
+it.each([
+  ["Privacy Policy", "/privacy"],
+  ["Terms of Service", "/terms"],
+])("opens %s from the footer", async (label, path) => {
+  const user = userEvent.setup();
+  renderWithRoutes([
+    { path: "/", element: <Footer /> },
+    { path, element: <h1>{label}</h1> },
+  ]);
+
+  const footer = screen.getByRole("contentinfo");
+  const link = within(footer).getByRole("link", { name: label });
+  expect(link).toHaveAttribute("href", path);
+  await user.click(link);
+  expect(screen.getByRole("heading", { name: label })).toBeVisible();
 });

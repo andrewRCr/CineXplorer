@@ -13,6 +13,7 @@ import { useOAuthFlow } from "../useOAuthFlow";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { server } from "@tests/mocks/server";
 import { clearBrowserAuth } from "@tests/helpers/auth";
+import { gate } from "@tests/helpers/web-locks";
 
 import logger from "@/services/logger";
 
@@ -62,6 +63,46 @@ describe("OAuth form CSRF", () => {
             expect(submitted?.get("csrfmiddlewaretoken")).toBe("django-csrf");
             expect(submitted?.get("provider")).toBe("google");
             expect(csrfRequests).toBe(present ? 0 : 1);
+        },
+    );
+
+    it.each([
+        ["google", "/privacy"],
+        ["github", "/terms"],
+    ])(
+        "leaves %s sign-in unsubmitted when the visitor opens %s during CSRF setup",
+        async (provider, path) => {
+            const requested = gate();
+            const response = gate();
+            server.use(
+                http.get(`${apiBaseUrl}/csrf/`, async () => {
+                    requested.release();
+                    await response.wait;
+                    document.cookie = "csrftoken=django-csrf; path=/";
+                    return HttpResponse.json({});
+                }),
+            );
+            vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(
+                function (this: HTMLFormElement) {
+                    submittedForms.push(this);
+                },
+            );
+            const previousPath = window.location.pathname;
+            const { result } = renderHook(() => useOAuthFlow());
+            const completion = result.current.initializeOAuth(provider);
+            try {
+                await requested.wait;
+                window.location.pathname = path;
+                response.release();
+                await completion;
+
+                expect(submittedForms).toHaveLength(0);
+                expect(sessionStorage.getItem("oauth_in_progress")).toBeNull();
+                expect(sessionStorage.getItem("oauth_start_time")).toBeNull();
+            } finally {
+                response.release();
+                window.location.pathname = previousPath;
+            }
         },
     );
 });

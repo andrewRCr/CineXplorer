@@ -373,6 +373,43 @@ rules below are the checkable part: lint and type checks enforce what they can, 
   identifier, such as the user's ID. The one exception is the API's handler for unhandled errors, which logs the
   traceback: it can't tell which errors carry personal data, and an unexpected error can't be diagnosed without one.
 
+### Keep the Privacy Policy and Terms Current
+
+When a change makes a statement in the privacy policy or terms of service inaccurate, or adds something the texts
+must describe, update the affected texts in the same pull request. This includes collecting new personal data, setting
+a cookie or browser-storage key, logging another field, sending data to another party, or showing user content to
+other people. Give each changed text the effective date of the merge and keep the signed-out Home disclosure in
+agreement with the policy.
+
+Before merging a change that uses personal data in a way or for a purpose the published policy does not describe,
+tell the people whose data it will use. Where consent is required, including for a new use of data received from
+Google, apply the new use only to people who consent. Record how you notified people and, where required, how you
+collected consent in the pull request.
+
+Read the texts when changing any of these areas, including the related settings in `backend/config/settings.py`:
+
+- Accounts and sign-in, including the user model, authentication app, allauth settings and adapters, and the sign-in,
+  sign-up and profile pages.
+- Movie lists and their record of changes in `backend/apps/user_movie_data/`, and the pages that show them.
+- The catalog, including which routes require sign-in, the film details saved from TMDB, the session that remembers
+  which films were shown, and requests to TMDB.
+- Cookies and browser storage.
+- Request and account-event logging, error reports, rate limits and email.
+- Web server, app server and container configuration, including log retention and the images they run.
+  `frontend/Dockerfile` supplies the web server. Check the deploy scripts and runbook for backups, restoration
+  and nightly maintenance.
+- Backend and frontend packages in `backend/requirements/` and `frontend/package.json`, scripts and images loaded
+  by the browser, the footer's TMDB attribution, and requests to any other service.
+- The server's host and region, Cloudflare's DNS-only setup and email forwarding, and the backup bucket's access,
+  expiry and location.
+- The email provider's region, tracking and message retention, and the controls in Google and GitHub that let users
+  revoke the app's access.
+
+If a change to a provider setting would make a statement inaccurate, update the affected texts in their own pull
+request before changing the setting, including when the setting change needs no code. Check the texts when adding
+error tracking, analytics, embeds, public reviews or shared lists. Public reviews and shared lists also require the
+terms to grant a licence to show that content to others.
+
 ### Data Integrity (Backend)
 
 - A model records `created_at` and `updated_at`, unless it is immutable reference data.

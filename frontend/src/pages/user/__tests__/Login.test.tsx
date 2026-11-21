@@ -544,11 +544,22 @@ describe("returning to the requested page", () => {
 });
 
 describe("signed-out notice", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   async function renderSignedOut() {
-    window.history.replaceState({}, "", "/login?signed_out=true");
+    const signedOutUrl = "/login?signed_out=true";
+    window.history.replaceState({}, "", signedOutUrl);
+    const { href, pathname, search, hash } = new URL(document.URL);
+    vi.stubGlobal("location", {
+      ...window.location,
+      href,
+      pathname,
+      search,
+      hash,
+    });
     const view = renderWithoutRouter(
       <TestProviders>
-        <MemoryRouter initialEntries={["/login?signed_out=true"]}>
+        <MemoryRouter initialEntries={[signedOutUrl]}>
           <AuthContextProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -661,4 +672,26 @@ describe("the sign-in page heading", () => {
       await screen.findByRole("textbox", { name: "Username or Email Address" });
     },
   );
+});
+
+it("shows the account creation notice after the sign-in provider buttons", () => {
+  render(<Login />);
+
+  const notice = screen.getByText(/^By creating an account, you agree to/);
+  expect(notice).toHaveTextContent(
+    /^By creating an account, you agree to the Terms of Service and acknowledge the Privacy Policy\.$/,
+  );
+  expect(
+    screen.getByRole("link", { name: "Terms of Service" }),
+  ).toHaveAttribute("href", "/terms");
+  expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+    "href",
+    "/privacy",
+  );
+  for (const name of ["Google", "GitHub"]) {
+    const button = screen.getByRole("button", { name });
+    expect(
+      button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).not.toBe(0);
+  }
 });

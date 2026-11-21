@@ -159,11 +159,12 @@ Otherwise the function sends `POST /api/auth/refresh` with credentials and CSRF,
 refresh cookie. A valid response replaces the access token in the original browser storage; a session-storage
 sign-in stays in session storage. Without Web Locks, the pending promise still coordinates callers in one tab.
 
-Only this function posts a refresh. On current-session renewal failure, the interceptors redirect to sign-in
-with `session_expired=true` and the safe current path, query and fragment in `next`, using `loginPathFor`.
-Sign-in pages are excluded from the return path. The session read and idle check instead land anonymous and run
-the change-of-user step described below. A failed retry
-of the original API request does not invalidate a successful refresh.
+Only this function posts a refresh. On current-session renewal failure, the interceptors clear the credentials.
+They reload the current legal URL to read the session afresh and discard the old account's cached data. On other
+routes they redirect to sign-in with `session_expired=true` and the safe current path, query and fragment in
+`next`, using `loginPathFor`. Sign-in pages are excluded from the return path. The session read and idle check land
+anonymous and run the change-of-user step described below. A failed retry of the original API request does not
+invalidate a successful refresh.
 
 A provider-return session read owns resolution from before allauth discovery through any password fallback. The idle
 check starts no renewal while this identity is active. API requests continue using credentials and shared renewal;
@@ -496,8 +497,14 @@ version cannot land or clear credentials.
 The status derives from the query: a profile is `authenticated`, `null` is `anonymous`. While its data is still
 undefined, it is `authenticated` only with a current stored token and sign-in flag, and `resolving` otherwise.
 `isAuthenticated` and the hook's public commands retain their shapes for context consumers. The OAuth callback
-effect reacts to this first result, clears provider-flow flags and handles feedback and navigation; it fetches
-nothing. Only the 60-second credential-renewal effect makes a network request.
+effect reacts to this first result, clears provider-flow flags and handles feedback and navigation. While the privacy
+policy or terms are open, OAuth errors and provider sign-in completion leave the document open. The OAuth callback
+effect and Login's signed-in redirect check the browser destination when a legal URL is ahead of React Router's
+committed location. Only the 60-second credential-renewal effect makes a network request.
+
+Password sign-in, registration, email verification and password reset also check the live destination at
+completion. If a legal page is open, registration, verification and password reset show their success notices
+at that URL. Email verification also shows errors there.
 
 Session writers cancel any in-flight session read before replacing it:
 
@@ -505,10 +512,11 @@ Session writers cancel any in-flight session read before replacing it:
   remember-me or session storage otherwise. It immediately retires old saves, then reads the session afresh and
   resolves after that result lands. Other queries reset after the read, including when it rejects the new token.
 - Sign-out invalidates renewal, clears tokens, writes `null`, runs the change-of-user step and navigates to Login
-  immediately. It sends the password logout request or allauth's CSRF-protected session DELETE, then loads
-  `/login?signed_out=true` afresh after success or failure. This drops data fetched with a provider cookie while
-  the request was pending. A newer password sign-in's token survives that reload. Login shows the signed-out notice
-  only after the fresh session reads `anonymous`, then clears the parameter.
+  immediately. It sends the password logout request or allauth's CSRF-protected session DELETE. After success or
+  failure it reloads the current legal URL if one is open or loads `/login?signed_out=true` for other routes.
+  A fresh load drops data fetched with a provider cookie while the request was pending.
+  A newer password sign-in's token survives that reload. `Login` shows the signed-out notice and clears the
+  parameter when the fresh session reads `anonymous` and the browser still shows the Login URL that owns the notice.
 - Failed idle renewal writes `null` and runs the change-of-user step only while its original authentication version
   and user ownership remain current, checked before and after canceling the session read. An older renewal cannot
   clear a provider session that landed while it was pending.
@@ -625,34 +633,7 @@ Unsafe methods require CSRF even before sign-in. Provider callbacks are outside 
 | `/_allauth/browser/v1/auth/password/reset`    | POST   | No            | Complete password reset   | `{key, password}`                                        | `200` or `401` on success                           |
 | `/accounts/{provider}/login/callback/`        | GET    | No            | OAuth callback (internal) | N/A                                                      | 302 redirect to callback_url                        |
 
-**Example: Initiate Google OAuth**:
-
-```javascript
-// Initialize the required token before constructing the OAuth form.
-if (!getCsrfToken()) await ensureCsrfTokenCookie(apiBaseUrl);
-const csrfToken = getCsrfToken();
-const form = document.createElement("form");
-form.method = "POST";
-form.action = "https://localhost:8444/_allauth/browser/v1/auth/provider/redirect";
-
-const fields = {
-  provider: "google",
-  callback_url: "https://localhost:8444/login",  // Where to send user after OAuth
-  process: "login",
-  csrfmiddlewaretoken: csrfToken
-};
-
-Object.entries(fields).forEach(([key, value]) => {
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = key;
-  input.value = value;
-  form.appendChild(input);
-});
-
-document.body.appendChild(form);
-form.submit();  // Browser redirects to Google OAuth
-```
+To start provider sign-in from the app, use the [OAuth hook example](#oauth-flow-implementation).
 
 **Example: Check OAuth Session**:
 
@@ -703,9 +684,11 @@ All endpoints authenticated by `JWTSessionAuth` support both authentication patt
 
 **OAuth hook** (`frontend/src/hooks/auth/useOAuthFlow.ts`):
 
-`initializeOAuth` ensures the CSRF cookie, builds the provider form with `csrfmiddlewaretoken`, records the provider
-and start time in session storage, and submits the form through the site's origin. The browser follows the provider
-redirect. Errors are reported to the caller's error callback; a throwing callback rejects the completion promise.
+`initializeOAuth` ensures the CSRF cookie and then checks the current browser URL. If a legal page is open at
+that check, the hook returns before building the provider form or recording OAuth state. On other routes, the hook
+builds the form with `csrfmiddlewaretoken`, records the provider and start time in session storage, and submits
+the form through the site's origin. The browser follows the provider redirect. The hook reports errors to the
+caller's callback. If that callback throws, the completion promise rejects.
 
 ```typescript
 const { initializeOAuth } = useOAuthFlow(setGeneralError);

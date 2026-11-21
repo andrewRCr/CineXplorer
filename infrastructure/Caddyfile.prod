@@ -5,6 +5,7 @@
 			fields {
 				request>uri regexp "[?].*$" ""
 				request>headers>Referer delete
+				request>headers>X-Csrftoken delete
 			}
 		}
 	}

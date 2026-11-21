@@ -105,6 +105,16 @@ if (command === 'docker' && args.includes('inspect')) {
         process.exit(1);
     }
 }
+if (command === 'docker' && args[0] === 'ps' && args.includes('--external')) {
+    // CX_BUILD_IDS_LATER: build containers that appear from the second listing on
+    const listings = join(process.env.CX_STATE, 'listings');
+    const count = (existsSync(listings) ? Number(readFileSync(listings, 'utf8')) : 0) + 1;
+    writeFileSync(listings, String(count));
+    const later = count > 1 ? process.env.CX_BUILD_IDS_LATER ?? '' : '';
+    const ids = ((process.env.CX_BUILD_IDS ?? '') + ' ' + later).split(' ').filter(Boolean);
+    if (ids.length) console.log(ids.join('\\n'));
+}
+if (command === 'docker' && args[0] === 'info') console.log(process.env.CX_STORAGE + ' overlay');
 if (command === 'docker' && args[0] === 'stats') {
     // Sampling starts before the stack does, so the run's name comes from its folder.
     const runs = join(process.env.STACK_CHECK_SHARED, 'runs');
@@ -157,11 +167,15 @@ function fixture(t) {
     const shared = join(parent, "shared");
     const claims = join(shared, "claims");
     const runs = join(shared, "runs");
+    // podman's container storage, and a process table that shows only the test's own stand-in build steps
+    const storage = join(parent, "storage");
+    const proc = join(parent, "proc");
+    mkdirSync(proc);
     function environment(env) {
         return {
             ...process.env, PATH: `${bin}:${process.env.PATH}`, CX_TEST_LOG: log, CX_STATE: stateDir,
             STACK_CHECK_SHARED: shared, XDG_RUNTIME_DIR: runtime, TMPDIR: temp, COMPOSE_PROFILES: "browser",
-            LEAK: "shell-value", ...env,
+            LEAK: "shell-value", CX_STORAGE: storage, STACK_CHECK_PROC: proc, ...env,
         };
     }
     function invoke(args, env = {}) {
@@ -173,7 +187,7 @@ function fixture(t) {
     function calls() {
         return existsSync(log) ? readFileSync(log, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse) : [];
     }
-    return { parent, root, runtime, temp, stateDir, shared, claims, runs, invoke, launch, calls };
+    return { parent, root, runtime, temp, stateDir, shared, claims, runs, storage, proc, invoke, launch, calls };
 }
 
 function compose(calls, verb) {
@@ -432,6 +446,132 @@ test("says what it couldn't remove, and still returns the check's status", (t) =
     assert.match(result.stdout, new RegExp(`^stack-check: couldn't remove all of ${project}: containers: stub command failed: rm$`, "m"));
     assert.doesNotMatch(result.stdout, /removed the stack/);
     assert.match(lastLine(result.stdout), /^stack-check: peak memory /);
+});
+
+// A build's working container: buildah's record of its build arguments, and its entry in podman's volatile container
+// store, which names the layer it is mounted on
+function buildContainer(f, name, args, { listed = true } = {}) {
+    const id = name.repeat(64 / name.length);
+    const layer = `layer${name}`;
+    write(f.storage, `overlay-containers/${id}/userdata/buildah.json`, JSON.stringify({ Args: args }));
+    const store = join(f.storage, "overlay-containers", "volatile-containers.json");
+    const entries = existsSync(store) ? JSON.parse(readFileSync(store, "utf8")) : [];
+    if (listed) writeFileSync(store, JSON.stringify([...entries, { id, names: [`${name}-working-container`], layer }]));
+    return { id, layer };
+}
+
+let runtimes = 0;
+// A build step in progress: a real process stands in for the step, and the process table shows it as the child of a
+// runtime (buildah's, unless named) that runs in its bundle folder with the given layer mounted as the step's root.
+function buildStep(t, f, layer, runtime = "buildah-oci-runtime") {
+    const step = spawn("sleep", ["600"], { stdio: "ignore" });
+    t.after(() => step.kill("SIGKILL"));
+    // A process ID no real process can have, so nothing here can be mistaken for one
+    const parent = 999999000 + ++runtimes;
+    const bundle = join(f.parent, `buildah${parent}`);
+    mkdirSync(bundle);
+    write(f.proc, `${parent}/cmdline`, `${runtime}\0`);
+    write(f.proc, `${parent}/stat`, `${parent} (${runtime.slice(0, 15)}) S 1 1 1 0 -1\n`);
+    write(f.proc, `${parent}/mountinfo`, `1869 1706 0:153 / / rw - overlay overlay rw,upperdir=/elsewhere/diff\n` +
+        `2122 2120 0:277 / ${bundle}/mnt/rootfs rw,nodev,relatime - overlay overlay rw,lowerdir=${f.storage}/overlay/l/diff,` +
+        `upperdir=${f.storage}/overlay/${layer}/diff,workdir=${f.storage}/overlay/${layer}/work\n`);
+    symlinkSync(bundle, join(f.proc, String(parent), "cwd"));
+    write(f.proc, `${step.pid}/cmdline`, ["sleep", "600", ""].join("\0"));
+    write(f.proc, `${step.pid}/stat`, `${step.pid} (sleep) S ${parent} ${step.pid} ${step.pid} 0 -1\n`);
+    return step;
+}
+
+function running(step) {
+    return step.exitCode === null && step.signalCode === null;
+}
+
+const RUN = "cinexplorer-run-8500-abcdef";
+
+test("stops a run's build step that is still running, and removes its build containers", async (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD, USER_UID: "1000" });
+    // An earlier stage of the same build, with no step running
+    const stage = buildContainer(f, "b", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const theirs = buildContainer(f, "c", { STACK_CHECK_PROJECT: "cinexplorer-run-8501-0f0f0f", STACK_CHECK_OWNER: LIVE });
+    const unnamed = buildContainer(f, "d", { USER_UID: "1000" });
+    const step = buildStep(t, f, building.layer);
+    const theirStep = buildStep(t, f, theirs.layer);
+    // Not buildah's runtime, though it has the run's layer mounted
+    const other = buildStep(t, f, building.layer, "conmon");
+    // A container that isn't a build's has no record
+    const containers = [building, stage, theirs, unnamed].map(({ id }) => id).concat("e".repeat(64));
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: containers.join(" ") });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
+    await until(() => step.signalCode === "SIGKILL");
+    assert.ok(running(theirStep) && running(other));
+    const removed = f.calls().filter((call) => call.command === "docker" && call.args[0] === "rm");
+    assert.deepEqual(removed.map((call) => call.args), [["rm", "--force", "--ignore", building.id, stage.id]]);
+});
+
+test("removes a build container its run's build adds as it stops", async (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const added = buildContainer(f, "b", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const step = buildStep(t, f, building.layer);
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: building.id, CX_BUILD_IDS_LATER: added.id });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
+    await until(() => step.signalCode === "SIGKILL");
+    const removed = f.calls().filter((call) => call.command === "docker" && call.args[0] === "rm");
+    assert.deepEqual(removed.map((call) => call.args), [["rm", "--force", "--ignore", building.id, added.id]]);
+});
+
+test("says when it can't read a build container's record, and stops nothing", (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    write(f.storage, `overlay-containers/${building.id}/userdata/buildah.json`, "{");
+    const step = buildStep(t, f, building.layer);
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: building.id });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(lastLine(result.stdout),
+        new RegExp(`^stack-check: couldn't remove all of ${RUN}: build containers: couldn't read the record of aaaaaaaaaaaa`));
+    assert.ok(running(step));
+    assert.equal(f.calls().filter((call) => call.command === "docker" && call.args[0] === "rm").length, 0);
+});
+
+test("says when it can't tell which steps are a build container's, and still removes it", async (t) => {
+    const f = fixture(t);
+    const unlisted = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD }, { listed: false });
+    const building = buildContainer(f, "b", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const step = buildStep(t, f, building.layer);
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: `${unlisted.id} ${building.id}` });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout),
+        `stack-check: couldn't remove all of ${RUN}: build steps: couldn't tell which are aaaaaaaaaaaa's`);
+    await until(() => step.signalCode === "SIGKILL");
+    const removed = f.calls().filter((call) => call.command === "docker" && call.args[0] === "rm");
+    assert.deepEqual(removed.map((call) => call.args), [["rm", "--force", "--ignore", unlisted.id, building.id]]);
+});
+
+test("a check stops and removes builds left by runs that ended, and leaves live runs' builds", async (t) => {
+    const f = fixture(t);
+    const ended = buildContainer(f, "a", { STACK_CHECK_PROJECT: "cinexplorer-run-8597-dead04", STACK_CHECK_OWNER: DEAD });
+    const live = buildContainer(f, "b", { STACK_CHECK_PROJECT: "cinexplorer-run-8596-11fe00", STACK_CHECK_OWNER: LIVE });
+    const endedStep = buildStep(t, f, ended.layer);
+    const liveStep = buildStep(t, f, live.layer);
+    const result = f.invoke(["backend"], { CX_ENGINE: "podman", CX_BUILD_IDS: `${ended.id} ${live.id}` });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /^stack-check: removed cinexplorer-run-8597-dead04, left by a run that ended$/m);
+    await until(() => endedStep.signalCode === "SIGKILL");
+    assert.ok(running(liveStep));
+    const removed = f.calls().filter((call) => call.command === "docker" && call.args[0] === "rm");
+    assert.deepEqual(removed.map((call) => call.args), [["rm", "--force", "--ignore", ended.id]]);
+});
+
+test("leaves image builds to Docker", (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const step = buildStep(t, f, building.layer);
+    const result = f.invoke(["--tear-down", RUN], { CX_BUILD_IDS: building.id });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.ok(running(step));
+    assert.equal(f.calls().filter((call) => call.args.includes("--external")).length, 0);
 });
 
 test("refuses to tear down anything but a stack-check project", (t) => {

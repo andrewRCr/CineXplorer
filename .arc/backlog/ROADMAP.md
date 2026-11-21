@@ -3,7 +3,7 @@
 **Purpose:** The order of the work remaining before launch, and what is in and out of launch scope. Subject to change
 as we learn.
 
-**Last Updated:** 2026-11-15
+**Last Updated:** 2026-11-20
 
 ---
 
@@ -104,9 +104,11 @@ later work unit keeps them green.
 2. **Navigation shell** ✅ (2026-11-12): one responsive top bar and one Films catalog with All films, In theaters and
    Coming soon release windows; pages keep their navigation and footer while loading or showing an error.
    Archive: `reference/archive/2026-q4/technical/12_navigation-shell/`
-3. **Landing page** ✅ (2026-11-14), then the **privacy and terms pages** (in progress). Home opens on a curated classic
-   film, introduces the app to signed-out visitors and shows films in theaters and an opening-week calendar; signed-in
-   visitors see their watchlist first. Archive: `reference/archive/2026-q4/technical/15_landing-page/`
+3. **Landing page** ✅ (2026-11-14), then the **privacy and terms pages** ✅ (2026-11-20). Home opens on a curated
+   classic film, introduces the app to signed-out visitors and shows films in theaters and an opening-week calendar;
+   signed-in visitors see their watchlist first. `/privacy` and `/terms` publish the texts Google's consent screen
+   links to, from the footer, Home's data-use line and a notice where accounts are made. Archives:
+   `reference/archive/2026-q4/technical/15_landing-page/`, `reference/archive/2026-q4/technical/19_privacy-terms/`
 
 **Data track:**
 

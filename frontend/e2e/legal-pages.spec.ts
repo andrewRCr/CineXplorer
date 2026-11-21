@@ -89,6 +89,37 @@ test("a direct privacy fragment lands below the top bar", async ({ page }) => {
     await expectSectionBelowTopBar(page);
 });
 
+test("a direct terms fragment stays below the top bar after fonts load", async ({
+    page,
+}) => {
+    const fonts = gate();
+    await page.route(/\.ttf(?:\?|$)/, async (route) => {
+        await fonts.wait;
+        await route.continue();
+    });
+
+    const name = "3. Your account";
+    const heading = page.getByRole("heading", { level: 2, name, exact: true });
+    try {
+        await page.goto("/terms#3-your%2Daccount", {
+            waitUntil: "domcontentloaded",
+        });
+        await expect(heading).toBeFocused();
+        expect(await page.evaluate(() => document.fonts.status)).toBe(
+            "loading",
+        );
+
+        fonts.release();
+        await page.evaluate(async () => {
+            await document.fonts.ready;
+        });
+        await expectSectionBelowTopBar(page, name);
+        await expect(heading).toBeFocused();
+    } finally {
+        fonts.release();
+    }
+});
+
 for (const [path, heading] of [
     ["/privacy#who%2Delse-handles-your-data", section],
     ["/terms#3-your%2Daccount", "3. Your account"],

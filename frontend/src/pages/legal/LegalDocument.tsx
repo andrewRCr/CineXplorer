@@ -33,12 +33,33 @@ export function LegalDocument({
     if (heading) {
       heading.scrollIntoView();
       heading.focus({ preventScroll: true });
-    } else {
-      window.scrollTo(0, 0);
-      if (!hash && navigationType !== NavigationType.Pop) {
-        titleHeading.current?.focus({ preventScroll: true });
+
+      const fonts = document.fonts;
+      if (fonts?.status !== "loading") return undefined;
+
+      // Font loading can move the heading after the initial scroll.
+      const alignment = new AbortController();
+      const cancelAlignment = () => alignment.abort();
+      for (const event of ["pointerdown", "wheel", "keydown"]) {
+        window.addEventListener(event, cancelAlignment, {
+          capture: true,
+          passive: true,
+          signal: alignment.signal,
+        });
       }
+      void fonts.ready.then(() => {
+        if (alignment.signal.aborted) return;
+        cancelAlignment();
+        if (document.activeElement === heading) heading.scrollIntoView();
+      });
+      return cancelAlignment;
     }
+
+    window.scrollTo(0, 0);
+    if (!hash && navigationType !== NavigationType.Pop) {
+      titleHeading.current?.focus({ preventScroll: true });
+    }
+    return undefined;
   }, [hash, key, navigationType]);
 
   return (

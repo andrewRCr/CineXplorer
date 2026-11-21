@@ -168,6 +168,7 @@ frontend/
     ├── back-to-results.spec.ts
     ├── phone-width.spec.ts
     ├── background.spec.ts
+    ├── legal-pages.spec.ts
     ├── fixtures.ts
     ├── catalogue.ts
     ├── target.ts
@@ -841,7 +842,7 @@ import { createMockUser } from '@/test/helpers/mocks';
 
 ### E2E Test Coordination
 
-The eleven specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
+The twelve specs in `frontend/e2e/` cover sign-up, sign-in and sign-out, browse pagination, filtered movie detail,
 Back to Results after reloading detail, the phone shell's drawer, search and account menu, and the signed-in
 Watchlist and Library journey in `library.spec.ts`.
 `background.spec.ts` checks the page background: the first frame before React loads, the CSS fallback with JavaScript
@@ -852,6 +853,9 @@ watchlist contents, separate entry reviews/ratings, focus restoration and persis
 `rating-selection.spec.ts` covers first-click/tap half-star selection, whole stars, cancelled touch and persistence.
 `card-layout.spec.ts` checks metadata and rating alignment at controlled 194px and 138px component widths using local
 catalogue fixtures; the browse columns retain their fixed width. This geometry case skips staging.
+`legal-pages.spec.ts` follows both legal links from the signed-out Home footer and scans both documents with axe.
+It also checks the privacy page for horizontal overflow at 360×800 and the sticky-bar offset of its section links.
+Its local fixtures hold account responses until a visitor opens a legal document, then check the address and outcome.
 Sign-up stops at the check-your-email notice; email-link verification, OAuth and other browsers are outside this tier.
 
 - **`local`** (default): the real development backend, PostgreSQL, Redis, registration, and session cookies. Browser
@@ -909,7 +913,7 @@ local fixture data does not show.
 ### E2E Best Practices
 
 Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
-its address. From `frontend/`, one command runs the eleven specs:
+its address. From `frontend/`, one command runs the twelve specs:
 
 ```bash
 # Worktree root

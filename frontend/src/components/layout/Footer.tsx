@@ -1,6 +1,7 @@
 import tmdbLogo from "../../assets/tmdb_logo_alt_short.svg";
 import { Box, HStack, Text, VStack } from "@chakra-ui/react";
 import { TextLink, ThemeSelector } from "@/components/common";
+import { ROUTES } from "@/constants/routes";
 import { ColorModeButton } from "../core/chakra/color-mode";
 
 const Footer = () => {
@@ -46,6 +47,15 @@ const Footer = () => {
             © {new Date().getFullYear()} CineXplorer. All rights reserved.
           </Text>
         </Box>
+
+        <HStack gap={3} justifyContent="center" fontSize="sm">
+          <TextLink to={ROUTES.PRIVACY} color="on-muted">
+            Privacy Policy
+          </TextLink>
+          <TextLink to={ROUTES.TERMS} color="on-muted">
+            Terms of Service
+          </TextLink>
+        </HStack>
 
         {/* TMDB Attribution Row */}
         <Box display="inline-flex" alignItems="center" gap={2}>

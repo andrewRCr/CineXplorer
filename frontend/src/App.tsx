@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import ErrorBoundary from "./components/core/ErrorBoundary";
 
 // Lazy load page components
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
 const Home = lazy(() => import("./pages/home/Home"));
 const Browse = lazy(() => import("./pages/movie/Browse"));
 const BrowseSequential = import.meta.env.DEV
@@ -80,6 +82,8 @@ const App: React.FC = () => {
 
               {/* Content routes - full app layout */}
               <Route element={<AppLayout />}>
+                <Route path={ROUTES.PRIVACY} element={<PrivacyPolicy />} />
+                <Route path={ROUTES.TERMS} element={<TermsOfService />} />
                 {/* Home is the canonical landing page */}
                 <Route path={ROUTES.HOME} element={<Home />} />
                 {/* /featured redirects to home (alias for explicit nav reference) */}

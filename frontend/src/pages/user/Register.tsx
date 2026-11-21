@@ -1,3 +1,4 @@
+import { SignUpNotice } from "@/components/auth/SignUpNotice";
 import { ROUTES } from "@/constants/routes";
 import { Box, Button, VStack, Text, VisuallyHidden } from "@chakra-ui/react";
 import {
@@ -6,10 +7,12 @@ import {
   FloatingAlertContainer,
 } from "@/components/common";
 import { AuthFormCard, FormField } from "@/components/auth";
+import { priorityToaster } from "@/components/core/chakra/toaster";
 import { useFormik } from "formik";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import useAuthContext from "@/hooks/auth/useAuthContext";
+import { isLegalDocumentPath } from "@/utilities/returnPath";
 
 const Register = () => {
   const authContext = useAuthContext();
@@ -45,13 +48,18 @@ const Register = () => {
         if (response.success) {
           // Clear any error state on success
           setRegistrationError("");
+          const message =
+            "Account created! Check your email to verify your account before logging in.";
+          if (isLegalDocumentPath(window.location.pathname)) {
+            priorityToaster.success({ title: message });
+            return;
+          }
 
           // The sign-in page shows the next step in its card
           void navigate(ROUTES.LOGIN, {
             state: {
               registrationSuccess: true,
-              message:
-                "Account created! Check your email to verify your account before logging in.",
+              message,
             },
           });
         } else {
@@ -125,6 +133,7 @@ const Register = () => {
             >
               Register
             </Button>
+            <SignUpNotice />
             <Text mt="16px" textAlign="center" w="100%" fontSize="16px">
               Already have an account?{" "}
               <TextLink to={ROUTES.LOGIN}>Sign In</TextLink>

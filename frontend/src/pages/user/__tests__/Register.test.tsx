@@ -78,3 +78,23 @@ it("shows registration's progress on the button alone", async () => {
   held.release();
   expect(await screen.findByRole("alert")).toBeVisible();
 });
+
+it("shows the account creation notice after the registration button", () => {
+  render(<Register />);
+
+  const notice = screen.getByText(/^By creating an account, you agree to/);
+  expect(notice).toHaveTextContent(
+    /^By creating an account, you agree to the Terms of Service and acknowledge the Privacy Policy\.$/,
+  );
+  expect(
+    screen.getByRole("link", { name: "Terms of Service" }),
+  ).toHaveAttribute("href", "/terms");
+  expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+    "href",
+    "/privacy",
+  );
+  const button = screen.getByRole("button", { name: "Register" });
+  expect(
+    button.compareDocumentPosition(notice) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).not.toBe(0);
+});

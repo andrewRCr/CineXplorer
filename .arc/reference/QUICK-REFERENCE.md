@@ -216,8 +216,9 @@ E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e
 E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e -- e2e/browse.spec.ts
 ```
 
-The eleven Chromium specs use catalogue fixtures locally and have no test retries. `library.spec.ts` covers the
-signed-in Watchlist and Library journey. Journeys scan reached pages with axe;
+The twelve Chromium specs use catalogue fixtures locally and have no test retries. `library.spec.ts` covers the
+signed-in Watchlist and Library journey. `legal-pages.spec.ts` checks the public pages from the Home footer,
+privacy section links, and phone-width overflow. Journeys scan reached pages with axe;
 tracking also scans entry-dialog and rating-sheet states. `scanPage` waits for finite motion inside dialogs and
 notification regions before its audit. `background.spec.ts` checks startup backgrounds, the CSS fallback without
 JavaScript, and mode and palette changes. The phone shell runs at 360×800. Tracking journeys run at 1280px with mouse

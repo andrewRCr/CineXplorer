@@ -266,3 +266,35 @@ it.each([true, false])(
         }
     },
 );
+
+it.each(["/Privacy/", "/terms"])(
+    "keeps the legal page at %s open after a rejected profile and renewal",
+    async (path) => {
+        setAuthTokens(token());
+        const address = `http://localhost:3000${path}`;
+        window.location.pathname = path;
+        window.location.href = address;
+        server.use(
+            http.get(`${apiBaseUrl}/profile/`, () =>
+                HttpResponse.json({ detail: "Unauthorized" }, { status: 401 }),
+            ),
+            http.post(`${apiBaseUrl}/auth/refresh`, () =>
+                HttpResponse.json(
+                    { detail: "Session expired" },
+                    { status: 401 },
+                ),
+            ),
+        );
+
+        try {
+            await expect(apiClient.get("/profile/")).rejects.toMatchObject({
+                response: { status: 401 },
+            });
+            expect(localStorage.getItem("access_token")).toBeNull();
+            expect(window.location.href).toBe(address);
+            expect(window.location.reload).toHaveBeenCalledOnce();
+        } finally {
+            window.location.pathname = "/";
+        }
+    },
+);

@@ -94,7 +94,7 @@ it("composes signed-out Home in order with named sections and no card actions", 
     within(row).queryByRole("button", { name: /^Actions for / }),
   ).not.toBeInTheDocument();
 });
-it("shows signed-in Home without the hero", async () => {
+it("shows signed-in Home without the hero or sign-in data notice", async () => {
   setAuthTokens(token());
   render(
     <AuthContextProvider>
@@ -112,6 +112,9 @@ it("shows signed-in Home without the hero", async () => {
   ).toBeInTheDocument();
   expect(
     screen.queryByText("Track what you watch. Find what's next."),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByText(/^An account keeps your lists\./),
   ).not.toBeInTheDocument();
 });
 it("switches a rejected stored sign-in to the pitch", async () => {

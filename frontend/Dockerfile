@@ -7,8 +7,8 @@ ARG USER_GID=1000
 # Reuse the base image's node account, matching the bind-mount owner.
 RUN --mount=type=cache,id=cinexplorer-apk-frontend,target=/etc/apk/cache,sharing=locked \
     if [ "$(id -u node)" != "$USER_UID" ] || [ "$(id -g node)" != "$USER_GID" ]; then \
-        apk update && \
-        apk add --virtual .user-tools shadow && \
+        rm -f /etc/apk/cache/APKINDEX.*.tar.gz && \
+        apk --update-cache add --virtual .user-tools shadow && \
         groupmod --gid "$USER_GID" node && \
         usermod --uid "$USER_UID" --gid "$USER_GID" node && \
         apk del .user-tools; \

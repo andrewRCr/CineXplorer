@@ -288,8 +288,15 @@ the worktree's browsable stack with Home's line and the notices in place.
       regressions cover these actions, and separate Chromium probes checked both documents for each action.
       All 238 related tests and 17 Chromium scenarios passed. Lint, formatting and type checking passed.
 
+    - [x] **4.1.i Reconcile failed renewal on both legal pages.** The interceptor reloads the active legal URL
+      after clearing expired credentials, so the new page reads the settled session and discards cached account
+      data. Both Chromium regressions started signed in and held a tracking save until the visitor opened a legal
+      page. When renewal failed, the URL stayed in place and the account menu showed the visitor as signed out.
+      The rendered policy describes renewal limits by account or IP address and matches Appendix A.
+      All 249 focused tests and 19 Chromium scenarios passed. Lint, formatting and type checking passed.
+
     - Local verification is complete. The full frontend test and Chromium suites passed during verification.
-      The focused runs in 4.1.a through 4.1.h cover the subsequent changes. The criteria below record the local
+      The focused runs in 4.1.a through 4.1.i cover the subsequent changes. The criteria below record the local
       results and the remaining merge checks. The branch changes no backend API or generated frontend API files.
 
 - [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
@@ -320,7 +327,7 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
   scan; `/privacy` at 360×800 doesn't scroll sideways; and its "Who else handles your data" heading lands below the top
   bar from the in-page link and on a direct load of its fragment. (R1, R3, R5, R8, R14)
 
-    All ten local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
+    All twelve local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
     Home and both legal pages. The CI smoke result is pending.
 
 - [x] 2. **The texts are the appendices'.** A reviewer comparing each page's rendered text with Appendix A and Appendix

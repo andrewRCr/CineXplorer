@@ -159,11 +159,12 @@ Otherwise the function sends `POST /api/auth/refresh` with credentials and CSRF,
 refresh cookie. A valid response replaces the access token in the original browser storage; a session-storage
 sign-in stays in session storage. Without Web Locks, the pending promise still coordinates callers in one tab.
 
-Only this function posts a refresh. On current-session renewal failure, the interceptors clear the credentials and
-keep the privacy policy and terms open. On other routes they redirect to sign-in with `session_expired=true` and
-the safe current path, query and fragment in `next`, using `loginPathFor`. Sign-in pages are excluded from the
-return path. The session read and idle check land anonymous and run the change-of-user step described below. A
-failed retry of the original API request does not invalidate a successful refresh.
+Only this function posts a refresh. On current-session renewal failure, the interceptors clear the credentials.
+They reload the current legal URL to read the session afresh and discard the old account's cached data. On other
+routes they redirect to sign-in with `session_expired=true` and the safe current path, query and fragment in
+`next`, using `loginPathFor`. Sign-in pages are excluded from the return path. The session read and idle check land
+anonymous and run the change-of-user step described below. A failed retry of the original API request does not
+invalidate a successful refresh.
 
 A provider-return session read owns resolution from before allauth discovery through any password fallback. The idle
 check starts no renewal while this identity is active. API requests continue using credentials and shared renewal;

@@ -218,7 +218,11 @@ async function refreshRequestToken(
         if (!canHandlePasswordFailure(sessionVersion, request.signal))
             throw failure;
         clearAuthTokens();
-        if (isLegalDocumentPath(window.location.pathname)) throw failure;
+        if (isLegalDocumentPath(window.location.pathname)) {
+            // Re-read the session and discard the old account's in-memory data.
+            window.location.reload();
+            throw failure;
+        }
         const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
         const loginUrl = new URL(
             loginPathFor(returnTo),

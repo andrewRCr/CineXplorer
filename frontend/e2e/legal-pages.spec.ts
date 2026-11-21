@@ -303,4 +303,65 @@ test.describe("account actions completing on a legal page", () => {
         ).toBeVisible();
         await scanPage(page, info);
     });
+
+    for (const [label, path] of [
+        ["Privacy Policy", "/privacy"],
+        ["Terms of Service", "/terms"],
+    ]) {
+        test(`a rejected renewal reconciles the session on ${path}`, async ({
+            page,
+        }, info) => {
+            const session = await mockPasswordSession(page);
+            await page.route("**/api/token/", (route) =>
+                route.fulfill({ json: session }),
+            );
+            await page.route("**/api/auth/refresh", (route) =>
+                route.fulfill({
+                    status: 401,
+                    json: { detail: "Session expired" },
+                }),
+            );
+            const save = await holdResponse(
+                page,
+                "/api/user-movie-data/1",
+                {
+                    detail: "Unauthorized",
+                },
+                401,
+            );
+            await page.goto("/login?next=%2Fbrowse");
+            await expect(
+                page.getByRole("button", { name: "Login", exact: true }),
+            ).toBeVisible();
+            await scanPage(page, info);
+            await submitPasswordSignIn(page);
+            const account = page.getByRole("button", { name: viewer.username });
+            await expect(account).toBeVisible();
+            await expect(page).toHaveURL("/browse");
+            const movie = page.getByRole("article", {
+                name: "Movie 1",
+                exact: true,
+            });
+            await movie
+                .getByRole("img", { name: "Movie 1", exact: true })
+                .hover();
+            await scanPage(page, info);
+            await movie
+                .getByRole("button", { name: "Watchlist", exact: true })
+                .click();
+            try {
+                await save.requested;
+                await openLegalFooterLink(page, label);
+                await expect(account).toBeVisible();
+            } finally {
+                save.release();
+            }
+            await expect(
+                page.getByRole("link", { name: "Sign in", exact: true }),
+            ).toBeVisible();
+            await expect(account).toHaveCount(0);
+            await expect(page).toHaveURL(path);
+            await scanPage(page, info);
+        });
+    }
 });

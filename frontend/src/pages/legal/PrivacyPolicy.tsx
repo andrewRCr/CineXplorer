@@ -226,13 +226,15 @@ export default function PrivacyPolicy() {
         </List.Item>
         <List.Item>
           <strong>Abuse limits.</strong> To stop repeated or automated requests,
-          the server briefly keeps counts of recent requests: by IP address for
-          signing up, signing in, renewing your session, resending a
-          verification email, resetting a password and sending error reports; by
-          a scrambled form of the email address entered when you sign up or ask
-          for a password reset; and by your account for saving to your lists.
-          Each count ends within a minute to a day of the last request it
-          counted, depending on the limit.
+          the server briefly keeps counts of recent requests. It counts
+          sign-ups, sign-ins, verification email resends, password resets and
+          error reports by IP address. For sign-ups and password reset requests
+          it also counts by a scrambled form of the email address you enter. It
+          counts saves to your lists by account. For password session renewal,
+          the server counts by the account tied to a valid signed-in session
+          cookie when one is present, and by IP address otherwise. Each count
+          ends within a minute to a day of the last request it counted,
+          depending on the limit.
         </List.Item>
       </List.Root>
       <LegalHeading as="h3">Email</LegalHeading>

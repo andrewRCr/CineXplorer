@@ -333,9 +333,10 @@ for it, with the effective dates of R7.
       (`sanitize_frontend_context`). Its random ID is made once per page load, so the text calls it an ID for that
       page visit.
     - **Abuse limits.** Counts are kept by IP address, by a scrambled (SHA-256) form of an email address for allauth's
-      sign-up and password-reset limits, and by account for saves. Each request an IP or address count takes renews
-      its expiry, and a save count runs to the end of its fixed window, so a count ends within a minute to a day of
-      the last request it counted, not of the first.
+      sign-up and password-reset limits, and by account for saves. Password session renewal uses the signed-in
+      session account when Django recognizes one, or the IP address otherwise. Each counted request renews the
+      expiry of the sliding counts, and a save count runs to the end of its fixed window. A count ends within a
+      minute to a day of the last request it counted.
     - **Your movie lists** become what the code stores: the watchlist with join times, watched and liked with their
       times, the current rating, logged viewings and reviews, and the record of changes, which Library and History
       show for the signed-in account. The operator can view tracked films, their list marks and associated dates,
@@ -484,6 +485,8 @@ None.
 - **2026-11-20.** Distinguished cancellation from a callback that clears pending GitHub data. D1 covers provider
   sign-in finishing while either document is open. Recorded admin search redaction in Non-Goals and Technical
   Considerations, and named the password-reset email send call in Appendix C.
+- **2026-11-20.** Clarified when the renewal rate limit uses the signed-in account or the IP address. On either
+  legal route, failed renewal reloads that address for a fresh session read.
 
 ## Appendix A: Privacy Policy
 
@@ -606,11 +609,12 @@ This applies whether or not you have an account.
   agent, language, platform and window size), your user ID if you signed in with a password, and a random ID for that
   page visit. Details labelled as passwords, tokens or other credentials, and the contents of any request that failed,
   are removed before the report is kept.
-- **Abuse limits.** To stop repeated or automated requests, the server briefly keeps counts of recent requests: by IP
-  address for signing up, signing in, renewing your session, resending a verification email, resetting a password and
-  sending error reports; by a scrambled form of the email address entered when you sign up or ask for a password
-  reset; and by your account for saving to your lists. Each count ends within a minute to a day of the last request it
-  counted, depending on the limit.
+- **Abuse limits.** To stop repeated or automated requests, the server briefly keeps counts of recent requests.
+  It counts sign-ups, sign-ins, verification email resends, password resets and error reports by IP address.
+  For sign-ups and password reset requests it also counts by a scrambled form of the email address you enter.
+  It counts saves to your lists by account. For password session renewal, the server counts by the account
+  tied to a valid signed-in session cookie when one is present, and by IP address otherwise. Each count ends
+  within a minute to a day of the last request it counted, depending on the limit.
 
 ### Email
 
@@ -946,10 +950,11 @@ installed packages of those names.
 | "your user ID if you signed in with a password" | `getCurrentUserId` reads the stored access token, which only a password sign-in stores | `logger.ts`, `frontend/src/utilities/tokenUtils.ts` |
 | "a random ID for that page visit" | `sessionId`, made once per page load | `logger.ts` (`generateSessionId`) |
 | "Details labelled as passwords, tokens or other credentials, and the contents of any request that failed, are removed before the report is kept" | The browser filters credential-named keys (`removeSensitiveFields`), but an axios error carries its request `config`, body included (a failed sign-in's password among it), which key filtering can't reach, and the browser sends it; the server drops `config`, `request`, `headers` and `body`, and string `data`, at any depth before logging | `frontend/src/services/logger.ts` (`sanitizeDataForBackend`), `frontend/src/hooks/auth/useAuth.ts`, `backend/apps/core/utils/logging.py` (`sanitize_frontend_context`) |
-| "by IP address for signing up, signing in, renewing your session, resending a verification email, resetting a password and sending error reports" | Registration 3 an hour, sign-in 5 a minute, resend 3 an hour, renewal 10 a minute, error reports 30 a minute; allauth's reset request and reset from a link 20 a minute. Each keys on the `X-Forwarded-For` address Caddy sets, read with one trusted proxy (`NINJA_NUM_PROXIES`, `ALLAUTH_TRUSTED_PROXY_COUNT`) | `backend/apps/authentication/api.py`, `throttles.py`, `backend/apps/core/api.py`, `backend/config/settings.py`, allauth `account/app_settings.py`, `core/internal/httpkit.py`, ninja `throttling.py`, `infrastructure/Caddyfile.prod`, `frontend/Dockerfile` (Caddy 2.11) |
-| "by a scrambled form of the email address entered when you sign up or ask for a password reset" | allauth's verification-email cooldown (one per 3 minutes, counted at sign-up) and reset request (5 a minute), keyed by the address's SHA-256 | allauth `account/internal/flows/email_verification.py`, `core/internal/ratelimit.py` |
-| "by your account for saving to your lists" | `SaveThrottle`, 30 a minute and 1,000 a day | `backend/apps/user_movie_data/throttles.py` |
-| "Each count ends within a minute to a day of the last request it counted, depending on the limit." | Each count is one cache entry. The IP and address counts keep a list of recent request times that each counted request saves again with its window as the timeout, dropping times older than the window; the save count runs to the end of its fixed window. Windows run from a minute to a day | ninja `throttling.py` (`SimpleRateThrottle`), allauth `core/internal/ratelimit.py` (`_consume_single_rate`), `backend/apps/user_movie_data/throttles.py` |
+| "It counts sign-ups, sign-ins, verification email resends, password resets and error reports by IP address" | Registration 3 an hour, sign-in 5 a minute, resend 3 an hour, error reports 30 a minute. Allauth's reset request and reset from a link are limited to 20 a minute. Each keys on the `X-Forwarded-For` address Caddy sets, read with one trusted proxy (`NINJA_NUM_PROXIES`, `ALLAUTH_TRUSTED_PROXY_COUNT`) | `backend/apps/authentication/api.py`, `throttles.py`, `backend/apps/core/api.py`, `backend/config/settings.py`, allauth `account/app_settings.py`, `core/internal/httpkit.py`, ninja `throttling.py`, `infrastructure/Caddyfile.prod`, `frontend/Dockerfile` (Caddy 2.11) |
+| "For sign-ups and password reset requests it also counts by a scrambled form of the email address you enter" | allauth's verification-email cooldown (one per 3 minutes, counted at sign-up) and reset request (5 a minute), keyed by the address's SHA-256 | allauth `account/internal/flows/email_verification.py`, `core/internal/ratelimit.py` |
+| "It counts saves to your lists by account" | `SaveThrottle`, 30 a minute and 1,000 a day | `backend/apps/user_movie_data/throttles.py` |
+| "For password session renewal, the server counts by the account tied to a valid signed-in session cookie when one is present, and by IP address otherwise" | Renewal sends cookies and is limited to 10 requests a minute. The route's `auth=None` leaves Django's session authentication in place. `TestAwareUserThrottle` inherits Ninja's `UserRateThrottle`, which uses `request.user.pk` for an authenticated user and `get_ident` for the IP address otherwise | `frontend/src/services/apiClient.ts`, `backend/apps/authentication/api.py`, `throttles.py`, `backend/config/settings.py`; Django `contrib/auth/middleware.py`; Ninja `operation.py`, `throttling.py` |
+| "Each count ends within a minute to a day of the last request it counted, depending on the limit." | Each count is one cache entry. The sliding counts keep a list of recent request times that each counted request saves again with its window as the timeout, dropping times older than the window. The save count runs to the end of its fixed window. Windows run from a minute to a day | Ninja `throttling.py` (`SimpleRateThrottle`), allauth `core/internal/ratelimit.py` (`_consume_single_rate`), `backend/apps/user_movie_data/throttles.py` |
 | "If you sign up with an email address and password, we send a verification email when you sign up (and again if you ask) and a welcome email once you've verified" | `register_user` calls `send_verification_email_to_address`, `resend_verification` calls `send_confirmation`, and `verify_email` sends the welcome message. Social sign-up runs through allauth with `SOCIALACCOUNT_EMAIL_VERIFICATION` set to `none` | `backend/apps/authentication/services/authentication_service.py`, `backend/apps/core/services/email_service.py`, `backend/config/settings.py`; allauth `socialaccount/internal/flows/signup.py` |
 | "We also send password-reset emails" | For a matching account, `request_password_reset` builds the reset link and calls `send_password_reset_mail`. That method calls `CustomAccountAdapter.send_mail`, which renders the reset-key message and sends it through the configured backend | allauth `account/internal/flows/password_reset.py`, `account/adapter.py`; `backend/apps/authentication/adapters.py`, `backend/config/settings.py` |
 | "If someone asks for a password reset for an address that has no account, we email that address" | `ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS` (default `True`) | allauth `account/app_settings.py` |

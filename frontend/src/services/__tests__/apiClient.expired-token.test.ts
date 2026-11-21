@@ -292,6 +292,7 @@ it.each(["/Privacy/", "/terms"])(
             });
             expect(localStorage.getItem("access_token")).toBeNull();
             expect(window.location.href).toBe(address);
+            expect(window.location.reload).toHaveBeenCalledOnce();
         } finally {
             window.location.pathname = "/";
         }

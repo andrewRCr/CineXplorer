@@ -96,6 +96,7 @@ const REPORT_URL_FIELDS = new Set([
     "referer",
     "referrer",
     "action",
+    "endpoint",
 ]);
 
 // These caps leave room under the API's 50 KiB limit after JSON escaping
@@ -844,6 +845,8 @@ class Logger {
             !value.startsWith("//") &&
             !value.startsWith("/\\")
         ) {
+            // eslint-disable-next-line no-control-regex -- URL parsing can remove controls and change a relative path's meaning.
+            if (/[\x00-\x1f\x7f]/u.test(value)) return "unknown";
             return value.split(/[?#]/, 1)[0] ?? "unknown";
         }
         try {
@@ -1268,6 +1271,9 @@ class Logger {
                 const nestedError = isRecord(sanitized.error)
                     ? sanitized.error
                     : undefined;
+                const additionalData = isRecord(sanitized.additionalData)
+                    ? sanitized.additionalData
+                    : undefined;
                 const summary: Record<string, unknown> = {
                     _truncated: true,
                     _originalSize: serialized.length,
@@ -1275,7 +1281,10 @@ class Logger {
                 for (const [field, length] of Object.entries(
                     REPORT_EXCERPT_LENGTHS,
                 )) {
-                    const value = sanitized[field] ?? nestedError?.[field];
+                    const value =
+                        sanitized[field] ??
+                        nestedError?.[field] ??
+                        additionalData?.[field];
                     if (typeof value === "string") {
                         summary[field] = clipReportText(value, length);
                     } else if (typeof value === "number") {

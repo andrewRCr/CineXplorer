@@ -1,3 +1,16 @@
+{
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>uri regexp "[?].*$" ""
+				request>headers>Referer delete
+				request>headers>X-Csrftoken delete
+			}
+		}
+	}
+}
+
 # Django sends the four security headers the site block sets; drop its copies so each response carries one.
 # A repeated Cross-Origin-Opener-Policy does not parse, and browsers then ignore it.
 (backend) {

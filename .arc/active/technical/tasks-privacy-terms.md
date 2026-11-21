@@ -348,8 +348,11 @@ the worktree's browsable stack with Home's line and the notices in place.
       appendices. All 26 related tests and 17 local Chromium scenarios passed, along with lint, formatting and
       type checking.
 
-- [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
+- [x] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
   the links on Google's Branding page, and the console's response is recorded here)
+
+    - Both proven-live criteria are met (2026-11-20). The merge (#240, `61665857`) passed CI run 44869834382 through
+      Deploy staging and Staging smoke. Google's Branding page accepted the three links, and the branding verified.
 
 ## Implementation Notes
 
@@ -418,6 +421,15 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
 
 ### Proven live
 
-- [ ] 1. After the merge deploys, staging serves `/privacy` and `/terms` to a signed-out visitor with the merge date as
+- [x] 1. After the merge deploys, staging serves `/privacy` and `/terms` to a signed-out visitor with the merge date as
   both effective dates, and the staging smoke passes over both pages. (R7, R14)
-- [ ] 2. The Owner enters the homepage, privacy and terms links on Google's Branding page, and the console accepts them.
+
+    The merge's run 44869834382 deployed `61665857` to staging, and its staging smoke passed 29 specs with 17
+    skipped. The signed-out legal-page journeys covered both pages from Home's footer, the phone width, and in-page,
+    direct and encoded section links. The account-action journeys were among the skipped specs, as staging runs
+    signed out. Staging answered `/privacy` and `/terms` with 200, and both pages' served bundles carry "November
+    20, 2026", the merge date, as the effective date (checked 2026-11-20, 11:42 pm CT).
+- [x] 2. The Owner enters the homepage, privacy and terms links on Google's Branding page, and the console accepts them.
+
+    The Owner entered the homepage, privacy policy and terms links on Google's Branding page, and the branding
+    verified (2026-11-20).

@@ -37,8 +37,9 @@ Both rendered pages matched the PRD appendices in the worktree. The full local v
 checks for later corrections are recorded in the task list. The merge requires the CI smoke result, a source trace
 against current `main`, and the merge date on both pages.
 
-After the merge deploys, verify both signed-out routes and effective dates on staging and run staging smoke.
-The Owner then enters the homepage, privacy policy, and terms URLs on Google's Branding page and records the result.
+The merge (#240, `61665857`, 2026-11-20) passed CI run 44869834382 through Deploy staging and Staging smoke.
+Staging serves both pages to signed-out visitors with November 20, 2026 as the effective date. The Owner entered the
+homepage, privacy policy and terms URLs on Google's Branding page, and the branding verified.
 
 ## Related Documentation
 

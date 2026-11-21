@@ -118,6 +118,7 @@ test("a direct terms fragment stays below the top bar after fonts load", async (
     const fonts = gate();
     try {
         const heading = await openTermsWithFontsHeld(page, fonts);
+        await expectSectionBelowTopBar(page, accountSection);
         fonts.release();
         await page.evaluate(async () => {
             await document.fonts.ready;

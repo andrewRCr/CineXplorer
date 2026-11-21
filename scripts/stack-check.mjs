@@ -163,8 +163,10 @@ async function tearDown(project, env) {
     if (listed.status !== 0) problems.push(`images: ${lastLine(listed.output)}`);
     const named = listed.stdout.split("\n").map((line) => line.trim().split(/\s+/))
         .filter(([id, repository]) => id && repository && names.has(repository.split("/").at(-1)))
-        .map(([id, repository, tag]) => (tag && tag !== "<none>" ? `${repository}:${tag}` : id));
-    const images = words([...labelled.ids, ...named].join(" "));
+        .map(([id, repository, tag]) => ({ id, ref: tag && tag !== "<none>" ? `${repository}:${tag}` : id }));
+    // An image both lists find goes by its name alone: naming it twice in one call fails on Docker once it's gone.
+    const covered = (id) => named.some((image) => image.id.startsWith(id) || id.startsWith(image.id));
+    const images = words([...labelled.ids.filter((id) => !covered(id)), ...named.map((image) => image.ref)].join(" "));
     if (images.length) {
         const removed = await run("docker", ["image", "rm", ...images], { env });
         if (removed.status !== 0) problems.push(`images: ${lastLine(removed.output)}`);

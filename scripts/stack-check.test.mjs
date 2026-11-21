@@ -77,6 +77,20 @@ if (command === 'docker' && args.includes('ls') && args.includes('-q')) {
 if (command === 'docker' && args.includes('ls') && args.includes('--format') && args[0] === 'image') {
     console.log((process.env.CX_IMAGES ?? '').replaceAll('{project}', project));
 }
+if (command === 'docker' && args[0] === 'image' && args[1] === 'rm') {
+    // As Docker does: an image named twice in one call is deleted by the first reference, and the second fails.
+    const ids = new Map((process.env.CX_IMAGES ?? '').replaceAll('{project}', project).split('\\n')
+        .map((line) => line.trim().split(/\\s+/)).filter(([id]) => id).map(([id, repository, tag]) => [repository + ':' + tag, id]));
+    const removed = new Set();
+    for (const ref of args.slice(2)) {
+        const id = ids.get(ref) ?? ref;
+        if (removed.has(id)) {
+            console.error('Error response from daemon: No such image: ' + ref);
+            process.exit(1);
+        }
+        removed.add(id);
+    }
+}
 if (command === 'docker' && args.includes('inspect')) {
     const labels = JSON.parse(process.env.CX_LABELS ?? '{}');
     const gone = (process.env.CX_GONE ?? '').split(' ');
@@ -312,6 +326,21 @@ test("removes the run's built images by its label and by the names Compose gives
     assert.equal(removed.length, 1);
     assert.deepEqual(removed[0].args.slice(2).sort(),
         ["docker.io/library/" + project + "-backend:latest", "labelled1", "localhost/" + project + "-frontend:latest"]);
+});
+
+test("removes an image its label and its name both find only once, so Docker reports a clean teardown", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["backend"], {
+        CX_LABELLED_IMAGES: "id1 id2",
+        CX_IMAGES: "id1 docker.io/library/{project}-backend latest\nid2 docker.io/library/{project}-frontend latest",
+    });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const project = projectOf(compose(f.calls(), "up")[0]);
+    const removed = f.calls().filter((call) => call.command === "docker" && call.args[0] === "image" && call.args[1] === "rm");
+    assert.deepEqual(removed.map((call) => call.args.slice(2).sort()),
+        [[`docker.io/library/${project}-backend:latest`, `docker.io/library/${project}-frontend:latest`]]);
+    assert.match(result.stdout, /^stack-check: removed the stack in \d+ s$/m);
+    assert.doesNotMatch(result.stdout, /couldn't remove/);
 });
 
 test("says what it couldn't remove, and still returns the check's status", (t) => {

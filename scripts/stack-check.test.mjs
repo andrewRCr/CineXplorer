@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import {
-    chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmdirSync, rmSync, statSync,
+    chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, statSync,
     symlinkSync, writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -336,21 +337,12 @@ test("keeps the shared folder private, closing one left open", (t) => {
 
 test("keeps the shared folder under /tmp for the account, with XDG_RUNTIME_DIR set elsewhere or unset", (t) => {
     const f = fixture(t);
-    // The real folder every run on this machine uses. The test works there only on a project no run can have (ports
-    // start at 8500), and afterward removes only the empty folders it created.
-    const shared = join("/tmp", `cinexplorer-stack-check-${process.getuid()}`);
-    const runs = join(shared, "runs");
-    const project = "cinexplorer-run-0000-000000";
-    const created = [shared, runs].filter((folder) => !existsSync(folder));
-    t.after(() => {
-        for (const folder of [join(runs, project), ...created.reverse()]) {
-            try {
-                rmdirSync(folder);
-            } catch {
-                // Gone already, or holding a real run's files
-            }
-        }
-    });
+    // The real folder every run on this machine uses. The test works there only on a project of its own that no run can
+    // have (ports start at 8500), and afterward removes only that project's folder: the shared folder stays, as after
+    // any run, since a real run may be using it.
+    const runs = join("/tmp", `cinexplorer-stack-check-${process.getuid()}`, "runs");
+    const project = `cinexplorer-run-0000-${randomBytes(3).toString("hex")}`;
+    t.after(() => rmSync(join(runs, project), { recursive: true, force: true }));
     for (const runtime of [f.runtime, undefined]) {
         mkdirSync(join(runs, project), { recursive: true, mode: 0o700 });
         const result = f.invoke(["--tear-down", project], { STACK_CHECK_SHARED: undefined, XDG_RUNTIME_DIR: runtime });

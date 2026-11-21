@@ -1260,8 +1260,10 @@ async function startHeldSave(view: ChangeView) {
         view.result.current.client.getQueryData(["library", "ownership"]),
       ).toBe(1),
     );
+    // Deliver TanStack Query's notification before reading the rendered result.
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
   });
-  await waitFor(() => expect(view.result.current.library.data).toBe(1));
+  expect(view.result.current.library.data).toBe(1);
   await act(async () => {
     view.result.current.save({ user_on_watchlist: true });
     await vi.waitFor(() => expect(view.patches).toBe(1));

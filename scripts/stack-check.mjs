@@ -3,10 +3,12 @@
 // these checks beside other work: each run has its own project and port, and leaves nothing behind.
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
+import {
+    chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, statSync, writeFileSync,
+} from "node:fs";
 import { createServer } from "node:net";
 import { constants } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HELP = `Usage: node scripts/stack-check.mjs backend|e2e [argument...]
@@ -38,6 +40,10 @@ const LAUNCH = 'import { chromium } from "@playwright/test"; const browser = awa
 const SHARED = process.env.STACK_CHECK_SHARED || join("/tmp", `cinexplorer-stack-check-${process.getuid?.()}`);
 const CLAIMS = join(SHARED, "claims");
 const RUNS = join(SHARED, "runs");
+
+// Where a build runtime's mount table is read from: /proc/<pid>/mountinfo, or <STACK_CHECK_MOUNTS>/<pid>/mountinfo in
+// tests, which can't mount layers. Everything else about processes, and every signal, uses the real /proc.
+const MOUNTS = process.env.STACK_CHECK_MOUNTS || "/proc";
 
 class NotRun extends Error {}
 
@@ -129,6 +135,51 @@ function alive(owner) {
     return startTime(match[3]) === match[4];
 }
 
+function statOf(pid) {
+    const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+    return stat.slice(stat.lastIndexOf(")") + 2).split(" ");
+}
+
+// A process that has ended, or that only waits for its parent to collect its exit status, is gone. A process this
+// account can't read isn't counted as gone.
+function gone(pid) {
+    try {
+        return statOf(pid)[0] === "Z";
+    } catch (error) {
+        return error.code === "ENOENT" || error.code === "ESRCH";
+    }
+}
+
+// Every process under these, read from /proc before any is signalled, so none is missed when its parent exits.
+function descendantsOf(roots) {
+    const parents = new Map();
+    for (const pid of readdirSync("/proc").filter((name) => /^\d+$/.test(name))) {
+        try {
+            parents.set(Number(pid), Number(statOf(pid)[1]));
+        } catch {
+            // Ended meanwhile
+        }
+    }
+    const found = new Set(roots);
+    for (let grew = true; grew;) {
+        grew = false;
+        for (const [pid, parent] of parents) {
+            if (!found.has(pid) && found.has(parent)) {
+                found.add(pid);
+                grew = true;
+            }
+        }
+    }
+    return [...found].filter((pid) => !roots.includes(pid));
+}
+
+// The engine behind the docker command: podman through its own command, podman's service through another client such
+// as Docker's, which lacks the podman commands that find podman's builds, or Docker.
+function engineOf(version) {
+    if (!/podman/i.test(version.stdout)) return "docker";
+    return /podman/i.test(version.stdout.split(/^Server:/m)[0]) ? "podman" : "podman-service";
+}
+
 // The caller's environment, less what would steer the stack or the specs: Compose's own settings, the stack's
 // variables, and a staging target or sign-in.
 function cleanEnv() {
@@ -159,7 +210,7 @@ async function preflight(mode, env) {
                 : `Chromium can't start: ${lastLine(launch.output)}`);
         }
     }
-    return /podman/i.test(version.stdout) ? "podman" : "docker";
+    return engineOf(version);
 }
 
 async function listIds(kind, filter, env) {
@@ -167,12 +218,153 @@ async function listIds(kind, filter, env) {
     return { ids: words(listed.stdout), problem: listed.status === 0 ? undefined : `${kind}s: ${lastLine(listed.output)}` };
 }
 
+// podman builds images inside its API service, so a run that ends during a build leaves the step it was running going
+// there (the service starts no further step once the run's Compose client has gone), and every build leaves its
+// working containers behind. Each run names itself to its builds in build arguments, its project and its owner, which
+// buildah records with each working container. Returns the build containers whose record names a run, each with the
+// layer podman's container store mounts it on, the storage driver, and what couldn't be read.
+async function buildsOf(env) {
+    const listed = await run("docker", ["ps", "--external", "--all", "--no-trunc", "--format", "{{.ID}}"], { env });
+    if (listed.status !== 0) return { builds: [], problems: [`build containers: ${lastLine(listed.output)}`] };
+    const ids = words(listed.stdout);
+    if (!ids.length) return { builds: [], problems: [] };
+    const info = await run("docker", ["info", "--format", "{{json .Store}}"], { env });
+    let store;
+    try {
+        store = JSON.parse(info.stdout);
+    } catch {
+        return { builds: [], problems: [`build containers: no storage details: ${lastLine(info.output)}`] };
+    }
+    // A transient store keeps its container records under the run root
+    const folder = join(store.transientStore ? store.runRoot : store.graphRoot, `${store.graphDriverName}-containers`);
+    // Build containers are in the volatile container store, others in the main one
+    const layers = new Map();
+    for (const file of ["containers.json", "volatile-containers.json"]) {
+        try {
+            for (const { id, layer } of JSON.parse(readFileSync(join(folder, file), "utf8"))) layers.set(id, layer);
+        } catch {
+            // A store podman hasn't written yet; a build container it should list is reported where it matters
+        }
+    }
+    const builds = [];
+    const problems = [];
+    for (const id of ids) {
+        let record;
+        try {
+            record = JSON.parse(readFileSync(join(folder, id, "userdata", "buildah.json"), "utf8"));
+        } catch (error) {
+            // Only a build's containers have a record, and one removed since the listing has none either
+            if (error.code !== "ENOENT") problems.push(`build containers: couldn't read the record of ${id.slice(0, 12)}`);
+            continue;
+        }
+        const { STACK_CHECK_PROJECT: project, STACK_CHECK_OWNER: owner } = record.Args ?? {};
+        if (project) builds.push({ id, project, owner, layer: layers.get(id) });
+    }
+    return { builds, driver: store.graphDriverName, problems };
+}
+
+// The build steps running on these layers. A step runs under buildah's OCI runtime, which runs as this account in the
+// step's bundle folder, with the build container's layer mounted at mnt/rootfs as the step's root; the bundle's pid
+// file names the step's first process. A layer belongs to one container only, so no other build's step can match.
+function stepsOn(layers) {
+    const steps = [];
+    const problems = [];
+    for (const pid of readdirSync("/proc").filter((name) => /^\d+$/.test(name))) {
+        let bundle;
+        try {
+            if (basename(readFileSync(`/proc/${pid}/cmdline`, "utf8").split("\0")[0]) !== "buildah-oci-runtime") continue;
+            if (statSync(`/proc/${pid}`).uid !== process.getuid()) continue;
+            bundle = readlinkSync(`/proc/${pid}/cwd`);
+        } catch {
+            continue;
+        }
+        let mounts;
+        try {
+            mounts = readFileSync(join(MOUNTS, pid, "mountinfo"), "utf8");
+        } catch (error) {
+            if (error.code !== "ENOENT") problems.push(`build steps: couldn't read the mounts of build runtime ${pid}`);
+            continue;
+        }
+        const rootfs = join(bundle, "mnt", "rootfs");
+        const mount = mounts.split("\n").map((line) => line.split(" ")).find((fields) => fields[4] === rootfs);
+        const layer = /(?:^|,)upperdir=[^,]*\/([^/,]+)\/diff(?:,|$)/.exec(mount?.at(-1) ?? "")?.[1];
+        // A runtime that hasn't mounted its step's root yet is found by the next look
+        if (!layers.has(layer)) continue;
+        try {
+            const step = Number(readFileSync(join(bundle, "pid"), "utf8").trim());
+            if (Number(statOf(step)[1]) === Number(pid)) steps.push({ pid: step, runtime: Number(pid), start: statOf(step)[19] });
+        } catch {
+            // The step's first process hasn't started yet, or has ended
+        }
+    }
+    return { steps, problems };
+}
+
+// Ends build steps. A step's first process is the first of its own PID namespace, which ignores SIGTERM, so SIGKILL,
+// which ends the namespace's other processes with it. Each is checked again just before its signal: still its
+// runtime's child, and the same process. Returns what couldn't be ended.
+async function endSteps(steps) {
+    const signalled = [];
+    const problems = [];
+    for (const { pid, runtime, start } of steps) {
+        try {
+            const stat = statOf(pid);
+            if (Number(stat[1]) !== runtime || stat[19] !== start) continue;
+            process.kill(pid, "SIGKILL");
+            signalled.push(pid);
+        } catch (error) {
+            if (error.code === "EPERM") problems.push(`build steps: not allowed to end ${pid}`);
+        }
+    }
+    const until = Date.now() + 5000;
+    while (signalled.some((pid) => !gone(pid)) && Date.now() < until) await new Promise((resolve) => setTimeout(resolve, 100));
+    const running = signalled.filter((pid) => !gone(pid));
+    if (running.length) problems.push(`build steps: ${running.length} still running`);
+    return problems;
+}
+
+// Stops one run's image builds on podman: ends their running steps, then removes their working containers. A build
+// counts as the run's only when its record names the run's project and owner, or, with no owner given, an owner that
+// has ended. It looks again a second later, since a step's runtime starts a moment before it mounts the step's root
+// and a build can add a container as it stops; after a cancel it always looks twice, since the build may not have
+// added its first container yet.
+async function stopBuilds(project, owner, env, { always }) {
+    const problems = new Set();
+    const containers = new Set();
+    for (const look of [1, 2]) {
+        if (look === 2) {
+            if (!always && !containers.size) break;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        const found = await buildsOf(env);
+        for (const problem of found.problems) problems.add(problem);
+        const mine = found.builds.filter((build) => build.project === project
+            && (owner ? build.owner === owner : build.owner && !alive(build.owner)));
+        if (!mine.length) continue;
+        if (found.driver !== "overlay") problems.add(`build steps: can't find steps on ${found.driver} storage`);
+        for (const { id, layer } of mine) {
+            containers.add(id);
+            if (!layer) problems.add(`build steps: couldn't tell which are ${id.slice(0, 12)}'s`);
+        }
+        const { steps, problems: unread } = stepsOn(new Set(mine.map((build) => build.layer).filter(Boolean)));
+        for (const problem of [...unread, ...await endSteps(steps)]) problems.add(problem);
+    }
+    if (containers.size) {
+        const removed = await run("docker", ["rm", "--force", "--ignore", ...containers], { env });
+        if (removed.status !== 0) problems.add(`build containers: ${lastLine(removed.output)}`);
+    }
+    return [...problems];
+}
+
 // Removes one run's stack: containers, volumes and networks by Compose's project label; images by this run's label and
 // by the names Compose gives them, since podman's builds can lack Compose's labels; then the run's folder. Returns
-// what it couldn't remove. Only this script's project names are accepted, so it can't reach another stack.
-async function tearDown(project, env) {
+// what it couldn't remove. Only this script's project names are accepted, so it can't reach another stack. On podman,
+// its image builds go first, so a build can't finish into an image after the images are removed; owner and always are
+// stopBuilds' own.
+async function tearDown(project, env, engine, { owner, always = false } = {}) {
     if (!RUN_PROJECT.test(project)) throw new Error(`refusing to remove ${project}: not a stack-check project`);
-    const problems = [];
+    const problems = engine === "podman" ? await stopBuilds(project, owner, env, { always })
+        : engine === "podman-service" ? ["builds: only podman's own command can find podman's builds"] : [];
     for (const kind of ["container", "volume", "network"]) {
         const { ids, problem } = await listIds(kind, `label=com.docker.compose.project=${project}`, env);
         if (problem) problems.push(problem);
@@ -217,7 +409,7 @@ async function labelsOf(kind, ids, env) {
 
 // Removes every stack whose run has ended without removing it, found by this script's labels and run folders only, so
 // worktree and main stacks are never touched.
-async function sweep(env) {
+async function sweep(env, engine) {
     const owners = new Map();
     const record = (project, owner) => {
         if (RUN_PROJECT.test(project ?? "")) owners.set(project, [...(owners.get(project) ?? []), owner]);
@@ -225,6 +417,11 @@ async function sweep(env) {
     for (const kind of ["container", "volume", "network", "image"]) {
         const { ids } = await listIds(kind, `label=${OWNER_LABEL}`, env);
         if (ids.length) for (const [owner, project] of await labelsOf(kind, ids, env)) record(project, owner);
+    }
+    if (engine === "podman") {
+        const { builds, problems } = await buildsOf(env);
+        for (const { project, owner } of builds) record(project, owner);
+        if (problems.length) console.log(`stack-check: couldn't check every build for runs that ended: ${problems.join("; ")}`);
     }
     for (const project of existsSync(RUNS) ? readdirSync(RUNS) : []) {
         try {
@@ -235,7 +432,7 @@ async function sweep(env) {
     }
     for (const [project, found] of owners) {
         if (found.some(alive)) continue;
-        report(project, await tearDown(project, env), `stack-check: removed ${project}, left by a run that ended`);
+        report(project, await tearDown(project, env, engine), `stack-check: removed ${project}, left by a run that ended`);
     }
 }
 
@@ -334,7 +531,7 @@ async function writeStackFiles(folder, { project, port, owner, engine, env }) {
         `COMPOSE_PROJECT_NAME=${project}`, `SITE_PORT=${port}`, `WORKTREE_SECRET_KEY=${secret()}`,
         `STACK_CHECK_OWNER=${owner}`, `STACK_CHECK_DIR=${folder}`,
         `USER_UID=${process.getuid()}`, `USER_GID=${process.getgid()}`,
-        ...(engine === "podman" ? ["USERNS_MODE=keep-id"] : []), "",
+        ...(engine === "docker" ? [] : ["USERNS_MODE=keep-id"]), "",
     ].join("\n"));
     // Throwaway values, which take precedence over any the backend finds in the checkout: tests replace TMDB, and mail
     // goes nowhere.
@@ -358,7 +555,7 @@ async function check(mode, extra) {
     useSharedFolder();
     const env = cleanEnv();
     const engine = await preflight(mode, env);
-    await sweep(env);
+    await sweep(env, engine);
     const owner = ownerOf(process.pid);
     const { port, claim } = await claimPort(owner);
     const project = `cinexplorer-run-${port}-${randomBytes(3).toString("hex")}`;
@@ -366,10 +563,20 @@ async function check(mode, extra) {
     mkdirSync(folder, { recursive: true });
     writeFileSync(join(folder, "owner"), owner);
     const compose = ["compose", "-p", project, "--env-file", join(folder, "compose.env"), ...FILES.flatMap((file) => ["-f", file])];
-    // On cancel: stop this run's own processes, and take the stack down in a detached process so this one exits at once.
+    // On cancel: stop this run's own processes, each with everything under it (podman's compose command runs Compose as
+    // its own child, which would otherwise stay connected and keep a build going), and take the stack down in a
+    // detached process so this one exits at once.
     const onSignal = (signal) => {
-        for (const child of children) child.kill("SIGTERM");
-        spawn(process.execPath, [SCRIPT, "--tear-down", project], { detached: true, stdio: "ignore", env }).unref();
+        const roots = [...children].map((child) => child.pid).filter(Boolean);
+        for (const pid of [...roots, ...descendantsOf(roots)]) {
+            try {
+                process.kill(pid, "SIGTERM");
+            } catch {
+                // Ended meanwhile
+            }
+        }
+        spawn(process.execPath, [SCRIPT, "--tear-down", project, "--engine", engine], { detached: true, stdio: "ignore", env })
+            .unref();
         rmSync(claim, { force: true });
         process.exit(128 + constants.signals[signal]);
     };
@@ -420,7 +627,7 @@ async function check(mode, extra) {
     } finally {
         const summary = stopSampling && await stopSampling();
         const removing = Date.now();
-        const problems = await tearDown(project, env);
+        const problems = await tearDown(project, env, engine, { owner });
         rmSync(claim, { force: true });
         report(project, problems, `stack-check: removed the stack in ${seconds(removing)}`);
         if (summary) console.log(summary);
@@ -434,7 +641,22 @@ async function main(args) {
             return USAGE;
         }
         useSharedFolder();
-        report(args[1], await tearDown(args[1], process.env), `stack-check: removed ${args[1]}`);
+        // A cancelled run passes its engine; otherwise the client says which it is
+        let engine = args[2] === "--engine" ? args[3] : undefined;
+        const problems = [];
+        if (!engine) {
+            const version = await run("docker", ["version"], { env: process.env });
+            if (version.status !== 0) problems.push(`builds: couldn't tell the engine: ${lastLine(version.output)}`);
+            engine = engineOf(version);
+        }
+        let owner;
+        try {
+            owner = readFileSync(join(RUNS, args[1], "owner"), "utf8").trim();
+        } catch {
+            // A run whose folder has gone: only builds whose owner has ended are its
+        }
+        problems.push(...await tearDown(args[1], process.env, engine, { owner, always: true }));
+        report(args[1], problems, `stack-check: removed ${args[1]}`);
         return 0;
     }
     const [mode, ...extra] = args;

@@ -8,16 +8,22 @@
 # folders, so a check never writes the checkout's .env files, certificates or logs. The backend and Vite still read any
 # other keys from the checkout's own env files, as a worktree stack does; the throwaway values take precedence, and a
 # runner's checkout has no such files. Every container, volume, network and built image carries its run's owner and
-# project, so a later run can remove what a killed run left behind.
+# project, so a later run can remove what a killed run left behind. Builds get both as build arguments too, which no
+# Dockerfile reads: podman records them with a build's working containers, so a run can stop its own build.
 
 x-run: &run
   cinexplorer.stack-check.owner: ${STACK_CHECK_OWNER:?run node scripts/stack-check.mjs}
   cinexplorer.stack-check.project: ${COMPOSE_PROJECT_NAME:?run node scripts/stack-check.mjs}
 
+x-run-args: &run-args
+  STACK_CHECK_OWNER: ${STACK_CHECK_OWNER}
+  STACK_CHECK_PROJECT: ${COMPOSE_PROJECT_NAME}
+
 services:
   backend:
     build:
       labels: *run
+      args: *run-args
     labels: *run
     env_file: !override
       - ${STACK_CHECK_DIR:?run node scripts/stack-check.mjs}/backend.env
@@ -29,6 +35,7 @@ services:
   frontend:
     build:
       labels: *run
+      args: *run-args
     labels: *run
     volumes:
       - ${STACK_CHECK_DIR}/logs/frontend:/frontend/logs

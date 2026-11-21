@@ -282,8 +282,14 @@ the worktree's browsable stack with Home's line and the notices in place.
       all 276 tests on rerun after an existing auth test timed out waiting for Library data. All 12 Chromium
       scenarios passed, along with lint, formatting and type checking.
 
+    - [x] **4.1.h Preserve legal addresses through account action completion.** Password sign-in, registration,
+      email verification and password reset keep the active legal URL. Registration, verification and reset show
+      completion feedback on the document, and sign-out reloads it to read the settled session. Five new browser
+      regressions cover these actions, and separate Chromium probes checked both documents for each action.
+      All 238 related tests and 17 Chromium scenarios passed. Lint, formatting and type checking passed.
+
     - Local verification is complete. The full frontend test and Chromium suites passed during verification.
-      The focused runs in 4.1.a through 4.1.g cover the subsequent changes. The criteria below record the local
+      The focused runs in 4.1.a through 4.1.h cover the subsequent changes. The criteria below record the local
       results and the remaining merge checks. The branch changes no backend API or generated frontend API files.
 
 - [ ] **4.2 Prove the post-merge criteria** (Proven live 1 and 2; load `archive-completed.md` § 9; the Owner enters
@@ -314,8 +320,8 @@ half and Success Criterion 3, marked before merging (§ 8); **Proven live** afte
   scan; `/privacy` at 360×800 doesn't scroll sideways; and its "Who else handles your data" heading lands below the top
   bar from the in-page link and on a direct load of its fragment. (R1, R3, R5, R8, R14)
 
-    All five scenarios in `legal-pages.spec.ts` passed in the worktree after the latest repairs, including
-    the axe scans on Home and both legal pages. The CI smoke result is pending.
+    All ten local scenarios in `legal-pages.spec.ts` passed after the latest repairs, including the axe scans on
+    Home and both legal pages. The CI smoke result is pending.
 
 - [x] 2. **The texts are the appendices'.** A reviewer comparing each page's rendered text with Appendix A and Appendix
   B finds the same headings, paragraphs, lists, table and links, and unit tests find no review marker, placeholder date

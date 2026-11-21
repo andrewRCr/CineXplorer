@@ -285,8 +285,8 @@ for it, with the effective dates of R7.
   need their own styles outside the theme, have no top bar or footer to get back into the app, and gain nothing from
   rendering without JavaScript, since Home itself renders in the browser and Google's reviewers read the pages in one;
   and over Django-rendered templates, a second way of rendering pages for two pages of text. The paths are what
-  Google's Branding page records. Both routes stay open when an OAuth error query is present, a password session
-  fails to renew, or a provider sign-in finishes after navigation from the sign-in page. _ADR:_ the new ADR (R12).
+  Google's Branding page records. Both routes keep their address when an OAuth error query is present, a password
+  session fails to renew, or an account action finishes after the visitor opens the document. _ADR:_ the new ADR (R12).
 - **D2: the text written into two page components** (R2 to R6) on Chakra's primitives and the semantic tokens, over
   Markdown rendered at run time (`react-markdown` with `remark-gfm` for the table), a dependency tree of a few dozen
   packages and a mapping layer from Markdown elements to themed components for two pages that change rarely; and over

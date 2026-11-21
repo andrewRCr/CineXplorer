@@ -232,7 +232,11 @@ export function useAuth(): AuthStateProps {
             logger.error("Logout failed", { error });
             // The local session is already anonymous; always finish with a fresh read.
         } finally {
-            window.location.href = `${ROUTES.LOGIN}?signed_out=true`;
+            if (isLegalDocumentPath(window.location.pathname)) {
+                window.location.reload();
+            } else {
+                window.location.href = `${ROUTES.LOGIN}?signed_out=true`;
+            }
         }
     }, [client, navigate]);
 

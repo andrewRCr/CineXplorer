@@ -855,6 +855,7 @@ watchlist contents, separate entry reviews/ratings, focus restoration and persis
 catalogue fixtures; the browse columns retain their fixed width. This geometry case skips staging.
 `legal-pages.spec.ts` follows both legal links from the signed-out Home footer and scans both documents with axe.
 It also checks the privacy page for horizontal overflow at 360×800 and the sticky-bar offset of its section links.
+Its local fixtures hold account responses until a visitor opens a legal document, then check the address and outcome.
 Sign-up stops at the check-your-email notice; email-link verification, OAuth and other browsers are outside this tier.
 
 - **`local`** (default): the real development backend, PostgreSQL, Redis, registration, and session cookies. Browser

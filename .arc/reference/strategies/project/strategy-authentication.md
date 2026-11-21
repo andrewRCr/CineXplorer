@@ -501,16 +501,21 @@ policy or terms are open, OAuth errors and provider sign-in completion leave the
 effect and Login's signed-in redirect check the browser destination when a legal URL is ahead of React Router's
 committed location. Only the 60-second credential-renewal effect makes a network request.
 
+Password sign-in, registration, email verification and password reset also check the live destination at
+completion. If a legal page is open, registration, verification and password reset show their success notices
+at that URL. Email verification also shows errors there.
+
 Session writers cancel any in-flight session read before replacing it:
 
 - Password sign-in invalidates prior renewal, clears both storages and stores the token in local storage for
   remember-me or session storage otherwise. It immediately retires old saves, then reads the session afresh and
   resolves after that result lands. Other queries reset after the read, including when it rejects the new token.
 - Sign-out invalidates renewal, clears tokens, writes `null`, runs the change-of-user step and navigates to Login
-  immediately. It sends the password logout request or allauth's CSRF-protected session DELETE, then loads
-  `/login?signed_out=true` afresh after success or failure. This drops data fetched with a provider cookie while
-  the request was pending. A newer password sign-in's token survives that reload. Login shows the signed-out notice
-  only after the fresh session reads `anonymous`, then clears the parameter.
+  immediately. It sends the password logout request or allauth's CSRF-protected session DELETE. After success or
+  failure it reloads the current legal URL if one is open or loads `/login?signed_out=true` for other routes.
+  A fresh load drops data fetched with a provider cookie while the request was pending.
+  A newer password sign-in's token survives that reload. Login shows the signed-out notice only after the fresh
+  session reads `anonymous`, then clears the parameter.
 - Failed idle renewal writes `null` and runs the change-of-user step only while its original authentication version
   and user ownership remain current, checked before and after canceling the session read. An older renewal cannot
   clear a provider session that landed while it was pending.

@@ -125,7 +125,9 @@ const Login = () => {
 
       if (response.success) {
         clearAlert();
-        void navigate(returnPathFrom(location.search));
+        if (!isLegalDocumentPath(window.location.pathname)) {
+          void navigate(returnPathFrom(location.search));
+        }
       } else {
         handleLoginError(response.error);
       }
@@ -195,6 +197,11 @@ const Login = () => {
 
     try {
       const response = await authService.verifyEmail(verifyToken);
+      const notice = "Email verified. You can now log in.";
+      if (isLegalDocumentPath(window.location.pathname)) {
+        priorityToaster.success({ title: notice });
+        return;
+      }
       setVerificationState("success");
       setVerificationMessage(
         response.message || "Email verified successfully!",
@@ -208,7 +215,7 @@ const Login = () => {
       // Clear the token from URL to prevent re-verification attempts
       window.history.replaceState({}, "", ROUTES.LOGIN);
 
-      showNotice("Email verified. You can now log in.");
+      showNotice(notice);
 
       // Clear verification UI after short delay to let user see success
       verificationTimeoutRef.current = setTimeout(() => {
@@ -216,7 +223,6 @@ const Login = () => {
       }, 1500);
     } catch (error: unknown) {
       logger.error("Email verification error:", error);
-      setVerificationState("error");
       hasVerifiedRef.current = false; // Allow retry
 
       // Extract error message
@@ -226,6 +232,11 @@ const Login = () => {
         const data = error.response?.data;
         if (data?.error) errorMessage = data.error;
       }
+      if (isLegalDocumentPath(window.location.pathname)) {
+        priorityToaster.error({ title: errorMessage });
+        return;
+      }
+      setVerificationState("error");
       setVerificationMessage(errorMessage);
       window.history.replaceState({}, "", ROUTES.LOGIN);
     }
@@ -242,18 +253,25 @@ const Login = () => {
 
   const handlePasswordResetSuccess = (autoLoggedIn: boolean) => {
     setPasswordResetKey(null);
-    window.history.replaceState({}, "", ROUTES.LOGIN);
+    const legalPageOpen = isLegalDocumentPath(window.location.pathname);
+    const notice = "Password reset. You can now log in with your new password.";
+    if (!legalPageOpen) {
+      window.history.replaceState({}, "", ROUTES.LOGIN);
+    }
 
     if (autoLoggedIn) {
-      // A toast fits here: the visitor lands on Home, where nothing else shows the reset happened
       priorityToaster.success({
         title: "Password reset successfully!",
         description: "You are now logged in.",
         duration: 4000,
       });
-      void navigate(ROUTES.HOME);
+      if (!legalPageOpen) {
+        void navigate(ROUTES.HOME);
+      }
+    } else if (legalPageOpen) {
+      priorityToaster.success({ title: notice });
     } else {
-      showNotice("Password reset. You can now log in with your new password.");
+      showNotice(notice);
     }
   };
 

@@ -67,6 +67,7 @@ def test_verify_email_with_valid_key_success(
     # Verify email is now marked as verified
     email_address.refresh_from_db()
     assert email_address.verified is True
+    assert "messages" not in response.cookies
 
 
 # ============================================================================

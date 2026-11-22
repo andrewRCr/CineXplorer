@@ -384,6 +384,7 @@ def test_registration_sends_verification_email_to_outbox(
 
     # Verify it's a verification email (not welcome)
     assert "confirm" in sent_email.subject.lower() or "verify" in sent_email.subject.lower()
+    assert "messages" not in response.cookies
 
 
 @pytest.mark.django_db

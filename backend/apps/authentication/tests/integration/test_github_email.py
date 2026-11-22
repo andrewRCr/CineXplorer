@@ -119,6 +119,7 @@ def test_github_signup_keeps_only_primary_verified_email(
     session = api_client.get("/_allauth/browser/v1/auth/session")
     assert session.status_code == 200
     assert session.json()["data"]["user"]["id"] == user.pk
+    assert "messages" not in response.cookies
 
 
 @pytest.mark.django_db
@@ -217,3 +218,4 @@ def test_google_keeps_configured_email_verification(
         EmailAddress.objects.filter(user=account.user).values_list("email", "primary", "verified")
     ) == [("google@example.com", True, True)]
     assert api_client.get("/_allauth/browser/v1/auth/session").status_code == 200
+    assert "messages" not in response.cookies

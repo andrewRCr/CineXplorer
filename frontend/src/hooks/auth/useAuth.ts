@@ -67,15 +67,24 @@ import * as authService from "@/services/authService";
 export function useAuth(): AuthStateProps {
     const navigate = useNavigate();
     const location = useLocation();
-    const [firstRead] = useState(() => ({
-        providerReturn:
-            location.pathname === ROUTES.LOGIN &&
-            (document.referrer.includes("google.com") ||
-                document.referrer.includes("github.com") ||
-                sessionStorage.getItem("oauth_in_progress") !== null),
-        returnPath: returnPathFrom(location.search),
-        locationKey: location.key,
-    }));
+    const [firstRead] = useState(() => {
+        const onLogin = location.pathname === ROUTES.LOGIN;
+        const provider = sessionStorage.getItem("oauth_in_progress");
+        const fromGoogle = document.referrer.includes("google.com");
+        return {
+            providerReturn:
+                onLogin &&
+                (fromGoogle ||
+                    document.referrer.includes("github.com") ||
+                    provider !== null),
+            offerGoogleRecovery:
+                onLogin &&
+                (provider === "google" || (provider === null && fromGoogle)) &&
+                !new URLSearchParams(location.search).has("error"),
+            returnPath: returnPathFrom(location.search),
+            locationKey: location.key,
+        };
+    });
     const [initialStatus] = useState<AuthStatus>(() => {
         // Detect access tokens in localStorage, then sessionStorage.
         const { access_token } = getAuthTokens();
@@ -169,8 +178,24 @@ export function useAuth(): AuthStateProps {
             if (session.data === undefined) return;
             hasHandledOAuthRef.current = true;
             clearProviderFlags();
-            if (canNavigate && session.data && !getAuthTokens().access_token) {
+            if (!canNavigate) return;
+            if (session.data && !getAuthTokens().access_token) {
                 void navigate(firstRead.returnPath);
+            } else if (
+                session.data === null &&
+                firstRead.offerGoogleRecovery &&
+                location.key === firstRead.locationKey &&
+                location.pathname === ROUTES.LOGIN &&
+                window.location.pathname === ROUTES.LOGIN
+            ) {
+                void navigate(loginPathFor(firstRead.returnPath), {
+                    replace: true,
+                    state: {
+                        oauthError: true,
+                        message:
+                            "You're still signed out. Try again in a few minutes or choose Forgot password.",
+                    },
+                });
             }
         } else if (
             location.pathname === ROUTES.LOGIN &&

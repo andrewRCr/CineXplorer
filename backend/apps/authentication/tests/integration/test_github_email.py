@@ -2,15 +2,21 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, TypedDict
 from unittest import TestCase
 from unittest.mock import Mock
 from urllib.parse import parse_qs, urlparse
 
+import jwt
 import pytest
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialAccount
+from cryptography import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.x509.oid import NameOID
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.test import Client, override_settings
@@ -18,7 +24,7 @@ from requests import Response, Session
 
 from apps.authentication.tests.fixtures import create_social_app
 from apps.core.tests.email_transport import ERROR_RESPONSE_BODY, zeptomail_api_stand_in
-from apps.core.tests.test_helpers import create_user
+from apps.core.tests.test_helpers import create_user, get_csrf_token
 from apps.users.models import User
 
 if TYPE_CHECKING:
@@ -30,6 +36,26 @@ class GitHubEmail(TypedDict):
     email: str
     primary: bool
     verified: bool
+
+
+def stub_provider_http(
+    monkeypatch: pytest.MonkeyPatch, responses: dict[tuple[str, str], object]
+) -> None:
+    def provider_request(method: str, url: str, **_kwargs: object) -> Response:
+        key = (method.upper(), url)
+        assert key in responses, f"Unexpected provider request: {method} {url}"
+        response = Mock(spec=Response)
+        response.status_code = 200
+        response.headers = {"content-type": "application/json"}
+        response.json.return_value = responses[key]
+        return response
+
+    def provider_session(_adapter: DefaultSocialAccountAdapter) -> Session:
+        session = Session()
+        monkeypatch.setattr(session, "request", provider_request)
+        return session
+
+    monkeypatch.setattr(DefaultSocialAccountAdapter, "get_requests_session", provider_session)
 
 
 def provider_callback(
@@ -58,21 +84,7 @@ def provider_callback(
     assert redirect.status_code == 302
     state = parse_qs(urlparse(redirect["Location"]).query)["state"][0]
 
-    def provider_request(method: str, url: str, **_kwargs: object) -> Response:
-        key = (method.upper(), url)
-        assert key in responses, f"Unexpected provider request: {method} {url}"
-        response = Mock(spec=Response)
-        response.status_code = 200
-        response.headers = {"content-type": "application/json"}
-        response.json.return_value = responses[key]
-        return response
-
-    def provider_session(_adapter: DefaultSocialAccountAdapter) -> Session:
-        session = Session()
-        monkeypatch.setattr(session, "request", provider_request)
-        return session
-
-    monkeypatch.setattr(DefaultSocialAccountAdapter, "get_requests_session", provider_session)
+    stub_provider_http(monkeypatch, responses)
     return client.get(
         f"/accounts/{provider}/login/callback/", {"code": "provider-test-code", "state": state}
     )
@@ -313,3 +325,67 @@ def test_unverified_google_email_failed_delivery_preserves_return_destination(
     assert record.exc_info is None
     assert record.stack_info is None
     assert user.email not in str(vars(record))
+
+
+@pytest.mark.django_db
+@override_settings(
+    EMAIL_BACKEND="apps.core.email_backend.ZeptoMailEmailBackend",
+    ZOHO_ZEPTOMAIL_API_KEY_TOKEN="placeholder-mail-key",
+)
+def test_google_token_sign_in_gets_generic_error_when_notice_delivery_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user = create_user()
+    app = create_social_app("google")
+    now = datetime.now(UTC)
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Google test certificate")])
+    certificate = (
+        x509.CertificateBuilder()
+        .issuer_name(issuer)
+        .subject_name(issuer)
+        .public_key(private_key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now - timedelta(minutes=1))
+        .not_valid_after(now + timedelta(minutes=5))
+        .sign(private_key, hashes.SHA256())
+    )
+    # Use the real signature validation against the test provider's certificate.
+    stub_provider_http(
+        monkeypatch,
+        {
+            ("GET", "https://www.googleapis.com/oauth2/v1/certs"): {
+                "test-key": certificate.public_bytes(serialization.Encoding.PEM).decode()
+            }
+        },
+    )
+    credential = jwt.encode(
+        {
+            "iss": "https://accounts.google.com",
+            "aud": app.client_id,
+            "exp": now + timedelta(minutes=5),
+            "sub": "google-person",
+            "email": user.email,
+            "email_verified": False,
+        },
+        private_key,
+        algorithm="RS256",
+        headers={"kid": "test-key"},
+    )
+    client = Client(enforce_csrf_checks=True, raise_request_exceptions=False)
+    csrf_token = get_csrf_token(client)
+    client.cookies["g_csrf_token"] = "test-google-csrf"
+    with zeptomail_api_stand_in(status=400, body=ERROR_RESPONSE_BODY) as transport:
+        response = client.post(
+            "/accounts/google/login/token/",
+            {"credential": credential, "g_csrf_token": "test-google-csrf"},
+            HTTP_X_CSRFTOKEN=csrf_token,
+        )
+
+    assert len(transport.requests) == 1
+    assert response.status_code == 302
+    location = urlparse(response["Location"])
+    assert location._replace(query="").geturl() == f"{settings.FRONTEND_URL}/login"
+    assert parse_qs(location.query) == {"error": ["unknown"], "error_process": ["login"]}
+    assert not SocialAccount.objects.filter(provider="google").exists()
+    assert client.get("/_allauth/browser/v1/auth/session").status_code == 401

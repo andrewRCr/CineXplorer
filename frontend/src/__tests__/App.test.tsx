@@ -71,6 +71,35 @@ function startPendingProviderReturn() {
   return response;
 }
 
+it("offers password recovery when Google sign-in returns signed out", async () => {
+  sessionStorage.setItem("oauth_in_progress", "google");
+  server.use(
+    http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, () =>
+      HttpResponse.json(
+        {
+          status: 401,
+          data: { flows: [{ id: "verify_email", is_pending: true }] },
+          meta: { is_authenticated: false },
+        },
+        { status: 401 },
+      ),
+    ),
+  );
+  startAt("/login?next=%2Fwatchlist");
+
+  expect(
+    await screen.findByText(
+      "You're still signed out. Try again in a few minutes or choose Forgot password.",
+    ),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("link", { name: "Forgot password?" }),
+  ).toHaveAttribute("href", "/forgot-password");
+  expect(window.location.pathname + window.location.search).toBe(
+    "/login?next=%2Fwatchlist",
+  );
+});
+
 it("contains a shell failure in the last-resort full-page display", async () => {
   window.__dismissPreloadOverlay = () => {
     throw new Error("Shell failed");

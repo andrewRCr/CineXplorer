@@ -16,6 +16,7 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.providers.base import ProviderException
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import PermissionDenied
 from django.http import HttpRequest
 
 if TYPE_CHECKING:
@@ -96,10 +97,14 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             if (
                 request is None
                 or request.resolver_match is None
-                or request.resolver_match.url_name != "google_callback"
+                or request.resolver_match.url_name
+                not in {"google_callback", "google_login_by_token"}
             ):
                 raise
             logger.error("%s | endpoint=%s", EMAIL_DELIVERY_FAILURE_MESSAGE, request.path)  # noqa: TRY400 - OAuth tracebacks can contain private data
+            if request.resolver_match.url_name == "google_login_by_token":
+                # The token view renders its generic sign-in error for permission errors.
+                raise PermissionDenied from None
             # The OAuth callback still has the validated state and returns to its destination.
             raise ProviderException from None
 

@@ -155,7 +155,8 @@ export function useAuth(): AuthStateProps {
             void navigate(loginPathFor(safeReturnPath(params.get("next"))), {
                 state: {
                     oauthError: true,
-                    message: "OAuth authentication failed. Please try again.",
+                    message:
+                        "Sign-in failed. Try again in a few minutes or choose Forgot password.",
                 },
             });
             return;

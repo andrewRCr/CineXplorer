@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypedDict
+from unittest import TestCase
 from unittest.mock import Mock
 from urllib.parse import parse_qs, urlparse
 
@@ -39,6 +40,7 @@ def provider_callback(
     *,
     process: str = "login",
     assume_verified: bool = False,
+    callback_url: str | None = None,
 ) -> HttpResponse:
     """Run the real redirect and callback, replacing only provider HTTP responses."""
     app = create_social_app(provider)
@@ -47,7 +49,11 @@ def provider_callback(
         app.save()
     redirect = client.post(
         "/_allauth/browser/v1/auth/provider/redirect",
-        {"provider": provider, "process": process, "callback_url": "http://testserver/login"},
+        {
+            "provider": provider,
+            "process": process,
+            "callback_url": callback_url or f"{settings.FRONTEND_URL}/login",
+        },
     )
     assert redirect.status_code == 302
     state = parse_qs(urlparse(redirect["Location"]).query)["state"][0]
@@ -220,6 +226,7 @@ def google_callback(
     email: str,
     *,
     assume_verified: bool = False,
+    callback_url: str | None = None,
 ) -> HttpResponse:
     return provider_callback(
         client,
@@ -238,6 +245,7 @@ def google_callback(
             },
         },
         assume_verified=assume_verified,
+        callback_url=callback_url,
     )
 
 
@@ -265,21 +273,43 @@ def test_unverified_google_email_for_existing_account_sends_recovery_link(
 
 @pytest.mark.django_db
 @override_settings(
+    ACCOUNT_RATE_LIMITS={},
     EMAIL_BACKEND="apps.core.email_backend.ZeptoMailEmailBackend",
     ZOHO_ZEPTOMAIL_API_KEY_TOKEN="placeholder-mail-key",
 )
-def test_unverified_google_email_failed_delivery_returns_to_sign_in(
+def test_unverified_google_email_failed_delivery_preserves_return_destination(
     monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    user = create_user(email="existing@example.com")
+    user = create_user()
     client = Client(raise_request_exceptions=False)
-    with zeptomail_api_stand_in(status=400, body=ERROR_RESPONSE_BODY) as transport:
-        response = google_callback(client, monkeypatch, user.email)
+    callback_url = f"{settings.FRONTEND_URL}/login?next=%2Fwatchlist"
+    with (
+        zeptomail_api_stand_in(status=400, body=ERROR_RESPONSE_BODY) as transport,
+        TestCase().assertLogs("cinexplorer.auth", level="ERROR") as logs,
+    ):
+        failed = google_callback(client, monkeypatch, user.email, callback_url=callback_url)
+        retried = google_callback(client, monkeypatch, user.email, callback_url=callback_url)
 
+    assert failed.status_code == 302
+    location = urlparse(failed["Location"])
+    assert location._replace(query="").geturl() == f"{settings.FRONTEND_URL}/login"
+    assert parse_qs(location.query) == {
+        "next": ["/watchlist"],
+        "error": ["unknown"],
+        "error_process": ["login"],
+    }
+    assert retried.status_code == 302
+    assert retried["Location"] == callback_url
+    # The failed send consumed the allowance, so the immediate retry skips mail.
     assert len(transport.requests) == 1
-    assert response.status_code == 302
-    assert response["Location"] == f"{settings.FRONTEND_URL}/login?error=oauth"
     assert not SocialAccount.objects.filter(provider="google").exists()
     assert client.get("/_allauth/browser/v1/auth/session").status_code == 401
-    assert user.email not in caplog.text
+
+    (record,) = logs.records
+    assert record.getMessage() == (
+        "We couldn't send the email. Please try again in a few minutes."
+        " | endpoint=/accounts/google/login/callback/"
+    )
+    assert record.exc_info is None
+    assert record.stack_info is None
+    assert user.email not in str(vars(record))

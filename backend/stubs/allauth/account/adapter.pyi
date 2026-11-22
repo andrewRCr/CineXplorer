@@ -49,6 +49,7 @@ class DefaultAccountAdapter:
     ) -> None:
         """Send email using Django's email backend."""
 
+    def send_account_already_exists_mail(self, email: str) -> None: ...
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation
     ) -> str:

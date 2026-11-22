@@ -7,11 +7,13 @@ GitHub accounts retain only the provider's primary verified email.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.providers.base import ProviderException
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest
@@ -24,6 +26,7 @@ if TYPE_CHECKING:
 
 
 EMAIL_DELIVERY_FAILURE_MESSAGE = "We couldn't send the email. Please try again in a few minutes."
+logger = logging.getLogger("cinexplorer.auth")
 
 
 class EmailDeliveryError(Exception):
@@ -36,6 +39,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     Overrides:
     - get_email_confirmation_url(): Points verification links to frontend
     - send_mail(): Verifies email was actually sent, raises on failure
+    - send_account_already_exists_mail(): Uses the OAuth error flow for failed Google notices
     - add_message(): Skips flash notices the frontend does not display
 
     Email delivery is handled by Django's email backend configured in
@@ -83,6 +87,21 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             if user_id is not None:
                 detail += f", user ID: {user_id}"
             raise EmailDeliveryError(f"Email delivery failed ({detail})")
+
+    def send_account_already_exists_mail(self, email: str) -> None:
+        try:
+            super().send_account_already_exists_mail(email)
+        except EmailDeliveryError:
+            request = self.request
+            if (
+                request is None
+                or request.resolver_match is None
+                or request.resolver_match.url_name != "google_callback"
+            ):
+                raise
+            logger.error("%s | endpoint=%s", EMAIL_DELIVERY_FAILURE_MESSAGE, request.path)  # noqa: TRY400 - OAuth tracebacks can contain private data
+            # The OAuth callback still has the validated state and returns to its destination.
+            raise ProviderException from None
 
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation

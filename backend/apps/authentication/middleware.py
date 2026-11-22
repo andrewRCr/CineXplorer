@@ -6,14 +6,7 @@ import json
 import logging
 from collections.abc import Callable
 
-from django.conf import settings
-from django.http import (
-    HttpRequest,
-    HttpResponseForbidden,
-    HttpResponseNotFound,
-    HttpResponseRedirect,
-    JsonResponse,
-)
+from django.http import HttpRequest, HttpResponseForbidden, HttpResponseNotFound, JsonResponse
 from django.middleware.csrf import CsrfViewMiddleware
 from django.utils.deprecation import MiddlewareMixin
 
@@ -67,20 +60,10 @@ class AllauthEndpointMiddleware(MiddlewareMixin):
 
 
 class AllauthEmailDeliveryMiddleware(MiddlewareMixin):
-    """Give allauth's mail failures a retryable response."""
+    """Give allauth's mail failures the same retryable response as the API."""
 
-    def process_exception(
-        self, request: HttpRequest, exception: Exception
-    ) -> JsonResponse | HttpResponseRedirect | None:
-        if not isinstance(exception, EmailDeliveryError):
-            return None
-        if request.path.startswith("/_allauth/"):
-            response = JsonResponse({"detail": EMAIL_DELIVERY_FAILURE_MESSAGE}, status=503)
-        elif request.resolver_match and request.resolver_match.url_name == "google_callback":
-            response = HttpResponseRedirect(
-                settings.HEADLESS_FRONTEND_URLS["socialaccount_login_error"]
-            )
-        else:
-            return None
-        logger.error("%s | endpoint=%s", EMAIL_DELIVERY_FAILURE_MESSAGE, request.path)
-        return response
+    def process_exception(self, request: HttpRequest, exception: Exception) -> JsonResponse | None:
+        if request.path.startswith("/_allauth/") and isinstance(exception, EmailDeliveryError):
+            logger.error("%s | endpoint=%s", EMAIL_DELIVERY_FAILURE_MESSAGE, request.path)
+            return JsonResponse({"detail": EMAIL_DELIVERY_FAILURE_MESSAGE}, status=503)
+        return None

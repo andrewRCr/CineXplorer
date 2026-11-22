@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
   return (
     <LegalDocument
       title="CineXplorer Privacy Policy"
-      effectiveDate="November 21, 2026"
+      effectiveDate="November 22, 2026"
     >
       <Text>
         CineXplorer is a free movie-discovery website run as a personal project
@@ -206,12 +206,11 @@ export default function PrivacyPolicy() {
           agent), the time, the address requested, the page you came from
           without its query, and the result. The web server serves app files
           such as JavaScript and styles without keeping a routine access log. We
-          remove movie search text and credentials in recognized fields from the
-          logged address. Admin searches can leave search text in the request
-          logs, such as a username or email address. Account events (signing up,
-          signing in, renewing your session, verifying your email address and
-          emails sent to you), including failed attempts, are also logged with
-          your username or user ID where known, and sometimes your browser's
+          remove movie and admin search text and credentials in recognized
+          fields from the logged address. Account events (signing up, signing
+          in, renewing your session, verifying your email address and emails
+          sent to you), including failed attempts, are also logged with your
+          username or user ID where known, and sometimes your browser's
           identification string. If the web server cannot complete a request to
           the application server, for example while the site restarts, it can
           log the requested path, your IP address, your browser's identification

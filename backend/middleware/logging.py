@@ -114,26 +114,37 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 sanitized[key] = str(value)[:200]  # Truncate long headers
         return sanitized
 
-    def _sanitize_query_string(self, query_string: str) -> str:
+    def _sanitize_query_string(self, request: HttpRequest) -> str:
         """Sanitize query string by redacting sensitive parameter values.
 
         Args:
-            query_string: Raw query string from request
+            request: The HTTP request
 
         Returns:
             str: Sanitized query string safe for logging
         """
+        query_string = request.META.get("QUERY_STRING", "")
         if not query_string:
             return query_string
 
         # Parse query string and redact sensitive params
         from urllib.parse import parse_qsl, urlencode
 
+        path = request.path_info.removesuffix("/")
+        sensitive_params = self.SENSITIVE_PARAMS
+        if path == "/admin" or path.startswith("/admin/"):
+            # Django can carry the search inside preserved filters or a login return address.
+            sensitive_params = sensitive_params | {"q", "_changelist_filters"}
+            if path == "/admin/login":
+                sensitive_params.add("next")
+            elif path == "/admin/autocomplete":
+                sensitive_params.add("term")
+
         params = parse_qsl(query_string, keep_blank_values=True)
         sanitized_params = []
         for key, value in params:
             # Case-insensitive check for sensitive params
-            if key.lower() in self.SENSITIVE_PARAMS:
+            if key.lower() in sensitive_params:
                 sanitized_params.append((key, "[REDACTED]"))
             else:
                 sanitized_params.append((key, value))
@@ -153,8 +164,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         request.start_time = time.time()
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get("QUERY_STRING", "")
-        sanitized_query_string = self._sanitize_query_string(query_string)
+        sanitized_query_string = self._sanitize_query_string(request)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
 
@@ -210,8 +220,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         log_level = self._get_log_level_for_status(response.status_code)
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get("QUERY_STRING", "")
-        sanitized_query_string = self._sanitize_query_string(query_string)
+        sanitized_query_string = self._sanitize_query_string(request)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
 
@@ -280,8 +289,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         correlation_id = getattr(request, "correlation_id", "unknown")
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get("QUERY_STRING", "")
-        sanitized_query_string = self._sanitize_query_string(query_string)
+        sanitized_query_string = self._sanitize_query_string(request)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
 

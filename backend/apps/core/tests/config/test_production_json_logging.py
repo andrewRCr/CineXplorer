@@ -385,6 +385,85 @@ except ValueError as exc:
 
 
 @pytest.mark.parametrize("environment", ["production", "staging"])
+@pytest.mark.parametrize(
+    ("path", "search_parameter", "redact_search"),
+    [
+        ("/admin/users/user/", "q", True),
+        ("/admin/user_movie_data/usermoviedata/", "q", True),
+        ("/admin", "q", True),
+        ("/admin/users/user/1/change/", "_changelist_filters", True),
+        ("/admin/login/", "next", True),
+        ("/admin/login", "next", True),
+        ("/admin/autocomplete/", "term", True),
+        ("/admin/autocomplete", "term", True),
+        ("/admin-preview/", "q", False),
+        ("/admin-preview/", "_changelist_filters", False),
+        ("/admin/users/user/", "next", False),
+        ("/admin/users/user/", "term", False),
+    ],
+)
+def test_request_logs_redact_admin_search_values(
+    environment: str, path: str, search_parameter: str, redact_search: bool
+) -> None:
+    from urllib.parse import parse_qsl, urlencode, urlsplit
+
+    search_values = ["fixture-viewer@example.test", "A film & 夜"]
+    if search_parameter in {"_changelist_filters", "next"}:
+        search_values = [urlencode({"q": value}) for value in search_values]
+    if search_parameter == "next":
+        search_values = [f"/admin/users/user/?{value}" for value in search_values]
+
+    pagination = ("page" if search_parameter == "term" else "p", "2")
+    parameters = [(search_parameter, value) for value in search_values] + [pagination]
+    output = _render(
+        f"""
+import django
+django.setup()
+from django.http import HttpResponse
+from django.test import RequestFactory
+from middleware.logging import RequestLoggingMiddleware
+
+def respond(request):
+    assert request.GET.getlist({search_parameter!r}) == {search_values!r}
+    return HttpResponse()
+
+http_request = RequestFactory().get({path!r}, data={parameters!r})
+middleware = RequestLoggingMiddleware(respond)
+middleware(http_request)
+try:
+    raise ValueError("Safe diagnostic")
+except ValueError as exc:
+    middleware.process_exception(http_request, exc)
+""",
+        environment,
+    )
+
+    records = [_one_record(line) for line in output.splitlines()]
+    assert [record["event_type"] for record in records] == [
+        "request_start",
+        "request_complete",
+        "request_exception",
+    ]
+    expected = parameters
+    if redact_search:
+        expected = [(search_parameter, "[REDACTED]")] * len(search_values) + [pagination]
+    for record in records:
+        full_url = record["full_url"]
+        message = record["message"]
+        assert isinstance(full_url, str)
+        assert isinstance(message, str)
+        assert full_url in message
+        assert record["path"] == path
+        assert parse_qsl(urlsplit(full_url).query) == expected
+        if record["event_type"] == "request_start":
+            query_string = record["query_string"]
+            assert isinstance(query_string, str)
+            assert parse_qsl(query_string) == expected
+    if redact_search:
+        assert "fixture-viewer" not in output
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
 @pytest.mark.parametrize("failure", [None, "Timeout", "ConnectionError", "RequestException"])
 def test_tmdb_logs_redact_search_text_without_changing_the_request(
     environment: str,

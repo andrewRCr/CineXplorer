@@ -35,3 +35,12 @@ export const messageOf = (value: unknown) =>
     value !== null && typeof value === "object" && "message" in value
         ? value.message
         : undefined;
+
+export const createToken = (payload: unknown): string => {
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    const encoded = btoa(String.fromCharCode(...bytes))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    return `e30.${encoded}.signature`;
+};

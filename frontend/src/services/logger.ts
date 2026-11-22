@@ -34,7 +34,7 @@
  *   - Backend Reporting: ERROR+ levels
  *   - Styling: Simplified formatting
  */
-import { apiBaseUrl } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { getAuthTokens } from "@/utilities/tokenUtils";
 import apiClient from "./apiClient";
 
@@ -584,7 +584,7 @@ class Logger {
                 correlation_id &&
                 clipReportText(correlation_id, REPORT_LIMITS.id),
             user_agent: clipReportText(user_agent, REPORT_LIMITS.userAgent),
-            url: clipReportText(this.sanitizeReportUrl(url), REPORT_LIMITS.url),
+            url: this.sanitizeReportUrl(url),
             session_id: clipReportText(session_id, REPORT_LIMITS.id),
         };
     }
@@ -840,20 +840,32 @@ class Logger {
 
     private sanitizeReportUrl(value: unknown): string {
         if (typeof value !== "string") return "unknown";
-        if (
-            value.startsWith("/") &&
-            !value.startsWith("//") &&
-            !value.startsWith("/\\")
-        ) {
-            // eslint-disable-next-line no-control-regex -- URL parsing can remove controls and change a relative path's meaning.
-            if (/[\x00-\x1f\x7f]/u.test(value)) return "unknown";
-            return value.split(/[?#]/, 1)[0] ?? "unknown";
+
+        const address = value.split(/[?#]/, 1)[0] ?? "";
+        // eslint-disable-next-line no-control-regex -- These characters can change how URL parsing interprets an address.
+        if (/[\x00-\x1f\x7f\\]/u.test(address)) return "unknown";
+        const rootRelative =
+            address.startsWith("/") && !address.startsWith("//");
+        if (!rootRelative && !/^https?:\/\/[^/\s]/iu.test(address)) {
+            return "unknown";
         }
+
         try {
-            const url = new URL(value);
-            return url.protocol === "https:" || url.protocol === "http:"
-                ? `${url.origin}${url.pathname}`
-                : "unknown";
+            const { origin, pathname } = new URL(
+                value,
+                rootRelative ? siteOrigin : undefined,
+            );
+            // A normalized relative path must still be relative when replayed.
+            if (rootRelative && pathname.startsWith("//")) return "unknown";
+
+            const site = rootRelative ? "" : origin;
+            const pathLimit = REPORT_LIMITS.url - site.length;
+            if (pathLimit < 1) return "unknown";
+            if (pathname.length <= pathLimit) return site + pathname;
+
+            // Stop at a segment boundary so clipping cannot introduce a dot segment.
+            const boundary = pathname.lastIndexOf("/", pathLimit - 1);
+            return site + pathname.slice(0, boundary + 1);
         } catch {
             return "unknown";
         }

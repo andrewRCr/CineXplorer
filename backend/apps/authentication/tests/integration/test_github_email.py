@@ -1,4 +1,4 @@
-"""GitHub callbacks retain only the provider's primary verified email."""
+"""Email handling on GitHub and Google sign-in callbacks."""
 
 from __future__ import annotations
 
@@ -14,8 +14,10 @@ from requests import Response, Session
 from apps.authentication.tests.fixtures import create_social_app
 from apps.core.tests.test_helpers import create_user
 from apps.users.models import User
+from config.settings import FRONTEND_URL
 
 if TYPE_CHECKING:
+    from django.core.mail import EmailMessage
     from django.http import HttpResponse
     from django.test import Client
 
@@ -219,3 +221,39 @@ def test_google_keeps_configured_email_verification(
     ) == [("google@example.com", True, True)]
     assert api_client.get("/_allauth/browser/v1/auth/session").status_code == 200
     assert "messages" not in response.cookies
+
+
+@pytest.mark.django_db
+def test_unverified_google_email_for_existing_account_sends_recovery_link(
+    api_client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+    mailoutbox: list[EmailMessage],
+) -> None:
+    user = create_user(email="existing@example.com")
+    response = provider_callback(
+        api_client,
+        monkeypatch,
+        "google",
+        {
+            ("POST", "https://oauth2.googleapis.com/token"): {
+                "access_token": "provider-test-token",
+                "token_type": "Bearer",
+            },
+            ("GET", "https://www.googleapis.com/oauth2/v2/userinfo"): {
+                "id": "google-person",
+                "email": user.email,
+                "verified_email": False,
+                "name": "Google Person",
+            },
+        },
+    )
+
+    assert response.status_code == 302
+    assert len(mailoutbox) == 1
+    message = mailoutbox[0]
+    assert message.to == [user.email]
+    assert "Account Already Exists" in message.subject
+    assert f"{FRONTEND_URL}/forgot-password" in message.body.split()
+    assert not SocialAccount.objects.filter(provider="google").exists()
+    assert list(User.objects.values_list("pk", flat=True)) == [user.pk]
+    assert api_client.get("/_allauth/browser/v1/auth/session").status_code == 401

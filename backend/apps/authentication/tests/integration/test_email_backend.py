@@ -27,8 +27,10 @@ from django.template.loader import render_to_string
 
 from apps.authentication.adapters import CustomAccountAdapter, EmailDeliveryError
 from apps.authentication.tests.fixtures import get_resend_token_from_login
+from config.settings import FRONTEND_URL
 
 if TYPE_CHECKING:
+    from django.core.mail import EmailMessage
     from django.test import Client
 
     from apps.users.models import User
@@ -460,6 +462,26 @@ def test_registration_email_contains_username(
 
     # Verify username appears in email
     assert register_data["username"] in email_body
+
+
+@pytest.mark.django_db
+def test_password_reset_for_unknown_email_sends_registration_link(
+    api_client: Client,
+    mailoutbox: list[EmailMessage],
+) -> None:
+    email = "unknown@example.com"
+    response = api_client.post(
+        "/_allauth/browser/v1/auth/password/request",
+        {"email": email},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(mailoutbox) == 1
+    message = mailoutbox[0]
+    assert message.to == [email]
+    assert "Unknown Account" in message.subject
+    assert f"{FRONTEND_URL}/register" in message.body.split()
 
 
 # ============================================================================

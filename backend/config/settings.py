@@ -313,8 +313,9 @@ HEADLESS_ONLY = True
 HEADLESS_FRONTEND_URLS = {
     # Note: account_confirm_email is handled by CustomAccountAdapter.get_email_confirmation_url()
     # which generates /login?verify={key} - no entry needed here
+    "account_reset_password": f"{FRONTEND_URL}/forgot-password",
     "account_reset_password_from_key": f"{FRONTEND_URL}/login?reset={{key}}",
-    "account_signup": f"{FRONTEND_URL}/auth/signup",
+    "account_signup": f"{FRONTEND_URL}/register",
     "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
 }
 

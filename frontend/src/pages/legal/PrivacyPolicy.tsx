@@ -248,9 +248,11 @@ export default function PrivacyPolicy() {
         when you sign up (and again if you ask) and a welcome email once you've
         verified. We also send password-reset emails. If someone asks for a
         password reset for an address that has no account, we email that address
-        to say so. Beyond these, we'd write to you only about the service
-        itself, such as a change to this policy or the site closing, through the
-        same email provider. We don't send newsletters or marketing.
+        to say so. If a Google sign-in sends an unverified email address that
+        matches an existing account, we email that address a link to start
+        password recovery. Beyond these, we'd write to you only about the
+        service itself, such as a change to this policy or the site closing,
+        through the same email provider. We don't send newsletters or marketing.
       </Text>
       <LegalHeading as="h2">Cookies and browser storage</LegalHeading>
       <Text>

@@ -80,10 +80,11 @@ export default function PrivacyPolicy() {
           account. If Google sends no email address for a new account, we keep
           the pending sign-in in your browser's session on our server, including
           the profile Google sent, its access token and any refresh token it
-          sends. If we send the existing-account notice described under Email,
-          we keep the unverified email address in that session as part of a
-          pending verification step. The session rules under "How long we keep
-          things" explain when these details are cleared.
+          sends. In the existing-account case described under Email, the server
+          can store the unverified address in that session as part of a pending
+          verification step, even when we skip sending the notice. The session
+          rules under "How long we keep things" explain when these details are
+          cleared.
         </List.Item>
         <List.Item>
           <strong>Sharing:</strong> we don't sell Google user data or use it for
@@ -253,9 +254,10 @@ export default function PrivacyPolicy() {
         to say so. If you try to sign in with a Google account that hasn't been
         linked to CineXplorer and Google sends an unverified email address that
         matches an existing account, we email that address a link to start
-        password recovery. Beyond these, we'd write to you only about the
-        service itself, such as a change to this policy or the site closing,
-        through the same email provider. We don't send newsletters or marketing.
+        password recovery. We limit how often we send this notice. Beyond these,
+        we'd write to you only about the service itself, such as a change to
+        this policy or the site closing, through the same email provider. We
+        don't send newsletters or marketing.
       </Text>
       <LegalHeading as="h2">Cookies and browser storage</LegalHeading>
       <Text>
@@ -428,9 +430,10 @@ export default function PrivacyPolicy() {
           browser reaches our account checks and the server saves the removal.
           If you cancel the later attempt or it fails, those details can remain
           in your session. Starting another sign-in can extend the session's
-          expiry. After we send an existing-account notice, the pending
-          verification step expires after 15 minutes. The email address can stay
-          in the session until we clear that step or remove the expired session.
+          expiry. In the existing-account case described under Email, the
+          pending verification step expires after 15 minutes. The email address
+          can stay in the session until we clear that step or remove the expired
+          session.
         </List.Item>
         <List.Item>
           <strong>Server logs:</strong> each service keeps about its most recent

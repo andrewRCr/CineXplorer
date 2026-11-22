@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
   return (
     <LegalDocument
       title="CineXplorer Privacy Policy"
-      effectiveDate="November 21, 2026"
+      effectiveDate="November 22, 2026"
     >
       <Text>
         CineXplorer is a free movie-discovery website run as a personal project

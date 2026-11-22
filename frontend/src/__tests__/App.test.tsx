@@ -100,6 +100,24 @@ it("offers password recovery when Google sign-in returns signed out", async () =
   );
 });
 
+it.each([
+  ["verify", "Verify Your Email"],
+  ["reset", "Set New Password"],
+])(
+  "keeps a Login %s link with a leftover Google sign-in marker",
+  async (action, title) => {
+    const address = `/login?${action}=fixture-email-key`;
+    sessionStorage.setItem("oauth_in_progress", "google");
+    startAt(address);
+
+    await waitFor(() =>
+      expect(sessionStorage.getItem("oauth_in_progress")).toBeNull(),
+    );
+    expect(window.location.pathname + window.location.search).toBe(address);
+    expect(await screen.findByRole("dialog", { name: title })).toBeVisible();
+  },
+);
+
 it("contains a shell failure in the last-resort full-page display", async () => {
   window.__dismissPreloadOverlay = () => {
     throw new Error("Shell failed");

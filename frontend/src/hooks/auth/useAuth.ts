@@ -31,7 +31,7 @@ import {
 } from "@/utilities/csrfTokenFetcher";
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { matchPath, useNavigate, useLocation } from "react-router";
 import type {
     AuthStateProps,
     AuthStatus,
@@ -63,6 +63,13 @@ import {
 } from "@/utilities/tokenUtils";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import * as authService from "@/services/authService";
+
+function blocksOAuthNavigation(pathname: string, search: string): boolean {
+    if (isLegalDocumentPath(pathname)) return true;
+    if (!matchPath(ROUTES.LOGIN, pathname)) return false;
+    const params = new URLSearchParams(search);
+    return params.has("verify") || params.has("reset");
+}
 
 export function useAuth(): AuthStateProps {
     const navigate = useNavigate();
@@ -156,8 +163,11 @@ export function useAuth(): AuthStateProps {
         const hasOAuthError = Boolean(params.get("error"));
         // Browser history can change before React Router commits the location.
         const canNavigate =
-            !isLegalDocumentPath(location.pathname) &&
-            !isLegalDocumentPath(window.location.pathname);
+            !blocksOAuthNavigation(location.pathname, location.search) &&
+            !blocksOAuthNavigation(
+                window.location.pathname,
+                window.location.search,
+            );
         if (hasOAuthError && canNavigate) {
             // Use the fixed failure code in reports because the URL is user-controlled.
             logger.error("OAuth authentication failed", { error: "oauth" });

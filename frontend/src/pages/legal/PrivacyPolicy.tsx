@@ -222,12 +222,12 @@ export default function PrivacyPolicy() {
         <List.Item>
           <strong>Error reports.</strong> If something breaks in your browser,
           the site sends us an error report: the error message and technical
-          details, the page's address (which we keep without its query), your
-          browser and device details (user agent, language, platform and window
-          size), your user ID if you signed in with a password, and a random ID
-          for that page visit. Details labelled as passwords, tokens or other
-          credentials, and the contents of any request that failed, are removed
-          before the report is kept.
+          details, the page's address (site and path only), your browser and
+          device details (user agent, language, platform and window size), your
+          user ID if you signed in with a password, and a random ID for that
+          page visit. Before sending the report, your browser removes the failed
+          request's headers, body and settings. It also filters out details
+          labelled as passwords, tokens or other credentials.
         </List.Item>
         <List.Item>
           <strong>Abuse limits.</strong> To stop repeated or automated requests,

@@ -34,7 +34,7 @@
  *   - Backend Reporting: ERROR+ levels
  *   - Styling: Simplified formatting
  */
-import { apiBaseUrl } from "@/config/baseUrls";
+import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { getAuthTokens } from "@/utilities/tokenUtils";
 import apiClient from "./apiClient";
 
@@ -76,8 +76,63 @@ type StoredCriticalReport = Omit<
     timestamp: string;
 };
 
+type ReportFields = Omit<StoredCriticalReport, "id" | "level" | "timestamp">;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
     value !== null && typeof value === "object" && !Array.isArray(value);
+
+const REQUEST_CONTENT_FIELDS = new Set([
+    "config",
+    "request",
+    "headers",
+    "body",
+    "requestdata",
+]);
+
+const REPORT_URL_FIELDS = new Set([
+    "url",
+    "href",
+    "previous",
+    "referer",
+    "referrer",
+    "action",
+    "endpoint",
+]);
+
+// These caps leave room under the API's 50 KiB limit after JSON escaping
+// and UTF-8 encoding, including both copies of the browser's user agent.
+const REPORT_LIMITS = {
+    data: 10000,
+    message: 1000,
+    url: 1000,
+    userAgent: 256,
+    id: 128,
+    browserField: 64,
+};
+
+const REPORT_TRUNCATION_MARKER = "…[truncated]";
+
+function clipReportText(text: string, limit: number): string {
+    if (text.length <= limit) return text;
+
+    // Keep the UTF-16 budget without splitting a surrogate pair.
+    const last = text.charCodeAt(limit - 1);
+    const next = text.charCodeAt(limit);
+    const splitsPair =
+        last >= 0xd800 && last <= 0xdbff && next >= 0xdc00 && next <= 0xdfff;
+    return text.slice(0, splitsPair ? limit - 1 : limit);
+}
+
+// These excerpts fit the report limit even when each character needs escaping.
+const REPORT_EXCERPT_LENGTHS = {
+    name: 80,
+    code: 80,
+    errorId: 80,
+    message: 80,
+    status: 80,
+    stack: 600,
+    componentStack: 600,
+};
 
 interface FailedReport {
     id: string;
@@ -233,9 +288,11 @@ class Logger {
         error?: unknown,
         requestData?: unknown,
     ): void {
+        const reportEndpoint = this.sanitizeReportUrl(endpoint);
+        const httpMethod = method.toUpperCase();
         const apiErrorData = {
-            endpoint,
-            method: method.toUpperCase(),
+            endpoint: reportEndpoint,
+            method: httpMethod,
             status,
             error,
             requestData,
@@ -243,7 +300,7 @@ class Logger {
         };
 
         this.error(
-            `API Error: ${method.toUpperCase()} ${endpoint}${status ? ` (${status})` : ""}`,
+            `API Error: ${httpMethod} ${reportEndpoint}${status ? ` (${status})` : ""}`,
             apiErrorData,
         );
     }
@@ -490,23 +547,46 @@ class Logger {
         await Promise.resolve();
         const payload = {
             level: LogLevel[entry.level],
-            message: entry.message,
             timestamp: entry.timestamp.toISOString(),
-            data: this.sanitizeDataForBackend(entry.data),
-            correlation_id: entry.correlation_id,
-            user_agent: entry.user_agent,
-            url: entry.url,
-            user_id: entry.user_id,
-            session_id: entry.session_id,
+            ...this.prepareReportFields(entry),
+            user_id:
+                typeof entry.user_id === "string" &&
+                entry.user_id.length > REPORT_LIMITS.id
+                    ? undefined
+                    : entry.user_id,
             source: "frontend",
             environment: this.detectEnvironment(),
             browser_info: this.getBrowserInfo(),
         };
         await apiClient.post("/logs/", payload, {
+            adapter: "fetch",
+            fetchOptions: { referrerPolicy: "no-referrer" },
             skipAuthRefresh: true,
             signal,
             timeout: 5000,
         });
+    }
+
+    private prepareReportFields(entry: ReportFields): ReportFields {
+        const { message, data, correlation_id, user_agent, url, session_id } =
+            entry;
+        return {
+            message:
+                message.length > REPORT_LIMITS.message
+                    ? clipReportText(
+                          message,
+                          REPORT_LIMITS.message -
+                              REPORT_TRUNCATION_MARKER.length,
+                      ) + REPORT_TRUNCATION_MARKER
+                    : message,
+            data: this.sanitizeDataForBackend(data),
+            correlation_id:
+                correlation_id &&
+                clipReportText(correlation_id, REPORT_LIMITS.id),
+            user_agent: clipReportText(user_agent, REPORT_LIMITS.userAgent),
+            url: this.sanitizeReportUrl(url),
+            session_id: clipReportText(session_id, REPORT_LIMITS.id),
+        };
     }
 
     private recoverStoredCriticalReports(): Promise<void> {
@@ -556,8 +636,13 @@ class Logger {
             error instanceof Error ? error.message : "Unknown error";
 
         const id = crypto.randomUUID();
+        const fields = this.prepareReportFields(entry);
         // Use the same identity in memory and persistent recovery.
-        this.storeFailedBackendReport(entry, errorMessage, id);
+        this.storeFailedBackendReport(
+            { ...entry, ...fields },
+            errorMessage,
+            id,
+        );
 
         // Log to console in development, suppress in production
         if (this.detectEnvironment() === "development") {
@@ -577,13 +662,8 @@ class Logger {
             reports.push({
                 id,
                 level: LogLevel.CRITICAL,
-                message: entry.message,
                 timestamp: entry.timestamp.toISOString(),
-                data: this.sanitizeDataForBackend(entry.data),
-                correlation_id: entry.correlation_id,
-                user_agent: entry.user_agent,
-                url: this.sanitizeStoredUrl(entry.url),
-                session_id: entry.session_id,
+                ...fields,
             });
             this.writeStoredCriticalReports(reports);
         }
@@ -758,12 +838,34 @@ class Logger {
         return this.readStoredCriticalReports() ?? [];
     }
 
-    private sanitizeStoredUrl(value: string): string {
+    private sanitizeReportUrl(value: unknown): string {
+        if (typeof value !== "string") return "unknown";
+
+        const address = value.split(/[?#]/, 1)[0] ?? "";
+        // eslint-disable-next-line no-control-regex -- These characters can change how URL parsing interprets an address.
+        if (/[\x00-\x1f\x7f\\]/u.test(address)) return "unknown";
+        const rootRelative =
+            address.startsWith("/") && !address.startsWith("//");
+        if (!rootRelative && !/^https?:\/\/[^/\s]/iu.test(address)) {
+            return "unknown";
+        }
+
         try {
-            const url = new URL(value);
-            return url.protocol === "https:" || url.protocol === "http:"
-                ? `${url.origin}${url.pathname}`
-                : "unknown";
+            const { origin, pathname } = new URL(
+                value,
+                rootRelative ? siteOrigin : undefined,
+            );
+            // A normalized relative path must still be relative when replayed.
+            if (rootRelative && pathname.startsWith("//")) return "unknown";
+
+            const site = rootRelative ? "" : origin;
+            const pathLimit = REPORT_LIMITS.url - site.length;
+            if (pathLimit < 1) return "unknown";
+            if (pathname.length <= pathLimit) return site + pathname;
+
+            // Stop at a segment boundary so clipping cannot introduce a dot segment.
+            const boundary = pathname.lastIndexOf("/", pathLimit - 1);
+            return site + pathname.slice(0, boundary + 1);
         } catch {
             return "unknown";
         }
@@ -797,22 +899,24 @@ class Logger {
                         continue;
                     reports.push({
                         id:
-                            typeof value.id === "string" && value.id
+                            typeof value.id === "string" &&
+                            value.id &&
+                            value.id.length <= REPORT_LIMITS.id
                                 ? value.id
                                 : crypto.randomUUID(),
                         level: LogLevel.CRITICAL,
-                        message: value.message,
                         timestamp: new Date(value.timestamp).toISOString(),
-                        data: this.normalizeReportData(
-                            this.removeSensitiveFields(value.data),
-                        ),
-                        correlation_id:
-                            typeof value.correlation_id === "string"
-                                ? value.correlation_id
-                                : undefined,
-                        user_agent: value.user_agent,
-                        url: this.sanitizeStoredUrl(value.url),
-                        session_id: value.session_id,
+                        ...this.prepareReportFields({
+                            message: value.message,
+                            data: value.data,
+                            correlation_id:
+                                typeof value.correlation_id === "string"
+                                    ? value.correlation_id
+                                    : undefined,
+                            user_agent: value.user_agent,
+                            url: value.url,
+                            session_id: value.session_id,
+                        }),
                     });
                 }
             }
@@ -1175,12 +1279,31 @@ class Logger {
 
             // Limit size to prevent large payloads
             const serialized = JSON.stringify(sanitized);
-            if (serialized.length > 10000) {
-                return {
+            if (sanitized && serialized.length > REPORT_LIMITS.data) {
+                const nestedError = isRecord(sanitized.error)
+                    ? sanitized.error
+                    : undefined;
+                const additionalData = isRecord(sanitized.additionalData)
+                    ? sanitized.additionalData
+                    : undefined;
+                const summary: Record<string, unknown> = {
                     _truncated: true,
                     _originalSize: serialized.length,
-                    data: serialized.substring(0, 10000) + "...[truncated]",
                 };
+                for (const [field, length] of Object.entries(
+                    REPORT_EXCERPT_LENGTHS,
+                )) {
+                    const value =
+                        sanitized[field] ??
+                        nestedError?.[field] ??
+                        additionalData?.[field];
+                    if (typeof value === "string") {
+                        summary[field] = clipReportText(value, length);
+                    } else if (typeof value === "number") {
+                        summary[field] = value;
+                    }
+                }
+                return summary;
             }
 
             return sanitized;
@@ -1222,8 +1345,17 @@ class Logger {
         const cleaned: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(obj)) {
             const lowerKey = key.toLowerCase();
+            // Serialized request bodies can hide credentials inside strings.
+            if (
+                REQUEST_CONTENT_FIELDS.has(lowerKey) ||
+                (lowerKey === "data" && typeof value === "string")
+            ) {
+                continue;
+            }
             if (sensitiveFields.some((field) => lowerKey.includes(field))) {
                 cleaned[key] = "[FILTERED]";
+            } else if (REPORT_URL_FIELDS.has(lowerKey)) {
+                cleaned[key] = this.sanitizeReportUrl(value);
             } else {
                 cleaned[key] = this.removeSensitiveFields(value);
             }
@@ -1245,13 +1377,24 @@ class Logger {
         return {
             user_agent:
                 typeof navigator !== "undefined"
-                    ? navigator.userAgent
+                    ? clipReportText(
+                          navigator.userAgent,
+                          REPORT_LIMITS.userAgent,
+                      )
                     : "test-environment",
             language:
-                typeof navigator !== "undefined" ? navigator.language : "en-US",
+                typeof navigator !== "undefined"
+                    ? clipReportText(
+                          navigator.language,
+                          REPORT_LIMITS.browserField,
+                      )
+                    : "en-US",
             platform:
                 typeof navigator !== "undefined"
-                    ? navigator.platform
+                    ? clipReportText(
+                          navigator.platform,
+                          REPORT_LIMITS.browserField,
+                      )
                     : "test-environment",
             viewport: {
                 width: typeof window !== "undefined" ? window.innerWidth : 1920,

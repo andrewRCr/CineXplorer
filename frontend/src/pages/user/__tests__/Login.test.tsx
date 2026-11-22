@@ -377,6 +377,51 @@ describe("notices the sign-in page opens with", () => {
     expectNotice(expired);
   });
 
+  it("keeps the verification key out of a failed verification report", async () => {
+    const key = "fixture-verification-key";
+    const page = `/login?verify=${key}#fixture-fragment`;
+    const reports: string[] = [];
+    const originalHref = window.location.href;
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, async ({ request }) => {
+        expect(await request.json()).toEqual({ key });
+        return HttpResponse.json(
+          { error: "The link expired." },
+          { status: 400 },
+        );
+      }),
+      http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+        reports.push(await request.text());
+        return HttpResponse.json({ success: true }, { status: 201 });
+      }),
+    );
+    logger.updateConfig({ enableBackendReporting: true });
+    window.location.href = `http://localhost:3000${page}`;
+
+    try {
+      renderLoginWith(page);
+      await userEvent
+        .setup()
+        .click(
+          await screen.findByRole("button", { name: "Complete Verification" }),
+        );
+      await waitFor(() => expect(reports).toHaveLength(1));
+      const report = reports[0] ?? "";
+      const payload: unknown = JSON.parse(report);
+      expect(payload).toMatchObject({
+        message: "Email verification error:",
+        data: { status: 400 },
+      });
+      expect(report.includes(key)).toBe(false);
+      expect(report.includes("fixture-fragment")).toBe(false);
+      expect(payload).toMatchObject({
+        url: "http://localhost:3000/login",
+      });
+    } finally {
+      window.location.href = originalHref;
+    }
+  });
+
   it("shows a verified email in the card", async () => {
     server.use(
       http.post(`${apiBaseUrl}/verify-email/`, () =>

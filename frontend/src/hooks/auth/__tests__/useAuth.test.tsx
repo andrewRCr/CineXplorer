@@ -47,6 +47,7 @@ import {
 } from "@tests/helpers/auth";
 
 import apiClient, { refreshAccessToken } from "@/services/apiClient";
+import logger, { LogLevel } from "@/services/logger";
 import { gate, installWebLocks } from "@tests/helpers/web-locks";
 
 function AuthTestProviders({ children }: { children: ReactNode }) {
@@ -338,20 +339,92 @@ describe("returning after a provider sign-in", () => {
     await waitFor(() => expect(result.current.location.pathname).toBe("/"));
   });
 
-  it("keeps the requested page when the provider reports an error", async () => {
-    const { result } = mountAt("/login?next=%2Fwatchlist&error=oauth");
-    await waitFor(() =>
-      expect(result.current.location.state).toMatchObject({
-        oauthError: true,
+  it("keeps the requested page and reports a fixed provider error code", async () => {
+    const reports: unknown[] = [];
+    const previousConfig = logger.getEnvironmentInfo().config;
+    server.use(
+      http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+        reports.push(await request.json());
+        return HttpResponse.json({ success: true }, { status: 201 });
       }),
     );
-    expect(
-      `${result.current.location.pathname}${result.current.location.search}`,
-    ).toBe("/login?next=%2Fwatchlist");
+    logger.updateConfig({
+      level: LogLevel.ERROR,
+      backendReportingThreshold: LogLevel.ERROR,
+      enableBackendReporting: true,
+      enableConsole: false,
+      enableStorage: false,
+    });
+
+    try {
+      const { result } = mountAt(
+        "/login?next=%2Fwatchlist&error=fixture-provider-error",
+      );
+      await waitFor(() =>
+        expect(result.current.location.state).toMatchObject({
+          oauthError: true,
+        }),
+      );
+      expect(
+        `${result.current.location.pathname}${result.current.location.search}`,
+      ).toBe("/login?next=%2Fwatchlist");
+      await waitFor(() => expect(reports).toHaveLength(1));
+      expect(reports[0]).toMatchObject({
+        message: "OAuth authentication failed",
+        data: { error: "oauth" },
+      });
+      expect(JSON.stringify(reports[0])).not.toContain(
+        "fixture-provider-error",
+      );
+    } finally {
+      logger.updateConfig(previousConfig);
+    }
   });
 });
 
 describe("sign-in and sign-out", () => {
+  it("reports a failed password sign-in without sending its password", async () => {
+    const password = "test-only-sign-in-password";
+    const reports: string[] = [];
+    const previousConfig = logger.getEnvironmentInfo().config;
+    server.use(
+      http.post(`${apiBaseUrl}/token/`, () =>
+        HttpResponse.json({ detail: "Invalid credentials" }, { status: 401 }),
+      ),
+      http.post(`${apiBaseUrl}/logs/`, async ({ request }) => {
+        reports.push(await request.text());
+        return HttpResponse.json({ success: true }, { status: 201 });
+      }),
+    );
+    logger.updateConfig({
+      level: LogLevel.ERROR,
+      backendReportingThreshold: LogLevel.ERROR,
+      enableBackendReporting: true,
+      enableConsole: false,
+      enableStorage: false,
+    });
+
+    try {
+      const { result } = mountAuth();
+      await waitFor(() => expect(result.current.status).toBe("anonymous"));
+      await act(async () => {
+        expect(await result.current.login("viewer", password)).toMatchObject({
+          success: false,
+          error: { status: 401 },
+        });
+      });
+      await waitFor(() => expect(reports).toHaveLength(1));
+      const report = reports[0] ?? "";
+      expect(JSON.parse(report)).toMatchObject({
+        message: "[useAuth] login() error",
+        data: { error: { status: 401 } },
+      });
+      expect(report.includes(password)).toBe(false);
+    } finally {
+      logger.updateConfig(previousConfig);
+    }
+  });
+
   it.each([false, true])(
     "stores password sign-in with remember me %s and fetches the profile",
     async (rememberMe) => {

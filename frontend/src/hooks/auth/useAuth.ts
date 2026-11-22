@@ -144,13 +144,14 @@ export function useAuth(): AuthStateProps {
     const hasHandledOAuthRef = useRef(false);
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const oauthError = params.get("error");
+        const hasOAuthError = Boolean(params.get("error"));
         // Browser history can change before React Router commits the location.
         const canNavigate =
             !isLegalDocumentPath(location.pathname) &&
             !isLegalDocumentPath(window.location.pathname);
-        if (oauthError && canNavigate) {
-            logger.error("OAuth authentication failed", { error: oauthError });
+        if (hasOAuthError && canNavigate) {
+            // Use the fixed failure code in reports because the URL is user-controlled.
+            logger.error("OAuth authentication failed", { error: "oauth" });
             void navigate(loginPathFor(safeReturnPath(params.get("next"))), {
                 state: {
                     oauthError: true,

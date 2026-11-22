@@ -7,6 +7,7 @@ GitHub accounts retain only the provider's primary verified email.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from allauth.account.adapter import DefaultAccountAdapter
@@ -34,10 +35,22 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     Overrides:
     - get_email_confirmation_url(): Points verification links to frontend
     - send_mail(): Verifies email was actually sent, raises on failure
+    - add_message(): Skips flash notices the frontend does not display
 
     Email delivery is handled by Django's email backend configured in
     settings.py (the project ZeptoMailEmailBackend, locmem for tests).
     """
+
+    def add_message(
+        self,
+        request: HttpRequest,
+        level: int,
+        message_template: str | None = None,
+        message_context: Mapping[str, object] | None = None,
+        extra_tags: str = "",
+        message: str | None = None,
+    ) -> None:
+        """Skip flash notices because the frontend displays account outcomes itself."""
 
     def send_mail(self, template_prefix: str, email: str, context: dict[str, object]) -> None:
         """Send email and verify delivery.

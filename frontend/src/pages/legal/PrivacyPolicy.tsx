@@ -254,9 +254,8 @@ export default function PrivacyPolicy() {
       </Text>
       <LegalHeading as="h2">Cookies and browser storage</LegalHeading>
       <Text>
-        The site sets cookies for signing in, security and showing lists
-        correctly, and one, <Code>messages</Code>, that holds a notice the site
-        doesn't use. There are no advertising or analytics cookies.
+        The public site uses cookies for signing in, security and showing lists
+        correctly. There are no advertising or analytics cookies.
       </Text>
       <LegalTableRegion label="Cookie table">
         <Table.Root variant="outline">
@@ -302,18 +301,6 @@ export default function PrivacyPolicy() {
                 14 days if you chose "Remember me", otherwise until you close
                 the browser
               </Table.Cell>
-            </Table.Row>
-            <Table.Row>
-              <Table.Cell>
-                <Code>messages</Code>
-              </Table.Cell>
-              <Table.Cell>
-                Set when you sign up, verify your email address, or sign in with
-                Google or GitHub. It holds a confirmation notice the site
-                doesn't display, which can include your email address or
-                username. Page scripts can't read it.
-              </Table.Cell>
-              <Table.Cell>Until you close the browser</Table.Cell>
             </Table.Row>
           </Table.Body>
         </Table.Root>

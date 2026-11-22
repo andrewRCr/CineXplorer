@@ -76,20 +76,15 @@ it("links to Google's policy and makes each contact address an email link", () =
   }
 });
 
-it("describes the four cookies in a focusable table region", () => {
+it("describes the three public-site cookies in a focusable table region", () => {
   renderPolicy();
 
   const region = screen.getByRole("region", { name: "Cookie table" });
   expect(region).toHaveAttribute("tabindex", "0");
   const table = within(region).getByRole("table");
   expect(within(table).getAllByRole("columnheader")).toHaveLength(3);
-  expect(within(table).getAllByRole("row")).toHaveLength(5);
-  for (const cookie of [
-    "sessionid",
-    "csrftoken",
-    "refresh_token",
-    "messages",
-  ]) {
+  expect(within(table).getAllByRole("row")).toHaveLength(4);
+  for (const cookie of ["sessionid", "csrftoken", "refresh_token"]) {
     expect(within(table).getByRole("cell", { name: cookie })).toBeVisible();
   }
 });

@@ -6,6 +6,7 @@ Uses Django's in-memory email backend to capture emails without sending.
 import os
 
 from .settings import *  # noqa: F403
+from .settings import build_headless_frontend_urls
 
 # Avoid production password-hashing cost when creating and authenticating test users.
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
@@ -28,6 +29,7 @@ ACCOUNT_RATE_LIMITS = {
     "reset_password": "",  # Password-request tests also reuse addresses across runs
 }
 FRONTEND_URL = "http://testserver"  # pyright: ignore[reportConstantRedefinition]
+HEADLESS_FRONTEND_URLS = build_headless_frontend_urls(FRONTEND_URL)  # pyright: ignore[reportConstantRedefinition]
 
 # Add missing settings for tests
 FORBIDDEN_USERNAMES = ["admin", "root", "superuser", "administrator"]  # pyright: ignore[reportConstantRedefinition]

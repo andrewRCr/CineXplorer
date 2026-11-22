@@ -440,20 +440,9 @@ def get_user_movies(request: HttpRequest):
 `get_current_user` and `get_current_user_optional` run the same check, raising `401` or returning `None` when
 neither credential is present.
 
-**Django-allauth Configuration** (`backend/config/settings.py`):
-
-```python
-# Headless mode (disables HTML views, keeps OAuth callbacks)
-HEADLESS_ONLY = True
-
-# Frontend URLs for redirects
-HEADLESS_FRONTEND_URLS = {
-    # Email confirmation links come from CustomAccountAdapter.get_email_confirmation_url()
-    "account_reset_password_from_key": f"{FRONTEND_URL}/login?reset={{key}}",
-    "account_signup": f"{FRONTEND_URL}/auth/signup",
-    "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
-}
-```
+Headless mode disables allauth's HTML views and keeps its OAuth callbacks. The allauth URL map sets the frontend
+destinations for password recovery, registration and OAuth errors. The account adapter supplies confirmation links.
+See the current configuration in [Django settings](../../../../backend/config/settings.py).
 
 Session-cookie security and origin configuration follow the [CORS configuration](#cors-configuration) above.
 

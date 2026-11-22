@@ -28,6 +28,8 @@ class DefaultAccountAdapter:
     Custom adapters should inherit from this class and override specific methods.
     """
 
+    request: HttpRequest | None
+
     def __init__(self, request: HttpRequest | None = None) -> None: ...
     def get_client_ip(self, request: HttpRequest) -> str: ...
     def render_mail(

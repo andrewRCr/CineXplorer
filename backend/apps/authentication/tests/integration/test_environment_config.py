@@ -11,6 +11,27 @@ from typing import cast
 import pytest
 from django.test import override_settings
 
+from apps.core.tests.test_helpers import load_settings
+
+
+@pytest.mark.parametrize(
+    ("url_setting", "origin"),
+    [
+        ("HEADLESS_FRONTEND_URLS", "https://app.example"),
+        ("config.settings_test.HEADLESS_FRONTEND_URLS", "http://testserver"),
+    ],
+)
+def test_allauth_frontend_urls_use_the_effective_origin(url_setting: str, origin: str) -> None:
+    result = load_settings({"FRONTEND_URL": "https://app.example/"}, [url_setting])
+
+    assert result[url_setting] == {
+        "account_reset_password": f"{origin}/forgot-password",
+        "account_reset_password_from_key": f"{origin}/login?reset={{key}}",
+        "account_signup": f"{origin}/register",
+        "socialaccount_login_error": f"{origin}/login?error=oauth",
+    }
+
+
 # ============================================================================
 # SESSION_COOKIE_SECURE Tests (Environment-Aware)
 # ============================================================================

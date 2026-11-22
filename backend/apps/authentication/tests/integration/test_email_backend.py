@@ -21,13 +21,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
+from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 from apps.authentication.adapters import CustomAccountAdapter, EmailDeliveryError
 from apps.authentication.tests.fixtures import get_resend_token_from_login
-from config.settings import FRONTEND_URL
 
 if TYPE_CHECKING:
     from django.core.mail import EmailMessage
@@ -481,7 +482,9 @@ def test_password_reset_for_unknown_email_sends_registration_link(
     message = mailoutbox[0]
     assert message.to == [email]
     assert "Unknown Account" in message.subject
-    assert f"{FRONTEND_URL}/register" in message.body.split()
+    assert f"Hello from {Site.objects.get_current().name}!" in message.body
+    assert email in message.body
+    assert f"{settings.FRONTEND_URL}/register" in message.body.split()
 
 
 # ============================================================================

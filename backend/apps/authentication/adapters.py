@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
 from django.http import HttpRequest
 
 if TYPE_CHECKING:
@@ -64,10 +65,16 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         Raises:
             EmailDeliveryError: If email backend returns 0 (not sent)
         """
-        # Inject expiry_days for templates that display verification expiration
-        context["expiry_days"] = getattr(settings, "EMAIL_VERIFICATION_EXPIRY_DAYS", 3)
+        request = self.request
+        mail_context = {
+            "request": request,
+            "email": email,
+            "current_site": get_current_site(request),
+            **context,
+            "expiry_days": getattr(settings, "EMAIL_VERIFICATION_EXPIRY_DAYS", 3),
+        }
 
-        msg = self.render_mail(template_prefix, email, context)
+        msg = self.render_mail(template_prefix, email, mail_context)
         sent_count = msg.send()
         if sent_count == 0:
             # Name the template and the user, never the address: this text reaches the logs.

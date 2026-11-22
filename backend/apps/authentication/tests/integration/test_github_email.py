@@ -8,18 +8,21 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from allauth.account.models import EmailAddress
+from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialAccount
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.test import Client, override_settings
 from requests import Response, Session
 
 from apps.authentication.tests.fixtures import create_social_app
+from apps.core.tests.email_transport import ERROR_RESPONSE_BODY, zeptomail_api_stand_in
 from apps.core.tests.test_helpers import create_user
 from apps.users.models import User
-from config.settings import FRONTEND_URL
 
 if TYPE_CHECKING:
     from django.core.mail import EmailMessage
     from django.http import HttpResponse
-    from django.test import Client
 
 
 class GitHubEmail(TypedDict):
@@ -49,7 +52,7 @@ def provider_callback(
     assert redirect.status_code == 302
     state = parse_qs(urlparse(redirect["Location"]).query)["state"][0]
 
-    def provider_request(_session: Session, method: str, url: str, **_kwargs: object) -> Response:
+    def provider_request(method: str, url: str, **_kwargs: object) -> Response:
         key = (method.upper(), url)
         assert key in responses, f"Unexpected provider request: {method} {url}"
         response = Mock(spec=Response)
@@ -58,7 +61,12 @@ def provider_callback(
         response.json.return_value = responses[key]
         return response
 
-    monkeypatch.setattr(Session, "request", provider_request)
+    def provider_session(_adapter: DefaultSocialAccountAdapter) -> Session:
+        session = Session()
+        monkeypatch.setattr(session, "request", provider_request)
+        return session
+
+    monkeypatch.setattr(DefaultSocialAccountAdapter, "get_requests_session", provider_session)
     return client.get(
         f"/accounts/{provider}/login/callback/", {"code": "provider-test-code", "state": state}
     )
@@ -196,24 +204,7 @@ def test_google_keeps_configured_email_verification(
     api_client: Client,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    response = provider_callback(
-        api_client,
-        monkeypatch,
-        "google",
-        {
-            ("POST", "https://oauth2.googleapis.com/token"): {
-                "access_token": "provider-test-token",
-                "token_type": "Bearer",
-            },
-            ("GET", "https://www.googleapis.com/oauth2/v2/userinfo"): {
-                "id": "google-person",
-                "email": "google@example.com",
-                "verified_email": False,
-                "name": "Google Person",
-            },
-        },
-        assume_verified=True,
-    )
+    response = google_callback(api_client, monkeypatch, "google@example.com", assume_verified=True)
     assert response.status_code == 302
     account = SocialAccount.objects.get(provider="google", uid="google-person")
     assert list(
@@ -223,15 +214,15 @@ def test_google_keeps_configured_email_verification(
     assert "messages" not in response.cookies
 
 
-@pytest.mark.django_db
-def test_unverified_google_email_for_existing_account_sends_recovery_link(
-    api_client: Client,
+def google_callback(
+    client: Client,
     monkeypatch: pytest.MonkeyPatch,
-    mailoutbox: list[EmailMessage],
-) -> None:
-    user = create_user(email="existing@example.com")
-    response = provider_callback(
-        api_client,
+    email: str,
+    *,
+    assume_verified: bool = False,
+) -> HttpResponse:
+    return provider_callback(
+        client,
         monkeypatch,
         "google",
         {
@@ -241,19 +232,54 @@ def test_unverified_google_email_for_existing_account_sends_recovery_link(
             },
             ("GET", "https://www.googleapis.com/oauth2/v2/userinfo"): {
                 "id": "google-person",
-                "email": user.email,
+                "email": email,
                 "verified_email": False,
                 "name": "Google Person",
             },
         },
+        assume_verified=assume_verified,
     )
+
+
+@pytest.mark.django_db
+def test_unverified_google_email_for_existing_account_sends_recovery_link(
+    api_client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+    mailoutbox: list[EmailMessage],
+) -> None:
+    user = create_user(email="existing@example.com")
+    response = google_callback(api_client, monkeypatch, user.email)
 
     assert response.status_code == 302
     assert len(mailoutbox) == 1
     message = mailoutbox[0]
     assert message.to == [user.email]
     assert "Account Already Exists" in message.subject
-    assert f"{FRONTEND_URL}/forgot-password" in message.body.split()
+    assert f"Hello from {Site.objects.get_current().name}!" in message.body
+    assert user.email in message.body
+    assert f"{settings.FRONTEND_URL}/forgot-password" in message.body.split()
     assert not SocialAccount.objects.filter(provider="google").exists()
     assert list(User.objects.values_list("pk", flat=True)) == [user.pk]
     assert api_client.get("/_allauth/browser/v1/auth/session").status_code == 401
+
+
+@pytest.mark.django_db
+@override_settings(
+    EMAIL_BACKEND="apps.core.email_backend.ZeptoMailEmailBackend",
+    ZOHO_ZEPTOMAIL_API_KEY_TOKEN="placeholder-mail-key",
+)
+def test_unverified_google_email_failed_delivery_returns_to_sign_in(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    user = create_user(email="existing@example.com")
+    client = Client(raise_request_exceptions=False)
+    with zeptomail_api_stand_in(status=400, body=ERROR_RESPONSE_BODY) as transport:
+        response = google_callback(client, monkeypatch, user.email)
+
+    assert len(transport.requests) == 1
+    assert response.status_code == 302
+    assert response["Location"] == f"{settings.FRONTEND_URL}/login?error=oauth"
+    assert not SocialAccount.objects.filter(provider="google").exists()
+    assert client.get("/_allauth/browser/v1/auth/session").status_code == 401
+    assert user.email not in caplog.text

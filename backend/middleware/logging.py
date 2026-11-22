@@ -114,26 +114,29 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 sanitized[key] = str(value)[:200]  # Truncate long headers
         return sanitized
 
-    def _sanitize_query_string(self, query_string: str) -> str:
+    def _sanitize_query_string(self, request: HttpRequest) -> str:
         """Sanitize query string by redacting sensitive parameter values.
 
         Args:
-            query_string: Raw query string from request
+            request: The HTTP request
 
         Returns:
             str: Sanitized query string safe for logging
         """
+        query_string = request.META.get("QUERY_STRING", "")
         if not query_string:
             return query_string
 
         # Parse query string and redact sensitive params
         from urllib.parse import parse_qsl, urlencode
 
+        is_admin = request.path_info == "/admin" or request.path_info.startswith("/admin/")
         params = parse_qsl(query_string, keep_blank_values=True)
         sanitized_params = []
         for key, value in params:
             # Case-insensitive check for sensitive params
-            if key.lower() in self.SENSITIVE_PARAMS:
+            name = key.lower()
+            if name in self.SENSITIVE_PARAMS or (is_admin and name == "q"):
                 sanitized_params.append((key, "[REDACTED]"))
             else:
                 sanitized_params.append((key, value))
@@ -153,8 +156,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         request.start_time = time.time()
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get("QUERY_STRING", "")
-        sanitized_query_string = self._sanitize_query_string(query_string)
+        sanitized_query_string = self._sanitize_query_string(request)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
 
@@ -210,8 +212,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         log_level = self._get_log_level_for_status(response.status_code)
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get("QUERY_STRING", "")
-        sanitized_query_string = self._sanitize_query_string(query_string)
+        sanitized_query_string = self._sanitize_query_string(request)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
 
@@ -280,8 +281,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         correlation_id = getattr(request, "correlation_id", "unknown")
 
         # Build query string for full URL (sanitize for logging)
-        query_string = request.META.get("QUERY_STRING", "")
-        sanitized_query_string = self._sanitize_query_string(query_string)
+        sanitized_query_string = self._sanitize_query_string(request)
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
 

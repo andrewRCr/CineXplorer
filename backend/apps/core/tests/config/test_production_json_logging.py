@@ -385,6 +385,69 @@ except ValueError as exc:
 
 
 @pytest.mark.parametrize("environment", ["production", "staging"])
+@pytest.mark.parametrize(
+    ("path", "redact_search"),
+    [
+        ("/admin/users/user/", True),
+        ("/admin/user_movie_data/usermoviedata/", True),
+        ("/admin", True),
+        ("/admin-preview/", False),
+    ],
+)
+def test_request_logs_redact_admin_search_values(
+    environment: str, path: str, redact_search: bool
+) -> None:
+    from urllib.parse import parse_qsl, urlsplit
+
+    search_values = ["fixture-viewer@example.test", "A film & 夜"]
+    parameters = [("q", value) for value in search_values] + [("p", "2")]
+    output = _render(
+        f"""
+import django
+django.setup()
+from django.http import HttpResponse
+from django.test import RequestFactory
+from middleware.logging import RequestLoggingMiddleware
+
+def respond(request):
+    assert request.GET.getlist("q") == {search_values!r}
+    return HttpResponse()
+
+http_request = RequestFactory().get({path!r}, data={parameters!r})
+middleware = RequestLoggingMiddleware(respond)
+middleware(http_request)
+try:
+    raise ValueError("Safe diagnostic")
+except ValueError as exc:
+    middleware.process_exception(http_request, exc)
+""",
+        environment,
+    )
+
+    records = [_one_record(line) for line in output.splitlines()]
+    assert [record["event_type"] for record in records] == [
+        "request_start",
+        "request_complete",
+        "request_exception",
+    ]
+    expected = (
+        [("q", "[REDACTED]"), ("q", "[REDACTED]"), ("p", "2")] if redact_search else parameters
+    )
+    for record in records:
+        full_url = record["full_url"]
+        message = record["message"]
+        assert isinstance(full_url, str)
+        assert isinstance(message, str)
+        assert full_url in message
+        assert record["path"] == path
+        assert parse_qsl(urlsplit(full_url).query) == expected
+        if record["event_type"] == "request_start":
+            query_string = record["query_string"]
+            assert isinstance(query_string, str)
+            assert parse_qsl(query_string) == expected
+
+
+@pytest.mark.parametrize("environment", ["production", "staging"])
 @pytest.mark.parametrize("failure", [None, "Timeout", "ConnectionError", "RequestException"])
 def test_tmdb_logs_redact_search_text_without_changing_the_request(
     environment: str,

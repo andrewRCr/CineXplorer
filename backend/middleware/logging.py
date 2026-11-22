@@ -130,13 +130,21 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         # Parse query string and redact sensitive params
         from urllib.parse import parse_qsl, urlencode
 
-        is_admin = request.path_info == "/admin" or request.path_info.startswith("/admin/")
+        path = request.path_info.removesuffix("/")
+        sensitive_params = self.SENSITIVE_PARAMS
+        if path == "/admin" or path.startswith("/admin/"):
+            # Django can carry the search inside preserved filters or a login return address.
+            sensitive_params = sensitive_params | {"q", "_changelist_filters"}
+            if path == "/admin/login":
+                sensitive_params.add("next")
+            elif path == "/admin/autocomplete":
+                sensitive_params.add("term")
+
         params = parse_qsl(query_string, keep_blank_values=True)
         sanitized_params = []
         for key, value in params:
             # Case-insensitive check for sensitive params
-            name = key.lower()
-            if name in self.SENSITIVE_PARAMS or (is_admin and name == "q"):
+            if key.lower() in sensitive_params:
                 sanitized_params.append((key, "[REDACTED]"))
             else:
                 sanitized_params.append((key, value))

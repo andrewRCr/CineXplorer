@@ -386,21 +386,35 @@ except ValueError as exc:
 
 @pytest.mark.parametrize("environment", ["production", "staging"])
 @pytest.mark.parametrize(
-    ("path", "redact_search"),
+    ("path", "search_parameter", "redact_search"),
     [
-        ("/admin/users/user/", True),
-        ("/admin/user_movie_data/usermoviedata/", True),
-        ("/admin", True),
-        ("/admin-preview/", False),
+        ("/admin/users/user/", "q", True),
+        ("/admin/user_movie_data/usermoviedata/", "q", True),
+        ("/admin", "q", True),
+        ("/admin/users/user/1/change/", "_changelist_filters", True),
+        ("/admin/login/", "next", True),
+        ("/admin/login", "next", True),
+        ("/admin/autocomplete/", "term", True),
+        ("/admin/autocomplete", "term", True),
+        ("/admin-preview/", "q", False),
+        ("/admin-preview/", "_changelist_filters", False),
+        ("/admin/users/user/", "next", False),
+        ("/admin/users/user/", "term", False),
     ],
 )
 def test_request_logs_redact_admin_search_values(
-    environment: str, path: str, redact_search: bool
+    environment: str, path: str, search_parameter: str, redact_search: bool
 ) -> None:
-    from urllib.parse import parse_qsl, urlsplit
+    from urllib.parse import parse_qsl, urlencode, urlsplit
 
     search_values = ["fixture-viewer@example.test", "A film & 夜"]
-    parameters = [("q", value) for value in search_values] + [("p", "2")]
+    if search_parameter in {"_changelist_filters", "next"}:
+        search_values = [urlencode({"q": value}) for value in search_values]
+    if search_parameter == "next":
+        search_values = [f"/admin/users/user/?{value}" for value in search_values]
+
+    pagination = ("page" if search_parameter == "term" else "p", "2")
+    parameters = [(search_parameter, value) for value in search_values] + [pagination]
     output = _render(
         f"""
 import django
@@ -410,7 +424,7 @@ from django.test import RequestFactory
 from middleware.logging import RequestLoggingMiddleware
 
 def respond(request):
-    assert request.GET.getlist("q") == {search_values!r}
+    assert request.GET.getlist({search_parameter!r}) == {search_values!r}
     return HttpResponse()
 
 http_request = RequestFactory().get({path!r}, data={parameters!r})
@@ -430,9 +444,9 @@ except ValueError as exc:
         "request_complete",
         "request_exception",
     ]
-    expected = (
-        [("q", "[REDACTED]"), ("q", "[REDACTED]"), ("p", "2")] if redact_search else parameters
-    )
+    expected = parameters
+    if redact_search:
+        expected = [(search_parameter, "[REDACTED]")] * len(search_values) + [pagination]
     for record in records:
         full_url = record["full_url"]
         message = record["message"]
@@ -445,6 +459,8 @@ except ValueError as exc:
             query_string = record["query_string"]
             assert isinstance(query_string, str)
             assert parse_qsl(query_string) == expected
+    if redact_search:
+        assert "fixture-viewer" not in output
 
 
 @pytest.mark.parametrize("environment", ["production", "staging"])

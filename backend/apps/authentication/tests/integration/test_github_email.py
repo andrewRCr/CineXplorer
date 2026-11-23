@@ -266,24 +266,34 @@ def google_callback(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("is_active", [True, False], ids=["active", "inactive"])
 def test_unverified_google_email_for_existing_account_sends_recovery_link(
     api_client: Client,
     monkeypatch: pytest.MonkeyPatch,
     mailoutbox: list[EmailMessage],
+    is_active: bool,
 ) -> None:
     user = create_user(email="existing@example.com")
-    response = google_callback(api_client, monkeypatch, user.email)
+    user.is_active = is_active
+    user.save(update_fields=["is_active"])
+    callback_url = f"{settings.FRONTEND_URL}/login?next=%2Fwatchlist"
+    response = google_callback(api_client, monkeypatch, user.email, callback_url=callback_url)
 
     assert response.status_code == 302
+    assert response["Location"] == callback_url
     assert len(mailoutbox) == 1
     message = mailoutbox[0]
     assert message.to == [user.email]
     assert "Account Already Exists" in message.subject
     assert f"Hello from {Site.objects.get_current().name}!" in message.body
     assert user.email in message.body
+    assert "If your account is active" in message.body
     assert f"{settings.FRONTEND_URL}/forgot-password" in message.body.split()
+    assert "If you can't recover access, contact cinexplorer@andrewcreekmore.dev." in message.body
     assert not SocialAccount.objects.filter(provider="google").exists()
     assert list(User.objects.values_list("pk", flat=True)) == [user.pk]
+    user.refresh_from_db()
+    assert user.is_active == is_active
     assert api_client.get("/_allauth/browser/v1/auth/session").status_code == 401
 
 

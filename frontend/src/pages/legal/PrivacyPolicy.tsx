@@ -80,15 +80,19 @@ export default function PrivacyPolicy() {
           account. If Google sends no email address for a new account, we keep
           the pending sign-in in your browser's session on our server, including
           the profile Google sent, its access token and any refresh token it
-          sends. The session rules under "How long we keep things" explain when
-          pending sign-ins are cleared.
+          sends. In the existing-account case described under Email, the server
+          can store the unverified address in that session as part of a pending
+          verification step, even when we skip sending the notice. The session
+          rules under "How long we keep things" explain when these details are
+          cleared.
         </List.Item>
         <List.Item>
           <strong>Sharing:</strong> we don't sell Google user data or use it for
           advertising, and we share it only with the providers that run the
           site: it's stored with the rest of the database at our hosting and
-          backup providers, and when we email you, your email address and
-          username go to our email provider (see{" "}
+          backup providers. When we email you, our email provider receives your
+          address and the message, which may include your CineXplorer username
+          (see{" "}
           <TextLink to="#who-else-handles-your-data">
             Who else handles your data
           </TextLink>
@@ -234,11 +238,13 @@ export default function PrivacyPolicy() {
           sign-ups, sign-ins, verification email resends, password resets and
           error reports by IP address. For sign-ups and password reset requests
           it also counts by a scrambled form of the email address you enter. It
-          counts saves to your lists by account. For password session renewal,
-          the server counts by the account tied to a valid signed-in session
-          cookie when one is present, and by IP address otherwise. Each count
-          ends within a minute to a day of the last request it counted,
-          depending on the limit.
+          uses a scrambled form of the address Google supplies to limit the
+          existing-account notice described under Email. The attempt counts even
+          if delivery fails. It counts saves to your lists by account. For
+          password session renewal, the server counts by the account tied to a
+          valid signed-in session cookie when one is present, and by IP address
+          otherwise. Each count ends within a minute to a day of the last
+          request it counted, depending on the limit.
         </List.Item>
       </List.Root>
       <LegalHeading as="h3">Email</LegalHeading>
@@ -248,9 +254,13 @@ export default function PrivacyPolicy() {
         when you sign up (and again if you ask) and a welcome email once you've
         verified. We also send password-reset emails. If someone asks for a
         password reset for an address that has no account, we email that address
-        to say so. Beyond these, we'd write to you only about the service
-        itself, such as a change to this policy or the site closing, through the
-        same email provider. We don't send newsletters or marketing.
+        to say so. If you try to sign in with a Google account that hasn't been
+        linked to CineXplorer and Google sends an unverified email address that
+        matches an existing account, we email that address a link to start
+        password recovery. We limit how often we send this notice. Beyond these,
+        we'd write to you only about the service itself, such as a change to
+        this policy or the site closing, through the same email provider. We
+        don't send newsletters or marketing.
       </Text>
       <LegalHeading as="h2">Cookies and browser storage</LegalHeading>
       <Text>
@@ -423,7 +433,10 @@ export default function PrivacyPolicy() {
           browser reaches our account checks and the server saves the removal.
           If you cancel the later attempt or it fails, those details can remain
           in your session. Starting another sign-in can extend the session's
-          expiry.
+          expiry. In the existing-account case described under Email, the
+          pending verification step expires after 15 minutes. The email address
+          can stay in the session until we clear that step or remove the expired
+          session.
         </List.Item>
         <List.Item>
           <strong>Server logs:</strong> each service keeps about its most recent

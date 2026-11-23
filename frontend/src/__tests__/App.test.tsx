@@ -71,6 +71,98 @@ function startPendingProviderReturn() {
   return response;
 }
 
+it("offers password recovery when Google sign-in returns signed out", async () => {
+  sessionStorage.setItem("oauth_in_progress", "google");
+  server.use(
+    http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, () =>
+      HttpResponse.json(
+        {
+          status: 401,
+          data: { flows: [{ id: "verify_email", is_pending: true }] },
+          meta: { is_authenticated: false },
+        },
+        { status: 401 },
+      ),
+    ),
+  );
+  startAt("/login?next=%2Fwatchlist");
+
+  expect(
+    await screen.findByText(
+      "You're still signed out. Try again in a few minutes or choose Forgot password.",
+    ),
+  ).toBeVisible();
+  expect(
+    screen.getByRole("link", { name: "Forgot password?" }),
+  ).toHaveAttribute("href", "/forgot-password");
+  expect(window.location.pathname + window.location.search).toBe(
+    "/login?next=%2Fwatchlist",
+  );
+});
+
+it.each([
+  ["a server error", () => new HttpResponse(null, { status: 500 })],
+  ["a network error", () => HttpResponse.error()],
+] as const)(
+  "does not infer a signed-out Google return from %s",
+  async (_, respond) => {
+    sessionStorage.setItem("oauth_in_progress", "google");
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, respond),
+    );
+    startAt("/login");
+
+    await screen.findByRole("link", { name: "Sign in" });
+    await screen.findByRole("textbox", { name: "Username or Email Address" });
+    expect(
+      screen.queryByText(/You're still signed out/),
+    ).not.toBeInTheDocument();
+    expect(window.location.search).toBe("");
+  },
+);
+
+it("shows the normal Login form to a signed-out visitor arriving from Google Search", async () => {
+  vi.spyOn(document, "referrer", "get").mockReturnValue(
+    "https://www.google.com/",
+  );
+  server.use(
+    http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, () =>
+      HttpResponse.json(
+        {
+          status: 401,
+          data: { flows: [{ id: "login" }] },
+          meta: { is_authenticated: false },
+        },
+        { status: 401 },
+      ),
+    ),
+  );
+  startAt("/login");
+
+  await screen.findByRole("link", { name: "Sign in" });
+  await screen.findByRole("textbox", { name: "Username or Email Address" });
+  expect(screen.queryByText(/You're still signed out/)).not.toBeInTheDocument();
+  expect(window.location.search).toBe("");
+});
+
+it.each([
+  ["verify", "Verify Your Email"],
+  ["reset", "Set New Password"],
+])(
+  "keeps a Login %s link with a leftover Google sign-in marker",
+  async (action, title) => {
+    const address = `/login?${action}=fixture-email-key`;
+    sessionStorage.setItem("oauth_in_progress", "google");
+    startAt(address);
+
+    await waitFor(() =>
+      expect(sessionStorage.getItem("oauth_in_progress")).toBeNull(),
+    );
+    expect(window.location.pathname + window.location.search).toBe(address);
+    expect(await screen.findByRole("dialog", { name: title })).toBeVisible();
+  },
+);
+
 it("contains a shell failure in the last-resort full-page display", async () => {
   window.__dismissPreloadOverlay = () => {
     throw new Error("Shell failed");

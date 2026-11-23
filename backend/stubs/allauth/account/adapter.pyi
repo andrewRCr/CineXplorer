@@ -21,12 +21,16 @@ from django.http import HttpRequest
 
 if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
+    from django.contrib.auth.models import AbstractBaseUser
+    from django.http.response import HttpResponseBase
 
 class DefaultAccountAdapter:
     """Base adapter class for django-allauth account functionality.
 
     Custom adapters should inherit from this class and override specific methods.
     """
+
+    request: HttpRequest | None
 
     def __init__(self, request: HttpRequest | None = None) -> None: ...
     def get_client_ip(self, request: HttpRequest) -> str: ...
@@ -47,6 +51,10 @@ class DefaultAccountAdapter:
     ) -> None:
         """Send email using Django's email backend."""
 
+    def send_account_already_exists_mail(self, email: str) -> None: ...
+    def respond_email_verification_sent(
+        self, request: HttpRequest, user: AbstractBaseUser | None
+    ) -> HttpResponseBase: ...
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation
     ) -> str:

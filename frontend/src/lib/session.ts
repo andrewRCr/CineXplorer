@@ -84,11 +84,11 @@ const isUserProfile = (value: unknown): value is UserProfile => {
 };
 
 /**
- * Read a valid provider profile or treat the response as anonymous.
+ * A 401 confirms an anonymous provider session. An unavailable read has no result.
  */
 async function checkOAuthSession(
     signal?: AbortSignal,
-): Promise<UserProfile | null> {
+): Promise<UserProfile | null | undefined> {
     try {
         const response = await fetch(ALLAUTH_SESSION_URL, {
             method: "GET",
@@ -96,6 +96,7 @@ async function checkOAuthSession(
             signal,
         });
 
+        if (response.status === 401) return null;
         if (response.ok) {
             const data: unknown = await response.json();
             if (
@@ -108,14 +109,15 @@ async function checkOAuthSession(
                 return data.data.user;
             }
         }
-        return null;
     } catch {
-        return null;
+        return undefined;
     }
+    return undefined;
 }
 
 export interface FirstReadContext {
     providerReturn: boolean;
+    requireConfirmedProviderSignOut?: boolean;
 }
 
 export async function readSession(
@@ -133,8 +135,10 @@ export async function readSession(
         ? beginSessionResolution(signal)
         : undefined;
     try {
+        const provider = firstRead?.providerReturn
+            ? await checkOAuthSession(signal)
+            : undefined;
         if (firstRead?.providerReturn) {
-            const provider = await checkOAuthSession(signal);
             assertCurrent();
             if (provider) {
                 invalidateAuthSession();
@@ -144,25 +148,28 @@ export async function readSession(
             }
         }
         const { access_token } = getAuthTokens();
-        if (!access_token) {
-            if (firstRead?.providerReturn) return null;
+        if (access_token) {
+            try {
+                if (areTokensExpired()) await refreshAccessToken();
+                assertCurrent();
+                const user = await authService.getUserProfile(signal);
+                assertCurrent();
+                return user;
+            } catch (error) {
+                assertCurrent();
+                if (isCancel(error)) throw error;
+                clearAuthTokens();
+                if (firstRead) void changeOfUser(client);
+            }
+        } else if (!firstRead?.providerReturn) {
             const user = await checkOAuthSession(signal);
             assertCurrent();
-            return user;
+            return user ?? null;
         }
-        try {
-            if (areTokensExpired()) await refreshAccessToken();
-            assertCurrent();
-            const user = await authService.getUserProfile(signal);
-            assertCurrent();
-            return user;
-        } catch (error) {
-            assertCurrent();
-            if (isCancel(error)) throw error;
-            clearAuthTokens();
-            if (firstRead) void changeOfUser(client);
-            return null;
+        if (firstRead?.requireConfirmedProviderSignOut && provider !== null) {
+            throw new Error("Could not confirm the provider session");
         }
+        return null;
     } finally {
         release?.();
     }

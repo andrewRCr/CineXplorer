@@ -31,7 +31,7 @@ import {
 } from "@/utilities/csrfTokenFetcher";
 import { ROUTES } from "@/constants/routes";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { matchPath, useNavigate, useLocation } from "react-router";
 import type {
     AuthStateProps,
     AuthStatus,
@@ -64,18 +64,35 @@ import {
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import * as authService from "@/services/authService";
 
+function blocksOAuthNavigation(pathname: string, search: string): boolean {
+    if (isLegalDocumentPath(pathname)) return true;
+    if (!matchPath(ROUTES.LOGIN, pathname)) return false;
+    const params = new URLSearchParams(search);
+    return params.has("verify") || params.has("reset");
+}
+
 export function useAuth(): AuthStateProps {
     const navigate = useNavigate();
     const location = useLocation();
-    const [firstRead] = useState(() => ({
-        providerReturn:
-            location.pathname === ROUTES.LOGIN &&
-            (document.referrer.includes("google.com") ||
-                document.referrer.includes("github.com") ||
-                sessionStorage.getItem("oauth_in_progress") !== null),
-        returnPath: returnPathFrom(location.search),
-        locationKey: location.key,
-    }));
+    const [firstRead] = useState(() => {
+        const onLogin = location.pathname === ROUTES.LOGIN;
+        const provider = sessionStorage.getItem("oauth_in_progress");
+        const fromGoogle = document.referrer.includes("google.com");
+        return {
+            providerReturn:
+                onLogin &&
+                (fromGoogle ||
+                    document.referrer.includes("github.com") ||
+                    provider !== null),
+            requireConfirmedProviderSignOut:
+                onLogin &&
+                provider === "google" &&
+                !new URLSearchParams(location.search).has("error") &&
+                !blocksOAuthNavigation(location.pathname, location.search),
+            returnPath: returnPathFrom(location.search),
+            locationKey: location.key,
+        };
+    });
     const [initialStatus] = useState<AuthStatus>(() => {
         // Detect access tokens in localStorage, then sessionStorage.
         const { access_token } = getAuthTokens();
@@ -98,7 +115,7 @@ export function useAuth(): AuthStateProps {
     const session = useQuery(sessionQuery(firstRead));
     const user = session.data ?? null;
     const status: AuthStatus =
-        session.data === undefined
+        session.data === undefined && !session.isError
             ? initialStatus
             : session.data
               ? "authenticated"
@@ -147,15 +164,19 @@ export function useAuth(): AuthStateProps {
         const hasOAuthError = Boolean(params.get("error"));
         // Browser history can change before React Router commits the location.
         const canNavigate =
-            !isLegalDocumentPath(location.pathname) &&
-            !isLegalDocumentPath(window.location.pathname);
+            !blocksOAuthNavigation(location.pathname, location.search) &&
+            !blocksOAuthNavigation(
+                window.location.pathname,
+                window.location.search,
+            );
         if (hasOAuthError && canNavigate) {
             // Use the fixed failure code in reports because the URL is user-controlled.
             logger.error("OAuth authentication failed", { error: "oauth" });
             void navigate(loginPathFor(safeReturnPath(params.get("next"))), {
                 state: {
                     oauthError: true,
-                    message: "OAuth authentication failed. Please try again.",
+                    message:
+                        "Sign-in failed. Try again in a few minutes or choose Forgot password.",
                 },
             });
             return;
@@ -165,11 +186,28 @@ export function useAuth(): AuthStateProps {
             sessionStorage.removeItem("oauth_start_time");
         };
         if (firstRead.providerReturn && !hasHandledOAuthRef.current) {
-            if (session.data === undefined) return;
+            if (session.data === undefined && !session.isError) return;
             hasHandledOAuthRef.current = true;
             clearProviderFlags();
-            if (canNavigate && session.data && !getAuthTokens().access_token) {
+            if (!canNavigate) return;
+            if (session.data && !getAuthTokens().access_token) {
                 void navigate(firstRead.returnPath);
+            } else if (
+                session.data === null &&
+                !session.isError &&
+                firstRead.requireConfirmedProviderSignOut &&
+                location.key === firstRead.locationKey &&
+                location.pathname === ROUTES.LOGIN &&
+                window.location.pathname === ROUTES.LOGIN
+            ) {
+                void navigate(loginPathFor(firstRead.returnPath), {
+                    replace: true,
+                    state: {
+                        oauthError: true,
+                        message:
+                            "You're still signed out. Try again in a few minutes or choose Forgot password.",
+                    },
+                });
             }
         } else if (
             location.pathname === ROUTES.LOGIN &&
@@ -184,6 +222,7 @@ export function useAuth(): AuthStateProps {
         location.search,
         navigate,
         session.data,
+        session.isError,
     ]);
 
     const logout = useCallback(async () => {

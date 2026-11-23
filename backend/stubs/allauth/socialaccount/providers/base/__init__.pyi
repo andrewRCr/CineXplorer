@@ -6,3 +6,5 @@ Re-check against socialaccount/providers/base/provider.py on upgrades.
 
 class Provider:
     id: str
+
+class ProviderException(Exception): ...  # noqa: N818 - upstream exception name

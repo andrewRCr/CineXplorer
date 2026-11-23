@@ -7,22 +7,28 @@ GitHub accounts retain only the provider's primary verified email.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from allauth.socialaccount.providers.base import ProviderException
 from django.conf import settings
-from django.http import HttpRequest
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import PermissionDenied
+from django.http import HttpRequest, HttpResponseRedirect
 
 if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
     from allauth.socialaccount.models import SocialLogin
     from allauth.socialaccount.providers.base import Provider
-    from django.contrib.auth.models import AbstractUser
+    from django.contrib.auth.models import AbstractBaseUser, AbstractUser
+    from django.http.response import HttpResponseBase
 
 
 EMAIL_DELIVERY_FAILURE_MESSAGE = "We couldn't send the email. Please try again in a few minutes."
+logger = logging.getLogger("cinexplorer.auth")
 
 
 class EmailDeliveryError(Exception):
@@ -35,6 +41,8 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     Overrides:
     - get_email_confirmation_url(): Points verification links to frontend
     - send_mail(): Verifies email was actually sent, raises on failure
+    - send_account_already_exists_mail(): Uses the OAuth error flow for failed Google notices
+    - respond_email_verification_sent(): Returns the Google token flow to Login
     - add_message(): Skips flash notices the frontend does not display
 
     Email delivery is handled by Django's email backend configured in
@@ -64,10 +72,16 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         Raises:
             EmailDeliveryError: If email backend returns 0 (not sent)
         """
-        # Inject expiry_days for templates that display verification expiration
-        context["expiry_days"] = getattr(settings, "EMAIL_VERIFICATION_EXPIRY_DAYS", 3)
+        request = self.request
+        mail_context = {
+            "request": request,
+            "email": email,
+            "current_site": get_current_site(request),
+            **context,
+            "expiry_days": getattr(settings, "EMAIL_VERIFICATION_EXPIRY_DAYS", 3),
+        }
 
-        msg = self.render_mail(template_prefix, email, context)
+        msg = self.render_mail(template_prefix, email, mail_context)
         sent_count = msg.send()
         if sent_count == 0:
             # Name the template and the user, never the address: this text reaches the logs.
@@ -76,6 +90,37 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             if user_id is not None:
                 detail += f", user ID: {user_id}"
             raise EmailDeliveryError(f"Email delivery failed ({detail})")
+
+    def send_account_already_exists_mail(self, email: str) -> None:
+        try:
+            super().send_account_already_exists_mail(email)
+        except EmailDeliveryError:
+            request = self.request
+            if (
+                request is None
+                or request.resolver_match is None
+                or request.resolver_match.url_name
+                not in {"google_callback", "google_login_by_token"}
+            ):
+                raise
+            logger.error("%s | endpoint=%s", EMAIL_DELIVERY_FAILURE_MESSAGE, request.path)  # noqa: TRY400 - OAuth tracebacks can contain private data
+            if request.resolver_match.url_name == "google_login_by_token":
+                # The token view renders its generic sign-in error for permission errors.
+                raise PermissionDenied from None
+            # The OAuth callback still has the validated state and returns to its destination.
+            raise ProviderException from None
+
+    def respond_email_verification_sent(
+        self, request: HttpRequest, user: AbstractBaseUser | None
+    ) -> HttpResponseBase:
+        if (
+            request.resolver_match is not None
+            and request.resolver_match.url_name == "google_login_by_token"
+        ):
+            # The token view returns this directly. Headless mode disables the verification page.
+            redirect_url = settings.HEADLESS_FRONTEND_URLS["socialaccount_login_error"]
+            return HttpResponseRedirect(redirect_url)
+        return super().respond_email_verification_sent(request, user)
 
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation

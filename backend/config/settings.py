@@ -310,13 +310,20 @@ ACCOUNT_ADAPTER = "apps.authentication.adapters.CustomAccountAdapter"
 # Provides JSON API endpoints instead of HTML templates
 # Serve frontend-oriented authentication endpoints without account templates
 HEADLESS_ONLY = True
-HEADLESS_FRONTEND_URLS = {
-    # Note: account_confirm_email is handled by CustomAccountAdapter.get_email_confirmation_url()
-    # which generates /login?verify={key} - no entry needed here
-    "account_reset_password_from_key": f"{FRONTEND_URL}/login?reset={{key}}",
-    "account_signup": f"{FRONTEND_URL}/auth/signup",
-    "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
-}
+
+
+def build_headless_frontend_urls(frontend_url: str) -> dict[str, str]:
+    origin = frontend_url.rstrip("/")
+    return {
+        # CustomAccountAdapter supplies the email confirmation link.
+        "account_reset_password": f"{origin}/forgot-password",
+        "account_reset_password_from_key": f"{origin}/login?reset={{key}}",
+        "account_signup": f"{origin}/register",
+        "socialaccount_login_error": f"{origin}/login?error=oauth",
+    }
+
+
+HEADLESS_FRONTEND_URLS = build_headless_frontend_urls(FRONTEND_URL)
 
 # Social account settings
 SOCIALACCOUNT_ADAPTER = "apps.authentication.adapters.CustomSocialAccountAdapter"

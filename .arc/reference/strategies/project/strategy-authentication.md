@@ -440,20 +440,10 @@ def get_user_movies(request: HttpRequest):
 `get_current_user` and `get_current_user_optional` run the same check, raising `401` or returning `None` when
 neither credential is present.
 
-**Django-allauth Configuration** (`backend/config/settings.py`):
-
-```python
-# Headless mode (disables HTML views, keeps OAuth callbacks)
-HEADLESS_ONLY = True
-
-# Frontend URLs for redirects
-HEADLESS_FRONTEND_URLS = {
-    # Email confirmation links come from CustomAccountAdapter.get_email_confirmation_url()
-    "account_reset_password_from_key": f"{FRONTEND_URL}/login?reset={{key}}",
-    "account_signup": f"{FRONTEND_URL}/auth/signup",
-    "socialaccount_login_error": f"{FRONTEND_URL}/login?error=oauth",
-}
-```
+Headless mode disables allauth's HTML views and keeps its OAuth callbacks. The allauth URL map sets the frontend
+destinations for password recovery, registration and OAuth errors. The account adapter supplies confirmation links.
+The Google token endpoint uses the configured sign-in error destination when verification is still pending.
+See the current configuration in [Django settings](../../../../backend/config/settings.py).
 
 Session-cookie security and origin configuration follow the [CORS configuration](#cors-configuration) above.
 
@@ -490,16 +480,18 @@ credential/version/cancellation rule in Token Refresh Flow above.
 stale, does not retry, and does not refetch on mount, focus or reconnect. Its first read receives the initial route's
 provider-return context. On a provider return it asks allauth first and invalidates prior authentication work before
 clearing stored password tokens if it finds the provider's user. Otherwise it renews an expired stored token and
-reads the password profile, or asks allauth when no token exists. A failed password read clears stored tokens and
-returns `null`; it does not fall through to provider discovery. Cancellation or an obsolete authentication-session
-version cannot land or clear credentials.
+reads the password profile, or asks allauth when no token exists. A failed password read clears stored tokens
+and ends that read. Cancellation or an obsolete authentication-session version cannot land or clear credentials.
 
-The status derives from the query: a profile is `authenticated`, `null` is `anonymous`. While its data is still
-undefined, it is `authenticated` only with a current stored token and sign-in flag, and `resolving` otherwise.
+The status derives from the query: a profile is `authenticated`, `null` is `anonymous`. While the first read is
+pending, it is `authenticated` only with a current stored token and sign-in flag, and `resolving` otherwise.
 `isAuthenticated` and the hook's public commands retain their shapes for context consumers. The OAuth callback
-effect reacts to this first result, clears provider-flow flags and handles feedback and navigation. While the privacy
-policy or terms are open, OAuth errors and provider sign-in completion leave the document open. The OAuth callback
-effect and Login's signed-in redirect check the browser destination when a legal URL is ahead of React Router's
+effect reacts to this first result, clears provider-flow flags and handles feedback and navigation. A Google attempt
+from the same tab receives recovery guidance only when the provider session endpoint confirms an anonymous session.
+When that session read is unavailable and no password profile can be read, the query settles with an error and
+Login shows its normal form. While the privacy policy or terms are open, OAuth errors and provider sign-in
+completion leave the document open. The OAuth callback effect and Login's signed-in redirect check the browser
+destination when a legal URL is ahead of React Router's
 committed location. Only the 60-second credential-renewal effect makes a network request.
 
 Password sign-in, registration, email verification and password reset also check the live destination at

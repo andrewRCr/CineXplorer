@@ -21,6 +21,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
+from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -29,6 +31,7 @@ from apps.authentication.adapters import CustomAccountAdapter, EmailDeliveryErro
 from apps.authentication.tests.fixtures import get_resend_token_from_login
 
 if TYPE_CHECKING:
+    from django.core.mail import EmailMessage
     from django.test import Client
 
     from apps.users.models import User
@@ -460,6 +463,28 @@ def test_registration_email_contains_username(
 
     # Verify username appears in email
     assert register_data["username"] in email_body
+
+
+@pytest.mark.django_db
+def test_password_reset_for_unknown_email_sends_registration_link(
+    api_client: Client,
+    mailoutbox: list[EmailMessage],
+) -> None:
+    email = "unknown@example.com"
+    response = api_client.post(
+        "/_allauth/browser/v1/auth/password/request",
+        {"email": email},
+        content_type="application/json",
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert len(mailoutbox) == 1
+    message = mailoutbox[0]
+    assert message.to == [email]
+    assert "Unknown Account" in message.subject
+    assert f"Hello from {Site.objects.get_current().name}!" in message.body
+    assert email in message.body
+    assert f"{settings.FRONTEND_URL}/register" in message.body.split()
 
 
 # ============================================================================

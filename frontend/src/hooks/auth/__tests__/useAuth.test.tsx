@@ -339,7 +339,7 @@ describe("returning after a provider sign-in", () => {
     await waitFor(() => expect(result.current.location.pathname).toBe("/"));
   });
 
-  it("keeps the requested page and reports a fixed provider error code", async () => {
+  it("keeps the requested page, offers recovery and reports a fixed provider error code", async () => {
     const reports: unknown[] = [];
     const previousConfig = logger.getEnvironmentInfo().config;
     server.use(
@@ -363,6 +363,8 @@ describe("returning after a provider sign-in", () => {
       await waitFor(() =>
         expect(result.current.location.state).toMatchObject({
           oauthError: true,
+          message:
+            "Sign-in failed. Try again in a few minutes or choose Forgot password.",
         }),
       );
       expect(

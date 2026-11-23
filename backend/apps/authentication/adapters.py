@@ -17,13 +17,14 @@ from allauth.socialaccount.providers.base import ProviderException
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import PermissionDenied
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponseRedirect
 
 if TYPE_CHECKING:
     from allauth.account.models import EmailConfirmation
     from allauth.socialaccount.models import SocialLogin
     from allauth.socialaccount.providers.base import Provider
-    from django.contrib.auth.models import AbstractUser
+    from django.contrib.auth.models import AbstractBaseUser, AbstractUser
+    from django.http.response import HttpResponseBase
 
 
 EMAIL_DELIVERY_FAILURE_MESSAGE = "We couldn't send the email. Please try again in a few minutes."
@@ -41,6 +42,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
     - get_email_confirmation_url(): Points verification links to frontend
     - send_mail(): Verifies email was actually sent, raises on failure
     - send_account_already_exists_mail(): Uses the OAuth error flow for failed Google notices
+    - respond_email_verification_sent(): Returns the Google token flow to Login
     - add_message(): Skips flash notices the frontend does not display
 
     Email delivery is handled by Django's email backend configured in
@@ -107,6 +109,18 @@ class CustomAccountAdapter(DefaultAccountAdapter):
                 raise PermissionDenied from None
             # The OAuth callback still has the validated state and returns to its destination.
             raise ProviderException from None
+
+    def respond_email_verification_sent(
+        self, request: HttpRequest, user: AbstractBaseUser | None
+    ) -> HttpResponseBase:
+        if (
+            request.resolver_match is not None
+            and request.resolver_match.url_name == "google_login_by_token"
+        ):
+            # The token view returns this directly. Headless mode disables the verification page.
+            redirect_url = settings.HEADLESS_FRONTEND_URLS["socialaccount_login_error"]
+            return HttpResponseRedirect(redirect_url)
+        return super().respond_email_verification_sent(request, user)
 
     def get_email_confirmation_url(
         self, request: HttpRequest | None, emailconfirmation: EmailConfirmation

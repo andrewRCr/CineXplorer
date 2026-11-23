@@ -84,10 +84,11 @@ export function useAuth(): AuthStateProps {
                 (fromGoogle ||
                     document.referrer.includes("github.com") ||
                     provider !== null),
-            offerGoogleRecovery:
+            requireConfirmedProviderSignOut:
                 onLogin &&
-                (provider === "google" || (provider === null && fromGoogle)) &&
-                !new URLSearchParams(location.search).has("error"),
+                provider === "google" &&
+                !new URLSearchParams(location.search).has("error") &&
+                !blocksOAuthNavigation(location.pathname, location.search),
             returnPath: returnPathFrom(location.search),
             locationKey: location.key,
         };
@@ -114,7 +115,7 @@ export function useAuth(): AuthStateProps {
     const session = useQuery(sessionQuery(firstRead));
     const user = session.data ?? null;
     const status: AuthStatus =
-        session.data === undefined
+        session.data === undefined && !session.isError
             ? initialStatus
             : session.data
               ? "authenticated"
@@ -185,7 +186,7 @@ export function useAuth(): AuthStateProps {
             sessionStorage.removeItem("oauth_start_time");
         };
         if (firstRead.providerReturn && !hasHandledOAuthRef.current) {
-            if (session.data === undefined) return;
+            if (session.data === undefined && !session.isError) return;
             hasHandledOAuthRef.current = true;
             clearProviderFlags();
             if (!canNavigate) return;
@@ -193,7 +194,8 @@ export function useAuth(): AuthStateProps {
                 void navigate(firstRead.returnPath);
             } else if (
                 session.data === null &&
-                firstRead.offerGoogleRecovery &&
+                !session.isError &&
+                firstRead.requireConfirmedProviderSignOut &&
                 location.key === firstRead.locationKey &&
                 location.pathname === ROUTES.LOGIN &&
                 window.location.pathname === ROUTES.LOGIN
@@ -220,6 +222,7 @@ export function useAuth(): AuthStateProps {
         location.search,
         navigate,
         session.data,
+        session.isError,
     ]);
 
     const logout = useCallback(async () => {

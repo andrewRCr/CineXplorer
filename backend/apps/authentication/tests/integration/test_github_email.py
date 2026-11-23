@@ -23,7 +23,11 @@ from django.test import Client, override_settings
 from requests import Response, Session
 
 from apps.authentication.tests.fixtures import create_social_app
-from apps.core.tests.email_transport import ERROR_RESPONSE_BODY, zeptomail_api_stand_in
+from apps.core.tests.email_transport import (
+    ACCEPTED_RESPONSE_BODY,
+    ERROR_RESPONSE_BODY,
+    zeptomail_api_stand_in,
+)
 from apps.core.tests.test_helpers import create_user, get_csrf_token
 from apps.users.models import User
 
@@ -328,12 +332,24 @@ def test_unverified_google_email_failed_delivery_preserves_return_destination(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("mail_status", "mail_body", "retry"),
+    [
+        pytest.param(201, ACCEPTED_RESPONSE_BODY, False, id="accepted"),
+        pytest.param(201, ACCEPTED_RESPONSE_BODY, True, id="cooldown"),
+        pytest.param(400, ERROR_RESPONSE_BODY, False, id="refused"),
+    ],
+)
 @override_settings(
+    ACCOUNT_RATE_LIMITS={},
     EMAIL_BACKEND="apps.core.email_backend.ZeptoMailEmailBackend",
     ZOHO_ZEPTOMAIL_API_KEY_TOKEN="placeholder-mail-key",
 )
-def test_google_token_sign_in_gets_generic_error_when_notice_delivery_fails(
+def test_google_token_sign_in_redirects_when_email_verification_is_required(
     monkeypatch: pytest.MonkeyPatch,
+    mail_status: int,
+    mail_body: str,
+    retry: bool,
 ) -> None:
     user = create_user()
     app = create_social_app("google")
@@ -375,10 +391,13 @@ def test_google_token_sign_in_gets_generic_error_when_notice_delivery_fails(
     client = Client(enforce_csrf_checks=True, raise_request_exceptions=False)
     csrf_token = get_csrf_token(client)
     client.cookies["g_csrf_token"] = "test-google-csrf"
-    with zeptomail_api_stand_in(status=400, body=ERROR_RESPONSE_BODY) as transport:
+    payload = {"credential": credential, "g_csrf_token": "test-google-csrf"}
+    with zeptomail_api_stand_in(status=mail_status, body=mail_body) as transport:
+        if retry:
+            client.post("/accounts/google/login/token/", payload, HTTP_X_CSRFTOKEN=csrf_token)
         response = client.post(
             "/accounts/google/login/token/",
-            {"credential": credential, "g_csrf_token": "test-google-csrf"},
+            payload,
             HTTP_X_CSRFTOKEN=csrf_token,
         )
 
@@ -386,6 +405,11 @@ def test_google_token_sign_in_gets_generic_error_when_notice_delivery_fails(
     assert response.status_code == 302
     location = urlparse(response["Location"])
     assert location._replace(query="").geturl() == f"{settings.FRONTEND_URL}/login"
-    assert parse_qs(location.query) == {"error": ["unknown"], "error_process": ["login"]}
+    expected_error = (
+        {"error": ["unknown"], "error_process": ["login"]}
+        if mail_status == 400
+        else {"error": ["oauth"]}
+    )
+    assert parse_qs(location.query) == expected_error
     assert not SocialAccount.objects.filter(provider="google").exists()
     assert client.get("/_allauth/browser/v1/auth/session").status_code == 401

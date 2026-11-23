@@ -101,6 +101,51 @@ it("offers password recovery when Google sign-in returns signed out", async () =
 });
 
 it.each([
+  ["a server error", () => new HttpResponse(null, { status: 500 })],
+  ["a network error", () => HttpResponse.error()],
+] as const)(
+  "does not infer a signed-out Google return from %s",
+  async (_, respond) => {
+    sessionStorage.setItem("oauth_in_progress", "google");
+    server.use(
+      http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, respond),
+    );
+    startAt("/login");
+
+    await screen.findByRole("link", { name: "Sign in" });
+    await screen.findByRole("textbox", { name: "Username or Email Address" });
+    expect(
+      screen.queryByText(/You're still signed out/),
+    ).not.toBeInTheDocument();
+    expect(window.location.search).toBe("");
+  },
+);
+
+it("shows the normal Login form to a signed-out visitor arriving from Google Search", async () => {
+  vi.spyOn(document, "referrer", "get").mockReturnValue(
+    "https://www.google.com/",
+  );
+  server.use(
+    http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, () =>
+      HttpResponse.json(
+        {
+          status: 401,
+          data: { flows: [{ id: "login" }] },
+          meta: { is_authenticated: false },
+        },
+        { status: 401 },
+      ),
+    ),
+  );
+  startAt("/login");
+
+  await screen.findByRole("link", { name: "Sign in" });
+  await screen.findByRole("textbox", { name: "Username or Email Address" });
+  expect(screen.queryByText(/You're still signed out/)).not.toBeInTheDocument();
+  expect(window.location.search).toBe("");
+});
+
+it.each([
   ["verify", "Verify Your Email"],
   ["reset", "Set New Password"],
 ])(

@@ -72,7 +72,7 @@ class BaseTMDBService:
         Args:
             api_response: ApiResponse object from TMDB client
             operation: Name of the operation for error context
-            **context: Additional context for logging (e.g., page=1, query="term")
+            **context: Additional context for logging (e.g., page=1), never text a visitor typed
 
         Returns:
             Validated JSON data dictionary

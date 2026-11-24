@@ -53,7 +53,7 @@ if (args.includes('-p')) {
 }
 const project = existsSync(state) ? readFileSync(state, 'utf8') : '';
 appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({
-    command, args, cwd: process.cwd(), envFile: envFile && readFileSync(envFile, 'utf8'),
+    command, args, ppid: process.ppid, cwd: process.cwd(), envFile: envFile && readFileSync(envFile, 'utf8'),
     env: Object.fromEntries(['COMPOSE_ENV_FILES', 'COMPOSE_FILE', 'COMPOSE_PROFILES', 'COMPOSE_PROJECT_NAME', 'E2E_BASE_URL',
         'E2E_TARGET', 'E2E_USERNAME', 'LEAK']
         .filter((key) => key in process.env).map((key) => [key, process.env[key]])),
@@ -501,6 +501,7 @@ test("says what it couldn't remove, and still returns the check's status", (t) =
     assert.match(result.stdout, new RegExp(`^stack-check: couldn't remove all of ${project}: containers: stub command failed: rm$`, "m"));
     assert.doesNotMatch(result.stdout, /removed the stack/);
     assert.match(lastLine(result.stdout), /^stack-check: peak memory /);
+    assert.deepEqual(readdirSync(f.runs), []);
 });
 
 // A build's working container: buildah's record of its build arguments, under podman's graph root
@@ -538,6 +539,62 @@ function removedBuilds(f) {
 
 // Unique to this test run, since a teardown signals processes that name its project
 const RUN = `cinexplorer-run-8500-${randomBytes(3).toString("hex")}`;
+const FAIL_IMAGE_LIST = { CX_FAIL: `label=cinexplorer.stack-check.project=${RUN}` };
+const IMAGE_LIST_PROBLEM = `stack-check: couldn't remove all of ${RUN}: images: stub command failed: ${FAIL_IMAGE_LIST.CX_FAIL}`;
+
+test("a failed teardown keeps the run's folder and owner", (t) => {
+    const f = fixture(t);
+    write(f.runs, `${RUN}/owner`, DEAD);
+    const result = f.invoke(["--tear-down", RUN], FAIL_IMAGE_LIST);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), IMAGE_LIST_PROBLEM);
+    assert.deepEqual(readdirSync(f.runs), [RUN]);
+    assert.equal(readFileSync(join(f.runs, RUN, "owner"), "utf8"), DEAD);
+});
+
+test("the next check reports a successful retry and removes the run's folder", (t) => {
+    const f = fixture(t);
+    write(f.runs, `${RUN}/owner`, DEAD);
+    const teardown = f.invoke(["--tear-down", RUN], FAIL_IMAGE_LIST);
+    assert.equal(lastLine(teardown.stdout), IMAGE_LIST_PROBLEM);
+    const result = f.invoke(["backend"]);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.deepEqual(result.stdout.split("\n").filter((line) => line.includes(RUN)),
+        [`stack-check: removed ${RUN}, left by a run that ended`]);
+    assert.deepEqual(readdirSync(f.runs), []);
+});
+
+test("a failed retry reports the problem once and removes the run's folder", (t) => {
+    const f = fixture(t);
+    write(f.runs, `${RUN}/owner`, DEAD);
+    const teardown = f.invoke(["--tear-down", RUN], FAIL_IMAGE_LIST);
+    assert.equal(lastLine(teardown.stdout), IMAGE_LIST_PROBLEM);
+    const retry = f.invoke(["backend"], FAIL_IMAGE_LIST);
+    assert.equal(retry.status, 0, retry.stdout + retry.stderr);
+    assert.deepEqual(retry.stdout.split("\n").filter((line) => line.includes(RUN)), [IMAGE_LIST_PROBLEM]);
+    assert.deepEqual(readdirSync(f.runs), []);
+    const later = f.invoke(["backend"], FAIL_IMAGE_LIST);
+    assert.equal(later.status, 0, later.stdout + later.stderr);
+    assert.ok(!(later.stdout + later.stderr).includes(RUN));
+});
+
+test("a successful teardown removes the run's folder", (t) => {
+    const f = fixture(t);
+    write(f.runs, `${RUN}/owner`, DEAD);
+    const result = f.invoke(["--tear-down", RUN]);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
+    assert.deepEqual(readdirSync(f.runs), []);
+});
+
+test("the next check leaves a run with a live owner alone", (t) => {
+    const f = fixture(t);
+    write(f.runs, `${RUN}/owner`, LIVE);
+    const result = f.invoke(["backend"]);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.ok(!(result.stdout + result.stderr).includes(RUN));
+    assert.equal(readFileSync(join(f.runs, RUN, "owner"), "utf8"), LIVE);
+});
 
 test("removes only its run's build containers", (t) => {
     const f = fixture(t);
@@ -761,10 +818,12 @@ test("leaves image builds to Docker, and says a Docker client on podman's servic
     assert.equal(f.calls().filter((call) => call.args.includes("--external")).length, 0);
 });
 
-test("says when a teardown can't tell the engine", (t) => {
+test("reports an engine detection failure and keeps the run's folder", (t) => {
     const f = fixture(t);
+    write(f.runs, `${RUN}/owner`, DEAD);
     const result = f.invoke(["--tear-down", RUN], { CX_FAIL: "version" });
     assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: builds: couldn't tell the engine: stub command failed: version`);
+    assert.equal(readFileSync(join(f.runs, RUN, "owner"), "utf8"), DEAD);
 });
 
 test("the stack's Compose files give both builds their run's owner and project", (t) => {
@@ -822,6 +881,30 @@ test("tears the stack down in the background when cancelled", async (t) => {
     }, 3000);
     await until(() => removals(f.calls()).length === 3 && readdirSync(f.runs).length === 0);
     assert.deepEqual(removals(f.calls()), [project, project, project]);
+});
+
+test("a failed background teardown leaves the cancelled run for the next check to retry", async (t) => {
+    const f = fixture(t);
+    const child = f.launch(["backend"], { CX_PYTEST_SLEEP: "20000", CX_PROJECT_CONTAINERS: "c1", CX_FAIL: "rm" });
+    const exited = new Promise((resolve) => child.once("exit", resolve));
+    await until(() => existsSync(join(f.stateDir, "pytest.pid")));
+    const project = projectOf(compose(f.calls(), "up")[0]);
+    const ownerFile = join(f.runs, project, "owner");
+    const owner = readFileSync(ownerFile, "utf8");
+    child.kill("SIGTERM");
+    assert.equal(await exited, 143);
+    // The detached teardown has no output. Wait for the parent of the failing command to exit.
+    await until(() => {
+        const removal = f.calls().find(({ args }) => args[0] === "container" && args[1] === "rm");
+        return removal && !running(removal.ppid);
+    });
+    assert.deepEqual(readdirSync(f.runs), [project]);
+    assert.equal(readFileSync(ownerFile, "utf8"), owner);
+    const result = f.invoke(["backend"]);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.deepEqual(result.stdout.split("\n").filter((line) => line.includes(project)),
+        [`stack-check: removed ${project}, left by a run that ended`]);
+    assert.deepEqual(readdirSync(f.runs), []);
 });
 
 test("ends with the stack's peak memory", (t) => {

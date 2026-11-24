@@ -97,7 +97,7 @@ class KeywordService(BaseTMDBService):
             return KeywordListResponseSchema(page=1, total_pages=0, total_results=0, results=[])
 
         response = self._tmdb_client.get("search/keyword", {"query": query})
-        result = self._get_validated_response(response, operation="search_keywords", query=query)
+        result = self._get_validated_response(response, operation="search_keywords")
 
         # Ensure we have results key for proper processing
         if "results" not in result:

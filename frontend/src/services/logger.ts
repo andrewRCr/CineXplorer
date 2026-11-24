@@ -478,7 +478,14 @@ class Logger {
         let dataStr = "";
         if (entry.data) {
             try {
-                const jsonData = JSON.stringify(entry.data, null, 2);
+                const serializedData: unknown = JSON.parse(
+                    JSON.stringify(entry.data),
+                );
+                const jsonData = JSON.stringify(
+                    this.removeSensitiveFields(serializedData),
+                    null,
+                    2,
+                );
                 // Indent each line of the JSON for nice formatting
                 const indentedData = jsonData
                     .split("\n")
@@ -496,6 +503,7 @@ class Logger {
         // Use configured API base URL to route through proxy (avoid CORS issues)
         fetch(`${apiBaseUrl}/dev-logs/write/`, {
             method: "POST",
+            referrerPolicy: "no-referrer",
             headers: {
                 "Content-Type": "application/json",
             },

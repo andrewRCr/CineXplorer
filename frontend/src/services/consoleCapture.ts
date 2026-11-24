@@ -103,6 +103,7 @@ const sendConsoleLog = (level: ConsoleMethod, args: unknown[]): void => {
 
     void fetch(`${apiBaseUrl}/dev-logs/write/`, {
         method: "POST",
+        referrerPolicy: "no-referrer",
         headers: {
             "Content-Type": "application/json",
         },

@@ -3,7 +3,7 @@
 This middleware provides:
 - UUID-based correlation IDs for request tracking
 - Request start/completion logging with timing
-- User context and sensitive data filtering
+- Sensitive data filtering
 - Integration with the logging system for request correlation
 
 Usage:
@@ -15,7 +15,6 @@ import time
 import uuid
 from typing import Protocol, cast
 
-from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
@@ -38,7 +37,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
     This middleware:
     1. Generates a unique correlation ID for each request
-    2. Logs request start with method, path, and user context
+    2. Logs request start with method and path
     3. Logs request completion with status code and duration
     4. Filters sensitive data from logs
     5. Filters health check requests (unless they're unhealthy)
@@ -168,15 +167,11 @@ class RequestLoggingMiddleware(MiddlewareMixin):
         query_suffix = f"?{sanitized_query_string}" if sanitized_query_string else ""
         full_url = f"{request.path}{query_suffix}"
 
-        # Get user context (safely handle anonymous users)
-        user_info = self._get_user_context(request)
         client_ip = self._get_client_ip(request)
         user_agent = request.META.get("HTTP_USER_AGENT", "")[:100]  # Truncate long user agents
 
         # Create concise, informative log message
         log_message = f"{request.method} {full_url} from {client_ip}"
-        if user_info["is_authenticated"]:
-            log_message += f" (user: {user_info['username']})"
 
         # Log with structured data for detailed analysis but readable message
         is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
@@ -188,7 +183,6 @@ class RequestLoggingMiddleware(MiddlewareMixin):
                 "path": request.path,
                 "full_url": full_url,
                 "query_string": sanitized_query_string,
-                "user": user_info,
                 "client_ip": client_ip,
                 "user_agent": user_agent,
                 "referer": sanitize_log_url(request.META.get("HTTP_REFERER", "")),
@@ -325,28 +319,6 @@ class RequestLoggingMiddleware(MiddlewareMixin):
             },
             exc_info=exception,  # Preserve the exception passed to this middleware callback.
         )
-
-    def _get_user_context(self, request: HttpRequest) -> dict[str, object]:
-        """Get user context for logging (safely handles anonymous users).
-
-        Args:
-            request: The HTTP request
-
-        Returns:
-            dict[str, object]: User context information
-        """
-        user = getattr(request, "user", None)
-
-        if not user or isinstance(user, AnonymousUser):
-            return {"id": None, "username": "anonymous", "is_authenticated": False}
-
-        return {
-            "id": user.id,
-            "username": getattr(user, "username", "unknown"),
-            "is_authenticated": True,
-            "is_staff": getattr(user, "is_staff", False),
-            "is_superuser": getattr(user, "is_superuser", False),
-        }
 
     def _get_client_ip(self, request: HttpRequest) -> str:
         """Get client IP address, handling proxies.

@@ -254,14 +254,14 @@ export default function PrivacyPolicy() {
         sign up with an email address and password, we send a verification email
         when you sign up (and again if you ask) and a welcome email once you've
         verified. We also send password-reset emails. If someone asks for a
-        password reset for an address that has no account, we email that address
-        to say so. If you try to sign in with a Google account that hasn't been
-        linked to CineXplorer and Google sends an unverified email address that
-        matches an existing account, we email that address a link to start
-        password recovery. We limit how often we send this notice. Beyond these,
-        we'd write to you only about the service itself, such as a change to
-        this policy or the site closing, through the same email provider. We
-        don't send newsletters or marketing.
+        password reset for an address that has no active account, we email that
+        address to say so. If you try to sign in with a Google account that
+        hasn't been linked to CineXplorer and Google sends an unverified email
+        address that matches an existing account, we email that address a link
+        to start password recovery. We limit how often we send this notice.
+        Beyond these, we'd write to you only about the service itself, such as a
+        change to this policy or the site closing, through the same email
+        provider. We don't send newsletters or marketing.
       </Text>
       <LegalHeading as="h2">Cookies and browser storage</LegalHeading>
       <Text>

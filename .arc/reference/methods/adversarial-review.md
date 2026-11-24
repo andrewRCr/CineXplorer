@@ -73,11 +73,9 @@ CineXplorer adaptation (`override-mode: extend`); the identity contract is uncha
   fixed").
 - **Orientation** is `.arc/reference/constitution/DEVELOPMENT-RULES.md`, `.arc/reference/agent/AGENTS.md` and
   `.arc/reference/constitution/TECHNICAL-OVERVIEW.md`.
-- **Runner.** A Claude session spawns a fresh general-purpose subagent per pass and fix check, and its prompt tells
-  it to stay read-only: nothing else stops it from editing.
-  A Codex session without subagents runs the pass in a fresh Codex session given the same prompt. Either way the
-  report names its runner, and a self-review is never presented as independent
-  ([DEVELOPMENT-RULES § Sub-agent scope][sub-agent-scope]).
+- **Runner.** Each pass and fix check runs in a read-only subagent or a separate session, of any model, with fresh
+  context. Its prompt tells it to stay read-only: nothing else stops it from editing. The report names its runner, and
+  a self-review is never presented as independent ([DEVELOPMENT-RULES § Sub-agent scope][sub-agent-scope]).
 - **Re-entry.** [resolve-planning-depth][resolve-planning-depth]'s re-entry valve routes as its override's Routes
   bullet says; the `Class` ratchet applies.
 - **Not used:** the authored-partition, bounded chunk-series and Novel partitioned fan-out modes, and attestation.

@@ -23,24 +23,25 @@ HTTP request/response helpers for consistent client info extraction and error ha
 
 #### `get_client_info(request: HttpRequest) -> tuple[str, str]`
 
-Extract client IP and user agent from request for security logging.
+Read the socket peer address and user agent from a request. Behind a reverse proxy, the peer address belongs to the proxy.
 
 **Returns**: `(client_ip, user_agent)` with 'unknown' defaults
 
-**Example**:
+For account events, use the request ID to find the corresponding request log.
 
 ```python
 from apps.core.utils import get_client_info
+from middleware.logging import get_correlation_id
 
-
-@auth_router.post("/login/")
-def login(request: HttpRequest):
-    client_ip, user_agent = get_client_info(request)
-    logger.info(f"Login attempt | ip={client_ip} | user_agent={user_agent}")
-    # ... authentication logic
+_, user_agent = get_client_info(request)
+request_id = get_correlation_id(request) or "unknown"
+logger.info(
+    "Login successful | cid=%s | user_agent=%s",
+    request_id,
+    user_agent,
+    extra={"correlation_id": request_id},
+)
 ```
-
-**Use When**: Logging authentication events, security monitoring, rate limiting attribution
 
 ---
 

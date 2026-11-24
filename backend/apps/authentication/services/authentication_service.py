@@ -219,6 +219,7 @@ class AuthenticationService:
     ) -> tuple[int, RegisterResponseSchema | dict[str, object]]:
         """Register a new user and send email verification."""
         correlation_id = get_correlation_id(request) or "unknown"
+        log_context = {"correlation_id": correlation_id}
         forbidden_usernames = settings.FORBIDDEN_USERNAMES
         # allauth lowercases an email before matching it at sign-in, so store it lowercase.
         email = payload.email.lower()
@@ -226,20 +227,23 @@ class AuthenticationService:
         if payload.username.lower() in forbidden_usernames:
             self._logger.warning(
                 "Registration failed: Forbidden username | "
-                f"username={payload.username} | cid={correlation_id}"
+                f"username={payload.username} | cid={correlation_id}",
+                extra=log_context,
             )
             return 409, {"error": f'Username "{payload.username}" is not allowed.'}
 
         if self._user_model.objects.filter(username=payload.username).exists():
             self._logger.warning(
                 "Registration failed: Username already exists | "
-                f"username={payload.username} | cid={correlation_id}"
+                f"username={payload.username} | cid={correlation_id}",
+                extra=log_context,
             )
             return 409, {"error": "Username already associated with an existing account."}
 
         if self._user_model.objects.filter(email__iexact=email).exists():
             self._logger.warning(
-                f"Registration failed: Email already exists | cid={correlation_id}"
+                f"Registration failed: Email already exists | cid={correlation_id}",
+                extra=log_context,
             )
             return 409, {"error": "Email address already associated with an existing account."}
 
@@ -248,7 +252,8 @@ class AuthenticationService:
         except ValidationError as exc:
             self._logger.warning(
                 "Registration failed: Weak password | "
-                f"username={payload.username} | cid={correlation_id}"
+                f"username={payload.username} | cid={correlation_id}",
+                extra=log_context,
             )
             return 400, {
                 "error": "Password validation failed.",
@@ -285,7 +290,8 @@ class AuthenticationService:
             # Transaction committed successfully - user and email records created
             self._logger.info(
                 "Registration successful | "
-                f"user_id={user.id} | username={payload.username} | cid={correlation_id}"
+                f"user_id={user.id} | username={payload.username} | cid={correlation_id}",
+                extra=log_context,
             )
 
             return 201, {
@@ -303,7 +309,8 @@ class AuthenticationService:
             self._logger.warning(
                 "Registration failed: Username or email taken during registration | "
                 f"username={payload.username} | cid={correlation_id} | "
-                f"error_type={type(exc).__name__}"
+                f"error_type={type(exc).__name__}",
+                extra=log_context,
             )
             return 409, {
                 "error": "Username or email address already associated with an existing account."
@@ -338,6 +345,7 @@ class AuthenticationService:
         password = payload.password
 
         correlation_id = get_correlation_id(request) or "unknown"
+        log_context = {"correlation_id": correlation_id}
         _, user_agent = self._client_info_getter(request)
 
         if not login or not password:
@@ -352,7 +360,8 @@ class AuthenticationService:
         if not authenticated_user:
             self._logger.warning(
                 "Login failed: Invalid credentials | "
-                f"cid={correlation_id} | user_agent={user_agent}"
+                f"cid={correlation_id} | user_agent={user_agent}",
+                extra=log_context,
             )
             return 401, {"error": "Unable to authenticate with provided credentials."}
 
@@ -364,7 +373,8 @@ class AuthenticationService:
             verified=True,
         ).exists():
             self._logger.warning(
-                f"Login failed: Email not verified | user_id={user.id} | cid={correlation_id}"
+                f"Login failed: Email not verified | user_id={user.id} | cid={correlation_id}",
+                extra=log_context,
             )
             resend_token = self._generate_resend_token(user.id)
             return 403, {
@@ -392,7 +402,8 @@ class AuthenticationService:
 
         self._logger.info(
             f"Login successful | user_id={user.id} | "
-            f"cid={correlation_id} | user_agent={user_agent}"
+            f"cid={correlation_id} | user_agent={user_agent}",
+            extra=log_context,
         )
 
         return 200, {
@@ -411,6 +422,7 @@ class AuthenticationService:
         """Refresh access token and rotate refresh cookie (hybrid auth)."""
         jwt_settings = self._jwt_settings_provider()
         correlation_id = get_correlation_id(request) or "unknown"
+        log_context = {"correlation_id": correlation_id}
         _, user_agent = self._client_info_getter(request)
         refresh_token_value = request.COOKIES.get(jwt_settings.refresh_token_name)
 
@@ -424,7 +436,8 @@ class AuthenticationService:
                 user_id = self._extract_user_id_fn(refresh_token_value)
                 self._logger.warning(
                     "SECURITY: Blacklisted token reuse attempt (hybrid auth) | "
-                    f"user_id={user_id} | cid={correlation_id} | user_agent={user_agent}"
+                    f"user_id={user_id} | cid={correlation_id} | user_agent={user_agent}",
+                    extra=log_context,
                 )
                 return 401, self._build_error_response_fn(
                     "Token has been revoked. Please login again.",
@@ -455,7 +468,8 @@ class AuthenticationService:
             issued_at = datetime.now(UTC)
 
             self._logger.info(
-                f"Hybrid token refresh successful | user_id={user_id} | cid={correlation_id}"
+                f"Hybrid token refresh successful | user_id={user_id} | cid={correlation_id}",
+                extra=log_context,
             )
 
             return 200, {
@@ -469,7 +483,8 @@ class AuthenticationService:
                 user_id = self._extract_user_id_fn(refresh_token_value)
                 self._logger.warning(
                     "SECURITY: Blacklisted token reuse attempt (hybrid auth) | "
-                    f"user_id={user_id} | cid={correlation_id} | user_agent={user_agent}"
+                    f"user_id={user_id} | cid={correlation_id} | user_agent={user_agent}",
+                    extra=log_context,
                 )
                 return 401, self._build_error_response_fn(
                     "Token has been revoked. Please login again.",

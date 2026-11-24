@@ -214,7 +214,7 @@ export default function PrivacyPolicy() {
           sent to you), including failed attempts, are also logged with your
           username or user ID where known, and sometimes your browser's
           identification string. For password sign-ups and sign-ins, session
-          renewals, and attempts to reuse a revoked token, we include the
+          renewals, and attempts to reuse a revoked token, we may include the
           request ID so we can match the account event to its request log. If
           the web server cannot complete a request to the application server,
           for example while the site restarts, it can log the requested path,

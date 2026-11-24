@@ -22,21 +22,6 @@ import { FormField } from "./FormField";
  * - submitting: Shows spinner while API call in progress
  * - success: Shows success message, user should login
  * - error: Shows error message with guidance
- *
- * @example
- * ```tsx
- * <PasswordResetDialog
- *   resetKey={resetKey}
- *   onSuccess={() => {
- *     // Confirm the reset (inline on the sign-in page, or a toast after signing in), clear URL
- *     setResetKey(null);
- *   }}
- *   onDismiss={() => {
- *     setResetKey(null);
- *     window.history.replaceState({}, "", ROUTES.LOGIN);
- *   }}
- * />
- * ```
  */
 
 export type ResetState = "form" | "submitting" | "success" | "error" | null;
@@ -44,7 +29,7 @@ export type ResetState = "form" | "submitting" | "success" | "error" | null;
 interface PasswordResetDialogProps {
   /** Password reset key from URL */
   resetKey: string | null;
-  /** Handler for successful password reset */
+  /** Handles a successful reset while the dialog shows its success message. */
   onSuccess: (autoLoggedIn: boolean) => void;
   /** Handler for dialog dismiss */
   onDismiss: () => void;
@@ -105,10 +90,7 @@ export const PasswordResetDialog = ({
       const result = await onSubmit(resetKey, password);
       if (result.success) {
         setResetState("success");
-        // Notify parent after brief delay to show success state
-        setTimeout(() => {
-          onSuccess(result.autoLoggedIn);
-        }, 1500);
+        onSuccess(result.autoLoggedIn);
       }
     } catch (error) {
       setResetState("error");

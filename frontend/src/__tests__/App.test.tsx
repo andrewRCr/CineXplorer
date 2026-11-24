@@ -1,10 +1,14 @@
 import userEvent from "@testing-library/user-event";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw/http";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";
 import { ThemeSelectProvider } from "@/components/core/chakra/theme-provider";
+import {
+  PriorityToaster,
+  priorityToaster,
+} from "@/components/core/chakra/toaster";
 import { TestProviders } from "@tests/helpers/test-providers";
 import {
   authHandlers,
@@ -36,6 +40,7 @@ beforeEach(() => {
   );
 });
 afterEach(() => {
+  act(() => priorityToaster.remove());
   delete window.__dismissPreloadOverlay;
   window.history.replaceState({}, "", "/");
   Object.defineProperty(window, "location", {
@@ -50,6 +55,7 @@ function startAt(path: string) {
     <ThemeSelectProvider>
       <TestProviders>
         <App />
+        <PriorityToaster />
       </TestProviders>
     </ThemeSelectProvider>,
   );
@@ -181,6 +187,369 @@ it.each([
     expect(await screen.findByRole("dialog", { name: title })).toBeVisible();
   },
 );
+
+describe("Login email links", () => {
+  const home = { level: 2, name: "Popular in theaters" };
+  const signInField = { name: "Username or Email Address" };
+
+  function startSignedInAt(path: string) {
+    homeHandlers();
+    setAuthTokens(token());
+    startAt(path);
+  }
+
+  function openLink(path: string) {
+    act(() => {
+      window.history.pushState(window.history.state, "", path);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+  }
+
+  it.each([
+    ["verify", "Verify Your Email"],
+    ["reset", "Set New Password"],
+  ])(
+    "keeps a signed-in visitor on a %s link until Cancel",
+    async (action, name) => {
+      const path = `/login?${action}=fixture-email-key`;
+      startSignedInAt(path);
+
+      const dialog = await screen.findByRole("dialog", { name });
+      expect(dialog).toBeVisible();
+      expect(window.location.pathname + window.location.search).toBe(path);
+      await userEvent
+        .setup()
+        .click(within(dialog).getByRole("button", { name: "Cancel" }));
+      expect(await screen.findByRole("heading", home)).toBeVisible();
+      expect(window.location.pathname + window.location.search).toBe("/");
+    },
+  );
+
+  it("shows the verification toast and waits for the success dialog before going Home", async () => {
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, () =>
+        HttpResponse.json({
+          message: "Verification complete",
+          email: profile.email,
+        }),
+      ),
+    );
+    startSignedInAt("/login?verify=fixture-email-key");
+    await userEvent
+      .setup()
+      .click(
+        await screen.findByRole("button", { name: "Complete Verification" }),
+      );
+
+    await waitFor(() =>
+      expect(screen.getByText("Email verified.")).toBeVisible(),
+    );
+    const dialog = screen.getByRole("dialog", { name: "Verify Your Email" });
+    expect(within(dialog).getByText("Verification complete")).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe("/login");
+    expect(
+      screen.queryByText("Email verified. You can now log in."),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", home, { timeout: 3000 }),
+    ).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe("/");
+    expect(screen.getByText("Email verified.")).toBeVisible();
+  });
+
+  it("shows the reset toast and waits for the success dialog before going Home", async () => {
+    server.use(
+      http.post(`${siteOrigin}/_allauth/browser/v1/auth/password/reset`, () =>
+        HttpResponse.json({}, { status: 401 }),
+      ),
+    );
+    startSignedInAt("/login?reset=fixture-email-key");
+    const user = userEvent.setup();
+    const dialog = within(
+      await screen.findByRole("dialog", { name: "Set New Password" }),
+    );
+    await user.type(dialog.getByLabelText("New Password"), "Fresh-pass-42");
+    await user.type(dialog.getByLabelText("Confirm Password"), "Fresh-pass-42");
+    await user.click(dialog.getByRole("button", { name: "Reset Password" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Password reset.")).toBeVisible(),
+    );
+    expect(dialog.getByText("Password reset successfully!")).toBeVisible();
+    expect(window.location.pathname).toBe("/login");
+    expect(
+      screen.queryByText(
+        "Password reset. You can now log in with your new password.",
+      ),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", home, { timeout: 3000 }),
+    ).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe("/");
+    expect(screen.getByText("Password reset.")).toBeVisible();
+  });
+
+  it("keeps a signed-in visitor on a verification error until Close", async () => {
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, () =>
+        HttpResponse.json({ error: "The link expired." }, { status: 400 }),
+      ),
+    );
+    startSignedInAt("/login?verify=expired-email-key");
+    const user = userEvent.setup();
+    await user.click(
+      await screen.findByRole("button", { name: "Complete Verification" }),
+    );
+
+    const dialog = within(
+      await screen.findByRole("dialog", { name: "Verification Failed" }),
+    );
+    expect(dialog.getByText("The link expired.")).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe("/login");
+    await user.click(dialog.getByRole("button", { name: "Close" }));
+    expect(await screen.findByRole("heading", home)).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe("/");
+  });
+
+  it.each([
+    ["verify", "Verify Your Email"],
+    ["reset", "Set New Password"],
+  ])(
+    "opens a %s link in the already-mounted Login page",
+    async (action, name) => {
+      startAt("/login");
+      await screen.findByRole("textbox", signInField);
+      openLink(`/login?${action}=new-email-key`);
+
+      expect(await screen.findByRole("dialog", { name })).toBeVisible();
+    },
+  );
+
+  it("opens a second verification link after completing the first", async () => {
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, async ({ request }) => {
+        const body: unknown = await request.json();
+        if (
+          body &&
+          typeof body === "object" &&
+          "key" in body &&
+          body.key === "second-key"
+        ) {
+          return HttpResponse.json({
+            message: "Second address verified",
+            email: "second@example.com",
+          });
+        }
+        return HttpResponse.json({
+          message: "First address verified",
+          email: "first@example.com",
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    startAt("/login?verify=first-key");
+    await user.click(
+      await screen.findByRole("button", { name: "Complete Verification" }),
+    );
+    expect(await screen.findByText("First address verified")).toBeVisible();
+    expect(
+      await screen.findByRole("textbox", signInField, { timeout: 3000 }),
+    ).toHaveValue("first@example.com");
+    openLink("/login?verify=second-key");
+
+    await user.click(
+      await screen.findByRole("button", { name: "Complete Verification" }),
+    );
+    expect(await screen.findByText("Second address verified")).toBeVisible();
+  });
+
+  it("replaces verification with reset and starts fresh for a different reset key", async () => {
+    const user = userEvent.setup();
+    startAt("/login?verify=first-key");
+    await screen.findByRole("dialog", { name: "Verify Your Email" });
+    openLink("/login?reset=first-reset-key");
+    const first = within(
+      await screen.findByRole("dialog", { name: "Set New Password" }),
+    );
+    expect(
+      screen.queryByRole("dialog", { name: "Verify Your Email" }),
+    ).not.toBeInTheDocument();
+    await user.type(first.getByLabelText("New Password"), "short");
+    await user.click(first.getByRole("button", { name: "Reset Password" }));
+    expect(
+      first.getByText("Password must be at least 8 characters"),
+    ).toBeVisible();
+
+    openLink("/login?reset=second-reset-key");
+    const second = within(
+      await screen.findByRole("dialog", { name: "Set New Password" }),
+    );
+    expect(second.getByLabelText("New Password")).toHaveValue("");
+    expect(
+      second.queryByText("Password must be at least 8 characters"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("ignores a verification response for the link a newer one replaced", async () => {
+    const response = gate();
+    const received = gate();
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, async () => {
+        received.release();
+        await response.wait;
+        return HttpResponse.json({
+          message: "Old address verified",
+          email: "old@example.com",
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    startAt("/login?verify=old-key");
+    try {
+      await user.click(
+        await screen.findByRole("button", { name: "Complete Verification" }),
+      );
+      await received.wait;
+      openLink("/login?verify=new-key");
+      expect(
+        await screen.findByRole("button", { name: "Complete Verification" }),
+      ).toBeVisible();
+    } finally {
+      response.release();
+    }
+
+    await expect(
+      screen.findByText("Old address verified", {}, { timeout: 500 }),
+    ).rejects.toThrow();
+    expect(window.location.search).toBe("?verify=new-key");
+    const dialog = within(
+      screen.getByRole("dialog", { name: "Verify Your Email" }),
+    );
+    await user.click(dialog.getByRole("button", { name: "Cancel" }));
+    expect(await screen.findByRole("textbox", signInField)).toHaveValue("");
+    expect(
+      screen.queryByText("Email verified. You can now log in."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("ignores an old verification response after the newer link is dismissed", async () => {
+    const response = gate();
+    const received = gate();
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, async () => {
+        received.release();
+        await response.wait;
+        return HttpResponse.json({
+          message: "Old address verified",
+          email: "old@example.com",
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    startAt("/login?verify=old-key");
+    await user.click(
+      await screen.findByRole("button", { name: "Complete Verification" }),
+    );
+    await received.wait;
+    openLink("/login?verify=new-key");
+    const dialog = within(
+      await screen.findByRole("dialog", { name: "Verify Your Email" }),
+    );
+    await user.click(dialog.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => expect(window.location.search).toBe(""));
+    response.release();
+
+    await expect(
+      screen.findByText("Old address verified", {}, { timeout: 500 }),
+    ).rejects.toThrow();
+    expect(await screen.findByRole("textbox", signInField)).toHaveValue("");
+    expect(
+      screen.queryByText("Email verified. You can now log in."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("leaves a visitor who moved on where they are when a verification finishes late", async () => {
+    const response = gate();
+    const received = gate();
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, async () => {
+        received.release();
+        await response.wait;
+        return HttpResponse.json({
+          message: "Late verification",
+          email: "late@example.com",
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    startAt("/login?verify=late-key");
+    try {
+      await user.click(
+        await screen.findByRole("button", { name: "Complete Verification" }),
+      );
+      await received.wait;
+      await user.keyboard("{Escape}");
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      );
+      await user.click(screen.getByRole("link", { name: "Register" }));
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "Create an account",
+        }),
+      ).toBeVisible();
+    } finally {
+      response.release();
+    }
+
+    await expect(
+      screen.findByText(
+        "Email verified. You can now log in.",
+        {},
+        {
+          timeout: 500,
+        },
+      ),
+    ).rejects.toThrow();
+    expect(window.location.pathname).toBe("/register");
+  });
+
+  it.each([
+    ["verify", "Verify Your Email"],
+    ["reset", "Set New Password"],
+  ])(
+    "keeps the browser's %s link when sign-in resolves before the route commits",
+    async (action, name) => {
+      const response = gate();
+      const path = `/login?${action}=fixture-email-key`;
+      homeHandlers();
+      server.use(
+        http.get(`${siteOrigin}/_allauth/browser/v1/auth/session`, async () => {
+          await response.wait;
+          return HttpResponse.json({
+            meta: { is_authenticated: true },
+            data: { user: profile },
+          });
+        }),
+      );
+      startAt("/login?next=%2Fwatchlist");
+      try {
+        await screen.findByRole("textbox", signInField);
+        window.history.pushState(window.history.state, "", path);
+      } finally {
+        response.release();
+      }
+
+      expect(
+        await screen.findByRole("button", { name: profile.username }),
+      ).toBeVisible();
+      expect(window.location.pathname + window.location.search).toBe(path);
+      act(() => window.dispatchEvent(new PopStateEvent("popstate")));
+      expect(await screen.findByRole("dialog", { name })).toBeVisible();
+    },
+  );
+});
 
 it("contains a shell failure in the last-resort full-page display", async () => {
   window.__dismissPreloadOverlay = () => {

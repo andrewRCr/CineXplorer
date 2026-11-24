@@ -29,7 +29,7 @@ import {
  *   onVerify={handleVerifyEmail}
  *   onDismiss={() => {
  *     setVerificationState(null);
- *     window.history.replaceState({}, "", ROUTES.LOGIN);
+ *     void navigate(ROUTES.LOGIN, { replace: true });
  *   }}
  * />
  * ```

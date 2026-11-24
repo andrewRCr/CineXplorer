@@ -1,3 +1,16 @@
+{
+    log {
+        format filter {
+            wrap json
+            fields {
+                request>uri regexp "[?].*$" ""
+                request>headers>Referer delete
+                request>headers>X-Csrftoken delete
+            }
+        }
+    }
+}
+
 https://localhost:8444 {
     tls /etc/caddy/cert.pem /etc/caddy/key.pem
 

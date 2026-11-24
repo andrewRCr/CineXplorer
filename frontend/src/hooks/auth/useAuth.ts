@@ -64,6 +64,12 @@ import {
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import * as authService from "@/services/authService";
 
+const OAUTH_SIGNUP_CLOSED = {
+    code: "signup_closed",
+    message:
+        "GitHub didn't share a verified primary email address, so we couldn't create your account. Verify one in your GitHub email settings and try again, or sign up with email.",
+};
+
 function blocksOAuthNavigation(pathname: string, search: string): boolean {
     if (isLegalDocumentPath(pathname)) return true;
     if (!matchPath(ROUTES.LOGIN, pathname)) return false;
@@ -161,7 +167,7 @@ export function useAuth(): AuthStateProps {
     const hasHandledOAuthRef = useRef(false);
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const hasOAuthError = Boolean(params.get("error"));
+        const errorCode = params.get("error");
         // Browser history can change before React Router commits the location.
         const canNavigate =
             !blocksOAuthNavigation(location.pathname, location.search) &&
@@ -169,14 +175,16 @@ export function useAuth(): AuthStateProps {
                 window.location.pathname,
                 window.location.search,
             );
-        if (hasOAuthError && canNavigate) {
+        if (errorCode && canNavigate) {
             // Use the fixed failure code in reports because the URL is user-controlled.
             logger.error("OAuth authentication failed", { error: "oauth" });
             void navigate(loginPathFor(safeReturnPath(params.get("next"))), {
                 state: {
                     oauthError: true,
                     message:
-                        "Sign-in failed. Try again in a few minutes or choose Forgot password.",
+                        errorCode === OAUTH_SIGNUP_CLOSED.code
+                            ? OAUTH_SIGNUP_CLOSED.message
+                            : "Sign-in failed. Try again in a few minutes or choose Forgot password.",
                 },
             });
             return;

@@ -149,6 +149,12 @@ class CustomAccountAdapter(DefaultAccountAdapter):
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     """Restrict GitHub email intake before account matching or persistence."""
 
+    def is_open_for_signup(self, request: HttpRequest, sociallogin: SocialLogin) -> bool:
+        """Refuse a GitHub sign-up without a verified primary address before storing it."""
+        if sociallogin.account.provider == "github" and not sociallogin.email_addresses:
+            return False
+        return super().is_open_for_signup(request, sociallogin)
+
     def is_email_verified(self, provider: Provider, email: str) -> bool:
         """For GitHub, trust verification from its email response only."""
         if provider.id == "github":

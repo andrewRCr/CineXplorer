@@ -275,6 +275,8 @@ Browser OAuth uses HTTP-only session cookies. The app client's session-token mec
 GitHub email intake keeps only addresses marked both primary and verified by GitHub, before account matching or
 storage. The public profile email is normalized to that address, or null when none qualifies; provider trust
 settings cannot promote an unverified GitHub address. Other providers retain allauth's verification behavior.
+Without a verified primary address, CineXplorer refuses GitHub sign-up before allauth stores the pending sign-in and
+returns to Login with `error=signup_closed`. Existing GitHub accounts can still sign in without that address.
 Existing email rows are not removed, and connecting GitHub does not replace the account's existing email.
 
 **Attempting to force JWT tokens for browser OAuth would require**:

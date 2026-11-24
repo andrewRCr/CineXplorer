@@ -39,6 +39,7 @@ import { priorityToaster } from "@/components/core/chakra/toaster";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import {
   isLegalDocumentPath,
+  loginPathFor,
   returnPathFrom,
   safeReturnPath,
 } from "@/utilities/returnPath";
@@ -153,6 +154,7 @@ const Login = () => {
       if (response.success) {
         clearAlert();
         if (
+          visitMounted.current &&
           !isLegalDocumentPath(window.location.pathname) &&
           !latest.current.emailDialogOpen &&
           !readLiveEmailLink()
@@ -203,9 +205,9 @@ const Login = () => {
 
   const urlLink = readEmailLink(searchParams);
   const hasUrlLink = urlLink !== null;
+  const returnTo = safeReturnPath(searchParams.get("next"));
   const [emailLink, setEmailLink] = useState(
-    () =>
-      urlLink && { ...urlLink, returnPath: returnPathFrom(location.search) },
+    () => urlLink && { ...urlLink, returnPath: returnTo },
   );
   const [emailDialogOpen, setEmailDialogOpen] = useState(emailLink !== null);
   const [verification, setVerification] = useState<{
@@ -218,7 +220,7 @@ const Login = () => {
     urlLink &&
     (emailLink?.action !== urlLink.action || emailLink.token !== urlLink.token)
   ) {
-    setEmailLink({ ...urlLink, returnPath: returnPathFrom(location.search) });
+    setEmailLink({ ...urlLink, returnPath: returnTo });
     setEmailDialogOpen(true);
     setVerification({ state: "pending" });
   }
@@ -256,7 +258,17 @@ const Login = () => {
 
   const clearEmailLink = () => {
     if (!isLiveLogin(latest.current.location)) return false;
-    void navigate(ROUTES.LOGIN, { replace: true, state: {} });
+    const liveLink = readLiveEmailLink();
+    if (
+      !liveLink ||
+      liveLink.action !== emailLink?.action ||
+      liveLink.token !== emailLink.token
+    )
+      return false;
+    void navigate(loginPathFor(emailLink.returnPath), {
+      replace: true,
+      state: {},
+    });
     return true;
   };
 
@@ -357,6 +369,10 @@ const Login = () => {
       const legalPageOpen = isLegalDocumentPath(window.location.pathname);
       if (!legalPageOpen && !isCurrentEmailLink()) return;
       const ownsLink = !legalPageOpen && visitMounted.current;
+      const dismissed =
+        ownsLink &&
+        !latest.current.emailDialogOpen &&
+        isLiveLogin(latest.current.location);
       if (ownsLink) setEmailDialogOpen(false);
       const clearedLink = ownsLink && clearEmailLink();
 
@@ -368,7 +384,7 @@ const Login = () => {
           description: "You are now logged in.",
           duration: 4000,
         });
-        if (clearedLink) void navigate(ROUTES.HOME);
+        if (clearedLink || dismissed) void navigate(ROUTES.HOME);
       } else if (!showedSignedInToast) {
         if (legalPageOpen) {
           priorityToaster.success({ title: notice });
@@ -459,11 +475,7 @@ const Login = () => {
       !emailDialogOpen
     ) {
       logger.debug("User already authenticated, redirecting");
-      const destination =
-        !location.search && emailLink
-          ? emailLink.returnPath
-          : returnPathFrom(location.search);
-      void navigate(destination, { replace: true });
+      void navigate(returnPathFrom(location.search), { replace: true });
     }
   }, [
     isAuthenticated,
@@ -480,7 +492,6 @@ const Login = () => {
   // OAuth Handlers
   // ==========================================================================
 
-  const returnTo = safeReturnPath(searchParams.get("next"));
   const handleGoogleLogin = () => initializeOAuth("google", returnTo);
   const handleGithubLogin = () => initializeOAuth("github", returnTo);
 

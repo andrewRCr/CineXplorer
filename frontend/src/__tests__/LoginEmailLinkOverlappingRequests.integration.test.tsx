@@ -234,7 +234,7 @@ describe("Login email links", () => {
         expect(screen.queryByText("Logging in...")).not.toBeInTheDocument(),
       );
       expect(window.location.pathname + window.location.search).toBe(
-        browserOnly ? path : "/login",
+        browserOnly ? path : "/login?next=%2Fwatchlist",
       );
       if (browserOnly) {
         act(() => window.dispatchEvent(new PopStateEvent("popstate")));

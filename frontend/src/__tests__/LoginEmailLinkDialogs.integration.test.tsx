@@ -172,6 +172,25 @@ describe("Login email links", () => {
     expect(window.location.pathname).toBe("/register");
   });
 
+  it("goes Home after dismissing a reset that signed the visitor in", async () => {
+    homeHandlers();
+    server.use(
+      http.post(`${siteOrigin}/_allauth/browser/v1/auth/password/reset`, () =>
+        HttpResponse.json({ meta: { is_authenticated: true } }),
+      ),
+    );
+    const user = userEvent.setup();
+    startAt("/login?reset=fixture-email-key&next=%2Fwatchlist");
+    const dialog = await submitReset(user);
+    await dialog.findByText("Password reset successfully!");
+    await user.keyboard("{Escape}");
+
+    expect(
+      await screen.findByRole("heading", home, { timeout: 3000 }),
+    ).toBeVisible();
+    expect(window.location.pathname).toBe("/");
+  });
+
   it("keeps the browser address when it changes before the verification success dialog closes", async () => {
     server.use(
       http.post(`${apiBaseUrl}/verify-email/`, () =>

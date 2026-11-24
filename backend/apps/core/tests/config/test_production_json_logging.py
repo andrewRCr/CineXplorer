@@ -223,9 +223,21 @@ def test_frontend_url_context_omits_credentials(environment: str, url: str, expe
     payload = {
         **_frontend_payload(),
         "url": url,
-        "data": {"context": {"url": url, "previous": url, "action": url, "attempt": 2}},
+        "data": {
+            "Endpoint": url,
+            "context": {
+                "url": url,
+                "previous": url,
+                "action": url,
+                "endpoint": url,
+                "attempt": 2,
+                "method": "GET",
+            },
+        },
         "browser_info": {"language": "en-US", "viewport": {"width": 1280, "height": 720}},
-        "recent_interactions": [{"type": "navigation", "url": url, "previous": url}],
+        "recent_interactions": [
+            {"type": "navigation", "url": url, "previous": url, "ENDPOINT": url}
+        ],
     }
     output = _render_frontend(payload, environment)
     records = [_one_record(line) for line in output.splitlines()]
@@ -234,10 +246,18 @@ def test_frontend_url_context_omits_credentials(environment: str, url: str, expe
     for record in records:
         assert record["frontend_url"] == expected
         assert record["frontend_data"] == {
-            "context": {"url": expected, "previous": expected, "action": expected, "attempt": 2}
+            "Endpoint": expected,
+            "context": {
+                "url": expected,
+                "previous": expected,
+                "action": expected,
+                "endpoint": expected,
+                "attempt": 2,
+                "method": "GET",
+            },
         }
         assert record["recent_interactions"] == [
-            {"type": "navigation", "url": expected, "previous": expected}
+            {"type": "navigation", "url": expected, "previous": expected, "ENDPOINT": expected}
         ]
         assert record["browser_info"] == payload["browser_info"]
         assert record["correlation_id"] == "browser-error-correlation"

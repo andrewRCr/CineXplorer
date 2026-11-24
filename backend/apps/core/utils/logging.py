@@ -4,7 +4,7 @@ from typing import cast
 from urllib.parse import urlsplit, urlunsplit
 
 _OMITTED_FIELDS = {"config", "request", "headers", "body"}
-_URL_FIELDS = {"url", "href", "previous", "referer", "referrer", "action"}
+_URL_FIELDS = {"url", "href", "previous", "referer", "referrer", "action", "endpoint"}
 
 
 def sanitize_log_url(value: str) -> str:

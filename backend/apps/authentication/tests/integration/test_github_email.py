@@ -48,10 +48,16 @@ def stub_provider_http(
     def provider_request(method: str, url: str, **_kwargs: object) -> Response:
         key = (method.upper(), url)
         assert key in responses, f"Unexpected provider request: {method} {url}"
+        payload = responses[key]
+        if payload is None:
+            not_found = Response()
+            not_found.status_code = 404
+            not_found.url = url
+            return not_found
         response = Mock(spec=Response)
         response.status_code = 200
         response.headers = {"content-type": "application/json"}
-        response.json.return_value = responses[key]
+        response.json.return_value = payload
         return response
 
     def provider_session(_adapter: DefaultSocialAccountAdapter) -> Session:
@@ -97,11 +103,12 @@ def provider_callback(
 def github_callback(
     client: Client,
     monkeypatch: pytest.MonkeyPatch,
-    emails: list[GitHubEmail],
+    emails: list[GitHubEmail] | None,
     *,
     profile_email: str | None = "secondary@example.com",
     process: str = "login",
     assume_verified: bool = False,
+    callback_url: str | None = None,
 ) -> HttpResponse:
     responses: dict[tuple[str, str], object] = {
         ("POST", "https://github.com/login/oauth/access_token"): {
@@ -118,7 +125,13 @@ def github_callback(
         ("GET", "https://api.github.com/user/emails"): emails,
     }
     return provider_callback(
-        client, monkeypatch, "github", responses, process=process, assume_verified=assume_verified
+        client,
+        monkeypatch,
+        "github",
+        responses,
+        process=process,
+        assume_verified=assume_verified,
+        callback_url=callback_url,
     )
 
 
@@ -154,6 +167,39 @@ def test_github_signup_keeps_only_primary_verified_email(
     assert "messages" not in response.cookies
 
 
+def assert_github_signup_refused(client: Client, response: HttpResponse) -> None:
+    assert response.status_code == 302
+    location = urlparse(response["Location"])
+    assert location._replace(query="").geturl() == f"{settings.FRONTEND_URL}/login"
+    assert parse_qs(location.query) == {
+        "next": ["/watchlist"],
+        "error": ["signup_closed"],
+        "error_process": ["login"],
+    }
+    assert "socialaccount_sociallogin" not in client.session
+    assert client.get("/_allauth/browser/v1/auth/session").status_code == 401
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "emails",
+    [[], [{"email": "primary@example.com", "primary": True, "verified": False}], None],
+    ids=["no-addresses", "unverified-primary", "emails-not-found"],
+)
+def test_github_signup_requires_verified_primary_email(
+    api_client: Client, monkeypatch: pytest.MonkeyPatch, emails: list[GitHubEmail] | None
+) -> None:
+    response = github_callback(
+        api_client,
+        monkeypatch,
+        emails,
+        callback_url=f"{settings.FRONTEND_URL}/login?next=%2Fwatchlist",
+    )
+    assert_github_signup_refused(api_client, response)
+    assert not User.objects.exists()
+    assert not SocialAccount.objects.exists()
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     ("emails", "assume_verified"),
@@ -181,13 +227,39 @@ def test_github_without_verified_primary_cannot_use_another_email(
     emails: list[GitHubEmail],
     assume_verified: bool,
 ) -> None:
-    create_user(username="secondary-owner", email="secondary@example.com")
+    user = create_user(username="secondary-owner", email="secondary@example.com")
     before = list(EmailAddress.objects.values_list("pk", "email", "primary", "verified"))
-    github_callback(api_client, monkeypatch, emails, assume_verified=assume_verified)
+    response = github_callback(
+        api_client,
+        monkeypatch,
+        emails,
+        assume_verified=assume_verified,
+        callback_url=f"{settings.FRONTEND_URL}/login?next=%2Fwatchlist",
+    )
+    assert_github_signup_refused(api_client, response)
     assert not SocialAccount.objects.filter(provider="github", uid="123456").exists()
-    assert User.objects.count() == 1
+    assert list(User.objects.values_list("pk", flat=True)) == [user.pk]
     assert list(EmailAddress.objects.values_list("pk", "email", "primary", "verified")) == before
-    assert api_client.get("/_allauth/browser/v1/auth/session").status_code == 401
+
+
+@pytest.mark.django_db
+def test_existing_github_account_signs_in_after_primary_email_loses_verification(
+    api_client: Client, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    user = create_user(username="returning-person", email="primary@example.com")
+    SocialAccount.objects.create(user=user, provider="github", uid="123456")
+    response = github_callback(
+        api_client,
+        monkeypatch,
+        [{"email": user.email, "primary": True, "verified": False}],
+        profile_email=user.email,
+    )
+
+    assert response.status_code == 302
+    assert response["Location"] == f"{settings.FRONTEND_URL}/login"
+    session = api_client.get("/_allauth/browser/v1/auth/session")
+    assert session.status_code == 200
+    assert session.json()["data"]["user"]["id"] == user.pk
 
 
 @pytest.mark.django_db
@@ -219,6 +291,19 @@ def test_github_connect_keeps_existing_emails_and_normalizes_profile_email(
     user.refresh_from_db()
     assert user.email == "existing@example.com"
     assert list(EmailAddress.objects.values_list("pk", "email", "primary", "verified")) == before
+
+
+@pytest.mark.django_db
+def test_google_signup_without_email_keeps_its_pending_sign_in(
+    api_client: Client,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    callback_url = f"{settings.FRONTEND_URL}/login?next=%2Fwatchlist"
+    response = google_callback(api_client, monkeypatch, "", callback_url=callback_url)
+    assert response.status_code == 302
+    assert response["Location"] == callback_url
+    assert "socialaccount_sociallogin" in api_client.session
+    assert not User.objects.exists()
 
 
 @pytest.mark.django_db

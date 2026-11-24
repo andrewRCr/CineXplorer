@@ -6,7 +6,7 @@ export default function PrivacyPolicy() {
   return (
     <LegalDocument
       title="CineXplorer Privacy Policy"
-      effectiveDate="November 22, 2026"
+      effectiveDate="November 24, 2026"
     >
       <Text>
         CineXplorer is a free movie-discovery website run as a personal project
@@ -153,12 +153,10 @@ export default function PrivacyPolicy() {
           of the profile GitHub sent, updated at each sign-in, and when you
           first and last signed in with GitHub. We don't keep GitHub's access
           token with your account, and we have no access to your repositories.
-          Sign-up requires GitHub to return a verified primary email address. If
-          that address is missing, we keep the pending sign-in in your browser's
-          session on our server, including the profile GitHub sent and its
-          access token. The session rules under "How long we keep things"
-          explain when pending sign-ins are cleared. Your session can retain
-          your GitHub user ID after account deletion.
+          Sign-up requires GitHub to return a verified primary email address.
+          Without one, we refuse the sign-up and don't keep the profile or
+          access token GitHub sent. Your session can retain your GitHub user ID
+          after account deletion.
         </List.Item>
         <List.Item>
           You can revoke CineXplorer's access in your GitHub settings, under
@@ -425,18 +423,18 @@ export default function PrivacyPolicy() {
           that copy of the return address. If you leave before that response,
           the stored address can remain until a later sign-in clears the old
           attempt or the server removes the expired session. An incomplete
-          sign-up can also keep the return address with the pending sign-in.
+          Google sign-up can also keep the return address with the pending
+          sign-in.
         </List.Item>
         <List.Item>
-          <strong>Pending Google or GitHub sign-ins:</strong> we clear an
-          earlier pending sign-in if a later Google or GitHub sign-in in that
-          browser reaches our account checks and the server saves the removal.
-          If you cancel the later attempt or it fails, those details can remain
-          in your session. Starting another sign-in can extend the session's
-          expiry. In the existing-account case described under Email, the
-          pending verification step expires after 15 minutes. The email address
-          can stay in the session until we clear that step or remove the expired
-          session.
+          <strong>Pending Google sign-ins:</strong> we clear an earlier pending
+          sign-in if a later Google or GitHub sign-in in that browser reaches
+          our account checks and the server saves the removal. If you cancel the
+          later attempt or it fails, those details can remain in your session.
+          Starting another sign-in can extend the session's expiry. In the
+          existing-account case described under Email, the pending verification
+          step expires after 15 minutes. The email address can stay in the
+          session until we clear that step or remove the expired session.
         </List.Item>
         <List.Item>
           <strong>Server logs:</strong> each service keeps about its most recent

@@ -10,6 +10,7 @@ from django.contrib.auth.models import AbstractUser
 from django.http import HttpRequest
 
 class DefaultSocialAccountAdapter:
+    def is_open_for_signup(self, request: HttpRequest, sociallogin: SocialLogin) -> bool: ...
     def is_email_verified(self, provider: Provider, email: str) -> bool: ...
     def populate_user(
         self, request: HttpRequest, sociallogin: SocialLogin, data: dict[str, object]

@@ -100,6 +100,25 @@ it("offers password recovery when Google sign-in returns signed out", async () =
   );
 });
 
+it("shows how to fix a refused GitHub sign-up and keeps the requested page", async () => {
+  startAt("/login?error=signup_closed&error_process=login&next=%2Fwatchlist");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "GitHub didn't share a verified primary email address, so we couldn't create your account. Verify one in your GitHub email settings and try again, or sign up with email.",
+  );
+  expect(window.location.pathname + window.location.search).toBe(
+    "/login?next=%2Fwatchlist",
+  );
+});
+
+it("shows the usual recovery message for a generic OAuth error", async () => {
+  startAt("/login?error=oauth");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Sign-in failed. Try again in a few minutes or choose Forgot password.",
+  );
+});
+
 it.each([
   ["a server error", () => new HttpResponse(null, { status: 500 })],
   ["a network error", () => HttpResponse.error()],

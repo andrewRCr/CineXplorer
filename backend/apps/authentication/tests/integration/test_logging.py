@@ -1,10 +1,11 @@
 """Authentication security logging tests.
 
 Tests the authentication event logging:
-- Failed login attempts log WARNING with IP and user agent, never the typed sign-in name
-- Successful logins log INFO with user_id, IP, user agent
-- Blacklisted token reuse logs WARNING with user_id, IP, user agent
-- Successful registration logs INFO with user_id, username and IP, never the email address
+- Failed logins log WARNING with the request ID and user agent and omit the typed sign-in name
+- Successful logins log INFO with user_id, request ID and user agent
+- Session renewal logs INFO with user_id and request ID
+- Blacklisted token reuse logs WARNING with user_id, request ID and user agent
+- Successful registration logs INFO with user_id, username and request ID, never the email address
 - Passwords NEVER appear in any log output (security critical)
 - Token values NEVER appear in any log output (security critical)
 
@@ -13,7 +14,7 @@ Security logging requirements:
 - Failed attempts logged at WARNING level for security monitoring
 - Successful operations logged at INFO level for tracking
 - Sensitive data (passwords, tokens) never logged
-- Forensic data included (IP addresses, user agents) for investigation
+- Request IDs link account events to request logs
 
 Uses unittest.assertLogs() because Django logging config sets propagate=False
 on all loggers (config/logging.py lines 253-315), preventing pytest caplog from
@@ -33,9 +34,21 @@ from django.test import override_settings
 from apps.core.tests.test_helpers import get_csrf_token
 
 if TYPE_CHECKING:
+    from django.http import HttpResponse
     from django.test import Client
 
     from apps.users.models import User
+
+
+PROXY_IP = "192.0.2.12"
+VISITOR_IP = "198.51.100.24"
+
+
+def assert_account_log_correlation(log_output: str, response: HttpResponse) -> None:
+    assert f"cid={response['X-Request-ID']}" in log_output
+    assert "ip=" not in log_output
+    assert PROXY_IP not in log_output
+    assert VISITOR_IP not in log_output
 
 
 # ============================================================================
@@ -47,7 +60,7 @@ if TYPE_CHECKING:
 def test_failed_login_logs_warning_with_forensic_data(
     api_client: Client,
 ) -> None:
-    """Test that failed login logs WARNING with IP address and username."""
+    """Test that failed login logs WARNING with the request ID and user agent."""
     test_case = TestCase()  # Create instance to use assertLogs
 
     # Capture logs from 'cinexplorer.auth' logger
@@ -59,6 +72,8 @@ def test_failed_login_logs_warning_with_forensic_data(
                 "password": "wrong_password",
             },
             content_type="application/json",
+            REMOTE_ADDR=PROXY_IP,
+            HTTP_X_FORWARDED_FOR=VISITOR_IP,
         )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -73,7 +88,7 @@ def test_failed_login_logs_warning_with_forensic_data(
     # Verify forensic data
     # The typed sign-in name can be an email address, so it is not logged
     assert "nonexistent_user" not in log_output, "Should not log the typed sign-in name"
-    assert "ip=" in log_output, "Should log IP address"
+    assert_account_log_correlation(log_output, response)
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level (cm.records is list of LogRecord objects)
@@ -104,6 +119,8 @@ def test_successful_login_logs_info_with_user_id(
                 "password": "testpass123",
             },
             content_type="application/json",
+            REMOTE_ADDR=PROXY_IP,
+            HTTP_X_FORWARDED_FOR=VISITOR_IP,
         )
 
     assert response.status_code == HTTPStatus.OK
@@ -119,7 +136,7 @@ def test_successful_login_logs_info_with_user_id(
         f"user_id={verified_user.id}" in log_output or f"user={verified_user.id}" in log_output
     ), "Should log user_id"
     assert "login=" not in log_output, "Should not log the typed sign-in name"
-    assert "ip=" in log_output, "Should log IP address"
+    assert_account_log_correlation(log_output, response)
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level
@@ -136,7 +153,7 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
     api_client: Client,
     verified_user: User,
 ) -> None:
-    """Test that blacklisted token reuse logs WARNING with user_id, IP, and user_agent."""
+    """Test that renewal and revoked token reuse log their own request IDs."""
     # Login to get initial tokens
     login_response = api_client.post(
         "/api/token/",
@@ -153,17 +170,21 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
     csrf_token = get_csrf_token(api_client)
 
     # First refresh - blacklists old token
-    first_refresh = api_client.post(
-        "/api/auth/refresh",
-        content_type="application/json",
-        HTTP_X_CSRFTOKEN=csrf_token,
-    )
+    test_case = TestCase()
+    with test_case.assertLogs("cinexplorer.auth", level="INFO") as renewal_logs:
+        first_refresh = api_client.post(
+            "/api/auth/refresh",
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=csrf_token,
+            REMOTE_ADDR=PROXY_IP,
+            HTTP_X_FORWARDED_FOR=VISITOR_IP,
+        )
     assert first_refresh.status_code == HTTPStatus.OK
+    renewal_output = " ".join(renewal_logs.output)
+    assert "Hybrid token refresh successful" in renewal_output
 
     # Manually set old token cookie to simulate reuse attack
     api_client.cookies["refresh_token"] = initial_refresh
-
-    test_case = TestCase()
 
     # Attempt reuse - should trigger security logging
     with test_case.assertLogs("cinexplorer.auth", level="WARNING") as cm:
@@ -171,6 +192,8 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
             "/api/auth/refresh",
             content_type="application/json",
             HTTP_X_CSRFTOKEN=csrf_token,
+            REMOTE_ADDR=PROXY_IP,
+            HTTP_X_FORWARDED_FOR=VISITOR_IP,
         )
 
     assert reuse_response.status_code == HTTPStatus.UNAUTHORIZED
@@ -188,7 +211,8 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
 
     # Verify log contains forensic data
     assert "user_id=" in log_output or "user=" in log_output, "Should log user_id"
-    assert "ip=" in log_output, "Should log IP address"
+    assert_account_log_correlation(renewal_output, first_refresh)
+    assert_account_log_correlation(log_output, reuse_response)
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level
@@ -217,6 +241,8 @@ def test_successful_registration_logs_info(
                 "password": "TestPass123!",
             },
             content_type="application/json",
+            REMOTE_ADDR=PROXY_IP,
+            HTTP_X_FORWARDED_FOR=VISITOR_IP,
         )
 
     assert response.status_code == HTTPStatus.CREATED
@@ -233,7 +259,7 @@ def test_successful_registration_logs_info(
     assert "user_id=" in log_output or "user=" in log_output, "Should log user_id"
     assert "username=newuser" in log_output or "newuser" in log_output, "Should log username"
     assert "newuser@example.com" not in log_output, "Should not log the email address"
-    assert "ip=" in log_output, "Should log IP address"
+    assert_account_log_correlation(log_output, response)
 
     # Verify log level
     assert any(r.levelname == "INFO" for r in cm.records), (

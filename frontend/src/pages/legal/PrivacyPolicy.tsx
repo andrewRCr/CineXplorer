@@ -213,12 +213,15 @@ export default function PrivacyPolicy() {
           in, renewing your session, verifying your email address and emails
           sent to you), including failed attempts, are also logged with your
           username or user ID where known, and sometimes your browser's
-          identification string. If the web server cannot complete a request to
-          the application server, for example while the site restarts, it can
-          log the requested path, your IP address, your browser's identification
-          string and the result. It leaves out the query, such as search text,
-          and the address of the page you came from. Unexpected application
-          errors can also leave technical details in the logs.
+          identification string. For password sign-ups and sign-ins, session
+          renewals, and attempts to reuse a revoked token, we include the
+          request ID so we can match the account event to its request log. If
+          the web server cannot complete a request to the application server,
+          for example while the site restarts, it can log the requested path,
+          your IP address, your browser's identification string and the result.
+          It leaves out the query, such as search text, and the address of the
+          page you came from. Unexpected application errors can also leave
+          technical details in the logs.
         </List.Item>
         <List.Item>
           <strong>Error reports.</strong> If something breaks in your browser,

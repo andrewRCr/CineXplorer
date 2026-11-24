@@ -44,6 +44,7 @@ Usage Examples:
 import logging
 import logging.config
 import os
+import re
 import sys
 from typing import TypedDict, cast
 
@@ -96,6 +97,34 @@ class HealthCheckFilter(logging.Filter):
         # Allow through if this health check message indicates an error
         # Return True if error indicators found, False otherwise (suppress healthy checks)
         return any(indicator in message for indicator in error_indicators)
+
+
+# A query runs to the last HTTP version, since Werkzeug decodes non-ASCII spaces in it.
+_REQUEST_QUERY = re.compile(r"\?.*(?= HTTP/[\d.]+)|\?.*", re.DOTALL)
+# runserver_plus formats the line itself, so its records carry no arguments. Only a quoted request
+# line is cut there: Werkzeug also logs error tracebacks as finished messages.
+# Colour codes can sit between the version and its closing quote.
+_FORMATTED_REQUEST_QUERY = re.compile(
+    r'("[^\s"]+ [^"?]*)\?.*(?= HTTP/[\d.]+(?:\x1b\[[\d;]*m)*")', re.DOTALL
+)
+
+
+class AccessQueryFilter(logging.Filter):
+    """Cut the query from the request line in the development server's access records.
+
+    Queries can hold search text, sign-in keys and callback codes. The request log already
+    redacts them. It sits on the logger rather than a handler, so a handler added later, such as
+    the one runserver_plus adds, gets the cut record too.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple) and record.args:
+            record.args = tuple(
+                _REQUEST_QUERY.sub("", arg) if isinstance(arg, str) else arg for arg in record.args
+            )
+        elif isinstance(record.msg, str):
+            record.msg = _FORMATTED_REQUEST_QUERY.sub(r"\1", record.msg)
+        return True
 
 
 # Valid log levels for environment variable validation
@@ -350,7 +379,7 @@ def _get_loggers_config(
             ),
             "level": "INFO",
             "propagate": False,
-            "filters": ["health_check_filter"] if debug_mode else [],
+            "filters": ["access_query_filter"] + (["health_check_filter"] if debug_mode else []),
         },
     }
 
@@ -522,6 +551,9 @@ def get_logging_config(
         "filters": {
             "health_check_filter": {
                 "()": "config.logging.HealthCheckFilter",
+            },
+            "access_query_filter": {
+                "()": "config.logging.AccessQueryFilter",
             },
         },
         "handlers": _get_handlers_config(

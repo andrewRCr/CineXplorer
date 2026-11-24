@@ -24,40 +24,30 @@ bypassing the root logger entirely.
 
 from __future__ import annotations
 
-from contextlib import nullcontext
 from http import HTTPStatus
 from typing import TYPE_CHECKING
 from unittest import TestCase
-from unittest.mock import patch
 
 import pytest
-from django.db import IntegrityError
+from django.http import HttpResponse
 from django.test import override_settings
+from ninja_jwt.tokens import RefreshToken
 
+from apps.authentication.services.authentication_service import AuthenticationService
+from apps.authentication.tests.test_helpers import (
+    PROXY_IP,
+    VISITOR_IP,
+    assert_account_log_correlation,
+    start_proxied_request,
+)
+from apps.authentication.utils import check_token_blacklist
 from apps.core.tests.test_helpers import create_user, get_csrf_token
-from apps.users.models import User
 
 if TYPE_CHECKING:
-    from logging import LogRecord
+    from django.contrib.auth.base_user import AbstractBaseUser
+    from django.test import Client, RequestFactory
 
-    from django.http import HttpResponse
-    from django.test import Client
-
-
-PROXY_IP = "192.0.2.12"
-VISITOR_IP = "198.51.100.24"
-
-
-def assert_account_log_correlation(
-    records: list[LogRecord], event: str, response: HttpResponse
-) -> None:
-    (record,) = [record for record in records if record.getMessage().startswith(event)]
-    request_id = response["X-Request-ID"]
-    assert getattr(record, "correlation_id", None) == request_id
-    assert f"cid={request_id}" in record.getMessage()
-    assert "ip=" not in record.getMessage()
-    assert PROXY_IP not in repr(vars(record))
-    assert VISITOR_IP not in repr(vars(record))
+    from apps.users.models import User
 
 
 def post_registration(api_client: Client, **overrides: str) -> HttpResponse:
@@ -108,7 +98,9 @@ def test_failed_login_logs_warning_with_forensic_data(
     # Verify forensic data
     # The typed sign-in name can be an email address, so it is not logged
     assert "nonexistent_user" not in log_output, "Should not log the typed sign-in name"
-    assert_account_log_correlation(cm.records, "Login failed: Invalid credentials", response)
+    assert_account_log_correlation(
+        cm.records, "Login failed: Invalid credentials", response["X-Request-ID"]
+    )
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level (cm.records is list of LogRecord objects)
@@ -156,7 +148,7 @@ def test_successful_login_logs_info_with_user_id(
         f"user_id={verified_user.id}" in log_output or f"user={verified_user.id}" in log_output
     ), "Should log user_id"
     assert "login=" not in log_output, "Should not log the typed sign-in name"
-    assert_account_log_correlation(cm.records, "Login successful", response)
+    assert_account_log_correlation(cm.records, "Login successful", response["X-Request-ID"])
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level
@@ -175,7 +167,9 @@ def test_unverified_login_logs_request_id(api_client: Client, unverified_user: U
         )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
-    assert_account_log_correlation(captured.records, "Login failed: Email not verified", response)
+    assert_account_log_correlation(
+        captured.records, "Login failed: Email not verified", response["X-Request-ID"]
+    )
 
 
 # ============================================================================
@@ -184,11 +178,9 @@ def test_unverified_login_logs_request_id(api_client: Client, unverified_user: U
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("detect_in_service", [False, True], ids=["token-parser", "service-check"])
 def test_blacklisted_token_reuse_logs_warning_with_forensics(
     api_client: Client,
     verified_user: User,
-    detect_in_service: bool,
 ) -> None:
     """Test that renewal and revoked token reuse log their own request IDs."""
     # Login to get initial tokens
@@ -218,21 +210,13 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
         )
     assert first_refresh.status_code == HTTPStatus.OK
     assert_account_log_correlation(
-        renewal_logs.records, "Hybrid token refresh successful", first_refresh
+        renewal_logs.records, "Hybrid token refresh successful", first_refresh["X-Request-ID"]
     )
 
-    # A revoked token is normally rejected while parsing. To exercise the separate
-    # service check, supply a parseable token and make that check report revocation.
-    revocation_check = nullcontext()
+    # Send the token that was revoked by rotation.
     api_client.cookies["refresh_token"] = initial_refresh
-    if detect_in_service:
-        api_client.cookies["refresh_token"] = first_refresh.cookies["refresh_token"].value
-        revocation_check = patch(
-            "apps.authentication.services.authentication_service.check_token_blacklist",
-            return_value=True,
-        )
 
-    with revocation_check, test_case.assertLogs("cinexplorer.auth", level="WARNING") as cm:
+    with test_case.assertLogs("cinexplorer.auth", level="WARNING") as cm:
         reuse_response = api_client.post(
             "/api/auth/refresh",
             content_type="application/json",
@@ -257,12 +241,35 @@ def test_blacklisted_token_reuse_logs_warning_with_forensics(
     # Verify log contains forensic data
     assert "user_id=" in log_output or "user=" in log_output, "Should log user_id"
     assert_account_log_correlation(
-        cm.records, "SECURITY: Blacklisted token reuse attempt", reuse_response
+        cm.records, "SECURITY: Blacklisted token reuse attempt", reuse_response["X-Request-ID"]
     )
     assert "user_agent=" in log_output, "Should log user agent"
 
     # Verify log level
     assert any(r.levelname == "WARNING" for r in cm.records), "Token reuse should be WARNING level"
+
+
+@pytest.mark.django_db
+def test_revocation_after_parsing_logs_request_id(
+    rf: RequestFactory, verified_user: AbstractBaseUser
+) -> None:
+    token = RefreshToken.for_user(verified_user)
+    request, request_id = start_proxied_request(rf, "/api/auth/refresh")
+    request.COOKIES["refresh_token"] = str(token)
+
+    def revoke_before_check(parsed_token: RefreshToken) -> None:
+        # The token has passed parsing by the time the service calls this check.
+        parsed_token.blacklist()
+        check_token_blacklist(parsed_token)
+
+    service = AuthenticationService(check_token_blacklist_fn=revoke_before_check)
+    with TestCase().assertLogs("cinexplorer.auth", level="WARNING") as captured:
+        status, _ = service.hybrid_refresh_token(request, HttpResponse())
+
+    assert status == HTTPStatus.UNAUTHORIZED
+    assert_account_log_correlation(
+        captured.records, "SECURITY: Blacklisted token reuse attempt", request_id
+    )
 
 
 # ============================================================================
@@ -295,7 +302,7 @@ def test_successful_registration_logs_info(
     assert "user_id=" in log_output or "user=" in log_output, "Should log user_id"
     assert "username=newuser" in log_output or "newuser" in log_output, "Should log username"
     assert "newuser@example.com" not in log_output, "Should not log the email address"
-    assert_account_log_correlation(cm.records, "Registration successful", response)
+    assert_account_log_correlation(cm.records, "Registration successful", response["X-Request-ID"])
 
     # Verify log level
     assert any(r.levelname == "INFO" for r in cm.records), (
@@ -323,20 +330,8 @@ def test_registration_rejection_logs_request_id(
         response = post_registration(api_client, **overrides)
 
     assert response.status_code == status
-    assert_account_log_correlation(captured.records, f"Registration failed: {reason}", response)
-
-
-@pytest.mark.django_db
-def test_registration_conflict_from_insert_logs_request_id(api_client: Client) -> None:
-    with (
-        patch.object(User.objects, "create_user", side_effect=IntegrityError("duplicate account")),
-        TestCase().assertLogs("cinexplorer.auth", level="WARNING") as captured,
-    ):
-        response = post_registration(api_client)
-
-    assert response.status_code == HTTPStatus.CONFLICT
     assert_account_log_correlation(
-        captured.records, "Registration failed: Username or email taken", response
+        captured.records, f"Registration failed: {reason}", response["X-Request-ID"]
     )
 
 

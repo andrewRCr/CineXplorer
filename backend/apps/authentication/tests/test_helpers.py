@@ -2,8 +2,7 @@
 
 **Location in Test Hierarchy:** Tier 4 - Domain Helpers
 
-Provides mock builders and input schema factories for AuthenticationService
-unit tests. Keep helpers small and focused to avoid obscuring behavior.
+Provides input schema factories, mock builders and account log assertions.
 
 Related helpers:
 - `core/tests/test_helpers.py` for create_mock_user(), JSON helpers, CSRF tokens
@@ -14,8 +13,10 @@ from __future__ import annotations
 
 from datetime import timedelta
 from types import SimpleNamespace
-from typing import Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 from unittest.mock import Mock
+
+from django.http import HttpResponse
 
 from apps.authentication.schemas import (
     EmailVerificationInputSchema,
@@ -23,8 +24,21 @@ from apps.authentication.schemas import (
     ResendVerificationInputSchema,
     TokenObtainInputSchema,
 )
+from middleware.logging import RequestLoggingMiddleware, get_correlation_id
+
+if TYPE_CHECKING:
+    from logging import LogRecord
+
+    from django.http import HttpRequest
+    from django.test import RequestFactory
+
+PROXY_IP = "192.0.2.12"
+VISITOR_IP = "198.51.100.24"
 
 __all__ = [
+    "PROXY_IP",
+    "VISITOR_IP",
+    "assert_account_log_correlation",
     "create_email_verification_input",
     "create_mock_jwt_settings",
     "create_mock_refresh_token",
@@ -32,6 +46,7 @@ __all__ = [
     "create_resend_verification_input",
     "create_token_input",
     "normalize_response_data",
+    "start_proxied_request",
 ]
 
 
@@ -110,3 +125,22 @@ def normalize_response_data(data: object) -> dict[str, object]:
     if hasattr(data, "model_dump"):
         return cast(ModelDumpProtocol, data).model_dump()
     raise TypeError("Unsupported response type")
+
+
+def start_proxied_request(factory: RequestFactory, path: str) -> tuple[HttpRequest, str]:
+    """Give a service-level test request its ID through the request logger."""
+    request = factory.post(path, REMOTE_ADDR=PROXY_IP, HTTP_X_FORWARDED_FOR=VISITOR_IP)
+    RequestLoggingMiddleware(lambda request: HttpResponse()).process_request(request)
+    request_id = get_correlation_id(request)
+    assert request_id is not None
+    return request, request_id
+
+
+def assert_account_log_correlation(records: list[LogRecord], event: str, request_id: str) -> None:
+    """Check the indicated event for the request link and for address redaction."""
+    (record,) = [record for record in records if record.getMessage().startswith(event)]
+    assert getattr(record, "correlation_id", None) == request_id
+    assert f"cid={request_id}" in record.getMessage()
+    assert "ip=" not in record.getMessage()
+    assert PROXY_IP not in repr(vars(record))
+    assert VISITOR_IP not in repr(vars(record))

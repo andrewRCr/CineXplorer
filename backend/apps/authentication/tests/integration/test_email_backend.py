@@ -29,9 +29,11 @@ from django.template.loader import render_to_string
 
 from apps.authentication.adapters import CustomAccountAdapter, EmailDeliveryError
 from apps.authentication.tests.fixtures import get_resend_token_from_login
+from apps.core.tests.test_helpers import create_user
 
 if TYPE_CHECKING:
     from django.core.mail import EmailMessage
+    from django.http import HttpResponse
     from django.test import Client
 
     from apps.users.models import User
@@ -466,25 +468,46 @@ def test_registration_email_contains_username(
 
 
 @pytest.mark.django_db
-def test_password_reset_for_unknown_email_sends_registration_link(
+@pytest.mark.parametrize("account", ["none", "inactive"])
+def test_password_reset_without_an_active_account_sends_guidance(
     api_client: Client,
     mailoutbox: list[EmailMessage],
+    account: str,
 ) -> None:
     email = "unknown@example.com"
-    response = api_client.post(
-        "/_allauth/browser/v1/auth/password/request",
-        {"email": email},
-        content_type="application/json",
-    )
+    if account == "inactive":
+        inactive = create_user(email=email, username="inactiveviewer")
+        inactive.is_active = False
+        inactive.save(update_fields=["is_active"])
+    active = create_user(email="active@example.com", username="activeviewer")
+
+    def request_reset(address: str) -> HttpResponse:
+        return api_client.post(
+            "/_allauth/browser/v1/auth/password/request",
+            {"email": address},
+            content_type="application/json",
+        )
+
+    response = request_reset(email)
 
     assert response.status_code == HTTPStatus.OK
     assert len(mailoutbox) == 1
     message = mailoutbox[0]
     assert message.to == [email]
-    assert "Unknown Account" in message.subject
+    assert message.subject == "[CineXplorer] No Active Account Found"
     assert f"Hello from {Site.objects.get_current().name}!" in message.body
     assert email in message.body
+    assert "No active account uses this address." in message.body
     assert f"{settings.FRONTEND_URL}/register" in message.body.split()
+    assert (
+        "If you had an account, or sign-up says this address is already used, "
+        "contact cinexplorer@andrewcreekmore.dev." in message.body
+    )
+    assert "If this wasn't you, you can ignore this email." in message.body
+
+    active_response = request_reset(active.email)
+    assert active_response.status_code == response.status_code
+    assert active_response.json() == response.json()
 
 
 # ============================================================================

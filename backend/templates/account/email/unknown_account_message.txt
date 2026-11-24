@@ -1,0 +1,15 @@
+{% extends "account/email/base_message.txt" %}
+
+{% block content %}{% autoescape off %}Someone tried to access a CineXplorer account using this email address:
+
+{{ email }}
+
+No active account uses this address.
+
+If you don't have a CineXplorer account, you can create one here:
+
+{{ signup_url }}
+
+If you had an account, or sign-up says this address is already used, contact cinexplorer@andrewcreekmore.dev.
+
+If this wasn't you, you can ignore this email.{% endautoescape %}{% endblock content %}

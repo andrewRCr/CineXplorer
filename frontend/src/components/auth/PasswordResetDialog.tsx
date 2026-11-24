@@ -20,7 +20,7 @@ import { FormField } from "./FormField";
  * States:
  * - form: Shows password input form
  * - submitting: Shows spinner while API call in progress
- * - success: Shows success message, user should login
+ * - success: Shows confirmation and prompts signed-out visitors to log in
  * - error: Shows error message with guidance
  */
 
@@ -29,6 +29,7 @@ export type ResetState = "form" | "submitting" | "success" | "error" | null;
 interface PasswordResetDialogProps {
   /** Password reset key from URL */
   resetKey: string | null;
+  isSignedIn: boolean;
   /** Handles a successful reset while the dialog shows its success message. */
   onSuccess: (autoLoggedIn: boolean) => void;
   /** Handler for dialog dismiss */
@@ -42,6 +43,7 @@ interface PasswordResetDialogProps {
 
 export const PasswordResetDialog = ({
   resetKey,
+  isSignedIn,
   onSuccess,
   onDismiss,
   onSubmit,
@@ -194,9 +196,11 @@ export const PasswordResetDialog = ({
                   <Text color="success" textAlign="center" fontWeight="medium">
                     Password reset successfully!
                   </Text>
-                  <Text fontSize="sm" color="on-muted" textAlign="center">
-                    You can now log in with your new password.
-                  </Text>
+                  {!isSignedIn && (
+                    <Text fontSize="sm" color="on-muted" textAlign="center">
+                      You can now log in with your new password.
+                    </Text>
+                  )}
                 </VStack>
               )}
               {resetState === "error" && (

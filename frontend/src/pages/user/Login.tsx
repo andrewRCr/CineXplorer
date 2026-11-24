@@ -65,6 +65,20 @@ function readEmailLink(params: URLSearchParams) {
   return reset ? ({ action: "reset", token: reset } as const) : null;
 }
 
+function readLiveEmailLink() {
+  return readEmailLink(new URLSearchParams(window.location.search));
+}
+
+function isLiveLogin(location: Pick<Location, "pathname" | "search" | "hash">) {
+  const current = window.location;
+  return (
+    matchPath(ROUTES.LOGIN, current.pathname) !== null &&
+    current.pathname === location.pathname &&
+    current.search === location.search &&
+    current.hash === location.hash
+  );
+}
+
 const Login = () => {
   // ==========================================================================
   // Core Hooks & Context
@@ -138,7 +152,11 @@ const Login = () => {
 
       if (response.success) {
         clearAlert();
-        if (!isLegalDocumentPath(window.location.pathname)) {
+        if (
+          !isLegalDocumentPath(window.location.pathname) &&
+          !latest.current.emailDialogOpen &&
+          !readLiveEmailLink()
+        ) {
           void navigate(returnPathFrom(location.search));
         }
       } else {
@@ -184,6 +202,7 @@ const Login = () => {
   // ==========================================================================
 
   const urlLink = readEmailLink(searchParams);
+  const hasUrlLink = urlLink !== null;
   const [emailLink, setEmailLink] = useState(
     () =>
       urlLink && { ...urlLink, returnPath: returnPathFrom(location.search) },
@@ -204,35 +223,47 @@ const Login = () => {
     setVerification({ state: "pending" });
   }
 
-  const currentEmailLink = useRef(emailLink);
-  const signedIn = useRef(isAuthenticated);
+  const latest = useRef({
+    location,
+    emailLink,
+    emailDialogOpen,
+    isAuthenticated,
+  });
   useLayoutEffect(() => {
-    currentEmailLink.current = emailLink;
-    signedIn.current = isAuthenticated;
-  }, [emailLink, isAuthenticated]);
+    latest.current = { location, emailLink, emailDialogOpen, isAuthenticated };
+  }, [location, emailLink, emailDialogOpen, isAuthenticated]);
 
-  const ownsEmailLink = () => {
-    if (currentEmailLink.current !== emailLink) return false;
-    const { pathname, search } = window.location;
-    if (!matchPath(ROUTES.LOGIN, pathname)) return true;
-    const liveLink = readEmailLink(new URLSearchParams(search));
+  const visitMounted = useRef(false);
+  useLayoutEffect(() => {
+    visitMounted.current = true;
+    return () => {
+      visitMounted.current = false;
+    };
+  }, []);
+
+  const isCurrentEmailLink = () => {
+    if (!emailLink || latest.current.emailLink !== emailLink) return false;
+    if (!matchPath(ROUTES.LOGIN, window.location.pathname)) return true;
+    const liveLink = readLiveEmailLink();
     return (
       !liveLink ||
-      (liveLink.action === emailLink?.action &&
+      (liveLink.action === emailLink.action &&
         liveLink.token === emailLink.token)
     );
   };
 
-  // A late response can arrive after the visitor has gone to another page, which stays as it is.
+  const ownsEmailLink = () => visitMounted.current && isCurrentEmailLink();
+
   const clearEmailLink = () => {
-    if (matchPath(ROUTES.LOGIN, window.location.pathname)) {
-      void navigate(ROUTES.LOGIN, { replace: true, state: {} });
-    }
+    if (!isLiveLogin(latest.current.location)) return false;
+    void navigate(ROUTES.LOGIN, { replace: true, state: {} });
+    return true;
   };
 
   const dismissEmailLink = () => {
+    if (!ownsEmailLink()) return;
     setEmailDialogOpen(false);
-    if (ownsEmailLink()) clearEmailLink();
+    clearEmailLink();
   };
 
   const verificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -256,12 +287,12 @@ const Login = () => {
 
     try {
       const response = await authService.verifyEmail(emailLink.token);
-      if (!ownsEmailLink()) return;
       const notice = "Email verified. You can now log in.";
       if (isLegalDocumentPath(window.location.pathname)) {
         priorityToaster.success({ title: notice });
         return;
       }
+      if (!ownsEmailLink()) return;
       setVerification({
         state: "success",
         message: response.message || "Email verified successfully!",
@@ -273,7 +304,7 @@ const Login = () => {
       }
 
       clearEmailLink();
-      if (signedIn.current) {
+      if (latest.current.isAuthenticated) {
         priorityToaster.success({ title: "Email verified." });
       } else {
         setEmailDialogOpen(true);
@@ -285,7 +316,8 @@ const Login = () => {
         if (ownsEmailLink()) setEmailDialogOpen(false);
       }, 1500);
     } catch (error: unknown) {
-      if (!ownsEmailLink()) return;
+      const legalPageOpen = isLegalDocumentPath(window.location.pathname);
+      if (!legalPageOpen && !ownsEmailLink()) return;
       logger.error("Email verification error:", error);
 
       // Extract error message
@@ -295,11 +327,11 @@ const Login = () => {
         const data = error.response?.data;
         if (data?.error) errorMessage = data.error;
       }
-      if (isLegalDocumentPath(window.location.pathname)) {
+      if (legalPageOpen) {
         priorityToaster.error({ title: errorMessage });
         return;
       }
-      if (!signedIn.current) setEmailDialogOpen(true);
+      if (!latest.current.isAuthenticated) setEmailDialogOpen(true);
       setVerification({ state: "error", message: errorMessage });
       clearEmailLink();
     }
@@ -310,20 +342,23 @@ const Login = () => {
   // ==========================================================================
 
   const handlePasswordResetSuccess = (autoLoggedIn: boolean) => {
-    if (!ownsEmailLink()) return;
+    const legalPageOpen = isLegalDocumentPath(window.location.pathname);
+    if (!legalPageOpen && !isCurrentEmailLink()) return;
     const showedSignedInToast =
       !autoLoggedIn &&
-      signedIn.current &&
-      !isLegalDocumentPath(window.location.pathname);
+      !legalPageOpen &&
+      visitMounted.current &&
+      latest.current.isAuthenticated;
     if (showedSignedInToast) {
       priorityToaster.success({ title: "Password reset." });
     }
 
     setTimeout(() => {
-      if (!ownsEmailLink()) return;
-      setEmailDialogOpen(false);
       const legalPageOpen = isLegalDocumentPath(window.location.pathname);
-      if (!legalPageOpen) clearEmailLink();
+      if (!legalPageOpen && !isCurrentEmailLink()) return;
+      const ownsLink = !legalPageOpen && visitMounted.current;
+      if (ownsLink) setEmailDialogOpen(false);
+      const clearedLink = ownsLink && clearEmailLink();
 
       const notice =
         "Password reset. You can now log in with your new password.";
@@ -333,13 +368,13 @@ const Login = () => {
           description: "You are now logged in.",
           duration: 4000,
         });
-        if (!legalPageOpen) void navigate(ROUTES.HOME);
+        if (clearedLink) void navigate(ROUTES.HOME);
       } else if (!showedSignedInToast) {
         if (legalPageOpen) {
           priorityToaster.success({ title: notice });
-        } else if (signedIn.current) {
+        } else if (ownsLink && latest.current.isAuthenticated) {
           priorityToaster.success({ title: "Password reset." });
-        } else {
+        } else if (ownsLink) {
           showNotice(notice);
         }
       }
@@ -413,16 +448,14 @@ const Login = () => {
   // ==========================================================================
 
   useEffect(() => {
-    const liveParams = new URLSearchParams(window.location.search);
     if (
       isAuthenticated &&
       !isLoggingIn &&
       oauthCanNavigate &&
       !isLegalDocumentPath(window.location.pathname) &&
-      !searchParams.has("verify") &&
-      !searchParams.has("reset") &&
-      !liveParams.has("verify") &&
-      !liveParams.has("reset") &&
+      (!emailLink || isLiveLogin(location)) &&
+      !hasUrlLink &&
+      !readLiveEmailLink() &&
       !emailDialogOpen
     ) {
       logger.debug("User already authenticated, redirecting");
@@ -437,8 +470,8 @@ const Login = () => {
     navigate,
     isLoggingIn,
     oauthCanNavigate,
-    location.search,
-    searchParams,
+    location,
+    hasUrlLink,
     emailDialogOpen,
     emailLink,
   ]);
@@ -683,6 +716,7 @@ const Login = () => {
             ? emailLink.token
             : null
         }
+        isSignedIn={isAuthenticated ?? false}
         onSubmit={authService.resetPassword}
         onSuccess={handlePasswordResetSuccess}
         onDismiss={dismissEmailLink}

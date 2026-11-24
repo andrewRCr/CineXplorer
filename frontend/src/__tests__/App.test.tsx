@@ -205,6 +205,16 @@ describe("Login email links", () => {
     });
   }
 
+  async function submitReset(user: ReturnType<typeof userEvent.setup>) {
+    const dialog = within(
+      await screen.findByRole("dialog", { name: "Set New Password" }),
+    );
+    await user.type(dialog.getByLabelText("New Password"), "Fresh-pass-42");
+    await user.type(dialog.getByLabelText("Confirm Password"), "Fresh-pass-42");
+    await user.click(dialog.getByRole("button", { name: "Reset Password" }));
+    return dialog;
+  }
+
   it.each([
     ["verify", "Verify Your Email"],
     ["reset", "Set New Password"],
@@ -222,6 +232,19 @@ describe("Login email links", () => {
         .click(within(dialog).getByRole("button", { name: "Cancel" }));
       expect(await screen.findByRole("heading", home)).toBeVisible();
       expect(window.location.pathname + window.location.search).toBe("/");
+    },
+  );
+
+  it.each(["verify", "reset"])(
+    "returns a signed-in visitor to the requested page when %s is empty",
+    async (action) => {
+      startSignedInAt(`/login?${action}=&next=%2Fwatchlist`);
+
+      expect(
+        await screen.findByRole("heading", { level: 1, name: "Watchlist" }),
+      ).toBeVisible();
+      expect(window.location.pathname).toBe("/watchlist");
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     },
   );
 
@@ -264,18 +287,15 @@ describe("Login email links", () => {
       ),
     );
     startSignedInAt("/login?reset=fixture-email-key");
-    const user = userEvent.setup();
-    const dialog = within(
-      await screen.findByRole("dialog", { name: "Set New Password" }),
-    );
-    await user.type(dialog.getByLabelText("New Password"), "Fresh-pass-42");
-    await user.type(dialog.getByLabelText("Confirm Password"), "Fresh-pass-42");
-    await user.click(dialog.getByRole("button", { name: "Reset Password" }));
+    const dialog = await submitReset(userEvent.setup());
 
     await waitFor(() =>
       expect(screen.getByText("Password reset.")).toBeVisible(),
     );
     expect(dialog.getByText("Password reset successfully!")).toBeVisible();
+    expect(
+      dialog.queryByText("You can now log in with your new password."),
+    ).not.toBeInTheDocument();
     expect(window.location.pathname).toBe("/login");
     expect(
       screen.queryByText(
@@ -287,6 +307,74 @@ describe("Login email links", () => {
     ).toBeVisible();
     expect(window.location.pathname + window.location.search).toBe("/");
     expect(screen.getByText("Password reset.")).toBeVisible();
+  });
+
+  it("shows the auto-sign-in toast without leaving the page opened during a reset", async () => {
+    const response = gate();
+    const received = gate();
+    homeHandlers();
+    server.use(
+      http.post(
+        `${siteOrigin}/_allauth/browser/v1/auth/password/reset`,
+        async () => {
+          received.release();
+          await response.wait;
+          return HttpResponse.json({
+            meta: { is_authenticated: true },
+            data: { user: profile },
+          });
+        },
+      ),
+    );
+    const user = userEvent.setup();
+    startAt("/login?reset=fixture-email-key");
+    try {
+      await submitReset(user);
+      await received.wait;
+      await user.keyboard("{Escape}");
+      await user.click(await screen.findByRole("link", { name: "Register" }));
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "Create an account",
+        }),
+      ).toBeVisible();
+    } finally {
+      response.release();
+    }
+
+    await waitFor(
+      () => expect(screen.getByText("You are now logged in.")).toBeVisible(),
+      { timeout: 3000 },
+    );
+    expect(screen.getByText("Password reset successfully!")).toBeVisible();
+    expect(window.location.pathname).toBe("/register");
+  });
+
+  it("keeps the browser address when it changes before the verification success dialog closes", async () => {
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, () =>
+        HttpResponse.json({
+          message: "Verification complete",
+          email: profile.email,
+        }),
+      ),
+    );
+    startSignedInAt("/login?verify=fixture-email-key");
+    await userEvent
+      .setup()
+      .click(
+        await screen.findByRole("button", { name: "Complete Verification" }),
+      );
+    expect(await screen.findByText("Verification complete")).toBeVisible();
+    expect(window.location.pathname + window.location.search).toBe("/login");
+
+    window.history.pushState(window.history.state, "", "/watchlist");
+    await waitFor(
+      () => expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      { timeout: 3000 },
+    );
+    expect(window.location.pathname).toBe("/watchlist");
   });
 
   it("keeps a signed-in visitor on a verification error until Close", async () => {
@@ -514,6 +602,117 @@ describe("Login email links", () => {
     ).rejects.toThrow();
     expect(window.location.pathname).toBe("/register");
   });
+
+  it("keeps the requested page on a fresh Login visit when an earlier verification finishes", async () => {
+    const response = gate();
+    const received = gate();
+    server.use(
+      http.post(`${apiBaseUrl}/verify-email/`, async () => {
+        received.release();
+        await response.wait;
+        return HttpResponse.json({
+          message: "Old address verified",
+          email: "old@example.com",
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    startAt("/login?verify=old-key");
+    try {
+      await user.click(
+        await screen.findByRole("button", { name: "Complete Verification" }),
+      );
+      await received.wait;
+      await user.keyboard("{Escape}");
+      await user.click(await screen.findByRole("link", { name: "Register" }));
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Create an account",
+      });
+      openLink("/login?next=%2Fwatchlist");
+      await screen.findByRole("textbox", signInField);
+    } finally {
+      response.release();
+    }
+
+    await expect(
+      screen.findByText("Old address verified", {}, { timeout: 500 }),
+    ).rejects.toThrow();
+    expect(window.location.pathname + window.location.search).toBe(
+      "/login?next=%2Fwatchlist",
+    );
+    expect(screen.getByRole("textbox", signInField)).toHaveValue("");
+  });
+
+  it.each(["with the dialog open", "before the route commits"])(
+    "keeps an email link that arrives during password sign-in %s",
+    async (arrival) => {
+      const response = gate();
+      const received = gate();
+      const browserOnly = arrival === "before the route commits";
+      server.use(
+        http.post(`${apiBaseUrl}/token/`, async () => {
+          received.release();
+          await response.wait;
+          return HttpResponse.json({
+            user_id: profile.id,
+            access_token: token(),
+            username: profile.username,
+          });
+        }),
+        http.post(`${apiBaseUrl}/verify-email/`, () =>
+          HttpResponse.json({ error: "The link expired." }, { status: 400 }),
+        ),
+      );
+      const path = "/login?verify=fixture-email-key&next=%2Fwatchlist";
+      const user = userEvent.setup();
+      startAt("/login?next=%2Fwatchlist");
+      try {
+        await user.type(
+          await screen.findByRole("textbox", signInField),
+          profile.username,
+        );
+        await user.type(screen.getByLabelText("Password"), "testpass123");
+        await user.click(screen.getByRole("button", { name: "Login" }));
+        await received.wait;
+        expect(screen.getByText("Logging in...")).toBeVisible();
+        if (browserOnly) {
+          window.history.pushState(window.history.state, "", path);
+        } else {
+          openLink(path);
+          await user.click(
+            await screen.findByRole("button", {
+              name: "Complete Verification",
+            }),
+          );
+          await screen.findByRole("dialog", { name: "Verification Failed" });
+        }
+      } finally {
+        response.release();
+      }
+
+      await waitFor(() =>
+        expect(screen.queryByText("Logging in...")).not.toBeInTheDocument(),
+      );
+      expect(window.location.pathname + window.location.search).toBe(
+        browserOnly ? path : "/login",
+      );
+      if (browserOnly) {
+        act(() => window.dispatchEvent(new PopStateEvent("popstate")));
+      }
+      const dialog = await screen.findByRole("dialog", {
+        name: browserOnly ? "Verify Your Email" : "Verification Failed",
+      });
+      await user.click(
+        within(dialog).getByRole("button", {
+          name: browserOnly ? "Cancel" : "Close",
+        }),
+      );
+      expect(
+        await screen.findByRole("heading", { level: 1, name: "Watchlist" }),
+      ).toBeVisible();
+    },
+  );
 
   it.each([
     ["verify", "Verify Your Email"],

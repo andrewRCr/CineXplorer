@@ -1,59 +1,16 @@
 import userEvent from "@testing-library/user-event";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { act, screen, waitFor, within } from "@testing-library/react";
+import { expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw/http";
 import { apiBaseUrl, siteOrigin } from "@/config/baseUrls";
 import { setAuthTokens } from "@/utilities/tokenUtils";
-import { ThemeSelectProvider } from "@/components/core/chakra/theme-provider";
-import { TestProviders } from "@tests/helpers/test-providers";
-import {
-  authHandlers,
-  clearBrowserAuth,
-  profile,
-  token,
-} from "@tests/helpers/auth";
+import { setupAppTest, startAt } from "@tests/helpers/app-test";
+import { profile, token } from "@tests/helpers/auth";
 import { gate } from "@tests/helpers/web-locks";
 import { server } from "@tests/mocks/server";
-import App from "../App";
 import { homeHandlers } from "@/pages/home/__tests__/homeFixtures";
 
-declare const jsdom: { window: Window };
-const mockLocation = window.location;
-
-beforeEach(() => {
-  // BrowserRouter needs history writes to update the location it reads.
-  Object.defineProperty(window, "location", {
-    value: jsdom.window.location,
-    writable: true,
-  });
-  clearBrowserAuth();
-  authHandlers();
-  vi.spyOn(console, "error").mockImplementation(() => {});
-  server.use(
-    http.post(`${apiBaseUrl}/logs/`, () =>
-      HttpResponse.json({ success: true }),
-    ),
-  );
-});
-afterEach(() => {
-  delete window.__dismissPreloadOverlay;
-  window.history.replaceState({}, "", "/");
-  Object.defineProperty(window, "location", {
-    value: mockLocation,
-    writable: true,
-  });
-});
-function startAt(path: string) {
-  // The test environment supplies a writable location; keep its path aligned with browser history.
-  window.history.replaceState({}, "", path);
-  return render(
-    <ThemeSelectProvider>
-      <TestProviders>
-        <App />
-      </TestProviders>
-    </ThemeSelectProvider>,
-  );
-}
+setupAppTest();
 
 function startPendingProviderReturn() {
   const response = gate();

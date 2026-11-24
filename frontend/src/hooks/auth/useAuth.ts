@@ -84,16 +84,19 @@ export function useAuth(): AuthStateProps {
         const onLogin = location.pathname === ROUTES.LOGIN;
         const provider = sessionStorage.getItem("oauth_in_progress");
         const fromGoogle = document.referrer.includes("google.com");
+        const params = new URLSearchParams(location.search);
         return {
             providerReturn:
                 onLogin &&
                 (fromGoogle ||
                     document.referrer.includes("github.com") ||
                     provider !== null),
+            hasEmailLink:
+                onLogin && Boolean(params.get("verify") || params.get("reset")),
             requireConfirmedProviderSignOut:
                 onLogin &&
                 provider === "google" &&
-                !new URLSearchParams(location.search).has("error") &&
+                !params.has("error") &&
                 !blocksOAuthNavigation(location.pathname, location.search),
             returnPath: returnPathFrom(location.search),
             locationKey: location.key,
@@ -197,7 +200,7 @@ export function useAuth(): AuthStateProps {
             if (session.data === undefined && !session.isError) return;
             hasHandledOAuthRef.current = true;
             clearProviderFlags();
-            if (!canNavigate) return;
+            if (!canNavigate || firstRead.hasEmailLink) return;
             if (session.data && !getAuthTokens().access_token) {
                 void navigate(firstRead.returnPath);
             } else if (

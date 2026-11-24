@@ -19,11 +19,16 @@ import {
 } from "@/components/auth";
 import type { VerificationState } from "@/components/auth";
 import { useFormik } from "formik";
-import { useNavigate, useLocation, useSearchParams } from "react-router";
+import {
+  matchPath,
+  useNavigate,
+  useLocation,
+  useSearchParams,
+} from "react-router";
 import useAuthContext from "@/hooks/auth/useAuthContext";
 import { useOAuthFlow } from "@/hooks/auth/useOAuthFlow";
 import { useLoginAlerts } from "@/hooks/auth/useLoginAlerts";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { FaGoogle, FaGithub } from "react-icons/fa";
 import { ERROR_CODES } from "@/constants/errors";
 import * as authService from "@/services/authService";
@@ -34,6 +39,7 @@ import { priorityToaster } from "@/components/core/chakra/toaster";
 import { isAxiosError } from "@/utilities/axiosErrorUtils";
 import {
   isLegalDocumentPath,
+  loginPathFor,
   returnPathFrom,
   safeReturnPath,
 } from "@/utilities/returnPath";
@@ -53,12 +59,34 @@ import logger from "@/services/logger";
 //
 // ============================================================================
 
+function readEmailLink(params: URLSearchParams) {
+  const verify = params.get("verify");
+  if (verify) return { action: "verify", token: verify } as const;
+  const reset = params.get("reset");
+  return reset ? ({ action: "reset", token: reset } as const) : null;
+}
+
+function readLiveEmailLink() {
+  return readEmailLink(new URLSearchParams(window.location.search));
+}
+
+function isLiveLogin(location: Pick<Location, "pathname" | "search" | "hash">) {
+  const current = window.location;
+  return (
+    matchPath(ROUTES.LOGIN, current.pathname) !== null &&
+    current.pathname === location.pathname &&
+    current.search === location.search &&
+    current.hash === location.hash
+  );
+}
+
 const Login = () => {
   // ==========================================================================
   // Core Hooks & Context
   // ==========================================================================
 
   const authContext = useAuthContext();
+  const isAuthenticated = authContext?.isAuthenticated;
   const login = authContext?.login;
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,7 +153,12 @@ const Login = () => {
 
       if (response.success) {
         clearAlert();
-        if (!isLegalDocumentPath(window.location.pathname)) {
+        if (
+          visitMounted.current &&
+          !isLegalDocumentPath(window.location.pathname) &&
+          !latest.current.emailDialogOpen &&
+          !readLiveEmailLink()
+        ) {
           void navigate(returnPathFrom(location.search));
         }
       } else {
@@ -167,15 +200,84 @@ const Login = () => {
   };
 
   // ==========================================================================
-  // Email Verification Flow (?verify=TOKEN)
+  // Email Links (?verify=TOKEN or ?reset=KEY)
   // ==========================================================================
 
-  const verifyToken = searchParams.get("verify");
-  const [verificationState, setVerificationState] = useState<VerificationState>(
-    verifyToken ? "pending" : null,
+  const urlLink = readEmailLink(searchParams);
+  const hasUrlLink = urlLink !== null;
+  const returnTo = safeReturnPath(searchParams.get("next"));
+  const [emailLink, setEmailLink] = useState(
+    () => urlLink && { ...urlLink, returnPath: returnTo },
   );
-  const [verificationMessage, setVerificationMessage] = useState("");
-  const hasVerifiedRef = useRef(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(emailLink !== null);
+  const [verification, setVerification] = useState<{
+    state: NonNullable<VerificationState>;
+    message?: string;
+  }>({ state: "pending" });
+
+  // Only a new link replaces the dialog. Clearing the URL leaves its result visible.
+  if (
+    urlLink &&
+    (emailLink?.action !== urlLink.action || emailLink.token !== urlLink.token)
+  ) {
+    setEmailLink({ ...urlLink, returnPath: returnTo });
+    setEmailDialogOpen(true);
+    setVerification({ state: "pending" });
+  }
+
+  const latest = useRef({
+    location,
+    emailLink,
+    emailDialogOpen,
+    isAuthenticated,
+  });
+  useLayoutEffect(() => {
+    latest.current = { location, emailLink, emailDialogOpen, isAuthenticated };
+  }, [location, emailLink, emailDialogOpen, isAuthenticated]);
+
+  const visitMounted = useRef(false);
+  useLayoutEffect(() => {
+    visitMounted.current = true;
+    return () => {
+      visitMounted.current = false;
+    };
+  }, []);
+
+  const isCurrentEmailLink = () => {
+    if (!emailLink || latest.current.emailLink !== emailLink) return false;
+    if (!matchPath(ROUTES.LOGIN, window.location.pathname)) return true;
+    const liveLink = readLiveEmailLink();
+    return (
+      !liveLink ||
+      (liveLink.action === emailLink.action &&
+        liveLink.token === emailLink.token)
+    );
+  };
+
+  const ownsEmailLink = () => visitMounted.current && isCurrentEmailLink();
+
+  const clearEmailLink = () => {
+    if (!isLiveLogin(latest.current.location)) return false;
+    const liveLink = readLiveEmailLink();
+    if (
+      !liveLink ||
+      liveLink.action !== emailLink?.action ||
+      liveLink.token !== emailLink.token
+    )
+      return false;
+    void navigate(loginPathFor(emailLink.returnPath), {
+      replace: true,
+      state: {},
+    });
+    return true;
+  };
+
+  const dismissEmailLink = () => {
+    if (!ownsEmailLink()) return;
+    setEmailDialogOpen(false);
+    clearEmailLink();
+  };
+
   const verificationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -190,40 +292,45 @@ const Login = () => {
   }, []);
 
   const handleVerifyEmail = async () => {
-    if (!verifyToken || hasVerifiedRef.current) return;
+    if (emailLink?.action !== "verify" || verification.state !== "pending")
+      return;
 
-    hasVerifiedRef.current = true;
-    setVerificationState("verifying");
+    setVerification({ state: "verifying" });
 
     try {
-      const response = await authService.verifyEmail(verifyToken);
+      const response = await authService.verifyEmail(emailLink.token);
       const notice = "Email verified. You can now log in.";
       if (isLegalDocumentPath(window.location.pathname)) {
         priorityToaster.success({ title: notice });
         return;
       }
-      setVerificationState("success");
-      setVerificationMessage(
-        response.message || "Email verified successfully!",
-      );
+      if (!ownsEmailLink()) return;
+      setVerification({
+        state: "success",
+        message: response.message || "Email verified successfully!",
+      });
 
       // Pre-fill the username field with verified email (reduces friction)
       if (response.email) {
         void formik.setFieldValue("username", response.email);
       }
 
-      // Clear the token from URL to prevent re-verification attempts
-      window.history.replaceState({}, "", ROUTES.LOGIN);
-
-      showNotice(notice);
+      clearEmailLink();
+      if (latest.current.isAuthenticated) {
+        priorityToaster.success({ title: "Email verified." });
+      } else {
+        setEmailDialogOpen(true);
+        showNotice(notice);
+      }
 
       // Clear verification UI after short delay to let user see success
       verificationTimeoutRef.current = setTimeout(() => {
-        setVerificationState(null);
+        if (ownsEmailLink()) setEmailDialogOpen(false);
       }, 1500);
     } catch (error: unknown) {
+      const legalPageOpen = isLegalDocumentPath(window.location.pathname);
+      if (!legalPageOpen && !ownsEmailLink()) return;
       logger.error("Email verification error:", error);
-      hasVerifiedRef.current = false; // Allow retry
 
       // Extract error message
       let errorMessage =
@@ -232,13 +339,13 @@ const Login = () => {
         const data = error.response?.data;
         if (data?.error) errorMessage = data.error;
       }
-      if (isLegalDocumentPath(window.location.pathname)) {
+      if (legalPageOpen) {
         priorityToaster.error({ title: errorMessage });
         return;
       }
-      setVerificationState("error");
-      setVerificationMessage(errorMessage);
-      window.history.replaceState({}, "", ROUTES.LOGIN);
+      if (!latest.current.isAuthenticated) setEmailDialogOpen(true);
+      setVerification({ state: "error", message: errorMessage });
+      clearEmailLink();
     }
   };
 
@@ -246,38 +353,48 @@ const Login = () => {
   // Password Reset Flow (?reset=KEY)
   // ==========================================================================
 
-  const resetKey = searchParams.get("reset");
-  const [passwordResetKey, setPasswordResetKey] = useState<string | null>(
-    resetKey,
-  );
-
   const handlePasswordResetSuccess = (autoLoggedIn: boolean) => {
-    setPasswordResetKey(null);
     const legalPageOpen = isLegalDocumentPath(window.location.pathname);
-    const notice = "Password reset. You can now log in with your new password.";
-    if (!legalPageOpen) {
-      window.history.replaceState({}, "", ROUTES.LOGIN);
+    if (!legalPageOpen && !isCurrentEmailLink()) return;
+    const showedSignedInToast =
+      !autoLoggedIn &&
+      !legalPageOpen &&
+      visitMounted.current &&
+      latest.current.isAuthenticated;
+    if (showedSignedInToast) {
+      priorityToaster.success({ title: "Password reset." });
     }
 
-    if (autoLoggedIn) {
-      priorityToaster.success({
-        title: "Password reset successfully!",
-        description: "You are now logged in.",
-        duration: 4000,
-      });
-      if (!legalPageOpen) {
-        void navigate(ROUTES.HOME);
+    setTimeout(() => {
+      const legalPageOpen = isLegalDocumentPath(window.location.pathname);
+      if (!legalPageOpen && !isCurrentEmailLink()) return;
+      const ownsLink = !legalPageOpen && visitMounted.current;
+      const dismissed =
+        ownsLink &&
+        !latest.current.emailDialogOpen &&
+        isLiveLogin(latest.current.location);
+      if (ownsLink) setEmailDialogOpen(false);
+      const clearedLink = ownsLink && clearEmailLink();
+
+      const notice =
+        "Password reset. You can now log in with your new password.";
+      if (autoLoggedIn) {
+        priorityToaster.success({
+          title: "Password reset successfully!",
+          description: "You are now logged in.",
+          duration: 4000,
+        });
+        if (clearedLink || dismissed) void navigate(ROUTES.HOME);
+      } else if (!showedSignedInToast) {
+        if (legalPageOpen) {
+          priorityToaster.success({ title: notice });
+        } else if (ownsLink && latest.current.isAuthenticated) {
+          priorityToaster.success({ title: "Password reset." });
+        } else if (ownsLink) {
+          showNotice(notice);
+        }
       }
-    } else if (legalPageOpen) {
-      priorityToaster.success({ title: notice });
-    } else {
-      showNotice(notice);
-    }
-  };
-
-  const handlePasswordResetDismiss = () => {
-    setPasswordResetKey(null);
-    window.history.replaceState({}, "", ROUTES.LOGIN);
+    }, 1500);
   };
 
   // ==========================================================================
@@ -348,27 +465,33 @@ const Login = () => {
 
   useEffect(() => {
     if (
-      authContext?.isAuthenticated &&
+      isAuthenticated &&
       !isLoggingIn &&
       oauthCanNavigate &&
-      !isLegalDocumentPath(window.location.pathname)
+      !isLegalDocumentPath(window.location.pathname) &&
+      (!emailLink || isLiveLogin(location)) &&
+      !hasUrlLink &&
+      !readLiveEmailLink() &&
+      !emailDialogOpen
     ) {
       logger.debug("User already authenticated, redirecting");
       void navigate(returnPathFrom(location.search), { replace: true });
     }
   }, [
-    authContext?.isAuthenticated,
+    isAuthenticated,
     navigate,
     isLoggingIn,
     oauthCanNavigate,
-    location.search,
+    location,
+    hasUrlLink,
+    emailDialogOpen,
+    emailLink,
   ]);
 
   // ==========================================================================
   // OAuth Handlers
   // ==========================================================================
 
-  const returnTo = safeReturnPath(searchParams.get("next"));
   const handleGoogleLogin = () => initializeOAuth("google", returnTo);
   const handleGithubLogin = () => initializeOAuth("github", returnTo);
 
@@ -586,21 +709,28 @@ const Login = () => {
 
       {/* Email verification dialog - shown when ?verify=TOKEN in URL */}
       <EmailVerificationDialog
-        verificationState={verificationState}
-        verificationMessage={verificationMessage}
+        verificationState={
+          emailDialogOpen && emailLink?.action === "verify"
+            ? verification.state
+            : null
+        }
+        verificationMessage={verification.message ?? ""}
         onVerify={() => void handleVerifyEmail()}
-        onDismiss={() => {
-          setVerificationState(null);
-          window.history.replaceState({}, "", ROUTES.LOGIN);
-        }}
+        onDismiss={dismissEmailLink}
       />
 
       {/* Password reset dialog - shown when ?reset=KEY in URL */}
       <PasswordResetDialog
-        resetKey={passwordResetKey}
+        key={emailLink?.action === "reset" ? emailLink.token : undefined}
+        resetKey={
+          emailDialogOpen && emailLink?.action === "reset"
+            ? emailLink.token
+            : null
+        }
+        isSignedIn={isAuthenticated ?? false}
         onSubmit={authService.resetPassword}
         onSuccess={handlePasswordResetSuccess}
-        onDismiss={handlePasswordResetDismiss}
+        onDismiss={dismissEmailLink}
       />
     </Box>
   );

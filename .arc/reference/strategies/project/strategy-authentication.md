@@ -488,13 +488,17 @@ and ends that read. Cancellation or an obsolete authentication-session version c
 The status derives from the query: a profile is `authenticated`, `null` is `anonymous`. While the first read is
 pending, it is `authenticated` only with a current stored token and sign-in flag, and `resolving` otherwise.
 `isAuthenticated` and the hook's public commands retain their shapes for context consumers. The OAuth callback
-effect reacts to this first result, clears provider-flow flags and handles feedback and navigation. A Google attempt
+effect reacts to this first result, clears provider-flow flags and handles feedback and navigation. Visits that start
+on a verification or password-reset link leave navigation to Login, even after the link is cleared. A Google attempt
 from the same tab receives recovery guidance only when the provider session endpoint confirms an anonymous session.
 When that session read is unavailable and no password profile can be read, the query settles with an error and
 Login shows its normal form. While the privacy policy or terms are open, OAuth errors and provider sign-in
 completion leave the document open. The OAuth callback effect and Login's signed-in redirect check the browser
-destination when a legal URL is ahead of React Router's
-committed location. Only the 60-second credential-renewal effect makes a network request.
+destination when a legal URL is ahead of React Router's committed location. A verification or password-reset link
+in the browser address or router location also takes priority over Login's signed-in redirect. Login waits until
+the dialog closes, including after a success message, before sending a signed-in visitor to `next` or Home.
+Clearing a link replaces its address only while that link is still present and preserves its validated `next`.
+Only the 60-second credential-renewal effect makes a network request.
 
 Password sign-in, registration, email verification and password reset also check the live destination at
 completion. If a legal page is open, registration, verification and password reset show their success notices

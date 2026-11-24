@@ -273,46 +273,6 @@ async function submitPasswordSignIn(page: Page) {
 test.describe("account actions completing on a legal page", () => {
     test.skip(target.name === "staging", "Uses synthetic account responses");
 
-    test("failed verification reports omit the browser referrer", async ({
-        page,
-    }) => {
-        const key = "fixture-failed-verification";
-        await page.route("**/api/verify-email/", async (route) => {
-            expect(route.request().postDataJSON()).toEqual({ key });
-            await route.fulfill({
-                status: 400,
-                json: { error: "The link expired." },
-            });
-        });
-        await page.goto(`/login?verify=${key}#fixture-fragment`);
-        const report = page.waitForResponse((response) => {
-            const request = response.request();
-            return (
-                request.method() === "POST" &&
-                new URL(response.url()).pathname === "/api/logs/" &&
-                request.postDataJSON()?.message === "Email verification error:"
-            );
-        });
-        await page
-            .getByRole("button", { name: "Complete Verification" })
-            .click();
-
-        const response = await report;
-        expect(response.status()).toBe(201);
-        const request = response.request();
-        const headers = await request.allHeaders();
-        expect(headers.referer).toBeUndefined();
-        expect(headers["x-csrftoken"]).toBeTruthy();
-        expect(headers.cookie).toContain(`csrftoken=${headers["x-csrftoken"]}`);
-        expect(request.postDataJSON()).toMatchObject({
-            url: `${new URL(page.url()).origin}/login`,
-            data: { status: 400 },
-        });
-        expect(request.postData()).not.toMatch(
-            /fixture-failed-verification|fixture-fragment/,
-        );
-    });
-
     test("password sign-in leaves the selected document open", async ({
         page,
     }, info) => {

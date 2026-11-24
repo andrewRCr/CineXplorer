@@ -337,11 +337,12 @@ async function removeBuilds(project, owner, env, { always, composeProblem }) {
 }
 
 // Removes one run's stack: containers, volumes and networks by Compose's project label; images by this run's label and
-// by the names Compose gives them, since podman's builds can lack Compose's labels; then the run's folder. Returns
-// what it couldn't remove. Only this script's project names are accepted, so it can't reach another stack. The run's
-// Compose processes end first, given time to exit, so podman's service starts no further build step; on podman the
-// run's builds go next, before its images. owner and always are removeBuilds' own.
-async function tearDown(project, env, engine, { owner, always = false } = {}) {
+// by the names Compose gives them, since podman's builds can lack Compose's labels; then the run's folder, unless
+// keepFolderOnProblem is set and there are problems. Returns those problems, including any earlier ones. Only this
+// script's project names are accepted, so it can't reach another stack. The run's Compose processes end first, given
+// time to exit, so podman's service starts no further build step; on podman the run's builds go next, before its
+// images. owner and always are removeBuilds' own.
+async function tearDown(project, env, engine, { owner, always = false, keepFolderOnProblem = false, earlierProblems = [] } = {}) {
     if (!RUN_PROJECT.test(project)) throw new Error(`refusing to remove ${project}: not a stack-check project`);
     let composeProblem = await endComposeOf(project);
     let problems = [];
@@ -374,7 +375,8 @@ async function tearDown(project, env, engine, { owner, always = false } = {}) {
         const removed = await run("docker", ["image", "rm", ...images], { env });
         if (removed.status !== 0) problems.push(`images: ${lastLine(removed.output)}`);
     }
-    rmSync(join(RUNS, project), { recursive: true, force: true });
+    problems.unshift(...earlierProblems);
+    if (!keepFolderOnProblem || !problems.length) rmSync(join(RUNS, project), { recursive: true, force: true });
     return problems;
 }
 
@@ -633,10 +635,10 @@ async function main(args) {
         useSharedFolder();
         // A cancelled run passes its engine; otherwise the client says which it is
         let engine = args[2] === "--engine" ? args[3] : undefined;
-        const problems = [];
+        const earlierProblems = [];
         if (!engine) {
             const version = await run("docker", ["version"], { env: process.env });
-            if (version.status !== 0) problems.push(`builds: couldn't tell the engine: ${lastLine(version.output)}`);
+            if (version.status !== 0) earlierProblems.push(`builds: couldn't tell the engine: ${lastLine(version.output)}`);
             engine = engineOf(version);
         }
         let owner;
@@ -645,7 +647,8 @@ async function main(args) {
         } catch {
             // A run whose folder has gone: only builds whose owner has ended are its
         }
-        problems.push(...await tearDown(args[1], process.env, engine, { owner, always: true }));
+        // The cancelled run's teardown is silent. Its folder lets the next check retry and report the result.
+        const problems = await tearDown(args[1], process.env, engine, { owner, always: true, keepFolderOnProblem: true, earlierProblems });
         report(args[1], problems, `stack-check: removed ${args[1]}`);
         return 0;
     }

@@ -9,6 +9,7 @@ const methods = ["log", "info", "warn", "error", "debug"] as const;
 let output: { method: string; args: unknown[] }[];
 let written: string[];
 let pending: Promise<Response>[];
+let fileReferrerPolicies: (ReferrerPolicy | undefined)[];
 
 beforeEach(() => {
     vi.stubEnv("DEV", true);
@@ -17,6 +18,7 @@ beforeEach(() => {
     output = [];
     written = [];
     pending = [];
+    fileReferrerPolicies = [];
     for (const method of methods)
         vi.spyOn(console, method).mockImplementation((...args: unknown[]) => {
             output.push({ method, args });
@@ -24,6 +26,9 @@ beforeEach(() => {
     // Keep real fetch and MSW; await every fire-and-forget write before teardown.
     const send = globalThis.fetch;
     vi.stubGlobal("fetch", (...args: Parameters<typeof fetch>) => {
+        if (args[0] === `${apiBaseUrl}/dev-logs/write/`) {
+            fileReferrerPolicies.push(args[1]?.referrerPolicy);
+        }
         const response = send(...args);
         pending.push(response);
         return response;
@@ -47,6 +52,14 @@ afterEach(async () => {
 });
 
 describe("console capture", () => {
+    it("posts captured console output with no referrer", async () => {
+        initConsoleCapture();
+        console.log("forward once");
+        await Promise.all(pending);
+
+        expect(fileReferrerPolicies).toEqual(["no-referrer"]);
+    });
+
     it("preserves console output and forwards each severity", async () => {
         initConsoleCapture();
         for (const method of methods) console[method](`message-${method}`);

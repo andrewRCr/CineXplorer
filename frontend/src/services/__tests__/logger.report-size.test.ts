@@ -12,6 +12,19 @@ import {
     succeeded,
 } from "./logger-test-fixtures";
 
+const REPORT_BYTE_LIMIT = 50 * 1024;
+
+const byteLength = (value: unknown) =>
+    new TextEncoder().encode(JSON.stringify(value)).byteLength;
+
+const savedReports = (): unknown[] => {
+    const saved: unknown = JSON.parse(
+        localStorage.getItem("cinexplorer_critical_logs") ?? "[]",
+    );
+    if (!Array.isArray(saved)) throw new Error("Expected saved reports");
+    return saved;
+};
+
 describe("browser report size", () => {
     afterAll(() => {
         document.cookie = "csrftoken=; Max-Age=0; Path=/";
@@ -291,6 +304,50 @@ describe("browser report size", () => {
                 },
             }),
         ]);
+    });
+
+    it("keeps each saved report within the byte limit after a failed submission", async () => {
+        const data = {
+            stack: "render fixture",
+            details: "界".repeat(9000),
+            escaped: "\u0000".repeat(6000),
+        };
+        expect(byteLength(data)).toBeGreaterThan(REPORT_BYTE_LIMIT);
+        server.use(
+            http.post(`${apiBaseUrl}/logs/`, () => HttpResponse.error()),
+        );
+        await expect(
+            reportingLogger().reportCriticalError("é".repeat(5000), data),
+        ).resolves.toBe(false);
+
+        const saved = savedReports();
+        expect(saved).toHaveLength(1);
+        for (const report of saved) {
+            expect(byteLength(report)).toBeLessThanOrEqual(REPORT_BYTE_LIMIT);
+        }
+    });
+
+    it("keeps each report within the byte limit on the first rewrite of legacy storage", () => {
+        const oversized = {
+            ...legacyReport("é".repeat(30000)),
+            data: {
+                stack: "render fixture",
+                details: "界".repeat(9000),
+                escaped: "\u0000".repeat(6000),
+            },
+        };
+        expect(byteLength(oversized)).toBeGreaterThan(REPORT_BYTE_LIMIT);
+        localStorage.setItem(
+            "cinexplorer_critical_logs",
+            JSON.stringify([oversized, legacyReport("Later report")]),
+        );
+        reportingLogger();
+
+        const rewritten = savedReports();
+        expect(rewritten).toHaveLength(2);
+        for (const report of rewritten) {
+            expect(byteLength(report)).toBeLessThanOrEqual(REPORT_BYTE_LIMIT);
+        }
     });
 
     it("preserves whole Unicode characters when clipping and replaying a saved report", async () => {

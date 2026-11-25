@@ -47,7 +47,7 @@ async function alertLayout(page: Page, alert: Locator) {
         noHorizontalOverflow: await page.evaluate(
             () =>
                 document.documentElement.scrollWidth <=
-                document.documentElement.clientWidth,
+                document.body.clientWidth,
         ),
     };
 }

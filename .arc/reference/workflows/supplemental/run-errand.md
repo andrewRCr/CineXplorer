@@ -130,10 +130,11 @@ stop; a pending first observation alone is not a completion report.
 
 ### 4. Review
 
-Recommend a review route with a one-line reason: none (a small, mechanical change), a local fresh-context subagent, or
-a hosted review (`@codex review`, `@coderabbitai review`). The Owner chooses; never start one unasked. An approved
-plan has already chosen: run its route once CI settles (a hosted request posts at publication, as § 3 says), and ask
-before any other. Findings follow [agent-pre-merge-review.md](agent-pre-merge-review.md).
+Recommend a review route with a one-line reason: none (a small, mechanical change), a local fresh-context review in a
+read-only subagent or a separate session, of any model, or a hosted review (`@codex review`, `@coderabbitai review`).
+The Owner chooses; never start one unasked. An approved plan has already chosen: run its route once CI settles (a hosted
+request posts at publication, as § 3 says), and ask before any other. Findings follow
+[agent-pre-merge-review.md](agent-pre-merge-review.md).
 
 After an authorized hosted request, retain its comment URL/time and exact head, then enter
 [monitor-pull-request.md](monitor-pull-request.md) without ending the turn merely because review is pending.

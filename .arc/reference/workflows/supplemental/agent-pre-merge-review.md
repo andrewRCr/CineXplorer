@@ -81,7 +81,8 @@ reports.
 - After the approved push, enter [monitor-pull-request.md](monitor-pull-request.md) for CI on the new exact head in
   this same turn. Return to this response flow when it settles. This CI-only wait does not request a new hosted
   review or treat the earlier receipt as a review of the repaired head
-- Offer a fix check: a fresh local subagent, scoped to the approved repairs, checks whether they hold
+- Offer a fix check: a local, fresh-context check in a read-only subagent or a separate session, of any model, scoped
+  to the approved repairs, checks whether they hold
   ([review-model § Passes and fix checks](../../methods/review-model.md)). Fix checks always run locally, since a
   hosted review can't be scoped to the repairs. Recommend one when the fixes were material. When none was material,
   mark which minor fixes are at the `full` verification scope (behavioral, authority, contract, materially

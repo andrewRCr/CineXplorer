@@ -325,8 +325,9 @@ same turn. Continue to a result or bounded stop; do not hand the Owner a pending
 wait for the Owner's choice. Never start one unprompted: hosted reviews are rate-limited and local ones spend tokens.
 
 - **Hosted:** `@codex review`, `@coderabbitai review`, or both (automatic CodeRabbit review is off)
-- **Local:** a fresh-context subagent pass applying [code-review-standard](../../methods/code-review-standard.md) over
-  the PR diff; for example when the diff is too large for a hosted reviewer, or hosted capacity is used up
+- **Local:** a fresh-context pass in a read-only subagent or a separate session, of any model, applying
+  [code-review-standard](../../methods/code-review-standard.md) over the PR diff; for example when the diff is too large
+  for a hosted reviewer, or hosted capacity is used up
 - **Skip:** for example when § 5's independent review already covered the final head
 
 ```bash

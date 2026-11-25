@@ -915,27 +915,35 @@ local fixture data does not show.
 
 ### E2E Best Practices
 
-Bring up a worktree's browsable stack from its root; the command migrates, seeds `dev` / `cinexplorer-dev`, and prints
-its address. From `frontend/`, one command runs the browser suite:
+From the checkout's root, one command builds a throwaway stack, migrates it, seeds `dev` / `cinexplorer-dev`, runs the
+browser suite and removes the stack; CI runs the same command:
+
+```bash
+node scripts/stack-check.mjs e2e
+
+# Run only the flow changed by a task
+node scripts/stack-check.mjs e2e e2e/movie-detail.spec.ts
+```
+
+[QUICK-REFERENCE](../../QUICK-REFERENCE.md#end-to-end-smoke-tests) lists what it needs. To iterate on one spec, bring
+up a worktree's browsable stack instead; it stays up between runs, and the command migrates, seeds and prints its
+address:
 
 ```bash
 # Worktree root
 node scripts/worktree.mjs browse
 
 # frontend/; substitute SITE_PORT from infrastructure/.env
-E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e
-
-# Run only the flow changed by a task
 E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/movie-detail.spec.ts
 ```
 
-`E2E_BASE_URL` is required. Local credentials default to the seeded account, with `E2E_USERNAME` and `E2E_PASSWORD`
-overrides available. The local target accepts the development certificate. Running sign-up against the primary
-checkout sends real mail: use the worktree's browsable stack for the supported local run.
+That form requires `E2E_BASE_URL`. Local credentials default to the seeded account, with `E2E_USERNAME` and
+`E2E_PASSWORD` overrides available. The local target accepts the development certificate. Running sign-up against the
+primary checkout sends real mail: use `stack-check` or the worktree's browsable stack.
 
 Registration permits three attempts per client IP per hour, including requests rejected for an existing account.
-Repeated local sign-up runs can hit this limit. From the worktree root, clear only that stack's registration history,
-then rerun:
+Repeated sign-up runs against one browsable stack can hit this limit. From the worktree root, clear only that stack's
+registration history, then rerun:
 
 ```bash
 docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.worktree.yml exec -T redis \

@@ -204,19 +204,30 @@ docker compose -f infrastructure/docker-compose.yml exec backend nice -n 15 pyte
 
 ### End-to-End Smoke Tests
 
-Use a worktree's browsable stack: it has its own database, seeded account, and discarded mail. The primary stack
-sends real verification mail. From the worktree root:
+From the checkout's root, `stack-check` builds a throwaway stack with its own database, seeded account and discarded
+mail, runs the specs and removes the stack, as CI does:
+
+```bash
+arc-offload node scripts/stack-check.mjs e2e
+# Only the affected flow; arguments pass to Playwright
+arc-offload node scripts/stack-check.mjs e2e e2e/browse.spec.ts
+```
+
+The machine it runs on needs Linux, a running container engine with Docker Compose, `openssl`, `curl`, frontend
+dependencies (`npm ci` in `frontend/`) and the system libraries Chromium loads; `stack-check` downloads Chromium
+itself. When something is missing it exits 75 after one `stack-check:` line naming it.
+
+To iterate on one spec, use a worktree's browsable stack, which stays up between runs; `arc-offload` runs this form only
+on the machine with the stack. The primary stack sends real verification mail. From the worktree root:
 
 ```bash
 node scripts/worktree.mjs browse
 # Prints https://localhost:{SITE_PORT}; use SITE_PORT from infrastructure/.env below
 cd frontend
-E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e
-# Only the affected flow
 E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e -- e2e/browse.spec.ts
 ```
 
-The twelve Chromium specs use catalogue fixtures locally and have no test retries. `library.spec.ts` covers the
+The Chromium specs use catalogue fixtures locally and have no test retries. `library.spec.ts` covers the
 signed-in Watchlist and Library journey. `legal-pages.spec.ts` checks the public pages from the Home footer,
 privacy section links, and phone-width overflow. Journeys scan reached pages with axe;
 tracking also scans entry-dialog and rating-sheet states. `scanPage` waits for finite motion inside dialogs and
@@ -348,7 +359,8 @@ The full command set: the verification run, and the wider run when the affected 
 
 Run frontend checks through `arc-offload` from `frontend/`. The pool places eligible checks locally or on a
 registered runner and applies that location's resource policy, including CPU priority, Node heap and
-`VITEST_MAX_WORKERS` limits. Keep the pool's worker settings. End-to-end tests run locally against the worktree's stack.
+`VITEST_MAX_WORKERS` limits. Keep the pool's worker settings. End-to-end specs run through `stack-check` from the
+checkout's root, locally or on a registered runner; against a worktree's browsable stack they run only locally.
 The registered script names are `test` (test class), `type-check` and `lint` (build class), and
 `verify-contrast` (light class). npm's `-s` and `--silent` options and trailing script arguments retain those
 classes. Other scripts, such as `test:coverage` and `test:e2e`, use the catch-all without a recorded peak and run
@@ -390,10 +402,8 @@ npx pyright backend/apps/ backend/config/ --project backend
 # 7. Markdown Linting (with auto-fix)
 npx markdownlint-cli2 --fix "README.md" ".arc/**/*.md"
 
-# 8. End-to-End Smoke Tests: precondition is this worktree's running browsable stack
-# Start it from the worktree root: node scripts/worktree.mjs browse
-# Use SITE_PORT from infrastructure/.env; run the command from frontend/
-(cd frontend && E2E_BASE_URL=https://localhost:{SITE_PORT} arc-offload npm run test:e2e)
+# 8. End-to-End Smoke Tests, from the checkout's root (builds and removes its own stack)
+arc-offload node scripts/stack-check.mjs e2e
 ```
 
 ---

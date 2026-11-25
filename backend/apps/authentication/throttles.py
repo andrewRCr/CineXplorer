@@ -19,11 +19,15 @@ References:
     - External Research Report: 2025-10-13 throttling testing patterns
 """
 
+import logging
 from threading import local
 
 from django.conf import settings
 from django.http import HttpRequest
 from ninja.throttling import AnonRateThrottle, SimpleRateThrottle, UserRateThrottle
+from redis.exceptions import RedisError
+
+logger = logging.getLogger(__name__)
 
 
 class _RequestState(local):
@@ -35,9 +39,22 @@ class _RequestState(local):
 class _RequestStateMixin(SimpleRateThrottle):
     """Keep mutable state in the thread handling allow_request and wait."""
 
+    # Whether requests pass, uncounted, while Redis is unavailable. Otherwise they fail.
+    allow_when_unavailable = False
+
     def __init__(self, rate: str | None = None) -> None:
         self._request_state = _RequestState()
         super().__init__(rate)
+
+    def allow_request(self, request: HttpRequest) -> bool:
+        try:
+            return super().allow_request(request)
+        except RedisError as error:
+            if not self.allow_when_unavailable:
+                raise
+            # Redis errors' text can contain connection credentials.
+            logger.error("Request limit unavailable: %s", type(error).__name__)  # noqa: TRY400 - credentials may appear in the traceback
+            return True
 
     @property
     def key(self) -> str | None:
@@ -166,9 +183,21 @@ class RegistrationThrottle(TestAwareAnonThrottle):
 
 
 class LoginThrottle(TestAwareAnonThrottle):
-    """Count password sign-in attempts independently of other authentication requests."""
+    """Count password sign-in attempts independently of other authentication requests.
+
+    Sign-in fails while Redis is unavailable, since this limit guards against guessed passwords.
+    """
 
     scope = "auth_login"
+
+
+class RefreshThrottle(TestAwareUserThrottle):
+    """Count token refreshes, letting them through while Redis is unavailable.
+
+    A refresh still needs a valid refresh cookie, and a failed one signs the visitor out.
+    """
+
+    allow_when_unavailable = True
 
 
 class ResendVerificationThrottle(TestAwareAnonThrottle):

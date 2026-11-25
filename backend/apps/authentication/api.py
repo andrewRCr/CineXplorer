@@ -29,9 +29,9 @@ from apps.authentication.schemas import (
 from apps.authentication.services.service_factory import get_authentication_service
 from apps.authentication.throttles import (
     LoginThrottle,
+    RefreshThrottle,
     RegistrationThrottle,
     ResendVerificationThrottle,
-    TestAwareUserThrottle,
 )
 
 # Create authentication router
@@ -142,7 +142,7 @@ def obtain_token(
         400: dict[str, object],
         401: dict[str, object],
     },
-    throttle=[TestAwareUserThrottle("10/m")],
+    throttle=[RefreshThrottle("10/m")],
 )
 def hybrid_refresh_token(
     request: HttpRequest, response: HttpResponse

@@ -71,7 +71,7 @@ async function expectWideBarFits(page: Page) {
         await page.evaluate(
             () =>
                 document.documentElement.scrollWidth <=
-                document.documentElement.clientWidth,
+                document.body.clientWidth,
         ),
     ).toBe(true);
 }

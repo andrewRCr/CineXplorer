@@ -69,9 +69,14 @@ test.describe("privacy policy at phone width", () => {
                 name: "CineXplorer Privacy Policy",
             }),
         ).toBeVisible();
+        // Hidden scrollbars still leave their space beside the body, where overflow must count.
         expect(
-            await page.evaluate(() => document.documentElement.scrollWidth),
-        ).toBe(360);
+            await page.evaluate(
+                () =>
+                    document.documentElement.scrollWidth -
+                    document.body.clientWidth,
+            ),
+        ).toBe(0);
     });
 });
 

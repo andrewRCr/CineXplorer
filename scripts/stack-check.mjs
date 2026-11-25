@@ -214,11 +214,16 @@ async function listIds(kind, filter, env) {
 // read.
 async function buildsOf(env) {
     // Buildah's container folders use full IDs, while podman lists short IDs by default.
-    const list = () => run("docker", ["ps", "--external", "--all", "--no-trunc", "--format", "{{.ID}}"], { env });
-    const listed = await list();
+    const list = (...options) => run("docker", ["ps", ...options, "--all", "--no-trunc", "--format", "{{.ID}}"], { env });
+    const listed = await list("--external");
     if (listed.status !== 0) return { builds: [], problems: [`build containers: ${lastLine(listed.output)}`] };
     const ids = words(listed.stdout);
     if (!ids.length) return { builds: [], problems: [] };
+    // Without --external, podman lists its own containers, which are never builds. Listed second, they include any
+    // that the first listing caught while it was being created.
+    const ownListed = await list();
+    if (ownListed.status !== 0) return { builds: [], problems: [`build containers: ${lastLine(ownListed.output)}`] };
+    const own = new Set(words(ownListed.stdout));
     const info = await run("docker", ["info", "--format", "{{json .Store}}"], { env });
     let store;
     try {
@@ -245,17 +250,18 @@ async function buildsOf(env) {
                 continue;
             }
             local = true;
+            if (own.has(id)) continue;
             record = JSON.parse(readFileSync(join(container, "userdata", "buildah.json"), "utf8"));
         } catch (error) {
             // Only a build has a record, and its folder can disappear between the listing and the read.
-            if (error.code !== "ENOENT") problems.push(problem);
+            if (error.code !== "ENOENT") problems.push(`${problem}: ${error.code ?? "not valid JSON"}`);
             continue;
         }
         // A build made without arguments has no project or owner tags.
         const args = record?.Args ?? {};
         if (!record || typeof record !== "object" || Array.isArray(record) ||
             typeof args !== "object" || Array.isArray(args)) {
-            problems.push(problem);
+            problems.push(`${problem}: unexpected contents`);
             continue;
         }
         const { STACK_CHECK_PROJECT: project, STACK_CHECK_OWNER: owner } = args;
@@ -264,7 +270,7 @@ async function buildsOf(env) {
     // The same path can name a store on another machine. Confirm a container with no folder is still listed,
     // since its folder can disappear when the container is removed.
     if (!local) {
-        const relisted = await list();
+        const relisted = await list("--external");
         if (relisted.status !== 0) problems.push(`build containers: ${lastLine(relisted.output)}`);
         else if (words(relisted.stdout).some((id) => missingFolders.has(id))) {
             problems.push("build containers: podman's storage isn't on this machine");

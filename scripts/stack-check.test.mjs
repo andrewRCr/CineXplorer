@@ -118,6 +118,8 @@ const save = (file, text) => {
 };
 // podman's build containers: CX_BUILD_IDS, CX_BUILD_IDS_LATER from the second listing on, and any a build added,
 // less those removed or gone since the first listing. A marker file can hold back the later IDs until a build ends.
+// CX_OWN_IDS, podman's own containers, are in both listings, and alone in the one without --external, which CX_OWN_FAIL
+// makes fail.
 const buildState = join(process.env.CX_STATE, 'builds.json');
 const builds = () => existsSync(buildState) ? JSON.parse(readFileSync(buildState, 'utf8')) : { listings: 0, added: [], removed: [] };
 if (command === 'docker' && args[0] === 'ps' && args.includes('--external')) {
@@ -127,8 +129,17 @@ if (command === 'docker' && args[0] === 'ps' && args.includes('--external')) {
     const ready = process.env.CX_BUILD_LATER_READY;
     const later = known.listings > 1 && (!ready || existsSync(ready)) ? process.env.CX_BUILD_IDS_LATER ?? '' : '';
     const gone = known.listings > 1 ? (process.env.CX_BUILD_IDS_GONE ?? '').split(' ') : [];
-    const ids = [...(process.env.CX_BUILD_IDS ?? '').split(' '), ...later.split(' '), ...known.added]
+    const ids = [process.env.CX_BUILD_IDS, process.env.CX_OWN_IDS].flatMap((ids) => (ids ?? '').split(' '))
+        .concat(later.split(' '), known.added)
         .filter((id) => id && !known.removed.includes(id) && !gone.includes(id));
+    if (ids.length) console.log((args.includes('--no-trunc') ? ids : ids.map((id) => id.slice(0, 12))).join('\\n'));
+}
+if (command === 'docker' && args[0] === 'ps' && !args.includes('--external')) {
+    if (process.env.CX_OWN_FAIL) {
+        console.error('stub listing failed');
+        process.exit(9);
+    }
+    const ids = (process.env.CX_OWN_IDS ?? '').split(' ').filter(Boolean);
     if (ids.length) console.log((args.includes('--no-trunc') ? ids : ids.map((id) => id.slice(0, 12))).join('\\n'));
 }
 if (command === 'docker' && args[0] === 'rm' && args.includes('--ignore')) {
@@ -657,10 +668,49 @@ test("says which build records it couldn't read, and still removes the run's", (
     const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman",
         CX_BUILD_IDS: listed.map(({ id }) => id).join(" ") });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    const unreadableIds = [unreadable, invalid, invalidArgs, arrayArgs, arrayRecord].map(({ id }) =>
-        `build containers: couldn't read the record of ${id.slice(0, 12)}`);
+    const unreadableIds = [[unreadable, "not valid JSON"],
+        ...[invalid, invalidArgs, arrayArgs, arrayRecord].map((container) => [container, "unexpected contents"])]
+        .map(([{ id }, cause]) => `build containers: couldn't read the record of ${id.slice(0, 12)}: ${cause}`);
     assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: ${unreadableIds.join("; ")}`);
     assert.deepEqual(removedBuilds(f), [[building.id]]);
+});
+
+test("never reads podman's own containers as builds", (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    // A symlink loop makes the folder unreadable even when the tests run as root.
+    const unreadable = (id) => {
+        mkdirSync(join(f.storage, "overlay-containers", id));
+        symlinkSync("userdata", join(f.storage, "overlay-containers", id, "userdata"));
+        return id;
+    };
+    const own = unreadable("b".repeat(64));
+    const env = { CX_ENGINE: "podman", CX_OWN_IDS: own };
+    const result = f.invoke(["--tear-down", RUN], { ...env, CX_BUILD_IDS: building.id });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), `stack-check: removed ${RUN}`);
+    assert.deepEqual(removedBuilds(f), [[building.id]]);
+    const external = unreadable("c".repeat(64));
+    const reported = f.invoke(["--tear-down", RUN], { ...env, CX_BUILD_IDS: external });
+    assert.equal(lastLine(reported.stdout), `stack-check: couldn't remove all of ${RUN}: ` +
+        `build containers: couldn't read the record of ${external.slice(0, 12)}: ELOOP`);
+});
+
+test("lists podman's own containers after the rest, so one being created isn't taken for a build", (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: building.id });
+    const external = f.calls().filter(({ args }) => args[0] === "ps").map(({ args }) => args.includes("--external"));
+    assert.deepEqual(external.slice(0, 2), [true, false]);
+});
+
+test("reports a failed listing of podman's own containers, and removes no build", (t) => {
+    const f = fixture(t);
+    const building = buildContainer(f, "a", { STACK_CHECK_PROJECT: RUN, STACK_CHECK_OWNER: DEAD });
+    const result = f.invoke(["--tear-down", RUN], { CX_ENGINE: "podman", CX_BUILD_IDS: building.id, CX_OWN_FAIL: "1" });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: build containers: stub listing failed`);
+    assert.deepEqual(removedBuilds(f), []);
 });
 
 test("finds a transient store's build records under the graph root", (t) => {
@@ -704,7 +754,7 @@ test("keeps a build record warning when its container is gone by the next listin
     });
     assert.equal(result.status, 0, result.stdout + result.stderr);
     assert.equal(lastLine(result.stdout), `stack-check: couldn't remove all of ${RUN}: ` +
-        `build containers: couldn't read the record of ${unreadable.slice(0, 12)}`);
+        `build containers: couldn't read the record of ${unreadable.slice(0, 12)}: ELOOP`);
 });
 
 test("a check removes builds left by runs that ended, and leaves live runs' builds", (t) => {
@@ -714,8 +764,8 @@ test("a check removes builds left by runs that ended, and leaves live runs' buil
     const unreadable = buildContainer(f, "c", {}, { record: "{" });
     const result = f.invoke(["backend"], { CX_ENGINE: "podman", CX_BUILD_IDS: [ended, live, unreadable].map(({ id }) => id).join(" ") });
     assert.equal(result.status, 0, result.stdout + result.stderr);
-    assert.match(result.stdout, /^stack-check: couldn't check every build for runs that ended: build containers: couldn't read the record of cccccccccccc$/m);
-    assert.match(result.stdout, /^stack-check: couldn't remove all of cinexplorer-run-8597-dead04: build containers: couldn't read the record of cccccccccccc$/m);
+    assert.match(result.stdout, /^stack-check: couldn't check every build for runs that ended: build containers: couldn't read the record of cccccccccccc: not valid JSON$/m);
+    assert.match(result.stdout, /^stack-check: couldn't remove all of cinexplorer-run-8597-dead04: build containers: couldn't read the record of cccccccccccc: not valid JSON$/m);
     assert.deepEqual(removedBuilds(f), [[ended.id]]);
 });
 

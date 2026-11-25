@@ -167,33 +167,63 @@ def test_search_movies_uses_injected_client() -> None:
     assert len(result.results) == 1
 
 
-def test_search_movies_filters_soundtrack_results() -> None:
-    """Test search_movies filters out soundtrack/score entries."""
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Inception: Music from the Motion Picture",
+        "Chrono Trigger Original Soundtrack Revival Disc",
+        "Movie (Original Motion Picture Soundtrack)",
+        "Movie: Original Motion Picture Score",
+        "MOVIE ORIGINAL SCORE",
+    ],
+)
+def test_search_movies_filters_recordings(title: str) -> None:
+    """Test search_movies filters out titles that name a recording."""
+    result = _search_titles(title)
+
+    assert result == ["Real Movie"]
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "The Score",
+        "Final Score",
+        "Shaft's Big Score!",
+        "The Top Scorer",
+        "Soundtrack to a Coup d'Etat",
+        "Soundtrack",
+        "Music from Another Room",
+        "Underscore",
+        "Score: A Film Music Documentary",
+    ],
+)
+def test_search_movies_keeps_films_named_after_music_words(title: str) -> None:
+    """Test search_movies keeps films whose title only contains score, soundtrack or music from."""
+    result = _search_titles(title)
+
+    assert result == ["Real Movie", title]
+
+
+def _search_titles(title: str) -> list[str]:
+    """Search TMDB results holding one ordinary film and the given title."""
+    from apps.movie.services.api_boundary import SearchServiceParams
     from apps.movie.services.movie_service import MovieService
 
-    # Arrange: Mock response with soundtrack entry
     mock_client = Mock(spec=["search_movies"])
-
     movies = [
         create_tmdb_movie(1, "Real Movie", "2023-01-01", 8.0, poster_path="/real.jpg"),
-        create_tmdb_movie(2, "Movie Soundtrack", "2023-01-01", 7.0, poster_path="/soundtrack.jpg"),
-        create_tmdb_movie(
-            3, "Original Motion Picture Score", "2023-01-01", 6.0, poster_path="/score.jpg"
-        ),
+        create_tmdb_movie(2, title, "2023-01-01", 7.0, poster_path="/other.jpg"),
     ]
-    mock_api_response = create_mock_paginated_response(movies=movies, page=1, total_pages=1)
-    mock_client.search_movies.return_value = mock_api_response
+    mock_client.search_movies.return_value = create_mock_paginated_response(
+        movies=movies, page=1, total_pages=1
+    )
 
-    service = MovieService(tmdb_client=mock_client)
+    result = MovieService(tmdb_client=mock_client).search_movies(
+        page=1, params=SearchServiceParams(query="test")
+    )
 
-    # Act: Call search_movies
-    from apps.movie.services.api_boundary import SearchServiceParams
-
-    result = service.search_movies(page=1, params=SearchServiceParams(query="test"))
-
-    # Assert: Only real movie returned (soundtracks filtered)
-    assert len(result.results) == 1
-    assert result.results[0].title == "Real Movie"
+    return [movie.title for movie in result.results]
 
 
 def test_search_movies_returns_empty_for_short_query() -> None:

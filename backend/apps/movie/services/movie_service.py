@@ -538,7 +538,7 @@ class MovieService(BaseTMDBService):
     def _filter_non_visual_content(self, movies: list[TMDBMovieBase]) -> list[TMDBMovieBase]:
         """Filter out non-visual content from movie search results.
 
-        This filters out soundtracks, scores, and other non-visual media that
+        This filters out recordings, such as soundtrack albums and scores, that
         sometimes appear in TMDB search results despite being irrelevant to
         visual movie discovery.
 
@@ -549,19 +549,16 @@ class MovieService(BaseTMDBService):
             Filtered list with non-visual content removed
 
         Note:
-            Uses a conservative approach - only filters obvious non-visual content
-            to minimize false positives.
+            Matches phrases that name a recording, never a bare word: many films
+            have "score", "soundtrack" or "music from" in their titles.
         """
-        # Skip terms for identifying non-visual content
+        # Phrases that mark a recording's title
         skip_terms = [
-            "soundtrack",
-            "score",
-            "music from",
-            "original motion picture soundtrack",
+            "original soundtrack",
             "original score",
-            "music score",
-            "film score",
+            "motion picture soundtrack",
             "motion picture score",
+            "music from the motion picture",
         ]
 
         filtered: list[TMDBMovieBase] = []

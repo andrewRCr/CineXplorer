@@ -117,9 +117,9 @@ to the entire parent directory. Git metadata and the installed harness are share
   `npx --yes pyright@1.1.414 backend/apps/ backend/config/ --project backend` and
   `npx --yes markdownlint-cli2@0.24.0 "README.md" ".arc/**/*.md"`
 - **Backend tests and API types:** only through the worktree's own stack, in test or browser mode
-- **End-to-end smoke specs:** on host Node in `frontend/`, against the running worktree browsable stack. Start it
-  with `node scripts/worktree.mjs browse` from the root, then run
-  `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e` from `frontend/`
+- **End-to-end smoke specs:** `node scripts/stack-check.mjs e2e` from the root, in its own throwaway stack. To iterate
+  on one spec, start the browsable stack with `node scripts/worktree.mjs browse` from the root, then run
+  `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/browse.spec.ts` from `frontend/`
 
 ## Test Stack
 

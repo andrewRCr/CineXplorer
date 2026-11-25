@@ -79,15 +79,22 @@ tests. Ask:
 3. **Cross-cutting changes:** did it modify shared infrastructure (context providers, hooks used by many components,
    global state)? These have a wider blast radius.
 
-Run the covering specs against the worktree's browsable stack, started with `node scripts/worktree.mjs browse`.
-From `frontend/`, set its site address; the tier uses Chromium only:
+Run the covering specs from the checkout's root with `stack-check`, which builds and removes its own stack; the tier
+uses Chromium only:
 
 ```bash
 # Filter-preserving detail navigation
-E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/movie-detail.spec.ts
+node scripts/stack-check.mjs e2e e2e/movie-detail.spec.ts
 
 # Scroll restoration after reloading detail
-E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/back-to-results.spec.ts
+node scripts/stack-check.mjs e2e e2e/back-to-results.spec.ts
+```
+
+While iterating on one spec, the worktree's browsable stack (`node scripts/worktree.mjs browse`) saves rebuilding. From
+`frontend/`, set its site address:
+
+```bash
+E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/movie-detail.spec.ts
 ```
 
 ---
@@ -100,8 +107,7 @@ specific E2E file, a build, a migration dry run.
 ```markdown
 - [ ] **3.2 Update FooterBar positioning**
     - [implementation details]
-    - Check in `frontend/`, with the worktree's browsable stack running:
-      `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/sign-in.spec.ts` (scans the footer)
+    - Check: `node scripts/stack-check.mjs e2e e2e/sign-in.spec.ts` (scans the footer)
 ```
 
 **No checkpoint tasks.** No per-parent quality gate, no full-suite checkpoint task, and no final "Testing & Quality
@@ -141,8 +147,8 @@ They take seconds. Skipping them lets type errors and lint violations accumulate
 Not naming the broader checks that have not run. The report says what ran and what did not.
 
 **❌ The full E2E suite for one component:**
-Run the files that drive the change against the worktree's browsable stack; CI and verification run all twelve specs,
-including the 360×800 phone shell and tracking/rating cases at desktop and touch widths.
+Run the files that drive the change; CI and verification run every spec, including the 360×800 phone shell and
+tracking/rating cases at desktop and touch widths.
 `library.spec.ts` covers the signed-in Watchlist and Library journey. `legal-pages.spec.ts` covers the public legal
 pages from Home, privacy section links, and phone-width overflow.
 

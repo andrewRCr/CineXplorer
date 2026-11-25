@@ -43,7 +43,7 @@ decides *what* runs; zero tolerance decides that it must *pass*. See
   backend apps, ESLint and `npm run type-check` for frontend changes, markdown lint for documentation. Then its
   related tests: for the backend, `pytest apps/{app}/` for the touched apps, in this checkout's own stack; for the
   frontend, `npx vitest related --run <files>`. When a task changes a page or flow a smoke spec drives, run its
-  covering `frontend/e2e/*.spec.ts` files against the worktree's browsable stack as part of those checks.
+  covering `frontend/e2e/*.spec.ts` files with `stack-check` as part of those checks.
 - **Commit:** the pre-commit and commit-message hooks. The task's checks have already run.
 - **Parent task, phase and session end:** nothing extra. The report names the broader checks not yet run. Run wider
   when the affected surface has grown past what related tests reach;
@@ -95,8 +95,10 @@ commands, see [QUICK-REFERENCE.md](../QUICK-REFERENCE.md).
      README
 
 8. **End-to-End Smoke Tests**: 100% pass rate in Chromium
-   - Start the worktree's browsable stack with `node scripts/worktree.mjs browse`
-   - From `frontend/`: `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e`
+   - Run `node scripts/stack-check.mjs e2e` from the checkout's root; it builds and removes its own stack, and passes
+     arguments such as `e2e/browse.spec.ts` to Playwright
+   - To iterate on one spec, start the worktree's browsable stack with `node scripts/worktree.mjs browse`, then from
+     `frontend/`: `E2E_BASE_URL=https://localhost:{SITE_PORT} npm run test:e2e -- e2e/browse.spec.ts`
    - Use its `SITE_PORT` from `infrastructure/.env`; the primary stack sends real verification mail
 
 ### Quality Gate Failure Protocol

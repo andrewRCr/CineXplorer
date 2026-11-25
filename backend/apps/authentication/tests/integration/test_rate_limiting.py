@@ -11,19 +11,27 @@ marker for selective throttling in tests.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from copy import deepcopy
 from http import HTTPStatus
 from typing import TYPE_CHECKING
+from unittest import TestCase
 
 import pytest
-from django.test import override_settings
+from django.conf import settings
+from django.test import Client, override_settings
 
-from apps.core.tests.test_helpers import get_csrf_token
+from apps.core.tests.test_helpers import (
+    closed_local_port,
+    get_csrf_token,
+    login_and_get_tokens,
+    silent_server,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator, Iterator
 
     from django.contrib.auth.models import AbstractUser
-    from django.test import Client
 
 
 # ============================================================================
@@ -444,3 +452,81 @@ def test_other_auth_attempts_do_not_consume_login_limit(
             content_type="application/json",
         )
         assert response.status_code == 200
+
+
+# ============================================================================
+# Limits while Redis is unavailable
+# ============================================================================
+
+
+@contextmanager
+def unavailable_redis(failure: str) -> Generator[None]:
+    """Count against a Redis that refuses connections, or accepts them and never answers."""
+    caches = deepcopy(settings.CACHES)
+    with silent_server() as server:
+        port = server.port if failure == "silent" else closed_local_port()
+        caches["default"]["LOCATION"] = f"redis://127.0.0.1:{port}/0"
+        with override_settings(CACHES=caches, TESTING=False):
+            yield
+
+
+def assert_only_the_error_type_was_logged(messages: list[str], failure: str) -> None:
+    error = "TimeoutError" if failure == "silent" else "ConnectionError"
+    assert messages == [f"Request limit unavailable: {error}"]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("failure", ["refused", "silent"])
+def test_refresh_renews_the_sign_in_while_redis_is_unavailable(
+    api_client: Client, verified_user: AbstractUser, failure: str
+) -> None:
+    login_and_get_tokens(api_client, verified_user.username, "testpass123")
+    csrf_token = get_csrf_token(api_client)
+
+    logs = TestCase().assertLogs("apps.authentication.throttles", level="ERROR")
+    with logs as captured, unavailable_redis(failure):
+        response = api_client.post(
+            "/api/auth/refresh", content_type="application/json", HTTP_X_CSRFTOKEN=csrf_token
+        )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["access_token"]
+    assert_only_the_error_type_was_logged(
+        [record.getMessage() for record in captured.records], failure
+    )
+    assert all(record.exc_info is None for record in captured.records)
+
+
+@pytest.mark.parametrize("failure", ["refused", "silent"])
+def test_frontend_reports_are_accepted_while_redis_is_unavailable(
+    api_client: Client, failure: str
+) -> None:
+    payload = {"level": "INFO", "message": "Outage test", "timestamp": "2026-11-01T00:00:00Z"}
+
+    logs = TestCase().assertLogs("apps.authentication.throttles", level="ERROR")
+    with logs as captured, unavailable_redis(failure):
+        response = api_client.post("/api/logs/", payload, content_type="application/json")
+
+    assert response.status_code == HTTPStatus.CREATED
+    assert_only_the_error_type_was_logged(
+        [record.getMessage() for record in captured.records], failure
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("failure", ["refused", "silent"])
+def test_sign_in_is_refused_while_its_attempts_cannot_be_counted(
+    verified_user: AbstractUser, failure: str
+) -> None:
+    client = Client(raise_request_exception=False)
+
+    with unavailable_redis(failure):
+        response = client.post(
+            "/api/token/",
+            {"login": verified_user.username, "password": "testpass123"},
+            content_type="application/json",
+        )
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert "refresh_token" not in response.cookies
+    assert b"access_token" not in response.content

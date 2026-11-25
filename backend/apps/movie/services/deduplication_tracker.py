@@ -150,11 +150,9 @@ class DeduplicationTracker:
             if client is None:
                 return
 
-            # SADD atomically adds members to set (no race conditions)
-            client.sadd(cache_key, *ids)
-
-            # Set/refresh TTL
-            client.expire(cache_key, SESSION_TTL_SECONDS)
+            # SADD atomically adds members to set (no race conditions), and the TTL is
+            # set or refreshed with it
+            client.sadd_and_expire(cache_key, *ids, seconds=SESSION_TTL_SECONDS)
 
         except RedisError as e:
             logger.error(

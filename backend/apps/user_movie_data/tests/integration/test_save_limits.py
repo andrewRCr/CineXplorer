@@ -27,6 +27,7 @@ from apps.core.tests.test_helpers import (
     closed_local_port,
     create_user,
     get_csrf_token,
+    silent_server,
 )
 from apps.user_movie_data.tests.test_helpers import create_movie
 from apps.users.models import User
@@ -183,6 +184,24 @@ def test_cache_unreachable_still_saves(mode: str) -> None:
         response = client.patch(URL, {"user_on_watchlist": True}, content_type="application/json")
     assert response.status_code == 201
     assert response.json()["user_on_watchlist"] is True
+
+
+def test_cache_that_never_answers_still_saves() -> None:
+    user = create_user()
+    create_movie()
+    client = signed_client(user, "session")
+    caches = deepcopy(settings.CACHES)
+    with silent_server() as server:
+        caches["default"]["LOCATION"] = f"redis://127.0.0.1:{server.port}/0"
+        with override_settings(CACHES=caches):
+            response = client.patch(
+                URL, {"user_on_watchlist": True}, content_type="application/json"
+            )
+    assert response.status_code == 201
+    assert response.json()["user_on_watchlist"] is True
+    # The request ended because the cache client stopped waiting, not because the server hung up.
+    assert server.gave_up
+    assert all(server.gave_up)
 
 
 def test_refusals_count_for_both_windows_and_later_end_wins() -> None:

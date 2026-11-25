@@ -39,9 +39,8 @@ def mock_client() -> MagicMock:
     """
     client = MagicMock()
     client.smembers.return_value = set()  # Default: empty set of ints
-    client.sadd.return_value = 0  # Default: no new elements added
+    client.sadd_and_expire.return_value = 0  # Default: no new elements added
     client.delete.return_value = False  # Default: key didn't exist
-    client.expire.return_value = True
     return client
 
 
@@ -134,8 +133,8 @@ class TestAddReturnedIds:
             manager.add_returned_ids(sample_params, new_ids)
 
         # Verify SADD was called with all IDs
-        mock_client.sadd.assert_called_once()
-        call_args = mock_client.sadd.call_args
+        mock_client.sadd_and_expire.assert_called_once()
+        call_args = mock_client.sadd_and_expire.call_args
         # First arg is key, rest are IDs
         added_ids = set(call_args[0][1:])
         assert added_ids == set(new_ids)
@@ -160,8 +159,8 @@ class TestAddReturnedIds:
             manager.add_returned_ids(sample_params, new_ids)
 
         # Verify SADD was called (atomic add, no read required)
-        mock_client.sadd.assert_called_once()
-        call_args = mock_client.sadd.call_args
+        mock_client.sadd_and_expire.assert_called_once()
+        call_args = mock_client.sadd_and_expire.call_args
         added_ids = set(call_args[0][1:])
         assert added_ids == set(new_ids)
 
@@ -182,7 +181,7 @@ class TestAddReturnedIds:
             manager.add_returned_ids(sample_params, ids_with_dupes)
 
         # SADD called - Redis handles dedup internally
-        mock_client.sadd.assert_called_once()
+        mock_client.sadd_and_expire.assert_called_once()
 
 
 class TestClearSession:
@@ -224,10 +223,9 @@ class TestSessionTTL:
             manager = DeduplicationTracker(session_id="test_session")
             manager.add_returned_ids(sample_params, new_ids)
 
-        # Verify EXPIRE was called with 3600 seconds
-        mock_client.expire.assert_called_once()
-        call_args = mock_client.expire.call_args
-        ttl = call_args[0][1]
+        # Verify the IDs were added with a TTL of 3600 seconds
+        mock_client.sadd_and_expire.assert_called_once()
+        ttl = mock_client.sadd_and_expire.call_args.kwargs["seconds"]
         assert ttl == 3600, f"Expected TTL of 3600 seconds (1 hour), got {ttl}"
 
 
@@ -298,11 +296,11 @@ class TestSessionScoping:
         """
         cache_keys_used: list[str] = []
 
-        def capture_key(key: str, *args: int) -> int:
+        def capture_key(key: str, *args: int, seconds: int) -> int:
             cache_keys_used.append(key)
             return len(args)  # Return number of IDs added
 
-        mock_client.sadd.side_effect = capture_key
+        mock_client.sadd_and_expire.side_effect = capture_key
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             # User 1
@@ -357,11 +355,11 @@ class TestSessionScoping:
 
         cache_keys_used: list[str] = []
 
-        def capture_key(key: str, *args: int) -> int:
+        def capture_key(key: str, *args: int, seconds: int) -> int:
             cache_keys_used.append(key)
             return len(args)
 
-        mock_client.sadd.side_effect = capture_key
+        mock_client.sadd_and_expire.side_effect = capture_key
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             manager = DeduplicationTracker(session_id="same_session")
@@ -392,11 +390,11 @@ class TestContextIdIsolation:
         """
         cache_keys_used: list[str] = []
 
-        def capture_key(key: str, *args: int) -> int:
+        def capture_key(key: str, *args: int, seconds: int) -> int:
             cache_keys_used.append(key)
             return len(args)
 
-        mock_client.sadd.side_effect = capture_key
+        mock_client.sadd_and_expire.side_effect = capture_key
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             # Tab 1
@@ -448,11 +446,11 @@ class TestContextIdIsolation:
         """
         cache_keys_used: list[str] = []
 
-        def capture_key(key: str, *args: int) -> int:
+        def capture_key(key: str, *args: int, seconds: int) -> int:
             cache_keys_used.append(key)
             return len(args)
 
-        mock_client.sadd.side_effect = capture_key
+        mock_client.sadd_and_expire.side_effect = capture_key
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             manager1 = DeduplicationTracker(session_id="same_session", context_id="context_A")
@@ -635,16 +633,15 @@ class TestAtomicRedisOperations:
         Scenario: Add IDs to session.
         Expected: Implementation calls SADD directly (not get -> union -> set).
         """
-        mock_client.sadd.return_value = 3  # Number of new elements added
-        mock_client.expire.return_value = True
+        mock_client.sadd_and_expire.return_value = 3  # Number of new elements added
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             manager = DeduplicationTracker(session_id="test_session")
             manager.add_returned_ids(sample_params, [1, 2, 3])
 
         # Verify SADD was called (atomic operation)
-        mock_client.sadd.assert_called_once()
-        call_args = mock_client.sadd.call_args
+        mock_client.sadd_and_expire.assert_called_once()
+        call_args = mock_client.sadd_and_expire.call_args
 
         # First arg is the key, rest are the IDs to add
         assert 1 in call_args[0] or 1 in call_args[0][1:], "SADD should include ID 1"
@@ -652,7 +649,7 @@ class TestAtomicRedisOperations:
         assert 3 in call_args[0] or 3 in call_args[0][1:], "SADD should include ID 3"
 
         # Verify TTL was set
-        mock_client.expire.assert_called_once()
+        assert call_args.kwargs["seconds"] == 3600
 
     def test_get_returned_ids_uses_smembers(
         self,
@@ -713,12 +710,11 @@ class TestAtomicRedisOperations:
         """
         added_ids: list[int] = []
 
-        def track_sadd(key: str, *ids: int) -> int:
+        def track_sadd(key: str, *ids: int, seconds: int) -> int:
             added_ids.extend(ids)
             return len(ids)
 
-        mock_client.sadd.side_effect = track_sadd
-        mock_client.expire.return_value = True
+        mock_client.sadd_and_expire.side_effect = track_sadd
 
         with patch(GET_CLIENT_PATH, return_value=mock_client):
             manager = DeduplicationTracker(session_id="test_session")

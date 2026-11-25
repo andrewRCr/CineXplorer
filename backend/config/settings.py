@@ -169,6 +169,9 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": env("REDIS_URL", default="redis://redis:6379/0"),
+        # Seconds. redis-py otherwise waits without limit, so a Redis that stops answering
+        # holds the request's server thread. A normal read takes a few milliseconds.
+        "OPTIONS": {"socket_connect_timeout": 1, "socket_timeout": 1},
     }
 }
 

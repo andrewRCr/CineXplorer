@@ -530,3 +530,17 @@ def test_sign_in_is_refused_while_its_attempts_cannot_be_counted(
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     assert "refresh_token" not in response.cookies
     assert b"access_token" not in response.content
+
+
+@pytest.mark.parametrize("failure", ["refused", "silent"])
+@pytest.mark.parametrize("path", ["/api/register/", "/api/resend-verification/"])
+def test_sign_up_and_resend_are_refused_while_their_attempts_cannot_be_counted(
+    path: str, failure: str
+) -> None:
+    client = Client(raise_request_exception=False)
+
+    with unavailable_redis(failure):
+        # An empty request answers 422 once it passes the limit.
+        response = client.post(path, {}, content_type="application/json")
+
+    assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR

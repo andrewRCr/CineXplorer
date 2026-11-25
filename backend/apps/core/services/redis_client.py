@@ -19,7 +19,7 @@ Usage:
 
     client = get_atomic_set_client()
     if client is not None:
-        client.sadd("my_set", 1, 2, 3)
+        client.sadd_and_expire("my_set", 1, 2, 3, seconds=3600)
         members = client.smembers("my_set")  # Returns set[int]
         client.delete("my_set")
 """
@@ -45,12 +45,15 @@ class AtomicSetOperations(Protocol):
     tracking TMDB movie IDs.
     """
 
-    def sadd(self, key: str, *values: int) -> int:
-        """Atomically add integer values to a set.
+    def sadd_and_expire(self, key: str, *values: int, seconds: int) -> int:
+        """Atomically add integer values to a set and set its time-to-live.
+
+        Both happen or neither does, even when the caller stops waiting for Redis.
 
         Args:
             key: Redis key name
             *values: Integer values to add
+            seconds: TTL in seconds
 
         Returns:
             Number of new members added (not already in set)
@@ -76,18 +79,6 @@ class AtomicSetOperations(Protocol):
 
         Returns:
             True if key existed and was deleted, False otherwise
-        """
-        ...
-
-    def expire(self, key: str, seconds: int) -> bool:
-        """Set time-to-live on a key.
-
-        Args:
-            key: Redis key name
-            seconds: TTL in seconds
-
-        Returns:
-            True if key exists and TTL was set, False otherwise
         """
         ...
 
@@ -121,12 +112,15 @@ class DjangoRedisAdapter:
         cache_backend = cache._cache  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         return cache_backend.get_client(write=True)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
-    def sadd(self, key: str, *values: int) -> int:
-        """Atomically add values to a set."""
+    def sadd_and_expire(self, key: str, *values: int, seconds: int) -> int:
+        """Atomically add values to a set and set its TTL."""
         if not values:
             return 0
-        result = self._client.sadd(key, *values)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
-        return int(result)  # pyright: ignore[reportUnknownArgumentType]
+        pipeline = self._client.pipeline(transaction=True)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
+        pipeline.sadd(key, *values)  # pyright: ignore[reportUnknownMemberType]
+        pipeline.expire(key, seconds)  # pyright: ignore[reportUnknownMemberType]
+        added, _ = pipeline.execute()  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        return int(added)  # pyright: ignore[reportUnknownArgumentType]
 
     def smembers(self, key: str) -> set[int]:
         """Get all members of a set as integers."""
@@ -137,11 +131,6 @@ class DjangoRedisAdapter:
     def delete(self, key: str) -> bool:
         """Delete a key."""
         result = self._client.delete(key)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
-        return bool(result)  # pyright: ignore[reportUnknownArgumentType]
-
-    def expire(self, key: str, seconds: int) -> bool:
-        """Set TTL on a key."""
-        result = self._client.expire(key, seconds)  # pyright: ignore[reportAttributeAccessIssue, reportUnknownMemberType, reportUnknownVariableType]
         return bool(result)  # pyright: ignore[reportUnknownArgumentType]
 
 
@@ -159,7 +148,7 @@ def get_atomic_set_client() -> AtomicSetOperations | None:
         client = get_atomic_set_client()
         if client is not None:
             seen_ids = client.smembers("pagination:session123")
-            client.sadd("pagination:session123", 1, 2, 3)
+            client.sadd_and_expire("pagination:session123", 1, 2, 3, seconds=3600)
     """
     try:
         return DjangoRedisAdapter()

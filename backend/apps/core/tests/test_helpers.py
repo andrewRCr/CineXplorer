@@ -51,7 +51,11 @@ import os
 import socket
 import subprocess
 import sys
+import threading
 import uuid
+from collections.abc import Generator
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 from http import HTTPStatus
 from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict, Unpack, cast
@@ -68,6 +72,7 @@ if TYPE_CHECKING:
 # Re-export HTTPStatus for convenience in test files
 __all__ = [
     "HTTPStatus",
+    "SilentServer",
     "UserParams",
     "authenticate_client",
     "closed_local_port",
@@ -80,6 +85,7 @@ __all__ = [
     "json_post",
     "json_put",
     "login_and_get_tokens",
+    "silent_server",
 ]
 
 
@@ -561,3 +567,42 @@ def closed_local_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
+
+
+@dataclass
+class SilentServer:
+    """A local server that accepts connections and never answers them."""
+
+    port: int
+    # For each connection, whether the client closed it before the server did.
+    gave_up: list[bool] = field(default_factory=list[bool])
+
+
+@contextmanager
+def silent_server(hold_seconds: float = 5) -> Generator[SilentServer]:
+    """Run a server that reads what it's sent, answers nothing and hangs up after hold_seconds."""
+    with socket.create_server(("127.0.0.1", 0)) as listener:
+        server = SilentServer(port=listener.getsockname()[1])
+
+        def serve() -> None:
+            while True:
+                try:
+                    connection, _ = listener.accept()
+                except OSError:
+                    return  # The listener was shut down.
+                with connection:
+                    connection.settimeout(hold_seconds)
+                    try:
+                        while connection.recv(4096):
+                            pass
+                        server.gave_up.append(True)
+                    except TimeoutError:
+                        server.gave_up.append(False)
+
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        try:
+            yield server
+        finally:
+            listener.shutdown(socket.SHUT_RDWR)
+            thread.join()

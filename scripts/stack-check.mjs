@@ -485,8 +485,9 @@ function treeBytes(root) {
     return total;
 }
 
-// Samples the stack's containers, plus the specs' Playwright and Chromium processes once they start, until stopped.
-function sampleMemory(project, env, { browser, browserRoot }) {
+// Samples the containers of the run's current stack, plus the specs' Playwright and Chromium processes once they start,
+// until stopped.
+function sampleMemory(currentProject, env, { browser, browserRoot }) {
     const peak = { total: 0, stack: 0, browser: 0, seen: false };
     let stopped = false;
     let wake = () => {};
@@ -494,6 +495,7 @@ function sampleMemory(project, env, { browser, browserRoot }) {
         while (!stopped) {
             const stats = await run("docker", ["stats", "--no-stream", "--format", "{{.Name}}\t{{.MemUsage}}"], { env });
             let stack = 0;
+            const project = currentProject();
             for (const [name, usage] of stats.stdout.split("\n").map((line) => line.split("\t"))) {
                 const bytes = name?.startsWith(`${project}-`) ? toBytes(usage?.split("/")[0]) : undefined;
                 if (bytes === undefined) continue;
@@ -545,6 +547,34 @@ async function writeStackFiles(folder, { project, port, owner, engine, env }) {
     chmodSync(folder, 0o755);
 }
 
+// podman's name service can stop answering inside a stack when a container joins it, and stays down until the stack is
+// removed. The backend's database client then fails with this, in a step's own output or, when the backend's health
+// check fails, only in its log. A fresh stack is one more try, not a fix.
+const NAMES_LOST = "failed to resolve host 'dev-db': [Errno -3] Try again";
+
+async function setupSteps(mode, compose, port, env) {
+    const profile = mode === "e2e" ? ["--profile", "browser"] : [];
+    const up = await run("docker", [...compose, ...profile, "up", "-d", "--build", "--wait", "--quiet-pull",
+        ...(mode === "e2e" ? [] : ["dev-db", "redis", "backend"])], { env });
+    if (up.status !== 0 || mode !== "e2e") return up;
+    for (const step of [["migrate", "--noinput"], ["seed_dev_data"]]) {
+        const done = await run("docker", [...compose, "exec", "-T", "-e", "DJANGO_CONSOLE_LOG_LEVEL=INFO", "backend",
+            "python", "manage.py", ...step], { env });
+        if (done.status !== 0) return done;
+    }
+    return run("curl", ["--insecure", "--fail", "--silent", "--show-error", "--output", "/dev/null",
+        "--retry", "45", "--retry-all-errors", "--retry-delay", "2", `https://localhost:${port}/`], { env });
+}
+
+// Brings the stack up and, for the specs, migrates and seeds it and waits for its site. Returns the failing step's
+// output and the backend's log, or nothing once the stack is ready.
+async function startStack(mode, compose, port, env) {
+    const last = await setupSteps(mode, compose, port, env);
+    if (last.status === 0) return undefined;
+    const logs = await run("docker", [...compose, "logs", "--no-color", "--tail", "100", "backend"], { env });
+    return { output: last.output.trim(), log: logs.output.trim() };
+}
+
 async function check(mode, extra) {
     useSharedFolder();
     const env = cleanEnv();
@@ -552,15 +582,23 @@ async function check(mode, extra) {
     await sweep(env, engine);
     const owner = ownerOf(process.pid);
     const { port, claim } = await claimPort(owner);
-    const project = `cinexplorer-run-${port}-${randomBytes(3).toString("hex")}`;
-    const folder = join(RUNS, project);
-    mkdirSync(folder, { recursive: true });
-    writeFileSync(join(folder, "owner"), owner);
-    const compose = ["compose", "-p", project, "--env-file", join(folder, "compose.env"), ...FILES.flatMap((file) => ["-f", file])];
+    // The run's current stack. A run that starts over replaces it with a fresh one on the same port.
+    let project;
+    let folder;
+    let compose;
+    const newStack = () => {
+        project = `cinexplorer-run-${port}-${randomBytes(3).toString("hex")}`;
+        folder = join(RUNS, project);
+        mkdirSync(folder, { recursive: true });
+        writeFileSync(join(folder, "owner"), owner);
+        compose = ["compose", "-p", project, "--env-file", join(folder, "compose.env"), ...FILES.flatMap((file) => ["-f", file])];
+        console.log(`stack-check: ${mode} in ${project} (${engine})`);
+    };
+    newStack();
     // On cancel: stop this run's own processes, each with everything under it (podman's compose command runs Compose as
     // its own child, which would otherwise stay connected and keep a build going). Node can know a child has exited
     // before its pipes close, so use its child handle and look for descendants only under live children. Take the
-    // stack down in a detached process so this one exits at once.
+    // current stack down in a detached process so this one exits at once.
     const onSignal = (signal) => {
         const roots = [...children].filter((child) => child.exitCode === null && child.signalCode === null)
             .map((child) => child.pid).filter(Boolean);
@@ -581,30 +619,22 @@ async function check(mode, extra) {
     for (const signal of ["SIGTERM", "SIGINT", "SIGHUP"]) process.on(signal, onSignal);
     const started = Date.now();
     const seconds = (since) => `${Math.round((Date.now() - since) / 1000)} s`;
-    console.log(`stack-check: ${mode} in ${project} (${engine})`);
     let stopSampling;
     let browserRoot;
     try {
         await writeStackFiles(folder, { project, port, owner, engine, env });
-        stopSampling = sampleMemory(project, env, { browser: mode === "e2e", browserRoot: () => browserRoot });
-        const profile = mode === "e2e" ? ["--profile", "browser"] : [];
-        const up = await run("docker", [...compose, ...profile, "up", "-d", "--build", "--wait", "--quiet-pull",
-            ...(mode === "e2e" ? [] : ["dev-db", "redis", "backend"])], { env });
-        const setup = [up];
-        if (up.status === 0 && mode === "e2e") {
-            for (const step of [["migrate", "--noinput"], ["seed_dev_data"]]) {
-                setup.push(await run("docker", [...compose, "exec", "-T", "-e", "DJANGO_CONSOLE_LOG_LEVEL=INFO", "backend",
-                    "python", "manage.py", ...step], { env }));
-                if (setup.at(-1).status !== 0) break;
-            }
-            if (setup.at(-1).status === 0) {
-                setup.push(await run("curl", ["--insecure", "--fail", "--silent", "--show-error", "--output", "/dev/null",
-                    "--retry", "45", "--retry-all-errors", "--retry-delay", "2", `https://localhost:${port}/`], { env }));
-            }
+        stopSampling = sampleMemory(() => project, env, { browser: mode === "e2e", browserRoot: () => browserRoot });
+        let failed = await startStack(mode, compose, port, env);
+        // Only once, and never after the check has started: its own failures are its result.
+        if (failed && [failed.output, failed.log].some((text) => text.includes(NAMES_LOST))) {
+            console.log(`stack-check: ${project} lost its containers' names (failed to resolve host 'dev-db'); starting over in a fresh stack`);
+            report(project, await tearDown(project, env, engine, { owner }), `stack-check: removed ${project}`);
+            newStack();
+            await writeStackFiles(folder, { project, port, owner, engine, env });
+            failed = await startStack(mode, compose, port, env);
         }
-        if (setup.at(-1).status !== 0) {
-            const logs = await run("docker", [...compose, "logs", "--no-color", "--tail", "100", "backend"], { env });
-            console.error(`${setup.at(-1).output.trim()}\n--- backend log ---\n${logs.output.trim()}`);
+        if (failed) {
+            console.error(`${failed.output}\n--- backend log ---\n${failed.log}`);
             console.error("stack-check: the stack didn't start");
             return 1;
         }

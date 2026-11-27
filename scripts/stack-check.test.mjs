@@ -60,6 +60,14 @@ appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({
 }) + '\\n');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 if (command === 'docker' && process.env.CX_NOISE) console.error('${NOISE}');
+// CX_HOLD_AT=<argument>: the CX_HOLD_CALL'th call with that argument (the first by default) waits 20 s first, so a test
+// can cancel during it
+if (process.env.CX_HOLD_AT && [command, ...args].includes(process.env.CX_HOLD_AT)) {
+    const counter = join(process.env.CX_STATE, 'holds');
+    const calls = (existsSync(counter) ? Number(readFileSync(counter, 'utf8')) : 0) + 1;
+    writeFileSync(counter, String(calls));
+    if (calls === Number(process.env.CX_HOLD_CALL ?? 1)) await sleep(20000);
+}
 if (process.env.CX_FAIL && [command, ...args].includes(process.env.CX_FAIL)) {
     console.error('stub command failed: ' + process.env.CX_FAIL);
     process.exit(9);
@@ -1128,7 +1136,39 @@ test("doesn't start over when the stack that lost its names can't be fully remov
     assert.ok(result.stderr.includes(NAMES_LOST));
     assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
     assert.equal(f.calls().filter((call) => call.command === "npm").length, 0);
+    // The final teardown tries the same stack again.
+    assert.deepEqual(removals(f.calls()), Array(6).fill(project));
+    const containerRemovals = f.calls().filter(({ args }) => args[0] === "container" && args[1] === "rm").map(({ args }) => args.join(" "));
+    assert.deepEqual(containerRemovals, ["container rm -f c1", "container rm -f c1"]);
     assert.deepEqual(readdirSync(f.claims), []);
+});
+
+test("a cancel after the stack that lost its names couldn't be removed leaves the run for the next check to retry", async (t) => {
+    const f = fixture(t);
+    // The second container stop is the final teardown's: cancel while it waits.
+    const child = f.launch(["backend"], {
+        CX_SETUP_ERROR_AT: "up", CX_SETUP_ERROR: NAMES_LOST, CX_PROJECT_CONTAINERS: "c1", CX_FAIL: "rm",
+        CX_HOLD_AT: "stop", CX_HOLD_CALL: "2",
+    });
+    const exited = new Promise((resolve) => child.once("exit", resolve));
+    const holds = join(f.stateDir, "holds");
+    await until(() => existsSync(holds) && readFileSync(holds, "utf8") === "2");
+    const ups = compose(f.calls(), "up");
+    assert.equal(ups.length, 1);
+    const project = projectOf(ups[0]);
+    child.kill("SIGTERM");
+    assert.equal(await exited, 143);
+    // The detached teardown has no output. Wait for the parent of its failing command to exit.
+    await until(() => {
+        const removal = f.calls().find(({ args, ppid }) => args[0] === "container" && args[1] === "rm" && ppid !== child.pid);
+        return removal && !running(removal.ppid);
+    });
+    assert.deepEqual(readdirSync(f.runs), [project]);
+    const result = f.invoke(["backend"]);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.deepEqual(result.stdout.split("\n").filter((line) => line.includes(project)),
+        [`stack-check: removed ${project}, left by a run that ended`]);
+    assert.deepEqual(readdirSync(f.runs), []);
 });
 
 test("a cancel while the fresh stack runs its check tears that stack down", async (t) => {

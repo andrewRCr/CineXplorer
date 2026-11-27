@@ -632,7 +632,9 @@ async function check(mode, extra) {
         // Only once, and never after the check has started: its own failures are its result.
         if (failed?.namesLost) {
             console.log(`stack-check: ${project} lost its containers' names (failed to resolve host 'dev-db'); starting over in a fresh stack once it's removed`);
-            const problems = await tearDown(project, env, engine, { owner });
+            // On a problem the run's folder stays, so a cancel during the final teardown still leaves the run for the next
+            // check to retry.
+            const problems = await tearDown(project, env, engine, { owner, keepFolderOnProblem: true });
             report(project, problems, `stack-check: removed ${project}`);
             // What's left of it could still hold the port: fail as before, and the final teardown tries again.
             if (!problems.length) {

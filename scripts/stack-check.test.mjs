@@ -1043,7 +1043,7 @@ test("starts over once in a fresh stack on the same port when the stack loses it
     assert.notEqual(second, first);
     assert.equal(portOf(second), portOf(first));
     assert.match(ups[1].envFile, new RegExp(`^COMPOSE_PROJECT_NAME=${second}$`, "m"));
-    assert.match(result.stdout, new RegExp(`^stack-check: ${first} lost its containers' names \\(failed to resolve host 'dev-db'\\); starting over in a fresh stack$`, "m"));
+    assert.match(result.stdout, new RegExp(`^stack-check: ${first} lost its containers' names \\(failed to resolve host 'dev-db'\\); starting over in a fresh stack once it's removed$`, "m"));
     assert.match(result.stdout, new RegExp(`^stack-check: e2e in ${second} `, "m"));
     // The first stack is gone before the second starts.
     assert.deepEqual(removals(calls.slice(0, calls.indexOf(ups[1]))), [first, first, first]);
@@ -1100,6 +1100,35 @@ test("doesn't start over when a setup step fails for any other reason", (t) => {
     assert.ok(result.stderr.includes(other));
     assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
     assert.doesNotMatch(result.stdout, /starting over/);
+});
+
+test("doesn't start over when a later step fails and only the backend's log shows the lost names", (t) => {
+    const f = fixture(t);
+    const other = 'django.db.utils.IntegrityError: duplicate key value violates unique constraint "movie_pkey"';
+    const result = f.invoke(["e2e"], {
+        CX_SETUP_ERROR_AT: "seed_dev_data", CX_SETUP_ERROR: other, CX_BACKEND_LOG: `backend-1  | ${NAMES_LOST}`,
+    });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(compose(f.calls(), "up").length, 1);
+    assert.ok(result.stderr.includes(other));
+    assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
+    assert.doesNotMatch(result.stdout, /starting over/);
+});
+
+test("doesn't start over when the stack that lost its names can't be fully removed", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["e2e"], {
+        CX_SETUP_ERROR_AT: "migrate", CX_SETUP_ERROR: NAMES_LOST, CX_PROJECT_CONTAINERS: "c1", CX_FAIL: "rm",
+    });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const ups = compose(f.calls(), "up");
+    assert.equal(ups.length, 1);
+    const project = projectOf(ups[0]);
+    assert.match(result.stdout, new RegExp(`^stack-check: couldn't remove all of ${project}: containers: stub command failed: rm$`, "m"));
+    assert.ok(result.stderr.includes(NAMES_LOST));
+    assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
+    assert.equal(f.calls().filter((call) => call.command === "npm").length, 0);
+    assert.deepEqual(readdirSync(f.claims), []);
 });
 
 test("a cancel while the fresh stack runs its check tears that stack down", async (t) => {

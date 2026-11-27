@@ -552,27 +552,31 @@ async function writeStackFiles(folder, { project, port, owner, engine, env }) {
 // check fails, only in its log. A fresh stack is one more try, not a fix.
 const NAMES_LOST = "failed to resolve host 'dev-db': [Errno -3] Try again";
 
+// Returns the last step run, and whether it was bringing the stack up.
 async function setupSteps(mode, compose, port, env) {
     const profile = mode === "e2e" ? ["--profile", "browser"] : [];
     const up = await run("docker", [...compose, ...profile, "up", "-d", "--build", "--wait", "--quiet-pull",
         ...(mode === "e2e" ? [] : ["dev-db", "redis", "backend"])], { env });
-    if (up.status !== 0 || mode !== "e2e") return up;
+    if (up.status !== 0 || mode !== "e2e") return { up: true, last: up };
     for (const step of [["migrate", "--noinput"], ["seed_dev_data"]]) {
         const done = await run("docker", [...compose, "exec", "-T", "-e", "DJANGO_CONSOLE_LOG_LEVEL=INFO", "backend",
             "python", "manage.py", ...step], { env });
-        if (done.status !== 0) return done;
+        if (done.status !== 0) return { up: false, last: done };
     }
-    return run("curl", ["--insecure", "--fail", "--silent", "--show-error", "--output", "/dev/null",
-        "--retry", "45", "--retry-all-errors", "--retry-delay", "2", `https://localhost:${port}/`], { env });
+    return { up: false, last: await run("curl", ["--insecure", "--fail", "--silent", "--show-error", "--output", "/dev/null",
+        "--retry", "45", "--retry-all-errors", "--retry-delay", "2", `https://localhost:${port}/`], { env }) };
 }
 
-// Brings the stack up and, for the specs, migrates and seeds it and waits for its site. Returns the failing step's
-// output and the backend's log, or nothing once the stack is ready.
+// Brings the stack up and, for the specs, migrates and seeds it and waits for its site. Returns nothing once the stack
+// is ready; otherwise the failing step's output, the backend's log, and whether the stack lost its names: the step's
+// own output says so, or bringing the stack up failed and the backend's log says so.
 async function startStack(mode, compose, port, env) {
-    const last = await setupSteps(mode, compose, port, env);
+    const { up, last } = await setupSteps(mode, compose, port, env);
     if (last.status === 0) return undefined;
     const logs = await run("docker", [...compose, "logs", "--no-color", "--tail", "100", "backend"], { env });
-    return { output: last.output.trim(), log: logs.output.trim() };
+    const output = last.output.trim();
+    const log = logs.output.trim();
+    return { output, log, namesLost: output.includes(NAMES_LOST) || (up && log.includes(NAMES_LOST)) };
 }
 
 async function check(mode, extra) {
@@ -626,12 +630,16 @@ async function check(mode, extra) {
         stopSampling = sampleMemory(() => project, env, { browser: mode === "e2e", browserRoot: () => browserRoot });
         let failed = await startStack(mode, compose, port, env);
         // Only once, and never after the check has started: its own failures are its result.
-        if (failed && [failed.output, failed.log].some((text) => text.includes(NAMES_LOST))) {
-            console.log(`stack-check: ${project} lost its containers' names (failed to resolve host 'dev-db'); starting over in a fresh stack`);
-            report(project, await tearDown(project, env, engine, { owner }), `stack-check: removed ${project}`);
-            newStack();
-            await writeStackFiles(folder, { project, port, owner, engine, env });
-            failed = await startStack(mode, compose, port, env);
+        if (failed?.namesLost) {
+            console.log(`stack-check: ${project} lost its containers' names (failed to resolve host 'dev-db'); starting over in a fresh stack once it's removed`);
+            const problems = await tearDown(project, env, engine, { owner });
+            report(project, problems, `stack-check: removed ${project}`);
+            // What's left of it could still hold the port: fail as before, and the final teardown tries again.
+            if (!problems.length) {
+                newStack();
+                await writeStackFiles(folder, { project, port, owner, engine, env });
+                failed = await startStack(mode, compose, port, env);
+            }
         }
         if (failed) {
             console.error(`${failed.output}\n--- backend log ---\n${failed.log}`);

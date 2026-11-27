@@ -60,10 +60,30 @@ appendFileSync(process.env.CX_TEST_LOG, JSON.stringify({
 }) + '\\n');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 if (command === 'docker' && process.env.CX_NOISE) console.error('${NOISE}');
+// CX_HOLD_AT=<argument>: the CX_HOLD_CALL'th call with that argument (the first by default) waits 20 s first, so a test
+// can cancel during it
+if (process.env.CX_HOLD_AT && [command, ...args].includes(process.env.CX_HOLD_AT)) {
+    const counter = join(process.env.CX_STATE, 'holds');
+    const calls = (existsSync(counter) ? Number(readFileSync(counter, 'utf8')) : 0) + 1;
+    writeFileSync(counter, String(calls));
+    if (calls === Number(process.env.CX_HOLD_CALL ?? 1)) await sleep(20000);
+}
 if (process.env.CX_FAIL && [command, ...args].includes(process.env.CX_FAIL)) {
     console.error('stub command failed: ' + process.env.CX_FAIL);
     process.exit(9);
 }
+// CX_SETUP_ERROR_AT=<step>: the first CX_SETUP_ERROR_TIMES calls with that step (once by default) fail, writing
+// CX_SETUP_ERROR to stderr
+if (process.env.CX_SETUP_ERROR_AT && [command, ...args].includes(process.env.CX_SETUP_ERROR_AT)) {
+    const counter = join(process.env.CX_STATE, 'setup-errors');
+    const failed = existsSync(counter) ? Number(readFileSync(counter, 'utf8')) : 0;
+    if (failed < Number(process.env.CX_SETUP_ERROR_TIMES ?? 1)) {
+        writeFileSync(counter, String(failed + 1));
+        console.error(process.env.CX_SETUP_ERROR);
+        process.exit(1);
+    }
+}
+if (command === 'docker' && args.includes('logs') && process.env.CX_BACKEND_LOG) console.log(process.env.CX_BACKEND_LOG);
 if (command === 'openssl' && args[0] === 'req') {
     writeFileSync(at('-keyout'), 'key');
     writeFileSync(at('-out'), 'cert');
@@ -1011,6 +1031,158 @@ test("fails when the stack doesn't start, showing why, and still removes it", (t
     assert.equal(compose(f.calls(), "exec").length, 0);
     assert.equal(removals(f.calls()).length, 3);
     assert.match(lastLine(result.stdout), /^stack-check: peak memory /);
+});
+
+// What the backend prints when podman's name service has stopped answering inside the stack
+const NAMES_LOST = "django.db.utils.OperationalError: failed to resolve host 'dev-db': [Errno -3] Try again";
+
+function portOf(project) {
+    return /^cinexplorer-run-(\d+)-/.exec(project)[1];
+}
+
+test("starts over once in a fresh stack on the same port when the stack loses its containers' names", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["e2e"], { CX_SETUP_ERROR_AT: "migrate", CX_SETUP_ERROR: NAMES_LOST });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const calls = f.calls();
+    const ups = compose(calls, "up");
+    assert.equal(ups.length, 2);
+    const [first, second] = ups.map(projectOf);
+    assert.notEqual(second, first);
+    assert.equal(portOf(second), portOf(first));
+    assert.match(ups[1].envFile, new RegExp(`^COMPOSE_PROJECT_NAME=${second}$`, "m"));
+    assert.match(result.stdout, new RegExp(`^stack-check: ${first} lost its containers' names \\(failed to resolve host 'dev-db'\\); starting over in a fresh stack once it's removed$`, "m"));
+    assert.match(result.stdout, new RegExp(`^stack-check: e2e in ${second} `, "m"));
+    // The first stack is gone before the second starts.
+    assert.deepEqual(removals(calls.slice(0, calls.indexOf(ups[1]))), [first, first, first]);
+    const steps = compose(calls, "exec").map((call) => [projectOf(call), call.args[call.args.indexOf("manage.py") + 1]]);
+    assert.deepEqual(steps, [[first, "migrate"], [second, "migrate"], [second, "seed_dev_data"]]);
+    const specs = calls.filter((call) => call.command === "npm");
+    assert.equal(specs.length, 1);
+    assert.equal(specs[0].env.COMPOSE_PROJECT_NAME, second);
+    assert.equal(specs[0].env.COMPOSE_ENV_FILES, ups[1].args[ups[1].args.indexOf("--env-file") + 1]);
+    assert.equal(specs[0].env.E2E_BASE_URL, `https://localhost:${portOf(first)}`);
+    assert.deepEqual(removals(calls), [first, first, first, second, second, second]);
+    assert.doesNotMatch(result.stderr, /the stack didn't start/);
+    assert.deepEqual(readdirSync(f.claims), []);
+    assert.deepEqual(readdirSync(f.runs), []);
+});
+
+test("starts over when the stack's health check fails and only the backend's log shows the lost names", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["e2e"], {
+        CX_SETUP_ERROR_AT: "up", CX_SETUP_ERROR: "dependency failed to start: container backend-1 is unhealthy",
+        CX_BACKEND_LOG: `backend-1  | ${NAMES_LOST}`,
+    });
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    const calls = f.calls();
+    const [first, second] = compose(calls, "up").map(projectOf);
+    assert.ok(second);
+    assert.match(result.stdout, new RegExp(`^stack-check: ${first} lost its containers' names `, "m"));
+    assert.equal(calls.filter((call) => call.command === "npm").length, 1);
+    assert.deepEqual(removals(calls), [first, first, first, second, second, second]);
+});
+
+test("fails as before when the fresh stack loses its names too, and starts no third", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["e2e"], { CX_SETUP_ERROR_AT: "migrate", CX_SETUP_ERROR: NAMES_LOST, CX_SETUP_ERROR_TIMES: "2" });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const calls = f.calls();
+    const [first, second, third] = compose(calls, "up").map(projectOf);
+    assert.ok(second);
+    assert.equal(third, undefined);
+    assert.ok(result.stderr.includes(NAMES_LOST));
+    assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
+    assert.deepEqual(compose(calls, "logs").map(projectOf), [first, second]);
+    assert.equal(calls.filter((call) => call.command === "npm").length, 0);
+    assert.deepEqual(removals(calls), [first, first, first, second, second, second]);
+    assert.deepEqual(readdirSync(f.runs), []);
+});
+
+test("doesn't start over when a setup step fails for any other reason", (t) => {
+    const f = fixture(t);
+    const other = "django.db.utils.OperationalError: failed to resolve host 'dev-db': [Errno -2] Name or service not known";
+    const result = f.invoke(["e2e"], { CX_SETUP_ERROR_AT: "migrate", CX_SETUP_ERROR: other });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(compose(f.calls(), "up").length, 1);
+    assert.ok(result.stderr.includes(other));
+    assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
+    assert.doesNotMatch(result.stdout, /starting over/);
+});
+
+test("doesn't start over when a later step fails and only the backend's log shows the lost names", (t) => {
+    const f = fixture(t);
+    const other = 'django.db.utils.IntegrityError: duplicate key value violates unique constraint "movie_pkey"';
+    const result = f.invoke(["e2e"], {
+        CX_SETUP_ERROR_AT: "seed_dev_data", CX_SETUP_ERROR: other, CX_BACKEND_LOG: `backend-1  | ${NAMES_LOST}`,
+    });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(compose(f.calls(), "up").length, 1);
+    assert.ok(result.stderr.includes(other));
+    assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
+    assert.doesNotMatch(result.stdout, /starting over/);
+});
+
+test("doesn't start over when the stack that lost its names can't be fully removed", (t) => {
+    const f = fixture(t);
+    const result = f.invoke(["e2e"], {
+        CX_SETUP_ERROR_AT: "migrate", CX_SETUP_ERROR: NAMES_LOST, CX_PROJECT_CONTAINERS: "c1", CX_FAIL: "rm",
+    });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    const ups = compose(f.calls(), "up");
+    assert.equal(ups.length, 1);
+    const project = projectOf(ups[0]);
+    assert.match(result.stdout, new RegExp(`^stack-check: couldn't remove all of ${project}: containers: stub command failed: rm$`, "m"));
+    assert.ok(result.stderr.includes(NAMES_LOST));
+    assert.match(result.stderr, /^stack-check: the stack didn't start$/m);
+    assert.equal(f.calls().filter((call) => call.command === "npm").length, 0);
+    // The final teardown tries the same stack again.
+    assert.deepEqual(removals(f.calls()), Array(6).fill(project));
+    const containerRemovals = f.calls().filter(({ args }) => args[0] === "container" && args[1] === "rm").map(({ args }) => args.join(" "));
+    assert.deepEqual(containerRemovals, ["container rm -f c1", "container rm -f c1"]);
+    assert.deepEqual(readdirSync(f.claims), []);
+});
+
+test("a cancel after the stack that lost its names couldn't be removed leaves the run for the next check to retry", async (t) => {
+    const f = fixture(t);
+    // The second container stop is the final teardown's: cancel while it waits.
+    const child = f.launch(["backend"], {
+        CX_SETUP_ERROR_AT: "up", CX_SETUP_ERROR: NAMES_LOST, CX_PROJECT_CONTAINERS: "c1", CX_FAIL: "rm",
+        CX_HOLD_AT: "stop", CX_HOLD_CALL: "2",
+    });
+    const exited = new Promise((resolve) => child.once("exit", resolve));
+    const holds = join(f.stateDir, "holds");
+    await until(() => existsSync(holds) && readFileSync(holds, "utf8") === "2");
+    const ups = compose(f.calls(), "up");
+    assert.equal(ups.length, 1);
+    const project = projectOf(ups[0]);
+    child.kill("SIGTERM");
+    assert.equal(await exited, 143);
+    // The detached teardown has no output. Wait for the parent of its failing command to exit.
+    await until(() => {
+        const removal = f.calls().find(({ args, ppid }) => args[0] === "container" && args[1] === "rm" && ppid !== child.pid);
+        return removal && !running(removal.ppid);
+    });
+    assert.deepEqual(readdirSync(f.runs), [project]);
+    const result = f.invoke(["backend"]);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+    assert.deepEqual(result.stdout.split("\n").filter((line) => line.includes(project)),
+        [`stack-check: removed ${project}, left by a run that ended`]);
+    assert.deepEqual(readdirSync(f.runs), []);
+});
+
+test("a cancel while the fresh stack runs its check tears that stack down", async (t) => {
+    const f = fixture(t);
+    const child = f.launch(["backend"], { CX_SETUP_ERROR_AT: "up", CX_SETUP_ERROR: NAMES_LOST, CX_PYTEST_SLEEP: "20000" });
+    const exited = new Promise((resolve) => child.once("exit", resolve));
+    await until(() => existsSync(join(f.stateDir, "pytest.pid")));
+    const [first, second] = compose(f.calls(), "up").map(projectOf);
+    assert.equal(projectOf(compose(f.calls(), "exec")[0]), second);
+    child.kill("SIGTERM");
+    assert.equal(await exited, 143);
+    await until(() => removals(f.calls()).length === 6 && readdirSync(f.runs).length === 0);
+    assert.deepEqual(removals(f.calls()), [first, first, first, second, second, second]);
+    assert.deepEqual(readdirSync(f.claims), []);
 });
 
 test("refuses an unknown check", (t) => {
